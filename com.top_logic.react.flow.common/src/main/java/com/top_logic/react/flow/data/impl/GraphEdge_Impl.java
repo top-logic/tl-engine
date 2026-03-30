@@ -9,6 +9,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 
 	private com.top_logic.react.flow.data.Box _target = null;
 
+	private int _priority = 0;
+
 	private final java.util.List<com.top_logic.react.flow.data.GraphWaypoint> _waypoints = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GraphWaypoint>() {
 		@Override
 		protected void beforeAdd(int index, com.top_logic.react.flow.data.GraphWaypoint element) {
@@ -122,6 +124,24 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 	@Override
 	public final boolean hasTarget() {
 		return _target != null;
+	}
+
+	@Override
+	public final int getPriority() {
+		return _priority;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GraphEdge setPriority(int value) {
+		internalSetPriority(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPriority()} without chain call utility. */
+	protected final void internalSetPriority(int value) {
+		_listener.beforeSet(this, PRIORITY__PROP, value);
+		_priority = value;
+		_listener.afterChanged(this, PRIORITY__PROP);
 	}
 
 	@Override
@@ -296,6 +316,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		java.util.List<String> local = java.util.Arrays.asList(
 			SOURCE__PROP, 
 			TARGET__PROP, 
+			PRIORITY__PROP, 
 			WAYPOINTS__PROP, 
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
@@ -332,6 +353,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		switch (field) {
 			case SOURCE__PROP: return getSource();
 			case TARGET__PROP: return getTarget();
+			case PRIORITY__PROP: return getPriority();
 			case WAYPOINTS__PROP: return getWaypoints();
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case THICKNESS__PROP: return getThickness();
@@ -346,6 +368,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		switch (field) {
 			case SOURCE__PROP: internalSetSource((com.top_logic.react.flow.data.Box) value); break;
 			case TARGET__PROP: internalSetTarget((com.top_logic.react.flow.data.Box) value); break;
+			case PRIORITY__PROP: internalSetPriority((int) value); break;
 			case WAYPOINTS__PROP: internalSetWaypoints(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GraphWaypoint.class, value)); break;
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
@@ -366,6 +389,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			out.name(TARGET__PROP);
 			getTarget().writeTo(scope, out);
 		}
+		out.name(PRIORITY__PROP);
+		out.value(getPriority());
 		out.name(WAYPOINTS__PROP);
 		out.beginArray();
 		for (com.top_logic.react.flow.data.GraphWaypoint x : getWaypoints()) {
@@ -409,6 +434,10 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 				}
 				break;
 			}
+			case PRIORITY__PROP: {
+				out.value(getPriority());
+				break;
+			}
 			case WAYPOINTS__PROP: {
 				out.beginArray();
 				for (com.top_logic.react.flow.data.GraphWaypoint x : getWaypoints()) {
@@ -450,6 +479,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		switch (field) {
 			case SOURCE__PROP: setSource(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case TARGET__PROP: setTarget(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
+			case PRIORITY__PROP: setPriority(in.nextInt()); break;
 			case WAYPOINTS__PROP: {
 				java.util.List<com.top_logic.react.flow.data.GraphWaypoint> newValue = new java.util.ArrayList<>();
 				in.beginArray();

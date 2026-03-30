@@ -23,6 +23,9 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	/** @see #getTarget() */
 	String TARGET__PROP = "target";
 
+	/** @see #getPriority() */
+	String PRIORITY__PROP = "priority";
+
 	/** @see #getWaypoints() */
 	String WAYPOINTS__PROP = "waypoints";
 
@@ -67,6 +70,18 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	 * Checks, whether {@link #getTarget()} has a value.
 	 */
 	boolean hasTarget();
+
+	/**
+	 * Layout priority for cycle-breaking. Higher priority edges are preserved (not reversed)
+	 * during acyclic subgraph computation. Use 3 for inheritance edges that must always point
+	 * upward, 2 for composition, 1 for normal references.
+	 */
+	int getPriority();
+
+	/**
+	 * @see #getPriority()
+	 */
+	com.top_logic.react.flow.data.GraphEdge setPriority(int value);
 
 	/**
 	 * Waypoints computed by the layout algorithm. Forms an orthogonal polyline.

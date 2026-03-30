@@ -84,7 +84,8 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 				continue;
 			}
 
-			graph.connect(sourceNode, targetNode, edge);
+			LayoutEdge layoutEdge = graph.connect(sourceNode, targetNode, edge);
+			layoutEdge.setPriority(edge.getPriority());
 		}
 
 		// Step 3: Create a NodeSizer that preserves the already-computed sizes.

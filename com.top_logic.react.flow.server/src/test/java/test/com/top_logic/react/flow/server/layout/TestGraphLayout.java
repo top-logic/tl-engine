@@ -34,11 +34,13 @@ public class TestGraphLayout extends TestCase {
 		Box product = node("Product");
 		Box category = node("Category");
 
-		GraphEdge e1 = GraphEdge.create().setSource(person).setTarget(company);
-		GraphEdge e2 = GraphEdge.create().setSource(person).setTarget(address);
-		GraphEdge e3 = GraphEdge.create().setSource(person).setTarget(order);
-		GraphEdge e4 = GraphEdge.create().setSource(order).setTarget(product);
-		GraphEdge e5 = GraphEdge.create().setSource(product).setTarget(category);
+		// Inheritance edge (high priority = 3): never reversed during cycle-breaking
+		GraphEdge e1 = GraphEdge.create().setSource(person).setTarget(company).setPriority(3);
+		// Reference edges (low priority = 1): may be reversed to break cycles
+		GraphEdge e2 = GraphEdge.create().setSource(person).setTarget(address).setPriority(1);
+		GraphEdge e3 = GraphEdge.create().setSource(person).setTarget(order).setPriority(1);
+		GraphEdge e4 = GraphEdge.create().setSource(order).setTarget(product).setPriority(1);
+		GraphEdge e5 = GraphEdge.create().setSource(product).setTarget(category).setPriority(1);
 
 		GraphLayout layout = GraphLayout.create();
 		layout.getNodes().add(person);

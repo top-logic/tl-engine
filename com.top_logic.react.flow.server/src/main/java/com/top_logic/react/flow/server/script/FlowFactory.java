@@ -1477,6 +1477,9 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The source node.
 	 * @param target
 	 *        The target node.
+	 * @param priority
+	 *        Layout priority for cycle-breaking. Higher values prevent edge reversal. Use 3 for
+	 *        inheritance (must always point upward), 2 for composition, 1 for normal references.
 	 * @param strokeStyle
 	 *        Stroke color.
 	 * @param thickness
@@ -1492,6 +1495,7 @@ public class FlowFactory extends TLScriptFunctions {
 	public static GraphEdge graphEdge(
 			@Mandatory Box source,
 			@Mandatory Box target,
+			int priority,
 			@StringDefault("black") String strokeStyle,
 			@DoubleDefault(1) double thickness,
 			List<Double> dashes,
@@ -1499,6 +1503,7 @@ public class FlowFactory extends TLScriptFunctions {
 		GraphEdge edge = GraphEdge.create()
 			.setSource(source)
 			.setTarget(target)
+			.setPriority(priority)
 			.setStrokeStyle(strokeStyle)
 			.setThickness(thickness);
 		if (dashes != null) {

@@ -129,7 +129,11 @@ $parts.isEmpty()
 									<en>Details</en>
 									<de>Details</de>
 								</title>
-								<form input="selectedNode" />
+								<form input="selectedNode">
+									<field attribute="name" />
+									<field attribute="marker" />
+									<field attribute="image" />
+								</form>
 							</panel>
 						</pane>
 					</panes>

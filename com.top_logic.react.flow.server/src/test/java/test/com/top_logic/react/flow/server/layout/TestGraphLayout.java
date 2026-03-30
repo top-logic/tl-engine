@@ -38,11 +38,20 @@ public class TestGraphLayout extends TestCase {
 		GraphEdge e1 = GraphEdge.create().setSource(person).setTarget(company)
 			.setPriority(3)
 			.setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol.FILLED_ARROW);
-		// Reference edges (low priority = 1): may be reversed to break cycles
-		GraphEdge e2 = GraphEdge.create().setSource(person).setTarget(address).setPriority(1);
-		GraphEdge e3 = GraphEdge.create().setSource(person).setTarget(order).setPriority(1);
-		GraphEdge e4 = GraphEdge.create().setSource(order).setTarget(product).setPriority(1);
-		GraphEdge e5 = GraphEdge.create().setSource(product).setTarget(category).setPriority(1);
+		// Reference edges with decorations at endpoints
+		GraphEdge e2 = GraphEdge.create().setSource(person).setTarget(address).setPriority(1)
+			.addDecoration(com.top_logic.react.flow.data.EdgeDecoration.create()
+				.setLinePosition(1.0).setContent(label("address  0..1")));
+		GraphEdge e3 = GraphEdge.create().setSource(person).setTarget(order).setPriority(1)
+			.addDecoration(com.top_logic.react.flow.data.EdgeDecoration.create()
+				.setLinePosition(1.0).setContent(label("orders  *")));
+		GraphEdge e4 = GraphEdge.create().setSource(order).setTarget(product).setPriority(1)
+			.setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol.FILLED_DIAMOND)
+			.addDecoration(com.top_logic.react.flow.data.EdgeDecoration.create()
+				.setLinePosition(1.0).setContent(label("items  1..*")));
+		GraphEdge e5 = GraphEdge.create().setSource(product).setTarget(category).setPriority(1)
+			.addDecoration(com.top_logic.react.flow.data.EdgeDecoration.create()
+				.setLinePosition(1.0).setContent(label("category  1")));
 
 		GraphLayout layout = GraphLayout.create();
 		layout.getNodes().add(person);
@@ -103,6 +112,11 @@ public class TestGraphLayout extends TestCase {
 		return Border.create().setContent(
 			Padding.create().setAll(5).setContent(
 				Text.create().setValue(label)));
+	}
+
+	private static Box label(String text) {
+		return Padding.create().setAll(2).setContent(
+			Text.create().setValue(text).setFontSize("10"));
 	}
 
 }

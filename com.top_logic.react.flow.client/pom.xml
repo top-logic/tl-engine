@@ -109,6 +109,18 @@
        <classifier>sources</classifier>
        <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-layouter</artifactId>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-common</artifactId>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
 
   </dependencies>
 

@@ -57,45 +57,30 @@ public class DesignTreeBuilder {
 	private DesignTreeNode buildNode(ConfigurationItem config, String sourceFile) throws ConfigurationException {
 		DesignTreeNode node = new DesignTreeNode(config, sourceFile);
 
-		// Collect container properties (LIST/ITEM of PolymorphicConfiguration).
-		List<PropertyDescriptor> containerProperties = new ArrayList<>();
+		// Traverse all container properties (LIST/ITEM of PolymorphicConfiguration).
+		// Each container property gets its own virtual group node — no inlining, so the tree
+		// always shows the full structure without losing intermediate levels.
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			if (isContainerProperty(property)) {
-				containerProperties.add(property);
+			if (!isContainerProperty(property)) {
+				continue;
 			}
-		}
-
-		int containerPropertyCount = containerProperties.size();
-
-		// Traverse container properties.
-		for (PropertyDescriptor property : containerProperties) {
 			if (property.kind() == PropertyKind.LIST) {
 				List<?> children = (List<?>) config.value(property);
 				if (children != null && !children.isEmpty()) {
-					if (containerPropertyCount == 1) {
-						for (Object childConfig : children) {
-							addChild(node, (ConfigurationItem) childConfig, sourceFile);
-						}
-					} else {
-						DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
-						group.setParent(node);
-						node.getChildren().add(group);
-						for (Object childConfig : children) {
-							addChild(group, (ConfigurationItem) childConfig, sourceFile);
-						}
+					DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
+					group.setParent(node);
+					node.getChildren().add(group);
+					for (Object childConfig : children) {
+						addChild(group, (ConfigurationItem) childConfig, sourceFile);
 					}
 				}
 			} else if (property.kind() == PropertyKind.ITEM) {
 				Object childConfig = config.value(property);
 				if (childConfig instanceof ConfigurationItem childItem) {
-					if (containerPropertyCount == 1) {
-						addChild(node, childItem, sourceFile);
-					} else {
-						DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
-						group.setParent(node);
-						node.getChildren().add(group);
-						addChild(group, childItem, sourceFile);
-					}
+					DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
+					group.setParent(node);
+					node.getChildren().add(group);
+					addChild(group, childItem, sourceFile);
 				}
 			}
 		}

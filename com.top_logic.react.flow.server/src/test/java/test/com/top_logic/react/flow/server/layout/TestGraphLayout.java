@@ -26,23 +26,32 @@ import com.top_logic.react.flow.svg.RenderContext;
 public class TestGraphLayout extends TestCase {
 
 	public void testSimpleGraph() {
+		// Same graph as graph-layout-demo.view.xml
 		Box person = node("Person");
 		Box company = node("Company");
+		Box address = node("Address");
 		Box order = node("Order");
 		Box product = node("Product");
+		Box category = node("Category");
 
 		GraphEdge e1 = GraphEdge.create().setSource(person).setTarget(company);
-		GraphEdge e2 = GraphEdge.create().setSource(person).setTarget(order);
-		GraphEdge e3 = GraphEdge.create().setSource(order).setTarget(product);
+		GraphEdge e2 = GraphEdge.create().setSource(person).setTarget(address);
+		GraphEdge e3 = GraphEdge.create().setSource(person).setTarget(order);
+		GraphEdge e4 = GraphEdge.create().setSource(order).setTarget(product);
+		GraphEdge e5 = GraphEdge.create().setSource(product).setTarget(category);
 
 		GraphLayout layout = GraphLayout.create();
 		layout.getNodes().add(person);
 		layout.getNodes().add(company);
+		layout.getNodes().add(address);
 		layout.getNodes().add(order);
 		layout.getNodes().add(product);
+		layout.getNodes().add(category);
 		layout.getEdges().add(e1);
 		layout.getEdges().add(e2);
 		layout.getEdges().add(e3);
+		layout.getEdges().add(e4);
+		layout.getEdges().add(e5);
 
 		Diagram diagram = Diagram.create().setRoot(layout);
 

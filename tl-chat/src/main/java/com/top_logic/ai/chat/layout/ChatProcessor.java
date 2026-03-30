@@ -14,11 +14,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.DtoMapper;
@@ -59,9 +56,6 @@ import dev.langchain4j.memory.ChatMemory;
  * </p>
  */
 public class ChatProcessor {
-
-	/** Polling interval for UI updates (milliseconds). */
-	static final long POLL_INTERVAL_MS = 500;
 
 	/** Funny placeholder descriptions for in-progress chat tasks. */
 	public static final String[] CHAT_TASK_PLACEHOLDERS = {
@@ -320,10 +314,6 @@ public class ChatProcessor {
 
 			// Check for completion
 			if (!state.isProcessing()) {
-				if (state._pollingTask != null) {
-					state._pollingTask.cancel(false);
-					state._pollingTask = null;
-				}
 				Throwable error = state.getError();
 				if (error != null) {
 					if (currentTaskId != null) {
@@ -337,15 +327,15 @@ public class ChatProcessor {
 					chat.addMessage(new ChatMessage("AI", errorMsg));
 					hasUpdates = true;
 				}
-				taskTracker.clearCurrentProcessingState();
+				taskTracker.removeProcessingState(currentTaskId);
 			}
 			return hasUpdates;
 		}
 	}
 
 	/**
-	 * Shared send logic: adds user message, starts task, submits background orchestrator, optionally
-	 * schedules UI polling.
+	 * Shared send logic: adds user message, starts task, submits background orchestrator.
+	 * Real-time updates are delivered via SSE ({@link com.top_logic.ai.chat.api.ChatSSEHandler}).
 	 *
 	 * @param tracker
 	 *        Task progress tracker for this session.
@@ -355,21 +345,12 @@ public class ChatProcessor {
 	 *        The message text.
 	 * @param attachments
 	 *        File attachments sent with the message; may be null or empty.
-	 * @param repaintRequester
-	 *        Called when polling has updates (e.g. {@code requestRepaint}); may be null for API-only.
-	 * @param uiExecutor
-	 *        TopLogic UI executor for server-side polling; if null, no polling is scheduled
-	 *        (client polls via SSE).
 	 * @return The send result (task ID, or busy/error); never null.
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, String userName, String userMessage,
-			List<AttachmentDto> attachments,
-			Runnable repaintRequester, ScheduledExecutorService uiExecutor) {
+			List<AttachmentDto> attachments) {
 		if (isProcessing(tracker)) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
-			if (repaintRequester != null) {
-				repaintRequester.run();
-			}
 			return SendResult.busy();
 		}
 
@@ -393,7 +374,7 @@ public class ChatProcessor {
 		state.startProcessing();
 		String taskId = tracker.startTask(randomChatTaskPlaceholder());
 		state.setCurrentTaskId(taskId);
-		tracker.setCurrentProcessingState(state);
+		tracker.addProcessingState(taskId, state);
 
 		// Capture session context so background task writes to the correct Chat,
 		// even if the user switches sessions before the task completes.
@@ -402,38 +383,12 @@ public class ChatProcessor {
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
 
-		if (repaintRequester != null) {
-			tracker.setRepaintRequester(repaintRequester);
-		}
-
 		ChatMemory chatMemory = tracker.getChatMemory();
-		Future<?> future = BACKGROUND_EXECUTOR.submit(new AIBackgroundTask(tracker, chatMemory, userMessage, attachments));
+		// Pass state directly to background task so it is immune to tracker-level overwrites
+		Future<?> future = BACKGROUND_EXECUTOR.submit(
+			new AIBackgroundTask(tracker, state, chatMemory, userMessage, attachments));
 		state._backgroundTask = future;
 
-		if (uiExecutor != null) {
-			try {
-				ScheduledFuture<?> pollingTask = uiExecutor.scheduleWithFixedDelay(
-					() -> {
-						AIProcessingState s = tracker.getCurrentProcessingState();
-						if (s == null) {
-							return;
-						}
-						boolean hasUpdates = applyPollUpdates(s, s.getChat(), tracker);
-						if (hasUpdates) {
-							tracker.requestRepaintIfNeeded();
-						}
-					},
-					POLL_INTERVAL_MS,
-					POLL_INTERVAL_MS,
-					TimeUnit.MILLISECONDS);
-				state._pollingTask = pollingTask;
-			} catch (Exception ex) {
-				Logger.error("Failed to schedule UI polling: " + ex.getMessage(), ex, ChatProcessor.class);
-				future.cancel(true);
-				tracker.clearCurrentProcessingState();
-				return SendResult.error();
-			}
-		}
 		return SendResult.ok(taskId);
 	}
 
@@ -441,15 +396,14 @@ public class ChatProcessor {
 	 * Returns whether an AI task is currently in progress for the given tracker.
 	 */
 	public static boolean isProcessing(TaskProgressTracker tracker) {
-		AIProcessingState state = tracker.getCurrentProcessingState();
-		return state != null && state.isProcessing();
+		return tracker.hasActiveProcessingState();
 	}
 
 	/**
 	 * Returns the current task ID for the given tracker, or null if none.
 	 */
 	public static String getCurrentTaskId(TaskProgressTracker tracker) {
-		AIProcessingState state = tracker.getCurrentProcessingState();
+		AIProcessingState state = tracker.getAnyActiveProcessingState();
 		return state != null ? state.getCurrentTaskId() : null;
 	}
 
@@ -562,16 +516,24 @@ public class ChatProcessor {
 
 	/**
 	 * Background task for AI processing with detailed progress tracking.
+	 *
+	 * <p>
+	 * The {@link AIProcessingState} is captured at construction time (not read from the tracker at
+	 * execution time) to eliminate the race window where a concurrent request could overwrite the
+	 * tracker's state before this task starts.
+	 * </p>
 	 */
 	static class AIBackgroundTask implements Runnable {
 		private final TaskProgressTracker _taskTracker;
+		private final AIProcessingState _state;
 		private final ChatMemory _chatMemory;
 		private final String _userMessage;
 		private final List<AttachmentDto> _attachments;
 
-		AIBackgroundTask(TaskProgressTracker taskTracker, ChatMemory chatMemory,
-				String userMessage, List<AttachmentDto> attachments) {
+		AIBackgroundTask(TaskProgressTracker taskTracker, AIProcessingState state,
+				ChatMemory chatMemory, String userMessage, List<AttachmentDto> attachments) {
 			_taskTracker = taskTracker;
+			_state = state;
 			_chatMemory = chatMemory;
 			_userMessage = userMessage;
 			_attachments = attachments;
@@ -579,10 +541,7 @@ public class ChatProcessor {
 
 		@Override
 		public void run() {
-			AIProcessingState state = _taskTracker.getCurrentProcessingState();
-			if (state == null) {
-				return;
-			}
+			AIProcessingState state = _state;
 			try {
 				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 					try {
@@ -638,7 +597,6 @@ public class ChatProcessor {
 
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
-		volatile ScheduledFuture<?> _pollingTask = null;
 
 		/** Whether AI is currently processing (not yet completed). */
 		public boolean isProcessing() {
@@ -704,14 +662,11 @@ public class ChatProcessor {
 			}
 		}
 
-		/** Cancels the background task and polling task. */
+		/** Cancels the background task. */
 		public void cancel() {
 			synchronized (_lock) {
 				if (_backgroundTask != null) {
 					_backgroundTask.cancel(true);
-				}
-				if (_pollingTask != null) {
-					_pollingTask.cancel(false);
 				}
 			}
 		}

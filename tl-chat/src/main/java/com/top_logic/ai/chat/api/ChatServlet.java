@@ -224,7 +224,7 @@ public class ChatServlet extends HttpServlet {
 			}
 		}
 		final String userName = storedName != null ? storedName : "Anonymous";
-		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, attachments, null, null);
+		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, attachments);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -262,7 +262,7 @@ public class ChatServlet extends HttpServlet {
 		}
 
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
-		ChatProcessor.AIProcessingState state = tracker.getCurrentProcessingState();
+		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state == null) {
 			resp.sendError(HttpServletResponse.SC_CONFLICT, "No active processing state");
 			return;
@@ -320,7 +320,7 @@ public class ChatServlet extends HttpServlet {
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(true));
 
 		// Sync timeline events from ToolCallTracker to TaskProgressTracker before returning updates
-		ChatProcessor.AIProcessingState state = tracker.getCurrentProcessingState();
+		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state != null) {
 			ChatProcessor.applyPollUpdates(state, tracker.getChat(), tracker);
 		}

@@ -307,7 +307,7 @@ public class ChatControl extends AbstractControlBase {
 			}
 			// Show in-progress task (not yet in entries) so trace appears after user message.
 			ChatProcessor.AIProcessingState state = _processingState != null ? _processingState
-				: _taskTracker.getCurrentProcessingState();
+				: _taskTracker.getAnyActiveProcessingState();
 			if (state != null) {
 				String currentTaskId = state.getCurrentTaskId();
 				if (currentTaskId != null) {
@@ -841,12 +841,10 @@ public class ChatControl extends AbstractControlBase {
 				if (!trimmedText.isEmpty()) {
 						String storedName = chatControl._taskTracker.getUserName();
 					String userName = storedName != null ? storedName : "Anonymous";
-					// No UIExecutor polling: the client uses SSE for real-time updates.
 					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
-						chatControl._taskTracker, userName, trimmedText, null,
-						() -> chatControl.requestRepaint(), null);
+						chatControl._taskTracker, userName, trimmedText, null);
 					if (result.getTaskId() != null) {
-						chatControl._processingState = chatControl._taskTracker.getCurrentProcessingState();
+						chatControl._processingState = chatControl._taskTracker.getAnyActiveProcessingState();
 						chatControl.requestRepaint();
 					} else if (!result.isBusy()) {
 						chatControl._chat.addMessage(new ChatMessage("System", "Failed to start AI processing"));

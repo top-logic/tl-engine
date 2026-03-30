@@ -199,7 +199,7 @@ public class ChatSSEHandler {
 		_lastTaskStatus = currentTaskStatus;
 
 		boolean processing = false;
-		ChatProcessor.AIProcessingState procState = _tracker.getCurrentProcessingState();
+		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
 		if (procState != null && procState.isProcessing()) {
 			// Only report processing if it belongs to the currently active session
 			String procSessionId = procState.getSessionId();
@@ -233,7 +233,7 @@ public class ChatSSEHandler {
 		try {
 			ThreadContextManager.inSystemInteraction(ChatSSEHandler.class, () -> {
 				// Sync timeline events from ToolCallTracker to TaskProgressTracker
-				ChatProcessor.AIProcessingState state = _tracker.getCurrentProcessingState();
+				ChatProcessor.AIProcessingState state = _tracker.getAnyActiveProcessingState();
 				if (state != null) {
 					Chat stateChat = state.getChat();
 					if (stateChat == null) {
@@ -277,7 +277,7 @@ public class ChatSSEHandler {
 		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
 
 		// Only emit task/timeline events if processing belongs to the active session
-		ChatProcessor.AIProcessingState procState = _tracker.getCurrentProcessingState();
+		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
 		if (procState != null) {
 			String procSessionId = procState.getSessionId();
 			String activeSessionId = _tracker.getActiveSessionId();
@@ -330,7 +330,7 @@ public class ChatSSEHandler {
 			}
 
 			// Emit pending user interaction requests
-			ChatProcessor.AIProcessingState currentState = _tracker.getCurrentProcessingState();
+			ChatProcessor.AIProcessingState currentState = _tracker.getAnyActiveProcessingState();
 			if (currentState != null) {
 				UserInteractionStore interactionStore = currentState.getUserInteractionStore();
 				if (interactionStore != null && interactionStore.hasPending()) {
@@ -399,11 +399,11 @@ public class ChatSSEHandler {
 	}
 
 	private void emitAgentTaskDeltas() {
-		ChatProcessor.AIProcessingState procState = _tracker.getCurrentProcessingState();
-		if (procState == null) {
+		ChatProcessor.AIProcessingState activeState = _tracker.getAnyActiveProcessingState();
+		if (activeState == null) {
 			return;
 		}
-		com.top_logic.ai.service.tools.task.TaskStore taskStore = procState.getTaskStore();
+		com.top_logic.ai.service.tools.task.TaskStore taskStore = activeState.getTaskStore();
 		if (taskStore == null) {
 			return;
 		}

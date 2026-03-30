@@ -7,7 +7,7 @@ package com.top_logic.graph.layouter.model.layer;
 
 import java.util.List;
 
-import com.top_logic.basic.col.TupleFactory.Pair;
+import com.top_logic.graph.layouter.model.util.Pair;
 
 /**
  * General layer with alternating items. The type switches between each adjacent item forth and

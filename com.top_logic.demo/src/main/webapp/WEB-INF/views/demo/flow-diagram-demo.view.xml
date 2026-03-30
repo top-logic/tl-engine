@@ -5,18 +5,22 @@
 			<en>Flow Diagram</en>
 			<de>Flow-Diagramm</de>
 		</title>
-		<flow-diagram createChart="chart(
-			tree(
-				list(
-					border(padding(text('Parent'), all: 5)),
-					border(padding(text('Child A'), all: 5)),
-					border(padding(text('Child B'), all: 5))
-				),
-				list(
-					connection(1, 2),
-					connection(1, 3)
+		<flow-diagram createChart="{
+			parent = reactFlowBorder(reactFlowPadding(reactFlowText('Parent'), all: 5));
+			childA = reactFlowBorder(reactFlowPadding(reactFlowText('Child A'), all: 5));
+			childB = reactFlowBorder(reactFlowPadding(reactFlowText('Child B'), all: 5));
+			reactFlowChart(
+				reactFlowPadding(
+					reactFlowTree(
+						list($parent, $childA, $childB),
+						list(
+							reactFlowConnection($parent, $childA),
+							reactFlowConnection($parent, $childB)
+						)
+					),
+					all: 20
 				)
 			)
-		)" />
+		}" />
 	</panel>
 </view>

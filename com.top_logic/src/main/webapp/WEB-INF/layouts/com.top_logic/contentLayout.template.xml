@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="internal"
 >
-	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.ButtonbarOptions">
+	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
@@ -30,5 +30,6 @@
 		horizontal="${horizontal}"
 		resizable="${resizable}"
 		resizeMode="instant"
+		securityObject="${securityObject}"
 	/>
 </config:template>

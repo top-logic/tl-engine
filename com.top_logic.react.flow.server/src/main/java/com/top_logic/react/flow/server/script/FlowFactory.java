@@ -55,6 +55,8 @@ import com.top_logic.react.flow.data.EdgeDecoration;
 import com.top_logic.react.flow.data.Empty;
 import com.top_logic.react.flow.data.Fill;
 import com.top_logic.react.flow.data.FloatingLayout;
+import com.top_logic.react.flow.data.GraphEdge;
+import com.top_logic.react.flow.data.GraphLayout;
 import com.top_logic.react.flow.data.GridLayout;
 import com.top_logic.react.flow.data.HorizontalLayout;
 import com.top_logic.react.flow.data.Image;
@@ -1431,6 +1433,81 @@ public class FlowFactory extends TLScriptFunctions {
 		// Convert to binary data
 		byte[] svgBytes = buffer.toString().getBytes(StandardCharsets.UTF_8);
 		return BinaryDataFactory.createBinaryData(svgBytes, "image/svg+xml", filename);
+	}
+
+	/**
+	 * Creates a graph layout that arranges nodes using hierarchical (layered) layout.
+	 *
+	 * @param nodes
+	 *        The nodes to arrange.
+	 * @param edges
+	 *        The edges connecting nodes.
+	 * @param layerGap
+	 *        Gap between layers.
+	 * @param nodeGap
+	 *        Gap between nodes in the same layer.
+	 * @param cssClass
+	 *        The CSS class.
+	 * @param userObject
+	 *        User object.
+	 * @return The new graph layout.
+	 */
+	@SideEffectFree
+	@Label("Create graph layout")
+	public static Box graphLayout(
+			@Mandatory List<? extends Box> nodes,
+			@Mandatory List<? extends GraphEdge> edges,
+			@DoubleDefault(60) double layerGap,
+			@DoubleDefault(30) double nodeGap,
+			String cssClass,
+			Object userObject) {
+		return GraphLayout.create()
+			.setNodes(nodes.stream().filter(Objects::nonNull).toList())
+			.setEdges(edges.stream().filter(Objects::nonNull).toList())
+			.setLayerGap(layerGap)
+			.setNodeGap(nodeGap)
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+
+	/**
+	 * Creates an edge for a graph layout.
+	 *
+	 * @param source
+	 *        The source node.
+	 * @param target
+	 *        The target node.
+	 * @param strokeStyle
+	 *        Stroke color.
+	 * @param thickness
+	 *        Line thickness.
+	 * @param dashes
+	 *        Dash pattern.
+	 * @param decorations
+	 *        Edge decorations.
+	 * @return The new edge.
+	 */
+	@SideEffectFree
+	@Label("Create graph edge")
+	public static GraphEdge graphEdge(
+			@Mandatory Box source,
+			@Mandatory Box target,
+			@StringDefault("black") String strokeStyle,
+			@DoubleDefault(1) double thickness,
+			List<Double> dashes,
+			List<? extends EdgeDecoration> decorations) {
+		GraphEdge edge = GraphEdge.create()
+			.setSource(source)
+			.setTarget(target)
+			.setStrokeStyle(strokeStyle)
+			.setThickness(thickness);
+		if (dashes != null) {
+			edge.setDashes(dashes);
+		}
+		if (decorations != null) {
+			edge.setDecorations(decorations);
+		}
+		return edge;
 	}
 
 }

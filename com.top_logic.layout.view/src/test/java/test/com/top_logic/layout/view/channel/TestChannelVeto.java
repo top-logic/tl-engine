@@ -9,7 +9,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.layout.view.form.StateHandler;
 
@@ -82,8 +81,8 @@ public class TestChannelVeto extends TestCase {
 	}
 
 	/**
-	 * Regular {@link ViewChannel.ChannelListener}s must NOT be notified when a veto blocks the
-	 * change.
+	 * Regular {@link com.top_logic.layout.view.channel.ViewChannel.ChannelListener}s must NOT be
+	 * notified when a veto blocks the change.
 	 */
 	public void testListenersNotNotifiedOnVeto() {
 		DefaultViewChannel channel = new DefaultViewChannel("test");

@@ -12,6 +12,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.MessageButtons;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.table.ReactTextCellControl;
 import com.top_logic.layout.react.dirty.StateHandler;

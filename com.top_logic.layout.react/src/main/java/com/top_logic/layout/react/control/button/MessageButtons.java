@@ -7,7 +7,6 @@ package com.top_logic.layout.react.control.button;
 
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**

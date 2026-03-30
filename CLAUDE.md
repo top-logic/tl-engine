@@ -352,6 +352,15 @@ throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based (JUnit 4.13.2)
 
+### Manual Verification with Playwright
+
+After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
+
+1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+2. **Start the demo app** using the `tl-app` skill.
+3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
+4. **Only then report the work as complete.**
+
 ## Important Notes
 
 ### Database Support

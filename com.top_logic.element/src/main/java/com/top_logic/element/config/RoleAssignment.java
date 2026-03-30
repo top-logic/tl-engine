@@ -22,7 +22,7 @@ import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModule;
-import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.model.annotate.security.RoleConfig.RoleNameOptionMapping;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 
@@ -110,20 +110,6 @@ public interface RoleAssignment extends ConfigurationItem {
 			ArrayList<BoundedRole> result = new ArrayList<>(allRoles);
 			Collections.sort(result, (r1, r2) -> r1.getName().compareTo(r2.getName()));
 			return result;
-		}
-	}
-
-	/**
-	 * {@link OptionMapping} allowing to store {@link BoundRole}s identified by their
-	 * {@link BoundedRole#getName() name}.
-	 */
-	class RoleNameOptionMapping implements OptionMapping {
-		@Override
-		public Object toSelection(Object option) {
-			if (option == null) {
-				return null;
-			}
-			return ((BoundRole) option).getName();
 		}
 	}
 

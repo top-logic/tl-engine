@@ -25,9 +25,11 @@
 							type="tl.core:String"
 							visibility="read-only"
 						/>
-						<code>
-							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.MFARequirementProvider"/>
-						</code>
+						<field
+							attribute="mfaRequirement"
+							fullQualifiedName="tl.accounts:Person#mfaRequirement"
+							type="tl.accounts:MFARequirement"
+						/>
 						<code>
 							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
 						</code>

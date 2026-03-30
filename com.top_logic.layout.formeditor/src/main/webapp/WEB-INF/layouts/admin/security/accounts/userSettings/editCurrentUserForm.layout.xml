@@ -200,7 +200,7 @@
 							<field
 								attribute="mfaRequirement"
 								fullQualifiedName="tl.accounts:Person#mfaRequirement"
-								type="tl.core:Boolean"
+								type="tl.accounts:MFARequirement"
 								visibility="read-only"
 							/>
 							<field

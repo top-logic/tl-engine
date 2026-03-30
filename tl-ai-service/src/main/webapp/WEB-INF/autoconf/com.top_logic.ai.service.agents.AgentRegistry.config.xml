@@ -538,7 +538,7 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 					tools="gitea.create_gitea_issue"
 					scope="CHAT"
 				>
-					<trigger config:interface="com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger" />
+					<trigger config:interface=""/>
 					<input config:interface="com.top_logic.ai.service.agents.background.input.ChatContextInput"
 						content="LAST_TURN" />
 					<output-handlers>

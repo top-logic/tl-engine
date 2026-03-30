@@ -96,7 +96,6 @@ public class FlowDiagramElement implements UIElement {
 		 * </p>
 		 */
 		@Name(CREATE_CHART)
-		@Mandatory
 		@NonNullable
 		@FormattedDefault("flowChart()")
 		Expr getCreateChart();

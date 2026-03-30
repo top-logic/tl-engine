@@ -8,11 +8,13 @@ package com.top_logic.element.meta.kbbased;
 import java.util.Locale;
 import java.util.Set;
 
+import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.service.db2.KnowledgeItemImpl;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -111,6 +113,26 @@ public class AttributedPerson extends Person {
 	@Override
 	public void setCountry(Country newValue) {
 		tUpdateByName(Person.COUNTRY_ATTR, newValue);
+	}
+
+	@Override
+	public Password getMFASecret() {
+		return (Password) tValueByName(MFA_SECRET_ATTR);
+	}
+
+	@Override
+	public void setMFASecret(Password secret) {
+		tUpdateByName(MFA_SECRET_ATTR, secret);
+	}
+
+	@Override
+	public MfaRequirement getMFARequirement() {
+		return (MfaRequirement) tValueByName(MFA_REQUIREMENT_ATTR);
+	}
+
+	@Override
+	public void setMFARequirement(MfaRequirement value) {
+		tUpdateByName(MFA_REQUIREMENT_ATTR, value);
 	}
 
 }

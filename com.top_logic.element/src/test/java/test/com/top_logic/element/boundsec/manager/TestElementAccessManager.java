@@ -28,6 +28,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.service.TransactionSetupDecorator;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.FileManager;
@@ -1510,10 +1511,10 @@ public class TestElementAccessManager extends BasicTestCase {
     }
 
     private Person initPerson(String aID) {
-        String authenticationDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
+        AuthenticationDevice authenticationDevice = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
         Person thePerson = Person.byName(aID);
         if (thePerson == null)
-			thePerson = Person.create(PersistencyLayer.getKnowledgeBase(), aID, authenticationDeviceID);
+			thePerson = Person.create(PersistencyLayer.getKnowledgeBase(), aID, authenticationDevice);
         else fail("Person '" + aID + "' exists already.");
         return thePerson;
     }

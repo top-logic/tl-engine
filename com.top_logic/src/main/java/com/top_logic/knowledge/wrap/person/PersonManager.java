@@ -243,8 +243,8 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		if (existingAccount == null) {
 			try (Transaction tx = kb().beginTransaction(I18NConstants.CREATED_ANONYMOUS_ACCOUNT)) {
 				// No login for anonymous user.
-				String deviceID = null;
-				Person anonymous = Person.create(kb(), loginName, deviceID);
+				AuthenticationDevice device = null;
+				Person anonymous = Person.create(kb(), loginName, device);
 				anonymous.setRestrictedUser(true);
 
 				tx.commit();
@@ -258,8 +258,7 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		if (existingAccount == null) {
 			try (Transaction tx = kb().beginTransaction(I18NConstants.CREATED_ROOT_ACCOUNT)) {
 				AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
-				String deviceID = device.getDeviceID();
-				Person root = Person.create(kb(), loginName, deviceID);
+				Person root = Person.create(kb(), loginName, device);
 				root.setAdmin(true);
 
 				setupRootPassword(root, loginName);

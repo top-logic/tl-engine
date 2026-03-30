@@ -21,6 +21,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
@@ -299,28 +300,44 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 * Type-safe access to the value of {@link #MFA_SECRET_ATTR}.
 	 */
 	public Password getMFASecret() {
-		return (Password) tValueByName(MFA_SECRET_ATTR);
+		String mfaSecret = tGetDataString(MFA_SECRET_ATTR);
+		if (StringServices.isEmpty(mfaSecret)) {
+			return null;
+		}
+		return new Password(mfaSecret);
 	}
 
 	/**
 	 * Setter for {@link #getMFASecret()}.
 	 */
 	public void setMFASecret(Password secret) {
-		tUpdateByName(MFA_SECRET_ATTR, secret);
+		if (secret == null) {
+			tSetData(MFA_SECRET_ATTR, null);
+		} else {
+			tSetData(MFA_REQUIREMENT_ATTR, secret.getCryptedValue());
+		}
 	}
 
 	/**
 	 * Type-safe access to the value of {@link #MFA_REQUIREMENT_ATTR}.
 	 */
 	public MfaRequirement getMFARequirement() {
-		return (MfaRequirement) tValueByName(MFA_REQUIREMENT_ATTR);
+		String mfaRequirement = tGetDataString(MFA_REQUIREMENT_ATTR);
+		if (StringServices.isEmpty(mfaRequirement)) {
+			return null;
+		}
+		return ConfigUtil.getEnumConstant(MfaRequirement.class, mfaRequirement);
 	}
 
 	/**
 	 * Setter for {@link #getMFARequirement()}.
 	 */
 	public void setMFARequirement(MfaRequirement value) {
-		tUpdateByName(MFA_REQUIREMENT_ATTR, value);
+		if (value == null) {
+			tSetData(MFA_REQUIREMENT_ATTR, null);
+		} else {
+			tSetData(MFA_REQUIREMENT_ATTR, ConfigUtil.getEnumExternalName(value));
+		}
 	}
 
     /**
@@ -578,21 +595,26 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	}
 
 	/**
-	 * Create a new {@link Person} in given {@link KnowledgeBase}. Does NOT check if such a person
-	 * already exists! Note: No user object will be created by this method
+	 * Create a new {@link Person} in given {@link KnowledgeBase}. This method does <b>NOT</b> check
+	 * if such a person already exists! Note: No user object will be created by this method
 	 * 
 	 * @param kb
-	 *        the {@link KnowledgeBase} in which the person is created.
+	 *        The {@link KnowledgeBase} in which the person is created.
 	 * @param userName
-	 *        the person (login) name
+	 *        The person (login) name.
+	 * @param authenticationDevice
+	 *        The device that is used to identify the new person. May be <code>null</code>.
 	 * 
-	 * @return the created person
+	 * @return The created person.
 	 */
-	public static Person create(KnowledgeBase kb, String userName, String authenticationDeviceID) {
+	public static Person create(KnowledgeBase kb, String userName, AuthenticationDevice authenticationDevice) {
 		KnowledgeObject handle = kb.createKnowledgeObject(OBJECT_NAME);
 		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, userName);
 		Person result = handle.getWrapper();
-		result.setAuthenticationDeviceID(authenticationDeviceID);
+		if (authenticationDevice != null) {
+			result.setAuthenticationDeviceID(authenticationDevice.getDeviceID());
+			result.setMFARequirement(authenticationDevice.getMFARequirement());
+		}
 		result.setCountry(DefaultCountryDefault.INSTANCE.defaultCountry());
 		result.setLanguage(DefaultLocaleDefault.INSTANCE.defaultLocale());
 		result.setTimeZone(UserTimeZoneDefault.INSTANCE.defaultUserTimeZone());

@@ -7,6 +7,7 @@ package com.top_logic.base.security.device.interfaces;
 
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.password.PasswordValidator;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -65,4 +66,9 @@ public interface AuthenticationDevice extends SecurityDevice {
 	 * </p>
 	 */
 	public boolean isPasswordChangeRequested(Person account, char[] password);
+
+	/**
+	 * {@link MfaRequirement} for accounts with this {@link AuthenticationDevice}.
+	 */
+	MfaRequirement getMFARequirement();
 }

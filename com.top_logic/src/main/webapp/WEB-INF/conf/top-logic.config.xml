@@ -593,6 +593,7 @@
 					<security-device 
 						id="dbSecurity"
 						class="com.top_logic.base.security.device.db.DBAuthenticationAccessDevice"
+						mfa-requirement="optional"
 					>
 						<password-validator>
 							<enabled>true</enabled>

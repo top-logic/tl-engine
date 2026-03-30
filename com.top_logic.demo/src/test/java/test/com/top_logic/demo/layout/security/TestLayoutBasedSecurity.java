@@ -17,6 +17,7 @@ import test.com.top_logic.layout.scripting.ApplicationTestSetup;
 import test.com.top_logic.layout.scripting.runtime.TestedApplicationSession;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.element.structured.wrap.StructuredElementWrapper;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -104,13 +105,13 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 		Transaction tx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		// Create a test roles on root
 		testRole = BoundedRole.createBoundedRole("testSec", kBase);
-		String authenticationDeviceID =
-			TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
+		AuthenticationDevice authenticationDevice =
+			TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
 
 		// Create test users if necessary
 		test1Person = Person.byName(kBase, "testSec");
 		if (test1Person == null) {
-			test1Person = Person.create(kBase, "testSec", authenticationDeviceID);
+			test1Person = Person.create(kBase, "testSec", authenticationDevice);
 		}
 
 		if (null == SecurityComponentCache.getSecurityComponent(toComponentName("testPLD"))) {

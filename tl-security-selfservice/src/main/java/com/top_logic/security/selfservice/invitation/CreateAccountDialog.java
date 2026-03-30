@@ -145,8 +145,11 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 		Account person;
 		KnowledgeBase kb = _invitation.tKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_INVITATION_CODE)) {
-			person = (Account) Person.create(kb, userName, _authenticationDevice.getDeviceID());
-			person.setMFARequirement(_invitation.getMfaRequirement());
+			person = (Account) Person.create(kb, userName, _authenticationDevice);
+			MfaRequirement mfaRequirement = _invitation.getMfaRequirement();
+			if (mfaRequirement != null) {
+				person.setMFARequirement(mfaRequirement);
+			}
 			
 			UserInterface user = person.getUser();
 			user.setName(surName);

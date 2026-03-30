@@ -37,6 +37,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -76,6 +77,14 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 		 */
 		@MapBinding()
 		Map<String, String> getMappings();
+
+		/**
+		 * The requirement for the multi-factor authentication for accounts with this authentication
+		 * device.
+		 */
+		@Name("mfa-requirement")
+		@Mandatory
+		MfaRequirement getMFARequirement();
 	}
 
 	/**
@@ -98,6 +107,14 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 		super(context, config);
 		initLAS(getDeviceID(), config);
 		mappings = new HashMap();
+	}
+
+	/**
+	 * @see com.top_logic.basic.config.AbstractConfiguredInstance#getConfig()
+	 */
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	/**
@@ -204,7 +221,6 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 
 	@Override
 	public List<Person> synchronizeUsers(KnowledgeBase kb) {
-		String authenticationDeviceID = getAuthenticationDeviceID();
 		List<Person> existingPersons = new ArrayList<>();
 		for (DataObject user : las.getAllUserData()) {
 			LDAPDataObject ldapUser = (LDAPDataObject) user;
@@ -219,8 +235,7 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 
 			Person account = Person.byName(userName);
 			if (account == null) {
-				account =
-					Person.create(PersistencyLayer.getKnowledgeBase(), userName, authenticationDeviceID);
+				account = Person.create(PersistencyLayer.getKnowledgeBase(), userName, this);
 			}
 			existingPersons.add(account);
 			UserInterface localUser = account.getUser();
@@ -242,6 +257,11 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 			}
 		}
 		return existingPersons;
+	}
+
+	@Override
+	public MfaRequirement getMFARequirement() {
+		return getConfig().getMFARequirement();
 	}
 
 	/**

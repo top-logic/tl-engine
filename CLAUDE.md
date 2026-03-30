@@ -17,14 +17,13 @@ TopLogic is an open-source, model-based, no-code web application development pla
 
 ```bash
 # Build entire engine from root (tl-parent-all)
-mvn clean install
-
-# Build without tests (faster, default configuration)
-mvn clean install -DskipTests=true
+mvn install
 
 # Build specific module (path-based -pl, from project root)
-mvn install -DskipTests=true -pl com.top_logic.basic
+mvn install -pl com.top_logic.basic
 ```
+
+Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTests=true` is not needed.
 
 **IMPORTANT**: Always build from the project root using `-pl <module-dir>`. NEVER `cd` into a module directory and run Maven there. The project uses a relative local repository (`.m2/repository` via `.mvn/maven.config`), so changing directories causes each module to use its own isolated local repo, leading to missing artifact errors.
 
@@ -45,14 +44,13 @@ mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
 
 **Important**: Tests require database configuration. Many tests use H2 in-memory databases, but some require specific database drivers (MySQL, Oracle, PostgreSQL, DB2, MS SQL Server).
 
-**Stale dependency jars**: If compilation fails with "cannot find symbol" for classes that DO exist in the source tree, the local Maven repository has outdated jars. Fix: run `mvn install -DskipTests=true` on the dependency modules, then recompile the failing module.
+**Stale dependency jars**: If compilation fails with "cannot find symbol" for classes that DO exist in the source tree, the local Maven repository has outdated jars. Fix: run `mvn install` on the dependency modules, then recompile the failing module.
 
 **Build pitfalls**:
-- **NEVER use `mvn clean` on app modules** (e.g. `com.top_logic.demo`) that use the `tl-maven-plugin:app` goal. It causes a `PluginContainerException` / missing `com.top_logic.basic.core.log.Log` error. Use incremental compilation instead.
-- **To force recompilation without clean**: `touch` the changed `.java` files, then run `mvn compile -DskipTests=true`.
-- **Library modules** (e.g. `com.top_logic.layout.react`) can safely use `mvn clean install` — the `tl-maven-plugin:app` goal only runs in app modules.
+- **Use `mvn install`, not just `compile`**, when building dependent modules in sequence — downstream modules need the updated artifacts in the local Maven repository.
+- **To force recompilation without clean**: `touch` the changed `.java` files, then run `mvn compile`.
 - **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
-- **Capture full output first**: Always redirect Maven output to a log file and then grep/tail it: `mvn -B ... &> $TMPDIR/mvn-out.log; grep -E 'Tests run|BUILD|ERROR' $TMPDIR/mvn-out.log`. Never pipe directly (`mvn ... | grep`) — if the filter misses something, the full output is lost and you have to re-run the entire build.
+- **Always preserve full build output**: Use `tee` to save output to a log file while still seeing it live: `mvn -B install -pl com.top_logic.basic 2>&1 | tee com.top_logic.basic/target/mvn-build.log`. This way you can search the full output afterwards without having to re-run the build.
 
 ### Other Useful Commands
 

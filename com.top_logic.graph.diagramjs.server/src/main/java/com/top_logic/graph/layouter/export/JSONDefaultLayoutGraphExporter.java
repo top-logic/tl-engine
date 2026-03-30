@@ -18,7 +18,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 import com.top_logic.graph.layouter.model.Waypoint;
-import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
+import com.top_logic.graph.layouter.model.util.DiagramJSLayoutGraphUtil;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.ModelKind;
@@ -33,7 +33,7 @@ import com.top_logic.model.util.TLModelUtil;
  * Default JSON graph exporter. Adds businessObjects to nodes and edges. In addition it generates
  * cardinalities out of the edge's businessObject.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutGraph> {
 
@@ -170,7 +170,7 @@ public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutG
 		if (businessObject != null) {
 			TLStructuredTypePart part = (TLStructuredTypePart) businessObject;
 
-			return Optional.of(LayoutGraphUtil.getLabel(_resourceProvider, part));
+			return Optional.of(DiagramJSLayoutGraphUtil.getLabel(_resourceProvider, part));
 		}
 
 		return Optional.empty();
@@ -186,7 +186,7 @@ public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutG
 			TLReference endReference = otherEnd.getReference();
 
 			if (endReference != null) {
-				return Optional.of(LayoutGraphUtil.getLabel(_resourceProvider, endReference));
+				return Optional.of(DiagramJSLayoutGraphUtil.getLabel(_resourceProvider, endReference));
 			}
 		}
 
@@ -200,7 +200,7 @@ public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutG
 			TLReference reference = (TLReference) businessObject;
 			TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(reference.getEnd());
 
-			return Optional.of(LayoutGraphUtil.getCardinality(otherEnd));
+			return Optional.of(DiagramJSLayoutGraphUtil.getCardinality(otherEnd));
 		}
 
 		return Optional.empty();
@@ -212,7 +212,7 @@ public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutG
 		if (businessObject != null) {
 			TLStructuredTypePart part = (TLStructuredTypePart) businessObject;
 
-			return Optional.of(LayoutGraphUtil.getCardinality(part));
+			return Optional.of(DiagramJSLayoutGraphUtil.getCardinality(part));
 		}
 
 		return Optional.empty();
@@ -222,7 +222,7 @@ public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutG
 		LinkedHashMap<String, Object> businessObject = new LinkedHashMap<>();
 		TLClass userObject = (TLClass) layoutNode.getUserObject();
 
-		businessObject.put(NODE_BUSINESSOBJECT_NAME_ATTRIBUTE, LayoutGraphUtil.getLabel(_resourceProvider, userObject));
+		businessObject.put(NODE_BUSINESSOBJECT_NAME_ATTRIBUTE, DiagramJSLayoutGraphUtil.getLabel(_resourceProvider, userObject));
 		businessObject.put(NODE_BUSINESSOBJECT_MODIFIERS_ATTRIBUTE, getModifiers(userObject));
 		businessObject.put(NODE_BUSINESSOBJECT_PROPERTIES_ATTRIBUTE, getProperties(userObject));
 
@@ -234,7 +234,7 @@ public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutG
 
 		for (TLClassPart clazzPart : clazz.getLocalClassParts()) {
 			if (clazzPart.getModelKind() == ModelKind.PROPERTY) {
-				properties.add(LayoutGraphUtil.getLabel(_resourceProvider, clazzPart));
+				properties.add(DiagramJSLayoutGraphUtil.getLabel(_resourceProvider, clazzPart));
 			}
 		}
 

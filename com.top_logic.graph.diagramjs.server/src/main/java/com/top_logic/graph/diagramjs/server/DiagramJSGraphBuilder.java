@@ -8,7 +8,7 @@ package com.top_logic.graph.diagramjs.server;
 import com.top_logic.graph.common.model.GraphModel;
 import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
-import com.top_logic.graph.layouter.LayoutContext;
+import com.top_logic.graph.layouter.DiagramJSLayoutContext;
 import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.server.component.builder.GraphModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -18,7 +18,7 @@ import com.top_logic.model.TLType;
 /**
  * Builds for the given model a layouted {@link SharedGraph}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class DiagramJSGraphBuilder implements GraphModelBuilder {
 
@@ -66,7 +66,7 @@ public class DiagramJSGraphBuilder implements GraphModelBuilder {
 
 		TLModule module = (TLModule) businessModel;
 
-		LayoutContext context = getLayoutContext(graphComponent);
+		DiagramJSLayoutContext context = getLayoutContext(graphComponent);
 
 		LayoutGraph graph = GraphModelUtil.getLayoutedGraph(module, context);
 
@@ -74,7 +74,7 @@ public class DiagramJSGraphBuilder implements GraphModelBuilder {
 				context.getHiddenElements(), graphComponent.getInvisibleGraphParts());
 	}
 
-	private LayoutContext getLayoutContext(DiagramJSGraphComponent component) {
+	private DiagramJSLayoutContext getLayoutContext(DiagramJSGraphComponent component) {
 		return component.getLayoutContext();
 	}
 

@@ -18,7 +18,6 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 import com.top_logic.graph.layouter.model.filter.FilterMarkedEdge;
 import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * A Finder to get the maximal acyclic subgraph for a given graph which uses the Strategy from
@@ -26,7 +25,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * Selfloops are removed and other conflicting edges are reversed.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class EadesLinSmythAcycleFinder extends AcycleFinder {
 
@@ -177,7 +176,7 @@ public class EadesLinSmythAcycleFinder extends AcycleFinder {
 		boolean isRemoved = edge.remove();
 
 		if (!isRemoved) {
-			throw new TopLogicException(I18NConstants.EDGE_COULD_NOT_BE_REMOVED);
+			throw new IllegalStateException("Edge could not be removed.");
 		}
 
 	}
@@ -188,7 +187,7 @@ public class EadesLinSmythAcycleFinder extends AcycleFinder {
 		if (reversedEdge != null) {
 			return reversedEdge;
 		} else {
-			throw new TopLogicException(I18NConstants.EDGE_COULD_NOT_BE_REVERSED);
+			throw new IllegalStateException("Edge could not be reversed.");
 		}
 	}
 

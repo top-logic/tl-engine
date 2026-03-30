@@ -5,7 +5,7 @@
  */
 package com.top_logic.graph.layouter.model.util;
 
-import com.top_logic.layout.I18NConstantsBase;
+import com.top_logic.basic.i18n.I18NConstantsBase;
 
 /**
  * Internationalization constants for this package.

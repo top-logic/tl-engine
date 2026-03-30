@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.graph.layouter.math.polynom;
@@ -10,13 +10,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.util.Resources;
-
 /**
  * Solver for quadratic equations.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
  */
 public class QuadraticEquationSolver implements Consumer<RealPolynom> {
 
@@ -29,7 +26,7 @@ public class QuadraticEquationSolver implements Consumer<RealPolynom> {
 	@Override
 	public void accept(RealPolynom polynom) {
 		if (polynom.getDegree() > QUADRATIC_DEGREE) {
-			Logger.error(Resources.getInstance().getString(I18NConstants.POLYNOM_IS_NOT_QUADRATIC), this);
+			throw new IllegalArgumentException("Polynom is not quadratic!");
 		}
 
 		List<Double> coefficients = polynom.getCoefficients();

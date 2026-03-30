@@ -32,11 +32,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>ext-com-google-fonts</artifactId>
+      <artifactId>tl-basic</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -48,12 +48,15 @@ import com.top_logic.graph.diagramjs.server.util.layout.Position;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritance;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritanceImpl;
 import com.top_logic.graph.diagramjs.util.GraphLayoutConstants;
-import com.top_logic.graph.layouter.LayoutContext;
+import com.top_logic.graph.layouter.DiagramJSLayoutContext;
 import com.top_logic.graph.layouter.Sugiyama;
+import com.top_logic.graph.layouter.algorithm.node.port.assigner.coordinates.DefaultNodePortCoordinateAssigner;
+import com.top_logic.graph.layouter.algorithm.node.size.DefaultNodeSizer;
 import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 import com.top_logic.graph.layouter.model.Waypoint;
+import com.top_logic.graph.layouter.model.util.DiagramJSLayoutGraphUtil;
 import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -79,7 +82,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Util methods to create and manipulate graph models.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class GraphModelUtil implements GraphLayoutConstants {
 
@@ -132,10 +135,12 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * @param context
 	 *        Contains properties that are needed to layout the graph
 	 */
-	public static LayoutGraph getLayoutedGraph(TLModule module, LayoutContext context) {
+	public static LayoutGraph getLayoutedGraph(TLModule module, DiagramJSLayoutContext context) {
 		LayoutGraph graph = createLayoutGraph(module, context);
 
-		Sugiyama.INSTANCE.layout(context, graph);
+		Sugiyama.INSTANCE.layout(context, graph,
+			new DefaultNodeSizer(context),
+			DefaultNodePortCoordinateAssigner.INSTANCE);
 
 		LayoutGraphUtil.getEdges(graph, edge -> edge.getBusinessObject() instanceof TLReference).forEach(edge -> edge.reverse());
 
@@ -145,7 +150,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	/**
 	 * Creates a {@link LayoutGraph} for the given {@link TLModule}.
 	 */
-	public static LayoutGraph createLayoutGraph(TLModule module, LayoutContext context) {
+	public static LayoutGraph createLayoutGraph(TLModule module, DiagramJSLayoutContext context) {
 		LayoutGraph graph = new LayoutGraph();
 
 		Collection<TLType> nodeObjects = getElementsToCreateNodeFor(module, context);
@@ -157,7 +162,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return graph;
 	}
 
-	private static Collection<TLType> getElementsToCreateNodeFor(TLModule module, LayoutContext context) {
+	private static Collection<TLType> getElementsToCreateNodeFor(TLModule module, DiagramJSLayoutContext context) {
 		Set<TLType> nodes = new HashSet<>();
 		Set<TLType> generalizations = new HashSet<>();
 
@@ -227,7 +232,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return ModelKind.CLASS.equals(type.getModelKind());
 	}
 
-	private static Set<Object> getElementsToCreateEdgeFor(Collection<TLType> nodes, LayoutContext context) {
+	private static Set<Object> getElementsToCreateEdgeFor(Collection<TLType> nodes, DiagramJSLayoutContext context) {
 		Set<Object> edges = new HashSet<>();
 
 		for (TLType type : nodes) {
@@ -287,12 +292,12 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * @param invisibleElements
 	 *        Collection of business objects that are invisible.
 	 */
-	public static GraphPart createGraphPart(GraphModel graph, Object newModel, LayoutContext context,
+	public static GraphPart createGraphPart(GraphModel graph, Object newModel, DiagramJSLayoutContext context,
 			Set<Object> invisibleElements) {
 		return createGraphPartInternal(graph, newModel, context, invisibleElements);
 	}
 
-	private static GraphPart createGraphPartInternal(GraphModel graph, Object newModel, LayoutContext context,
+	private static GraphPart createGraphPartInternal(GraphModel graph, Object newModel, DiagramJSLayoutContext context,
 			Set<Object> invisibleElements) {
 		if (newModel instanceof TLClassProperty) {
 			TLClassProperty property = (TLClassProperty) newModel;
@@ -392,7 +397,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			TLType type, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
 		DefaultDiagramJSClassNode node = (DefaultDiagramJSClassNode) graphModel.createNode(null, type);
 
-		node.setClassName(LayoutGraphUtil.getLabel(labelProvider, type));
+		node.setClassName(DiagramJSLayoutGraphUtil.getLabel(labelProvider, type));
 		node.setImported(((TLModule) graphModel.getTag()).getType(type.getName()) == null);
 
 		getModifiers(type).ifPresent(modifiers -> node.setClassModifiers(modifiers));
@@ -456,7 +461,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	private static Label createClassifier(LabelProvider labelProvider, Node node, TLClassifier classifier) {
-		return createDiagramJSLabel(node, classifier, LayoutGraphUtil.getLabel(labelProvider, classifier),
+		return createDiagramJSLabel(node, classifier, DiagramJSLayoutGraphUtil.getLabel(labelProvider, classifier),
 			LABEL_CLASSIFIER_TYPE);
 	}
 
@@ -466,7 +471,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * @see DefaultDiagramJSClassNode#getClassProperties()
 	 */
 	public static Label createClassProperty(LabelProvider labelProvider, Node node, TLClassProperty property) {
-		String propertyLabel = LayoutGraphUtil.getLabel(labelProvider, property);
+		String propertyLabel = DiagramJSLayoutGraphUtil.getLabel(labelProvider, property);
 
 		return createDiagramJSLabel(node, property, propertyLabel, LABEL_PROPERTY_TYPE);
 	}
@@ -584,7 +589,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 	private static void createSourceCardinalityLabel(DefaultDiagramJSEdge edge, TLReference reference) {
 		if (!EDGE_COMPOSITION_TYPE.equals(edge.getType())) {
-			String cardinality = LayoutGraphUtil.getCardinality(TLModelUtil.getOtherEnd(reference.getEnd()));
+			String cardinality = DiagramJSLayoutGraphUtil.getCardinality(TLModelUtil.getOtherEnd(reference.getEnd()));
 
 			createDiagramJSLabel(edge, reference, cardinality, LABEL_EDGE_SOURCE_CARDINALITY_TYPE);
 		}
@@ -608,7 +613,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	private static void createTargetCardinalityLabel(DefaultDiagramJSEdge edge, TLReference reference) {
-		String cardinality = LayoutGraphUtil.getCardinality(reference);
+		String cardinality = DiagramJSLayoutGraphUtil.getCardinality(reference);
 
 		createDiagramJSLabel(edge, reference, cardinality, LABEL_EDGE_TARGET_CARDINALITY_TYPE);
 	}
@@ -748,7 +753,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * @see LayoutGraphUtil#getLabel(LabelProvider, TLTypePart)
 	 */
 	private static Optional<String> getTargetName(LabelProvider labelProvider, Object businessObject) {
-		return getTypePartOptional(businessObject).map(part -> LayoutGraphUtil.getLabel(labelProvider, part));
+		return getTypePartOptional(businessObject).map(part -> DiagramJSLayoutGraphUtil.getLabel(labelProvider, part));
 	}
 
 	/**
@@ -840,7 +845,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * 
 	 * It is assumed that the tag of every {@link Node} is a {@link TLClass}.
 	 */
-	public static void connectSpecializations(LayoutContext context, GraphModel graphModel, Node node) {
+	public static void connectSpecializations(DiagramJSLayoutContext context, GraphModel graphModel, Node node) {
 		Object tag = node.getTag();
 
 		if (tag instanceof TLClass) {
@@ -866,12 +871,12 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		}
 	}
 
-	private static boolean isInheritanceHidden(LayoutContext context, TLInheritance inheritance) {
+	private static boolean isInheritanceHidden(DiagramJSLayoutContext context, TLInheritance inheritance) {
 		return isInheritanceEndHidden(context, inheritance.getSpecialization())
 			|| isInheritanceEndHidden(context, inheritance.getGeneralization());
 	}
 
-	private static boolean isInheritanceEndHidden(LayoutContext context, TLClass inheritanceEnd) {
+	private static boolean isInheritanceEndHidden(DiagramJSLayoutContext context, TLClass inheritanceEnd) {
 		Collection<Object> hiddenElements = context.getHiddenElements();
 		Collection<TLType> hiddenGeneralizations = context.getHiddenGeneralizations();
 
@@ -884,7 +889,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * 
 	 * It is assumed that the tag of every {@link Node} is a {@link TLClass}.
 	 */
-	public static void connectGeneralizations(LayoutContext context, GraphModel graphModel, Node node) {
+	public static void connectGeneralizations(DiagramJSLayoutContext context, GraphModel graphModel, Node node) {
 		Object tag = node.getTag();
 
 		if (tag instanceof TLClass) {
@@ -920,7 +925,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * Inserts an {@link Edge} into the given {@link GraphModel} and creating all necessary graph
 	 * nodes.
 	 */
-	public static GraphPart insertEdgeIntoGraph(GraphModel graph, TLReference reference, LayoutContext context,
+	public static GraphPart insertEdgeIntoGraph(GraphModel graph, TLReference reference, DiagramJSLayoutContext context,
 			Set<Object> invisibleElements) {
 		GraphPart source = graph.getGraphPart(reference.getOwner());
 		if (source == null) {
@@ -939,7 +944,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * Inserts a node into the given {@link GraphModel} and create all necessary edges
 	 * (generalizations and references) to already existing graph nodes.
 	 */
-	public static Node insertNodeIntoGraph(GraphModel graph, TLType type, LayoutContext context,
+	public static Node insertNodeIntoGraph(GraphModel graph, TLType type, DiagramJSLayoutContext context,
 			Set<Object> invisibleParts) {
 		LabelProvider labelProvider = context.getLabelProvider();
 
@@ -961,7 +966,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * 
 	 * It is assumed that the tag of every {@link Node} is a {@link TLClass}.
 	 */
-	public static void connectReferences(LayoutContext context, GraphModel graphModel, Node node) {
+	public static void connectReferences(DiagramJSLayoutContext context, GraphModel graphModel, Node node) {
 		Object tag = node.getTag();
 
 		if (tag instanceof TLType) {
@@ -970,12 +975,12 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		}
 	}
 
-	private static void connectIncomingReferences(LayoutContext context, GraphModel graphModel,
+	private static void connectIncomingReferences(DiagramJSLayoutContext context, GraphModel graphModel,
 			Optional<TLType> type) {
 		getNodesStream(graphModel).forEach(sourceNode -> connectReference(context, graphModel, sourceNode, type));
 	}
 	
-	private static void connectOutgoingReferences(LayoutContext context, GraphModel graphModel, Node node) {
+	private static void connectOutgoingReferences(DiagramJSLayoutContext context, GraphModel graphModel, Node node) {
 		connectReference(context, graphModel, node, Optional.empty());
 	}
 	
@@ -990,7 +995,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return graphModel.getNodes().stream();
 	}
 
-	private static void connectReference(LayoutContext context, GraphModel graphModel, Node node,
+	private static void connectReference(DiagramJSLayoutContext context, GraphModel graphModel, Node node,
 			Optional<TLType> expectedTargetType) {
 		TLStructuredType clazz = (TLStructuredType) node.getTag();
 

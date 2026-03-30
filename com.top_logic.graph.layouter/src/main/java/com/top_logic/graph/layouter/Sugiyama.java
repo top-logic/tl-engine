@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2019 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.graph.layouter;
@@ -16,10 +16,10 @@ import com.top_logic.graph.layouter.algorithm.edge.routing.OrthogonalEdgeRouter;
 import com.top_logic.graph.layouter.algorithm.layering.LayeringFinder;
 import com.top_logic.graph.layouter.algorithm.layering.LongestPathFromSinkLayeringFinder;
 import com.top_logic.graph.layouter.algorithm.layering.LongestPathFromSourceLayeringFinder;
-import com.top_logic.graph.layouter.algorithm.node.port.assigner.coordinates.DefaultNodePortCoordinateAssigner;
+import com.top_logic.graph.layouter.algorithm.node.port.assigner.NodePortAssignAlgorithm;
 import com.top_logic.graph.layouter.algorithm.node.port.assigner.edges.DefaultNodePortEdgesAssigner;
 import com.top_logic.graph.layouter.algorithm.node.port.orderer.DefaultNodePortOrderer;
-import com.top_logic.graph.layouter.algorithm.node.size.DefaultNodeSizer;
+import com.top_logic.graph.layouter.algorithm.node.size.NodeSizer;
 import com.top_logic.graph.layouter.algorithm.ordering.EiglspergerLayerOrderingFinder;
 import com.top_logic.graph.layouter.algorithm.ordering.LayerOrderingFinder;
 import com.top_logic.graph.layouter.model.LayoutGraph;
@@ -32,10 +32,10 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * Implementation of the Sugiyama graph layouting algorithm. A hierarchical graph drawing in which
  * vertices are drawn in horizontal layers and edges downwards to the next layer.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
  */
 public class Sugiyama {
-	
+
 	/**
 	 * Singleton {@link Sugiyama} instance.
 	 */
@@ -47,8 +47,18 @@ public class Sugiyama {
 
 	/**
 	 * Layout the given graph in the given direction after the known Sugiyama algorithm.
+	 *
+	 * @param context
+	 *        The layout context containing layout direction.
+	 * @param graph
+	 *        The graph to layout.
+	 * @param sizer
+	 *        The {@link NodeSizer} to compute node dimensions.
+	 * @param portCoordinateAssigner
+	 *        The algorithm to assign port coordinates after ordering.
 	 */
-	public void layout(LayoutContext context, LayoutGraph graph) {
+	public void layout(LayoutContext context, LayoutGraph graph, NodeSizer sizer,
+			NodePortAssignAlgorithm portCoordinateAssigner) {
 		LayoutDirection direction = context.getDirection();
 
 		LayoutGraph acyclicGraph = EadesLinSmythAcycleFinder.INSTANCE.findMaximalAcyclicSubgraph(graph);
@@ -64,7 +74,7 @@ public class Sugiyama {
 
 		DefaultNodePortEdgesAssigner.INSTANCE.assignNodePorts(context, acyclicGraph);
 
-		new DefaultNodeSizer(context).size(acyclicGraph);
+		sizer.size(acyclicGraph);
 
 		LayerOrderingFinder orderingFinder = new EiglspergerLayerOrderingFinder(acyclicGraph, direction);
 		Map<Integer, DefaultAlternatingLayer> ordering = orderingFinder.getLayerOrdering(layering);
@@ -74,7 +84,7 @@ public class Sugiyama {
 
 		new DefaultNodePortOrderer(direction).orderNodePorts(acyclicGraph);
 
-		DefaultNodePortCoordinateAssigner.INSTANCE.assignNodePorts(context, acyclicGraph);
+		portCoordinateAssigner.assignNodePorts(context, acyclicGraph);
 
 		DefaultVerticalCoordinateAssigner.INSTANCE.setVerticalNodeCoordinates(ordering);
 

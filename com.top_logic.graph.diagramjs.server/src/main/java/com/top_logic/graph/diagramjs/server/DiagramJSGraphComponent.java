@@ -52,6 +52,7 @@ import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritance;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritanceImpl;
 import com.top_logic.graph.diagramjs.util.GraphLayoutConstants;
+import com.top_logic.graph.layouter.DiagramJSLayoutContext;
 import com.top_logic.graph.layouter.LayoutContext;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.TechnicalNamesLabelProvider;
@@ -87,14 +88,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Component to display a dynamic automated layouted graph using library <code>UmlJS</code>.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class DiagramJSGraphComponent extends AbstractGraphComponent implements DiagramHandler, Selectable {
 
 	/**
 	 * Graph component configuration.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
 	 */
 	public interface Config extends AbstractGraphComponent.Config, Selectable.SelectableConfig {
 
@@ -675,11 +676,11 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 	}
 
 	/**
-	 * {@link LayoutContext} containing the {@link LayoutDirection} and a
+	 * {@link DiagramJSLayoutContext} containing the {@link LayoutDirection} and a
 	 *         {@link LabelProvider} for {@link TLModelPart}s.
 	 */
-	public LayoutContext getLayoutContext() {
-		return new LayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), getHiddenElements(),
+	public DiagramJSLayoutContext getLayoutContext() {
+		return new DiagramJSLayoutContext(LayoutDirection.VERTICAL_FROM_SINK, getLabelProvider(), getHiddenElements(),
 			getHiddenGeneralizations());
 	}
 

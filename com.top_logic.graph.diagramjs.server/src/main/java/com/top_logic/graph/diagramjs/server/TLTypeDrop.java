@@ -11,7 +11,7 @@ import com.top_logic.graph.common.model.Node;
 import com.top_logic.graph.common.model.impl.SharedGraph;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.server.util.GraphModelUtil;
-import com.top_logic.graph.layouter.LayoutContext;
+import com.top_logic.graph.layouter.DiagramJSLayoutContext;
 import com.top_logic.graph.server.model.GraphData;
 import com.top_logic.graph.server.model.GraphDropEvent;
 import com.top_logic.graph.server.model.GraphDropTarget;
@@ -22,7 +22,7 @@ import com.top_logic.model.TLType;
 /**
  * {@link TLTypeDrop} drop in a {@link DiagramJSGraphControl}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class TLTypeDrop implements GraphDropTarget {
 
@@ -63,7 +63,7 @@ public class TLTypeDrop implements GraphDropTarget {
 		if (graph.getGraphPart(type) == null) {
 			DefaultDiagramJSGraphModel graphModel = (DefaultDiagramJSGraphModel) graph;
 
-			LayoutContext context = graphComponent.getLayoutContext();
+			DiagramJSLayoutContext context = graphComponent.getLayoutContext();
 
 			Node node =
 				GraphModelUtil.insertNodeIntoGraph(graphModel, type, context, graphComponent.getInvisibleGraphParts());

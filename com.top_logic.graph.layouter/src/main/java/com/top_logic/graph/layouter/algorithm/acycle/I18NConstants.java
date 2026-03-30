@@ -6,7 +6,7 @@
 package com.top_logic.graph.layouter.algorithm.acycle;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.I18NConstantsBase;
+import com.top_logic.basic.i18n.I18NConstantsBase;
 
 /**
  * Internationalization constants for this package.

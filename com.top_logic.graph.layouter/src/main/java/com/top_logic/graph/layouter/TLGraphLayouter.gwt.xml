@@ -1,0 +1,8 @@
+<module>
+    <inherits name="com.google.gwt.user.User" />
+    <inherits name="com.top_logic.graph.common.TLGraphCommon" />
+    <source path="." />
+    <source path="algorithm" />
+    <source path="model" />
+    <source path="math" />
+</module>

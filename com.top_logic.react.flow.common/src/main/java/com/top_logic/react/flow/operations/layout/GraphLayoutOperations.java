@@ -126,8 +126,6 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 				graphEdge.getWaypoints().clear();
 
 				List<Waypoint> waypoints = layoutEdge.getWaypoints();
-				edgeCount++;
-				waypointTotal += waypoints.size();
 				for (Waypoint wp : waypoints) {
 					GraphWaypoint graphWp = GraphWaypoint.create();
 					graphWp.setX(wp.getX());

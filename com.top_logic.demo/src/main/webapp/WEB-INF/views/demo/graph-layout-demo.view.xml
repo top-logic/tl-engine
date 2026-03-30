@@ -22,7 +22,10 @@
 				list(
 					reactFlowGraphEdge($person, $company,
 						priority: 3,
-						targetSymbol: "FILLED_ARROW"),
+						targetSymbol: "FILLED_ARROW",
+						decorations: list(
+							reactFlowDecoration(reactFlowPadding(reactFlowText("persons\n*", fontSize: "10"), all: 4), linePosition: 0.0)
+						)),
 					reactFlowGraphEdge($person, $address,
 						priority: 1,
 						targetSymbol: "ARROW",

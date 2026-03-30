@@ -90,6 +90,8 @@ public class ConfigEditorElement implements UIElement {
 			children.clear();
 			if (child != null) {
 				addChild(child);
+			} else {
+				putState("children", children);
 			}
 		}
 	}

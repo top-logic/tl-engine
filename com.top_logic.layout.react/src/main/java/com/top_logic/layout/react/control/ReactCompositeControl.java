@@ -75,6 +75,7 @@ public class ReactCompositeControl extends ReactControl {
 	 */
 	public void addChild(ReactControl child) {
 		_children.add(child);
+		putState(CHILDREN, _children);
 	}
 
 	/**

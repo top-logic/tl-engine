@@ -102,11 +102,16 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 
 		for (Box node : nodes) {
 			LayoutNode layoutNode = nodeMap.get(node);
-			node.setX(layoutNode.getX());
-			node.setY(layoutNode.getY());
+			double nodeX = layoutNode.getX();
+			double nodeY = layoutNode.getY();
+			node.setX(nodeX);
+			node.setY(nodeY);
 
-			maxX = Math.max(maxX, layoutNode.getX() + layoutNode.getWidth());
-			maxY = Math.max(maxY, layoutNode.getY() + layoutNode.getHeight());
+			// Propagate final size and position to child widgets.
+			node.distributeSize(context, nodeX, nodeY, node.getWidth(), node.getHeight());
+
+			maxX = Math.max(maxX, nodeX + layoutNode.getWidth());
+			maxY = Math.max(maxY, nodeY + layoutNode.getHeight());
 		}
 
 		// Step 7: Map edge waypoints from LayoutEdge to GraphEdge.

@@ -20,9 +20,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -84,8 +84,8 @@ public class DemoReactSidebarComponent extends LayoutComponent {
 
 		// Top-level navigation items.
 		items.add(new NavigationItem("dashboard", "Dashboard", "bi bi-speedometer2", this::createDashboard));
-		items.add(new NavigationItem("reports", "Reports", "bi bi-bar-chart", this::createReports, "3"));
-		items.add(new NavigationItem("notifications", "Notifications", "bi bi-bell", this::createNotifications, "12"));
+		items.add(new NavigationItem("reports", "Reports", "bi bi-bar-chart", this::createReports));
+		items.add(new NavigationItem("notifications", "Notifications", "bi bi-bell", this::createNotifications));
 
 		// A collapsible group with child navigation items.
 		List<SidebarItem> settingsChildren = new ArrayList<>();

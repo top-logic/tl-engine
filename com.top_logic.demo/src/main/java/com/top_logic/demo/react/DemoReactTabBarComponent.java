@@ -74,9 +74,9 @@ public class DemoReactTabBarComponent extends LayoutComponent {
 
 	private ReactTabBarControl createTabBar() {
 		List<TabDefinition> tabs = new ArrayList<>();
-		tabs.add(new TabDefinition("counter-a", "Counter A", this::createCounterA));
-		tabs.add(new TabDefinition("counter-b", "Counter B", this::createCounterB));
-		tabs.add(new TabDefinition("buttons", "Buttons", this::createButtonsTab));
+		tabs.add(new TabDefinition("counter-a", "Counter A", this::createCounterA, null));
+		tabs.add(new TabDefinition("counter-b", "Counter B", this::createCounterB, null));
+		tabs.add(new TabDefinition("buttons", "Buttons", this::createButtonsTab, null));
 		return new ReactTabBarControl(_context, null, tabs);
 	}
 

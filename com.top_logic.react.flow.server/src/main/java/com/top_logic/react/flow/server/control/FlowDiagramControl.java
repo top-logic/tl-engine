@@ -327,6 +327,29 @@ public class FlowDiagramControl extends ReactControl {
 	void processUpdate(String patch) throws IOException {
 		JsonReader json = new JsonReader(new StringR(patch));
 		_graphScope.applyChanges(json);
+
+		updateSelectionChannel();
+	}
+
+	private void updateSelectionChannel() {
+		if (_selectionChannel == null || _diagram == null) {
+			return;
+		}
+
+		List<Object> selectedUserObjects = _diagram.getSelection().stream()
+			.filter(w -> w instanceof SelectableBox)
+			.filter(w -> ((SelectableBox) w).isSelected())
+			.map(Widget::getUserObject)
+			.filter(Objects::nonNull)
+			.toList();
+
+		if (selectedUserObjects.isEmpty()) {
+			_selectionChannel.set(null);
+		} else if (selectedUserObjects.size() == 1) {
+			_selectionChannel.set(selectedUserObjects.get(0));
+		} else {
+			_selectionChannel.set(selectedUserObjects);
+		}
 	}
 
 	/**

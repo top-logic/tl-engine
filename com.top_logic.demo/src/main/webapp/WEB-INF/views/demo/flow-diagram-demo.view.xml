@@ -1,26 +1,140 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<panel>
-		<title>
-			<en>Flow Diagram</en>
-			<de>Flow-Diagramm</de>
-		</title>
-		<flow-diagram createChart="{
-			parent = reactFlowBorder(reactFlowPadding(reactFlowText('Parent'), all: 5));
-			childA = reactFlowBorder(reactFlowPadding(reactFlowText('Child A'), all: 5));
-			childB = reactFlowBorder(reactFlowPadding(reactFlowText('Child B'), all: 5));
-			reactFlowChart(
-				reactFlowPadding(
-					reactFlowTree(
-						list($parent, $childA, $childB),
-						list(
-							reactFlowConnection($parent, $childA),
-							reactFlowConnection($parent, $childB)
-						)
-					),
-					all: 20
-				)
-			)
-		}" />
-	</panel>
+	<channels>
+		<channel name="selectedProduct" />
+		<channel name="selectedNode" />
+	</channels>
+	<split-panel orientation="horizontal" resizable="true">
+		<panes>
+			<pane size="25" unit="%">
+				<panel>
+					<title>
+						<en>Products</en>
+						<de>Produkte</de>
+					</title>
+					<table
+						selection="selectedProduct"
+						types="test.flowchart:Product"
+					>
+						<rows>all(`test.flowchart:Product`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="75" unit="%">
+				<split-panel orientation="vertical" resizable="true">
+					<panes>
+						<pane size="70" unit="%">
+							<panel>
+								<title>
+									<en>Construction Plan</en>
+									<de>Bauplan</de>
+								</title>
+								<flow-diagram selection="selectedNode">
+									<inputs>
+										<input channel="selectedProduct" />
+									</inputs>
+									<createChart><![CDATA[product -> {
+parts = $product == null ? list() : $product.get(`test.flowchart:Product#buildInstructions`);
+
+nodes = $parts.map(p -> reactFlowSelection(
+    userObject: $p,
+    content: reactFlowBorder(stroke: "#eccf33", thickness: 2, cssClass: "tlSelectionMarker",
+    content: reactFlowFill(fill: "#ffee95", cssClass: "tlSelectionMarker",
+    content: reactFlowPadding(all: 3,
+    content: reactFlowVertical(
+        contents: [
+            $p.get(`test.flowchart:FlowNode#marker`).with(marker ->
+                $marker.isEmpty()
+                    ? reactFlowEmpty()
+                    : reactFlowPadding(bottom: 8, content: reactFlowAlign(
+                        hAlign: "middle",
+                        content:
+                            reactFlowBorder(
+                                stroke: "red",
+                                dashes: [5, 5],
+                                content: reactFlowPadding(
+                                    all: 4,
+                                    content: reactFlowText($marker)))))
+            ),
+
+            reactFlowAlign(
+                hAlign: "middle",
+                content: reactFlowPadding(
+                    all: 4,
+                    content: reactFlowText(
+                        fontWeight: "bold",
+                        text: $p.get(`test.flowchart:FlowNode#name`))
+            )),
+
+            reactFlowAlign(
+                hAlign: "middle", content: reactFlowGrid(
+                gapY: -1,
+                contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> [
+                    $l.get(`test.flowchart:Location#count`).with(count ->
+                        $count == null
+                        ? reactFlowEmpty()
+                        : reactFlowBorder(
+                            right: false,
+                            content: reactFlowPadding(all: 3, content: reactFlowText($count)))
+                    ),
+                    reactFlowBorder(
+                        content: reactFlowFill(
+                            fill: $l.get(`test.flowchart:Location#part`)
+                                .get(`test.flowchart:Part#color`),
+                            content:
+                                reactFlowPadding(all: 3, content: reactFlowText($l.get(`test.flowchart:Location#part`)))
+                        )
+                    ),
+                    {
+                        usages = $l.get(`test.flowchart:Location#usages`);
+                        $usages.isEmpty()
+                            ? reactFlowEmpty()
+                            : reactFlowAlign(
+                                content: reactFlowBorder(
+                                    left: false,
+                                    content: reactFlowPadding(all: 3, content: reactFlowText($usages))))
+                    }
+                ])
+            ))
+        ]))))
+    )
+);
+
+nodeByPart = $nodes.indexBy(n -> $n["userObject"]);
+
+$parts.isEmpty()
+    ? reactFlowChart()
+    : reactFlowChart(
+        root: reactFlowPadding(all: 16,
+            content: reactFlowTree(
+                nodes: $nodes,
+                connections: $parts
+                    .filter(p -> !$p.get(`test.flowchart:FlowNode#inputs`).isEmpty())
+                    .map(p -> $p
+                        .get(`test.flowchart:FlowNode#inputs`)
+                        .map(c -> reactFlowConnection(
+                            parent: $nodeByPart[$p],
+                            child: $nodeByPart[$c])))
+                    .flatten()
+            )
+        )
+    )
+}]]></createChart>
+								</flow-diagram>
+							</panel>
+						</pane>
+						<pane size="30" unit="%">
+							<panel>
+								<title>
+									<en>Details</en>
+									<de>Details</de>
+								</title>
+								<form input="selectedNode" />
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+		</panes>
+	</split-panel>
 </view>

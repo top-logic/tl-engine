@@ -1,5 +1,5 @@
 <module>
     <inherits name="com.google.gwt.user.User" />
     <inherits name="com.top_logic.basic.shared.TLBasicShared" />
-    <source path="." />
+    <source path="layouter" />
 </module>

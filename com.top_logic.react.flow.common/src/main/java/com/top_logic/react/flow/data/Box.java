@@ -126,6 +126,7 @@ public interface Box extends Widget, com.top_logic.react.flow.operations.BoxOper
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
 			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;
+			case GraphLayout.GRAPH_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GraphLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
 			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;

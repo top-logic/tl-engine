@@ -17,6 +17,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.react.flow.data.TreeLayout}. */
 		TREE_LAYOUT,
 
+		/** Type literal for {@link com.top_logic.react.flow.data.GraphLayout}. */
+		GRAPH_LAYOUT,
+
 		/** Type literal for {@link com.top_logic.react.flow.data.Text}. */
 		TEXT,
 
@@ -77,6 +80,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.react.flow.data.PolygonalChain}. */
 		POLYGONAL_CHAIN,
 
+		/** Type literal for {@link com.top_logic.react.flow.data.GraphEdge}. */
+		GRAPH_EDGE,
+
 		/** Type literal for {@link com.top_logic.react.flow.data.TreeConnection}. */
 		TREE_CONNECTION,
 
@@ -94,6 +100,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 
 		/** Visit case for {@link com.top_logic.react.flow.data.Diagram}.*/
 		R visit(com.top_logic.react.flow.data.Diagram self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.react.flow.data.GraphEdge}.*/
+		R visit(com.top_logic.react.flow.data.GraphEdge self, A arg) throws E;
 
 		/** Visit case for {@link com.top_logic.react.flow.data.TreeConnection}.*/
 		R visit(com.top_logic.react.flow.data.TreeConnection self, A arg) throws E;
@@ -192,6 +201,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		int id = in.nextInt();
 		switch (type) {
 			case Diagram.DIAGRAM__TYPE: result = com.top_logic.react.flow.data.Diagram.create(); break;
+			case GraphEdge.GRAPH_EDGE__TYPE: result = com.top_logic.react.flow.data.GraphEdge.create(); break;
 			case TreeConnection.TREE_CONNECTION__TYPE: result = com.top_logic.react.flow.data.TreeConnection.create(); break;
 			case EdgeDecoration.EDGE_DECORATION__TYPE: result = com.top_logic.react.flow.data.EdgeDecoration.create(); break;
 			case TreeConnector.TREE_CONNECTOR__TYPE: result = com.top_logic.react.flow.data.TreeConnector.create(); break;
@@ -203,6 +213,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
 			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;
+			case GraphLayout.GRAPH_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GraphLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
 			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;

@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import com.top_logic.basic.graph.ExplicitGraph;
+import com.top_logic.basic.shared.graph.ExplicitGraph;
 
 /**
  * Graph with a layout structure, i.e. every node has a x and y coordinate.

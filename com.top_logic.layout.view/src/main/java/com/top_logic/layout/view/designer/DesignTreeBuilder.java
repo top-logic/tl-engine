@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.designer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
@@ -22,12 +23,15 @@ import com.top_logic.layout.view.ViewLoader;
  * {@link com.top_logic.layout.view.UIElement.Config} hierarchy.
  *
  * <p>
- * Generically traverses all properties of each config: LIST properties containing
- * {@link com.top_logic.layout.view.UIElement.Config}s and ITEM properties containing a single
- * {@link com.top_logic.layout.view.UIElement.Config} are discovered via
- * {@link PropertyDescriptor#getInstanceType()}. If a config has exactly one such container property,
- * its children are inlined directly. Multiple container properties each get their own virtual group
- * node (e.g. "[header]", "[content]", "[footer]").
+ * Generically traverses all {@link PolymorphicConfiguration}-typed LIST and ITEM properties of each
+ * config. This includes not only {@link com.top_logic.layout.view.UIElement.Config} but also
+ * intermediate config types (e.g. {@code NavItemConfig}, {@code BottomBarItemConfig}) that contain
+ * UIElement children in their own properties.
+ * </p>
+ *
+ * <p>
+ * If a config has exactly one container property, its children are inlined directly. Multiple
+ * container properties each get their own virtual group node (e.g. "[header]", "[content]").
  * </p>
  *
  * <p>
@@ -50,44 +54,47 @@ public class DesignTreeBuilder {
 	}
 
 	@SuppressWarnings("unchecked")
-	private DesignTreeNode buildNode(PolymorphicConfiguration<? extends UIElement> config,
-			String sourceFile) throws ConfigurationException {
+	private DesignTreeNode buildNode(ConfigurationItem config, String sourceFile) throws ConfigurationException {
 		DesignTreeNode node = new DesignTreeNode(config, sourceFile);
-		ConfigurationItem configItem = (ConfigurationItem) config;
 
-		// Count container properties to decide between inline and grouped display.
-		int containerPropertyCount = countContainerProperties(configItem);
+		// Collect container properties (LIST/ITEM of PolymorphicConfiguration).
+		List<PropertyDescriptor> containerProperties = new ArrayList<>();
+		for (PropertyDescriptor property : config.descriptor().getProperties()) {
+			if (isContainerProperty(property)) {
+				containerProperties.add(property);
+			}
+		}
 
-		// Traverse all properties generically.
-		for (PropertyDescriptor property : configItem.descriptor().getProperties()) {
-			if (property.kind() == PropertyKind.LIST && isUIElementProperty(property)) {
-				List<PolymorphicConfiguration<? extends UIElement>> children =
-					(List<PolymorphicConfiguration<? extends UIElement>>) configItem.value(property);
+		int containerPropertyCount = containerProperties.size();
+
+		// Traverse container properties.
+		for (PropertyDescriptor property : containerProperties) {
+			if (property.kind() == PropertyKind.LIST) {
+				List<?> children = (List<?>) config.value(property);
 				if (children != null && !children.isEmpty()) {
 					if (containerPropertyCount == 1) {
-						for (var childConfig : children) {
-							addChild(node, childConfig, sourceFile);
+						for (Object childConfig : children) {
+							addChild(node, (ConfigurationItem) childConfig, sourceFile);
 						}
 					} else {
 						DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
 						group.setParent(node);
 						node.getChildren().add(group);
-						for (var childConfig : children) {
-							addChild(group, childConfig, sourceFile);
+						for (Object childConfig : children) {
+							addChild(group, (ConfigurationItem) childConfig, sourceFile);
 						}
 					}
 				}
-			} else if (property.kind() == PropertyKind.ITEM && isUIElementProperty(property)) {
-				PolymorphicConfiguration<? extends UIElement> childConfig =
-					(PolymorphicConfiguration<? extends UIElement>) configItem.value(property);
-				if (childConfig != null) {
+			} else if (property.kind() == PropertyKind.ITEM) {
+				Object childConfig = config.value(property);
+				if (childConfig instanceof ConfigurationItem childItem) {
 					if (containerPropertyCount == 1) {
-						addChild(node, childConfig, sourceFile);
+						addChild(node, childItem, sourceFile);
 					} else {
 						DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
 						group.setParent(node);
 						node.getChildren().add(group);
-						addChild(group, childConfig, sourceFile);
+						addChild(group, childItem, sourceFile);
 					}
 				}
 			}
@@ -103,31 +110,23 @@ public class DesignTreeBuilder {
 		return node;
 	}
 
-	private int countContainerProperties(ConfigurationItem configItem) {
-		int count = 0;
-		for (PropertyDescriptor property : configItem.descriptor().getProperties()) {
-			if (isUIElementProperty(property)) {
-				count++;
-			}
-		}
-		return count;
-	}
-
 	/**
-	 * Whether the given property contains UIElement configurations (either as a LIST of
-	 * {@link PolymorphicConfiguration}s or a single ITEM).
+	 * Whether the given property is a container that holds {@link PolymorphicConfiguration} items.
 	 */
-	private boolean isUIElementProperty(PropertyDescriptor property) {
+	private boolean isContainerProperty(PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
-		if (kind != PropertyKind.LIST && kind != PropertyKind.ITEM) {
-			return false;
+		if (kind == PropertyKind.LIST) {
+			Class<?> elementType = property.getElementType();
+			return elementType != null && PolymorphicConfiguration.class.isAssignableFrom(elementType);
 		}
-		Class<?> instanceType = property.getInstanceType();
-		return instanceType != null && UIElement.class.isAssignableFrom(instanceType);
+		if (kind == PropertyKind.ITEM) {
+			Class<?> type = property.getType();
+			return type != null && PolymorphicConfiguration.class.isAssignableFrom(type);
+		}
+		return false;
 	}
 
-	private void addChild(DesignTreeNode parent,
-			PolymorphicConfiguration<? extends UIElement> childConfig,
+	private void addChild(DesignTreeNode parent, ConfigurationItem childConfig,
 			String sourceFile) throws ConfigurationException {
 		DesignTreeNode child = buildNode(childConfig, sourceFile);
 		child.setParent(parent);

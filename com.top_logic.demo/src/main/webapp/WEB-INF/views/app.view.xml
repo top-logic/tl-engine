@@ -130,6 +130,15 @@
 					</label>
 					<view-ref view="demo/flow-diagram-demo.view.xml"/>
 				</nav-item>
+				<nav-item id="graph-layout-demo"
+					icon="bi bi-diagram-2"
+				>
+					<label>
+						<en>Graph Layout</en>
+						<de>Graph-Layout</de>
+					</label>
+					<view-ref view="demo/graph-layout-demo.view.xml"/>
+				</nav-item>
 				<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"

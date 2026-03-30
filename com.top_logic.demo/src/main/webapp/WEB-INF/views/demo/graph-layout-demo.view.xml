@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view>
+	<panel>
+		<title>
+			<en>Graph Layout Demo</en>
+			<de>Graph-Layout-Demo</de>
+		</title>
+		<flow-diagram>
+			<inputs/>
+			<createChart><![CDATA[{
+	person   = reactFlowBorder(reactFlowPadding(reactFlowText('Person'),   all: 5));
+	company  = reactFlowBorder(reactFlowPadding(reactFlowText('Company'),  all: 5));
+	address  = reactFlowBorder(reactFlowPadding(reactFlowText('Address'),  all: 5));
+	order    = reactFlowBorder(reactFlowPadding(reactFlowText('Order'),    all: 5));
+	product  = reactFlowBorder(reactFlowPadding(reactFlowText('Product'),  all: 5));
+	category = reactFlowBorder(reactFlowPadding(reactFlowText('Category'), all: 5));
+
+	reactFlowChart(
+		reactFlowPadding(
+			reactFlowGraphLayout(
+				list($person, $company, $address, $order, $product, $category),
+				list(
+					reactFlowGraphEdge(source: $person,  target: $company),
+					reactFlowGraphEdge(source: $person,  target: $address),
+					reactFlowGraphEdge(source: $person,  target: $order),
+					reactFlowGraphEdge(source: $order,   target: $product),
+					reactFlowGraphEdge(source: $product, target: $category)
+				)
+			),
+			all: 20
+		)
+	)
+}]]></createChart>
+		</flow-diagram>
+	</panel>
+</view>

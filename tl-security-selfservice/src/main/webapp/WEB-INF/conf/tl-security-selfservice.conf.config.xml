@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.security.selfservice.invitation.InvitationModule$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl-security-selfservice.app-messages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-security-selfservice"/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
+				<methods>
+					<method class="com.top_logic.security.selfservice.invitation.script.SendInvitation$Builder"
+						name="sendInvitation"
+					/>
+				</methods>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.mig.html.layout.MainLayout$GlobalConfig">
+			<login-hooks>
+				<login-hook class="com.top_logic.security.selfservice.invitation.CreateLoginHoook"
+					config:position="begin"
+				/>
+			</login-hooks>
+		</config>
+
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl.security.selfservice.Meta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+
+		<config config:interface="com.top_logic.layout.component.configuration.LoginViewDialog$Config">
+			<toolbar-commands>
+				<toolbar-command class="com.top_logic.security.selfservice.invitation.ForgotPasswordDialog$Opener"/>
+			</toolbar-commands>
+		</config>
+
+		<config config:interface="com.top_logic.layout.component.configuration.CheckOTPDialog$Config">
+			<toolbar-commands>
+				<toolbar-command class="com.top_logic.security.selfservice.invitation.ResetMFADialog$Opener"/>
+			</toolbar-commands>
+		</config>
+	</configs>
+</application>

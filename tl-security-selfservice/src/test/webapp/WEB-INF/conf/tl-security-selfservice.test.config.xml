@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Configuration options for testing tl-security-selfservice with JUnit. -->
+<application>
+	<configs/>
+</application>

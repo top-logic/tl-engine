@@ -22,6 +22,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("main.admin.maintenanceWindow.task.defaultMessage")
 	public static ResKey ENTERING_MAINTENANCE_MODE;
 
+	@CustomKey("main.admin.maintenanceWindow.component.isInMaintenanceWindow")
+	public static ResKey IN_MAINTENANCE_MODE;
+
+	@CustomKey("main.admin.maintenanceWindow.component.isAboutToEnterMaintenanceWindow")
+	public static ResKey ABOUT_TO_ENTER_MAINTENANCE_MODE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

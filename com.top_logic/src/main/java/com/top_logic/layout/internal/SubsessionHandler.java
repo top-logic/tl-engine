@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -31,6 +32,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -46,6 +49,8 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LayoutContext;
 import com.top_logic.layout.URLParser;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.CommandCommandHandler;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.component.I18NConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.Action;
@@ -78,6 +83,13 @@ import com.top_logic.util.ValidationQueue;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SubsessionHandler extends WindowHandler implements LayoutContext {
+
+	/**
+	 * {@link Property} for {@link DisplayContext} to inform the {@link SubsessionHandler} that the
+	 * bookmark is handled by another class.
+	 */
+	public static final Property<Boolean> BOOKMARK_HANDLED =
+		TypedAnnotatable.property(Boolean.class, "bookmark handled", Boolean.FALSE);
 
 	private final String _rootLayoutName;
 
@@ -181,42 +193,11 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 		Map<String, ?> arguments = request.getParameterMap();
 		if (!arguments.isEmpty()) {
 			CommandHandler handler =
-				CommandHandlerFactory.getInstance().getHandler(
-					DefaultBookmarkHandler.COMMAND_RESOLVE_BOOKMARK);
-			if (handler != null) {
-				// Note: Argument map must be copied, because the original one
-				// contains
-				// array instances containing single values.
-				HashMap<String, Object> gotoArguments = new HashMap<>();
-				for (String paramName : arguments.keySet()) {
-					if (GotoHandler.COMMAND_PARAM_COMPONENT.equals(paramName)) {
-						// convert given component id from string to component name
-						String compName = request.getParameter(paramName);
-						if (!StringServices.isEmpty(compName)) {
-							try{
-								gotoArguments.put(paramName, ComponentName.newConfiguredName(paramName, compName));
-							}catch(ConfigurationException ce){
-								Logger.warn("Bookmark link contained invalid component name",ce, this);
-							}
-						}
-					} else {
-						gotoArguments.put(paramName, request.getParameter(paramName));
-					}
-				}
-				gotoArguments.remove(ContentHandlersRegistry.LAYOUT_PARAMETER);
+				CommandHandlerFactory.getInstance().getHandler(DefaultBookmarkHandler.COMMAND_RESOLVE_BOOKMARK);
+			if (handler != null && !context.get(BOOKMARK_HANDLED)) {
+				Map<String, Object> gotoArguments = resolveBookmarkArguments(request, arguments);
 				if (!gotoArguments.isEmpty()) {
-					boolean before = enableUpdate(true);
-					try {
-						try {
-							CommandHandlerUtil.handleCommand(handler, context, mainLayout, gotoArguments);
-						} catch (ObjectNotFound ex) {
-							// Goto object not found. Perhaps it was deleted
-							notifyBookmarkNotFound(mainLayout, null);
-						}
-						mainLayout.globallyValidateModel(context);
-					} finally {
-						enableUpdate(before);
-					}
+					processBookmark(context, handler, gotoArguments);
 				}
 			}
 
@@ -237,12 +218,90 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	}
 
 	/**
+	 * Creates a {@link Map} containing the transformed GOTO arguments from the requests parameter
+	 * map.
+	 * 
+	 * <p>
+	 * The returned {@link Map} should be treated as argument map for the
+	 * {@link DefaultBookmarkHandler#COMMAND_RESOLVE_BOOKMARK bookmark handler}.
+	 * </p>
+	 * 
+	 * @param arguments
+	 *        The parameter of the given request. See {@link ServletRequest#getParameterMap()}.
+	 * @return Application variant of the given arguments map. May be empty when no relevant GOTO
+	 *         arguments are given.
+	 * 
+	 * @see #processBookmark(DisplayContext, CommandHandler, Map)
+	 */
+	public Map<String, Object> resolveBookmarkArguments(ServletRequest request, Map<String, ?> arguments) {
+		// Note: Argument map must be copied, because the original one
+		// contains
+		// array instances containing single values.
+		HashMap<String, Object> gotoArguments = new HashMap<>();
+		for (String paramName : arguments.keySet()) {
+			if (GotoHandler.COMMAND_PARAM_COMPONENT.equals(paramName)) {
+				// convert given component id from string to component name
+				String compName = request.getParameter(paramName);
+				if (!StringServices.isEmpty(compName)) {
+					try{
+						gotoArguments.put(paramName, ComponentName.newConfiguredName(paramName, compName));
+					}catch(ConfigurationException ce){
+						Logger.warn("Bookmark link contained invalid component name",ce, this);
+					}
+				}
+			} else {
+				gotoArguments.put(paramName, request.getParameter(paramName));
+			}
+		}
+		gotoArguments.remove(ContentHandlersRegistry.LAYOUT_PARAMETER);
+		return gotoArguments;
+	}
+
+	/**
+	 * Displays the bookmark that is encoded in the given request.
+	 * 
+	 * @param context
+	 *        The request containing the bookmark arguments.
+	 * @param handler
+	 *        The bookmark handler to execute.
+	 * @param gotoArguments
+	 *        The actual GOTO arguments derived from the
+	 *        {@link #resolveBookmarkArguments(ServletRequest, Map) request}.
+	 * 
+	 * @see #resolveBookmarkArguments(ServletRequest, Map)
+	 */
+	public void processBookmark(DisplayContext context, CommandHandler handler, Map<String, Object> gotoArguments) {
+		MainLayout mainLayout = getMainLayout();
+		boolean before = enableUpdate(true);
+		try {
+			try {
+				CommandHandlerUtil.handleCommand(handler, context, mainLayout, gotoArguments);
+			} catch (ObjectNotFound ex) {
+				// Goto object not found. Perhaps it was deleted
+				notifyBookmarkNotFound(mainLayout, null, before);
+			}
+			mainLayout.globallyValidateModel(context);
+		} finally {
+			enableUpdate(before);
+		}
+	}
+
+	/**
 	 * Called to inform the user that the bookmark object could not be found
 	 * 
 	 * @param bookmarkArguments
 	 *        the arguments used to resolve the bookmark.
+	 * @param isInCommandPhase
+	 *        Whether this method was called in command phase
 	 */
-	private void notifyBookmarkNotFound(MainLayout mainLayout, Object bookmarkArguments) {
+	private void notifyBookmarkNotFound(MainLayout mainLayout, Object bookmarkArguments, boolean isInCommandPhase) {
+		if (isInCommandPhase) {
+			BookmarkNotFoundNotification notification =
+				BookmarkNotFoundNotification.newInstance(bookmarkArguments, null);
+			notification.executeCommand(DefaultDisplayContext.getDisplayContext());
+			return;
+		}
+
 		final String commandId = "bookmarkNotFound_" + mainLayout.getEnclosingFrameScope().createNewID();
 		Command continuation = new Command() {
 			@Override
@@ -252,12 +311,12 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 			}
 		};
 		BookmarkNotFoundNotification notification =
-			BookmarkNotFoundNotification.newInstance(commandId, bookmarkArguments, continuation);
-		mainLayout.registerCommand(notification);
+			BookmarkNotFoundNotification.newInstance(bookmarkArguments, continuation);
+		mainLayout.registerCommand(CommandCommandHandler.newHandler(notification, commandId));
 		HTMLFragment onLoad = new HTMLFragment() {
 			@Override
 			public void write(DisplayContext context, TagWriter out) throws IOException {
-				HTMLUtil.writeJavaScriptContent(out, notification.getID() + "();");
+				HTMLUtil.writeJavaScriptContent(out, commandId + "();");
 
 				// Only once after login, not after any further repaint.
 				mainLayout.removeOnLoad(this);
@@ -475,6 +534,13 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 				_onLoad.accept(this);
 				_onLoad = null;
 			}
+		} else {
+			/* Ensure that the context component and WindowScope are attached to the interaction:
+			 * When a bookmark link is executed in a tab with a valid session, then no new
+			 * MainLayout is created. When a dialog is opened based on the current interaction, then
+			 * a WindowScope is needed. This happens at least when the bookmark is not longer
+			 * valid. */
+			LayoutUtils.setContextComponent(displayContext, _mainLayout);
 		}
 	}
 

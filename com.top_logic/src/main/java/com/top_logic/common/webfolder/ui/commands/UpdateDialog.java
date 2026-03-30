@@ -46,13 +46,12 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * Update dialog providing the {@link DataField} for identifying the file to be uploaded (and updated).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael Gï¿½nsler</a>
  */
 public class UpdateDialog extends AbstractFormPageDialog {
 
@@ -64,7 +63,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 	 * When updating a {@link Document} will become new version.
 	 * Moreover the stuff from the {@link DataField} will be used as content for that new version.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael Gï¿½nsler</a>
 	 */
 	public static class UpdateCommand implements Command {
 	
@@ -219,8 +218,8 @@ public class UpdateDialog extends AbstractFormPageDialog {
 			FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, new SimpleFileNameStrategy(theBlack, theWhite));
 		context.addMember(updateData);
 
-		updateData.setLabel(Resources.getInstance().getString(I18NConstants.UPDATE_DIALOG_FILE));
-		updateData.setTooltip(Resources.getInstance().getString(I18NConstants.UPDATE_DIALOG_FILE.tooltip()));
+		updateData.setLabel(I18NConstants.UPDATE_DIALOG_FILE);
+		updateData.setTooltip(I18NConstants.UPDATE_DIALOG_FILE.tooltip());
 
 		StringField stringField = WebFolderUtils.createDescriptionField(DocumentVersion.DESCRIPTION, 5);
 		stringField.initializeField(document.getDocumentVersion().getDescription());

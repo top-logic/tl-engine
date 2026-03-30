@@ -25,6 +25,7 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.ListBinding;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.dob.DataObject;
@@ -32,6 +33,7 @@ import com.top_logic.knowledge.objects.LifecycleAttributes;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.error.TopLogicException;
 
@@ -69,6 +71,14 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 		 */
 		@Name("password-validator")
 		PolymorphicConfiguration<? extends PasswordValidator> getPasswordValidator();
+
+		/**
+		 * The requirement for the multi-factor authentication for accounts with this authentication
+		 * device.
+		 */
+		@Name("mfa-requirement")
+		@Mandatory
+		MfaRequirement getMFARequirement();
 	}
 
 	private final PasswordValidator _validator;
@@ -87,6 +97,11 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 		super(context, config);
 		_validator = context.getInstance(config.getPasswordValidator());
 		_kb = PersistencyLayer.getKnowledgeBase();
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
 	}
 
 	@Override
@@ -115,7 +130,7 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 
 		String hash = (String) row.getAttributeValue(PASSWORD_ATTR);
 		if (hash == null || hash.isBlank()) {
-			Logger.info("Log-in attempt for account without empty password hash denied: " + account.getName(),
+			Logger.info("Log-in attempt for account with empty password hash denied: " + account.getName(),
 				DBAuthenticationAccessDevice.class);
 			return VerificationResult.FAILED;
 		}
@@ -131,7 +146,7 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 				}
 			}
 		} else {
-			Logger.info("Log-in attempt for account without wrong password denied: " + account.getName(),
+			Logger.info("Log-in attempt for account with wrong password denied: " + account.getName(),
 				DBAuthenticationAccessDevice.class);
 		}
 
@@ -283,6 +298,11 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 				DBAuthenticationAccessDevice.class);
 			return new ArrayList<>();
 		}
+	}
+
+	@Override
+	public MfaRequirement getMFARequirement() {
+		return getConfig().getMFARequirement();
 	}
 
 }

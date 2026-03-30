@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
+			<instance class="com.top_logic.security.selfservice.invitation.InvitationModule"
+				code-validity="5min"
+				password-reset-timeout="15min"
+				verification-code-size="6"
+			>
+				<invitation-mail><![CDATA[invitation -> applicationName -> link -> {
+  emailBody = {{{<p>
+Dear Recipient,
+</p>
+<p>
+You have been invited to create an account for the application {$applicationName}.
+</p>
+<p>
+To begin the setup process, please open the link and follow the instructions on the website:<br/>
+<a href="{$link}">{$link}</a>
+</p>
+<p>
+If you did not expect this invitation, you can safely ignore this email.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}};
+  subject = "Invitation to " + $applicationName;
+  emailAddr = $invitation.get(`tl.security.selfservice:Invitation#email`);
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $emailAddr,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></invitation-mail>
+				<verification-mail><![CDATA[invitation -> applicationName -> code -> {
+  emailBody = {{{<p>
+Dear Recipient,
+</p>
+<p>
+Please enter the following verification code in the application to continue:<br/>
+<b>Verification Code:</b> {$code}
+</p>
+<p>
+This verification code is only valid for a limited time.
+</p>
+<p>
+If you did not expect this invitation, you can safely ignore this email.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}};
+  subject = "Your verification code";
+  emailAddr = $invitation.get(`tl.security.selfservice:Invitation#email`);
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $emailAddr,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></verification-mail>
+				<reset-password-mail><![CDATA[email -> applicationName -> code -> {
+  emailBody = {{{<p>
+Dear Recipient,
+</p>
+<p>
+A request has been made to reset the password for your {$applicationName} account.
+</p>
+<p>
+If you made this request, you can set a new password using the following code.<br/>
+<b>Verficationcode:</b> {$code}</p>
+<p>
+For security reasons, this code is only valid for a limited time and can be used once.
+</p>
+<p>
+If you did <b>not</b> request a password reset, you can safely ignore this email. Your password will remain unchanged.
+</p>
+<p>
+For your security, we recommend using a strong and unique password and updating it regularly.
+</p>
+<p>
+If you have any questions or need assistance, please contact our support team.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}};
+  subject = "Password Reset Request in " + $applicationName;
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $email,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $email + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></reset-password-mail>
+				<reset-mfa-mail><![CDATA[email -> applicationName -> code -> {
+  emailBody = {{{<p>
+Dear Recipient,
+</p>
+<p>
+A request has been made to reset the multi-factor authentication for your {$applicationName} account.
+</p>
+<p>
+If you made this request, you can reset the multi-factor authentication using the following code.<br/>
+<b>Verficationcode:</b> {$code}
+</p>
+<p>
+For security reasons, this code is only valid for a limited time and can be used once.
+</p>
+<p>
+If you have any questions or need assistance, please contact our support team.
+</p>
+<p>
+Kind regards,<br/>
+Your {$applicationName} Team
+</p>}}};
+  subject = "Verification code for multi-factor authentication reset in " + $applicationName;
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $email,
+      body: $emailBody
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $email + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></reset-mfa-mail>
+			</instance>
+		</config>
+	</services>
+</application>

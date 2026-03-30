@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	comment="Berechtigung_ohne_Wirkung"
 >
 	<actions>
@@ -208,35 +209,6 @@
 						>
 							<parameters>
 								<parameter name="Berechtigungsstruktur"
-									value="Mandantenstruktur"
-								/>
-								<parameter name="ergebnis"
-									value="R_03"
-								/>
-								<parameter name="Name"
-									value="R_03"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Alle Rechte geben"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Mandantenstruktur"
-								/>
-								<parameter name="Name"
-									value="R_03"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Anlegen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
 									value="Zentrale Berechtigungen"
 								/>
 								<parameter name="ergebnis"
@@ -308,22 +280,6 @@
 								/>
 								<parameter name="Knoten"
 									value="SecurityRoot"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Rolle zuweisen"
-							business-object="Nutzer"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Mandantenstruktur"
-								/>
-								<parameter name="kontext"
-									value="N_01"
-								/>
-								<parameter name="Rolle"
-									value="R_03"
 								/>
 							</parameters>
 						</action>
@@ -407,22 +363,6 @@
 								/>
 								<parameter name="Name"
 									value="R_02"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Loeschen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Mandantenstruktur"
-								/>
-								<parameter name="kontext"
-									value="R03"
-								/>
-								<parameter name="Name"
-									value="R_03"
 								/>
 							</parameters>
 						</action>

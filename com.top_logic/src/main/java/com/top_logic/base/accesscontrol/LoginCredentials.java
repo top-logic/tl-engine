@@ -24,7 +24,7 @@ import com.top_logic.knowledge.wrap.person.Person;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class LoginCredentials implements AutoCloseable {
+public class LoginCredentials {
 
 	private final String _username;
 
@@ -154,10 +154,11 @@ public class LoginCredentials implements AutoCloseable {
 		}
 		return person;
 	}
-
-	@Override
-	public void close() {
-		// clear password
+	
+	/**
+	 * Clears the cached password.
+	 */
+	public void clearPassword() {
 		if (_password != null) {
 			Arrays.fill(_password, '0');
 		}

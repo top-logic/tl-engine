@@ -17,12 +17,13 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResKey MAX_USERS_EXCEEDED;
-
 	public static ResKey COMMIT_FAILED;
 
+	@CustomKey("tl.login.message")
+	public static ResKey TL_LOGIN_MESSAGE;
+
 	@CustomKey("logout.messages.errorauthenticate")
-	public static ResKey ERROR_AUTHENTICATE;
+	public static ResKey1 ERROR_AUTHENTICATE;
 
 	@CustomKey("logout.messages.errorauthenticatemaintenancemode")
 	public static ResKey1 ERROR_AUTHENTICATE_MAINTENANCE_MODE;
@@ -162,6 +163,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en User changed password: {0}
 	 */
 	public static ResKey1 CHANGED_PASSWORD__USER;
+
+	/**
+	 * @en Unable to set cookies
+	 * @tooltip It is not possible to set cookies. Please check the browser settings.
+	 */
+	@CalledFromJSP
+	public static ResKey ERROR_SET_COOKIES;
 
 	static {
 		initConstants(I18NConstants.class);

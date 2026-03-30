@@ -12,6 +12,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -138,7 +139,7 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	private Person mkPerson(String name) {
-		return Person.create(kb(), name, "dbSecurity");
+		return Person.create(kb(), name, TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity"));
 	}
 
 	private String mkName() {

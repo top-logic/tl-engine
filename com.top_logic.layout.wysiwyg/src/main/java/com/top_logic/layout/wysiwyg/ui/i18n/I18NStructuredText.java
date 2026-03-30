@@ -229,7 +229,8 @@ public class I18NStructuredText implements FullTextSearchable {
 	 * results in some situations.
 	 * </p>
 	 * <p>
-	 * <em>Important:</em>Neither the {@link Map}, nor the {@link StructuredText}s must be modified.
+	 * <em>Important:</em> Neither the {@link Map}, nor the {@link StructuredText}s must be
+	 * modified.
 	 * </p>
 	 */
 	@FrameworkInternal

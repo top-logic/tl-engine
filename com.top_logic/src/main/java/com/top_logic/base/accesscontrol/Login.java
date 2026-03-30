@@ -7,9 +7,9 @@ package com.top_logic.base.accesscontrol;
 
 import java.util.Set;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
@@ -24,9 +24,11 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.monitor.FailedLogin;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -221,6 +223,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	private final BoundCommandGroup _commandGroupLeavingMaintenanceMode;
 
+	private LoginHook _loginHook;
+
 	/**
 	 * Creates a {@link Login} from configuration.
 	 */
@@ -241,6 +245,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			}
 		}
 		_commandGroupLeavingMaintenanceMode = leavingCommandGoup;
+		_loginHook = context.getInstance(config.getLoginHook());
 	}
 
     /**
@@ -255,26 +260,42 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
                         "]";
     }
 
-    public boolean login(String userName, HttpServletRequest aRequest, HttpServletResponse response)
-			throws InMaintenanceModeException, MaxUsersExceededException {
-		char[] thePassword = StringServices.nonNull(aRequest.getParameter(PASSWORD)).toCharArray();
-
+	/**
+	 * Checks whether the given combination of username and password are valid, and the user may be
+	 * logged in.
+	 * 
+	 * <p>
+	 * The actual login happens by calling
+	 * {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}
+	 * </p>
+	 * 
+	 * @param userName
+	 *        The name of the user to login.
+	 * @param password
+	 *        The password for the user to check.
+	 * @return Whether the {@link Person} with the given username is valid and may be
+	 *         {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)
+	 *         logged in}. If <code>null</code>, then the combination of username and password does
+	 *         not authorize login to the application.
+	 */
+	public boolean checkUserPassword(String userName, char[] password, HttpServletRequest aRequest,
+			HttpServletResponse response) throws InMaintenanceModeException, LoginHookFailedException {
 		if (StringServices.isEmpty(userName)) {
 			// don't authenticate for empty UserName
 			return noLogin(userName, aRequest, FailedLogin.REASON_NO_PERSON);
 		}
-		if (thePassword.length == 0) {
+		if (password.length == 0) {
 			// don't authenticate for empty Password
 			return noLogin(userName, aRequest, FailedLogin.REASON_NO_PASSWORD);
 		}
-		if (userName.length() > MAXINPUT_LEN || thePassword.length > MAXINPUT_LEN) {
+		if (userName.length() > MAXINPUT_LEN || password.length > MAXINPUT_LEN) {
 			String reason = null;
 			if (userName.length() > MAXINPUT_LEN) {
 				Logger.warn("User name too long (" + userName.length() + ") ignored", Login.class);
 				reason = FailedLogin.REASON_PERSON_TOO_LONG;
 			}
-			if (thePassword.length > MAXINPUT_LEN) {
-				Logger.warn("Password too long (" + thePassword.length + ") ignored", Login.class);
+			if (password.length > MAXINPUT_LEN) {
+				Logger.warn("Password too long (" + password.length + ") ignored", Login.class);
 				reason = reason == null ? FailedLogin.REASON_PWD_TOO_LONG : FailedLogin.REASON_BOTH_TOO_LONG;
 			}
 			try {
@@ -288,9 +309,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			// no such person known to the system or person not longer alive
 			return this.noLogin(userName, aRequest, FailedLogin.REASON_UNKNOWN_PERSON);
 		}
-		try (LoginCredentials login = LoginCredentials.fromUserAndPassword(thePerson, thePassword)) {
-			return this.login(aRequest, response, login);
-		}
+		LoginCredentials login = LoginCredentials.fromUserAndPassword(thePerson, password);
+		return this.checkLoginCredentials(login, aRequest, response);
 	}
 
 	/**
@@ -355,22 +375,24 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	/**
 	 * Attempt to login the specified user.
-	 *
+	 * 
+	 * @param login
+	 *        The user name and password information.
 	 * @param aRequest
 	 *        the request of the user; must not be null
 	 * @param response
 	 *        the current response
-	 * @param login
-	 *        The user name and password information.
 	 *
 	 * @return true if successful, else false
 	 * @throws InMaintenanceModeException
 	 *         to indicate that login failed because of maintenance mode
+	 * @throws LoginHookFailedException
+	 *         to indicate that login failed because of configured hook
 	 *
 	 *         #author Michael Eriksson #author Thomas Richter
 	 */
-	public boolean login(HttpServletRequest aRequest, HttpServletResponse response, LoginCredentials login)
-			throws InMaintenanceModeException, MaxUsersExceededException {
+	public boolean checkLoginCredentials(LoginCredentials login, HttpServletRequest aRequest, HttpServletResponse response)
+			throws InMaintenanceModeException, LoginHookFailedException {
 		Person person = login.getPerson();
 		AuthenticationDevice authDevice = person.getAuthenticationDevice();
 		if (authDevice == null) {
@@ -381,11 +403,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			boolean authenticated = authDevice.authentify(login);
 			if (authenticated) {
 				checkAllowedGroups(person);
-				HttpSession loginUser = SessionService.getInstance().loginUser(aRequest, response, person);
-				if (loginUser == null) {
-					noLogin(person, aRequest, FailedLogin.REASON_MAX_USERS_EXCEEDED);
-					throw new MaxUsersExceededException(person);
-				}
+				checkConfiguredHook(aRequest, response);
 				return true;
 			} else {
 				return noLogin(person, aRequest, FailedLogin.REASON_PWD_VALIDATION_FAILED);
@@ -393,8 +411,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		} catch (InMaintenanceModeException e) {
 			noLogin(person, aRequest, FailedLogin.REASON_MAINTENANCE_MODE);
 			throw e;
-		} catch (MaxUsersExceededException e) {
-			noLogin(person, aRequest, FailedLogin.REASON_MAX_USERS_EXCEEDED);
+		} catch (LoginHookFailedException e) {
+			noLogin(person, aRequest, FailedLogin.REASON_CONFIGURED_HOOK);
 			throw e;
 		} catch (Exception e) {
 			Logger.error("Unable to authenticate person " + person.getName(), e, this);
@@ -411,6 +429,16 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			FailedLogin.storeNewFailedLogin(userName, SessionService.clientHost(request), reason);
 		}
 		return false;
+	}
+
+	private void checkConfiguredHook(HttpServletRequest aRequest, HttpServletResponse response)
+			throws ServletException, LoginHookFailedException {
+		if (_loginHook != null) {
+			ResKey reason = _loginHook.check(aRequest, response);
+			if (reason != null) {
+				throw new LoginHookFailedException(reason);
+			}
+		}
 	}
 
     /**
@@ -520,20 +548,80 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
         this.allowedGroups = allowedGroups;
     }
 
+	/**
+	 * Checks whether the password for the user with the given name is valid and not expired.
+	 * 
+	 * <p>
+	 * Note: Is is not checked that the user can be authorized with the given password.
+	 * </p>
+	 * 
+	 * @see #isPasswordValidAndNotExpired(char[], Person)
+	 */
+	public static boolean isPasswordValidAndNotExpired(char[] password, String userName) {
+		return isPasswordValidAndNotExpired(password, Person.byName(userName));
+	}
 
-    /**
-     * Gets a I18Ned error message as reason for the failed login.
-     */
-    public static String getI18NedMaintenanceMessage(String userName) {
+	/**
+	 * Checks whether the password for the given user is valid and not expired.
+	 * 
+	 * <p>
+	 * Note: Is is not checked that the user can be authorized with the given password.
+	 * </p>
+	 */
+	public static boolean isPasswordValidAndNotExpired(char[] password, Person account) {
+		try{
+			AuthenticationDevice device = account.getAuthenticationDevice();
+			if (device == null) {
+				// No password change possible, cannot request for a password update.
+				return true;
+			}
+	
+			if (!device.allowPwdChange()) {
+				// No password change possible, cannot request for a password update.
+				return true;
+			}
+	
+			return !device.isPasswordChangeRequested(account, password);
+		} catch (Exception e) {
+			Logger.error("Problem checking pwd validy for Person " + account.getName(), e, Login.class);
+	    	return true; //do not spoil the login, though
+	    }
+	}
+
+	/**
+	 * Gets a I18Ned error message as reason for the failed login.
+	 */
+	public static String getI18NedMaintenanceMessage(String userName) {
+		return Resources.getInstance().getString(getMaintenanceMessage(userName));
+	}
+
+	/**
+	 * Gets a {@link ResKey} describing that login was denied by maintenance mode.
+	 */
+	public static ResKey getMaintenanceMessage(String userName) {
         int currentState = MaintenanceWindowManager.getInstance().getMaintenanceModeState();
         if (currentState == MaintenanceWindowManager.ABOUT_TO_ENTER_MAINTENANCE_MODE) {
-			return Resources.getInstance().getString(I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON.fill(userName));
+			return I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE_SOON.fill(userName);
         }
         else {
-			return Resources.getInstance().getString(I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE.fill(userName));
+			return I18NConstants.ERROR_AUTHENTICATE_MAINTENANCE_MODE.fill(userName);
         }
     }
 
+
+	/**
+	 * Exception to indicate that login failed due to configured {@link LoginHook}.
+	 */
+	public static class LoginHookFailedException extends I18NException {
+
+		/**
+		 * Creates a new {@link LoginHookFailedException}.
+		 */
+		public LoginHookFailedException(ResKey errorKey) {
+			super(errorKey);
+		}
+
+	}
 
     /**
      * Exception to indicate that login failed because system is in maintenance mode.
@@ -573,48 +661,6 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
         }
 
     }
-
-	/**
-	 * Exception to indicate that login failed because there are more users in system than the
-	 * license allows.
-	 *
-	 * @author <a href=mailto:msi@top-logic.com>msi</a>
-	 */
-	public static class MaxUsersExceededException extends Exception {
-
-		/** The person that tried to login. If the person is not known, <code>null</code>. */
-		private final Person person;
-
-		/**
-		 * Creates a new {@link MaxUsersExceededException} without a message.
-		 * 
-		 * @param person
-		 *        The person that tried to login. If the person is not known, <code>null</code>.
-		 */
-		public MaxUsersExceededException(Person person) {
-            super();
-			this.person = person;
-        }
-
-		/**
-		 * Creates a new {@link MaxUsersExceededException} with the given message.
-		 *
-		 * @param aMessage
-		 *        the message of the Exception
-		 */
-		public MaxUsersExceededException(Person person, String aMessage) {
-            super(aMessage);
-			this.person = person;
-		}
-
-		/**
-		 * The person that tried to login. If the person is not known, <code>null</code>.
-		 */
-		public Person getPerson() {
-			return person;
-		}
-
-	}
 
 	/**
 	 * Singleton reference for {@link Login} service.

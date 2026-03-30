@@ -65,6 +65,7 @@
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
 			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
+			       <module key="com.top_logic.base.accesscontrol.LoginFailuresModule$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -592,6 +593,7 @@
 					<security-device 
 						id="dbSecurity"
 						class="com.top_logic.base.security.device.db.DBAuthenticationAccessDevice"
+						mfa-requirement="optional"
 					>
 						<password-validator>
 							<enabled>true</enabled>
@@ -1177,7 +1179,7 @@
 					<handler id="logout" class="com.top_logic.layout.component.configuration.LogoutCommandHandler"
 						group="System"
 						image="theme:IMAGE_BUTTONS_LOGOUT22"
-						resourceKey="tl.logout"
+						resourceKey="class.com.top_logic.layout.component.configuration.I18NConstants.LOGOUT"
 					/>
 					<handler id="exportPowerpoint" class="com.top_logic.tool.export.PowerpointExportHandler"
 						clique="exportButtons"/>
@@ -1498,7 +1500,7 @@
 		</config>
 		
 		<config service-class="com.top_logic.knowledge.wrap.person.PersonManager">
-			<instance class="com.top_logic.knowledge.wrap.person.TLPersonManager"
+			<instance class="com.top_logic.knowledge.wrap.person.PersonManager"
 					  super-user-name="root"
 					  person-name-pattern="[-_a-zA-Z0-9@\.]+"
 					  >
@@ -1849,6 +1851,9 @@
 				path="/xml/dtd/"
 				publicID="-//W3C//DTD XHTML 1.0 Transitional//EN"
 			/>
+			<login-hooks>
+				<login-hook class="com.top_logic.layout.component.configuration.OpenLoginDialogHook"/>
+			</login-hooks>
 		</config>
 		
 		<config config:interface="com.top_logic.dsa.file.DOImporter$Config">
@@ -1873,18 +1878,14 @@
 		</config>
 		
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
-			<login>/servlet/login</login>
-			<loginPage>/login.jsp</loginPage>
-			<loginRetryPage>/login.jsp</loginRetryPage>
-			<loginRetrySSO>/login.jsp</loginRetrySSO>
-			<loginErrorPage>/jsp/main/loginError.jsp</loginErrorPage>
+			<loginPage>/servlet/LayoutServlet</loginPage>
+			<loginRetrySSO>/servlet/LayoutServlet</loginRetrySSO>
 			<triggerLogoutPage>/jsp/main/LogoutPage.jsp</triggerLogoutPage>
-			<logoutPage>/login.jsp</logoutPage>
+			<logoutPage>/servlet/LayoutServlet</logoutPage>
 			<buzzyPage>/jsp/main/buzzyPage.jsp</buzzyPage>
 			<noCookiePage>/jsp/main/LoginErrorPage_noCookies.jsp</noCookiePage>
 			<startPage>/servlet/LayoutServlet</startPage>
 			<layout>/servlet/LayoutServlet</layout>
-			<changePassword>/jsp/util/administration/changePwd.jsp</changePassword>
 		</config>
 		
 		<config config:interface="com.top_logic.mig.html.layout.GlobalModelEventForwarder$Config">

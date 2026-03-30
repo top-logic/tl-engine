@@ -1,0 +1,56 @@
+.loginDialog .messageContainer {
+	text-align: center;
+	color: #D3181B;
+	font-style: italic;
+	padding: 0.25rem 0;
+	min-height: 2rem;
+}
+
+.loginDialog .logodiv {
+	text-align: center;
+}
+
+/* mobile first */
+.loginDialog .logodiv img {
+	width: 64px;
+	height: 64px;
+	max-width: 18.75rem;
+	margin-bottom: .75rem; 
+}
+
+@media only screen and (min-width: 340px){
+	.loginDialog .logodiv img {
+		width: 300px;
+		height: auto;
+		max-height: 68px;
+	}
+}
+
+.loginDialog .tlLink {
+	margin: 1rem;
+	font-family: 'Inter-Regular';
+	font-size: .75rem;
+	line-height: 1rem;
+	letter-spacing: .15px;
+	text-align: center;
+}
+
+.loginDialog .tlLink a, .loginDialog .tlLink a:link {
+	color: #2968c8;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.loginDialog .tlLink a:hover {
+	color: #245db2;
+	text-decoration: underline;
+}
+
+.loginDialog .tlLink a:active {
+	color: #101113;
+	text-decoration: underline;
+}
+
+.loginDialog .tlLink a:focus {
+    color: #245db2;
+}

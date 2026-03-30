@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/structure/aspectInheritance/aspectTreeTree.layout.xml#Tree)">
+		<name key="dynamic.4aec2be1-dd7f-4db6-a938-9c3574b85e5b">
+			<en>Details</en>
+			<de>Details</de>
+		</name>
+		<buttons>
+			<button id="ID_a949babe_20cf_4e2f_9d05_38aaec302bf2"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="model(self())"
+			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+			</button>
+		</buttons>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/structure/aspectInheritance/new___/dialog.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</dialogs>
+		<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+			function="`DemoTypes#ROOT`"
+		/>
+	</arguments>
+</config:template-call>

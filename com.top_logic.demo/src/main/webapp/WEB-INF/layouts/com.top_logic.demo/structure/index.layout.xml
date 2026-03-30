@@ -13,8 +13,7 @@
 		<components>
 			<layout-reference resource="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml"/>
-			<layout-reference resource="com.top_logic.demo/structure/demoAspect/demoAspectView.layout.xml"/>
-			<layout-reference resource="com.top_logic.demo/structure/mandator/mandatorView.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

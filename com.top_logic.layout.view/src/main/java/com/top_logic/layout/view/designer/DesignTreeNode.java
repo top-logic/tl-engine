@@ -16,7 +16,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.view.UIElement;
 
 /**
- * A node in the design tree representing a single {@link UIElement.Config}.
+ * A node in the design tree representing a single {@link com.top_logic.layout.view.UIElement.Config}.
  *
  * <p>
  * Carries the configuration, source file origin, parent reference, and mutable children list for

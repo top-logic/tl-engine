@@ -14,10 +14,12 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 
 /**
- * Builds a {@link DesignTreeNode} tree from a root view's {@link UIElement.Config} hierarchy.
+ * Builds a {@link DesignTreeNode} tree from a root view's
+ * {@link com.top_logic.layout.view.UIElement.Config} hierarchy.
  *
  * <p>
- * Eagerly resolves {@link ReferenceElement.Config} by loading the referenced view's config via
+ * Eagerly resolves {@link com.top_logic.layout.view.ReferenceElement.Config} by loading the
+ * referenced view's config via
  * {@link ViewLoader#getOrLoadConfig(String)}.
  * </p>
  */

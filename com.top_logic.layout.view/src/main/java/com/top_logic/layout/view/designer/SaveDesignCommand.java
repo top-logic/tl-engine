@@ -31,12 +31,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * A {@link ViewCommand} that serializes modified {@link com.top_logic.layout.view.UIElement.Config}
- * trees back to {@code .view.xml} files.
+ * A {@link ViewCommand} that serializes modified
+ * {@link com.top_logic.layout.view.UIElement.Config} trees back to {@code .view.xml} files.
  *
  * <p>
  * Reads the root {@link DesignTreeNode} from the configured channel, traverses the tree to collect
- * all unique source files, and writes each modified {@link ViewElement.Config} back to disk. The
+ * all unique source files, and writes each modified {@link com.top_logic.layout.view.ViewElement.Config} back to disk. The
  * {@link com.top_logic.layout.view.ViewLoader} cache auto-invalidates via timestamps on next
  * access.
  * </p>
@@ -101,7 +101,7 @@ public class SaveDesignCommand implements ViewCommand {
 
 	/**
 	 * Traverses the design tree and maps each unique source file to the root
-	 * {@link ViewElement.Config} of that file's subtree.
+	 * {@link com.top_logic.layout.view.ViewElement.Config} of that file's subtree.
 	 */
 	private void collectSourceFiles(DesignTreeNode node, Map<String, ViewElement.Config> fileConfigs) {
 		if (node.getConfig() instanceof ViewElement.Config viewConfig) {
@@ -113,7 +113,7 @@ public class SaveDesignCommand implements ViewCommand {
 	}
 
 	/**
-	 * Writes the given {@link ViewElement.Config} to the specified view path.
+	 * Writes the given {@link com.top_logic.layout.view.ViewElement.Config} to the specified view path.
 	 */
 	private void writeViewConfig(String viewPath, ViewElement.Config viewConfig) {
 		File file = FileManager.getInstance().getIDEFileOrNull(viewPath);

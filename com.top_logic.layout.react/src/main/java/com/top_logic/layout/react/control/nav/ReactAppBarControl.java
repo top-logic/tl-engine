@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.nav;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.config.ExternallyNamed;
@@ -18,8 +17,8 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * component.
  *
  * <p>
- * Extends {@link ToolbarControl} so that {@link CommandScopeElement} can add toolbar buttons to the
- * trailing actions area. The {@code TLAppBar} React component reads actions from the {@code actions}
+ * Extends {@link ToolbarControl} so that command scopes can add toolbar buttons to the trailing
+ * actions area. The {@code TLAppBar} React component reads actions from the {@code actions}
  * state key — which is aliased to the same list that {@link ToolbarControl} populates via
  * {@code toolbarButtons}.
  * </p>

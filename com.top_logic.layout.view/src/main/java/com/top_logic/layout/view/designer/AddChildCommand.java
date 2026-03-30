@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.view.designer;
 
-import java.util.List;
-
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.view.element.StackElement;
 
@@ -14,7 +12,8 @@ import com.top_logic.layout.view.element.StackElement;
  * Adds a new child {@link DesignTreeNode} to the given parent node.
  *
  * <p>
- * Creates a default {@link StackElement.Config} (a generic container) and wraps it in a new
+ * Creates a default {@link com.top_logic.layout.view.element.StackElement.Config} (a generic
+ * container) and wraps it in a new
  * {@link DesignTreeNode} that is appended to the parent's children list. The caller is responsible
  * for rebuilding the tree UI after this operation.
  * </p>

@@ -6,7 +6,6 @@
 package com.top_logic.layout.react.control.tree;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;

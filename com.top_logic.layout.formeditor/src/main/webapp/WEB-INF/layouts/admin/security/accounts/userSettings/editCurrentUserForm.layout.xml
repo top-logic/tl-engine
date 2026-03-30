@@ -198,6 +198,12 @@
 								visibility="read-only"
 							/>
 							<field
+								attribute="mfaRequirement"
+								fullQualifiedName="tl.accounts:Person#mfaRequirement"
+								type="tl.core:Boolean"
+								visibility="read-only"
+							/>
+							<field
 								attribute="admin"
 								fullQualifiedName="tl.accounts:Person#admin"
 								type="tl.core:Boolean"
@@ -247,12 +253,6 @@
 							<code>
 								<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
 							</code>
-							<field
-								attribute="mfaRequirement"
-								fullQualifiedName="tl.accounts:Person#mfaRequirement"
-								type="tl.core:Boolean"
-								visibility="read-only"
-							/>
 						</layout>
 					</foreign-objects>
 					<other-attributes/>

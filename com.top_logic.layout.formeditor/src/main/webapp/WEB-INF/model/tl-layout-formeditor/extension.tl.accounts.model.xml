@@ -26,6 +26,9 @@
 							visibility="read-only"
 						/>
 						<code>
+							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.MFARequirementProvider"/>
+						</code>
+						<code>
 							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
 						</code>
 						<field
@@ -75,9 +78,6 @@
 						</code>
 						<code>
 							<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
-						</code>
-						<code>
-							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.MFARequirementProvider"/>
 						</code>
 					</form>
 				</form-definition>

@@ -59,6 +59,7 @@ import dev.langchain4j.model.mistralai.MistralAiEmbeddingModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest.EmbeddingSearchRequestBuilder;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.Filter;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
@@ -875,15 +876,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * @return List of matching documents with similarity scores
 	 */
 	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Integer limit, Double scoreThreshold) {
-		Embedding queryEmbedding = this.getDocumentEmbedding(query);
-
-		EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
-			.queryEmbedding(queryEmbedding)
-			.maxResults(limit)
-			.minScore(scoreThreshold)
-			.build();
-
-		return this.vectorStore.search(embeddingSearchRequest).matches();
+		return this.searchVectorIndex(query, null, DEFAULT_MAX_RESULTS, scoreThreshold);
 	}
 
 	/**
@@ -909,15 +902,20 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, String objectType, Integer limit,
 			Double scoreThreshold) {
 		Embedding queryEmbedding = this.getDocumentEmbedding(query);
-
-		Filter objectTypeMeta = metadataKey("TopLogic-type").isEqualTo(objectType);
-
-		EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
+		EmbeddingSearchRequestBuilder embeddingSearchRequestBuilder = EmbeddingSearchRequest.builder()
 			.queryEmbedding(queryEmbedding)
 			.maxResults(limit)
-			.minScore(scoreThreshold)
-			.filter(objectTypeMeta)
-			.build();
+			.minScore(scoreThreshold);
+
+		EmbeddingSearchRequest embeddingSearchRequest;
+
+		if (objectType != null) {
+			Filter objectTypeMeta = metadataKey("TopLogic-type").isEqualTo(objectType);
+
+			embeddingSearchRequestBuilder.filter(objectTypeMeta);
+		}
+
+		embeddingSearchRequest = embeddingSearchRequestBuilder.build();
 
 		return this.vectorStore.search(embeddingSearchRequest).matches();
 	}

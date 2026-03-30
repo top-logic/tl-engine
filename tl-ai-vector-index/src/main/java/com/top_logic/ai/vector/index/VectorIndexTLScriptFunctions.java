@@ -45,7 +45,7 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 * 
 	 * <pre>{@code 
 	 * {
-	 *   franceVacations = vectorIndexSearch("all vacations in France", 2); 
+	 *   franceVacations = vectorIndexSearch("all vacations in France", 2, 0.8, "test.indexingVector:Vacation"); 
 	 *   $franceVacations.map(x -> { 
 	 *   	"internalId": $x["embedded"]["text"].parseJson()["internalId"], 
 	 *      "TopLogic-type": $x["embedded"]["text"].parseJson()["TopLogic-type"], 
@@ -58,9 +58,12 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 * @param query
 	 *        The string query to search inside the vector database.
 	 * @param limit
-	 *        Optional parameter for number of expected records to return (defaults to 5).
+	 *        Optional parameter for number of expected records to return (default to number,
+	 *        configured in the Service Setting).
 	 * @param scoreThreshold
 	 *        Minimum score threshold. Must be between 0 and 1 (defaults to 0.8).
+	 * @param type
+	 *        TL Script type to filter by in the Vector Index search
 	 * @return A list of record dictionaries matching the query and parameters.
 	 * @throws Exception
 	 *         When parameters are incorrect (e.g., negative threshold).
@@ -68,87 +71,11 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	@Label("Search for a string")
 	@SideEffectFree
 	public static List<Map<String, Object>> search(@Mandatory String query,
-			@OptionalParameter Integer limit, @OptionalParameter Double scoreThreshold) throws Exception {
-		if (limit == null) {
-			limit = 5;
-		}
+			@OptionalParameter Integer limit, @OptionalParameter Double scoreThreshold, @OptionalParameter String type)
+			throws Exception {
 
-		if (scoreThreshold == null) {
-			scoreThreshold = 0.8;
-		}
 
-		if (scoreThreshold < 0 || scoreThreshold > 1) {
-			throw new Exception("scoreThreshold must be a number between 0 and 1.");
-		}
-
-		List<EmbeddingMatch<TextSegment>> matches =
-			VectorIndex.getInstance().searchVectorIndex(query, limit, scoreThreshold);
-		List<Map<String, Object>> results = new ArrayList<>();
-
-		for (EmbeddingMatch<TextSegment> match : matches) {
-			Map<String, Object> matchItem = new HashMap<>();
-			matchItem.put("score", match.score());
-			matchItem.put("embeddingId", match.embeddingId());
-
-			if (match.embedded() != null) {
-				Map<String, Object> segmentItem = new HashMap<>();
-				segmentItem.put("text", match.embedded().text());
-				if (match.embedded().metadata() != null) {
-					segmentItem.put("metadata", match.embedded().metadata().toMap());
-				}
-				matchItem.put("embedded", segmentItem);
-			}
-
-			results.add(matchItem);
-		}
-
-		return results;
-	}
-
-	/**
-	 * Returns a list of results from the Vector database
-	 *
-	 * <p>
-	 * Example usage in TL-Script to resolve objects, contained in the Vector Index result:
-	 * </p>
-	 * 
-	 * <pre>{@code 
-	 * {
-	 *   franceVacations = vectorIndexSearchByType("all vacations in France", "test.indexingVector:Vacation", 2); 
-	 *   $franceVacations.map(x -> { 
-	 *   	"internalId": $x["embedded"]["text"].parseJson()["internalId"], 
-	 *      "TopLogic-type": $x["embedded"]["text"].parseJson()["TopLogic-type"], 
-	 *      "Instance": (`test.indexingVector:Vacation`).filter(a ->
-	 *            $a.get(`test.indexingVector:Vacation#id`).equals($x["embedded"]["text"].parseJson()["internalId"]))
-	 *   })
-	 * }
-	 * }</pre>
-	 * 
-	 * @param query
-	 *        The string query to search inside the vector database.
-	 * @param type
-	 *        TL Script type to filter by in the Vector Index search
-	 * @param limit
-	 *        Optional parameter for number of expected records to return (defaults to 5).
-	 * @param scoreThreshold
-	 *        Minimum score threshold. Must be between 0 and 1 (defaults to 0.8).
-	 * @return A list of record dictionaries matching the query and parameters.
-	 * @throws Exception
-	 *         When parameters are incorrect (e.g., negative threshold).
-	 */
-	@Label("Search for a string")
-	@SideEffectFree
-	public static List<Map<String, Object>> searchByType(@Mandatory String query, @Mandatory String type,
-			@OptionalParameter Integer limit, @OptionalParameter Double scoreThreshold) throws Exception {
-		if (limit == null) {
-			limit = 5;
-		}
-
-		if (scoreThreshold == null) {
-			scoreThreshold = 0.8;
-		}
-
-		if (scoreThreshold < 0 || scoreThreshold > 1) {
+		if (scoreThreshold != null && (scoreThreshold < 0 || scoreThreshold > 1)) {
 			throw new Exception("scoreThreshold must be a number between 0 and 1.");
 		}
 

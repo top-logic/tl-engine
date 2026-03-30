@@ -59,9 +59,11 @@ public class DecorationAwarePortCoordinateAssigner implements NodePortAssignAlgo
 		double offset = (node.getWidth() - totalWidth) / 2;
 		double x = node.getX() + Math.max(0, offset);
 
+		double halfScale = GraphConstants.SCALE / 2.0;
 		for (int i = 0; i < ports.size(); i++) {
-			// Place port at center of its allocated width.
-			ports.get(i).setX(x + portWidths[i] / 2);
+			// Place port at the left edge of its allocation (+ half scale for edge centering).
+			// The decoration label extends to the right from the port position.
+			ports.get(i).setX(x + halfScale);
 			x += portWidths[i];
 		}
 	}

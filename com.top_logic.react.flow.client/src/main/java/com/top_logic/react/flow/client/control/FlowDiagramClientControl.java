@@ -238,6 +238,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 				diagram.draw(svgBuilder());
 
+				// Drop layout-induced scope changes so they don't trigger an update command.
+				_scope.dropChanges();
+				_scope.reset();
+
 				_diagram = diagram;
 
 				_zoomDisplay = (HTMLDivElement) DomGlobal.document.createElement("div");

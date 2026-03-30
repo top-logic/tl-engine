@@ -13,7 +13,7 @@ import java.util.Map;
 import com.top_logic.graph.layouter.LayoutContext;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.Sugiyama;
-import com.top_logic.graph.layouter.algorithm.node.port.assigner.coordinates.SimpleNodePortCoordinateAssigner;
+// SimpleNodePortCoordinateAssigner replaced by DecorationAwarePortCoordinateAssigner
 import com.top_logic.graph.layouter.algorithm.node.size.NodeSizer;
 import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
@@ -161,7 +161,7 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 		LayoutContext layoutContext = new LayoutContext(LayoutDirection.VERTICAL_FROM_SOURCE);
 
 		// Step 6: Run the Sugiyama layout algorithm.
-		Sugiyama.INSTANCE.layout(layoutContext, graph, sizer, SimpleNodePortCoordinateAssigner.INSTANCE);
+		Sugiyama.INSTANCE.layout(layoutContext, graph, sizer, DecorationAwarePortCoordinateAssigner.INSTANCE);
 
 		// Step 7: Map layout results back to widget nodes.
 		double maxX = 0;

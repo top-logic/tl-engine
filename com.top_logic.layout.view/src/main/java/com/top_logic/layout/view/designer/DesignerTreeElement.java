@@ -101,6 +101,7 @@ public class DesignerTreeElement implements UIElement {
 		// 2. Build the tree model.
 		TreeBuilder<DefaultTreeUINode> builder = createTreeBuilder();
 		DefaultTreeUINodeModel treeModel = new DefaultTreeUINodeModel(builder, rootNode);
+		treeModel.setRootVisible(true);
 
 		// 3. Create selection model.
 		DefaultSingleSelectionModel<Object> selectionModel =
@@ -143,6 +144,7 @@ public class DesignerTreeElement implements UIElement {
 		inputChannel.addListener((sender, oldValue, newValue) -> {
 			if (newValue instanceof DesignTreeNode newRoot) {
 				DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, newRoot);
+				newTreeModel.setRootVisible(true);
 				treeControl.setTreeModel(newTreeModel);
 			}
 		});

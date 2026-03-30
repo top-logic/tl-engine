@@ -7,6 +7,7 @@
     <inherits name="com.top_logic.ajax.shared.TLAjaxShared"/>
     <inherits name="com.top_logic.common.json.TLCommonJson"/>
     <inherits name="de.haumacher.msgbuf.MsgBuf"/>
+    <inherits name="com.top_logic.graph.layouter.TLGraphLayouter"/>
 
 	<source path='callback'/>
 	<source path='common'/>

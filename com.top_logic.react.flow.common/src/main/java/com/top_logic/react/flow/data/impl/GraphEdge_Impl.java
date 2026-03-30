@@ -91,22 +91,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 
 	/** Internal setter for {@link #getSource()} without chain call utility. */
 	protected final void internalSetSource(com.top_logic.react.flow.data.Box value) {
-		com.top_logic.react.flow.data.impl.Box_Impl before = (com.top_logic.react.flow.data.impl.Box_Impl) _source;
-		com.top_logic.react.flow.data.impl.Box_Impl after = (com.top_logic.react.flow.data.impl.Box_Impl) value;
-		if (after != null) {
-			com.top_logic.react.flow.data.Widget oldContainer = after.getParent();
-			if (oldContainer != null && oldContainer != this) {
-				throw new IllegalStateException("Object may not be part of two different containers.");
-			}
-		}
 		_listener.beforeSet(this, SOURCE__PROP, value);
-		if (before != null) {
-			before.internalSetParent(null);
-		}
 		_source = value;
-		if (after != null) {
-			after.internalSetParent(this);
-		}
 		_listener.afterChanged(this, SOURCE__PROP);
 	}
 
@@ -128,22 +114,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 
 	/** Internal setter for {@link #getTarget()} without chain call utility. */
 	protected final void internalSetTarget(com.top_logic.react.flow.data.Box value) {
-		com.top_logic.react.flow.data.impl.Box_Impl before = (com.top_logic.react.flow.data.impl.Box_Impl) _target;
-		com.top_logic.react.flow.data.impl.Box_Impl after = (com.top_logic.react.flow.data.impl.Box_Impl) value;
-		if (after != null) {
-			com.top_logic.react.flow.data.Widget oldContainer = after.getParent();
-			if (oldContainer != null && oldContainer != this) {
-				throw new IllegalStateException("Object may not be part of two different containers.");
-			}
-		}
 		_listener.beforeSet(this, TARGET__PROP, value);
-		if (before != null) {
-			before.internalSetParent(null);
-		}
 		_target = value;
-		if (after != null) {
-			after.internalSetParent(this);
-		}
 		_listener.afterChanged(this, TARGET__PROP);
 	}
 

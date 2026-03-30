@@ -39,7 +39,7 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	String DECORATIONS__PROP = "decorations";
 
 	/**
-	 * Source node.
+	 * Source node. The node is owned by the enclosing {@link GraphLayout}, not by this edge.
 	 */
 	com.top_logic.react.flow.data.Box getSource();
 
@@ -54,7 +54,7 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	boolean hasSource();
 
 	/**
-	 * Target node.
+	 * Target node. The node is owned by the enclosing {@link GraphLayout}, not by this edge.
 	 */
 	com.top_logic.react.flow.data.Box getTarget();
 

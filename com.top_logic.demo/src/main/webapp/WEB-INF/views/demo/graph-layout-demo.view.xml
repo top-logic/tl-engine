@@ -20,11 +20,11 @@
 			reactFlowGraphLayout(
 				list($person, $company, $address, $order, $product, $category),
 				list(
-					reactFlowGraphEdge(source: $person,  target: $company),
-					reactFlowGraphEdge(source: $person,  target: $address),
-					reactFlowGraphEdge(source: $person,  target: $order),
-					reactFlowGraphEdge(source: $order,   target: $product),
-					reactFlowGraphEdge(source: $product, target: $category)
+					reactFlowGraphEdge($person,  $company),
+					reactFlowGraphEdge($person,  $address),
+					reactFlowGraphEdge($person,  $order),
+					reactFlowGraphEdge($order,   $product),
+					reactFlowGraphEdge($product, $category)
 				)
 			),
 			all: 20

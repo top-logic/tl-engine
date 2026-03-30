@@ -157,10 +157,12 @@ message GraphLayout extends FloatingLayout {
  */
 @Operations("com.top_logic.react.flow.operations.GraphEdgeOperations")
 message GraphEdge extends Widget {
-	/** Source node. */
+	/** Source node. The node is owned by the enclosing {@link GraphLayout}, not by this edge. */
+	@Ref
 	Box source;
 
-	/** Target node. */
+	/** Target node. The node is owned by the enclosing {@link GraphLayout}, not by this edge. */
+	@Ref
 	Box target;
 
 	/** Waypoints computed by the layout algorithm. Forms an orthogonal polyline. */

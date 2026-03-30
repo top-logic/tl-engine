@@ -27,29 +27,29 @@
 						priority: 1,
 						targetSymbol: "ARROW",
 						decorations: list(
-							reactFlowDecoration(reactFlowText("address", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
-							reactFlowDecoration(reactFlowText("0..1", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("address", fontSize: "10"), all: 2), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowPadding(reactFlowText("0..1", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
 						)),
 					reactFlowGraphEdge($person, $order,
 						priority: 1,
 						targetSymbol: "ARROW",
 						decorations: list(
-							reactFlowDecoration(reactFlowText("orders", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
-							reactFlowDecoration(reactFlowText("*", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("orders", fontSize: "10"), all: 2), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowPadding(reactFlowText("*", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
 						)),
 					reactFlowGraphEdge($order, $product,
 						priority: 2,
 						sourceSymbol: "FILLED_DIAMOND",
 						decorations: list(
-							reactFlowDecoration(reactFlowText("items", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
-							reactFlowDecoration(reactFlowText("1..*", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("items", fontSize: "10"), all: 2), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowPadding(reactFlowText("1..*", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
 						)),
 					reactFlowGraphEdge($product, $category,
 						priority: 1,
 						targetSymbol: "ARROW",
 						decorations: list(
-							reactFlowDecoration(reactFlowText("category", fontSize: "10"), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
-							reactFlowDecoration(reactFlowText("1", fontSize: "10"), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("category", fontSize: "10"), all: 2), linePosition: 0.5, offsetPosition: "CENTER_LEFT"),
+							reactFlowDecoration(reactFlowPadding(reactFlowText("1", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "CENTER_LEFT")
 						))
 				)
 			),

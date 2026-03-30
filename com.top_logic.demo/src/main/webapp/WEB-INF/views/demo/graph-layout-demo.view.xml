@@ -27,26 +27,26 @@
 						priority: 1,
 						targetSymbol: "ARROW",
 						decorations: list(
-							reactFlowDecoration(reactFlowPadding(reactFlowText("address\n0..1", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "BOTTOM_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("address\n0..1", fontSize: "10"), all: 4), linePosition: 1.0)
 						)),
 					reactFlowGraphEdge($person, $order,
 						priority: 1,
 						targetSymbol: "ARROW",
 						decorations: list(
-							reactFlowDecoration(reactFlowPadding(reactFlowText("orders\n*", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "BOTTOM_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("orders\n*", fontSize: "10"), all: 4), linePosition: 1.0)
 						)),
 					reactFlowGraphEdge($order, $product,
 						priority: 2,
 						sourceSymbol: "FILLED_DIAMOND",
 						decorations: list(
-							reactFlowDecoration(reactFlowPadding(reactFlowText("1", fontSize: "10"), all: 2), linePosition: 0.0, offsetPosition: "BOTTOM_LEFT"),
-							reactFlowDecoration(reactFlowPadding(reactFlowText("items\n1..*", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "BOTTOM_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("1", fontSize: "10"), all: 4), linePosition: 0.0),
+							reactFlowDecoration(reactFlowPadding(reactFlowText("items\n1..*", fontSize: "10"), all: 4), linePosition: 1.0)
 						)),
 					reactFlowGraphEdge($product, $category,
 						priority: 1,
 						targetSymbol: "ARROW",
 						decorations: list(
-							reactFlowDecoration(reactFlowPadding(reactFlowText("category\n1", fontSize: "10"), all: 2), linePosition: 1.0, offsetPosition: "BOTTOM_LEFT")
+							reactFlowDecoration(reactFlowPadding(reactFlowText("category\n1", fontSize: "10"), all: 4), linePosition: 1.0)
 						))
 				)
 			),

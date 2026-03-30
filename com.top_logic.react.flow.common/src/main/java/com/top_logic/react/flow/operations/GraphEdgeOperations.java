@@ -128,14 +128,21 @@ public interface GraphEdgeOperations extends WidgetOperations {
 		}
 
 		for (EdgeDecoration decoration : decorations) {
-			double[] pos = positionOnPolyline(waypoints, segLen, totalLen, decoration.getLinePosition());
+			int[] segIndex = new int[1];
+			double[] pos = positionOnPolyline(waypoints, segLen, totalLen, decoration.getLinePosition(), segIndex);
 			double x = pos[0];
 			double y = pos[1];
 
-			// Adjust for offsetPosition within the decoration content box
+			// Determine the offset position: use explicit if set, otherwise auto-compute
+			// from local edge direction. Convention: labels to the right of the edge.
+			OffsetPosition offset = decoration.getOffsetPosition();
+			if (offset == null || offset == OffsetPosition.CENTER) {
+				offset = autoOffsetPosition(waypoints, segIndex[0], decoration.getLinePosition());
+			}
+
 			if (decoration.hasContent()) {
-				x += offsetX(decoration.getOffsetPosition(), decoration.getContent().getWidth());
-				y += offsetY(decoration.getOffsetPosition(), decoration.getContent().getHeight());
+				x += offsetX(offset, decoration.getContent().getWidth());
+				y += offsetY(offset, decoration.getContent().getHeight());
 			}
 
 			out.beginGroup();
@@ -144,6 +151,49 @@ public interface GraphEdgeOperations extends WidgetOperations {
 				decoration.draw(out);
 			}
 			out.endGroup();
+		}
+	}
+
+	/**
+	 * Auto-computes the offset position based on local edge direction.
+	 *
+	 * <p>
+	 * Convention: labels are placed to the right of the edge. The vertical placement depends on
+	 * whether the decoration is near the start or end of the edge:
+	 * </p>
+	 * <ul>
+	 * <li>Near start (linePosition &lt; 0.5): label below the source endpoint → TOP_LEFT</li>
+	 * <li>Near end (linePosition &gt;= 0.5): label above the target endpoint → BOTTOM_LEFT</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * For horizontal edge segments, left/right is determined by the segment direction.
+	 * </p>
+	 */
+	default OffsetPosition autoOffsetPosition(List<GraphWaypoint> waypoints, int segIndex, double linePosition) {
+		GraphWaypoint a = waypoints.get(segIndex);
+		GraphWaypoint b = waypoints.get(Math.min(segIndex + 1, waypoints.size() - 1));
+		double dx = b.getX() - a.getX();
+		double dy = b.getY() - a.getY();
+
+		boolean nearStart = linePosition < 0.5;
+
+		if (Math.abs(dy) >= Math.abs(dx)) {
+			// Vertical segment: labels to the right of the edge.
+			if (nearStart) {
+				// Near source: label below source node.
+				return dy >= 0 ? OffsetPosition.TOP_LEFT : OffsetPosition.BOTTOM_LEFT;
+			} else {
+				// Near target: label above target node.
+				return dy >= 0 ? OffsetPosition.BOTTOM_LEFT : OffsetPosition.TOP_LEFT;
+			}
+		} else {
+			// Horizontal segment: labels below the edge.
+			if (nearStart) {
+				return dx >= 0 ? OffsetPosition.TOP_LEFT : OffsetPosition.TOP_RIGHT;
+			} else {
+				return dx >= 0 ? OffsetPosition.TOP_RIGHT : OffsetPosition.TOP_LEFT;
+			}
 		}
 	}
 
@@ -158,10 +208,16 @@ public interface GraphEdgeOperations extends WidgetOperations {
 	 *        Total polyline length.
 	 * @param ratio
 	 *        A value in [0, 1] where 0 is the start and 1 is the end.
+	 * @param outSegIndex
+	 *        If non-null, the segment index at the computed position is written to index 0.
 	 * @return A two-element array [x, y].
 	 */
-	default double[] positionOnPolyline(List<GraphWaypoint> waypoints, double[] segLen, double totalLen, double ratio) {
+	default double[] positionOnPolyline(List<GraphWaypoint> waypoints, double[] segLen, double totalLen,
+			double ratio, int[] outSegIndex) {
 		if (totalLen == 0) {
+			if (outSegIndex != null) {
+				outSegIndex[0] = 0;
+			}
 			GraphWaypoint wp = waypoints.get(0);
 			return new double[] { wp.getX(), wp.getY() };
 		}
@@ -170,6 +226,9 @@ public interface GraphEdgeOperations extends WidgetOperations {
 		for (int n = 0; n < segLen.length; n++) {
 			double next = accumulated + segLen[n];
 			if (next >= target || n == segLen.length - 1) {
+				if (outSegIndex != null) {
+					outSegIndex[0] = n;
+				}
 				double t = (segLen[n] == 0) ? 0 : (target - accumulated) / segLen[n];
 				GraphWaypoint a = waypoints.get(n);
 				GraphWaypoint b = waypoints.get(n + 1);
@@ -179,6 +238,9 @@ public interface GraphEdgeOperations extends WidgetOperations {
 				};
 			}
 			accumulated = next;
+		}
+		if (outSegIndex != null) {
+			outSegIndex[0] = segLen.length - 1;
 		}
 		GraphWaypoint last = waypoints.get(waypoints.size() - 1);
 		return new double[] { last.getX(), last.getY() };

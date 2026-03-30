@@ -6,16 +6,16 @@
 package com.top_logic.graph.layouter.model.filter;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
-import com.top_logic.basic.col.Filter;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 
 /**
- * {@link Filter} edges that are marked.
+ * {@link Predicate} that matches edges that are marked.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
-public class FilterMarkedEdge implements Filter<LayoutEdge> {
+public class FilterMarkedEdge implements Predicate<LayoutEdge> {
 	Set<LayoutEdge> _markedEdges;
 
 	/**
@@ -26,11 +26,7 @@ public class FilterMarkedEdge implements Filter<LayoutEdge> {
 	}
 
 	@Override
-	public boolean accept(LayoutEdge edge) {
-		if (_markedEdges.contains(edge)) {
-			return true;
-		} else {
-			return false;
-		}
+	public boolean test(LayoutEdge edge) {
+		return _markedEdges.contains(edge);
 	}
 }

@@ -20,9 +20,6 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.FilterUtil;
-import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.algorithm.coordinates.horizontal.aligner.VerticalAlignment;
 import com.top_logic.graph.layouter.algorithm.rendering.lines.Line1D;
@@ -258,7 +255,7 @@ public class LayoutGraphUtil {
 	 * @return True, if the given node is a sink otherwise false.
 	 */
 	public static boolean isSink(LayoutNode node, Set<LayoutEdge> markedEdges) {
-		return getFilteredEdges(FilterFactory.not(new FilterMarkedEdge(markedEdges)), node.outgoingEdges()).isEmpty();
+		return getFilteredEdges(new FilterMarkedEdge(markedEdges).negate(), node.outgoingEdges()).isEmpty();
 	}
 
 	/**
@@ -284,34 +281,34 @@ public class LayoutGraphUtil {
 	 * @return True, if the given node is a source otherwise false.
 	 */
 	public static boolean isSource(LayoutNode node, Set<LayoutEdge> markedEdges) {
-		return getFilteredEdges(FilterFactory.not(new FilterMarkedEdge(markedEdges)), node.incomingEdges()).isEmpty();
+		return getFilteredEdges(new FilterMarkedEdge(markedEdges).negate(), node.incomingEdges()).isEmpty();
 	}
 
 	/**
 	 * Filter not marked {@link LayoutEdge}s for the given edges.
 	 */
-	public static Set<LayoutEdge> getFilteredEdges(Filter<? super LayoutEdge> filter, Collection<LayoutEdge> edges) {
-		return FilterUtil.filterInto(new LinkedHashSet<>(), filter, edges);
+	public static Set<LayoutEdge> getFilteredEdges(Predicate<? super LayoutEdge> filter, Collection<LayoutEdge> edges) {
+		return edges.stream().filter(filter).collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**
 	 * Filter not marked {@link LayoutNode}s for the given nodes.
 	 */
-	public static Set<LayoutNode> getFilteredNodes(Filter<? super LayoutNode> filter, Set<LayoutNode> nodes) {
-		return FilterUtil.filterInto(new LinkedHashSet<>(), filter, nodes);
+	public static Set<LayoutNode> getFilteredNodes(Predicate<? super LayoutNode> filter, Set<LayoutNode> nodes) {
+		return nodes.stream().filter(filter).collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**
 	 * Filter not marked {@link LayoutNode}s for the given nodes.
 	 */
-	public static List<LayoutNode> getFilteredNodes(Filter<? super LayoutNode> filter, List<LayoutNode> nodes) {
-		return FilterUtil.filterList(filter, nodes);
+	public static List<LayoutNode> getFilteredNodes(Predicate<? super LayoutNode> filter, List<LayoutNode> nodes) {
+		return nodes.stream().filter(filter).collect(Collectors.toList());
 	}
 
 	/**
 	 * Calculates the size difference between two filtered {@link LayoutEdge} sets.
 	 */
-	public static int getSizeDiff(Set<LayoutEdge> edges1, Set<LayoutEdge> edges2, Filter<? super LayoutEdge> filter) {
+	public static int getSizeDiff(Set<LayoutEdge> edges1, Set<LayoutEdge> edges2, Predicate<? super LayoutEdge> filter) {
 		return getFilteredEdges(filter, edges1).size() - getFilteredEdges(filter, edges2).size();
 	}
 

@@ -5,23 +5,20 @@
  */
 package com.top_logic.graph.layouter.model.filter;
 
-import com.top_logic.basic.col.Filter;
+import java.util.function.Predicate;
+
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 
 /**
- * {@link Filter} segment source {@link LayoutNode}.
+ * {@link Predicate} that matches segment source {@link LayoutNode}s.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
-public class FilterSegmentSourceNode implements Filter<LayoutNode> {
+public class FilterSegmentSourceNode implements Predicate<LayoutNode> {
 
 	@Override
-	public boolean accept(LayoutNode node) {
-		if (node.isSourceDummy()) {
-			return true;
-		} else {
-			return false;
-		}
+	public boolean test(LayoutNode node) {
+		return node.isSourceDummy();
 	}
 
 }

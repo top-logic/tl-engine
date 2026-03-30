@@ -28,11 +28,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-graph-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-basic</artifactId>
+      <artifactId>tl-basic-shared</artifactId>
     </dependency>
   </dependencies>
 </project>

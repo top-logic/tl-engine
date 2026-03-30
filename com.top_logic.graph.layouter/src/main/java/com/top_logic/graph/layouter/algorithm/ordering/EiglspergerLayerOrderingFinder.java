@@ -18,7 +18,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.graph.layouter.model.util.Pair;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.algorithm.crossing.LayerCrossingMinimizer;
@@ -36,7 +35,7 @@ import com.top_logic.graph.layouter.model.layer.UnorderedNodeLayer;
  * Finds an ordering for the given layered graph, i.e. order each layer of nodes w.r.t. minimize the
  * edge crossings between two layers.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Fï¿½rster</a>
  */
 public class EiglspergerLayerOrderingFinder extends LayerOrderingFinder {
 
@@ -92,8 +91,7 @@ public class EiglspergerLayerOrderingFinder extends LayerOrderingFinder {
 		} else if (layering.size() == 1) {
 			DefaultAlternatingLayer layer = getFirstAlternatingLayer(layering);
 
-			return new MapBuilder<Integer, DefaultAlternatingLayer>(true).put(LayerConstants.FIRST_LAYER, layer)
-				.toMap();
+			return Collections.singletonMap(LayerConstants.FIRST_LAYER, layer);
 		} else {
 			return Collections.emptyMap();
 		}

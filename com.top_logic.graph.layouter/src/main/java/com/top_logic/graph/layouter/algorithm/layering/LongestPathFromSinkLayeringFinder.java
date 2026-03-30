@@ -8,8 +8,7 @@ package com.top_logic.graph.layouter.algorithm.layering;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.filter.FilterFactory;
+import java.util.function.Predicate;
 import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
@@ -96,7 +95,7 @@ public class LongestPathFromSinkLayeringFinder extends LongestPathLayeringFinder
 
 	@Override
 	Set<LayoutNode> getNotAssignedSourceNodes(LayoutNode node) {
-		Filter<? super LayoutNode> filterNotMarkedNodes = FilterFactory.not(new FilterMarkedNode(_allAssignedVertices));
+		Predicate<LayoutNode> filterNotMarkedNodes = new FilterMarkedNode(_allAssignedVertices).negate();
 
 		return LayoutGraphUtil.getFilteredNodes(filterNotMarkedNodes, node.incoming());
 	}

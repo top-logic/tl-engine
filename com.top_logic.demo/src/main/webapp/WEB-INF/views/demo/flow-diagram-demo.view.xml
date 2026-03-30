@@ -5,8 +5,18 @@
 			<en>Flow Diagram</en>
 			<de>Flow-Diagramm</de>
 		</title>
-		<flow-diagram>
-			<builder class="com.top_logic.react.flow.server.ui.TestFlowChartBuilder" />
-		</flow-diagram>
+		<flow-diagram createChart="chart(
+			tree(
+				list(
+					border(padding(text('Parent'), all: 5)),
+					border(padding(text('Child A'), all: 5)),
+					border(padding(text('Child B'), all: 5))
+				),
+				list(
+					connection(1, 2),
+					connection(1, 3)
+				)
+			)
+		)" />
 	</panel>
 </view>

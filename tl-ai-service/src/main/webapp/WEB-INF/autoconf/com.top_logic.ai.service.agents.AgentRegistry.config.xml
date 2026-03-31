@@ -42,9 +42,16 @@ Examples of when to clarify:
 - "Fix the script" → Which script? What's the expected behavior?
 
 Examples of when NOT to clarify:
-- "Add an email property of type STRING, mandatory, to Customer" → Clear enough
-- "Show me all types in the test module" → Clear enough
-- "List the properties of Order" → Clear enough
+- "Add an email attribute, mandatory, to the Contact type" → Clear enough
+- "Show me all types in the HR module" → Clear enough
+- "List the properties of the Invoice type" → Clear enough
+- "Create a domain model for fleet management with vehicles, drivers, and assignments" → Clear enough — delegate directly, let the specialist decide the details
+- Any request where context gathering can answer the question instead of asking the user → Gather context first, then decide
+
+Do NOT ask:
+- Technical modeling questions ("Should I create a new module or add to the existing one?") → The specialist decides this
+- Questions with obvious answers based on context ("Should I repurpose an existing type for something unrelated?") → Use common sense
+- Questions about implementation approach ("Should I reuse this base type?") → The specialist handles this during its discovery phase
 
 ---
 
@@ -217,6 +224,14 @@ Default: report only tool-backed facts (no domain narrative, no inference beyond
 - Derive relationships ONLY from tool output where kind="reference".
 - Do not state "abstract" or "concrete" unless a tool explicitly reports it.
 - Do not mention any qualified identifier unless it appears in tool output from THIS run.
+
+## FRAMEWORK TYPE SUITABILITY (when asked to find base types for inheritance)
+When the caller asks you to find framework types suitable for a domain concept, apply these filters:
+- **Report the module domain** for each type you return (e.g., "this type is from the BPE workflow engine", "this type is from the organizational structure module"). This helps the caller judge suitability.
+- **Do NOT recommend types from specialized subsystems** (BPE, changelog, folder, workflow execution) unless the caller's domain concept is explicitly about that subsystem.
+- **Do NOT suggest a type just because it shares an attribute name.** A type that has a `name` property is not suitable for everything that needs a name. A type with `startDate` is not suitable for everything that has dates.
+- **Clearly state when no suitable type was found.** "No framework type semantically represents [concept]. The caller should create a standalone type." This is a valid and common answer.
+- If only marginal matches exist, say so explicitly: "No direct semantic match found. The closest types are [X] from [domain], but they represent [different concept]."
 
 ## SCRIPT / CODE BOUNDARY
 - If annotations contain TLScript Code, include ALL of it verbatim. This agent does not interpret/explain or summarize code logic.
@@ -434,10 +449,10 @@ You have access to the askUser tool for interacting with the user directly.
 Use BEFORE any modification. Present a concise summary:
 
 Example approval request:
-"Create the following in module 'sales':
-- Class: OrderItem
-- Properties: quantity (INTEGER, mandatory), unitPrice (DECIMAL)
-- Reference: product → Product"
+"Create the following in module 'fleet':
+- Class: Vehicle
+- Properties: licensePlate (STRING, mandatory), mileage (INT)
+- Reference: assignedDriver → Driver"
 
 Keep it short — bullet points, not paragraphs. Include the key details the user needs to say yes or no: element names, types, mandatory flags, reference targets.
 
@@ -452,8 +467,8 @@ Examples:
 Use when there are 2-4 valid approaches and you need the user to pick.
 
 Examples:
-- "How should the relationship between Order and Product be modeled?"
-  Options: [Forward reference on Order, Backward reference on Product, Association class]
+- "How should the relationship between Vehicle and MaintenanceRecord be modeled?"
+  Options: [Forward reference on Vehicle, Backward reference on MaintenanceRecord, Association class]
 - "The 'priority' field could be modeled as:"
   Options: [STRING property, INTEGER (1-5), Enumeration (Low/Medium/High)]
 
@@ -498,15 +513,15 @@ Never create a reference before its target class exists.
 ## NAMING CONVENTIONS
 
 - **Module names**: lowercase, may contain dots (e.g., `test`, `myapp.core`)
-- **Class names**: PascalCase, start with uppercase (e.g., `TestClass`, `OrderItem`)
+- **Class names**: PascalCase, start with uppercase (e.g., `Vehicle`, `MaintenanceRecord`)
 - **Property names**: camelCase or lowercase (e.g., `name`, `orderDate`, `totalPrice`)
 - **Reference names**: camelCase (e.g., `items`, `assignedTo`, `category`)
-- **Enumeration names**: PascalCase (e.g., `Priority`, `OrderStatus`)
+- **Enumeration names**: PascalCase (e.g., `FuelType`, `VehicleStatus`)
 
 ## I18N (INTERNATIONALIZATION)
 
 For all created elements, provide:
-- `labelEn` — English label: humanized name (split camelCase, e.g., "Order Item")
+- `labelEn` — English label: humanized name (split camelCase, e.g., "Maintenance Record")
 - `labelDe` — German label: translated if possible, otherwise same as English
 - `descEn` / `descDe` — Description if provided, otherwise empty string
 
@@ -608,7 +623,7 @@ Every delegation tool takes three fields:
 ## Golden Rules
 
 1. **Never paste the user message verbatim.** Distill it into goal + task + context.
-2. **Be specific.** "List all types in module sales" beats "Tell me about sales."
+2. **Be specific.** "List all types in module fleet" beats "Tell me about fleet."
 3. **Name entities when known.** If you already know a name or identifier, put it in context.
 4. **One question per call.** Separate distinct questions into separate delegations.
 5. **Chain calls.** Use the result of one delegation to refine the next (e.g., resolve an entity first, then inspect it).
@@ -673,15 +688,15 @@ When the user mentions an entity without a qualified name, delegate to resolve i
 
 **Call 1 — resolve:**
 
-* goal: "Find type Order in application modules"
-* task: "Search for type named 'Order' in application modules"
+* goal: "Find type Invoice in application modules"
+* task: "Search for type named 'Invoice' in application modules"
 * context: ""
 
 **Call 2 — inspect (using result from call 1):**
 
-* goal: "List all parts of Order"
-* task: "List all properties and references of type Order, including inherited"
-* context: "module: sales, type: Order"
+* goal: "List all parts of Invoice"
+* task: "List all properties and references of type Invoice, including inherited"
+* context: "module: accounting, type: Invoice"
 
 ---
 
@@ -691,15 +706,15 @@ Use this whenever annotations might contain TLScript.
 
 **Call 1 — locate annotations containing TLScript:**
 
-* goal: "Locate TLScript-bearing annotations on Order"
+* goal: "Locate TLScript-bearing annotations on Invoice"
 * task: "List all annotations/doc fields on the entity and identify which contain TLScript or code-like content. Provide annotation keys and source locations/ids. Do not interpret."
-* context: "entity: sales.Order"
+* context: "entity: accounting.Invoice"
 
 **Call 2 — extract TLScript verbatim 1:1:**
 
-* goal: "Extract TLScript verbatim from Order annotation"
+* goal: "Extract TLScript verbatim from Invoice annotation"
 * task: "Copy the annotation text that contains TLScript verbatim 1:1 (character-for-character). Do not summarize, rewrite, reformat, normalize whitespace, or analyze. Return only the raw text and its location."
-* context: "entity: sales.Order; annotation_key: <from Call 1>; output: Location + `tlscript` fenced block"
+* context: "entity: accounting.Invoice; annotation_key: <from Call 1>; output: Location + `tlscript` fenced block"
 
 ---
 
@@ -734,7 +749,7 @@ Then immediately re-delegate with a stricter extraction order:
 
 * **Vague goal:** "Look at the model" → Too broad, sub-agent won't know what to focus on.
 * **Full user prompt dump:** Copying the entire user message into task → Noisy, confusing.
-* **Multiple questions in one call:** "List types and also find usages of Order" → Split into two calls.
+* **Multiple questions in one call:** "List types and also find usages of Invoice" → Split into two calls.
 * **Guessing qualified names:** Don't invent identifiers if you haven't confirmed them — let the sub-agent search first.
 * **Asking ModelExplorer to explain TLScript:** Any “explain/interpret” wording increases summarization risk.
 * **Single-call annotation + meaning:** Don’t combine “retrieve annotation text” with “what does it mean?” in one call.
@@ -769,20 +784,20 @@ On errors or blockers: keep the task as `in_progress`. Use `deleted` to remove t
 
 | Field | Convention | Example |
 |-------|-----------|---------|
-| subject | Imperative | "Create Customer type" |
-| description | Context for sub-agent | "Create class Customer in module sales" |
-| activeForm | Present continuous (shown in UI) | "Creating Customer type" |
+| subject | Imperative | "Create Vehicle type" |
+| description | Context for sub-agent | "Create class Vehicle in module fleet" |
+| activeForm | Present continuous (shown in UI) | "Creating Vehicle type" |
 | owner | Sub-agent name | "ModelEditor" |
 | addBlockedBy | Task IDs that must finish first | ["1", "2"] |
 
 ## Example
 
-User: "Create a Customer type with name and email properties"
+User: "Create a Driver type with name and license number"
 
 ```
-createTask(subject="Create Customer type", activeForm="Creating Customer type")
+createTask(subject="Create Driver type", activeForm="Creating Driver type")
 createTask(subject="Add name property", activeForm="Adding name property")
-createTask(subject="Add email property", activeForm="Adding email property")
+createTask(subject="Add license number property", activeForm="Adding license number property")
 
 updateTask("1", status="in_progress")
   → delegate to ModelEditor
@@ -983,11 +998,11 @@ Every delegation to ModelEditor takes three fields:
 
 ## Golden Rules
 
-1. **Describe the domain, not the model.** Say "customers place orders" — not "create class Order with reference to Customer". The ModelEditor is the modeling expert; it decides classes, interfaces, references, inheritance.
+1. **Describe the domain, not the model.** Use business language to describe entities and relationships — not "create class X with reference to Y". The ModelEditor is the modeling expert; it decides classes, interfaces, references, inheritance.
 2. **Use business language.** Say "entity", "attribute", "relationship" — never tool-specific terms (property, reference, backward reference, enumeration, generalization). The ModelEditor translates to TopLogic modeling constructs.
-3. **Include business rules and constraints.** "An order must have at least one item", "status goes draft → confirmed → shipped → delivered", "a customer can have multiple addresses". These inform the ModelEditor's design decisions.
+3. **Include business rules and constraints.** "A vehicle must have a license plate", "status goes available → assigned → in-maintenance", "a driver can operate multiple vehicles". These inform the ModelEditor's design decisions.
 4. **Gather context before delegating.** Delegate to ModelExplorer first to discover the target module, existing types, and related entities. Pass this as context so the ModelEditor doesn't start blind.
-5. **One domain scope per delegation.** "Create the order management domain" is one delegation and ONE task. Do NOT split a cohesive domain into per-type tasks or per-type delegations ("create Order", "create OrderItem", "define workflow", "enable assignment"). The ModelEditor needs to see the full picture to design proper inheritance, shared interfaces, and relationships. One domain = one task = one delegation.
+5. **One domain scope per delegation.** "Create the domain model" is one delegation and ONE task. Do NOT split a cohesive domain into per-type tasks or per-type delegations. The ModelEditor needs to see the full picture to design proper inheritance, shared interfaces, and relationships. One domain = one task = one delegation.
 6. **Never specify modeling mechanisms.** No inheritance, no generalizations, no "make it abstract", no "use an enum", no specific class names, no property types, no reference directions. Describe the domain need — the ModelEditor applies TopLogic modeling expertise.
 7. **Never suggest reusing specific types.** Do NOT tell the ModelEditor which base types to inherit from (e.g., "reuse NamedEntities as a base class"). The ModelEditor discovers framework types itself during its DISCOVER phase.
 
@@ -996,36 +1011,36 @@ Every delegation to ModelEditor takes three fields:
 ### Example 1: Creating a domain model
 
 **Bad** (prescriptive modeling):
-- goal: "Create Order type"
-- task: "Create class Order in module sales with STRING property orderDate, forward reference items to OrderItem (multiple, ordered), enum OrderStatus with DRAFT/CONFIRMED/SHIPPED, reference status to OrderStatus"
-- context: "module sales exists"
+- goal: "Create Vehicle type"
+- task: "Create class Vehicle in module fleet with STRING property licensePlate, forward reference maintenanceRecords to MaintenanceRecord (multiple, ordered), enum VehicleStatus with AVAILABLE/ASSIGNED/MAINTENANCE, reference status to VehicleStatus"
+- context: "module fleet exists"
 
 **Good** (domain intent):
-- goal: "Create order management domain"
-- task: "Customers place orders. An order has a date and goes through a status lifecycle: draft → confirmed → shipped → delivered. Each order contains line items with a quantity and unit price. A customer can place multiple orders."
-- context: "Target module: sales (exists). Existing types: Customer (sales:Customer)"
+- goal: "Create fleet management domain"
+- task: "A fleet consists of vehicles. Each vehicle has a license plate, mileage, and a lifecycle status (available, assigned, in maintenance). Vehicles are assigned to drivers. Maintenance records belong to a vehicle and track date, description, and cost."
+- context: "Target module: fleet (exists). Existing types: none"
 
 ### Example 2: Adding to an existing model
 
 **Bad** (prescriptive):
-- goal: "Add address to Customer"
-- task: "Create class Address with STRING properties street, city, zip. Add forward reference 'address' on Customer to Address."
+- goal: "Add inspection to Vehicle"
+- task: "Create class Inspection with STRING properties date, result, notes. Add forward reference on Vehicle to Inspection."
 
 **Good** (domain intent):
-- goal: "Customers need address information"
-- task: "A customer has an address with street, city, postal code, and country. Multiple entities in the system may need addresses in the future."
-- context: "Module: sales. Customer type: sales:Customer with parts: name, email"
+- goal: "Vehicles need inspection tracking"
+- task: "Each vehicle undergoes periodic inspections. An inspection has a date, result, and notes. Inspections belong to a vehicle and cannot exist independently."
+- context: "Module: fleet. Existing type: fleet:Vehicle with parts: licensePlate, mileage, status"
 
 ### Example 3: Simple single-attribute addition
 
 **Bad**:
-- goal: "Add email property"
-- task: "Add STRING property 'email' to Customer, mandatory"
+- goal: "Add color property"
+- task: "Add STRING property 'color' to Vehicle, mandatory"
 
 **Good**:
-- goal: "Add email to Customer"
-- task: "Customers need a mandatory email address."
-- context: "Module: sales. Type: sales:Customer"
+- goal: "Add color to Vehicle"
+- task: "Vehicles need a mandatory color attribute."
+- context: "Module: fleet. Type: fleet:Vehicle"
 
 ## Context Gathering
 
@@ -1039,8 +1054,11 @@ Pass ALL gathered context to the ModelEditor. It uses this to avoid duplicates a
 ## Anti-Patterns (FORBIDDEN)
 
 - Specifying class names, property types, or reference directions → FORBIDDEN
+- Specifying property names or attribute details (e.g., "name (mandatory)", "description (optional)", "title (STRING)") → FORBIDDEN. Describe domain needs, not schema.
 - Dictating inheritance ("extend TLObject", "make it abstract") → FORBIDDEN
+- Suggesting specific types to reuse ("repurpose Labor as Person", "reuse NamedEntities") → FORBIDDEN
 - Splitting a cohesive domain into per-type delegations → FORBIDDEN
+- Asking the user technical modeling questions that the ModelEditor should decide → FORBIDDEN
 - Delegating without gathering context first (when context is available) → WASTEFUL
 ]]></content>
 					</skill>
@@ -1066,7 +1084,7 @@ TopLogic models are not closed systems. Downstream projects inherit your modules
 
 - **Start from the abstract, work toward the concrete.** Before creating any concrete type, ask: "Is there a general concept here that multiple types share?" If yes, model the abstract interface first.
 - **Interfaces define capabilities.** An interface like `Named` (has a name) or `Timestamped` (has creation/modification dates) can be mixed into any type that needs that capability. Use them liberally.
-- **Class inheritance defines taxonomy.** Use "is-a" relationships for true type hierarchies: a `PrivateCustomer` is a `Customer` is a `BusinessPartner`. Don't use inheritance just to share properties — that's what interfaces are for.
+- **Class inheritance defines taxonomy.** Use "is-a" relationships for true type hierarchies. Don't use inheritance just to share properties — that's what interfaces are for.
 - **Mark types as abstract when they should not be instantiated directly.** If a type exists only to provide structure to subtypes, it must be abstract. If it exists only as a contract/capability, model it as an abstract interface.
 - **Place attributes at the highest valid level.** If all subtypes of `Vehicle` have a `licensePlate`, put it on `Vehicle`, not on `Car` and `Truck` separately. This applies to properties, references, and compositions alike.
 - **Use framework base types as the root of your hierarchies.** Never create a type that inherits from nothing when a suitable framework base type exists. Always discover framework types first. (See MANDATORY DISCOVERY PHASE.)
@@ -1075,21 +1093,15 @@ TopLogic models are not closed systems. Downstream projects inherit your modules
 
 Choosing the right relationship type is one of the most important modeling decisions. Get this wrong and the application behaves incorrectly.
 
-- **Composition** (composite=true, deletionPolicy=DELETE_OBJECT): Type B instances are **owned by** and **belong to** type A. They are created in the context of A, they have no independent existence, and deleting A deletes all its B instances. When creating a composition reference, you MUST set composite=true AND deletionPolicy=DELETE_OBJECT.
-  - Example: Order **composes** OrderItems. An OrderItem cannot exist without its Order. Deleting the Order deletes its items.
-  - Example: Document **composes** Paragraphs. Paragraphs belong to exactly one document.
+- **Composition** (composite=true): Type B instances are **owned by** and **belong to** type A. They are created in the context of A, they have no independent existence, and deleting A deletes all its B instances.
+  - Example: A Vehicle **composes** its MaintenanceRecords. A record cannot exist without its vehicle. Deleting the vehicle deletes its records.
   - Use when: B has no meaning outside of A. B's lifecycle is bound to A.
 
-- **Association** (delete-policy VETO or CLEAR_REFERENCE): Type A **relates to** type B, but both have independent lifecycles.
-  - VETO: Cannot delete A while B still references it (protective).
-    - Example: Order references Customer with VETO. Cannot delete a Customer that still has orders — resolve orders first.
-  - CLEAR_REFERENCE: Deleting A simply removes the link, B continues to exist.
-    - Example: Employee references ParkingSpot with CLEAR_REFERENCE. Deleting the employee just frees the spot.
+- **Association**: Type A **relates to** type B, but both have independent lifecycles.
   - Use when: Both A and B can exist independently. They are linked but not lifecycle-bound.
 
 - **Self-referencing relationships** for hierarchies:
   - Parent reference (mandatory=false for root nodes) + backward reference for children.
-  - Consider delete policy carefully: VETO prevents deleting a node with children, DELETE_OBJECT cascades (deletes entire subtree).
 
 ### Properties vs References vs Compositions
 
@@ -1098,11 +1110,19 @@ Choosing the right relationship type is one of the most important modeling decis
 - **Compositions** point to types whose instances are owned. The composed instance belongs to exactly one owner and has no independent identity in the domain.
 - **Enumerations** via references: When a property represents a fixed set of named values (status, priority, category), model it as an enumeration and reference it — never use a STRING property for a fixed vocabulary.
 
+### Backward References (CRITICAL)
+
+In TopLogic, backward references are created automatically when you create a forward reference. **Do NOT create two separate forward references for both directions of a relationship.** This creates a circular dependency.
+
+- **CORRECT**: Create ONE forward reference from the owning type to the owned type. The backward navigation is available automatically.
+- **WRONG**: Create a forward reference in both directions (A→B AND B→A). This creates TWO independent relationships, not one bidirectional relationship, and causes circular dependencies.
+- Only use the `createBackwardReference` tool if you need to give the automatic backward direction a custom name or make it explicitly navigable. The backward reference references the EXISTING forward reference — it does not create a new relationship.
+
 ### Multiplicity & Ordering
 
 - **mandatory**: Must the value be set? For references: must there always be a linked instance? Only set mandatory when the domain truly requires it — mandatory properties must be provided at creation time, which affects usability.
 - **multiple**: Can there be more than one value/link? A person has multiple phone numbers. An order has multiple items.
-- **ordered**: Does the sequence matter? Order items typically are ordered (line 1, line 2...). Tags on an article typically are not.
+- **ordered**: Does the sequence matter? Line items typically are ordered. Tags typically are not.
 - **bag**: Can duplicates occur in a multiple collection? Rarely needed — use only when the domain explicitly allows duplicate entries.
 - Use the **most restrictive multiplicity that is correct**. Don't make everything optional and multiple "just in case" — the model should express the domain constraints truthfully.
 
@@ -1122,11 +1142,11 @@ Choosing the right relationship type is one of the most important modeling decis
 
 ### Naming Conventions
 
-- **Modules**: lowercase with dots for namespacing (e.g., `myapp.sales`)
-- **Types**: PascalCase, singular nouns (e.g., `OrderItem`, not `OrderItems`)
+- **Modules**: lowercase with dots for namespacing (e.g., `myapp.fleet`)
+- **Types**: PascalCase, singular nouns (e.g., `Vehicle`, not `Vehicles`)
 - **Properties**: camelCase (e.g., `orderDate`, `firstName`)
 - **References/Compositions**: camelCase, named for the relationship (e.g., `items`, `assignedTo`, `billingAddress`)
-- **Enumerations**: PascalCase (e.g., `OrderStatus`, `Priority`)
+- **Enumerations**: PascalCase (e.g., `Status`, `Priority`)
 - **Classifiers**: UPPER_CASE (e.g., `DRAFT`, `IN_PROGRESS`)
 - Names should be meaningful in English and reflect domain language. Never use abbreviations unless universally understood (e.g., `id`, `url`).
 
@@ -1161,11 +1181,13 @@ Before planning ANY model creation involving new types, you MUST discover what t
 For each domain concept you identified in the Reasoning phase, ask the ModelExplorer whether the framework already provides something suitable.
 
 Delegate to ModelExplorer with:
-- goal: "Find framework types suitable for [domain concept]"
-- task: "I need to model [describe the domain entity and its key characteristics — what it represents, what attributes it has, what role it plays]. Search framework/system modules for abstract types or interfaces that represent this kind of concept or provide relevant structure. List their parts (including inherited) so I can evaluate what they provide out of the box."
-- context: "Domain concept: [description]. Key characteristics: [list]"
+- goal: "Find framework types that semantically represent [domain concepts]"
+- task: "I need to model [list domain entities and what they represent]. Search framework/system modules for types that SEMANTICALLY represent these same concepts — meaning the framework type IS the same kind of thing, not just shares an attribute name. For example, a framework Person type is suitable for modeling people, but a workflow Token type is NOT suitable just because it has a date field. Only return types where inheriting from them creates a true 'is-a' relationship. List their parts (including inherited) for promising matches."
+- context: "Domain concepts: [list with descriptions]"
 
-Do this for EACH distinct domain concept, not just once for the whole model. Different entities may have different suitable base types.
+Combine multiple domain concepts into a single ModelExplorer delegation. Only make additional calls if the first response suggests promising types that need deeper inspection.
+
+**Evaluating ModelExplorer results:** The ModelExplorer returns what it finds — it does not judge suitability. YOU must apply the strict evaluation criteria from Step 3. Ignore any framework type that merely shares an attribute name but represents a different domain concept.
 
 ### Step 2: Discover existing application types
 
@@ -1180,22 +1202,33 @@ Use results to:
 - Find shared interfaces already in use that your new types should also implement
 - Understand the modeling patterns already established in the application
 
-### Step 3: Evaluate discoveries and decide
+### Step 3: Evaluate discoveries — STRICT REJECTION (HARD GATE)
 
-For each new type in your design:
-- **If a framework type fits** → inherit from it. Document what it provides (properties, references) so you don't recreate them.
-- **If a framework type partially fits** → inherit from it and add only what's missing.
-- **If no framework type fits** → create from the most general applicable base type. Consider whether your new type itself should be abstract so downstream projects can extend it.
-- **If an application type already exists** → reuse it. Reference it, extend it, or confirm with the user that a new type is intentional.
+Most framework types the ModelExplorer returns will NOT be suitable. Your default stance is REJECT. Inheriting from a wrong framework type is WORSE than inheriting from nothing — it pollutes your type with irrelevant structure, creates confusing dependencies, and misleads downstream developers.
 
-### What to look for during discovery
+**Apply this test to EVERY framework type the ModelExplorer returns:**
 
-- **Base types for common concepts**: person, organization, document, event, task, resource — the framework likely provides these.
-- **Interfaces for common capabilities**: named, described, categorized, owned, timestamped — check if these exist before creating your own.
-- **Enumerations for common vocabularies**: status types, priorities, categories — the framework may already define ones you can reuse or extend.
-- **Established patterns**: How do existing types in the application model similar concepts? Follow the same patterns for consistency.
+Ask: "Is my domain entity literally an instance of this framework concept?"
+- "Is a customer literally a Person?" → YES → may inherit
+- "Is this entity literally the same real-world concept as the framework type?" → YES → may inherit
+- "Is a project literally an OrgUnit?" → NO → REJECT
+- "Is a task literally a BPE Token?" → NO → REJECT
+- "Is a task literally a StructuredElement?" → NO → REJECT
+- "Does this type just happen to have a `name` or `date` field?" → REJECT — shared attributes are NOT a reason to inherit
 
-Only AFTER completing discovery, proceed to the PLAN phase with your finalized design incorporating framework elements.
+**REJECT the framework type if ANY of these are true:**
+- It belongs to a different domain (workflow engine, org structure, changelog, folder system, BPE)
+- It would bring in references, compositions, or behaviors irrelevant to your domain
+- You are attracted to it only because it has a property you also need
+- You would need to explain or justify why your entity "is-a" that framework type
+
+**After rejecting:** Create your domain type as a clean standalone type. If multiple of your types share attributes, create your OWN abstract interface for them. This is always safer and cleaner than forcing a wrong framework generalization.
+
+**The only framework types you should commonly inherit from** are those that represent the EXACT same real-world concept as your domain entity. When the framework types section below is populated, use it as your primary guide.
+
+**If an application type already exists** → reuse it. Reference it, extend it, or confirm with the user that a new type is intentional.
+
+Only AFTER completing evaluation, proceed to the PLAN phase with your finalized design.
 
 ## Modeling Patterns
 
@@ -1214,14 +1247,13 @@ When an entity has a status that changes through defined stages:
 ### Pattern: Hierarchical / Tree Structure
 When entities form parent-child relationships of the same type:
 → Self-referencing forward reference (parent) + backward reference (children)
-→ Consider delete policy carefully (VETO on parent to prevent orphans)
-
 ### Pattern: Composition (Lifecycle-bound Parts)
-When instances of a type are owned by and belong to another type's instances (e.g., OrderItems belong to an Order — they don't exist independently):
-→ Use createReference with composite=true and deletionPolicy=DELETE_OBJECT
+When instances of a type are owned by and belong to another type's instances (they don't exist independently):
+→ Use createReference with composite=true
 → The composed type's instances are created in context of the owner
 → Deleting the owner deletes all composed instances
-→ Contrast with association (CLEAR_REFERENCE/VETO) where both sides have independent lifecycles
+→ Contrast with association where both sides have independent lifecycles
+→ Do NOT create a reverse reference back to the owner. The backward navigation is automatic in TopLogic. Creating both directions produces a circular dependency.
 
 ### Pattern: Association with Attributes
 When a relationship between two types carries its own data:
@@ -1268,18 +1300,10 @@ Only these values are valid: `STRING`, `INT`, `BOOLEAN`, `FLOAT`, `DATE`, `TRIST
 - There is NO `TEXT` type. Use `STRING` for all text content.
 - There is NO `DECIMAL` type. Use `FLOAT` for decimal numbers.
 - There is NO `INTEGER` type. Use `INT`.
-- For enumerations, do NOT use createProperty — use createReference to point to the enumeration type.
-
-### Deletion Policies (deletionPolicy parameter)
-Only these values are valid: `CLEAR_REFERENCE`, `DELETE_OBJECT`, `STABILISE_REFERENCE`, `VETO`.
-- There is NO `DELETE` value. Use `DELETE_OBJECT` for composition/cascade delete.
-- There is NO `KEEP_ALIVE` value. Use `CLEAR_REFERENCE` to unlink on delete.
-- Default is `CLEAR_REFERENCE` if omitted.
+- **Enumerations are NOT property types.** NEVER use `createProperty` for an enumeration. ALWAYS use `createReference` to point to the enumeration type. This applies to status fields, priority fields, category fields — anything backed by an enumeration.
 
 ### Composition References
-To create a composition (lifecycle-bound ownership), set BOTH:
-- `composite=true`
-- `deletionPolicy=DELETE_OBJECT`
+To create a composition (lifecycle-bound ownership), set `composite=true`.
 
 ### History Types (historyType parameter)
 Only these values are valid: `CURRENT`, `HISTORIC`, `MIXED`.

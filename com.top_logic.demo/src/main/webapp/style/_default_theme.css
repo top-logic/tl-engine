@@ -1,0 +1,159 @@
+/*
+ * Generated from '/style/tl-blocks.css'
+ */
+
+
+/*
+   Default font properties that the layout algorithm can rely on, if not explicitly specified at diagram level.
+
+   Note: Values defined in CSS take precedence. Therefore, a selector must only 
+   apply, when not explicitly set at element level. When an explicit CSS attribute
+   is specified, it is likely that this is used to select an icon font. Therefore, 
+   the default setting must not apply also, since the selector is now more specific
+   than that of the icon font.
+*/
+text:not([font-family]):not([class]) {font-family: Arial }
+text:not([font-size]):not([class]) {font-size: 14px; }
+
+g.tlbA path.tlbShape {stroke: #265699; fill: #4C97FF; }
+g.tlbA path.tlbBorder {stroke: #6897d9; fill: none; }
+g.tlbB path.tlbShape {stroke: #996711; fill: #FFAB19; }
+g.tlbB path.tlbBorder {stroke: #e0b05e; fill: none; }
+g.tlbC path.tlbShape {stroke: #2f792f; fill: #59C059; } 
+g.tlbC path.tlbBorder {stroke: #63ad63; fill: none; } 
+g.tlbInput rect {fill: white; } 
+g.tlbInput text {fill: black; } 
+g.tlbSelect {cursor: pointer; } 
+g.tlbSelect rect {fill: #00000000; stroke: white; } 
+g.tlbSelect:hover rect {fill: #FFFFFF30; } 
+g.tlbSelect text {fill: white; } 
+g.tlbSelect path {fill: white; stroke: none; } 
+g.tlbLabel text {fill: white; } 
+
+g.tlbSelected > path.tlbBorder {
+	stroke: none;
+}
+
+path.tlbConnector {
+	fill: none;
+}
+
+g.tlbSelected > path.tlbShape, 
+path.tlbConnector {
+	stroke-width: 3;
+	stroke: #ffe635; 
+}
+
+/* .tlSelectionMarker elements are hidden by default in the tl-flow-core.css rules. */
+.tlSelected .tlSelectionMarker {
+	display: initial;
+}
+
+/* Color-change selection highlight for graph nodes (overrides SVG presentation attributes). */
+.tlSelected .tlNodeBorder { stroke: #2266cc; stroke-width: 2; }
+.tlSelected .tlNodeFill { fill: #e8f0ff; }
+
+.tlClickTarget {
+	cursor: pointer;
+	stroke: var(--link-primary);
+}
+
+.tlDiagram {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	transform-origin: top left;
+}
+
+.tlDiagram > svg {
+	cursor: default;
+}
+
+.zoomDisplay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 8px;
+	background-color: #3338;
+	border-bottom-left-radius: 8px;
+	color: white;
+}
+
+:root {
+--BODY_BACK: #FFFFFF;
+--BOX_HSPACE_SIZE: 8px;
+--BUTTON_COMP_HEIGHT: 39px;
+--CALENDAR_POPUP_HEIGHT: 160;
+--CALENDAR_POPUP_WIDTH: 240;
+--CHART_BACK: #F5F5F5;
+--CHART_BACKGROUND_COLOR: transparent;
+--CHART_BORDER_COLOR: rgba(0,0,0,0.1);
+--CHART_COLOR_1: #4e79a7;
+--CHART_COLOR_10: #bab0ac;
+--CHART_COLOR_2: #f28e2b;
+--CHART_COLOR_3: #e15759;
+--CHART_COLOR_4: #76b7b2;
+--CHART_COLOR_5: #59a14f;
+--CHART_COLOR_6: #edc948;
+--CHART_COLOR_7: #b07aa1;
+--CHART_COLOR_8: #ff9da7;
+--CHART_COLOR_9: #9c755f;
+--CHART_GRID_COLOR: rgba(0,0,0,0.1);
+--CHART_TEXT_COLOR: #374151;
+--COLLAPSIBLE_IMAGE_HEIGHT: 22px;
+--COLLAPSIBLE_IMAGE_WIDTH: 22px;
+--DIALOG_BOTTOM_BORDER_HEIGHT: 5px;
+--DIALOG_TITLE_HEIGHT: 24px;
+--DIALOG_VERTICAL_BORDER_WIDTH: 5px;
+--DIRTY_DIALOG_HEIGHT: 300px;
+--DIRTY_DIALOG_WIDTH: 450px;
+--FILTER_DIALOG_HEIGHT: 200;
+--FILTER_DIALOG_WIDTH: 300;
+--FONT_SIZE_IMAGE: 12;
+--FORM_COLUMN_GAP: 64;
+--FORM_INPUT_MIN_WIDTH: 250;
+--FORM_LABEL_PADDING: 8;
+--FORM_LABEL_WIDTH: 175;
+--FORM_PADDING: 64;
+--FORM_TABLE_HEIGHT: 600;
+--FROZEN_TABLE_FOOTER_HEIGHT: 22px;
+--FROZEN_TABLE_HEADER_ROW_HEIGHT: 28px;
+--FROZEN_TABLE_ROW_HEIGHT: 28px;
+--FROZEN_TABLE_TITLE_HEIGHT: 22px;
+--FROZEN_TREE_TABLE_TITLE_HEIGHT: 22px;
+--GALLERY_HEIGHT: 200px;
+--GALLERY_WIDTH: 240px;
+--GRAD0: #000066;
+--GRAD1: #D00000;
+--GRAD2: #FF9900;
+--GRAD3: #FFFFFF;
+--GRAD4: #CCCCCC;
+--GRID_EDIT_WIDTH: 31;
+--LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE: 1;
+--LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE: 5;
+--MEGA_MENU_BORDER_WIDTH: 3;
+--META_VIEWPORT: width=device-width, initial-scale=1, shrink-to-fit=no;
+--PASSWORD_BAR_MEDIUM_COLOR: #FFD400;
+--PASSWORD_BAR_NORMAL_COLOR: #FF6600;
+--PASSWORD_BAR_STRONG_COLOR: #33CC00;
+--PASSWORD_BAR_VERY_STRONG_COLOR: #33FF00;
+--PASSWORD_BAR_WEAK_COLOR: #FF0000;
+--POPUP_TITLE_HEIGHT: 24px;
+--SELECTION_COLUMN_WIDTH: 34px;
+--SELECTION_CONTROL_FIELD_HEIGHT: 25;
+--TABBAR_CSS_CLASS: tabBar;
+--TABBAR_HEIGHT: 36;
+--TABLE_BACKGROUND_COLOR: #FFFFFF;
+--TABLE_CELL_BACKGROUND_COLOR: #FFFFFF;
+--TABLE_COLUMN_BORDER_WIDTH: 1px;
+--TABLE_RESIZE_GRABBER_COLOR: #FFFFFF;
+--TABLE_SEPARATOR_WIDTH: 4px;
+--TAB_COMPONENT_DEFAULT_TAB_HEIGHT: 16;
+--TEXT_FAMILY: Arial,Helvetica,sans-serif;
+--TREE_INDENT_CHARS: 6;
+--TYPE_GENERATOR_HEIGHT: 300px;
+--TYPE_GENERATOR_WIDTH: 460px;
+--VR_BACKGROUND_WIDTH: 20px;
+--WINDOWLAYOUT_BAR_HEIGHT: 22;
+--WINDOWLAYOUT_LEFT_SPACER_WIDTH: 12;
+}

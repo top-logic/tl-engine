@@ -127,15 +127,19 @@
 
 #### UML-Klassendiagramm-Aufbau
 - **Node-Komposition** pro TLClass:
-  - «abstract»-Stereotyp (bedingt, fontSize 10, grau)
+  - «abstract»-Stereotyp (bedingt, fontSize 10, grau via fillStyle)
   - Klassenname (bold)
   - Attribut-Kompartiment (TLProperty-Teile mit `name : typeName`, fontSize 11)
   - Kompartiment-Trenner via `reactFlowBorder(top: true, left/right/bottom: false)`
   - Weißer Hintergrund (`reactFlowFill(fill: "white")`)
   - `reactFlowSelection(userObject: $class)` für Typ-Selektion
+  - "extends module:ClassName" bei externen Generalizations (grau, fontSize 9)
+- **Enumeration-Nodes**:
+  - «enumeration»-Stereotyp, Classifier-Liste, hellgelber Hintergrund
 - **Generalisierungs-Kanten**:
-  - `TLClass#generalizations` → FILLED_ARROW (priority 3)
-  - Nur Kanten innerhalb des Moduls (nodeByClass-Lookup)
+  - `TLClass#generalizations` → CLOSED_ARROW (hohles Dreieck, priority 3)
+  - Source=Elternklasse (oben), Target=Kindklasse (unten) für korrekte UML-Richtung
+  - Nur Kanten innerhalb des Moduls (name-basierter Lookup)
 - **Referenz-Kanten**:
   - `TLReference` aus `localParts` → ARROW (priority 1) oder FILLED_DIAMOND (priority 2)
   - Komposition erkannt via `TLReference#end → TLAssociationEnd#composite`
@@ -146,14 +150,36 @@
 #### TL-Script Model-Navigation
 - `all(\`tl.model:TLModule\`)` → Modul-Liste
 - `$module.get(\`tl.model:TLModule#types\`).filter(instanceOf(\`tl.model:TLClass\`))` → Klassen
+- `$module.get(\`tl.model:TLModule#types\`).filter(instanceOf(\`tl.model:TLEnumeration\`))` → Enums
 - `$class.get(\`tl.model:TLStructuredType#localParts\`)` → Properties + References
 - `$class.get(\`tl.model:TLClass#generalizations\`)` → Elternklassen
-- `$nodes.indexBy(n -> $n["userObject"])` → Klasse→Box-Mapping für Kanten
+- `$nodes.indexBy(n -> $n["userObject"].get(\`tl.model:TLNamedPart#name\`))` → Name→Box-Mapping
 
 #### Layout
 - Links: Modul-Tabelle (20%)
 - Rechts oben: Klassendiagramm via `reactFlowGraphLayout` (75%)
 - Rechts unten: Typ-Details-Formular (25%)
+
+### Phase 2c: Layout-Engine-Fixes
+
+#### Viewport & Panning
+- Container `overflow: hidden` verhindert Browser-Scrollbar
+- Container `draggable="true"` aktiviert HTML5-Drag für Pan-by-Drag
+- Initialer ViewBox fittet Diagramm-Inhalt mit Seitenverhältnis-Erhalt
+- Initialer Zoom auf max 100% begrenzt (kleine Diagramme nicht vergrößert)
+- Resize-Observer überspringt Server-Updates via `_resizing`-Flag (kein Loop)
+- `destroy()` räumt SVG + Zoom-Display auf (kein Stacking bei Modulwechsel)
+
+#### Sugiyama-Integration
+- **Negative Koordinaten**: Shift aller Nodes/Waypoints so dass min(x,y) >= 0
+- **Edge-Inversion**: `DecorationAwarePortCoordinateAssigner` und `computeTotalPortWidth()` berücksichtigen `isReversed()` via XOR
+- **NodeSizer exakt**: Port-Breiten im NodeSizer-Lambda direkt aus `n.outgoingEdges()`/`n.incomingEdges()` berechnet (nach Zyklenumkehr), identisch zur Port-Assigner-Logik
+
+#### Text-Metrik
+- `RenderContext.measure()` hat jetzt `fontWeight`-Parameter
+- `AWTContext`: `Font.BOLD` für Bold-Messung
+- `JSRenderContext`: `"bold 14px Arial"` als Canvas-Font
+- `TextOperations.computeIntrinsicSize()` reicht `fontWeight` durch
 
 ## Offene Gaps (Phase 1)
 
@@ -167,7 +193,6 @@
 
 ## Nächste Schritte
 
-- Laufzeit-Test: Demo-App starten, verschiedene Module auswählen, Diagramm prüfen
-- Enumerationen als Nodes (mit «enumeration»-Stereotyp + Literale)
 - TLAssociation-Kanten die nicht als TLReference sichtbar sind
 - Navigierbare Kanten zu Typen in anderen Modulen (Cross-Modul-Referenzen)
+- Tabellen-Spalten einschränken (TableConfigurationProvider-Syntax klären)

@@ -1505,13 +1505,17 @@ public class FlowFactory extends TLScriptFunctions {
 			@StringDefault("black") String strokeStyle,
 			@DoubleDefault(1) double thickness,
 			List<Double> dashes,
-			List<? extends EdgeDecoration> decorations) {
+			List<? extends EdgeDecoration> decorations,
+			Object userObject) {
 		GraphEdge edge = GraphEdge.create()
 			.setSource(source)
 			.setTarget(target)
 			.setPriority(priority)
 			.setStrokeStyle(strokeStyle)
 			.setThickness(thickness);
+		if (userObject != null) {
+			edge.setUserObject(userObject);
+		}
 		if (sourceSymbol != null) {
 			edge.setSourceSymbol(sourceSymbol);
 		}

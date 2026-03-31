@@ -16,7 +16,7 @@ import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
-import com.top_logic.react.flow.data.SelectableBox;
+import com.top_logic.react.flow.data.Widget;
 
 /**
  * Custom operations for {@link Diagram} elements.
@@ -72,8 +72,8 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 		if (event.isShiftKey() || event.isCtrlKey()) {
 			// Ignore.
 		} else {
-			for (SelectableBox selected : self().getSelection()) {
-				selected.setSelected(false);
+			for (Widget selected : self().getSelection()) {
+				SelectionUtil.setSelected(selected, false);
 			}
 			self().setSelection(Collections.emptyList());
 		}

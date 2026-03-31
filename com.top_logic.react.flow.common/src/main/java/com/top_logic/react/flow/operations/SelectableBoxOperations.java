@@ -16,6 +16,7 @@ import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.SelectableBox;
+import com.top_logic.react.flow.data.Widget;
 
 import de.haumacher.msgbuf.graph.AbstractSharedGraphNode;
 
@@ -84,18 +85,17 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 		Diagram diagram = self().getDiagram();
 		if (self().isSelected()) {
 			if (event.isCtrlKey()) {
-				// Toggle
+				// Toggle off.
 				diagram.getSelection().remove(self());
 				self().setSelected(false);
 			} else if (event.isShiftKey()) {
 				// Ignore.
 			} else {
 				// Make unique.
-				for (SelectableBox selected : diagram.getSelection()) {
-					if (selected == self()) {
-						continue;
+				for (Widget selected : diagram.getSelection()) {
+					if (selected != self()) {
+						SelectionUtil.setSelected(selected, false);
 					}
-					selected.setSelected(false);
 				}
 				diagram.setSelection(Collections.singletonList(self()));
 			}
@@ -104,11 +104,8 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 				diagram.getSelection().add(self());
 			} else {
 				// Make unique.
-				for (SelectableBox selected : diagram.getSelection()) {
-					if (selected == self()) {
-						continue;
-					}
-					selected.setSelected(false);
+				for (Widget selected : diagram.getSelection()) {
+					SelectionUtil.setSelected(selected, false);
 				}
 				diagram.setSelection(Collections.singletonList(self()));
 			}

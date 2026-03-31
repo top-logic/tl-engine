@@ -5,23 +5,41 @@
  */
 package com.top_logic.react.flow.operations;
 
+import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.shared.string.StringServicesShared;
+import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ConnectorSymbol;
+import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.EdgeDecoration;
 import com.top_logic.react.flow.data.GraphEdge;
 import com.top_logic.react.flow.data.GraphWaypoint;
 import com.top_logic.react.flow.data.OffsetPosition;
+import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.SvgWriter;
+import com.top_logic.react.flow.svg.event.MouseButton;
+import com.top_logic.react.flow.svg.event.Registration;
+import com.top_logic.react.flow.svg.event.SVGClickEvent;
+import com.top_logic.react.flow.svg.event.SVGClickHandler;
 
 /**
  * Operations for a {@link GraphEdge}.
+ *
+ * <p>
+ * When a {@link GraphEdge#getUserObject() userObject} is set, the edge becomes selectable: a wider
+ * invisible click target is drawn along the polyline, and clicking it updates the
+ * {@link Diagram#getSelection() diagram selection}.
+ * </p>
  */
-public interface GraphEdgeOperations extends WidgetOperations {
+public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 
 	@Override
 	GraphEdge self();
+
+	/** Minimum click target width in pixels for edge selection. */
+	static final double CLICK_TARGET_WIDTH = 10;
 
 	@Override
 	default void draw(SvgWriter out) {
@@ -35,8 +53,26 @@ public interface GraphEdgeOperations extends WidgetOperations {
 		double thickness = self().getThickness();
 		String strokeStyle = self().getStrokeStyle();
 		double scale = thickness / 2;
+		boolean selectable = self().getUserObject() != null;
+
+		// Cancel previous click handler.
+		Registration clickHandler = self().getClickHandler();
+		if (clickHandler != null) {
+			clickHandler.cancel();
+		}
 
 		out.beginGroup(self());
+
+		if (selectable) {
+			String cssClass = self().isSelected()
+				? SelectableBoxOperations.TL_SELECTED
+				: SelectableBoxOperations.TL_CAN_SELECT;
+			if (!StringServicesShared.isEmpty(self().getCssClass())) {
+				cssClass += " " + self().getCssClass();
+			}
+			out.writeCssClass(cssClass);
+			self().setClickHandler(out.attachOnClick(this, self()));
+		}
 
 		// Draw the polyline path, shortened by symbol insets at both ends.
 		out.beginPath();
@@ -89,9 +125,70 @@ public interface GraphEdgeOperations extends WidgetOperations {
 				targetSymbol, strokeStyle, thickness);
 		}
 
+		// Draw invisible wider click target for easier edge selection.
+		if (selectable) {
+			out.beginPath();
+			out.setStrokeWidth(Math.max(CLICK_TARGET_WIDTH, thickness));
+			out.setStroke("transparent");
+			out.setFill("none");
+			out.beginData();
+			{
+				GraphWaypoint first = waypoints.get(0);
+				out.moveToAbs(first.getX(), first.getY());
+				for (int n = 1; n < waypoints.size(); n++) {
+					GraphWaypoint wp = waypoints.get(n);
+					out.lineToAbs(wp.getX(), wp.getY());
+				}
+			}
+			out.endData();
+			out.endPath();
+		}
+
 		drawDecorations(out, waypoints);
 
 		out.endGroup();
+	}
+
+	@Override
+	default void onClick(SVGClickEvent event) {
+		if (!event.getButton(MouseButton.LEFT)) {
+			return;
+		}
+
+		// Navigate to the Diagram via the source node (GraphEdge is not in the Box hierarchy).
+		Box source = self().getSource();
+		if (source == null) {
+			return;
+		}
+		Diagram diagram = source.getDiagram();
+		if (diagram == null) {
+			return;
+		}
+
+		if (self().isSelected()) {
+			if (event.isCtrlKey()) {
+				diagram.getSelection().remove(self());
+				self().setSelected(false);
+			} else if (!event.isShiftKey()) {
+				for (Widget selected : diagram.getSelection()) {
+					if (selected != self()) {
+						SelectionUtil.setSelected(selected, false);
+					}
+				}
+				diagram.setSelection(Collections.singletonList(self()));
+			}
+		} else {
+			if (diagram.isMultiSelect() && (event.isShiftKey() || event.isCtrlKey())) {
+				diagram.getSelection().add(self());
+			} else {
+				for (Widget selected : diagram.getSelection()) {
+					SelectionUtil.setSelected(selected, false);
+				}
+				diagram.setSelection(Collections.singletonList(self()));
+			}
+			self().setSelected(true);
+		}
+		event.stopPropagation();
 	}
 
 	/**

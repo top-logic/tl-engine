@@ -8,6 +8,8 @@
 	display: none;
 }
 
-/* Color-change selection for graph nodes. CSS overrides SVG presentation attributes. */
+/* Color-change selection for graph nodes and edges. CSS overrides SVG presentation attributes. */
 .tlSelected .tlSelectionStroke { stroke: var(--focus); stroke-width: 2; }
 .tlSelected .tlSelectionFill { fill: var(--layer-selected); }
+/* Edge selection: highlight the visible edge stroke (not the transparent click target). */
+g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--focus); stroke-width: 2; }

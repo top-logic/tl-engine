@@ -31,6 +31,7 @@ import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.SelectableBox;
+import com.top_logic.react.flow.operations.SelectionUtil;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.server.handler.DiagramContextMenuProviderSPI;
 import com.top_logic.react.flow.server.handler.ServerDropHandler;
@@ -337,8 +338,7 @@ public class FlowDiagramControl extends ReactControl {
 		}
 
 		List<Object> selectedUserObjects = _diagram.getSelection().stream()
-			.filter(w -> w instanceof SelectableBox)
-			.filter(w -> ((SelectableBox) w).isSelected())
+			.filter(w -> SelectionUtil.isSelected(w))
 			.map(Widget::getUserObject)
 			.filter(Objects::nonNull)
 			.toList();

@@ -193,6 +193,9 @@ message GraphEdge extends Widget {
 	/** Decorations placed on the edge (arrow heads, diamonds, labels). */
 	repeated EdgeDecoration decorations;
 
+	/** Whether this edge can be interactively selected by the user. */
+	bool selectable;
+
 	/** Whether this edge is currently selected. */
 	bool selected;
 

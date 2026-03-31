@@ -47,6 +47,9 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	/** @see #getDecorations() */
 	String DECORATIONS__PROP = "decorations";
 
+	/** @see #isSelectable() */
+	String SELECTABLE__PROP = "selectable";
+
 	/** @see #isSelected() */
 	String SELECTED__PROP = "selected";
 
@@ -194,6 +197,16 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	 * Removes a value from the {@link #getDecorations()} list.
 	 */
 	void removeDecoration(com.top_logic.react.flow.data.EdgeDecoration value);
+
+	/**
+	 * Whether this edge can be interactively selected by the user.
+	 */
+	boolean isSelectable();
+
+	/**
+	 * @see #isSelectable()
+	 */
+	com.top_logic.react.flow.data.GraphEdge setSelectable(boolean value);
 
 	/**
 	 * Whether this edge is currently selected.

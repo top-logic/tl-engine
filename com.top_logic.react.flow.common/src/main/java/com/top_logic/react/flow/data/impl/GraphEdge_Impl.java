@@ -70,6 +70,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		}
 	};
 
+	private boolean _selectable = false;
+
 	private boolean _selected = false;
 
 	private transient com.top_logic.react.flow.svg.event.Registration _clickHandler = null;
@@ -328,6 +330,24 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public final boolean isSelectable() {
+		return _selectable;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GraphEdge setSelectable(boolean value) {
+		internalSetSelectable(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isSelectable()} without chain call utility. */
+	protected final void internalSetSelectable(boolean value) {
+		_listener.beforeSet(this, SELECTABLE__PROP, value);
+		_selectable = value;
+		_listener.afterChanged(this, SELECTABLE__PROP);
+	}
+
+	@Override
 	public final boolean isSelected() {
 		return _selected;
 	}
@@ -411,6 +431,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			THICKNESS__PROP, 
 			DASHES__PROP, 
 			DECORATIONS__PROP, 
+			SELECTABLE__PROP, 
 			SELECTED__PROP, 
 			CLICK_HANDLER__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
@@ -452,6 +473,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			case THICKNESS__PROP: return getThickness();
 			case DASHES__PROP: return getDashes();
 			case DECORATIONS__PROP: return getDecorations();
+			case SELECTABLE__PROP: return isSelectable();
 			case SELECTED__PROP: return isSelected();
 			case CLICK_HANDLER__PROP: return getClickHandler();
 			default: return super.get(field);
@@ -471,6 +493,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
 			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 			case DECORATIONS__PROP: internalSetDecorations(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.EdgeDecoration.class, value)); break;
+			case SELECTABLE__PROP: internalSetSelectable((boolean) value); break;
 			case SELECTED__PROP: internalSetSelected((boolean) value); break;
 			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.react.flow.svg.event.Registration) value); break;
 			default: super.set(field, value); break;
@@ -516,6 +539,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			x.writeTo(scope, out);
 		}
 		out.endArray();
+		out.name(SELECTABLE__PROP);
+		out.value(isSelectable());
 		out.name(SELECTED__PROP);
 		out.value(isSelected());
 	}
@@ -583,6 +608,10 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 				out.endArray();
 				break;
 			}
+			case SELECTABLE__PROP: {
+				out.value(isSelectable());
+				break;
+			}
 			case SELECTED__PROP: {
 				out.value(isSelected());
 				break;
@@ -638,6 +667,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 				setDecorations(newValue);
 			}
 			break;
+			case SELECTABLE__PROP: setSelectable(in.nextBoolean()); break;
 			case SELECTED__PROP: setSelected(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}

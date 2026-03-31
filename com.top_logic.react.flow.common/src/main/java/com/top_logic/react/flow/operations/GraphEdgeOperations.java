@@ -53,7 +53,7 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 		double thickness = self().getThickness();
 		String strokeStyle = self().getStrokeStyle();
 		double scale = thickness / 2;
-		boolean selectable = self().getUserObject() != null;
+		boolean selectable = self().isSelectable();
 
 		// Cancel previous click handler.
 		Registration clickHandler = self().getClickHandler();

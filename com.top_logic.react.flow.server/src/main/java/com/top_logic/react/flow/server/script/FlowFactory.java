@@ -1515,6 +1515,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setThickness(thickness);
 		if (userObject != null) {
 			edge.setUserObject(userObject);
+			edge.setSelectable(true);
 		}
 		if (sourceSymbol != null) {
 			edge.setSourceSymbol(sourceSymbol);

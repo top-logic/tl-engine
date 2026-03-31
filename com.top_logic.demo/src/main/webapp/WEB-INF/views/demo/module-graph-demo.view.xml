@@ -137,7 +137,8 @@
 								linePosition: 0.0),
 							reactFlowDecoration(
 								reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
-								linePosition: 1.0)))
+								linePosition: 1.0)),
+						userObject: $p)
 					: reactFlowGraphEdge(
 						$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
 						$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
@@ -146,7 +147,8 @@
 						decorations: list(
 							reactFlowDecoration(
 								reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
-								linePosition: 1.0)))
+								linePosition: 1.0)),
+						userObject: $p)
 			}))
 		.flatten();
 

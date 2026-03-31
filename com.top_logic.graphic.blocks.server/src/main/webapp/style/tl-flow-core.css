@@ -9,5 +9,5 @@
 }
 
 /* Color-change selection for graph nodes. CSS overrides SVG presentation attributes. */
-.tlSelected .tlNodeBorder { stroke: #2266cc; stroke-width: 2; }
-.tlSelected .tlNodeFill { fill: #e8f0ff; }
+.tlSelected .tlSelectionStroke { stroke: var(--focus); stroke-width: 2; }
+.tlSelected .tlSelectionFill { fill: var(--layer-selected); }

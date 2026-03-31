@@ -70,40 +70,7 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 
 		int portScale = com.top_logic.graph.layouter.GraphConstants.SCALE;
 
-		// Step 2: Compute total port allocation width per node.
-		// Each port needs max(SCALE, decorWidth + SCALE) — sum these per node to match
-		// the actual allocation in DecorationAwarePortCoordinateAssigner.
-		Map<Box, Double> totalOutgoingPortWidth = new HashMap<>();
-		Map<Box, Double> totalIncomingPortWidth = new HashMap<>();
-
-		for (GraphEdge edge : edges) {
-			Box source = edge.getSource();
-			Box target = edge.getTarget();
-
-			double sourcePortWidth = Math.max(portScale, symbolInset(edge.getSourceSymbol(), edge.getThickness()) + portScale);
-			double targetPortWidth = Math.max(portScale, symbolInset(edge.getTargetSymbol(), edge.getThickness()) + portScale);
-
-			for (EdgeDecoration decoration : edge.getDecorations()) {
-				if (decoration.getContent() == null) {
-					continue;
-				}
-				double decorWidth = decoration.getContent().getWidth();
-				if (decoration.getLinePosition() <= 0.1) {
-					sourcePortWidth = Math.max(sourcePortWidth, decorWidth + portScale);
-				} else if (decoration.getLinePosition() >= 0.9) {
-					targetPortWidth = Math.max(targetPortWidth, decorWidth + portScale);
-				}
-			}
-
-			if (source != null) {
-				totalOutgoingPortWidth.merge(source, sourcePortWidth, Double::sum);
-			}
-			if (target != null) {
-				totalIncomingPortWidth.merge(target, targetPortWidth, Double::sum);
-			}
-		}
-
-		// Step 3: Build a LayoutGraph from the widget nodes and edges.
+		// Step 2: Build a LayoutGraph from the widget nodes and edges.
 		LayoutGraph graph = new LayoutGraph();
 		Map<Box, LayoutNode> nodeMap = new HashMap<>();
 
@@ -134,28 +101,28 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 			layoutEdge.setPriority(edge.getPriority());
 		}
 
-		// Step 4: Create a NodeSizer that accounts for port count and decoration widths.
-		// Each port needs SCALE pixels of horizontal space, plus room for the widest decoration.
+		// Step 3: Create a NodeSizer that computes port widths from the LayoutNode's
+		// actual edges. This runs INSIDE Sugiyama, after cycle breaking has reversed
+		// edges, so isReversed() correctly reflects the current direction.
 		NodeSizer sizer = new NodeSizer(
 			n -> {
-				Box box = (Box) n.getUserObject();
 				double intrinsic = n.getWidth();
 
-				double outWidth = totalOutgoingPortWidth.getOrDefault(box, 0.0);
-				double inWidth = totalIncomingPortWidth.getOrDefault(box, 0.0);
+				double outWidth = computeTotalPortWidth(n.outgoingEdges(), true, portScale);
+				double inWidth = computeTotalPortWidth(n.incomingEdges(), false, portScale);
 
 				return Math.max(intrinsic, Math.max(outWidth, inWidth));
 			},
 			n -> n.getHeight()
 		);
 
-		// Step 5: Create LayoutContext with vertical top-to-bottom direction.
+		// Step 4: Create LayoutContext with vertical top-to-bottom direction.
 		LayoutContext layoutContext = new LayoutContext(LayoutDirection.VERTICAL_FROM_SOURCE);
 
-		// Step 6: Run the Sugiyama layout algorithm.
+		// Step 5: Run the Sugiyama layout algorithm.
 		Sugiyama.INSTANCE.layout(layoutContext, graph, sizer, DecorationAwarePortCoordinateAssigner.INSTANCE);
 
-		// Step 7: Find coordinate extent (Sugiyama may produce negative coordinates).
+		// Step 6: Find coordinate extent (Sugiyama may produce negative coordinates).
 		double minX = Double.MAX_VALUE;
 		double minY = Double.MAX_VALUE;
 		double maxX = 0;
@@ -184,7 +151,7 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 		double shiftX = minX < 0 ? -minX : 0;
 		double shiftY = minY < 0 ? -minY : 0;
 
-		// Step 8: Map layout results back to widget nodes (shifted).
+		// Step 7: Map layout results back to widget nodes (shifted).
 		for (Box node : nodes) {
 			LayoutNode layoutNode = nodeMap.get(node);
 			double nodeX = layoutNode.getX() + shiftX;
@@ -200,7 +167,7 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 			node.distributeSize(context, nodeX, nodeY, finalWidth, finalHeight);
 		}
 
-		// Step 9: Map edge waypoints from LayoutEdge to GraphEdge (shifted).
+		// Step 8: Map edge waypoints from LayoutEdge to GraphEdge (shifted).
 		for (LayoutNode layoutNode : graph.nodes()) {
 			for (LayoutEdge layoutEdge : layoutNode.outgoingEdges()) {
 				Object businessObject = layoutEdge.getBusinessObject();
@@ -220,9 +187,43 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 			}
 		}
 
-		// Step 10: Set bounding box on self.
+		// Step 9: Set bounding box on self.
 		self().setWidth(maxX + shiftX);
 		self().setHeight(maxY + shiftY);
+	}
+
+	/**
+	 * Computes the total port allocation width for a set of edges on one side of a node.
+	 * Mirrors the per-port width logic in {@link DecorationAwarePortCoordinateAssigner}.
+	 */
+	private static double computeTotalPortWidth(Iterable<LayoutEdge> edges, boolean outgoing, int portScale) {
+		double total = 0;
+		for (LayoutEdge edge : edges) {
+			Object bo = edge.getBusinessObject();
+			if (!(bo instanceof GraphEdge)) {
+				total += portScale;
+				continue;
+			}
+
+			GraphEdge graphEdge = (GraphEdge) bo;
+			boolean isSource = outgoing ^ edge.isReversed();
+
+			ConnectorSymbol symbol = isSource ? graphEdge.getSourceSymbol() : graphEdge.getTargetSymbol();
+			double width = ConnectorSymbolRenderer.inset(symbol, graphEdge.getThickness() / 2);
+
+			for (EdgeDecoration decoration : graphEdge.getDecorations()) {
+				if (decoration.getContent() == null) {
+					continue;
+				}
+				double lp = decoration.getLinePosition();
+				if ((isSource && lp <= 0.1) || (!isSource && lp >= 0.9)) {
+					width = Math.max(width, decoration.getContent().getWidth());
+				}
+			}
+
+			total += Math.max(portScale, width + portScale);
+		}
+		return total;
 	}
 
 	/**

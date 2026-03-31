@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.Set;
+
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -164,4 +166,42 @@ public interface ViewContext extends ReactContext {
 	 *         if no channel with the referenced name exists.
 	 */
 	ViewChannel resolveChannel(ChannelRef ref);
+
+	/**
+	 * Registers a listener that is notified when view files change.
+	 *
+	 * <p>
+	 * Listeners are always registered at the root context. Child contexts delegate registration
+	 * upward so that a single {@link #fireViewChanged(Set)} call reaches all listeners in the
+	 * hierarchy.
+	 * </p>
+	 *
+	 * @param listener
+	 *        The listener to register.
+	 *
+	 * @see #removeViewReloadListener(ViewReloadListener)
+	 * @see #fireViewChanged(Set)
+	 */
+	void addViewReloadListener(ViewReloadListener listener);
+
+	/**
+	 * Removes a previously registered {@link ViewReloadListener}.
+	 *
+	 * @param listener
+	 *        The listener to remove.
+	 */
+	void removeViewReloadListener(ViewReloadListener listener);
+
+	/**
+	 * Notifies all registered {@link ViewReloadListener}s that the given view files have changed.
+	 *
+	 * <p>
+	 * Called by the designer's save command after writing modified {@code .view.xml} files to disk.
+	 * Child contexts delegate this call to the root context.
+	 * </p>
+	 *
+	 * @param changedPaths
+	 *        The set of changed view file paths.
+	 */
+	void fireViewChanged(Set<String> changedPaths);
 }

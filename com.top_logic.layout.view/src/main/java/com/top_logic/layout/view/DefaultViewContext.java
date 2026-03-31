@@ -5,8 +5,11 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
@@ -41,6 +44,8 @@ public class DefaultViewContext implements ViewContext {
 
 	private FormModel _formModel;
 
+	private final List<ViewReloadListener> _reloadListeners;
+
 	private DirtyChannel _dirtyChannel;
 
 	/**
@@ -51,12 +56,20 @@ public class DefaultViewContext implements ViewContext {
 	 *        infrastructure.
 	 */
 	public DefaultViewContext(ReactContext reactContext) {
-		this(reactContext, "view", new HashMap<>(), null, null, null, null);
+		this(reactContext, "view", new HashMap<>(), null, null, null, null,
+			resolveReloadListeners(reactContext));
+	}
+
+	private static List<ViewReloadListener> resolveReloadListeners(ReactContext reactContext) {
+		if (reactContext instanceof DefaultViewContext dvc) {
+			return dvc._reloadListeners;
+		}
+		return new ArrayList<>();
 	}
 
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
 			Map<String, ViewChannel> channels, CommandScope commandScope, FormModel formModel,
-			ErrorSink errorSink, DirtyChannel dirtyChannel) {
+			ErrorSink errorSink, DirtyChannel dirtyChannel, List<ViewReloadListener> reloadListeners) {
 		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
@@ -64,12 +77,13 @@ public class DefaultViewContext implements ViewContext {
 		_formModel = formModel;
 		_errorSink = errorSink;
 		_dirtyChannel = dirtyChannel;
+		_reloadListeners = reloadListeners;
 	}
 
 	@Override
 	public ViewContext childContext(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels, _commandScope,
-			_formModel, _errorSink, _dirtyChannel);
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners);
 	}
 
 	@Override
@@ -105,13 +119,13 @@ public class DefaultViewContext implements ViewContext {
 	@Override
 	public ViewContext withCommandScope(CommandScope scope) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formModel, _errorSink,
-			_dirtyChannel);
+			_dirtyChannel, _reloadListeners);
 	}
 
 	@Override
 	public ViewContext withErrorSink(ErrorSink errorSink) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
-			_commandScope, _formModel, errorSink, _dirtyChannel);
+			_commandScope, _formModel, errorSink, _dirtyChannel, _reloadListeners);
 	}
 
 	@Override
@@ -172,5 +186,22 @@ public class DefaultViewContext implements ViewContext {
 	@Override
 	public com.top_logic.model.listen.ModelScope getModelScope() {
 		return _reactContext.getModelScope();
+	}
+
+	@Override
+	public void addViewReloadListener(ViewReloadListener listener) {
+		_reloadListeners.add(listener);
+	}
+
+	@Override
+	public void removeViewReloadListener(ViewReloadListener listener) {
+		_reloadListeners.remove(listener);
+	}
+
+	@Override
+	public void fireViewChanged(Set<String> changedPaths) {
+		for (ViewReloadListener listener : List.copyOf(_reloadListeners)) {
+			listener.viewChanged(changedPaths);
+		}
 	}
 }

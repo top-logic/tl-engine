@@ -34,14 +34,19 @@
 										<input channel="selectedModule" />
 									</inputs>
 									<createChart><![CDATA[module -> {
-	classes = $module == null
-		? list()
-		: $module.get(`tl.model:TLModule#types`)
-			.filter(t -> $t.instanceOf(`tl.model:TLClass`));
+	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`);
+	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));
+	enums = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLEnumeration`));
+	classNameSet = $classes.indexBy(c -> $c.get(`tl.model:TLNamedPart#name`));
 
-	nodes = $classes.map(c -> {
+	classNodes = $classes.map(c -> {
 		props = $c.get(`tl.model:TLStructuredType#localParts`)
 			.filter(p -> $p.instanceOf(`tl.model:TLProperty`));
+		allGens = $c.get(`tl.model:TLClass#generalizations`);
+		externalGens = $allGens
+			.filter(g -> $classNameSet[$g.get(`tl.model:TLNamedPart#name`)] == null)
+			.map(g -> $g.get(`tl.model:TLType#module`).get(`tl.model:TLNamedPart#name`)
+				+ ":" + $g.get(`tl.model:TLNamedPart#name`));
 
 		reactFlowSelection(userObject: $c,
 			content: reactFlowBorder(
@@ -52,7 +57,9 @@
 								$c.get(`tl.model:TLClass#abstract`)
 									? reactFlowText("\u00ABabstract\u00BB", fontSize: 10, strokeStyle: "#888")
 									: reactFlowEmpty(),
-								reactFlowText($c.get(`tl.model:TLNamedPart#name`), fontWeight: "bold")
+								reactFlowText($c.get(`tl.model:TLNamedPart#name`), fontWeight: "bold"),
+								$externalGens.isEmpty() ? reactFlowEmpty()
+									: reactFlowText("extends " + $externalGens.toString(), fontSize: 9, strokeStyle: "#888")
 							])
 						)),
 						$props.isEmpty() ? reactFlowEmpty()
@@ -67,19 +74,43 @@
 					]))))
 	});
 
-	nodeByClass = $nodes.indexBy(n -> $n["userObject"]);
+	enumNodes = $enums.map(e -> {
+		classifiers = $e.get(`tl.model:TLEnumeration#classifiers`);
+
+		reactFlowSelection(userObject: $e,
+			content: reactFlowBorder(
+				content: reactFlowFill(fill: "#FFFFF0",
+					content: reactFlowVertical(gap: 0, contents: [
+						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
+							content: reactFlowVertical(gap: 2, contents: [
+								reactFlowText("\u00ABenumeration\u00BB", fontSize: 10, strokeStyle: "#888"),
+								reactFlowText($e.get(`tl.model:TLNamedPart#name`), fontWeight: "bold")
+							])
+						)),
+						$classifiers.isEmpty() ? reactFlowEmpty()
+							: reactFlowBorder(top: true, left: false, right: false, bottom: false,
+								content: reactFlowPadding(all: 6,
+									content: reactFlowVertical(gap: 2, contents: $classifiers.map(cl ->
+										reactFlowText($cl.get(`tl.model:TLNamedPart#name`), fontSize: 11)))))
+					]))))
+	});
+
+	nodes = list($classNodes, $enumNodes).flatten();
+	nodeByName = $nodes.indexBy(n -> $n["userObject"].get(`tl.model:TLNamedPart#name`));
 
 	genEdges = $classes
 		.map(c -> $c.get(`tl.model:TLClass#generalizations`)
-			.filter(g -> $nodeByClass[$g] != null)
-			.map(g -> reactFlowGraphEdge($nodeByClass[$c], $nodeByClass[$g],
+			.filter(g -> $nodeByName[$g.get(`tl.model:TLNamedPart#name`)] != null)
+			.map(g -> reactFlowGraphEdge(
+				$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
+				$nodeByName[$g.get(`tl.model:TLNamedPart#name`)],
 				priority: 3, targetSymbol: "FILLED_ARROW")))
 		.flatten();
 
 	refEdges = $classes
 		.map(c -> $c.get(`tl.model:TLStructuredType#localParts`)
 			.filter(p -> $p.instanceOf(`tl.model:TLReference`))
-			.filter(p -> $nodeByClass[$p.get(`tl.model:TLStructuredTypePart#type`)] != null)
+			.filter(p -> $nodeByName[$p.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`)] != null)
 			.map(p -> {
 				targetType = $p.get(`tl.model:TLStructuredTypePart#type`);
 				refName = $p.get(`tl.model:TLNamedPart#name`);
@@ -89,7 +120,9 @@
 				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
 
 				$composite
-					? reactFlowGraphEdge($nodeByClass[$c], $nodeByClass[$targetType],
+					? reactFlowGraphEdge(
+						$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
+						$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
 						priority: 2,
 						sourceSymbol: "FILLED_DIAMOND",
 						decorations: list(
@@ -99,7 +132,9 @@
 							reactFlowDecoration(
 								reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
 								linePosition: 1.0)))
-					: reactFlowGraphEdge($nodeByClass[$c], $nodeByClass[$targetType],
+					: reactFlowGraphEdge(
+						$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
+						$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
 						priority: 1,
 						targetSymbol: "ARROW",
 						decorations: list(
@@ -109,7 +144,7 @@
 			}))
 		.flatten();
 
-	$classes.isEmpty()
+	$nodes.isEmpty()
 		? reactFlowChart()
 		: reactFlowChart(
 			root: reactFlowPadding(all: 20,

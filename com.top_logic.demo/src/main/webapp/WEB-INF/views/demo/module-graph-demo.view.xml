@@ -65,14 +65,15 @@
 						$props.isEmpty() ? reactFlowEmpty()
 							: reactFlowBorder(top: true, left: false, right: false, bottom: false,
 								content: reactFlowPadding(all: 6,
-									content: reactFlowVertical(gap: 2, contents: $props.map(a ->
+									content: reactFlowVertical(gap: 0, contents: $props.map(a ->
 										reactFlowSelection(userObject: $a,
-											content: reactFlowFill(cssClass: "tlSelectionFill",
-												content: reactFlowText(
-													$a.get(`tl.model:TLNamedPart#name`)
-														+ " : "
-														+ $a.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`),
-													fontSize: 11)))))))
+											content: reactFlowFill(fill: "transparent", cssClass: "tlSelectionFill",
+												content: reactFlowPadding(top: 1, bottom: 1,
+													content: reactFlowText(
+														$a.get(`tl.model:TLNamedPart#name`)
+															+ " : "
+															+ $a.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`),
+														fontSize: 11))))))))
 					]))))
 	});
 
@@ -92,10 +93,11 @@
 						$classifiers.isEmpty() ? reactFlowEmpty()
 							: reactFlowBorder(top: true, left: false, right: false, bottom: false,
 								content: reactFlowPadding(all: 6,
-									content: reactFlowVertical(gap: 2, contents: $classifiers.map(cl ->
+									content: reactFlowVertical(gap: 0, contents: $classifiers.map(cl ->
 										reactFlowSelection(userObject: $cl,
-											content: reactFlowFill(cssClass: "tlSelectionFill",
-												content: reactFlowText($cl.get(`tl.model:TLNamedPart#name`), fontSize: 11)))))))
+											content: reactFlowFill(fill: "transparent", cssClass: "tlSelectionFill",
+												content: reactFlowPadding(top: 1, bottom: 1,
+													content: reactFlowText($cl.get(`tl.model:TLNamedPart#name`), fontSize: 11))))))))
 					]))))
 	});
 

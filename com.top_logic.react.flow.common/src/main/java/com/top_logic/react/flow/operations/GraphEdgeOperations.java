@@ -126,8 +126,11 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 		}
 
 		// Draw invisible wider click target for easier edge selection.
+		// pointer-events:all is required because transparent strokes are not "visible"
+		// and SVG's default pointer-events:visiblePainted would ignore them.
 		if (selectable) {
 			out.beginPath();
+			out.writeAttribute("pointer-events", "all");
 			out.setStrokeWidth(Math.max(CLICK_TARGET_WIDTH, thickness));
 			out.setStroke("transparent");
 			out.setFill("none");

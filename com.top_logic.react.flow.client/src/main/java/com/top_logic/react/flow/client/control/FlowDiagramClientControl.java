@@ -225,6 +225,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_svg.setId(svgId);
 		_svg.setAttribute("width", "100%");
 		_svg.setAttribute("height", "100%");
+		// Override the grab cursor inherited from draggable="true" on the container.
+		_svg.setAttribute("style", "cursor: default");
 		_control.appendChild(Js.cast(_svg.getElement()));
 
 		// Enable HTML5 drag events on the container for pan-by-drag.

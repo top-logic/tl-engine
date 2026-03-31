@@ -49,8 +49,9 @@
 				+ ":" + $g.get(`tl.model:TLNamedPart#name`));
 
 		reactFlowSelection(userObject: $c,
-			content: reactFlowBorder(cssClass: "tlSelectionMarker",
-				content: reactFlowFill(fill: "white", cssClass: "tlSelectionMarker",
+			content: reactFlowBorder(stroke: "#2266cc", thickness: 3, cssClass: "tlSelectionMarker",
+				content: reactFlowBorder(
+					content: reactFlowFill(fill: "white",
 					content: reactFlowVertical(gap: 0, contents: [
 						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
 							content: reactFlowVertical(gap: 2, contents: [
@@ -71,28 +72,29 @@
 												+ " : "
 												+ $a.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`),
 											fontSize: 11)))))
-					]))))
+					])))))
 	});
 
 	enumNodes = $enums.map(e -> {
 		classifiers = $e.get(`tl.model:TLEnumeration#classifiers`);
 
 		reactFlowSelection(userObject: $e,
-			content: reactFlowBorder(cssClass: "tlSelectionMarker",
-				content: reactFlowFill(fill: "#FFFFF0", cssClass: "tlSelectionMarker",
-					content: reactFlowVertical(gap: 0, contents: [
-						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
-							content: reactFlowVertical(gap: 2, contents: [
-								reactFlowText("\u00ABenumeration\u00BB", fontSize: 10, fillStyle: "#888"),
-								reactFlowText($e.get(`tl.model:TLNamedPart#name`), fontWeight: "bold")
-							])
-						)),
-						$classifiers.isEmpty() ? reactFlowEmpty()
-							: reactFlowBorder(top: true, left: false, right: false, bottom: false,
-								content: reactFlowPadding(all: 6,
-									content: reactFlowVertical(gap: 2, contents: $classifiers.map(cl ->
-										reactFlowText($cl.get(`tl.model:TLNamedPart#name`), fontSize: 11)))))
-					]))))
+			content: reactFlowBorder(stroke: "#2266cc", thickness: 3, cssClass: "tlSelectionMarker",
+				content: reactFlowBorder(
+					content: reactFlowFill(fill: "#FFFFF0",
+						content: reactFlowVertical(gap: 0, contents: [
+							reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
+								content: reactFlowVertical(gap: 2, contents: [
+									reactFlowText("\u00ABenumeration\u00BB", fontSize: 10, fillStyle: "#888"),
+									reactFlowText($e.get(`tl.model:TLNamedPart#name`), fontWeight: "bold")
+								])
+							)),
+							$classifiers.isEmpty() ? reactFlowEmpty()
+								: reactFlowBorder(top: true, left: false, right: false, bottom: false,
+									content: reactFlowPadding(all: 6,
+										content: reactFlowVertical(gap: 2, contents: $classifiers.map(cl ->
+											reactFlowText($cl.get(`tl.model:TLNamedPart#name`), fontSize: 11)))))
+						])))))
 	});
 
 	nodes = list($classNodes, $enumNodes).flatten();

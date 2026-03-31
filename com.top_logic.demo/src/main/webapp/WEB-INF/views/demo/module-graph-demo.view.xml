@@ -49,8 +49,8 @@
 				+ ":" + $g.get(`tl.model:TLNamedPart#name`));
 
 		reactFlowSelection(userObject: $c,
-			content: reactFlowBorder(
-				content: reactFlowFill(fill: "white",
+			content: reactFlowBorder(cssClass: "tlSelectionMarker",
+				content: reactFlowFill(fill: "white", cssClass: "tlSelectionMarker",
 					content: reactFlowVertical(gap: 0, contents: [
 						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
 							content: reactFlowVertical(gap: 2, contents: [
@@ -78,8 +78,8 @@
 		classifiers = $e.get(`tl.model:TLEnumeration#classifiers`);
 
 		reactFlowSelection(userObject: $e,
-			content: reactFlowBorder(
-				content: reactFlowFill(fill: "#FFFFF0",
+			content: reactFlowBorder(cssClass: "tlSelectionMarker",
+				content: reactFlowFill(fill: "#FFFFF0", cssClass: "tlSelectionMarker",
 					content: reactFlowVertical(gap: 0, contents: [
 						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
 							content: reactFlowVertical(gap: 2, contents: [

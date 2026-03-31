@@ -68,18 +68,20 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 			return;
 		}
 
-		// Step 2: Compute extra width needed per node for ports and their decorations.
-		Map<Box, Integer> outgoingPortCount = new HashMap<>();
-		Map<Box, Integer> incomingPortCount = new HashMap<>();
-		Map<Box, Double> maxOutgoingPortWidth = new HashMap<>();
-		Map<Box, Double> maxIncomingPortWidth = new HashMap<>();
+		int portScale = com.top_logic.graph.layouter.GraphConstants.SCALE;
+
+		// Step 2: Compute total port allocation width per node.
+		// Each port needs max(SCALE, decorWidth + SCALE) — sum these per node to match
+		// the actual allocation in DecorationAwarePortCoordinateAssigner.
+		Map<Box, Double> totalOutgoingPortWidth = new HashMap<>();
+		Map<Box, Double> totalIncomingPortWidth = new HashMap<>();
 
 		for (GraphEdge edge : edges) {
 			Box source = edge.getSource();
 			Box target = edge.getTarget();
 
-			double sourcePortWidth = symbolInset(edge.getSourceSymbol(), edge.getThickness());
-			double targetPortWidth = symbolInset(edge.getTargetSymbol(), edge.getThickness());
+			double sourcePortWidth = Math.max(portScale, symbolInset(edge.getSourceSymbol(), edge.getThickness()) + portScale);
+			double targetPortWidth = Math.max(portScale, symbolInset(edge.getTargetSymbol(), edge.getThickness()) + portScale);
 
 			for (EdgeDecoration decoration : edge.getDecorations()) {
 				if (decoration.getContent() == null) {
@@ -87,19 +89,17 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 				}
 				double decorWidth = decoration.getContent().getWidth();
 				if (decoration.getLinePosition() <= 0.1) {
-					sourcePortWidth = Math.max(sourcePortWidth, decorWidth);
+					sourcePortWidth = Math.max(sourcePortWidth, decorWidth + portScale);
 				} else if (decoration.getLinePosition() >= 0.9) {
-					targetPortWidth = Math.max(targetPortWidth, decorWidth);
+					targetPortWidth = Math.max(targetPortWidth, decorWidth + portScale);
 				}
 			}
 
 			if (source != null) {
-				outgoingPortCount.merge(source, 1, Integer::sum);
-				maxOutgoingPortWidth.merge(source, sourcePortWidth, Math::max);
+				totalOutgoingPortWidth.merge(source, sourcePortWidth, Double::sum);
 			}
 			if (target != null) {
-				incomingPortCount.merge(target, 1, Integer::sum);
-				maxIncomingPortWidth.merge(target, targetPortWidth, Math::max);
+				totalIncomingPortWidth.merge(target, targetPortWidth, Double::sum);
 			}
 		}
 
@@ -136,21 +136,13 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 
 		// Step 4: Create a NodeSizer that accounts for port count and decoration widths.
 		// Each port needs SCALE pixels of horizontal space, plus room for the widest decoration.
-		int portScale = com.top_logic.graph.layouter.GraphConstants.SCALE;
 		NodeSizer sizer = new NodeSizer(
 			n -> {
 				Box box = (Box) n.getUserObject();
 				double intrinsic = n.getWidth();
 
-				int outPorts = outgoingPortCount.getOrDefault(box, 0);
-				int inPorts = incomingPortCount.getOrDefault(box, 0);
-				double outDecor = maxOutgoingPortWidth.getOrDefault(box, 0.0);
-				double inDecor = maxIncomingPortWidth.getOrDefault(box, 0.0);
-
-				// Width needed for outgoing ports: count * scale + max decoration width
-				double outWidth = outPorts * portScale + outDecor;
-				// Width needed for incoming ports: count * scale + max decoration width
-				double inWidth = inPorts * portScale + inDecor;
+				double outWidth = totalOutgoingPortWidth.getOrDefault(box, 0.0);
+				double inWidth = totalIncomingPortWidth.getOrDefault(box, 0.0);
 
 				return Math.max(intrinsic, Math.max(outWidth, inWidth));
 			},

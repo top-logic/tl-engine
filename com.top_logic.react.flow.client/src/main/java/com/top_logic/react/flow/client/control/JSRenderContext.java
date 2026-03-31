@@ -37,11 +37,12 @@ public class JSRenderContext implements RenderContext {
 	}
 
 	@Override
-	public TextMetrics measure(String text, String fontFamily, double fontSize) {
+	public TextMetrics measure(String text, String fontFamily, double fontSize, String fontWeight) {
 		String family = (fontFamily != null && !fontFamily.isEmpty()) ? fontFamily : "Arial";
 		double size = fontSize > 0 ? fontSize : 14;
+		String weight = (fontWeight != null && !fontWeight.isEmpty()) ? fontWeight + " " : "";
 		String savedFont = _context2d.getFont();
-		_context2d.setFont((int) size + "px " + family);
+		_context2d.setFont(weight + (int) size + "px " + family);
 		com.google.gwt.canvas.dom.client.TextMetrics metrics = _context2d.measureText(text);
 		_context2d.setFont(savedFont);
 		return new JSTextMetrics(metrics);

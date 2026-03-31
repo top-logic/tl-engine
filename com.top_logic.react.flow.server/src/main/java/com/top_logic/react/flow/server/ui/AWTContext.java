@@ -41,10 +41,11 @@ public class AWTContext implements RenderContext {
 	}
 
 	@Override
-	public TextMetricsImpl measure(String text, String fontFamily, double fontSize) {
+	public TextMetricsImpl measure(String text, String fontFamily, double fontSize, String fontWeight) {
 		String family = (fontFamily != null && !fontFamily.isEmpty()) ? fontFamily : "Arial";
 		float size = fontSize > 0 ? (float) fontSize : _font.getSize2D();
-		Font font = Font.decode(family).deriveFont(size);
+		int style = "bold".equalsIgnoreCase(fontWeight) ? Font.BOLD : Font.PLAIN;
+		Font font = new Font(family, style, 1).deriveFont(size);
 		return measureWithFont(font, text);
 	}
 

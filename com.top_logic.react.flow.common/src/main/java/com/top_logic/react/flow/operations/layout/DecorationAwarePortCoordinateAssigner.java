@@ -79,8 +79,12 @@ public class DecorationAwarePortCoordinateAssigner implements NodePortAssignAlgo
 
 			GraphEdge graphEdge = (GraphEdge) bo;
 
+			// Account for edge inversion during cycle breaking: if the layout edge
+			// is reversed, source and target semantics are swapped.
+			boolean isSource = outgoing ^ edge.isReversed();
+
 			// Symbol inset at this end.
-			ConnectorSymbol symbol = outgoing ? graphEdge.getSourceSymbol() : graphEdge.getTargetSymbol();
+			ConnectorSymbol symbol = isSource ? graphEdge.getSourceSymbol() : graphEdge.getTargetSymbol();
 			double width = ConnectorSymbolRenderer.inset(symbol, graphEdge.getThickness() / 2);
 
 			// Decoration width at this end.
@@ -89,7 +93,7 @@ public class DecorationAwarePortCoordinateAssigner implements NodePortAssignAlgo
 					continue;
 				}
 				double lp = decoration.getLinePosition();
-				if ((outgoing && lp <= 0.1) || (!outgoing && lp >= 0.9)) {
+				if ((isSource && lp <= 0.1) || (!isSource && lp >= 0.9)) {
 					width = Math.max(width, decoration.getContent().getWidth());
 				}
 			}

@@ -20,7 +20,7 @@ public interface TextOperations extends BoxOperations {
 
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		TextMetrics metrics = context.measure(self().getValue(), self().getFontFamily(), self().getFontSize());
+		TextMetrics metrics = context.measure(self().getValue(), self().getFontFamily(), self().getFontSize(), self().getFontWeight());
 
 		self().setBaseLine(metrics.getBaseLine());
 

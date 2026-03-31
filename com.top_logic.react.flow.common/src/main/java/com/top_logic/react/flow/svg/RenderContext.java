@@ -31,6 +31,23 @@ public interface RenderContext {
 	 * @return The text metrics.
 	 */
 	default TextMetrics measure(String text, String fontFamily, double fontSize) {
+		return measure(text, fontFamily, fontSize, null);
+	}
+
+	/**
+	 * Measures the given text with specific font properties including weight.
+	 *
+	 * @param text
+	 *        The text to measure.
+	 * @param fontFamily
+	 *        The font family, or {@code null} to use the default.
+	 * @param fontSize
+	 *        The font size in pixels, or 0 to use the default.
+	 * @param fontWeight
+	 *        The font weight (e.g. "bold"), or {@code null} for normal.
+	 * @return The text metrics.
+	 */
+	default TextMetrics measure(String text, String fontFamily, double fontSize, String fontWeight) {
 		// Default: ignore font properties, use default. Subclasses should override.
 		return measure(text);
 	}

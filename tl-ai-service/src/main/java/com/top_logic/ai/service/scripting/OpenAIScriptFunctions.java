@@ -347,10 +347,10 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 	 *        String - the agent name from the Agent Registry
 	 * 
 	 * @param userMessage
-	 *        String - the user message to prompt the Agent with
+	 *        Object - the user message to prompt the Agent with
 	 * @return String - the response from the AI Agent
 	 */
-	public static String agentChat(String agentName, String userMessage) {
+	public static String agentChat(String agentName, Object userMessage) {
 		AgentRegistry registry = AgentRegistry.getInstance();
 		if (registry == null) {
 			throw new RuntimeException("AgentRegistry is not available");

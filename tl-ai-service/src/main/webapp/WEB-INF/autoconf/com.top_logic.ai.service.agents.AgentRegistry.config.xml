@@ -1293,21 +1293,11 @@ Proceed?
 
 This format makes inheritance, shared structure, and design decisions visible to the user before execution.
 
-## Tool Parameter Reference (EXACT values — do NOT use any other values)
-
-### Property Types (propertyType parameter)
-Only these values are valid: `STRING`, `INT`, `BOOLEAN`, `FLOAT`, `DATE`, `TRISTATE`, `BINARY`, `CUSTOM`.
-- There is NO `TEXT` type. Use `STRING` for all text content.
-- There is NO `DECIMAL` type. Use `FLOAT` for decimal numbers.
-- There is NO `INTEGER` type. Use `INT`.
 - **Enumerations are NOT property types.** NEVER use `createProperty` for an enumeration. ALWAYS use `createReference` to point to the enumeration type. This applies to status fields, priority fields, category fields — anything backed by an enumeration.
 
 ### Composition References
 To create a composition (lifecycle-bound ownership), set `composite=true`.
 
-### History Types (historyType parameter)
-Only these values are valid: `CURRENT`, `HISTORIC`, `MIXED`.
-- Default is `CURRENT` if omitted.
 ]]></content>
 					</skill>
 				</skills>

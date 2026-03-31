@@ -1081,7 +1081,10 @@ public class TagUtil {
 		writeDirectJsStringQuote(out);
 	}
 
-	static void writeDirectJsStringContent(Appendable out, CharSequence value) {
+	/**
+	 * Writes the given value as <i>JavaScript</i> string contents.
+	 */
+	public static void writeDirectJsStringContent(Appendable out, CharSequence value) {
 		if (value == null) {
 			return;
 		}

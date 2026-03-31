@@ -17,9 +17,6 @@
 						types="tl.model:TLModule"
 					>
 						<rows>all(`tl.model:TLModule`)</rows>
-						<columns>
-							<column attribute="name"/>
-						</columns>
 					</table>
 				</panel>
 			</pane>

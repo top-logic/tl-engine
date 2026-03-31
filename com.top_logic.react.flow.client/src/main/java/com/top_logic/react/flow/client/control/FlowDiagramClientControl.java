@@ -246,18 +246,27 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 					if (containerW > 0 && containerH > 0 && contentW > 0 && contentH > 0) {
 						// Fit entire diagram content into the viewport, preserving aspect ratio.
+						// Never zoom in beyond 100% (viewBox >= container).
+						double vbW, vbH;
 						double containerRatio = containerW / containerH;
 						double contentRatio = contentW / contentH;
 
 						if (contentRatio > containerRatio) {
-							// Content is wider → fit to width, add vertical space.
-							diagram.setViewBoxWidth(contentW);
-							diagram.setViewBoxHeight(contentW / containerRatio);
+							vbW = contentW;
+							vbH = contentW / containerRatio;
 						} else {
-							// Content is taller → fit to height, add horizontal space.
-							diagram.setViewBoxWidth(contentH * containerRatio);
-							diagram.setViewBoxHeight(contentH);
+							vbW = contentH * containerRatio;
+							vbH = contentH;
 						}
+
+						// Cap at 100% zoom: viewBox must not be smaller than container.
+						if (vbW < containerW) {
+							vbW = containerW;
+							vbH = containerH;
+						}
+
+						diagram.setViewBoxWidth(vbW);
+						diagram.setViewBoxHeight(vbH);
 					} else {
 						diagram.setViewBoxWidth(containerW);
 						diagram.setViewBoxHeight(containerH);

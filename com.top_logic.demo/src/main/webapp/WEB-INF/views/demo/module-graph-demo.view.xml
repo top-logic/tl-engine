@@ -55,11 +55,11 @@
 						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
 							content: reactFlowVertical(gap: 2, contents: [
 								$c.get(`tl.model:TLClass#abstract`)
-									? reactFlowText("\u00ABabstract\u00BB", fontSize: 10, strokeStyle: "#888")
+									? reactFlowText("\u00ABabstract\u00BB", fontSize: 10, fillStyle: "#888")
 									: reactFlowEmpty(),
 								reactFlowText($c.get(`tl.model:TLNamedPart#name`), fontWeight: "bold"),
 								$externalGens.isEmpty() ? reactFlowEmpty()
-									: reactFlowText("extends " + $externalGens.toString(), fontSize: 9, strokeStyle: "#888")
+									: reactFlowText("extends " + $externalGens.toString(), fontSize: 9, fillStyle: "#888")
 							])
 						)),
 						$props.isEmpty() ? reactFlowEmpty()
@@ -83,7 +83,7 @@
 					content: reactFlowVertical(gap: 0, contents: [
 						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
 							content: reactFlowVertical(gap: 2, contents: [
-								reactFlowText("\u00ABenumeration\u00BB", fontSize: 10, strokeStyle: "#888"),
+								reactFlowText("\u00ABenumeration\u00BB", fontSize: 10, fillStyle: "#888"),
 								reactFlowText($e.get(`tl.model:TLNamedPart#name`), fontWeight: "bold")
 							])
 						)),

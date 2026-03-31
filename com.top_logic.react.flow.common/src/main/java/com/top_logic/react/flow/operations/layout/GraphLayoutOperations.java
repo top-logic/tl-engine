@@ -163,31 +163,52 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 		// Step 6: Run the Sugiyama layout algorithm.
 		Sugiyama.INSTANCE.layout(layoutContext, graph, sizer, DecorationAwarePortCoordinateAssigner.INSTANCE);
 
-		// Step 7: Map layout results back to widget nodes.
+		// Step 7: Find coordinate extent (Sugiyama may produce negative coordinates).
+		double minX = Double.MAX_VALUE;
+		double minY = Double.MAX_VALUE;
 		double maxX = 0;
 		double maxY = 0;
 
 		for (Box node : nodes) {
 			LayoutNode layoutNode = nodeMap.get(node);
-			double nodeX = layoutNode.getX();
-			double nodeY = layoutNode.getY();
+			minX = Math.min(minX, layoutNode.getX());
+			minY = Math.min(minY, layoutNode.getY());
+			maxX = Math.max(maxX, layoutNode.getX() + Math.max(node.getWidth(), layoutNode.getWidth()));
+			maxY = Math.max(maxY, layoutNode.getY() + Math.max(node.getHeight(), layoutNode.getHeight()));
+		}
+
+		for (LayoutNode layoutNode : graph.nodes()) {
+			for (LayoutEdge layoutEdge : layoutNode.outgoingEdges()) {
+				for (Waypoint wp : layoutEdge.getWaypoints()) {
+					minX = Math.min(minX, wp.getX());
+					minY = Math.min(minY, wp.getY());
+					maxX = Math.max(maxX, wp.getX());
+					maxY = Math.max(maxY, wp.getY());
+				}
+			}
+		}
+
+		// Shift so that the top-left corner is at (0, 0).
+		double shiftX = minX < 0 ? -minX : 0;
+		double shiftY = minY < 0 ? -minY : 0;
+
+		// Step 8: Map layout results back to widget nodes (shifted).
+		for (Box node : nodes) {
+			LayoutNode layoutNode = nodeMap.get(node);
+			double nodeX = layoutNode.getX() + shiftX;
+			double nodeY = layoutNode.getY() + shiftY;
 			node.setX(nodeX);
 			node.setY(nodeY);
 
-			// Sugiyama may have expanded the node; use the larger size.
 			double finalWidth = Math.max(node.getWidth(), layoutNode.getWidth());
 			double finalHeight = Math.max(node.getHeight(), layoutNode.getHeight());
 			node.setWidth(finalWidth);
 			node.setHeight(finalHeight);
 
-			// Propagate final size and position to child widgets.
 			node.distributeSize(context, nodeX, nodeY, finalWidth, finalHeight);
-
-			maxX = Math.max(maxX, nodeX + finalWidth);
-			maxY = Math.max(maxY, nodeY + finalHeight);
 		}
 
-		// Step 8: Map edge waypoints from LayoutEdge to GraphEdge.
+		// Step 9: Map edge waypoints from LayoutEdge to GraphEdge (shifted).
 		for (LayoutNode layoutNode : graph.nodes()) {
 			for (LayoutEdge layoutEdge : layoutNode.outgoingEdges()) {
 				Object businessObject = layoutEdge.getBusinessObject();
@@ -198,22 +219,18 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 				GraphEdge graphEdge = (GraphEdge) businessObject;
 				graphEdge.getWaypoints().clear();
 
-				List<Waypoint> waypoints = layoutEdge.getWaypoints();
-				for (Waypoint wp : waypoints) {
+				for (Waypoint wp : layoutEdge.getWaypoints()) {
 					GraphWaypoint graphWp = GraphWaypoint.create();
-					graphWp.setX(wp.getX());
-					graphWp.setY(wp.getY());
+					graphWp.setX(wp.getX() + shiftX);
+					graphWp.setY(wp.getY() + shiftY);
 					graphEdge.addWaypoint(graphWp);
-
-					maxX = Math.max(maxX, wp.getX());
-					maxY = Math.max(maxY, wp.getY());
 				}
 			}
 		}
 
-		// Step 9: Set bounding box on self.
-		self().setWidth(maxX);
-		self().setHeight(maxY);
+		// Step 10: Set bounding box on self.
+		self().setWidth(maxX + shiftX);
+		self().setHeight(maxY + shiftY);
 	}
 
 	/**

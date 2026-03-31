@@ -49,10 +49,6 @@ path.tlbConnector {
 	display: initial;
 }
 
-/* Color-change selection highlight for graph nodes (overrides SVG presentation attributes). */
-.tlSelected .tlNodeBorder { stroke: #2266cc; stroke-width: 2; }
-.tlSelected .tlNodeFill { fill: #e8f0ff; }
-
 .tlClickTarget {
 	cursor: pointer;
 	stroke: var(--link-primary);

@@ -47,6 +47,12 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	/** @see #getDecorations() */
 	String DECORATIONS__PROP = "decorations";
 
+	/** @see #isSelected() */
+	String SELECTED__PROP = "selected";
+
+	/** @see #getClickHandler() */
+	String CLICK_HANDLER__PROP = "clickHandler";
+
 	/**
 	 * Source node. The node is owned by the enclosing {@link GraphLayout}, not by this edge.
 	 */
@@ -188,6 +194,31 @@ public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.G
 	 * Removes a value from the {@link #getDecorations()} list.
 	 */
 	void removeDecoration(com.top_logic.react.flow.data.EdgeDecoration value);
+
+	/**
+	 * Whether this edge is currently selected.
+	 */
+	boolean isSelected();
+
+	/**
+	 * @see #isSelected()
+	 */
+	com.top_logic.react.flow.data.GraphEdge setSelected(boolean value);
+
+	/**
+	 * Internal field to store the click handler registration (client-side only).
+	 */
+	com.top_logic.react.flow.svg.event.Registration getClickHandler();
+
+	/**
+	 * @see #getClickHandler()
+	 */
+	com.top_logic.react.flow.data.GraphEdge setClickHandler(com.top_logic.react.flow.svg.event.Registration value);
+
+	/**
+	 * Checks, whether {@link #getClickHandler()} has a value.
+	 */
+	boolean hasClickHandler();
 
 	@Override
 	com.top_logic.react.flow.data.GraphEdge setCssClass(String value);

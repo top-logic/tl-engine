@@ -33,9 +33,9 @@ message Diagram extends Widget {
 	/** The top-level diagram element. */
 	Box root;
 
-	/** The list of currently selected diagram elements. */	
+	/** The list of currently selected diagram elements (nodes or edges). */
 	@Ref
-	repeated SelectableBox selection;
+	repeated Widget selection;
 	
 	/** Whether multi-selection is supported */
 	boolean multiSelect;
@@ -192,6 +192,12 @@ message GraphEdge extends Widget {
 
 	/** Decorations placed on the edge (arrow heads, diamonds, labels). */
 	repeated EdgeDecoration decorations;
+
+	/** Whether this edge is currently selected. */
+	bool selected;
+
+	/** Internal field to store the click handler registration (client-side only). */
+	transient com.top_logic.react.flow.svg.event.Registration clickHandler;
 }
 
 /**

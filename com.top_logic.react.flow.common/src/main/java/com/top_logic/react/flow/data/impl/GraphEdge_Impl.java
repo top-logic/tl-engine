@@ -70,6 +70,10 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		}
 	};
 
+	private boolean _selected = false;
+
+	private transient com.top_logic.react.flow.svg.event.Registration _clickHandler = null;
+
 	/**
 	 * Creates a {@link GraphEdge_Impl} instance.
 	 *
@@ -324,6 +328,47 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public final boolean isSelected() {
+		return _selected;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GraphEdge setSelected(boolean value) {
+		internalSetSelected(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isSelected()} without chain call utility. */
+	protected final void internalSetSelected(boolean value) {
+		_listener.beforeSet(this, SELECTED__PROP, value);
+		_selected = value;
+		_listener.afterChanged(this, SELECTED__PROP);
+	}
+
+	@Override
+	public final com.top_logic.react.flow.svg.event.Registration getClickHandler() {
+		return _clickHandler;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GraphEdge setClickHandler(com.top_logic.react.flow.svg.event.Registration value) {
+		internalSetClickHandler(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getClickHandler()} without chain call utility. */
+	protected final void internalSetClickHandler(com.top_logic.react.flow.svg.event.Registration value) {
+		_listener.beforeSet(this, CLICK_HANDLER__PROP, value);
+		_clickHandler = value;
+		_listener.afterChanged(this, CLICK_HANDLER__PROP);
+	}
+
+	@Override
+	public final boolean hasClickHandler() {
+		return _clickHandler != null;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GraphEdge setCssClass(String value) {
 		internalSetCssClass(value);
 		return this;
@@ -365,7 +410,9 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
 			DASHES__PROP, 
-			DECORATIONS__PROP);
+			DECORATIONS__PROP, 
+			SELECTED__PROP, 
+			CLICK_HANDLER__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Widget_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -378,7 +425,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Widget_Impl.TRANSIENT_PROPERTIES);
 		tmp.addAll(java.util.Arrays.asList(
-				));
+				CLICK_HANDLER__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -405,6 +452,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			case THICKNESS__PROP: return getThickness();
 			case DASHES__PROP: return getDashes();
 			case DECORATIONS__PROP: return getDecorations();
+			case SELECTED__PROP: return isSelected();
+			case CLICK_HANDLER__PROP: return getClickHandler();
 			default: return super.get(field);
 		}
 	}
@@ -422,6 +471,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
 			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 			case DECORATIONS__PROP: internalSetDecorations(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.EdgeDecoration.class, value)); break;
+			case SELECTED__PROP: internalSetSelected((boolean) value); break;
+			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.react.flow.svg.event.Registration) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -465,6 +516,8 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 			x.writeTo(scope, out);
 		}
 		out.endArray();
+		out.name(SELECTED__PROP);
+		out.value(isSelected());
 	}
 
 	@Override
@@ -530,6 +583,17 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 				out.endArray();
 				break;
 			}
+			case SELECTED__PROP: {
+				out.value(isSelected());
+				break;
+			}
+			case CLICK_HANDLER__PROP: {
+				if (hasClickHandler()) {
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -574,6 +638,7 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 				setDecorations(newValue);
 			}
 			break;
+			case SELECTED__PROP: setSelected(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

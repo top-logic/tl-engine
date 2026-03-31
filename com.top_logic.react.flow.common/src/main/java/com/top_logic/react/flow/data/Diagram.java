@@ -58,24 +58,24 @@ public interface Diagram extends Widget, com.top_logic.react.flow.operations.Dia
 	boolean hasRoot();
 
 	/**
-	 * The list of currently selected diagram elements.
+	 * The list of currently selected diagram elements (nodes or edges).
 	 */
-	java.util.List<com.top_logic.react.flow.data.SelectableBox> getSelection();
+	java.util.List<com.top_logic.react.flow.data.Widget> getSelection();
 
 	/**
 	 * @see #getSelection()
 	 */
-	com.top_logic.react.flow.data.Diagram setSelection(java.util.List<? extends com.top_logic.react.flow.data.SelectableBox> value);
+	com.top_logic.react.flow.data.Diagram setSelection(java.util.List<? extends com.top_logic.react.flow.data.Widget> value);
 
 	/**
 	 * Adds a value to the {@link #getSelection()} list.
 	 */
-	com.top_logic.react.flow.data.Diagram addSelection(com.top_logic.react.flow.data.SelectableBox value);
+	com.top_logic.react.flow.data.Diagram addSelection(com.top_logic.react.flow.data.Widget value);
 
 	/**
 	 * Removes a value from the {@link #getSelection()} list.
 	 */
-	void removeSelection(com.top_logic.react.flow.data.SelectableBox value);
+	void removeSelection(com.top_logic.react.flow.data.Widget value);
 
 	/**
 	 * Whether multi-selection is supported

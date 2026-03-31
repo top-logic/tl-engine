@@ -7,14 +7,14 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 
 	private com.top_logic.react.flow.data.Box _root = null;
 
-	private final java.util.List<com.top_logic.react.flow.data.SelectableBox> _selection = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.SelectableBox>() {
+	private final java.util.List<com.top_logic.react.flow.data.Widget> _selection = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.Widget>() {
 		@Override
-		protected void beforeAdd(int index, com.top_logic.react.flow.data.SelectableBox element) {
+		protected void beforeAdd(int index, com.top_logic.react.flow.data.Widget element) {
 			_listener.beforeAdd(Diagram_Impl.this, SELECTION__PROP, index, element);
 		}
 
 		@Override
-		protected void afterRemove(int index, com.top_logic.react.flow.data.SelectableBox element) {
+		protected void afterRemove(int index, com.top_logic.react.flow.data.Widget element) {
 			_listener.afterRemove(Diagram_Impl.this, SELECTION__PROP, index, element);
 		}
 
@@ -90,36 +90,36 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 	}
 
 	@Override
-	public final java.util.List<com.top_logic.react.flow.data.SelectableBox> getSelection() {
+	public final java.util.List<com.top_logic.react.flow.data.Widget> getSelection() {
 		return _selection;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.Diagram setSelection(java.util.List<? extends com.top_logic.react.flow.data.SelectableBox> value) {
+	public com.top_logic.react.flow.data.Diagram setSelection(java.util.List<? extends com.top_logic.react.flow.data.Widget> value) {
 		internalSetSelection(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getSelection()} without chain call utility. */
-	protected final void internalSetSelection(java.util.List<? extends com.top_logic.react.flow.data.SelectableBox> value) {
+	protected final void internalSetSelection(java.util.List<? extends com.top_logic.react.flow.data.Widget> value) {
 		if (value == null) throw new IllegalArgumentException("Property 'selection' cannot be null.");
 		_selection.clear();
 		_selection.addAll(value);
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.Diagram addSelection(com.top_logic.react.flow.data.SelectableBox value) {
+	public com.top_logic.react.flow.data.Diagram addSelection(com.top_logic.react.flow.data.Widget value) {
 		internalAddSelection(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addSelection(com.top_logic.react.flow.data.SelectableBox)} without chain call utility. */
-	protected final void internalAddSelection(com.top_logic.react.flow.data.SelectableBox value) {
+	/** Implementation of {@link #addSelection(com.top_logic.react.flow.data.Widget)} without chain call utility. */
+	protected final void internalAddSelection(com.top_logic.react.flow.data.Widget value) {
 		_selection.add(value);
 	}
 
 	@Override
-	public final void removeSelection(com.top_logic.react.flow.data.SelectableBox value) {
+	public final void removeSelection(com.top_logic.react.flow.data.Widget value) {
 		_selection.remove(value);
 	}
 
@@ -348,7 +348,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 	public void set(String field, Object value) {
 		switch (field) {
 			case ROOT__PROP: internalSetRoot((com.top_logic.react.flow.data.Box) value); break;
-			case SELECTION__PROP: internalSetSelection(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.SelectableBox.class, value)); break;
+			case SELECTION__PROP: internalSetSelection(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.Widget.class, value)); break;
 			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
 			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.react.flow.svg.event.Registration) value); break;
 			case CONTEXT__PROP: internalSetContext((com.top_logic.react.flow.callback.DiagramContext) value); break;
@@ -369,7 +369,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 		}
 		out.name(SELECTION__PROP);
 		out.beginArray();
-		for (com.top_logic.react.flow.data.SelectableBox x : getSelection()) {
+		for (com.top_logic.react.flow.data.Widget x : getSelection()) {
 			x.writeTo(scope, out);
 		}
 		out.endArray();
@@ -398,7 +398,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			}
 			case SELECTION__PROP: {
 				out.beginArray();
-				for (com.top_logic.react.flow.data.SelectableBox x : getSelection()) {
+				for (com.top_logic.react.flow.data.Widget x : getSelection()) {
 					x.writeTo(scope, out);
 				}
 				out.endArray();
@@ -447,10 +447,10 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 		switch (field) {
 			case ROOT__PROP: setRoot(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case SELECTION__PROP: {
-				java.util.List<com.top_logic.react.flow.data.SelectableBox> newValue = new java.util.ArrayList<>();
+				java.util.List<com.top_logic.react.flow.data.Widget> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					newValue.add(com.top_logic.react.flow.data.SelectableBox.readSelectableBox(scope, in));
+					newValue.add(com.top_logic.react.flow.data.Widget.readWidget(scope, in));
 				}
 				in.endArray();
 				setSelection(newValue);
@@ -469,7 +469,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
 		switch (field) {
 			case SELECTION__PROP: {
-				((com.top_logic.react.flow.data.SelectableBox) element).writeTo(scope, out);
+				((com.top_logic.react.flow.data.Widget) element).writeTo(scope, out);
 				break;
 			}
 			default: super.writeElement(scope, out, field, element);
@@ -480,7 +480,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case SELECTION__PROP: {
-				return com.top_logic.react.flow.data.SelectableBox.readSelectableBox(scope, in);
+				return com.top_logic.react.flow.data.Widget.readWidget(scope, in);
 			}
 			default: return super.readElement(scope, in, field);
 		}

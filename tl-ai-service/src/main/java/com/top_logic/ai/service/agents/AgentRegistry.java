@@ -63,6 +63,7 @@ import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutor;
 
@@ -812,6 +813,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 		var builder = AgenticServices.agentBuilder()
 			.chatModel(model)
+			.hallucinatedToolNameStrategy(request -> ToolExecutionResultMessage.from(request,
+				"Error: No tool named '" + request.name() + "' exists. Use only tools from your tool catalog."))
 			.systemMessage(systemPrompt)
 			.userMessage("{{message}}")
 			.inputKey(String.class, "message")
@@ -885,7 +888,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result));
 				return result;
 			} catch (Exception e) {
-				ToolCallTracking.recordAgentCallCompleteIfTracking("Error: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+				Throwable cause = e;
+				while (cause.getCause() != null && cause.getCause() != cause) {
+					cause = cause.getCause();
+				}
+				String errorMsg = cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
+				Logger.error("Delegation to '" + targetName + "' failed: " + errorMsg, cause, AgentRegistry.class);
+				ToolCallTracking.recordAgentCallCompleteIfTracking("Error: " + errorMsg);
 				throw e;
 			}
 		};
@@ -953,6 +962,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 		var builder = AgenticServices.agentBuilder(agentInterface)
 			.chatModel(model)
+			.hallucinatedToolNameStrategy(request -> ToolExecutionResultMessage.from(request,
+				"Error: No tool named '" + request.name() + "' exists. Use only tools from your tool catalog."))
 			.systemMessageProvider(memoryId -> systemPrompt);
 
 		if (!allTools.isEmpty()) {

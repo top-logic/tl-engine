@@ -741,9 +741,9 @@ public class ModelEditorTool {
 	 *        Name of the source class.
 	 * @param referenceName
 	 *        Name of the reference.
-	 * @param targetModuleName
+	 * @param targetModule
 	 *        Name of the module containing the target class.
-	 * @param targetClassName
+	 * @param targetClass
 	 *        Name of the target class or enumeration.
 	 * @param labelEn
 	 *        English label (optional).
@@ -772,7 +772,7 @@ public class ModelEditorTool {
 	 * @param historyType
 	 *        History type: CURRENT, HISTORIC, or MIXED (default: CURRENT).
 	 * @param deletionPolicy
-	 *        Deletion policy: CLEAR_REFERENCE, DELETE_OBJECT, STABILISE_REFERENCE, or VETO.
+	 *        Deletion policy: CLEAR_REFERENCE, DELETE_REFERER, STABILISE_REFERENCE, or VETO.
 	 * @return JSON with reference details.
 	 */
 	@Tool("Create a new reference on a TopLogic class pointing to another class or enumeration, or return an existing one by name")
@@ -780,8 +780,8 @@ public class ModelEditorTool {
 			@P("Name of the module containing the source class") String moduleName,
 			@P("Name of the source class to add the reference to") String className,
 			@P("Name of the reference") String referenceName,
-			@P("Name of the module containing the target class or enumeration") String targetModuleName,
-			@P("Name of the target class or enumeration the reference points to") String targetClassName,
+			@P("Name of the module containing the target class or enumeration") String targetModule,
+			@P("Name of the target class or enumeration the reference points to") String targetClass,
 			@P("English label for the reference") String labelEn,
 			@P("German label for the reference") String labelDe,
 			@P("English description for the reference") String descEn,
@@ -795,13 +795,13 @@ public class ModelEditorTool {
 			@P("Whether this reference points to an aggregate part (default: false)") Boolean aggregate,
 			@P("Whether navigation is efficient for this reference (default: true)") Boolean navigate,
 			@P("Type of history: CURRENT (default), HISTORIC, or MIXED") String historyType,
-			@P("Deletion policy: CLEAR_REFERENCE (default), DELETE_OBJECT, STABILISE_REFERENCE, or VETO") String deletionPolicy) {
+			@P("Deletion policy: CLEAR_REFERENCE (default), DELETE_REFERER, STABILISE_REFERENCE, or VETO") String deletionPolicy) {
 
 		try {
 			ReferenceResponse response = ThreadContextManager.inSystemInteraction(
 				ModelEditorTool.class,
 				() -> doCreateReference(moduleName, className, referenceName,
-					targetModuleName, targetClassName,
+					targetModule, targetClass,
 					labelEn, labelDe, descEn, descDe,
 					mandatory, multiple, ordered, bag, isAbstract,
 					composite, aggregate, navigate, historyType, deletionPolicy));
@@ -818,7 +818,7 @@ public class ModelEditorTool {
 	}
 
 	private ReferenceResponse doCreateReference(String moduleName, String className, String referenceName,
-			String targetModuleName, String targetClassName,
+			String targetModule, String targetClass,
 			String labelEn, String labelDe, String descEn, String descDe,
 			Boolean mandatory, Boolean multiple, Boolean ordered, Boolean bag, Boolean isAbstract,
 			Boolean composite, Boolean aggregate, Boolean navigate,
@@ -827,8 +827,8 @@ public class ModelEditorTool {
 		requireNonEmpty(moduleName, "Module name");
 		requireNonEmpty(className, "Class name");
 		requireNonEmpty(referenceName, "Reference name");
-		requireNonEmpty(targetModuleName, "Target module name");
-		requireNonEmpty(targetClassName, "Target class name");
+		requireNonEmpty(targetModule, "Target module name");
+		requireNonEmpty(targetClass, "Target class name");
 		validatePropertyName(referenceName);
 
 		boolean mandatoryFlag = mandatory != null && mandatory;
@@ -846,18 +846,18 @@ public class ModelEditorTool {
 		TLModel model = ModelService.getApplicationModel();
 		TLClass sourceClass = resolveClass(model, moduleName, className);
 
-		TLModule targetModule = model.getModule(targetModuleName);
-		if (targetModule == null) {
-			throw new IllegalArgumentException("Target module '" + targetModuleName + "' does not exist");
+		TLModule resolvedTargetModule = model.getModule(targetModule);
+		if (resolvedTargetModule == null) {
+			throw new IllegalArgumentException("Target module '" + targetModule + "' does not exist");
 		}
-		TLType targetType = targetModule.getType(targetClassName);
+		TLType targetType = resolvedTargetModule.getType(targetClass);
 		if (targetType == null) {
 			throw new IllegalArgumentException(
-				"Target class '" + targetClassName + "' does not exist in module '" + targetModuleName + "'");
+				"Target class '" + targetClass + "' does not exist in module '" + targetModule + "'");
 		}
 		if (!(targetType instanceof TLClass) && !(targetType instanceof TLEnumeration)) {
 			throw new IllegalArgumentException(
-				"Target type '" + targetClassName + "' is not a class or enumeration");
+				"Target type '" + targetClass + "' is not a class or enumeration");
 		}
 
 		// Check if reference already exists
@@ -1543,17 +1543,14 @@ public class ModelEditorTool {
 		if (value == null || value.trim().isEmpty()) {
 			return DeletionPolicy.CLEAR_REFERENCE;
 		}
-		try {
-			for (DeletionPolicy policy : DeletionPolicy.values()) {
-				if (policy.getExternalName().equalsIgnoreCase(value)) {
-					return policy;
-				}
+		for (DeletionPolicy policy : DeletionPolicy.values()) {
+			if (policy.getExternalName().equalsIgnoreCase(value)
+				|| policy.name().equalsIgnoreCase(value)) {
+				return policy;
 			}
-			return DeletionPolicy.valueOf(value.toUpperCase().replace('-', '_'));
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(
-				"Invalid deletionPolicy: '" + value + "'. Valid values are: CLEAR_REFERENCE, DELETE_OBJECT, STABILISE_REFERENCE, VETO");
 		}
+		throw new IllegalArgumentException(
+			"Invalid deletionPolicy: '" + value + "'. Valid values are: CLEAR_REFERENCE, DELETE_REFERER, STABILISE_REFERENCE, VETO");
 	}
 
 	private static List<String> parseStringList(String jsonOrCommaSeparated) {

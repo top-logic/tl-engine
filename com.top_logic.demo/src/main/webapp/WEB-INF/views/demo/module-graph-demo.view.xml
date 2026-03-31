@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<channel name="selectedModule" />
+		<channel name="selectedType" />
+	</channels>
+	<split-panel orientation="horizontal" resizable="true">
+		<panes>
+			<pane size="20" unit="%">
+				<panel>
+					<title>
+						<en>Modules</en>
+						<de>Module</de>
+					</title>
+					<table
+						selection="selectedModule"
+						types="tl.model:TLModule"
+					>
+						<rows>all(`tl.model:TLModule`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane size="80" unit="%">
+				<split-panel orientation="vertical" resizable="true">
+					<panes>
+						<pane size="75" unit="%">
+							<panel>
+								<title>
+									<en>Module Class Diagram</en>
+									<de>Modul-Klassendiagramm</de>
+								</title>
+								<flow-diagram selection="selectedType">
+									<inputs>
+										<input channel="selectedModule" />
+									</inputs>
+									<createChart><![CDATA[module -> {
+	classes = $module == null
+		? list()
+		: $module.get(`tl.model:TLModule#types`)
+			.filter(t -> $t.instanceOf(`tl.model:TLClass`));
+
+	nodes = $classes.map(c -> {
+		props = $c.get(`tl.model:TLStructuredType#localParts`)
+			.filter(p -> $p.instanceOf(`tl.model:TLProperty`));
+
+		reactFlowSelection(userObject: $c,
+			content: reactFlowBorder(
+				content: reactFlowFill(fill: "white",
+					content: reactFlowVertical(gap: 0, contents: [
+						reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
+							content: reactFlowVertical(gap: 2, contents: [
+								$c.get(`tl.model:TLClass#abstract`)
+									? reactFlowText("\u00ABabstract\u00BB", fontSize: 10, strokeStyle: "#888")
+									: reactFlowEmpty(),
+								reactFlowText($c.get(`tl.model:TLNamedPart#name`), fontWeight: "bold")
+							])
+						)),
+						$props.isEmpty() ? reactFlowEmpty()
+							: reactFlowBorder(top: true, left: false, right: false, bottom: false,
+								content: reactFlowPadding(all: 6,
+									content: reactFlowVertical(gap: 2, contents: $props.map(a ->
+										reactFlowText(
+											$a.get(`tl.model:TLNamedPart#name`)
+												+ " : "
+												+ $a.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`),
+											fontSize: 11)))))
+					]))))
+	});
+
+	nodeByClass = $nodes.indexBy(n -> $n["userObject"]);
+
+	genEdges = $classes
+		.map(c -> $c.get(`tl.model:TLClass#generalizations`)
+			.filter(g -> $nodeByClass[$g] != null)
+			.map(g -> reactFlowGraphEdge($nodeByClass[$c], $nodeByClass[$g],
+				priority: 3, targetSymbol: "FILLED_ARROW")))
+		.flatten();
+
+	refEdges = $classes
+		.map(c -> $c.get(`tl.model:TLStructuredType#localParts`)
+			.filter(p -> $p.instanceOf(`tl.model:TLReference`))
+			.filter(p -> $nodeByClass[$p.get(`tl.model:TLStructuredTypePart#type`)] != null)
+			.map(p -> {
+				targetType = $p.get(`tl.model:TLStructuredTypePart#type`);
+				refName = $p.get(`tl.model:TLNamedPart#name`);
+				mandatory = $p.get(`tl.model:TLStructuredTypePart#mandatory`);
+				multiple = $p.get(`tl.model:TLStructuredTypePart#multiple`);
+				card = $mandatory ? ($multiple ? "1..*" : "1") : ($multiple ? "*" : "0..1");
+				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
+
+				$composite
+					? reactFlowGraphEdge($nodeByClass[$c], $nodeByClass[$targetType],
+						priority: 2,
+						sourceSymbol: "FILLED_DIAMOND",
+						decorations: list(
+							reactFlowDecoration(
+								reactFlowPadding(reactFlowText("1", fontSize: 10), all: 4),
+								linePosition: 0.0),
+							reactFlowDecoration(
+								reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
+								linePosition: 1.0)))
+					: reactFlowGraphEdge($nodeByClass[$c], $nodeByClass[$targetType],
+						priority: 1,
+						targetSymbol: "ARROW",
+						decorations: list(
+							reactFlowDecoration(
+								reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
+								linePosition: 1.0)))
+			}))
+		.flatten();
+
+	$classes.isEmpty()
+		? reactFlowChart()
+		: reactFlowChart(
+			root: reactFlowPadding(all: 20,
+				content: reactFlowGraphLayout($nodes,
+					list($genEdges, $refEdges).flatten())))
+}]]></createChart>
+								</flow-diagram>
+							</panel>
+						</pane>
+						<pane size="25" unit="%">
+							<panel>
+								<title>
+									<en>Type Details</en>
+									<de>Typ-Details</de>
+								</title>
+								<form input="selectedType">
+									<field attribute="name" />
+									<field attribute="abstract" />
+								</form>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -139,6 +139,15 @@
 					</label>
 					<view-ref view="demo/graph-layout-demo.view.xml"/>
 				</nav-item>
+				<nav-item id="module-graph-demo"
+					icon="bi bi-bezier2"
+				>
+					<label>
+						<en>Module Graph</en>
+						<de>Modul-Graph</de>
+					</label>
+					<view-ref view="demo/module-graph-demo.view.xml"/>
+				</nav-item>
 				<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"

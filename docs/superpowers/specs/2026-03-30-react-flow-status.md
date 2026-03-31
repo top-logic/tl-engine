@@ -1,6 +1,6 @@
 # React Flow Diagram — Aktueller Stand
 
-**Datum**: 2026-03-30 (Abend-Update)
+**Datum**: 2026-03-31
 **Branch**: `CWS/CWS_29108_flow_diagram_completion`
 **Ticket**: #29108
 
@@ -118,12 +118,56 @@
 | Legacy JSNI (Gap 6) | Mittel |
 | Lazy Update (Gap 7) | Niedrig |
 
-## Nächster Schritt: Dynamischer Modul-Graph
+### Phase 2b: Dynamischer Modul-Graph (module-graph-demo.view.xml)
 
-TL-Script das ein echtes TL-Modul in einen Graph umrechnet:
-- Typen → Nodes (mit UML-Klassenkomposition: Stereotyp, Name, Attribute)
-- Vererbung → Edges mit FILLED_ARROW (priority 3)
-- Referenzen → Edges mit ARROW/DIAMOND (priority 1-2)
-- Kardinalitäten + Rollennamen als zweizeilige EdgeDecorations
+#### Architektur
+- **Reine TL-Script-Lösung** — kein neuer Java-Code, alles deklarativ in `<flow-diagram>`
+- Input-Channel: Modul-Auswahl aus Tabelle → TL-Script erzeugt UML-Klassendiagramm
+- Selection-Channel: Klick auf Typ → Details-Formular
 
-Kein neues UIElement nötig — alles über `<flow-diagram>` + TL-Script konfigurierbar.
+#### UML-Klassendiagramm-Aufbau
+- **Node-Komposition** pro TLClass:
+  - «abstract»-Stereotyp (bedingt, fontSize 10, grau)
+  - Klassenname (bold)
+  - Attribut-Kompartiment (TLProperty-Teile mit `name : typeName`, fontSize 11)
+  - Kompartiment-Trenner via `reactFlowBorder(top: true, left/right/bottom: false)`
+  - Weißer Hintergrund (`reactFlowFill(fill: "white")`)
+  - `reactFlowSelection(userObject: $class)` für Typ-Selektion
+- **Generalisierungs-Kanten**:
+  - `TLClass#generalizations` → FILLED_ARROW (priority 3)
+  - Nur Kanten innerhalb des Moduls (nodeByClass-Lookup)
+- **Referenz-Kanten**:
+  - `TLReference` aus `localParts` → ARROW (priority 1) oder FILLED_DIAMOND (priority 2)
+  - Komposition erkannt via `TLReference#end → TLAssociationEnd#composite`
+  - Komposition: sourceSymbol FILLED_DIAMOND + "1" Decoration am Source-Ende
+  - Kardinalität aus mandatory/multiple: 0..1 / 1 / * / 1..*
+  - Rollenname + Kardinalität als zweizeilige EdgeDecoration (linePosition 1.0)
+
+#### TL-Script Model-Navigation
+- `all(\`tl.model:TLModule\`)` → Modul-Liste
+- `$module.get(\`tl.model:TLModule#types\`).filter(instanceOf(\`tl.model:TLClass\`))` → Klassen
+- `$class.get(\`tl.model:TLStructuredType#localParts\`)` → Properties + References
+- `$class.get(\`tl.model:TLClass#generalizations\`)` → Elternklassen
+- `$nodes.indexBy(n -> $n["userObject"])` → Klasse→Box-Mapping für Kanten
+
+#### Layout
+- Links: Modul-Tabelle (20%)
+- Rechts oben: Klassendiagramm via `reactFlowGraphLayout` (75%)
+- Rechts unten: Typ-Details-Formular (25%)
+
+## Offene Gaps (Phase 1)
+
+| Gap | Priorität |
+|-----|-----------|
+| Context Menu (Gap 4) | Mittel |
+| Drag-and-Drop (Gap 3) | Mittel |
+| Model Observation (Gap 8) | Mittel |
+| Legacy JSNI (Gap 6) | Mittel |
+| Lazy Update (Gap 7) | Niedrig |
+
+## Nächste Schritte
+
+- Laufzeit-Test: Demo-App starten, verschiedene Module auswählen, Diagramm prüfen
+- Enumerationen als Nodes (mit «enumeration»-Stereotyp + Literale)
+- TLAssociation-Kanten die nicht als TLReference sichtbar sind
+- Navigierbare Kanten zu Typen in anderen Modulen (Cross-Modul-Referenzen)

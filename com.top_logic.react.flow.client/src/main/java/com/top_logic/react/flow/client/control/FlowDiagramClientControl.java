@@ -151,6 +151,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 	/** Boolean flag if the user is currently dragging the SVG to pan it. */
 	boolean _draggingToPan;
 
+	boolean _resizing;
+
 	private OMSVGRect _viewbox;
 
 	private ResizeObserver _observer;
@@ -213,13 +215,16 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		_svgDoc = OMSVGParser.currentDocument();
 
+		// Prevent parent containers from showing scrollbars due to SVG content.
+		((Element) _control).setAttribute("style",
+			((Element) _control).getAttribute("style") + "; overflow: hidden");
+
 		// Create SVG element inside the container.
 		String svgId = _controlId + FlowControlCommon.SVG_ID_SUFFIX;
 		_svg = _svgDoc.createSVGSVGElement();
 		_svg.setId(svgId);
 		_svg.setAttribute("width", "100%");
 		_svg.setAttribute("height", "100%");
-		_svg.setAttribute("style", "overflow: hidden");
 		_control.appendChild(Js.cast(_svg.getElement()));
 
 		// Enable HTML5 drag events on the container for pan-by-drag.
@@ -437,7 +442,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 					_newCtrlW = _control.clientWidth;
 					_newCtrlH = _control.clientHeight;
 					if ((_newCtrlW != 0 && _newCtrlW != _controlW) || (_newCtrlH != 0 && _newCtrlH != _controlH)) {
+						_resizing = true;
 						zoomSVG(0, 0, 0);
+						_resizing = false;
 					}
 				}
 				return null;
@@ -643,6 +650,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	private void updateServerViewbox() {
+		if (_resizing) {
+			// Don't push viewBox changes to the model during resize — it would dirty the
+			// scope and trigger a server round-trip, which causes a re-render loop.
+			return;
+		}
 		_diagram.setViewBoxX(_viewbox.getX());
 		_diagram.setViewBoxY(_viewbox.getY());
 		_diagram.setViewBoxWidth(_viewbox.getWidth());
@@ -811,6 +823,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Clean up global listeners.
 		DomGlobal.window.removeEventListener("dragover", _panningSVG);
 		DomGlobal.window.removeEventListener("keyup", _resetZoom);
+
+		// Remove SVG and zoom display from the container so a re-mount starts clean.
+		if (_svg != null) {
+			_svg.getElement().removeFromParent();
+		}
+		if (_zoomDisplay != null) {
+			_zoomDisplay.remove();
+		}
 	}
 
 }

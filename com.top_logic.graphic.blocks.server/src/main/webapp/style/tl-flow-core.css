@@ -8,6 +8,10 @@
 	display: none;
 }
 
+/* In SVG diagrams, selectable areas should use the default arrow cursor
+   instead of the pointer hand — clicking selects, it does not navigate. */
+svg .tlClickTarget { cursor: default; }
+
 /* Color-change selection for graph nodes. CSS overrides SVG presentation attributes. */
 .tlSelected .tlSelectionStroke { stroke: var(--focus); stroke-width: 2; }
 .tlSelected .tlSelectionFill { fill: var(--layer-selected); }

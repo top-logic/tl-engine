@@ -15,9 +15,11 @@
 					<table
 						selection="selectedModule"
 						types="tl.model:TLModule"
-						columns="name"
 					>
 						<rows>all(`tl.model:TLModule`)</rows>
+						<columns>
+							<column attribute="name"/>
+						</columns>
 					</table>
 				</panel>
 			</pane>

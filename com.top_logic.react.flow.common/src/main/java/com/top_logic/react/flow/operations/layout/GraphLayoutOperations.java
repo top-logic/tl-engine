@@ -194,7 +194,20 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 
 	/**
 	 * Computes the total port allocation width for a set of edges on one side of a node.
-	 * Mirrors the per-port width logic in {@link DecorationAwarePortCoordinateAssigner}.
+	 *
+	 * <p>
+	 * This method <strong>must</strong> mirror the per-port width logic in
+	 * {@link DecorationAwarePortCoordinateAssigner#computePortWidth} exactly, including the
+	 * {@code outgoing ^ edge.isReversed()} correction for cycle-breaking edge inversion. If
+	 * the two computations diverge, nodes will be too narrow or too wide for their ports.
+	 * See the class-level documentation on {@link DecorationAwarePortCoordinateAssigner} for
+	 * background on the edge inversion issue.
+	 * </p>
+	 *
+	 * <p>
+	 * Called from the {@link NodeSizer} lambda during Sugiyama's coordinate assignment phase,
+	 * i.e. <em>after</em> cycle breaking has already reversed edges.
+	 * </p>
 	 */
 	private static double computeTotalPortWidth(Iterable<LayoutEdge> edges, boolean outgoing, int portScale) {
 		double total = 0;

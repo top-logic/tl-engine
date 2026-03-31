@@ -26,6 +26,25 @@ import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
  * Each port gets horizontal space proportional to its decoration width (symbol inset + label width).
  * Ports without decorations get the minimum {@link GraphConstants#SCALE} width.
  * </p>
+ *
+ * <h3>Edge inversion during cycle breaking</h3>
+ *
+ * <p>
+ * Sugiyama's cycle breaker temporarily reverses some edges to make the graph acyclic (see
+ * {@link LayoutEdge#isReversed()}). This runs <em>before</em> port assignment, so when this class
+ * executes, a node's "outgoing" ports may carry edges that were originally incoming (and vice
+ * versa). The business-level {@link GraphEdge} still has its original source/target semantics
+ * (symbols, decorations with {@code linePosition}), but the layout-level direction is flipped.
+ * </p>
+ *
+ * <p>
+ * To resolve this, {@link #computePortWidth} XORs the {@code outgoing} flag with
+ * {@link LayoutEdge#isReversed()} to recover the correct business-level end
+ * ({@code isSource = outgoing ^ reversed}). The same logic must be used in the
+ * {@link com.top_logic.graph.layouter.algorithm.node.port.NodeSizer NodeSizer} created by
+ * {@link GraphLayoutOperations} (see {@link GraphLayoutOperations#computeTotalPortWidth}) to ensure
+ * that node widths are consistent with port allocation.
+ * </p>
  */
 public class DecorationAwarePortCoordinateAssigner implements NodePortAssignAlgorithm {
 

@@ -102,9 +102,9 @@
 		.map(c -> $c.get(`tl.model:TLClass#generalizations`)
 			.filter(g -> $nodeByName[$g.get(`tl.model:TLNamedPart#name`)] != null)
 			.map(g -> reactFlowGraphEdge(
-				$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
 				$nodeByName[$g.get(`tl.model:TLNamedPart#name`)],
-				priority: 3, targetSymbol: "FILLED_ARROW")))
+				$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
+				priority: 3, sourceSymbol: "CLOSED_ARROW")))
 		.flatten();
 
 	refEdges = $classes

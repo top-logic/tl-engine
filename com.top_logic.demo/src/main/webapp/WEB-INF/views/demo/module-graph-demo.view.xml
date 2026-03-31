@@ -66,11 +66,13 @@
 							: reactFlowBorder(top: true, left: false, right: false, bottom: false,
 								content: reactFlowPadding(all: 6,
 									content: reactFlowVertical(gap: 2, contents: $props.map(a ->
-										reactFlowText(
-											$a.get(`tl.model:TLNamedPart#name`)
-												+ " : "
-												+ $a.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`),
-											fontSize: 11)))))
+										reactFlowSelection(userObject: $a,
+											content: reactFlowFill(cssClass: "tlSelectionFill",
+												content: reactFlowText(
+													$a.get(`tl.model:TLNamedPart#name`)
+														+ " : "
+														+ $a.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`),
+													fontSize: 11)))))))
 					]))))
 	});
 
@@ -91,7 +93,9 @@
 							: reactFlowBorder(top: true, left: false, right: false, bottom: false,
 								content: reactFlowPadding(all: 6,
 									content: reactFlowVertical(gap: 2, contents: $classifiers.map(cl ->
-										reactFlowText($cl.get(`tl.model:TLNamedPart#name`), fontSize: 11)))))
+										reactFlowSelection(userObject: $cl,
+											content: reactFlowFill(cssClass: "tlSelectionFill",
+												content: reactFlowText($cl.get(`tl.model:TLNamedPart#name`), fontSize: 11)))))))
 					]))))
 	});
 
@@ -162,7 +166,6 @@
 								</title>
 								<form input="selectedType">
 									<field attribute="name" />
-									<field attribute="abstract" />
 								</form>
 							</panel>
 						</pane>

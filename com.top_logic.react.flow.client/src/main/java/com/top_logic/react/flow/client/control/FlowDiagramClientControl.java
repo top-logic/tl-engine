@@ -219,7 +219,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_svg.setId(svgId);
 		_svg.setAttribute("width", "100%");
 		_svg.setAttribute("height", "100%");
+		_svg.setAttribute("style", "overflow: hidden");
 		_control.appendChild(Js.cast(_svg.getElement()));
+
+		// Enable HTML5 drag events on the container for pan-by-drag.
+		((Element) _control).setAttribute("draggable", "true");
 
 		if (diagramJson != null && !diagramJson.isEmpty()) {
 			try {
@@ -230,10 +234,29 @@ public class FlowDiagramClientControl implements DiagramContext {
 				diagram.layout(_renderContext);
 
 				if (diagram.getViewBoxWidth() == 0) {
-					diagram.setViewBoxWidth(_control.clientWidth);
-				}
-				if (diagram.getViewBoxHeight() == 0) {
-					diagram.setViewBoxHeight(_control.clientHeight);
+					double contentW = diagram.getRoot().getWidth();
+					double contentH = diagram.getRoot().getHeight();
+					double containerW = _control.clientWidth;
+					double containerH = _control.clientHeight;
+
+					if (containerW > 0 && containerH > 0 && contentW > 0 && contentH > 0) {
+						// Fit entire diagram content into the viewport, preserving aspect ratio.
+						double containerRatio = containerW / containerH;
+						double contentRatio = contentW / contentH;
+
+						if (contentRatio > containerRatio) {
+							// Content is wider → fit to width, add vertical space.
+							diagram.setViewBoxWidth(contentW);
+							diagram.setViewBoxHeight(contentW / containerRatio);
+						} else {
+							// Content is taller → fit to height, add horizontal space.
+							diagram.setViewBoxWidth(contentH * containerRatio);
+							diagram.setViewBoxHeight(contentH);
+						}
+					} else {
+						diagram.setViewBoxWidth(containerW);
+						diagram.setViewBoxHeight(containerH);
+					}
 				}
 
 				diagram.draw(svgBuilder());

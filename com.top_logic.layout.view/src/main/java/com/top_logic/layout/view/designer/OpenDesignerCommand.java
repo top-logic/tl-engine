@@ -98,6 +98,12 @@ public class OpenDesignerCommand implements ViewCommand {
 			designTreeChannel.set(designTree);
 			designerContext.registerChannel("designTree", designTreeChannel);
 
+			// Pass the main application window's ViewContext so the designer can
+			// trigger hot-reload after saving.
+			DefaultViewChannel appContextChannel = new DefaultViewChannel("appContext");
+			appContextChannel.set(context);
+			designerContext.registerChannel("appContext", appContextChannel);
+
 			// Build the control tree from the designer view.
 			return (ReactControl) designerView.createControl(designerContext);
 		};

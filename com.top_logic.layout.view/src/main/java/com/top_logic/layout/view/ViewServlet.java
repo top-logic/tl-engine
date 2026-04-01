@@ -127,7 +127,8 @@ public class ViewServlet extends TopLogicServlet {
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
 		ViewContext viewContext = new DefaultViewContext(displayContext);
 
-		IReactControl rootControl = view.createControl(viewContext);
+		IReactControl rootControl = new ReloadableControl(viewPath, viewContext,
+			(ReactControl) view.createControl(viewContext));
 
 		renderPage(request, response, rootControl, displayContext);
 	}

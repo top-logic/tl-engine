@@ -53,10 +53,9 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 * {
 	 *   franceVacations = vectorIndexSearch("all vacations in France", 2, 0.8, "test.indexingVector:Vacation"); 
 	 *   $franceVacations.map(x -> { 
-	 *   	"internalId": $x["embedded"]["text"].parseJson()["internalId"], 
+	 *   	"score": $x["score"], 
 	 *      "TopLogic-type": $x["embedded"]["text"].parseJson()["TopLogic-type"], 
-	 *      "Instance": (`test.indexingVector:Vacation`).filter(a ->
-	 *            $a.get(`test.indexingVector:Vacation#id`).equals($x["embedded"]["text"].parseJson()["internalId"]))
+	 *      "Instance": $x["TL-instance"]
 	 *   })
 	 * }
 	 * }</pre>

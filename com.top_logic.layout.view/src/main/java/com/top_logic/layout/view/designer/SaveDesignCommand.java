@@ -98,8 +98,14 @@ public class SaveDesignCommand implements ViewCommand {
 			writeViewConfig(viewPath, viewConfig);
 		}
 
-		// TODO: Trigger a reload in the main window. The exact mechanism depends on the
-		// ReactWindowRegistry API and needs further investigation before it can be wired up.
+		// Trigger hot-reload in the main application window.
+		if (viewContext.hasChannel("appContext")) {
+			ViewChannel appContextChannel = viewContext.resolveChannel(new ChannelRef("appContext"));
+			Object appContextValue = appContextChannel.get();
+			if (appContextValue instanceof ViewContext appViewContext) {
+				appViewContext.fireViewChanged(fileConfigs.keySet());
+			}
+		}
 
 		return HandlerResult.DEFAULT_RESULT;
 	}

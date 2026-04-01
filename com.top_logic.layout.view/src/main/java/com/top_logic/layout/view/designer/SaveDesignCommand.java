@@ -87,11 +87,15 @@ public class SaveDesignCommand implements ViewCommand {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		// Collect all unique source files and their root ViewElement.Config.
+		// Collect only dirty source files and their root ViewElement.Config.
 		Map<String, ViewElement.Config> fileConfigs = new LinkedHashMap<>();
-		collectSourceFiles(root, fileConfigs);
+		collectDirtySourceFiles(root, fileConfigs);
 
-		// Write each file back to disk.
+		if (fileConfigs.isEmpty()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		// Write only dirty files back to disk.
 		for (Map.Entry<String, ViewElement.Config> entry : fileConfigs.entrySet()) {
 			String viewPath = entry.getKey();
 			ViewElement.Config viewConfig = entry.getValue();
@@ -111,15 +115,16 @@ public class SaveDesignCommand implements ViewCommand {
 	}
 
 	/**
-	 * Traverses the design tree and maps each unique source file to the root
-	 * {@link com.top_logic.layout.view.ViewElement.Config} of that file's subtree.
+	 * Traverses the design tree and maps each dirty source file to its root
+	 * {@link com.top_logic.layout.view.ViewElement.Config}. Only files containing dirty nodes are
+	 * included. After collection, dirty flags on included nodes are cleared.
 	 */
-	private void collectSourceFiles(DesignTreeNode node, Map<String, ViewElement.Config> fileConfigs) {
-		if (node.getConfig() instanceof ViewElement.Config viewConfig) {
+	private void collectDirtySourceFiles(DesignTreeNode node, Map<String, ViewElement.Config> fileConfigs) {
+		if (node.isDirty() && node.getConfig() instanceof ViewElement.Config viewConfig) {
 			fileConfigs.put(node.getSourceFile(), viewConfig);
 		}
 		for (DesignTreeNode child : node.getChildren()) {
-			collectSourceFiles(child, fileConfigs);
+			collectDirtySourceFiles(child, fileConfigs);
 		}
 	}
 

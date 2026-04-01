@@ -67,6 +67,7 @@ public class MoveElementCommand {
 
 		siblings.remove(index);
 		siblings.add(targetIndex, node);
+		parent.markDirty();
 		return true;
 	}
 

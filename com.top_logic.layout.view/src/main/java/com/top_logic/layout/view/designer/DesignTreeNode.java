@@ -37,6 +37,8 @@ public class DesignTreeNode {
 
 	private DesignTreeNode _parent;
 
+	private boolean _dirty;
+
 	/**
 	 * Creates a config node.
 	 *
@@ -123,6 +125,32 @@ public class DesignTreeNode {
 	 */
 	void setParent(DesignTreeNode parent) {
 		_parent = parent;
+	}
+
+	/**
+	 * Whether this node or any descendant has been modified since the last save.
+	 */
+	public boolean isDirty() {
+		return _dirty;
+	}
+
+	/**
+	 * Marks this node as dirty and propagates the flag to the nearest ancestor
+	 * {@link com.top_logic.layout.view.ViewElement.Config} node (the file-level root).
+	 */
+	public void markDirty() {
+		_dirty = true;
+		// Propagate to parent so file-level ViewElement nodes know they need saving.
+		if (_parent != null) {
+			_parent.markDirty();
+		}
+	}
+
+	/**
+	 * Clears the dirty flag on this node (not recursive).
+	 */
+	public void clearDirty() {
+		_dirty = false;
 	}
 
 	/**

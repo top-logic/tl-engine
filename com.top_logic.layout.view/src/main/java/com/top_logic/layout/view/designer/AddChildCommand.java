@@ -33,6 +33,7 @@ public class AddChildCommand {
 		DesignTreeNode child = new DesignTreeNode(childConfig, parent.getSourceFile());
 		child.setParent(parent);
 		parent.getChildren().add(child);
+		parent.markDirty();
 
 		return child;
 	}

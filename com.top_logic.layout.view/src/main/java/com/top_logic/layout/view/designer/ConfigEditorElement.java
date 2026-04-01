@@ -8,7 +8,9 @@ package com.top_logic.layout.view.designer;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -116,6 +118,7 @@ public class ConfigEditorElement implements UIElement {
 		Object initialValue = inputChannel.get();
 		if (initialValue instanceof DesignTreeNode node && !node.isVirtual()) {
 			ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem());
+			installDirtyTracking(node);
 			wrapper.addChild(editor);
 		}
 
@@ -123,6 +126,7 @@ public class ConfigEditorElement implements UIElement {
 		inputChannel.addListener((sender, oldValue, newValue) -> {
 			if (newValue instanceof DesignTreeNode node && !node.isVirtual()) {
 				ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem());
+				installDirtyTracking(node);
 				wrapper.setChild(editor);
 			} else {
 				wrapper.setChild(null);
@@ -130,6 +134,17 @@ public class ConfigEditorElement implements UIElement {
 		});
 
 		return wrapper;
+	}
+
+	/**
+	 * Registers a {@link com.top_logic.basic.config.ConfigurationListener} on all properties of
+	 * the node's config that marks the node as dirty on any change.
+	 */
+	private static void installDirtyTracking(DesignTreeNode node) {
+		ConfigurationItem config = node.getConfigItem();
+		for (PropertyDescriptor property : config.descriptor().getProperties()) {
+			config.addConfigurationListener(property, change -> node.markDirty());
+		}
 	}
 
 }

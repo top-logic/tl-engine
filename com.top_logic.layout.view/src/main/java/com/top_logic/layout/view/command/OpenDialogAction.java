@@ -25,6 +25,7 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
@@ -160,7 +161,8 @@ public class OpenDialogAction implements ViewAction {
 			dialogContext.registerChannel(_bindInputTo, inputChannel);
 		}
 
-		ReactControl dialogControl = (ReactControl) dialogView.createControl(dialogContext);
+		ReactControl dialogControl = new ReloadableControl(_dialogViewPath, dialogContext,
+			(ReactControl) dialogView.createControl(dialogContext));
 
 		mgr.openDialog(_closeOnBackdrop, dialogControl, result -> {
 			// Dialog closed.

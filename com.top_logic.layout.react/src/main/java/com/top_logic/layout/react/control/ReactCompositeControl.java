@@ -85,6 +85,22 @@ public class ReactCompositeControl extends ReactControl {
 		return _children;
 	}
 
+	/**
+	 * Replaces all child controls with a new list.
+	 *
+	 * <p>
+	 * Callers are responsible for cleaning up old children before calling this method.
+	 * </p>
+	 *
+	 * @param newChildren
+	 *        The new child controls.
+	 */
+	protected void replaceChildren(List<? extends ReactControl> newChildren) {
+		_children.clear();
+		_children.addAll(newChildren);
+		putState(CHILDREN, _children);
+	}
+
 	@Override
 	protected void cleanupChildren() {
 		for (ReactControl child : _children) {

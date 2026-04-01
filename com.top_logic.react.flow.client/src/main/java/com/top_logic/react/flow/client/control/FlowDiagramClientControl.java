@@ -7,8 +7,10 @@ package com.top_logic.react.flow.client.control;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -714,25 +716,127 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
 		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
+
+			/** Cache of ID'd elements detached during update. */
+			private Map<String, Element> _idCache = null;
+
+			/** Nesting depth tracker for cache lifecycle. */
+			private int _updateDepth = 0;
+
 			@Override
 			public void write(Drawable element) {
-				// Ignore direct contents.
+				if (_idCache != null && element instanceof Widget) {
+					String id = ((Widget) element).getClientId();
+					if (id != null) {
+						Element cached = _idCache.remove(id);
+						if (cached != null) {
+							// Re-insert preserved sub-widget at current position.
+							getParent().appendChild(Js.uncheckedCast(cached));
+							return;
+						}
+					}
+				}
+				// New sub-widget: draw it for real.
+				super.write(element);
 			}
+
+			// --- Hierarchical begin/end (change parent) ---
 
 			@Override
 			public void beginGroup(Object model) {
-				lookupUpdated(model);
+				if (tryLookupAndPrepare(model)) return;
+				if (_updateDepth > 0) _updateDepth++;
+				super.beginGroup(model);
 			}
 
 			@Override
-			public void beginPath(Object model) {
-				lookupUpdated(model);
+			public void endGroup() {
+				endUpdatedScope();
+				super.endGroup();
 			}
 
-			private void lookupUpdated(Object model) {
+			@Override
+			public void beginClipPath(Object model) {
+				if (tryLookupAndPrepare(model)) return;
+				if (_updateDepth > 0) _updateDepth++;
+				super.beginClipPath(model);
+			}
+
+			@Override
+			public void endClipPath() {
+				endUpdatedScope();
+				super.endClipPath();
+			}
+
+			// --- Leaf begin/end (don't change parent) ---
+
+			@Override
+			public void beginPath(Object model) {
+				if (tryLookupAndPrepare(model)) return;
+				super.beginPath(model);
+			}
+
+			@Override
+			public void beginPolyline(Object model) {
+				if (tryLookupAndPrepare(model)) return;
+				super.beginPolyline(model);
+			}
+
+			@Override
+			public void beginPolygon(Object model) {
+				if (tryLookupAndPrepare(model)) return;
+				super.beginPolygon(model);
+			}
+
+			// --- Shared logic ---
+
+			private void endUpdatedScope() {
+				if (_updateDepth > 0) {
+					_updateDepth--;
+					if (_updateDepth == 0) {
+						// Update of the looked-up element is complete.
+						_idCache = null;
+					}
+				}
+			}
+
+			private boolean tryLookupAndPrepare(Object model) {
+				if (model == null) return false;
 				String id = ((Widget) model).getClientId();
-				OMSVGElement updated = getDoc().getElementById(id);
-				setParent(updated);
+				if (id == null) return false;
+				OMSVGElement existing = getDoc().getElementById(id);
+				if (existing == null) return false;
+
+				// Use elemental2 view for DOM traversal.
+				Element existingEl = Js.uncheckedCast(existing);
+
+				// Cache all ID'd descendants before clearing.
+				_idCache = new HashMap<>();
+				collectIdDescendants(existingEl, _idCache);
+
+				// Clear all children — anonymous structure will be redrawn.
+				while (existingEl.firstChild != null) {
+					existingEl.removeChild(existingEl.lastChild);
+				}
+
+				setParent(existing);
+				_updateDepth = 1;
+				return true;
+			}
+
+			private void collectIdDescendants(Element parent, Map<String, Element> cache) {
+				for (Element child = parent.firstElementChild; child != null;
+						child = child.nextElementSibling) {
+
+					String childId = child.id;
+					if (childId != null && !childId.isEmpty()) {
+						cache.put(childId, child);
+						// Don't recurse into ID'd elements —
+						// they manage their own children.
+					} else {
+						collectIdDescendants(child, cache);
+					}
+				}
 			}
 		};
 

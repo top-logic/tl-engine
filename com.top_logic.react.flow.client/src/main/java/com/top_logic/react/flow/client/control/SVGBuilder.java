@@ -97,6 +97,13 @@ public class SVGBuilder implements SvgWriter {
 		return _doc;
 	}
 
+	/**
+	 * The current parent element to which new children are appended.
+	 */
+	protected final OMSVGElement getParent() {
+		return _parent;
+	}
+
 	@Override
 	public void beginSvg() {
 		if (_parent != _root) {
@@ -614,6 +621,7 @@ public class SVGBuilder implements SvgWriter {
 		_parent = next;
 		_current = next;
 	}
+
 
 	private void appendChild(OMSVGElement next) {
 		_parent.appendChild(next);

@@ -107,7 +107,6 @@
 							<button id="storeCustomServiceConfig"
 								class="com.top_logic.layout.admin.component.TLSaveServiceConfigHandler"
 								clique="save"
-								group="Create"
 								image="theme:SAVE_SERVICE_CONFIGURATION"
 							/>
 

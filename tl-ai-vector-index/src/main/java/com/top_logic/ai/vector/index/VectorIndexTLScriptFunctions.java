@@ -12,9 +12,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.checkerframework.dataflow.qual.SideEffectFree;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.BulkIdLoad;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 
@@ -83,10 +89,20 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			VectorIndex.getInstance().searchVectorIndex(query, type, limit, scoreThreshold);
 		List<Map<String, Object>> results = new ArrayList<>();
 
+		Map<String, List<String>> objectsToFetch = new HashMap<>();
+		JSONParser parser = new JSONParser();
+
 		for (EmbeddingMatch<TextSegment> match : matches) {
 			Map<String, Object> matchItem = new HashMap<>();
 			matchItem.put("score", match.score());
 			matchItem.put("embeddingId", match.embeddingId());
+
+			JSONObject obj = (JSONObject) parser.parse(match.embedded().text());
+
+			matchItem.put("objectId", obj.get("objectId"));
+			String tlType = (String) obj.get("TopLogic-type");
+
+			objectsToFetch.computeIfAbsent(tlType, k -> new ArrayList<>()).add((String) obj.get("objectId"));
 
 			if (match.embedded() != null) {
 				Map<String, Object> segmentItem = new HashMap<>();
@@ -98,6 +114,24 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			}
 
 			results.add(matchItem);
+		}
+
+		BulkIdLoad loader = new BulkIdLoad(PersistencyLayer.getKnowledgeBase());
+
+		for (String objectTypesToFetch : objectsToFetch.keySet()) {
+			for (String objectId : objectsToFetch.get(objectTypesToFetch)) {
+				loader.add(
+					ObjectKey.fromStringObjectKey(PersistencyLayer.getKnowledgeBase().getMORepository(), objectId));
+			}
+		}
+
+		List<KnowledgeItem> items = loader.load();
+
+
+		for (Map<String, Object> resultItem : results) {
+			resultItem.put("TL-instance",
+				items.stream().filter(item -> item.tId().asString().equals(resultItem.get("objectId"))).toList()
+					.get(0));
 		}
 
 		return results;

@@ -175,6 +175,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	}
 
+	private static final String META_TL_TYPE_KEY = "TopLogic-type";
+
 	private static final boolean DEBUG = Logger.isDebugEnabled(VectorIndex.class);
 
 	/** The name of the KO field in a Lucene document */
@@ -460,7 +462,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.myThread.start();
 
 		if (this.shouldReindexingOnRestart) {
-			Logger.info("shouldReindexingOnRestart=true — scheduling background re-index.", VectorIndex.class);
+			Logger.info("shouldReindexingOnRestart=true scheduling background re-index.", VectorIndex.class);
 			Thread reindexer = new Thread(() ->
 				ThreadContextManager.inSystemInteraction(VectorIndex.class, () -> {
 					for (String modelFqn : this.vectorIndexModels) {
@@ -670,6 +672,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			Object val = fd.getAttributeValue(key);
 			joContent.put(indexKey, val == null ? null : val.toString());
 		}
+//		joContent.put("objectKey", aDoc.tId().asString());
 		joContent.put("_text", content);
 		content = joContent.toJSONString();
 
@@ -738,7 +741,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			"id", this.getDocumentUUID(documentId).toString(),
 			// "internalId", value(payload.get(associationKeyName)),
 			"description", description,
-			"TopLogic-type", aDoc.getWrapper().tType().toString(),
+			META_TL_TYPE_KEY, aDoc.getWrapper().tType().toString(),
 			"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
 			"TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
 			"content", joContent);
@@ -804,7 +807,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		TextSegment content;
 
 		try {
-			content = TextSegment.from(pl, metadata("TopLogic-type", payload.get("TopLogic-type").toString()));
+			content = TextSegment.from(pl, metadata(META_TL_TYPE_KEY, payload.get(META_TL_TYPE_KEY).toString()));
 		} catch (Exception e) {
 			content = TextSegment.from(pl);
 		}
@@ -910,7 +913,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		EmbeddingSearchRequest embeddingSearchRequest;
 
 		if (objectType != null) {
-			Filter objectTypeMeta = metadataKey("TopLogic-type").isEqualTo(objectType);
+			Filter objectTypeMeta = metadataKey(META_TL_TYPE_KEY).isEqualTo(objectType);
 
 			embeddingSearchRequestBuilder.filter(objectTypeMeta);
 		}

@@ -12,6 +12,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.model.annotate.TLAccessRights;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 
@@ -27,6 +28,11 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
  *
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@DisplayOrder({
+	AccessGrant.OPERATION,
+	AccessGrant.ROLES,
+	AccessGrant.INHERIT,
+})
 public interface AccessGrant extends ConfigurationItem {
 
 	/** Config property name for {@link #getOperation()}. */
@@ -34,6 +40,9 @@ public interface AccessGrant extends ConfigurationItem {
 
 	/** Config property name for {@link #getRoles()}. */
 	String ROLES = "roles";
+
+	/** Config property name for {@link #isInherit()}. */
+	String INHERIT = "inherit";
 
 	/**
 	 * The operation (command group) this grant applies to.
@@ -48,5 +57,12 @@ public interface AccessGrant extends ConfigurationItem {
 	@Format(CommaSeparatedRoles.class)
 	@Name(ROLES)
 	List<RoleConfig> getRoles();
+
+	/**
+	 * Whether this grant is propagated to specializations (subclasses) of the annotated type.
+	 */
+	@Name(INHERIT)
+	boolean isInherit();
+
 }
 

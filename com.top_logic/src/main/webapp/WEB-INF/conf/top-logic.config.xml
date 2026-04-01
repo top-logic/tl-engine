@@ -67,8 +67,13 @@
 			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
 			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.LoginFailuresModule$Module" value="true"/>
+			       <module key="com.top_logic.model.security.SecurityConfigurationService$Module" value="true"/>
 				</modules>
 			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance class="com.top_logic.model.security.SecurityConfigurationService"/>
 		</config>
 		
 		<config service-class="com.top_logic.tool.boundsec.commandhandlers.BookmarkService">

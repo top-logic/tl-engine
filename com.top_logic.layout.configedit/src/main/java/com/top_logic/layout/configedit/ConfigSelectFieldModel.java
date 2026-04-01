@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.form.model.SelectFieldModel;
 
@@ -42,6 +43,27 @@ public class ConfigSelectFieldModel extends ConfigFieldModel implements SelectFi
 		super(config, property);
 		_options = options;
 		_multiple = multiple;
+	}
+
+	@Override
+	public void setValue(Object value) {
+		// The client sends string values for select fields. If the property has a
+		// ConfigurationValueProvider (e.g. for enums), use it to parse the string back to the
+		// expected type.
+		if (value instanceof String stringValue) {
+			ConfigurationValueProvider<?> valueProvider = getProperty().getValueProvider();
+			if (valueProvider != null) {
+				try {
+					value = valueProvider.getValue(getProperty().getPropertyName(), (CharSequence) stringValue);
+				} catch (com.top_logic.basic.config.ConfigurationException ex) {
+					throw new IllegalArgumentException(
+						"Cannot parse value '" + stringValue + "' for property '"
+							+ getProperty().getPropertyName() + "'",
+						ex);
+				}
+			}
+		}
+		super.setValue(value);
 	}
 
 	@Override

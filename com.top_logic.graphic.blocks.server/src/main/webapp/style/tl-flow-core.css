@@ -8,6 +8,9 @@
 	display: none;
 }
 
+/* Pointer cursor on selectable elements. */
+.tlCanSelect { cursor: pointer; }
+
 /* Color-change selection for graph nodes and edges. CSS overrides SVG presentation attributes. */
 .tlSelected .tlSelectionStroke { stroke: var(--focus); stroke-width: 2; }
 .tlSelected .tlSelectionFill { fill: var(--layer-selected); }

@@ -135,13 +135,13 @@ public class DesignTreeNode {
 	}
 
 	/**
-	 * Marks this node as dirty and propagates the flag to the nearest ancestor
-	 * {@link com.top_logic.layout.view.ViewElement.Config} node (the file-level root).
+	 * Marks this node as dirty and propagates the flag upward within the same source file. The
+	 * propagation stops at view-file boundaries (when the parent's source file differs from
+	 * this node's source file), so that only the actually modified file is marked for saving.
 	 */
 	public void markDirty() {
 		_dirty = true;
-		// Propagate to parent so file-level ViewElement nodes know they need saving.
-		if (_parent != null) {
+		if (_parent != null && _sourceFile != null && _sourceFile.equals(_parent.getSourceFile())) {
 			_parent.markDirty();
 		}
 	}

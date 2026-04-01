@@ -3,7 +3,7 @@
 **Datum**: 2026-03-31 (aktualisiert 2026-04-01)
 **Branch**: `CWS/CWS_29108_flow_diagram_completion`
 **Ticket**: #29108
-**Status**: Offen — implementierungsbereit
+**Status**: In Umsetzung
 
 ## Kontext
 
@@ -20,245 +20,151 @@ Edge-Selektion ist als Feature fast fertig:
 `applyScopeChanges` rendert dirty Widgets inkrementell via `updateWriter`. Der `updateWriter` findet existierende SVG-Elemente per `clientId`:
 
 ```java
-beginGroup(model) → ((Widget) model).getClientId() → getElementById(id)
-beginPath(model)  → ((Widget) model).getClientId() → getElementById(id)
+beginGroup(model) -> ((Widget) model).getClientId() -> getElementById(id)
+beginPath(model)  -> ((Widget) model).getClientId() -> getElementById(id)
 ```
 
-`GraphEdge.draw()` enthält `beginPath()` ohne Model (anonyme Paths). Der `updateWriter` ruft `lookupUpdated(null)` → `null.getClientId()` → **TypeError**.
+`GraphEdge.draw()` enthält `beginPath()` ohne Model (anonyme Paths). Der `updateWriter` ruft `lookupUpdated(null)` -> `null.getClientId()` -> **TypeError**.
 
-Bei `SelectableBox` tritt das Problem nicht auf, weil deren Inhalt über `out.write(content)` gezeichnet wird — und der `updateWriter` `write()` überspringt.
+## Voraussetzung: Ein Widget = Ein top-level SVG-Element
 
-## Warum `out.write()` keine Lösung ist
+Damit der ID-Cache-Ansatz funktioniert, muss jedes Widget **genau ein top-level SVG-Element mit ID** produzieren. Aller Inhalt muss als Kinder dieses Elements erscheinen.
 
-Den Edge-Inhalt in `out.write(Drawable)` einzuwickeln würde den Inhalt beim Update komplett überspringen. Das funktioniert für Selection-Toggles (nur CSS-Klasse ändert sich), aber NICHT wenn sich Edge-Properties ändern (Farbe, Strich, Waypoints). Der Inhalt muss bei Bedarf neu gezeichnet werden können.
+### Problem: Flache Decorator-Struktur
+
+Einige Decorator-Widgets erzeugen aktuell **Geschwister-Elemente** statt verschachtelter Struktur:
+
+```
+Widget-Hierarchie:          SVG-Ergebnis (IST):
+SelectableBox               <g id="sel">
+  Border                      <path id="fill"/>    <- Fill
+    Fill                      <text/>               <- Content
+      Text, Text              <text/>               <- Content
+                              <path id="border"/>   <- Border
+                            </g>
+```
+
+Ein `write(borderWidget)` im updateWriter findet `border` im Cache und fügt nur den Border-PATH ein — aber `borderWidget.draw()` wäre für Fill + Text + Border zuständig.
+
+### Lösung: Jedes Widget wraps in `<g>`
+
+```
+SVG-Ergebnis (SOLL):
+<g id="sel">
+  <g id="border">
+    <g id="fill">
+      <path/>             <- Fill-Background
+      <text/>             <- Content
+      <text/>             <- Content
+    </g>
+    <path/>               <- Border-Stroke
+  </g>
+</g>
+```
+
+Jetzt ist `write(borderWidget)` -> Cache-Hit -> `<g id="border">` komplett mit allen Kindern einfügen -> fertig.
+
+### Betroffene Operations-Klassen
+
+| Klasse | Aktuell | Fix |
+|--------|---------|-----|
+| **FillOperations** | `beginPath(self)` + `drawContent()` als Geschwister | `beginGroup(self)` um beides |
+| **BorderOperations** | `drawContent()` + `beginPath(self)` als Geschwister | `beginGroup(self)` um beides |
+| **ClipBoxOperations** | `beginGroup(self)` + `beginClipPath()` als Geschwister | Äußeres `beginGroup(self)` um beides |
+| **TreeConnectionOperations** | Paths + Symbols + Decorations ohne Wrapper | `beginGroup(self)` um alles |
+
+**Bereits korrekt**: GraphEdgeOperations, SelectableBoxOperations, ClickTargetOperations, DropRegionOperations, TooltipOperations, ContextMenuOperations, FloatingLayoutOperations, ImageOperations.
 
 ## Die Lösung: ID-Cache mit Reconciliation
 
 ### Kernidee
 
 Wenn der `updateWriter` ein existierendes Element per ID findet:
-1. **Alle ID-Nachkommen rekursiv einsammeln** → ID-Cache (Map: ID → DOM-Element)
+1. **Alle ID-Nachkommen rekursiv einsammeln** -> ID-Cache (Map: ID -> OMSVGElement)
 2. **Alle Kinder des Elements entfernen** (komplett leeren)
-3. **`draw()` normal ausführen** — anonyme Elemente werden frisch erzeugt
-4. Bei `write(subWidget)`: ID im Cache? → Cached Element an aktuelle Position anhängen. Nicht im Cache? → Echt zeichnen (neues Sub-Widget).
-5. **Cache leeren** wenn `endGroup()`/`endPath()` das aktualisierte Element abschliesst — alle IDs im Unterbaum müssen genau vom Render-Vorgang des aktualisierten Elements wieder aufgerufen werden.
+3. **`draw()` normal ausführen** -- anonyme Elemente werden frisch erzeugt
+4. Bei `write(subWidget)`: ID im Cache? -> Cached Element komplett an aktuelle Position anhängen (mit gesamtem Subtree). Nicht im Cache? -> Echt zeichnen (neues Sub-Widget).
+5. Bei `beginGroup/beginPath(model)` innerhalb des Updates: ID im Cache? -> Cached Element einfügen, als Parent/Current setzen. Nicht im Cache? -> Normal erstellen.
+6. **Cache leeren** wenn `endGroup()`/`endClipPath()` das aktualisierte Element abschliesst.
 
-### Warum das in 100% der Fälle korrekt ist
+### Ablauf am Beispiel Node (SelectableBox -> Border -> Fill)
 
-- Anonyme Struktur wird **komplett neu gezeichnet** → Änderungen an Verschachtelung, Attributen, Reihenfolge sind kein Problem
-- Sub-Widgets werden **exakt dort eingefügt, wo `write()` aufgerufen wird** → Position stimmt immer, auch bei geänderter Zwischenstruktur
-- Sub-Widget-Inhalt bleibt unangetastet (aktualisiert sich selbst, wenn dirty)
-- DOM-Referenzen bleiben gültig nach `removeChild` — `appendChild` an anderer Stelle versetzt das Element
-- Cache-Clearing bei `endGroup()` stellt sicher, dass keine verwaisten Referenzen übrig bleiben
-
-### Ablauf am Beispiel GraphEdge
-
-Ausgangszustand im DOM:
+Ausgangszustand:
 ```
-<g id="edge123">
-  <path d="M0,0 L100,100"/>         ← Kantenlinie (anonym)
-  <path pointer-events="all"/>       ← Click-Target (anonym)
-  <g transform="translate(50,50)">   ← Decoration-Position (anonym)
-    <g id="decoration456">           ← Sub-Widget
-      <text>Label</text>
+<g id="sel">
+  <g id="border">
+    <g id="fill">
+      <path/>
+      <text/>
+      <text/>
+    </g>
+    <path/>
+  </g>
+</g>
+```
+
+Update (CSS-Klasse aendert sich):
+1. `beginGroup(selBox)` -> findet `<g id="sel">` im DOM
+2. Cache: `{border: <g id="border">...komplett...}`
+3. Kinder von `sel` entfernen
+4. CSS-Klasse auf `sel` setzen
+5. `write(borderWidget)` -> `border` im Cache -> **komplett einfuegen** -> fertig
+6. `endGroup()` -> Cache leeren
+
+Ergebnis: `<g id="sel">` hat aktualisierte CSS-Klasse, Border mit gesamtem Inhalt intakt.
+
+### Ablauf am Beispiel Edge (mit anonymen Paths)
+
+Ausgangszustand:
+```
+<g id="edge">
+  <path/>                    <- Kantenlinie (anonym)
+  <path pointer-events/>     <- Click-Target (anonym)
+  <g transform="...">        <- Decoration-Position (anonym)
+    <g id="label">           <- Label Sub-Widget
+      <text>name</text>
     </g>
   </g>
 </g>
 ```
 
-Update-Vorgang:
-1. `beginGroup(edge)` → findet `<g id="edge123">`
-2. Cache: `{decoration456: <g id="decoration456">…}`
-3. Alle Kinder von `edge123` entfernen → Element ist leer
-4. `edge.draw(updateWriter)` läuft:
-   - `beginPath(null)` → neuer `<path>` (Kantenlinie), angehängt an `edge123`
-   - `endPath()`
-   - `beginPath(null)` → neuer `<path>` (Click-Target), angehängt an `edge123`
-   - `endPath()`
-   - `beginGroup(null)` → neues `<g>` (translate), angehängt an `edge123`, wird Parent
-   - `write(decoration)` → `decoration456` im Cache → **cached Element anhängen**
-   - `endGroup()` → Parent zurück auf `edge123`
-5. `endGroup()` → aktualisiertes Element abgeschlossen → **Cache leeren**
+Update:
+1. `beginGroup(edge)` -> findet `<g id="edge">` im DOM
+2. Cache: `{label: <g id="label">...komplett...}`
+3. Kinder von `edge` entfernen
+4. CSS-Klasse auf `edge` setzen
+5. `beginPath(null)` -> anonym -> frisch erzeugt
+6. `beginPath(null)` -> anonym -> frisch erzeugt
+7. `beginGroup(null)` -> anonym -> frisch erzeugt, wird Parent
+8. `write(labelWidget)` -> `label` im Cache -> **komplett einfuegen**
+9. `endGroup()` -> Parent zurueck
+10. `endGroup()` -> Cache leeren
 
-Ergebnis:
-```
-<g id="edge123">
-  <path d="M0,0 L100,100"/>         ← frisch gezeichnet
-  <path pointer-events="all"/>       ← frisch gezeichnet
-  <g transform="translate(50,50)">   ← frisch gezeichnet
-    <g id="decoration456">           ← aus Cache eingefügt, Inhalt intakt
-      <text>Label</text>
-    </g>
-  </g>
-</g>
-```
+Ergebnis: Anonyme Paths frisch, Label-Widget intakt.
 
-### Randfälle
+## Betroffene Dateien
 
-| Fall | Verhalten |
-|------|-----------|
-| Sub-Widget entfernt | Bleibt im Cache, wird nie eingefügt → GC räumt auf |
-| Sub-Widget neu hinzugefügt | Nicht im Cache → `super.write(element)` zeichnet es echt |
-| Sub-Widget verschoben | Wird an neuer Position eingefügt (durch `write()`-Aufruf) |
-| Verschachtelte Updates | Nur die oberste Ebene cached — innere Widgets aktualisieren sich selbst |
+### 1. Operations-Klassen (Widget -> ein top-level `<g>`)
 
-### Code-Skizze für `FlowDiagramClientControl.applyScopeChanges()`
+- `com.top_logic.react.flow.common/.../operations/FillOperations.java`
+- `com.top_logic.react.flow.common/.../operations/BorderOperations.java`
+- `com.top_logic.react.flow.common/.../operations/ClipBoxOperations.java`
+- `com.top_logic.react.flow.common/.../operations/tree/TreeConnectionOperations.java`
 
-Alle begin-Methoden mit Model-Parameter im SVGBuilder:
-- **Hierarchisch** (ändern Parent): `beginGroup(model)`, `beginClipPath(model)`
-- **Blatt-Elemente**: `beginPath(model)`, `beginPolyline(model)`, `beginPolygon(model)`
+### 2. SVGBuilder (Accessor-Methoden)
 
-Das Lookup muss bei **allen fünf** greifen, das Depth-Tracking bei **allen hierarchischen** Paaren.
+- `com.top_logic.react.flow.client/.../control/SVGBuilder.java` -- `getParent()`, `setCurrent()`
 
-```java
-SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
+### 3. UpdateWriter
 
-    /** Cache of ID'd elements detached during update. */
-    private Map<String, OMSVGElement> _idCache = null;
-
-    /** Nesting depth tracker for cache lifecycle. */
-    private int _updateDepth = 0;
-
-    @Override
-    public void write(Drawable element) {
-        if (_idCache != null && element instanceof Widget) {
-            String id = ((Widget) element).getClientId();
-            if (id != null) {
-                OMSVGElement cached = _idCache.remove(id);
-                if (cached != null) {
-                    // Re-insert preserved sub-widget at current position.
-                    getParent().appendChild(cached);
-                    return;
-                }
-            }
-        }
-        // New sub-widget: draw it for real.
-        super.write(element);
-    }
-
-    // --- Hierarchical begin/end (change parent) ---
-
-    @Override
-    public void beginGroup(Object model) {
-        if (tryLookupAndPrepare(model)) return;
-        if (_updateDepth > 0) _updateDepth++;
-        super.beginGroup(model);
-    }
-
-    @Override
-    public void endGroup() {
-        endUpdatedScope();
-        super.endGroup();
-    }
-
-    @Override
-    public void beginClipPath(Object model) {
-        if (tryLookupAndPrepare(model)) return;
-        if (_updateDepth > 0) _updateDepth++;
-        super.beginClipPath(model);
-    }
-
-    @Override
-    public void endClipPath() {
-        endUpdatedScope();
-        super.endClipPath();
-    }
-
-    // --- Leaf begin/end (don't change parent) ---
-
-    @Override
-    public void beginPath(Object model) {
-        if (tryLookupAndPrepare(model)) return;
-        super.beginPath(model);
-    }
-
-    @Override
-    public void beginPolyline(Object model) {
-        if (tryLookupAndPrepare(model)) return;
-        super.beginPolyline(model);
-    }
-
-    @Override
-    public void beginPolygon(Object model) {
-        if (tryLookupAndPrepare(model)) return;
-        super.beginPolygon(model);
-    }
-
-    // --- Shared logic ---
-
-    private void endUpdatedScope() {
-        if (_updateDepth > 0) {
-            _updateDepth--;
-            if (_updateDepth == 0) {
-                // Update of the looked-up element is complete.
-                _idCache = null;
-            }
-        }
-    }
-
-    private boolean tryLookupAndPrepare(Object model) {
-        if (model == null) return false;
-        String id = ((Widget) model).getClientId();
-        if (id == null) return false;
-        OMSVGElement existing = getDoc().getElementById(id);
-        if (existing == null) return false;
-
-        // Cache all ID'd descendants before clearing.
-        _idCache = new HashMap<>();
-        collectIdDescendants(existing, _idCache);
-
-        // Clear all children — anonymous structure will be redrawn.
-        while (existing.hasChildNodes()) {
-            existing.removeChild(existing.getLastChild());
-        }
-
-        setParent(existing);
-        _updateDepth = 1;
-        return true;
-    }
-
-    private void collectIdDescendants(OMSVGElement parent,
-            Map<String, OMSVGElement> cache) {
-        Node child = parent.getFirstChild();
-        while (child != null) {
-            if (child instanceof OMSVGElement) {
-                OMSVGElement el = (OMSVGElement) child;
-                String childId = el.getId();
-                if (childId != null && !childId.isEmpty()) {
-                    cache.put(childId, el);
-                    // Don't recurse into ID'd elements —
-                    // they manage their own children.
-                } else {
-                    collectIdDescendants(el, cache);
-                }
-            }
-            child = child.getNextSibling();
-        }
-    }
-};
-```
-
-### Wichtige Design-Entscheidungen
-
-1. **Alle begin-Methoden mit Model**: Das Lookup (`tryLookupAndPrepare`) wird bei allen fünf begin-Methoden aufgerufen, die ein Model-Objekt erhalten: `beginGroup`, `beginClipPath`, `beginPath`, `beginPolyline`, `beginPolygon`.
-
-2. **Depth-Tracking bei hierarchischen Paaren**: `_updateDepth` wird bei `beginGroup`/`endGroup` und `beginClipPath`/`endClipPath` inkrementiert/dekrementiert — also bei allen Paaren, die den Parent ändern. Blatt-Elemente (`beginPath`, `beginPolyline`, `beginPolygon`) ändern den Parent nicht und brauchen kein Depth-Tracking.
-
-3. **Cache-Scope**: Der Cache lebt genau für die Dauer des hierarchischen begin→end-Paares des aktualisierten Elements. Danach wird er verworfen.
-
-4. **Kein Rekursieren in ID-Elemente**: `collectIdDescendants` stoppt bei Elementen mit ID — deren Kinder gehören zu einem anderen Widget und werden von dessen eigenem Update verwaltet.
-
-5. **Neue Sub-Widgets**: Wenn `write()` ein Widget zeichnet, dessen ID nicht im Cache ist, wird `super.write()` aufgerufen — das Element wird echt gerendert.
-
-## Betroffene Datei
-
-`com.top_logic.react.flow.client/.../FlowDiagramClientControl.java` — nur die `applyScopeChanges` Methode
+- `com.top_logic.react.flow.client/.../control/FlowDiagramClientControl.java` -- `applyScopeChanges()`
 
 ## Verifikation
 
-1. Build: `mvn install -DskipTests=true -pl com.top_logic.react.flow.client`
-2. Demo-App starten
-3. Modul-Graph → Modul auswählen → Node klicken → Details erscheinen, Node hervorgehoben
-4. Edge-Linie klicken → Details erscheinen, Edge hervorgehoben
-5. Zwischen Nodes und Edges wechseln → vorherige Selektion verschwindet
-6. Construction-Plan-Demo → Selektion funktioniert weiterhin
+1. Build: `mvn install -DskipTests=true -pl com.top_logic.react.flow.common,com.top_logic.react.flow.client`
+2. Build demo: `mvn install -DskipTests=true -pl com.top_logic.demo`
+3. Demo-App starten
+4. Modul-Graph -> Modul auswaehlen -> Node klicken -> Details erscheinen, Node hervorgehoben
+5. Edge-Linie klicken -> Details erscheinen, Edge hervorgehoben
+6. Zwischen Nodes und Edges wechseln -> vorherige Selektion verschwindet, Child-Counts stabil
+7. Construction-Plan-Demo -> Selektion funktioniert weiterhin

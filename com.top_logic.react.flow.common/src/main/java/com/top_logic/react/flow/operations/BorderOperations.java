@@ -72,11 +72,13 @@ public interface BorderOperations extends DecorationOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
+		out.beginGroup(self());
+
 		drawContent(out);
 
 		double radius = self().getThickness() / 2;
 
-		out.beginPath(self());
+		out.beginPath();
 		out.writeCssClass(self().getCssClass());
 		out.setStrokeWidth(self().getThickness());
 		out.setStroke(self().getStrokeStyle());
@@ -111,6 +113,8 @@ public interface BorderOperations extends DecorationOperations {
 		}
 		out.endData();
 		out.endPath();
+
+		out.endGroup();
 	}
 
 }

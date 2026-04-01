@@ -51,6 +51,8 @@ public interface TreeConnectionOperations extends Drawable {
 
 	@Override
 	default void draw(SvgWriter out) {
+		out.beginGroup(self());
+
 		TreeConnector parent = self().getParent();
 
 		double fromX = parent.getX();
@@ -96,6 +98,8 @@ public interface TreeConnectionOperations extends Drawable {
 			}
 			out.endGroup();
 		}
+
+		out.endGroup();
 	}
 
 	/**

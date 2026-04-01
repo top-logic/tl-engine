@@ -24,7 +24,9 @@ public interface FillOperations extends DecorationOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.beginPath(self());
+		out.beginGroup(self());
+
+		out.beginPath();
 		out.writeCssClass(self().getCssClass());
 		out.setStroke("none");
 		out.setFill(self().getFillStyle());
@@ -40,6 +42,8 @@ public interface FillOperations extends DecorationOperations {
 		out.endPath();
 
 		drawContent(out);
+
+		out.endGroup();
 	}
 
 }

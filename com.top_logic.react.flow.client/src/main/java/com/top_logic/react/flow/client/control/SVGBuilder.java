@@ -104,6 +104,13 @@ public class SVGBuilder implements SvgWriter {
 		return _parent;
 	}
 
+	/**
+	 * Sets the current element to which attributes are applied, without changing the parent.
+	 */
+	protected final void setCurrent(OMSVGElement element) {
+		_current = element;
+	}
+
 	@Override
 	public void beginSvg() {
 		if (_parent != _root) {

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.vectomatic.dom.svg.OMNode;
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
 import org.vectomatic.dom.svg.OMSVGMatrix;
@@ -717,8 +718,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
 		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
 
-			/** Cache of ID'd elements detached during update. */
-			private Map<String, Element> _idCache = null;
+			/** Cache of OMSVGElement wrappers detached during update. */
+			private Map<String, OMSVGElement> _idCache = null;
 
 			/** Nesting depth tracker for cache lifecycle. */
 			private int _updateDepth = 0;
@@ -728,10 +729,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 				if (_idCache != null && element instanceof Widget) {
 					String id = ((Widget) element).getClientId();
 					if (id != null) {
-						Element cached = _idCache.remove(id);
+						OMSVGElement cached = _idCache.remove(id);
 						if (cached != null) {
 							// Re-insert preserved sub-widget at current position.
-							getParent().appendChild(Js.uncheckedCast(cached));
+							getParent().appendChild(cached);
 							return;
 						}
 					}
@@ -744,7 +745,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 			@Override
 			public void beginGroup(Object model) {
-				if (tryLookupAndPrepare(model)) return;
+				if (tryBeginElement(model, true)) return;
 				if (_updateDepth > 0) _updateDepth++;
 				super.beginGroup(model);
 			}
@@ -757,7 +758,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 			@Override
 			public void beginClipPath(Object model) {
-				if (tryLookupAndPrepare(model)) return;
+				if (tryBeginElement(model, true)) return;
 				if (_updateDepth > 0) _updateDepth++;
 				super.beginClipPath(model);
 			}
@@ -772,19 +773,19 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 			@Override
 			public void beginPath(Object model) {
-				if (tryLookupAndPrepare(model)) return;
+				if (tryBeginElement(model, false)) return;
 				super.beginPath(model);
 			}
 
 			@Override
 			public void beginPolyline(Object model) {
-				if (tryLookupAndPrepare(model)) return;
+				if (tryBeginElement(model, false)) return;
 				super.beginPolyline(model);
 			}
 
 			@Override
 			public void beginPolygon(Object model) {
-				if (tryLookupAndPrepare(model)) return;
+				if (tryBeginElement(model, false)) return;
 				super.beginPolygon(model);
 			}
 
@@ -800,23 +801,39 @@ public class FlowDiagramClientControl implements DiagramContext {
 				}
 			}
 
-			private boolean tryLookupAndPrepare(Object model) {
+			private boolean tryBeginElement(Object model, boolean hierarchical) {
 				if (model == null) return false;
 				String id = ((Widget) model).getClientId();
 				if (id == null) return false;
+
+				// Inside an active update: check cache first for inner elements.
+				if (_idCache != null) {
+					OMSVGElement cached = _idCache.remove(id);
+					if (cached != null) {
+						// Re-insert cached wrapper at current position.
+						getParent().appendChild(cached);
+						if (hierarchical) {
+							_updateDepth++;
+							setParent(cached);
+						} else {
+							setCurrent(cached);
+						}
+						return true;
+					}
+				}
+
+				// Top-level lookup: find existing element in the DOM.
 				OMSVGElement existing = getDoc().getElementById(id);
 				if (existing == null) return false;
 
-				// Use elemental2 view for DOM traversal.
-				Element existingEl = Js.uncheckedCast(existing);
-
-				// Cache all ID'd descendants before clearing.
+				// Cache all ID'd descendant wrappers before clearing.
 				_idCache = new HashMap<>();
-				collectIdDescendants(existingEl, _idCache);
+				collectIdDescendants(existing);
 
 				// Clear all children — anonymous structure will be redrawn.
-				while (existingEl.firstChild != null) {
-					existingEl.removeChild(existingEl.lastChild);
+				OMNode child;
+				while ((child = existing.getFirstChild()) != null) {
+					existing.removeChild(child);
 				}
 
 				setParent(existing);
@@ -824,17 +841,17 @@ public class FlowDiagramClientControl implements DiagramContext {
 				return true;
 			}
 
-			private void collectIdDescendants(Element parent, Map<String, Element> cache) {
-				for (Element child = parent.firstElementChild; child != null;
-						child = child.nextElementSibling) {
-
-					String childId = child.id;
+			private void collectIdDescendants(OMSVGElement parent) {
+				for (OMNode node = parent.getFirstChild(); node != null; node = node.getNextSibling()) {
+					if (!(node instanceof OMSVGElement)) continue;
+					OMSVGElement child = (OMSVGElement) node;
+					String childId = child.getId();
 					if (childId != null && !childId.isEmpty()) {
-						cache.put(childId, child);
+						_idCache.put(childId, child);
 						// Don't recurse into ID'd elements —
 						// they manage their own children.
 					} else {
-						collectIdDescendants(child, cache);
+						collectIdDescendants(child);
 					}
 				}
 			}

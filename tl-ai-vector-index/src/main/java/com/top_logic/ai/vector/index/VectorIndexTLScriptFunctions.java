@@ -93,8 +93,6 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 
 		BulkIdLoad loader = new BulkIdLoad(PersistencyLayer.getKnowledgeBase());
 
-		Integer index = 0;
-
 		for (EmbeddingMatch<TextSegment> match : matches) {
 			Map<String, Object> matchItem = new HashMap<>();
 			matchItem.put("score", match.score());
@@ -120,7 +118,7 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 					objectId));
 
 			results.add(matchItem);
-			objectsToFetch.put(objectId, results.get(index++));
+			objectsToFetch.put(objectId, results.get(results.size() - 1));
 		}
 
 

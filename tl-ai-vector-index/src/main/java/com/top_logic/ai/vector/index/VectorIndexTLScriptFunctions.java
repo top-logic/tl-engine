@@ -88,7 +88,7 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			VectorIndex.getInstance().searchVectorIndex(query, type, limit, scoreThreshold);
 		List<Map<String, Object>> results = new ArrayList<>();
 
-		Map<String, List<String>> objectsToFetch = new HashMap<>();
+		Map<String, Object> objectsToFetch = new HashMap<>();
 		JSONParser parser = new JSONParser();
 
 		for (EmbeddingMatch<TextSegment> match : matches) {
@@ -98,10 +98,10 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 
 			JSONObject obj = (JSONObject) parser.parse(match.embedded().text());
 
-			matchItem.put("objectId", obj.get("objectId"));
+			matchItem.put("objectId", obj.get("objectId").toString());
 			String tlType = (String) obj.get("TopLogic-type");
 
-			objectsToFetch.computeIfAbsent(tlType, k -> new ArrayList<>()).add((String) obj.get("objectId"));
+			objectsToFetch.put(obj.get("objectId").toString(), null);
 
 			if (match.embedded() != null) {
 				Map<String, Object> segmentItem = new HashMap<>();
@@ -117,20 +117,19 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 
 		BulkIdLoad loader = new BulkIdLoad(PersistencyLayer.getKnowledgeBase());
 
-		for (String objectTypesToFetch : objectsToFetch.keySet()) {
-			for (String objectId : objectsToFetch.get(objectTypesToFetch)) {
-				loader.add(
-					ObjectKey.fromStringObjectKey(PersistencyLayer.getKnowledgeBase().getMORepository(), objectId));
-			}
+		for (String objectId : objectsToFetch.keySet()) {
+			loader.add(
+				ObjectKey.fromStringObjectKey(PersistencyLayer.getKnowledgeBase().getMORepository(), objectId));
 		}
 
 		List<KnowledgeItem> items = loader.load();
 
+		for (KnowledgeItem item : items) {
+			objectsToFetch.put(item.tId().asString(), item);
+		}
 
 		for (Map<String, Object> resultItem : results) {
-			resultItem.put("TL-instance",
-				items.stream().filter(item -> item.tId().asString().equals(resultItem.get("objectId"))).toList()
-					.get(0));
+			resultItem.put("TL-instance", objectsToFetch.get(resultItem.get("objectId")));
 		}
 
 		return results;

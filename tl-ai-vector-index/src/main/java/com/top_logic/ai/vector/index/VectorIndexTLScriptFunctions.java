@@ -125,7 +125,7 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 		List<KnowledgeItem> items = loader.load();
 
 		for (KnowledgeItem item : items) {
-			objectsToFetch.put(item.tId().asString(), item);
+			objectsToFetch.put(item.tId().asString(), item.getWrapper());
 		}
 
 		for (Map<String, Object> resultItem : results) {

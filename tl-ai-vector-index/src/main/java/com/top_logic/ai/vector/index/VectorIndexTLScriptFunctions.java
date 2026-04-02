@@ -91,6 +91,8 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 		Map<String, Object> objectsToFetch = new HashMap<>();
 		JSONParser parser = new JSONParser();
 
+		BulkIdLoad loader = new BulkIdLoad(PersistencyLayer.getKnowledgeBase());
+
 		for (EmbeddingMatch<TextSegment> match : matches) {
 			Map<String, Object> matchItem = new HashMap<>();
 			matchItem.put("score", match.score());
@@ -99,9 +101,6 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			JSONObject obj = (JSONObject) parser.parse(match.embedded().text());
 
 			matchItem.put("objectId", obj.get("objectId").toString());
-			String tlType = (String) obj.get("TopLogic-type");
-
-			objectsToFetch.put(obj.get("objectId").toString(), null);
 
 			if (match.embedded() != null) {
 				Map<String, Object> segmentItem = new HashMap<>();
@@ -112,15 +111,13 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 				matchItem.put("embedded", segmentItem);
 			}
 
+			loader.add(
+				ObjectKey.fromStringObjectKey(PersistencyLayer.getKnowledgeBase().getMORepository(),
+					obj.get("objectId").toString()));
+
 			results.add(matchItem);
 		}
 
-		BulkIdLoad loader = new BulkIdLoad(PersistencyLayer.getKnowledgeBase());
-
-		for (String objectId : objectsToFetch.keySet()) {
-			loader.add(
-				ObjectKey.fromStringObjectKey(PersistencyLayer.getKnowledgeBase().getMORepository(), objectId));
-		}
 
 		List<KnowledgeItem> items = loader.load();
 

@@ -88,10 +88,12 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			VectorIndex.getInstance().searchVectorIndex(query, type, limit, scoreThreshold);
 		List<Map<String, Object>> results = new ArrayList<>();
 
-		Map<String, Object> objectsToFetch = new HashMap<>();
+		Map<String, Map<String, Object>> objectsToFetch = new HashMap<>();
 		JSONParser parser = new JSONParser();
 
 		BulkIdLoad loader = new BulkIdLoad(PersistencyLayer.getKnowledgeBase());
+
+		Integer index = 0;
 
 		for (EmbeddingMatch<TextSegment> match : matches) {
 			Map<String, Object> matchItem = new HashMap<>();
@@ -100,7 +102,9 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 
 			JSONObject obj = (JSONObject) parser.parse(match.embedded().text());
 
-			matchItem.put("objectId", obj.get("objectId").toString());
+			String objectId = obj.get("objectId").toString();
+
+			matchItem.put("objectId", objectId);
 
 			if (match.embedded() != null) {
 				Map<String, Object> segmentItem = new HashMap<>();
@@ -113,20 +117,17 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 
 			loader.add(
 				ObjectKey.fromStringObjectKey(PersistencyLayer.getKnowledgeBase().getMORepository(),
-					obj.get("objectId").toString()));
+					objectId));
 
 			results.add(matchItem);
+			objectsToFetch.put(objectId, results.get(index++));
 		}
 
 
 		List<KnowledgeItem> items = loader.load();
 
 		for (KnowledgeItem item : items) {
-			objectsToFetch.put(item.tId().asString(), item.getWrapper());
-		}
-
-		for (Map<String, Object> resultItem : results) {
-			resultItem.put("TL-instance", objectsToFetch.get(resultItem.get("objectId")));
+			objectsToFetch.get(item.tId().asString()).put("TL-instance", item.getWrapper());
 		}
 
 		return results;

@@ -110,12 +110,9 @@ public class VectorIndexingService extends DefaultIndexingService {
 				AttributedWrapper instance = (AttributedWrapper) iterator.next();
 
 				this.indexContent(new VectorIndexContentObject(instance.tHandle()));
-
-//				this.indexContent(WrapperContentObject(instance));
 			}
 
 			iterator.close();
-
 		}
 
 		Logger.info("Finished rebuilding search index", DefaultIndexingService.class);

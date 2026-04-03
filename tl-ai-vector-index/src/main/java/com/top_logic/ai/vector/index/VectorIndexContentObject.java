@@ -22,7 +22,6 @@ public class VectorIndexContentObject implements ContentObject {
 	String description;
 
 	Wrapper _wrapper;
-
 	/**
 	 * @param ko
 	 *        Knowledge object

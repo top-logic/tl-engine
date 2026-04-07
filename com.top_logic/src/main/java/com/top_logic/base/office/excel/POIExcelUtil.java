@@ -31,10 +31,8 @@ import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Drawing;
-import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Footer;
 import org.apache.poi.ss.usermodel.Header;
-import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.PrintSetup;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
@@ -1451,31 +1449,6 @@ public class POIExcelUtil {
 			return cell.getStringCellValue();
 		}
 		return null;
-	}
-
-	/**
-	 * Create a new cell style, adapt the given color to it and store this in the given style
-	 * manager.
-	 * 
-	 * @param manager
-	 *        The manager handling the given style, must not be <code>null</code>.
-	 * @param key
-	 *        The accessing key for the new created style, must not be <code>null</code>.
-	 * @param color
-	 *        The color to be used, must not be <code>null</code>.
-	 * @param style
-	 *        The style to create a new one for, must not be <code>null</code>.
-	 * @return The new created style, never <code>null</code>.
-	 */
-	public static final CellStyle adaptCellStyle(POIStyleManager manager, String key, IndexedColors color,
-			CellStyle style) {
-		CellStyle newStyle = manager.newStyle(style);
-
-		newStyle.setFillBackgroundColor(color.getIndex());
-		newStyle.setFillForegroundColor(color.getIndex());
-		newStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-		return manager.putStyle(key, newStyle);
 	}
 
 	/**

@@ -247,7 +247,8 @@ public class AnthropicProvider implements LLMProvider {
 					json.name("type").value("tool_use");
 					json.name("id").value(toolCall.id());
 					json.name("name").value(toolCall.name());
-					json.name("input").jsonValue(toolCall.arguments());
+					String args = toolCall.arguments();
+					json.name("input").jsonValue(args.isEmpty() ? "{}" : args);
 					json.endObject();
 				}
 				case ImageContent ignored -> { /* Not valid in assistant messages. */ }

@@ -39,7 +39,7 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 public class SummarizingStrategy implements CompactionStrategy {
 
 	/** Default minimum messages to preserve. */
-	static final int DEFAULT_MIN_PRESERVE = 2;
+	static final int DEFAULT_MIN_PRESERVE = 4;
 
 	/** Maximum characters per tool result sent to the summarizer. */
 	static final int MAX_TOOL_RESULT_CHARS = 2000;

@@ -69,16 +69,19 @@ public class TestSummarizingStrategy extends TestCase {
 		SummarizingStrategy strategy = new SummarizingStrategy(provider, "test-model", 4096);
 		CompactionResult result = strategy.compact(messages, 250, _estimator);
 
-		// Result should have: CompactionMarker + SystemMessage(summary) + recent messages
+		// Result should have: CompactionMarker + SystemMessage(summary) + 4 preserved messages
 		assertTrue(result.replacementMessages().get(0) instanceof CompactionMarker);
 		assertTrue(result.replacementMessages().get(1) instanceof SystemMessage);
 		SystemMessage summary = (SystemMessage) result.replacementMessages().get(1);
 		assertEquals("Summary of old conversation.", summary.content());
 
-		// Recent messages preserved
-		assertEquals("u3", result.replacementMessages().get(2).id());
-		assertEquals("a3", result.replacementMessages().get(3).id());
-		assertTrue(result.messagesSummarized() > 0);
+		// 4 recent messages preserved (u2, a2, u3, a3)
+		assertEquals(6, result.replacementMessages().size());
+		assertEquals("u2", result.replacementMessages().get(2).id());
+		assertEquals("a2", result.replacementMessages().get(3).id());
+		assertEquals("u3", result.replacementMessages().get(4).id());
+		assertEquals("a3", result.replacementMessages().get(5).id());
+		assertEquals(2, result.messagesSummarized());
 	}
 
 	/** Falls back to truncation when LLM call fails. */
@@ -87,8 +90,10 @@ public class TestSummarizingStrategy extends TestCase {
 		List<Message> messages = List.of(
 			userMsg("u1", longText),
 			assistantMsg("a1", longText),
-			userMsg("u2", "recent"),
-			assistantMsg("a2", "recent"));
+			userMsg("u2", longText),
+			assistantMsg("a2", longText),
+			userMsg("u3", "recent"),
+			assistantMsg("a3", "recent"));
 
 		LLMProvider failingProvider = (request, handler) -> {
 			throw new ProviderException(
@@ -118,8 +123,10 @@ public class TestSummarizingStrategy extends TestCase {
 		List<Message> messages = List.of(
 			userMsg("u1", "x".repeat(400)),
 			assistantMsg("a1", "x".repeat(400)),
-			userMsg("u2", "recent"),
-			assistantMsg("a2", "recent"));
+			userMsg("u2", "x".repeat(400)),
+			assistantMsg("a2", "x".repeat(400)),
+			userMsg("u3", "recent"),
+			assistantMsg("a3", "recent"));
 
 		SummarizingStrategy strategy = new SummarizingStrategy(capturingProvider, "sum-model", 4096);
 		strategy.compact(messages, 50, _estimator);

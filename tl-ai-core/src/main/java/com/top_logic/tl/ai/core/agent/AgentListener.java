@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -60,6 +61,15 @@ public interface AgentListener {
 		// no-op
 	}
 
-	// TODO: onCompactionStart/Complete (context compaction)
+	/** Called when context compaction starts. */
+	default void onCompactionStart(int tokensBefore) {
+		// no-op
+	}
+
+	/** Called when context compaction completes. */
+	default void onCompactionComplete(CompactionResult result) {
+		// no-op
+	}
+
 	// TODO: onPermissionCheck (security context)
 }

@@ -14,6 +14,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -80,6 +82,8 @@ public class AgentLoop {
 
 	private final int _maxResultChars;
 
+	private final ConversationMemory _memory;
+
 	/**
 	 * Creates a new agent loop with default result truncation.
 	 *
@@ -108,6 +112,24 @@ public class AgentLoop {
 			throw new IllegalArgumentException("maxResultChars must be positive.");
 		}
 		_maxResultChars = maxResultChars;
+		_memory = null;
+	}
+
+	/**
+	 * Creates a new agent loop with memory-aware context management.
+	 *
+	 * @param config       loop configuration
+	 * @param provider     LLM provider for streaming responses
+	 * @param toolExecutor executes tool calls requested by the LLM
+	 * @param memory       conversation memory with token tracking and compaction
+	 */
+	public AgentLoop(AgentConfig config, LLMProvider provider, ToolExecutor toolExecutor,
+			ConversationMemory memory) {
+		_config = Objects.requireNonNull(config, "Config must not be null.");
+		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
+		_toolExecutor = Objects.requireNonNull(toolExecutor, "Tool executor must not be null.");
+		_memory = Objects.requireNonNull(memory, "Memory must not be null.");
+		_maxResultChars = DEFAULT_MAX_RESULT_CHARS;
 	}
 
 	/**
@@ -177,6 +199,82 @@ public class AgentLoop {
 	 */
 	public AgentResult run(Conversation conversation, AgentListener listener) {
 		return run(conversation, ToolContext.EMPTY, listener);
+	}
+
+	/**
+	 * Run the agent loop using the configured {@link ConversationMemory}.
+	 *
+	 * <p>Uses the memory's conversation for message history. After each LLM response,
+	 * updates the token baseline. At the end of each turn, checks whether compaction
+	 * is needed and triggers it automatically.</p>
+	 *
+	 * @param context  execution context for the current user
+	 * @param listener receives progress events
+	 * @return the result describing why the loop stopped
+	 * @throws IllegalStateException if this loop was not created with a ConversationMemory
+	 */
+	public AgentResult run(ToolContext context, AgentListener listener) {
+		if (_memory == null) {
+			throw new IllegalStateException(
+				"This AgentLoop was not created with a ConversationMemory. "
+				+ "Use the constructor that accepts ConversationMemory, "
+				+ "or call run(Conversation, ToolContext, AgentListener) instead.");
+		}
+		return runWithMemory(_memory, context, listener);
+	}
+
+	private AgentResult runWithMemory(ConversationMemory memory, ToolContext context,
+			AgentListener listener) {
+		Conversation conversation = memory.conversation();
+		TokenUsage totalUsage = TokenUsage.EMPTY;
+		int maxTurns = _config.maxTurns();
+
+		for (int turn = 1; turn <= maxTurns; turn++) {
+			if (Thread.interrupted()) {
+				return new AgentResult(StopReason.ABORTED, turn - 1, totalUsage);
+			}
+
+			listener.onTurnStart(turn);
+
+			AssistantMessage assistantMsg;
+			try {
+				assistantMsg = callProvider(conversation, listener);
+			} catch (ProviderException e) {
+				listener.onError(e);
+				listener.onTurnComplete(turn, TokenUsage.EMPTY);
+				return new AgentResult(StopReason.ERROR, turn - 1, totalUsage);
+			}
+
+			conversation.add(assistantMsg);
+			totalUsage = totalUsage.add(assistantMsg.usage());
+			memory.updateTokenBaseline(assistantMsg.usage());
+
+			List<ToolCall> toolCalls = assistantMsg.content().stream()
+				.filter(ToolCall.class::isInstance)
+				.map(ToolCall.class::cast)
+				.toList();
+
+			if (toolCalls.isEmpty()) {
+				listener.onTurnComplete(turn, assistantMsg.usage());
+				return new AgentResult(StopReason.COMPLETE, turn, totalUsage);
+			}
+
+			if (!executeToolCalls(toolCalls, context, conversation, listener)) {
+				listener.onTurnComplete(turn, assistantMsg.usage());
+				return new AgentResult(StopReason.ABORTED, turn, totalUsage);
+			}
+
+			if (memory.shouldCompact()) {
+				int tokensBefore = memory.estimateTokens();
+				listener.onCompactionStart(tokensBefore);
+				CompactionResult compactionResult = memory.compact();
+				listener.onCompactionComplete(compactionResult);
+			}
+
+			listener.onTurnComplete(turn, assistantMsg.usage());
+		}
+
+		return new AgentResult(StopReason.MAX_TURNS, maxTurns, totalUsage);
 	}
 
 	/**

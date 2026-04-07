@@ -1,0 +1,65 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.message;
+
+import junit.framework.TestCase;
+
+/**
+ * Tests for {@link ToolCall}.
+ */
+public class TestToolCall extends TestCase {
+
+	/** ToolCall stores id, name, and arguments. */
+	public void testFields() {
+		ToolCall call = new ToolCall("tc_1", "read_file", "{\"path\":\"foo.txt\"}");
+		assertEquals("tc_1", call.id());
+		assertEquals("read_file", call.name());
+		assertEquals("{\"path\":\"foo.txt\"}", call.arguments());
+	}
+
+	/** ToolCall is a ContentPart. */
+	public void testIsContentPart() {
+		ContentPart part = new ToolCall("tc_1", "read_file", "{}");
+		assertTrue(part instanceof ToolCall);
+	}
+
+	/** Null id is rejected. */
+	public void testNullIdRejected() {
+		try {
+			new ToolCall(null, "read_file", "{}");
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
+	/** Null name is rejected. */
+	public void testNullNameRejected() {
+		try {
+			new ToolCall("tc_1", null, "{}");
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
+	/** Null arguments is rejected. */
+	public void testNullArgumentsRejected() {
+		try {
+			new ToolCall("tc_1", "read_file", null);
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
+	/** Two ToolCalls with same fields are equal. */
+	public void testEquality() {
+		ToolCall a = new ToolCall("tc_1", "read_file", "{}");
+		ToolCall b = new ToolCall("tc_1", "read_file", "{}");
+		assertEquals(a, b);
+	}
+}

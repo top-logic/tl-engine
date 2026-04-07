@@ -5,10 +5,23 @@
  */
 package com.top_logic.tl.ai.core.message;
 
+import java.util.Objects;
+
 /**
  * An image content block within a message.
+ *
+ * @param url       the image URL or data URI
+ * @param mediaType the MIME type (e.g. "image/png")
  *
  * @see ContentPart
  */
 public record ImageContent(String url, String mediaType) implements ContentPart {
+
+	/**
+	 * Creates a new {@link ImageContent}.
+	 */
+	public ImageContent {
+		Objects.requireNonNull(url, "Image URL must not be null.");
+		Objects.requireNonNull(mediaType, "Media type must not be null.");
+	}
 }

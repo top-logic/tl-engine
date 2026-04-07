@@ -12,7 +12,7 @@ import com.top_logic.knowledge.searching.DefaultFullTextBuffer;
 import com.top_logic.knowledge.wrap.Wrapper;
 
 /**
- * Class that implements {@link ContentObject} interface for Vector Indexing
+ * Class that implements {@link ContentObject} interface for Vector Indexing.
  */
 public class VectorIndexContentObject implements ContentObject {
 	KnowledgeObject ko;

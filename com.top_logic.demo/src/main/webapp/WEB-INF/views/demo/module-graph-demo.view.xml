@@ -125,10 +125,18 @@
 				multiple = $p.get(`tl.model:TLStructuredTypePart#multiple`);
 				card = $mandatory ? ($multiple ? "1..*" : "1") : ($multiple ? "*" : "0..1");
 				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
+				isOverride = $p.get(`tl.model:TLStructuredTypePart#override`);
+
+				redefinesLabel = $isOverride ? {
+					defOwner = $p.get(`tl.model:TLStructuredTypePart#definition`)
+						.get(`tl.model:TLStructuredTypePart#owner`)
+						.get(`tl.model:TLNamedPart#name`);
+					"\n{redefines " + $defOwner + "}"
+				} : "";
 
 				opposite = $p.get(`tl.model:TLReference#opposite`);
 				targetLabel = reactFlowDecoration(
-					reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
+					reactFlowPadding(reactFlowText($refName + "\n" + $card + $redefinesLabel, fontSize: 10), all: 4),
 					linePosition: 1.0);
 				decos = $opposite != null ? {
 					oppName = $opposite.get(`tl.model:TLNamedPart#name`);
@@ -148,6 +156,7 @@
 					priority: $composite ? 2 : 1,
 					sourceSymbol: $composite ? "FILLED_DIAMOND" : null,
 					targetSymbol: $composite ? null : "ARROW",
+					strokeStyle: $isOverride ? "#bbbbbb" : "black",
 					decorations: $decos,
 					selectable: true,
 					userObject: $p)

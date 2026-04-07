@@ -70,10 +70,12 @@
 											content: reactFlowFill(fill: "transparent", cssClass: "tlSelectionFill",
 												content: reactFlowPadding(top: 1, bottom: 1,
 													content: reactFlowText(
-														$a.get(`tl.model:TLNamedPart#name`)
+														($a.get(`tl.model:DerivedTLTypePart#derived`) ? "/" : "")
+															+ $a.get(`tl.model:TLNamedPart#name`)
 															+ " : "
 															+ $a.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`),
-														fontSize: 11))))))))
+														fontSize: 11,
+														fillStyle: $a.get(`tl.model:DerivedTLTypePart#derived`) ? "#888" : "black"))))))))
 					]))))
 	});
 

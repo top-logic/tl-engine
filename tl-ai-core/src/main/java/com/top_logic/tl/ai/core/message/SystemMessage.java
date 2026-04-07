@@ -18,9 +18,6 @@ import java.util.Objects;
 public record SystemMessage(String id, Instant timestamp,
 		String content) implements Message {
 
-	/**
-	 * Creates a new {@link SystemMessage}.
-	 */
 	public SystemMessage {
 		Objects.requireNonNull(id, "Id must not be null.");
 		Objects.requireNonNull(timestamp, "Timestamp must not be null.");

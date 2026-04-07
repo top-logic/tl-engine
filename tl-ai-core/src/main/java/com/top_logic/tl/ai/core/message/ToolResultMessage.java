@@ -28,9 +28,6 @@ public record ToolResultMessage(String id, Instant timestamp,
 		String toolCallId, String toolName,
 		ToolState state) implements Message {
 
-	/**
-	 * Creates a new {@link ToolResultMessage}.
-	 */
 	public ToolResultMessage {
 		Objects.requireNonNull(id, "Id must not be null.");
 		Objects.requireNonNull(timestamp, "Timestamp must not be null.");

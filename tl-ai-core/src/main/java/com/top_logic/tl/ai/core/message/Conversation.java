@@ -61,7 +61,6 @@ public class Conversation {
 		updated.addAll(replacement);
 		updated.addAll(current.subList(toIndex, current.size()));
 
-		// Single volatile write — atomic for concurrent readers
 		_messages = List.copyOf(updated);
 	}
 

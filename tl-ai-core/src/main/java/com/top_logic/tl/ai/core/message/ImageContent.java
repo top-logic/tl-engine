@@ -17,9 +17,6 @@ import java.util.Objects;
  */
 public record ImageContent(String url, String mediaType) implements ContentPart {
 
-	/**
-	 * Creates a new {@link ImageContent}.
-	 */
 	public ImageContent {
 		Objects.requireNonNull(url, "Image URL must not be null.");
 		Objects.requireNonNull(mediaType, "Media type must not be null.");

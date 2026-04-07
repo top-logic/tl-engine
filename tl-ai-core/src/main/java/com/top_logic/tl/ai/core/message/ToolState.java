@@ -26,7 +26,6 @@ public sealed interface ToolState
 	 * @param arguments raw JSON arguments from the LLM
 	 */
 	record Pending(String arguments) implements ToolState {
-		/** Creates a new {@link Pending} state. */
 		public Pending {
 			Objects.requireNonNull(arguments, "Arguments must not be null.");
 		}
@@ -39,7 +38,6 @@ public sealed interface ToolState
 	 * @param startTime when execution started
 	 */
 	record Running(String arguments, Instant startTime) implements ToolState {
-		/** Creates a new {@link Running} state. */
 		public Running {
 			Objects.requireNonNull(arguments, "Arguments must not be null.");
 			Objects.requireNonNull(startTime, "Start time must not be null.");
@@ -56,7 +54,6 @@ public sealed interface ToolState
 	 */
 	record Completed(String result, Instant startTime, Instant endTime,
 			boolean compacted) implements ToolState {
-		/** Creates a new {@link Completed} state. */
 		public Completed {
 			Objects.requireNonNull(result, "Result must not be null.");
 			Objects.requireNonNull(startTime, "Start time must not be null.");
@@ -72,7 +69,6 @@ public sealed interface ToolState
 	 * @param endTime   when the failure was recorded
 	 */
 	record Failed(String error, Instant startTime, Instant endTime) implements ToolState {
-		/** Creates a new {@link Failed} state. */
 		public Failed {
 			Objects.requireNonNull(error, "Error must not be null.");
 			Objects.requireNonNull(startTime, "Start time must not be null.");

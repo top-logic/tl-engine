@@ -56,9 +56,6 @@ import com.top_logic.tl.ai.core.tool.ToolRegistry;
 public class AgentLoop {
 
 	// TODO: Retry with backoff for RATE_LIMITED / OVERLOADED (callProvider is the seam)
-	// TODO: Context compaction when CONTEXT_WINDOW_EXCEEDED (callProvider is the seam)
-	//   The ToolState.Completed.compacted flag exists for this — compaction should replace
-	//   old tool results with summaries and set the flag. See PRD section 3.6.
 	// TODO: Memory/attachment injection between turns
 	// TODO: Stop hooks (post-response validation)
 	// TODO: Approval workflow for GLOBAL tools — Pillar 7 (Human-in-the-Loop) requires that
@@ -186,7 +183,6 @@ public class AgentLoop {
 			}
 
 			listener.onTurnComplete(turn, assistantMsg.usage());
-			// TODO: check token budget, trigger compaction if approaching limit
 		}
 
 		return new AgentResult(StopReason.MAX_TURNS, maxTurns, totalUsage);
@@ -223,6 +219,9 @@ public class AgentLoop {
 		return runWithMemory(_memory, context, listener);
 	}
 
+	/** Maximum reactive compaction retries on context_window_exceeded before giving up. */
+	private static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
+
 	private AgentResult runWithMemory(ConversationMemory memory, ToolContext context,
 			AgentListener listener) {
 		Conversation conversation = memory.conversation();
@@ -238,7 +237,8 @@ public class AgentLoop {
 
 			AssistantMessage assistantMsg;
 			try {
-				assistantMsg = callProvider(conversation, listener);
+				assistantMsg = callProviderWithReactiveCompaction(
+					conversation, memory, listener);
 			} catch (ProviderException e) {
 				listener.onError(e);
 				listener.onTurnComplete(turn, TokenUsage.EMPTY);
@@ -275,6 +275,30 @@ public class AgentLoop {
 		}
 
 		return new AgentResult(StopReason.MAX_TURNS, maxTurns, totalUsage);
+	}
+
+	/**
+	 * Call provider with reactive compaction: if the API returns
+	 * {@link ProviderException.Kind#CONTEXT_WINDOW_EXCEEDED}, compact and retry.
+	 */
+	private AssistantMessage callProviderWithReactiveCompaction(
+			Conversation conversation, ConversationMemory memory,
+			AgentListener listener) throws ProviderException {
+		for (int attempt = 0; attempt <= MAX_REACTIVE_COMPACT_RETRIES; attempt++) {
+			try {
+				return callProvider(conversation, listener);
+			} catch (ProviderException e) {
+				if (e.kind() != ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
+						|| attempt == MAX_REACTIVE_COMPACT_RETRIES) {
+					throw e;
+				}
+				int tokensBefore = memory.estimateTokens();
+				listener.onCompactionStart(tokensBefore);
+				CompactionResult result = memory.compact("reactive");
+				listener.onCompactionComplete(result);
+			}
+		}
+		throw new IllegalStateException("Unreachable");
 	}
 
 	/**

@@ -104,11 +104,4 @@ public class Conversation {
 		return total;
 	}
 
-	// TODO: estimateTokens() — sum of per-message token estimates.
-	//   Requires a TokenEstimator strategy (tokenizer-dependent). Needed by the agent loop
-	//   to decide when to trigger compaction. See spec section 3.6.
-
-	// TODO: getMessages(int tokenBudget) — return messages fitting within a token budget.
-	//   Requires estimateTokens() to be implemented first. Used by the agent loop to select
-	//   which messages to send to the provider on each turn. See spec section 3.6.
 }

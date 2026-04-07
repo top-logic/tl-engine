@@ -101,8 +101,21 @@ public class SummarizingStrategy implements CompactionStrategy {
 		}
 
 		int splitIndex = findSplitIndex(messages);
-		List<Message> summarizeZone = messages.subList(0, splitIndex);
+		List<Message> summarizeZone = new ArrayList<>();
+		List<Message> preservedSystemMessages = new ArrayList<>();
+		for (int i = 0; i < splitIndex; i++) {
+			Message msg = messages.get(i);
+			if (msg instanceof SystemMessage) {
+				preservedSystemMessages.add(msg);
+			} else {
+				summarizeZone.add(msg);
+			}
+		}
 		List<Message> preserveZone = messages.subList(splitIndex, messages.size());
+
+		if (summarizeZone.isEmpty()) {
+			return new CompactionResult(messages, 0, tokensBefore, tokensBefore, "auto");
+		}
 
 		String summaryText;
 		try {
@@ -117,6 +130,7 @@ public class SummarizingStrategy implements CompactionStrategy {
 		replacement.add(new CompactionMarker(
 			UUID.randomUUID().toString(), now,
 			summarizeZone.size(), tokensBefore, "auto"));
+		replacement.addAll(preservedSystemMessages);
 		replacement.add(new SystemMessage(
 			UUID.randomUUID().toString(), now, summaryText));
 		replacement.addAll(preserveZone);

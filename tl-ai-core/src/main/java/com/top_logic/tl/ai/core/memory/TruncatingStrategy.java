@@ -16,17 +16,22 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 
 /**
  * Compaction strategy that drops oldest messages to fit within the token budget.
  *
- * <p>Maintains the tool call/result pairing invariant: if an {@link AssistantMessage}
- * containing {@link ToolCall}s is dropped, the corresponding {@link ToolResultMessage}s
- * are also dropped (and vice versa).</p>
- *
- * <p>Always preserves at least {@code minPreserve} recent messages.</p>
+ * <p>Invariants:</p>
+ * <ul>
+ *   <li>{@link SystemMessage}s are never dropped — they carry the system prompt and
+ *       compaction summaries that the LLM needs to stay on track.</li>
+ *   <li>Tool call/result pairing: if an {@link AssistantMessage} containing
+ *       {@link ToolCall}s is dropped, the corresponding {@link ToolResultMessage}s
+ *       are also dropped (and vice versa).</li>
+ *   <li>At least {@code minPreserve} recent non-system messages are kept.</li>
+ * </ul>
  */
 public class TruncatingStrategy implements CompactionStrategy {
 
@@ -62,10 +67,15 @@ public class TruncatingStrategy implements CompactionStrategy {
 		int preserveFrom = Math.max(0, messages.size() - _minPreserve);
 
 		Set<String> droppedToolCallIds = new HashSet<>();
+		List<Message> preservedSystemMessages = new ArrayList<>();
 		int dropCount = 0;
 
 		for (int i = 0; i < preserveFrom; i++) {
 			Message msg = messages.get(i);
+			if (msg instanceof SystemMessage) {
+				preservedSystemMessages.add(msg);
+				continue;
+			}
 			if (msg instanceof AssistantMessage a) {
 				for (ContentPart part : a.content()) {
 					if (part instanceof ToolCall tc) {
@@ -96,6 +106,7 @@ public class TruncatingStrategy implements CompactionStrategy {
 				UUID.randomUUID().toString(), Instant.now(),
 				dropCount, tokensBefore, "auto"));
 		}
+		replacement.addAll(preservedSystemMessages);
 		replacement.addAll(kept);
 
 		int tokensAfter = estimator.estimateTokens(replacement);

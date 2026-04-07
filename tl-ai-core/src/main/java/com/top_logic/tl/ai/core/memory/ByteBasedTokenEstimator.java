@@ -22,33 +22,52 @@ import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 
 /**
- * Token estimator using UTF-8 byte length divided by 4.
+ * Token estimator using UTF-8 byte length divided by a configurable ratio.
  *
- * <p>This heuristic (~0.25 tokens per byte) matches the approach used by Claude Code,
- * OpenCode, and Codex. It is fast and good enough for compaction decisions. Images
- * are estimated at a fixed 2000 tokens.</p>
+ * <p>This heuristic (~0.25 tokens per byte for prose, ~0.5 for JSON) matches the
+ * approach used by Claude Code, OpenCode, and Codex. It is fast and good enough
+ * for compaction decisions. Images are estimated at a fixed 2000 tokens.</p>
+ *
+ * <p>Adds per-message overhead (4 tokens for role + envelope) and per-request
+ * priming (3 tokens), matching the structural overhead that LLM APIs charge.</p>
  */
 public class ByteBasedTokenEstimator implements TokenEstimator {
 
 	/** Fixed token estimate for image content. */
 	static final int IMAGE_TOKENS = 2000;
 
+	/** Per-message overhead: role token + message envelope. */
+	static final int MESSAGE_OVERHEAD = 4;
+
+	/** Per-request priming tokens (added once to the total). */
+	static final int REQUEST_PRIMING = 3;
+
 	private static final int BYTES_PER_TOKEN = 4;
+
+	/** JSON is denser — roughly 2 bytes per token due to single-char tokens. */
+	private static final int JSON_BYTES_PER_TOKEN = 2;
 
 	@Override
 	public int estimateTokens(Message message) {
-		return switch (message) {
+		int content = switch (message) {
 			case UserMessage m -> estimateContentParts(m.content());
 			case AssistantMessage m -> estimateContentParts(m.content());
 			case SystemMessage m -> estimateText(m.content());
 			case ToolResultMessage m -> estimateToolResult(m);
 			case CompactionMarker m -> 0;
 		};
+		if (message instanceof CompactionMarker) {
+			return 0;
+		}
+		return content + MESSAGE_OVERHEAD;
 	}
 
 	@Override
 	public int estimateTokens(List<Message> messages) {
-		int total = 0;
+		if (messages.isEmpty()) {
+			return 0;
+		}
+		int total = REQUEST_PRIMING;
 		for (Message msg : messages) {
 			total += estimateTokens(msg);
 		}
@@ -62,7 +81,7 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 				case TextContent t -> estimateText(t.text());
 				case ThinkingContent t -> estimateText(t.text());
 				case ImageContent i -> IMAGE_TOKENS;
-				case ToolCall tc -> estimateText(tc.name()) + estimateText(tc.arguments());
+				case ToolCall tc -> estimateText(tc.name()) + estimateJson(tc.arguments());
 			};
 		}
 		return total;
@@ -79,5 +98,9 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 
 	private int estimateText(String text) {
 		return text.getBytes(StandardCharsets.UTF_8).length / BYTES_PER_TOKEN;
+	}
+
+	private int estimateJson(String json) {
+		return json.getBytes(StandardCharsets.UTF_8).length / JSON_BYTES_PER_TOKEN;
 	}
 }

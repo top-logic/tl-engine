@@ -15,6 +15,7 @@ import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
@@ -129,6 +130,51 @@ public class TestTruncatingStrategy extends TestCase {
 		if (!hasToolCall) {
 			assertFalse("Orphaned tool results should be dropped", hasToolResult);
 		}
+	}
+
+	/** System messages in the drop zone are preserved across compaction. */
+	public void testPreservesSystemMessages() {
+		SystemMessage sys = new SystemMessage("s1", T0, "You are helpful.");
+		String longText = "x".repeat(400); // 100 tokens each
+		List<Message> messages = List.of(
+			sys,
+			userMsg("u1", longText),
+			assistantMsg("a1", longText),
+			userMsg("u2", "recent"),
+			assistantMsg("a2", "recent"));
+
+		TruncatingStrategy strategy = new TruncatingStrategy(2);
+		CompactionResult result = strategy.compact(messages, 50, _estimator);
+
+		// System message must survive: CompactionMarker + SystemMessage + u2 + a2
+		assertEquals(4, result.replacementMessages().size());
+		assertTrue(result.replacementMessages().get(0) instanceof CompactionMarker);
+		assertTrue(result.replacementMessages().get(1) instanceof SystemMessage);
+		assertEquals("s1", result.replacementMessages().get(1).id());
+		assertEquals("u2", result.replacementMessages().get(2).id());
+		// Only the non-system messages were dropped
+		assertEquals(2, result.messagesSummarized());
+	}
+
+	/** Multiple system messages (e.g. original + compaction summary) are all preserved. */
+	public void testPreservesMultipleSystemMessages() {
+		SystemMessage sys1 = new SystemMessage("s1", T0, "You are helpful.");
+		SystemMessage sys2 = new SystemMessage("s2", T0, "Previous conversation summary.");
+		String longText = "x".repeat(400);
+		List<Message> messages = List.of(
+			sys1,
+			sys2,
+			userMsg("u1", longText),
+			assistantMsg("a1", longText),
+			userMsg("u2", "recent"),
+			assistantMsg("a2", "recent"));
+
+		TruncatingStrategy strategy = new TruncatingStrategy(2);
+		CompactionResult result = strategy.compact(messages, 50, _estimator);
+
+		long systemCount = result.replacementMessages().stream()
+			.filter(SystemMessage.class::isInstance).count();
+		assertEquals(2, systemCount);
 	}
 
 	/** Never drops past an existing CompactionMarker. */

@@ -14,6 +14,7 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
@@ -53,9 +54,9 @@ public class TestConversationMemory extends TestCase {
 			conv, new ByteBasedTokenEstimator(), new TruncatingStrategy(),
 			200_000, 33_000);
 
-		// "Hello, world!" = 13 bytes / 4 = 3 tokens
+		// "Hello, world!" = 13 bytes / 4 = 3 content + 4 overhead + 3 priming = 10
 		memory.add(userMsg("u1", "Hello, world!"));
-		assertEquals(3, memory.estimateTokens());
+		assertEquals(10, memory.estimateTokens());
 	}
 
 	/** After updateTokenBaseline, uses API actual + estimate of new messages. */
@@ -72,11 +73,11 @@ public class TestConversationMemory extends TestCase {
 		memory.updateTokenBaseline(new TokenUsage(5000, 100, 0, 0, 0));
 
 		// Now add a new message after baseline
-		// "New message text!" = 18 bytes / 4 = 4 tokens
+		// The list estimate for [u2] alone: priming(3) + content(4) + overhead(4) = 11
 		memory.add(userMsg("u2", "New message text!"));
 
-		// Should be: baseline (5000) + estimate of u2 (4) = 5004
-		assertEquals(5004, memory.estimateTokens());
+		// Should be: baseline (5000) + estimate of [u2] list (11) = 5011
+		assertEquals(5011, memory.estimateTokens());
 	}
 
 	/** shouldCompact returns false when under budget. */
@@ -171,6 +172,37 @@ public class TestConversationMemory extends TestCase {
 
 		assertEquals(167_000, memory.usableTokens());
 		assertNotNull(memory.conversation());
+	}
+
+	/** getMessages returns all messages when under budget. */
+	public void testGetMessagesUnderBudget() {
+		ConversationMemory memory = new ConversationMemory(
+			new Conversation(), new ByteBasedTokenEstimator(), new TruncatingStrategy(),
+			200_000, 33_000);
+
+		memory.add(userMsg("u1", "Hello"));
+		memory.add(assistantMsg("a1", "Hi"));
+
+		List<Message> result = memory.getMessages(100_000);
+		assertEquals(2, result.size());
+	}
+
+	/** getMessages always includes system messages even when budget is tight. */
+	public void testGetMessagesPreservesSystemMessages() {
+		ConversationMemory memory = new ConversationMemory(
+			new Conversation(), new ByteBasedTokenEstimator(), new TruncatingStrategy(),
+			200_000, 33_000);
+
+		memory.add(new SystemMessage("s1", T0, "You are helpful."));
+		memory.add(userMsg("u1", "x".repeat(400))); // large
+		memory.add(assistantMsg("a1", "x".repeat(400))); // large
+		memory.add(userMsg("u2", "recent"));
+		memory.add(assistantMsg("a2", "recent"));
+
+		// Small budget: should get system + most recent messages
+		List<Message> result = memory.getMessages(50);
+		assertTrue(result.stream().anyMatch(SystemMessage.class::isInstance));
+		assertTrue(result.size() < 5);
 	}
 
 	/** After compaction, baseline is reset. */

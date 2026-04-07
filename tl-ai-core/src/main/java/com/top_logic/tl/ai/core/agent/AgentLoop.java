@@ -45,9 +45,8 @@ import com.top_logic.tl.ai.core.provider.StreamHandler;
  */
 public class AgentLoop {
 
-	// TODO: Retry with backoff for RATE_LIMITED / OVERLOADED
-	// TODO: Context compaction when CONTEXT_WINDOW_EXCEEDED
-	// TODO: Cancellation via interrupt check between turns and before tool execution
+	// TODO: Retry with backoff for RATE_LIMITED / OVERLOADED (callProvider is the seam)
+	// TODO: Context compaction when CONTEXT_WINDOW_EXCEEDED (callProvider is the seam)
 	// TODO: Parallel tool execution (partition read-only vs write)
 	// TODO: Permission check before tool execution
 	// TODO: Memory/attachment injection between turns
@@ -76,7 +75,7 @@ public class AgentLoop {
 	 * Run the agent loop.
 	 *
 	 * <p>Blocks until the LLM completes without tool calls, the turn limit is reached,
-	 * or an unrecoverable error occurs.</p>
+	 * an unrecoverable error occurs, or the thread is interrupted.</p>
 	 *
 	 * @param conversation the conversation to operate on (messages are added during the run)
 	 * @param listener     receives progress events
@@ -90,25 +89,21 @@ public class AgentLoop {
 		int maxTurns = _config.maxTurns();
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
+			if (Thread.interrupted()) {
+				return new AgentResult(StopReason.ABORTED, turn - 1, totalUsage);
+			}
+
 			listener.onTurnStart(turn);
 
-			ProviderRequest request = new ProviderRequest(
-				_config.model(),
-				_config.systemPrompt(),
-				conversation.messages(),
-				_config.tools(),
-				_config.maxOutputTokens());
-
-			ResponseCollector collector = new ResponseCollector(listener);
+			AssistantMessage assistantMsg;
 			try {
-				_provider.stream(request, collector);
+				assistantMsg = callProvider(conversation, listener);
 			} catch (ProviderException e) {
 				listener.onError(e);
 				listener.onTurnComplete(turn, TokenUsage.EMPTY);
 				return new AgentResult(StopReason.ERROR, turn - 1, totalUsage);
 			}
 
-			AssistantMessage assistantMsg = collector.toAssistantMessage();
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
 
@@ -123,8 +118,12 @@ public class AgentLoop {
 			}
 
 			for (ToolCall toolCall : toolCalls) {
+				if (Thread.interrupted()) {
+					listener.onTurnComplete(turn, assistantMsg.usage());
+					return new AgentResult(StopReason.ABORTED, turn, totalUsage);
+				}
 				listener.onToolCallStart(toolCall);
-				ToolResultMessage resultMsg = _toolExecutor.execute(toolCall);
+				ToolResultMessage resultMsg = _toolExecutor.execute(toolCall, ToolContext.EMPTY);
 				conversation.add(resultMsg);
 
 				if (resultMsg.state() instanceof ToolState.Failed failed) {
@@ -139,6 +138,28 @@ public class AgentLoop {
 		}
 
 		return new AgentResult(StopReason.MAX_TURNS, maxTurns, totalUsage);
+	}
+
+	/**
+	 * Call the LLM provider and collect the response.
+	 *
+	 * <p>This is the seam for retry logic (rate limiting, context overflow, backoff).
+	 * Currently calls once and throws on error. Recovery strategies will wrap
+	 * this method's internals with retry/compact/fallback logic.</p>
+	 */
+	private AssistantMessage callProvider(Conversation conversation, AgentListener listener)
+			throws ProviderException {
+		ProviderRequest request = new ProviderRequest(
+			_config.model(),
+			_config.systemPrompt(),
+			conversation.messages(),
+			_config.tools(),
+			_config.maxOutputTokens(),
+			_config.modelOptions());
+
+		ResponseCollector collector = new ResponseCollector(listener);
+		_provider.stream(request, collector);
+		return collector.toAssistantMessage();
 	}
 
 	/**
@@ -166,6 +187,9 @@ public class AgentLoop {
 			switch (event) {
 				case StreamEvent.TextDelta delta -> {
 					_listener.onTextDelta(delta.text());
+				}
+				case StreamEvent.ThinkingDelta delta -> {
+					_listener.onThinkingDelta(delta.text());
 				}
 				case StreamEvent.ToolCallStart start -> {
 					// Accumulated in MessageComplete

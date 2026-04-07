@@ -28,6 +28,14 @@ public sealed interface StreamEvent {
 	record TextDelta(int contentIndex, String text) implements StreamEvent { /**/ }
 
 	/**
+	 * A thinking text delta from the LLM (extended thinking).
+	 *
+	 * @param contentIndex index of the content block in the response
+	 * @param text         the thinking text fragment
+	 */
+	record ThinkingDelta(int contentIndex, String text) implements StreamEvent { /**/ }
+
+	/**
 	 * Start of a tool call in the response.
 	 *
 	 * @param contentIndex index of the content block

@@ -81,7 +81,7 @@ public class VisualAgentLoopTest extends TestCase {
 				new TextContent("I couldn't convert the temperature because the calculator "),
 				new TextContent("was unavailable, but 20°C is about 68°F.")));
 
-		ToolExecutor executor = toolCall -> {
+		ToolExecutor executor = (toolCall, context) -> {
 			sleep(100); // simulate work
 			if ("calculate".equals(toolCall.name())) {
 				return new ToolResultMessage(
@@ -132,7 +132,7 @@ public class VisualAgentLoopTest extends TestCase {
 			"Returns the current server time in ISO-8601 format.",
 			"{\"type\":\"object\",\"properties\":{}}");
 
-		ToolExecutor executor = toolCall -> new ToolResultMessage(
+		ToolExecutor executor = (toolCall, context) -> new ToolResultMessage(
 			UUID.randomUUID().toString(), Instant.now(),
 			toolCall.id(), toolCall.name(),
 			new ToolState.Completed(Instant.now().toString(),

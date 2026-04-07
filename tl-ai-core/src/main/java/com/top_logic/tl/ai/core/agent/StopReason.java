@@ -19,8 +19,10 @@ public enum StopReason {
 	MAX_TURNS,
 
 	/** Unrecoverable provider error. */
-	ERROR
+	ERROR,
 
-	// TODO: ABORTED (cancellation support)
+	/** Loop was interrupted (cancellation). */
+	ABORTED
+
 	// TODO: CONTEXT_OVERFLOW (compaction trigger)
 }

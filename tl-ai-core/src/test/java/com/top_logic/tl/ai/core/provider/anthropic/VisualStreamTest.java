@@ -54,6 +54,7 @@ public class VisualStreamTest extends TestCase {
 		provider.stream(request, event -> {
 			switch (event) {
 				case StreamEvent.TextDelta delta -> System.out.print(delta.text());
+				case StreamEvent.ThinkingDelta delta -> System.out.print(delta.text());
 				case StreamEvent.ToolCallStart tc -> System.out.print("\n[tool: " + tc.name() + "]");
 				case StreamEvent.ToolCallDelta tc -> System.out.print(tc.partialJson());
 				case StreamEvent.MessageComplete done -> {

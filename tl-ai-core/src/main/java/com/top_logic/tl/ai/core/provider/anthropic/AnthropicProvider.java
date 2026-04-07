@@ -31,6 +31,7 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
@@ -65,7 +66,12 @@ public class AnthropicProvider implements LLMProvider {
 
 	/** */
 	public AnthropicProvider(String apiKey) {
-		this(apiKey, DEFAULT_BASE_URL, DEFAULT_API_VERSION, defaultHttpClient());
+		this(apiKey, DEFAULT_BASE_URL, DEFAULT_API_VERSION);
+	}
+
+	/** */
+	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion) {
+		this(apiKey, baseUrl, apiVersion, defaultHttpClient());
 	}
 
 	/** */
@@ -227,6 +233,7 @@ public class AnthropicProvider implements LLMProvider {
 					json.endObject();
 				}
 				case ToolCall ignored -> { /* Not valid in user messages. */ }
+			case ThinkingContent ignored -> { /* Not valid in user messages. */ }
 			}
 		}
 		json.endArray();
@@ -252,6 +259,7 @@ public class AnthropicProvider implements LLMProvider {
 					json.endObject();
 				}
 				case ImageContent ignored -> { /* Not valid in assistant messages. */ }
+			case ThinkingContent ignored -> { /* Not serialized back to Anthropic. */ }
 			}
 		}
 		json.endArray();
@@ -414,6 +422,9 @@ public class AnthropicProvider implements LLMProvider {
 						if ("text_delta".equals(deltaType) && text != null) {
 							block._text.append(text);
 							handler.onEvent(new StreamEvent.TextDelta(index, text));
+						} else if ("thinking_delta".equals(deltaType) && text != null) {
+							block._text.append(text);
+							handler.onEvent(new StreamEvent.ThinkingDelta(index, text));
 						} else if ("input_json_delta".equals(deltaType) && partialJson != null) {
 							block._arguments.append(partialJson);
 							handler.onEvent(new StreamEvent.ToolCallDelta(index, partialJson));
@@ -506,6 +517,11 @@ public class AnthropicProvider implements LLMProvider {
 				String text = block._text.toString();
 				if (!text.isEmpty()) {
 					parts.add(new TextContent(text));
+				}
+			} else if ("thinking".equals(block._type)) {
+				String text = block._text.toString();
+				if (!text.isEmpty()) {
+					parts.add(new ThinkingContent(text));
 				}
 			} else if ("tool_use".equals(block._type)) {
 				parts.add(new ToolCall(block._id, block._name, block._arguments.toString()));

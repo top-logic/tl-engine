@@ -55,7 +55,11 @@ public interface AgentListener {
 		// no-op
 	}
 
+	/** Called for each thinking token streamed from the LLM (extended thinking). */
+	default void onThinkingDelta(String text) {
+		// no-op
+	}
+
 	// TODO: onCompactionStart/Complete (context compaction)
 	// TODO: onPermissionCheck (security context)
-	// TODO: onThinkingDelta (extended thinking blocks)
 }

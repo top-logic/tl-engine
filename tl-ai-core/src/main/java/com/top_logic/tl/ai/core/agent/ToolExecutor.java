@@ -24,9 +24,10 @@ public interface ToolExecutor {
 	 * Execute the given tool call.
 	 *
 	 * @param toolCall the tool call from the LLM's response
+	 * @param context  execution context (security, transaction, progress)
 	 * @return the result (success or failure, never {@code null})
 	 */
-	ToolResultMessage execute(ToolCall toolCall);
+	ToolResultMessage execute(ToolCall toolCall, ToolContext context);
 
 	// TODO: Parallel tool execution (partition read-only vs write, execute read-only batch concurrently)
 	// TODO: Permission check before execute (security context flows down)

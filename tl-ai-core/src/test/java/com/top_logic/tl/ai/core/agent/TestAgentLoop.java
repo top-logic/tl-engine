@@ -96,7 +96,7 @@ public class TestAgentLoop extends TestCase {
 	 * Creates a tool executor that returns a successful result with the given text.
 	 */
 	private static ToolExecutor echoExecutor() {
-		return toolCall -> new ToolResultMessage(
+		return (toolCall, context) -> new ToolResultMessage(
 			"tr-" + toolCall.id(), Instant.now(),
 			toolCall.id(), toolCall.name(),
 			new ToolState.Completed("Result of " + toolCall.name(),
@@ -230,7 +230,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("The tool failed, but I recovered.")));
 
-		ToolExecutor failingExecutor = tc -> new ToolResultMessage(
+		ToolExecutor failingExecutor = (tc, ctx) -> new ToolResultMessage(
 			"tr-" + tc.id(), Instant.now(),
 			tc.id(), tc.name(),
 			new ToolState.Failed("Something went wrong", Instant.now(), Instant.now()));
@@ -352,7 +352,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
 
-		ToolExecutor failingExecutor = tc -> new ToolResultMessage(
+		ToolExecutor failingExecutor = (tc, ctx) -> new ToolResultMessage(
 			"tr-" + tc.id(), Instant.now(),
 			tc.id(), tc.name(),
 			new ToolState.Failed("Boom", Instant.now(), Instant.now()));
@@ -391,6 +391,56 @@ public class TestAgentLoop extends TestCase {
 		// 2 turns, each with USAGE (100 input, 50 output)
 		assertEquals(200, result.totalUsage().inputTokens());
 		assertEquals(100, result.totalUsage().outputTokens());
+	}
+
+	/**
+	 * Thread interrupted before first turn — loop returns ABORTED immediately.
+	 */
+	public void testCancellationBeforeTurn() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider provider = mockProvider(List.of(new TextContent("Hi")));
+
+		Thread.currentThread().interrupt();
+		AgentLoop loop = new AgentLoop(config(), provider, echoExecutor());
+		AgentResult result = loop.run(conv, new AgentListener() {});
+
+		assertEquals(StopReason.ABORTED, result.stopReason());
+		assertEquals(0, result.turnsUsed());
+		// Clear interrupt flag for subsequent tests
+		Thread.interrupted();
+	}
+
+	/**
+	 * Thread interrupted between tool calls — loop returns ABORTED.
+	 */
+	public void testCancellationDuringToolExecution() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema tool = new ToolSchema("tool", "T", "{}");
+		ToolCall tc1 = new ToolCall("tc1", "tool", "{}");
+		ToolCall tc2 = new ToolCall("tc2", "tool", "{}");
+
+		LLMProvider provider = mockProvider(List.of(tc1, tc2));
+
+		ToolExecutor interruptingExecutor = (tc, ctx) -> {
+			if ("tc1".equals(tc.id())) {
+				Thread.currentThread().interrupt();
+			}
+			return new ToolResultMessage(
+				"tr-" + tc.id(), Instant.now(),
+				tc.id(), tc.name(),
+				new ToolState.Completed("ok", Instant.now(), Instant.now(), false));
+		};
+
+		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), provider, interruptingExecutor);
+		AgentResult result = loop.run(conv, new AgentListener() {});
+
+		assertEquals(StopReason.ABORTED, result.stopReason());
+		// Clear interrupt flag
+		Thread.interrupted();
 	}
 
 	private static AgentListener listener() {

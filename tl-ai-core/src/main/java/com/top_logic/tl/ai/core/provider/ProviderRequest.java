@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.provider;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.tl.ai.core.message.Message;
@@ -18,23 +19,35 @@ import com.top_logic.tl.ai.core.message.Message;
  * @param messages        conversation history
  * @param tools           tool definitions the LLM may call (empty list for none)
  * @param maxOutputTokens maximum tokens in the response
+ * @param modelOptions    provider-specific options (temperature, topP, thinkingBudgetTokens, etc.)
  */
 public record ProviderRequest(
 		String model,
 		String systemPrompt,
 		List<Message> messages,
 		List<ToolSchema> tools,
-		int maxOutputTokens) {
+		int maxOutputTokens,
+		Map<String, Object> modelOptions) {
 
 	/** */
 	public ProviderRequest {
 		Objects.requireNonNull(model, "Model must not be null.");
 		Objects.requireNonNull(messages, "Messages must not be null.");
 		Objects.requireNonNull(tools, "Tools must not be null.");
+		Objects.requireNonNull(modelOptions, "Model options must not be null.");
 		messages = List.copyOf(messages);
 		tools = List.copyOf(tools);
+		modelOptions = Map.copyOf(modelOptions);
 		if (maxOutputTokens <= 0) {
 			throw new IllegalArgumentException("maxOutputTokens must be positive.");
 		}
+	}
+
+	/**
+	 * Convenience constructor without model options.
+	 */
+	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
+			List<ToolSchema> tools, int maxOutputTokens) {
+		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of());
 	}
 }

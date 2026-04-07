@@ -303,7 +303,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Verifies that onError is called on provider failure.
+	 * Verifies that onError is called on provider failure, and turn_start/turn_complete are symmetric.
 	 */
 	public void testListenerOnError() {
 		Conversation conv = new Conversation();
@@ -317,6 +317,16 @@ public class TestAgentLoop extends TestCase {
 		List<String> events = new ArrayList<>();
 		AgentListener listener = new AgentListener() {
 			@Override
+			public void onTurnStart(int turnNumber) {
+				events.add("turn_start:" + turnNumber);
+			}
+
+			@Override
+			public void onTurnComplete(int turnNumber, TokenUsage usage) {
+				events.add("turn_complete:" + turnNumber);
+			}
+
+			@Override
 			public void onError(ProviderException error) {
 				events.add("error:" + error.kind());
 			}
@@ -325,7 +335,7 @@ public class TestAgentLoop extends TestCase {
 		AgentLoop loop = new AgentLoop(config(), failingProvider, echoExecutor());
 		loop.run(conv, listener);
 
-		assertEquals(List.of("error:AUTHENTICATION"), events);
+		assertEquals(List.of("turn_start:1", "error:AUTHENTICATION", "turn_complete:1"), events);
 	}
 
 	/**

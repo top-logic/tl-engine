@@ -104,6 +104,7 @@ public class AgentLoop {
 				_provider.stream(request, collector);
 			} catch (ProviderException e) {
 				listener.onError(e);
+				listener.onTurnComplete(turn, TokenUsage.EMPTY);
 				return new AgentResult(StopReason.ERROR, turn - 1, totalUsage);
 			}
 

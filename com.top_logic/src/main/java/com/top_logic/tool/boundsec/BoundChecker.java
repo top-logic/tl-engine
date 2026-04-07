@@ -139,7 +139,7 @@ public interface BoundChecker {
 			return false;
 		}
 		Set<? extends BoundRole> accessRoles = getRolesForCommandGroup(cmdGroup);
-		if (accessRoles == null || accessRoles.isEmpty()) {
+		if (accessRoles.isEmpty()) {
 			// No roles may execute this command group.
 			return false;
 		}
@@ -183,7 +183,7 @@ public interface BoundChecker {
 	 * 
 	 * @param aCommand
 	 *        The command to get the associated roles for
-	 * @return the roles for the given command
+	 * @return the roles for the given command. Not <code>null</code>.
 	 */
 	public Set<? extends BoundRole> getRolesForCommandGroup(BoundCommandGroup aCommand);
     

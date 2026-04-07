@@ -13,15 +13,15 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+
+
 /**
- * A {@link Graph} with explicit {@link Node} and {@link Edge} objects.
+ * A graph with explicit {@link Node} and {@link Edge} objects.
  * 
  * @param <V>
  *        The vertex user object type.
  * @param <E>
  *        The edge user object type.
- * 
- * @see NodeGraph
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

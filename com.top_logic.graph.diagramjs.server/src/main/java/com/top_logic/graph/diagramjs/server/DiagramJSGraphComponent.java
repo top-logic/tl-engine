@@ -53,7 +53,6 @@ import com.top_logic.graph.diagramjs.server.util.model.TLInheritance;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritanceImpl;
 import com.top_logic.graph.diagramjs.util.GraphLayoutConstants;
 import com.top_logic.graph.layouter.DiagramJSLayoutContext;
-import com.top_logic.graph.layouter.LayoutContext;
 import com.top_logic.graph.layouter.LayoutDirection;
 import com.top_logic.graph.layouter.TechnicalNamesLabelProvider;
 import com.top_logic.graph.server.component.builder.GraphModelBuilder;

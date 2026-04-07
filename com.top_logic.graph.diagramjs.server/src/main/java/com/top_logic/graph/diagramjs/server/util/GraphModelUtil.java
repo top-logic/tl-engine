@@ -749,9 +749,6 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		return TLModelUtil.getEndIndex(reference.getEnd()) == 0;
 	}
 
-	/**
-	 * @see LayoutGraphUtil#getLabel(LabelProvider, TLTypePart)
-	 */
 	private static Optional<String> getTargetName(LabelProvider labelProvider, Object businessObject) {
 		return getTypePartOptional(businessObject).map(part -> DiagramJSLayoutGraphUtil.getLabel(labelProvider, part));
 	}

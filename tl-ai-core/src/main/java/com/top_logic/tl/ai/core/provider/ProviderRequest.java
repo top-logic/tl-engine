@@ -1,0 +1,40 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.provider;
+
+import java.util.List;
+import java.util.Objects;
+
+import com.top_logic.tl.ai.core.message.Message;
+
+/**
+ * A request to send to an {@link LLMProvider}.
+ *
+ * @param model           the model identifier (e.g. "claude-haiku-4-5-20251001")
+ * @param systemPrompt    system prompt, or {@code null} for none
+ * @param messages        conversation history
+ * @param tools           tool definitions the LLM may call (empty list for none)
+ * @param maxOutputTokens maximum tokens in the response
+ */
+public record ProviderRequest(
+		String model,
+		String systemPrompt,
+		List<Message> messages,
+		List<ToolSchema> tools,
+		int maxOutputTokens) {
+
+	/** */
+	public ProviderRequest {
+		Objects.requireNonNull(model, "Model must not be null.");
+		Objects.requireNonNull(messages, "Messages must not be null.");
+		Objects.requireNonNull(tools, "Tools must not be null.");
+		messages = List.copyOf(messages);
+		tools = List.copyOf(tools);
+		if (maxOutputTokens <= 0) {
+			throw new IllegalArgumentException("maxOutputTokens must be positive.");
+		}
+	}
+}

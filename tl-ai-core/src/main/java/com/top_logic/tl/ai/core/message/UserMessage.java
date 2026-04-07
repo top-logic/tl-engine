@@ -19,6 +19,9 @@ import java.util.Objects;
 public record UserMessage(String id, Instant timestamp,
 		List<ContentPart> content) implements Message {
 
+	/**
+	 *
+	 */
 	public UserMessage {
 		Objects.requireNonNull(id, "Id must not be null.");
 		Objects.requireNonNull(timestamp, "Timestamp must not be null.");

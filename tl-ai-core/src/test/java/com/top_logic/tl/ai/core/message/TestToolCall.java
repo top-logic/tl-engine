@@ -27,6 +27,7 @@ public class TestToolCall extends TestCase {
 	}
 
 	/** Null id is rejected. */
+	@SuppressWarnings("unused")
 	public void testNullIdRejected() {
 		try {
 			new ToolCall(null, "read_file", "{}");
@@ -37,6 +38,7 @@ public class TestToolCall extends TestCase {
 	}
 
 	/** Null name is rejected. */
+	@SuppressWarnings("unused")
 	public void testNullNameRejected() {
 		try {
 			new ToolCall("tc_1", null, "{}");
@@ -47,6 +49,7 @@ public class TestToolCall extends TestCase {
 	}
 
 	/** Null arguments is rejected. */
+	@SuppressWarnings("unused")
 	public void testNullArgumentsRejected() {
 		try {
 			new ToolCall("tc_1", "read_file", null);

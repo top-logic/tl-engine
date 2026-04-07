@@ -22,6 +22,9 @@ import java.util.Objects;
  */
 public record ToolCall(String id, String name, String arguments) implements ContentPart {
 
+	/**
+	 *
+	 */
 	public ToolCall {
 		Objects.requireNonNull(id, "Tool call id must not be null.");
 		Objects.requireNonNull(name, "Tool name must not be null.");

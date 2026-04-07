@@ -26,6 +26,7 @@ public class TestImageContent extends TestCase {
 	}
 
 	/** Null url is rejected. */
+	@SuppressWarnings("unused")
 	public void testNullUrlRejected() {
 		try {
 			new ImageContent(null, "image/png");
@@ -36,6 +37,7 @@ public class TestImageContent extends TestCase {
 	}
 
 	/** Null mediaType is rejected. */
+	@SuppressWarnings("unused")
 	public void testNullMediaTypeRejected() {
 		try {
 			new ImageContent("https://example.com/img.png", null);

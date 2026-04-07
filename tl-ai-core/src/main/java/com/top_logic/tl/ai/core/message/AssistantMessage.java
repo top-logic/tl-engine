@@ -25,6 +25,9 @@ public record AssistantMessage(String id, Instant timestamp,
 		List<ContentPart> content, TokenUsage usage,
 		String finishReason) implements Message {
 
+	/**
+	 * 
+	 */
 	public AssistantMessage {
 		Objects.requireNonNull(id, "Id must not be null.");
 		Objects.requireNonNull(timestamp, "Timestamp must not be null.");

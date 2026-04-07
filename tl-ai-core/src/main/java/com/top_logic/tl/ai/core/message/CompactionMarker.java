@@ -25,6 +25,9 @@ public record CompactionMarker(String id, Instant timestamp,
 		int messagesSummarized, int tokensBefore,
 		String trigger) implements Message {
 
+	/**
+	 * 
+	 */
 	public CompactionMarker {
 		Objects.requireNonNull(id, "Id must not be null.");
 		Objects.requireNonNull(timestamp, "Timestamp must not be null.");

@@ -12,6 +12,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
+import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -441,6 +445,90 @@ public class TestAgentLoop extends TestCase {
 		assertEquals(StopReason.ABORTED, result.stopReason());
 		// Clear interrupt flag
 		Thread.interrupted();
+	}
+
+	/**
+	 * Agent loop with memory triggers compaction when token budget is exceeded.
+	 */
+	public void testMemoryAutoCompaction() {
+		// Small context window: 300 tokens, 50 reserved -> 250 usable
+		ConversationMemory memory = new ConversationMemory(
+			new Conversation(), new ByteBasedTokenEstimator(), new TruncatingStrategy(2),
+			300, 50);
+
+		// Add a user message with large content to push close to budget
+		memory.add(new UserMessage("u1", T0,
+			List.of(new TextContent("x".repeat(800))))); // 200 tokens
+
+		ToolSchema tool = new ToolSchema("tool", "T", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "tool", "{}");
+
+		// Provider that reports high input token usage to trigger compaction
+		AtomicInteger providerCalls = new AtomicInteger(0);
+		LLMProvider highUsageProvider = (request, handler) -> {
+			int idx = providerCalls.getAndIncrement();
+			TokenUsage highUsage = new TokenUsage(250, 50, 0, 0, 0);
+			if (idx == 0) {
+				handler.onEvent(new StreamEvent.ToolCallStart(0, "tc1", "tool"));
+				handler.onEvent(new StreamEvent.ToolCallDelta(0, "{}"));
+				handler.onEvent(new StreamEvent.MessageComplete(
+					"msg-0", MODEL, "tool_use", highUsage, List.of(toolCall)));
+			} else {
+				handler.onEvent(new StreamEvent.TextDelta(0, "Done"));
+				handler.onEvent(new StreamEvent.MessageComplete(
+					"msg-1", MODEL, "end_turn", highUsage,
+					List.of(new TextContent("Done"))));
+			}
+		};
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onCompactionStart(int tokensBefore) {
+				events.add("compaction_start:" + tokensBefore);
+			}
+
+			@Override
+			public void onCompactionComplete(CompactionResult result) {
+				events.add("compaction_complete:" + result.messagesSummarized());
+			}
+		};
+
+		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), highUsageProvider,
+			echoExecutor(), memory);
+		AgentResult result = loop.run(ToolContext.EMPTY, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Compaction should have been triggered",
+			events.stream().anyMatch(e -> e.startsWith("compaction_start")));
+	}
+
+	/**
+	 * Agent loop without memory (existing constructor) does not trigger compaction.
+	 */
+	public void testNoMemoryNoCompaction() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider provider = mockProvider(List.of(new TextContent("Hi")));
+
+		AgentLoop loop = new AgentLoop(config(), provider, echoExecutor());
+		AgentResult result = loop.run(conv, new AgentListener() {});
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+	}
+
+	/**
+	 * run(ToolContext, AgentListener) throws when no memory is configured.
+	 */
+	public void testRunWithoutMemoryThrows() {
+		AgentLoop loop = new AgentLoop(config(), mockProvider(List.of(new TextContent("Hi"))), echoExecutor());
+		try {
+			loop.run(ToolContext.EMPTY, new AgentListener() {});
+			fail("Expected IllegalStateException");
+		} catch (IllegalStateException e) {
+			// expected
+		}
 	}
 
 	private static AgentListener listener() {

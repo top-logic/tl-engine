@@ -129,8 +129,7 @@
 				card = $mandatory ? ($multiple ? "1..*" : "1") : ($multiple ? "*" : "0..1");
 				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
 				isOverride = $p.get(`tl.model:TLStructuredTypePart#override`);
-				isDerived = $p.get(`tl.model:DerivedTLTypePart#derived`)
-					&& $p.get(`tl.model:TLReference#opposite`) == null;
+				isDerived = $p.get(`tl.model:DerivedTLTypePart#derived`);
 
 				refName = $isDerived ? "/" + $rawName : $rawName;
 

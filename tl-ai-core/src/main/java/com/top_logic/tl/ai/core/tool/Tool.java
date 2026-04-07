@@ -16,6 +16,11 @@ import com.top_logic.tl.ai.core.provider.ToolSchema;
  * <p>Every tool in the system implements this interface — whether created from
  * {@link ToolMethod} annotations, script configuration, or programmatically.</p>
  *
+ * <p><b>Thread safety:</b> Tool instances are shared across users via the
+ * {@link ToolRegistry}. Implementations must be stateless or thread-safe.
+ * Per-user state is passed via the {@link com.top_logic.tl.ai.core.agent.ToolContext}
+ * parameter of {@link #execute}.</p>
+ *
  * @see ToolRegistry
  * @see ToolMode
  */
@@ -29,6 +34,12 @@ public interface Tool {
 
 	/** */
 	ToolSchema schema();
+
+	// TODO: Change return type from String to a ToolResult record once a consumer exists
+	//   (compaction layer, structured metadata, or per-tool truncation hints).
+	//   See PRD FR-3.2 and ARCHITECTURE-VISION Pillar 4 (Context Management).
+	//   A ToolResult would carry: result text, optional summary for compaction,
+	//   metadata map (cacheable, accessed objects), and partial-success flag.
 
 	/**
 	 * Execute the tool with the given arguments.

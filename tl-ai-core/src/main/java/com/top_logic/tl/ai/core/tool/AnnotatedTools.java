@@ -10,8 +10,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -22,6 +24,12 @@ import com.top_logic.tl.ai.core.provider.ToolSchema;
 /**
  * Scans an object for {@link ToolMethod}-annotated methods and produces {@link Tool} instances.
  *
+ * <p>Scans the full class hierarchy (declared methods of the class and all superclasses),
+ * so annotated methods in base classes are discovered.</p>
+ *
+ * <p>Parameters of type {@link ToolContext} are automatically injected during execution
+ * and excluded from the JSON Schema sent to the LLM.</p>
+ *
  * @see ToolMethod
  * @see P
  */
@@ -30,18 +38,29 @@ public final class AnnotatedTools {
 	/**
 	 * Scan the given object for {@link ToolMethod}-annotated methods.
 	 *
+	 * <p>Walks the full class hierarchy so that inherited methods are included.</p>
+	 *
 	 * @param provider the object whose methods to scan
 	 * @return a list of {@link Tool} instances, one per annotated method
 	 */
 	public static List<Tool> from(Object provider) {
 		List<Tool> tools = new ArrayList<>();
-		for (Method method : provider.getClass().getDeclaredMethods()) {
-			ToolMethod annotation = method.getAnnotation(ToolMethod.class);
-			if (annotation == null) {
-				continue;
+		Set<String> seen = new HashSet<>();
+		Class<?> clazz = provider.getClass();
+		while (clazz != null && clazz != Object.class) {
+			for (Method method : clazz.getDeclaredMethods()) {
+				ToolMethod annotation = method.getAnnotation(ToolMethod.class);
+				if (annotation == null) {
+					continue;
+				}
+				String key = method.getName() + ":" + List.of(method.getParameterTypes());
+				if (!seen.add(key)) {
+					continue;
+				}
+				method.setAccessible(true);
+				tools.add(createTool(provider, method, annotation));
 			}
-			method.setAccessible(true);
-			tools.add(createTool(provider, method, annotation));
+			clazz = clazz.getSuperclass();
 		}
 		return tools;
 	}
@@ -73,6 +92,9 @@ public final class AnnotatedTools {
 				json.name("properties");
 				json.beginObject();
 				for (Parameter param : params) {
+					if (isInjectedParam(param)) {
+						continue;
+					}
 					P p = param.getAnnotation(P.class);
 					String paramName = param.getName();
 					json.name(paramName);
@@ -82,6 +104,9 @@ public final class AnnotatedTools {
 
 				List<String> required = new ArrayList<>();
 				for (Parameter param : params) {
+					if (isInjectedParam(param)) {
+						continue;
+					}
 					P p = param.getAnnotation(P.class);
 					if (p == null || p.required()) {
 						required.add(param.getName());
@@ -102,6 +127,10 @@ public final class AnnotatedTools {
 		} catch (IOException e) {
 			throw new IllegalStateException("Failed to generate JSON Schema", e);
 		}
+	}
+
+	private static boolean isInjectedParam(Parameter param) {
+		return ToolContext.class.isAssignableFrom(param.getType());
 	}
 
 	private static void writeParamSchema(JsonWriter json, Class<?> type, P p) throws IOException {
@@ -140,16 +169,29 @@ public final class AnnotatedTools {
 
 	/**
 	 * Coerce a JSON-parsed value to the target Java parameter type.
+	 *
+	 * @throws IllegalArgumentException with a clean, LLM-facing message on type mismatch
 	 */
-	static Object coerceArg(Object value, Class<?> targetType) {
+	static Object coerceArg(Object value, Class<?> targetType, String paramName) {
 		if (value == null) {
 			if (targetType.isPrimitive()) {
 				throw new IllegalArgumentException(
-					"Cannot pass null for primitive parameter of type " + targetType.getName());
+					"Parameter '" + paramName + "' is required (type " + targetType.getSimpleName() + "), got null.");
 			}
 			return null;
 		}
 
+		try {
+			return doCoerce(value, targetType);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException(
+				"Parameter '" + paramName + "': expected " + targetType.getSimpleName()
+					+ ", got '" + value + "' (" + value.getClass().getSimpleName() + ").",
+				e);
+		}
+	}
+
+	private static Object doCoerce(Object value, Class<?> targetType) {
 		if (targetType == String.class) {
 			return value.toString();
 		}
@@ -264,9 +306,13 @@ public final class AnnotatedTools {
 			Object[] invokeArgs = new Object[params.length];
 
 			for (int i = 0; i < params.length; i++) {
-				String paramName = params[i].getName();
-				Object rawValue = args.get(paramName);
-				invokeArgs[i] = coerceArg(rawValue, params[i].getType());
+				if (isInjectedParam(params[i])) {
+					invokeArgs[i] = context;
+				} else {
+					String paramName = params[i].getName();
+					Object rawValue = args.get(paramName);
+					invokeArgs[i] = coerceArg(rawValue, params[i].getType(), paramName);
+				}
 			}
 
 			try {

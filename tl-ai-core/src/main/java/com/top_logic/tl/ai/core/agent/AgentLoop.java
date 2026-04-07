@@ -6,9 +6,13 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -22,6 +26,8 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tool.ToolRegistry;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -35,7 +41,9 @@ import com.top_logic.tl.ai.core.provider.StreamHandler;
  *   <li>Call {@link LLMProvider#stream} — streams via internal handler</li>
  *   <li>Assemble {@link AssistantMessage}, add to conversation</li>
  *   <li>Extract {@link ToolCall}s — if none, stop</li>
- *   <li>Execute each via {@link ToolExecutor}, add results to conversation</li>
+ *   <li>Security check via {@link SecurityContext#canUseTool}</li>
+ *   <li>Partition into concurrent/serial batches, execute</li>
+ *   <li>Truncate oversized results, add to conversation</li>
  *   <li>Loop</li>
  * </ol>
  *
@@ -47,10 +55,22 @@ public class AgentLoop {
 
 	// TODO: Retry with backoff for RATE_LIMITED / OVERLOADED (callProvider is the seam)
 	// TODO: Context compaction when CONTEXT_WINDOW_EXCEEDED (callProvider is the seam)
-	// TODO: Parallel tool execution (partition read-only vs write)
-	// TODO: Permission check before tool execution
+	//   The ToolState.Completed.compacted flag exists for this — compaction should replace
+	//   old tool results with summaries and set the flag. See PRD section 3.6.
 	// TODO: Memory/attachment injection between turns
 	// TODO: Stop hooks (post-response validation)
+	// TODO: Approval workflow for GLOBAL tools — Pillar 7 (Human-in-the-Loop) requires that
+	//   state-changing tools pause for user confirmation before executing. Needs:
+	//   (a) ApprovalPolicy interface (auto-approve, always-ask, mode-based),
+	//   (b) AgentListener callback: onApprovalRequired(ToolCall) → ApprovalResult,
+	//   (c) UI protocol for the chat interface to show approve/deny dialog.
+	//   Currently, GLOBAL tools execute immediately if SecurityContext.canUseTool allows them.
+	// TODO: Audit logging of tool executions — PRD FR-4 requires logging to an audit trail.
+	//   Timing data (start/end Instant) is already tracked in ToolState. Needs a listener
+	//   or dedicated AuditLogger that persists: who, which tool, arguments, result, duration.
+
+	/** Default maximum characters per tool result before truncation. */
+	public static final int DEFAULT_MAX_RESULT_CHARS = 4000;
 
 	private final AgentConfig _config;
 
@@ -58,17 +78,36 @@ public class AgentLoop {
 
 	private final ToolExecutor _toolExecutor;
 
+	private final int _maxResultChars;
+
 	/**
-	 * Creates a new agent loop.
+	 * Creates a new agent loop with default result truncation.
 	 *
 	 * @param config       loop configuration
 	 * @param provider     LLM provider for streaming responses
 	 * @param toolExecutor executes tool calls requested by the LLM
 	 */
 	public AgentLoop(AgentConfig config, LLMProvider provider, ToolExecutor toolExecutor) {
+		this(config, provider, toolExecutor, DEFAULT_MAX_RESULT_CHARS);
+	}
+
+	/**
+	 * Creates a new agent loop with configurable result truncation.
+	 *
+	 * @param config         loop configuration
+	 * @param provider       LLM provider for streaming responses
+	 * @param toolExecutor   executes tool calls requested by the LLM
+	 * @param maxResultChars maximum characters per tool result before truncation
+	 */
+	public AgentLoop(AgentConfig config, LLMProvider provider, ToolExecutor toolExecutor,
+			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
 		_toolExecutor = Objects.requireNonNull(toolExecutor, "Tool executor must not be null.");
+		if (maxResultChars <= 0) {
+			throw new IllegalArgumentException("maxResultChars must be positive.");
+		}
+		_maxResultChars = maxResultChars;
 	}
 
 	/**
@@ -78,11 +117,13 @@ public class AgentLoop {
 	 * an unrecoverable error occurs, or the thread is interrupted.</p>
 	 *
 	 * @param conversation the conversation to operate on (messages are added during the run)
+	 * @param context      execution context for the current user (security, transaction)
 	 * @param listener     receives progress events
 	 * @return the result describing why the loop stopped
 	 */
-	public AgentResult run(Conversation conversation, AgentListener listener) {
+	public AgentResult run(Conversation conversation, ToolContext context, AgentListener listener) {
 		Objects.requireNonNull(conversation, "Conversation must not be null.");
+		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
 		TokenUsage totalUsage = TokenUsage.EMPTY;
@@ -117,20 +158,9 @@ public class AgentLoop {
 				return new AgentResult(StopReason.COMPLETE, turn, totalUsage);
 			}
 
-			for (ToolCall toolCall : toolCalls) {
-				if (Thread.interrupted()) {
-					listener.onTurnComplete(turn, assistantMsg.usage());
-					return new AgentResult(StopReason.ABORTED, turn, totalUsage);
-				}
-				listener.onToolCallStart(toolCall);
-				ToolResultMessage resultMsg = _toolExecutor.execute(toolCall, ToolContext.EMPTY);
-				conversation.add(resultMsg);
-
-				if (resultMsg.state() instanceof ToolState.Failed failed) {
-					listener.onToolError(toolCall, failed.error());
-				} else {
-					listener.onToolCallComplete(toolCall, resultMsg);
-				}
+			if (!executeToolCalls(toolCalls, context, conversation, listener)) {
+				listener.onTurnComplete(turn, assistantMsg.usage());
+				return new AgentResult(StopReason.ABORTED, turn, totalUsage);
 			}
 
 			listener.onTurnComplete(turn, assistantMsg.usage());
@@ -138,6 +168,169 @@ public class AgentLoop {
 		}
 
 		return new AgentResult(StopReason.MAX_TURNS, maxTurns, totalUsage);
+	}
+
+	/**
+	 * Run the agent loop with an empty (unrestricted) context.
+	 *
+	 * <p>Convenience method for tests and trusted internal use.</p>
+	 */
+	public AgentResult run(Conversation conversation, AgentListener listener) {
+		return run(conversation, ToolContext.EMPTY, listener);
+	}
+
+	/**
+	 * @return {@code true} if all tool calls were executed, {@code false} if interrupted
+	 */
+	private boolean executeToolCalls(List<ToolCall> toolCalls, ToolContext context,
+			Conversation conversation, AgentListener listener) {
+
+		List<List<ToolCall>> batches = partitionBatches(toolCalls);
+
+		for (List<ToolCall> batch : batches) {
+			if (Thread.interrupted()) {
+				Thread.currentThread().interrupt();
+				return false;
+			}
+			if (batch.size() == 1) {
+				executeSingle(batch.get(0), context, conversation, listener);
+			} else {
+				executeConcurrent(batch, context, conversation, listener);
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Partition tool calls into batches: consecutive concurrency-safe tools are grouped
+	 * together, non-safe tools get their own batch.
+	 */
+	private List<List<ToolCall>> partitionBatches(List<ToolCall> toolCalls) {
+		List<List<ToolCall>> batches = new ArrayList<>();
+		List<ToolCall> currentBatch = null;
+		boolean currentBatchConcurrent = false;
+
+		for (ToolCall tc : toolCalls) {
+			boolean safe = isConcurrencySafe(tc);
+
+			if (currentBatch == null) {
+				currentBatch = new ArrayList<>();
+				currentBatch.add(tc);
+				currentBatchConcurrent = safe;
+			} else if (safe && currentBatchConcurrent) {
+				currentBatch.add(tc);
+			} else {
+				batches.add(currentBatch);
+				currentBatch = new ArrayList<>();
+				currentBatch.add(tc);
+				currentBatchConcurrent = safe;
+			}
+		}
+		if (currentBatch != null) {
+			batches.add(currentBatch);
+		}
+		return batches;
+	}
+
+	private boolean isConcurrencySafe(ToolCall tc) {
+		if (_toolExecutor instanceof ToolRegistry registry) {
+			Tool tool = registry.getTool(tc.name());
+			return tool != null && tool.isConcurrencySafe();
+		}
+		return false;
+	}
+
+	private void executeSingle(ToolCall toolCall, ToolContext context,
+			Conversation conversation, AgentListener listener) {
+
+		ToolResultMessage result = executeWithSecurityCheck(toolCall, context, listener);
+		conversation.add(result);
+		reportResult(toolCall, result, listener);
+	}
+
+	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
+			Conversation conversation, AgentListener listener) {
+
+		ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+		try {
+			List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
+
+			for (ToolCall tc : batch) {
+				listener.onToolCallStart(tc);
+				futures.add(CompletableFuture.supplyAsync(
+					() -> executeWithSecurityCheck(tc, context, null), executor));
+			}
+
+			List<ToolResultMessage> results = new ArrayList<>();
+			for (CompletableFuture<ToolResultMessage> future : futures) {
+				try {
+					results.add(future.join());
+				} catch (Exception e) {
+					results.add(errorResult(batch.get(results.size()), "Concurrent execution failed: " + e.getMessage()));
+				}
+			}
+
+			for (int i = 0; i < batch.size(); i++) {
+				conversation.add(results.get(i));
+				reportResult(batch.get(i), results.get(i), listener);
+			}
+		} finally {
+			executor.close();
+		}
+	}
+
+	private ToolResultMessage executeWithSecurityCheck(ToolCall toolCall, ToolContext context,
+			AgentListener listener) {
+
+		if (listener != null) {
+			listener.onToolCallStart(toolCall);
+		}
+
+		SecurityContext security = context.security();
+		if (_toolExecutor instanceof ToolRegistry registry) {
+			Tool tool = registry.getTool(toolCall.name());
+			if (tool != null && !security.canUseTool(tool)) {
+				return errorResult(toolCall,
+					"Permission denied: you do not have access to tool '" + toolCall.name() + "'.");
+			}
+		}
+
+		ToolResultMessage result = _toolExecutor.execute(toolCall, context);
+		return truncateIfNeeded(result);
+	}
+
+	private ToolResultMessage truncateIfNeeded(ToolResultMessage result) {
+		if (!(result.state() instanceof ToolState.Completed completed)) {
+			return result;
+		}
+		String text = completed.result();
+		if (text.length() <= _maxResultChars) {
+			return result;
+		}
+
+		String truncated = text.substring(0, _maxResultChars)
+			+ "\n\n[Result truncated: " + text.length() + " chars total, showing first " + _maxResultChars + "]";
+
+		return new ToolResultMessage(
+			result.id(), result.timestamp(), result.toolCallId(), result.toolName(),
+			new ToolState.Completed(truncated, completed.startTime(), completed.endTime(), false));
+	}
+
+	private static ToolResultMessage errorResult(ToolCall toolCall, String error) {
+		Instant now = Instant.now();
+		return new ToolResultMessage(
+			UUID.randomUUID().toString(), now,
+			toolCall.id(), toolCall.name(),
+			new ToolState.Failed(error, now, now));
+	}
+
+	private static void reportResult(ToolCall toolCall, ToolResultMessage result,
+			AgentListener listener) {
+		if (result.state() instanceof ToolState.Failed failed) {
+			listener.onToolError(toolCall, failed.error());
+		} else {
+			listener.onToolCallComplete(toolCall, result);
+		}
 	}
 
 	/**

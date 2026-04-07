@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.agent.AgentConfig;
 import com.top_logic.tl.ai.core.agent.AgentListener;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -147,7 +148,7 @@ public class TestToolRegistry extends TestCase {
 			error.contains("add"));
 	}
 
-	/** Execute with tool that throws returns Failed. */
+	/** Execute with tool that throws returns Failed with sanitized message. */
 	public void testExecuteToolError() {
 		Object provider = new Object() {
 			@ToolMethod(description ="Fails", mode = ToolMode.READ)
@@ -162,7 +163,11 @@ public class TestToolRegistry extends TestCase {
 		ToolResultMessage result = registry.execute(call, ToolContext.EMPTY);
 
 		assertInstanceOf(ToolState.Failed.class, result.state());
-		assertTrue(((ToolState.Failed) result.state()).error().contains("Boom"));
+		String error = ((ToolState.Failed) result.state()).error();
+		assertTrue("Error should mention tool name: " + error,
+			error.contains("fail"));
+		assertTrue("Error should mention the message: " + error,
+			error.contains("Boom"));
 	}
 
 	/** Execute with empty arguments JSON. */
@@ -181,6 +186,52 @@ public class TestToolRegistry extends TestCase {
 
 		assertInstanceOf(ToolState.Completed.class, result.state());
 		assertEquals("ok", ((ToolState.Completed) result.state()).result());
+	}
+
+	/** Invalid JSON arguments returns Failed with clean error. */
+	public void testExecuteInvalidJson() {
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new MathTools());
+
+		ToolCall call = new ToolCall("tc1", "add", "not-json");
+		ToolResultMessage result = registry.execute(call, ToolContext.EMPTY);
+
+		assertInstanceOf(ToolState.Failed.class, result.state());
+		String error = ((ToolState.Failed) result.state()).error();
+		assertTrue("Error should mention tool name: " + error,
+			error.contains("add"));
+	}
+
+	/** Type coercion error returns Failed with parameter-specific message. */
+	public void testExecuteCoercionError() {
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new MathTools());
+
+		ToolCall call = new ToolCall("tc1", "add", "{\"a\":\"not_a_number\",\"b\":1}");
+		ToolResultMessage result = registry.execute(call, ToolContext.EMPTY);
+
+		assertInstanceOf(ToolState.Failed.class, result.state());
+		String error = ((ToolState.Failed) result.state()).error();
+		assertTrue("Error should mention parameter name: " + error,
+			error.contains("'a'"));
+	}
+
+	/** SecurityContext.canUseTool blocks tool execution in AgentLoop. */
+	public void testSecurityBlocksTool() {
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new MathTools());
+		registry.register(new EditTools());
+
+		SecurityContext noDelete = tool -> !tool.name().equals("delete");
+		ToolContext context = new ToolContext(noDelete);
+
+		// add should work
+		ToolCall addCall = new ToolCall("tc1", "add", "{\"a\":1,\"b\":2}");
+		ToolResultMessage addResult = registry.execute(addCall, context);
+		assertInstanceOf(ToolState.Completed.class, addResult.state());
+
+		// delete blocked at AgentLoop level, not at ToolRegistry level
+		// ToolRegistry is a pure executor — security check happens in AgentLoop
 	}
 
 	// --- AgentLoop integration ---
@@ -215,6 +266,77 @@ public class TestToolRegistry extends TestCase {
 		// Verify the tool result was fed back into the conversation
 		// conv: user + assistant(tool_call) + tool_result + assistant(text) = 4
 		assertEquals(4, conv.size());
+	}
+
+	/** SecurityContext blocks a tool in the agent loop. */
+	public void testAgentLoopSecurityBlock() {
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new EditTools());
+
+		ToolCall toolCall = new ToolCall("tc1", "delete", "{\"id\":\"123\"}");
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("I see the tool was denied.")));
+
+		AgentConfig config = new AgentConfig(MODEL, "Test",
+			registry.toolSchemas(), 10, 8192);
+
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", Instant.now(), List.of(new TextContent("Delete 123"))));
+
+		SecurityContext noDeletions = tool -> !tool.name().equals("delete");
+		ToolContext context = new ToolContext(noDeletions);
+
+		AgentLoop loop = new AgentLoop(config, provider, registry);
+		AgentResult result = loop.run(conv, context, new AgentListener() {});
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+
+		// The tool result should be a Failed "Permission denied"
+		ToolResultMessage toolResult = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.findFirst().orElse(null);
+		assertNotNull("Tool result should exist", toolResult);
+		assertInstanceOf(ToolState.Failed.class, toolResult.state());
+		assertTrue(((ToolState.Failed) toolResult.state()).error().contains("Permission denied"));
+	}
+
+	/** Result truncation in AgentLoop. */
+	public void testResultTruncation() {
+		ToolRegistry registry = new ToolRegistry();
+		Object provider = new Object() {
+			@ToolMethod(description = "Returns large output", mode = ToolMode.READ)
+			public String largeOutput(@P("size") int size) {
+				return "x".repeat(size);
+			}
+		};
+		registry.register(provider);
+
+		ToolCall toolCall = new ToolCall("tc1", "largeOutput", "{\"size\":10000}");
+		LLMProvider llm = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Got it.")));
+
+		AgentConfig config = new AgentConfig(MODEL, "Test",
+			registry.toolSchemas(), 10, 8192);
+
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", Instant.now(), List.of(new TextContent("Big output"))));
+
+		int maxChars = 100;
+		AgentLoop loop = new AgentLoop(config, llm, registry, maxChars);
+		loop.run(conv, new AgentListener() {});
+
+		ToolResultMessage toolResult = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.findFirst().orElse(null);
+		assertNotNull(toolResult);
+		assertInstanceOf(ToolState.Completed.class, toolResult.state());
+		String result = ((ToolState.Completed) toolResult.state()).result();
+		assertTrue("Result should be truncated", result.contains("[Result truncated:"));
+		assertTrue("Result should mention total size", result.contains("10000 chars total"));
 	}
 
 	// --- Helper: mock provider (same pattern as TestAgentLoop) ---

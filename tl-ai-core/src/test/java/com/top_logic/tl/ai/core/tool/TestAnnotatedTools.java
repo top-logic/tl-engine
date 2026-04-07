@@ -51,6 +51,31 @@ public class TestAnnotatedTools extends TestCase {
 		}
 	}
 
+	/** Base class with an annotated method. */
+	static class BaseTools {
+		@ToolMethod(description = "Base tool", mode = ToolMode.READ)
+		public String baseTool(@P("input") String input) {
+			return "base:" + input;
+		}
+	}
+
+	/** Subclass adding its own tool — should see both base and own. */
+	static class DerivedTools extends BaseTools {
+		@ToolMethod(description = "Derived tool", mode = ToolMode.READ)
+		public String derivedTool(@P("input") String input) {
+			return "derived:" + input;
+		}
+	}
+
+	/** Provider with a method that accepts ToolContext. */
+	static class ContextAwareTools {
+		@ToolMethod(description = "Tool using context", mode = ToolMode.READ)
+		public String contextTool(@P("input") String input, ToolContext ctx) {
+			boolean unrestricted = ctx.security().canUseTool(null);
+			return "input=" + input + ",unrestricted=" + unrestricted;
+		}
+	}
+
 	/** Scans a class with multiple @ToolMethod methods. */
 	public void testScanFindsAllMethods() {
 		List<Tool> tools = AnnotatedTools.from(new TestTools());
@@ -70,7 +95,7 @@ public class TestAnnotatedTools extends TestCase {
 		assertNotNull(tool);
 	}
 
-	/** Description comes from @ToolMethod.value. */
+	/** Description comes from @ToolMethod.description. */
 	public void testDescription() {
 		Tool tool = findTool("add");
 		assertEquals("Add two numbers", tool.description());
@@ -208,6 +233,54 @@ public class TestAnnotatedTools extends TestCase {
 		Tool tool = AnnotatedTools.from(provider).get(0);
 		String result = tool.execute(Map.of("input", "test"), ToolContext.EMPTY);
 		assertEquals("Success", result);
+	}
+
+	/** Inherited @ToolMethod methods are discovered. */
+	public void testInheritanceScanning() {
+		List<Tool> tools = AnnotatedTools.from(new DerivedTools());
+		assertEquals(2, tools.size());
+
+		Tool base = tools.stream().filter(t -> t.name().equals("baseTool")).findFirst().orElse(null);
+		Tool derived = tools.stream().filter(t -> t.name().equals("derivedTool")).findFirst().orElse(null);
+		assertNotNull("Base tool should be found", base);
+		assertNotNull("Derived tool should be found", derived);
+
+		assertEquals("base:hello", base.execute(Map.of("input", "hello"), ToolContext.EMPTY));
+		assertEquals("derived:world", derived.execute(Map.of("input", "world"), ToolContext.EMPTY));
+	}
+
+	/** ToolContext parameters are injected automatically and excluded from schema. */
+	public void testToolContextInjection() {
+		List<Tool> tools = AnnotatedTools.from(new ContextAwareTools());
+		assertEquals(1, tools.size());
+
+		Tool tool = tools.get(0);
+		String schema = tool.schema().inputSchemaJson();
+
+		// Schema should NOT contain ToolContext — only "input"
+		assertFalse("Schema should not mention ToolContext: " + schema,
+			schema.contains("ctx"));
+		assertTrue("Schema should contain input parameter: " + schema,
+			schema.contains("\"input\""));
+
+		// Execute — ToolContext.EMPTY uses UNRESTRICTED security
+		String result = tool.execute(Map.of("input", "test"), ToolContext.EMPTY);
+		assertEquals("input=test,unrestricted=true", result);
+	}
+
+	/** Coercion errors produce clean, parameter-specific messages. */
+	public void testCoercionErrorMessage() {
+		Tool tool = findTool("add");
+		try {
+			tool.execute(Map.of("a", "not_a_number", "b", 1), ToolContext.EMPTY);
+			fail("Expected IllegalArgumentException");
+		} catch (IllegalArgumentException e) {
+			String msg = e.getMessage();
+			assertTrue("Error should mention parameter name: " + msg,
+				msg.contains("'a'"));
+			assertTrue("Error should mention expected type: " + msg,
+				msg.contains("int"));
+		}
 	}
 
 	// --- Helper ---

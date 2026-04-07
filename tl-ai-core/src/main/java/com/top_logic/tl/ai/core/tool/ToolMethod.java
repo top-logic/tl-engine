@@ -28,7 +28,7 @@ public @interface ToolMethod {
 	 * Description of what this tool does. Sent to the LLM.
 	 * Multiple values are joined with newline.
 	 */
-	String[] value();
+	String[] description();
 
 	/**
 	 * Tool name. Defaults to the Java method name if empty.

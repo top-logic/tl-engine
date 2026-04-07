@@ -37,19 +37,19 @@ import com.top_logic.tl.ai.core.provider.ToolSchema;
 public class TestToolRegistry extends TestCase {
 
 	static class MathTools {
-		@ToolMethod(value = "Add two numbers", mode = ToolMode.READ, concurrencySafe = true)
+		@ToolMethod(description ="Add two numbers", mode = ToolMode.READ, concurrencySafe = true)
 		public String add(@P("first") int a, @P("second") int b) {
 			return String.valueOf(a + b);
 		}
 
-		@ToolMethod(value = "Multiply two numbers", mode = ToolMode.READ, concurrencySafe = true)
+		@ToolMethod(description ="Multiply two numbers", mode = ToolMode.READ, concurrencySafe = true)
 		public String multiply(@P("first") int a, @P("second") int b) {
 			return String.valueOf(a * b);
 		}
 	}
 
 	static class EditTools {
-		@ToolMethod("Delete a record")
+		@ToolMethod(description = "Delete a record")
 		public String delete(@P("record id") String id) {
 			return "Deleted " + id;
 		}
@@ -150,7 +150,7 @@ public class TestToolRegistry extends TestCase {
 	/** Execute with tool that throws returns Failed. */
 	public void testExecuteToolError() {
 		Object provider = new Object() {
-			@ToolMethod(value = "Fails", mode = ToolMode.READ)
+			@ToolMethod(description ="Fails", mode = ToolMode.READ)
 			public String fail(@P("input") String input) {
 				throw new RuntimeException("Boom");
 			}
@@ -168,7 +168,7 @@ public class TestToolRegistry extends TestCase {
 	/** Execute with empty arguments JSON. */
 	public void testExecuteEmptyArgs() {
 		Object provider = new Object() {
-			@ToolMethod(value = "No args", mode = ToolMode.READ)
+			@ToolMethod(description ="No args", mode = ToolMode.READ)
 			public String noArgs() {
 				return "ok";
 			}

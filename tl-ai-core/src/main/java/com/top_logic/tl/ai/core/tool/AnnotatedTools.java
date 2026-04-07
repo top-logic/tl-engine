@@ -48,7 +48,7 @@ public final class AnnotatedTools {
 
 	private static Tool createTool(Object provider, Method method, ToolMethod annotation) {
 		String toolName = annotation.name().isEmpty() ? method.getName() : annotation.name();
-		String description = String.join("\n", annotation.value());
+		String description = String.join("\n", annotation.description());
 		ToolMode mode = annotation.mode();
 		boolean concurrencySafe = annotation.concurrencySafe();
 		ToolSchema schema = generateSchema(toolName, description, method);

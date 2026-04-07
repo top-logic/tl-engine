@@ -22,22 +22,22 @@ public class TestAnnotatedTools extends TestCase {
 	/** Test provider with multiple tool methods and various parameter types. */
 	static class TestTools {
 
-		@ToolMethod(value = "Add two numbers", mode = ToolMode.READ, concurrencySafe = true)
+		@ToolMethod(description = "Add two numbers", mode = ToolMode.READ, concurrencySafe = true)
 		public String add(@P("first number") int a, @P("second number") int b) {
 			return String.valueOf(a + b);
 		}
 
-		@ToolMethod(value = "Greet someone", name = "greet_user", mode = ToolMode.READ)
+		@ToolMethod(description = "Greet someone", name = "greet_user", mode = ToolMode.READ)
 		public String greet(@P("name to greet") String name) {
 			return "Hello, " + name + "!";
 		}
 
-		@ToolMethod(value = "Pick a color", mode = ToolMode.READ)
+		@ToolMethod(description = "Pick a color", mode = ToolMode.READ)
 		public String pickColor(@P("the color") Color color) {
 			return "You picked " + color.name();
 		}
 
-		@ToolMethod(value = "Search with optional flag", mode = ToolMode.READ)
+		@ToolMethod(description = "Search with optional flag", mode = ToolMode.READ)
 		public String search(
 				@P("query text") String query,
 				@P(value = "include archived", required = false) Boolean includeArchived) {
@@ -45,7 +45,7 @@ public class TestAnnotatedTools extends TestCase {
 			return "Searching: " + query + " (archived=" + archived + ")";
 		}
 
-		@ToolMethod("Delete everything")
+		@ToolMethod(description = "Delete everything")
 		public String deleteAll() {
 			return "Deleted";
 		}
@@ -124,6 +124,10 @@ public class TestAnnotatedTools extends TestCase {
 		// The required array should contain "query" but not "includeArchived"
 		assertTrue("required should contain query: " + schema,
 			schema.contains("\"required\""));
+		// Extract the required array portion and verify includeArchived is not in it
+		String requiredPart = schema.substring(schema.indexOf("\"required\""));
+		assertFalse("required should not contain includeArchived: " + requiredPart,
+			requiredPart.contains("\"includeArchived\""));
 	}
 
 	/** No-arg tool produces empty properties schema. */
@@ -179,7 +183,7 @@ public class TestAnnotatedTools extends TestCase {
 	/** Tool that throws returns the exception message (not the exception itself). */
 	public void testExecuteThrowingMethod() {
 		Object provider = new Object() {
-			@ToolMethod(value = "Fails always", mode = ToolMode.READ)
+			@ToolMethod(description = "Fails always", mode = ToolMode.READ)
 			public String fail(@P("input") String input) {
 				throw new RuntimeException("Boom");
 			}
@@ -196,7 +200,7 @@ public class TestAnnotatedTools extends TestCase {
 	/** void return type produces "Success". */
 	public void testVoidReturn() {
 		Object provider = new Object() {
-			@ToolMethod(value = "Does nothing", mode = ToolMode.READ)
+			@ToolMethod(description = "Does nothing", mode = ToolMode.READ)
 			public void doNothing(@P("input") String input) {
 				// no-op
 			}

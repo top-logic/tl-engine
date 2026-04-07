@@ -63,13 +63,13 @@ public class VisualToolRegistryTest extends TestCase {
 	static class MathTools {
 
 		/** */
-		@ToolMethod(value = "Add two numbers together", mode = ToolMode.READ, concurrencySafe = true)
+		@ToolMethod(description ="Add two numbers together", mode = ToolMode.READ, concurrencySafe = true)
 		public String add(@P("first number") int a, @P("second number") int b) {
 			return String.valueOf(a + b);
 		}
 
 		/** */
-		@ToolMethod(value = "Multiply two numbers", mode = ToolMode.READ, concurrencySafe = true)
+		@ToolMethod(description ="Multiply two numbers", mode = ToolMode.READ, concurrencySafe = true)
 		public String multiply(@P("first number") int a, @P("second number") int b) {
 			return String.valueOf(a * b);
 		}
@@ -79,7 +79,7 @@ public class VisualToolRegistryTest extends TestCase {
 	static class WeatherTools {
 
 		/** */
-		@ToolMethod(value = "Get the current weather for a city", name = "get_weather",
+		@ToolMethod(description ="Get the current weather for a city", name = "get_weather",
 			mode = ToolMode.READ, concurrencySafe = true)
 		public String getWeather(@P("city name") String city) {
 			return switch (city.toLowerCase()) {
@@ -95,7 +95,7 @@ public class VisualToolRegistryTest extends TestCase {
 	static class AdminTools {
 
 		/** */
-		@ToolMethod("Delete all records from a table")
+		@ToolMethod(description = "Delete all records from a table")
 		public String deleteAll(@P("table name") String table) {
 			return "Deleted all records from " + table;
 		}

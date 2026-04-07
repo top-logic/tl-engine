@@ -127,47 +127,30 @@
 				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
 
 				opposite = $p.get(`tl.model:TLReference#opposite`);
-				oppLabel = $opposite != null ? {
+				targetLabel = reactFlowDecoration(
+					reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
+					linePosition: 1.0);
+				decos = $opposite != null ? {
 					oppName = $opposite.get(`tl.model:TLNamedPart#name`);
 					oppMandatory = $opposite.get(`tl.model:TLStructuredTypePart#mandatory`);
 					oppMultiple = $opposite.get(`tl.model:TLStructuredTypePart#multiple`);
 					oppCard = $oppMandatory ? ($oppMultiple ? "1..*" : "1") : ($oppMultiple ? "*" : "0..1");
-					reactFlowDecoration(
-						reactFlowPadding(reactFlowText($oppName + "\n" + $oppCard, fontSize: 10), all: 4),
-						linePosition: 0.0)
-				} : null;
+					list(
+						reactFlowDecoration(
+							reactFlowPadding(reactFlowText($oppName + "\n" + $oppCard, fontSize: 10), all: 4),
+							linePosition: 0.0),
+						$targetLabel)
+				} : list($targetLabel);
 
-				$composite
-					? reactFlowGraphEdge(
-						$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
-						$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
-						priority: 2,
-						sourceSymbol: "FILLED_DIAMOND",
-						decorations: $oppLabel != null
-							? list($oppLabel,
-								reactFlowDecoration(
-									reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
-									linePosition: 1.0))
-							: list(
-								reactFlowDecoration(
-									reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
-									linePosition: 1.0)),
-						userObject: $p)
-					: reactFlowGraphEdge(
-						$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
-						$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
-						priority: 1,
-						targetSymbol: "ARROW",
-						decorations: $oppLabel != null
-							? list($oppLabel,
-								reactFlowDecoration(
-									reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
-									linePosition: 1.0))
-							: list(
-								reactFlowDecoration(
-									reactFlowPadding(reactFlowText($refName + "\n" + $card, fontSize: 10), all: 4),
-									linePosition: 1.0)),
-						userObject: $p)
+				reactFlowGraphEdge(
+					$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
+					$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
+					priority: $composite ? 2 : 1,
+					sourceSymbol: $composite ? "FILLED_DIAMOND" : null,
+					targetSymbol: $composite ? null : "ARROW",
+					decorations: $decos,
+					selectable: true,
+					userObject: $p)
 			}))
 		.flatten();
 

@@ -1506,16 +1506,17 @@ public class FlowFactory extends TLScriptFunctions {
 			@DoubleDefault(1) double thickness,
 			List<Double> dashes,
 			List<? extends EdgeDecoration> decorations,
+			boolean selectable,
 			Object userObject) {
 		GraphEdge edge = GraphEdge.create()
 			.setSource(source)
 			.setTarget(target)
 			.setPriority(priority)
 			.setStrokeStyle(strokeStyle)
-			.setThickness(thickness);
+			.setThickness(thickness)
+			.setSelectable(selectable);
 		if (userObject != null) {
 			edge.setUserObject(userObject);
-			edge.setSelectable(true);
 		}
 		if (sourceSymbol != null) {
 			edge.setSourceSymbol(sourceSymbol);

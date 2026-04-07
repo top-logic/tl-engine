@@ -31,5 +31,83 @@
             <groupId>com.top-logic</groupId>
             <artifactId>tl-layout-react</artifactId>
         </dependency>
+
+        <!-- The GWT client-code. -->
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-react-flow-client</artifactId>
+            <version>${project.version}</version>
+            <type>war</type>
+            <classifier>web-fragment</classifier>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <id>war-fragment</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>war</goal>
+                        </goals>
+                        <configuration>
+                            <overlays>
+                                <overlay>
+                                    <groupId>com.top-logic</groupId>
+                                    <artifactId>tl-react-flow-client</artifactId>
+                                    <type>war</type>
+                                    <classifier>web-fragment</classifier>
+                                </overlay>
+                            </overlays>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.15.4</version>
+
+                <executions>
+                    <execution>
+                        <id>install-node</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>v20.10.0</nodeVersion>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm-install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm-build</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

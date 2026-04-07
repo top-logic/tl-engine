@@ -757,8 +757,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	public AttributeUpdate createUpdate() {
 		setType(UpdateType.TYPE_EDIT);
 		initCreate(true);
-		initCreateValue();
 		initCreateVisibility();
+		initCreateValue();
 		return this;
 	}
 
@@ -779,8 +779,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	public AttributeUpdate editUpdateDefault(boolean externalDisabled) {
 		setType(UpdateType.TYPE_EDIT);
-		initPersistentValue();
 		initDefaultEditVisibility(externalDisabled);
+		initPersistentValue();
 		return this;
 	}
 
@@ -796,8 +796,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	public AttributeUpdate editUpdateCustom(boolean disabled, boolean mandatory) {
 		setType(UpdateType.TYPE_EDIT);
-		initPersistentValue();
 		initCustomEditVisibility(disabled, mandatory);
+		initPersistentValue();
 		return this;
 	}
 

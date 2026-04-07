@@ -122,6 +122,23 @@ public interface BoundChecker {
 			// Means a technical view without access checks.
 			return true;
 		}
+		Boolean allowedBypass = isAllowedBypass(user, cmdGroup);
+		if (allowedBypass != null) {
+			return allowedBypass.booleanValue();
+		}
+		Set<? extends BoundRole> accessRoles = getRolesForCommandGroup(cmdGroup);
+		if (accessRoles.isEmpty()) {
+			// No roles may execute this command group.
+			return false;
+		}
+		return AccessManager.getInstance().hasRole(user, context, accessRoles);
+	}
+
+	/**
+	 * Returns a non-{@code null} shortcut answer when the check can be resolved without role lookup
+	 * (e.g. system group, admin context), or {@code null} to proceed with the full role check.
+	 */
+	static Boolean isAllowedBypass(Person user, BoundCommandGroup cmdGroup) {
 		if (user == null) {
 			// Without user, no access rights.
 			return false;
@@ -138,12 +155,7 @@ public interface BoundChecker {
 			// A restricted user.
 			return false;
 		}
-		Set<? extends BoundRole> accessRoles = getRolesForCommandGroup(cmdGroup);
-		if (accessRoles.isEmpty()) {
-			// No roles may execute this command group.
-			return false;
-		}
-		return AccessManager.getInstance().hasRole(user, context, accessRoles);
+		return null;
 	}
 
 	/**

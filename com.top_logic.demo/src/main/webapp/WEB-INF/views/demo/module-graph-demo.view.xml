@@ -120,12 +120,15 @@
 			.filter(p -> $nodeByName[$p.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`)] != null)
 			.map(p -> {
 				targetType = $p.get(`tl.model:TLStructuredTypePart#type`);
-				refName = $p.get(`tl.model:TLNamedPart#name`);
+				rawName = $p.get(`tl.model:TLNamedPart#name`);
 				mandatory = $p.get(`tl.model:TLStructuredTypePart#mandatory`);
 				multiple = $p.get(`tl.model:TLStructuredTypePart#multiple`);
 				card = $mandatory ? ($multiple ? "1..*" : "1") : ($multiple ? "*" : "0..1");
 				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
 				isOverride = $p.get(`tl.model:TLStructuredTypePart#override`);
+				isDerived = $p.get(`tl.model:DerivedTLTypePart#derived`);
+
+				refName = $isDerived ? "/" + $rawName : $rawName;
 
 				redefinesLabel = $isOverride ? {
 					defOwner = $p.get(`tl.model:TLStructuredTypePart#definition`)
@@ -156,7 +159,7 @@
 					priority: $composite ? 2 : 1,
 					sourceSymbol: $composite ? "FILLED_DIAMOND" : null,
 					targetSymbol: $composite ? null : "ARROW",
-					strokeStyle: $isOverride ? "#bbbbbb" : "black",
+					strokeStyle: $isDerived ? "#bbbbbb" : "black",
 					decorations: $decos,
 					selectable: true,
 					userObject: $p)

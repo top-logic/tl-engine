@@ -34,7 +34,8 @@
 										<input channel="selectedModule" />
 									</inputs>
 									<createChart><![CDATA[module -> {
-	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`);
+	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
+		.filter(t -> $t.get(`tl.model:TLType#scope`).instanceOf(`tl.model:TLModule`));
 	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));
 	enums = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLEnumeration`));
 	classNameSet = $classes.indexBy(c -> $c.get(`tl.model:TLNamedPart#name`));

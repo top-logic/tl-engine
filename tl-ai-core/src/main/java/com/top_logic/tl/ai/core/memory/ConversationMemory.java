@@ -134,14 +134,12 @@ public class ConversationMemory {
 
 		CompactionResult result = _strategy.compact(messages, targetTokens, _estimator);
 
-		// Replace entire conversation with compacted messages
 		_conversation.replaceRange(0, messages.size(), result.replacementMessages());
 
-		// Reset baseline — it's no longer valid after compaction
+		// Baseline holds absolute message indices; after replaceRange they are stale.
 		_apiBaselineTokens = 0;
 		_apiBaselineMessageCount = 0;
 
-		// Update trigger if different from what strategy used
 		if (!trigger.equals(result.trigger())) {
 			return new CompactionResult(result.replacementMessages(),
 				result.messagesSummarized(), result.tokensBefore(),

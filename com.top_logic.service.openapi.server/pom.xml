@@ -47,7 +47,7 @@
     <dependency>
 	    <groupId>org.webjars.npm</groupId>
 	    <artifactId>swagger-ui-dist</artifactId>
-	    <version>5.32.1</version>
+	    <version>5.32.2</version>
 	</dependency>
   </dependencies>
 </project>

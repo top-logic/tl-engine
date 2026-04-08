@@ -294,9 +294,9 @@ public class DBSchemaGeneratorCommand extends AbstractCommandHandler {
 		DeletionPolicy deletionPolicy = tlReference.getDeletionPolicy();
 		LinkStorage.Config<?> storageConfig;
 		if (tlReference.isOrdered()) {
-			storageConfig = ListStorage.listConfig(isComposite, historyType, deletionPolicy);
+			storageConfig = ListStorage.listConfig(isComposite, historyType, deletionPolicy, tlReference.tTransient());
 		} else {
-			storageConfig = SetStorage.setConfig(isComposite, historyType, deletionPolicy);
+			storageConfig = SetStorage.setConfig(isComposite, historyType, deletionPolicy, tlReference.tTransient());
 		}
 		storageConfig.setTable(tableName);
 		return storageConfig;

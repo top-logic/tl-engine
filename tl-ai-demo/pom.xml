@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-vector-index</artifactId>
-			<version>0.0.3-AI</version>
+			<version>${tl.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>

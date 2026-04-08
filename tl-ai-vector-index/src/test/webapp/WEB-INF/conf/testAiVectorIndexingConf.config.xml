@@ -8,8 +8,7 @@
 				<modules>
 		           <module key="com.top_logic.base.services.SearchFactory$Module" value="true" />
 		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
-		           <module key="com.top_logic.knowledge.analyze.DefaultAnalyzeService$Module" value="true" />
-		           <module key="com.top_logic.ai.vector.index.VectorIndexingService$Module" value="true" />
+		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -38,20 +37,6 @@
 			</instance>
 		</config>
 		
-		
-		<config service-class="com.top_logic.knowledge.indexing.IndexingService" >
-			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
-				<protocols>
-					<protocol value="knowledgerepository" />
-					<protocol value="knowledge" />
-					<protocol value="repository" />
-				</protocols>
-				<meta-objects>
-					<meta-object value="Document" />
-					<meta-object value="GenericObject" />
-				</meta-objects>
-			</instance>
-		</config>
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
 			<instance>
 				<modules>

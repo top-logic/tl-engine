@@ -25,7 +25,6 @@ import org.vectomatic.dom.svg.utils.OMSVGParser;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Timer;
-
 import com.top_logic.react.flow.callback.DiagramContext;
 import com.top_logic.react.flow.client.bridge.ReactBridge;
 import com.top_logic.react.flow.client.bridge.StateListener;
@@ -876,6 +875,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		};
 	}
 
+	@SuppressWarnings("unusable-by-js")
 	@Override
 	public void processClick(ClickTarget node, List<MouseButton> pressedButtons) {
 		int nodeId = _scope.id(node);
@@ -884,6 +884,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		ReactBridge.sendCommand(_contextPath, _controlId, "dispatchClick", _windowName, args);
 	}
 
+	@SuppressWarnings("unusable-by-js")
 	@Override
 	public void processDrop(DropRegion node, SVGDropEvent event) {
 		int nodeId = _scope.id(node);

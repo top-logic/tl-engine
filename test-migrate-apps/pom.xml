@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app</artifactId>
-		<version>8.0.0-alpha1</version>
+		<version>0.0.15-SollAna_TL_8.0.0</version>
 
 		<relativePath>../tl-parent-app</relativePath>
 	</parent>

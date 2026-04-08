@@ -4,7 +4,7 @@
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>8.0.0-alpha1</version>
+		<version>0.0.15-SollAna_TL_8.0.0</version>
 		<artifactId>tl-parent-all</artifactId>
 		<relativePath>..</relativePath>
 	</parent>
@@ -154,7 +154,7 @@
 			<plugin>
 		        <groupId>com.top-logic</groupId>
 		        <artifactId>tl-maven-plugin</artifactId>
-		        <version>8.0.0-alpha1</version>
+		        <version>0.0.15-SollAna_TL_8.0.0</version>
 		        
 		        <executions>
 					<execution>

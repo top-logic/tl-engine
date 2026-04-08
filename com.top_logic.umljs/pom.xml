@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core</artifactId>
-    <version>8.0.0-alpha1</version>
+    <version>0.0.15-SollAna_TL_8.0.0</version>
   </parent>
 
   <artifactId>tl-umljs</artifactId>

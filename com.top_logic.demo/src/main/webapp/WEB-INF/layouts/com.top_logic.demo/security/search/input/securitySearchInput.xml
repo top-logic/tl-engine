@@ -5,8 +5,10 @@
 	metaElement="DemoSecurity.A,DemoSecurity.B"
 	namePrefix="SecuritySearch"
 	searchResultComponent="com.top_logic.demo/security/search/result/securitySearchResult.layout.xml#SecuritySearchAttributedSearchResultTable"
-	securityObject="ref:com.top_logic.demo.layout.security.DomainAwareSecurityObjectProvider"
 >
+	<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+		function="`DemoSecurity#ROOT`"
+	/>
 	<modelBuilder class="com.top_logic.element.layout.meta.search.DefaultConfigurableSearchModelBuilder">
 		<elements>
 			<element name="DemoSecurity.A"

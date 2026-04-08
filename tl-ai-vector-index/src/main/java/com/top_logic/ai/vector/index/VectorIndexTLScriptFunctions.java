@@ -53,11 +53,11 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 * <pre>
 	 *<code>
 	 * vectorIndexSearch("all vacations in France",<br/>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;2,<br/>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;0.8,<br/>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;"test.indexingVector:Vacation").map(x -> {<br/>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"score": $x["score"],<br/>
-	 * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"instance": $x["TL-instance"]<br/>
+	 * &#160;&#160;&#160;&#160;2,<br/>
+	 * &#160;&#160;&#160;&#160;0.8,<br/>
+	 * &#160;&#160;&#160;&#160;"test.indexingVector:Vacation").map(x -> {<br/>
+	 * &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;"score": $x["score"],<br/>
+	 * &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;"instance": $x["TL-instance"]<br/>
 	 * })<br/>
 	 *</code>
 	 * </pre>

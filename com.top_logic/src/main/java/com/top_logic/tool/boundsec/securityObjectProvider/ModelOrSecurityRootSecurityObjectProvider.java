@@ -5,6 +5,10 @@
  */
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
+import java.util.Set;
+
+import com.top_logic.basic.col.SetBuilder;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -40,5 +44,12 @@ public class ModelOrSecurityRootSecurityObjectProvider implements SecurityObject
 			return theModel;
 		}
     }
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		return new SetBuilder<TLClass>()
+			.addAll(PathSecurityObjectProvider.MODEL_INSTANCE.getPossibleSecurityObjectTypes())
+			.addAll(SecurityRootObjectProvider.INSTANCE.getPossibleSecurityObjectTypes()).toSet();
+	}
     
 }

@@ -5,8 +5,12 @@
  */
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
+import java.util.Collections;
+import java.util.Set;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -34,6 +38,11 @@ public class SecurityRootObjectProvider implements SecurityObjectProvider {
     @Override
 	public BoundObject getSecurityObject(BoundChecker checker, Object model, BoundCommandGroup commandGroup) {
 		return getSecurityRoot();
+	}
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		return Collections.singleton((TLClass) getSecurityRoot().tType());
 	}
 
 	/**

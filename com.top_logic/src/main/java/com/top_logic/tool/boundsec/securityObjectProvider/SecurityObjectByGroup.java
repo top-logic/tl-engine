@@ -5,8 +5,10 @@
  */
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.annotation.InApp;
@@ -18,6 +20,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -122,6 +125,16 @@ public class SecurityObjectByGroup extends AbstractConfiguredInstance<SecurityOb
 			provider = _defaultProvider;
 		}
 		return provider.getSecurityObject(aChecker, model, aCommandGroup);
+	}
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		Set<TLClass> possibleTypes = new HashSet<>();
+		possibleTypes.addAll(_defaultProvider.getPossibleSecurityObjectTypes());
+		for (SecurityObjectProvider secProvider : _providerByGroup.values()) {
+			possibleTypes.addAll(secProvider.getPossibleSecurityObjectTypes());
+		}
+		return possibleTypes;
 	}
 
 }

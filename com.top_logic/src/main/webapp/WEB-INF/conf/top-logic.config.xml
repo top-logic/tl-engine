@@ -562,7 +562,6 @@
 					<provider name="null" impl="com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider" />
 					<provider name="securityRoot" impl="com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider" />
 					<provider name="selection" impl="path:selection" />
-					<provider name="slave" impl="com.top_logic.tool.boundsec.securityObjectProvider.FirstSlaveSecurityObjectProvider" />
 					<provider name="windowParent" impl="path:window.opener.currentobject" />
 					<provider name="windowParentModel" impl="path:window.opener.model" />
 					<provider name="windowParentSelection" impl="path:window.opener.selection" />

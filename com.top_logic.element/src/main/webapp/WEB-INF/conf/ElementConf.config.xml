@@ -181,8 +181,6 @@
 		<config service-class="com.top_logic.tool.boundsec.SecurityObjectProviderManager">
 			<instance>
 				<providers>
-					<provider name="rootForCreate" impl="com.top_logic.element.boundsec.RootForCreateSecurityObjectProvider" />
-					<provider name="securityStrRoot" impl="com.top_logic.element.boundsec.SecurityStructureRootSecurityObjectProvider" />
 		            <provider name="searchSecurityObjectProvider">
 		             	<impl class="com.top_logic.tool.boundsec.DispatchingSecurityObjectProvider"
 		             		default="model"

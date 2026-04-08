@@ -676,10 +676,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		joContent.put("_text", content);
 		content = joContent.toJSONString();
 
-		System.out
-			.println("DEBUG: [VectorIndex] Indexing document id=" + documentId + " name=" + joContent.get("name"));
-		System.out.println("DEBUG: [VectorIndex] Content preview: "
-			+ (content.length() > 50 ? content.substring(0, 50) + "..." : content));
 
 		HashMap<String, ArrayList<String>> associations = new HashMap<>();
 
@@ -768,7 +764,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 */
 	protected void deleteDocument(ObjectKey key) {
 		String uuid = this.getDocumentUUID(key.toString()).toString();
-		System.out.println("DEBUG: Removing document from vector store: " + key + " (UUID: " + uuid + ")");
 		this.vectorStore.remove(uuid);
 
 		// Persist to disk if using JVector
@@ -783,8 +778,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	private Embedding getDocumentEmbedding(String content) {
-		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
-
 		Embedding embeddingsResponse = this.embeddingModel.embed(content).content();
 
 		return embeddingsResponse;
@@ -801,8 +794,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	public void storeToVectorStore(String documentId, JSONObject payload) {
 		String pl = payload.toJSONString();
 		String uuid = this.getDocumentUUID(documentId).toString();
-		System.out.println("DEBUG: Storing document to vector store: " + documentId + " (UUID: " + uuid + ")");
-		System.out.println("DEBUG: Content: " + pl);
 
 		TextSegment content;
 

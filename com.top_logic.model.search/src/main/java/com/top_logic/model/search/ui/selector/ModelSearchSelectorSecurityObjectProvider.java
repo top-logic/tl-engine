@@ -5,7 +5,13 @@
  */
 package com.top_logic.model.search.ui.selector;
 
+import java.util.Set;
+
+import com.top_logic.basic.col.SetBuilder;
 import com.top_logic.layout.component.Selectable;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.search.persistency.expressions.SearchExpressionImpl;
+import com.top_logic.model.search.persistency.expressions.SearchExpressionStructureFactory;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -34,10 +40,18 @@ public class ModelSearchSelectorSecurityObjectProvider implements SecurityObject
 		}
 		Selectable selectable = (Selectable) securityChecker;
 		Object selection = selectable.getSelected();
-		if (!(selection instanceof BoundObject)) {
+		if (!(selection instanceof SearchExpressionImpl)) {
 			return null;
 		}
-		return (BoundObject) selection;
+		return (SearchExpressionImpl) selection;
+	}
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		return new SetBuilder<TLClass>()
+			.addAll(SecurityRootObjectProvider.INSTANCE.getPossibleSecurityObjectTypes())
+			.add(SearchExpressionStructureFactory.getInstance().getSearchExpressionType())
+			.toSet();
 	}
 
 }

@@ -6,7 +6,9 @@
 package com.top_logic.tool.boundsec;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -15,6 +17,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityObjectProviderFormat;
 
 /**
@@ -136,6 +139,16 @@ public class DispatchingSecurityObjectProvider implements SecurityObjectProvider
 			dispatcher = _default;
 		}
 		return dispatcher.getSecurityObject(aChecker, model, aCommandGroup);
+	}
+
+	@Override
+	public Set<TLClass> getPossibleSecurityObjectTypes() {
+		Set<TLClass> possibleTypes = new HashSet<>();
+		possibleTypes.addAll(_default.getPossibleSecurityObjectTypes());
+		for (SecurityObjectProvider secProvider : _providers.values()) {
+			possibleTypes.addAll(secProvider.getPossibleSecurityObjectTypes());
+		}
+		return possibleTypes;
 	}
 
 }

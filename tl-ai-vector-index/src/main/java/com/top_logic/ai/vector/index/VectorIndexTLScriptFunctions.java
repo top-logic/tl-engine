@@ -191,8 +191,14 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			throw new Exception("scoreThreshold must be a number between 0 and 1.");
 		}
 
+		String searchType = null;
+
+		if (type != null) {
+			searchType = type.toString();
+		}
+
 		List<EmbeddingMatch<TextSegment>> matches =
-			VectorIndex.getInstance().searchVectorIndex(query, type.toString(), limit, scoreThreshold);
+			VectorIndex.getInstance().searchVectorIndex(query, searchType, limit, scoreThreshold);
 		List<Map<String, Object>> results = new ArrayList<>();
 
 		Map<String, Map<String, Object>> objectsToFetch = new HashMap<>();

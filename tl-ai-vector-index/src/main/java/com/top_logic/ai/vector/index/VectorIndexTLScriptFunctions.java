@@ -18,6 +18,7 @@ import org.json.simple.parser.JSONParser;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.element.meta.PersistentClass;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.BulkIdLoad;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -49,16 +50,17 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 * Example usage in TL-Script to resolve objects, contained in the Vector Index result:
 	 * </p>
 	 * 
-	 * <pre>{@code 
-	 * {
-	 *   franceVacations = vectorIndexSearch("all vacations in France", 2, 0.8, "test.indexingVector:Vacation"); 
-	 *   $franceVacations.map(x -> { 
-	 *   	"score": $x["score"], 
-	 *      "TopLogic-type": $x["embedded"]["text"].parseJson()["TopLogic-type"], 
-	 *      "Instance": $x["TL-instance"]
-	 *   })
-	 * }
-	 * }</pre>
+	 * <pre>
+	 *<code>
+	 * vectorIndexSearch("all vacations in France",<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;2,<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;0.8,<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;"test.indexingVector:Vacation").map(x -> {<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"score": $x["score"],<br/>
+	 * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"instance": $x["TL-instance"]<br/>
+	 * })<br/>
+	 *</code>
+	 * </pre>
 	 * 
 	 * @param query
 	 *        The string query to search inside the vector database.
@@ -69,14 +71,119 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 	 *        Minimum score threshold. Must be between 0 and 1 (defaults to 0.8).
 	 * @param type
 	 *        TL Script type to filter by in the Vector Index search
-	 * @return A list of record dictionaries matching the query and parameters.
+	 * @return Returns a list of record dictionaries matching the query and parameters. Each element
+	 *         of the list has the following properties:
+	 * 
+	 *         <pre>
+	 *         <i>$result:</i>
+	 *         <table class="tlDocTable" border="0">
+	 *         <thead>
+	 *         		<tr>
+	 * 		 			<th>name</th>
+	 * 					<th>type</th>
+	 * 					<th>description</th>
+	 * 				</tr>
+	 * 			</thead>
+	 * 			<tbody>
+	 * 				<tr>
+	 * 					<td>score</td>
+	 * 					<td>Number between 0 and 1</td>
+	 * 					<td>Matching score of the element</td>
+	 * 				</tr>
+	 * 					<td>embeddingId</td>
+	 * 					<td>UUID</td>
+	 * 					<td>ID of the point in the vector database</td>
+	 * 				<tr>
+	 * 					<td>objectId</td>
+	 * 					<td>String</td>
+	 * 					<td>The object id in the TL application (e.g. GenericObject:12002)</td>
+	 * 				</tr>
+	 * 				<tr>
+	 * 					<td>TL-instance</td>
+	 * 					<td>AttributedWrapper</td>
+	 * 					<td>The TL Object instance</td>
+	 * 				</tr>
+	 * 				<tr>
+	 * 					<td>embedded</td>
+	 * 					<td>Map</td>
+	 * 					<td>Content of the point in the vector database</td>
+	 * 				</tr>
+	 * 			</tbody>
+	 *        </table>
+	 *        
+	 *        <i>$result["embedded"]:</i>
+	 *        <table class="tlDocTable" border="0">
+	 *         <thead>
+	 *         		<tr>
+	 * 		 			<th>name</th>
+	 * 					<th>type</th>
+	 * 					<th>description</th>
+	 * 				</tr>
+	 * 			</thead>
+	 * 			<tbody>
+	 * 				<tr>
+	 * 					<td>metadata</td>
+	 * 					<td>Map</td>
+	 * 					<td>Metadata stored in the vector database</td>
+	 * 				</tr>
+	 *        </tbody>
+	 *        </table>
+	 *        
+	 *        <i>$result["embedded"]["metadata"]:</i>
+	 *        <table class="tlDocTable" border="0">
+	 *         <thead>
+	 *         		<tr>
+	 * 		 			<th>name</th>
+	 * 					<th>type</th>
+	 * 					<th>description</th>
+	 * 				</tr>
+	 * 			</thead>
+	 * 			<tbody>
+	 * 				<tr>
+	 * 					<td>TopLogic-type</td>
+	 * 					<td>String</td>
+	 * 					<td>TopLogic type of the stored instance</td>
+	 * 				</tr>
+	 *        </tbody>
+	 *        </table>
+	 *        
+	 *        $result["embedded"]["text"]:
+	 *        <table class="tlDocTable" border="0">
+	 *         <thead>
+	 *         		<tr>
+	 * 		 			<th>name</th>
+	 * 					<th>type</th>
+	 * 					<th>description</th>
+	 * 				</tr>
+	 * 			</thead>
+	 * 			<tbody>
+	 * 				<tr>
+	 * 					<td>TLObject-creation-date</td>
+	 * 					<td>String</td>
+	 * 					<td>Date of TL instance creation</td>
+	 * 				</tr>
+	 * 				<tr>
+	 * 					<td>TLObject-modification-date</td>
+	 *					<td>String</td>
+	 *					<td>Date of TL instance last modification</td>
+	 * 				</tr>
+	 * 				<tr>
+	 * 					<td>All other instance attributes</td>
+	 * 					<td>String</td>
+	 * 					<td>All instance attribute key/value pairs</td>
+	 * 				</tr>
+	 *        </tbody>
+	 *        </table>
+	 *         </pre>
+	 * 
 	 * @throws Exception
 	 *         When parameters are incorrect (e.g., negative threshold).
 	 */
 	@Label("Search for a string")
 	@SideEffectFree
 	public static List<Map<String, Object>> search(@Mandatory String query,
-			@OptionalParameter Integer limit, @OptionalParameter Double scoreThreshold, @OptionalParameter String type)
+			@OptionalParameter Integer limit, @OptionalParameter Double scoreThreshold,
+			@OptionalParameter PersistentClass type)
 			throws Exception {
 
 
@@ -85,7 +192,7 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 		}
 
 		List<EmbeddingMatch<TextSegment>> matches =
-			VectorIndex.getInstance().searchVectorIndex(query, type, limit, scoreThreshold);
+			VectorIndex.getInstance().searchVectorIndex(query, type.toString(), limit, scoreThreshold);
 		List<Map<String, Object>> results = new ArrayList<>();
 
 		Map<String, Map<String, Object>> objectsToFetch = new HashMap<>();

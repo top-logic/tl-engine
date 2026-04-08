@@ -44,11 +44,12 @@
 
         <!-- JAR dependency so Eclipse includes the client module's web-fragment
              resources on the IDE classpath. The GWT-compiled JS is in the client's
-             src/main/webapp/ which the TopLogic IDE resource loader scans. -->
+             src/main/webapp/ which the TopLogic IDE resource loader scans.
+             Scope "provided" ensures this is not transitive and not packaged. -->
         <dependency>
             <groupId>com.top-logic</groupId>
             <artifactId>tl-react-flow-client</artifactId>
-            <scope>runtime</scope>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

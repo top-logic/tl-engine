@@ -23,7 +23,6 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.model.util.TLModelPartRefsFormat;
 
 /**
  * {@link ExportCustomization} that excludes a configured attribute or reference.
@@ -60,7 +59,7 @@ public class ExcludeParts extends AbstractConfiguredInstance<ExcludeParts.Config
 		@Name(PARTS)
 		@Mandatory
 		@Options(fun = AttributesOfType.class, args = @Ref(TYPE), mapping = TLModelPartRef.PartMapping.class)
-		@Format(TLModelPartRefsFormat.class)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getParts();
 
 		/**

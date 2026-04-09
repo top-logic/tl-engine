@@ -455,7 +455,8 @@ public class AgentLoop {
 					ApprovalRequest request = new ApprovalRequest(
 						tool.name(), toolCall.id(),
 						Map.of(), tool.mode(),
-						needsApproval.displayReason());
+						needsApproval.displayReason(),
+						ApprovalRequest.DEFAULT_TIMEOUT);
 					if (listener != null) {
 						listener.onApprovalRequired(toolCall, request);
 					}
@@ -464,12 +465,18 @@ public class AgentLoop {
 						case ApprovalResult.Approved approved -> {
 							// proceed to execution
 						}
+						case ApprovalResult.ApprovedForSession afs -> {
+							// proceed to execution (session memory will be added in Task 5)
+						}
 						case ApprovalResult.Rejected rejected -> {
 							String feedback = rejected.userComment().isBlank()
 								? "User denied tool '" + toolCall.name() + "'."
 								: "User denied tool '" + toolCall.name() + "': "
 									+ rejected.userComment();
 							return errorResult(toolCall, feedback);
+						}
+						case ApprovalResult.TimedOut timedOut -> {
+							return errorResult(toolCall, "Approval timed out for tool '" + toolCall.name() + "'.");
 						}
 					}
 				}

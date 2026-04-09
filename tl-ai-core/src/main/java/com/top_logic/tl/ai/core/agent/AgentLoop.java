@@ -60,12 +60,6 @@ public class AgentLoop {
 	// TODO: Retry with backoff for RATE_LIMITED / OVERLOADED (callProvider is the seam)
 	// TODO: Memory/attachment injection between turns
 	// TODO: Stop hooks (post-response validation)
-	// TODO: Approval workflow for GLOBAL tools — Pillar 7 (Human-in-the-Loop) requires that
-	//   state-changing tools pause for user confirmation before executing. Needs:
-	//   (a) ApprovalPolicy interface (auto-approve, always-ask, mode-based),
-	//   (b) AgentListener callback: onApprovalRequired(ToolCall) → ApprovalResult,
-	//   (c) UI protocol for the chat interface to show approve/deny dialog.
-	//   Currently, GLOBAL tools execute immediately if SecurityContext.canUseTool allows them.
 	// TODO: Audit logging of tool executions — PRD FR-4 requires logging to an audit trail.
 	//   Timing data (start/end Instant) is already tracked in ToolState. Needs a listener
 	//   or dedicated AuditLogger that persists: who, which tool, arguments, result, duration.

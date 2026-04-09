@@ -55,6 +55,15 @@
 						labelProvider="com.top_logic.tool.boundsec.gui.profile.ExportNameLabels"
 						visibility="hidden"
 					/>
+					<column name="securityDomain"
+						accessor="com.top_logic.tool.boundsec.gui.profile.ConfigNode$DomainAccessor"
+						columnWidth="300px"
+						visibility="hidden"
+					>
+						<cellExistenceTester class="com.top_logic.layout.table.filter.InstanceofTester"
+							type="com.top_logic.tool.boundsec.gui.profile.ConfigNode"
+						/>
+					</column>
 				</columns>
 			</table>
 		</tables>

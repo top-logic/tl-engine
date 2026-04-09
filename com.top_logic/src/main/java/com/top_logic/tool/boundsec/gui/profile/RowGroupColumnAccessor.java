@@ -28,8 +28,9 @@ class RowGroupColumnAccessor extends ReadOnlyAccessor<Object> {
 		if (formGroup == null) {
 			return null;
 		}
-		if (formGroup.hasMember(property)) {
-			return formGroup.getMember(property);
+		String fieldName = EditSecurityProfileComponent.escapeDotForFieldName(property);
+		if (formGroup.hasMember(fieldName)) {
+			return formGroup.getMember(fieldName);
 		}
 		return null;
 	}

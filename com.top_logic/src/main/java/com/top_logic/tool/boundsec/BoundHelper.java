@@ -824,6 +824,7 @@ public class BoundHelper extends ManagedClass {
 	/**
 	 * All {@link BoundedRole}s defined for the given {@link TLModule}
 	 */
+	@Deprecated
 	public Set<? extends BoundedRole> getPossibleRoles(TLModule securityModule) {
 		if (securityModule != null) {
 			return BoundedRole.getDefinedRoles(securityModule);

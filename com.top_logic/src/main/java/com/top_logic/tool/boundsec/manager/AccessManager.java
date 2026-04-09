@@ -30,9 +30,11 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContext;
 
 /**
@@ -232,6 +234,21 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 
 
     // Subclass hooks
+
+	/**
+	 * Checks whether a user can have the role on an object of the specified type.
+	 * 
+	 * @param type
+	 *        The type to check.
+	 * @param role
+	 *        The role to check.
+	 * 
+	 * @return <code>true</code> if it is possible that a user has the given role on an object of
+	 *         the given type.
+	 */
+	public boolean canHaveRole(TLClass type, BoundedRole role) {
+		return true;
+	}
 
     /**
 	 * Hook for subclasses to update the access manager in case of a security change.

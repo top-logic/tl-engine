@@ -25,6 +25,12 @@
 			<artifactId>tl-contact</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
 		<!-- LangChain4j for AI integration -->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>

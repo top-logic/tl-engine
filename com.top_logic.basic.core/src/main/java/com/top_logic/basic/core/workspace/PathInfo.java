@@ -124,13 +124,13 @@ public class PathInfo {
 		File pomFile = new File(projectPath, "pom.xml");
 		if (pomFile.exists()) {
 			Model projectModel = _analyzer.read(pomFile, Collections.emptyMap());
-			addPart(projectModel, isTest, () -> doAddProject(projectPath, isTest));
+			addPart(projectModel, isTest, () -> doAddProject(projectPath, projectModel, isTest));
 		} else {
-			doAddProject(projectPath, isTest);
+			doAddProject(projectPath, null, isTest);
 		}
 	}
 
-	private void doAddProject(File projectPath, boolean isTest) {
+	private void doAddProject(File projectPath, Model projectModel, boolean isTest) {
 		String webappDir;
 		if (isTest) {
 			webappDir = ModuleLayoutConstants.TEST_WEBAPP_DIR;
@@ -144,6 +144,78 @@ public class PathInfo {
 		if (webappPath.exists()) {
 			addWebappPath(webappPath);
 		}
+
+		if (!isTest && projectModel != null) {
+			addOverlayWebapps(projectPath, projectModel);
+		}
+	}
+
+	/**
+	 * Scans the project's POM for WAR overlay dependencies (web-fragment WARs) and includes
+	 * the corresponding sibling project's webapp paths. This is needed because WAR-type
+	 * dependencies are not on the classpath, so their webapp resources would otherwise not be
+	 * found in IDE mode.
+	 */
+	private void addOverlayWebapps(File projectPath, Model projectModel) {
+		File workspaceRoot = projectPath.getParentFile();
+		for (org.apache.maven.model.Dependency dep : projectModel.getDependencies()) {
+			if (!"war".equals(dep.getType())) {
+				continue;
+			}
+			if (!"web-fragment".equals(dep.getClassifier())) {
+				continue;
+			}
+
+			// Look for the overlay project as a sibling directory in the workspace.
+			File overlayProject = findModuleDir(workspaceRoot, dep.getArtifactId());
+			if (overlayProject == null) {
+				continue;
+			}
+
+			File overlayWebapp = new File(overlayProject, ModuleLayoutConstants.WEBAPP_DIR);
+			if (overlayWebapp.exists()) {
+				LOG.fine("Including overlay webapp from: " + overlayWebapp);
+				addWebappPath(overlayWebapp);
+			}
+		}
+	}
+
+	/**
+	 * Finds the workspace directory for the given Maven artifactId by scanning the
+	 * workspace root for a directory whose pom.xml declares that artifactId. Falls back
+	 * to a naming convention ("tl-foo-bar" -> "com.top_logic.foo.bar").
+	 */
+	private File findModuleDir(File workspaceRoot, String artifactId) {
+		// Try naming convention first (fast path).
+		String conventionName;
+		if (artifactId.startsWith("tl-")) {
+			conventionName = "com.top_logic." + artifactId.substring("tl-".length()).replace('-', '.');
+		} else {
+			conventionName = artifactId;
+		}
+		File conventionDir = new File(workspaceRoot, conventionName);
+		if (conventionDir.isDirectory()) {
+			return conventionDir;
+		}
+
+		// Fallback: scan workspace directories for matching artifactId.
+		File[] candidates = workspaceRoot.listFiles(File::isDirectory);
+		if (candidates != null) {
+			for (File dir : candidates) {
+				File pom = new File(dir, "pom.xml");
+				if (pom.exists()) {
+					try {
+						Model model = _analyzer.read(pom, Collections.emptyMap());
+						if (artifactId.equals(model.getArtifactId())) {
+							return dir;
+						}
+					} catch (IOException ex) {
+						// Skip unreadable POMs.
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	void addJar(File jarFile) throws IOException {

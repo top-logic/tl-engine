@@ -5,11 +5,14 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -77,6 +80,8 @@ public class AgentLoop {
 	private final int _maxResultChars;
 
 	private final ConversationMemory _memory;
+
+	private final Set<String> _sessionApprovedTools = new HashSet<>();
 
 	/**
 	 * Creates a new agent loop with default result truncation.
@@ -442,46 +447,59 @@ public class AgentLoop {
 			}
 
 			// Approval check
-			PermissionDecision decision = security.checkApproval(tool, toolCall);
-			switch (decision) {
-				case PermissionDecision.Denied denied -> {
-					String reason = denied.reason();
-					if (listener != null) {
-						listener.onPermissionDenied(toolCall, reason);
+			// Check session memory first — skip approval if already approved for session
+			if (_sessionApprovedTools.contains(tool.name())) {
+				// Auto-approved for this session, proceed to execution
+			} else {
+				PermissionDecision decision = security.checkApproval(tool, toolCall);
+				switch (decision) {
+					case PermissionDecision.Denied denied -> {
+						String reason = denied.reason();
+						if (listener != null) {
+							listener.onPermissionDenied(toolCall, reason);
+						}
+						return errorResult(toolCall, reason);
 					}
-					return errorResult(toolCall, reason);
-				}
-				case PermissionDecision.NeedsApproval needsApproval -> {
-					ApprovalRequest request = new ApprovalRequest(
-						tool.name(), toolCall.id(),
-						Map.of(), tool.mode(),
-						needsApproval.displayReason(),
-						ApprovalRequest.DEFAULT_TIMEOUT);
-					if (listener != null) {
-						listener.onApprovalRequired(toolCall, request);
+					case PermissionDecision.NeedsApproval needsApproval -> {
+						Map<String, Object> parsedArgs;
+						try {
+							parsedArgs = ToolRegistry.parseJson(toolCall.arguments());
+						} catch (IOException e) {
+							parsedArgs = Map.of();
+						}
+						ApprovalRequest request = new ApprovalRequest(
+							tool.name(), toolCall.id(),
+							parsedArgs, tool.mode(),
+							needsApproval.displayReason(),
+							ApprovalRequest.DEFAULT_TIMEOUT);
+						if (listener != null) {
+							listener.onApprovalRequired(toolCall, request);
+						}
+						ApprovalResult approvalResult = context.approval().requestApproval(request);
+						switch (approvalResult) {
+							case ApprovalResult.Approved approved -> {
+								// proceed to execution
+							}
+							case ApprovalResult.ApprovedForSession approvedForSession -> {
+								_sessionApprovedTools.add(tool.name());
+								// proceed to execution
+							}
+							case ApprovalResult.Rejected rejected -> {
+								String feedback = rejected.userComment().isBlank()
+									? "User denied tool '" + toolCall.name() + "'."
+									: "User denied tool '" + toolCall.name() + "': "
+										+ rejected.userComment();
+								return errorResult(toolCall, feedback);
+							}
+							case ApprovalResult.TimedOut timedOut -> {
+								return errorResult(toolCall, "Approval timed out for tool '"
+									+ toolCall.name() + "'.");
+							}
+						}
 					}
-					ApprovalResult approvalResult = context.approval().requestApproval(request);
-					switch (approvalResult) {
-						case ApprovalResult.Approved approved -> {
-							// proceed to execution
-						}
-						case ApprovalResult.ApprovedForSession afs -> {
-							// proceed to execution (session memory will be added in Task 5)
-						}
-						case ApprovalResult.Rejected rejected -> {
-							String feedback = rejected.userComment().isBlank()
-								? "User denied tool '" + toolCall.name() + "'."
-								: "User denied tool '" + toolCall.name() + "': "
-									+ rejected.userComment();
-							return errorResult(toolCall, feedback);
-						}
-						case ApprovalResult.TimedOut timedOut -> {
-							return errorResult(toolCall, "Approval timed out for tool '" + toolCall.name() + "'.");
-						}
+					case PermissionDecision.Allowed allowed -> {
+						// proceed to execution
 					}
-				}
-				case PermissionDecision.Allowed allowed -> {
-					// proceed to execution
 				}
 			}
 		}

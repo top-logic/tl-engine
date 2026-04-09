@@ -758,6 +758,109 @@ public class TestAgentLoop extends TestCase {
 					&& f.error().contains("User denied tool 'edit_model'")));
 	}
 
+	/**
+	 * ApprovedForSession skips approval on subsequent calls to the same tool.
+	 */
+	public void testApprovedForSessionSkipsSubsequentApproval() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit twice"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit", "Edits", "{}");
+		ToolCall tc1 = new ToolCall("tc1", "edit", "{}");
+		ToolCall tc2 = new ToolCall("tc2", "edit", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(tc1),
+			List.of(tc2),
+			List.of(new TextContent("Done")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit", toolSpec));
+		registry.freeze();
+
+		AtomicInteger approvalCount = new AtomicInteger(0);
+		ApprovalCallback sessionApprover = request -> {
+			approvalCount.incrementAndGet();
+			return new ApprovalResult.ApprovedForSession();
+		};
+
+		ToolContext ctx = new ToolContext(developmentSecurity(), sessionApprover);
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals("Approval should only be requested once — second call auto-approved",
+			1, approvalCount.get());
+	}
+
+	/**
+	 * TimedOut approval is treated as rejection.
+	 */
+	public void testApprovalTimedOutTreatedAsRejection() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit", "Edits", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("OK")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit", toolSpec));
+		registry.freeze();
+
+		ApprovalCallback timeoutCallback = request -> new ApprovalResult.TimedOut();
+
+		ToolContext ctx = new ToolContext(developmentSecurity(), timeoutCallback);
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Conversation should contain timeout message",
+			conv.messages().stream()
+				.filter(ToolResultMessage.class::isInstance)
+				.map(ToolResultMessage.class::cast)
+				.anyMatch(tr -> tr.state() instanceof ToolState.Failed f
+					&& f.error().contains("timed out")));
+	}
+
+	/**
+	 * ApprovalRequest contains the actual tool arguments, not an empty map.
+	 */
+	public void testApprovalRequestContainsArguments() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit", "Edits",
+			"{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"}}}");
+		ToolCall toolCall = new ToolCall("tc1", "edit", "{\"name\":\"Customer\"}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Done")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit", toolSpec));
+		registry.freeze();
+
+		List<ApprovalRequest> capturedRequests = new ArrayList<>();
+		ApprovalCallback capturingCallback = request -> {
+			capturedRequests.add(request);
+			return new ApprovalResult.Approved();
+		};
+
+		ToolContext ctx = new ToolContext(developmentSecurity(), capturingCallback);
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		loop.run(conv, ctx, listener());
+
+		assertEquals(1, capturedRequests.size());
+		ApprovalRequest req = capturedRequests.get(0);
+		assertEquals("Customer", req.arguments().get("name"));
+		assertNotNull(req.timeout());
+	}
+
 	private static Tool globalTool(String name, ToolSchema schema) {
 		return new Tool() {
 			@Override public String name() { return name; }

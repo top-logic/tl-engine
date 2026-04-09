@@ -14,7 +14,7 @@ import com.top_logic.tl.ai.core.tool.ToolMode;
  *
  * <p>Combines three concerns:</p>
  * <ul>
- *   <li><b>User-level access</b> ({@link #canUseTool}) — can this user invoke this tool at all?
+ *   <li><b>User-level access</b> ({@link #hasToolPermission}) — can this user invoke this tool at all?
  *       Currently always returns {@code true}; will integrate with TopLogic's per-user security
  *       when ready.</li>
  *   <li><b>System execution mode</b> ({@link #executionMode}) — is the system in development,
@@ -39,7 +39,47 @@ public interface SecurityContext {
 	 * @param tool the tool to check
 	 * @return {@code true} if the user may invoke the tool
 	 */
-	boolean canUseTool(Tool tool);
+	boolean hasToolPermission(Tool tool);
+
+	/**
+	 * Whether the current user has permission to invoke a tool by name.
+	 *
+	 * <p>Used for tools whose metadata is not available (e.g., external/MCP tools).
+	 * The default returns {@code true} — permissive for unknown tools. Override
+	 * to integrate with a role-based permission system.</p>
+	 *
+	 * @param toolName the tool name
+	 * @return {@code true} if the user has permission
+	 */
+	default boolean hasToolPermission(String toolName) {
+		return true;
+	}
+
+	/**
+	 * Whether the current user has read access to the given object.
+	 *
+	 * <p>Placeholder — always returns {@code true}. Override in the bridge module
+	 * to integrate with TopLogic's {@code BoundChecker}/{@code AccessManager}.</p>
+	 *
+	 * @param ref the object to check (typically a TLObject in the bridge)
+	 * @return {@code true} if the user may read the object
+	 */
+	default boolean hasReadAccess(Object ref) {
+		return true;
+	}
+
+	/**
+	 * Whether the current user has write access to the given object.
+	 *
+	 * <p>Placeholder — always returns {@code true}. Override in the bridge module
+	 * to integrate with TopLogic's {@code BoundChecker}/{@code AccessManager}.</p>
+	 *
+	 * @param ref the object to check (typically a TLObject in the bridge)
+	 * @return {@code true} if the user may write the object
+	 */
+	default boolean hasWriteAccess(Object ref) {
+		return true;
+	}
 
 	/**
 	 * The system's current execution mode.
@@ -52,7 +92,7 @@ public interface SecurityContext {
 	/**
 	 * Whether this tool call needs user approval before executing.
 	 *
-	 * <p>Only called after {@link #canUseTool} passes and the system mode gate allows
+	 * <p>Only called after {@link #hasToolPermission} passes and the system mode gate allows
 	 * the tool. The default implementation requires approval for all state-changing
 	 * tools ({@link ToolMode#USER_SCOPED} and {@link ToolMode#GLOBAL}).</p>
 	 *
@@ -74,7 +114,7 @@ public interface SecurityContext {
 	SecurityContext UNRESTRICTED = new SecurityContext() {
 
 		@Override
-		public boolean canUseTool(Tool tool) {
+		public boolean hasToolPermission(Tool tool) {
 			return true;
 		}
 

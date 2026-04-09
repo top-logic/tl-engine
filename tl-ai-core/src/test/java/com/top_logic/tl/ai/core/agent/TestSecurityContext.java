@@ -27,8 +27,8 @@ public class TestSecurityContext extends TestCase {
 		Tool readTool = stubTool("read", ToolMode.READ);
 		Tool globalTool = stubTool("edit", ToolMode.GLOBAL);
 
-		assertTrue(ctx.canUseTool(readTool));
-		assertTrue(ctx.canUseTool(globalTool));
+		assertTrue(ctx.hasToolPermission(readTool));
+		assertTrue(ctx.hasToolPermission(globalTool));
 		assertEquals(ExecutionMode.DEVELOPMENT, ctx.executionMode());
 	}
 
@@ -87,7 +87,7 @@ public class TestSecurityContext extends TestCase {
 	private static SecurityContext contextWithMode(ExecutionMode mode) {
 		return new SecurityContext() {
 			@Override
-			public boolean canUseTool(Tool tool) {
+			public boolean hasToolPermission(Tool tool) {
 				return true;
 			}
 

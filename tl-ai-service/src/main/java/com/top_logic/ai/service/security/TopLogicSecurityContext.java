@@ -15,7 +15,7 @@ import com.top_logic.tl.ai.core.tool.Tool;
  * {@link SecurityContext} implementation backed by TopLogic's runtime.
  *
  * <p>Maps TopLogic's {@link MaintenanceWindowManager} and {@link Environment} to
- * {@link ExecutionMode}. User-level security ({@link #canUseTool}) always returns
+ * {@link ExecutionMode}. User-level security ({@link #hasToolPermission}) always returns
  * {@code true} for now — TopLogic's per-user security model is still evolving.</p>
  *
  * <p>The execution mode is resolved dynamically on each call (not cached),
@@ -25,7 +25,7 @@ public class TopLogicSecurityContext implements SecurityContext {
 
 	/** */
 	@Override
-	public boolean canUseTool(Tool tool) {
+	public boolean hasToolPermission(Tool tool) {
 		// Future: integrate with TopLogic's per-user role/permission system
 		return true;
 	}

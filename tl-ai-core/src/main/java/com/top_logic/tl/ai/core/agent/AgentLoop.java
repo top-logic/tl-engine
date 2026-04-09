@@ -45,7 +45,7 @@ import com.top_logic.tl.ai.core.tool.ToolRegistry;
  *   <li>Call {@link LLMProvider#stream} — streams via internal handler</li>
  *   <li>Assemble {@link AssistantMessage}, add to conversation</li>
  *   <li>Extract {@link ToolCall}s — if none, stop</li>
- *   <li>Security check via {@link SecurityContext#canUseTool}</li>
+ *   <li>Security check via {@link SecurityContext#hasToolPermission}</li>
  *   <li>Partition into concurrent/serial batches, execute</li>
  *   <li>Truncate oversized results, add to conversation</li>
  *   <li>Loop</li>
@@ -409,7 +409,7 @@ public class AgentLoop {
 		if (_toolExecutor instanceof ToolRegistry registry) {
 			Tool tool = registry.getTool(toolCall.name());
 			if (tool != null) {
-				if (!security.canUseTool(tool)) {
+				if (!security.hasToolPermission(tool)) {
 					String reason = "Permission denied: you do not have access to tool '" + toolCall.name() + "'.";
 					if (listener != null) {
 						listener.onPermissionDenied(toolCall, reason);

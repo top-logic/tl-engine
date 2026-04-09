@@ -600,7 +600,7 @@ public class TestAgentLoop extends TestCase {
 		registry.freeze();
 
 		SecurityContext devSecurity = new SecurityContext() {
-			@Override public boolean canUseTool(Tool tool) { return true; }
+			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 			@Override public PermissionDecision checkApproval(Tool tool, ToolCall tc) {
 				return new PermissionDecision.Allowed();
@@ -741,7 +741,7 @@ public class TestAgentLoop extends TestCase {
 
 	private static SecurityContext productionSecurity() {
 		return new SecurityContext() {
-			@Override public boolean canUseTool(Tool tool) { return true; }
+			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.PRODUCTION; }
 		};
 	}
@@ -814,7 +814,7 @@ public class TestAgentLoop extends TestCase {
 
 	private static SecurityContext developmentSecurity() {
 		return new SecurityContext() {
-			@Override public boolean canUseTool(Tool tool) { return true; }
+			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 		};
 	}

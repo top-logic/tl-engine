@@ -218,7 +218,7 @@ public class TestToolRegistry extends TestCase {
 			error.contains("'a'"));
 	}
 
-	/** SecurityContext.canUseTool blocks tool execution in AgentLoop. */
+	/** SecurityContext.hasToolPermission blocks tool execution in AgentLoop. */
 	public void testSecurityBlocksTool() {
 		ToolRegistry registry = new ToolRegistry();
 		registry.register(new MathTools());
@@ -226,7 +226,7 @@ public class TestToolRegistry extends TestCase {
 
 		SecurityContext noDelete = new SecurityContext() {
 			@Override
-			public boolean canUseTool(Tool tool) {
+			public boolean hasToolPermission(Tool tool) {
 				return !tool.name().equals("delete");
 			}
 
@@ -298,7 +298,7 @@ public class TestToolRegistry extends TestCase {
 
 		SecurityContext noDeletions = new SecurityContext() {
 			@Override
-			public boolean canUseTool(Tool tool) {
+			public boolean hasToolPermission(Tool tool) {
 				return !tool.name().equals("delete");
 			}
 

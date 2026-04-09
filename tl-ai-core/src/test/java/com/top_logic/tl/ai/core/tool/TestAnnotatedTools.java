@@ -11,6 +11,7 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
  * Tests for {@link AnnotatedTools}.
@@ -71,7 +72,7 @@ public class TestAnnotatedTools extends TestCase {
 	static class ContextAwareTools {
 		@ToolMethod(description = "Tool using context", mode = ToolMode.READ)
 		public String contextTool(@P("input") String input, ToolContext ctx) {
-			boolean unrestricted = ctx.security().canUseTool(null);
+			boolean unrestricted = ctx.security().hasToolPermission((Tool) null);
 			return "input=" + input + ",unrestricted=" + unrestricted;
 		}
 	}

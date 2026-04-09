@@ -5,7 +5,6 @@
  */
 package com.top_logic.tool.boundsec;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
 
@@ -17,7 +16,7 @@ import com.top_logic.basic.config.annotation.Name;
  *           parent layout, if the component is marked as security master.
  */
 @Abstract
-public interface WithSecurityMaster extends ConfigurationItem {
+public interface WithSecurityMaster extends SecurityObjectProviderConfig {
 
 	/** @see #getIsSecurityMaster() */
 	String IS_SECURITY_MASTER = "isSecurityMaster";

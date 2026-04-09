@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -221,10 +222,9 @@ public class ElementAccessManager extends AccessManager {
      */
     private Map<TLStructuredTypePart, Set<RoleProvider> > pathAttributes;
 
-    /**
-     * The resolved rules declared for the access manager (respecting the inherit flag)
-     */
-    private Map<TLClass, Collection<RoleProvider>> resolvedMERules;
+	private Map<TLClass, Collection<RoleProvider>> _resolvedMERules;
+
+	private Map<TLClass, Set<BoundedRole>> _potentialRolesForType;
 
 	private Map<TLClass, TLModule> _securityModuleByClass;
 
@@ -318,7 +318,8 @@ public class ElementAccessManager extends AccessManager {
         this.rules            = new HashMap< >();
         this.ruleIds          = new HashMap<>();
         this.ruleNumbers      = new BidiHashMap();
-        this.resolvedMERules  = new HashMap<>();
+		_resolvedMERules = new HashMap<>();
+		_potentialRolesForType = new HashMap<>();
         this.pathAttributes   = new HashMap< >();
     }
 
@@ -413,12 +414,7 @@ public class ElementAccessManager extends AccessManager {
     }
 
     public Collection<RoleProvider> getRules(TLClass aME) {
-        return getFromCollectionMap(aME, this.resolvedMERules);
-    }
-
-    private <U, V> Collection<V> getFromCollectionMap(U aKey, Map<U, Collection<V>> aMap) {
-        Collection<V> theRules = aMap.get(aKey);
-        return theRules != null ? theRules : Collections.<V>emptyList();
+		return getResolvedMERules().getOrDefault(aME, Collections.emptyList());
     }
 
     /**
@@ -431,7 +427,8 @@ public class ElementAccessManager extends AccessManager {
 		Map<TLClass, Collection<RoleProvider>> theRules = someRules == null
 			? Collections.emptyMap()
     	    : someRules;
-		this.resolvedMERules = resolveRules(theRules);
+		_resolvedMERules = resolveRules(theRules);
+		_potentialRolesForType = resolvePotentialRoles(_resolvedMERules);
         this.pathAttributes   = resolveMetaAttributes(theRules);
         this.rules            = theRules;
         this.ruleIds          = new HashMap<>();
@@ -467,6 +464,30 @@ public class ElementAccessManager extends AccessManager {
         Set<RoleProvider> theResult = this.pathAttributes.get(aMA);
         return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
     }
+
+	private Map<TLClass, Set<BoundedRole>> resolvePotentialRoles(
+			Map<TLClass, Collection<RoleProvider>> resolvedMERules) {
+		Map<TLClass, Set<BoundedRole>> result = new HashMap<>();
+		for (Entry<TLClass, Collection<RoleProvider>> e : resolvedMERules.entrySet()) {
+			Set<BoundedRole> roles = e.getValue()
+				.stream()
+				.filter(RoleRule.class::isInstance)
+				.map(RoleRule.class::cast)
+				.map(RoleRule::getRole)
+				.map(BoundedRole.class::cast)
+				.collect(Collectors.toSet());
+			addRolesRecursive(result, e.getKey(), roles);
+		}
+		return result;
+	}
+
+	private void addRolesRecursive(Map<TLClass, Set<BoundedRole>> result, TLClass key, Set<BoundedRole> roles) {
+		result.computeIfAbsent(key, unused -> new HashSet<>()).addAll(roles);
+		for (TLClass generalization : key.getGeneralizations()) {
+			addRolesRecursive(result, generalization, roles);
+		}
+
+	}
 
 	private Map<TLClass, Collection<RoleProvider>> resolveRules(Map<TLClass, Collection<RoleProvider>> someRules) {
 		HashMap<TLClass, Collection<RoleProvider>> resolved = new HashMap<>();
@@ -652,9 +673,17 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
+	/**
+	 * The resolved rules declared for the access manager (respecting the inherit flag)
+	 */
     public Map<TLClass, Collection<RoleProvider>> getResolvedMERules() {
-        return this.resolvedMERules;
+		return _resolvedMERules;
     }
+
+	@Override
+	public boolean canHaveRole(TLClass type, BoundedRole role) {
+		return _potentialRolesForType.getOrDefault(type, Collections.emptySet()).contains(role);
+	}
 
 	final BoundObject getSecurityRoot() {
 		return _boundHelper.securityRoot();

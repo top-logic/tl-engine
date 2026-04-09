@@ -31,7 +31,6 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.boundsec.manager.ElementAccessImporter;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.I18NConstants;
 import com.top_logic.element.boundsec.manager.RoleRulesImporter;
@@ -49,11 +48,11 @@ import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
- * Test the {@link ElementAccessImporter}.
+ * Test the {@link RoleRulesImporter}.
  *
- * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
+ * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class TestElementAccessImporter extends BasicTestCase {
+public class TestRoleRulesImporter extends BasicTestCase {
 
     private static final String ROLE_TEST_ROLE = "testRole";
     private static final String STRUCTURE_PROJECT_ELEMENT = "projElement";
@@ -300,7 +299,7 @@ public class TestElementAccessImporter extends BasicTestCase {
 
     /**  Return the suite of tests to perform. */
     public static Test suite() {
-        TestSuite suite = new TestSuite(TestElementAccessImporter.class);
+        TestSuite suite = new TestSuite(TestRoleRulesImporter.class);
 
         return ElementWebTestSetup.createElementWebTestSetup(suite);
     }

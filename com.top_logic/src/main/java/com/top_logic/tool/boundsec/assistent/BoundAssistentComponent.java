@@ -82,7 +82,7 @@ public class BoundAssistentComponent extends AssistentComponent implements Layou
 		if (commandGroups.isEmpty()) {
 			commandGroups = SimpleBoundCommandGroup.READ_SET;
         }
-		_securityProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+		_securityProvider = config.resolveSecurityObject(context);
     }
 
 	@Override

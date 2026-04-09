@@ -94,7 +94,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 		super(context, config);
 
 		isSecurityMaster = config.getIsSecurityMaster();
-		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, config.getSecurityObject());
+		_securityObjectProvider = config.resolveSecurityObject(context);
     }
     
 	@Override

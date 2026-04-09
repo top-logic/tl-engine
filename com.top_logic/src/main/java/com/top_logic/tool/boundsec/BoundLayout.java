@@ -48,7 +48,7 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
 
-		_securityObjectProvider = SecurityObjectProvider.fromConfiguration(context, atts.getSecurityObject());
+		_securityObjectProvider = atts.resolveSecurityObject(context);
     }
 
 	@Override

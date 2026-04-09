@@ -65,9 +65,6 @@ public class AgentLoop {
 	// TODO: Retry with backoff for RATE_LIMITED / OVERLOADED (callProvider is the seam)
 	// TODO: Memory/attachment injection between turns
 	// TODO: Stop hooks (post-response validation)
-	// TODO: Audit logging of tool executions — PRD FR-4 requires logging to an audit trail.
-	//   Timing data (start/end Instant) is already tracked in ToolState. Needs a listener
-	//   or dedicated AuditLogger that persists: who, which tool, arguments, result, duration.
 
 	/** Default maximum characters per tool result before truncation. */
 	public static final int DEFAULT_MAX_RESULT_CHARS = 4000;
@@ -320,12 +317,16 @@ public class AgentLoop {
 				return false;
 			}
 
+			boolean lockFailed = false;
 			for (ToolCall tc : batch) {
 				if (!ensureTransaction(tc, context, conversation, listener)) {
-					// Lock failed — skip remaining tools in this batch
-					// The error result was already added to conversation
+					lockFailed = true;
 					break;
 				}
+			}
+
+			if (lockFailed) {
+				continue;
 			}
 
 			if (batch.size() == 1) {
@@ -400,6 +401,7 @@ public class AgentLoop {
 			long revNum = rev != null ? rev.getCommitNumber() : -1;
 			listener.onTransactionCommit(revNum);
 		} catch (TransactionException e) {
+			scope.rollback();
 			listener.onTransactionRollback("Commit failed: " + e.getMessage());
 		}
 	}

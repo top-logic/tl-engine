@@ -62,17 +62,6 @@ com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documen
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessHelper.getClassifier
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessHelper.getUniqueMetaElements
 com.top_logic.element.boundsec.manager.ElementAccessHelper.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessHelper.setClassifierRoles
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder.getRole
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder.isUniqueRoleRole
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.addProblem
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getAttributeClassifications
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getClassifierRoles
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getGroups
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getProblems
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.getProfileCount
-com.top_logic.element.boundsec.manager.ElementAccessImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessImporter.parse
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Invalid camel case word 'ElementAccessManager', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Invalid camel case word 'RoleRules', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Invalid camel case word 'beginCacheMode', this may only be used within JavaDoc links or HTML code tags.
@@ -94,17 +83,6 @@ com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing docume
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessManager.getRules
 com.top_logic.element.boundsec.manager.ElementAccessManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementAccessManager.getRulesWithSourceRole
 com.top_logic.element.boundsec.manager.ElementSecurityUpdateManager.java: Missing documentation: com.top_logic.element.boundsec.manager.ElementSecurityUpdateManager.handleSecurityUpdate
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.EntryHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler.addGroup
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler.addLanguage
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupHandler.addPerson
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.GroupInfo
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.LanguageHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.LanguageHandler.addEntry
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.MemberHandler
-com.top_logic.element.boundsec.manager.GroupImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.GroupImporter.addProblem
 com.top_logic.element.boundsec.manager.LogHandler.java: Missing documentation: com.top_logic.element.boundsec.manager.LogHandler.logSecurityUpdate
 com.top_logic.element.boundsec.manager.PartialImporter.java: Missing documentation: com.top_logic.element.boundsec.manager.PartialImporter
 com.top_logic.element.boundsec.manager.RebuildStorageAfterStartupThread.java: Missing documentation: com.top_logic.element.boundsec.manager.RebuildStorageAfterStartupThread.CM_PROPERTY_REBUILD_AFTER_STARTUP

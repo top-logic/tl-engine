@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.StringServices;
@@ -19,7 +20,6 @@ import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
-import com.top_logic.element.boundsec.manager.ElementAccessImporter.ApplicationRoleHolder;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
@@ -35,6 +35,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.error.TopLogicException;
 
@@ -78,7 +79,7 @@ public class RoleRulesImporter {
 	 */
 	private Map<TLClass, Collection<RoleProvider>> _rules = new HashMap<>();
 
-	private ApplicationRoleHolder _roleProvider;
+	private Function<String, BoundedRole> _roleProvider;
 
 	private final KnowledgeBase _kb = PersistencyLayer.getKnowledgeBase();
 
@@ -96,9 +97,9 @@ public class RoleRulesImporter {
      * Creates a {@link RoleRulesImporter}.
      *
      */
-    public RoleRulesImporter(ApplicationRoleHolder aRoleProvieder) {
-		this._roleProvider = aRoleProvieder;
-    }
+	public RoleRulesImporter(Function<String, BoundedRole> roleProvider) {
+		this._roleProvider = roleProvider;
+	}
 
 	void addProblem(ResKey aProblem) {
 		_problems.add(aProblem);
@@ -128,7 +129,10 @@ public class RoleRulesImporter {
 	 *        The {@link RoleRulesConfig role rules configuration} to create {@link RoleRule} from.
 	 */
 	public static RoleRulesImporter loadRules(ElementAccessManager accessManager, RoleRulesConfig roleRules) {
-		RoleRulesImporter importer = new RoleRulesImporter(new ApplicationRoleHolder(accessManager));
+		Map<String, BoundedRole> availableRoles = ElementAccessHelper.getAvailableRoles(null, accessManager).stream()
+			.collect(Collectors.toMap(BoundRole::getName, BoundedRole.class::cast));
+
+		RoleRulesImporter importer = new RoleRulesImporter(availableRoles::get);
 		importer.loadRules(roleRules);
 		return importer;
 	}
@@ -247,7 +251,7 @@ public class RoleRulesImporter {
 		}
 		ArrayList<BoundedRole> result = new ArrayList<>(roleNames.size());
 		for (String roleName : roleNames) {
-			BoundedRole role = _roleProvider.getRole(roleName);
+			BoundedRole role = _roleProvider.apply(roleName);
 
 			Set<String> availableRoles = Collections.emptySet();
 			if (role == null) {

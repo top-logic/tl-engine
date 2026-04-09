@@ -746,6 +746,72 @@ public class TestAgentLoop extends TestCase {
 		};
 	}
 
+	/**
+	 * Listener receives onPermissionDenied when system mode gate blocks a GLOBAL tool.
+	 */
+	public void testListenerOnPermissionDenied() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit", "Edits", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("OK")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onPermissionDenied(ToolCall tc, String reason) {
+				events.add("denied:" + tc.name());
+			}
+		};
+
+		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		loop.run(conv, ctx, listener);
+
+		assertEquals(List.of("denied:edit"), events);
+	}
+
+	/**
+	 * Listener receives onApprovalRequired when a tool needs user approval.
+	 */
+	public void testListenerOnApprovalRequired() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit", "Edits", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Done")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onApprovalRequired(ToolCall tc, ApprovalRequest request) {
+				events.add("approval:" + tc.name());
+			}
+		};
+
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE);
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		loop.run(conv, ctx, listener);
+
+		assertEquals(List.of("approval:edit"), events);
+	}
+
 	private static SecurityContext developmentSecurity() {
 		return new SecurityContext() {
 			@Override public boolean canUseTool(Tool tool) { return true; }

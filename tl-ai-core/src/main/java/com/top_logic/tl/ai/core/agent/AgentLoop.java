@@ -416,30 +416,43 @@ public class AgentLoop {
 			Tool tool = registry.getTool(toolCall.name());
 			if (tool != null) {
 				if (!security.canUseTool(tool)) {
-					return errorResult(toolCall,
-						"Permission denied: you do not have access to tool '" + toolCall.name() + "'.");
+					String reason = "Permission denied: you do not have access to tool '" + toolCall.name() + "'.";
+					if (listener != null) {
+						listener.onPermissionDenied(toolCall, reason);
+					}
+					return errorResult(toolCall, reason);
 				}
 
 				// Step 2: System mode gate
 				if (tool.mode() == ToolMode.GLOBAL
 						&& security.executionMode() == ExecutionMode.PRODUCTION) {
-					return errorResult(toolCall,
-						"Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
+					String reason = "Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
 						+ "application state, which requires maintenance or development mode. "
-						+ "The system is currently in production mode.");
+						+ "The system is currently in production mode.";
+					if (listener != null) {
+						listener.onPermissionDenied(toolCall, reason);
+					}
+					return errorResult(toolCall, reason);
 				}
 
 				// Step 3: Approval check
 				PermissionDecision decision = security.checkApproval(tool, toolCall);
 				switch (decision) {
 					case PermissionDecision.Denied denied -> {
-						return errorResult(toolCall, denied.reason());
+						String reason = denied.reason();
+						if (listener != null) {
+							listener.onPermissionDenied(toolCall, reason);
+						}
+						return errorResult(toolCall, reason);
 					}
 					case PermissionDecision.NeedsApproval needsApproval -> {
 						ApprovalRequest request = new ApprovalRequest(
 							tool.name(), toolCall.id(),
 							Map.of(), tool.mode(),
 							needsApproval.displayReason());
+						if (listener != null) {
+							listener.onApprovalRequired(toolCall, request);
+						}
 						ApprovalResult approvalResult = context.approval().requestApproval(request);
 						switch (approvalResult) {
 							case ApprovalResult.Approved approved -> {

@@ -71,5 +71,26 @@ public interface AgentListener {
 		// no-op
 	}
 
-	// TODO: onPermissionCheck (security context)
+	/**
+	 * Called when a tool call requires user approval.
+	 *
+	 * <p>Fired before the {@link ApprovalCallback} blocks. The UI can use this to
+	 * show a pending approval indicator.</p>
+	 *
+	 * @param toolCall the tool call awaiting approval
+	 * @param request  the approval request details
+	 */
+	default void onApprovalRequired(ToolCall toolCall, ApprovalRequest request) {
+		// no-op
+	}
+
+	/**
+	 * Called when a tool call is denied by the system or security check.
+	 *
+	 * @param toolCall the denied tool call
+	 * @param reason   the denial reason (same text fed to the LLM)
+	 */
+	default void onPermissionDenied(ToolCall toolCall, String reason) {
+		// no-op
+	}
 }

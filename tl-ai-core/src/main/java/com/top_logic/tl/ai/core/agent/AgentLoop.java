@@ -358,7 +358,10 @@ public class AgentLoop {
 
 	private boolean isConcurrencySafe(ToolCall tc) {
 		Tool tool = _registry.getTool(tc.name());
-		return tool != null && tool.isConcurrencySafe();
+		if (tool == null) {
+			return false;
+		}
+		return tool.isConcurrencySafe() && tool.mode() == ToolMode.READ;
 	}
 
 	private void executeSingle(ToolCall toolCall, ToolContext context,
@@ -377,9 +380,8 @@ public class AgentLoop {
 			List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
 
 			for (ToolCall tc : batch) {
-				listener.onToolCallStart(tc);
 				futures.add(CompletableFuture.supplyAsync(
-					() -> executeWithSecurityCheck(tc, context, null), executor));
+					() -> executeWithSecurityCheck(tc, context, listener), executor));
 			}
 
 			List<ToolResultMessage> results = new ArrayList<>();

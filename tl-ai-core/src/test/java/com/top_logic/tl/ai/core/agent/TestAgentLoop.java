@@ -1029,4 +1029,60 @@ public class TestAgentLoop extends TestCase {
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 		};
 	}
+
+	/**
+	 * GLOBAL tools are always executed sequentially, even if marked concurrencySafe.
+	 * Listener events fire correctly for concurrent READ tools.
+	 */
+	public void testGlobalToolsForcedSequential() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema readSpec = new ToolSchema("read1", "Reads", "{}");
+		ToolSchema readSpec2 = new ToolSchema("read2", "Reads", "{}");
+		ToolSchema globalSpec = new ToolSchema("write1", "Writes", "{}");
+		ToolCall tcRead1 = new ToolCall("tc1", "read1", "{}");
+		ToolCall tcRead2 = new ToolCall("tc2", "read2", "{}");
+		ToolCall tcGlobal = new ToolCall("tc3", "write1", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(tcRead1, tcRead2, tcGlobal),
+			List.of(new TextContent("Done")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(readTool("read1", readSpec));
+		registry.register(readTool("read2", readSpec2));
+		registry.register(globalTool("write1", globalSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onToolCallStart(ToolCall tc) {
+				events.add("start:" + tc.name());
+			}
+			@Override
+			public void onToolCallComplete(ToolCall tc, ToolResultMessage result) {
+				events.add("complete:" + tc.name());
+			}
+			@Override
+			public void onApprovalRequired(ToolCall tc, ApprovalRequest request) {
+				events.add("approval:" + tc.name());
+			}
+		};
+
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE);
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		loop.run(conv, ctx, listener);
+
+		// write1 should have approval event (it's GLOBAL, needs approval in dev mode)
+		assertTrue("GLOBAL tool should trigger approval",
+			events.contains("approval:write1"));
+		// All tools should have start and complete events (listener passed everywhere)
+		assertTrue(events.contains("start:read1"));
+		assertTrue(events.contains("start:read2"));
+		assertTrue(events.contains("complete:read1"));
+		assertTrue(events.contains("complete:read2"));
+		assertTrue(events.contains("complete:write1"));
+	}
 }

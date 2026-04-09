@@ -5,6 +5,8 @@
  */
 package com.top_logic.tool.boundsec;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,6 +14,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
@@ -33,6 +36,9 @@ import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProv
 @Abstract
 public interface SecurityObjectProviderConfig extends ConfigurationItem {
 
+	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+	Lookup LOOKUP = MethodHandles.lookup();
+
 	/** @see #getSecurityObject() */
 	public static final String SECURITY_OBJECT = "securityObject";
 
@@ -44,6 +50,13 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 	@FormattedDefault(CompactSecurityObjectProviderFormat.SECURITY_ROOT)
 	@Format(CompactSecurityObjectProviderFormat.class)
 	PolymorphicConfiguration<? extends SecurityObjectProvider> getSecurityObject();
+
+	/**
+	 * Resolves {@link #getSecurityObject()} within the given context.
+	 */
+	default SecurityObjectProvider resolveSecurityObject(InstantiationContext context) {
+		return SecurityObjectProvider.fromConfiguration(context, getSecurityObject());
+	}
 
 	/**
 	 * Format to serialize an In App configured {@link SecurityObjectProvider} in compact form.

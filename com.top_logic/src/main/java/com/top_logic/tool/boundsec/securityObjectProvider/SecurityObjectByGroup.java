@@ -112,9 +112,9 @@ public class SecurityObjectByGroup extends AbstractConfiguredInstance<SecurityOb
 	 */
 	public SecurityObjectByGroup(InstantiationContext context, Config config) {
 		super(context, config);
-		_defaultProvider = context.getInstance(config.getSecurityObject());
+		_defaultProvider = config.resolveSecurityObject(context);
 		_providerByGroup = config.getProviders().stream().collect(Collectors.toMap(ProviderByGroup::getGroup,
-			functionByGroup -> context.getInstance(functionByGroup.getSecurityObject())));
+			functionByGroup -> functionByGroup.resolveSecurityObject(context)));
 
 	}
 

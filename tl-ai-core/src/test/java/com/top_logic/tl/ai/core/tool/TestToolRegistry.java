@@ -16,6 +16,8 @@ import com.top_logic.tl.ai.core.agent.AgentConfig;
 import com.top_logic.tl.ai.core.agent.AgentListener;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.ApprovalCallback;
+import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -222,8 +224,18 @@ public class TestToolRegistry extends TestCase {
 		registry.register(new MathTools());
 		registry.register(new EditTools());
 
-		SecurityContext noDelete = tool -> !tool.name().equals("delete");
-		ToolContext context = new ToolContext(noDelete);
+		SecurityContext noDelete = new SecurityContext() {
+			@Override
+			public boolean canUseTool(Tool tool) {
+				return !tool.name().equals("delete");
+			}
+
+			@Override
+			public ExecutionMode executionMode() {
+				return ExecutionMode.DEVELOPMENT;
+			}
+		};
+		ToolContext context = new ToolContext(noDelete, ApprovalCallback.AUTO_APPROVE);
 
 		// add should work
 		ToolCall addCall = new ToolCall("tc1", "add", "{\"a\":1,\"b\":2}");
@@ -284,8 +296,18 @@ public class TestToolRegistry extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", Instant.now(), List.of(new TextContent("Delete 123"))));
 
-		SecurityContext noDeletions = tool -> !tool.name().equals("delete");
-		ToolContext context = new ToolContext(noDeletions);
+		SecurityContext noDeletions = new SecurityContext() {
+			@Override
+			public boolean canUseTool(Tool tool) {
+				return !tool.name().equals("delete");
+			}
+
+			@Override
+			public ExecutionMode executionMode() {
+				return ExecutionMode.DEVELOPMENT;
+			}
+		};
+		ToolContext context = new ToolContext(noDeletions, ApprovalCallback.AUTO_APPROVE);
 
 		AgentLoop loop = new AgentLoop(config, provider, registry);
 		AgentResult result = loop.run(conv, context, new AgentListener() {});

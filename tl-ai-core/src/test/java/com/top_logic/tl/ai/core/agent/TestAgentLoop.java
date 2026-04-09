@@ -893,6 +893,78 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
+	 * TransactionScope that tracks state without needing a real KB.
+	 */
+	private static class TestableTransactionScope extends TransactionScope {
+
+		private boolean _active;
+
+		private boolean _locked;
+
+		/** */
+		@Override
+		public void acquireLock() {
+			_locked = true;
+		}
+
+		/** */
+		@Override
+		public void releaseLock() {
+			_locked = false;
+		}
+
+		/** */
+		@Override
+		public boolean holdsLock() {
+			return _locked;
+		}
+
+		/** */
+		@Override
+		public void begin() {
+			_active = true;
+		}
+
+		/** */
+		@Override
+		public void begin(com.top_logic.basic.util.ResKey commitMessage) {
+			_active = true;
+		}
+
+		/** */
+		@Override
+		public void commit() {
+			_active = false;
+			releaseLock();
+		}
+
+		/** */
+		@Override
+		public void rollback() {
+			_active = false;
+			releaseLock();
+		}
+
+		/** */
+		@Override
+		public boolean isActive() {
+			return _active;
+		}
+
+		/** */
+		@Override
+		public boolean isNoOp() {
+			return false;
+		}
+
+		/** */
+		@Override
+		public void close() {
+			rollback();
+		}
+	}
+
+	/**
 	 * Listener receives onPermissionDenied when system mode gate blocks a GLOBAL tool.
 	 */
 	public void testListenerOnPermissionDenied() {
@@ -1028,6 +1100,193 @@ public class TestAgentLoop extends TestCase {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 		};
+	}
+
+	/**
+	 * Transaction is opened on first non-READ tool call, committed after turn.
+	 */
+	public void testTransactionOpenedOnWrite() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Done")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onTransactionBegin() {
+				events.add("tx_begin");
+			}
+			@Override
+			public void onTransactionCommit(long revisionNumber) {
+				events.add("tx_commit");
+			}
+			@Override
+			public void onLockAcquired() {
+				events.add("lock_acquired");
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Lock should be acquired before transaction",
+			events.indexOf("lock_acquired") < events.indexOf("tx_begin"));
+		assertTrue("Transaction should be committed",
+			events.contains("tx_commit"));
+	}
+
+	/**
+	 * No transaction opened for read-only turns.
+	 */
+	public void testNoTransactionForReadOnly() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Search"))));
+
+		ToolSchema toolSpec = new ToolSchema("search", "Searches", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "search", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Found.")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(readTool("search", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onTransactionBegin() {
+				events.add("tx_begin");
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertFalse("No transaction for read-only tools", events.contains("tx_begin"));
+	}
+
+	/**
+	 * Transaction is rolled back when a tool throws.
+	 */
+	public void testTransactionRolledBackOnError() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		ToolCall tc1 = new ToolCall("tc1", "edit_model", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(tc1),
+			List.of(new TextContent("OK")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new Tool() {
+			@Override public String name() { return "edit_model"; }
+			@Override public String description() { return "Edits"; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				throw new RuntimeException("Something went wrong");
+			}
+			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+		});
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onTransactionBegin() {
+				events.add("tx_begin");
+			}
+			@Override
+			public void onTransactionCommit(long revisionNumber) {
+				events.add("tx_commit");
+			}
+			@Override
+			public void onTransactionRollback(String reason) {
+				events.add("tx_rollback:" + reason);
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Transaction should begin", events.contains("tx_begin"));
+		assertFalse("Transaction should NOT commit", events.contains("tx_commit"));
+		assertTrue("Transaction should rollback",
+			events.stream().anyMatch(e -> e.startsWith("tx_rollback:")));
+		assertFalse("Scope should not be active after rollback", scope.isActive());
+	}
+
+	/**
+	 * Lock failure returns error to LLM, no transaction opened.
+	 */
+	public void testLockFailureReportedToLLM() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Cannot edit — locked.")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onLockFailed(String reason) {
+				events.add("lock_failed:" + reason);
+			}
+			@Override
+			public void onTransactionBegin() {
+				events.add("tx_begin");
+			}
+		};
+
+		TransactionScope failingScope = new TestableTransactionScope() {
+			@Override
+			public void acquireLock() {
+				throw new TransactionException("Locked by Developer A");
+			}
+		};
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, failingScope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Lock failure should be reported",
+			events.stream().anyMatch(e -> e.startsWith("lock_failed:")));
+		assertFalse("No transaction should begin on lock failure",
+			events.contains("tx_begin"));
 	}
 
 	/**

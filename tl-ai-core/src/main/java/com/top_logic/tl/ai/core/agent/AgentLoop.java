@@ -18,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -310,19 +311,107 @@ public class AgentLoop {
 			Conversation conversation, AgentListener listener) {
 
 		List<List<ToolCall>> batches = partitionBatches(toolCalls);
+		int messagesBefore = conversation.size();
 
 		for (List<ToolCall> batch : batches) {
 			if (Thread.interrupted()) {
 				Thread.currentThread().interrupt();
+				rollbackTransaction(context, listener, "Interrupted");
 				return false;
 			}
+
+			for (ToolCall tc : batch) {
+				if (!ensureTransaction(tc, context, conversation, listener)) {
+					// Lock failed — skip remaining tools in this batch
+					// The error result was already added to conversation
+					break;
+				}
+			}
+
 			if (batch.size() == 1) {
 				executeSingle(batch.get(0), context, conversation, listener);
 			} else {
 				executeConcurrent(batch, context, conversation, listener);
 			}
 		}
+
+		// End-of-turn: check for failures and commit or rollback
+		boolean anyFailed = conversation.messages().subList(messagesBefore, conversation.size())
+			.stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.anyMatch(tr -> tr.state() instanceof ToolState.Failed);
+
+		if (anyFailed) {
+			rollbackTransaction(context, listener, "Tool execution failed");
+		} else {
+			commitTransaction(context, listener);
+		}
+
 		return true;
+	}
+
+	/**
+	 * Ensure a transaction is active before executing a write tool.
+	 * Acquires the lock and begins a transaction on first write.
+	 *
+	 * @return {@code true} if the tool can proceed, {@code false} if lock failed
+	 *   (error result already added to conversation)
+	 */
+	private boolean ensureTransaction(ToolCall toolCall, ToolContext context,
+			Conversation conversation, AgentListener listener) {
+		TransactionScope scope = context.transaction();
+		if (scope.isNoOp() || scope.isActive()) {
+			return true;
+		}
+
+		Tool tool = _registry.getTool(toolCall.name());
+		if (tool == null || tool.mode() == ToolMode.READ) {
+			return true;
+		}
+
+		// First write tool in this turn — acquire lock and begin transaction
+		try {
+			scope.acquireLock();
+			listener.onLockAcquired();
+		} catch (TransactionException e) {
+			listener.onLockFailed(e.getMessage());
+			conversation.add(errorResult(toolCall, "Cannot edit: " + e.getMessage()));
+			reportResult(toolCall,
+				(ToolResultMessage) conversation.messages().get(conversation.size() - 1),
+				listener);
+			return false;
+		}
+
+		scope.begin();
+		listener.onTransactionBegin();
+		return true;
+	}
+
+	/** */
+	private void commitTransaction(ToolContext context, AgentListener listener) {
+		TransactionScope scope = context.transaction();
+		if (!scope.isActive()) {
+			return;
+		}
+		try {
+			scope.commit();
+			Revision rev = scope.commitRevision();
+			long revNum = rev != null ? rev.getCommitNumber() : -1;
+			listener.onTransactionCommit(revNum);
+		} catch (TransactionException e) {
+			listener.onTransactionRollback("Commit failed: " + e.getMessage());
+		}
+	}
+
+	/** */
+	private void rollbackTransaction(ToolContext context, AgentListener listener, String reason) {
+		TransactionScope scope = context.transaction();
+		if (!scope.isActive()) {
+			return;
+		}
+		scope.rollback();
+		listener.onTransactionRollback(reason);
 	}
 
 	/**

@@ -47,4 +47,38 @@ public class AuditListener implements AgentListener {
 		LOG.log(Level.WARNING,
 			"Permission denied: " + toolCall.name() + " \u2014 " + reason);
 	}
+
+	/** */
+	@Override
+	public void onTransactionBegin() {
+		LOG.log(Level.INFO, "Transaction started.");
+	}
+
+	/** */
+	@Override
+	public void onTransactionCommit(long revisionNumber) {
+		if (revisionNumber > 0) {
+			LOG.log(Level.INFO, "Transaction committed (revision " + revisionNumber + ").");
+		} else {
+			LOG.log(Level.INFO, "Transaction committed (no changes).");
+		}
+	}
+
+	/** */
+	@Override
+	public void onTransactionRollback(String reason) {
+		LOG.log(Level.WARNING, "Transaction rolled back: " + reason);
+	}
+
+	/** */
+	@Override
+	public void onLockAcquired() {
+		LOG.log(Level.INFO, "Edit lock acquired.");
+	}
+
+	/** */
+	@Override
+	public void onLockFailed(String reason) {
+		LOG.log(Level.WARNING, "Edit lock failed: " + reason);
+	}
 }

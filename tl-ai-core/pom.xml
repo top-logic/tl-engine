@@ -37,6 +37,12 @@
 			<version>${msgbuf.version}</version>
 		</dependency>
 
+		<!-- TopLogic kernel (KB transactions, locking, security) -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+		</dependency>
+
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>

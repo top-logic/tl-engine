@@ -35,8 +35,9 @@ public class TopLogicSecurityContext implements SecurityContext {
 	public ExecutionMode executionMode() {
 		// ABOUT_TO_ENTER_MAINTENANCE_MODE intentionally falls through to normal mode
 		// detection — users are being warned but the system is still operational.
-		int state = MaintenanceWindowManager.getInstance().getMaintenanceModeState();
-		if (state == MaintenanceWindowManager.IN_MAINTENANCE_MODE) {
+		MaintenanceWindowManager mgr = MaintenanceWindowManager.getInstance();
+		if (mgr != null
+				&& mgr.getMaintenanceModeState() == MaintenanceWindowManager.IN_MAINTENANCE_MODE) {
 			return ExecutionMode.MAINTENANCE;
 		}
 		if (!Environment.isDeployed()) {

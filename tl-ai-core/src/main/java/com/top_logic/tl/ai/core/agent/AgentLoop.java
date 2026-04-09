@@ -404,66 +404,80 @@ public class AgentLoop {
 			listener.onToolCallStart(toolCall);
 		}
 
-		// Step 1: User-level access check (future per-user security)
 		SecurityContext security = context.security();
-		if (_toolExecutor instanceof ToolRegistry registry) {
-			Tool tool = registry.getTool(toolCall.name());
-			if (tool != null) {
-				if (!security.hasToolPermission(tool)) {
-					String reason = "Permission denied: you do not have access to tool '" + toolCall.name() + "'.";
+
+		// Step 1: Unconditional user permission check (runs for ALL tools)
+		Tool tool = (_toolExecutor instanceof ToolRegistry registry)
+			? registry.getTool(toolCall.name()) : null;
+
+		if (tool != null) {
+			if (!security.hasToolPermission(tool)) {
+				String reason = "Permission denied: you do not have access to tool '"
+					+ toolCall.name() + "'.";
+				if (listener != null) {
+					listener.onPermissionDenied(toolCall, reason);
+				}
+				return errorResult(toolCall, reason);
+			}
+		} else {
+			if (!security.hasToolPermission(toolCall.name())) {
+				String reason = "Permission denied: you do not have access to tool '"
+					+ toolCall.name() + "'.";
+				if (listener != null) {
+					listener.onPermissionDenied(toolCall, reason);
+				}
+				return errorResult(toolCall, reason);
+			}
+		}
+
+		// Step 2+3: Mode gate + approval (only for registered tools with metadata)
+		if (tool != null) {
+			// System mode gate
+			if (tool.mode() == ToolMode.GLOBAL
+					&& security.executionMode() == ExecutionMode.PRODUCTION) {
+				String reason = "Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
+					+ "application state, which requires maintenance or development mode. "
+					+ "The system is currently in production mode.";
+				if (listener != null) {
+					listener.onPermissionDenied(toolCall, reason);
+				}
+				return errorResult(toolCall, reason);
+			}
+
+			// Approval check
+			PermissionDecision decision = security.checkApproval(tool, toolCall);
+			switch (decision) {
+				case PermissionDecision.Denied denied -> {
+					String reason = denied.reason();
 					if (listener != null) {
 						listener.onPermissionDenied(toolCall, reason);
 					}
 					return errorResult(toolCall, reason);
 				}
-
-				// Step 2: System mode gate
-				if (tool.mode() == ToolMode.GLOBAL
-						&& security.executionMode() == ExecutionMode.PRODUCTION) {
-					String reason = "Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
-						+ "application state, which requires maintenance or development mode. "
-						+ "The system is currently in production mode.";
+				case PermissionDecision.NeedsApproval needsApproval -> {
+					ApprovalRequest request = new ApprovalRequest(
+						tool.name(), toolCall.id(),
+						Map.of(), tool.mode(),
+						needsApproval.displayReason());
 					if (listener != null) {
-						listener.onPermissionDenied(toolCall, reason);
+						listener.onApprovalRequired(toolCall, request);
 					}
-					return errorResult(toolCall, reason);
+					ApprovalResult approvalResult = context.approval().requestApproval(request);
+					switch (approvalResult) {
+						case ApprovalResult.Approved approved -> {
+							// proceed to execution
+						}
+						case ApprovalResult.Rejected rejected -> {
+							String feedback = rejected.userComment().isBlank()
+								? "User denied tool '" + toolCall.name() + "'."
+								: "User denied tool '" + toolCall.name() + "': "
+									+ rejected.userComment();
+							return errorResult(toolCall, feedback);
+						}
+					}
 				}
-
-				// Step 3: Approval check
-				PermissionDecision decision = security.checkApproval(tool, toolCall);
-				switch (decision) {
-					case PermissionDecision.Denied denied -> {
-						String reason = denied.reason();
-						if (listener != null) {
-							listener.onPermissionDenied(toolCall, reason);
-						}
-						return errorResult(toolCall, reason);
-					}
-					case PermissionDecision.NeedsApproval needsApproval -> {
-						ApprovalRequest request = new ApprovalRequest(
-							tool.name(), toolCall.id(),
-							Map.of(), tool.mode(),
-							needsApproval.displayReason());
-						if (listener != null) {
-							listener.onApprovalRequired(toolCall, request);
-						}
-						ApprovalResult approvalResult = context.approval().requestApproval(request);
-						switch (approvalResult) {
-							case ApprovalResult.Approved approved -> {
-								// proceed to execution
-							}
-							case ApprovalResult.Rejected rejected -> {
-								String feedback = rejected.userComment().isBlank()
-									? "User denied tool '" + toolCall.name() + "'."
-									: "User denied tool '" + toolCall.name() + "': "
-										+ rejected.userComment();
-								return errorResult(toolCall, feedback);
-							}
-						}
-					}
-					case PermissionDecision.Allowed allowed -> {
-						// proceed to execution
-					}
+				case PermissionDecision.Allowed allowed -> {
+					// proceed to execution
 				}
 			}
 		}

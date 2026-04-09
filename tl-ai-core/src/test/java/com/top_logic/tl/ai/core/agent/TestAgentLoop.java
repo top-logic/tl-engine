@@ -812,6 +812,45 @@ public class TestAgentLoop extends TestCase {
 		assertEquals(List.of("approval:edit"), events);
 	}
 
+	/**
+	 * hasToolPermission is checked even when executor is not a ToolRegistry.
+	 */
+	public void testPermissionCheckWithNonRegistryExecutor() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema toolSpec = new ToolSchema("external_tool", "External", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "external_tool", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("OK")));
+
+		// Non-ToolRegistry executor
+		ToolExecutor plainExecutor = echoExecutor();
+
+		SecurityContext denyAll = new SecurityContext() {
+			@Override public boolean hasToolPermission(Tool tool) { return true; }
+			@Override public boolean hasToolPermission(String toolName) { return false; }
+			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
+		};
+
+		List<String> events = new ArrayList<>();
+		AgentListener listener = new AgentListener() {
+			@Override
+			public void onPermissionDenied(ToolCall tc, String reason) {
+				events.add("denied:" + tc.name());
+			}
+		};
+
+		ToolContext ctx = new ToolContext(denyAll, ApprovalCallback.AUTO_APPROVE);
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, plainExecutor);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals(List.of("denied:external_tool"), events);
+	}
+
 	private static SecurityContext developmentSecurity() {
 		return new SecurityContext() {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }

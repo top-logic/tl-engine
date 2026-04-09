@@ -3,12 +3,10 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.service.security;
+package com.top_logic.tl.ai.core.agent;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.core.workspace.Environment;
-import com.top_logic.tl.ai.core.agent.ExecutionMode;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
@@ -26,15 +24,12 @@ public class TopLogicSecurityContext implements SecurityContext {
 	/** */
 	@Override
 	public boolean hasToolPermission(Tool tool) {
-		// Future: integrate with TopLogic's per-user role/permission system
 		return true;
 	}
 
 	/** */
 	@Override
 	public ExecutionMode executionMode() {
-		// ABOUT_TO_ENTER_MAINTENANCE_MODE intentionally falls through to normal mode
-		// detection — users are being warned but the system is still operational.
 		MaintenanceWindowManager mgr = MaintenanceWindowManager.getInstance();
 		if (mgr != null
 				&& mgr.getMaintenanceModeState() == MaintenanceWindowManager.IN_MAINTENANCE_MODE) {

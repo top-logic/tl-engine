@@ -7,6 +7,9 @@ package com.top_logic.tl.ai.core.agent;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.agent.ApprovalResult;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
+
 /**
  * Tests for {@link ToolContext}.
  */
@@ -53,5 +56,35 @@ public class TestToolContext extends TestCase {
 		} catch (NullPointerException e) {
 			// expected
 		}
+	}
+
+	/**
+	 * EMPTY context uses NOOP transaction scope.
+	 */
+	public void testEmptyContextHasNoOpTransaction() {
+		ToolContext ctx = ToolContext.EMPTY;
+		assertSame(TransactionScope.NOOP, ctx.transaction());
+		assertTrue(ctx.transaction().isNoOp());
+	}
+
+	/**
+	 * Three-arg constructor sets all fields.
+	 */
+	public void testThreeArgConstructor() {
+		TransactionScope scope = new TransactionScope();
+		ApprovalCallback callback = request -> new ApprovalResult.Approved();
+		ToolContext ctx = new ToolContext(SecurityContext.UNRESTRICTED, callback, scope);
+		assertSame(SecurityContext.UNRESTRICTED, ctx.security());
+		assertSame(callback, ctx.approval());
+		assertSame(scope, ctx.transaction());
+	}
+
+	/**
+	 * Two-arg constructor uses NOOP transaction.
+	 */
+	public void testTwoArgConstructorUsesNoOpTransaction() {
+		ApprovalCallback callback = request -> new ApprovalResult.Approved();
+		ToolContext ctx = new ToolContext(SecurityContext.UNRESTRICTED, callback);
+		assertSame(TransactionScope.NOOP, ctx.transaction());
 	}
 }

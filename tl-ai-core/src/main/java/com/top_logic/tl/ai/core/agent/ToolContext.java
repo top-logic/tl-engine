@@ -19,32 +19,44 @@ import java.util.Objects;
  */
 public class ToolContext {
 
-	// TODO: Add TransactionScope — Pillar 3 (Transactional Editing). Tools that write
-	//   shared state must do so inside a transaction that can be reviewed, committed,
-	//   or rolled back. The scope would be created per-agent-run and passed here.
 	// TODO: Add ProgressReporter — Pillar 7 (Human-in-the-Loop). Long-running tools
 	//   should report progress (e.g., "processing 50 of 200 records") so the UI can
 	//   display status. Interface: progress(String message) or progress(int current, int total).
 	// TODO: Add AgentContext — for sub-agent delegation. Carries parent agent identity,
 	//   delegation depth, shared memory references.
 
-	/** Context with no security restrictions and auto-approval. For tests and trusted internal use. */
+	/** Context with no security restrictions, auto-approval, and no transaction. For tests and trusted internal use. */
 	public static final ToolContext EMPTY =
-		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE);
+		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
 
 	private final SecurityContext _security;
 
 	private final ApprovalCallback _approval;
 
+	private final TransactionScope _transaction;
+
+	/**
+	 * Creates a context with the given security, approval callback, and transaction scope.
+	 *
+	 * @param security    the security context for the current user
+	 * @param approval    the callback for requesting user approval
+	 * @param transaction the transaction scope for the current agent run
+	 */
+	public ToolContext(SecurityContext security, ApprovalCallback approval, TransactionScope transaction) {
+		_security = Objects.requireNonNull(security, "Security context must not be null.");
+		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
+		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
+	}
+
 	/**
 	 * Creates a context with the given security and approval callback.
+	 * Uses {@link TransactionScope#NOOP} for the transaction scope.
 	 *
 	 * @param security the security context for the current user
 	 * @param approval the callback for requesting user approval
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval) {
-		_security = Objects.requireNonNull(security, "Security context must not be null.");
-		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
+		this(security, approval, TransactionScope.NOOP);
 	}
 
 	/**
@@ -63,5 +75,15 @@ public class ToolContext {
 	 */
 	public ApprovalCallback approval() {
 		return _approval;
+	}
+
+	/**
+	 * The transaction scope for the current agent run.
+	 *
+	 * <p>Tools do not call begin/commit/rollback — the agent loop manages the lifecycle.
+	 * Tools can check {@link TransactionScope#isActive()} if needed.</p>
+	 */
+	public TransactionScope transaction() {
+		return _transaction;
 	}
 }

@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -29,6 +30,7 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 import com.top_logic.tl.ai.core.tool.ToolRegistry;
 
 /**
@@ -408,12 +410,54 @@ public class AgentLoop {
 			listener.onToolCallStart(toolCall);
 		}
 
+		// Step 1: User-level access check (future per-user security)
 		SecurityContext security = context.security();
 		if (_toolExecutor instanceof ToolRegistry registry) {
 			Tool tool = registry.getTool(toolCall.name());
-			if (tool != null && !security.canUseTool(tool)) {
-				return errorResult(toolCall,
-					"Permission denied: you do not have access to tool '" + toolCall.name() + "'.");
+			if (tool != null) {
+				if (!security.canUseTool(tool)) {
+					return errorResult(toolCall,
+						"Permission denied: you do not have access to tool '" + toolCall.name() + "'.");
+				}
+
+				// Step 2: System mode gate
+				if (tool.mode() == ToolMode.GLOBAL
+						&& security.executionMode() == ExecutionMode.PRODUCTION) {
+					return errorResult(toolCall,
+						"Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
+						+ "application state, which requires maintenance or development mode. "
+						+ "The system is currently in production mode.");
+				}
+
+				// Step 3: Approval check
+				PermissionDecision decision = security.checkApproval(tool, toolCall);
+				switch (decision) {
+					case PermissionDecision.Denied denied -> {
+						return errorResult(toolCall, denied.reason());
+					}
+					case PermissionDecision.NeedsApproval needsApproval -> {
+						ApprovalRequest request = new ApprovalRequest(
+							tool.name(), toolCall.id(),
+							Map.of(), tool.mode(),
+							needsApproval.displayReason());
+						ApprovalResult approvalResult = context.approval().requestApproval(request);
+						switch (approvalResult) {
+							case ApprovalResult.Approved approved -> {
+								// proceed to execution
+							}
+							case ApprovalResult.Rejected rejected -> {
+								String feedback = rejected.userComment().isBlank()
+									? "User denied tool '" + toolCall.name() + "'."
+									: "User denied tool '" + toolCall.name() + "': "
+										+ rejected.userComment();
+								return errorResult(toolCall, feedback);
+							}
+						}
+					}
+					case PermissionDecision.Allowed allowed -> {
+						// proceed to execution
+					}
+				}
 			}
 		}
 

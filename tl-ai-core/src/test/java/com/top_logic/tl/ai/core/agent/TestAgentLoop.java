@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
@@ -30,6 +31,9 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tool.ToolMode;
+import com.top_logic.tl.ai.core.tool.ToolRegistry;
 
 /**
  * Tests for {@link AgentLoop}.
@@ -533,5 +537,219 @@ public class TestAgentLoop extends TestCase {
 
 	private static AgentListener listener() {
 		return new AgentListener() {};
+	}
+
+	/**
+	 * GLOBAL tool in PRODUCTION mode is denied by system mode gate.
+	 */
+	public void testSystemModeGateDeniesGlobalInProduction() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Create a class"))));
+
+		ToolSchema toolSpec = new ToolSchema("create_class", "Creates a class", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "create_class", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("I cannot create classes in production mode.")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new Tool() {
+			@Override public String name() { return "create_class"; }
+			@Override public String description() { return "Creates a class"; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				fail("Tool should not execute in production mode");
+				return "";
+			}
+			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+		});
+		registry.freeze();
+
+		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
+
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+
+		assertTrue("Conversation should contain mode denial",
+			conv.messages().stream()
+				.filter(ToolResultMessage.class::isInstance)
+				.map(ToolResultMessage.class::cast)
+				.anyMatch(tr -> tr.state() instanceof ToolState.Failed f
+					&& f.error().contains("maintenance or development mode")));
+	}
+
+	/**
+	 * GLOBAL tool in DEVELOPMENT mode passes system gate. With auto-approve, tool executes.
+	 */
+	public void testSystemModeGateAllowsGlobalInDevelopment() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Create a class"))));
+
+		ToolSchema toolSpec = new ToolSchema("create_class", "Creates a class", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "create_class", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Class created.")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("create_class", toolSpec));
+		registry.freeze();
+
+		SecurityContext devSecurity = new SecurityContext() {
+			@Override public boolean canUseTool(Tool tool) { return true; }
+			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
+			@Override public PermissionDecision checkApproval(Tool tool, ToolCall tc) {
+				return new PermissionDecision.Allowed();
+			}
+		};
+
+		ToolContext ctx = new ToolContext(devSecurity, ApprovalCallback.AUTO_APPROVE);
+
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals(2, result.turnsUsed());
+	}
+
+	/**
+	 * READ tool in PRODUCTION mode passes system gate without approval.
+	 */
+	public void testSystemModeGateAllowsReadInProduction() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Search"))));
+
+		ToolSchema toolSpec = new ToolSchema("search", "Searches", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "search", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Found results.")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(readTool("search", toolSpec));
+		registry.freeze();
+
+		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
+
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals(2, result.turnsUsed());
+	}
+
+	/**
+	 * User rejects a tool via ApprovalCallback. LLM gets rejection with user comment.
+	 */
+	public void testUserRejectsToolCall() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit something"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits model", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("OK, I won't edit.")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		ApprovalCallback rejectingCallback = request ->
+			new ApprovalResult.Rejected("I don't want to edit the model right now.");
+
+		ToolContext ctx = new ToolContext(developmentSecurity(), rejectingCallback);
+
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+
+		assertTrue("Conversation should contain user rejection",
+			conv.messages().stream()
+				.filter(ToolResultMessage.class::isInstance)
+				.map(ToolResultMessage.class::cast)
+				.anyMatch(tr -> tr.state() instanceof ToolState.Failed f
+					&& f.error().contains("User denied")
+					&& f.error().contains("I don't want to edit the model right now")));
+	}
+
+	/**
+	 * User rejects without comment. LLM gets generic rejection message.
+	 */
+	public void testUserRejectsWithoutComment() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit something"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits model", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("OK.")));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		ApprovalCallback rejectingCallback = request -> new ApprovalResult.Rejected("");
+
+		ToolContext ctx = new ToolContext(developmentSecurity(), rejectingCallback);
+
+		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+
+		assertTrue("Conversation should contain generic rejection",
+			conv.messages().stream()
+				.filter(ToolResultMessage.class::isInstance)
+				.map(ToolResultMessage.class::cast)
+				.anyMatch(tr -> tr.state() instanceof ToolState.Failed f
+					&& f.error().contains("User denied tool 'edit_model'")));
+	}
+
+	private static Tool globalTool(String name, ToolSchema schema) {
+		return new Tool() {
+			@Override public String name() { return name; }
+			@Override public String description() { return ""; }
+			@Override public ToolSchema schema() { return schema; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				return "Result of " + name;
+			}
+			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+		};
+	}
+
+	private static Tool readTool(String name, ToolSchema schema) {
+		return new Tool() {
+			@Override public String name() { return name; }
+			@Override public String description() { return ""; }
+			@Override public ToolSchema schema() { return schema; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				return "Result of " + name;
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		};
+	}
+
+	private static SecurityContext productionSecurity() {
+		return new SecurityContext() {
+			@Override public boolean canUseTool(Tool tool) { return true; }
+			@Override public ExecutionMode executionMode() { return ExecutionMode.PRODUCTION; }
+		};
+	}
+
+	private static SecurityContext developmentSecurity() {
+		return new SecurityContext() {
+			@Override public boolean canUseTool(Tool tool) { return true; }
+			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
+		};
 	}
 }

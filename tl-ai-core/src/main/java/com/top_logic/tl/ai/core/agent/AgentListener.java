@@ -93,4 +93,45 @@ public interface AgentListener {
 	default void onPermissionDenied(ToolCall toolCall, String reason) {
 		// no-op
 	}
+
+	/**
+	 * Called when a KB transaction begins (first write tool in a turn).
+	 */
+	default void onTransactionBegin() {
+		// no-op
+	}
+
+	/**
+	 * Called when a KB transaction commits successfully.
+	 *
+	 * @param revisionNumber the committed revision number, or -1 if no changes were made
+	 */
+	default void onTransactionCommit(long revisionNumber) {
+		// no-op
+	}
+
+	/**
+	 * Called when a KB transaction is rolled back.
+	 *
+	 * @param reason the reason for rollback (typically an error message)
+	 */
+	default void onTransactionRollback(String reason) {
+		// no-op
+	}
+
+	/**
+	 * Called when the global edit lock is acquired.
+	 */
+	default void onLockAcquired() {
+		// no-op
+	}
+
+	/**
+	 * Called when the global edit lock cannot be acquired.
+	 *
+	 * @param reason the lock conflict details (who holds the lock)
+	 */
+	default void onLockFailed(String reason) {
+		// no-op
+	}
 }

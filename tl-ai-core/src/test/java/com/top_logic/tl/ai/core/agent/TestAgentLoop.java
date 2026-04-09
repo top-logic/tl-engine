@@ -29,7 +29,6 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tool.Tool;
 import com.top_logic.tl.ai.core.tool.ToolMode;
@@ -47,19 +46,38 @@ public class TestAgentLoop extends TestCase {
 	private static final String MODEL = "test-model";
 
 	/**
-	 * Creates an AgentConfig with no tools.
+	 * Creates an AgentConfig with defaults.
 	 */
 	private static AgentConfig config() {
-		return new AgentConfig(MODEL, "You are a test assistant.", List.of(),
+		return new AgentConfig(MODEL, "You are a test assistant.",
 			AgentConfig.DEFAULT_MAX_TURNS, AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS);
 	}
 
 	/**
-	 * Creates an AgentConfig with the given tools and max turns.
+	 * Creates an AgentConfig with the given max turns.
 	 */
-	private static AgentConfig config(List<ToolSchema> tools, int maxTurns) {
-		return new AgentConfig(MODEL, "You are a test assistant.", tools,
+	private static AgentConfig config(int maxTurns) {
+		return new AgentConfig(MODEL, "You are a test assistant.",
 			maxTurns, AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS);
+	}
+
+	/**
+	 * Creates a frozen empty tool registry.
+	 */
+	private static ToolRegistry emptyRegistry() {
+		ToolRegistry r = new ToolRegistry();
+		r.freeze();
+		return r;
+	}
+
+	/**
+	 * Creates a frozen registry with a single echo tool.
+	 */
+	private static ToolRegistry echoRegistry(String name, ToolSchema schema) {
+		ToolRegistry r = new ToolRegistry();
+		r.register(readTool(name, schema));
+		r.freeze();
+		return r;
 	}
 
 	/**
@@ -101,17 +119,6 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Creates a tool executor that returns a successful result with the given text.
-	 */
-	private static ToolExecutor echoExecutor() {
-		return (toolCall, context) -> new ToolResultMessage(
-			"tr-" + toolCall.id(), Instant.now(),
-			toolCall.id(), toolCall.name(),
-			new ToolState.Completed("Result of " + toolCall.name(),
-				Instant.now(), Instant.now(), false));
-	}
-
-	/**
 	 * LLM responds with text only, no tool calls. Loop completes in 1 turn.
 	 */
 	public void testSimpleCompletion() {
@@ -120,7 +127,7 @@ public class TestAgentLoop extends TestCase {
 
 		LLMProvider provider = mockProvider(List.of(new TextContent("Hi there!")));
 
-		AgentLoop loop = new AgentLoop(config(), provider, echoExecutor());
+		AgentLoop loop = new AgentLoop(config(), provider, emptyRegistry());
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -138,7 +145,7 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("What is 2+2?"))));
 
-		ToolSchema calcTool = new ToolSchema("calculate", "Does math", "{}");
+		ToolSchema calcSpec = new ToolSchema("calculate", "Does math", "{}");
 		ToolCall toolCall = new ToolCall("tc1", "calculate", "{\"expr\":\"2+2\"}");
 
 		// Turn 1: LLM requests tool. Turn 2: LLM responds with text.
@@ -146,7 +153,9 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("The answer is 4.")));
 
-		AgentLoop loop = new AgentLoop(config(List.of(calcTool), 10), provider, echoExecutor());
+		ToolRegistry registry = echoRegistry("calculate", calcSpec);
+
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -163,7 +172,7 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Read two files"))));
 
-		ToolSchema readTool = new ToolSchema("read_file", "Reads a file", "{}");
+		ToolSchema readSpec = new ToolSchema("read_file", "Reads a file", "{}");
 		ToolCall tc1 = new ToolCall("tc1", "read_file", "{\"path\":\"a.txt\"}");
 		ToolCall tc2 = new ToolCall("tc2", "read_file", "{\"path\":\"b.txt\"}");
 
@@ -172,7 +181,9 @@ public class TestAgentLoop extends TestCase {
 			List.of(tc1, tc2),
 			List.of(new TextContent("Both files read.")));
 
-		AgentLoop loop = new AgentLoop(config(List.of(readTool), 10), provider, echoExecutor());
+		ToolRegistry registry = echoRegistry("read_file", readSpec);
+
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -189,7 +200,7 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Loop forever"))));
 
-		ToolSchema tool = new ToolSchema("do_thing", "Does a thing", "{}");
+		ToolSchema toolSpec = new ToolSchema("do_thing", "Does a thing", "{}");
 		int maxTurns = 3;
 
 		// All 3 turns return tool calls — never returns text-only.
@@ -198,7 +209,9 @@ public class TestAgentLoop extends TestCase {
 			List.of(new ToolCall("tc2", "do_thing", "{}")),
 			List.of(new ToolCall("tc3", "do_thing", "{}")));
 
-		AgentLoop loop = new AgentLoop(config(List.of(tool), maxTurns), provider, echoExecutor());
+		ToolRegistry registry = echoRegistry("do_thing", toolSpec);
+
+		AgentLoop loop = new AgentLoop(config(maxTurns), provider, registry);
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.MAX_TURNS, result.stopReason());
@@ -217,7 +230,7 @@ public class TestAgentLoop extends TestCase {
 				ProviderException.Kind.AUTHENTICATION, 401, "Invalid API key");
 		};
 
-		AgentLoop loop = new AgentLoop(config(), failingProvider, echoExecutor());
+		AgentLoop loop = new AgentLoop(config(), failingProvider, emptyRegistry());
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.ERROR, result.stopReason());
@@ -231,19 +244,26 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Do something"))));
 
-		ToolSchema tool = new ToolSchema("risky_tool", "Might fail", "{}");
+		ToolSchema toolSpec = new ToolSchema("risky_tool", "Might fail", "{}");
 		ToolCall toolCall = new ToolCall("tc1", "risky_tool", "{}");
 
 		LLMProvider provider = mockProvider(
 			List.of(toolCall),
 			List.of(new TextContent("The tool failed, but I recovered.")));
 
-		ToolExecutor failingExecutor = (tc, ctx) -> new ToolResultMessage(
-			"tr-" + tc.id(), Instant.now(),
-			tc.id(), tc.name(),
-			new ToolState.Failed("Something went wrong", Instant.now(), Instant.now()));
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new Tool() {
+			@Override public String name() { return "risky_tool"; }
+			@Override public String description() { return "Might fail"; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				throw new RuntimeException("Something went wrong");
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		});
+		registry.freeze();
 
-		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), provider, failingExecutor);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -260,12 +280,14 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Use a tool"))));
 
-		ToolSchema tool = new ToolSchema("my_tool", "A tool", "{}");
+		ToolSchema toolSpec = new ToolSchema("my_tool", "A tool", "{}");
 		ToolCall toolCall = new ToolCall("tc1", "my_tool", "{\"x\":1}");
 
 		LLMProvider provider = mockProvider(
 			List.of(toolCall),
 			List.of(new TextContent("Done.")));
+
+		ToolRegistry registry = echoRegistry("my_tool", toolSpec);
 
 		List<String> events = new ArrayList<>();
 
@@ -296,7 +318,7 @@ public class TestAgentLoop extends TestCase {
 			}
 		};
 
-		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), provider, echoExecutor());
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		loop.run(conv, listener);
 
 		assertEquals(List.of(
@@ -340,7 +362,7 @@ public class TestAgentLoop extends TestCase {
 			}
 		};
 
-		AgentLoop loop = new AgentLoop(config(), failingProvider, echoExecutor());
+		AgentLoop loop = new AgentLoop(config(), failingProvider, emptyRegistry());
 		loop.run(conv, listener);
 
 		assertEquals(List.of("turn_start:1", "error:AUTHENTICATION", "turn_complete:1"), events);
@@ -353,17 +375,24 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
 
-		ToolSchema tool = new ToolSchema("bad_tool", "Fails", "{}");
+		ToolSchema toolSpec = new ToolSchema("bad_tool", "Fails", "{}");
 		ToolCall toolCall = new ToolCall("tc1", "bad_tool", "{}");
 
 		LLMProvider provider = mockProvider(
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
 
-		ToolExecutor failingExecutor = (tc, ctx) -> new ToolResultMessage(
-			"tr-" + tc.id(), Instant.now(),
-			tc.id(), tc.name(),
-			new ToolState.Failed("Boom", Instant.now(), Instant.now()));
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new Tool() {
+			@Override public String name() { return "bad_tool"; }
+			@Override public String description() { return "Fails"; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				throw new RuntimeException("Boom");
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		});
+		registry.freeze();
 
 		List<String> events = new ArrayList<>();
 		AgentListener listener = new AgentListener() {
@@ -373,10 +402,12 @@ public class TestAgentLoop extends TestCase {
 			}
 		};
 
-		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), provider, failingExecutor);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		loop.run(conv, listener);
 
-		assertEquals(List.of("tool_error:bad_tool:Boom"), events);
+		assertEquals(1, events.size());
+		assertTrue(events.get(0).startsWith("tool_error:bad_tool:"));
+		assertTrue(events.get(0).contains("Boom"));
 	}
 
 	/**
@@ -386,14 +417,16 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
 
-		ToolSchema tool = new ToolSchema("tool", "T", "{}");
+		ToolSchema toolSpec = new ToolSchema("tool", "T", "{}");
 		ToolCall toolCall = new ToolCall("tc1", "tool", "{}");
 
 		LLMProvider provider = mockProvider(
 			List.of(toolCall),
 			List.of(new TextContent("Done")));
 
-		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), provider, echoExecutor());
+		ToolRegistry registry = echoRegistry("tool", toolSpec);
+
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		// 2 turns, each with USAGE (100 input, 50 output)
@@ -411,7 +444,7 @@ public class TestAgentLoop extends TestCase {
 		LLMProvider provider = mockProvider(List.of(new TextContent("Hi")));
 
 		Thread.currentThread().interrupt();
-		AgentLoop loop = new AgentLoop(config(), provider, echoExecutor());
+		AgentLoop loop = new AgentLoop(config(), provider, emptyRegistry());
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.ABORTED, result.stopReason());
@@ -421,29 +454,37 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Thread interrupted between tool calls — loop returns ABORTED.
+	 * Thread interrupted between turns — loop returns ABORTED.
+	 *
+	 * <p>Sets the interrupt flag during tool execution. The loop detects it
+	 * at the start of the next turn iteration and returns ABORTED.</p>
 	 */
 	public void testCancellationDuringToolExecution() {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
 
-		ToolSchema tool = new ToolSchema("tool", "T", "{}");
+		ToolSchema toolSpec = new ToolSchema("tool", "T", "{}");
 		ToolCall tc1 = new ToolCall("tc1", "tool", "{}");
-		ToolCall tc2 = new ToolCall("tc2", "tool", "{}");
 
-		LLMProvider provider = mockProvider(List.of(tc1, tc2));
+		// Two responses: first returns tool call, second would return text
+		LLMProvider provider = mockProvider(
+			List.of(tc1),
+			List.of(new TextContent("Done")));
 
-		ToolExecutor interruptingExecutor = (tc, ctx) -> {
-			if ("tc1".equals(tc.id())) {
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new Tool() {
+			@Override public String name() { return "tool"; }
+			@Override public String description() { return "T"; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
 				Thread.currentThread().interrupt();
+				return "ok";
 			}
-			return new ToolResultMessage(
-				"tr-" + tc.id(), Instant.now(),
-				tc.id(), tc.name(),
-				new ToolState.Completed("ok", Instant.now(), Instant.now(), false));
-		};
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		});
+		registry.freeze();
 
-		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), provider, interruptingExecutor);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.ABORTED, result.stopReason());
@@ -464,7 +505,7 @@ public class TestAgentLoop extends TestCase {
 		memory.add(new UserMessage("u1", T0,
 			List.of(new TextContent("x".repeat(800))))); // 200 tokens
 
-		ToolSchema tool = new ToolSchema("tool", "T", "{}");
+		ToolSchema toolSpec = new ToolSchema("tool", "T", "{}");
 		ToolCall toolCall = new ToolCall("tc1", "tool", "{}");
 
 		// Provider that reports high input token usage to trigger compaction
@@ -498,8 +539,10 @@ public class TestAgentLoop extends TestCase {
 			}
 		};
 
-		AgentLoop loop = new AgentLoop(config(List.of(tool), 10), highUsageProvider,
-			echoExecutor(), memory);
+		ToolRegistry registry = echoRegistry("tool", toolSpec);
+
+		AgentLoop loop = new AgentLoop(config(10), highUsageProvider,
+			registry, memory);
 		AgentResult result = loop.run(ToolContext.EMPTY, listener);
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -516,7 +559,7 @@ public class TestAgentLoop extends TestCase {
 
 		LLMProvider provider = mockProvider(List.of(new TextContent("Hi")));
 
-		AgentLoop loop = new AgentLoop(config(), provider, echoExecutor());
+		AgentLoop loop = new AgentLoop(config(), provider, emptyRegistry());
 		AgentResult result = loop.run(conv, new AgentListener() {});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -526,7 +569,7 @@ public class TestAgentLoop extends TestCase {
 	 * run(ToolContext, AgentListener) throws when no memory is configured.
 	 */
 	public void testRunWithoutMemoryThrows() {
-		AgentLoop loop = new AgentLoop(config(), mockProvider(List.of(new TextContent("Hi"))), echoExecutor());
+		AgentLoop loop = new AgentLoop(config(), mockProvider(List.of(new TextContent("Hi"))), emptyRegistry());
 		try {
 			loop.run(ToolContext.EMPTY, new AgentListener() {});
 			fail("Expected IllegalStateException");
@@ -568,7 +611,7 @@ public class TestAgentLoop extends TestCase {
 
 		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
 
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, ctx, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -609,7 +652,7 @@ public class TestAgentLoop extends TestCase {
 
 		ToolContext ctx = new ToolContext(devSecurity, ApprovalCallback.AUTO_APPROVE);
 
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, ctx, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -636,7 +679,7 @@ public class TestAgentLoop extends TestCase {
 
 		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
 
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, ctx, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -666,7 +709,7 @@ public class TestAgentLoop extends TestCase {
 
 		ToolContext ctx = new ToolContext(developmentSecurity(), rejectingCallback);
 
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, ctx, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -702,7 +745,7 @@ public class TestAgentLoop extends TestCase {
 
 		ToolContext ctx = new ToolContext(developmentSecurity(), rejectingCallback);
 
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, ctx, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
@@ -773,7 +816,7 @@ public class TestAgentLoop extends TestCase {
 		};
 
 		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		loop.run(conv, ctx, listener);
 
 		assertEquals(List.of("denied:edit"), events);
@@ -806,28 +849,24 @@ public class TestAgentLoop extends TestCase {
 		};
 
 		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE);
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, registry);
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		loop.run(conv, ctx, listener);
 
 		assertEquals(List.of("approval:edit"), events);
 	}
 
 	/**
-	 * hasToolPermission is checked even when executor is not a ToolRegistry.
+	 * hasToolPermission(String) is checked for tools not found in the registry.
 	 */
-	public void testPermissionCheckWithNonRegistryExecutor() {
+	public void testPermissionCheckForUnknownTool() {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
 
-		ToolSchema toolSpec = new ToolSchema("external_tool", "External", "{}");
 		ToolCall toolCall = new ToolCall("tc1", "external_tool", "{}");
 
 		LLMProvider provider = mockProvider(
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
-
-		// Non-ToolRegistry executor
-		ToolExecutor plainExecutor = echoExecutor();
 
 		SecurityContext denyAll = new SecurityContext() {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
@@ -844,11 +883,41 @@ public class TestAgentLoop extends TestCase {
 		};
 
 		ToolContext ctx = new ToolContext(denyAll, ApprovalCallback.AUTO_APPROVE);
-		AgentLoop loop = new AgentLoop(config(List.of(toolSpec), 10), provider, plainExecutor);
+		AgentLoop loop = new AgentLoop(config(10), provider, emptyRegistry());
 		AgentResult result = loop.run(conv, ctx, listener);
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertEquals(List.of("denied:external_tool"), events);
+	}
+
+	/**
+	 * In PRODUCTION mode, GLOBAL tool specs are not sent to the LLM at all.
+	 */
+	public void testToolSpecsFilteredBySecurityContext() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(readTool("search", new ToolSchema("search", "Searches", "{}")));
+		registry.register(globalTool("edit", new ToolSchema("edit", "Edits", "{}")));
+		registry.freeze();
+
+		List<ProviderRequest> capturedRequests = new ArrayList<>();
+		LLMProvider capturingProvider = (request, handler) -> {
+			capturedRequests.add(request);
+			handler.onEvent(new StreamEvent.TextDelta(0, "Hi"));
+			handler.onEvent(new StreamEvent.MessageComplete(
+				"msg-0", MODEL, "end_turn", USAGE, List.of(new TextContent("Hi"))));
+		};
+
+		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
+		AgentLoop loop = new AgentLoop(config(), capturingProvider, registry);
+		AgentResult result = loop.run(conv, ctx, listener());
+
+		assertEquals(1, capturedRequests.size());
+		List<ToolSchema> sentTools = capturedRequests.get(0).tools();
+		assertEquals("Only READ tool should be sent", 1, sentTools.size());
+		assertEquals("search", sentTools.get(0).name());
 	}
 
 	private static SecurityContext developmentSecurity() {

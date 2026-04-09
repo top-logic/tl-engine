@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import junit.framework.TestCase;
@@ -24,6 +25,9 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
+import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tool.ToolMode;
+import com.top_logic.tl.ai.core.tool.ToolRegistry;
 
 /**
  * Visual agent loop test — prints the full agent loop lifecycle to stdout.
@@ -58,11 +62,11 @@ public class VisualAgentLoopTest extends TestCase {
 		System.out.println(ANSI_CYAN + "  Agent Loop — Mock Simulation (3 turns)" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
 
-		ToolSchema weatherTool = new ToolSchema("get_weather",
+		ToolSchema weatherSpec = new ToolSchema("get_weather",
 			"Gets the current weather for a city",
 			"{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}}}");
 
-		ToolSchema calcTool = new ToolSchema("calculate",
+		ToolSchema calcSpec = new ToolSchema("calculate",
 			"Evaluates a math expression",
 			"{\"type\":\"object\",\"properties\":{\"expr\":{\"type\":\"string\"}}}");
 
@@ -81,32 +85,39 @@ public class VisualAgentLoopTest extends TestCase {
 				new TextContent("I couldn't convert the temperature because the calculator "),
 				new TextContent("was unavailable, but 20°C is about 68°F.")));
 
-		ToolExecutor executor = (toolCall, context) -> {
-			sleep(100); // simulate work
-			if ("calculate".equals(toolCall.name())) {
-				return new ToolResultMessage(
-					UUID.randomUUID().toString(), Instant.now(),
-					toolCall.id(), toolCall.name(),
-					new ToolState.Failed("Calculator service unavailable",
-						Instant.now(), Instant.now()));
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new Tool() {
+			@Override public String name() { return "get_weather"; }
+			@Override public String description() { return "Gets the current weather for a city"; }
+			@Override public ToolSchema schema() { return weatherSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				sleep(100);
+				String city = args.containsKey("city") ? String.valueOf(args.get("city")) : "Unknown";
+				String temp = "Berlin".equals(city) ? "20°C, sunny" : "15°C, cloudy";
+				return "Weather in " + city + ": " + temp;
 			}
-			String city = toolCall.arguments().contains("Berlin") ? "Berlin" : "Munich";
-			String temp = "Berlin".equals(city) ? "20°C, sunny" : "15°C, cloudy";
-			return new ToolResultMessage(
-				UUID.randomUUID().toString(), Instant.now(),
-				toolCall.id(), toolCall.name(),
-				new ToolState.Completed("Weather in " + city + ": " + temp,
-					Instant.now(), Instant.now(), false));
-		};
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		});
+		registry.register(new Tool() {
+			@Override public String name() { return "calculate"; }
+			@Override public String description() { return "Evaluates a math expression"; }
+			@Override public ToolSchema schema() { return calcSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				sleep(100);
+				throw new RuntimeException("Calculator service unavailable");
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		});
+		registry.freeze();
 
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("What's the weather in Berlin and Munich? Convert Berlin's temp to Fahrenheit."))));
 
 		AgentConfig config = new AgentConfig("mock-model", "You are a helpful assistant.",
-			List.of(weatherTool, calcTool), 10, 4096);
+			10, 4096);
 
-		AgentLoop loop = new AgentLoop(config, provider, executor);
+		AgentLoop loop = new AgentLoop(config, provider, registry);
 		AgentResult result = loop.run(conv, printingListener());
 
 		printResult(result, conv);
@@ -128,15 +139,21 @@ public class VisualAgentLoopTest extends TestCase {
 
 		AnthropicProvider provider = new AnthropicProvider(apiKey);
 
-		ToolSchema tool = new ToolSchema("get_current_time",
+		ToolSchema toolSpec = new ToolSchema("get_current_time",
 			"Returns the current server time in ISO-8601 format.",
 			"{\"type\":\"object\",\"properties\":{}}");
 
-		ToolExecutor executor = (toolCall, context) -> new ToolResultMessage(
-			UUID.randomUUID().toString(), Instant.now(),
-			toolCall.id(), toolCall.name(),
-			new ToolState.Completed(Instant.now().toString(),
-				Instant.now(), Instant.now(), false));
+		ToolRegistry registry = new ToolRegistry();
+		registry.register(new Tool() {
+			@Override public String name() { return "get_current_time"; }
+			@Override public String description() { return "Returns the current server time in ISO-8601 format."; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public String execute(Map<String, Object> args, ToolContext context) {
+				return Instant.now().toString();
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		});
+		registry.freeze();
 
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
@@ -144,9 +161,9 @@ public class VisualAgentLoopTest extends TestCase {
 
 		AgentConfig config = new AgentConfig("claude-haiku-4-5-20251001",
 			"You are a helpful assistant. Use tools when appropriate. Be concise.",
-			List.of(tool), 5, 1024);
+			5, 1024);
 
-		AgentLoop loop = new AgentLoop(config, provider, executor);
+		AgentLoop loop = new AgentLoop(config, provider, registry);
 		AgentResult result = loop.run(conv, printingListener());
 
 		printResult(result, conv);

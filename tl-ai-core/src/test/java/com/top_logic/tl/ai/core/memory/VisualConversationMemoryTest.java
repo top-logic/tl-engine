@@ -293,30 +293,33 @@ public class VisualConversationMemoryTest extends TestCase {
 			}
 		};
 
-		// Tool executor returns sizable file contents
-		var executor = new com.top_logic.tl.ai.core.agent.ToolExecutor() {
-			@Override
-			public ToolResultMessage execute(ToolCall toolCall, ToolContext ctx) {
+		// Tool registry with a read_file tool that returns sizable file contents
+		com.top_logic.tl.ai.core.tool.ToolRegistry registry = new com.top_logic.tl.ai.core.tool.ToolRegistry();
+		registry.register(new com.top_logic.tl.ai.core.tool.Tool() {
+			@Override public String name() { return "read_file"; }
+			@Override public String description() { return "Read a file's contents"; }
+			@Override public com.top_logic.tl.ai.core.provider.ToolSchema schema() { return readTool; }
+			@Override public String execute(java.util.Map<String, Object> args, ToolContext context) {
 				sleep(50);
-				String content = switch (toolCall.arguments()) {
-					case String s when s.contains("App.java") ->
-						"package com.example;\n\n" + "// Application entry point\n".repeat(20);
-					case String s when s.contains("Config.xml") ->
-						"<config>\n" + "  <db host='localhost' port='5432'/>\n".repeat(15) + "</config>";
-					default ->
-						"CREATE TABLE users (\n" + "  id SERIAL PRIMARY KEY,\n".repeat(10) + ");";
-				};
-				return new ToolResultMessage(
-					UUID.randomUUID().toString(), Instant.now(),
-					toolCall.id(), toolCall.name(),
-					new ToolState.Completed(content, Instant.now(), Instant.now(), false));
+				String path = String.valueOf(args.getOrDefault("path", ""));
+				if (path.contains("App.java")) {
+					return "package com.example;\n\n" + "// Application entry point\n".repeat(20);
+				} else if (path.contains("Config.xml")) {
+					return "<config>\n" + "  <db host='localhost' port='5432'/>\n".repeat(15) + "</config>";
+				} else {
+					return "CREATE TABLE users (\n" + "  id SERIAL PRIMARY KEY,\n".repeat(10) + ");";
+				}
 			}
-		};
+			@Override public com.top_logic.tl.ai.core.tool.ToolMode mode() {
+				return com.top_logic.tl.ai.core.tool.ToolMode.READ;
+			}
+		});
+		registry.freeze();
 
 		AgentConfig config = new AgentConfig("mock-model",
-			"You are a helpful assistant.", List.of(readTool), 10, 4096);
+			"You are a helpful assistant.", 10, 4096);
 
-		AgentLoop loop = new AgentLoop(config, provider, executor, memory);
+		AgentLoop loop = new AgentLoop(config, provider, registry, memory);
 		AgentResult result = loop.run(ToolContext.EMPTY, memoryListener(memory));
 
 		System.out.println("\n" + ANSI_CYAN + "───────────────────────────────────────────" + ANSI_RESET);

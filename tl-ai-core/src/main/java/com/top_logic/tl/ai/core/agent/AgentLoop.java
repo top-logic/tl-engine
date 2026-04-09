@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tool.Tool;
 import com.top_logic.tl.ai.core.tool.ToolMode;
 import com.top_logic.tl.ai.core.tool.ToolRegistry;
@@ -71,7 +72,7 @@ public class AgentLoop {
 
 	private final LLMProvider _provider;
 
-	private final ToolExecutor _toolExecutor;
+	private final ToolRegistry _registry;
 
 	private final int _maxResultChars;
 
@@ -80,12 +81,12 @@ public class AgentLoop {
 	/**
 	 * Creates a new agent loop with default result truncation.
 	 *
-	 * @param config       loop configuration
-	 * @param provider     LLM provider for streaming responses
-	 * @param toolExecutor executes tool calls requested by the LLM
+	 * @param config   loop configuration
+	 * @param provider LLM provider for streaming responses
+	 * @param registry tool registry for tool lookup and execution
 	 */
-	public AgentLoop(AgentConfig config, LLMProvider provider, ToolExecutor toolExecutor) {
-		this(config, provider, toolExecutor, DEFAULT_MAX_RESULT_CHARS);
+	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry) {
+		this(config, provider, registry, DEFAULT_MAX_RESULT_CHARS);
 	}
 
 	/**
@@ -93,14 +94,14 @@ public class AgentLoop {
 	 *
 	 * @param config         loop configuration
 	 * @param provider       LLM provider for streaming responses
-	 * @param toolExecutor   executes tool calls requested by the LLM
+	 * @param registry       tool registry for tool lookup and execution
 	 * @param maxResultChars maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentConfig config, LLMProvider provider, ToolExecutor toolExecutor,
+	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry,
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
-		_toolExecutor = Objects.requireNonNull(toolExecutor, "Tool executor must not be null.");
+		_registry = Objects.requireNonNull(registry, "Registry must not be null.");
 		if (maxResultChars <= 0) {
 			throw new IllegalArgumentException("maxResultChars must be positive.");
 		}
@@ -111,16 +112,16 @@ public class AgentLoop {
 	/**
 	 * Creates a new agent loop with memory-aware context management.
 	 *
-	 * @param config       loop configuration
-	 * @param provider     LLM provider for streaming responses
-	 * @param toolExecutor executes tool calls requested by the LLM
-	 * @param memory       conversation memory with token tracking and compaction
+	 * @param config   loop configuration
+	 * @param provider LLM provider for streaming responses
+	 * @param registry tool registry for tool lookup and execution
+	 * @param memory   conversation memory with token tracking and compaction
 	 */
-	public AgentLoop(AgentConfig config, LLMProvider provider, ToolExecutor toolExecutor,
+	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry,
 			ConversationMemory memory) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
-		_toolExecutor = Objects.requireNonNull(toolExecutor, "Tool executor must not be null.");
+		_registry = Objects.requireNonNull(registry, "Registry must not be null.");
 		_memory = Objects.requireNonNull(memory, "Memory must not be null.");
 		_maxResultChars = DEFAULT_MAX_RESULT_CHARS;
 	}
@@ -153,7 +154,7 @@ public class AgentLoop {
 
 			AssistantMessage assistantMsg;
 			try {
-				assistantMsg = callProvider(conversation, listener);
+				assistantMsg = callProvider(conversation, context, listener);
 			} catch (ProviderException e) {
 				listener.onError(e);
 				listener.onTurnComplete(turn, TokenUsage.EMPTY);
@@ -234,7 +235,7 @@ public class AgentLoop {
 			AssistantMessage assistantMsg;
 			try {
 				assistantMsg = callProviderWithReactiveCompaction(
-					conversation, memory, listener);
+					conversation, context, memory, listener);
 			} catch (ProviderException e) {
 				listener.onError(e);
 				listener.onTurnComplete(turn, TokenUsage.EMPTY);
@@ -278,11 +279,11 @@ public class AgentLoop {
 	 * {@link ProviderException.Kind#CONTEXT_WINDOW_EXCEEDED}, compact and retry.
 	 */
 	private AssistantMessage callProviderWithReactiveCompaction(
-			Conversation conversation, ConversationMemory memory,
+			Conversation conversation, ToolContext context, ConversationMemory memory,
 			AgentListener listener) throws ProviderException {
 		for (int attempt = 0; attempt <= MAX_REACTIVE_COMPACT_RETRIES; attempt++) {
 			try {
-				return callProvider(conversation, listener);
+				return callProvider(conversation, context, listener);
 			} catch (ProviderException e) {
 				if (e.kind() != ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
 						|| attempt == MAX_REACTIVE_COMPACT_RETRIES) {
@@ -351,11 +352,8 @@ public class AgentLoop {
 	}
 
 	private boolean isConcurrencySafe(ToolCall tc) {
-		if (_toolExecutor instanceof ToolRegistry registry) {
-			Tool tool = registry.getTool(tc.name());
-			return tool != null && tool.isConcurrencySafe();
-		}
-		return false;
+		Tool tool = _registry.getTool(tc.name());
+		return tool != null && tool.isConcurrencySafe();
 	}
 
 	private void executeSingle(ToolCall toolCall, ToolContext context,
@@ -407,8 +405,7 @@ public class AgentLoop {
 		SecurityContext security = context.security();
 
 		// Step 1: Unconditional user permission check (runs for ALL tools)
-		Tool tool = (_toolExecutor instanceof ToolRegistry registry)
-			? registry.getTool(toolCall.name()) : null;
+		Tool tool = _registry.getTool(toolCall.name());
 
 		if (tool != null) {
 			if (!security.hasToolPermission(tool)) {
@@ -482,7 +479,7 @@ public class AgentLoop {
 			}
 		}
 
-		ToolResultMessage result = _toolExecutor.execute(toolCall, context);
+		ToolResultMessage result = _registry.execute(toolCall, context);
 		return truncateIfNeeded(result);
 	}
 
@@ -523,17 +520,33 @@ public class AgentLoop {
 	/**
 	 * Call the LLM provider and collect the response.
 	 *
+	 * <p>Filters tool schemas dynamically based on the security context: tools the
+	 * user lacks permission for, and GLOBAL tools in PRODUCTION mode, are excluded
+	 * from the request so the LLM never sees capabilities it cannot use.</p>
+	 *
 	 * <p>This is the seam for retry logic (rate limiting, context overflow, backoff).
 	 * Currently calls once and throws on error. Recovery strategies will wrap
 	 * this method's internals with retry/compact/fallback logic.</p>
 	 */
-	private AssistantMessage callProvider(Conversation conversation, AgentListener listener)
-			throws ProviderException {
+	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
+			AgentListener listener) throws ProviderException {
+		List<ToolSchema> filteredTools = _registry.toolSchemas(tool -> {
+			SecurityContext security = context.security();
+			if (!security.hasToolPermission(tool)) {
+				return false;
+			}
+			if (tool.mode() == ToolMode.GLOBAL
+					&& security.executionMode() == ExecutionMode.PRODUCTION) {
+				return false;
+			}
+			return true;
+		});
+
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),
 			_config.systemPrompt(),
 			conversation.messages(),
-			_config.tools(),
+			filteredTools,
 			_config.maxOutputTokens(),
 			_config.modelOptions());
 

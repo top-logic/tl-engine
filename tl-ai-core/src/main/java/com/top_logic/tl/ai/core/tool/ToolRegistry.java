@@ -199,7 +199,7 @@ public class ToolRegistry implements ToolExecutor {
 	/**
 	 * Parse a JSON object string into a {@code Map<String, Object>}.
 	 */
-	static Map<String, Object> parseJson(String json) throws IOException {
+	public static Map<String, Object> parseJson(String json) throws IOException {
 		if (json == null || json.isBlank() || "{}".equals(json.trim())) {
 			return Map.of();
 		}

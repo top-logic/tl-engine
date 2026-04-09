@@ -136,7 +136,7 @@ public class VisualToolRegistryTest extends TestCase {
 
 		AgentConfig config = new AgentConfig("mock-model",
 			"You are a helpful assistant with math and weather tools.",
-			registry.toolSchemas(t -> t.mode() != ToolMode.GLOBAL), 10, 4096);
+			10, 4096);
 
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
@@ -170,7 +170,7 @@ public class VisualToolRegistryTest extends TestCase {
 
 		AgentConfig config = new AgentConfig("claude-haiku-4-5-20251001",
 			"You are a helpful assistant. Use the available tools to answer questions. Be concise.",
-			registry.toolSchemas(), 5, 1024);
+			5, 1024);
 
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),

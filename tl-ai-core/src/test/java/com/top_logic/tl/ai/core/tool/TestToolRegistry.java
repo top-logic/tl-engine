@@ -264,7 +264,7 @@ public class TestToolRegistry extends TestCase {
 			List.of(new TextContent("The answer is 42.")));
 
 		AgentConfig config = new AgentConfig(MODEL, "You can do math.",
-			registry.toolSchemas(), 10, 8192);
+			10, 8192);
 
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", Instant.now(), List.of(new TextContent("What is 17+25?"))));
@@ -291,7 +291,7 @@ public class TestToolRegistry extends TestCase {
 			List.of(new TextContent("I see the tool was denied.")));
 
 		AgentConfig config = new AgentConfig(MODEL, "Test",
-			registry.toolSchemas(), 10, 8192);
+			10, 8192);
 
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", Instant.now(), List.of(new TextContent("Delete 123"))));
@@ -341,7 +341,7 @@ public class TestToolRegistry extends TestCase {
 			List.of(new TextContent("Got it.")));
 
 		AgentConfig config = new AgentConfig(MODEL, "Test",
-			registry.toolSchemas(), 10, 8192);
+			10, 8192);
 
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", Instant.now(), List.of(new TextContent("Big output"))));

@@ -24,13 +24,14 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 
 /**
- * A {@link ReactControl} that renders a form for all PLAIN, REF, and ITEM properties of a
+ * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, and LIST properties of a
  * {@link ConfigurationItem}.
  *
  * <p>
  * Each PLAIN/REF property is wrapped in a {@link ReactFormFieldChromeControl} with label, mandatory
  * indicator, and help text. ITEM properties are rendered as collapsible
- * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl}. LIST,
+ * {@link ReactFormGroupControl} sections containing a nested {@link ConfigEditorControl}. LIST
+ * properties are rendered as collapsible sections containing nested editors for each list element.
  * MAP, ARRAY, DERIVED, and COMPLEX properties are skipped.
  * </p>
  */
@@ -117,6 +118,30 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 
+			if (property.kind() == PropertyKind.LIST) {
+				List<?> items = (List<?>) config.value(property);
+				if (items != null && !items.isEmpty()) {
+					String listLabel = resolveLabel(property);
+					ReactFormLayoutControl listContainer = new ReactFormLayoutControl(context);
+					for (int i = 0; i < items.size(); i++) {
+						Object item = items.get(i);
+						if (item instanceof ConfigurationItem itemConfig) {
+							ConfigEditorControl nestedEditor = createNestedEditor(context, itemConfig);
+							String itemLabel = resolveListItemLabel(itemConfig, i);
+							ReactFormGroupControl itemGroup = new ReactFormGroupControl(
+								context, itemLabel, true, false, "subtle", true,
+								List.of(), List.of(nestedEditor));
+							listContainer.addChild(itemGroup);
+						}
+					}
+					ReactFormGroupControl listGroup = new ReactFormGroupControl(
+						context, listLabel, true, false, "default", false,
+						List.of(), List.of(listContainer));
+					addChild(listGroup);
+				}
+				continue;
+			}
+
 			ConfigFieldModel model = new ConfigFieldModel(config, property);
 			addCleanupAction(model::detach);
 
@@ -195,8 +220,45 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
 	}
 
+	/**
+	 * Resolves a display label for a list item.
+	 *
+	 * <p>
+	 * Tries common identifying properties ("name", "id") first. Falls back to the tag name
+	 * annotation or the simple interface name with the list index.
+	 * </p>
+	 */
+	private static String resolveListItemLabel(ConfigurationItem itemConfig, int index) {
+		PropertyDescriptor nameProp = itemConfig.descriptor().getProperty("name");
+		if (nameProp != null) {
+			Object value = itemConfig.value(nameProp);
+			if (value instanceof String s && !s.isEmpty()) {
+				return s;
+			}
+		}
+		PropertyDescriptor idProp = itemConfig.descriptor().getProperty("id");
+		if (idProp != null) {
+			Object value = itemConfig.value(idProp);
+			if (value instanceof String s && !s.isEmpty()) {
+				return s;
+			}
+		}
+		Class<?> iface = itemConfig.descriptor().getConfigurationInterface();
+		com.top_logic.basic.config.annotation.TagName tagName =
+			iface.getAnnotation(com.top_logic.basic.config.annotation.TagName.class);
+		if (tagName != null) {
+			return tagName.value() + " [" + (index + 1) + "]";
+		}
+		String simpleName = iface.getSimpleName();
+		if (simpleName.endsWith("Config")) {
+			simpleName = simpleName.substring(0, simpleName.length() - "Config".length());
+		}
+		return simpleName + " [" + (index + 1) + "]";
+	}
+
 	private static boolean isSupportedKind(PropertyKind kind) {
-		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM;
+		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
+			|| kind == PropertyKind.LIST;
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {

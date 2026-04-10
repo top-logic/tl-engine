@@ -14,6 +14,8 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
+import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -43,7 +45,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *        The configuration item to edit.
 	 */
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config) {
-		this(context, config, Collections.emptySet());
+		this(context, config, Collections.emptySet(), false);
 	}
 
 	/**
@@ -58,6 +60,26 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties) {
+		this(context, config, hiddenProperties, false);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl}, hiding the given properties and optionally skipping
+	 * tree properties.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param hiddenProperties
+	 *        Properties to exclude from the form.
+	 * @param skipTreeProperties
+	 *        If {@code true}, properties annotated with {@link TreeProperty} are skipped. Use
+	 *        {@code true} for top-level tree node configurations, {@code false} for nested/inline
+	 *        sub-configurations.
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties) {
 		super(context);
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
@@ -65,6 +87,12 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				continue;
 			}
 			if (!isSupportedKind(property.kind())) {
+				continue;
+			}
+			if (isHidden(property)) {
+				continue;
+			}
+			if (skipTreeProperties && isTreeProperty(property)) {
 				continue;
 			}
 
@@ -169,6 +197,16 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 	private static boolean isSupportedKind(PropertyKind kind) {
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM;
+	}
+
+	private static boolean isHidden(PropertyDescriptor property) {
+		Hidden annotation = property.getAnnotation(Hidden.class);
+		return annotation != null && annotation.value();
+	}
+
+	private static boolean isTreeProperty(PropertyDescriptor property) {
+		TreeProperty annotation = property.getAnnotation(TreeProperty.class);
+		return annotation != null && annotation.value();
 	}
 
 }

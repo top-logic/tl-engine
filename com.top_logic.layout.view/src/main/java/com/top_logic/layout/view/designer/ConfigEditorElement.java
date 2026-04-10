@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.designer;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -117,7 +118,8 @@ public class ConfigEditorElement implements UIElement {
 		// Build initial editor if a node is already selected.
 		Object initialValue = inputChannel.get();
 		if (initialValue instanceof DesignTreeNode node && !node.isVirtual()) {
-			ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem());
+			ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem(),
+				Collections.emptySet(), true);
 			installDirtyTracking(node);
 			wrapper.addChild(editor);
 		}
@@ -125,7 +127,8 @@ public class ConfigEditorElement implements UIElement {
 		// Listen for selection changes and rebuild the editor.
 		inputChannel.addListener((sender, oldValue, newValue) -> {
 			if (newValue instanceof DesignTreeNode node && !node.isVirtual()) {
-				ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem());
+				ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem(),
+					Collections.emptySet(), true);
 				installDirtyTracking(node);
 				wrapper.setChild(editor);
 			} else {

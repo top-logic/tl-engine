@@ -5,18 +5,21 @@
  */
 package com.top_logic.element.boundsec.manager.rule;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.I18NConstants;
 import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * One node in a role rule path that navigates a {@link TLReference}.
@@ -88,4 +91,20 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 	public Collection<? extends TLObject> getSources(TLObject destination) {
 		return this.getValues(destination, false);
     }
+
+	@Override
+	public void appendId(Appendable out) throws IOException {
+		out.append("ma:");
+		out.append(TLModelUtil.qualifiedName(_reference));
+		out.append('_');
+		out.append(isInverse() ? "back" : "succ");
+	}
+
+	@Override
+	public void appendForTooltip(Appendable out) throws IOException {
+		out.append("MA: ");
+		out.append(TagUtil.encodeXML(TLModelUtil.qualifiedName(_reference)));
+		out.append("; Inverse: ");
+		out.append(String.valueOf(isInverse()));
+	}
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.boundsec.manager.rule;
 
+import java.io.IOException;
 import java.util.Collection;
 
 import com.top_logic.basic.CollectionUtil;
@@ -55,6 +56,16 @@ public class IdentityPathElement implements PathElement {
 	@Override
 	public boolean isInverse() {
 		return false;
+	}
+
+	@Override
+	public void appendId(Appendable out) throws IOException {
+		// No ID for technical path element.
+	}
+
+	@Override
+	public void appendForTooltip(Appendable out) throws IOException {
+		// No tooltip for technical path element.
 	}
 
 }

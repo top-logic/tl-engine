@@ -412,22 +412,9 @@ public class ElementAccessHelper {
 			Set<TLObject> theNewSources = new HashSet<>();
             int           theNewPos     = aPos - 1;
             PathElement   thePE         = aPath.get(theNewPos);
-            TLStructuredTypePart theMA         = thePE.getMetaAttribute();
-			if (thePE.isInverse()) {
-				for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-					TLObject theSource = theIt.next();
-					Object theDestination = theSource.tValue(theMA);
-					if (theDestination != null) {
-						theNewSources.addAll((theDestination instanceof Collection)
-							? (Collection<TLObject>) theDestination
-							: Collections.singleton((TLObject) theDestination));
-					}
-				}
-            } else {
-				for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-					TLObject theSource = theIt.next();
-					theNewSources.addAll(theSource.tReferers((TLReference) theMA));
-				}
+			for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
+				TLObject theSource = theIt.next();
+				theNewSources.addAll(thePE.getSources(theSource));
             }
             addBaseObjects(aPath, theNewPos, theNewSources, someResult);
         }

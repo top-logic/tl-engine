@@ -7,7 +7,9 @@ package com.top_logic.layout.view.designer;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -15,6 +17,9 @@ import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.FileManager;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.annotation.Format;
@@ -138,13 +143,16 @@ public class SaveDesignCommand implements ViewCommand {
 				com.top_logic.layout.view.I18NConstants.ERROR_SAVE_VIEW_NO_IDE_FILE__PATH.fill(viewPath));
 		}
 
-		try (java.io.Writer out =
-				new OutputStreamWriter(new FileOutputStream(file), "ISO-8859-1")) {
-			ConfigurationWriter writer = new ConfigurationWriter(out);
-			writer.write("view", ViewElement.Config.class, viewConfig);
-		} catch (XMLStreamException | java.io.IOException ex) {
+		try (Writer out = new OutputStreamWriter(new FileOutputStream(file), StringServices.CHARSET_UTF_8)) {
+			new ConfigurationWriter(out).write("view", ViewElement.Config.class, viewConfig);
+		} catch (XMLStreamException | IOException ex) {
 			throw new TopLogicException(
 				com.top_logic.layout.view.I18NConstants.ERROR_SAVE_VIEW_FAILED__PATH.fill(viewPath), ex);
+		}
+		try {
+			XMLPrettyPrinter.normalizeFile(file);
+		} catch (Exception ex) {
+			Logger.warn("Failed to normalize XML: " + viewPath, ex, SaveDesignCommand.class);
 		}
 	}
 }

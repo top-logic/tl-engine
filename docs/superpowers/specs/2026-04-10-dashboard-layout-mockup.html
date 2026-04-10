@@ -280,10 +280,22 @@
   const minColWidthPx = 16 * remPx; // 16rem
   const gapPx = 1 * remPx; // 1rem gap
 
+  // Only allow column counts where 1/2, 1/3, 1/4, 2/3 all produce
+  // clean integer spans. These are the divisors of 12 (except 12 itself).
+  const NICE_COLUMNS = [1, 2, 3, 4, 6];
+
+  function getNiceColumnCount(containerWidth) {
+    const raw = Math.max(1, Math.floor((containerWidth + gapPx) / (minColWidthPx + gapPx)));
+    // Snap down to the largest "nice" number <= raw
+    for (let i = NICE_COLUMNS.length - 1; i >= 0; i--) {
+      if (NICE_COLUMNS[i] <= raw) return NICE_COLUMNS[i];
+    }
+    return 1;
+  }
+
   function updateLayout() {
-    // Calculate how many columns fit based on container width
     const containerWidth = dashboard.clientWidth;
-    const cols = Math.max(1, Math.floor((containerWidth + gapPx) / (minColWidthPx + gapPx)));
+    const cols = getNiceColumnCount(containerWidth);
     colCountEl.textContent = cols;
 
     // Set explicit grid columns

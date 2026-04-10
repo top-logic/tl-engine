@@ -111,7 +111,10 @@ Layout slot that defines size/position. Contains arbitrary child elements
 - Renders a CSS Grid container.
 - Does NOT use `auto-fit` -- `auto-fit` and explicit column spans conflict
   (spanning items create implicit extra columns). Instead, the column count
-  is calculated in JavaScript: `Math.max(1, Math.floor((width + gap) / (minColWidth + gap)))`.
+  is calculated in JavaScript: `Math.max(1, Math.floor((width + gap) / (minColWidth + gap)))`,
+  then snapped down to a "nice" column count from `[1, 2, 3, 4, 6]` where
+  all width fractions (1/2, 1/3, 1/4, 2/3) produce clean integer spans.
+  This prevents gaps where items don't fill a row.
 - Sets `grid-template-columns: repeat(N, 1fr)` explicitly based on
   calculated column count.
 - Sets `grid-auto-rows: <rowHeight>`.
@@ -146,13 +149,16 @@ span = Math.max(1, Math.round(fraction * totalColumns))
 span = Math.min(span, totalColumns)  // clamp to available columns
 ```
 
-| `width` | fraction | 4 cols | 3 cols | 2 cols | 1 col |
-|---------|----------|--------|--------|--------|-------|
-| `full` | 1.0 | 4 | 3 | 2 | 1 |
-| `two-thirds` | 0.667 | 3 | 2 | 2 | 1 |
-| `half` | 0.5 | 2 | 2 | 1 | 1 |
-| `third` | 0.333 | 1 | 1 | 1 | 1 |
-| `quarter` | 0.25 | 1 | 1 | 1 | 1 |
+Column count is restricted to `[1, 2, 3, 4, 6]` (divisors of 12 up to 6)
+so that all fractions always produce clean integer spans with no gaps:
+
+| `width` | fraction | 6 cols | 4 cols | 3 cols | 2 cols | 1 col |
+|---------|----------|--------|--------|--------|--------|-------|
+| `full` | 1.0 | 6 | 4 | 3 | 2 | 1 |
+| `two-thirds` | 0.667 | 4 | 3 | 2 | 1 | 1 |
+| `half` | 0.5 | 3 | 2 | 2 | 1 | 1 |
+| `third` | 0.333 | 2 | 1 | 1 | 1 | 1 |
+| `quarter` | 0.25 | 2 | 1 | 1 | 1 | 1 |
 
 At 1 column (mobile), `row-span` is reset to 1 to prevent excessively tall
 pages.

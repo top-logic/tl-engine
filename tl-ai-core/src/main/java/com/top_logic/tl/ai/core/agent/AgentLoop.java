@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,6 +20,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.event.ApprovalOutcome;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -42,7 +46,7 @@ import com.top_logic.tl.ai.core.tool.ToolRegistry;
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
  *
  * <p>Blocks the calling thread for the entire run. Progress is reported via
- * {@link AgentListener} callbacks on the same thread.</p>
+ * {@link AgentEventListener} callbacks on the same thread.</p>
  *
  * <p>One iteration:</p>
  * <ol>
@@ -58,7 +62,7 @@ import com.top_logic.tl.ai.core.tool.ToolRegistry;
  *
  * @see AgentConfig
  * @see AgentResult
- * @see AgentListener
+ * @see AgentEventListener
  */
 public class AgentLoop {
 
@@ -80,6 +84,9 @@ public class AgentLoop {
 	private final ConversationMemory _memory;
 
 	private final Set<String> _sessionApprovedTools = new HashSet<>();
+
+	/** Tool call IDs denied in the current turn; cleared at the start of each turn's tool execution. */
+	private final Set<String> _turnDeniedCallIds = new HashSet<>();
 
 	/**
 	 * Creates a new agent loop with default result truncation.
@@ -129,6 +136,14 @@ public class AgentLoop {
 		_maxResultChars = DEFAULT_MAX_RESULT_CHARS;
 	}
 
+	private static Instant now() {
+		return Instant.now();
+	}
+
+	private static void emit(AgentEventListener listener, AgentEvent event) {
+		listener.onEvent(event);
+	}
+
 	/**
 	 * Run the agent loop.
 	 *
@@ -140,28 +155,36 @@ public class AgentLoop {
 	 * @param listener     receives progress events
 	 * @return the result describing why the loop stopped
 	 */
-	public AgentResult run(Conversation conversation, ToolContext context, AgentListener listener) {
+	public AgentResult run(Conversation conversation, ToolContext context, AgentEventListener listener) {
 		Objects.requireNonNull(conversation, "Conversation must not be null.");
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
+
+		listener = AgentEventListener.serializing(listener);
+		String runId = UUID.randomUUID().toString();
+		emit(listener, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
 		TokenUsage totalUsage = TokenUsage.EMPTY;
 		int maxTurns = _config.maxTurns();
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
 			if (Thread.interrupted()) {
-				return new AgentResult(StopReason.ABORTED, turn - 1, totalUsage);
+				StopReason stopReason = StopReason.ABORTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn - 1, totalUsage);
 			}
 
-			listener.onTurnStart(turn);
+			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
 			AssistantMessage assistantMsg;
 			try {
-				assistantMsg = callProvider(conversation, context, listener);
+				assistantMsg = callProvider(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
-				listener.onError(e);
-				listener.onTurnComplete(turn, TokenUsage.EMPTY);
-				return new AgentResult(StopReason.ERROR, turn - 1, totalUsage);
+				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY));
+				StopReason stopReason = StopReason.ERROR;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn - 1, totalUsage);
 			}
 
 			conversation.add(assistantMsg);
@@ -173,19 +196,25 @@ public class AgentLoop {
 				.toList();
 
 			if (toolCalls.isEmpty()) {
-				listener.onTurnComplete(turn, assistantMsg.usage());
-				return new AgentResult(StopReason.COMPLETE, turn, totalUsage);
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				StopReason stopReason = StopReason.COMPLETE;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
-			if (!executeToolCalls(toolCalls, context, conversation, listener)) {
-				listener.onTurnComplete(turn, assistantMsg.usage());
-				return new AgentResult(StopReason.ABORTED, turn, totalUsage);
+			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				StopReason stopReason = StopReason.ABORTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
-			listener.onTurnComplete(turn, assistantMsg.usage());
+			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
 		}
 
-		return new AgentResult(StopReason.MAX_TURNS, maxTurns, totalUsage);
+		StopReason stopReason = StopReason.MAX_TURNS;
+		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage));
+		return new AgentResult(stopReason, maxTurns, totalUsage);
 	}
 
 	/**
@@ -193,7 +222,7 @@ public class AgentLoop {
 	 *
 	 * <p>Convenience method for tests and trusted internal use.</p>
 	 */
-	public AgentResult run(Conversation conversation, AgentListener listener) {
+	public AgentResult run(Conversation conversation, AgentEventListener listener) {
 		return run(conversation, ToolContext.EMPTY, listener);
 	}
 
@@ -209,40 +238,51 @@ public class AgentLoop {
 	 * @return the result describing why the loop stopped
 	 * @throws IllegalStateException if this loop was not created with a ConversationMemory
 	 */
-	public AgentResult run(ToolContext context, AgentListener listener) {
+	public AgentResult run(ToolContext context, AgentEventListener listener) {
 		if (_memory == null) {
 			throw new IllegalStateException(
 				"This AgentLoop was not created with a ConversationMemory. "
 				+ "Use the constructor that accepts ConversationMemory, "
-				+ "or call run(Conversation, ToolContext, AgentListener) instead.");
+				+ "or call run(Conversation, ToolContext, AgentEventListener) instead.");
 		}
-		return runWithMemory(_memory, context, listener);
+		Objects.requireNonNull(context, "Context must not be null.");
+		Objects.requireNonNull(listener, "Listener must not be null.");
+
+		listener = AgentEventListener.serializing(listener);
+		String runId = UUID.randomUUID().toString();
+		emit(listener, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
+
+		return runWithMemory(_memory, context, listener, runId);
 	}
 
 	/** Maximum reactive compaction retries on context_window_exceeded before giving up. */
 	private static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
 
 	private AgentResult runWithMemory(ConversationMemory memory, ToolContext context,
-			AgentListener listener) {
+			AgentEventListener listener, String runId) {
 		Conversation conversation = memory.conversation();
 		TokenUsage totalUsage = TokenUsage.EMPTY;
 		int maxTurns = _config.maxTurns();
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
 			if (Thread.interrupted()) {
-				return new AgentResult(StopReason.ABORTED, turn - 1, totalUsage);
+				StopReason stopReason = StopReason.ABORTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn - 1, totalUsage);
 			}
 
-			listener.onTurnStart(turn);
+			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
 
 			AssistantMessage assistantMsg;
 			try {
 				assistantMsg = callProviderWithReactiveCompaction(
-					conversation, context, memory, listener);
+					conversation, context, memory, listener, runId, turn);
 			} catch (ProviderException e) {
-				listener.onError(e);
-				listener.onTurnComplete(turn, TokenUsage.EMPTY);
-				return new AgentResult(StopReason.ERROR, turn - 1, totalUsage);
+				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY));
+				StopReason stopReason = StopReason.ERROR;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn - 1, totalUsage);
 			}
 
 			conversation.add(assistantMsg);
@@ -255,26 +295,32 @@ public class AgentLoop {
 				.toList();
 
 			if (toolCalls.isEmpty()) {
-				listener.onTurnComplete(turn, assistantMsg.usage());
-				return new AgentResult(StopReason.COMPLETE, turn, totalUsage);
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				StopReason stopReason = StopReason.COMPLETE;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
-			if (!executeToolCalls(toolCalls, context, conversation, listener)) {
-				listener.onTurnComplete(turn, assistantMsg.usage());
-				return new AgentResult(StopReason.ABORTED, turn, totalUsage);
+			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				StopReason stopReason = StopReason.ABORTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
 			if (memory.shouldCompact()) {
 				int tokensBefore = memory.estimateTokens();
-				listener.onCompactionStart(tokensBefore);
+				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "proactive"));
 				CompactionResult compactionResult = memory.compact();
-				listener.onCompactionComplete(compactionResult);
+				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), compactionResult));
 			}
 
-			listener.onTurnComplete(turn, assistantMsg.usage());
+			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
 		}
 
-		return new AgentResult(StopReason.MAX_TURNS, maxTurns, totalUsage);
+		StopReason stopReason = StopReason.MAX_TURNS;
+		emit(listener, new AgentEvent.RunCompleted(runId, maxTurns, now(), stopReason, totalUsage));
+		return new AgentResult(stopReason, maxTurns, totalUsage);
 	}
 
 	/**
@@ -284,19 +330,19 @@ public class AgentLoop {
 	 */
 	private AssistantMessage callProviderWithReactiveCompaction(
 			Conversation conversation, ToolContext context, ConversationMemory memory,
-			AgentListener listener) throws ProviderException {
+			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		for (int attempt = 0; attempt <= MAX_REACTIVE_COMPACT_RETRIES; attempt++) {
 			try {
-				return callProvider(conversation, context, listener);
+				return callProvider(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
 				if (e.kind() != ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
 						|| attempt == MAX_REACTIVE_COMPACT_RETRIES) {
 					throw e;
 				}
 				int tokensBefore = memory.estimateTokens();
-				listener.onCompactionStart(tokensBefore);
+				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "reactive"));
 				CompactionResult result = memory.compact("reactive");
-				listener.onCompactionComplete(result);
+				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), result));
 			}
 		}
 		throw new IllegalStateException("Unreachable");
@@ -306,7 +352,9 @@ public class AgentLoop {
 	 * @return {@code true} if all tool calls were executed, {@code false} if interrupted
 	 */
 	private boolean executeToolCalls(List<ToolCall> toolCalls, ToolContext context,
-			Conversation conversation, AgentListener listener) {
+			Conversation conversation, AgentEventListener listener, String runId, int turn) {
+
+		_turnDeniedCallIds.clear();
 
 		List<List<ToolCall>> batches = partitionBatches(toolCalls);
 		int messagesBefore = conversation.size();
@@ -314,14 +362,14 @@ public class AgentLoop {
 		for (List<ToolCall> batch : batches) {
 			if (Thread.interrupted()) {
 				Thread.currentThread().interrupt();
-				rollbackTransaction(context, listener, "Interrupted");
+				rollbackTransaction(context, listener, runId, turn, "Interrupted");
 				return false;
 			}
 
 			if (batch.size() == 1) {
-				executeSingle(batch.get(0), context, conversation, listener);
+				executeSingle(batch.get(0), context, conversation, listener, runId, turn);
 			} else {
-				executeConcurrent(batch, context, conversation, listener);
+				executeConcurrent(batch, context, conversation, listener, runId, turn);
 			}
 		}
 
@@ -333,9 +381,9 @@ public class AgentLoop {
 			.anyMatch(tr -> tr.state() instanceof ToolState.Failed);
 
 		if (anyFailed) {
-			rollbackTransaction(context, listener, "Tool execution failed");
+			rollbackTransaction(context, listener, runId, turn, "Tool execution failed");
 		} else {
-			commitTransaction(context, listener);
+			commitTransaction(context, listener, runId, turn);
 		}
 
 		return true;
@@ -349,10 +397,12 @@ public class AgentLoop {
 	 * @param tool     the resolved tool (may be {@code null} for unknown tools)
 	 * @param context  the current execution context
 	 * @param listener receives lock/transaction events
+	 * @param runId    the current run ID
+	 * @param turn     the current turn number
 	 * @return an error result if the lock could not be acquired, {@code null} if the tool can proceed
 	 */
 	private ToolResultMessage ensureTransaction(ToolCall toolCall, Tool tool, ToolContext context,
-			AgentListener listener) {
+			AgentEventListener listener, String runId, int turn) {
 		TransactionScope scope = context.transaction();
 		if (scope.isNoOp() || scope.isActive()) {
 			return null;
@@ -365,19 +415,19 @@ public class AgentLoop {
 		// First write tool in this turn — acquire lock and begin transaction
 		try {
 			scope.acquireLock();
-			listener.onLockAcquired();
+			emit(listener, new AgentEvent.LockAcquired(runId, turn, now()));
 		} catch (TransactionException e) {
-			listener.onLockFailed(e.getMessage());
+			emit(listener, new AgentEvent.LockFailed(runId, turn, now(), e.getMessage()));
 			return errorResult(toolCall, "Cannot edit: " + e.getMessage());
 		}
 
 		scope.begin();
-		listener.onTransactionBegin();
+		emit(listener, new AgentEvent.TransactionBegan(runId, turn, now()));
 		return null;
 	}
 
 	/** */
-	private void commitTransaction(ToolContext context, AgentListener listener) {
+	private void commitTransaction(ToolContext context, AgentEventListener listener, String runId, int turn) {
 		TransactionScope scope = context.transaction();
 		if (!scope.isActive()) {
 			return;
@@ -386,21 +436,22 @@ public class AgentLoop {
 			scope.commit();
 			Revision rev = scope.commitRevision();
 			long revNum = rev != null ? rev.getCommitNumber() : -1;
-			listener.onTransactionCommit(revNum);
+			emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
 		} catch (TransactionException e) {
 			scope.rollback();
-			listener.onTransactionRollback("Commit failed: " + e.getMessage());
+			emit(listener, new AgentEvent.TransactionRolledBack(runId, turn, now(), "Commit failed: " + e.getMessage()));
 		}
 	}
 
 	/** */
-	private void rollbackTransaction(ToolContext context, AgentListener listener, String reason) {
+	private void rollbackTransaction(ToolContext context, AgentEventListener listener, String runId, int turn,
+			String reason) {
 		TransactionScope scope = context.transaction();
 		if (!scope.isActive()) {
 			return;
 		}
 		scope.rollback();
-		listener.onTransactionRollback(reason);
+		emit(listener, new AgentEvent.TransactionRolledBack(runId, turn, now(), reason));
 	}
 
 	/**
@@ -443,15 +494,15 @@ public class AgentLoop {
 	}
 
 	private void executeSingle(ToolCall toolCall, ToolContext context,
-			Conversation conversation, AgentListener listener) {
+			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
-		ToolResultMessage result = executeWithSecurityCheck(toolCall, context, listener);
+		ToolResultMessage result = executeWithSecurityCheck(toolCall, context, listener, runId, turn);
 		conversation.add(result);
-		reportResult(toolCall, result, listener);
+		reportResult(toolCall, result, listener, runId, turn, _turnDeniedCallIds);
 	}
 
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
-			Conversation conversation, AgentListener listener) {
+			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
 		ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 		try {
@@ -459,7 +510,7 @@ public class AgentLoop {
 
 			for (ToolCall tc : batch) {
 				futures.add(CompletableFuture.supplyAsync(
-					() -> executeWithSecurityCheck(tc, context, listener), executor));
+					() -> executeWithSecurityCheck(tc, context, listener, runId, turn), executor));
 			}
 
 			List<ToolResultMessage> results = new ArrayList<>();
@@ -473,7 +524,7 @@ public class AgentLoop {
 
 			for (int i = 0; i < batch.size(); i++) {
 				conversation.add(results.get(i));
-				reportResult(batch.get(i), results.get(i), listener);
+				reportResult(batch.get(i), results.get(i), listener, runId, turn, _turnDeniedCallIds);
 			}
 		} finally {
 			executor.close();
@@ -481,11 +532,9 @@ public class AgentLoop {
 	}
 
 	private ToolResultMessage executeWithSecurityCheck(ToolCall toolCall, ToolContext context,
-			AgentListener listener) {
+			AgentEventListener listener, String runId, int turn) {
 
-		if (listener != null) {
-			listener.onToolCallStart(toolCall);
-		}
+		emit(listener, new AgentEvent.ToolCallStarted(runId, turn, now(), toolCall.id(), toolCall.name(), toolCall.arguments()));
 
 		SecurityContext security = context.security();
 
@@ -496,18 +545,16 @@ public class AgentLoop {
 			if (!security.hasToolPermission(tool)) {
 				String reason = "Permission denied: you do not have access to tool '"
 					+ toolCall.name() + "'.";
-				if (listener != null) {
-					listener.onPermissionDenied(toolCall, reason);
-				}
+				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
+				_turnDeniedCallIds.add(toolCall.id());
 				return errorResult(toolCall, reason);
 			}
 		} else {
 			if (!security.hasToolPermission(toolCall.name())) {
 				String reason = "Permission denied: you do not have access to tool '"
 					+ toolCall.name() + "'.";
-				if (listener != null) {
-					listener.onPermissionDenied(toolCall, reason);
-				}
+				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
+				_turnDeniedCallIds.add(toolCall.id());
 				return errorResult(toolCall, reason);
 			}
 		}
@@ -520,9 +567,8 @@ public class AgentLoop {
 				String reason = "Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
 					+ "application state, which requires maintenance or development mode. "
 					+ "The system is currently in production mode.";
-				if (listener != null) {
-					listener.onPermissionDenied(toolCall, reason);
-				}
+				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
+				_turnDeniedCallIds.add(toolCall.id());
 				return errorResult(toolCall, reason);
 			}
 
@@ -535,9 +581,8 @@ public class AgentLoop {
 				switch (decision) {
 					case PermissionDecision.Denied denied -> {
 						String reason = denied.reason();
-						if (listener != null) {
-							listener.onPermissionDenied(toolCall, reason);
-						}
+						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
+						_turnDeniedCallIds.add(toolCall.id());
 						return errorResult(toolCall, reason);
 					}
 					case PermissionDecision.NeedsApproval needsApproval -> {
@@ -552,16 +597,21 @@ public class AgentLoop {
 							parsedArgs, tool.mode(),
 							needsApproval.displayReason(),
 							ApprovalRequest.DEFAULT_TIMEOUT);
-						if (listener != null) {
-							listener.onApprovalRequired(toolCall, request);
-						}
+						String approvalRequestId = UUID.randomUUID().toString();
+						emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
+							toolCall.id(), approvalRequestId, toolCall.name(),
+							request.arguments(), request.displayReason()));
 						ApprovalResult approvalResult = context.approval().requestApproval(request);
 						switch (approvalResult) {
 							case ApprovalResult.Approved approved -> {
+								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+									toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED));
 								// proceed to execution
 							}
 							case ApprovalResult.ApprovedForSession approvedForSession -> {
 								_sessionApprovedTools.add(tool.name());
+								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+									toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED_FOR_SESSION));
 								// proceed to execution
 							}
 							case ApprovalResult.Rejected rejected -> {
@@ -569,11 +619,19 @@ public class AgentLoop {
 									? "User denied tool '" + toolCall.name() + "'."
 									: "User denied tool '" + toolCall.name() + "': "
 										+ rejected.userComment();
+								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+									toolCall.id(), approvalRequestId, ApprovalOutcome.REJECTED));
+								emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
+								_turnDeniedCallIds.add(toolCall.id());
 								return errorResult(toolCall, feedback);
 							}
 							case ApprovalResult.TimedOut timedOut -> {
-								return errorResult(toolCall, "Approval timed out for tool '"
-									+ toolCall.name() + "'.");
+								String feedback = "Approval timed out for tool '" + toolCall.name() + "'.";
+								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+									toolCall.id(), approvalRequestId, ApprovalOutcome.TIMED_OUT));
+								emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
+								_turnDeniedCallIds.add(toolCall.id());
+								return errorResult(toolCall, feedback);
 							}
 						}
 					}
@@ -586,7 +644,7 @@ public class AgentLoop {
 
 		// Ensure transaction is open before executing a write tool.
 		// Done here (after all security gates) so denied tools never open a transaction.
-		ToolResultMessage lockError = ensureTransaction(toolCall, tool, context, listener);
+		ToolResultMessage lockError = ensureTransaction(toolCall, tool, context, listener, runId, turn);
 		if (lockError != null) {
 			return lockError;
 		}
@@ -621,11 +679,19 @@ public class AgentLoop {
 	}
 
 	private static void reportResult(ToolCall toolCall, ToolResultMessage result,
-			AgentListener listener) {
+			AgentEventListener listener, String runId, int turnNumber,
+			Set<String> deniedCallIds) {
+		if (deniedCallIds.contains(toolCall.id())) {
+			return;
+		}
 		if (result.state() instanceof ToolState.Failed failed) {
-			listener.onToolError(toolCall, failed.error());
-		} else {
-			listener.onToolCallComplete(toolCall, result);
+			Duration d = Duration.between(failed.startTime(), failed.endTime());
+			emit(listener, new AgentEvent.ToolCallFailed(
+				runId, turnNumber, now(), toolCall.id(), toolCall.name(), failed.error(), d));
+		} else if (result.state() instanceof ToolState.Completed completed) {
+			Duration d = Duration.between(completed.startTime(), completed.endTime());
+			emit(listener, new AgentEvent.ToolCallCompleted(
+				runId, turnNumber, now(), toolCall.id(), toolCall.name(), completed.result(), d));
 		}
 	}
 
@@ -641,7 +707,7 @@ public class AgentLoop {
 	 * this method's internals with retry/compact/fallback logic.</p>
 	 */
 	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
-			AgentListener listener) throws ProviderException {
+			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		List<ToolSchema> filteredTools = _registry.toolSchemas(tool -> {
 			SecurityContext security = context.security();
 			if (!security.hasToolPermission(tool)) {
@@ -662,18 +728,22 @@ public class AgentLoop {
 			_config.maxOutputTokens(),
 			_config.modelOptions());
 
-		ResponseCollector collector = new ResponseCollector(listener);
+		ResponseCollector collector = new ResponseCollector(listener, runId, turn);
 		_provider.stream(request, collector);
 		return collector.toAssistantMessage();
 	}
 
 	/**
-	 * Internal handler that bridges {@link StreamHandler} events to {@link AgentListener}
+	 * Internal handler that bridges {@link StreamHandler} events to {@link AgentEventListener}
 	 * callbacks and accumulates data to build an {@link AssistantMessage}.
 	 */
 	private static class ResponseCollector implements StreamHandler {
 
-		private final AgentListener _listener;
+		private final AgentEventListener _listener;
+
+		private final String _runId;
+
+		private final int _turnNumber;
 
 		private String _id;
 
@@ -683,18 +753,20 @@ public class AgentLoop {
 
 		private List<ContentPart> _content;
 
-		ResponseCollector(AgentListener listener) {
+		ResponseCollector(AgentEventListener listener, String runId, int turnNumber) {
 			_listener = listener;
+			_runId = runId;
+			_turnNumber = turnNumber;
 		}
 
 		@Override
 		public void onEvent(StreamEvent event) {
 			switch (event) {
 				case StreamEvent.TextDelta delta -> {
-					_listener.onTextDelta(delta.text());
+					_listener.onEvent(new AgentEvent.TextDelta(_runId, _turnNumber, Instant.now(), delta.text()));
 				}
 				case StreamEvent.ThinkingDelta delta -> {
-					_listener.onThinkingDelta(delta.text());
+					_listener.onEvent(new AgentEvent.ThinkingDelta(_runId, _turnNumber, Instant.now(), delta.text()));
 				}
 				case StreamEvent.ToolCallStart start -> {
 					// Accumulated in MessageComplete

@@ -42,4 +42,15 @@ public interface AgentEventListener {
 	 * block the loop thread on I/O that could stall indefinitely.
 	 */
 	void onEvent(AgentEvent event);
+
+	/**
+	 * Wraps the given listener in a framework-internal wrapper that serializes
+	 * dispatch and swallows listener exceptions.
+	 *
+	 * <p>{@link com.top_logic.tl.ai.core.agent.AgentLoop} calls this at the
+	 * start of every run.</p>
+	 */
+	static AgentEventListener serializing(AgentEventListener delegate) {
+		return new SerializingListener(delegate);
+	}
 }

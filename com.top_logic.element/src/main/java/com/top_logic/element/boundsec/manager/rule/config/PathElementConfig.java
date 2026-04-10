@@ -5,12 +5,15 @@
  */
 package com.top_logic.element.boundsec.manager.rule.config;
 
-import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Configuration of a step in the {@link RoleRuleConfig}.
@@ -19,7 +22,8 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface PathElementConfig extends ConfigurationItem {
+@TagName("step")
+public interface PathElementConfig extends PolymorphicConfiguration<PathNavigation> {
 
 	/** Name of the value of {@link #getAttribute()} in the configuration. */
 	String XML_ATTRIBUTE_ATTRIBUTE = "attribute";
@@ -27,21 +31,12 @@ public interface PathElementConfig extends ConfigurationItem {
 	/** Name of the value of {@link #isInverse()} in the configuration. */
 	String XML_ATTRIBUTE_INVERSE = "inverse";
 
-	/** Name of the value of {@link #getMetaElement()} in the configuration. */
-	String XML_ATTRIBUTE_META_ELEMENT = "meta-element";
-
 	/**
-	 * Qualified name of the {@link TLStructuredType} in which {@link #getAttribute()} is defined.
-	 */
-	@Name(PathElementConfig.XML_ATTRIBUTE_META_ELEMENT)
-	String getMetaElement();
-
-	/**
-	 * Name of the {@link TLStructuredTypePart} in {@link #getMetaElement()} over which is
-	 * navigated.
+	 * Qualified name of the {@link TLStructuredTypePart} over which is navigated.
 	 */
 	@Name(PathElementConfig.XML_ATTRIBUTE_ATTRIBUTE)
-	String getAttribute();
+	@Mandatory
+	TLModelPartRef getAttribute();
 
 	/**
 	 * Whether {@link #getAttribute()} is navigated forwards or backwards.

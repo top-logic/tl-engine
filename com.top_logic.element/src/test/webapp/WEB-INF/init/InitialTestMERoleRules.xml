@@ -11,11 +11,7 @@
 			role="projElement.Verantwortlicher"
 		>
 			<path>
-				<step
-					attribute="Verantwortlicher"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#Verantwortlicher"/>
 			</path>
 		</rule>
 		<rule
@@ -25,11 +21,7 @@
 			role="projElement.Mitarbeiter"
 		>
 			<path>
-				<step
-					attribute="Mitarbeiter"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#Mitarbeiter"/>
 			</path>
 		</rule>
 
@@ -42,9 +34,8 @@
 		>
 			<path>
 				<step
-					attribute="children"
+					attribute="projElement:ProjElementContainer#children"
 					inverse="true"
-					meta-element="projElement:ProjElementContainer"
 				/>
 			</path>
 		</rule>
@@ -58,10 +49,7 @@
 			type="inheritance"
 		>
 			<path>
-				<step
-					attribute="children"
-					inverse="false"
-				/>
+				<step attribute="projElement:projElement.ProjectRoot#children"/>
 			</path>
 		</rule>
 
@@ -73,10 +61,7 @@
 			role="projElement.Nutzer"
 		>
 			<path>
-				<step
-					attribute="Nutzer"
-					meta-element="SecurityStructure:SecurityStructure.Root"
-				/>
+				<step attribute="SecurityStructure:SecurityStructure.Root#Nutzer"/>
 			</path>
 		</rule>
 		<rule
@@ -87,10 +72,7 @@
 			role="projElement.Hauptbenutzer"
 		>
 			<path>
-				<step
-					attribute="Hauptbenutzer"
-					meta-element="SecurityStructure:SecurityStructure.Root"
-				/>
+				<step attribute="SecurityStructure:SecurityStructure.Root#Hauptbenutzer"/>
 			</path>
 		</rule>
 
@@ -119,16 +101,8 @@
 			role="projElement.Verantwortlicher"
 		>
 			<path>
-				<step
-					attribute="AbhaengigVon"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
-				<step
-					attribute="Verantwortlicher"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#AbhaengigVon"/>
+				<step attribute="projElement:projElement.All#Verantwortlicher"/>
 			</path>
 		</rule>
 		<rule
@@ -139,15 +113,10 @@
 		>
 			<path>
 				<step
-					attribute="AbhaengigVon"
+					attribute="projElement:projElement.All#AbhaengigVon"
 					inverse="true"
-					meta-element="projElement:projElement.All"
 				/>
-				<step
-					attribute="Verantwortlicher"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#Verantwortlicher"/>
 			</path>
 		</rule>
 	</rules>

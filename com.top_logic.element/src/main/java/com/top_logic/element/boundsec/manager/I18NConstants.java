@@ -12,6 +12,7 @@ import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
+import com.top_logic.model.TLClass;
 
 /**
  * Internationalization constants for this package.
@@ -22,9 +23,16 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * Message key used when the source {@link TLClass} of a rule is abstract.
+	 */
 	@CustomKey("admin.security.import.roleRules.problem.abstractSourceType")
 	public static ResKey1 ABSTRACT_SOURCE_TYPE;
 
+	/**
+	 * Message key used when the {@link TLClass} of a rule is abstract and the rule is no "inherit"
+	 * rule. In such case the rule is useless.
+	 */
 	@CustomKey("admin.security.import.roleRules.problem.abstractTypeWithoutInheritance")
 	public static ResKey1 ABSTRACT_TYPE_WITHOUT_INHERITANCE;
 
@@ -45,19 +53,10 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("admin.security.import.authorization.problem.duplicateRole")
 	public static ResKey2 DUPLICATE_ROLE;
 
-	@CustomKey("admin.security.import.roleRules.problem.illegalMetaElement")
-	public static ResKey2 ILLEGAL_META_ELEMENT;
-
-
 	/**
 	 * @en No type is given.
 	 */
 	public static ResKey NO_META_ELEMENT_DECLARED;
-
-	/**
-	 * @en No attribute given in path.
-	 */
-	public static ResKey NO_ATTRIBUTE_DECLARED;
 
 	/**
 	 * @en The role {0} does not exist. Available application roles are {1}, available global roles
@@ -70,12 +69,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 NOT_A_REFERENCE__PART;
 
-	@CustomKey("admin.security.import.roleRules.problem.unknownAttribute")
-	public static ResKey2 UNKNOWN_ATTRIBUTE;
-
 	@CustomKey("admin.security.import.classifications.problem.unknownMetaAttribute")
 	public static ResKey2 UNKNOWN_META_ATTRIBUTE;
 
+	/**
+	 * Message key used when configured {@link TLClass} is unknown.
+	 */
 	@CustomKey("admin.security.import.roleRules.problem.unknownMetaElement")
 	public static ResKey1 UNKNOWN_META_ELEMENT;
 

@@ -11,10 +11,7 @@
 			role="testRole"
 		>
 			<path>
-				<step
-					attribute="Verantwortlicher"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#Verantwortlicher"/>
 			</path>
 		</rule>
 		<rule
@@ -24,11 +21,7 @@
 			role="testRole"
 		>
 			<path>
-				<step
-					attribute="Mitarbeiter"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#Mitarbeiter"/>
 			</path>
 		</rule>
 		<rule
@@ -38,16 +31,8 @@
 			role="testRole"
 		>
 			<path>
-				<step
-					attribute="AbhaengigVon"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
-				<step
-					attribute="Mitarbeiter"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#AbhaengigVon"/>
+				<step attribute="projElement:projElement.All#Mitarbeiter"/>
 			</path>
 		</rule>
 		<rule
@@ -58,15 +43,10 @@
 		>
 			<path>
 				<step
-					attribute="AbhaengigVon"
+					attribute="projElement:projElement.All#AbhaengigVon"
 					inverse="true"
-					meta-element="projElement:projElement.All"
 				/>
-				<step
-					attribute="Mitarbeiter"
-					inverse="false"
-					meta-element="projElement:projElement.All"
-				/>
+				<step attribute="projElement:projElement.All#Mitarbeiter"/>
 			</path>
 		</rule>
 	</rules>

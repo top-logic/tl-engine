@@ -96,19 +96,11 @@ public class DesignTreeBuilder {
 	}
 
 	/**
-	 * Whether the given property is a container that holds {@link PolymorphicConfiguration} items.
+	 * Whether the given property holds structured values that should be traversed.
 	 */
 	private boolean isContainerProperty(PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
-		if (kind == PropertyKind.LIST) {
-			Class<?> elementType = property.getElementType();
-			return elementType != null && PolymorphicConfiguration.class.isAssignableFrom(elementType);
-		}
-		if (kind == PropertyKind.ITEM) {
-			Class<?> type = property.getType();
-			return type != null && PolymorphicConfiguration.class.isAssignableFrom(type);
-		}
-		return false;
+		return kind == PropertyKind.LIST || kind == PropertyKind.ITEM;
 	}
 
 	private void addChild(DesignTreeNode parent, ConfigurationItem childConfig,

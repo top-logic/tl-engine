@@ -1,170 +1,154 @@
-<?xml version="1.0" encoding="iso-8859-1" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <view>
 	<app-shell>
-		<header>
-			<app-bar>
-				<title>
-					<en>Task Manager</en>
-					<de>Aufgabenverwaltung</de>
-				</title>
-				<commands>
-					<open-designer placement="TOOLBAR">
-						<label>
-							<en>Designer</en>
-							<de>Designer</de>
-						</label>
-					</open-designer>
-				</commands>
-			</app-bar>
-		</header>
 		<content>
 			<sidebar active-item="dashboard">
 				<items>
 					<nav-item id="dashboard"
 						icon="bi bi-speedometer2"
 					>
+						<view-ref view="demo/dashboard.view.xml"/>
 						<label>
 							<en>Dashboard</en>
 							<de>Dashboard</de>
 						</label>
-						<view-ref view="demo/dashboard.view.xml"/>
 					</nav-item>
 					<nav-item id="tabs-demo"
 						icon="bi bi-layout-text-window-reverse"
 					>
+						<view-ref view="demo/tabs-demo.view.xml"/>
 						<label>
 							<en>Tabs Demo</en>
 							<de>Tabs-Demo</de>
 						</label>
-						<view-ref view="demo/tabs-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="split-demo"
 						icon="bi bi-layout-split"
 					>
+						<view-ref view="demo/split-demo.view.xml"/>
 						<label>
 							<en>Split Demo</en>
 							<de>Split-Demo</de>
 						</label>
-						<view-ref view="demo/split-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="channels-demo"
 						icon="bi bi-table"
 					>
+						<view-ref view="demo/channels-demo.view.xml"/>
 						<label>
 							<en>Channels Demo</en>
 							<de>Channels-Demo</de>
 						</label>
-						<view-ref view="demo/channels-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="form-demo"
 						icon="bi bi-pencil-square"
 					>
+						<view-ref view="demo/form-demo.view.xml"/>
 						<label>
 							<en>Form Demo</en>
 							<de>Formular-Demo</de>
 						</label>
-						<view-ref view="demo/form-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="input-controls-demo"
 						icon="bi bi-input-cursor"
 					>
+						<view-ref view="demo/input-controls-demo.view.xml"/>
 						<label>
 							<en>Input Controls</en>
 							<de>Eingabesteuerungen</de>
 						</label>
-						<view-ref view="demo/input-controls-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="chart-demo"
 						icon="bi bi-bar-chart-line"
 					>
+						<view-ref view="demo/chart-demo.view.xml"/>
 						<label>
 							<en>Chart Demo</en>
 							<de>Diagramm-Demo</de>
 						</label>
-						<view-ref view="demo/chart-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="tlscript-editor-demo"
 						icon="bi bi-code-square"
 					>
+						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 						<label>
 							<en>TL-Script Editor</en>
 							<de>TL-Script-Editor</de>
 						</label>
-						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="config-editor-demo"
 						icon="bi bi-sliders"
 					>
+						<view-ref view="demo/config-editor-demo.view.xml"/>
 						<label>
 							<en>Config Editor</en>
 							<de>Konfigurationseditor</de>
 						</label>
-						<view-ref view="demo/config-editor-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="dialog-demo"
 						icon="bi bi-window-stack"
 					>
+						<view-ref view="demo/dialog-demo.view.xml"/>
 						<label>
 							<en>Dialog Demo</en>
 							<de>Dialog-Demo</de>
 						</label>
-						<view-ref view="demo/dialog-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="error-handling-demo"
-					icon="bi bi-exclamation-triangle"
-				>
-					<label>
-						<en>Error Handling</en>
-						<de>Fehlerbehandlung</de>
-					</label>
-					<view-ref view="demo/error-handling-demo.view.xml"/>
-				</nav-item>
-				<nav-item id="constraint-test"
-					icon="bi bi-check-circle"
-				>
-					<label>
-						<en>Constraint Test</en>
-						<de>Constraint-Test</de>
-					</label>
-					<view-ref view="demo/constraint-test.view.xml"/>
-				</nav-item>
-				<nav-item id="flow-diagram-demo"
-					icon="bi bi-diagram-3"
-				>
-					<label>
-						<en>Flow Diagram</en>
-						<de>Flow-Diagramm</de>
-					</label>
-					<view-ref view="demo/flow-diagram-demo.view.xml"/>
-				</nav-item>
-				<nav-item id="graph-layout-demo"
-					icon="bi bi-diagram-2"
-				>
-					<label>
-						<en>Graph Layout</en>
-						<de>Graph-Layout</de>
-					</label>
-					<view-ref view="demo/graph-layout-demo.view.xml"/>
-				</nav-item>
-				<nav-item id="module-graph-demo"
-					icon="bi bi-bezier2"
-				>
-					<label>
-						<en>Module Graph</en>
-						<de>Modul-Graph</de>
-					</label>
-					<view-ref view="demo/module-graph-demo.view.xml"/>
-				</nav-item>
-				<separator/>
+						icon="bi bi-exclamation-triangle"
+					>
+						<view-ref view="demo/error-handling-demo.view.xml"/>
+						<label>
+							<en>Error Handling</en>
+							<de>Fehlerbehandlung</de>
+						</label>
+					</nav-item>
+					<nav-item id="constraint-test"
+						icon="bi bi-check-circle"
+					>
+						<view-ref view="demo/constraint-test.view.xml"/>
+						<label>
+							<en>Constraint Test</en>
+							<de>Constraint-Test</de>
+						</label>
+					</nav-item>
+					<nav-item id="flow-diagram-demo"
+						icon="bi bi-diagram-3"
+					>
+						<view-ref view="demo/flow-diagram-demo.view.xml"/>
+						<label>
+							<en>Flow Diagram</en>
+							<de>Flow-Diagramm</de>
+						</label>
+					</nav-item>
+					<nav-item id="graph-layout-demo"
+						icon="bi bi-diagram-2"
+					>
+						<view-ref view="demo/graph-layout-demo.view.xml"/>
+						<label>
+							<en>Graph Layout</en>
+							<de>Graph-Layout</de>
+						</label>
+					</nav-item>
+					<nav-item id="module-graph-demo"
+						icon="bi bi-bezier2"
+					>
+						<view-ref view="demo/module-graph-demo.view.xml"/>
+						<label>
+							<en>Module Graph</en>
+							<de>Modul-Graph</de>
+						</label>
+					</nav-item>
+					<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"
 					>
+						<view-ref view="demo/settings.view.xml"/>
 						<label>
 							<en>Settings</en>
 							<de>Einstellungen</de>
 						</label>
-						<view-ref view="demo/settings.view.xml"/>
 					</nav-item>
 				</items>
 			</sidebar>
@@ -199,5 +183,21 @@
 				</items>
 			</bottom-bar>
 		</footer>
+		<header>
+			<app-bar variant="flat">
+				<commands>
+					<open-designer placement="TOOLBAR">
+						<label>
+							<en>Designer</en>
+							<de>Designer</de>
+						</label>
+					</open-designer>
+				</commands>
+				<title>
+					<en>Task Manager</en>
+					<de>Aufgabenverwaltung</de>
+				</title>
+			</app-bar>
+		</header>
 	</app-shell>
 </view>

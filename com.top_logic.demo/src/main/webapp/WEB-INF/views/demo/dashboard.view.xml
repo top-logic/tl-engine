@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="iso-8859-1" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <view>
 	<stack
@@ -10,82 +10,83 @@
 			min-column-width="16rem"
 		>
 			<card
-				variant="elevated"
+				padding="default"
+				variant="outlined"
 			>
-				<title>
-					<en>Active Tasks</en>
-					<de>Aktive Aufgaben</de>
-				</title>
 				<demo-counter>
 					<label>
 						<en>Tasks</en>
 						<de>Aufgaben</de>
 					</label>
 				</demo-counter>
+				<title>
+					<en>Active Tasks</en>
+					<de>Aktive Aufgaben</de>
+				</title>
 			</card>
 			<card>
-				<title>
-					<en>In Review</en>
-					<de>In Pr&#xFC;fung</de>
-				</title>
 				<demo-counter>
 					<label>
 						<en>Reviews</en>
 						<de>Reviews</de>
 					</label>
 				</demo-counter>
+				<title>
+					<en>In Review</en>
+					<de>In Prüfung</de>
+				</title>
 			</card>
 			<card>
-				<title>
-					<en>Team Notes</en>
-					<de>Teamnotizen</de>
-				</title>
 				<button>
 					<action class="com.top_logic.layout.view.command.OpenDialogCommand"
 						dialog-view="demo/team-notes-dialog.view.xml"
 					>
 						<label>
 							<en>Open Details</en>
-							<de>Details &#xF6;ffnen</de>
+							<de>Details öffnen</de>
 						</label>
 					</action>
 				</button>
+				<title>
+					<en>Team Notes</en>
+					<de>Teamnotizen</de>
+				</title>
 			</card>
 			<card>
-				<title>
-					<en>Quick Add</en>
-					<de>Schnellerfassung</de>
-				</title>
 				<button>
 					<action class="com.top_logic.demo.view.command.OpenDemoDialogCommand">
-						<dialog-message>
-							<en>Enter your new task details here.</en>
-							<de>Geben Sie hier die Details der neuen Aufgabe ein.</de>
-						</dialog-message>
 						<label>
 							<en>+ New Task</en>
 							<de>+ Neue Aufgabe</de>
 						</label>
+						<dialog-message>
+							<en>Enter your new task details here.</en>
+							<de>Geben Sie hier die Details der neuen Aufgabe ein.</de>
+						</dialog-message>
 						<dialog-title>
 							<en>New Task</en>
 							<de>Neue Aufgabe</de>
 						</dialog-title>
 					</action>
 				</button>
+				<title>
+					<en>Quick Add</en>
+					<de>Schnellerfassung</de>
+				</title>
 			</card>
 			<card>
-				<title>
-					<en>Multi-Window Demo</en>
-					<de>Multi-Fenster-Demo</de>
-				</title>
 				<button>
 					<action class="com.top_logic.demo.view.command.OpenWindowDemoCommand">
 						<label>
 							<en>Open Child Window</en>
-							<de>Kinderfenster &#xF6;ffnen</de>
+							<de>Kinderfenster öffnen</de>
 						</label>
 					</action>
 				</button>
+				<title>
+					<en>Multi-Window Demo</en>
+					<de>Multi-Fenster-Demo</de>
+				</title>
 			</card>
 		</grid>
 	</stack>

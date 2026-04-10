@@ -7,6 +7,7 @@ package com.top_logic.element.boundsec.manager.rule;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.model.TLObject;
@@ -42,15 +43,9 @@ public class IdentityPathElement implements PathElement {
 		return CollectionUtil.intoList(base);
 	}
 
-	/**
-	 * Not supported: an {@link IdentityPathElement} has no underlying reference.
-	 *
-	 * @throws NullPointerException
-	 *         always
-	 */
 	@Override
-	public TLStructuredTypePart getMetaAttribute() {
-		throw new NullPointerException("No MetaAttribute.");
+	public Collection<TLStructuredTypePart> getRelevantParts() {
+		return Collections.emptySet();
 	}
 
 	@Override

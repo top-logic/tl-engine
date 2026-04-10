@@ -48,7 +48,6 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.ElementBoundHelper;
-import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
@@ -460,9 +459,11 @@ public class ElementAccessManager extends AccessManager {
         return this.ruleIds.get(theID);
     }
 
+	/**
+	 * Determines the rules which uses the given part.
+	 */
     public Set<RoleProvider> getRules(TLStructuredTypePart aMA) {
-        Set<RoleProvider> theResult = this.pathAttributes.get(aMA);
-        return theResult == null ? Collections.<RoleProvider>emptySet() : theResult;
+		return pathAttributes.getOrDefault(aMA, Collections.emptySet());
     }
 
 	private Map<TLClass, Set<BoundedRole>> resolvePotentialRoles(
@@ -537,11 +538,8 @@ public class ElementAccessManager extends AccessManager {
                 RoleRule theRule = (RoleRule) theRIt.next();
 
 				for (PathElement thePathElement : theRule.getPath()) {
-					if (thePathElement instanceof IdentityPathElement) continue;
-                    TLStructuredTypePart theMA          = thePathElement.getMetaAttribute();
-                    if (theMA != null) {
-						MultiMaps.add(theResult, theMA, theRule);
-                    }
+					Collection<TLStructuredTypePart> parts = thePathElement.getRelevantParts();
+					parts.forEach(part -> MultiMaps.add(theResult, part, theRule));
                 }
             }
         }

@@ -49,13 +49,10 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		_reference = (TLReference) ((TLReference) part).getDefinition();
 	}
 
-    /**
-     * Getter
-     */
 	@Override
-	public TLStructuredTypePart getMetaAttribute() {
-		return (_reference);
-    }
+	public Collection<TLStructuredTypePart> getRelevantParts() {
+		return Collections.singleton(_reference);
+	}
     
 	@Override
 	public boolean isInverse() {

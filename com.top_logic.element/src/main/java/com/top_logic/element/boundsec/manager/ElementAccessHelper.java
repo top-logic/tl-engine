@@ -333,7 +333,7 @@ public class ElementAccessHelper {
 		// locate the meta attribute, may appear more than once
 		for (int i = 0, thePathLength = path.size(); i < thePathLength; i++) {
 			PathElement elt = path.get(i);
-			if (reference.equals(elt.getMetaAttribute())) {
+			if (elt.getRelevantParts().contains(reference)) {
 				partIndexes.add(Integer.valueOf(i));
 			}
 		}

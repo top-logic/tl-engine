@@ -65,6 +65,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey3 ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
 
+	/**
+	 * @en The part {0} is not a reference.
+	 */
+	public static ResKey1 NOT_A_REFERENCE__PART;
+
 	@CustomKey("admin.security.import.roleRules.problem.unknownAttribute")
 	public static ResKey2 UNKNOWN_ATTRIBUTE;
 

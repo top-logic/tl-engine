@@ -8,9 +8,8 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.util.Collection;
 import java.util.Collections;
 
-import com.top_logic.basic.Logger;
-import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -21,7 +20,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public class PathElement {
 
     /** the meta attribute defining the content */
-    private TLStructuredTypePart metaAttribute;
+	private TLReference _reference;
     
     /** 
      * indicates that the attribute is to be resolved in revers,
@@ -32,13 +31,14 @@ public class PathElement {
     /**
      * Constructor
      */
-    public PathElement(TLStructuredTypePart aMA, boolean isInvers) {
-        this.metaAttribute = aMA;
-		if (aMA == null) {
+	public PathElement(TLReference reference, boolean isInvers) {
+		_reference = reference;
+		if (reference == null) {
 			// Special hack for IdentityPathElement!
 		} else {
-			if (metaAttribute.getDefinition() != metaAttribute) {
-				Logger.error("Only the definition of an TLStructureTypePart must be given: " + metaAttribute, aMA);
+			if (_reference.getDefinition() != _reference) {
+				throw new IllegalArgumentException(
+					"Only the definition of an TLReference must be given: " + _reference);
 			}
 		}
         this.inverse       = isInvers;
@@ -49,7 +49,7 @@ public class PathElement {
      * Getter
      */
     public TLStructuredTypePart getMetaAttribute() {
-        return (metaAttribute);
+		return (_reference);
     }
     
     /**
@@ -59,36 +59,63 @@ public class PathElement {
         return (inverse);
     }
     
-    /**
-     * An object referenced by the rule path so far. This object is the base for the lookup
-     * either as source or destination (in case of an inverse path element).
-     * 
-     * @param aBase   the object to containing the attribute
-     * @return the Objects referd to via the attribute, never <code>null</code>
-     */
-    public Collection getValues(Wrapper aBase) {
-        return getValues(aBase, true);
+	/**
+	 * Traverses this path element starting from the given base object and returns the reached
+	 * objects.
+	 *
+	 * <p>
+	 * For a non-inverse path element, the reference value(s) of {@code base} are returned. For an
+	 * inverse path element, all objects that refer to {@code base} via the reference are returned.
+	 * </p>
+	 *
+	 * @param base
+	 *        The object to start the traversal from. Must not be <code>null</code>.
+	 * @return The objects reached by following this path element. Never <code>null</code>.
+	 * 
+	 * @see #getSources(TLObject)
+	 */
+	public Collection<? extends TLObject> getValues(TLObject base) {
+		return getValues(base, true);
     }
-    
-    private Collection getValues(Wrapper aBase, boolean isForward) {
-        Collection theResult;
+
+	private Collection<? extends TLObject> getValues(TLObject base, boolean isForward) {
+		Collection<? extends TLObject> result;
         
 		if (this.isInverse() == isForward) {
-			theResult = AttributeOperations.getReferers(aBase, this.metaAttribute);
+			result = base.tReferers(_reference);
 		} else {
-			Object theContent = aBase.getValue(metaAttribute.getName());
-			if (theContent instanceof Collection) {
-				theResult = (Collection) theContent;
-			} else if (theContent != null) {
-				theResult = Collections.singleton(theContent);
+			Object value = base.tValue(_reference);
+			if (value instanceof Collection) {
+				@SuppressWarnings("unchecked")
+				Collection<? extends TLObject> cast = (Collection<? extends TLObject>) value;
+				result = cast;
+			} else if (value != null) {
+				result = Collections.singleton((TLObject) value);
 			} else {
-				theResult = Collections.EMPTY_LIST;
+				result = Collections.emptySet();
 			}
         }
-        return theResult != null ? theResult : Collections.EMPTY_SET;
+		return result != null ? result : Collections.emptySet();
     }
     
-    public Collection getSources(Wrapper aDestination) {
-        return this.getValues(aDestination, false);
+	/**
+	 * Returns the source objects that reach the given destination object when this path element is
+	 * traversed.
+	 *
+	 * <p>
+	 * This is the inverse operation of {@link #getValues(TLObject)}: for a non-inverse path
+	 * element, all objects that refer to {@code destination} via the reference are returned; for an
+	 * inverse path element, the reference value(s) of {@code destination} are returned.
+	 * </p>
+	 *
+	 * @param destination
+	 *        The object to determine the sources for. Must not be <code>null</code>.
+	 * @return The objects that reach {@code destination} by following this path element. Never
+	 *         <code>null</code>.
+	 * 
+	 * @see #getValues(TLObject)
+	 */
+	public Collection<? extends TLObject> getSources(TLObject destination) {
+		return this.getValues(destination, false);
     }
 }

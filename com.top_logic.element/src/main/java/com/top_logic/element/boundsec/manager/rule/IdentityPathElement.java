@@ -8,31 +8,46 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.util.Collection;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The IdentityPathElement is used for rules with no path elements to map some roles to
+ * The {@link IdentityPathElement} is used for rules with no path elements to map some roles to
  * other roles.
- * 
- * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class IdentityPathElement extends PathElement {
 
+	/**
+	 * Creates an {@link IdentityPathElement}.
+	 */
     public IdentityPathElement() {
 		super(null, false);
     }
 
-    @Override
-	public Collection getSources(Wrapper aDestination) {
-        return CollectionUtil.intoList(aDestination);
-    }
+	/**
+	 * Returns a singleton collection containing {@code destination} itself, since the identity
+	 * path element does not traverse any reference.
+	 */
+	@Override
+	public Collection<? extends TLObject> getSources(TLObject destination) {
+		return CollectionUtil.intoList(destination);
+	}
 
-    @Override
-	public Collection getValues(Wrapper aBase) {
-        return CollectionUtil.intoList(aBase);
-    }
+	/**
+	 * Returns a singleton collection containing {@code base} itself, since the identity path
+	 * element does not traverse any reference.
+	 */
+	@Override
+	public Collection<? extends TLObject> getValues(TLObject base) {
+		return CollectionUtil.intoList(base);
+	}
 
+	/**
+	 * Not supported: an {@link IdentityPathElement} has no underlying reference.
+	 *
+	 * @throws NullPointerException
+	 *         always
+	 */
 	@Override
 	public TLStructuredTypePart getMetaAttribute() {
 		throw new NullPointerException("No MetaAttribute.");

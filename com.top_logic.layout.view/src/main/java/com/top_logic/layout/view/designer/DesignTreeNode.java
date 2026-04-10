@@ -12,6 +12,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.layout.form.values.edit.Labels;
 
 /**
  * A node in the design tree representing either a {@link ConfigurationItem} or a virtual property
@@ -31,7 +32,7 @@ public class DesignTreeNode {
 
 	private final String _sourceFile;
 
-	private final String _propertyName;
+	private final PropertyDescriptor _property;
 
 	private final List<DesignTreeNode> _children;
 
@@ -50,22 +51,22 @@ public class DesignTreeNode {
 	public DesignTreeNode(ConfigurationItem config, String sourceFile) {
 		_config = config;
 		_sourceFile = sourceFile;
-		_propertyName = null;
+		_property = null;
 		_children = new ArrayList<>();
 	}
 
 	/**
 	 * Creates a virtual property group node.
 	 *
-	 * @param propertyName
-	 *        The property name this group represents (e.g. "header", "content").
+	 * @param property
+	 *        The property descriptor this group represents (e.g. for "header", "content").
 	 * @param sourceFile
 	 *        The .view.xml file this group belongs to.
 	 */
-	public DesignTreeNode(String propertyName, String sourceFile) {
+	public DesignTreeNode(PropertyDescriptor property, String sourceFile) {
 		_config = null;
 		_sourceFile = sourceFile;
-		_propertyName = propertyName;
+		_property = property;
 		_children = new ArrayList<>();
 	}
 
@@ -73,14 +74,14 @@ public class DesignTreeNode {
 	 * Whether this is a virtual property group node (no config of its own).
 	 */
 	public boolean isVirtual() {
-		return _config == null;
+		return _property != null;
 	}
 
 	/**
 	 * The property name for virtual group nodes, or {@code null} for config nodes.
 	 */
 	public String getPropertyName() {
-		return _propertyName;
+		return _property != null ? _property.getPropertyName() : null;
 	}
 
 	/**
@@ -155,12 +156,12 @@ public class DesignTreeNode {
 
 	/**
 	 * The tag name for display, derived from the {@link TagName} annotation on the config
-	 * interface, or the simple interface name as fallback. For virtual nodes, returns the property
-	 * name in brackets.
+	 * interface, or the simple interface name as fallback. For virtual nodes, returns the
+	 * internationalized property label in brackets.
 	 */
 	public String getTagName() {
 		if (isVirtual()) {
-			return "[" + _propertyName + "]";
+			return "[" + Labels.propertyLabel(_property, false) + "]";
 		}
 		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
 		TagName tagName = configInterface.getAnnotation(TagName.class);

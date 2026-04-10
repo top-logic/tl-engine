@@ -15,13 +15,12 @@ import com.top_logic.model.TLStructuredTypePart;
  * The {@link IdentityPathElement} is used for rules with no path elements to map some roles to
  * other roles.
  */
-public class IdentityPathElement extends PathElement {
+public class IdentityPathElement implements PathElement {
 
 	/**
 	 * Creates an {@link IdentityPathElement}.
 	 */
     public IdentityPathElement() {
-		super(null, false);
     }
 
 	/**
@@ -51,6 +50,11 @@ public class IdentityPathElement extends PathElement {
 	@Override
 	public TLStructuredTypePart getMetaAttribute() {
 		throw new NullPointerException("No MetaAttribute.");
+	}
+
+	@Override
+	public boolean isInverse() {
+		return false;
 	}
 
 }

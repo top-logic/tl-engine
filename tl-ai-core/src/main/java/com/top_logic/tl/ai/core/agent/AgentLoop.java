@@ -9,13 +9,13 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -83,10 +83,10 @@ public class AgentLoop {
 
 	private final ConversationMemory _memory;
 
-	private final Set<String> _sessionApprovedTools = new HashSet<>();
+	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
 
 	/** Tool call IDs denied in the current turn; cleared at the start of each turn's tool execution. */
-	private final Set<String> _turnDeniedCallIds = new HashSet<>();
+	private final Set<String> _turnDeniedCallIds = ConcurrentHashMap.newKeySet();
 
 	/**
 	 * Creates a new agent loop with default result truncation.

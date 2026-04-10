@@ -5,8 +5,6 @@
  */
 package com.top_logic.element.layout.security;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,7 +26,6 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.element.boundsec.attribute.AttributeClassifierManager;
 import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.element.layout.security.handler.SecurityExportHandler;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.knowledge.wrap.list.FastListElement;
 import com.top_logic.layout.Accessor;
@@ -54,7 +51,6 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnCustomization;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
-import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
@@ -81,9 +77,6 @@ public class AttributeClassifierRolesComponent extends EditComponent {
 	 */
 	public interface Config extends EditComponent.Config {
 
-		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
-		Lookup LOOKUP = MethodHandles.lookup();
-
 		@Override
 		@NullDefault
 		String getLockOperation();
@@ -92,11 +85,6 @@ public class AttributeClassifierRolesComponent extends EditComponent {
 		@StringDefault(AttributeClassifirRolesApplyHandler.COMMAND_ID)
 		String getApplyCommand();
 
-		@Override
-		default void modifyIntrinsicCommands(CommandRegistry registry) {
-			registry.registerButton(SecurityExportHandler.COMMAND_ID);
-			EditComponent.Config.super.modifyIntrinsicCommands(registry);
-		}
 	}
 
 	private static final Property<TLClass> GLOBAL_DOMAIN = TypedAnnotatable.property(TLClass.class, "global domain");

@@ -17,6 +17,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.protocol.WindowFocusEvent;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
@@ -42,6 +43,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	private final ConcurrentHashMap<String, SSEUpdateQueue> _windowQueues = new ConcurrentHashMap<>();
 
 	private final ConcurrentHashMap<String, GlobalModelEventForwarder> _windowModelScopes = new ConcurrentHashMap<>();
+
+	/** Maps singleton keys to window IDs for singleton window reuse. */
+	private final ConcurrentHashMap<String, String> _singletonKeys = new ConcurrentHashMap<>();
 
 	private final ReentrantLock _requestLock = new ReentrantLock();
 
@@ -127,11 +131,17 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @return The generated window ID.
 	 */
 	public String openWindow(ReactContext openerContext, WindowOptions options) {
+		String existingWindowId = focusSingletonIfOpen(openerContext, options);
+		if (existingWindowId != null) {
+			return existingWindowId;
+		}
+
 		String windowId = generateWindowId();
 		String openerWindowId = openerContext.getWindowName();
 
 		WindowEntry entry = new WindowEntry(windowId, openerWindowId, options, null);
 		_windows.put(windowId, entry);
+		registerSingletonKey(options, windowId);
 
 		WindowOpenEvent event = WindowOpenEvent.create()
 			.setTargetWindowId(openerWindowId)
@@ -183,12 +193,18 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	public String openWindow(ReactContext openerContext, ReactControlProvider controlProvider,
 			Object model, WindowOptions options, Runnable closeCallback) {
+		String existingWindowId = focusSingletonIfOpen(openerContext, options);
+		if (existingWindowId != null) {
+			return existingWindowId;
+		}
+
 		String windowId = generateWindowId();
 		String openerWindowId = openerContext.getWindowName();
 
 		WindowEntry entry =
 			new WindowEntry(windowId, openerWindowId, controlProvider, model, options, closeCallback);
 		_windows.put(windowId, entry);
+		registerSingletonKey(options, windowId);
 
 		WindowOpenEvent event = WindowOpenEvent.create()
 			.setTargetWindowId(openerWindowId)
@@ -226,6 +242,10 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			ReactWindowRegistry.class);
 		WindowEntry entry = _windows.remove(windowId);
 		if (entry != null) {
+			String singletonKey = entry.getOptions().getSingletonKey();
+			if (singletonKey != null) {
+				_singletonKeys.remove(singletonKey, windowId);
+			}
 			Runnable closeCallback = entry.getCloseCallback();
 			if (closeCallback != null) {
 				Logger.info("Running close callback for '" + windowId + "'.",
@@ -272,6 +292,39 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 			}
 		}
 		_windows.clear();
+		_singletonKeys.clear();
+	}
+
+	/**
+	 * If the given options specify a singleton key and a window with that key is already open,
+	 * sends a {@link WindowFocusEvent} to the opener and returns the existing window ID.
+	 *
+	 * @return The existing window ID if focused, or {@code null} if no singleton match was found.
+	 */
+	private String focusSingletonIfOpen(ReactContext openerContext, WindowOptions options) {
+		String singletonKey = options.getSingletonKey();
+		if (singletonKey != null) {
+			String existingWindowId = _singletonKeys.get(singletonKey);
+			if (existingWindowId != null && _windows.containsKey(existingWindowId)) {
+				WindowEntry existingEntry = _windows.get(existingWindowId);
+				WindowFocusEvent focusEvent = WindowFocusEvent.create()
+					.setTargetWindowId(existingEntry.getOpenerWindowId())
+					.setWindowId(existingWindowId);
+				SSEUpdateQueue openerQueue = getQueue(existingEntry.getOpenerWindowId());
+				if (openerQueue != null) {
+					openerQueue.enqueue(focusEvent);
+				}
+				return existingWindowId;
+			}
+		}
+		return null;
+	}
+
+	private void registerSingletonKey(WindowOptions options, String windowId) {
+		String singletonKey = options.getSingletonKey();
+		if (singletonKey != null) {
+			_singletonKeys.put(singletonKey, windowId);
+		}
 	}
 
 	private String generateWindowId() {

@@ -18,6 +18,8 @@ public class WindowOptions {
 
 	private boolean _resizable = true;
 
+	private String _singletonKey;
+
 	/** Window width in pixels. */
 	public int getWidth() {
 		return _width;
@@ -59,6 +61,26 @@ public class WindowOptions {
 	/** @see #isResizable() */
 	public WindowOptions setResizable(boolean resizable) {
 		_resizable = resizable;
+		return this;
+	}
+
+	/**
+	 * Optional key that identifies this window as a singleton.
+	 *
+	 * <p>
+	 * When a singleton key is set and a window with the same key is already open, the existing
+	 * window is focused instead of opening a new one.
+	 * </p>
+	 *
+	 * @return The singleton key, or {@code null} if this window is not a singleton.
+	 */
+	public String getSingletonKey() {
+		return _singletonKey;
+	}
+
+	/** @see #getSingletonKey() */
+	public WindowOptions setSingletonKey(String singletonKey) {
+		_singletonKey = singletonKey;
 		return this;
 	}
 }

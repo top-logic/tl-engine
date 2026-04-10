@@ -69,7 +69,8 @@ public class OpenDesignerCommand implements ViewCommand {
 			.setTitle("View Designer")
 			.setWidth(1200)
 			.setHeight(800)
-			.setResizable(true);
+			.setResizable(true)
+			.setSingletonKey("viewDesigner");
 
 		ReactControlProvider controlProvider = (windowContext, model) -> {
 			ViewElement designerView;

@@ -431,6 +431,7 @@ mvn exec:java@migrate-ticket28336
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
+- **docs/faq/** - FAQ articles for common development tasks and pitfalls
 
 ## Trac Ticket System
 

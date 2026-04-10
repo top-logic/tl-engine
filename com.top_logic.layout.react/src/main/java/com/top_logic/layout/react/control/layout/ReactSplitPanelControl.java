@@ -442,6 +442,7 @@ public class ReactSplitPanelControl extends ReactControl {
 			for (ChildEntry entry : _children) {
 				list.add(entry.toDescriptor());
 			}
+			patchChildren();
 			if (_onSizesChanged != null) {
 				Map<String, Float> sizeMap = new LinkedHashMap<>();
 				for (ChildEntry entry : _children) {

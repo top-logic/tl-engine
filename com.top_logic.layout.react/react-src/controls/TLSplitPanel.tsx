@@ -60,11 +60,11 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     } else if (localSize !== undefined) {
       // During drag, use pixel sizes.
       style.flex = `0 0 ${localSize}px`;
-    } else if (child.unit === '%' || someCollapsed) {
-      // Use size as proportional flex-grow so non-collapsed children fill space freed by collapsed siblings.
-      style.flex = `${child.size} 0 0%`;
     } else {
-      style.flex = `0 0 ${child.size}px`;
+      // Use size as proportional flex-grow weight (works for both % and px values).
+      // Pixel values act as relative weights just like percentages, ensuring the layout
+      // scales proportionally when the viewport is resized.
+      style.flex = `${child.size} 1 0%`;
     }
 
     if (child.minSize > 0 && !child.collapsed) {

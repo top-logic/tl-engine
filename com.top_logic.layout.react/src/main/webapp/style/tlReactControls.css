@@ -5,6 +5,21 @@
  * integrate visually with the rest of the TL UI.
  */
 
+/* --- Viewport-filling layout ------------------------------------------- */
+
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+.is-control {
+	height: 100%;
+}
+
+.is-control > .tlStack {
+	height: 100%;
+}
+
 /* --- React mount point ------------------------------------------------- */
 
 [data-react-module] {
@@ -1057,6 +1072,13 @@ button.tlPanel__actionButton:focus-visible {
 	overflow: auto;
 	position: relative;
 	padding: var(--spacing-04);
+	display: flex;
+	flex-direction: column;
+}
+
+.tlSidebar__content > * {
+	flex: 1 1 0%;
+	min-height: 0;
 }
 
 .tlSidebar__headerSlot,

@@ -12,8 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.AgentConfig;
-import com.top_logic.tl.ai.core.agent.AgentListener;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -29,7 +30,6 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 
@@ -397,69 +397,42 @@ public class VisualConversationMemoryTest extends TestCase {
 		return sb.toString();
 	}
 
-	private static AgentListener memoryListener(ConversationMemory memory) {
-		return new AgentListener() {
-			@Override
-			public void onTurnStart(int turnNumber) {
-				System.out.println("\n" + ANSI_BLUE + "── Turn " + turnNumber
+	private static AgentEventListener memoryListener(ConversationMemory memory) {
+		return e -> {
+			if (e instanceof AgentEvent.TurnStarted t) {
+				System.out.println("\n" + ANSI_BLUE + "── Turn " + t.turnNumber()
 					+ " ──" + ANSI_RESET + ANSI_DIM + "  (~"
 					+ memory.estimateTokens() + "/" + memory.usableTokens()
 					+ " tokens)" + ANSI_RESET);
-			}
-
-			@Override
-			public void onTurnComplete(int turnNumber, TokenUsage usage) {
-				System.out.println(ANSI_DIM + "  tokens: " + usage.inputTokens() + " in / "
-					+ usage.outputTokens() + " out"
+			} else if (e instanceof AgentEvent.TurnCompleted t) {
+				System.out.println(ANSI_DIM + "  tokens: " + t.turnUsage().inputTokens() + " in / "
+					+ t.turnUsage().outputTokens() + " out"
 					+ "  |  memory: ~" + memory.estimateTokens() + "/" + memory.usableTokens()
 					+ ANSI_RESET);
-			}
-
-			@Override
-			public void onTextDelta(String text) {
-				System.out.print(text);
-			}
-
-			@Override
-			public void onToolCallStart(ToolCall toolCall) {
-				System.out.println(ANSI_YELLOW + "  ⚡ " + toolCall.name()
-					+ "(" + truncate(toolCall.arguments(), 40) + ")" + ANSI_RESET);
-			}
-
-			@Override
-			public void onToolCallComplete(ToolCall toolCall, ToolResultMessage result) {
-				if (result.state() instanceof ToolState.Completed c) {
-					System.out.println(ANSI_GREEN + "  ✓ " + toolCall.name()
-						+ " → " + c.result().length() + " chars" + ANSI_RESET);
-				}
-			}
-
-			@Override
-			public void onToolError(ToolCall toolCall, String error) {
-				System.out.println(ANSI_RED + "  ✗ " + toolCall.name()
-					+ " → " + error + ANSI_RESET);
-			}
-
-			@Override
-			public void onCompactionStart(int tokensBefore) {
+			} else if (e instanceof AgentEvent.TextDelta d) {
+				System.out.print(d.text());
+			} else if (e instanceof AgentEvent.ToolCallStarted s) {
+				System.out.println(ANSI_YELLOW + "  ⚡ " + s.toolName()
+					+ "(" + truncate(s.argsJson(), 40) + ")" + ANSI_RESET);
+			} else if (e instanceof AgentEvent.ToolCallCompleted c) {
+				System.out.println(ANSI_GREEN + "  ✓ " + c.toolName()
+					+ " → " + c.result().length() + " chars" + ANSI_RESET);
+			} else if (e instanceof AgentEvent.ToolCallFailed f) {
+				System.out.println(ANSI_RED + "  ✗ " + f.toolName()
+					+ " → " + f.errorMessage() + ANSI_RESET);
+			} else if (e instanceof AgentEvent.CompactionStarted cs) {
 				System.out.println("\n" + ANSI_RED + ANSI_BOLD
 					+ "  ⚠ COMPACTION TRIGGERED" + ANSI_RESET
-					+ ANSI_DIM + "  (tokens: " + tokensBefore
+					+ ANSI_DIM + "  (tokens: " + cs.tokensBefore()
 					+ " ≥ budget: " + memory.usableTokens() + ")" + ANSI_RESET);
-			}
-
-			@Override
-			public void onCompactionComplete(CompactionResult result) {
+			} else if (e instanceof AgentEvent.CompactionCompleted cc) {
 				System.out.println(ANSI_GREEN + "  ✓ Compacted: "
-					+ result.tokensBefore() + " → " + result.tokensAfter() + " tokens"
-					+ " (" + result.messagesSummarized() + " messages dropped)"
+					+ cc.result().tokensBefore() + " → " + cc.result().tokensAfter() + " tokens"
+					+ " (" + cc.result().messagesSummarized() + " messages dropped)"
 					+ ANSI_RESET);
-			}
-
-			@Override
-			public void onError(ProviderException error) {
-				System.out.println(ANSI_RED + "\n  PROVIDER ERROR: " + error.kind()
-					+ " — " + error.getMessage() + ANSI_RESET);
+			} else if (e instanceof AgentEvent.ProviderError p) {
+				System.out.println(ANSI_RED + "\n  PROVIDER ERROR: " + p.kind()
+					+ " — " + p.message() + ANSI_RESET);
 			}
 		};
 	}

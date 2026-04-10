@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.AgentConfig;
-import com.top_logic.tl.ai.core.agent.AgentListener;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
@@ -269,7 +269,7 @@ public class TestToolRegistry extends TestCase {
 		conv.add(new UserMessage("u1", Instant.now(), List.of(new TextContent("What is 17+25?"))));
 
 		AgentLoop loop = new AgentLoop(config, provider, registry);
-		AgentResult result = loop.run(conv, new AgentListener() {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertEquals(2, result.turnsUsed());
@@ -309,7 +309,7 @@ public class TestToolRegistry extends TestCase {
 		ToolContext context = new ToolContext(noDeletions, ApprovalCallback.AUTO_APPROVE);
 
 		AgentLoop loop = new AgentLoop(config, provider, registry);
-		AgentResult result = loop.run(conv, context, new AgentListener() {});
+		AgentResult result = loop.run(conv, context, (AgentEventListener) e -> {});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 
@@ -347,7 +347,7 @@ public class TestToolRegistry extends TestCase {
 
 		int maxChars = 100;
 		AgentLoop loop = new AgentLoop(config, llm, registry, maxChars);
-		loop.run(conv, new AgentListener() {});
+		loop.run(conv, (AgentEventListener) e -> {});
 
 		ToolResultMessage toolResult = conv.messages().stream()
 			.filter(ToolResultMessage.class::isInstance)

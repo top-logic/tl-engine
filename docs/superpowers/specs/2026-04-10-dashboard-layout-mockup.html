@@ -203,7 +203,6 @@
 <div class="info" id="info">
   Resize the browser window to see responsive behavior.
   Columns: <span class="col-count" id="colCount">?</span>
-  | Base grid: <span class="col-count" id="baseCount">?</span>
   <br>Click <strong>Edit Layout</strong> to enable drag-and-drop reordering.
 </div>
 
@@ -211,7 +210,6 @@
 const dashboard = document.getElementById('dashboard');
 const editBtn = document.getElementById('editBtn');
 const colCountEl = document.getElementById('colCount');
-const baseCountEl = document.getElementById('baseCount');
 
 // --- Width fractions ---
 const WIDTH_FRACTION = {
@@ -232,27 +230,20 @@ function calcMaxColumns(containerWidth) {
 }
 
 // --- Layout engine ---
-// Uses a 12-column base grid. Each item gets a base span from its width
-// fraction. Items are packed into rows left-to-right. When a row can't
-// fit the next item, the last item in the row is stretched to fill the
+// Items are packed into rows left-to-right. Each item's span is computed
+// from its width fraction against the actual column count. When a row
+// can't fit the next item, the last item in the row is stretched to fill
 // remaining columns. Row-spanning items reserve their columns in
-// subsequent rows.
-//
-// For responsiveness: the 12-column base is scaled down when the container
-// is too narrow. Items whose base span exceeds available columns are clamped.
+// subsequent rows. The stretching guarantees gap-free rows regardless
+// of which fraction combinations appear.
 
-const BASE_COLS = 12;
-
-function baseSpan(widthName) {
+function itemSpan(widthName, cols) {
   const frac = WIDTH_FRACTION[widthName] || 1.0;
-  return Math.max(1, Math.round(frac * BASE_COLS));
+  return Math.max(1, Math.round(frac * cols));
 }
 
 function computeLayout(items, maxVisualCols) {
-  // Scale base grid to fit container. If container fits 3 visual columns
-  // (at minColWidth), we use min(12, 3*3=9) -> but simpler: cap base cols.
-  // Actually: the base grid IS the visual grid. We pick a base that fits.
-  const cols = Math.min(BASE_COLS, maxVisualCols);
+  const cols = Math.max(1, maxVisualCols);
 
   // occupied[row][col] = true if cell is taken (by a row-spanning item)
   const occupied = [];
@@ -273,7 +264,7 @@ function computeLayout(items, maxVisualCols) {
   for (const item of items) {
     const widthName = item.dataset.width || 'full';
     const rowSpan = (cols <= 1) ? 1 : (parseInt(item.dataset.rowSpan) || 1);
-    let span = Math.min(baseSpan(widthName), cols);
+    let span = Math.min(itemSpan(widthName, cols), cols);
 
     // Find next free position
     while (isOccupied(curRow, curCol)) {
@@ -367,7 +358,6 @@ function updateLayout() {
   const { placements, cols } = computeLayout(items, maxCols);
 
   colCountEl.textContent = cols;
-  baseCountEl.textContent = BASE_COLS;
 
   dashboard.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
 

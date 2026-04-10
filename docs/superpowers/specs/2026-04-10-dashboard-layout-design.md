@@ -116,8 +116,8 @@ Layout slot that defines size/position. Contains arbitrary child elements
 
 **Layout algorithm (runs on every resize via `ResizeObserver`):**
 
-1. Determine column count: `Math.min(12, Math.floor((width + gap) / (minColWidth + gap)))`.
-2. Calculate each item's base span: `Math.round(fraction * columnCount)`,
+1. Determine column count: `Math.max(1, Math.floor((width + gap) / (minColWidth + gap)))`.
+2. Calculate each item's span: `Math.round(fraction * columnCount)`,
    clamped to `[1, columnCount]`.
 3. Pack items into rows left-to-right:
    - Track occupied cells in a 2D grid (for row-spanning items).

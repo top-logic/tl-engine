@@ -949,10 +949,6 @@
 		            <handler id="ElementSwitchEditCommand" class="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
 						clique="edit"/>
 		
-		            <handler id="securityExport" class="com.top_logic.element.layout.security.handler.SecurityExportHandler"
-						clique="exportButtons"
-						image="theme:ICONS_BUTTON_XML_EXPORT" disabledImage="theme:ICONS_BUTTON_XML_EXPORT_DISABLED"/>
-		
 		            <handler id="addSelectedToClipboard" class="com.top_logic.element.layout.grid.GridComponent$AddSelectedToClipboard"
 						clique="clipboard"
 		            	image="theme:ICONS_ADD2_CLIPBOARD" disabledImage="theme:ICONS_ADD2_CLIPBOARD_DISABLED"

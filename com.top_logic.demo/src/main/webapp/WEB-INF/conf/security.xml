@@ -1071,7 +1071,6 @@
 				<commandGroup name="Write"/>
 			</view>
 			<view name="com.top_logic.element/admin/security/attributeCategoryPermissions/attributeSecurityRelease.layout.xml#adminRoleClassSec">
-				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>

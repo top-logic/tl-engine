@@ -22,6 +22,7 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
+import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
@@ -248,7 +249,7 @@ public class RoleRulesImporter {
 			addProblem(I18NConstants.NOT_A_REFERENCE__PART.fill(part));
 			return;
 		}
-		path.add(new PathElement((TLReference) part, inverse));
+		path.add(new PathNavigation((TLReference) part, inverse));
 	}
 
 	private Collection<BoundedRole> getRoles(List<String> roleNames) {

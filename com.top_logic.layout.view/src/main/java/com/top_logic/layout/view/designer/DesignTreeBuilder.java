@@ -13,6 +13,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.view.ReferenceElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
@@ -23,15 +24,15 @@ import com.top_logic.layout.view.ViewLoader;
  * {@link com.top_logic.layout.view.UIElement.Config} hierarchy.
  *
  * <p>
- * Generically traverses all {@link PolymorphicConfiguration}-typed LIST and ITEM properties of each
- * config. This includes not only {@link com.top_logic.layout.view.UIElement.Config} but also
- * intermediate config types (e.g. {@code NavItemConfig}, {@code BottomBarItemConfig}) that contain
- * UIElement children in their own properties.
+ * Traverses only {@link TreeProperty}-annotated LIST and ITEM properties of each config. This
+ * allows configuration authors to explicitly control which structural properties appear as tree
+ * nodes vs. editable form fields.
  * </p>
  *
  * <p>
- * If a config has exactly one container property, its children are inlined directly. Multiple
- * container properties each get their own virtual group node (e.g. "[header]", "[content]").
+ * If a config has exactly one {@link TreeProperty}, its children are inlined directly into the
+ * parent node (no virtual group node). Multiple {@link TreeProperty} properties each get their own
+ * virtual group node (e.g. "[header]", "[content]").
  * </p>
  *
  * <p>
@@ -57,30 +58,30 @@ public class DesignTreeBuilder {
 	private DesignTreeNode buildNode(ConfigurationItem config, String sourceFile) throws ConfigurationException {
 		DesignTreeNode node = new DesignTreeNode(config, sourceFile);
 
-		// Traverse all container properties (LIST/ITEM of PolymorphicConfiguration).
-		// Each container property gets its own virtual group node — no inlining, so the tree
-		// always shows the full structure without losing intermediate levels.
+		// Collect tree properties.
+		List<PropertyDescriptor> treeProperties = new ArrayList<>();
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			if (!isContainerProperty(property)) {
-				continue;
+			if (isTreeProperty(property)) {
+				treeProperties.add(property);
 			}
+		}
+
+		boolean inline = treeProperties.size() == 1;
+
+		for (PropertyDescriptor property : treeProperties) {
 			if (property.kind() == PropertyKind.LIST) {
 				List<?> children = (List<?>) config.value(property);
 				if (children != null && !children.isEmpty()) {
-					DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
-					group.setParent(node);
-					node.getChildren().add(group);
+					DesignTreeNode target = inline ? node : createGroupNode(node, property, sourceFile);
 					for (Object childConfig : children) {
-						addChild(group, (ConfigurationItem) childConfig, sourceFile);
+						addChild(target, (ConfigurationItem) childConfig, sourceFile);
 					}
 				}
 			} else if (property.kind() == PropertyKind.ITEM) {
 				Object childConfig = config.value(property);
 				if (childConfig instanceof ConfigurationItem childItem) {
-					DesignTreeNode group = new DesignTreeNode(property.getPropertyName(), sourceFile);
-					group.setParent(node);
-					node.getChildren().add(group);
-					addChild(group, childItem, sourceFile);
+					DesignTreeNode target = inline ? node : createGroupNode(node, property, sourceFile);
+					addChild(target, childItem, sourceFile);
 				}
 			}
 		}
@@ -95,12 +96,19 @@ public class DesignTreeBuilder {
 		return node;
 	}
 
+	private DesignTreeNode createGroupNode(DesignTreeNode parent, PropertyDescriptor property, String sourceFile) {
+		DesignTreeNode group = new DesignTreeNode(property, sourceFile);
+		group.setParent(parent);
+		parent.getChildren().add(group);
+		return group;
+	}
+
 	/**
-	 * Whether the given property holds structured values that should be traversed.
+	 * Whether the given property is annotated with {@link TreeProperty} and should be traversed.
 	 */
-	private boolean isContainerProperty(PropertyDescriptor property) {
-		PropertyKind kind = property.kind();
-		return kind == PropertyKind.LIST || kind == PropertyKind.ITEM;
+	private boolean isTreeProperty(PropertyDescriptor property) {
+		TreeProperty annotation = property.getAnnotation(TreeProperty.class);
+		return annotation != null && annotation.value();
 	}
 
 	private void addChild(DesignTreeNode parent, ConfigurationItem childConfig,

@@ -6,7 +6,7 @@
 <title>Dashboard Layout Mockup</title>
 <style>
   :root {
-    --gap-default: 1rem;
+    --gap: 1rem;
     --row-height: 12rem;
     --min-col-width: 16rem;
     --color-bg: #f5f6fa;
@@ -26,12 +26,7 @@
     color: #333;
   }
 
-  h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: #444;
-  }
+  h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #444; }
 
   .toolbar {
     display: flex;
@@ -41,30 +36,23 @@
   }
 
   .edit-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
     padding: 0.4rem 0.8rem;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-card);
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: #555;
-    transition: all 0.15s;
+    border: 1px solid var(--color-border); border-radius: 6px;
+    background: var(--color-card); cursor: pointer;
+    font-size: 0.85rem; color: #555; transition: all 0.15s;
   }
   .edit-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
   .edit-toggle.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
 
-  /* Dashboard grid -- columns are set by JS via style attribute */
+  /* Grid container -- columns set by JS */
   .dashboard {
     display: grid;
     grid-auto-rows: var(--row-height);
-    grid-auto-flow: dense;
-    gap: var(--gap-default);
+    gap: var(--gap);
   }
 
-  /* Dashboard items */
+  /* Items -- grid-column and grid-row set by JS */
   .dashboard-item {
     border-radius: 10px;
     background: var(--color-card);
@@ -72,94 +60,53 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
-    position: relative;
+    transition: box-shadow 0.2s, opacity 0.2s;
+    min-width: 0;
   }
 
-  /* Spans are set directly via style attribute by JavaScript */
-
-  /* Card header */
   .item-header {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--color-border);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #555;
+    font-size: 0.85rem; font-weight: 600; color: #555;
   }
   .item-header .drag-handle {
-    display: none;
-    cursor: grab;
-    margin-right: 0.5rem;
-    color: var(--color-drag-handle);
-    font-size: 1.1rem;
-    user-select: none;
+    display: none; cursor: grab; margin-right: 0.5rem;
+    color: var(--color-drag-handle); font-size: 1.1rem; user-select: none;
   }
   .item-header .drag-handle:active { cursor: grabbing; }
 
   .item-content {
     flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    color: #888;
-    font-size: 0.8rem;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem; color: #888; font-size: 0.8rem;
   }
 
-  /* KPI style */
-  .kpi-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #333;
-  }
-  .kpi-label {
-    font-size: 0.8rem;
-    color: #999;
-    margin-top: 0.25rem;
-  }
+  .kpi-value { font-size: 2.5rem; font-weight: 700; color: #333; }
+  .kpi-label { font-size: 0.8rem; color: #999; margin-top: 0.25rem; }
 
-  /* Chart placeholder */
   .chart-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #f0f4ff 0%, #e8edf5 100%);
-    border-radius: 6px;
-    color: #aab;
-    font-size: 0.85rem;
+    border-radius: 6px; color: #aab; font-size: 0.85rem;
   }
 
   /* Edit mode */
   .dashboard.edit-mode .drag-handle { display: inline-block; }
   .dashboard.edit-mode .dashboard-item { cursor: default; }
   .dashboard.edit-mode .dashboard-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-
-  /* Dragging */
-  .dashboard-item.dragging {
-    opacity: 0.4;
-    transform: scale(0.97);
-  }
+  .dashboard-item.dragging { opacity: 0.4; }
   .dashboard-item.drag-over {
     outline: 2px dashed var(--color-drop-zone);
-    outline-offset: -2px;
-    background: #f0f6ff;
+    outline-offset: -2px; background: #f0f6ff;
   }
 
-  /* Responsive info */
   .info {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: var(--color-card);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    font-size: 0.8rem;
-    color: #666;
+    margin-top: 1.5rem; padding: 1rem;
+    background: var(--color-card); border: 1px solid var(--color-border);
+    border-radius: 8px; font-size: 0.8rem; color: #666;
   }
-  .info code { background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 3px; }
   .info .col-count { font-weight: 700; color: var(--color-accent); }
 </style>
 </head>
@@ -173,18 +120,17 @@
 </div>
 
 <div class="dashboard" id="dashboard">
-
-  <div class="dashboard-item" draggable="false" data-id="sales" data-width="half" data-row-span="2">
+  <div class="dashboard-item" data-id="sales" data-width="half" data-row-span="2">
     <div class="item-header">
       <span class="drag-handle" title="Drag to reorder">&#9776;</span>
       Sales Overview
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Bar Chart (half width, 2 rows)</div>
+      <div class="chart-placeholder">Bar Chart (half, 2 rows)</div>
     </div>
   </div>
 
-  <div class="dashboard-item" draggable="false" data-id="tasks" data-width="quarter">
+  <div class="dashboard-item" data-id="tasks" data-width="quarter">
     <div class="item-header">
       <span class="drag-handle" title="Drag to reorder">&#9776;</span>
       Active Tasks
@@ -197,7 +143,7 @@
     </div>
   </div>
 
-  <div class="dashboard-item" draggable="false" data-id="issues" data-width="quarter">
+  <div class="dashboard-item" data-id="issues" data-width="quarter">
     <div class="item-header">
       <span class="drag-handle" title="Drag to reorder">&#9776;</span>
       Open Issues
@@ -210,7 +156,7 @@
     </div>
   </div>
 
-  <div class="dashboard-item" draggable="false" data-id="reviews" data-width="half">
+  <div class="dashboard-item" data-id="reviews" data-width="half">
     <div class="item-header">
       <span class="drag-handle" title="Drag to reorder">&#9776;</span>
       In Review
@@ -223,175 +169,291 @@
     </div>
   </div>
 
-  <div class="dashboard-item" draggable="false" data-id="timeline" data-width="two-thirds">
+  <div class="dashboard-item" data-id="timeline" data-width="two-thirds">
     <div class="item-header">
       <span class="drag-handle" title="Drag to reorder">&#9776;</span>
       Timeline
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Line Chart (two-thirds width)</div>
+      <div class="chart-placeholder">Line Chart (two-thirds)</div>
     </div>
   </div>
 
-  <div class="dashboard-item" draggable="false" data-id="distribution" data-width="third">
+  <div class="dashboard-item" data-id="distribution" data-width="third">
     <div class="item-header">
       <span class="drag-handle" title="Drag to reorder">&#9776;</span>
       Distribution
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Doughnut Chart (third width)</div>
+      <div class="chart-placeholder">Doughnut Chart (third)</div>
     </div>
   </div>
 
-  <div class="dashboard-item" draggable="false" data-id="activity" data-width="full">
+  <div class="dashboard-item" data-id="activity" data-width="full">
     <div class="item-header">
       <span class="drag-handle" title="Drag to reorder">&#9776;</span>
       Recent Activity
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Activity Table (full width)</div>
+      <div class="chart-placeholder">Activity Table (full)</div>
     </div>
   </div>
 </div>
 
 <div class="info" id="info">
-  Resize the browser window to see responsive behavior. Current columns: <span class="col-count" id="colCount">?</span><br>
-  Click <strong>Edit Layout</strong> to enable drag-and-drop reordering.
+  Resize the browser window to see responsive behavior.
+  Columns: <span class="col-count" id="colCount">?</span>
+  | Base grid: <span class="col-count" id="baseCount">?</span>
+  <br>Click <strong>Edit Layout</strong> to enable drag-and-drop reordering.
 </div>
 
 <script>
-  const dashboard = document.getElementById('dashboard');
-  const editBtn = document.getElementById('editBtn');
-  const colCountEl = document.getElementById('colCount');
-  let editMode = false;
-  let draggedItem = null;
+const dashboard = document.getElementById('dashboard');
+const editBtn = document.getElementById('editBtn');
+const colCountEl = document.getElementById('colCount');
+const baseCountEl = document.getElementById('baseCount');
 
-  // Explicit span lookup: for each "nice" column count, every width
-  // maps to an integer span so that common combinations fill rows.
-  //                        full  2/3  1/2  1/3  1/4
-  //  4 cols:                 4    3    2    1    1
-  //  3 cols:                 3    2    2    1    1
-  //  2 cols:                 2    2    1    1    1
-  //  1 col:                  1    1    1    1    1
-  const SPAN_TABLE = {
-    4: { 'full': 4, 'two-thirds': 3, 'half': 2, 'third': 1, 'quarter': 1 },
-    3: { 'full': 3, 'two-thirds': 2, 'half': 2, 'third': 1, 'quarter': 1 },
-    2: { 'full': 2, 'two-thirds': 2, 'half': 1, 'third': 1, 'quarter': 1 },
-    1: { 'full': 1, 'two-thirds': 1, 'half': 1, 'third': 1, 'quarter': 1 },
-  };
+// --- Width fractions ---
+const WIDTH_FRACTION = {
+  'full':       1.0,
+  'two-thirds': 2/3,
+  'half':       1/2,
+  'third':      1/3,
+  'quarter':    1/4,
+};
 
-  const NICE_COLUMNS = [1, 2, 3, 4];
+// --- Responsive column count ---
+const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+const minColWidthPx = 16 * remPx;
+const gapPx = remPx;
 
-  // Convert rem to px
-  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
-  const minColWidthPx = 16 * remPx; // 16rem
-  const gapPx = 1 * remPx; // 1rem gap
+function calcMaxColumns(containerWidth) {
+  return Math.max(1, Math.floor((containerWidth + gapPx) / (minColWidthPx + gapPx)));
+}
 
-  function getNiceColumnCount(containerWidth) {
-    const raw = Math.max(1, Math.floor((containerWidth + gapPx) / (minColWidthPx + gapPx)));
-    for (let i = NICE_COLUMNS.length - 1; i >= 0; i--) {
-      if (NICE_COLUMNS[i] <= raw) return NICE_COLUMNS[i];
+// --- Layout engine ---
+// Uses a 12-column base grid. Each item gets a base span from its width
+// fraction. Items are packed into rows left-to-right. When a row can't
+// fit the next item, the last item in the row is stretched to fill the
+// remaining columns. Row-spanning items reserve their columns in
+// subsequent rows.
+//
+// For responsiveness: the 12-column base is scaled down when the container
+// is too narrow. Items whose base span exceeds available columns are clamped.
+
+const BASE_COLS = 12;
+
+function baseSpan(widthName) {
+  const frac = WIDTH_FRACTION[widthName] || 1.0;
+  return Math.max(1, Math.round(frac * BASE_COLS));
+}
+
+function computeLayout(items, maxVisualCols) {
+  // Scale base grid to fit container. If container fits 3 visual columns
+  // (at minColWidth), we use min(12, 3*3=9) -> but simpler: cap base cols.
+  // Actually: the base grid IS the visual grid. We pick a base that fits.
+  const cols = Math.min(BASE_COLS, maxVisualCols);
+
+  // occupied[row][col] = true if cell is taken (by a row-spanning item)
+  const occupied = [];
+  function isOccupied(row, col) {
+    return occupied[row] && occupied[row][col];
+  }
+  function markOccupied(row, col) {
+    if (!occupied[row]) occupied[row] = {};
+    occupied[row][col] = true;
+  }
+
+  // Result: array of { element, colStart, colEnd, rowStart, rowEnd }
+  const placements = [];
+
+  let curRow = 0;
+  let curCol = 0;
+
+  for (const item of items) {
+    const widthName = item.dataset.width || 'full';
+    const rowSpan = (cols <= 1) ? 1 : (parseInt(item.dataset.rowSpan) || 1);
+    let span = Math.min(baseSpan(widthName), cols);
+
+    // Find next free position
+    while (isOccupied(curRow, curCol)) {
+      curCol++;
+      if (curCol >= cols) { curCol = 0; curRow++; }
     }
-    return 1;
-  }
 
-  function updateLayout() {
-    const containerWidth = dashboard.clientWidth;
-    const cols = getNiceColumnCount(containerWidth);
-    colCountEl.textContent = cols;
-
-    dashboard.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
-
-    const spans = SPAN_TABLE[cols];
-    document.querySelectorAll('.dashboard-item').forEach(item => {
-      const widthName = item.dataset.width || 'full';
-      const rowSpan = parseInt(item.dataset.rowSpan) || 1;
-
-      item.style.gridColumn = 'span ' + (spans[widthName] || cols);
-      item.style.gridRow = (cols <= 1) ? 'span 1' : 'span ' + rowSpan;
-    });
-  }
-
-  const ro = new ResizeObserver(() => updateLayout());
-  ro.observe(dashboard);
-  updateLayout();
-
-  // Edit mode toggle
-  function toggleEdit() {
-    editMode = !editMode;
-    dashboard.classList.toggle('edit-mode', editMode);
-    editBtn.classList.toggle('active', editMode);
-    editBtn.innerHTML = editMode
-      ? '<span>&#10003;</span> Done'
-      : '<span>&#9998;</span> Edit Layout';
-
-    document.querySelectorAll('.dashboard-item').forEach(item => {
-      item.draggable = editMode;
-    });
-  }
-
-  // Drag and drop
-  dashboard.addEventListener('dragstart', e => {
-    const item = e.target.closest('.dashboard-item');
-    if (!item || !editMode) return;
-    draggedItem = item;
-    item.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', item.dataset.id);
-  });
-
-  dashboard.addEventListener('dragover', e => {
-    e.preventDefault();
-    if (!editMode || !draggedItem) return;
-    e.dataTransfer.dropEffect = 'move';
-
-    const target = e.target.closest('.dashboard-item');
-    if (target && target !== draggedItem) {
-      document.querySelectorAll('.dashboard-item.drag-over').forEach(el =>
-        el.classList.remove('drag-over'));
-      target.classList.add('drag-over');
+    // Does this item fit in the current row?
+    // Count free columns from curCol to end of row
+    let freeInRow = 0;
+    for (let c = curCol; c < cols; c++) {
+      if (!isOccupied(curRow, c)) freeInRow++;
+      else break;
     }
-  });
 
-  dashboard.addEventListener('dragleave', e => {
-    const target = e.target.closest('.dashboard-item');
-    if (target) target.classList.remove('drag-over');
-  });
-
-  dashboard.addEventListener('drop', e => {
-    e.preventDefault();
-    if (!editMode || !draggedItem) return;
-
-    const target = e.target.closest('.dashboard-item');
-    if (target && target !== draggedItem) {
-      const items = [...dashboard.querySelectorAll('.dashboard-item')];
-      const fromIndex = items.indexOf(draggedItem);
-      const toIndex = items.indexOf(target);
-
-      if (fromIndex < toIndex) {
-        target.after(draggedItem);
-      } else {
-        target.before(draggedItem);
+    if (span > freeInRow) {
+      // Item doesn't fit. Stretch the previous item in this row to fill,
+      // then move to next row.
+      stretchLastInRow(placements, curRow, cols, occupied);
+      curCol = 0;
+      curRow++;
+      // Skip occupied cells (from row-spanning items)
+      while (isOccupied(curRow, curCol)) {
+        curCol++;
+        if (curCol >= cols) { curCol = 0; curRow++; }
       }
-
-      // Log new order (would be sent to server)
-      const newOrder = [...dashboard.querySelectorAll('.dashboard-item')]
-        .map(el => el.dataset.id);
-      console.log('New order:', newOrder);
+      // Recalculate free space
+      freeInRow = 0;
+      for (let c = curCol; c < cols; c++) {
+        if (!isOccupied(curRow, c)) freeInRow++;
+        else break;
+      }
+      span = Math.min(span, freeInRow);
     }
 
-    document.querySelectorAll('.drag-over').forEach(el =>
-      el.classList.remove('drag-over'));
-  });
+    const colStart = curCol;
+    const colEnd = curCol + span;
+    const rowStart = curRow;
+    const rowEnd = curRow + rowSpan;
 
-  dashboard.addEventListener('dragend', () => {
-    if (draggedItem) {
-      draggedItem.classList.remove('dragging');
-      draggedItem = null;
+    placements.push({ element: item, colStart, colEnd, rowStart, rowEnd });
+
+    // Mark cells as occupied
+    for (let r = rowStart; r < rowEnd; r++) {
+      for (let c = colStart; c < colEnd; c++) {
+        markOccupied(r, c);
+      }
     }
-    document.querySelectorAll('.drag-over').forEach(el =>
-      el.classList.remove('drag-over'));
+
+    // Advance cursor
+    curCol = colEnd;
+    if (curCol >= cols) { curCol = 0; curRow++; }
+  }
+
+  // Stretch last item of the final row
+  stretchLastInRow(placements, curRow, cols, occupied);
+
+  return { placements, cols };
+}
+
+function stretchLastInRow(placements, row, totalCols, occupied) {
+  // Find the last placement that starts in this row
+  let lastInRow = null;
+  for (const p of placements) {
+    if (p.rowStart === row) lastInRow = p;
+  }
+  if (!lastInRow) return;
+
+  // Stretch it to fill remaining free columns in this row
+  let newEnd = lastInRow.colEnd;
+  while (newEnd < totalCols && !occupied[row][newEnd]) {
+    newEnd++;
+  }
+  if (newEnd !== lastInRow.colEnd) {
+    // Mark newly occupied cells
+    for (let r = lastInRow.rowStart; r < lastInRow.rowEnd; r++) {
+      for (let c = lastInRow.colEnd; c < newEnd; c++) {
+        if (!occupied[r]) occupied[r] = {};
+        occupied[r][c] = true;
+      }
+    }
+    lastInRow.colEnd = newEnd;
+  }
+}
+
+// --- Apply layout ---
+function updateLayout() {
+  const containerWidth = dashboard.clientWidth;
+  const maxCols = calcMaxColumns(containerWidth);
+  const items = [...dashboard.querySelectorAll('.dashboard-item')];
+  const { placements, cols } = computeLayout(items, maxCols);
+
+  colCountEl.textContent = cols;
+  baseCountEl.textContent = BASE_COLS;
+
+  dashboard.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+
+  for (const p of placements) {
+    // CSS Grid uses 1-based line numbers
+    p.element.style.gridColumn = (p.colStart + 1) + ' / ' + (p.colEnd + 1);
+    p.element.style.gridRow = (p.rowStart + 1) + ' / ' + (p.rowEnd + 1);
+  }
+}
+
+const ro = new ResizeObserver(() => updateLayout());
+ro.observe(dashboard);
+updateLayout();
+
+// --- Edit mode ---
+let editMode = false;
+let draggedItem = null;
+
+function toggleEdit() {
+  editMode = !editMode;
+  dashboard.classList.toggle('edit-mode', editMode);
+  editBtn.classList.toggle('active', editMode);
+  editBtn.innerHTML = editMode
+    ? '<span>&#10003;</span> Done'
+    : '<span>&#9998;</span> Edit Layout';
+  document.querySelectorAll('.dashboard-item').forEach(item => {
+    item.draggable = editMode;
   });
+}
+
+// --- Drag and drop ---
+dashboard.addEventListener('dragstart', e => {
+  const item = e.target.closest('.dashboard-item');
+  if (!item || !editMode) return;
+  draggedItem = item;
+  item.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', item.dataset.id);
+});
+
+dashboard.addEventListener('dragover', e => {
+  e.preventDefault();
+  if (!editMode || !draggedItem) return;
+  e.dataTransfer.dropEffect = 'move';
+  const target = e.target.closest('.dashboard-item');
+  if (target && target !== draggedItem) {
+    document.querySelectorAll('.dashboard-item.drag-over').forEach(el =>
+      el.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+  }
+});
+
+dashboard.addEventListener('dragleave', e => {
+  const target = e.target.closest('.dashboard-item');
+  if (target) target.classList.remove('drag-over');
+});
+
+dashboard.addEventListener('drop', e => {
+  e.preventDefault();
+  if (!editMode || !draggedItem) return;
+  const target = e.target.closest('.dashboard-item');
+  if (target && target !== draggedItem) {
+    const items = [...dashboard.querySelectorAll('.dashboard-item')];
+    const fromIndex = items.indexOf(draggedItem);
+    const toIndex = items.indexOf(target);
+    if (fromIndex < toIndex) {
+      target.after(draggedItem);
+    } else {
+      target.before(draggedItem);
+    }
+    updateLayout(); // recalculate after reorder
+    console.log('New order:', [...dashboard.querySelectorAll('.dashboard-item')]
+      .map(el => el.dataset.id));
+  }
+  document.querySelectorAll('.drag-over').forEach(el =>
+    el.classList.remove('drag-over'));
+});
+
+dashboard.addEventListener('dragend', () => {
+  if (draggedItem) {
+    draggedItem.classList.remove('dragging');
+    draggedItem = null;
+  }
+  document.querySelectorAll('.drag-over').forEach(el =>
+    el.classList.remove('drag-over'));
+});
 </script>
 </body>
 </html>

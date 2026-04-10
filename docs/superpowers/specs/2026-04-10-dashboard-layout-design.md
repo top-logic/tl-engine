@@ -108,23 +108,35 @@ Layout slot that defines size/position. Contains arbitrary child elements
 
 **`TLDashboard.tsx`** in `com.top_logic.layout.react/react-src/controls/`:
 
-- Renders a CSS Grid container.
-- Does NOT use `auto-fit` -- `auto-fit` and explicit column spans conflict
-  (spanning items create implicit extra columns). Instead, the column count
-  is calculated in JavaScript: `Math.max(1, Math.floor((width + gap) / (minColWidth + gap)))`,
-  then snapped down to a "nice" column count from `[1, 2, 3, 4, 6]` where
-  all width fractions (1/2, 1/3, 1/4, 2/3) produce clean integer spans.
-  This prevents gaps where items don't fill a row.
-- Sets `grid-template-columns: repeat(N, 1fr)` explicitly based on
-  calculated column count.
-- Sets `grid-auto-rows: <rowHeight>`.
-- Sets `grid-auto-flow: dense` so that smaller items fill gaps left by
-  spanning items -- the grid always fills completely without holes.
-- Uses `ResizeObserver` to recalculate on container resize.
-- Sets `style.gridColumn` and `style.gridRow` directly on each item element.
-- Maps each item's `width` to a `grid-column: span N` value based on current
-  column count (see mapping table below).
-- Sets `grid-row: span <rowSpan>` for each item.
+- Renders a CSS Grid container with `grid-auto-rows: <rowHeight>`.
+- Does NOT use CSS Grid auto-placement (`auto-fit`, `auto-flow`).
+  Instead, a **JS layout engine** calculates explicit `grid-column` and
+  `grid-row` positions for every item. This is necessary because CSS
+  Grid auto-placement cannot stretch items to fill remaining row space.
+
+**Layout algorithm (runs on every resize via `ResizeObserver`):**
+
+1. Determine column count: `Math.min(12, Math.floor((width + gap) / (minColWidth + gap)))`.
+2. Calculate each item's base span: `Math.round(fraction * columnCount)`,
+   clamped to `[1, columnCount]`.
+3. Pack items into rows left-to-right:
+   - Track occupied cells in a 2D grid (for row-spanning items).
+   - If the next item doesn't fit in the current row, **stretch the last
+     item in that row to fill remaining columns**, then start a new row.
+   - Row-spanning items reserve their columns in subsequent rows.
+4. After the last item, stretch it to fill its row.
+5. Assign explicit `grid-column: <start> / <end>` and
+   `grid-row: <start> / <end>` (1-based CSS Grid line numbers).
+
+This guarantees:
+- **No gaps**: every row is completely filled.
+- **Row-span works**: items can span multiple rows, and the packing
+  algorithm accounts for reserved cells.
+- **Responsive**: on resize, the column count changes and the layout
+  is fully recalculated.
+
+At 1 column (mobile), `row-span` is reset to 1 to prevent excessively
+tall pages.
 
 **Edit mode:**
 
@@ -135,35 +147,9 @@ Layout slot that defines size/position. Contains arbitrary child elements
   - HTML5 Drag API: `dragstart`, `dragover`, `drop`, `dragend`.
   - Dragged item becomes semi-transparent; drop target shows a dashed
     placeholder.
-  - On drop: item order array is updated, React re-renders, server command
-    `reorder` is called with new ID list.
+  - On drop: item order is updated in the DOM, layout is recalculated,
+    server command `reorder` is called with new ID list.
 - In normal mode: no drag handles visible, no drag interaction.
-
-### Width-to-Span Mapping
-
-The `width` fraction is mapped to a column span based on the current number
-of columns (determined by `ResizeObserver`):
-
-```
-span = Math.max(1, Math.round(fraction * totalColumns))
-span = Math.min(span, totalColumns)  // clamp to available columns
-```
-
-Column count is restricted to `[1, 2, 3, 4]`. At 4 columns, all width
-fractions produce clean integer spans. On wider screens, the 4 columns
-simply grow wider. Spans are defined by an explicit lookup table (not
-calculated via `round()`) to ensure items fill rows without gaps:
-
-| `width` | 4 cols | 3 cols | 2 cols | 1 col |
-|---------|--------|--------|--------|-------|
-| `full` | 4 | 3 | 2 | 1 |
-| `two-thirds` | 3 | 2 | 2 | 1 |
-| `half` | 2 | 2 | 1 | 1 |
-| `third` | 1 | 1 | 1 | 1 |
-| `quarter` | 1 | 1 | 1 | 1 |
-
-At 1 column (mobile), `row-span` is reset to 1 to prevent excessively tall
-pages.
 
 ### Persistence
 

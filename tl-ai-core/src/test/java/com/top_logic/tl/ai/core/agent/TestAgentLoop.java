@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventAssertions;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
@@ -1469,5 +1470,33 @@ public class TestAgentLoop extends TestCase {
 		assertTrue(events.contains("complete:read1"));
 		assertTrue(events.contains("complete:read2"));
 		assertTrue(events.contains("complete:write1"));
+	}
+
+	/** */
+	public void testEventBookendsAndToolCallMatching() {
+		List<AgentEvent> captured = new ArrayList<>();
+		AgentEventListener capture = captured::add;
+
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("What is 2+2?"))));
+
+		ToolSchema calcSpec = new ToolSchema("calculate", "Does math", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "calculate", "{\"expr\":\"2+2\"}");
+
+		// Turn 1: LLM requests tool. Turn 2: LLM responds with text.
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("The answer is 4.")));
+
+		ToolRegistry registry = echoRegistry("calculate", calcSpec);
+
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
+		loop.run(conv, capture);
+
+		AgentEventAssertions.assertBookends(captured);
+		AgentEventAssertions.assertToolCallsMatched(captured);
+		AgentEventAssertions.assertTurnNumbersMonotone(captured);
+		assertNotNull(AgentEventAssertions.firstOfType(captured, AgentEvent.RunStarted.class));
+		assertEquals(1, AgentEventAssertions.allOfType(captured, AgentEvent.RunCompleted.class).size());
 	}
 }

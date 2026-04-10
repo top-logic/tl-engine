@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
@@ -51,6 +52,7 @@ public class BottomBarElement implements UIElement {
 		 * The navigation items.
 		 */
 		@Name(ITEMS)
+		@TreeProperty
 		List<ItemConfig> getItems();
 
 		/**

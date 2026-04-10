@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -121,6 +122,7 @@ public class WindowElement extends CommandScopeElement {
 		 * </p>
 		 */
 		@Name(ACTIONS)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getActions();
 	}
 

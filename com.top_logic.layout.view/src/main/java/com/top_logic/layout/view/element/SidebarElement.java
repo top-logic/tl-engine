@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -67,6 +68,7 @@ public class SidebarElement implements UIElement {
 		 * The sidebar navigation items.
 		 */
 		@Name(ITEMS)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends SidebarItemElement>> getItems();
 
 		/**
@@ -139,6 +141,7 @@ public class SidebarElement implements UIElement {
 		 */
 		@Name(CHILDREN)
 		@DefaultContainer
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 

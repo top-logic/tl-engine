@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.react.control.IReactControl;
 
 /**
@@ -33,6 +34,7 @@ public abstract class ContainerElement implements UIElement {
 		 */
 		@Name(CHILDREN)
 		@DefaultContainer
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 

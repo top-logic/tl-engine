@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -92,6 +93,7 @@ public class AppBarElement implements UIElement {
 		 */
 		@Name(COMMANDS)
 		@EntryTag("command")
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
 	}
 

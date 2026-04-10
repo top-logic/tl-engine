@@ -18,6 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -66,18 +67,21 @@ public class AppShellElement implements UIElement {
 		 * Optional header element (e.g. an app bar).
 		 */
 		@Name(HEADER)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
 
 		/**
 		 * The main content element.
 		 */
 		@Name(CONTENT)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
 
 		/**
 		 * Optional footer element (e.g. a bottom bar).
 		 */
 		@Name(FOOTER)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
 	}
 

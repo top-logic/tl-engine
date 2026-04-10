@@ -130,8 +130,6 @@ public class AnthropicProvider implements LLMProvider {
 		}
 	}
 
-	// --- Request Building ---
-
 	private String buildRequestJson(ProviderRequest request) throws ProviderException {
 		StringW buffer = new StringW();
 		try (JsonWriter json = new JsonWriter(buffer)) {
@@ -294,8 +292,6 @@ public class AnthropicProvider implements LLMProvider {
 		}
 		json.endArray();
 	}
-
-	// --- SSE Stream Processing ---
 
 	private void processStream(InputStream input, StreamHandler handler)
 			throws IOException, ProviderException {
@@ -488,8 +484,6 @@ public class AnthropicProvider implements LLMProvider {
 		}
 	}
 
-	// --- Response Parsing Helpers ---
-
 	private static JsonReader jsonReader(String json) {
 		return new JsonReader(new StringR(json));
 	}
@@ -529,8 +523,6 @@ public class AnthropicProvider implements LLMProvider {
 		}
 		return parts;
 	}
-
-	// --- Error Handling ---
 
 	private void handleErrorResponse(HttpResponse<InputStream> response) throws ProviderException {
 		int status = response.statusCode();
@@ -632,8 +624,6 @@ public class AnthropicProvider implements LLMProvider {
 			})
 			.orElse(null);
 	}
-
-	// --- Inner Types ---
 
 	private static final class ContentBlock {
 		final String _type;

@@ -30,11 +30,21 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  *   <li>{@link RunStarted} is the first event; {@link RunCompleted} is the last.</li>
  *   <li>All events between {@link TurnStarted}({@code n}) and
  *       {@link TurnCompleted}({@code n}) carry {@code turnNumber == n}.</li>
- *   <li>For each {@code toolCallId}, {@link ToolCallStarted} precedes exactly one of
- *       {@link ToolCallCompleted}, {@link ToolCallFailed}, or {@link ToolCallDenied}.</li>
+ *   <li>Every tool call from the LLM produces exactly one terminal event —
+ *       {@link ToolCallCompleted}, {@link ToolCallFailed}, or {@link ToolCallDenied}
+ *       — for its {@code toolCallId}. {@link ToolCallStarted} is emitted only once
+ *       all security and approval gates have passed and the call is about to run; it
+ *       therefore precedes {@link ToolCallCompleted} or {@link ToolCallFailed}, but
+ *       is <b>not</b> emitted before {@link ToolCallDenied}.</li>
  *   <li>For each approval, {@link ApprovalRequired} precedes {@link ApprovalResolved},
  *       which precedes {@link ToolCallStarted} or {@link ToolCallDenied} for the same
- *       {@code toolCallId}.</li>
+ *       {@code toolCallId}. When a tool is auto-approved from a previous session grant,
+ *       a single {@link ApprovalResolved} with
+ *       {@link ApprovalOutcome#APPROVED_FOR_SESSION} is emitted without a preceding
+ *       {@link ApprovalRequired}.</li>
+ *   <li>If a tool result is truncated before being returned to the LLM,
+ *       {@link ToolCallResultTruncated} is emitted immediately before the
+ *       corresponding {@link ToolCallCompleted} for the same {@code toolCallId}.</li>
  *   <li>On a turn with writes: {@link LockAcquired} &rarr; {@link TransactionBegan}
  *       &rarr; write tool's {@link ToolCallCompleted} &rarr;
  *       {@link TransactionCommitted} / {@link TransactionRolledBack}. If
@@ -105,6 +115,16 @@ public sealed interface AgentEvent {
 	/** Emitted when a tool call is blocked by a security or approval gate. */
 	record ToolCallDenied(String runId, int turnNumber, Instant timestamp,
 			String toolCallId, String toolName, String reason) implements AgentEvent {}
+
+	/**
+	 * Emitted when a tool result exceeded the configured size limit and was truncated
+	 * before being fed back to the LLM. The {@link ToolCallCompleted} event for the
+	 * same {@code toolCallId} carries the truncated text; {@code originalLength} lets
+	 * listeners surface how much was dropped.
+	 */
+	record ToolCallResultTruncated(String runId, int turnNumber, Instant timestamp,
+			String toolCallId, String toolName, int originalLength, int truncatedLength)
+			implements AgentEvent {}
 
 	// ---------- Approval (notification; decisions flow via ApprovalCallback) ----------
 

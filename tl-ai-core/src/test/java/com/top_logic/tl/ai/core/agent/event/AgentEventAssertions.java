@@ -41,8 +41,9 @@ public final class AgentEventAssertions {
 
 	/**
 	 * For every {@link AgentEvent.ToolCallStarted}, exactly one of
-	 * {@link AgentEvent.ToolCallCompleted}, {@link AgentEvent.ToolCallFailed}, or
-	 * {@link AgentEvent.ToolCallDenied} must follow with the same {@code toolCallId}.
+	 * {@link AgentEvent.ToolCallCompleted} or {@link AgentEvent.ToolCallFailed} must
+	 * follow with the same {@code toolCallId}. Denied calls never emit
+	 * {@link AgentEvent.ToolCallStarted}.
 	 */
 	public static void assertToolCallsMatched(List<AgentEvent> events) {
 		Map<String, AgentEvent> starts = new HashMap<>();

@@ -46,6 +46,21 @@ public class TestAgentEventDispatch extends TestCase {
 	}
 
 	/** */
+	public void testCompositeIsolatesDelegateExceptions() {
+		List<String> calls = new ArrayList<>();
+		AgentEventListener a = e -> calls.add("a");
+		AgentEventListener b = e -> { throw new RuntimeException("boom"); };
+		AgentEventListener c = e -> calls.add("c");
+		AgentEventListener d = e -> { throw new AssertionError("kaboom"); };
+		AgentEventListener ee = e -> calls.add("e");
+
+		CompositeAgentEventListener composite = new CompositeAgentEventListener(a, b, c, d, ee);
+		composite.onEvent(event());
+
+		assertEquals(List.of("a", "c", "e"), calls);
+	}
+
+	/** */
 	public void testSerializingSwallowsRuntimeException() {
 		AgentEventListener throwing = e -> { throw new RuntimeException("boom"); };
 		SerializingListener safe = new SerializingListener(throwing);

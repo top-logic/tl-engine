@@ -534,8 +534,6 @@ public class AgentLoop {
 	private ToolResultMessage executeWithSecurityCheck(ToolCall toolCall, ToolContext context,
 			AgentEventListener listener, String runId, int turn) {
 
-		emit(listener, new AgentEvent.ToolCallStarted(runId, turn, now(), toolCall.id(), toolCall.name(), toolCall.arguments()));
-
 		SecurityContext security = context.security();
 
 		// Step 1: Unconditional user permission check (runs for ALL tools)
@@ -575,7 +573,12 @@ public class AgentLoop {
 			// Approval check
 			// Check session memory first — skip approval if already approved for session
 			if (_sessionApprovedTools.contains(tool.name())) {
-				// Auto-approved for this session, proceed to execution
+				// Auto-approved for this session: emit a resolved event so listeners
+				// still see an approval signal on repeat invocations, even though no
+				// user interaction happens.
+				emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+					toolCall.id(), UUID.randomUUID().toString(),
+					ApprovalOutcome.APPROVED_FOR_SESSION));
 			} else {
 				PermissionDecision decision = security.checkApproval(tool, toolCall);
 				switch (decision) {
@@ -600,7 +603,7 @@ public class AgentLoop {
 						String approvalRequestId = UUID.randomUUID().toString();
 						emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 							toolCall.id(), approvalRequestId, toolCall.name(),
-							request.arguments(), request.displayReason()));
+							Map.copyOf(request.arguments()), request.displayReason()));
 						ApprovalResult approvalResult = context.approval().requestApproval(request);
 						switch (approvalResult) {
 							case ApprovalResult.Approved approved -> {
@@ -642,6 +645,10 @@ public class AgentLoop {
 			}
 		}
 
+		// All security and approval gates passed — signal that the call is about to run.
+		emit(listener, new AgentEvent.ToolCallStarted(runId, turn, now(),
+			toolCall.id(), toolCall.name(), toolCall.arguments()));
+
 		// Ensure transaction is open before executing a write tool.
 		// Done here (after all security gates) so denied tools never open a transaction.
 		ToolResultMessage lockError = ensureTransaction(toolCall, tool, context, listener, runId, turn);
@@ -650,10 +657,11 @@ public class AgentLoop {
 		}
 
 		ToolResultMessage result = _registry.execute(toolCall, context);
-		return truncateIfNeeded(result);
+		return truncateIfNeeded(result, listener, runId, turn);
 	}
 
-	private ToolResultMessage truncateIfNeeded(ToolResultMessage result) {
+	private ToolResultMessage truncateIfNeeded(ToolResultMessage result,
+			AgentEventListener listener, String runId, int turn) {
 		if (!(result.state() instanceof ToolState.Completed completed)) {
 			return result;
 		}
@@ -664,6 +672,9 @@ public class AgentLoop {
 
 		String truncated = text.substring(0, _maxResultChars)
 			+ "\n\n[Result truncated: " + text.length() + " chars total, showing first " + _maxResultChars + "]";
+
+		emit(listener, new AgentEvent.ToolCallResultTruncated(runId, turn, now(),
+			result.toolCallId(), result.toolName(), text.length(), truncated.length()));
 
 		return new ToolResultMessage(
 			result.id(), result.timestamp(), result.toolCallId(), result.toolName(),

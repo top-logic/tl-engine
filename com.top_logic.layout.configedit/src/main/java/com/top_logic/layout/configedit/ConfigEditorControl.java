@@ -119,26 +119,13 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			}
 
 			if (property.kind() == PropertyKind.LIST) {
-				List<?> items = (List<?>) config.value(property);
-				if (items != null && !items.isEmpty()) {
-					String listLabel = resolveLabel(property);
-					ReactFormLayoutControl listContainer = new ReactFormLayoutControl(context);
-					for (int i = 0; i < items.size(); i++) {
-						Object item = items.get(i);
-						if (item instanceof ConfigurationItem itemConfig) {
-							ConfigEditorControl nestedEditor = createNestedEditor(context, itemConfig);
-							String itemLabel = resolveListItemLabel(itemConfig, i);
-							ReactFormGroupControl itemGroup = new ReactFormGroupControl(
-								context, itemLabel, true, false, "subtle", true,
-								List.of(), List.of(nestedEditor));
-							listContainer.addChild(itemGroup);
-						}
-					}
-					ReactFormGroupControl listGroup = new ReactFormGroupControl(
-						context, listLabel, true, false, "default", false,
-						List.of(), List.of(listContainer));
-					addChild(listGroup);
-				}
+				String listLabel = resolveLabel(property);
+				ConfigListEditorControl listEditor =
+					new ConfigListEditorControl(context, config, property);
+				ReactFormGroupControl listGroup = new ReactFormGroupControl(
+					context, listLabel, true, false, "default", false,
+					List.of(), List.of(listEditor));
+				addChild(listGroup);
 				continue;
 			}
 
@@ -218,42 +205,6 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
 			ConfigurationItem parentConfig, PropertyDescriptor property) {
 		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor);
-	}
-
-	/**
-	 * Resolves a display label for a list item.
-	 *
-	 * <p>
-	 * Tries common identifying properties ("name", "id") first. Falls back to the tag name
-	 * annotation or the simple interface name with the list index.
-	 * </p>
-	 */
-	private static String resolveListItemLabel(ConfigurationItem itemConfig, int index) {
-		PropertyDescriptor nameProp = itemConfig.descriptor().getProperty("name");
-		if (nameProp != null) {
-			Object value = itemConfig.value(nameProp);
-			if (value instanceof String s && !s.isEmpty()) {
-				return s;
-			}
-		}
-		PropertyDescriptor idProp = itemConfig.descriptor().getProperty("id");
-		if (idProp != null) {
-			Object value = itemConfig.value(idProp);
-			if (value instanceof String s && !s.isEmpty()) {
-				return s;
-			}
-		}
-		Class<?> iface = itemConfig.descriptor().getConfigurationInterface();
-		com.top_logic.basic.config.annotation.TagName tagName =
-			iface.getAnnotation(com.top_logic.basic.config.annotation.TagName.class);
-		if (tagName != null) {
-			return tagName.value() + " [" + (index + 1) + "]";
-		}
-		String simpleName = iface.getSimpleName();
-		if (simpleName.endsWith("Config")) {
-			simpleName = simpleName.substring(0, simpleName.length() - "Config".length());
-		}
-		return simpleName + " [" + (index + 1) + "]";
 	}
 
 	private static boolean isSupportedKind(PropertyKind kind) {

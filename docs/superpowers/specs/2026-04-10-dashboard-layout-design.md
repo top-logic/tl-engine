@@ -149,16 +149,18 @@ span = Math.max(1, Math.round(fraction * totalColumns))
 span = Math.min(span, totalColumns)  // clamp to available columns
 ```
 
-Column count is restricted to `[1, 2, 3, 4, 6]` (divisors of 12 up to 6)
-so that all fractions always produce clean integer spans with no gaps:
+Column count is restricted to `[1, 2, 3, 4]`. At 4 columns, all width
+fractions produce clean integer spans. On wider screens, the 4 columns
+simply grow wider. Spans are defined by an explicit lookup table (not
+calculated via `round()`) to ensure items fill rows without gaps:
 
-| `width` | fraction | 6 cols | 4 cols | 3 cols | 2 cols | 1 col |
-|---------|----------|--------|--------|--------|--------|-------|
-| `full` | 1.0 | 6 | 4 | 3 | 2 | 1 |
-| `two-thirds` | 0.667 | 4 | 3 | 2 | 1 | 1 |
-| `half` | 0.5 | 3 | 2 | 2 | 1 | 1 |
-| `third` | 0.333 | 2 | 1 | 1 | 1 | 1 |
-| `quarter` | 0.25 | 2 | 1 | 1 | 1 | 1 |
+| `width` | 4 cols | 3 cols | 2 cols | 1 col |
+|---------|--------|--------|--------|-------|
+| `full` | 4 | 3 | 2 | 1 |
+| `two-thirds` | 3 | 2 | 2 | 1 |
+| `half` | 2 | 2 | 1 | 1 |
+| `third` | 1 | 1 | 1 | 1 |
+| `quarter` | 1 | 1 | 1 | 1 |
 
 At 1 column (mobile), `row-span` is reset to 1 to prevent excessively tall
 pages.

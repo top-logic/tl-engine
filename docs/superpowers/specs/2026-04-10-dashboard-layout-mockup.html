@@ -266,27 +266,29 @@
   let editMode = false;
   let draggedItem = null;
 
-  // Width name -> fraction
-  const widthFractions = {
-    'full': 1.0,
-    'two-thirds': 0.667,
-    'half': 0.5,
-    'third': 0.333,
-    'quarter': 0.25
+  // Explicit span lookup: for each "nice" column count, every width
+  // maps to an integer span so that common combinations fill rows.
+  //                        full  2/3  1/2  1/3  1/4
+  //  4 cols:                 4    3    2    1    1
+  //  3 cols:                 3    2    2    1    1
+  //  2 cols:                 2    2    1    1    1
+  //  1 col:                  1    1    1    1    1
+  const SPAN_TABLE = {
+    4: { 'full': 4, 'two-thirds': 3, 'half': 2, 'third': 1, 'quarter': 1 },
+    3: { 'full': 3, 'two-thirds': 2, 'half': 2, 'third': 1, 'quarter': 1 },
+    2: { 'full': 2, 'two-thirds': 2, 'half': 1, 'third': 1, 'quarter': 1 },
+    1: { 'full': 1, 'two-thirds': 1, 'half': 1, 'third': 1, 'quarter': 1 },
   };
+
+  const NICE_COLUMNS = [1, 2, 3, 4];
 
   // Convert rem to px
   const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
   const minColWidthPx = 16 * remPx; // 16rem
   const gapPx = 1 * remPx; // 1rem gap
 
-  // Only allow column counts where 1/2, 1/3, 1/4, 2/3 all produce
-  // clean integer spans. These are the divisors of 12 (except 12 itself).
-  const NICE_COLUMNS = [1, 2, 3, 4, 6];
-
   function getNiceColumnCount(containerWidth) {
     const raw = Math.max(1, Math.floor((containerWidth + gapPx) / (minColWidthPx + gapPx)));
-    // Snap down to the largest "nice" number <= raw
     for (let i = NICE_COLUMNS.length - 1; i >= 0; i--) {
       if (NICE_COLUMNS[i] <= raw) return NICE_COLUMNS[i];
     }
@@ -298,19 +300,14 @@
     const cols = getNiceColumnCount(containerWidth);
     colCountEl.textContent = cols;
 
-    // Set explicit grid columns
     dashboard.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
 
-    // Update each item's span
+    const spans = SPAN_TABLE[cols];
     document.querySelectorAll('.dashboard-item').forEach(item => {
       const widthName = item.dataset.width || 'full';
       const rowSpan = parseInt(item.dataset.rowSpan) || 1;
-      const frac = widthFractions[widthName] || 1.0;
 
-      let colSpan = Math.max(1, Math.round(frac * cols));
-      colSpan = Math.min(colSpan, cols);
-
-      item.style.gridColumn = 'span ' + colSpan;
+      item.style.gridColumn = 'span ' + (spans[widthName] || cols);
       item.style.gridRow = (cols <= 1) ? 'span 1' : 'span ' + rowSpan;
     });
   }

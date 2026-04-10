@@ -157,11 +157,11 @@ public class DesignTreeNode {
 	/**
 	 * The tag name for display, derived from the {@link TagName} annotation on the config
 	 * interface, or the simple interface name as fallback. For virtual nodes, returns the
-	 * internationalized property label in brackets.
+	 * internationalized property label.
 	 */
 	public String getTagName() {
 		if (isVirtual()) {
-			return "[" + Labels.propertyLabel(_property, false) + "]";
+			return Labels.propertyLabel(_property, false);
 		}
 		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
 		TagName tagName = configInterface.getAnnotation(TagName.class);

@@ -32,7 +32,7 @@ import com.top_logic.layout.view.ViewLoader;
  * <p>
  * If a config has exactly one {@link TreeProperty}, its children are inlined directly into the
  * parent node (no virtual group node). Multiple {@link TreeProperty} properties each get their own
- * virtual group node (e.g. "[header]", "[content]").
+ * virtual group node with an internationalized label.
  * </p>
  *
  * <p>
@@ -69,10 +69,10 @@ public class DesignTreeBuilder {
 		boolean inline = treeProperties.size() == 1;
 
 		for (PropertyDescriptor property : treeProperties) {
+			DesignTreeNode target = inline ? node : createGroupNode(node, property, sourceFile);
 			if (property.kind() == PropertyKind.LIST) {
 				List<?> children = (List<?>) config.value(property);
-				if (children != null && !children.isEmpty()) {
-					DesignTreeNode target = inline ? node : createGroupNode(node, property, sourceFile);
+				if (children != null) {
 					for (Object childConfig : children) {
 						addChild(target, (ConfigurationItem) childConfig, sourceFile);
 					}
@@ -80,7 +80,6 @@ public class DesignTreeBuilder {
 			} else if (property.kind() == PropertyKind.ITEM) {
 				Object childConfig = config.value(property);
 				if (childConfig instanceof ConfigurationItem childItem) {
-					DesignTreeNode target = inline ? node : createGroupNode(node, property, sourceFile);
 					addChild(target, childItem, sourceFile);
 				}
 			}

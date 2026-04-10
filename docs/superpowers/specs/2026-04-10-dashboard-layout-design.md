@@ -111,7 +111,11 @@ Layout slot that defines size/position. Contains arbitrary child elements
 - Renders a CSS Grid container with
   `grid-template-columns: repeat(auto-fit, minmax(<minColumnWidth>, 1fr))`.
 - Sets `grid-auto-rows: <rowHeight>`.
+- Sets `grid-auto-flow: dense` so that smaller items fill gaps left by
+  spanning items -- the grid always fills completely without holes.
 - Uses `ResizeObserver` to track actual column count.
+- Sets `style.gridColumn` and `style.gridRow` directly on each item element
+  (not via CSS classes, since `span var(--x)` is not supported in CSS Grid).
 - Maps each item's `width` to a `grid-column: span N` value based on current
   column count (see mapping table below).
 - Sets `grid-row: span <rowSpan>` for each item.

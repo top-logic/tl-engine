@@ -265,12 +265,12 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 									put(added, updatedObject, reference, () -> newValue);
 								} else if (oldValue instanceof Collection oldColValue) {
 									if (newValue instanceof Collection newColValue) {
-										HashSet<?> addedValues = new HashSet(newColValue);
+										HashSet<?> addedValues = new HashSet<>(newColValue);
 										addedValues.removeAll(oldColValue);
 										if (!addedValues.isEmpty()) {
 											put(added, updatedObject, reference, () -> addedValues);
 										}
-										HashSet<?> removedValues = new HashSet(oldColValue);
+										HashSet<?> removedValues = new HashSet<>(oldColValue);
 										removedValues.removeAll(newColValue);
 										if (!removedValues.isEmpty()) {
 											put(removed, updatedObject, reference, () -> removedValues);
@@ -290,13 +290,15 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 						}
 					}
 					for (Entry<TLStructuredTypePart, Object> partValue : newValues.entrySet()) {
-						if (partValue instanceof TLReference reference) {
+						TLStructuredTypePart part = partValue.getKey();
+						if (part instanceof TLReference reference) {
 							if (processedReferences.contains(reference)) {
 								// new value for reference already processed.
 								continue;
 							}
 							// register as change
-							put(added, updatedObject, reference, () -> partValue.getValue());
+							Object newValue = partValue.getValue();
+							put(added, updatedObject, reference, () -> newValue);
 						}
 					}
 				}

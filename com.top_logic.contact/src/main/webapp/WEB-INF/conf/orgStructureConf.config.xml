@@ -55,7 +55,7 @@
 							type="inheritance"
 						>
 							<path>
-					            <step attribute="children" inverse="false" />
+					            <step attribute="orgStructure:OrgUnit.all#children" />
 							</path>
 				        </rule>
 					</rules>

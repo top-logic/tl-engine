@@ -23,16 +23,16 @@
 			<instance>
 				<role-rules>
 					<rules>
-				        <rule
-							inherit="true" 
-							meta-element="mandatorStructure:Mandator.all" 
-							role="mandatorStructure.navigation" 
+						<rule
+							inherit="true"
+							meta-element="mandatorStructure:Mandator.all"
+							role="mandatorStructure.navigation"
 							type="inheritance"
 						>
 							<path>
-					            <step attribute="children" inverse="false" />
+								<step attribute="mandatorStructure:Mandator.all#children"/>
 							</path>
-				        </rule>
+						</rule>
 					</rules>
 				</role-rules>
 			</instance>

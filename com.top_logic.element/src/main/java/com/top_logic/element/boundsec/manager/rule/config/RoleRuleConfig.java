@@ -9,11 +9,12 @@ import java.util.List;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.model.TLClass;
 
@@ -40,17 +41,8 @@ public interface RoleRuleConfig extends ConfigurationItem {
 
 	/**
 	 * Name of the value of {@link #getPathElements()} in the configuration.
-	 * 
-	 * @see #XML_TAG_STEP_ELEMENT
 	 */
 	String XML_TAG_PATH_ELEMENT = "path";
-
-	/**
-	 * Name of the entry tags of attribute {@link #getPathElements()}.
-	 * 
-	 * @see #XML_TAG_PATH_ELEMENT
-	 */
-	String XML_TAG_STEP_ELEMENT = "step";
 
 	/** Name of the value of {@link #getResKey()} in the configuration. */
 	String XML_ATTRIBUTE_RESOURCE_KEY = "resource-key";
@@ -69,8 +61,7 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	 * role to.
 	 */
 	@Name(RoleRuleConfig.XML_TAG_PATH_ELEMENT)
-	@EntryTag(RoleRuleConfig.XML_TAG_STEP_ELEMENT)
-	List<PathElementConfig> getPathElements();
+	List<PolymorphicConfiguration<? extends PathElement>> getPathElements();
 
 	/**
 	 * Full qualified name of the {@link TLClass} to that an object must have to get the given

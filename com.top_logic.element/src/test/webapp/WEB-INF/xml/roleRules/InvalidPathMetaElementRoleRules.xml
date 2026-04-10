@@ -11,11 +11,7 @@
 			role="testRole"
 		>
 			<path>
-				<step
-					attribute="Mitarbeiter"
-					inverse="false"
-					meta-element="unknown"
-				/>
+				<step attribute="unknown#Mitarbeiter"/>
 			</path>
 		</rule>
 	</rules>

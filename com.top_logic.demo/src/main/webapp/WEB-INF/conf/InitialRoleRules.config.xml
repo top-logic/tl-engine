@@ -12,10 +12,7 @@
 							role="SecurityStructure.OwnerRole"
 						>
 							<path>
-								<step
-									attribute="owner"
-									inverse="false"
-								/>
+								<step attribute="tl.accounts:WithOwner#owner"/>
 							</path>
 						</rule>
 
@@ -25,10 +22,7 @@
 							role="DemoSecurity.Role1"
 						>
 							<path>
-								<step
-									attribute="singlePersonContact"
-									inverse="false"
-								/>
+								<step attribute="DemoSecurity:DemoSecurity.A#singlePersonContact"/>
 							</path>
 						</rule>
 
@@ -38,10 +32,7 @@
 							role="DemoSecurity.Role2"
 						>
 							<path>
-								<step
-									attribute="personContactList"
-									inverse="false"
-								/>
+								<step attribute="DemoSecurity:DemoSecurity.A#personContactList"/>
 							</path>
 						</rule>
 
@@ -52,9 +43,8 @@
 						>
 							<path>
 								<step
-									attribute="children"
+									attribute="DemoSecurity:DemoSecurityElementContainer#children"
 									inverse="true"
-									meta-element="DemoSecurity:DemoSecurityElementContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -87,10 +77,7 @@
 							role="DemoSecurity.navigation"
 						>
 							<path>
-								<step
-									attribute="children"
-									inverse="false"
-								/>
+								<step attribute="DemoSecurity:DemoSecurityElementContainer#children"/>
 							</path>
 						</inheritance-rule>
 
@@ -107,10 +94,7 @@
 							role="DemoTypes.Navigation"
 						>
 							<path>
-								<step
-									attribute="children"
-									inverse="false"
-								/>
+								<step attribute="DemoTypes:DemoTypesContainer#children"/>
 							</path>
 						</inheritance-rule>
 
@@ -121,9 +105,8 @@
 						>
 							<path>
 								<step
-									attribute="children"
+									attribute="DemoTypes:DemoTypesContainer#children"
 									inverse="true"
-									meta-element="DemoTypes:DemoTypesContainer"
 								/>
 							</path>
 						</inheritance-rule>
@@ -141,10 +124,7 @@
 							role="DemoTypes.Responsible"
 						>
 							<path>
-								<step
-									attribute="responsible"
-									meta-element="DemoTypes:DemoTypes.A"
-								/>
+								<step attribute="DemoTypes:DemoTypes.A#responsible"/>
 							</path>
 						</rule>
 						<rule
@@ -153,14 +133,10 @@
 							role="DemoTypes.Responsible"
 						>
 							<path>
+								<step attribute="DemoTypes:DemoTypes.A#responsibleContact"/>
 								<step
-									attribute="responsibleContact"
-									meta-element="DemoTypes:DemoTypes.A"
-								/>
-								<step
-									attribute="contact"
+									attribute="tl.accounts:Person#contact"
 									inverse="true"
-									meta-element="tl.accounts:Person"
 								/>
 							</path>
 						</rule>

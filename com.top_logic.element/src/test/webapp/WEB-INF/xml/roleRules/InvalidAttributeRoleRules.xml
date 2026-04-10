@@ -12,9 +12,8 @@
 		>
 			<path>
 				<step
-					attribute="Mitarbeiter"
+					attribute="projElement:projElement.ProjectRoot#Mitarbeiter"
 					inverse="true"
-					meta-element="projElement:projElement.ProjectRoot"
 				/>
 			</path>
 		</rule>

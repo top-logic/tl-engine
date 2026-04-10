@@ -8,6 +8,12 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.element.boundsec.manager.I18NConstants;
+import com.top_logic.element.boundsec.manager.rule.config.PathElementConfig;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -17,34 +23,29 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class PathNavigation implements PathElement {
+public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig> implements PathElement {
 
     /** the meta attribute defining the content */
-	private TLReference _reference;
+	private final TLReference _reference;
     
-    /** 
-     * indicates that the attribute is to be resolved in revers,
-     * i.e. get all objects that hold a given object via the given meta attribute.
-     */
-    private boolean       inverse;
+	/**
+	 * Create a {@link PathNavigation}.
+	 * 
+	 * @param context
+	 *        the {@link InstantiationContext} to create the new object in
+	 * @param config
+	 *        the configuration object to be used for instantiation
+	 */
+	public PathNavigation(InstantiationContext context, PathElementConfig config) {
+		super(context, config);
 
-    /**
-     * Constructor
-     */
-	public PathNavigation(TLReference reference, boolean isInvers) {
-		_reference = reference;
-		if (reference == null) {
-			// Special hack for IdentityPathElement!
-		} else {
-			if (_reference.getDefinition() != _reference) {
-				throw new IllegalArgumentException(
-					"Only the definition of an TLReference must be given: " + _reference);
-			}
+		TLModelPart part = config.getAttribute().resolve();
+		if (!(part instanceof TLReference)) {
+			throw new ConfigurationError(I18NConstants.NOT_A_REFERENCE__PART.fill(part));
 		}
-        this.inverse       = isInvers;
-        // TODO TSA: add consistency checks: type of attribute, ...
-    }
-    
+		_reference = (TLReference) ((TLReference) part).getDefinition();
+	}
+
     /**
      * Getter
      */
@@ -53,12 +54,9 @@ public class PathNavigation implements PathElement {
 		return (_reference);
     }
     
-    /**
-     * Getter
-     */
 	@Override
 	public boolean isInverse() {
-        return (inverse);
+		return getConfig().isInverse();
     }
     
 	@Override

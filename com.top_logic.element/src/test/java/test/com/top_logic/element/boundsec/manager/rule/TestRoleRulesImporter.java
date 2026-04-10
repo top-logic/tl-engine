@@ -29,12 +29,14 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.LocationImpl;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.I18NConstants;
 import com.top_logic.element.boundsec.manager.RoleRulesImporter;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
+import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
@@ -67,9 +69,6 @@ public class TestRoleRulesImporter extends BasicTestCase {
 
 	private final static String ROLE_RULES_INVALID_PATH_META_ELEMENT =
 		"/WEB-INF/xml/roleRules/InvalidPathMetaElementRoleRules.xml";
-
-	private final static String ROLE_RULES_INVALID_PATH_META_ELEMENT_2 =
-		"/WEB-INF/xml/roleRules/InvalidPathMetaElement2RoleRules.xml";
 
 	private final static String ROLE_RULES_INVALID_ATTRIBUTE = "/WEB-INF/xml/roleRules/InvalidAttributeRoleRules.xml";
 
@@ -121,25 +120,19 @@ public class TestRoleRulesImporter extends BasicTestCase {
     }
 
     public void testInvalidPathMetaElementRules() throws Exception {
-        this.multiProblemTest(
-                ROLE_RULES_INVALID_PATH_META_ELEMENT,
-			I18NConstants.UNKNOWN_META_ELEMENT.fill("unknown")
-        );
-    }
-
-    public void testInvalidPathMetaElement2Rules() throws Exception {
-		this.multiProblemTest(
-                ROLE_RULES_INVALID_PATH_META_ELEMENT_2,
-			I18NConstants.ILLEGAL_META_ELEMENT.fill("projElement:projElement.Project", "projElement.All")
+		this.multiProblemTest(ROLE_RULES_INVALID_PATH_META_ELEMENT,
+			com.top_logic.basic.config.I18NConstants.ERROR_INSTANTIATION_FAILED__CLASS_LOCATION
+				.fill(PathNavigation.class.getName(),
+					LocationImpl.location("file://" + ROLE_RULES_INVALID_PATH_META_ELEMENT, 14, 44))
         );
     }
 
     public void testInvalidAttributeRules() throws Exception {
-        this.multiProblemTest(
-                ROLE_RULES_INVALID_ATTRIBUTE,
-			I18NConstants.UNKNOWN_ATTRIBUTE.fill("projElement:projElement.ProjectRoot", "Mitarbeiter")
-        );
-    }
+		this.multiProblemTest(ROLE_RULES_INVALID_ATTRIBUTE,
+			com.top_logic.basic.config.I18NConstants.ERROR_INSTANTIATION_FAILED__CLASS_LOCATION
+				.fill(PathNavigation.class.getName(),
+					LocationImpl.location("file://" + ROLE_RULES_INVALID_ATTRIBUTE, 17, 7)));
+	}
 
     /**
      * Compare problems found when parsing anInput with expectedProblems.
@@ -148,13 +141,14 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		RoleRulesConfig roleRulesConfig = getRoleRulesConfig(anInput);
 		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRulesConfig);
 		List<ResKey> theProblems = importer.getProblems();
-        assertEquals(Arrays.asList(expectedProblems) + " != " + theProblems, expectedProblems.length, theProblems.size());
-        for (int i = 0; i < expectedProblems.length; i++) {
+		assertEquals(Arrays.asList(expectedProblems) + " != " + theProblems, expectedProblems.length,
+			theProblems.size());
+		for (int i = 0; i < expectedProblems.length; i++) {
 			assertEquals(expectedProblems[i], theProblems.get(i));
-        }
-    }
+		}
+	}
 
-    public void testVaildRules() throws Exception {
+	public void testVaildRules() throws Exception {
 		RoleRulesConfig roleRules = getRoleRulesConfig(ROLE_RULES_VALID);
 		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRules);
 		assertTrue(importer.getProblems().isEmpty());

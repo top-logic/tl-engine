@@ -10,7 +10,7 @@
 			role="testRole"
 		>
 			<path>
-				<step attribute="Verantwortlicher"/>
+				<step attribute="projElement:projElement.All#Verantwortlicher"/>
 			</path>
 		</rule>
 	</rules>

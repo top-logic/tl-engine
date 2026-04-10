@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Layout Mockup</title>
+<style>
+  :root {
+    --gap-default: 1rem;
+    --row-height: 12rem;
+    --min-col-width: 16rem;
+    --color-bg: #f5f6fa;
+    --color-card: #fff;
+    --color-border: #e0e3eb;
+    --color-drag-handle: #aab;
+    --color-drop-zone: #4a90d9;
+    --color-accent: #4a90d9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--color-bg);
+    padding: 2rem;
+    color: #333;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #444;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .edit-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-card);
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #555;
+    transition: all 0.15s;
+  }
+  .edit-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .edit-toggle.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+
+  /* Dashboard grid */
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--min-col-width), 1fr));
+    grid-auto-rows: var(--row-height);
+    gap: var(--gap-default);
+  }
+
+  /* Dashboard items */
+  .dashboard-item {
+    border-radius: 10px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
+    position: relative;
+  }
+
+  /* Width classes */
+  .dashboard-item.width-full       { grid-column: span var(--span-full); }
+  .dashboard-item.width-two-thirds { grid-column: span var(--span-two-thirds); }
+  .dashboard-item.width-half       { grid-column: span var(--span-half); }
+  .dashboard-item.width-third      { grid-column: span var(--span-third); }
+  .dashboard-item.width-quarter    { grid-column: span var(--span-quarter); }
+
+  /* Row span */
+  .dashboard-item.row-span-2 { grid-row: span 2; }
+  .dashboard-item.row-span-3 { grid-row: span 3; }
+
+  /* Card header */
+  .item-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+  }
+  .item-header .drag-handle {
+    display: none;
+    cursor: grab;
+    margin-right: 0.5rem;
+    color: var(--color-drag-handle);
+    font-size: 1.1rem;
+    user-select: none;
+  }
+  .item-header .drag-handle:active { cursor: grabbing; }
+
+  .item-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    color: #888;
+    font-size: 0.8rem;
+  }
+
+  /* KPI style */
+  .kpi-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+  }
+  .kpi-label {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.25rem;
+  }
+
+  /* Chart placeholder */
+  .chart-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8edf5 100%);
+    border-radius: 6px;
+    color: #aab;
+    font-size: 0.85rem;
+  }
+
+  /* Edit mode */
+  .dashboard.edit-mode .drag-handle { display: inline-block; }
+  .dashboard.edit-mode .dashboard-item { cursor: default; }
+  .dashboard.edit-mode .dashboard-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+
+  /* Dragging */
+  .dashboard-item.dragging {
+    opacity: 0.4;
+    transform: scale(0.97);
+  }
+  .dashboard-item.drag-over {
+    outline: 2px dashed var(--color-drop-zone);
+    outline-offset: -2px;
+    background: #f0f6ff;
+  }
+
+  /* Responsive info */
+  .info {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #666;
+  }
+  .info code { background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 3px; }
+  .info .col-count { font-weight: 700; color: var(--color-accent); }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Dashboard Layout Mockup</h1>
+  <button class="edit-toggle" onclick="toggleEdit()" id="editBtn">
+    <span>&#9998;</span> Edit Layout
+  </button>
+</div>
+
+<div class="dashboard" id="dashboard">
+
+  <div class="dashboard-item width-half row-span-2" draggable="false" data-id="sales">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Sales Overview
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Bar Chart (half width, 2 rows)</div>
+    </div>
+  </div>
+
+  <div class="dashboard-item width-quarter" draggable="false" data-id="tasks">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Active Tasks
+    </div>
+    <div class="item-content">
+      <div style="text-align:center">
+        <div class="kpi-value">42</div>
+        <div class="kpi-label">tasks in progress</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-item width-quarter" draggable="false" data-id="issues">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Open Issues
+    </div>
+    <div class="item-content">
+      <div style="text-align:center">
+        <div class="kpi-value">7</div>
+        <div class="kpi-label">critical issues</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-item width-half" draggable="false" data-id="reviews">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      In Review
+    </div>
+    <div class="item-content">
+      <div style="text-align:center">
+        <div class="kpi-value">12</div>
+        <div class="kpi-label">pending reviews</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-item width-two-thirds" draggable="false" data-id="timeline">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Timeline
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Line Chart (two-thirds width)</div>
+    </div>
+  </div>
+
+  <div class="dashboard-item width-third" draggable="false" data-id="distribution">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Distribution
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Doughnut Chart (third width)</div>
+    </div>
+  </div>
+
+  <div class="dashboard-item width-full" draggable="false" data-id="activity">
+    <div class="item-header">
+      <span class="drag-handle" title="Drag to reorder">&#9776;</span>
+      Recent Activity
+    </div>
+    <div class="item-content">
+      <div class="chart-placeholder">Activity Table (full width)</div>
+    </div>
+  </div>
+</div>
+
+<div class="info" id="info">
+  Resize the browser window to see responsive behavior. Current columns: <span class="col-count" id="colCount">?</span><br>
+  Click <strong>Edit Layout</strong> to enable drag-and-drop reordering.
+</div>
+
+<script>
+  const dashboard = document.getElementById('dashboard');
+  const editBtn = document.getElementById('editBtn');
+  const colCountEl = document.getElementById('colCount');
+  let editMode = false;
+  let draggedItem = null;
+
+  // Responsive span calculation
+  const widthFractions = {
+    'width-full': 1.0,
+    'width-two-thirds': 0.667,
+    'width-half': 0.5,
+    'width-third': 0.333,
+    'width-quarter': 0.25
+  };
+
+  function updateSpans() {
+    const style = getComputedStyle(dashboard);
+    const cols = style.gridTemplateColumns.split(' ').length;
+    colCountEl.textContent = cols;
+
+    for (const [cls, frac] of Object.entries(widthFractions)) {
+      let span = Math.max(1, Math.round(frac * cols));
+      span = Math.min(span, cols);
+      dashboard.style.setProperty('--span-' + cls.replace('width-', ''), span);
+    }
+
+    // Reset row-span at 1 column
+    document.querySelectorAll('.dashboard-item').forEach(item => {
+      if (cols <= 1) {
+        item.style.gridRow = 'span 1';
+      } else {
+        item.style.gridRow = '';
+      }
+    });
+  }
+
+  const ro = new ResizeObserver(() => updateSpans());
+  ro.observe(dashboard);
+  updateSpans();
+
+  // Edit mode toggle
+  function toggleEdit() {
+    editMode = !editMode;
+    dashboard.classList.toggle('edit-mode', editMode);
+    editBtn.classList.toggle('active', editMode);
+    editBtn.innerHTML = editMode
+      ? '<span>&#10003;</span> Done'
+      : '<span>&#9998;</span> Edit Layout';
+
+    document.querySelectorAll('.dashboard-item').forEach(item => {
+      item.draggable = editMode;
+    });
+  }
+
+  // Drag and drop
+  dashboard.addEventListener('dragstart', e => {
+    const item = e.target.closest('.dashboard-item');
+    if (!item || !editMode) return;
+    draggedItem = item;
+    item.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', item.dataset.id);
+  });
+
+  dashboard.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!editMode || !draggedItem) return;
+    e.dataTransfer.dropEffect = 'move';
+
+    const target = e.target.closest('.dashboard-item');
+    if (target && target !== draggedItem) {
+      document.querySelectorAll('.dashboard-item.drag-over').forEach(el =>
+        el.classList.remove('drag-over'));
+      target.classList.add('drag-over');
+    }
+  });
+
+  dashboard.addEventListener('dragleave', e => {
+    const target = e.target.closest('.dashboard-item');
+    if (target) target.classList.remove('drag-over');
+  });
+
+  dashboard.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!editMode || !draggedItem) return;
+
+    const target = e.target.closest('.dashboard-item');
+    if (target && target !== draggedItem) {
+      const items = [...dashboard.querySelectorAll('.dashboard-item')];
+      const fromIndex = items.indexOf(draggedItem);
+      const toIndex = items.indexOf(target);
+
+      if (fromIndex < toIndex) {
+        target.after(draggedItem);
+      } else {
+        target.before(draggedItem);
+      }
+
+      // Log new order (would be sent to server)
+      const newOrder = [...dashboard.querySelectorAll('.dashboard-item')]
+        .map(el => el.dataset.id);
+      console.log('New order:', newOrder);
+    }
+
+    document.querySelectorAll('.drag-over').forEach(el =>
+      el.classList.remove('drag-over'));
+  });
+
+  dashboard.addEventListener('dragend', () => {
+    if (draggedItem) {
+      draggedItem.classList.remove('dragging');
+      draggedItem = null;
+    }
+    document.querySelectorAll('.drag-over').forEach(el =>
+      el.classList.remove('drag-over'));
+  });
+</script>
+</body>
+</html>

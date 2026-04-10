@@ -5,80 +5,53 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
-import java.time.Duration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.message.ToolResultMessage;
-import com.top_logic.tl.ai.core.message.ToolState;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 
 /**
- * {@link AgentListener} that logs tool executions and permission denials for auditing.
+ * {@link AgentEventListener} that logs tool executions, permission denials, and
+ * transaction/lock lifecycle events for auditing.
  *
- * <p>Logs tool execution events at INFO level and errors/denials at WARNING level.</p>
- *
- * @see AgentListener
+ * <p>Tool execution events are logged at INFO; denials and rollbacks at WARNING.
+ * Every other event is ignored so the audit log stays focused on security-relevant
+ * activity.</p>
  */
-public class AuditListener implements AgentListener {
+public class AuditListener implements AgentEventListener {
 
 	private static final Logger LOG = Logger.getLogger(AuditListener.class.getName());
 
 	/** */
 	@Override
-	public void onToolCallComplete(ToolCall toolCall, ToolResultMessage result) {
-		if (result.state() instanceof ToolState.Completed completed) {
-			Duration duration = Duration.between(completed.startTime(), completed.endTime());
-			LOG.log(Level.INFO,
-				"Tool executed: " + toolCall.name() + " (" + duration.toMillis() + "ms)");
+	public void onEvent(AgentEvent event) {
+		switch (event) {
+			case AgentEvent.ToolCallCompleted c ->
+				LOG.log(Level.INFO,
+					"Tool executed: " + c.toolName() + " (" + c.duration().toMillis() + "ms)");
+			case AgentEvent.ToolCallFailed f ->
+				LOG.log(Level.WARNING, "Tool failed: " + f.toolName() + " \u2014 " + f.errorMessage());
+			case AgentEvent.ToolCallDenied d ->
+				LOG.log(Level.WARNING, "Permission denied: " + d.toolName() + " \u2014 " + d.reason());
+			case AgentEvent.TransactionBegan t ->
+				LOG.log(Level.INFO, "Transaction started.");
+			case AgentEvent.TransactionCommitted c -> {
+				if (c.revisionNumber() > 0) {
+					LOG.log(Level.INFO, "Transaction committed (revision " + c.revisionNumber() + ").");
+				} else {
+					LOG.log(Level.INFO, "Transaction committed (no changes).");
+				}
+			}
+			case AgentEvent.TransactionRolledBack r ->
+				LOG.log(Level.WARNING, "Transaction rolled back: " + r.reason());
+			case AgentEvent.LockAcquired l ->
+				LOG.log(Level.INFO, "Edit lock acquired.");
+			case AgentEvent.LockFailed l ->
+				LOG.log(Level.WARNING, "Edit lock failed: " + l.reason());
+			default -> {
+				// Other events are not audit-relevant.
+			}
 		}
-	}
-
-	/** */
-	@Override
-	public void onToolError(ToolCall toolCall, String error) {
-		LOG.log(Level.WARNING,
-			"Tool failed: " + toolCall.name() + " \u2014 " + error);
-	}
-
-	/** */
-	@Override
-	public void onPermissionDenied(ToolCall toolCall, String reason) {
-		LOG.log(Level.WARNING,
-			"Permission denied: " + toolCall.name() + " \u2014 " + reason);
-	}
-
-	/** */
-	@Override
-	public void onTransactionBegin() {
-		LOG.log(Level.INFO, "Transaction started.");
-	}
-
-	/** */
-	@Override
-	public void onTransactionCommit(long revisionNumber) {
-		if (revisionNumber > 0) {
-			LOG.log(Level.INFO, "Transaction committed (revision " + revisionNumber + ").");
-		} else {
-			LOG.log(Level.INFO, "Transaction committed (no changes).");
-		}
-	}
-
-	/** */
-	@Override
-	public void onTransactionRollback(String reason) {
-		LOG.log(Level.WARNING, "Transaction rolled back: " + reason);
-	}
-
-	/** */
-	@Override
-	public void onLockAcquired() {
-		LOG.log(Level.INFO, "Edit lock acquired.");
-	}
-
-	/** */
-	@Override
-	public void onLockFailed(String reason) {
-		LOG.log(Level.WARNING, "Edit lock failed: " + reason);
 	}
 }

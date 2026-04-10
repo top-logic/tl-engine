@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.boundsec.manager.rule;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,13 +22,11 @@ import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.singleton.ElementSingletonManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -122,18 +122,11 @@ public class RoleRule implements RoleProvider {
         }
         theSB.append('_');
         for (Iterator<PathElement> theIt = aPath.iterator(); theIt.hasNext();) {
-            PathElement   thePE  = theIt.next();
-            if (thePE instanceof IdentityPathElement) continue;
-            TLStructuredTypePart theMA  = thePE.getMetaAttribute();
-			TLClass theME = AttributeOperations.getMetaElement(theMA);
-			if (theME != null) {
-				theSB.append("pme:");
-				theSB.append(theME.getName());
-            }
-			theSB.append("ma:");
-			theSB.append(theMA.getName());
-            theSB.append('_');
-            theSB.append(thePE.isInverse() ? "back" : "succ");
+			try {
+				theIt.next().appendId(theSB);
+			} catch (IOException ex) {
+				throw new IOError(ex);
+			}
         }
         theSB.append("_base:");
         if (aBase != null) {

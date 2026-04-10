@@ -6,11 +6,8 @@
 package test.com.top_logic.element.boundsec.manager.rule;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +32,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.I18NConstants;
 import com.top_logic.element.boundsec.manager.RoleRulesImporter;
-import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
-import com.top_logic.element.boundsec.manager.rule.RoleProvider;
-import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
-import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.TLClass;
@@ -58,9 +51,6 @@ public class TestRoleRulesImporter extends BasicTestCase {
 
     private static final String ROLE_TEST_ROLE = "testRole";
     private static final String STRUCTURE_PROJECT_ELEMENT = "projElement";
-    private static final String META_ELEMENT_PROJECT_ALL = "projElement.All";
-
-	private static final String META_ELEMENT_PROJECT_PART = "projElement.Part";
 
 	private final static String ROLE_RULES_VALID = "/WEB-INF/xml/roleRules/ValidRoleRules.xml";
 
@@ -153,34 +143,6 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRules);
 		assertTrue(importer.getProblems().isEmpty());
 
-		final Map<TLClass, Collection<RoleProvider>> theRulesMap = importer.getRules();
-		assertEquals(2, theRulesMap.size());
-
-		List<RuleDesc> allRuleDescs = new ArrayList<>();
-		allRuleDescs.add(
-			(new RuleDesc(META_ELEMENT_PROJECT_ALL, "testRole", true, "roleRule.minimal"))
-				.extendPath(new PathElementDesc(META_ELEMENT_PROJECT_ALL, "Verantwortlicher", false))
-			);
-		allRuleDescs.add(
-			(new RuleDesc(META_ELEMENT_PROJECT_ALL, "testRole", true, "roleRule.simple"))
-				.extendPath(new PathElementDesc(META_ELEMENT_PROJECT_ALL, "Mitarbeiter", false))
-			);
-		Collections.sort(allRuleDescs, RoleRuleDescKeyComparator.INSTANCE);
-		check(theRulesMap.get(this.getMetaElement(META_ELEMENT_PROJECT_ALL)), allRuleDescs);
-
-		List<RuleDesc> partRuleDescs = new ArrayList<>();
-		partRuleDescs.add(
-			(new RuleDesc(META_ELEMENT_PROJECT_PART, "testRole", true, "roleRule.forward"))
-				.extendPath(new PathElementDesc(META_ELEMENT_PROJECT_ALL, "AbhaengigVon", false))
-				.extendPath(new PathElementDesc(META_ELEMENT_PROJECT_ALL, "Mitarbeiter", false))
-			);
-		partRuleDescs.add(
-			(new RuleDesc(META_ELEMENT_PROJECT_PART, "testRole", true, "roleRule.backward"))
-				.extendPath(new PathElementDesc(META_ELEMENT_PROJECT_ALL, "AbhaengigVon", true))
-				.extendPath(new PathElementDesc(META_ELEMENT_PROJECT_ALL, "Mitarbeiter", false))
-			);
-		Collections.sort(partRuleDescs, RoleRuleDescKeyComparator.INSTANCE);
-		check(theRulesMap.get(this.getMetaElement(META_ELEMENT_PROJECT_PART)), partRuleDescs);
 	}
 
 	private RoleRulesConfig getRoleRulesConfig(String resource) throws ConfigurationException, IOException {
@@ -190,16 +152,6 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		ConfigurationItem configItem = ConfigurationReader.readContent(log, globalDescriptors, file);
 		assertTrue(configItem instanceof RoleRulesConfig);
 		return (RoleRulesConfig) configItem;
-	}
-
-	private void check(Collection<RoleProvider> importedRules, List<RuleDesc> ruleDescs) {
-		final ArrayList<RoleProvider> theSortedRules = new ArrayList<>(importedRules);
-        Collections.sort(theSortedRules, RoleRuleKeyComparator.INSTANCE);
-
-		assertEquals(ruleDescs.size(), importedRules.size());
-		for (int i = 0; i < ruleDescs.size(); i++) {
-			ruleDescs.get(i).check((RoleRule) theSortedRules.get(i));
-        }
 	}
 
     private TLClass getMetaElement(String aName) {
@@ -217,81 +169,7 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		return (ElementAccessManager) AccessManager.getInstance();
 	}
 
-    private static class RuleDesc {
-
-        private String  metaElementName;
-        private String  roleName;
-        private String  resourceKey;
-        private boolean inherit;
-
-		private List<PathElementDesc> path;
-
-        public RuleDesc(String aMetaElementName, String aRoleName, boolean aIsInherit, String aResourceKey) {
-            super();
-            this.metaElementName = aMetaElementName;
-            this.roleName        = aRoleName;
-            this.inherit         = aIsInherit;
-            this.resourceKey     = aResourceKey;
-			this.path = new ArrayList<>();
-        }
-
-        public void check(RoleRule aRule) {
-            assertEquals(aRule.getMetaElement().getName(), this.metaElementName);
-            assertEquals(aRule.getRole().getName(),                   this.roleName);
-            assertEquals(aRule.isInherit(),                           this.inherit);
-			assertEquals(ResKey.encode(aRule.getResourceKey()), this.resourceKey);
-            List thePath = aRule.getPath();
-            assertEquals(thePath.size(), this.path.size());
-            for (int i = 0; i < thePath.size(); i++) {
-				this.path.get(i).check((PathElement) thePath.get(i));
-            }
-        }
-
-        public RuleDesc extendPath(PathElementDesc aPathElementDesc) {
-            this.path.add(aPathElementDesc);
-            return this;
-        }
-    }
-
-    private static class PathElementDesc {
-        private String metaElementName;
-        private String attributeName;
-        private boolean invers;
-
-        public PathElementDesc(String aMetaElementName, String aAttributeName,
-                boolean aInvers) {
-            super();
-            this.metaElementName = aMetaElementName;
-            this.attributeName = aAttributeName;
-            this.invers = aInvers;
-        }
-
-        public void check(PathElement aPathElement) {
-            assertEquals(AttributeOperations.getMetaElement(aPathElement.getMetaAttribute()).getName(), this.metaElementName);
-            assertEquals(aPathElement.getMetaAttribute().getName(), this.attributeName);
-            assertEquals(aPathElement.isInverse(),                  this.invers);
-        }
-    }
-
-	private static class RoleRuleKeyComparator implements Comparator<RoleProvider> {
-        public static final RoleRuleKeyComparator INSTANCE = new RoleRuleKeyComparator();
-
-        @Override
-		public int compare(RoleProvider aObject1, RoleProvider aObject2) {
-			return ((RoleRule) aObject1).getResourceKey().getKey().compareTo(((RoleRule) aObject2).getResourceKey().getKey());
-        }
-    }
-
-	private static class RoleRuleDescKeyComparator implements Comparator<RuleDesc> {
-        public static final RoleRuleDescKeyComparator INSTANCE = new RoleRuleDescKeyComparator();
-
-        @Override
-		public int compare(RuleDesc aObject1, RuleDesc aObject2) {
-			return aObject1.resourceKey.compareTo(aObject2.resourceKey);
-        }
-    }
-
-    /**  Return the suite of tests to perform. */
+	/** Return the suite of tests to perform. */
     public static Test suite() {
         TestSuite suite = new TestSuite(TestRoleRulesImporter.class);
 

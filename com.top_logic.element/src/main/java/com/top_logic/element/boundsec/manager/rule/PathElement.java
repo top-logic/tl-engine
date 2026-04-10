@@ -6,6 +6,7 @@
 
 package com.top_logic.element.boundsec.manager.rule;
 
+import java.io.IOException;
 import java.util.Collection;
 
 import com.top_logic.model.TLObject;
@@ -60,5 +61,35 @@ public interface PathElement {
 	 * @see #getValues(TLObject)
 	 */
 	Collection<? extends TLObject> getSources(TLObject destination);
+
+	/**
+	 * Appends a machine-readable identifier for this path element to the given output.
+	 *
+	 * <p>
+	 * The produced string is used as part of a unique ID for the enclosing {@link RoleRule} and
+	 * must therefore be stable and unambiguous across all path element types.
+	 * </p>
+	 *
+	 * @param out
+	 *        The output to append to. Must not be <code>null</code>.
+	 * @throws IOException
+	 *         If writing to {@code out} fails.
+	 */
+	void appendId(Appendable out) throws IOException;
+
+	/**
+	 * Appends an HTML-encoded, human-readable description of this path element to the given output.
+	 *
+	 * <p>
+	 * The produced string is used inside a tooltip that describes the path of a {@link RoleRule} to
+	 * the user.
+	 * </p>
+	 *
+	 * @param out
+	 *        The output to append to. Must not be <code>null</code>.
+	 * @throws IOException
+	 *         If writing to {@code out} fails.
+	 */
+	void appendForTooltip(Appendable out) throws IOException;
 }
 

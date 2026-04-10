@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.boundsec.manager.rule;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -13,14 +15,12 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.DefaultResourceProvider;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
@@ -111,23 +111,14 @@ public class RoleRuleResourceProvider extends DefaultResourceProvider {
                 if (value instanceof List) {
                     StringBuilder sb = new StringBuilder();
                     for (Iterator it = ((List)value).iterator(); it.hasNext(); ) {
-                        boolean separator = false;
                         PathElement element = (PathElement)it.next();
                         if (element instanceof IdentityPathElement) continue;
                         sb.append("<br/>").append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append("> ");
-                        TLStructuredTypePart metaAttribute = element.getMetaAttribute();
-						TLClass metaElement = AttributeOperations.getMetaElement(metaAttribute);
-						if (metaElement != null) {
-							if (separator)
-								sb.append("; ");
-							sb.append("ME: ").append(TagUtil.encodeXML(metaElement.getName())).append(' ');
-							separator = true;
-                        }
-                        if (separator) sb.append("; ");
-						sb.append("MA: ").append(TagUtil.encodeXML(metaAttribute.getName())).append(' ');
-						sb.append("; ");
-                        sb.append("Inverse: ").append(element.isInverse());
-                        separator = true;
+						try {
+							element.appendForTooltip(sb);
+						} catch (IOException ex) {
+							throw new IOError(ex);
+						}
                     }
                     values.set(i, sb.toString());
                 }

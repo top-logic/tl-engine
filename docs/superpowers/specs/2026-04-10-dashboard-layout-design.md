@@ -108,14 +108,17 @@ Layout slot that defines size/position. Contains arbitrary child elements
 
 **`TLDashboard.tsx`** in `com.top_logic.layout.react/react-src/controls/`:
 
-- Renders a CSS Grid container with
-  `grid-template-columns: repeat(auto-fit, minmax(<minColumnWidth>, 1fr))`.
+- Renders a CSS Grid container.
+- Does NOT use `auto-fit` -- `auto-fit` and explicit column spans conflict
+  (spanning items create implicit extra columns). Instead, the column count
+  is calculated in JavaScript: `Math.max(1, Math.floor((width + gap) / (minColWidth + gap)))`.
+- Sets `grid-template-columns: repeat(N, 1fr)` explicitly based on
+  calculated column count.
 - Sets `grid-auto-rows: <rowHeight>`.
 - Sets `grid-auto-flow: dense` so that smaller items fill gaps left by
   spanning items -- the grid always fills completely without holes.
-- Uses `ResizeObserver` to track actual column count.
-- Sets `style.gridColumn` and `style.gridRow` directly on each item element
-  (not via CSS classes, since `span var(--x)` is not supported in CSS Grid).
+- Uses `ResizeObserver` to recalculate on container resize.
+- Sets `style.gridColumn` and `style.gridRow` directly on each item element.
 - Maps each item's `width` to a `grid-column: span N` value based on current
   column count (see mapping table below).
 - Sets `grid-row: span <rowSpan>` for each item.

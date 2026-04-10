@@ -56,10 +56,9 @@
   .edit-toggle:hover { border-color: var(--color-accent); color: var(--color-accent); }
   .edit-toggle.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
 
-  /* Dashboard grid */
+  /* Dashboard grid -- columns are set by JS via style attribute */
   .dashboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(var(--min-col-width), 1fr));
     grid-auto-rows: var(--row-height);
     grid-auto-flow: dense;
     gap: var(--gap-default);
@@ -276,11 +275,21 @@
     'quarter': 0.25
   };
 
-  function updateSpans() {
-    const style = getComputedStyle(dashboard);
-    const cols = style.gridTemplateColumns.split(' ').length;
+  // Convert rem to px
+  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const minColWidthPx = 16 * remPx; // 16rem
+  const gapPx = 1 * remPx; // 1rem gap
+
+  function updateLayout() {
+    // Calculate how many columns fit based on container width
+    const containerWidth = dashboard.clientWidth;
+    const cols = Math.max(1, Math.floor((containerWidth + gapPx) / (minColWidthPx + gapPx)));
     colCountEl.textContent = cols;
 
+    // Set explicit grid columns
+    dashboard.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+
+    // Update each item's span
     document.querySelectorAll('.dashboard-item').forEach(item => {
       const widthName = item.dataset.width || 'full';
       const rowSpan = parseInt(item.dataset.rowSpan) || 1;
@@ -294,9 +303,9 @@
     });
   }
 
-  const ro = new ResizeObserver(() => updateSpans());
+  const ro = new ResizeObserver(() => updateLayout());
   ro.observe(dashboard);
-  updateSpans();
+  updateLayout();
 
   // Edit mode toggle
   function toggleEdit() {

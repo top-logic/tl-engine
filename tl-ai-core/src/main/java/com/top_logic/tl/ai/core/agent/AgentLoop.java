@@ -279,7 +279,8 @@ public class AgentLoop {
 
 	/**
 	 * Call provider with reactive compaction: if the API returns
-	 * {@link ProviderException.Kind#CONTEXT_WINDOW_EXCEEDED}, compact and retry.
+	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#CONTEXT_WINDOW_EXCEEDED},
+	 * compact and retry.
 	 */
 	private AssistantMessage callProviderWithReactiveCompaction(
 			Conversation conversation, ToolContext context, ConversationMemory memory,
@@ -317,18 +318,6 @@ public class AgentLoop {
 				return false;
 			}
 
-			boolean lockFailed = false;
-			for (ToolCall tc : batch) {
-				if (!ensureTransaction(tc, context, conversation, listener)) {
-					lockFailed = true;
-					break;
-				}
-			}
-
-			if (lockFailed) {
-				continue;
-			}
-
 			if (batch.size() == 1) {
 				executeSingle(batch.get(0), context, conversation, listener);
 			} else {
@@ -356,19 +345,21 @@ public class AgentLoop {
 	 * Ensure a transaction is active before executing a write tool.
 	 * Acquires the lock and begins a transaction on first write.
 	 *
-	 * @return {@code true} if the tool can proceed, {@code false} if lock failed
-	 *   (error result already added to conversation)
+	 * @param toolCall the tool call about to execute
+	 * @param tool     the resolved tool (may be {@code null} for unknown tools)
+	 * @param context  the current execution context
+	 * @param listener receives lock/transaction events
+	 * @return an error result if the lock could not be acquired, {@code null} if the tool can proceed
 	 */
-	private boolean ensureTransaction(ToolCall toolCall, ToolContext context,
-			Conversation conversation, AgentListener listener) {
+	private ToolResultMessage ensureTransaction(ToolCall toolCall, Tool tool, ToolContext context,
+			AgentListener listener) {
 		TransactionScope scope = context.transaction();
 		if (scope.isNoOp() || scope.isActive()) {
-			return true;
+			return null;
 		}
 
-		Tool tool = _registry.getTool(toolCall.name());
 		if (tool == null || tool.mode() == ToolMode.READ) {
-			return true;
+			return null;
 		}
 
 		// First write tool in this turn — acquire lock and begin transaction
@@ -377,16 +368,12 @@ public class AgentLoop {
 			listener.onLockAcquired();
 		} catch (TransactionException e) {
 			listener.onLockFailed(e.getMessage());
-			conversation.add(errorResult(toolCall, "Cannot edit: " + e.getMessage()));
-			reportResult(toolCall,
-				(ToolResultMessage) conversation.messages().get(conversation.size() - 1),
-				listener);
-			return false;
+			return errorResult(toolCall, "Cannot edit: " + e.getMessage());
 		}
 
 		scope.begin();
 		listener.onTransactionBegin();
-		return true;
+		return null;
 	}
 
 	/** */
@@ -597,6 +584,13 @@ public class AgentLoop {
 			}
 		}
 
+		// Ensure transaction is open before executing a write tool.
+		// Done here (after all security gates) so denied tools never open a transaction.
+		ToolResultMessage lockError = ensureTransaction(toolCall, tool, context, listener);
+		if (lockError != null) {
+			return lockError;
+		}
+
 		ToolResultMessage result = _registry.execute(toolCall, context);
 		return truncateIfNeeded(result);
 	}
@@ -720,7 +714,9 @@ public class AgentLoop {
 		/**
 		 * Build the {@link AssistantMessage} from the accumulated stream events.
 		 *
-		 * @throws IllegalStateException if no {@link StreamEvent.MessageComplete} was received
+		 * @throws IllegalStateException
+		 *         if no {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete} was
+		 *         received
 		 */
 		AssistantMessage toAssistantMessage() {
 			if (_content == null) {

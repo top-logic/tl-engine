@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.tool;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;

@@ -132,11 +132,11 @@ public class TransactionScope implements AutoCloseable {
 		try {
 			_transaction.commit();
 			_commitRevision = _transaction.getCommitRevision();
-		} catch (KnowledgeBaseException e) {
-			throw new TransactionException("Commit failed: " + e.getMessage(), e);
-		} finally {
 			_transaction = null;
 			releaseLock();
+		} catch (KnowledgeBaseException e) {
+			// Leave _transaction and _lock intact so callers can rollback()
+			throw new TransactionException("Commit failed: " + e.getMessage(), e);
 		}
 	}
 

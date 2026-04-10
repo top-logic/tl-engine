@@ -11,7 +11,6 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
  * Tests for {@link AnnotatedTools}.

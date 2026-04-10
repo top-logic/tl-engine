@@ -54,7 +54,6 @@
 
   /* Items -- grid-column and grid-row set by JS */
   .dashboard-item {
-    position: relative;
     border-radius: 10px;
     background: var(--color-card);
     border: 1px solid var(--color-border);
@@ -103,22 +102,11 @@
     outline-offset: -2px; background: #f0f6ff;
   }
 
-  /* Size badge showing configured dimensions */
-  .dashboard-item::after {
-    content: attr(data-width) " \00d7  " attr(data-row-span) " row";
-    position: absolute;
-    bottom: 0.4rem; right: 0.5rem;
-    font-size: 0.7rem;
-    color: #b0b8c8;
-    background: rgba(255,255,255,0.85);
-    padding: 0.15rem 0.4rem;
-    border-radius: 4px;
-    pointer-events: none;
-  }
-  /* Hide row-span part when it's 1 (default) */
-  .dashboard-item:not([data-row-span])::after,
-  .dashboard-item[data-row-span="1"]::after {
-    content: attr(data-width);
+  .size-spec {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #9aa;
+    margin-top: 0.35rem;
   }
 
   .info {
@@ -145,7 +133,7 @@
       Sales Overview
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Bar Chart (half, 2 rows)</div>
+      <div class="chart-placeholder">Bar Chart<br><span class="size-spec">width="half" row-span="2"</span></div>
     </div>
   </div>
 
@@ -158,6 +146,7 @@
       <div style="text-align:center">
         <div class="kpi-value">42</div>
         <div class="kpi-label">tasks in progress</div>
+        <div class="size-spec">width="quarter"</div>
       </div>
     </div>
   </div>
@@ -171,6 +160,7 @@
       <div style="text-align:center">
         <div class="kpi-value">7</div>
         <div class="kpi-label">critical issues</div>
+        <div class="size-spec">width="quarter"</div>
       </div>
     </div>
   </div>
@@ -184,6 +174,7 @@
       <div style="text-align:center">
         <div class="kpi-value">12</div>
         <div class="kpi-label">pending reviews</div>
+        <div class="size-spec">width="half"</div>
       </div>
     </div>
   </div>
@@ -194,7 +185,7 @@
       Timeline
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Line Chart (two-thirds)</div>
+      <div class="chart-placeholder">Line Chart<br><span class="size-spec">width="two-thirds"</span></div>
     </div>
   </div>
 
@@ -204,7 +195,7 @@
       Distribution
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Doughnut Chart (third)</div>
+      <div class="chart-placeholder">Doughnut Chart<br><span class="size-spec">width="third"</span></div>
     </div>
   </div>
 
@@ -214,7 +205,7 @@
       Recent Activity
     </div>
     <div class="item-content">
-      <div class="chart-placeholder">Activity Table (full)</div>
+      <div class="chart-placeholder">Activity Table<br><span class="size-spec">width="full"</span></div>
     </div>
   </div>
 </div>

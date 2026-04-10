@@ -32,6 +32,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
@@ -242,7 +243,12 @@ public class RoleRulesImporter {
 			addProblem(UNKNOWN_ATTRIBUTE.fill(qMEName, metaAtributeName));
 			return;
 		}
-		path.add(new PathElement(theMA.getDefinition(), inverse));
+		TLStructuredTypePart part = theMA.getDefinition();
+		if (!(part instanceof TLReference)) {
+			addProblem(I18NConstants.NOT_A_REFERENCE__PART.fill(part));
+			return;
+		}
+		path.add(new PathElement((TLReference) part, inverse));
 	}
 
 	private Collection<BoundedRole> getRoles(List<String> roleNames) {

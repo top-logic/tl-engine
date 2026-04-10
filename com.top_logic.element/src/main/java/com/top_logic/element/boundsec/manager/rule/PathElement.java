@@ -20,9 +20,9 @@ import com.top_logic.model.TLStructuredTypePart;
 public interface PathElement {
 
 	/**
-	 * The part that is used by this {@link PathElement}.
+	 * The parts that are used by this {@link PathElement}.
 	 */
-	TLStructuredTypePart getMetaAttribute();
+	Collection<TLStructuredTypePart> getRelevantParts();
 
 	boolean isInverse();
 

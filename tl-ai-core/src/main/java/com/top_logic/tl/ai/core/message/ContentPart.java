@@ -14,7 +14,8 @@ package com.top_logic.tl.ai.core.message;
  * @see TextContent
  * @see ToolCall
  * @see ImageContent
+ * @see PdfContent
  */
-public sealed interface ContentPart permits TextContent, ToolCall, ImageContent, ThinkingContent {
+public sealed interface ContentPart permits TextContent, ToolCall, ImageContent, ThinkingContent, PdfContent {
 	// Marker interface — subtypes carry the data.
 }

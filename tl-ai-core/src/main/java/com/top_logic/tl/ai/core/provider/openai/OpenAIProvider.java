@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
@@ -204,6 +205,15 @@ public class OpenAIProvider implements LLMProvider {
 					json.name("image_url").value(image.url());
 					json.endObject();
 				}
+				case PdfContent pdf -> {
+					json.beginObject();
+					json.name("type").value("file");
+					json.name("file");
+					json.beginObject();
+					json.name("data").value("data:" + pdf.mediaType() + ";base64," + pdf.data());
+					json.endObject();
+					json.endObject();
+				}
 				case ToolCall ignored -> { /* Not valid in user messages. */ }
 				case ThinkingContent ignored -> { /* Not valid in user messages. */ }
 			}
@@ -250,6 +260,7 @@ public class OpenAIProvider implements LLMProvider {
 					json.endObject();
 				}
 				case ImageContent ignored -> { /* Not valid in assistant messages. */ }
+				case PdfContent ignored -> { /* Not valid in assistant messages. */ }
 			}
 		}
 	}

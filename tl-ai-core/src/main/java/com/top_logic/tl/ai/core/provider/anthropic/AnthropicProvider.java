@@ -29,6 +29,7 @@ import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
@@ -231,6 +232,17 @@ public class AnthropicProvider implements LLMProvider {
 					json.endObject();
 					json.endObject();
 				}
+				case PdfContent pdf -> {
+					json.beginObject();
+					json.name("type").value("document");
+					json.name("source");
+					json.beginObject();
+					json.name("type").value("base64");
+					json.name("media_type").value(pdf.mediaType());
+					json.name("data").value(pdf.data());
+					json.endObject();
+					json.endObject();
+				}
 				case ToolCall ignored -> { /* Not valid in user messages. */ }
 			case ThinkingContent ignored -> { /* Not valid in user messages. */ }
 			}
@@ -258,6 +270,7 @@ public class AnthropicProvider implements LLMProvider {
 					json.endObject();
 				}
 				case ImageContent ignored -> { /* Not valid in assistant messages. */ }
+				case PdfContent ignored -> { /* Not valid in assistant messages. */ }
 			case ThinkingContent ignored -> { /* Not serialized back to Anthropic. */ }
 			}
 		}

@@ -30,6 +30,7 @@ import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
@@ -179,7 +180,7 @@ public class MistralProvider implements LLMProvider {
 		json.name("role").value("user");
 
 		boolean hasImages = user.content().stream()
-			.anyMatch(p -> p instanceof ImageContent);
+			.anyMatch(p -> p instanceof ImageContent || p instanceof PdfContent);
 
 		if (hasImages) {
 			json.name("content");
@@ -201,6 +202,7 @@ public class MistralProvider implements LLMProvider {
 						json.endObject();
 						json.endObject();
 					}
+					case PdfContent ignored -> { /* Mistral does not support PDF natively — skipped. */ }
 					case ToolCall ignored -> { /* Not valid in user messages. */ }
 					case ThinkingContent ignored -> { /* Not valid in user messages. */ }
 				}

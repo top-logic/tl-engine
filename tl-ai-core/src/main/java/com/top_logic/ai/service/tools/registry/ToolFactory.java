@@ -7,8 +7,10 @@ package com.top_logic.ai.service.tools.registry;
 
 import java.util.List;
 
+import com.top_logic.tl.ai.core.tool.Tool;
+
 /**
- * Factory for creating {@link ToolImplementation} instances.
+ * Factory for creating {@link Tool} instances.
  *
  * <p>
  * A tool factory is responsible for producing a list of tools that can be used by AI agents. Each
@@ -28,6 +30,6 @@ public interface ToolFactory {
 	 *
 	 * @return A list of tools created by this factory. Must not be null.
 	 */
-	List<ToolImplementation> createTools();
+	List<Tool> createTools();
 
 }

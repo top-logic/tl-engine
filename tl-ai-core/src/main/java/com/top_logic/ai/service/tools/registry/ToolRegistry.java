@@ -7,8 +7,10 @@ package com.top_logic.ai.service.tools.registry;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -19,11 +21,8 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
-
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.service.tool.ToolProvider;
-import dev.langchain4j.service.tool.ToolProviderRequest;
-import dev.langchain4j.service.tool.ToolProviderResult;
+import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
  * Registry service for managing tools available in the application.
@@ -83,7 +82,7 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 
 	private final InstantiationContext _context;
 
-	private Map<String, ToolImplementation> _tools;
+	private Map<String, Tool> _tools;
 
 	/**
 	 * Creates a new {@link ToolRegistry} from the given configuration.
@@ -97,7 +96,7 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 	protected void startUp() {
 		super.startUp();
 
-		_tools = new java.util.HashMap<>();
+		_tools = new HashMap<>();
 		for (Map.Entry<String, ToolFactoryConfig> entry : getConfig().getToolFactories().entrySet()) {
 			String factoryName = entry.getKey();
 			try {
@@ -108,9 +107,8 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 					continue;
 				}
 
-				// Create tools from this factory and register them with qualified names
-				for (ToolImplementation tool : factory.createTools()) {
-					String qualifiedName = factoryName + "." + tool.getName();
+				for (Tool tool : factory.createTools()) {
+					String qualifiedName = factoryName + "." + tool.name();
 					_tools.put(qualifiedName, tool);
 				}
 			} catch (Exception ex) {
@@ -127,7 +125,7 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 	 *        The qualified name of the tool in the format {@code factory-name.tool-name}.
 	 * @return The tool, or <code>null</code> if no tool with the given name exists.
 	 */
-	public ToolImplementation getTool(String qualifiedName) {
+	public Tool getTool(String qualifiedName) {
 		return _tools.get(qualifiedName);
 	}
 
@@ -138,83 +136,70 @@ public class ToolRegistry extends ConfiguredManagedClass<ToolRegistry.Config<?>>
 	 * Tool names are in the qualified format {@code factory-name.tool-name}.
 	 * </p>
 	 */
-	public java.util.Set<String> getToolNames() {
+	public Set<String> getToolNames() {
 		return _tools.keySet();
 	}
 
 	/**
 	 * Returns all registered tools.
 	 */
-	public java.util.Collection<ToolImplementation> getTools() {
+	public Collection<Tool> getTools() {
 		return _tools.values();
 	}
 
 	/**
-	 * Creates a {@link ToolProvider} that provides access to the specified tools.
-	 *
-	 * <p>
-	 * The returned tool provider can be used with AI services to make the specified tools
-	 * available to AI agents during conversation.
-	 * </p>
+	 * Returns tool schemas for the specified qualified tool names.
 	 *
 	 * @param qualifiedToolNames
 	 *        Collection of qualified tool names in the format {@code factory-name.tool-name}.
-	 * @return A tool provider that provides the requested tools.
+	 * @return A list of tool schemas for the requested tools.
 	 * @throws IllegalArgumentException
 	 *         If any of the specified tool names is not found in the registry.
 	 */
-	public ToolProvider createToolProvider(Collection<String> qualifiedToolNames) {
-		ToolProviderResult.Builder builder = ToolProviderResult.builder();
+	public List<ToolSchema> getToolSchemas(Collection<String> qualifiedToolNames) {
+		List<ToolSchema> schemas = new ArrayList<>();
 
 		for (String qualifiedName : qualifiedToolNames) {
-			ToolImplementation tool = _tools.get(qualifiedName);
+			Tool tool = _tools.get(qualifiedName);
 			if (tool != null) {
-				builder.add(tool.getSpecification(), tool.getExecutor());
+				schemas.add(tool.schema());
 			} else {
 				throw new IllegalArgumentException("Tool '" + qualifiedName + "' not found in registry."
 					+ " Available tools: " + _tools.keySet());
 			}
 		}
 
-		ToolProviderResult result = builder.build();
-
-		// Return a simple ToolProvider that always returns the same result
-		return new ToolProvider() {
-			@Override
-			public ToolProviderResult provideTools(ToolProviderRequest request) {
-				return result;
-			}
-		};
+		return schemas;
 	}
 
 	/**
-	 * Returns a list of tool specifications for the specified qualified tool names.
+	 * Builds a {@link com.top_logic.tl.ai.core.tool.ToolRegistry} populated with the specified
+	 * tools.
 	 *
 	 * <p>
-	 * This method retrieves the {@link ToolSpecification} objects for the requested tools,
-	 * which can be used with chat requests.
+	 * The returned core registry is frozen and ready for use with the agent loop.
 	 * </p>
 	 *
 	 * @param qualifiedToolNames
 	 *        Collection of qualified tool names in the format {@code factory-name.tool-name}.
-	 * @return A list of tool specifications for the requested tools.
+	 * @return A frozen core {@link com.top_logic.tl.ai.core.tool.ToolRegistry}.
 	 * @throws IllegalArgumentException
 	 *         If any of the specified tool names is not found in the registry.
 	 */
-	public List<ToolSpecification> getToolSpecifications(Collection<String> qualifiedToolNames) {
-		List<ToolSpecification> specs = new ArrayList<>();
+	public com.top_logic.tl.ai.core.tool.ToolRegistry buildCoreRegistry(Collection<String> qualifiedToolNames) {
+		com.top_logic.tl.ai.core.tool.ToolRegistry coreRegistry = new com.top_logic.tl.ai.core.tool.ToolRegistry();
 
 		for (String qualifiedName : qualifiedToolNames) {
-			ToolImplementation tool = _tools.get(qualifiedName);
+			Tool tool = _tools.get(qualifiedName);
 			if (tool != null) {
-				specs.add(tool.getSpecification());
+				coreRegistry.register(tool);
 			} else {
 				throw new IllegalArgumentException("Tool '" + qualifiedName + "' not found in registry."
 					+ " Available tools: " + _tools.keySet());
 			}
 		}
 
-		return specs;
+		return coreRegistry.freeze();
 	}
 
 	/**

@@ -13,7 +13,7 @@ const I18N_KEYS = {
  * Participates as a grid item in the parent layout; uses CSS subgrid internally.
  *
  * State:
- * - header: string | null
+ * - headerControl: ChildDescriptor | null
  * - headerActions: ChildDescriptor[]
  * - collapsible: boolean
  * - collapsed: boolean
@@ -26,7 +26,7 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
 
-  const header = state.header as string | null;
+  const headerControl = (state.headerControl as unknown) ?? null;
   const headerActions = (state.headerActions as unknown[]) ?? [];
   const collapsible = state.collapsible === true;
   const collapsed = state.collapsed === true;
@@ -34,7 +34,7 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
   const fullLine = state.fullLine === true;
   const children = (state.children as unknown[]) ?? [];
 
-  const hasHeader = header != null || headerActions.length > 0 || collapsible;
+  const hasHeader = headerControl != null || headerActions.length > 0 || collapsible;
 
   const handleToggle = useCallback(() => {
     sendCommand('toggleCollapse');
@@ -63,7 +63,11 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
               </svg>
             </button>
           )}
-          {header && <span className="tlFormGroup__title">{header}</span>}
+          {headerControl && (
+            <span className="tlFormGroup__title">
+              <TLChild control={headerControl} />
+            </span>
+          )}
           {headerActions.length > 0 && (
             <div className="tlFormGroup__actions">
               {headerActions.map((action, i) => (

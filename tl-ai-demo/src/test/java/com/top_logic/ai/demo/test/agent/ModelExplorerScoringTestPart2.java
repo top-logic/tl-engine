@@ -19,7 +19,7 @@ import com.top_logic.ai.demo.test.agent.judge.JudgeClient;
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.oracle.OracleLoader;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
-import com.top_logic.ai.service.AIService;
+
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -73,7 +73,7 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
 			
 			// 3. Score with AI judge (prompt-based with tool trace)
-			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			JudgeClient judge = new JudgeClient();
 			String judgePrompt = loadJudgeSystemPrompt();
 			
 			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
@@ -123,7 +123,7 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
 			
 			// 3. Score with AI judge (prompt-based with tool trace)
-			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			JudgeClient judge = new JudgeClient();
 			String judgePrompt = loadJudgeSystemPrompt();
 			
 			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
@@ -173,7 +173,7 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
 			
 			// 3. Score with AI judge (prompt-based with tool trace)
-			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			JudgeClient judge = new JudgeClient();
 			String judgePrompt = loadJudgeSystemPrompt();
 			
 			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
@@ -223,7 +223,7 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
 			
 			// 3. Score with AI judge (prompt-based with tool trace)
-			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			JudgeClient judge = new JudgeClient();
 			String judgePrompt = loadJudgeSystemPrompt();
 			
 			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(
@@ -273,7 +273,7 @@ public class ModelExplorerScoringTestPart2 extends ModelExplorerScoringTestBase 
 			Map<String, Object> toolResults = ToolResultMinimizer.minimizeToolResults(tracker.getToolResults());
 			
 			// 3. Score with AI judge (prompt-based with tool trace)
-			JudgeClient judge = new JudgeClient(AIService.getInstance());
+			JudgeClient judge = new JudgeClient();
 			String judgePrompt = loadJudgeSystemPrompt();
 			
 			JudgeResult judgeResult = judge.scoreWithPromptAndToolTrace(

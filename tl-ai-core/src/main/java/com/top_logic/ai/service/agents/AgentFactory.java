@@ -5,41 +5,28 @@
  */
 package com.top_logic.ai.service.agents;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonWriter;
-
-import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.ChatModelFactory;
-import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
-import com.top_logic.ai.service.providers.MistralChatModelFactory;
-import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
-import com.top_logic.ai.service.tools.registry.ToolImplementation;
+import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentConfig;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
-import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
-import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 import com.top_logic.tl.ai.core.tool.Tool;
-import com.top_logic.tl.ai.core.tool.ToolRegistry;
 
 /**
  * Builds {@link AgentLoop} instances from agent definitions stored in the knowledge base.
  *
  * <p>
  * This is the primary entry point for constructing agents from model-based definitions
- * ({@code tl.ai.core:Agent} instances). It replaces the XML-config-based approach of
- * {@link AgentRegistry} with direct KB access.
+ * ({@code tl.ai.core:Agent} instances). It delegates provider creation to
+ * {@link AgentRegistry#buildProvider(String)} and tool resolution to the service-level
+ * {@link ToolRegistry}.
  * </p>
  *
  * @see AgentDefinitionQuery
@@ -91,7 +78,7 @@ public class AgentFactory {
 
 		AgentConfig config = buildConfig(agent);
 		LLMProvider provider = buildProvider(config.model());
-		ToolRegistry registry = buildToolRegistry(agent);
+		com.top_logic.tl.ai.core.tool.ToolRegistry registry = buildToolRegistry(agent);
 
 		return new AgentLoop(config, provider, registry);
 	}
@@ -102,8 +89,8 @@ public class AgentFactory {
 	AgentConfig buildConfig(TLObject agent) {
 		String model = (String) agent.tValueByName("model");
 		if (model == null || model.isBlank()) {
-			AIService service = AIService.getInstance();
-			model = service != null ? service.getConfig().getDefaultModel() : null;
+			AgentRegistry agentRegistry = AgentRegistry.getInstance();
+			model = agentRegistry != null ? agentRegistry.getConfig().getDefaultModel() : null;
 		}
 		if (model == null) {
 			throw new IllegalStateException(
@@ -144,82 +131,29 @@ public class AgentFactory {
 	 * Creates an {@link LLMProvider} for the given model name.
 	 *
 	 * <p>
-	 * Looks up the {@link ChatModelFactory} from {@link AIService} and extracts connection details
-	 * to create a native {@link LLMProvider} (bypassing LangChain4j).
+	 * Delegates to {@link AgentRegistry#buildProvider(String)}.
 	 * </p>
 	 */
 	LLMProvider buildProvider(String modelName) {
-		AIService service = AIService.getInstance();
-		if (service == null) {
-			throw new IllegalStateException("AIService is not available.");
+		AgentRegistry registry = AgentRegistry.getInstance();
+		if (registry == null) {
+			throw new IllegalStateException("AgentRegistry is not available.");
 		}
-
-		ChatModelFactory factory = service.getFactory(modelName);
-		if (factory == null) {
-			throw new IllegalStateException(
-				"No ChatModelFactory registered for model: " + modelName
-					+ ". Available: " + service.getModelNames());
-		}
-
-		if (factory instanceof AnthropicChatModelFactory) {
-			AnthropicChatModelFactory.Config config =
-				(AnthropicChatModelFactory.Config) factory.getConfig();
-
-			// LangChain4j uses base URL with /v1 suffix (e.g. "https://api.anthropic.com/v1"),
-			// but AnthropicProvider appends /v1/messages itself, so strip the trailing /v1.
-			String baseUrl = config.getBaseUrl();
-			if (baseUrl.endsWith("/v1")) {
-				baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-			}
-
-			String version = config.getVersion();
-			if (version == null) {
-				version = "2023-06-01";
-			}
-
-			return new AnthropicProvider(config.getApiKey(), baseUrl, version);
-		}
-
-		if (factory instanceof OpenAIChatModelFactory) {
-			OpenAIChatModelFactory.Config config =
-				(OpenAIChatModelFactory.Config) factory.getConfig();
-
-			String baseUrl = config.getBaseUrl();
-			if (baseUrl.endsWith("/v1")) {
-				baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-			}
-
-			return new OpenAIProvider(config.getApiKey(), baseUrl);
-		}
-
-		if (factory instanceof MistralChatModelFactory) {
-			MistralChatModelFactory.Config config =
-				(MistralChatModelFactory.Config) factory.getConfig();
-
-			String baseUrl = config.getBaseUrl();
-			if (baseUrl.endsWith("/v1")) {
-				baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-			}
-
-			return new MistralProvider(config.getApiKey(), baseUrl);
-		}
-
-		throw new UnsupportedOperationException(
-			"No native LLMProvider for factory type: " + factory.getClass().getSimpleName()
-				+ ". Supported: Anthropic, OpenAI, Mistral.");
+		return registry.buildProvider(modelName);
 	}
 
 	/**
-	 * Builds a {@link ToolRegistry} containing the tools assigned to the agent.
+	 * Builds a {@link com.top_logic.tl.ai.core.tool.ToolRegistry} containing the tools assigned
+	 * to the agent.
 	 *
 	 * <p>
-	 * Resolves tool names from the agent's {@code tools} attribute against the
-	 * tl-ai-service {@link com.top_logic.ai.service.tools.registry.ToolRegistry} and wraps them as
-	 * tl-ai-core {@link Tool} objects.
+	 * Resolves tool names from the agent's {@code tools} attribute against the service-level
+	 * {@link ToolRegistry} and registers them in a core registry.
 	 * </p>
 	 */
-	ToolRegistry buildToolRegistry(TLObject agent) {
-		ToolRegistry registry = new ToolRegistry();
+	com.top_logic.tl.ai.core.tool.ToolRegistry buildToolRegistry(TLObject agent) {
+		com.top_logic.tl.ai.core.tool.ToolRegistry registry =
+			new com.top_logic.tl.ai.core.tool.ToolRegistry();
 
 		@SuppressWarnings("unchecked")
 		Collection<String> toolNames = (Collection<String>) agent.tValueByName("tools");
@@ -227,103 +161,18 @@ public class AgentFactory {
 			return registry.freeze();
 		}
 
-		com.top_logic.ai.service.tools.registry.ToolRegistry serviceRegistry =
-			com.top_logic.ai.service.tools.registry.ToolRegistry.getInstance();
+		ToolRegistry serviceRegistry = ToolRegistry.getInstance();
 
 		for (String toolName : toolNames) {
-			ToolImplementation impl = serviceRegistry.getTool(toolName);
-			if (impl == null) {
+			Tool tool = serviceRegistry.getTool(toolName);
+			if (tool == null) {
 				Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 				continue;
 			}
-			registry.register(wrapTool(toolName, impl));
+			registry.register(tool);
 		}
 
 		return registry.freeze();
-	}
-
-	/**
-	 * Wraps a tl-ai-service {@link ToolImplementation} as a tl-ai-core {@link Tool}.
-	 */
-	private Tool wrapTool(String name, ToolImplementation impl) {
-		String description = impl.getSpecification().description();
-
-		// Serialize JsonObjectSchema to JSON string for tl-ai-core ToolSchema
-		dev.langchain4j.model.chat.request.json.JsonObjectSchema params =
-			impl.getSpecification().parameters();
-		String inputSchema = params != null ? params.toString() : "{}";
-
-		ToolSchema schema = new ToolSchema(name, description, inputSchema);
-
-		return new Tool() {
-			@Override
-			public String name() {
-				return name;
-			}
-
-			@Override
-			public String description() {
-				return description;
-			}
-
-			@Override
-			public ToolSchema schema() {
-				return schema;
-			}
-
-			@Override
-			public String execute(Map<String, Object> args,
-					com.top_logic.tl.ai.core.agent.ToolContext context) {
-				try {
-					// Convert args map back to JSON for LangChain4j executor
-					String argsJson = argsToJson(args);
-					dev.langchain4j.agent.tool.ToolExecutionRequest request =
-						dev.langchain4j.agent.tool.ToolExecutionRequest.builder()
-							.name(name)
-							.arguments(argsJson)
-							.build();
-					return impl.getExecutor().execute(request, null);
-				} catch (Exception e) {
-					Logger.error("Tool execution failed: " + name, e, AgentFactory.class);
-					return "Error: " + e.getMessage();
-				}
-			}
-		};
-	}
-
-	private static String argsToJson(Map<String, Object> args) {
-		if (args == null || args.isEmpty()) {
-			return "{}";
-		}
-		StringW buffer = new StringW();
-		try (JsonWriter json = new JsonWriter(buffer)) {
-			json.beginObject();
-			for (Map.Entry<String, Object> entry : args.entrySet()) {
-				json.name(entry.getKey());
-				writeValue(json, entry.getValue());
-			}
-			json.endObject();
-		} catch (IOException ex) {
-			Logger.error("Failed to serialize tool arguments.", ex, AgentFactory.class);
-			return "{}";
-		}
-		return buffer.toString();
-	}
-
-	private static void writeValue(JsonWriter json, Object value) throws IOException {
-		if (value == null) {
-			json.nullValue();
-		} else if (value instanceof String s) {
-			json.value(s);
-		} else if (value instanceof Boolean b) {
-			json.value(b);
-		} else if (value instanceof Long l) {
-			json.value(l);
-		} else if (value instanceof Number n) {
-			json.value(n.doubleValue());
-		} else {
-			json.value(String.valueOf(value));
-		}
 	}
 
 	/**

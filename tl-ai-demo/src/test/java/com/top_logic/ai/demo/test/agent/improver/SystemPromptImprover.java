@@ -8,50 +8,41 @@ package com.top_logic.ai.demo.test.agent.improver;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
-import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
 
 /**
  * System prompt improver that analyzes test results and suggests improvements.
- * 
- * @author jhu
  */
 public class SystemPromptImprover {
 
 	public static final String DEFAULT_IMPROVER_MODEL = "claude-sonnet-4-5-20250929";
 
-	private final AIService _aiService;
 	private final String _improverModelName;
 
 	/**
 	 * Creates an improver with default model.
 	 */
-	public SystemPromptImprover(AIService aiService) {
-		this(aiService, DEFAULT_IMPROVER_MODEL);
+	public SystemPromptImprover() {
+		this(DEFAULT_IMPROVER_MODEL);
 	}
 
 	/**
 	 * Creates an improver with specific model.
 	 */
-	public SystemPromptImprover(AIService aiService, String improverModelName) {
-		_aiService = aiService;
+	public SystemPromptImprover(String improverModelName) {
 		_improverModelName = improverModelName;
 	}
 
 	/**
 	 * Analyzes test results and suggests improvements to the system prompt.
-	 * 
+	 *
 	 * @param currentSystemPrompt
 	 *        The current system prompt of the agent
 	 * @param testResults
@@ -69,22 +60,13 @@ public class SystemPromptImprover {
 			SystemPromptImprover.class,
 			() -> {
 				try {
-					ChatModel improverModel = _aiService.getChatModel(_improverModelName);
-
 					String userMessage = buildUserMessage(currentSystemPrompt, testResults);
 
-					SystemMessage systemMessage = SystemMessage.from(improverSystemPrompt);
-					UserMessage userMsg = UserMessage.from(userMessage);
+					List<Object> messages = List.of(
+						Map.of("role", "system", "content", improverSystemPrompt),
+						Map.of("role", "user", "content", userMessage));
 
-					ChatRequest request = ChatRequest.builder()
-						.messages(systemMessage, userMsg)
-						.build();
-
-					ChatResponse response = improverModel.chat(request);
-					AiMessage aiMessage = response.aiMessage();
-					String resultText = aiMessage.text();
-
-					return resultText;
+					return OpenAIScriptFunctions.chat(messages, _improverModelName, null, null);
 
 				} catch (Exception ex) {
 					Logger.error("Failed to improve system prompt: " + ex.getMessage(), ex,
@@ -111,9 +93,7 @@ public class SystemPromptImprover {
 					json.name("test_name").value(testResult.getTestName());
 					json.name("user_prompt").value(testResult.getUserPrompt());
 					json.name("agent_answer").value(testResult.getAgentAnswer());
-					// Embed judge_evaluation JSON as escaped string (LLM will parse it)
 					json.name("judge_evaluation").value(testResult.getJudgeEvaluationJson());
-					// Embed final_score JSON as escaped string (LLM will parse it)
 					json.name("final_score").value(testResult.getFinalScoreJson());
 					json.endObject();
 				}

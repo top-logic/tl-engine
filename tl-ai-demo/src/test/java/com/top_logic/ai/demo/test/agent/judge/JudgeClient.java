@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
-import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -18,16 +18,10 @@ import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
 
 /**
  * Simplified client for using AI to score agent answers.
- * 
+ *
  * <p>
  * This sends:
  * <ul>
@@ -37,43 +31,30 @@ import dev.langchain4j.model.chat.response.ChatResponse;
  * </ul>
  * to an AI judge that scores the answer.
  * </p>
- * 
- * @author jhu
  */
 public class JudgeClient {
 
 	public static final String DEFAULT_JUDGE_MODEL = "claude-sonnet-4-5-20250929";
 
-	private final AIService _aiService;
 	private final String _judgeModelName;
 
 	/**
 	 * Creates a judge client with default model.
 	 */
-	public JudgeClient(AIService aiService) {
-		this(aiService, DEFAULT_JUDGE_MODEL);
+	public JudgeClient() {
+		this(DEFAULT_JUDGE_MODEL);
 	}
 
 	/**
 	 * Creates a judge client with specific model.
 	 */
-	public JudgeClient(AIService aiService, String judgeModelName) {
-		_aiService = aiService;
+	public JudgeClient(String judgeModelName) {
 		_judgeModelName = judgeModelName;
 	}
 
 	/**
 	 * Scores an agent's answer with LLM-inferred expectations and tool trace evidence.
-	 * 
-	 * <p>
-	 * This method provides both the model XML and a compact tool-evidence trace to the judge,
-	 * allowing it to distinguish between:
-	 * <ul>
-	 * <li>Facts not in XML but fetched from tools (allowed)</li>
-	 * <li>Facts not in XML and not fetched (hallucination/notFetched)</li>
-	 * </ul>
-	 * </p>
-	 * 
+	 *
 	 * @param userPrompt
 	 *        The original prompt given to the agent
 	 * @param modelXml
@@ -100,24 +81,16 @@ public class JudgeClient {
 			JudgeClient.class,
 			() -> {
 				try {
-					ChatModel judgeModel = _aiService.getChatModel(_judgeModelName);
-
 					String judgeUserPrompt = buildPromptBasedUserMessageWithToolTrace(
 						userPrompt, modelXml, agentAnswer, toolTrace, toolResults);
 
-					SystemMessage systemMessage = SystemMessage.from(judgeSystemPrompt);
-					UserMessage userMessage = UserMessage.from(judgeUserPrompt);
+					List<Object> messages = List.of(
+						Map.of("role", "system", "content", judgeSystemPrompt),
+						Map.of("role", "user", "content", judgeUserPrompt));
 
-					ChatRequest request = ChatRequest.builder()
-						.messages(systemMessage, userMessage)
-						.build();
-
-					ChatResponse response = judgeModel.chat(request);
-					AiMessage aiMessage = response.aiMessage();
-					String resultText = aiMessage.text();
-
+					String resultText = OpenAIScriptFunctions.chat(messages, _judgeModelName, null, null);
 					return parseJudgeResult(resultText);
-					
+
 				} catch (Exception ex) {
 					Logger.error("Failed to score answer: " + ex.getMessage(), ex, JudgeClient.class);
 					throw new RuntimeException("Failed to score answer: " + ex.getMessage(), ex);
@@ -139,11 +112,11 @@ public class JudgeClient {
 			StringW buffer = new StringW();
 			try (JsonWriter json = new JsonWriter(buffer)) {
 				json.beginObject();
-				
+
 				json.name("question").value(userPrompt);
 				json.name("agent_answer").value(agentAnswer);
 				json.name("model_xml").value(modelXml);
-				
+
 				// Write tool_trace array
 				json.name("tool_trace");
 				json.beginArray();
@@ -156,11 +129,11 @@ public class JudgeClient {
 					json.endObject();
 				}
 				json.endArray();
-				
+
 				// Write tool_results object
 				json.name("tool_results");
 				writeJsonValue(json, toolResults);
-				
+
 				json.endObject();
 			}
 			return buffer.toString();
@@ -209,61 +182,8 @@ public class JudgeClient {
 			}
 			json.endArray();
 		} else {
-			// For other types, convert to string
 			json.value(value.toString());
 		}
-	}
-
-	/**
-	 * Escapes a string for use as a JSON value.
-	 * 
-	 * <p>
-	 * Handles quotes, backslashes, newlines, and other special characters.
-	 * </p>
-	 */
-	private String escapeJson(String value) {
-		if (value == null) {
-			return "null";
-		}
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("\"");
-		for (int i = 0; i < value.length(); i++) {
-			char c = value.charAt(i);
-			switch (c) {
-				case '"':
-					sb.append("\\\"");
-					break;
-				case '\\':
-					sb.append("\\\\");
-					break;
-				case '\b':
-					sb.append("\\b");
-					break;
-				case '\f':
-					sb.append("\\f");
-					break;
-				case '\n':
-					sb.append("\\n");
-					break;
-				case '\r':
-					sb.append("\\r");
-					break;
-				case '\t':
-					sb.append("\\t");
-					break;
-				default:
-					// Control characters
-					if (c < 0x20) {
-						sb.append(String.format("\\u%04x", (int) c));
-					} else {
-						sb.append(c);
-					}
-					break;
-			}
-		}
-		sb.append("\"");
-		return sb.toString();
 	}
 
 	/**

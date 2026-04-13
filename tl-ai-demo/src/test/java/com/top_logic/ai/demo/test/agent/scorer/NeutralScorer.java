@@ -7,9 +7,11 @@ package com.top_logic.ai.demo.test.agent.scorer;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
-import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -17,43 +19,33 @@ import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
 
 /**
  * Neutral scorer that provides a final assessment after the judge's evaluation.
- * 
- * @author jhu
  */
 public class NeutralScorer {
 
 	public static final String DEFAULT_SCORER_MODEL = "claude-sonnet-4-5-20250929";
 
-	private final AIService _aiService;
 	private final String _scorerModelName;
 
 	/**
 	 * Creates a neutral scorer with default model.
 	 */
-	public NeutralScorer(AIService aiService) {
-		this(aiService, DEFAULT_SCORER_MODEL);
+	public NeutralScorer() {
+		this(DEFAULT_SCORER_MODEL);
 	}
 
 	/**
 	 * Creates a neutral scorer with specific model.
 	 */
-	public NeutralScorer(AIService aiService, String scorerModelName) {
-		_aiService = aiService;
+	public NeutralScorer(String scorerModelName) {
 		_scorerModelName = scorerModelName;
 	}
 
 	/**
 	 * Scores the agent's performance based on user prompt, agent answer, and judge evaluation.
-	 * 
+	 *
 	 * @param userPrompt
 	 *        The original user prompt
 	 * @param agentAnswer
@@ -74,21 +66,13 @@ public class NeutralScorer {
 			NeutralScorer.class,
 			() -> {
 				try {
-					ChatModel scorerModel = _aiService.getChatModel(_scorerModelName);
-
 					String userMessage = buildUserMessage(userPrompt, agentAnswer, judgeResult);
 
-					SystemMessage systemMessage = SystemMessage.from(scorerSystemPrompt);
-					UserMessage userMsg = UserMessage.from(userMessage);
+					List<Object> messages = List.of(
+						Map.of("role", "system", "content", scorerSystemPrompt),
+						Map.of("role", "user", "content", userMessage));
 
-					ChatRequest request = ChatRequest.builder()
-						.messages(systemMessage, userMsg)
-						.build();
-
-					ChatResponse response = scorerModel.chat(request);
-					AiMessage aiMessage = response.aiMessage();
-					String resultText = aiMessage.text();
-
+					String resultText = OpenAIScriptFunctions.chat(messages, _scorerModelName, null, null);
 					return parseResult(resultText);
 
 				} catch (Exception ex) {

@@ -5,24 +5,19 @@
  */
 package com.top_logic.ai.service.scripting;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import dev.langchain4j.model.chat.request.json.JsonArraySchema;
-import dev.langchain4j.model.chat.request.json.JsonBooleanSchema;
-import dev.langchain4j.model.chat.request.json.JsonIntegerSchema;
-import dev.langchain4j.model.chat.request.json.JsonNumberSchema;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import dev.langchain4j.model.chat.request.json.JsonSchema;
-import dev.langchain4j.model.chat.request.json.JsonSchemaElement;
-import dev.langchain4j.model.chat.request.json.JsonStringSchema;
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * Utility class for converting map-based schema definitions to <i>LangChain4j</i> JSON schemas.
+ * Utility class for converting map-based schema definitions to JSON schema strings.
  *
  * <p>
- * Converts TL-Script map structures into strongly-typed <i>LangChain4j</i> JSON schema objects.
+ * Converts TL-Script map structures into JSON schema strings using msgbuf {@link JsonWriter}.
  * Supports all JSON schema primitive types (string, integer, number, boolean), complex types
  * (array, object), enum values, and required property specifications.
  * </p>
@@ -72,15 +67,20 @@ public class JsonSchemaConverter {
 	private static final String TYPE_OBJECT = "object";
 
 	/**
-	 * Converts a map-based schema definition to a {@link JsonSchema}.
+	 * Converts a map-based schema definition to a JSON schema string.
+	 *
+	 * <p>
+	 * The map must contain a "name" field and a "schema" field. The "schema" field must be a map
+	 * with "properties" and optionally "required" fields.
+	 * </p>
 	 *
 	 * @param schemaMap
 	 *        Map containing "name" and "schema" fields defining the JSON schema.
-	 * @return The constructed {@link JsonSchema}.
+	 * @return The JSON schema as a string.
 	 * @throws IllegalArgumentException
 	 *         If the schema definition is invalid.
 	 */
-	public static JsonSchema fromMap(Map<?, ?> schemaMap) {
+	public static String fromMap(Map<?, ?> schemaMap) {
 		String name = (String) schemaMap.get(FIELD_NAME);
 		if (name == null) {
 			throw new IllegalArgumentException("JSON schema must contain a '" + FIELD_NAME + "' field.");
@@ -95,313 +95,217 @@ public class JsonSchemaConverter {
 			throw new IllegalArgumentException("Schema must be a Map.");
 		}
 
-		// Parse the root object schema with properties and required fields
-		JsonObjectSchema.Builder rootBuilder = JsonObjectSchema.builder();
-
-		// Get required properties list
-		Object requiredObj = schemaPropsMap.get(FIELD_REQUIRED);
-		List<String> requiredProps = new ArrayList<>();
-		if (requiredObj instanceof List<?> reqList) {
-			for (Object item : reqList) {
-				if (item instanceof String str) {
-					requiredProps.add(str);
-				}
+		try {
+			StringW buffer = new StringW();
+			try (JsonWriter json = new JsonWriter(buffer)) {
+				writeObjectSchema(json, schemaPropsMap);
 			}
-		}
-
-		// Parse and add properties
-		Object propertiesObj = schemaPropsMap.get(FIELD_PROPERTIES);
-		if (propertiesObj instanceof Map<?, ?> propertiesMap) {
-			addPropertiesToBuilder(rootBuilder, propertiesMap);
-		}
-
-		// Add required properties if any
-		if (!requiredProps.isEmpty()) {
-			rootBuilder.required(requiredProps);
-		}
-
-		return JsonSchema.builder()
-			.name(name)
-			.rootElement(rootBuilder.build())
-			.build();
-	}
-
-	/**
-	 * Adds properties to a {@link dev.langchain4j.model.chat.request.json.JsonObjectSchema.Builder} using individual property methods.
-	 *
-	 * @param builder
-	 *        The builder to add properties to.
-	 * @param propertiesMap
-	 *        The map of property definitions.
-	 */
-	private static void addPropertiesToBuilder(JsonObjectSchema.Builder builder, Map<?, ?> propertiesMap) {
-		for (Map.Entry<?, ?> entry : propertiesMap.entrySet()) {
-			String propertyName = (String) entry.getKey();
-			Object propertyValue = entry.getValue();
-
-			if (propertyValue instanceof Map<?, ?> propertyDef) {
-				addProperty(builder, propertyName, propertyDef);
-			}
+			return buffer.toString();
+		} catch (IOException e) {
+			throw new IllegalStateException("Failed to generate JSON Schema", e);
 		}
 	}
 
 	/**
-	 * Adds a property to a {@link dev.langchain4j.model.chat.request.json.JsonObjectSchema.Builder}
-	 * from a type string and description.
+	 * Builds a JSON schema string from a map of parameter definitions.
 	 *
 	 * <p>
-	 * This is a convenience method for adding properties when you have the type as a string (e.g.,
-	 * "string", "integer", "number", "boolean", "array", "object") and an optional description.
+	 * Each entry in the map defines a parameter with "type" and optionally "description" fields.
+	 * All parameters are treated as required.
 	 * </p>
 	 *
-	 * @param builder
-	 *        The builder to add the property to.
-	 * @param propertyName
-	 *        The name of the property.
-	 * @param type
-	 *        The JSON schema type (string, integer, number, boolean, array, object).
-	 * @param description
-	 *        Optional description for the property (may be {@code null}).
+	 * @param parameters
+	 *        Map from parameter name to parameter definition map.
+	 * @return The JSON schema as a string.
 	 */
-	public static void addProperty(JsonObjectSchema.Builder builder, String propertyName,
-			String type, String description) {
-		if (type == null) {
-			throw new IllegalArgumentException("Property '" + propertyName + "' must have a type.");
-		}
+	public static String buildParameterSchema(Map<String, ? extends Map<?, ?>> parameters) {
+		try {
+			StringW buffer = new StringW();
+			try (JsonWriter json = new JsonWriter(buffer)) {
+				json.beginObject();
+				json.name("type").value("object");
 
-		switch (type.toLowerCase()) {
-			case TYPE_STRING:
-				if (description != null) {
-					builder.addStringProperty(propertyName, description);
-				} else {
-					builder.addStringProperty(propertyName);
+				json.name("properties");
+				json.beginObject();
+				for (Map.Entry<String, ? extends Map<?, ?>> entry : parameters.entrySet()) {
+					json.name(entry.getKey());
+					writeSchemaElement(json, entry.getValue());
 				}
-				break;
+				json.endObject();
 
-			case TYPE_INTEGER:
-				if (description != null) {
-					builder.addIntegerProperty(propertyName, description);
-				} else {
-					builder.addIntegerProperty(propertyName);
+				json.name("required");
+				json.beginArray();
+				for (String name : parameters.keySet()) {
+					json.value(name);
 				}
-				break;
+				json.endArray();
 
-			case TYPE_NUMBER:
-				if (description != null) {
-					builder.addNumberProperty(propertyName, description);
-				} else {
-					builder.addNumberProperty(propertyName);
-				}
-				break;
-
-			case TYPE_BOOLEAN:
-				if (description != null) {
-					builder.addBooleanProperty(propertyName, description);
-				} else {
-					builder.addBooleanProperty(propertyName);
-				}
-				break;
-
-			case TYPE_ARRAY:
-				builder.addProperty(propertyName, JsonArraySchema.builder()
-					.description(description)
-					.build());
-				break;
-
-			case TYPE_OBJECT:
-				builder.addProperty(propertyName, JsonObjectSchema.builder()
-					.description(description)
-					.build());
-				break;
-
-			default:
-				throw new IllegalArgumentException("Unsupported property type: " + type);
+				json.endObject();
+			}
+			return buffer.toString();
+		} catch (IOException e) {
+			throw new IllegalStateException("Failed to build parameter schema JSON", e);
 		}
 	}
 
 	/**
-	 * Adds a single property to a {@link dev.langchain4j.model.chat.request.json.JsonObjectSchema.Builder} based on its definition.
-	 *
-	 * @param builder
-	 *        The builder to add the property to.
-	 * @param propertyName
-	 *        The name of the property.
-	 * @param propertyDef
-	 *        The property definition map containing "type", "description", etc.
+	 * Writes a JSON object schema from a map definition.
 	 */
-	private static void addProperty(JsonObjectSchema.Builder builder, String propertyName,
-			Map<?, ?> propertyDef) {
-		String type = (String) propertyDef.get(FIELD_TYPE);
+	private static void writeObjectSchema(JsonWriter json, Map<?, ?> schemaDef) throws IOException {
+		json.beginObject();
+		json.name("type").value("object");
 
-		if (type == null) {
-			throw new IllegalArgumentException("Property '" + propertyName + "' must have a '" + FIELD_TYPE + "' field.");
-		}
-
-		String description = (String) propertyDef.get(FIELD_DESCRIPTION);
-
-		// Special handling for enum strings
-		if (TYPE_STRING.equals(type.toLowerCase())) {
-			Object enumValues = propertyDef.get(FIELD_ENUM);
-			if (enumValues instanceof List<?> enumList) {
-				List<String> enumStrings = extractStringList(enumList);
-				if (description != null) {
-					builder.addEnumProperty(propertyName, enumStrings, description);
-				} else {
-					builder.addEnumProperty(propertyName, enumStrings);
+		Object propertiesObj = schemaDef.get(FIELD_PROPERTIES);
+		if (propertiesObj instanceof Map<?, ?> propertiesMap) {
+			json.name("properties");
+			json.beginObject();
+			for (Map.Entry<?, ?> entry : propertiesMap.entrySet()) {
+				String propertyName = (String) entry.getKey();
+				json.name(propertyName);
+				if (entry.getValue() instanceof Map<?, ?> propertyDef) {
+					writeSchemaElement(json, propertyDef);
 				}
-				return;
+			}
+			json.endObject();
+		}
+
+		Object requiredObj = schemaDef.get(FIELD_REQUIRED);
+		if (requiredObj instanceof List<?> reqList) {
+			List<String> requiredProps = extractStringList(reqList);
+			if (!requiredProps.isEmpty()) {
+				json.name("required");
+				json.beginArray();
+				for (String name : requiredProps) {
+					json.value(name);
+				}
+				json.endArray();
 			}
 		}
 
-		// Special handling for complex types (array and object) with nested definitions
-		if (TYPE_ARRAY.equals(type.toLowerCase())) {
-			builder.addProperty(propertyName, buildArraySchema(propertyDef));
-			return;
+		String description = (String) schemaDef.get(FIELD_DESCRIPTION);
+		if (description != null) {
+			json.name("description").value(description);
 		}
 
-		if (TYPE_OBJECT.equals(type.toLowerCase())) {
-			Object propertiesObj = propertyDef.get(FIELD_PROPERTIES);
-			if (propertiesObj != null) {
-				// Complex object with nested properties - use full builder
-				builder.addProperty(propertyName, buildObjectSchema(propertyDef));
-				return;
-			}
-		}
-
-		// For simple types, delegate to the public method
-		addProperty(builder, propertyName, type, description);
+		json.endObject();
 	}
 
 	/**
-	 * Parses a schema element definition into a {@link JsonSchemaElement}.
-	 *
-	 * @param elementDef
-	 *        The element definition map.
-	 * @return The parsed schema element.
+	 * Writes a single schema element (property definition) based on its type.
 	 */
-	private static JsonSchemaElement parseSchemaElement(Map<?, ?> elementDef) {
+	private static void writeSchemaElement(JsonWriter json, Map<?, ?> elementDef) throws IOException {
 		String type = (String) elementDef.get(FIELD_TYPE);
 
 		if (type == null) {
 			throw new IllegalArgumentException("Schema element must have a '" + FIELD_TYPE + "' field.");
 		}
 
+		json.beginObject();
+
 		switch (type.toLowerCase()) {
 			case TYPE_STRING:
-				return buildStringSchema(elementDef);
+				json.name("type").value("string");
+				writeEnumValues(json, elementDef);
+				break;
 
 			case TYPE_INTEGER:
-				return buildIntegerSchema(elementDef);
+				json.name("type").value("integer");
+				break;
 
 			case TYPE_NUMBER:
-				return buildNumberSchema(elementDef);
+				json.name("type").value("number");
+				break;
 
 			case TYPE_BOOLEAN:
-				return buildBooleanSchema(elementDef);
+				json.name("type").value("boolean");
+				break;
 
 			case TYPE_ARRAY:
-				return buildArraySchema(elementDef);
+				json.name("type").value("array");
+				writeArrayItems(json, elementDef);
+				break;
 
 			case TYPE_OBJECT:
-				return buildObjectSchema(elementDef);
+				json.name("type").value("object");
+				writeNestedProperties(json, elementDef);
+				writeNestedRequired(json, elementDef);
+				break;
 
 			default:
 				throw new IllegalArgumentException("Unsupported element type: " + type);
 		}
+
+		String description = (String) elementDef.get(FIELD_DESCRIPTION);
+		if (description != null) {
+			json.name("description").value(description);
+		}
+
+		json.endObject();
 	}
 
 	/**
-	 * Builds a string schema from a definition map.
+	 * Writes enum values if present on a string schema element.
 	 */
-	private static JsonStringSchema buildStringSchema(Map<?, ?> def) {
-		JsonStringSchema.Builder builder = JsonStringSchema.builder();
-		String description = (String) def.get(FIELD_DESCRIPTION);
-		if (description != null) {
-			builder.description(description);
+	private static void writeEnumValues(JsonWriter json, Map<?, ?> elementDef) throws IOException {
+		Object enumValues = elementDef.get(FIELD_ENUM);
+		if (enumValues instanceof List<?> enumList) {
+			List<String> enumStrings = extractStringList(enumList);
+			if (!enumStrings.isEmpty()) {
+				json.name("enum");
+				json.beginArray();
+				for (String value : enumStrings) {
+					json.value(value);
+				}
+				json.endArray();
+			}
 		}
-		return builder.build();
 	}
 
 	/**
-	 * Builds an integer schema from a definition map.
+	 * Writes array item schema if present.
 	 */
-	private static JsonIntegerSchema buildIntegerSchema(Map<?, ?> def) {
-		JsonIntegerSchema.Builder builder = JsonIntegerSchema.builder();
-		String description = (String) def.get(FIELD_DESCRIPTION);
-		if (description != null) {
-			builder.description(description);
-		}
-		return builder.build();
-	}
-
-	/**
-	 * Builds a number schema from a definition map.
-	 */
-	private static JsonNumberSchema buildNumberSchema(Map<?, ?> def) {
-		JsonNumberSchema.Builder builder = JsonNumberSchema.builder();
-		String description = (String) def.get(FIELD_DESCRIPTION);
-		if (description != null) {
-			builder.description(description);
-		}
-		return builder.build();
-	}
-
-	/**
-	 * Builds a boolean schema from a definition map.
-	 */
-	private static JsonBooleanSchema buildBooleanSchema(Map<?, ?> def) {
-		JsonBooleanSchema.Builder builder = JsonBooleanSchema.builder();
-		String description = (String) def.get(FIELD_DESCRIPTION);
-		if (description != null) {
-			builder.description(description);
-		}
-		return builder.build();
-	}
-
-	/**
-	 * Builds an array schema from a definition map.
-	 */
-	private static JsonArraySchema buildArraySchema(Map<?, ?> def) {
-		JsonArraySchema.Builder builder = JsonArraySchema.builder();
-		String description = (String) def.get(FIELD_DESCRIPTION);
-		if (description != null) {
-			builder.description(description);
-		}
-
-		Object itemsObj = def.get(FIELD_ITEMS);
+	private static void writeArrayItems(JsonWriter json, Map<?, ?> elementDef) throws IOException {
+		Object itemsObj = elementDef.get(FIELD_ITEMS);
 		if (itemsObj instanceof Map<?, ?> itemsDef) {
-			builder.items(parseSchemaElement(itemsDef));
+			json.name("items");
+			writeSchemaElement(json, itemsDef);
 		}
-
-		return builder.build();
 	}
 
 	/**
-	 * Builds an object schema from a definition map.
+	 * Writes nested properties for an object schema element.
 	 */
-	private static JsonObjectSchema buildObjectSchema(Map<?, ?> def) {
-		JsonObjectSchema.Builder builder = JsonObjectSchema.builder();
-		String description = (String) def.get(FIELD_DESCRIPTION);
-		if (description != null) {
-			builder.description(description);
-		}
-
-		// Add properties
-		Object propertiesObj = def.get(FIELD_PROPERTIES);
+	private static void writeNestedProperties(JsonWriter json, Map<?, ?> elementDef) throws IOException {
+		Object propertiesObj = elementDef.get(FIELD_PROPERTIES);
 		if (propertiesObj instanceof Map<?, ?> propertiesMap) {
-			addPropertiesToBuilder(builder, propertiesMap);
+			json.name("properties");
+			json.beginObject();
+			for (Map.Entry<?, ?> entry : propertiesMap.entrySet()) {
+				json.name((String) entry.getKey());
+				if (entry.getValue() instanceof Map<?, ?> propertyDef) {
+					writeSchemaElement(json, propertyDef);
+				}
+			}
+			json.endObject();
 		}
+	}
 
-		// Add required properties
-		Object requiredObj = def.get(FIELD_REQUIRED);
+	/**
+	 * Writes nested required fields for an object schema element.
+	 */
+	private static void writeNestedRequired(JsonWriter json, Map<?, ?> elementDef) throws IOException {
+		Object requiredObj = elementDef.get(FIELD_REQUIRED);
 		if (requiredObj instanceof List<?> reqList) {
 			List<String> requiredProps = extractStringList(reqList);
 			if (!requiredProps.isEmpty()) {
-				builder.required(requiredProps);
+				json.name("required");
+				json.beginArray();
+				for (String name : requiredProps) {
+					json.value(name);
+				}
+				json.endArray();
 			}
 		}
-
-		return builder.build();
 	}
 
 	/**

@@ -97,10 +97,23 @@
   .dashboard.edit-mode .dashboard-item { cursor: default; }
   .dashboard.edit-mode .dashboard-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
   .dashboard-item.dragging { opacity: 0.4; }
-  .dashboard-item.drag-over {
-    outline: 2px dashed var(--color-drop-zone);
-    outline-offset: -2px; background: #f0f6ff;
+  .dashboard-item.drop-before,
+  .dashboard-item.drop-after { position: relative; }
+  .dashboard-item.drop-before::before,
+  .dashboard-item.drop-after::after {
+    content: "";
+    position: absolute;
+    top: -6px; bottom: -6px;
+    width: 8px;
+    background: var(--color-drop-zone);
+    border-radius: 4px;
+    box-shadow: 0 0 12px 2px var(--color-drop-zone),
+                0 0 24px 4px var(--color-drop-zone);
+    pointer-events: none;
+    z-index: 10;
   }
+  .dashboard-item.drop-before::before { left: -10px; }
+  .dashboard-item.drop-after::after { right: -10px; }
 
   .size-spec {
     font-family: monospace;
@@ -332,7 +345,37 @@ function computeLayout(items, maxVisualCols) {
   // Stretch last item of the final row
   stretchLastInRow(placements, curRow, cols, occupied);
 
+  // Fill gaps left by row-spanning items: extend neighbors downward.
+  fillRowSpanGaps(placements, occupied, cols);
+
   return { placements, cols };
+}
+
+// Row-spanning items leave holes in subsequent rows that horizontal
+// stretching cannot fill (no item to stretch, or neighbors were already
+// placed in earlier rows). We close these holes by extending the items
+// directly above each hole vertically (increasing their row-span).
+function fillRowSpanGaps(placements, occupied, cols) {
+  let maxRow = 0;
+  for (const p of placements) {
+    if (p.rowEnd > maxRow) maxRow = p.rowEnd;
+  }
+
+  for (let r = 1; r < maxRow; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (occupied[r] && occupied[r][c]) continue;
+      // Find the placement that ends exactly at row r and covers column c.
+      const above = placements.find(p =>
+        p.rowEnd === r && p.colStart <= c && c < p.colEnd);
+      if (!above) continue;
+      // Extend it one row down.
+      above.rowEnd = r + 1;
+      if (!occupied[r]) occupied[r] = {};
+      for (let cc = above.colStart; cc < above.colEnd; cc++) {
+        occupied[r][cc] = true;
+      }
+    }
+  }
 }
 
 function stretchLastInRow(placements, row, totalCols, occupied) {
@@ -414,15 +457,17 @@ dashboard.addEventListener('dragover', e => {
   e.dataTransfer.dropEffect = 'move';
   const target = e.target.closest('.dashboard-item');
   if (target && target !== draggedItem) {
-    document.querySelectorAll('.dashboard-item.drag-over').forEach(el =>
-      el.classList.remove('drag-over'));
-    target.classList.add('drag-over');
+    document.querySelectorAll('.dashboard-item.drop-before, .dashboard-item.drop-after')
+      .forEach(el => el.classList.remove('drop-before', 'drop-after'));
+    const rect = target.getBoundingClientRect();
+    const before = e.clientX < rect.left + rect.width / 2;
+    target.classList.add(before ? 'drop-before' : 'drop-after');
   }
 });
 
 dashboard.addEventListener('dragleave', e => {
   const target = e.target.closest('.dashboard-item');
-  if (target) target.classList.remove('drag-over');
+  if (target) target.classList.remove('drop-before', 'drop-after');
 });
 
 dashboard.addEventListener('drop', e => {
@@ -430,20 +475,19 @@ dashboard.addEventListener('drop', e => {
   if (!editMode || !draggedItem) return;
   const target = e.target.closest('.dashboard-item');
   if (target && target !== draggedItem) {
-    const items = [...dashboard.querySelectorAll('.dashboard-item')];
-    const fromIndex = items.indexOf(draggedItem);
-    const toIndex = items.indexOf(target);
-    if (fromIndex < toIndex) {
-      target.after(draggedItem);
-    } else {
+    const rect = target.getBoundingClientRect();
+    const before = e.clientX < rect.left + rect.width / 2;
+    if (before) {
       target.before(draggedItem);
+    } else {
+      target.after(draggedItem);
     }
-    updateLayout(); // recalculate after reorder
+    updateLayout();
     console.log('New order:', [...dashboard.querySelectorAll('.dashboard-item')]
       .map(el => el.dataset.id));
   }
-  document.querySelectorAll('.drag-over').forEach(el =>
-    el.classList.remove('drag-over'));
+  document.querySelectorAll('.drop-before, .drop-after').forEach(el =>
+    el.classList.remove('drop-before', 'drop-after'));
 });
 
 dashboard.addEventListener('dragend', () => {
@@ -451,8 +495,8 @@ dashboard.addEventListener('dragend', () => {
     draggedItem.classList.remove('dragging');
     draggedItem = null;
   }
-  document.querySelectorAll('.drag-over').forEach(el =>
-    el.classList.remove('drag-over'));
+  document.querySelectorAll('.drop-before, .drop-after').forEach(el =>
+    el.classList.remove('drop-before', 'drop-after'));
 });
 </script>
 </body>

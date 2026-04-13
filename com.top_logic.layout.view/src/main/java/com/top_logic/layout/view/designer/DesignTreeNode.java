@@ -8,98 +8,35 @@ package com.top_logic.layout.view.designer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.layout.form.values.edit.Labels;
 
 /**
- * A node in the design tree representing either a {@link ConfigurationItem} or a virtual property
- * group.
+ * A node in the design tree.
  *
  * <p>
- * Config nodes carry the actual configuration and source file origin. Virtual nodes represent a
- * container property (e.g. "header", "content", "footer") and group the child elements that belong
- * to that property.
+ * Concrete subclasses are {@link ConfigDesignTreeNode} (a node bound to a {@link ConfigurationItem})
+ * and {@link VirtualDesignTreeNode} (a virtual property group node).
  * </p>
  */
-public class DesignTreeNode {
-
-	private static final String[] LABEL_PROPERTIES = { "name", "title-key", "attribute", "view", "id" };
-
-	private final ConfigurationItem _config;
+public abstract class DesignTreeNode {
 
 	private final String _sourceFile;
 
-	private final PropertyDescriptor _property;
-
-	private final List<DesignTreeNode> _children;
+	private final List<DesignTreeNode> _children = new ArrayList<>();
 
 	private DesignTreeNode _parent;
 
 	private boolean _dirty;
 
 	/**
-	 * Creates a config node.
+	 * Creates a {@link DesignTreeNode}.
 	 *
-	 * @param config
-	 *        The configuration this node represents.
 	 * @param sourceFile
-	 *        The .view.xml file this config originates from.
+	 *        The .view.xml file this node belongs to.
 	 */
-	public DesignTreeNode(ConfigurationItem config, String sourceFile) {
-		_config = config;
+	protected DesignTreeNode(String sourceFile) {
 		_sourceFile = sourceFile;
-		_property = null;
-		_children = new ArrayList<>();
-
-		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			config.addConfigurationListener(property, change -> markDirty());
-		}
-	}
-
-	/**
-	 * Creates a virtual property group node.
-	 *
-	 * @param property
-	 *        The property descriptor this group represents (e.g. for "header", "content").
-	 * @param sourceFile
-	 *        The .view.xml file this group belongs to.
-	 */
-	public DesignTreeNode(PropertyDescriptor property, String sourceFile) {
-		_config = null;
-		_sourceFile = sourceFile;
-		_property = property;
-		_children = new ArrayList<>();
-	}
-
-	/**
-	 * Whether this is a virtual property group node (no config of its own).
-	 */
-	public boolean isVirtual() {
-		return _property != null;
-	}
-
-	/**
-	 * The property name for virtual group nodes, or {@code null} for config nodes.
-	 */
-	public String getPropertyName() {
-		return _property != null ? _property.getPropertyName() : null;
-	}
-
-	/**
-	 * The configuration, or {@code null} for virtual nodes.
-	 */
-	public ConfigurationItem getConfig() {
-		return _config;
-	}
-
-	/**
-	 * Alias for {@link #getConfig()} for the config editor.
-	 */
-	public ConfigurationItem getConfigItem() {
-		return _config;
 	}
 
 	/**
@@ -141,8 +78,8 @@ public class DesignTreeNode {
 
 	/**
 	 * Marks this node as dirty and propagates the flag upward within the same source file. The
-	 * propagation stops at view-file boundaries (when the parent's source file differs from
-	 * this node's source file), so that only the actually modified file is marked for saving.
+	 * propagation stops at view-file boundaries (when the parent's source file differs from this
+	 * node's source file), so that only the actually modified file is marked for saving.
 	 */
 	public void markDirty() {
 		_dirty = true;
@@ -159,53 +96,24 @@ public class DesignTreeNode {
 	}
 
 	/**
-	 * The tag name for display, derived from the {@link TagName} annotation on the config
-	 * interface, or the simple interface name as fallback. For virtual nodes, returns the
-	 * internationalized property label.
+	 * The tag name for display.
 	 */
-	public String getTagName() {
-		if (isVirtual()) {
-			return Labels.propertyLabel(_property, false);
-		}
-		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
-		TagName tagName = configInterface.getAnnotation(TagName.class);
-		if (tagName != null) {
-			return tagName.value();
-		}
-		String name = configInterface.getSimpleName();
-		if (name.endsWith("Config")) {
-			name = name.substring(0, name.length() - "Config".length());
-		}
-		return name;
-	}
+	public abstract String getTagName();
 
 	/**
-	 * An identifying label for display. Checks common identifying properties in order: "name",
-	 * "title-key", "attribute", "view", "id".
-	 *
-	 * @return The first non-null property value found, or {@code null} if none match. Always
-	 *         {@code null} for virtual nodes.
+	 * An identifying label for display, or {@code null} when not applicable.
 	 */
 	public String getLabel() {
-		if (isVirtual()) {
-			return null;
-		}
-		ConfigurationDescriptor descriptor = _config.descriptor();
-		for (String propName : LABEL_PROPERTIES) {
-			PropertyDescriptor property = descriptor.getProperty(propName);
-			if (property != null) {
-				Object value = _config.value(property);
-				if (value != null) {
-					return String.valueOf(value);
-				}
-			}
-		}
 		return null;
 	}
 
 	/**
-	 * Display string: tagName + optional label in quotes.
+	 * The {@link PropertyDescriptor} of a virtual group node, or {@code null} for config nodes.
 	 */
+	public PropertyDescriptor getProperty() {
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		String label = getLabel();

@@ -56,7 +56,7 @@ public class DesignTreeBuilder {
 
 	@SuppressWarnings("unchecked")
 	private DesignTreeNode buildNode(ConfigurationItem config, String sourceFile) throws ConfigurationException {
-		DesignTreeNode node = new DesignTreeNode(config, sourceFile);
+		DesignTreeNode node = new ConfigDesignTreeNode(config, sourceFile);
 
 		// Collect tree properties.
 		List<PropertyDescriptor> treeProperties = new ArrayList<>();
@@ -96,7 +96,7 @@ public class DesignTreeBuilder {
 	}
 
 	private DesignTreeNode createGroupNode(DesignTreeNode parent, PropertyDescriptor property, String sourceFile) {
-		DesignTreeNode group = new DesignTreeNode(property, sourceFile);
+		DesignTreeNode group = new VirtualDesignTreeNode(property, sourceFile);
 		group.setParent(parent);
 		parent.getChildren().add(group);
 		return group;

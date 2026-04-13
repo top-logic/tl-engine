@@ -30,7 +30,7 @@ public class AddChildCommand {
 	public static DesignTreeNode execute(DesignTreeNode parent) {
 		StackElement.Config childConfig = TypedConfiguration.newConfigItem(StackElement.Config.class);
 
-		DesignTreeNode child = new DesignTreeNode(childConfig, parent.getSourceFile());
+		DesignTreeNode child = new ConfigDesignTreeNode(childConfig, parent.getSourceFile());
 		child.setParent(parent);
 		parent.getChildren().add(child);
 		parent.markDirty();

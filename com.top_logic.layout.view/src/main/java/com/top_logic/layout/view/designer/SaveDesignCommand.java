@@ -125,7 +125,8 @@ public class SaveDesignCommand implements ViewCommand {
 	 * included. After collection, dirty flags on included nodes are cleared.
 	 */
 	private void collectDirtySourceFiles(DesignTreeNode node, Map<String, ViewElement.Config> fileConfigs) {
-		if (node.isDirty() && node.getConfig() instanceof ViewElement.Config viewConfig) {
+		if (node.isDirty() && node instanceof ConfigDesignTreeNode configNode
+				&& configNode.getConfig() instanceof ViewElement.Config viewConfig) {
 			fileConfigs.put(node.getSourceFile(), viewConfig);
 		}
 		for (DesignTreeNode child : node.getChildren()) {

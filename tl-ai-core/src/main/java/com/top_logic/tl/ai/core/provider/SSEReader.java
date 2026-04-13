@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.provider.anthropic;
+package com.top_logic.tl.ai.core.provider;
 
 import java.io.BufferedReader;
 import java.io.Closeable;

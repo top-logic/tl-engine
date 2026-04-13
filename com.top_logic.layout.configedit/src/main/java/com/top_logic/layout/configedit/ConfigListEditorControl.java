@@ -169,10 +169,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<ReactControl> headerActions = List.of(moveUpButton, moveDownButton, removeButton);
 
 		List<ReactControl> bodyChildren = new ArrayList<>();
-		if (_choices.hasOptions()) {
+		boolean polymorphic = _choices.hasOptions();
+		if (polymorphic) {
 			bodyChildren.add(createTypeSelector(item));
 		}
-		bodyChildren.add(new ConfigEditorControl(_context, item));
+		if (!polymorphic || isTypeSelected(item)) {
+			bodyChildren.add(new ConfigEditorControl(_context, item));
+		}
 		ReactFormGroupControl group = new ReactFormGroupControl(
 			_context, null, true, !expanded, "subtle", true,
 			headerActions, bodyChildren);
@@ -227,19 +230,26 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 	@SuppressWarnings("unchecked")
 	private void onTypeChanged(ConfigurationItem oldItem, Class<?> selected) {
-		if (selected == null) {
-			return;
-		}
 		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
 		int index = items.indexOf(oldItem);
 		if (index < 0) {
 			return;
 		}
-		ConfigurationItem replacement = PolymorphicOptions.toConfig(_choices.mapping(), selected);
-		ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
-			oldItem, replacement, true);
+		ConfigurationItem replacement;
+		if (selected == null) {
+			replacement = TypedConfiguration.newConfigItem(
+				(Class<? extends ConfigurationItem>) _property.getDefaultDescriptor().getConfigurationInterface());
+		} else {
+			replacement = PolymorphicOptions.toConfig(_choices.mapping(), selected);
+			ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
+				oldItem, replacement, true);
+		}
 		items.set(index, replacement);
 		rebuild(replacement);
+	}
+
+	private boolean isTypeSelected(ConfigurationItem item) {
+		return PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), item) != null;
 	}
 
 	static Class<?> resolveClass(List<Class<?>> options, String fqcn) {

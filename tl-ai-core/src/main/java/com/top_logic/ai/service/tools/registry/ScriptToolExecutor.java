@@ -8,22 +8,27 @@ package com.top_logic.ai.service.tools.registry;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.json.JSON;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-
-import dev.langchain4j.agent.tool.ToolExecutionRequest;
-import dev.langchain4j.service.tool.ToolExecutor;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
- * A {@link ToolExecutor} that executes tools implemented in TL-Script.
+ * A {@link Tool} that executes tools implemented in TL-Script.
  *
  * <p>
  * This executor takes a TL-Script {@link QueryExecutor} and passes tool parameters as script
  * arguments. The script's return value is converted to a string as the tool result.
  * </p>
  */
-public class ScriptToolExecutor implements ToolExecutor {
+public class ScriptToolExecutor implements Tool {
+
+	private final String _name;
+
+	private final String _description;
+
+	private final ToolSchema _schema;
 
 	private final QueryExecutor _executor;
 
@@ -32,44 +37,53 @@ public class ScriptToolExecutor implements ToolExecutor {
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
 	 *
+	 * @param name
+	 *        The tool name.
+	 * @param description
+	 *        The tool description.
+	 * @param inputSchemaJson
+	 *        The JSON Schema string describing the tool's input parameters.
 	 * @param executor
 	 *        The TL-Script query executor that implements the tool logic.
 	 * @param parameterNames
 	 *        The ordered list of parameter names as defined in the tool configuration.
 	 */
-	public ScriptToolExecutor(QueryExecutor executor, List<String> parameterNames) {
+	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
+			QueryExecutor executor, List<String> parameterNames) {
+		_name = name;
+		_description = description;
+		_schema = new ToolSchema(name, description, inputSchemaJson);
 		_executor = executor;
 		_parameterNames = parameterNames;
 	}
 
 	@Override
-	public String execute(ToolExecutionRequest request, Object memoryId) {
-		String argumentsJson = request.arguments();
+	public String name() {
+		return _name;
+	}
 
+	@Override
+	public String description() {
+		return _description;
+	}
+
+	@Override
+	public ToolSchema schema() {
+		return _schema;
+	}
+
+	@Override
+	public String execute(Map<String, Object> args, ToolContext context) {
 		try {
-			// Parse JSON arguments into a map
-			Map<String, Object> namedArgs = null;
-			if (argumentsJson != null && !argumentsJson.isEmpty()) {
-				Object parsed = JSON.fromString(argumentsJson);
-				if (parsed instanceof Map) {
-					@SuppressWarnings("unchecked")
-					Map<String, Object> argsMap = (Map<String, Object>) parsed;
-					namedArgs = argsMap;
-				}
-			}
-
-			// Convert named arguments to positional array based on parameter order
 			Object[] positionalArgs = new Object[_parameterNames.size()];
-			if (namedArgs != null) {
+			if (args != null) {
 				for (int i = 0; i < _parameterNames.size(); i++) {
-					positionalArgs[i] = namedArgs.get(_parameterNames.get(i));
+					positionalArgs[i] = args.get(_parameterNames.get(i));
 				}
 			}
 
-			// Execute the TL-Script with the positional arguments
 			return ToString.toString(_executor.execute(positionalArgs));
 		} catch (Exception ex) {
-			// Return error message as tool result
 			return "Error executing tool: " + ex.getMessage();
 		}
 	}

@@ -5,11 +5,14 @@
  */
 package com.top_logic.ai.service.tools.registry;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.scripting.JsonSchemaConverter;
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
+
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -21,10 +24,7 @@ import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import dev.langchain4j.service.tool.ToolExecutor;
+import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
  * A {@link ToolFactory} that creates tools from TL-Script implementations.
@@ -202,7 +202,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 
 	private final Config _config;
 
-	private final List<ToolImplementation> _tools;
+	private final List<Tool> _tools;
 
 	/**
 	 * Creates a new {@link ScriptToolFactory} from the given configuration.
@@ -219,33 +219,21 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		for (Map.Entry<String, ScriptToolConfig> entry : config.getTools().entrySet()) {
 			ScriptToolConfig toolConfig = entry.getValue();
 
-			// Build parameters as JsonObjectSchema and collect parameter names
-			JsonObjectSchema.Builder parametersBuilder = JsonObjectSchema.builder();
 			List<String> parameterNames = new ArrayList<>();
 			for (ToolParameterConfig paramConfig : toolConfig.getParameters().values()) {
-				// Use JsonSchemaConverter to add the property
-				JsonSchemaConverter.addProperty(parametersBuilder,
-					paramConfig.getName(),
-					paramConfig.getType(),
-					paramConfig.getDescription());
-
-				// Collect parameter name in order
 				parameterNames.add(paramConfig.getName());
 			}
-			JsonObjectSchema parameters = parametersBuilder.build();
 
-			// Build tool specification
-			ToolSpecification specification = ToolSpecification.builder()
-				.name(toolConfig.getName())
-				.description(toolConfig.getDescription())
-				.parameters(parameters)
-				.build();
+			String inputSchemaJson = buildInputSchemaJson(toolConfig, parameterNames);
 
-			// Create executor from TL-Script expression
 			QueryExecutor executor = QueryExecutor.compile(toolConfig.getImplementation());
-			ToolExecutor toolExecutor = new ScriptToolExecutor(executor, parameterNames);
 
-			_tools.add(new ToolImplementation(specification, toolExecutor));
+			_tools.add(new ScriptToolExecutor(
+				toolConfig.getName(),
+				toolConfig.getDescription(),
+				inputSchemaJson,
+				executor,
+				parameterNames));
 		}
 	}
 
@@ -255,8 +243,44 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 	}
 
 	@Override
-	public List<ToolImplementation> createTools() {
+	public List<Tool> createTools() {
 		return _tools;
+	}
+
+	private static String buildInputSchemaJson(ScriptToolConfig toolConfig, List<String> parameterNames) {
+		try {
+			StringW buffer = new StringW();
+			try (JsonWriter json = new JsonWriter(buffer)) {
+				json.beginObject();
+				json.name("type").value("object");
+
+				json.name("properties");
+				json.beginObject();
+				for (ToolParameterConfig paramConfig : toolConfig.getParameters().values()) {
+					json.name(paramConfig.getName());
+					json.beginObject();
+					json.name("type").value(paramConfig.getType());
+					String description = paramConfig.getDescription();
+					if (description != null && !description.isEmpty()) {
+						json.name("description").value(description);
+					}
+					json.endObject();
+				}
+				json.endObject();
+
+				json.name("required");
+				json.beginArray();
+				for (String name : parameterNames) {
+					json.value(name);
+				}
+				json.endArray();
+
+				json.endObject();
+			}
+			return buffer.toString();
+		} catch (IOException e) {
+			throw new IllegalStateException("Failed to build input schema JSON", e);
+		}
 	}
 
 }

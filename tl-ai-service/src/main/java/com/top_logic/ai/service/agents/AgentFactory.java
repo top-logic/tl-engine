@@ -17,6 +17,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
 import com.top_logic.ai.service.AIService;
 import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
+import com.top_logic.ai.service.providers.MistralChatModelFactory;
+import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.ai.service.tools.registry.ToolImplementation;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
@@ -26,6 +28,8 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
+import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
+import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 import com.top_logic.tl.ai.core.tool.Tool;
 import com.top_logic.tl.ai.core.tool.ToolRegistry;
 
@@ -176,10 +180,33 @@ public class AgentFactory {
 			return new AnthropicProvider(config.getApiKey(), baseUrl, version);
 		}
 
-		// TODO: Add OpenAI and Mistral LLMProvider implementations in tl-ai-core
+		if (factory instanceof OpenAIChatModelFactory) {
+			OpenAIChatModelFactory.Config config =
+				(OpenAIChatModelFactory.Config) factory.getConfig();
+
+			String baseUrl = config.getBaseUrl();
+			if (baseUrl.endsWith("/v1")) {
+				baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
+			}
+
+			return new OpenAIProvider(config.getApiKey(), baseUrl);
+		}
+
+		if (factory instanceof MistralChatModelFactory) {
+			MistralChatModelFactory.Config config =
+				(MistralChatModelFactory.Config) factory.getConfig();
+
+			String baseUrl = config.getBaseUrl();
+			if (baseUrl.endsWith("/v1")) {
+				baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
+			}
+
+			return new MistralProvider(config.getApiKey(), baseUrl);
+		}
+
 		throw new UnsupportedOperationException(
 			"No native LLMProvider for factory type: " + factory.getClass().getSimpleName()
-				+ ". Currently only Anthropic is supported.");
+				+ ". Supported: Anthropic, OpenAI, Mistral.");
 	}
 
 	/**

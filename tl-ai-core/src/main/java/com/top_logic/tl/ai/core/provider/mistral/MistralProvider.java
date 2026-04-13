@@ -140,7 +140,7 @@ public class MistralProvider implements LLMProvider {
 			if (!request.tools().isEmpty()) {
 				json.name("tools");
 				writeTools(json, request.tools());
-				json.name("tool_choice").value("any");
+				json.name("tool_choice").value("auto");
 			}
 
 			json.endObject();

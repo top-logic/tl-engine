@@ -342,12 +342,11 @@ public class TestConfigEditorControl extends TestCase {
 		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
 		PropertyDescriptor handlerProp = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER);
 
-		java.util.List<String> options = PolymorphicItemControl.resolveTypeOptions(handlerProp);
+		java.util.List<Class<?>> options =
+			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, handlerProp).options();
 
-		assertTrue("Options should contain HandlerAConfig",
-			options.contains(HandlerAConfig.class.getName()));
-		assertTrue("Options should contain HandlerBConfig",
-			options.contains(HandlerBConfig.class.getName()));
+		assertTrue("Options should contain HandlerAConfig", options.contains(HandlerAConfig.class));
+		assertTrue("Options should contain HandlerBConfig", options.contains(HandlerBConfig.class));
 	}
 
 	private PolymorphicItemControl findPolymorphicControl(TestableConfigEditorControl editor) {

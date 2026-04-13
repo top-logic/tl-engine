@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -22,29 +22,30 @@ import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
-import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
+import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.ExecutionResult;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
+import com.top_logic.ai.service.tools.TimelineAgentListener;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.ai.service.tools.task.TaskStore;
 import com.top_logic.ai.service.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;
-import com.top_logic.model.TLObject;
 import com.top_logic.basic.thread.ThreadContextManager;
-
-import dev.langchain4j.agentic.UntypedAgent;
-import dev.langchain4j.data.message.Content;
-import dev.langchain4j.data.message.ImageContent;
-import dev.langchain4j.data.message.PdfFileContent;
-import dev.langchain4j.data.message.TextContent;
-import dev.langchain4j.memory.ChatMemory;
+import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.message.ContentPart;
+import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.tl.ai.core.message.PdfContent;
+import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.UserMessage;
 
 /**
  * Background processing logic for the chat component.
@@ -75,6 +76,7 @@ public class ChatProcessor {
 		"Spinning up...",
 	};
 
+	/** */
 	static String randomChatTaskPlaceholder() {
 		return CHAT_TASK_PLACEHOLDERS[ThreadLocalRandom.current().nextInt(CHAT_TASK_PLACEHOLDERS.length)];
 	}
@@ -103,7 +105,8 @@ public class ChatProcessor {
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
-			ChatMemory chatMemory, String userMessage, List<AttachmentDto> attachments) throws Exception {
+			ConversationMemory conversationMemory, String userMessage,
+			List<AttachmentDto> attachments) throws Exception {
 		if (state == null) {
 			return;
 		}
@@ -136,21 +139,6 @@ public class ChatProcessor {
 				return;
 			}
 			String trimmed = hasText ? userMessage.trim() : "[See attached files]";
-
-			// Build attachment content list for multimodal injection
-			ChatMemory effectiveMemory = chatMemory;
-			java.util.function.UnaryOperator<dev.langchain4j.model.chat.ChatModel> modelDecorator = null;
-			if (hasAttachments) {
-				List<Content> attachmentContents = new ArrayList<>();
-				for (AttachmentDto att : attachments) {
-					attachmentContents.add(toContent(att));
-				}
-				// Wrap ChatMemory so multimodal content is persisted for future conversation turns
-				effectiveMemory = new MultimodalChatMemoryWrapper(chatMemory, attachmentContents);
-				// Wrap ChatModel so the FIRST LLM request includes multimodal content
-				List<Content> modelContents = new ArrayList<>(attachmentContents);
-				modelDecorator = model -> new MultimodalChatModelWrapper(model, modelContents);
-			}
 
 			AgentRegistry agentRegistry = AgentRegistry.getInstance();
 			if (agentRegistry == null) {
@@ -196,12 +184,24 @@ public class ChatProcessor {
 				}
 			}
 
+			// Build user message with content parts (text + attachments)
+			List<ContentPart> contentParts = new ArrayList<>();
+			contentParts.add(new TextContent(trimmed));
+			if (hasAttachments) {
+				for (AttachmentDto att : attachments) {
+					contentParts.add(toContentPart(att));
+				}
+			}
+
+			Conversation conversation = conversationMemory.conversation();
+			conversation.add(new UserMessage(
+				UUID.randomUUID().toString(), Instant.now(), contentParts));
+
+			// Run the entry point agent via AgentLoop
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
-			java.util.Map<String, ChatMemory> subAgentMemories = taskTracker.getSubAgentMemories();
-			UntypedAgent agent = agentRegistry.buildUntypedAgent(
-				entryPointAgent, effectiveMemory, modelDecorator, subAgentMemories);
+			TimelineAgentListener listener = new TimelineAgentListener(tracker);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
-				() -> (String) agent.invoke(Map.of("message", trimmed)));
+				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, listener));
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
 			taskTracker.completeTask(taskId);
@@ -383,10 +383,10 @@ public class ChatProcessor {
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
 
-		ChatMemory chatMemory = tracker.getChatMemory();
+		ConversationMemory conversationMemory = tracker.getConversationMemory();
 		// Pass state directly to background task so it is immune to tracker-level overwrites
 		Future<?> future = BACKGROUND_EXECUTOR.submit(
-			new AIBackgroundTask(tracker, state, chatMemory, userMessage, attachments));
+			new AIBackgroundTask(tracker, state, conversationMemory, userMessage, attachments));
 		state._backgroundTask = future;
 
 		return SendResult.ok(taskId);
@@ -487,13 +487,24 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Converts an {@link AttachmentDto} to a LangChain4j {@link Content} object.
+	 * Converts an {@link AttachmentDto} to a tl-ai-core {@link ContentPart}.
 	 *
 	 * <p>
-	 * Images are converted to {@link ImageContent}, PDFs to {@link PdfFileContent}. Unsupported
+	 * Images are converted to {@link ImageContent}, PDFs to {@link PdfContent}. Unsupported
 	 * types produce a placeholder {@link TextContent}.
 	 * </p>
 	 */
+	private static ContentPart toContentPart(AttachmentDto att) {
+		String mimeType = att.getMimeType();
+		String base64 = att.getBase64Data();
+		if (mimeType != null && mimeType.startsWith("image/")) {
+			return new ImageContent("data:" + mimeType + ";base64," + base64, mimeType);
+		} else if ("application/pdf".equals(mimeType)) {
+			return new PdfContent(base64, mimeType);
+		}
+		return new TextContent("[Unsupported attachment: " + att.getFileName() + "]");
+	}
+
 	/** Returns a human-readable error description, never null. */
 	static String formatErrorMessage(Throwable error) {
 		String msg = error.getMessage();
@@ -501,17 +512,6 @@ public class ChatProcessor {
 			return msg;
 		}
 		return error.getClass().getSimpleName();
-	}
-
-	private static Content toContent(AttachmentDto att) {
-		String mimeType = att.getMimeType();
-		String base64 = att.getBase64Data();
-		if (mimeType != null && mimeType.startsWith("image/")) {
-			return new ImageContent(base64, mimeType);
-		} else if ("application/pdf".equals(mimeType)) {
-			return new PdfFileContent(base64, mimeType);
-		}
-		return new TextContent("[Unsupported attachment: " + att.getFileName() + "]");
 	}
 
 	/**
@@ -526,15 +526,16 @@ public class ChatProcessor {
 	static class AIBackgroundTask implements Runnable {
 		private final TaskProgressTracker _taskTracker;
 		private final AIProcessingState _state;
-		private final ChatMemory _chatMemory;
+		private final ConversationMemory _conversationMemory;
 		private final String _userMessage;
 		private final List<AttachmentDto> _attachments;
 
+		/** */
 		AIBackgroundTask(TaskProgressTracker taskTracker, AIProcessingState state,
-				ChatMemory chatMemory, String userMessage, List<AttachmentDto> attachments) {
+				ConversationMemory conversationMemory, String userMessage, List<AttachmentDto> attachments) {
 			_taskTracker = taskTracker;
 			_state = state;
-			_chatMemory = chatMemory;
+			_conversationMemory = conversationMemory;
 			_userMessage = userMessage;
 			_attachments = attachments;
 		}
@@ -545,7 +546,7 @@ public class ChatProcessor {
 			try {
 				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 					try {
-						executeOrchestrator(_taskTracker, state, _chatMemory, _userMessage, _attachments);
+						executeOrchestrator(_taskTracker, state, _conversationMemory, _userMessage, _attachments);
 						state.completeSuccessfully();
 						return null;
 					} catch (InterruptedException ex) {

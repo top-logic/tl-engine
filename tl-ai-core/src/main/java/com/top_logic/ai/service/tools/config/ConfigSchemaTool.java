@@ -18,8 +18,8 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for retrieving JSON Schema definitions for TopLogic configuration types.
@@ -70,7 +70,7 @@ public class ConfigSchemaTool {
 	 * @return The JSON Schema as a string, or an error message if the class cannot be found or is
 	 *         not a valid configuration type.
 	 */
-	@Tool("Get JSON Schema for a TopLogic configuration type or layout template. Accepts config schema URIs (toplogic://schema/config/...), layout template URIs (toplogic://schema/layout-template/{name}), or class names. Returns the schema with $ref URIs for nested types that can be resolved by calling this tool again.")
+	@ToolMethod(description = "Get JSON Schema for a TopLogic configuration type or layout template. Accepts config schema URIs (toplogic://schema/config/...), layout template URIs (toplogic://schema/layout-template/{name}), or class names. Returns the schema with $ref URIs for nested types that can be resolved by calling this tool again.")
 	public String getConfigSchema(
 			@P("Schema URI (toplogic://schema/config/... or toplogic://schema/layout-template/{name}) or class name") String typeReference) {
 

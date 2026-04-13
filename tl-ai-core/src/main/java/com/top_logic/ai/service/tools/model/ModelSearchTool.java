@@ -38,8 +38,8 @@ import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for searching across the TopLogic application model.
@@ -109,7 +109,7 @@ public class ModelSearchTool {
 	 *        reference). Null or empty = search all kinds.
 	 * @return JSON object with search results and relevance scores.
 	 */
-	@Tool("Search for model elements by name, label, or description. Returns top 10 matches with relevance scores.")
+	@ToolMethod(description = "Search for model elements by name, label, or description. Returns top 10 matches with relevance scores.")
 	public String searchModel(
 			@P("Search query string (case-insensitive)") String query,
 			@P("Optional: Limit to specific modules") List<String> moduleFilter,

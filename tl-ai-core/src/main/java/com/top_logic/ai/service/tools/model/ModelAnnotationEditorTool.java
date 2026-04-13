@@ -35,8 +35,8 @@ import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.io.StringW;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for setting and removing annotations on TopLogic model elements.
@@ -90,7 +90,7 @@ public class ModelAnnotationEditorTool {
 	 *        Annotation configuration as JSON matching the schema.
 	 * @return JSON with operation result and the annotation's canonical JSON representation.
 	 */
-	@Tool("Add or replace an annotation on a model element (module, type, part, classifier). Accepts annotation config as JSON. Use listAvailableAnnotations to discover options and getConfigSchema to understand the structure first.")
+	@ToolMethod(description = "Add or replace an annotation on a model element (module, type, part, classifier). Accepts annotation config as JSON. Use listAvailableAnnotations to discover options and getConfigSchema to understand the structure first.")
 	public String addAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Fully-qualified annotation config interface class name") String configInterfaceName,
@@ -172,7 +172,7 @@ public class ModelAnnotationEditorTool {
 	 *        Fully-qualified annotation configuration interface class name to remove.
 	 * @return JSON with operation result.
 	 */
-	@Tool("Remove an annotation from a model element. Use getCurrentAnnotations to see which annotations exist on a target.")
+	@ToolMethod(description = "Remove an annotation from a model element. Use getCurrentAnnotations to see which annotations exist on a target.")
 	public String removeAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Fully-qualified annotation config interface class name to remove") String configInterfaceName) {

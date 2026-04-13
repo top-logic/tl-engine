@@ -27,8 +27,8 @@ import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for listing TLScript functions and retrieving documentation.
@@ -71,7 +71,7 @@ public class TLScriptReferenceTool {
 	 *
 	 * @return JSON object containing the list of function names.
 	 */
-	@Tool("List all available TLScript functions and methods. Returns function names that can be used in TLScript expressions.")
+	@ToolMethod(description = "List all available TLScript functions and methods. Returns function names that can be used in TLScript expressions.")
 	public String listTLScriptFunctions() {
 		Map<String, Object> args = new HashMap<>();
 
@@ -108,7 +108,7 @@ public class TLScriptReferenceTool {
 	 * @return JSON object containing the function documentation if available, or an error message
 	 *         if not found.
 	 */
-	@Tool("Get detailed documentation for a specific TLScript function. Returns signature, description, and usage information.")
+	@ToolMethod(description = "Get detailed documentation for a specific TLScript function. Returns signature, description, and usage information.")
 	public String getTLScriptFunctionDocumentation(
 			@P("Name of the TLScript function") String functionName) {
 

@@ -17,8 +17,8 @@ import com.top_logic.ai.service.tools.gitea.messages.CreateIssueRequest;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for creating issues in a Gitea repository via REST API.
@@ -71,8 +71,8 @@ public class GiteaIssueTool {
 	 *        An optional suggestion for how to fix the issue. May be {@code null}.
 	 * @return A confirmation message on success, or an error description on failure.
 	 */
-	@Tool(name = "create_gitea_issue",
-		value = "Create a Gitea issue to report a quality problem found during AI conversation review. "
+	@ToolMethod(name = "create_gitea_issue",
+		description = "Create a Gitea issue to report a quality problem found during AI conversation review. "
 			+ "Use this to file issues for incorrect answers, bad delegation, tool misuse, "
 			+ "unhelpful responses, or inefficiencies.")
 	public String createGiteaIssue(

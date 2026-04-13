@@ -5,8 +5,8 @@
  */
 package com.top_logic.ai.service.agents.background;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool that allows a background agent to block the current turn.
@@ -31,7 +31,7 @@ public class BlockTurnTool {
 	 *        The reason for blocking, shown to the user.
 	 * @return Confirmation message.
 	 */
-	@Tool("Block the current turn. For pre-turn agents: prevents the user message from reaching the main agent. For post-turn agents: discards the main agent's response. The reason is shown to the user.")
+	@ToolMethod(description = "Block the current turn. For pre-turn agents: prevents the user message from reaching the main agent. For post-turn agents: discards the main agent's response. The reason is shown to the user.")
 	public String blockTurn(@P("The reason for blocking the turn") String reason) {
 		BlockTurnResult.block(reason);
 		return "Turn blocked: " + reason;

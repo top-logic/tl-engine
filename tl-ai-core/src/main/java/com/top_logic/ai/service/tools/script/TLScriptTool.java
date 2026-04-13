@@ -17,8 +17,8 @@ import com.top_logic.ai.service.tools.script.messages.ValidationResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Langchain4j tool for validating and executing TLScript code.
@@ -71,7 +71,7 @@ public class TLScriptTool {
 	 *        The TLScript code to validate.
 	 * @return JSON object indicating validation success or containing error details.
 	 */
-	@Tool("Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.")
+	@ToolMethod(description = "Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.")
 	public String validateTLScript(
 			@P("TLScript code to validate") String script) {
 		return ThreadContextManager.inSystemInteraction(
@@ -113,7 +113,7 @@ public class TLScriptTool {
 	 *        Optional arguments to pass to the script ($arg1, $arg2, ...).
 	 * @return JSON object containing execution result or error details.
 	 */
-	@Tool("Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.")
+	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.")
 	public String executeTLScript(
 			@P("TLScript code to execute") String script,
 			@P("If true, execute within transaction and commit changes (default: false)") Boolean withCommit,

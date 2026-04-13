@@ -47,8 +47,8 @@ import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for browsing TopLogic model structure (modules, types, parts).
@@ -105,7 +105,7 @@ public class ModelBrowserTool {
 	 *        Whether to include framework/platform modules. Default: {@code false}.
 	 * @return JSON array of modules.
 	 */
-	@Tool("List modules in the TopLogic application model. By default, only application-specific "
+	@ToolMethod(description = "List modules in the TopLogic application model. By default, only application-specific "
 		+ "modules are returned. Framework/platform modules (tl.*, tl5.*) are excluded unless "
 		+ "includeFramework is set to true. Use includeFramework=true only when you need to "
 		+ "discover framework base types for extending or referencing.")
@@ -195,7 +195,7 @@ public class ModelBrowserTool {
 	 *        The name of the module to list types from.
 	 * @return JSON array of types, or error JSON if module not found.
 	 */
-	@Tool("List all types (classes, enumerations, datatypes) in a specific module with inheritance information")
+	@ToolMethod(description = "List all types (classes, enumerations, datatypes) in a specific module with inheritance information")
 	public String listTypes(@P("The name of the module to list types from") String moduleName) {
 		try {
 			// System interaction returns data class
@@ -316,7 +316,7 @@ public class ModelBrowserTool {
 	 * @return JSON array of parts, or error JSON if module/type not found or type is not
 	 *         structured.
 	 */
-	@Tool("List all parts (properties and references) of a specific type with multiplicity and constraints. Set {@code includeInherited=true} to include inherited parts from supertypes.")
+	@ToolMethod(description = "List all parts (properties and references) of a specific type with multiplicity and constraints. Set {@code includeInherited=true} to include inherited parts from supertypes.")
 	public String listTypeParts(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
@@ -453,7 +453,7 @@ public class ModelBrowserTool {
 	 *        The name of the enumeration type
 	 * @return JSON string containing enumeration metadata and classifier list with annotations
 	 */
-	@Tool("List all classifiers in a TopLogic enumeration with annotations")
+	@ToolMethod(description = "List all classifiers in a TopLogic enumeration with annotations")
 	public String listClassifiers(
 			@P("The name of the module containing the enumeration") String moduleName,
 			@P("The name of the enumeration type") String enumName) {

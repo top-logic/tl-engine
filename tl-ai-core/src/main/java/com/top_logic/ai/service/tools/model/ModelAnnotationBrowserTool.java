@@ -38,8 +38,8 @@ import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.io.StringW;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for browsing annotations on TopLogic model elements (modules, types, parts, enumerations,
@@ -153,7 +153,7 @@ public class ModelAnnotationBrowserTool {
 	 *        {@code false}.
 	 * @return JSON string containing annotation information, or error JSON if the operation fails.
 	 */
-	@Tool("Get all annotations currently set on a model element (module, type, enumeration, part, classifier) with optional inheritance")
+	@ToolMethod(description = "Get all annotations currently set on a model element (module, type, enumeration, part, classifier) with optional inheritance")
 	public String getCurrentAnnotations(
 			@P("Target reference in format 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Include inherited annotations from supertypes/definitions (default: false)") Boolean includeInherited) {

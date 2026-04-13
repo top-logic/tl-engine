@@ -14,8 +14,8 @@ import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.basic.Logger;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for the Orchestrator to interact with the user.
@@ -55,7 +55,7 @@ public class AskUserTool {
 	 *                 [{"label":"Option A","description":"..."}]. Ignored for other types.
 	 * @return The user's response as a string.
 	 */
-	@Tool("Ask the user a question and wait for their response. "
+	@ToolMethod(description = "Ask the user a question and wait for their response. "
 		+ "Use for approvals before model changes, clarifying ambiguous requests, "
 		+ "presenting choices, or getting feedback on plans.")
 	public String askUser(

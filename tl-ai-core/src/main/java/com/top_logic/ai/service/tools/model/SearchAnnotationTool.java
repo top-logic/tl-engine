@@ -49,8 +49,8 @@ import com.top_logic.model.config.TLModuleAnnotation;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.util.model.ModelService;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for listing available annotation types for TopLogic model elements.
@@ -100,7 +100,7 @@ public class SearchAnnotationTool {
 	 *        Target reference (e.g. "module", "module:Type", "module:Type#part").
 	 * @return JSON object listing all applicable annotation types.
 	 */
-	@Tool("List all available annotation types for a given model element. "
+	@ToolMethod(description = "List all available annotation types for a given model element. "
 		+ "Returns every applicable annotation that can be set on the target.")
 	public String listAvailableAnnotations(
 			@P("Target reference (e.g. 'module:Type#part')") String targetRef) {

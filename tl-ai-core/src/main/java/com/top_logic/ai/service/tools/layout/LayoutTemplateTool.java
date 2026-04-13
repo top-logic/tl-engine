@@ -34,8 +34,8 @@ import com.top_logic.util.Resources;
 
 import de.haumacher.msgbuf.io.StringW;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for managing TopLogic layout templates and layout configurations.
@@ -65,7 +65,7 @@ public class LayoutTemplateTool {
 	 *
 	 * @return JSON string containing the list of layout templates.
 	 */
-	@Tool("List all available layout templates with names, labels, and groups. Use the template name with getConfigSchema (toplogic://schema/layout-template/{name}) to get the parameter schema.")
+	@ToolMethod(description = "List all available layout templates with names, labels, and groups. Use the template name with getConfigSchema (toplogic://schema/layout-template/{name}) to get the parameter schema.")
 	public String listLayoutTemplates() {
 		try {
 			LayoutTemplateListResponse response = ThreadContextManager.inSystemInteraction(
@@ -127,7 +127,7 @@ public class LayoutTemplateTool {
 	 *
 	 * @return The top-level layout key.
 	 */
-	@Tool("Get the top-level layout key of the application. Use this as entry point for getLayout to navigate the layout tree.")
+	@ToolMethod(description = "Get the top-level layout key of the application. Use this as entry point for getLayout to navigate the layout tree.")
 	public String getTopLevelLayoutKey() {
 		try {
 			return ThreadContextManager.inSystemInteraction(
@@ -161,7 +161,7 @@ public class LayoutTemplateTool {
 	 *        The layout identifier.
 	 * @return JSON string containing the layout configuration.
 	 */
-	@Tool("Get the configuration of a layout by its key. Returns template name and arguments for template-based layouts, or the component configuration for others. Use getTopLevelLayoutKey to find the application's top-level layout key.")
+	@ToolMethod(description = "Get the configuration of a layout by its key. Returns template name and arguments for template-based layouts, or the component configuration for others. Use getTopLevelLayoutKey to find the application's top-level layout key.")
 	public String getLayout(
 			@P("The layout key (identifier). Use getTopLevelLayoutKey to find the top-level layout key.") String layoutKey) {
 
@@ -294,7 +294,7 @@ public class LayoutTemplateTool {
 	 *        JSON string with the template arguments.
 	 * @return JSON string indicating success or failure.
 	 */
-	@Tool("Create a new layout from a template. Use listLayoutTemplates to find templates and getConfigSchema with toplogic://schema/layout-template/{name} to get the parameter schema.")
+	@ToolMethod(description = "Create a new layout from a template. Use listLayoutTemplates to find templates and getConfigSchema with toplogic://schema/layout-template/{name} to get the parameter schema.")
 	public String createLayout(
 			@P("The name of the template to instantiate") String templateName,
 			@P("The layout key for the new layout") String layoutKey,

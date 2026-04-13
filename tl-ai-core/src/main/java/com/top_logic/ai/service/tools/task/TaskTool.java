@@ -20,8 +20,8 @@ import com.top_logic.ai.service.tools.task.messages.TaskResponse;
 import com.top_logic.ai.service.tools.task.messages.TaskSummary;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool for managing agent tasks within a processing session.
@@ -66,7 +66,7 @@ public class TaskTool {
 	 *        Present continuous form shown while the task is in progress (e.g. "Running tests").
 	 * @return JSON with {@code taskId}, status, and subject.
 	 */
-	@Tool("Create a new task to track a unit of work. Use for complex multi-step operations (3+ steps)."
+	@ToolMethod(description = "Create a new task to track a unit of work. Use for complex multi-step operations (3+ steps)."
 		+ " Do NOT use for single, trivial tasks. Tasks start as 'pending'. Always provide activeForm."
 		+ " Use imperative form for subject (e.g. 'Create user model'),"
 		+ " present continuous for activeForm (e.g. 'Creating user model')."
@@ -119,7 +119,7 @@ public class TaskTool {
 	 *        Task IDs to add to the {@code blockedBy} set, or null to skip.
 	 * @return JSON with updated {@code taskId}, status, and subject, or error if task not found.
 	 */
-	@Tool("Update a task's status, subject, description, owner, or dependencies."
+	@ToolMethod(description = "Update a task's status, subject, description, owner, or dependencies."
 		+ " Set status to 'in_progress' BEFORE starting work on a task."
 		+ " Set status to 'completed' ONLY when the task is FULLY done."
 		+ " If blocked or encountering errors, keep status as 'in_progress'."
@@ -174,7 +174,7 @@ public class TaskTool {
 	 * @return JSON with array of task summaries containing id, subject, status, owner, and
 	 *         {@code blockedBy}.
 	 */
-	@Tool("List all tasks with their ID, subject, status, owner, and blockedBy dependencies."
+	@ToolMethod(description = "List all tasks with their ID, subject, status, owner, and blockedBy dependencies."
 		+ " Use to see available work, check overall progress, or find the next task after completing one."
 		+ " Prefer working on tasks in ID order (lowest first)."
 		+ " Tasks with non-empty blockedBy cannot be started until their blockers are completed.")

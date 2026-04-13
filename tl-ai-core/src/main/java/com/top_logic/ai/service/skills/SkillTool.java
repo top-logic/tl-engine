@@ -7,8 +7,8 @@ package com.top_logic.ai.service.skills;
 
 import java.util.List;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
+import com.top_logic.tl.ai.core.tool.P;
+import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
  * Tool that allows agents to discover and load skills at runtime.
@@ -67,7 +67,7 @@ public class SkillTool {
 	 *        The skill id from the catalog (e.g. {@code "shared/prompting-ModelExplorer"}).
 	 * @return The full skill content, or an error message if not available.
 	 */
-	@Tool("Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.")
+	@ToolMethod(description = "Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.")
 	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-ModelExplorer'") String skillId) {
 		List<Skill> skills = _registry.getSkillsFor(_agentName);
 		for (Skill skill : skills) {

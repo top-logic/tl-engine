@@ -248,16 +248,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private Label resolveElementLabel(ConfigurationItem item) {
+		String typeName = ConfigTagName.of(item);
 		PropertyDescriptor titleProp = resolveTitleProperty(item);
-		if (titleProp != null) {
-			Object value = item.value(titleProp);
-			if (value instanceof String s && !s.isEmpty()) {
-				return new Label(s, false);
-			}
+		if (titleProp == null) {
+			return new Label(typeName, false);
 		}
-
+		Object value = item.value(titleProp);
+		if (value instanceof String s && !s.isEmpty()) {
+			return new Label(s, false);
+		}
 		String label = Resources.getInstance()
-			.getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(ConfigTagName.of(item)));
+			.getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(typeName));
 		return new Label(label, true);
 	}
 

@@ -10,9 +10,11 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -234,6 +236,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			return;
 		}
 		ConfigurationItem replacement = PolymorphicOptions.toConfig(_choices.mapping(), selected);
+		ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
+			oldItem, replacement, true);
 		items.set(index, replacement);
 		rebuild(replacement);
 	}

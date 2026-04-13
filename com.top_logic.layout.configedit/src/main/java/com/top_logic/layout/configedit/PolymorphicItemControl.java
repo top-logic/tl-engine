@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -127,6 +129,8 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	}
 
 	private void onTypeChanged(Class<?> selected) {
+		ConfigurationItem oldConfig = (ConfigurationItem) _parentConfig.value(_property);
+
 		if (_nestedEditor != null) {
 			_nestedEditor.cleanupTree();
 			getChildren().remove(_nestedEditor);
@@ -140,6 +144,10 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		}
 
 		ConfigurationItem newConfig = PolymorphicOptions.toConfig(_choices.mapping(), selected);
+		if (oldConfig != null) {
+			ConfigCopier.copyContent(new DefaultInstantiationContext(PolymorphicItemControl.class),
+				oldConfig, newConfig, true);
+		}
 		_parentConfig.update(_property, newConfig);
 
 		_nestedEditor = _editorFactory.apply(_context, newConfig);

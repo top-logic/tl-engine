@@ -192,9 +192,9 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 
 		securityStorage.begin(aHandler);
 		
-		Map<TLObject, Map<TLReference, Supplier<?>>> added = new HashMap<>();
+		Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> added = new HashMap<>();
 		Set<TLObject> addedDirectRoles = new HashSet<>();
-		Map<TLObject, Map<TLReference, Supplier<?>>> removed = new HashMap<>();
+		Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> removed = new HashMap<>();
 		Set<TLObject> removedDirectRoles = new HashSet<>();
 
 		if (!creations.isEmpty()) {
@@ -205,10 +205,8 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 					addedDirectRoles.add(createdObject);
 				} else {
 					objType.getAllParts().stream()
-						.filter(TLReference.class::isInstance)
-						.forEach(reference -> {
-							put(added, createdObject, (TLReference) reference,
-								() -> createdObject.tValue(reference));
+						.forEach(part -> {
+							put(added, createdObject, part,	() -> createdObject.tValue(part));
 						});
 				}
 			}
@@ -223,10 +221,8 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 						removedDirectRoles.add(deletedObject);
 					} else {
 						objType.getAllParts().stream()
-							.filter(TLReference.class::isInstance)
-							.forEach(reference -> {
-								put(removed, deletedObject, (TLReference) reference,
-									() -> deletedObject.tValue(reference));
+							.forEach(part -> {
+								put(removed, deletedObject, part, () -> deletedObject.tValue(part));
 							});
 					}
 				}
@@ -235,7 +231,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		}
 		if (!updates.isEmpty()) {
 			/* The oldValues and newValues of an TLObjectUpdate may not contain the same parts. */
-			HashSet<TLReference> processedReferences = new HashSet<>();
+			HashSet<TLStructuredTypePart> processedParts = new HashSet<>();
 
 			for (TLObjectUpdate update : updates) {
 				TLObject updatedObject = update.object();
@@ -245,21 +241,22 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 					removedDirectRoles.add(updatedObject);
 					addedDirectRoles.add(updatedObject);
 				} else {
-					processedReferences.clear();
-					Object noPartValue = processedReferences;
+					processedParts.clear();
 					Map<TLStructuredTypePart, Object> newValues = update.newValues();
 					for (Entry<TLStructuredTypePart, Object> oldPartValue : update.oldValues().entrySet()) {
 						TLStructuredTypePart part = oldPartValue.getKey();
 						Object oldValue = oldPartValue.getValue();
+						Object newValue = newValues.get(part);
 						if (part instanceof TLReference reference) {
 							/* Check whether the change is actually an collection add or collection
 							 * remove. */
-							Object newValue = newValues.getOrDefault(reference, noPartValue);
-							if (newValue == noPartValue) {
-								// no new value. Maybe part deleted?
-								put(removed, updatedObject, reference, () -> oldValue);
-							} else if (newValue == null) {
-								put(removed, updatedObject, reference, () -> oldValue);
+							if (newValue == null) {
+								if (!newValues.containsKey(reference)) {
+									// no new value. Maybe part deleted?
+									put(removed, updatedObject, reference, () -> oldValue);
+								} else {
+									put(removed, updatedObject, reference, () -> oldValue);
+								}
 							} else {
 								if (oldValue == null) {
 									put(added, updatedObject, reference, () -> newValue);
@@ -286,20 +283,21 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 									put(added, updatedObject, reference, () -> newValue);
 								}
 							}
-							processedReferences.add(reference);
+						} else {
+							put(removed, updatedObject, part, () -> oldValue);
+							put(added, updatedObject, part, () -> newValue);
 						}
+						processedParts.add(part);
 					}
 					for (Entry<TLStructuredTypePart, Object> partValue : newValues.entrySet()) {
 						TLStructuredTypePart part = partValue.getKey();
-						if (part instanceof TLReference reference) {
-							if (processedReferences.contains(reference)) {
-								// new value for reference already processed.
-								continue;
-							}
-							// register as change
-							Object newValue = partValue.getValue();
-							put(added, updatedObject, reference, () -> newValue);
+						if (processedParts.contains(part)) {
+							// new value for part already processed.
+							continue;
 						}
+						// register as change
+						Object newValue = partValue.getValue();
+						put(added, updatedObject, part, () -> newValue);
 					}
 				}
 			}
@@ -308,7 +306,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		for (TLObject addedDirectRole : addedDirectRoles) {
 			handleRoleAssignment(addedDirectRole, newRoleAssignments, invalidObjects, true);
 		}
-		for (Entry<TLObject, Map<TLReference, Supplier<?>>> e : added.entrySet()) {
+		for (Entry<TLObject, Map<TLStructuredTypePart, Supplier<?>>> e : added.entrySet()) {
 			TLObject object = e.getKey();
 			e.getValue().entrySet()
 				.forEach(entry -> handleReference(object, entry.getKey(), entry.getValue(),
@@ -318,7 +316,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			for (TLObject removedDirectRole : removedDirectRoles) {
 				handleRoleAssignment(removedDirectRole, deletedRoleAssignments, invalidObjects, false);
 			}
-			for (Entry<TLObject, Map<TLReference, Supplier<?>>> e : removed.entrySet()) {
+			for (Entry<TLObject, Map<TLStructuredTypePart, Supplier<?>>> e : removed.entrySet()) {
 				TLObject object = e.getKey();
 				e.getValue().entrySet()
 					.forEach(entry -> handleReference(object, entry.getKey(), entry.getValue(),
@@ -337,7 +335,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		updateSecurityStorage(someRemoved, invalidObjects, invalidObjectsByRole, rulesToObjectsMap);
 	}
 
-	private static void put(Map<TLObject, Map<TLReference, Supplier<?>>> map, TLObject object, TLReference ref,
+		private static void put(Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> map, TLObject object, TLStructuredTypePart ref,
 			Supplier<?> value) {
 		map.computeIfAbsent(object, unused -> new HashMap<>()).put(ref, value);
 	}
@@ -398,16 +396,16 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		}
 	}
 
-	private void handleReference(TLObject baseObject, TLReference reference,
-			Supplier<?> referenceValue, Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap,
+	private void handleReference(TLObject baseObject, TLStructuredTypePart part,
+			Supplier<?> partValue, Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap,
 			boolean isAdded) {
 		try {
-			for (Iterator<RoleProvider> theIt = accessManager.getRules(reference).iterator(); theIt.hasNext();) {
+			for (Iterator<RoleProvider> theIt = accessManager.getRules(part).iterator(); theIt.hasNext();) {
 				RoleProvider theRule = theIt.next();
 				if (theRule instanceof RoleRule) {
 					Set<BoundObject> theBaseObjects =
-						ElementAccessHelper.navigateRoleRuleBackwards((RoleRule) theRule, baseObject, reference,
-							referenceValue);
+						ElementAccessHelper.navigateRoleRuleBackwards((RoleRule) theRule, baseObject,
+							part, partValue);
 					if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
 						addAll(rulesToObjectsMap, theRule, theBaseObjects);
 					}

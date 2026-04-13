@@ -8,6 +8,7 @@ package com.top_logic.element.boundsec.manager.rule;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -23,8 +24,6 @@ public interface PathElement {
 	 * The parts that are used by this {@link PathElement}.
 	 */
 	Collection<TLStructuredTypePart> getRelevantParts();
-
-	boolean isInverse();
 
 	/**
 	 * Traverses this path element starting from the given base object and returns the reached
@@ -61,6 +60,23 @@ public interface PathElement {
 	 * @see #getValues(TLObject)
 	 */
 	Collection<? extends TLObject> getSources(TLObject destination);
+
+	/**
+	 * Determines base objects for this {@link PathElement} when the value for the given part in the
+	 * given element changes. The result is used to navigate backward to the role rule to which this
+	 * path element belongs.
+	 * 
+	 * @param element
+	 *        The element whose attribute value has changed,
+	 * @param part
+	 *        The part whose value has changed. This part is {@link #getRelevantParts() relevant}
+	 *        for this path element.
+	 * @param partValue
+	 *        Supplier for the value of the element. <b> Attention:</b> When the part is a multiple
+	 *        reference then the value does not contain all referenced objects but only the
+	 *        difference to the value before.
+	 */
+	Collection<? extends TLObject> getPathBase(TLObject element, TLStructuredTypePart part, Supplier<?> partValue);
 
 	/**
 	 * Appends a machine-readable identifier for this path element to the given output.

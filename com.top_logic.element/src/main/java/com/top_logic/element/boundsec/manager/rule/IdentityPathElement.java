@@ -8,6 +8,7 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.model.TLObject;
@@ -49,8 +50,9 @@ public class IdentityPathElement implements PathElement {
 	}
 
 	@Override
-	public boolean isInverse() {
-		return false;
+	public Collection<? extends TLObject> getPathBase(TLObject element, TLStructuredTypePart part,
+			Supplier<?> partValue) {
+		return CollectionUtil.intoList(element);
 	}
 
 	@Override

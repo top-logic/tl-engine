@@ -16,8 +16,13 @@ import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 
 import com.top_logic.ai.service.AIService;
+import com.top_logic.ai.service.agents.AgentFactory;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
+import com.top_logic.tl.ai.core.agent.AgentLoop;
+import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -342,10 +347,10 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Call an AI Agent from the Registry
-	 * 
+	 *
 	 * @param agentName
 	 *        String - the agent name from the Agent Registry
-	 * 
+	 *
 	 * @param userMessage
 	 *        String - the user message to prompt the Agent with
 	 * @return String - the response from the AI Agent
@@ -357,6 +362,49 @@ public class OpenAIScriptFunctions extends TLScriptFunctions {
 		}
 		UntypedAgent explorer = registry.buildUntypedAgent(agentName);
 		return (String) explorer.invoke(Map.of("message", userMessage));
+	}
+
+	/**
+	 * Run an agent defined in the knowledge base via AgentFactory.
+	 *
+	 * <p>
+	 * Builds an {@link AgentLoop} from a KB-defined agent and runs it with the given user message.
+	 * The agent is resolved by name from the {@code tl.ai.core:Agent} model instances.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        the agent name as stored in the KB
+	 * @param userMessage
+	 *        the user message to send to the agent
+	 * @return the agent's final text response
+	 */
+	public static String runAgent(String agentName, String userMessage) {
+		AgentFactory factory = AgentFactory.getInstance();
+		AgentLoop loop = factory.buildAgentLoop(agentName);
+
+		Conversation conversation = new Conversation();
+		conversation.add(new com.top_logic.tl.ai.core.message.UserMessage(
+			java.util.UUID.randomUUID().toString(),
+			java.time.Instant.now(),
+			java.util.List.of(new com.top_logic.tl.ai.core.message.TextContent(userMessage))));
+
+		AgentResult result = loop.run(conversation, ToolContext.EMPTY, event -> { });
+
+		// Extract text from the last assistant message
+		java.util.List<com.top_logic.tl.ai.core.message.Message> messages = conversation.messages();
+		for (int i = messages.size() - 1; i >= 0; i--) {
+			if (messages.get(i) instanceof com.top_logic.tl.ai.core.message.AssistantMessage assistant) {
+				StringBuilder text = new StringBuilder();
+				for (com.top_logic.tl.ai.core.message.ContentPart part : assistant.content()) {
+					if (part instanceof com.top_logic.tl.ai.core.message.TextContent tc) {
+						text.append(tc.text());
+					}
+				}
+				return text.toString();
+			}
+		}
+
+		return "Agent finished with " + result.stopReason() + " but produced no text response.";
 	}
 
 	/**

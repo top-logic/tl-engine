@@ -57,6 +57,9 @@
 					<property name="maxRetries"
 						type="tl.core:Integer"
 					/>
+					<property name="entryPoint"
+						type="tl.core:Boolean"
+					/>
 					<property name="tools"
 						type="tl.core:String"
 						multiple="true"

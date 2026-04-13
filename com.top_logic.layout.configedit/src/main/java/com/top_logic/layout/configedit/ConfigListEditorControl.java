@@ -194,16 +194,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item) {
-		Class<?> currentOption = PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), item);
-		SimpleSelectFieldModel typeModel =
-			new SimpleSelectFieldModel(currentOption, _choices.options(), false);
+		Class<?> currentClass = PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), item);
+		List<String> options = _choices.options().stream().map(Class::getName).toList();
+		String currentFqcn = currentClass != null ? currentClass.getName() : null;
+		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
 
-		LabelProvider labelProvider = new ClassLabelProvider();
+		LabelProvider labelProvider = new FqcnClassLabelProvider(_choices.options());
 
 		typeModel.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				onTypeChanged(item, (Class<?>) newValue);
+				onTypeChanged(item, resolveClass(_choices.options(), (String) newValue));
 			}
 
 			@Override
@@ -235,6 +236,43 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ConfigurationItem replacement = PolymorphicOptions.toConfig(_choices.mapping(), selected);
 		items.set(index, replacement);
 		rebuild(replacement);
+	}
+
+	static Class<?> resolveClass(List<Class<?>> options, String fqcn) {
+		if (fqcn == null) {
+			return null;
+		}
+		for (Class<?> cls : options) {
+			if (cls.getName().equals(fqcn)) {
+				return cls;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * {@link LabelProvider} that receives a fully-qualified class name and delegates to
+	 * {@link ClassLabelProvider} once the {@link Class} has been resolved against a known option
+	 * list.
+	 */
+	static final class FqcnClassLabelProvider implements LabelProvider {
+
+		private final List<Class<?>> _options;
+
+		private final ClassLabelProvider _delegate = new ClassLabelProvider();
+
+		FqcnClassLabelProvider(List<Class<?>> options) {
+			_options = options;
+		}
+
+		@Override
+		public String getLabel(Object object) {
+			if (!(object instanceof String fqcn) || fqcn.isEmpty()) {
+				return "";
+			}
+			Class<?> cls = resolveClass(_options, fqcn);
+			return cls != null ? _delegate.getLabel(cls) : fqcn;
+		}
 	}
 
 	@SuppressWarnings("unchecked")

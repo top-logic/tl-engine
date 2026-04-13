@@ -75,10 +75,12 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 
 		ConfigurationItem currentValue = (ConfigurationItem) parentConfig.value(property);
-		Class<?> currentOption = PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), currentValue);
-		_typeModel = new SimpleSelectFieldModel(currentOption, _choices.options(), false);
+		Class<?> currentClass = PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), currentValue);
+		List<String> options = _choices.options().stream().map(Class::getName).toList();
+		String currentFqcn = currentClass != null ? currentClass.getName() : null;
+		_typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
 
-		LabelProvider labelProvider = new ClassLabelProvider();
+		LabelProvider labelProvider = new ConfigListEditorControl.FqcnClassLabelProvider(_choices.options());
 
 		ReactSelectFormFieldControl typeSelect =
 			new ReactSelectFormFieldControl(context, _typeModel, labelProvider);
@@ -94,7 +96,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_typeChangeListener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				onTypeChanged((Class<?>) newValue);
+				onTypeChanged(ConfigListEditorControl.resolveClass(_choices.options(), (String) newValue));
 			}
 
 			@Override

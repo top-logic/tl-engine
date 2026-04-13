@@ -12,7 +12,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.layout.configedit.ConfigTagName;
 
 /**
  * A {@link DesignTreeNode} bound to a {@link ConfigurationItem}.
@@ -64,16 +64,7 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 
 	@Override
 	public String getTagName() {
-		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
-		TagName tagName = configInterface.getAnnotation(TagName.class);
-		if (tagName != null) {
-			return tagName.value();
-		}
-		String name = configInterface.getSimpleName();
-		if (name.endsWith("Config")) {
-			name = name.substring(0, name.length() - "Config".length());
-		}
-		return name;
+		return ConfigTagName.of(_config);
 	}
 
 	@Override

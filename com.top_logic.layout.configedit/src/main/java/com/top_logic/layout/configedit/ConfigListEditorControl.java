@@ -13,7 +13,6 @@ import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
@@ -257,18 +256,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 		}
 
-		Class<?> iface = item.descriptor().getConfigurationInterface();
-		TagName tagName = iface.getAnnotation(TagName.class);
-		String typeName;
-		if (tagName != null) {
-			typeName = tagName.value();
-		} else {
-			typeName = iface.getSimpleName();
-			if (typeName.endsWith("Config")) {
-				typeName = typeName.substring(0, typeName.length() - "Config".length());
-			}
-		}
-		String label = Resources.getInstance().getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(typeName));
+		String label = Resources.getInstance()
+			.getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(ConfigTagName.of(item)));
 		return new Label(label, true);
 	}
 

@@ -262,7 +262,8 @@ public class OpenAIProvider implements LLMProvider {
 		String content = switch (result.state()) {
 			case ToolState.Completed c -> c.result();
 			case ToolState.Failed f -> f.error();
-			default -> "";
+			case ToolState.Pending ignored -> "";
+			case ToolState.Running ignored -> "";
 		};
 		json.name("output").value(content);
 		json.endObject();
@@ -512,9 +513,39 @@ public class OpenAIProvider implements LLMProvider {
 				}
 
 				case "response.incomplete" -> {
-					String reason = parseIncompleteReason(data);
-					throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-						"Response incomplete: " + reason);
+					// Incomplete responses still carry content and usage — emit what we have.
+					try (JsonReader json = jsonReader(data)) {
+						json.beginObject();
+						while (json.hasNext()) {
+							if ("response".equals(json.nextName())) {
+								json.beginObject();
+								while (json.hasNext()) {
+									switch (json.nextName()) {
+										case "id" -> responseId = json.nextString();
+										case "model" -> model = json.nextString();
+										case "usage" -> {
+											int[] u = parseUsage(json);
+											inputTokens = u[0];
+											outputTokens = u[1];
+											reasoningTokens = u[2];
+											cachedTokens = u[3];
+										}
+										default -> json.skipValue();
+									}
+								}
+								json.endObject();
+							} else {
+								json.skipValue();
+							}
+						}
+						json.endObject();
+					}
+
+					List<ContentPart> content = buildContentParts(blocks);
+					TokenUsage usage = new TokenUsage(
+						inputTokens, outputTokens, reasoningTokens, cachedTokens, 0);
+					handler.onEvent(new StreamEvent.MessageComplete(
+						responseId, model, "max_tokens", usage, content));
 				}
 
 				default -> { /* Ignore unknown event types. */ }
@@ -546,38 +577,6 @@ public class OpenAIProvider implements LLMProvider {
 			// Not valid JSON — ignore.
 		}
 		return null;
-	}
-
-	private String parseIncompleteReason(String data) {
-		try (JsonReader json = jsonReader(data)) {
-			json.beginObject();
-			while (json.hasNext()) {
-				if ("response".equals(json.nextName())) {
-					json.beginObject();
-					while (json.hasNext()) {
-						if ("incomplete_details".equals(json.nextName())) {
-							json.beginObject();
-							while (json.hasNext()) {
-								if ("reason".equals(json.nextName())) {
-									return json.nextString();
-								}
-								json.skipValue();
-							}
-							json.endObject();
-						} else {
-							json.skipValue();
-						}
-					}
-					json.endObject();
-				} else {
-					json.skipValue();
-				}
-			}
-			json.endObject();
-		} catch (Exception e) {
-			// Best effort.
-		}
-		return "unknown";
 	}
 
 	private static JsonReader jsonReader(String json) {

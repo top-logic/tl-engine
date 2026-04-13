@@ -15,11 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-import dev.langchain4j.memory.ChatMemory;
-
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.layout.WindowScope;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
 
 /**
  * Session-scoped storage for task progress tracking.
@@ -236,19 +235,11 @@ public class TaskProgressTracker {
 
 	/**
 	 * Returns the conversation memory for this session, creating it on first access. The memory
-	 * keeps the last 20 messages (user + assistant turns) so the orchestrator can follow multi-turn
-	 * conversations.
+	 * uses a {@link com.top_logic.tl.ai.core.memory.TruncatingStrategy} to keep conversation
+	 * context within the configured token budget.
 	 */
-	public ChatMemory getChatMemory() {
-		return _sessionManager.getActiveChatMemory();
-	}
-
-	/**
-	 * Returns the session-scoped sub-agent memory map. Sub-agents retain conversation context
-	 * across multiple delegations within the same session via this map.
-	 */
-	public Map<String, ChatMemory> getSubAgentMemories() {
-		return _sessionManager.getActiveSubAgentMemories();
+	public ConversationMemory getConversationMemory() {
+		return _sessionManager.getActiveConversationMemory();
 	}
 
 	/**

@@ -5,28 +5,32 @@
  */
 package com.top_logic.ai.chat.layout;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.UUID;
 
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
-
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import com.top_logic.tl.ai.core.memory.CompactionStrategy;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
+import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.message.UserMessage;
 
 /**
- * Manages per-session in-memory state ({@link Chat} + {@link ChatMemory}) with LRU caching.
+ * Manages per-session in-memory state ({@link Chat} + {@link ConversationMemory}) with LRU caching.
  *
  * <p>
- * Each chat session gets its own {@link Chat} (message container) and {@link ChatMemory}
- * (<code>LangChain4j</code> conversation context). When the user switches sessions, this manager persists the
- * current session, loads the target session from the database (or LRU cache), and rebuilds the AI's
+ * Each chat session gets its own {@link Chat} (message container) and {@link ConversationMemory}
+ * (conversation context). When the user switches sessions, this manager persists the current
+ * session, loads the target session from the database (or LRU cache), and rebuilds the AI's
  * conversation memory from the persisted messages.
  * </p>
  */
@@ -35,8 +39,13 @@ public class ChatSessionManager {
 	/** Maximum number of sessions to keep in the in-memory LRU cache. */
 	private static final int MAX_CACHED_SESSIONS = 5;
 
-	/** Maximum messages in LangChain4j ChatMemory (sliding window). */
-	private static final int CHAT_MEMORY_MAX_MESSAGES = 20;
+	/**
+	 * Default context window budget for chat session memory. This is a generous default that allows
+	 * the {@link TruncatingStrategy} to keep enough context for multi-turn conversations. The
+	 * actual model context window is enforced by the agent loop; this budget only controls how many
+	 * messages the session memory retains.
+	 */
+	private static final int DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000;
 
 	private final Object _lock = new Object();
 
@@ -57,18 +66,12 @@ public class ChatSessionManager {
 	static class SessionState {
 		final Chat _chat;
 
-		ChatMemory _chatMemory;
+		ConversationMemory _conversationMemory;
 
-		/**
-		 * Session-scoped conversation memories for sub-agents, keyed by agent name. When the
-		 * orchestrator delegates to a sub-agent multiple times (within or across user messages), the
-		 * sub-agent retains its conversation history via this map.
-		 */
-		final Map<String, ChatMemory> _subAgentMemories = new ConcurrentHashMap<>();
-
-		SessionState(Chat chat, ChatMemory chatMemory) {
+		/** */
+		SessionState(Chat chat, ConversationMemory conversationMemory) {
 			_chat = chat;
-			_chatMemory = chatMemory;
+			_conversationMemory = conversationMemory;
 		}
 	}
 
@@ -87,38 +90,19 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Returns the active session's {@link ChatMemory}, or creates a transient one if no session is
-	 * active.
+	 * Returns the active session's {@link ConversationMemory}, or creates a transient one if no
+	 * session is active.
 	 */
-	public ChatMemory getActiveChatMemory() {
+	public ConversationMemory getActiveConversationMemory() {
 		synchronized (_lock) {
 			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
 			if (state != null) {
-				if (state._chatMemory == null) {
-					state._chatMemory = MessageWindowChatMemory.withMaxMessages(CHAT_MEMORY_MAX_MESSAGES);
+				if (state._conversationMemory == null) {
+					state._conversationMemory = createDefaultMemory();
 				}
-				return state._chatMemory;
+				return state._conversationMemory;
 			}
-			return MessageWindowChatMemory.withMaxMessages(CHAT_MEMORY_MAX_MESSAGES);
-		}
-	}
-
-	/**
-	 * Returns the active session's sub-agent memory map. Sub-agents use this map to retain
-	 * conversation context across multiple delegations within the same session.
-	 *
-	 * <p>
-	 * If no session is active, returns a fresh map (transient, same as
-	 * {@link #getActiveChatMemory()}).
-	 * </p>
-	 */
-	public Map<String, ChatMemory> getActiveSubAgentMemories() {
-		synchronized (_lock) {
-			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
-			if (state != null) {
-				return state._subAgentMemories;
-			}
-			return new ConcurrentHashMap<>();
+			return createDefaultMemory();
 		}
 	}
 
@@ -157,7 +141,7 @@ public class ChatSessionManager {
 
 			// Load from database
 			Chat chat = new Chat();
-			ChatMemory memory = MessageWindowChatMemory.withMaxMessages(CHAT_MEMORY_MAX_MESSAGES);
+			ConversationMemory memory = createDefaultMemory();
 
 			try {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
@@ -166,7 +150,7 @@ public class ChatSessionManager {
 					if (json != null && !json.isEmpty()) {
 						List<ChatEntry> entries = DtoMapper.deserializeEntries(json);
 						chat.loadEntries(entries);
-						rebuildChatMemory(memory, entries);
+						rebuildConversationMemory(memory, entries);
 					}
 				}
 			} catch (Exception ex) {
@@ -210,20 +194,34 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Rebuilds a {@link ChatMemory} from persisted chat entries by replaying user and agent
-	 * messages.
+	 * Rebuilds a {@link ConversationMemory} from persisted chat entries by replaying user and
+	 * assistant messages into the underlying {@link Conversation}.
 	 */
-	private static void rebuildChatMemory(ChatMemory memory, List<ChatEntry> entries) {
+	private static void rebuildConversationMemory(ConversationMemory memory, List<ChatEntry> entries) {
+		Conversation conversation = memory.conversation();
 		for (ChatEntry entry : entries) {
 			if (entry instanceof ChatEntry.MessageEntry me) {
 				ChatMessage msg = me.message();
 				String role = msg.getUser();
 				if ("Agent".equals(role) || "AI".equals(role)) {
-					memory.add(new AiMessage(msg.getText()));
+					conversation.add(new AssistantMessage(
+						UUID.randomUUID().toString(), Instant.now(),
+						List.of(new TextContent(msg.getText())),
+						TokenUsage.EMPTY, "stop"));
 				} else if (!"System".equals(role)) {
-					memory.add(new UserMessage(msg.getText()));
+					conversation.add(new UserMessage(
+						UUID.randomUUID().toString(), Instant.now(),
+						List.of(new TextContent(msg.getText()))));
 				}
 			}
 		}
+	}
+
+	/**
+	 * Creates a default {@link ConversationMemory} with truncating strategy.
+	 */
+	private static ConversationMemory createDefaultMemory() {
+		CompactionStrategy strategy = new TruncatingStrategy();
+		return ConversationMemory.withDefaults(strategy, DEFAULT_CONTEXT_WINDOW_TOKENS);
 	}
 }

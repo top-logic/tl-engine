@@ -2190,7 +2190,7 @@ button.tlMenu__item--disabled:hover {
 	border-right: none;
 }
 
-.tlTextCell {
+.tlText {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

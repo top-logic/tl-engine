@@ -1583,8 +1583,8 @@ const ke = ({ icon: n }) => n ? /* @__PURE__ */ e.createElement("i", { className
   const t = Z(), a = t.header, l = t.content, c = t.footer, i = t.snackbar, o = t.dialogManager;
   return /* @__PURE__ */ e.createElement("div", { id: n, className: "tlAppShell" }, a && /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__header" }, /* @__PURE__ */ e.createElement(q, { control: a })), /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__content" }, /* @__PURE__ */ e.createElement(q, { control: l })), c && /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__footer" }, /* @__PURE__ */ e.createElement(q, { control: c })), /* @__PURE__ */ e.createElement(q, { control: i }), o && /* @__PURE__ */ e.createElement(q, { control: o }));
 }, zn = () => {
-  const t = Z().text ?? "";
-  return /* @__PURE__ */ e.createElement("span", { className: "tlTextCell" }, t);
+  const n = Z(), t = n.text ?? "", a = n.cssClass ?? "", l = a ? `tlText ${a}` : "tlText";
+  return /* @__PURE__ */ e.createElement("span", { className: l }, t);
 }, Un = {
   "js.table.freezeUpTo": "Freeze up to here",
   "js.table.unfreezeAll": "Unfreeze all"
@@ -3654,7 +3654,7 @@ W("TLDrawer", Mn);
 W("TLSnackbar", $n);
 W("TLMenu", Hn);
 W("TLAppShell", Wn);
-W("TLTextCell", zn);
+W("TLText", zn);
 W("TLTableView", Vn);
 W("TLFormLayout", Qn);
 W("TLFormGroup", tl);

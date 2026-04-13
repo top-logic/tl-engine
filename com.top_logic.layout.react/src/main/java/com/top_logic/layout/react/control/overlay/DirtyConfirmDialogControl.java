@@ -14,7 +14,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
-import com.top_logic.layout.react.control.table.ReactTextCellControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -56,9 +56,9 @@ public class DirtyConfirmDialogControl {
 
 		// Body: message text + list of dirty handler descriptions.
 		List<ReactControl> bodyChildren = new ArrayList<>();
-		bodyChildren.add(new ReactTextCellControl(context, message));
+		bodyChildren.add(new ReactTextControl(context, message));
 		for (StateHandler handler : dirtyHandlers) {
-			bodyChildren.add(new ReactTextCellControl(context, "\u2022 " + handler.getDescription()));
+			bodyChildren.add(new ReactTextControl(context, "\u2022 " + handler.getDescription()));
 		}
 		ReactStackControl body = new ReactStackControl(context, bodyChildren);
 

@@ -27,7 +27,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
-import com.top_logic.layout.react.control.table.ReactTextCellControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
@@ -308,7 +308,7 @@ public class TableElement implements UIElement {
 
 	private ReactCellControlProvider createCellProvider(ViewContext context) {
 		return (ctx, rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(ctx, MetaLabelProvider.INSTANCE.getLabel(cellValue));
+			return new ReactTextControl(ctx, MetaLabelProvider.INSTANCE.getLabel(cellValue));
 		};
 	}
 

@@ -30,7 +30,7 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
-import com.top_logic.layout.react.control.table.ReactTextCellControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
@@ -701,7 +701,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			if (!editMode || (colConfig != null && colConfig.isReadonly())) {
 				// View mode or read-only column: just show formatted text.
 				String text = MetaLabelProvider.INSTANCE.getLabel(cellValue);
-				return new ReactTextCellControl(ctx, text);
+				return new ReactTextControl(ctx, text);
 			}
 
 			// Edit mode: create an editable field control for this cell.
@@ -736,7 +736,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 			// Fallback: text display.
 			String text = MetaLabelProvider.INSTANCE.getLabel(cellValue);
-			return new ReactTextCellControl(ctx, text);
+			return new ReactTextControl(ctx, text);
 		};
 	}
 

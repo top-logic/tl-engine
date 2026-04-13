@@ -5,11 +5,20 @@
  */
 package com.top_logic.ai.service.agents;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
@@ -470,9 +479,15 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 
 	/**
 	 * Builds the model-to-provider index from the provider configurations.
+	 *
+	 * <p>
+	 * First adds any statically configured model names from {@link ProviderConfig#getModels()},
+	 * then queries each provider's API to discover additional models.
+	 * </p>
 	 */
 	private static Map<String, String> buildModelProviderIndex(Map<String, ProviderConfig> providers) {
 		Map<String, String> index = new LinkedHashMap<>();
+
 		for (Map.Entry<String, ProviderConfig> entry : providers.entrySet()) {
 			String providerName = entry.getKey();
 			List<String> models = entry.getValue().getModels();
@@ -484,7 +499,164 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				}
 			}
 		}
+
+		for (Map.Entry<String, ProviderConfig> entry : providers.entrySet()) {
+			String providerName = entry.getKey();
+			List<String> discovered = discoverModels(providerName, entry.getValue());
+			for (String model : discovered) {
+				index.putIfAbsent(model, providerName);
+			}
+			if (!discovered.isEmpty()) {
+				Logger.info("Discovered " + discovered.size() + " model(s) from provider '"
+					+ providerName + "'.", AgentRegistry.class);
+			}
+		}
+
 		return index;
+	}
+
+	/**
+	 * Queries a provider's models API endpoint and returns all discovered model IDs.
+	 *
+	 * <p>
+	 * Calls {@code GET {baseUrl}/v1/models} using the provider's authentication scheme.
+	 * Anthropic uses the {@code x-api-key} header; OpenAI and Mistral use
+	 * {@code Authorization: Bearer}.
+	 * </p>
+	 *
+	 * @param providerName
+	 *        The provider name (e.g. "anthropic", "openai", "mistral").
+	 * @param config
+	 *        The provider configuration with API key and optional base URL.
+	 * @return A list of model ID strings discovered from the API; empty list on any error.
+	 */
+	private static List<String> discoverModels(String providerName, ProviderConfig config) {
+		String apiKey = config.getApiKey();
+		if (!isValidApiKey(apiKey)) {
+			return List.of();
+		}
+
+		String baseUrl = resolveBaseUrl(providerName, config);
+		String endpoint = baseUrl + "/v1/models";
+
+		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+			.uri(URI.create(endpoint))
+			.GET()
+			.timeout(Duration.ofSeconds(30));
+
+		String name = providerName.toLowerCase(Locale.ROOT);
+		if (name.contains("anthropic")) {
+			requestBuilder.header("x-api-key", apiKey);
+			String version = config.getVersion();
+			requestBuilder.header("anthropic-version", version != null ? version : "2023-06-01");
+		} else {
+			requestBuilder.header("Authorization", "Bearer " + apiKey);
+		}
+
+		try {
+			HttpClient client = HttpClient.newBuilder()
+				.connectTimeout(Duration.ofSeconds(10))
+				.build();
+
+			HttpResponse<String> response = client.send(
+				requestBuilder.build(),
+				HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+			if (response.statusCode() != 200) {
+				Logger.warn(
+					"Model discovery failed for provider '" + providerName
+						+ "': HTTP " + response.statusCode(),
+					AgentRegistry.class);
+				return List.of();
+			}
+
+			return parseModelIds(response.body());
+		} catch (Exception ex) {
+			Logger.warn(
+				"Model discovery failed for provider '" + providerName + "': " + ex.getMessage(),
+				AgentRegistry.class);
+			return List.of();
+		}
+	}
+
+	/**
+	 * Resolves the base URL for a provider, using defaults when not configured.
+	 */
+	private static String resolveBaseUrl(String providerName, ProviderConfig config) {
+		String baseUrl = config.getBaseUrl();
+		if (baseUrl != null) {
+			if (baseUrl.endsWith("/v1")) {
+				baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
+			}
+			if (baseUrl.endsWith("/")) {
+				baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+			}
+			return baseUrl;
+		}
+
+		String name = providerName.toLowerCase(Locale.ROOT);
+		if (name.contains("anthropic")) {
+			return "https://api.anthropic.com";
+		}
+		if (name.contains("openai")) {
+			return "https://api.openai.com";
+		}
+		if (name.contains("mistral")) {
+			return "https://api.mistral.ai";
+		}
+		return "https://api." + name + ".com";
+	}
+
+	/**
+	 * Parses model IDs from the JSON response of a {@code /v1/models} endpoint.
+	 *
+	 * <p>
+	 * Expects the standard format: {@code {"data": [{"id": "model-name", ...}, ...]}}.
+	 * </p>
+	 */
+	private static List<String> parseModelIds(String json) {
+		List<String> models = new ArrayList<>();
+		try (JsonReader reader = new JsonReader(new StringR(json))) {
+			reader.beginObject();
+			while (reader.hasNext()) {
+				String field = reader.nextName();
+				if ("data".equals(field)) {
+					reader.beginArray();
+					while (reader.hasNext()) {
+						String modelId = parseModelEntry(reader);
+						if (modelId != null && !modelId.isBlank()) {
+							models.add(modelId);
+						}
+					}
+					reader.endArray();
+				} else {
+					reader.skipValue();
+				}
+			}
+			reader.endObject();
+		} catch (Exception ex) {
+			Logger.warn("Failed to parse model list JSON: " + ex.getMessage(),
+				AgentRegistry.class);
+		}
+		return models;
+	}
+
+	/**
+	 * Parses a single model entry object and extracts its {@code id} field.
+	 */
+	private static String parseModelEntry(JsonReader reader) throws Exception {
+		String id = null;
+		reader.beginObject();
+		while (reader.hasNext()) {
+			String field = reader.nextName();
+			if ("id".equals(field)) {
+				id = reader.nextString();
+			} else {
+				reader.skipValue();
+			}
+		}
+		reader.endObject();
+		return id;
 	}
 
 	/**

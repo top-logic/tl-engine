@@ -10,6 +10,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 
 /**
  * Configuration for a channel binding between a parent view and a referenced child view.
@@ -31,6 +32,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * </pre>
  */
 @TagName("bind")
+@TitleProperty(name = ChannelBindingConfig.CHANNEL)
 public interface ChannelBindingConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getChannel()}. */

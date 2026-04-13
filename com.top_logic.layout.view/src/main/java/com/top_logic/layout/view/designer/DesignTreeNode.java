@@ -53,6 +53,10 @@ public class DesignTreeNode {
 		_sourceFile = sourceFile;
 		_property = null;
 		_children = new ArrayList<>();
+
+		for (PropertyDescriptor property : config.descriptor().getProperties()) {
+			config.addConfigurationListener(property, change -> markDirty());
+		}
 	}
 
 	/**

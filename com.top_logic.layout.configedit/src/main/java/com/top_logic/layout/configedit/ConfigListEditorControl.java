@@ -5,9 +5,11 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -45,6 +47,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 	private final PropertyDescriptor _property;
 
+	private final List<ListenerRegistration> _listeners = new ArrayList<>();
+
+	private record ListenerRegistration(ConfigurationItem item, PropertyDescriptor property,
+			ConfigurationListener listener) {
+	}
+
 	/**
 	 * Creates a {@link ConfigListEditorControl}.
 	 *
@@ -62,14 +70,33 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		_parentConfig = parentConfig;
 		_property = property;
 
-		rebuild();
+		rebuild(null);
 	}
 
 	/**
 	 * Clears all children and rebuilds them from the current list state.
+	 *
+	 * @param expandItem
+	 *        Element whose group should be rendered expanded; all others stay collapsed. May be
+	 *        {@code null}.
 	 */
+	@Override
+	protected void onCleanup() {
+		removeListeners();
+		super.onCleanup();
+	}
+
+	private void removeListeners() {
+		for (ListenerRegistration reg : _listeners) {
+			reg.item().removeConfigurationListener(reg.property(), reg.listener());
+		}
+		_listeners.clear();
+	}
+
 	@SuppressWarnings("unchecked")
-	private void rebuild() {
+	private void rebuild(ConfigurationItem expandItem) {
+		removeListeners();
+
 		for (ReactControl child : getChildren()) {
 			child.cleanupTree();
 		}
@@ -79,7 +106,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (items != null) {
 			for (int i = 0; i < items.size(); i++) {
 				ConfigurationItem item = items.get(i);
-				addChild(createElementGroup(item, i, items.size()));
+				addChild(createElementGroup(item, i, items.size(), item == expandItem));
 			}
 		}
 
@@ -94,7 +121,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		putState("children", getChildren());
 	}
 
-	private ReactFormGroupControl createElementGroup(ConfigurationItem item, int index, int listSize) {
+	private ReactFormGroupControl createElementGroup(ConfigurationItem item, int index, int listSize, boolean expanded) {
 		String label = resolveElementLabel(item, index);
 
 		// Action buttons: Move Up, Move Down, Remove.
@@ -125,15 +152,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ConfigEditorControl nestedEditor = new ConfigEditorControl(_context, item);
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, label, true, true, "subtle", true,
+			_context, label, true, !expanded, "subtle", true,
 			headerActions, List.of(nestedEditor));
 
 		// Register dynamic label update on the title property.
 		PropertyDescriptor titleProp = resolveTitleProperty(item);
 		if (titleProp != null) {
-			item.addConfigurationListener(titleProp, change -> {
+			ConfigurationListener listener = change -> {
 				group.setHeader(resolveElementLabel(item, indexOf(item)));
-			});
+			};
+			item.addConfigurationListener(titleProp, listener);
+			_listeners.add(new ListenerRegistration(item, titleProp, listener));
 		}
 
 		return group;
@@ -156,7 +185,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		Class<? extends ConfigurationItem> elementType = resolveNewElementType();
 		ConfigurationItem newItem = TypedConfiguration.newConfigItem(elementType);
 		items.add(newItem);
-		rebuild();
+		rebuild(newItem);
 	}
 
 	/**
@@ -167,7 +196,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
 		if (items != null && index >= 0 && index < items.size()) {
 			items.remove(index);
-			rebuild();
+			rebuild(null);
 		}
 	}
 
@@ -180,7 +209,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (items != null && index > 0 && index < items.size()) {
 			ConfigurationItem item = items.remove(index);
 			items.add(index - 1, item);
-			rebuild();
+			rebuild(null);
 		}
 	}
 
@@ -193,7 +222,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (items != null && index >= 0 && index < items.size() - 1) {
 			ConfigurationItem item = items.remove(index);
 			items.add(index + 1, item);
-			rebuild();
+			rebuild(null);
 		}
 	}
 

@@ -9,9 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -118,36 +116,21 @@ public class ConfigEditorElement implements UIElement {
 		// Build initial editor if a node is already selected.
 		Object initialValue = inputChannel.get();
 		if (initialValue instanceof DesignTreeNode node && !node.isVirtual()) {
-			ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem(),
-				Collections.emptySet(), true);
-			installDirtyTracking(node);
-			wrapper.addChild(editor);
+			wrapper.addChild(new ConfigEditorControl(context, node.getConfigItem(),
+				Collections.emptySet(), true));
 		}
 
 		// Listen for selection changes and rebuild the editor.
 		inputChannel.addListener((sender, oldValue, newValue) -> {
 			if (newValue instanceof DesignTreeNode node && !node.isVirtual()) {
-				ConfigEditorControl editor = new ConfigEditorControl(context, node.getConfigItem(),
-					Collections.emptySet(), true);
-				installDirtyTracking(node);
-				wrapper.setChild(editor);
+				wrapper.setChild(new ConfigEditorControl(context, node.getConfigItem(),
+					Collections.emptySet(), true));
 			} else {
 				wrapper.setChild(null);
 			}
 		});
 
 		return wrapper;
-	}
-
-	/**
-	 * Registers a {@link com.top_logic.basic.config.ConfigurationListener} on all properties of
-	 * the node's config that marks the node as dirty on any change.
-	 */
-	private static void installDirtyTracking(DesignTreeNode node) {
-		ConfigurationItem config = node.getConfigItem();
-		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			config.addConfigurationListener(property, change -> node.markDirty());
-		}
 	}
 
 }

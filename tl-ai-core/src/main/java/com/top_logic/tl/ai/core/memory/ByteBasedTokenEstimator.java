@@ -13,6 +13,7 @@ import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
@@ -82,6 +83,7 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 				case ThinkingContent t -> estimateText(t.text());
 				case ImageContent i -> IMAGE_TOKENS;
 				case ToolCall tc -> estimateText(tc.name()) + estimateJson(tc.arguments());
+				case PdfContent p -> estimateText(p.data());
 			};
 		}
 		return total;

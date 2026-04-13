@@ -24,7 +24,7 @@ import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.resources.TypePartsResource;
 import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
-import com.top_logic.ai.mcp.server.tools.LangChain4jToolAdapter;
+import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -258,7 +258,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * </ul>
 	 *
 	 * <p>
-	 * All tools are provided by the {@link LangChain4jToolAdapter} which adapts tools from the
+	 * All tools are provided by the {@link McpToolAdapter} which adapts tools from the
 	 * {@link ToolRegistry} to MCP tool specifications.
 	 * </p>
 	 *
@@ -305,7 +305,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 		// Register langchain4j tools from ToolRegistry (if available)
 		for (io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification adaptedTool :
-				LangChain4jToolAdapter.adaptAllTools()) {
+				McpToolAdapter.adaptAllTools()) {
 			builder.tools(adaptedTool);
 		}
 	}

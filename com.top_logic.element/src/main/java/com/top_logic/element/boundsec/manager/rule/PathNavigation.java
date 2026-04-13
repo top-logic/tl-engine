@@ -8,7 +8,9 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -54,8 +56,7 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		return Collections.singleton(_reference);
 	}
     
-	@Override
-	public boolean isInverse() {
+	private boolean isInverse() {
 		return getConfig().isInverse();
     }
     
@@ -67,7 +68,7 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 	private Collection<? extends TLObject> getValues(TLObject base, boolean isForward) {
 		Collection<? extends TLObject> result;
         
-		if (this.isInverse() == isForward) {
+		if (isInverse() == isForward) {
 			result = base.tReferers(_reference);
 		} else {
 			Object value = base.tValue(_reference);
@@ -88,6 +89,21 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 	public Collection<? extends TLObject> getSources(TLObject destination) {
 		return this.getValues(destination, false);
     }
+
+	@Override
+	public Collection<? extends TLObject> getPathBase(TLObject element, TLStructuredTypePart part,
+			Supplier<?> partValue) {
+		Collection<? extends TLObject> baseElements;
+		if (isInverse()) {
+			@SuppressWarnings("unchecked")
+			Collection<? extends TLObject> refValue =
+				(Collection<? extends TLObject>) CollectionUtil.asCollection(partValue.get());
+			baseElements = refValue;
+		} else {
+			baseElements = Collections.singleton(element);
+		}
+		return baseElements;
+	}
 
 	@Override
 	public void appendId(Appendable out) throws IOException {

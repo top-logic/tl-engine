@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -318,14 +317,14 @@ public class ElementAccessHelper {
 	 * 
 	 * @param obj
 	 *        The object which has changed values.
-	 * @param reference
-	 *        The reference whose value has changed.
-	 * @param referenceValue
-	 *        Supplier delivering values for the reference. When the reference is multiple, then the
-	 *        reference value may not deliver all values.
+	 * @param part
+	 *        The part whose value has changed.
+	 * @param partValue
+	 *        Supplier delivering values for the part. When the part is a multiple reference, then
+	 *        the part value may not deliver all values.
 	 */
-	public static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject obj, TLReference reference,
-			Supplier<?> referenceValue) {
+	public static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject obj, TLStructuredTypePart part,
+			Supplier<?> partValue) {
 
 		List<PathElement> path = rule.getPath();
 
@@ -333,30 +332,21 @@ public class ElementAccessHelper {
 		// locate the meta attribute, may appear more than once
 		for (int i = 0, thePathLength = path.size(); i < thePathLength; i++) {
 			PathElement elt = path.get(i);
-			if (elt.getRelevantParts().contains(reference)) {
+			if (elt.getRelevantParts().contains(part)) {
 				partIndexes.add(Integer.valueOf(i));
 			}
 		}
 
-		return navigateRoleRuleBackwards(rule, obj, referenceValue, partIndexes);
+		return navigateRoleRuleBackwards(rule, obj, part, partValue, partIndexes);
 	}
 
-	private static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject base, Supplier<?> referenceValue,
-			List<Integer> referenceIndexes) {
+	private static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject base, TLStructuredTypePart part,
+			Supplier<?> partValue, List<Integer> indexes) {
 		List<PathElement> path = rule.getPath();
 		Set<BoundObject> theResult = new HashSet<>();
-		for (Integer index : referenceIndexes) {
+		for (Integer index : indexes) {
 			PathElement thePE = path.get(index.intValue());
-			Collection<? extends TLObject> theWrapper;
-			if (thePE.isInverse()) {
-				@SuppressWarnings("unchecked")
-				Collection<? extends TLObject> refValue =
-					(Collection<? extends TLObject>) CollectionUtil.asCollection(referenceValue.get());
-				theWrapper = refValue;
-			} else {
-				theWrapper = Collections.singleton(base);
-			}
-
+			Collection<? extends TLObject> theWrapper = thePE.getPathBase(base, part, partValue);
 			addBaseObjects(path, index.intValue(), theWrapper, theResult);
 		}
 

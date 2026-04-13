@@ -5,32 +5,24 @@
  */
 package com.top_logic.ai.service.tools.registry;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigUtil;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
-
-import dev.langchain4j.agent.tool.Tool;
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.agent.tool.ToolSpecifications;
-import dev.langchain4j.service.tool.DefaultToolExecutor;
-import dev.langchain4j.service.tool.ToolExecutor;
+import com.top_logic.tl.ai.core.tool.AnnotatedTools;
+import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
- * A {@link ToolFactory} that reflectively discovers tools from a Java class with {@code @Tool}
- * annotated methods.
+ * A {@link ToolFactory} that reflectively discovers tools from a Java class with
+ * {@link com.top_logic.tl.ai.core.tool.ToolMethod @ToolMethod} annotated methods.
  *
  * <p>
  * This factory extracts tool specifications from the configured class and creates corresponding
- * executors for each tool.
+ * {@link Tool} instances for each annotated method.
  * </p>
  *
- * @see ToolSpecifications
+ * @see AnnotatedTools
  */
 public class ReflectiveToolFactory implements ToolFactory {
 
@@ -40,11 +32,12 @@ public class ReflectiveToolFactory implements ToolFactory {
 	public interface Config extends PolymorphicConfiguration<ReflectiveToolFactory> {
 
 		/**
-		 * The Java class containing {@code @Tool} annotated methods.
+		 * The Java class containing {@link com.top_logic.tl.ai.core.tool.ToolMethod @ToolMethod}
+		 * annotated methods.
 		 *
 		 * <p>
-		 * This class will be scanned for tool definitions. All public methods annotated with
-		 * {@code @Tool} will be exposed as AI tools.
+		 * This class will be scanned for tool definitions. All methods annotated with
+		 * {@code @ToolMethod} will be exposed as AI tools.
 		 * </p>
 		 */
 		@Mandatory
@@ -52,7 +45,7 @@ public class ReflectiveToolFactory implements ToolFactory {
 
 	}
 
-	private final List<ToolImplementation> _tools;
+	private final List<Tool> _tools;
 
 	/**
 	 * Creates a new {@link ReflectiveToolFactory} from the given configuration.
@@ -62,53 +55,19 @@ public class ReflectiveToolFactory implements ToolFactory {
 	 * @param config
 	 *        The configuration.
 	 */
-	public ReflectiveToolFactory(InstantiationContext context, Config config) throws ConfigurationException {
+	public ReflectiveToolFactory(InstantiationContext context, Config config) {
 		Class<?> toolClass = config.getToolClass();
-
-		// Create an instance of the tool class using ConfigUtil
-		Object toolInstance = ConfigUtil.getInstance(toolClass);
-		if (toolInstance == null) {
-			context.error("Failed to instantiate tool class " + toolClass.getName()
-				+ ": Class must have a public no-argument constructor.");
-		}
-
-		// Extract tool specifications and create executors from the class
-		if (toolInstance != null) {
-			_tools = new ArrayList<>();
-
-			// Get all tool specifications from the class
-			for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(toolClass)) {
-				// Find the method for this tool specification
-				Method method = findMethodForToolSpec(toolClass, spec.name());
-				if (method != null) {
-					// Create executor for this method
-					ToolExecutor executor = new DefaultToolExecutor(toolInstance, method);
-					_tools.add(new ToolImplementation(spec, executor));
-				}
-			}
-		} else {
+		try {
+			Object toolInstance = toolClass.getDeclaredConstructor().newInstance();
+			_tools = AnnotatedTools.from(toolInstance);
+		} catch (Exception e) {
+			context.error("Failed to instantiate tool class: " + toolClass.getName(), e);
 			_tools = List.of();
 		}
 	}
 
-	/**
-	 * Finds the method with @Tool annotation matching the given tool name.
-	 */
-	private static Method findMethodForToolSpec(Class<?> clazz, String toolName) {
-		for (Method method : clazz.getDeclaredMethods()) {
-			Tool toolAnnotation = method.getAnnotation(Tool.class);
-			if (toolAnnotation != null) {
-				String name = toolAnnotation.name().isEmpty() ? method.getName() : toolAnnotation.name();
-				if (name.equals(toolName)) {
-					return method;
-				}
-			}
-		}
-		return null;
-	}
-
 	@Override
-	public List<com.top_logic.ai.service.tools.registry.ToolImplementation> createTools() {
+	public List<Tool> createTools() {
 		return _tools;
 	}
 

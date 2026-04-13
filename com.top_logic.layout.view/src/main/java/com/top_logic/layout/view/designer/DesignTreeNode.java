@@ -96,6 +96,25 @@ public abstract class DesignTreeNode {
 	}
 
 	/**
+	 * Disposes this node and all descendants. Subclasses release resources by overriding
+	 * {@link #onCleanup()}.
+	 */
+	public final void cleanup() {
+		for (DesignTreeNode child : _children) {
+			child.cleanup();
+		}
+		onCleanup();
+	}
+
+	/**
+	 * Hook for subclasses to release resources held by this node (e.g. configuration listeners).
+	 * The default implementation does nothing.
+	 */
+	protected void onCleanup() {
+		// Hook for subclasses.
+	}
+
+	/**
 	 * The tag name for display.
 	 */
 	public abstract String getTagName();

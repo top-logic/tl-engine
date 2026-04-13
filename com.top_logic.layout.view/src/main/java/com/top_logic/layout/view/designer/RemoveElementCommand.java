@@ -30,6 +30,7 @@ public class RemoveElementCommand {
 		}
 		parent.getChildren().remove(node);
 		node.setParent(null);
+		node.cleanup();
 		parent.markDirty();
 		return true;
 	}

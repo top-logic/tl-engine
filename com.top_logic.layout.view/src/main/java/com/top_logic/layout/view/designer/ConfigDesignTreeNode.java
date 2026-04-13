@@ -5,8 +5,12 @@
  */
 package com.top_logic.layout.view.designer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.TagName;
 
@@ -18,6 +22,11 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 	private static final String[] LABEL_PROPERTIES = { "name", "title-key", "attribute", "view", "id" };
 
 	private final ConfigurationItem _config;
+
+	private final List<ListenerRegistration> _listeners = new ArrayList<>();
+
+	private record ListenerRegistration(PropertyDescriptor property, ConfigurationListener listener) {
+	}
 
 	/**
 	 * Creates a {@link ConfigDesignTreeNode}.
@@ -32,8 +41,18 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 		_config = config;
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			config.addConfigurationListener(property, change -> markDirty());
+			ConfigurationListener listener = change -> markDirty();
+			config.addConfigurationListener(property, listener);
+			_listeners.add(new ListenerRegistration(property, listener));
 		}
+	}
+
+	@Override
+	protected void onCleanup() {
+		for (ListenerRegistration reg : _listeners) {
+			_config.removeConfigurationListener(reg.property(), reg.listener());
+		}
+		_listeners.clear();
 	}
 
 	/**

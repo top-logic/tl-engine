@@ -103,9 +103,12 @@ public class RevertDesignCommand implements ViewCommand {
 			throw new RuntimeException("Failed to reload design tree from: " + viewPath, ex);
 		}
 
-		// 3. Resolve the design-tree channel and set the new root, triggering a UI rebuild.
+		// 3. Resolve the design-tree channel, dispose the old tree, and set the new root.
 		if (context instanceof ViewContext viewContext) {
 			ViewChannel designTreeChannel = viewContext.resolveChannel(_config.getDesignTree());
+			if (designTreeChannel.get() instanceof DesignTreeNode oldRoot) {
+				oldRoot.cleanup();
+			}
 			designTreeChannel.set(newRoot);
 
 			// 4. Clear the selection channel if configured.

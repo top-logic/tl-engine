@@ -2,10 +2,8 @@
 
 <objectlist>
 
-	<!-- Put your database schema definitions here, for example: -->
-	<!-- 
 	<metaobject
-		object_name="MyTable"
+		object_name="AIAgent"
 		super_class="TLObject"
 	>
 		<mo_attribute
@@ -13,11 +11,17 @@
 			att_type="String"
 			db_size="255"
 		/>
+	</metaobject>
+
+	<metaobject
+		object_name="AISkill"
+		super_class="TLObject"
+	>
 		<mo_attribute
-			att_name="x"
-			att_type="Integer"
+			att_name="name"
+			att_type="String"
+			db_size="255"
 		/>
 	</metaobject>
- 	-->
-	
+
 </objectlist>

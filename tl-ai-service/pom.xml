@@ -27,6 +27,11 @@
 
 		<dependency>
 			<groupId>com.top-logic</groupId>
+			<artifactId>tl-element</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>

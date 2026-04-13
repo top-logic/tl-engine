@@ -10,25 +10,102 @@
 		</annotations>
 		<types>
 
-			<!-- Put your application types here, for example: -->
-			<!-- 
-			<class name="A">
+			<class name="Agent">
+				<annotations>
+					<table name="AIAgent"/>
+				</annotations>
 				<attributes>
-					<property name="name" type="tl.core:String" mandatory="true"/>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="description"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<property name="model"
+						type="tl.core:String"
+					>
+						<annotations>
+							<options>
+								<all-model-names/>
+							</options>
+						</annotations>
+					</property>
+					<property name="systemPrompt"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<property name="maxTokens"
+						type="tl.core:Integer"
+					/>
+					<property name="temperature"
+						type="tl.core:Double"
+					/>
+					<property name="topP"
+						type="tl.core:Double"
+					/>
+					<property name="timeoutSeconds"
+						type="tl.core:Integer"
+					/>
+					<property name="maxRetries"
+						type="tl.core:Integer"
+					/>
+					<property name="tools"
+						type="tl.core:String"
+						multiple="true"
+					>
+						<annotations>
+							<options>
+								<all-tool-names/>
+							</options>
+						</annotations>
+					</property>
+					<reference name="skills"
+						kind="forwards"
+						multiple="true"
+						type="Skill"
+					/>
 				</attributes>
 			</class>
-			
-			<class name="B">
-				<generalizations>
-					<generalization type="A"/>
-				</generalizations>
-				
+
+			<class name="Skill">
+				<annotations>
+					<table name="AISkill"/>
+				</annotations>
 				<attributes>
-					<property name="x" type="tl.core:Integer"/>
-					<reference name="others" type="A" multiple="true"/>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="description"
+						type="tl.core:String"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<property name="content"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<reference name="agents"
+						inverse-reference="skills"
+						kind="backwards"
+						multiple="true"
+						type="Agent"
+					/>
 				</attributes>
 			</class>
-		 -->
 
 		</types>
 	</module>

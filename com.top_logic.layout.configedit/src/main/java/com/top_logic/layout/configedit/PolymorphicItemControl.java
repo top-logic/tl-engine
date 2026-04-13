@@ -168,8 +168,15 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	 * Resolves the available configuration type options for the given property.
 	 */
 	public static List<String> resolveTypeOptions(PropertyDescriptor property) {
+		return resolveTypeOptions(property.getType());
+	}
+
+	/**
+	 * Resolves the available configuration type options for the given base type.
+	 */
+	public static List<String> resolveTypeOptions(Class<?> baseType) {
 		Collection<Class<?>> specializations =
-			TypeIndex.getInstance().getSpecializations(property.getType(), true, true, false);
+			TypeIndex.getInstance().getSpecializations(baseType, true, true, false);
 		List<String> result = new ArrayList<>();
 		for (Class<?> cls : specializations) {
 			result.add(cls.getName());

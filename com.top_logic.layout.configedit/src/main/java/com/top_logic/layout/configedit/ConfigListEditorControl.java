@@ -8,21 +8,29 @@ package com.top_logic.layout.configedit;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.util.Resources;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactControl} that renders a full editor for a LIST property of a
@@ -156,10 +164,14 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		List<ReactControl> headerActions = List.of(moveUpButton, moveDownButton, removeButton);
 
-		ConfigEditorControl nestedEditor = new ConfigEditorControl(_context, item);
+		List<ReactControl> bodyChildren = new ArrayList<>();
+		if (isPolymorphicList()) {
+			bodyChildren.add(createTypeSelector(item));
+		}
+		bodyChildren.add(new ConfigEditorControl(_context, item));
 		ReactFormGroupControl group = new ReactFormGroupControl(
 			_context, null, true, !expanded, "subtle", true,
-			headerActions, List.of(nestedEditor));
+			headerActions, bodyChildren);
 		group.setHeader(createHeaderControl(label));
 
 		// Register dynamic label update on the title property.
@@ -177,6 +189,66 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 	private ReactTextControl createHeaderControl(Label label) {
 		return new ReactTextControl(_context, label.text(), label.placeholder() ? PLACEHOLDER_CSS : null);
+	}
+
+	private boolean isPolymorphicList() {
+		return PolymorphicConfiguration.class.isAssignableFrom(_property.getElementType());
+	}
+
+	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item) {
+		List<String> options = PolymorphicItemControl.resolveTypeOptions(_property.getElementType());
+		String currentType = item.descriptor().getConfigurationInterface().getName();
+		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentType, options, false);
+
+		LabelProvider labelProvider = fqcn -> {
+			if (fqcn instanceof String name) {
+				int dot = name.lastIndexOf('.');
+				return dot >= 0 ? name.substring(dot + 1) : name;
+			}
+			return fqcn != null ? fqcn.toString() : "";
+		};
+
+		typeModel.addListener(new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				onTypeChanged(item, (String) newValue);
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// Ignored.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				// Ignored.
+			}
+		});
+
+		ReactSelectFormFieldControl typeSelect =
+			new ReactSelectFormFieldControl(_context, typeModel, labelProvider);
+		return new ReactFormFieldChromeControl(_context, "Type", typeSelect);
+	}
+
+	@SuppressWarnings("unchecked")
+	private void onTypeChanged(ConfigurationItem oldItem, String newTypeFqcn) {
+		if (newTypeFqcn == null || newTypeFqcn.isEmpty()) {
+			return;
+		}
+		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
+		int index = items.indexOf(oldItem);
+		if (index < 0) {
+			return;
+		}
+		try {
+			Class<? extends ConfigurationItem> newCls =
+				(Class<? extends ConfigurationItem>) Class.forName(newTypeFqcn);
+			ConfigurationItem replacement = TypedConfiguration.newConfigItem(newCls);
+			items.set(index, replacement);
+			rebuild(replacement);
+		} catch (ClassNotFoundException ex) {
+			Logger.error("Unknown configuration class: " + newTypeFqcn, ex, ConfigListEditorControl.class);
+		}
 	}
 
 	@SuppressWarnings("unchecked")

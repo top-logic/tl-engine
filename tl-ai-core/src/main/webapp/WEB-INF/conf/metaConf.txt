@@ -1,2 +1,3 @@
 db-default.xml
 tl-ai-core.conf.xml
+tl-ai-openai.conf.xml

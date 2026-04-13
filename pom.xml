@@ -10,7 +10,6 @@
   <modules>
     <module>tl-ai-mcp-server</module>
     <module>tl-chat</module>
-    <module>tl-ai-service</module>
     <module>tl-ai-demo</module>
     <module>tl-ai-vector-index</module>
     <module>tl-ai-core</module>

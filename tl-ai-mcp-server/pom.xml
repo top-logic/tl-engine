@@ -29,7 +29,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-ai-service</artifactId>
+			<artifactId>tl-ai-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 

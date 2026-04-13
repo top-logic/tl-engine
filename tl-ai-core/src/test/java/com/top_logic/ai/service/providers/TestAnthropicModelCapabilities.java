@@ -9,8 +9,10 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.service.agents.AgentConfig;
+
 /**
- * Tests for {@link AnthropicChatModelFactory#anthropicModelCapabilities(String)}.
+ * Tests for {@link AgentConfig#anthropicModelCapabilities(String)}.
  */
 public class TestAnthropicModelCapabilities extends TestCase {
 
@@ -18,7 +20,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Opus 4.6 supports both enabled and adaptive thinking.
 	 */
 	public void testOpus46HasAdaptiveAndEnabled() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("claude-opus-4-6-20260401");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("claude-opus-4-6-20260401");
 		assertTrue(caps.contains(ModelCapability.THINKING_ENABLED));
 		assertTrue(caps.contains(ModelCapability.THINKING_ADAPTIVE));
 	}
@@ -27,7 +29,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Sonnet 4.6 supports both enabled and adaptive thinking.
 	 */
 	public void testSonnet46HasAdaptiveAndEnabled() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("claude-sonnet-4-6-20260401");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("claude-sonnet-4-6-20260401");
 		assertTrue(caps.contains(ModelCapability.THINKING_ENABLED));
 		assertTrue(caps.contains(ModelCapability.THINKING_ADAPTIVE));
 	}
@@ -36,7 +38,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Haiku 4.5 supports enabled thinking only.
 	 */
 	public void testHaiku45HasEnabledOnly() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("claude-haiku-4-5-20250301");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("claude-haiku-4-5-20250301");
 		assertTrue(caps.contains(ModelCapability.THINKING_ENABLED));
 		assertFalse(caps.contains(ModelCapability.THINKING_ADAPTIVE));
 	}
@@ -45,7 +47,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Sonnet 4 supports enabled thinking only.
 	 */
 	public void testSonnet4HasEnabledOnly() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("claude-sonnet-4-20250514");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("claude-sonnet-4-20250514");
 		assertTrue(caps.contains(ModelCapability.THINKING_ENABLED));
 		assertFalse(caps.contains(ModelCapability.THINKING_ADAPTIVE));
 	}
@@ -54,7 +56,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Opus 4.5 supports enabled thinking only.
 	 */
 	public void testOpus45HasEnabledOnly() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("claude-opus-4-5-20250501");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("claude-opus-4-5-20250501");
 		assertTrue(caps.contains(ModelCapability.THINKING_ENABLED));
 		assertFalse(caps.contains(ModelCapability.THINKING_ADAPTIVE));
 	}
@@ -63,7 +65,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Claude 3.7 Sonnet supports enabled thinking only.
 	 */
 	public void testSonnet37HasEnabledOnly() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("claude-3-7-sonnet-20250219");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("claude-3-7-sonnet-20250219");
 		assertTrue(caps.contains(ModelCapability.THINKING_ENABLED));
 		assertFalse(caps.contains(ModelCapability.THINKING_ADAPTIVE));
 	}
@@ -72,7 +74,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Claude 3.5 Sonnet does not support thinking.
 	 */
 	public void testSonnet35HasNoThinking() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("claude-3-5-sonnet-20241022");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("claude-3-5-sonnet-20241022");
 		assertTrue(caps.isEmpty());
 	}
 
@@ -80,7 +82,7 @@ public class TestAnthropicModelCapabilities extends TestCase {
 	 * Unknown model returns empty capabilities.
 	 */
 	public void testUnknownModelHasNoThinking() {
-		Set<ModelCapability> caps = AnthropicChatModelFactory.anthropicModelCapabilities("some-unknown-model");
+		Set<ModelCapability> caps = AgentConfig.anthropicModelCapabilities("some-unknown-model");
 		assertTrue(caps.isEmpty());
 	}
 }

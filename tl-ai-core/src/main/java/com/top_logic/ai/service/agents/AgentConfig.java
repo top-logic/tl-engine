@@ -9,14 +9,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.ChatModelFactory;
-import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
-import com.top_logic.ai.service.providers.MistralChatModelFactory;
 import com.top_logic.ai.service.providers.ModelCapability;
-import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.NamedConfigMandatory;
@@ -190,7 +187,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * The LLM model name to use for this agent (e.g. {@code "claude-sonnet-4-20250514"}).
 	 *
 	 * <p>
-	 * Options are populated from the models registered in {@link AIService}.
+	 * Options are populated from the models listed in the {@link AgentRegistry} provider configs.
 	 * </p>
 	 */
 	@Name(MODEL)
@@ -540,17 +537,17 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Provides all model names registered in {@link AIService} as selection options.
+	 * Provides all model names registered in {@link AgentRegistry} as selection options.
 	 */
 	class AllModelNames extends Function0<List<String>> {
 
 		@Override
 		public List<String> apply() {
-			AIService service = AIService.getInstance();
-			if (service == null) {
+			AgentRegistry registry = AgentRegistry.getInstance();
+			if (registry == null) {
 				return Collections.emptyList();
 			}
-			return new ArrayList<>(service.getModelNames());
+			return new ArrayList<>(registry.getModelNames());
 		}
 	}
 
@@ -625,52 +622,53 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Generic provider capability check for the selected model.
+	 * Generic provider name check for the selected model.
 	 */
 	abstract class IsProviderCapable extends Function1<Boolean, String> {
 
 		/**
-		 * The provider type to check for.
+		 * The substring the provider name must contain.
 		 */
-		protected abstract Class<? extends ChatModelFactory> providerType();
+		protected abstract String providerNameFragment();
 
 		@Override
 		public Boolean apply(String modelName) {
-			ChatModelFactory factory = getFactory(modelName);
-			return Boolean.valueOf(factory != null && providerType().isInstance(factory));
+			String providerName = getProviderName(modelName);
+			return Boolean.valueOf(providerName != null
+				&& providerName.toLowerCase(Locale.ROOT).contains(providerNameFragment()));
 		}
 	}
 
 	/**
-	 * Checks whether the selected model is served by {@link OpenAIChatModelFactory}.
+	 * Checks whether the selected model is served by an OpenAI provider.
 	 */
 	class IsOpenAIProvider extends IsProviderCapable {
 
 		@Override
-		protected Class<? extends ChatModelFactory> providerType() {
-			return OpenAIChatModelFactory.class;
+		protected String providerNameFragment() {
+			return "openai";
 		}
 	}
 
 	/**
-	 * Checks whether the selected model is served by {@link AnthropicChatModelFactory}.
+	 * Checks whether the selected model is served by an Anthropic provider.
 	 */
 	class IsAnthropicProvider extends IsProviderCapable {
 
 		@Override
-		protected Class<? extends ChatModelFactory> providerType() {
-			return AnthropicChatModelFactory.class;
+		protected String providerNameFragment() {
+			return "anthropic";
 		}
 	}
 
 	/**
-	 * Checks whether the selected model is served by {@link MistralChatModelFactory}.
+	 * Checks whether the selected model is served by a Mistral provider.
 	 */
 	class IsMistralProvider extends IsProviderCapable {
 
 		@Override
-		protected Class<? extends ChatModelFactory> providerType() {
-			return MistralChatModelFactory.class;
+		protected String providerNameFragment() {
+			return "mistral";
 		}
 	}
 
@@ -787,23 +785,95 @@ public interface AgentConfig extends NamedConfigMandatory {
 		JSON
 	}
 
-	private static ChatModelFactory getFactory(String modelName) {
+	/**
+	 * Returns the provider name for a given model, or {@code null} if not found.
+	 */
+	private static String getProviderName(String modelName) {
 		if (modelName == null || modelName.isEmpty()) {
 			return null;
 		}
-		AIService service = AIService.getInstance();
-		if (service == null) {
+		AgentRegistry registry = AgentRegistry.getInstance();
+		if (registry == null) {
 			return null;
 		}
-		return service.getFactory(modelName);
+		Map<String, AgentRegistry.ProviderConfig> providers = registry.getConfig().getProviders();
+		for (Map.Entry<String, AgentRegistry.ProviderConfig> entry : providers.entrySet()) {
+			List<String> models = entry.getValue().getModels();
+			if (models != null && models.contains(modelName)) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 
+	/**
+	 * Returns the capabilities for a given model based on its provider name and model name
+	 * heuristics.
+	 */
 	private static Set<ModelCapability> getCapabilities(String modelName) {
-		ChatModelFactory factory = getFactory(modelName);
-		if (factory == null) {
+		String providerName = getProviderName(modelName);
+		if (providerName == null) {
 			return EnumSet.noneOf(ModelCapability.class);
 		}
-		return factory.getModelCapabilities(modelName);
+		String lowerProvider = providerName.toLowerCase(Locale.ROOT);
+		if (lowerProvider.contains("anthropic")) {
+			return anthropicModelCapabilities(modelName);
+		}
+		if (lowerProvider.contains("openai")) {
+			return openAIModelCapabilities(modelName);
+		}
+		return EnumSet.noneOf(ModelCapability.class);
+	}
+
+	/**
+	 * Determines Anthropic model capabilities from the model name.
+	 */
+	public static Set<ModelCapability> anthropicModelCapabilities(String modelName) {
+		if (modelName == null) {
+			return EnumSet.noneOf(ModelCapability.class);
+		}
+		String name = modelName.toLowerCase(Locale.ROOT);
+
+		if (name.contains("opus-4-6") || name.contains("sonnet-4-6")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED, ModelCapability.THINKING_ADAPTIVE);
+		}
+		if (name.contains("opus-4") || name.contains("sonnet-4")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED);
+		}
+		if (name.contains("haiku-4-5")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED);
+		}
+		if (name.contains("claude-3-7-sonnet")) {
+			return EnumSet.of(ModelCapability.THINKING_ENABLED);
+		}
+		return EnumSet.noneOf(ModelCapability.class);
+	}
+
+	/**
+	 * Determines OpenAI model capabilities from the model name.
+	 */
+	public static Set<ModelCapability> openAIModelCapabilities(String modelName) {
+		if (modelName == null) {
+			return EnumSet.noneOf(ModelCapability.class);
+		}
+		String name = modelName.toLowerCase(Locale.ROOT);
+
+		if (name.startsWith("o3") || name.startsWith("o4-mini")) {
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+		if (name.equals("o1") || name.startsWith("o1-")) {
+			if (name.startsWith("o1-mini") || name.startsWith("o1-preview")) {
+				return EnumSet.noneOf(ModelCapability.class);
+			}
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+		if (name.startsWith("gpt-5")) {
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+		if (name.startsWith("codex-mini")) {
+			return EnumSet.of(ModelCapability.REASONING_EFFORT);
+		}
+		return EnumSet.noneOf(ModelCapability.class);
 	}
 
 	// --- Constraint algorithms ---

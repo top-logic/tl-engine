@@ -74,7 +74,7 @@ public interface ChatAgentConfig extends AgentConfig {
 	 *
 	 * <p>
 	 * For each target agent name listed here, a dedicated {@code delegate_to_<name>} tool with a
-	 * self-describing {@link dev.langchain4j.agent.tool.ToolSpecification} is created at runtime by
+	 * self-describing {@link com.top_logic.tl.ai.core.provider.ToolSchema} is created at runtime by
 	 * the {@link AgentRegistry}.
 	 * </p>
 	 */

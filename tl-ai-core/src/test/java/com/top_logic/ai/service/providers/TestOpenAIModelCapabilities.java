@@ -9,8 +9,10 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.service.agents.AgentConfig;
+
 /**
- * Tests for {@link OpenAIChatModelFactory#openAIModelCapabilities(String)}.
+ * Tests for {@link AgentConfig#openAIModelCapabilities(String)}.
  */
 public class TestOpenAIModelCapabilities extends TestCase {
 
@@ -18,7 +20,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code o1} supports reasoning effort.
 	 */
 	public void testO1HasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("o1");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("o1");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -26,7 +28,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code o1-2024-12-17} (versioned o1) supports reasoning effort.
 	 */
 	public void testO1VersionedHasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("o1-2024-12-17");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("o1-2024-12-17");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -34,7 +36,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code o1-mini} does not support reasoning effort.
 	 */
 	public void testO1MiniHasNoReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("o1-mini");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("o1-mini");
 		assertTrue(caps.isEmpty());
 	}
 
@@ -42,7 +44,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code o1-preview} does not support reasoning effort.
 	 */
 	public void testO1PreviewHasNoReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("o1-preview");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("o1-preview");
 		assertTrue(caps.isEmpty());
 	}
 
@@ -50,7 +52,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code o3} supports reasoning effort.
 	 */
 	public void testO3HasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("o3");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("o3");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -58,7 +60,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code o3-mini} supports reasoning effort.
 	 */
 	public void testO3MiniHasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("o3-mini");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("o3-mini");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -66,7 +68,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code o4-mini} supports reasoning effort.
 	 */
 	public void testO4MiniHasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("o4-mini");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("o4-mini");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -74,7 +76,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code gpt-5} supports reasoning effort.
 	 */
 	public void testGpt5HasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("gpt-5");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("gpt-5");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -82,7 +84,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code gpt-5.1} supports reasoning effort.
 	 */
 	public void testGpt51HasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("gpt-5.1");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("gpt-5.1");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -90,7 +92,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code gpt-4o} does not support reasoning effort.
 	 */
 	public void testGpt4oHasNoReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("gpt-4o");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("gpt-4o");
 		assertTrue(caps.isEmpty());
 	}
 
@@ -98,7 +100,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code gpt-4o-mini} does not support reasoning effort.
 	 */
 	public void testGpt4oMiniHasNoReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("gpt-4o-mini");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("gpt-4o-mini");
 		assertTrue(caps.isEmpty());
 	}
 
@@ -106,7 +108,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code codex-mini-2025-05-16} supports reasoning effort.
 	 */
 	public void testCodexMiniHasReasoningEffort() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities("codex-mini-2025-05-16");
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities("codex-mini-2025-05-16");
 		assertTrue(caps.contains(ModelCapability.REASONING_EFFORT));
 	}
 
@@ -114,7 +116,7 @@ public class TestOpenAIModelCapabilities extends TestCase {
 	 * {@code null} model name returns empty capabilities.
 	 */
 	public void testNullModelReturnsEmpty() {
-		Set<ModelCapability> caps = OpenAIChatModelFactory.openAIModelCapabilities(null);
+		Set<ModelCapability> caps = AgentConfig.openAIModelCapabilities(null);
 		assertTrue(caps.isEmpty());
 	}
 }

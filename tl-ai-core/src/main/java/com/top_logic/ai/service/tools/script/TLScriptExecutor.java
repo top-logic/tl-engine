@@ -44,7 +44,7 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * This class provides the shared logic for TLScript validation and execution used by both
- * langchain4j tools (in tl-ai-service) and MCP tools (in tl-ai-mcp-server). It performs:
+ * AI tools (in tl-ai-core) and MCP tools (in tl-ai-mcp-server). It performs:
  * </p>
  * <ul>
  * <li>Syntax validation (parser errors)</li>

@@ -6,7 +6,10 @@
 package com.top_logic.ai.service.agents.background;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -36,9 +39,10 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.util.model.ModelService;
-
-import dev.langchain4j.agentic.UntypedAgent;
 
 /**
  * Central execution pipeline for background agents.
@@ -267,15 +271,16 @@ public class BackgroundAgentExecutor {
 
 	private String invokeAgent(String agentName, String input) {
 		try {
-			Object response = ThreadContextManager.inSystemInteraction(
+			return ThreadContextManager.inSystemInteraction(
 				BackgroundAgentExecutor.class,
 				() -> {
-					UntypedAgent agent = _timeoutOverride != null
-						? _registry.buildUntypedAgent(agentName, _timeoutOverride)
-						: _registry.buildUntypedAgent(agentName);
-					return agent.invoke(Map.of("message", input));
+					Conversation conversation = new Conversation();
+					conversation.add(new UserMessage(
+						UUID.randomUUID().toString(),
+						Instant.now(),
+						List.of(new TextContent(input))));
+					return _registry.runAgent(agentName, conversation, null, event -> { });
 				});
-			return response != null ? response.toString() : null;
 		} catch (Exception ex) {
 			Logger.error("Agent invocation failed for '" + agentName + "'",
 				ex, BackgroundAgentExecutor.class);

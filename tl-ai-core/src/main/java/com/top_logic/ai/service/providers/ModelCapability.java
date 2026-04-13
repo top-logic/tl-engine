@@ -13,7 +13,7 @@ package com.top_logic.ai.service.providers;
  * combinations.
  * </p>
  *
- * @see com.top_logic.ai.service.ChatModelFactory#getModelCapabilities(String)
+ * @see com.top_logic.ai.service.agents.AgentConfig
  */
 public enum ModelCapability {
 

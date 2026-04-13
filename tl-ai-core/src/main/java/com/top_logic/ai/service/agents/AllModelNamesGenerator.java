@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.ai.service.AIService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -26,7 +25,7 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * {@code tl.ai.core:Agent}.
  * </p>
  *
- * @see AIService#getModelNames()
+ * @see AgentRegistry#getModelNames()
  */
 @InApp
 public class AllModelNamesGenerator extends ListGeneratorAdaptor {
@@ -47,10 +46,10 @@ public class AllModelNamesGenerator extends ListGeneratorAdaptor {
 
 	@Override
 	public List<?> generateList(EditContext editContext) {
-		AIService service = AIService.getInstance();
-		if (service == null) {
+		AgentRegistry registry = AgentRegistry.getInstance();
+		if (registry == null) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<>(service.getModelNames());
+		return new ArrayList<>(registry.getModelNames());
 	}
 }

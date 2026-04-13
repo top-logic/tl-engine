@@ -13,8 +13,6 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance>
 				<modules>
-					<!-- AI Service for AI/LLM API integration -->
-					<module key="com.top_logic.ai.service.AIService$Module" value="true"/>
 					<!-- Tool Registry for managing AI tool providers -->
 					<module key="com.top_logic.ai.service.tools.registry.ToolRegistry$Module" value="true"/>
 					<!-- Agent Registry for runtime-configurable agent definitions -->
@@ -156,33 +154,7 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.ai.service.AIService">
-			<instance class="com.top_logic.ai.service.AIService"
-				default-model="mistral-large-latest"
-			>
-				<factories>
-					<factory class="com.top_logic.ai.service.providers.OpenAIChatModelFactory"
-						api-key="%OPENAI_API_KEY%"
-						base-url="https://api.openai.com/v1"
-						max-idle-models="5"
-						max-pool-size="10"
-						models=""
-					/>
-					<factory class="com.top_logic.ai.service.providers.AnthropicChatModelFactory"
-						api-key="%ANTHROPIC_API_KEY%"
-						base-url="https://api.anthropic.com/v1"
-						max-idle-models="5"
-						max-pool-size="10"
-						models=""
-					/>
-					<factory class="com.top_logic.ai.service.providers.MistralChatModelFactory"
-						api-key="%MISTRAL_API_KEY%"
-						base-url="https://api.mistral.ai/v1"
-						max-idle-models="5"
-						max-pool-size="10"
-					/>
-				</factories>
-			</instance>
-		</config>
+		<!-- Provider credentials are configured via AgentRegistry providers section.
+		     Override in application-specific autoconf files. -->
 	</services>
 </application>

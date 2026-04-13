@@ -5,89 +5,83 @@
  */
 package com.top_logic.ai.service.agents;
 
-import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
-import com.top_logic.ai.service.AIService;
-import com.top_logic.ai.service.ChatModelFactory;
 import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.scheduler.BackgroundAgentTask;
 import com.top_logic.ai.service.agents.background.trigger.ScheduledTrigger;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
-import com.top_logic.ai.service.providers.AnthropicChatModelFactory;
-import com.top_logic.ai.service.providers.MistralChatModelFactory;
-import com.top_logic.ai.service.providers.ModelCapability;
-import com.top_logic.ai.service.providers.OpenAIChatModelFactory;
 import com.top_logic.ai.service.skills.Skill;
 import com.top_logic.ai.service.skills.SkillConfig;
 import com.top_logic.ai.service.skills.SkillRegistry;
 import com.top_logic.ai.service.skills.SkillTool;
-import com.top_logic.ai.service.tools.TimelineAgentListener;
-import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
-import com.top_logic.ai.service.tools.registry.ToolImplementation;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.tl.ai.core.agent.AgentLoop;
+import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.ContentPart;
+import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.Message;
+import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
+import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
+import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.tool.AnnotatedTools;
+import com.top_logic.tl.ai.core.tool.Tool;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.agent.tool.ToolSpecifications;
-import dev.langchain4j.agentic.AgenticServices;
-import dev.langchain4j.agentic.UntypedAgent;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ResponseFormat;
-import dev.langchain4j.model.chat.request.json.JsonObjectSchema;
-import dev.langchain4j.model.mistralai.MistralAiChatModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.data.message.ToolExecutionResultMessage;
-import dev.langchain4j.service.tool.DefaultToolExecutor;
-import dev.langchain4j.service.tool.ToolExecutor;
-
 /**
- * Registry of runtime-configurable agents and skills.
+ * Registry of runtime-configurable agents, skills, and LLM provider connections.
  *
  * <p>
  * Each agent is declared in XML via {@link AgentConfig} and holds its LLM model name, optional
  * thinking parameters, system prompt, tools, and skills. Skills are declared via
- * {@link SkillConfig}. This service validates the configurations at startup and provides factory
- * methods to build fully-wired <i>LangChain4j</i> agents from them.
+ * {@link SkillConfig}. LLM provider connections are configured via {@link ProviderConfig}.
  * </p>
  *
  * <p>
- * Model building is provider-aware: if the referenced model is served by a known provider
- * ({@link AnthropicChatModelFactory}, {@link MistralChatModelFactory},
- * {@link OpenAIChatModelFactory}), the agent's parameters (thinking, temperature, max tokens) are
- * applied to a fresh, unpooled model instance. Otherwise, the pooled model from {@link AIService}
- * is returned as a fallback.
+ * This service validates all configurations at startup, builds provider connections, and provides
+ * the {@link #runAgent(String, Conversation, ConversationMemory, AgentEventListener)} method
+ * to run agents using the tl-ai-core {@link AgentLoop}.
  * </p>
  *
  * @see AgentConfig
  * @see SkillConfig
- * @see AIService
+ * @see ProviderConfig
+ * @see AgentLoop
  */
 @ServiceDependencies(Scheduler.Module.class)
 public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
@@ -131,6 +125,20 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		String SKILLS = "skills";
 
 		/**
+		 * Configuration property name for providers.
+		 *
+		 * @see #getProviders()
+		 */
+		String PROVIDERS = "providers";
+
+		/**
+		 * Configuration property name for default model.
+		 *
+		 * @see #getDefaultModel()
+		 */
+		String DEFAULT_MODEL = "default-model";
+
+		/**
 		 * The configured agents, keyed by {@link AgentConfig#getName() agent name}.
 		 *
 		 * <p>
@@ -155,6 +163,97 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		@EntryTag("skill")
 		@Key(SkillConfig.NAME_ATTRIBUTE)
 		Map<String, SkillConfig> getSkills();
+
+		/**
+		 * The configured LLM providers, keyed by provider name.
+		 *
+		 * <p>
+		 * Each provider entry specifies connection details (API key, base URL) and a
+		 * comma-separated list of model names it serves. When building an agent, the registry
+		 * matches the agent's model name against these lists to select the correct provider.
+		 * </p>
+		 */
+		@Name(PROVIDERS)
+		@EntryTag("provider")
+		@Key(ProviderConfig.NAME_ATTRIBUTE)
+		Map<String, ProviderConfig> getProviders();
+
+		/**
+		 * The default model name to use when no model is explicitly specified on an agent.
+		 *
+		 * <p>
+		 * This should match a model listed in one of the {@link #getProviders() providers}.
+		 * </p>
+		 */
+		@Name(DEFAULT_MODEL)
+		@Nullable
+		String getDefaultModel();
+	}
+
+	/**
+	 * Configuration for a single LLM provider.
+	 *
+	 * <p>
+	 * Each provider has a name (e.g. {@code "anthropic"}, {@code "openai"}, {@code "mistral"}),
+	 * API credentials, and a comma-separated list of model names it serves.
+	 * </p>
+	 */
+	public interface ProviderConfig extends NamedConfigMandatory {
+
+		/** @see #getApiKey() */
+		String API_KEY = "api-key";
+
+		/** @see #getBaseUrl() */
+		String BASE_URL = "base-url";
+
+		/** @see #getModels() */
+		String MODELS = "models";
+
+		/** @see #getVersion() */
+		String VERSION = "version";
+
+		/**
+		 * The API key for authentication with the provider.
+		 */
+		@Name(API_KEY)
+		@Mandatory
+		@Encrypted
+		String getApiKey();
+
+		/**
+		 * The base URL for the provider's API.
+		 *
+		 * <p>
+		 * Optional. When not set, the default URL for the provider type is used.
+		 * </p>
+		 */
+		@Name(BASE_URL)
+		@Nullable
+		String getBaseUrl();
+
+		/**
+		 * Comma-separated list of model names served by this provider.
+		 *
+		 * <p>
+		 * Used to match agent model references to the correct provider. May be empty if the
+		 * provider name alone is sufficient for matching.
+		 * </p>
+		 */
+		@Name(MODELS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getModels();
+
+		/**
+		 * Provider-specific API version string.
+		 *
+		 * <p>
+		 * Used by Anthropic to set the {@code anthropic-version} header. Ignored by other
+		 * providers.
+		 * </p>
+		 */
+		@Name(VERSION)
+		@Nullable
+		String getVersion();
 	}
 
 	private static volatile AgentRegistry _instance;
@@ -162,6 +261,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	private SkillRegistry _skillRegistry;
 
 	private Map<String, String> _agentNameIndex;
+
+	/**
+	 * Index mapping model names to their provider config name. Built at startup from the
+	 * {@link ProviderConfig#getModels()} lists.
+	 */
+	private Map<String, String> _modelProviderIndex;
 
 	private String _entryPointAgentName;
 
@@ -203,9 +308,11 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			_skillRegistry.registerSkillsFromConfig(skillConfigs);
 		}
 
+		// Build model name index from provider configs
+		_modelProviderIndex = buildModelProviderIndex(getConfig().getProviders());
+
 		// Single pass over all agents: validate models, register skills, collect entry points,
 		// log background agents, and register scheduled tasks.
-		AIService aiService = AIService.getInstance();
 		Scheduler scheduler = Scheduler.Module.INSTANCE.getImplementationInstance();
 		List<String> entryPoints = new ArrayList<>();
 		_scheduledTaskNames = new ArrayList<>();
@@ -219,12 +326,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			if (model == null || model.isEmpty()) {
 				Logger.info(
 					"Agent '" + agentName + "' has no model configured. " +
-						"It will use the AIService default model when invoked.",
+						"It will use the default model when invoked.",
 					AgentRegistry.class);
-			} else if (aiService != null && !aiService.getModelNames().contains(model)) {
+			} else if (!_modelProviderIndex.containsKey(model)) {
 				Logger.warn(
 					"Agent '" + agentName + "' references model '" + model +
-						"' which is not registered in AIService. Available: " + aiService.getModelNames(),
+						"' which is not listed in any provider. Available: " + _modelProviderIndex.keySet(),
 					AgentRegistry.class);
 			}
 
@@ -289,7 +396,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		}
 		_entryPointAgentName = entryPoints.get(0);
 
-		Logger.info("AgentRegistry started with " + getConfig().getAgents().size() + " agent(s) and " +
+		Logger.info("AgentRegistry started with " + getConfig().getAgents().size() + " agent(s), " +
+			getConfig().getProviders().size() + " provider(s), and " +
 			skillConfigs.size() + " skill(s).",
 			AgentRegistry.class);
 	}
@@ -311,6 +419,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			_instance = null;
 			_skillRegistry = null;
 			_agentNameIndex = null;
+			_modelProviderIndex = null;
 			_entryPointAgentName = null;
 		} finally {
 			super.shutDown();
@@ -391,67 +500,379 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Builds a provider-specific {@link ChatModel} from the given agent configuration.
+	 * Returns the names of all models listed across all configured providers.
 	 *
-	 * <p>
-	 * If the model's factory is a known provider, a fresh unpooled model is created with the
-	 * agent's parameters (thinking, temperature, max tokens). Otherwise, falls back to the pooled
-	 * model from {@link AIService}.
-	 * </p>
-	 *
-	 * @param config
-	 *        The agent configuration.
-	 * @return A chat model configured per the agent's settings.
+	 * @return An immutable list of all model names.
 	 */
-	public ChatModel buildChatModel(AgentConfig config) {
-		return buildChatModel(config, null);
+	public List<String> getModelNames() {
+		if (_modelProviderIndex == null) {
+			return List.of();
+		}
+		return List.copyOf(_modelProviderIndex.keySet());
 	}
 
 	/**
-	 * Builds a provider-specific {@link ChatModel} from the given agent configuration with an
-	 * optional timeout override.
+	 * Builds an {@link LLMProvider} for the given model name.
 	 *
 	 * <p>
-	 * When {@code timeoutOverride} is non-null it takes precedence over the agent's configured
-	 * {@link AgentConfig#getTimeoutSeconds() timeoutSeconds}. This is used by pre-turn agents
-	 * to enforce a model-level HTTP timeout instead of relying on {@code Future.cancel()}.
+	 * Looks up the provider configuration whose {@link ProviderConfig#getModels() models} list
+	 * contains the given model name, then creates the appropriate provider implementation.
 	 * </p>
 	 *
-	 * @param config
-	 *        The agent configuration.
-	 * @param timeoutOverride
-	 *        Optional timeout that overrides the agent's configured timeout; may be {@code null}.
-	 * @return A chat model configured per the agent's settings.
+	 * @param modelName
+	 *        The model name to find a provider for.
+	 * @return A ready-to-use provider.
+	 * @throws IllegalStateException
+	 *         if no provider is configured for the given model.
 	 */
-	public ChatModel buildChatModel(AgentConfig config, Duration timeoutOverride) {
-		AIService aiService = AIService.getInstance();
-		if (aiService == null) {
-			throw new RuntimeException("AIService is not available.");
+	public LLMProvider buildProvider(String modelName) {
+		String providerName = _modelProviderIndex.get(modelName);
+		if (providerName == null) {
+			throw new IllegalStateException(
+				"No provider configured for model: " + modelName
+					+ ". Available models: " + _modelProviderIndex.keySet());
 		}
 
-		String modelName = config.getModel();
+		ProviderConfig providerConfig = getConfig().getProviders().get(providerName);
+		return createProvider(providerName, providerConfig);
+	}
 
-		// Fall back to AIService default model when agent has no model configured
-		if (modelName == null || modelName.isEmpty()) {
-			return aiService.getChatModel(null);
+	/**
+	 * Runs an agent by name using the tl-ai-core {@link AgentLoop}.
+	 *
+	 * <p>
+	 * Resolves the agent configuration, builds the provider, tool registry, and core
+	 * {@link com.top_logic.tl.ai.core.agent.AgentConfig}, creates an {@link AgentLoop}, and runs
+	 * it. Returns the response text extracted from the last {@link AssistantMessage}.
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param conversation
+	 *        The conversation to operate on.
+	 * @param conversationMemory
+	 *        Optional conversation memory for context management, or {@code null}.
+	 * @param listener
+	 *        Receives progress events during the run.
+	 * @return The response text from the agent, or empty string if no response.
+	 */
+	public String runAgent(String name, Conversation conversation,
+			ConversationMemory conversationMemory, AgentEventListener listener) {
+		AgentConfig agentConfig = getAgentConfig(name);
+		return runAgentWithConfig(agentConfig, conversation, conversationMemory, listener);
+	}
+
+	/**
+	 * Runs an agent with the given configuration using the tl-ai-core {@link AgentLoop}.
+	 */
+	private String runAgentWithConfig(AgentConfig agentConfig, Conversation conversation,
+			ConversationMemory conversationMemory, AgentEventListener listener) {
+		String modelName = resolveModelName(agentConfig);
+
+		LLMProvider provider = buildProvider(modelName);
+		com.top_logic.tl.ai.core.tool.ToolRegistry coreRegistry = buildCoreToolRegistry(agentConfig);
+
+		String systemPrompt = getSystemPrompt(agentConfig);
+
+		// Build model options from agent config
+		Map<String, Object> modelOptions = buildModelOptions(agentConfig);
+
+		Integer maxTokens = agentConfig.getMaxTokens();
+		int maxOutputTokens = maxTokens != null ? maxTokens
+			: com.top_logic.tl.ai.core.agent.AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS;
+
+		com.top_logic.tl.ai.core.agent.AgentConfig coreConfig =
+			new com.top_logic.tl.ai.core.agent.AgentConfig(
+				modelName, systemPrompt,
+				com.top_logic.tl.ai.core.agent.AgentConfig.DEFAULT_MAX_TURNS,
+				maxOutputTokens, modelOptions);
+
+		AgentLoop loop;
+		if (conversationMemory != null) {
+			loop = new AgentLoop(coreConfig, provider, coreRegistry, conversationMemory);
+		} else {
+			loop = new AgentLoop(coreConfig, provider, coreRegistry);
 		}
 
-		ChatModelFactory factory = aiService.getFactory(modelName);
-		if (factory == null) {
-			return aiService.getChatModel(modelName);
+		AgentResult result;
+		if (conversationMemory != null) {
+			result = loop.run(ToolContext.EMPTY, listener);
+		} else {
+			result = loop.run(conversation, ToolContext.EMPTY, listener);
 		}
 
-		if (factory instanceof AnthropicChatModelFactory) {
-			return buildAnthropicModel((AnthropicChatModelFactory) factory, config, timeoutOverride);
+		return extractResponseText(conversation, conversationMemory);
+	}
+
+	/**
+	 * Resolves the effective model name for an agent, falling back to the default model.
+	 */
+	private String resolveModelName(AgentConfig agentConfig) {
+		String model = agentConfig.getModel();
+		if (model != null && !model.isEmpty()) {
+			return model;
 		}
-		if (factory instanceof MistralChatModelFactory) {
-			return buildMistralModel((MistralChatModelFactory) factory, config, timeoutOverride);
+		String defaultModel = getConfig().getDefaultModel();
+		if (defaultModel != null && !defaultModel.isEmpty()) {
+			return defaultModel;
 		}
-		if (factory instanceof OpenAIChatModelFactory) {
-			return buildOpenAIModel((OpenAIChatModelFactory) factory, config, timeoutOverride);
+		throw new RuntimeException(
+			"Agent '" + agentConfig.getName() + "' has no model and no default model is configured.");
+	}
+
+	/**
+	 * Builds model options from the XML agent configuration.
+	 *
+	 * <p>
+	 * Maps thinking, temperature, topP, and other provider-specific settings into the generic
+	 * {@code modelOptions} map consumed by the core providers.
+	 * </p>
+	 */
+	private Map<String, Object> buildModelOptions(AgentConfig agentConfig) {
+		Map<String, Object> options = new HashMap<>();
+
+		if (agentConfig.getTemperature() != null) {
+			options.put("temperature", agentConfig.getTemperature());
+		}
+		if (agentConfig.getTopP() != null) {
+			options.put("topP", agentConfig.getTopP());
+		}
+		if (agentConfig.getTopK() != null) {
+			options.put("topK", agentConfig.getTopK());
+		}
+		if (agentConfig.getThinkingType() != null) {
+			options.put("thinkingType", agentConfig.getThinkingType().name().toLowerCase(Locale.ROOT));
+			if (agentConfig.getThinkingBudgetTokens() != null) {
+				options.put("thinkingBudgetTokens", agentConfig.getThinkingBudgetTokens());
+			}
+		}
+		if (agentConfig.getReasoningEffort() != null) {
+			options.put("reasoningEffort", agentConfig.getReasoningEffort().name().toLowerCase(Locale.ROOT));
+		}
+		if (agentConfig.getStopSequences() != null && !agentConfig.getStopSequences().isEmpty()) {
+			options.put("stop", agentConfig.getStopSequences());
+		}
+		if (agentConfig.getPresencePenalty() != null) {
+			options.put("presencePenalty", agentConfig.getPresencePenalty());
+		}
+		if (agentConfig.getFrequencyPenalty() != null) {
+			options.put("frequencyPenalty", agentConfig.getFrequencyPenalty());
+		}
+		if (agentConfig.getSeed() != null) {
+			options.put("seed", agentConfig.getSeed());
 		}
 
-		return aiService.getChatModel(modelName);
+		return options.isEmpty() ? Map.of() : Map.copyOf(options);
+	}
+
+	/**
+	 * Builds a tl-ai-core {@link com.top_logic.tl.ai.core.tool.ToolRegistry} from the agent's
+	 * configured tools, delegation tools, and skill tools.
+	 */
+	private com.top_logic.tl.ai.core.tool.ToolRegistry buildCoreToolRegistry(AgentConfig agentConfig) {
+		com.top_logic.tl.ai.core.tool.ToolRegistry coreRegistry =
+			new com.top_logic.tl.ai.core.tool.ToolRegistry();
+
+		// Add standard tools from the service-level ToolRegistry
+		ToolRegistry serviceRegistry = ToolRegistry.getInstance();
+		for (String qualifiedName : agentConfig.getTools()) {
+			Tool tool = serviceRegistry.getTool(qualifiedName);
+			if (tool != null) {
+				coreRegistry.register(tool);
+			} else {
+				Logger.warn("Agent '" + agentConfig.getName() + "' references unknown tool '" + qualifiedName +
+					"'. Available: " + serviceRegistry.getToolNames(), AgentRegistry.class);
+			}
+		}
+
+		// Add skill tools
+		if (!agentConfig.getSkills().isEmpty() && _skillRegistry != null) {
+			SkillTool skillTool = new SkillTool(_skillRegistry, agentConfig.getName());
+			for (Tool tool : AnnotatedTools.from(skillTool)) {
+				coreRegistry.register(tool);
+			}
+		}
+
+		// Add delegation tools
+		if (agentConfig instanceof ChatAgentConfig chatConfig) {
+			List<String> delegations = chatConfig.getDelegations();
+			if (!delegations.isEmpty()) {
+				for (Tool delegationTool : buildDelegationTools(agentConfig)) {
+					coreRegistry.register(delegationTool);
+				}
+			}
+		}
+
+		return coreRegistry.freeze();
+	}
+
+	/**
+	 * Builds delegation tools as tl-ai-core {@link Tool} instances.
+	 *
+	 * <p>
+	 * Each delegation target becomes a {@link Tool} that runs a nested {@link AgentLoop} with
+	 * the target agent's configuration, its own conversation and tool registry.
+	 * </p>
+	 */
+	private List<Tool> buildDelegationTools(AgentConfig config) {
+		if (!(config instanceof ChatAgentConfig chatConfig)) {
+			return List.of();
+		}
+		List<String> delegations = chatConfig.getDelegations();
+		if (delegations.isEmpty()) {
+			return List.of();
+		}
+
+		List<Tool> result = new ArrayList<>(delegations.size());
+		String fromAgent = chatConfig.getName();
+
+		for (String targetName : delegations) {
+			AgentConfig targetConfig = getConfig().getAgents().get(targetName);
+			if (targetConfig == null) {
+				Logger.warn("Agent '" + fromAgent + "' delegates to unknown agent '" + targetName +
+					"'. Available: " + getConfig().getAgents().keySet(), AgentRegistry.class);
+				continue;
+			}
+
+			String desc = targetConfig.getDescription();
+			if (desc == null || desc.isEmpty()) {
+				desc = "Specialist agent";
+			}
+
+			String toolName = delegationToolName(targetName);
+			String toolDescription = "Delegate to '" + targetName + "': " + desc;
+
+			String inputSchemaJson = "{"
+				+ "\"type\":\"object\","
+				+ "\"properties\":{"
+				+ "\"goal\":{\"type\":\"string\",\"description\":\"Short intent\"},"
+				+ "\"task\":{\"type\":\"string\",\"description\":\"Concrete question or instruction\"},"
+				+ "\"context\":{\"type\":\"string\",\"description\":\"Optional: relevant context or hints\"}"
+				+ "},"
+				+ "\"required\":[\"task\"]"
+				+ "}";
+
+			ToolSchema schema = new ToolSchema(toolName, toolDescription, inputSchemaJson);
+
+			result.add(new DelegationTool(toolName, toolDescription, schema, fromAgent, targetName));
+		}
+
+		return result;
+	}
+
+	/**
+	 * A delegation tool that runs a sub-agent via a nested {@link AgentLoop}.
+	 */
+	private class DelegationTool implements Tool {
+
+		private final String _name;
+
+		private final String _description;
+
+		private final ToolSchema _schema;
+
+		private final String _fromAgent;
+
+		private final String _targetName;
+
+		/** */
+		DelegationTool(String name, String description, ToolSchema schema,
+				String fromAgent, String targetName) {
+			_name = name;
+			_description = description;
+			_schema = schema;
+			_fromAgent = fromAgent;
+			_targetName = targetName;
+		}
+
+		@Override
+		public String name() {
+			return _name;
+		}
+
+		@Override
+		public String description() {
+			return _description;
+		}
+
+		@Override
+		public ToolSchema schema() {
+			return _schema;
+		}
+
+		@Override
+		public com.top_logic.tl.ai.core.tool.ToolMode mode() {
+			return com.top_logic.tl.ai.core.tool.ToolMode.READ;
+		}
+
+		@Override
+		public String execute(Map<String, Object> args, ToolContext context) {
+			String goal = (String) args.get("goal");
+			String task = (String) args.get("task");
+			String contextHint = (String) args.get("context");
+
+			StringBuilder prompt = new StringBuilder();
+			if (goal != null && !goal.isEmpty()) {
+				prompt.append("Goal: ").append(goal).append("\n");
+			}
+			if (task != null && !task.isEmpty()) {
+				prompt.append("Task: ").append(task).append("\n");
+			}
+			if (contextHint != null && !contextHint.isEmpty()) {
+				prompt.append("Context: ").append(contextHint).append("\n");
+			}
+
+			String message = prompt.length() > 0 ? prompt.toString() : task;
+
+			ToolCallTracking.recordAgentCallStartIfTracking(_fromAgent, _targetName, message);
+			try {
+				// Create a fresh conversation for the sub-agent
+				Conversation subConversation = new Conversation();
+				subConversation.add(new UserMessage(
+					java.util.UUID.randomUUID().toString(), java.time.Instant.now(),
+					List.of(new TextContent(message))));
+
+				AgentConfig targetConfig = getAgentConfig(_targetName);
+				String subResult = ThreadContextManager.inSystemInteraction(AgentRegistry.class,
+					() -> runAgentWithConfig(targetConfig, subConversation, null,
+						event -> { /* discard sub-agent events */ }));
+
+				ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(subResult));
+				return subResult;
+			} catch (Exception e) {
+				Throwable cause = e;
+				while (cause.getCause() != null && cause.getCause() != cause) {
+					cause = cause.getCause();
+				}
+				String errorMsg = cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
+				Logger.error("Delegation to '" + _targetName + "' failed: " + errorMsg, cause, AgentRegistry.class);
+				ToolCallTracking.recordAgentCallCompleteIfTracking("Error: " + errorMsg);
+				return "Error delegating to '" + _targetName + "': " + errorMsg;
+			}
+		}
+	}
+
+	/**
+	 * Extracts the response text from the last {@link AssistantMessage} in the conversation.
+	 */
+	private static String extractResponseText(Conversation conversation, ConversationMemory memory) {
+		Conversation effectiveConversation = memory != null ? memory.conversation() : conversation;
+		List<Message> messages = effectiveConversation.messages();
+		for (int i = messages.size() - 1; i >= 0; i--) {
+			if (messages.get(i) instanceof AssistantMessage assistant) {
+				StringBuilder sb = new StringBuilder();
+				for (ContentPart part : assistant.content()) {
+					if (part instanceof TextContent text) {
+						if (sb.length() > 0) {
+							sb.append("\n");
+						}
+						sb.append(text.text());
+					}
+				}
+				return sb.toString();
+			}
+		}
+		return "";
 	}
 
 	/**
@@ -460,9 +881,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 * <p>
 	 * Reads the base prompt from {@link AgentConfig#getSystemPrompt()}, resolves the agent's
 	 * {@link AgentConfig#getSkills() skills}, and injects them into the prompt. Skills appear as a
-	 * catalog that the agent can load on demand via {@code loadSkill()}. Delegation targets are not mentioned
-	 * in the system prompt because each delegation tool carries its own self-describing
-	 * {@link ToolSpecification}.
+	 * catalog that the agent can load on demand via {@code loadSkill()}. Delegation targets appear
+	 * as a catalog with their tool names and descriptions.
 	 * </p>
 	 *
 	 * @param config
@@ -515,325 +935,12 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Resolves tools for the given agent configuration from the {@link ToolRegistry}.
+	 * Returns the shared {@link SkillRegistry} managed by this service.
 	 *
-	 * <p>
-	 * Each qualified name in {@link AgentConfig#getTools()} is looked up in the
-	 * {@link ToolRegistry}. On-demand skill tools are added when the agent has skills of
-	 * that mode. Delegation tools are handled separately by
-	 * {@link #buildDelegationTools(AgentConfig)}.
-	 * </p>
-	 *
-	 * @param config
-	 *        The agent configuration.
-	 * @return A list of resolved tool implementations.
+	 * @return The skill registry, or {@code null} if the service is not started.
 	 */
-	public List<ToolImplementation> buildTools(AgentConfig config) {
-		List<ToolImplementation> tools = new ArrayList<>();
-
-		ToolRegistry toolRegistry = ToolRegistry.getInstance();
-		for (String qualifiedName : config.getTools()) {
-			ToolImplementation tool = toolRegistry.getTool(qualifiedName);
-			if (tool != null) {
-				tools.add(tool);
-			} else {
-				Logger.warn("Agent '" + config.getName() + "' references unknown tool '" + qualifiedName +
-					"'. Available: " + toolRegistry.getToolNames(), AgentRegistry.class);
-			}
-		}
-
-		if (!config.getSkills().isEmpty() && _skillRegistry != null) {
-			SkillTool skillTool = new SkillTool(_skillRegistry, config.getName());
-			for (ToolSpecification spec : ToolSpecifications.toolSpecificationsFrom(skillTool)) {
-				Method method = findMethodForToolSpec(SkillTool.class, spec.name());
-				if (method != null) {
-					ToolExecutor executor = new DefaultToolExecutor(skillTool, method);
-					tools.add(new ToolImplementation(spec, executor));
-				}
-			}
-		}
-
-		return tools;
-	}
-
-	private static Method findMethodForToolSpec(Class<?> clazz, String toolName) {
-		for (Method method : clazz.getDeclaredMethods()) {
-			dev.langchain4j.agent.tool.Tool toolAnnotation =
-				method.getAnnotation(dev.langchain4j.agent.tool.Tool.class);
-			if (toolAnnotation != null) {
-				String name = toolAnnotation.name().isEmpty() ? method.getName() : toolAnnotation.name();
-				if (name.equals(toolName)) {
-					return method;
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Builds programmatic delegation tools for the given agent configuration.
-	 *
-	 * <p>
-	 * For each name in {@link ChatAgentConfig#getDelegations()}, a dedicated
-	 * {@link ToolSpecification} is created whose description includes the target agent's
-	 * {@link AgentConfig#getDescription() description}. This makes each delegation target
-	 * self-describing in the tool signature — the LLM does not need a system prompt section to
-	 * know what each delegation target does.
-	 * </p>
-	 *
-	 * @param config
-	 *        The source agent configuration.
-	 * @return A list of {@link ToolImplementation}s, one per delegation target. Empty if the agent
-	 *         has no delegations.
-	 */
-	public List<ToolImplementation> buildDelegationTools(AgentConfig config) {
-		return buildDelegationTools(config, null);
-	}
-
-	/**
-	 * Builds delegation tools with session-scoped sub-agent memory.
-	 *
-	 * <p>
-	 * Each delegation target gets a {@link ChatMemory} from the provided map (created on first
-	 * access). When the orchestrator calls the same sub-agent multiple times, the sub-agent sees
-	 * its previous conversation history.
-	 * </p>
-	 *
-	 * @param config
-	 *        The source agent configuration.
-	 * @param subAgentMemories
-	 *        Optional session-scoped map of sub-agent memories. If {@code null}, a local map is
-	 *        created for within-invocation memory only.
-	 * @return A list of {@link ToolImplementation}s, one per delegation target.
-	 */
-	public List<ToolImplementation> buildDelegationTools(AgentConfig config,
-			Map<String, ChatMemory> subAgentMemories) {
-		if (!(config instanceof ChatAgentConfig chatConfig)) {
-			return List.of();
-		}
-		List<String> delegations = chatConfig.getDelegations();
-		if (delegations.isEmpty()) {
-			return List.of();
-		}
-
-		Map<String, ChatMemory> effectiveMemories =
-			subAgentMemories != null ? subAgentMemories : new HashMap<>();
-
-		List<ToolImplementation> result = new ArrayList<>(delegations.size());
-		String fromAgent = chatConfig.getName();
-
-		JsonObjectSchema parameters = JsonObjectSchema.builder()
-			.addStringProperty("goal", "Short intent")
-			.addStringProperty("task", "Concrete question or instruction")
-			.addStringProperty("context", "Optional: relevant context or hints")
-			.required("task")
-			.build();
-
-		for (String targetName : delegations) {
-			AgentConfig targetConfig = getConfig().getAgents().get(targetName);
-			if (targetConfig == null) {
-				Logger.warn("Agent '" + fromAgent + "' delegates to unknown agent '" + targetName +
-					"'. Available: " + getConfig().getAgents().keySet(), AgentRegistry.class);
-				continue;
-			}
-
-			String desc = targetConfig.getDescription();
-			if (desc == null || desc.isEmpty()) {
-				desc = "Specialist agent";
-			}
-
-			String toolName = delegationToolName(targetName);
-
-			ToolSpecification spec = ToolSpecification.builder()
-				.name(toolName)
-				.description("Delegate to '" + targetName + "': " + desc)
-				.parameters(parameters)
-				.build();
-
-			ToolExecutor executor = createDelegationExecutor(fromAgent, targetName, effectiveMemories);
-			result.add(new ToolImplementation(spec, executor));
-		}
-
-		return result;
-	}
-
-	/**
-	 * Builds an {@link UntypedAgent} from the named configuration.
-	 *
-	 * <p>
-	 * Uses the no-arg {@link AgenticServices#agentBuilder()} to create an agent purely from
-	 * configuration data — no Java interface is required. The agent accepts a single
-	 * {@code "message"} input and returns a {@link String}.
-	 * </p>
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @return A fully configured untyped agent instance.
-	 */
-	public UntypedAgent buildUntypedAgent(String name) {
-		return buildUntypedAgent(name, (ChatMemory) null);
-	}
-
-	/**
-	 * Builds an {@link UntypedAgent} with a model-level timeout override.
-	 *
-	 * <p>
-	 * Used by pre-turn agents where the HTTP client timeout enforces the deadline instead of
-	 * {@code Future.cancel()}, avoiding thread-pool poisoning from lingering interrupt flags.
-	 * </p>
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param timeoutOverride
-	 *        Timeout passed to the underlying HTTP client; may be {@code null} to use the
-	 *        agent's configured timeout.
-	 * @return A fully configured untyped agent instance.
-	 */
-	public UntypedAgent buildUntypedAgent(String name, Duration timeoutOverride) {
-		return buildUntypedAgent(name, null, null, null, timeoutOverride);
-	}
-
-	/**
-	 * Builds an {@link UntypedAgent} from the named configuration.
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param memory
-	 *        Optional conversation memory, or {@code null} for stateless agents.
-	 * @return A fully configured untyped agent instance.
-	 */
-	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory) {
-		return buildUntypedAgent(name, memory, null);
-	}
-
-	/**
-	 * Builds an {@link UntypedAgent} from the named configuration with an optional
-	 * {@link ChatModel} decorator.
-	 *
-	 * <p>
-	 * Delegates to
-	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map, Duration)} with a
-	 * fresh (invocation-scoped) sub-agent memory map, so that sub-agents called multiple times
-	 * within the same orchestrator loop retain their conversation context.
-	 * </p>
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param memory
-	 *        Optional conversation memory, or {@code null} for stateless agents.
-	 * @param chatModelDecorator
-	 *        Optional decorator applied to the {@link ChatModel} before building. Useful for
-	 *        injecting multimodal content into LLM requests. May be {@code null}.
-	 * @return A fully configured untyped agent instance.
-	 */
-	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
-			java.util.function.UnaryOperator<ChatModel> chatModelDecorator) {
-		return buildUntypedAgent(name, memory, chatModelDecorator, null, null);
-	}
-
-	/**
-	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
-	 * memory.
-	 *
-	 * <p>
-	 * Convenience overload equivalent to
-	 * {@link #buildUntypedAgent(String, ChatMemory, java.util.function.UnaryOperator, Map, Duration)}
-	 * with {@code null} timeout (uses the agent's configured timeout).
-	 * </p>
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param memory
-	 *        Optional conversation memory, or {@code null} for stateless agents.
-	 * @param chatModelDecorator
-	 *        Optional decorator applied to the {@link ChatModel} before building. May be
-	 *        {@code null}.
-	 * @param subAgentMemories
-	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
-	 *        If {@code null}, a local map is created for within-invocation memory only.
-	 * @return A fully configured untyped agent instance.
-	 */
-	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
-			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
-			Map<String, ChatMemory> subAgentMemories) {
-		return buildUntypedAgent(name, memory, chatModelDecorator, subAgentMemories, null);
-	}
-
-	/**
-	 * Builds an {@link UntypedAgent} from the named configuration with session-scoped sub-agent
-	 * memory and an optional model-level timeout override.
-	 *
-	 * <p>
-	 * When {@code subAgentMemories} is provided, delegation targets (sub-agents) share their
-	 * {@link ChatMemory} across invocations via this map, keyed by agent name. This allows
-	 * sub-agents to retain conversation context when the orchestrator calls them multiple times
-	 * — both within a single orchestrator loop and across user messages within the same session.
-	 * </p>
-	 *
-	 * <p>
-	 * If {@code subAgentMemories} is {@code null}, a fresh map is created internally so that
-	 * sub-agents still retain context within a single orchestrator invocation (within-message
-	 * scope).
-	 * </p>
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param memory
-	 *        Optional conversation memory, or {@code null} for stateless agents.
-	 * @param chatModelDecorator
-	 *        Optional decorator applied to the {@link ChatModel} before building. Useful for
-	 *        injecting multimodal content into LLM requests. May be {@code null}.
-	 * @param subAgentMemories
-	 *        Optional session-scoped map of sub-agent conversation memories, keyed by agent name.
-	 *        If {@code null}, a local map is created for within-invocation memory only.
-	 * @param timeoutOverride
-	 *        Optional timeout passed to the underlying HTTP client; may be {@code null} to use
-	 *        the agent's configured timeout.
-	 * @return A fully configured untyped agent instance.
-	 */
-	public UntypedAgent buildUntypedAgent(String name, ChatMemory memory,
-			java.util.function.UnaryOperator<ChatModel> chatModelDecorator,
-			Map<String, ChatMemory> subAgentMemories, Duration timeoutOverride) {
-		AgentConfig config = getAgentConfig(name);
-		ChatModel model = buildChatModel(config, timeoutOverride);
-		if (chatModelDecorator != null) {
-			model = chatModelDecorator.apply(model);
-		}
-		String systemPrompt = getSystemPrompt(config);
-		List<ToolImplementation> tools = buildTools(config);
-		List<ToolImplementation> delegationTools = buildDelegationTools(config, subAgentMemories);
-
-		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
-		for (ToolImplementation impl : tools) {
-			allTools.put(impl.getSpecification(), impl.getExecutor());
-		}
-		for (ToolImplementation impl : delegationTools) {
-			allTools.put(impl.getSpecification(), impl.getExecutor());
-		}
-
-		var builder = AgenticServices.agentBuilder()
-			.chatModel(model)
-			.hallucinatedToolNameStrategy(request -> ToolExecutionResultMessage.from(request,
-				"Error: No tool named '" + request.name() + "' exists. Use only tools from your tool catalog."))
-			.systemMessage(systemPrompt)
-			.userMessage("{{message}}")
-			.inputKey(String.class, "message")
-			.returnType(String.class);
-
-		if (!allTools.isEmpty()) {
-			builder.tools(allTools);
-		}
-
-		if (memory != null) {
-			builder.chatMemory(memory);
-		}
-
-		ToolCallTracker tracker = ToolCallTracking.getTracker();
-		if (tracker != null) {
-			builder.listener(new TimelineAgentListener(tracker));
-		}
-
-		return builder.build();
+	public SkillRegistry getSkillRegistry() {
+		return _skillRegistry;
 	}
 
 	/**
@@ -848,58 +955,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return "delegate_to_" + targetName.replace('-', '_');
 	}
 
-	private ToolExecutor createDelegationExecutor(String fromAgent, String targetName,
-			Map<String, ChatMemory> subAgentMemories) {
-		return (request, memoryId) -> {
-			Map<String, Object> args;
-			try {
-				@SuppressWarnings("unchecked")
-				Map<String, Object> parsed = (Map<String, Object>) JSON.fromString(request.arguments());
-				args = parsed;
-			} catch (Exception e) {
-				return "Error parsing delegation arguments: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
-			}
-
-			String goal = (String) args.get("goal");
-			String task = (String) args.get("task");
-			String context = (String) args.get("context");
-
-			StringBuilder prompt = new StringBuilder();
-			if (goal != null && !goal.isEmpty()) {
-				prompt.append("Goal: ").append(goal).append("\n");
-			}
-			if (task != null && !task.isEmpty()) {
-				prompt.append("Task: ").append(task).append("\n");
-			}
-			if (context != null && !context.isEmpty()) {
-				prompt.append("Context: ").append(context).append("\n");
-			}
-
-			String message = prompt.length() > 0 ? prompt.toString() : task;
-
-			ChatMemory agentMemory = subAgentMemories.computeIfAbsent(targetName,
-				k -> MessageWindowChatMemory.withMaxMessages(SUB_AGENT_MEMORY_MAX_MESSAGES));
-
-			ToolCallTracking.recordAgentCallStartIfTracking(fromAgent, targetName, message);
-			try {
-				UntypedAgent agent = buildUntypedAgent(targetName, agentMemory);
-				String result = (String) ThreadContextManager.inSystemInteraction(AgentRegistry.class,
-					() -> agent.invoke(Map.of("message", message)));
-				ToolCallTracking.recordAgentCallCompleteIfTracking(truncate(result));
-				return result;
-			} catch (Exception e) {
-				Throwable cause = e;
-				while (cause.getCause() != null && cause.getCause() != cause) {
-					cause = cause.getCause();
-				}
-				String errorMsg = cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName();
-				Logger.error("Delegation to '" + targetName + "' failed: " + errorMsg, cause, AgentRegistry.class);
-				ToolCallTracking.recordAgentCallCompleteIfTracking("Error: " + errorMsg);
-				throw e;
-			}
-		};
-	}
-
 	private static final int RESULT_SUMMARY_MAX_LEN = 100_000;
 
 	private static String truncate(String s) {
@@ -910,234 +965,92 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Builds a fully-wired <i>LangChain4j</i> agent from the named configuration without
-	 * conversation memory.
-	 *
-	 * @param <T>
-	 *        The agent interface type.
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param agentInterface
-	 *        The agent interface class.
-	 * @return A fully configured agent instance.
-	 *
-	 * @see #buildAgent(String, Class, ChatMemory)
+	 * Builds the model-to-provider index from the provider configurations.
 	 */
-	public <T> T buildAgent(String name, Class<T> agentInterface) {
-		return buildAgent(name, agentInterface, null);
-	}
-
-	/**
-	 * Builds a fully-wired <i>LangChain4j</i> agent from the named configuration.
-	 *
-	 * <p>
-	 * Resolves the agent's model, system prompt, and tools from the XML configuration and assembles
-	 * them into a <i>LangChain4j</i> agent via {@link AgenticServices#agentBuilder(Class)}.
-	 * </p>
-	 *
-	 * @param <T>
-	 *        The agent interface type.
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param agentInterface
-	 *        The agent interface class.
-	 * @param memory
-	 *        Optional conversation memory, or {@code null} for stateless agents.
-	 * @return A fully configured agent instance.
-	 */
-	public <T> T buildAgent(String name, Class<T> agentInterface, ChatMemory memory) {
-		AgentConfig config = getAgentConfig(name);
-		ChatModel model = buildChatModel(config);
-		String systemPrompt = getSystemPrompt(config);
-		List<ToolImplementation> tools = buildTools(config);
-		List<ToolImplementation> delegationTools = buildDelegationTools(config);
-
-		Map<ToolSpecification, ToolExecutor> allTools = new LinkedHashMap<>();
-		for (ToolImplementation impl : tools) {
-			allTools.put(impl.getSpecification(), impl.getExecutor());
-		}
-		for (ToolImplementation impl : delegationTools) {
-			allTools.put(impl.getSpecification(), impl.getExecutor());
-		}
-
-		var builder = AgenticServices.agentBuilder(agentInterface)
-			.chatModel(model)
-			.hallucinatedToolNameStrategy(request -> ToolExecutionResultMessage.from(request,
-				"Error: No tool named '" + request.name() + "' exists. Use only tools from your tool catalog."))
-			.systemMessageProvider(memoryId -> systemPrompt);
-
-		if (!allTools.isEmpty()) {
-			builder.tools(allTools);
-		}
-
-		if (memory != null) {
-			builder.chatMemory(memory);
-		}
-
-		return builder.build();
-	}
-
-	/**
-	 * Returns the shared {@link SkillRegistry} managed by this service.
-	 *
-	 * @return The skill registry, or {@code null} if the service is not started.
-	 */
-	public SkillRegistry getSkillRegistry() {
-		return _skillRegistry;
-	}
-
-	private ChatModel buildAnthropicModel(AnthropicChatModelFactory factory, AgentConfig config,
-			Duration timeoutOverride) {
-		AnthropicChatModelFactory.Config fc = factory.getConfig();
-		AnthropicChatModel.AnthropicChatModelBuilder builder = AnthropicChatModel.builder()
-			.apiKey(fc.getApiKey())
-			.baseUrl(fc.getBaseUrl())
-			.modelName(config.getModel());
-
-		if (config.getThinkingType() != null && config.isThinkingCapable()) {
-			ThinkingType thinkingType = config.getThinkingType();
-			Set<ModelCapability> caps = factory.getModelCapabilities(config.getModel());
-			boolean supported = (thinkingType == ThinkingType.ADAPTIVE)
-				? caps.contains(ModelCapability.THINKING_ADAPTIVE)
-				: caps.contains(ModelCapability.THINKING_ENABLED);
-			if (supported) {
-				builder.thinkingType(thinkingType.getValue());
-				if (config.getThinkingBudgetTokens() != null) {
-					builder.thinkingBudgetTokens(config.getThinkingBudgetTokens());
+	private static Map<String, String> buildModelProviderIndex(Map<String, ProviderConfig> providers) {
+		Map<String, String> index = new LinkedHashMap<>();
+		for (Map.Entry<String, ProviderConfig> entry : providers.entrySet()) {
+			String providerName = entry.getKey();
+			List<String> models = entry.getValue().getModels();
+			if (models != null) {
+				for (String model : models) {
+					if (model != null && !model.isBlank()) {
+						index.put(model.trim(), providerName);
+					}
 				}
-				builder.returnThinking(config.getReturnThinking());
-				builder.sendThinking(config.getSendThinking());
 			}
 		}
-		if (config.getMaxTokens() != null) {
-			builder.maxTokens(config.getMaxTokens());
-		}
-		if (config.getTemperature() != null) {
-			builder.temperature(config.getTemperature());
-		}
-		if (config.getTopP() != null) {
-			builder.topP(config.getTopP());
-		}
-		if (config.getTopK() != null) {
-			builder.topK(config.getTopK());
-		}
-		if (config.getStopSequences() != null && !config.getStopSequences().isEmpty()) {
-			builder.stopSequences(config.getStopSequences());
-		}
-		if (config.getDisableParallelToolUse()) {
-			builder.disableParallelToolUse(Boolean.TRUE);
-		}
-		Duration timeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
-		if (timeout != null) {
-			builder.timeout(timeout);
-		}
-		if (config.getMaxRetries() != null) {
-			builder.maxRetries(config.getMaxRetries());
-		}
-		String version = fc.getVersion();
-		if (version != null) {
-			builder.version(version);
-		}
-		return builder.build();
+		return index;
 	}
 
-	private ChatModel buildMistralModel(MistralChatModelFactory factory, AgentConfig config,
-			Duration timeoutOverride) {
-		MistralChatModelFactory.Config fc = factory.getConfig();
-		MistralAiChatModel.MistralAiChatModelBuilder builder = MistralAiChatModel.builder()
-			.apiKey(fc.getApiKey())
-			.baseUrl(fc.getBaseUrl())
-			.modelName(config.getModel());
+	/**
+	 * Creates an {@link LLMProvider} from the provider configuration.
+	 *
+	 * <p>
+	 * The provider name determines which implementation to use: names containing "anthropic"
+	 * produce an {@link AnthropicProvider}, "openai" produce an {@link OpenAIProvider}, and
+	 * "mistral" produce a {@link MistralProvider}.
+	 * </p>
+	 */
+	private LLMProvider createProvider(String providerName, ProviderConfig config) {
+		String name = providerName.toLowerCase(Locale.ROOT);
+		String apiKey = config.getApiKey();
 
-		if (config.getMaxTokens() != null) {
-			builder.maxTokens(config.getMaxTokens());
+		if (name.contains("anthropic")) {
+			String baseUrl = config.getBaseUrl();
+			if (baseUrl != null) {
+				// Strip trailing /v1 if present — the provider appends it internally
+				if (baseUrl.endsWith("/v1")) {
+					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
+				}
+			}
+			String version = config.getVersion();
+			if (version == null) {
+				version = "2023-06-01";
+			}
+			return new AnthropicProvider(apiKey,
+				baseUrl != null ? baseUrl : "https://api.anthropic.com",
+				version);
 		}
-		if (config.getTemperature() != null) {
-			builder.temperature(config.getTemperature());
+
+		if (name.contains("openai")) {
+			String baseUrl = config.getBaseUrl();
+			if (baseUrl != null) {
+				if (baseUrl.endsWith("/v1")) {
+					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
+				}
+			}
+			return new OpenAIProvider(apiKey,
+				baseUrl != null ? baseUrl : "https://api.openai.com");
 		}
-		if (config.getTopP() != null) {
-			builder.topP(config.getTopP());
+
+		if (name.contains("mistral")) {
+			String baseUrl = config.getBaseUrl();
+			if (baseUrl != null) {
+				if (baseUrl.endsWith("/v1")) {
+					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
+				}
+			}
+			return new MistralProvider(apiKey,
+				baseUrl != null ? baseUrl : "https://api.mistral.ai");
 		}
-		if (config.getStopSequences() != null && !config.getStopSequences().isEmpty()) {
-			builder.stopSequences(config.getStopSequences());
-		}
-		ResponseFormat responseFormat = mapResponseFormat(config.getResponseFormat());
-		if (responseFormat != null) {
-			builder.responseFormat(responseFormat);
-		}
-		Duration mistralTimeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
-		if (mistralTimeout != null) {
-			builder.timeout(mistralTimeout);
-		}
-		if (config.getMaxRetries() != null) {
-			builder.maxRetries(config.getMaxRetries());
-		}
-		return builder.build();
+
+		throw new IllegalStateException(
+			"Unknown provider type: '" + providerName
+				+ "'. Provider name must contain 'anthropic', 'openai', or 'mistral'.");
 	}
 
-	private ChatModel buildOpenAIModel(OpenAIChatModelFactory factory, AgentConfig config,
-			Duration timeoutOverride) {
-		OpenAIChatModelFactory.Config fc = factory.getConfig();
-		OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel.builder()
-			.apiKey(fc.getApiKey())
-			.baseUrl(fc.getBaseUrl())
-			.modelName(config.getModel());
-
-		if (config.getMaxTokens() != null) {
-			builder.maxTokens(config.getMaxTokens());
+	/**
+	 * Checks if an API key is valid (not null, not empty, not a placeholder).
+	 */
+	static boolean isValidApiKey(String apiKey) {
+		if (apiKey == null || apiKey.trim().isEmpty()) {
+			return false;
 		}
-		if (config.getTemperature() != null) {
-			builder.temperature(config.getTemperature());
+		if (apiKey.startsWith("%") && apiKey.endsWith("%")) {
+			return false;
 		}
-		if (config.getTopP() != null) {
-			builder.topP(config.getTopP());
-		}
-		if (config.getStopSequences() != null && !config.getStopSequences().isEmpty()) {
-			builder.stop(config.getStopSequences());
-		}
-		if (config.getPresencePenalty() != null) {
-			builder.presencePenalty(config.getPresencePenalty());
-		}
-		if (config.getFrequencyPenalty() != null) {
-			builder.frequencyPenalty(config.getFrequencyPenalty());
-		}
-		if (config.getSeed() != null) {
-			builder.seed(config.getSeed());
-		}
-		if (config.getReasoningEffort() != null
-			&& factory.getModelCapabilities(config.getModel()).contains(ModelCapability.REASONING_EFFORT)) {
-			builder.reasoningEffort(config.getReasoningEffort().getValue());
-		}
-		ResponseFormat responseFormat = mapResponseFormat(config.getResponseFormat());
-		if (responseFormat != null) {
-			builder.responseFormat(responseFormat);
-		}
-		Duration openAiTimeout = timeoutOverride != null ? timeoutOverride : toTimeoutDuration(config.getTimeoutSeconds());
-		if (openAiTimeout != null) {
-			builder.timeout(openAiTimeout);
-		}
-		if (config.getMaxRetries() != null) {
-			builder.maxRetries(config.getMaxRetries());
-		}
-		String org = fc.getOrganization();
-		if (org != null) {
-			builder.organizationId(org);
-		}
-		return builder.build();
-	}
-
-	static ResponseFormat mapResponseFormat(AgentConfig.ResponseFormatOption option) {
-		if (option == null || option == AgentConfig.ResponseFormatOption.DEFAULT) {
-			return null;
-		}
-		if (option == AgentConfig.ResponseFormatOption.JSON) {
-			return ResponseFormat.JSON;
-		}
-		return ResponseFormat.TEXT;
-	}
-
-	static Duration toTimeoutDuration(Integer timeoutSeconds) {
-		return timeoutSeconds == null ? null : Duration.ofSeconds(timeoutSeconds);
+		return true;
 	}
 
 	/**
@@ -1183,10 +1096,9 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		sb.append("and perform actions. NEVER guess when a tool can give you the answer.\n\n");
 
 		for (String qualifiedName : toolNames) {
-			ToolImplementation tool = toolRegistry.getTool(qualifiedName);
+			Tool tool = toolRegistry.getTool(qualifiedName);
 			if (tool != null) {
-				ToolSpecification spec = tool.getSpecification();
-				sb.append("- **").append(spec.name()).append("**: ").append(spec.description()).append("\n");
+				sb.append("- **").append(tool.name()).append("**: ").append(tool.description()).append("\n");
 			} else {
 				Logger.warn("buildToolSection: agent '" + config.getName() +
 					"' references unknown tool '" + qualifiedName + "' — omitted from prompt catalog.",

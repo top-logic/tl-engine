@@ -41,9 +41,11 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.SSEReader;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 
 /**
@@ -146,6 +148,25 @@ public class OpenAIProvider implements LLMProvider {
 			if (!request.tools().isEmpty()) {
 				json.name("tools");
 				writeTools(json, request.tools());
+			}
+
+			if (request.responseFormat() == ResponseFormat.JSON) {
+				json.name("text");
+				json.beginObject();
+				json.name("format");
+				json.beginObject();
+				json.name("type").value("json_object");
+				json.endObject();
+				json.endObject();
+			}
+
+			if (request.toolChoice() != null) {
+				String choice = switch (request.toolChoice()) {
+					case REQUIRED -> "required";
+					case NONE -> "none";
+					case AUTO -> "auto";
+				};
+				json.name("tool_choice").value(choice);
 			}
 
 			json.endObject();

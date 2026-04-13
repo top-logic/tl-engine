@@ -20,6 +20,8 @@ import com.top_logic.tl.ai.core.message.Message;
  * @param tools           tool definitions the LLM may call (empty list for none)
  * @param maxOutputTokens maximum tokens in the response
  * @param modelOptions    provider-specific options (temperature, topP, thinkingBudgetTokens, etc.)
+ * @param responseFormat  desired response format, or {@code null} for provider default
+ * @param toolChoice      tool selection behaviour, or {@code null} for provider default
  */
 public record ProviderRequest(
 		String model,
@@ -27,7 +29,9 @@ public record ProviderRequest(
 		List<Message> messages,
 		List<ToolSchema> tools,
 		int maxOutputTokens,
-		Map<String, Object> modelOptions) {
+		Map<String, Object> modelOptions,
+		ResponseFormat responseFormat,
+		ToolChoice toolChoice) {
 
 	/** */
 	public ProviderRequest {
@@ -44,10 +48,18 @@ public record ProviderRequest(
 	}
 
 	/**
-	 * Convenience constructor without model options.
+	 * Convenience constructor without responseFormat and toolChoice.
+	 */
+	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
+			List<ToolSchema> tools, int maxOutputTokens, Map<String, Object> modelOptions) {
+		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions, null, null);
+	}
+
+	/**
+	 * Convenience constructor without modelOptions, responseFormat, and toolChoice.
 	 */
 	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
 			List<ToolSchema> tools, int maxOutputTokens) {
-		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of());
+		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of(), null, null);
 	}
 }

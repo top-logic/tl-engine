@@ -42,9 +42,11 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.SSEReader;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 
 /**
@@ -141,7 +143,24 @@ public class MistralProvider implements LLMProvider {
 			if (!request.tools().isEmpty()) {
 				json.name("tools");
 				writeTools(json, request.tools());
-				json.name("tool_choice").value("auto");
+			}
+
+			if (request.responseFormat() == ResponseFormat.JSON) {
+				json.name("response_format");
+				json.beginObject();
+				json.name("type").value("json_object");
+				json.endObject();
+			}
+
+			if (request.toolChoice() != null || !request.tools().isEmpty()) {
+				// Default to "auto" when tools are present; honour explicit choice otherwise.
+				ToolChoice choice = request.toolChoice() != null ? request.toolChoice() : ToolChoice.AUTO;
+				String choiceStr = switch (choice) {
+					case REQUIRED -> "any";
+					case NONE -> "none";
+					case AUTO -> "auto";
+				};
+				json.name("tool_choice").value(choiceStr);
 			}
 
 			json.endObject();

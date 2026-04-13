@@ -40,10 +40,12 @@ import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.SSEReader;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ResponseFormat;
+import com.top_logic.tl.ai.core.provider.SSEReader;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 
 /**
@@ -150,6 +152,20 @@ public class AnthropicProvider implements LLMProvider {
 			if (!request.tools().isEmpty()) {
 				json.name("tools");
 				writeTools(json, request.tools());
+			}
+
+			if (request.responseFormat() == ResponseFormat.JSON) {
+				json.name("response_format");
+				json.beginObject();
+				json.name("type").value("json_object");
+				json.endObject();
+			}
+
+			if (request.toolChoice() != null && request.toolChoice() != ToolChoice.AUTO) {
+				json.name("tool_choice");
+				json.beginObject();
+				json.name("type").value(request.toolChoice() == ToolChoice.REQUIRED ? "any" : "none");
+				json.endObject();
 			}
 
 			json.endObject();

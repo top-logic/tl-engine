@@ -2198,6 +2198,11 @@ button.tlMenu__item--disabled:hover {
 	color: var(--text-primary, #161616);
 }
 
+.tlText--placeholder {
+	font-style: italic;
+	color: var(--text-helper, #6f6f6f);
+}
+
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;

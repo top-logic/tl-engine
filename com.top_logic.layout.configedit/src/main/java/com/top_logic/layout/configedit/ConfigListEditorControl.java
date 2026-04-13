@@ -14,11 +14,13 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -40,6 +42,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  */
 public class ConfigListEditorControl extends ReactFormLayoutControl {
+
+	private static final String PLACEHOLDER_CSS = "tlText--placeholder";
+
+	private record Label(String text, boolean placeholder) {
+	}
 
 	private final ReactContext _context;
 
@@ -122,7 +129,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	private ReactFormGroupControl createElementGroup(ConfigurationItem item, int index, int listSize, boolean expanded) {
-		String label = resolveElementLabel(item, index);
+		Label label = resolveElementLabel(item);
 
 		// Action buttons: Move Up, Move Down, Remove.
 		ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
@@ -152,20 +159,25 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ConfigEditorControl nestedEditor = new ConfigEditorControl(_context, item);
 		ReactFormGroupControl group = new ReactFormGroupControl(
-			_context, label, true, !expanded, "subtle", true,
+			_context, null, true, !expanded, "subtle", true,
 			headerActions, List.of(nestedEditor));
+		group.setHeader(createHeaderControl(label));
 
 		// Register dynamic label update on the title property.
 		PropertyDescriptor titleProp = resolveTitleProperty(item);
 		if (titleProp != null) {
 			ConfigurationListener listener = change -> {
-				group.setHeader(resolveElementLabel(item, indexOf(item)));
+				group.setHeader(createHeaderControl(resolveElementLabel(item)));
 			};
 			item.addConfigurationListener(titleProp, listener);
 			_listeners.add(new ListenerRegistration(item, titleProp, listener));
 		}
 
 		return group;
+	}
+
+	private ReactTextControl createHeaderControl(Label label) {
+		return new ReactTextControl(_context, label.text(), label.placeholder() ? PLACEHOLDER_CSS : null);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -232,20 +244,19 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	 * Resolves the display label for a list element.
 	 *
 	 * <p>
-	 * Uses the title property value if available and non-empty, otherwise falls back to the
-	 * TagName annotation or simple interface name with a 1-based index.
+	 * Uses the title property value if available and non-empty. Otherwise marks the label as a
+	 * placeholder showing the type name plus an "(empty)" hint.
 	 * </p>
 	 */
-	private String resolveElementLabel(ConfigurationItem item, int index) {
+	private Label resolveElementLabel(ConfigurationItem item) {
 		PropertyDescriptor titleProp = resolveTitleProperty(item);
 		if (titleProp != null) {
 			Object value = item.value(titleProp);
 			if (value instanceof String s && !s.isEmpty()) {
-				return s;
+				return new Label(s, false);
 			}
 		}
 
-		// Fallback: TagName or simple interface name with index.
 		Class<?> iface = item.descriptor().getConfigurationInterface();
 		TagName tagName = iface.getAnnotation(TagName.class);
 		String typeName;
@@ -257,7 +268,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				typeName = typeName.substring(0, typeName.length() - "Config".length());
 			}
 		}
-		return typeName + " " + (index + 1);
+		String label = Resources.getInstance().getString(I18NConstants.LIST_ELEMENT_EMPTY_TITLE__TYPE.fill(typeName));
+		return new Label(label, true);
 	}
 
 	/**

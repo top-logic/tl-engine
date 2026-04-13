@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
-import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
+import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -72,7 +72,7 @@ public class NeutralScorer {
 						Map.of("role", "system", "content", scorerSystemPrompt),
 						Map.of("role", "user", "content", userMessage));
 
-					String resultText = OpenAIScriptFunctions.chat(messages, _scorerModelName, null, null);
+					String resultText = AIScriptFunctions.chat(messages, _scorerModelName, null, null);
 					return parseResult(resultText);
 
 				} catch (Exception ex) {

@@ -22,7 +22,7 @@ import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorer;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
 import com.top_logic.ai.service.agents.AgentRegistry;
-import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
+import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -347,7 +347,7 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 	protected String runModelExplorer(String prompt) {
 		return ThreadContextManager.inSystemInteraction(
 			ModelExplorerScoringTestBase.class,
-			() -> OpenAIScriptFunctions.agentChat("ModelExplorer", prompt));
+			() -> AIScriptFunctions.agentChat("ModelExplorer", prompt));
 	}
 
 	/**

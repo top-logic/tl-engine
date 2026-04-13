@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
-import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
+import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -88,7 +88,7 @@ public class JudgeClient {
 						Map.of("role", "system", "content", judgeSystemPrompt),
 						Map.of("role", "user", "content", judgeUserPrompt));
 
-					String resultText = OpenAIScriptFunctions.chat(messages, _judgeModelName, null, null);
+					String resultText = AIScriptFunctions.chat(messages, _judgeModelName, null, null);
 					return parseJudgeResult(resultText);
 
 				} catch (Exception ex) {

@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.scripting.OpenAIScriptFunctions;
+import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 
@@ -66,7 +66,7 @@ public class SystemPromptImprover {
 						Map.of("role", "system", "content", improverSystemPrompt),
 						Map.of("role", "user", "content", userMessage));
 
-					return OpenAIScriptFunctions.chat(messages, _improverModelName, null, null);
+					return AIScriptFunctions.chat(messages, _improverModelName, null, null);
 
 				} catch (Exception ex) {
 					Logger.error("Failed to improve system prompt: " + ex.getMessage(), ex,

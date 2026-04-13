@@ -22,8 +22,6 @@ import com.top_logic.basic.json.JSON;
  * Also records agent-to-agent delegations for a unified execution timeline
  * ({@code AgentCall} vs {@code ToolCall}) usable by the UI.
  * </p>
- * 
- * @author jhu
  */
 public class ToolCallTracker {
 

@@ -1,8 +1,8 @@
 # tl-chat
 
-Real-time agentic chat interface for TopLogic applications. Connects users to the multi-agent orchestrator (from `tl-ai-service`) and displays tool calls, agent handoffs, and AI responses as they happen.
+Real-time agentic chat interface for TopLogic applications. Connects users to the multi-agent orchestrator (from `tl-ai-core`) and displays tool calls, agent handoffs, and AI responses as they happen.
 
-**Parent:** `tl-parent-app` | **Dependencies:** `tl-core`, `tl-ai-service`, `jackson-databind`
+**Parent:** `tl-parent-core` | **Dependencies:** `tl-core`, `tl-ai-core`
 
 ## Architecture
 

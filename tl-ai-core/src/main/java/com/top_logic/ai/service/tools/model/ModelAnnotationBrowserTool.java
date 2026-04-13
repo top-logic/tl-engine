@@ -76,19 +76,9 @@ import com.top_logic.tl.ai.core.tool.ToolMethod;
  * <h3>Integration:</h3>
  *
  * <p>
- * To use this tool with an AI agent, instantiate it and add to the agent's tools:
+ * Register this tool via {@link com.top_logic.tl.ai.core.tool.AnnotatedTools} and assign it to an
+ * agent through the {@link com.top_logic.ai.service.agents.AgentRegistry} configuration.
  * </p>
- *
- * <pre>
- * ModelAnnotationBrowserTool annotationTool = new ModelAnnotationBrowserTool();
- *
- * ModelExplorer explorer = AgenticServices.agentBuilder(ModelExplorer.class)
- *     .chatModel(explorationModel)
- *     .tools(browserTool, instanceTool, analysisTool, searchTool, annotationTool)
- *     .build();
- * </pre>
- * 
- * @author jhu
  */
 public class ModelAnnotationBrowserTool {
 

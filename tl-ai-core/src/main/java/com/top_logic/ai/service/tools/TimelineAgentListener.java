@@ -14,19 +14,18 @@ import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 
 /**
- * Bridges tl-ai-core {@link AgentEventListener} tool execution events to
- * {@link ToolCallTracker} for the chat timeline.
+ * Bridges tl-ai-core {@link AgentEventListener} tool execution events to {@link ToolCallTracker}
+ * for the chat timeline.
  *
  * <p>
- * Automatically records all tool executions except delegation tools
- * (whose names start with {@code delegate_to_}), which are tracked
- * separately as agent calls by the delegation executor.
+ * Automatically records all tool executions except delegation tools (whose names start with
+ * {@code delegate_to_}), which are tracked separately as agent calls by the delegation executor.
  * </p>
  *
  * <p>
- * {@link AgentEvent.ToolCallStarted} events are used to cache the args JSON
- * (keyed by {@code toolCallId}) so they are available when the corresponding
- * {@link AgentEvent.ToolCallCompleted} arrives.
+ * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ToolCallStarted} events are used to cache
+ * the args JSON (keyed by {@code toolCallId}) so they are available when the corresponding
+ * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ToolCallCompleted} arrives.
  * </p>
  *
  * @see ToolCallTracker

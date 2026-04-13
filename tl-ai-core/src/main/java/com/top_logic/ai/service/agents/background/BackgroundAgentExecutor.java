@@ -158,7 +158,7 @@ public class BackgroundAgentExecutor {
 	 * <p>
 	 * This allows modules like {@code tl-chat} to register adapters for their own
 	 * {@link InputConfig} sub-types without creating a compile-time dependency from
-	 * {@code tl-ai-service} to {@code tl-chat}.
+	 * {@code tl-ai-core} to {@code tl-chat}.
 	 * </p>
 	 *
 	 * @param <T>

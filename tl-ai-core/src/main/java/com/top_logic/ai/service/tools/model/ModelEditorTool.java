@@ -64,7 +64,7 @@ import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
- * <code>LangChain4j</code> tool for creating and updating TopLogic model elements.
+ * Tool for creating and updating TopLogic model elements.
  *
  * <p>
  * This tool provides methods for creating and updating modules, classes, properties, references,

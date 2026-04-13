@@ -303,7 +303,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			builder.resourceTemplates(resource.createSpecification());
 		}
 
-		// Register langchain4j tools from ToolRegistry (if available)
+		// Register tools from ToolRegistry (if available)
 		for (io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification adaptedTool :
 				McpToolAdapter.adaptAllTools()) {
 			builder.tools(adaptedTool);

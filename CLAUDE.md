@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a TopLogic-based AI application with MCP server integration, AI service layer, and chat UI. Multi-module Maven build on TopLogic 7.10.0-SNAPSHOT.
 
+- **tl-ai-core**: Core AI framework — custom agent loop, multi-provider LLM support, tool system, multi-agent orchestration, TL-Script functions
 - **tl-ai-mcp-server**: MCP server exposing TopLogic model data to AI agents
-- **tl-ai-service**: Core AI service with LangChain4j, multi-agent orchestration, tool call tracking
 - **tl-chat**: Real-time agentic chat interface with SSE-based progress tracking
 - **tl-ai-demo**: Demo application bundling all modules
 
@@ -15,9 +15,9 @@ This is a TopLogic-based AI application with MCP server integration, AI service 
 
 ```bash
 mvn clean install                      # Build entire project
-mvn clean install -pl tl-ai-service    # Build specific module
+mvn clean install -pl tl-ai-core       # Build specific module
 mvn test                               # Run all tests
-mvn test -pl tl-ai-service             # Test specific module
+mvn test -pl tl-ai-core                # Test specific module
 mvn clean install -DskipTests          # Skip tests
 ```
 

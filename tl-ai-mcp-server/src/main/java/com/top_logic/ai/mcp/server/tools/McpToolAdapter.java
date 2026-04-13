@@ -11,7 +11,6 @@ import java.util.Map;
 
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.json.JSON;
 import com.top_logic.tl.ai.core.tool.Tool;
 
 import io.modelcontextprotocol.json.McpJsonMapper;

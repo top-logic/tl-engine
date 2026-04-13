@@ -16,8 +16,6 @@ import java.util.StringJoiner;
  * This allows automatic tracking without requiring wrapper classes. Tracking can be used for
  * debugging, monitoring, analysis, judge scoring, and other purposes.
  * </p>
- * 
- * @author jhu
  */
 public class ToolCallTracking {
 

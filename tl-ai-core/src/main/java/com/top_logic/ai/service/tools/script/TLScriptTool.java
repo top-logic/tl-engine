@@ -21,7 +21,7 @@ import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
 
 /**
- * Langchain4j tool for validating and executing TLScript code.
+ * Tool for validating and executing TLScript code.
  *
  * <p>
  * This tool provides validation and execution of TLScript. Both methods use the shared

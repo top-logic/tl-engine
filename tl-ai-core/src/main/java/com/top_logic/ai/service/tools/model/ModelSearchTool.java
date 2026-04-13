@@ -48,8 +48,6 @@ import com.top_logic.tl.ai.core.tool.ToolMethod;
  * datatypes), and properties/references. It searches technical names, qualified names, labels, and
  * descriptions, returning the top 10 most relevant matches with contextual information.
  * </p>
- * 
- * @author jhu
  */
 public class ModelSearchTool {
 

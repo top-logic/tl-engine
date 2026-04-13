@@ -44,7 +44,7 @@ public class ToolRegistry implements ToolExecutor {
 	//   pattern: reflective (@ToolMethod) + script/config-based. A ScriptToolFactory would
 	//   create Tool instances from TopLogic configuration (XML/model), allowing developers to
 	//   define tools without Java code. register(ScriptToolDefinition) or a ToolFactory interface
-	//   that produces Tool instances from config. Lives in tl-ai-service, not core.
+	//   that produces Tool instances from config.
 
 	private final Map<String, Tool> _tools = new LinkedHashMap<>();
 

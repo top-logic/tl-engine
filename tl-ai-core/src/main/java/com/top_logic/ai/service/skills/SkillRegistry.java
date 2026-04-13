@@ -141,8 +141,8 @@ public class SkillRegistry {
 	 * is injected. If the marker is not present, the catalog is appended at the end.
 	 *
 	 * <p>
-	 * Note: Uses angle brackets ({@code <<...>>}) instead of curly braces because
-	 * <i>LangChain4j</i> interprets {@code &#123;&#123;...&#125;&#125;} as template variables.
+	 * Note: Uses angle brackets ({@code <<...>>}) instead of curly braces to avoid
+	 * conflicts with template variable syntax.
 	 * </p>
 	 */
 	public static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";

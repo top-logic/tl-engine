@@ -21,7 +21,7 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.util.Resources;
 
 /**
- * Utility class for handling internationalization (I18N) in <code>LangChain4j</code> tools.
+ * Utility class for handling internationalization (I18N) in AI tools.
  *
  * <p>
  * This class provides helper methods to apply localized label and description values to TopLogic

@@ -5,16 +5,16 @@
  */
 package com.top_logic.ai.service.tools;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.basic.json.JSON;
-
-import dev.langchain4j.agentic.observability.AgentListener;
-import dev.langchain4j.service.tool.ToolExecution;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 
 /**
- * Bridges {@code LangChain4j}'s {@link AgentListener} tool execution events to
+ * Bridges tl-ai-core {@link AgentEventListener} tool execution events to
  * {@link ToolCallTracker} for the chat timeline.
  *
  * <p>
@@ -23,14 +23,23 @@ import dev.langchain4j.service.tool.ToolExecution;
  * separately as agent calls by the delegation executor.
  * </p>
  *
+ * <p>
+ * {@link AgentEvent.ToolCallStarted} events are used to cache the args JSON
+ * (keyed by {@code toolCallId}) so they are available when the corresponding
+ * {@link AgentEvent.ToolCallCompleted} arrives.
+ * </p>
+ *
  * @see ToolCallTracker
  * @see ToolCallTracking
  */
-public class TimelineAgentListener implements AgentListener {
+public class TimelineAgentListener implements AgentEventListener {
 
 	private static final String DELEGATION_PREFIX = "delegate_to_";
 
 	private final ToolCallTracker _tracker;
+
+	/** Pending args JSON keyed by toolCallId, populated on ToolCallStarted. */
+	private final Map<String, String> _pendingArgs = new HashMap<>();
 
 	/**
 	 * Creates a new listener that records tool executions into the given tracker.
@@ -43,20 +52,23 @@ public class TimelineAgentListener implements AgentListener {
 	}
 
 	@Override
-	public void afterToolExecution(ToolExecution execution) {
-		String toolName = execution.request().name();
-		if (toolName.startsWith(DELEGATION_PREFIX)) {
-			return;
+	public void onEvent(AgentEvent event) {
+		switch (event) {
+			case AgentEvent.ToolCallStarted started -> {
+				if (!started.toolName().startsWith(DELEGATION_PREFIX)) {
+					_pendingArgs.put(started.toolCallId(), started.argsJson());
+				}
+			}
+			case AgentEvent.ToolCallCompleted completed -> {
+				if (completed.toolName().startsWith(DELEGATION_PREFIX)) {
+					return;
+				}
+				String argsJson = _pendingArgs.remove(completed.toolCallId());
+				Map<String, Object> args = parseArguments(argsJson);
+				_tracker.recordToolCall(completed.toolName(), args, completed.result());
+			}
+			default -> { /* ignore */ }
 		}
-
-		Map<String, Object> args = parseArguments(execution.request().arguments());
-		String resultJson = execution.result();
-		_tracker.recordToolCall(toolName, args, resultJson);
-	}
-
-	@Override
-	public boolean inheritedBySubagents() {
-		return true;
 	}
 
 	@SuppressWarnings("unchecked")

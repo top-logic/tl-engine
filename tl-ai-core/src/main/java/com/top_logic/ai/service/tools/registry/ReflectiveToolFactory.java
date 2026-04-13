@@ -57,13 +57,15 @@ public class ReflectiveToolFactory implements ToolFactory {
 	 */
 	public ReflectiveToolFactory(InstantiationContext context, Config config) {
 		Class<?> toolClass = config.getToolClass();
+		List<Tool> tools;
 		try {
 			Object toolInstance = toolClass.getDeclaredConstructor().newInstance();
-			_tools = AnnotatedTools.from(toolInstance);
+			tools = AnnotatedTools.from(toolInstance);
 		} catch (Exception e) {
 			context.error("Failed to instantiate tool class: " + toolClass.getName(), e);
-			_tools = List.of();
+			tools = List.of();
 		}
+		_tools = tools;
 	}
 
 	@Override

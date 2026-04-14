@@ -102,6 +102,18 @@ public interface CommandModel {
 	String getPlacement();
 
 	/**
+	 * The clique identifier used to group this command with other related commands.
+	 *
+	 * <p>
+	 * Commands within the same clique are rendered together (e.g. in menus); separators are drawn
+	 * between cliques. Returns {@code null} by default if no clique is assigned.
+	 * </p>
+	 */
+	default String getClique() {
+		return null;
+	}
+
+	/**
 	 * Registers a listener that is notified when any visible state (label, executability) changes.
 	 *
 	 * @param listener

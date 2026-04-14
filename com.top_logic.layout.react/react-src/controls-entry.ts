@@ -54,6 +54,7 @@ import TLTreeView from './controls/TLTreeView';
 import TLDropdownSelect from './controls/TLDropdownSelect';
 import TLColorInput from './controls/TLColorInput';
 import TLIconSelect from './controls/TLIconSelect';
+import TLDashboard from './controls/TLDashboard';
 
 
 register('TLButton', TLButton);
@@ -101,3 +102,4 @@ register('TLTreeView', TLTreeView);
 register('TLDropdownSelect', TLDropdownSelect);
 register('TLColorInput', TLColorInput);
 register('TLIconSelect', TLIconSelect);
+register('TLDashboard', TLDashboard);

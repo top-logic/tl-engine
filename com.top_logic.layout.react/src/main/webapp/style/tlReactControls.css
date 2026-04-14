@@ -3921,3 +3921,71 @@ button.tlMenu__item--disabled:hover {
 .tl-tooltip-arrow {
   fill: var(--background-inverse);
 }
+/* --- Dashboard --- */
+.tlDashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+.tlDashboard__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+.tlDashboard__editBtn {
+  font: inherit;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--color-border, #c0c4cc);
+  background: var(--color-surface, #fff);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.tlDashboard__editBtn--active {
+  background: var(--layer-selected, #e6f0ff);
+  border-color: var(--layer-selected-hover, #3380ff);
+}
+.tlDashboard__grid {
+  width: 100%;
+}
+.tlDashboard__tile {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border, #dde1e7);
+  border-radius: 6px;
+  background: var(--color-surface, #fff);
+}
+.tlDashboard__tile > *:not(.tlDashboard__overlay) {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.tlDashboard--edit .tlDashboard__tile { cursor: move; }
+.tlDashboard__tile--dragging { opacity: 0.4; }
+.tlDashboard__overlay {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  cursor: move;
+  z-index: 5;
+}
+.tlDashboard__tile--dropBefore::before,
+.tlDashboard__tile--dropAfter::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 8px;
+  background: var(--color-drop-zone, #3380ff);
+  border-radius: 4px;
+  box-shadow: 0 0 12px 2px var(--color-drop-zone, #3380ff),
+              0 0 24px 4px var(--color-drop-zone, #3380ff);
+  pointer-events: none;
+  z-index: 10;
+}
+.tlDashboard__tile--dropBefore::before { left: -10px; }
+.tlDashboard__tile--dropAfter::after { right: -10px; }

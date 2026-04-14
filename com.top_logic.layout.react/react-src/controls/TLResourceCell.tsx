@@ -45,14 +45,19 @@ const TLResourceCell: React.FC<TLCellProps> = () => {
 
   if (hasLink) {
     return (
-      <a className={className} href="#" onClick={handleClick} title={tooltip}>
+      <a
+        className={className}
+        href="#"
+        onClick={handleClick}
+        data-tooltip={tooltip ? `text:${tooltip}` : undefined}
+      >
         {content}
       </a>
     );
   }
 
   return (
-    <span className={className} title={tooltip}>
+    <span className={className} data-tooltip={tooltip ? `text:${tooltip}` : undefined}>
       {content}
     </span>
   );

@@ -16,9 +16,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.table.CellObject;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.ColumnConfiguration;
@@ -44,7 +47,7 @@ import com.top_logic.layout.tree.model.TreeUIModel;
  * and the server creates/removes cell controls accordingly.
  * </p>
  */
-public class ReactTableControl extends ReactControl {
+public class ReactTableControl extends ReactControl implements TooltipProvider {
 
 	/**
 	 * Listener notified when the set of selected rows changes.
@@ -393,6 +396,41 @@ public class ReactTableControl extends ReactControl {
 			return _tableModel.getValueAt(((TLTreeNode<?>) rowObject).getBusinessObject(), columnName);
 		}
 		return _tableModel.getValueAt(rowObject, columnName);
+	}
+
+	@Override
+	public TooltipContent getTooltipContent(String key) {
+		if (key == null) {
+			return null;
+		}
+		int sep = key.indexOf('|');
+		if (sep < 0 || !key.startsWith("row_")) {
+			return null;
+		}
+		int rowIndex;
+		try {
+			rowIndex = Integer.parseInt(key.substring(4, sep));
+		} catch (NumberFormatException ex) {
+			return null;
+		}
+		String columnName = key.substring(sep + 1);
+
+		List<?> displayedRows = getDisplayedRows();
+		if (rowIndex < 0 || rowIndex >= displayedRows.size()) {
+			return null;
+		}
+		Object rowObject = displayedRows.get(rowIndex);
+		Object cellValue = getCellValue(rowObject, columnName);
+
+		String cellTooltip = null;
+		if (cellValue instanceof CellObject) {
+			cellTooltip = ((CellObject) cellValue).getTooltip();
+		}
+		if (cellTooltip != null && !cellTooltip.isEmpty()) {
+			return new TooltipContent(cellTooltip, null);
+		}
+
+		return null;
 	}
 
 	/**

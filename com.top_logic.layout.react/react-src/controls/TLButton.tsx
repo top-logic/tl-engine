@@ -55,7 +55,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
         disabled={resolvedDisabled}
         style={hiddenStyle}
         className="tlReactButton tlReactButton--icon"
-        title={resolvedLabel}
+        data-tooltip={resolvedLabel ? `text:${resolvedLabel}` : undefined}
         aria-label={resolvedLabel}
       >
         <ThemeIcon encoded={image} />

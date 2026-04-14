@@ -3867,3 +3867,26 @@ button.tlMenu__item--disabled:hover {
   background: var(--support-error, #da1e28);
   color: var(--text-on-color, #fff);
 }
+
+/* Rich tooltip popover (see tooltip-host.ts / TooltipPopover.tsx). */
+.tl-tooltip-popover {
+  background: var(--layer-01, #fff);
+  color: var(--text-primary, #1c1c1c);
+  border: 1px solid var(--border-subtle-01, #c6c6c6);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  padding: 10px 12px;
+  max-width: 420px;
+  font-size: 13px;
+  line-height: 1.4;
+  z-index: 10000;
+  user-select: text;
+}
+.tl-tooltip-caption {
+  font-weight: 600;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle-01, #e0e0e0);
+  padding-bottom: 4px;
+}
+.tl-tooltip-body p:first-child { margin-top: 0; }
+.tl-tooltip-body p:last-child  { margin-bottom: 0; }

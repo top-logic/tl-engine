@@ -6,6 +6,8 @@
 package com.top_logic.layout.react.control.layout;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -28,7 +30,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@code field} - the child field control descriptor</li>
  * </ul>
  */
-public class ReactFormFieldChromeControl extends ReactControl {
+public class ReactFormFieldChromeControl extends ReactControl implements TooltipProvider {
 
 	private static final String REACT_MODULE = "TLFormField";
 
@@ -52,7 +54,16 @@ public class ReactFormFieldChromeControl extends ReactControl {
 
 	private static final String FIELD = "field";
 
+	private static final String HAS_TOOLTIP = "hasTooltip";
+
+	/** Key expected by {@link #getTooltipContent(String)}. */
+	private static final String TOOLTIP_KEY = "tooltip";
+
 	private ReactControl _field;
+
+	private String _tooltipHtml;
+
+	private String _tooltipCaption;
 
 	/**
 	 * Creates a form field chrome wrapper.
@@ -195,6 +206,32 @@ public class ReactFormFieldChromeControl extends ReactControl {
 		}
 		_field = field;
 		putState(FIELD, field);
+	}
+
+	/**
+	 * Sets the rich tooltip shown on the field label. The HTML must already be sanitized (see
+	 * {@code SafeHTML}); the caption is optional.
+	 *
+	 * @param html
+	 *        Sanitized tooltip HTML, or {@code null} to clear.
+	 * @param caption
+	 *        Optional caption, or {@code null}.
+	 */
+	public void setTooltip(String html, String caption) {
+		_tooltipHtml = (html == null || html.isEmpty()) ? null : html;
+		_tooltipCaption = caption;
+		putState(HAS_TOOLTIP, _tooltipHtml != null);
+	}
+
+	@Override
+	public TooltipContent getTooltipContent(String key) {
+		if (!TOOLTIP_KEY.equals(key)) {
+			return null;
+		}
+		if (_tooltipHtml == null) {
+			return null;
+		}
+		return new TooltipContent(_tooltipHtml, _tooltipCaption);
 	}
 
 	@Override

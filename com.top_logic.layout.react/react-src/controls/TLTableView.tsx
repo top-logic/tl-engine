@@ -35,6 +35,32 @@ const TLTableView: React.FC<TLCellProps> = () => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  // Tooltip resolver: look upwards from the hovered target for a cell carrying
+  // data-row / data-col, and turn that into an opaque key for ReactTableControl.
+  React.useEffect(() => {
+    const node = rootRef.current;
+    if (!node) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as {
+        target: Element;
+        resolved: { key: string } | { inline: unknown } | null;
+      };
+      let el: Element | null = detail.target;
+      while (el && el !== node) {
+        const rowId = (el as HTMLElement).dataset.row;
+        const colName = (el as HTMLElement).dataset.col;
+        if (rowId != null && colName != null) {
+          detail.resolved = { key: rowId + '|' + colName };
+          return;
+        }
+        el = el.parentElement;
+      }
+    };
+    node.addEventListener('tl-tooltip-resolve', handler as EventListener);
+    return () => node.removeEventListener('tl-tooltip-resolve', handler as EventListener);
+  }, []);
 
   const columns = (state.columns as ColumnState[]) ?? [];
   const totalRowCount = (state.totalRowCount as number) ?? 0;
@@ -327,7 +353,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   }, [someSelected]);
 
   return (
-    <div className="tlTableView"
+    <div ref={rootRef} className="tlTableView" data-tooltip="dynamic"
       onDragOver={(e) => {
         if (!dragColumnRef.current) return;
         e.preventDefault();
@@ -494,6 +520,8 @@ const TLTableView: React.FC<TLCellProps> = () => {
                   <div
                     key={col.name}
                     className={cellClass}
+                    data-row={row.id}
+                    data-col={col.name}
                     style={{
                       ...(isLast && !isFrozen
                         ? { flex: '1 0 auto', minWidth: w }

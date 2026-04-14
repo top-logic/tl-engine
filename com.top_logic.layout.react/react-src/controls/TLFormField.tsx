@@ -34,6 +34,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const labelPos = (state.labelPosition as string | null) ?? ctx.resolvedLabelPosition;
   const fullLine = state.fullLine === true;
   const visible = state.visible !== false;
+  const hasTooltip = state.hasTooltip === true;
   const field = state.field;
   const readOnly = ctx.readOnly;
 
@@ -58,7 +59,10 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div id={controlId} className={className}>
       <div className="tlFormField__label">
-        <span className="tlFormField__labelText">{label}</span>
+        <span
+          className="tlFormField__labelText"
+          data-tooltip={hasTooltip ? 'key:tooltip' : undefined}
+        >{label}</span>
         {required && !readOnly && <span className="tlFormField__required">*</span>}
         {dirty && <span className="tlFormField__dirtyDot" />}
         {helpText && !readOnly && (

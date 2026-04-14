@@ -319,25 +319,9 @@ public class ChatProcessor {
 			boolean hasUpdates = false;
 			String currentTaskId = state.getCurrentTaskId();
 
-			// Check for new messages (agent response when task completes)
-			List<ChatMessage> newMessages = state.consumePendingMessages();
-			if (!newMessages.isEmpty()) {
-				if (currentTaskId != null) {
-					ChatTask task = taskTracker.getTask(currentTaskId);
-					if (task != null) {
-						task = task.toBuilder()
-							.withTotalUsage(taskTracker.getCumulativeUsage())
-							.build();
-					}
-					chat.addTaskSnapshot(task);
-				}
-				for (ChatMessage msg : newMessages) {
-					chat.addMessage(msg);
-				}
-				hasUpdates = true;
-			}
-
-			// Check for new timeline events (tool calls and agent calls) in real-time
+			// Sync timeline events FIRST so the task snapshot (below) includes all tool calls.
+			// Previously this ran after the snapshot, causing completed tasks to be persisted
+			// with an empty timeline when tool calls and completion arrived in the same poll cycle.
 			ToolCallTracker tracker = state.getToolCallTracker();
 			if (currentTaskId != null && tracker != null) {
 				List<TraceEntry> timeline = tracker.getTimeline();
@@ -354,6 +338,24 @@ public class ChatProcessor {
 					state.setLastSeenToolCallCount(currentCount);
 					hasUpdates = true;
 				}
+			}
+
+			// Check for new messages (agent response when task completes)
+			List<ChatMessage> newMessages = state.consumePendingMessages();
+			if (!newMessages.isEmpty()) {
+				if (currentTaskId != null) {
+					ChatTask task = taskTracker.getTask(currentTaskId);
+					if (task != null) {
+						task = task.toBuilder()
+							.withTotalUsage(taskTracker.getCumulativeUsage())
+							.build();
+					}
+					chat.addTaskSnapshot(task);
+				}
+				for (ChatMessage msg : newMessages) {
+					chat.addMessage(msg);
+				}
+				hasUpdates = true;
 			}
 
 			// Check for completion

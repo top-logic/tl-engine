@@ -183,6 +183,14 @@ export function unmount(controlId: string): void {
   }
 }
 
+/**
+ * Returns true if the given id is currently mounted as a React control in this window.
+ * Used by the TooltipHost to resolve a hovered DOM element to its owning control.
+ */
+export function isMountedControl(id: string): boolean {
+  return _mounts.has(id);
+}
+
 // --- Hooks ---
 
 /**

@@ -6,6 +6,7 @@ export {
   mountField,
   unmount,
   discoverAndMount,
+  isMountedControl,
   useTLState,
   useTLCommand,
   useTLUpload,
@@ -18,6 +19,8 @@ export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { default as TLChild } from './bridge/TLChild';
 export type { ChildDescriptor } from './bridge/TLChild';
+export { Tooltip } from './bridge/Tooltip';
+export type { TooltipProps, TooltipSpec } from './bridge/Tooltip';
 
 // Re-export React so that control bundles use the SAME React instance.
 //
@@ -42,3 +45,11 @@ import { subscribe as sseSubscribe, unsubscribe as sseUnsubscribe } from './brid
 // Initialize window self-close notification for multi-window support.
 import { initSelfCloseNotification } from './bridge/window-manager';
 initSelfCloseNotification();
+
+// Initialize per-window tooltip host (delegate handler + popover portal root).
+import { initTooltipHost } from './bridge/tooltip-host';
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', () => initTooltipHost(), { once: true });
+} else {
+  initTooltipHost();
+}

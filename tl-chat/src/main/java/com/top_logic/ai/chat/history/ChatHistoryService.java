@@ -53,6 +53,8 @@ public class ChatHistoryService {
 
 	private static final String ATTR_LAST_UPDATED = "lastUpdated";
 
+	private static final String ATTR_METADATA = "metadata";
+
 	private static final String ATTR_OWNER = "owner";
 
 	private ChatHistoryService() {
@@ -250,6 +252,34 @@ public class ChatHistoryService {
 			Logger.error("Failed to get session title: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
 		}
+	}
+
+	/**
+	 * Returns the metadata JSON for the given session, or null if not set.
+	 */
+	public static String getMetadataJson(TLObject session) {
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
+				() -> (String) session.tValueByName(ATTR_METADATA));
+		} catch (Exception ex) {
+			Logger.error("Failed to get session metadata: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return null;
+		}
+	}
+
+	/**
+	 * Saves session metadata as JSON.
+	 */
+	public static void saveMetadata(TLObject session, String metadataJson) {
+		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat session metadata"))) {
+				session.tUpdateByName(ATTR_METADATA, metadataJson);
+				tx.commit();
+			} catch (Exception ex) {
+				Logger.error("Failed to save session metadata: " + ex.getMessage(), ex, ChatHistoryService.class);
+			}
+		});
 	}
 
 	/**

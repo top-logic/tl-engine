@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<view>
+	<dashboard id="dashboard-layout-demo" min-col-width="16rem">
+		<tile id="sales" width="half" row-span="2">
+			<card variant="elevated">
+				<title>
+					<en>Sales</en>
+					<de>Ums&#xE4;tze</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Sales</en>
+						<de>Ums&#xE4;tze</de>
+					</label>
+				</demo-counter>
+			</card>
+		</tile>
+		<tile id="tasks" width="quarter">
+			<card>
+				<title>
+					<en>Tasks</en>
+					<de>Aufgaben</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Tasks</en>
+						<de>Aufgaben</de>
+					</label>
+				</demo-counter>
+			</card>
+		</tile>
+		<tile id="issues" width="quarter">
+			<card>
+				<title>
+					<en>Issues</en>
+					<de>Probleme</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Issues</en>
+						<de>Probleme</de>
+					</label>
+				</demo-counter>
+			</card>
+		</tile>
+		<tile id="reviews" width="half">
+			<card>
+				<title>
+					<en>Reviews</en>
+					<de>Reviews</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Reviews</en>
+						<de>Reviews</de>
+					</label>
+				</demo-counter>
+			</card>
+		</tile>
+		<tile id="timeline" width="two-thirds">
+			<card>
+				<title>
+					<en>Timeline</en>
+					<de>Verlauf</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Events</en>
+						<de>Ereignisse</de>
+					</label>
+				</demo-counter>
+			</card>
+		</tile>
+		<tile id="distribution" width="third">
+			<card>
+				<title>
+					<en>Distribution</en>
+					<de>Verteilung</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Segments</en>
+						<de>Segmente</de>
+					</label>
+				</demo-counter>
+			</card>
+		</tile>
+		<tile id="activity" width="full">
+			<card>
+				<title>
+					<en>Activity</en>
+					<de>Aktivit&#xE4;t</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Events</en>
+						<de>Ereignisse</de>
+					</label>
+				</demo-counter>
+			</card>
+		</tile>
+	</dashboard>
+</view>

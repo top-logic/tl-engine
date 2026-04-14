@@ -14,6 +14,15 @@
 							<de>Dashboard</de>
 						</label>
 					</nav-item>
+					<nav-item id="dashboard-layout-demo"
+						icon="bi bi-grid-1x2"
+					>
+						<label>
+							<en>Dashboard Layout</en>
+							<de>Dashboard-Layout</de>
+						</label>
+						<view-ref view="demo/dashboard-layout-demo.view.xml"/>
+					</nav-item>
 					<nav-item id="tabs-demo"
 						icon="bi bi-layout-text-window-reverse"
 					>

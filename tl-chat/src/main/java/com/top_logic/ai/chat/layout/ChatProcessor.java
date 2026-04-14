@@ -324,6 +324,11 @@ public class ChatProcessor {
 			if (!newMessages.isEmpty()) {
 				if (currentTaskId != null) {
 					ChatTask task = taskTracker.getTask(currentTaskId);
+					if (task != null) {
+						task = task.toBuilder()
+							.withTotalUsage(taskTracker.getCumulativeUsage())
+							.build();
+					}
 					chat.addTaskSnapshot(task);
 				}
 				for (ChatMessage msg : newMessages) {
@@ -357,6 +362,11 @@ public class ChatProcessor {
 				if (error != null) {
 					if (currentTaskId != null) {
 						ChatTask task = taskTracker.getTask(currentTaskId);
+						if (task != null) {
+							task = task.toBuilder()
+								.withTotalUsage(taskTracker.getCumulativeUsage())
+								.build();
+						}
 						chat.addTaskSnapshot(task);
 					}
 					String errorMsg = "Error: " + formatErrorMessage(error);

@@ -252,12 +252,14 @@ public class ChatServlet extends HttpServlet {
 		String requestId = null;
 		String response = null;
 		String toolName = null;
+		String comment = null;
 		try {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
 			requestId = (String) parsed.get("requestId");
 			response = (String) parsed.get("response");
 			toolName = (String) parsed.get("toolName");
+			comment = (String) parsed.get("comment");
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
 			return;
@@ -281,7 +283,12 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 
-		store.resolve(requestId, response);
+		// Include rejection comment in the response string so the ApprovalCallback receives it
+		String resolvedResponse = response;
+		if ("REJECTED".equals(response) && comment != null && !comment.isEmpty()) {
+			resolvedResponse = "REJECTED:" + comment;
+		}
+		store.resolve(requestId, resolvedResponse);
 
 		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
 			tracker.addSessionApprovedTool(toolName);

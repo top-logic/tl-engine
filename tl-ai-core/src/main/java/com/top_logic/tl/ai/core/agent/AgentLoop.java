@@ -160,6 +160,8 @@ public class AgentLoop {
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
 
+		_sessionApprovedTools.addAll(context.sessionApprovedTools());
+
 		listener = AgentEventListener.serializing(listener);
 		String runId = UUID.randomUUID().toString();
 		emit(listener, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
@@ -247,6 +249,8 @@ public class AgentLoop {
 		}
 		Objects.requireNonNull(context, "Context must not be null.");
 		Objects.requireNonNull(listener, "Listener must not be null.");
+
+		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
 		listener = AgentEventListener.serializing(listener);
 		String runId = UUID.randomUUID().toString();
@@ -593,12 +597,13 @@ public class AgentLoop {
 					} catch (IOException e) {
 						parsedArgs = Map.of();
 					}
+					String approvalRequestId = UUID.randomUUID().toString();
 					ApprovalRequest request = new ApprovalRequest(
+						approvalRequestId,
 						tool.name(), toolCall.id(),
 						parsedArgs, tool.mode(),
 						needsApproval.displayReason(),
 						ApprovalRequest.DEFAULT_TIMEOUT);
-					String approvalRequestId = UUID.randomUUID().toString();
 					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 						toolCall.id(), approvalRequestId, toolCall.name(),
 						Map.copyOf(request.arguments()), request.displayReason()));

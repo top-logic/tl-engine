@@ -399,12 +399,13 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Runs an agent by name using the tl-ai-core {@link AgentLoop}.
+	 * Runs an agent by name with an unrestricted {@link ToolContext}.
 	 *
 	 * <p>
-	 * Resolves the agent configuration, builds the provider, tool registry, and core
-	 * {@link com.top_logic.tl.ai.core.agent.AgentConfig}, creates an {@link AgentLoop}, and runs
-	 * it. Returns the response text extracted from the last {@link AssistantMessage}.
+	 * Convenience overload for trusted internal use (scripts, background agents). Uses
+	 * {@link ToolContext#EMPTY} which auto-approves all tools. For interactive use with
+	 * human-in-the-loop approval, call
+	 * {@link #runAgent(String, Conversation, ConversationMemory, ToolContext, AgentEventListener)}.
 	 * </p>
 	 *
 	 * @param name
@@ -419,6 +420,33 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public String runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, AgentEventListener listener) {
+		return runAgent(name, conversation, conversationMemory, ToolContext.EMPTY, listener);
+	}
+
+	/**
+	 * Runs an agent by name using the tl-ai-core {@link AgentLoop}.
+	 *
+	 * <p>
+	 * Resolves the agent configuration, builds the provider, tool registry, and core
+	 * {@link com.top_logic.tl.ai.core.agent.AgentConfig}, creates an {@link AgentLoop}, and runs
+	 * it. Returns the response text extracted from the last {@link AssistantMessage}.
+	 * </p>
+	 *
+	 * @param name
+	 *        The agent name as declared in the configuration.
+	 * @param conversation
+	 *        The conversation to operate on.
+	 * @param conversationMemory
+	 *        Optional conversation memory for context management, or {@code null}.
+	 * @param context
+	 *        Execution context with security policy, approval callback, and transaction scope.
+	 * @param listener
+	 *        Receives progress events during the run.
+	 * @return The response text from the agent, or empty string if no response.
+	 */
+	public String runAgent(String name, Conversation conversation,
+			ConversationMemory conversationMemory, ToolContext context,
+			AgentEventListener listener) {
 		AgentFactory factory = AgentFactory.getInstance();
 		TLObject agentObj = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentObj == null) {
@@ -433,10 +461,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		AgentLoop loop;
 		if (conversationMemory != null) {
 			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory);
-			loop.run(ToolContext.EMPTY, listener);
+			loop.run(context, listener);
 		} else {
 			loop = new AgentLoop(coreConfig, provider, registry);
-			loop.run(conversation, ToolContext.EMPTY, listener);
+			loop.run(conversation, context, listener);
 		}
 
 		return extractResponseText(conversation, conversationMemory);

@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Execution context passed to tools.
@@ -35,6 +36,8 @@ public class ToolContext {
 
 	private final TransactionScope _transaction;
 
+	private final Set<String> _sessionApprovedTools;
+
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
@@ -43,9 +46,24 @@ public class ToolContext {
 	 * @param transaction the transaction scope for the current agent run
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval, TransactionScope transaction) {
+		this(security, approval, transaction, Set.of());
+	}
+
+	/**
+	 * Creates a context with the given security, approval callback, transaction scope,
+	 * and pre-approved tools from a previous run in the same session.
+	 *
+	 * @param security             the security context for the current user
+	 * @param approval             the callback for requesting user approval
+	 * @param transaction          the transaction scope for the current agent run
+	 * @param sessionApprovedTools tool names already approved for the session
+	 */
+	public ToolContext(SecurityContext security, ApprovalCallback approval,
+			TransactionScope transaction, Set<String> sessionApprovedTools) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
+		_sessionApprovedTools = sessionApprovedTools != null ? sessionApprovedTools : Set.of();
 	}
 
 	/**
@@ -85,5 +103,15 @@ public class ToolContext {
 	 */
 	public TransactionScope transaction() {
 		return _transaction;
+	}
+
+	/**
+	 * Tool names already approved for the current session.
+	 *
+	 * <p>Carried across runs so the {@link AgentLoop} can skip approval for tools the user
+	 * already approved with "Allow for Session" in an earlier run.</p>
+	 */
+	public Set<String> sessionApprovedTools() {
+		return _sessionApprovedTools;
 	}
 }

@@ -337,6 +337,8 @@ public class ChatSSEHandler implements AgentEventListener {
 		} else if (event instanceof AgentEvent.ToolCallResultTruncated) {
 			// Not surfaced to UI
 		} else if (event instanceof AgentEvent.ApprovalRequired e) {
+			Logger.info("SSE: Sending approval_required for tool '" + e.toolName()
+				+ "' (approvalRequestId=" + e.approvalRequestId() + ")", ChatSSEHandler.class);
 			sendEvent("approval_required", DtoMapper.toJson(ApprovalRequiredEvent.create()
 				.setToolCallId(e.toolCallId())
 				.setApprovalRequestId(e.approvalRequestId())
@@ -383,6 +385,11 @@ public class ChatSSEHandler implements AgentEventListener {
 			return;
 		}
 		for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
+			// Skip tool-approval requests — they are delivered via the AgentEvent.ApprovalRequired
+			// path, not via polling. Only poll for askUser-style interactions (text, choice).
+			if ("approval".equals(req.getType())) {
+				continue;
+			}
 			if (!_emittedInteractionIds.contains(req.getId())) {
 				try {
 					sendEvent("user_interaction", DtoMapper.toJson(

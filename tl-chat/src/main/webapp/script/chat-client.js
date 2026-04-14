@@ -403,6 +403,7 @@
 			this._messagesEl = root.querySelector('.chat-messages');
 			this._inputEl = root.querySelector('.chat-input');
 			this._sendBtn = root.querySelector('.chat-button');
+			this._inputSection = root.querySelector('.chat-input-section');
 			this._ensureParentHeight(root);
 			this._setupCancelButton();
 			this._setupInput();
@@ -910,8 +911,8 @@
 		_currentPrompt: null,
 
 		showPrompt(data) {
-			const container = Render._currentToolsEl || Render._messagesEl;
-			if (!container) return;
+			const section = Render._inputSection;
+			if (!section) return;
 
 			const el = document.createElement('div');
 			el.className = 'tl-chat-approval';
@@ -955,9 +956,9 @@
 				});
 			});
 
-			container.appendChild(el);
+			// Insert at the top of the input section, above the input row
+			section.insertBefore(el, section.firstChild);
 			this._currentPrompt = el;
-			Render._scrollToBottom();
 		},
 
 		_respond(requestId, outcome, toolName, comment) {
@@ -983,6 +984,8 @@
 			el.innerHTML = '<div class="tl-chat-status-pill">' + status + '</div>';
 			el.className = 'tl-chat-approval-resolved';
 			this._currentPrompt = null;
+			// Remove resolved prompt from input section after brief display
+			setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 2000);
 		},
 
 		_dismiss(el) {
@@ -991,8 +994,8 @@
 		},
 
 		showInteraction(data) {
-			const container = Render._currentToolsEl || Render._messagesEl;
-			if (!container) return;
+			const section = Render._inputSection;
+			if (!section) return;
 
 			const el = document.createElement('div');
 			el.className = 'tl-chat-approval';
@@ -1049,8 +1052,7 @@
 				return;
 			}
 
-			container.appendChild(el);
-			Render._scrollToBottom();
+			section.insertBefore(el, section.firstChild);
 		}
 	};
 

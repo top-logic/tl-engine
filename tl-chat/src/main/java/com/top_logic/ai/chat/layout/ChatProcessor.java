@@ -11,11 +11,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatSSEHandler;
@@ -30,6 +34,7 @@ import com.top_logic.ai.service.agents.background.ExecutionResult;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
+import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.scripting.Converters;
@@ -42,6 +47,11 @@ import com.top_logic.ai.service.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.ApprovalCallback;
+import com.top_logic.tl.ai.core.agent.ApprovalResult;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
@@ -202,6 +212,9 @@ public class ChatProcessor {
 			conversation.add(new UserMessage(
 				UUID.randomUUID().toString(), Instant.now(), contentParts));
 
+			// Build ToolContext with real security, approval, and transaction scope
+			ToolContext toolContext = buildToolContext(interactionStore, taskTracker);
+
 			// Run the entry point agent via AgentLoop
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
 			TimelineAgentListener timelineListener = new TimelineAgentListener(tracker);
@@ -226,7 +239,7 @@ public class ChatProcessor {
 				listener = timelineListener;
 			}
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
-				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, listener));
+				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener));
 			state.setLastAgentResponse(result);
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
@@ -533,6 +546,75 @@ public class ChatProcessor {
 			return new PdfContent(base64, mimeType);
 		}
 		return new TextContent("[Unsupported attachment: " + att.getFileName() + "]");
+	}
+
+	/**
+	 * Builds a {@link ToolContext} for interactive chat use.
+	 *
+	 * <p>
+	 * Uses {@link TopLogicSecurityContext} for permission checks and system mode gating,
+	 * a live {@link TransactionScope} for KB transactions, and an {@link ApprovalCallback}
+	 * backed by the {@link UserInteractionStore} for human-in-the-loop approval.
+	 * </p>
+	 */
+	private static ToolContext buildToolContext(UserInteractionStore interactionStore,
+			TaskProgressTracker taskTracker) {
+		ApprovalCallback approvalCallback;
+		if (taskTracker.getApprovalMode() == ApprovalMode.AUTO_APPROVE) {
+			approvalCallback = ApprovalCallback.AUTO_APPROVE;
+		} else {
+			approvalCallback = request -> {
+				Logger.info("Approval requested for tool '" + request.toolName()
+					+ "' (mode=" + request.mode() + ", approvalRequestId="
+					+ request.approvalRequestId() + "). Blocking until user responds.",
+					ChatProcessor.class);
+				CompletableFuture<String> future =
+					interactionStore.registerApproval(request.approvalRequestId());
+				try {
+					String response = future.get(
+						request.timeout().toMillis(), TimeUnit.MILLISECONDS);
+					Logger.info("Approval response for '" + request.toolName()
+						+ "': " + response, ChatProcessor.class);
+					return mapApprovalResponse(response);
+				} catch (TimeoutException e) {
+					Logger.warn("Approval timed out for tool '" + request.toolName() + "'.",
+						ChatProcessor.class);
+					return new ApprovalResult.TimedOut();
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return new ApprovalResult.TimedOut();
+				} catch (ExecutionException e) {
+					Logger.error("Approval future failed for tool '" + request.toolName()
+						+ "': " + e.getMessage(), e, ChatProcessor.class);
+					return new ApprovalResult.TimedOut();
+				}
+			};
+		}
+		return new ToolContext(
+			new TopLogicSecurityContext(), approvalCallback, new TransactionScope(),
+			taskTracker.getSessionApprovedTools());
+	}
+
+	/**
+	 * Maps the raw response string from the UI to an {@link ApprovalResult}.
+	 */
+	private static ApprovalResult mapApprovalResponse(String response) {
+		if (response == null) {
+			return new ApprovalResult.TimedOut();
+		}
+		return switch (response) {
+			case "APPROVED" -> new ApprovalResult.Approved();
+			case "APPROVED_FOR_SESSION" -> new ApprovalResult.ApprovedForSession();
+			default -> {
+				if (response.startsWith("REJECTED")) {
+					String comment = response.length() > "REJECTED".length()
+						? response.substring("REJECTED:".length()).trim()
+						: "";
+					yield new ApprovalResult.Rejected(comment);
+				}
+				yield new ApprovalResult.Rejected(response);
+			}
+		};
 	}
 
 	/** Returns a human-readable error description, never null. */

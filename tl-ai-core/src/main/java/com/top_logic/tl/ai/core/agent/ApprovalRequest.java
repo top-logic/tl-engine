@@ -17,16 +17,19 @@ import com.top_logic.tl.ai.core.tool.ToolMode;
  * <p>Contains everything the approval UI needs to display: tool name, arguments,
  * risk level (mode), a human-readable reason, and a timeout.</p>
  *
- * @param toolName      name of the tool requesting approval
- * @param toolCallId    unique ID of the tool call from the LLM
- * @param arguments     deserialized arguments the tool would receive
- * @param mode          the tool's {@link ToolMode} (indicates scope of change)
- * @param displayReason human-readable reason shown in the approval dialog
- * @param timeout       maximum time to wait for user response
+ * @param approvalRequestId unique ID for this approval request (used to correlate SSE events with
+ *                          the UI response)
+ * @param toolName          name of the tool requesting approval
+ * @param toolCallId        unique ID of the tool call from the LLM
+ * @param arguments         deserialized arguments the tool would receive
+ * @param mode              the tool's {@link ToolMode} (indicates scope of change)
+ * @param displayReason     human-readable reason shown in the approval dialog
+ * @param timeout           maximum time to wait for user response
  *
  * @see ApprovalCallback
  */
 public record ApprovalRequest(
+		String approvalRequestId,
 		String toolName,
 		String toolCallId,
 		Map<String, Object> arguments,
@@ -39,6 +42,7 @@ public record ApprovalRequest(
 
 	/** */
 	public ApprovalRequest {
+		Objects.requireNonNull(approvalRequestId);
 		Objects.requireNonNull(toolName);
 		Objects.requireNonNull(toolCallId);
 		Objects.requireNonNull(arguments);

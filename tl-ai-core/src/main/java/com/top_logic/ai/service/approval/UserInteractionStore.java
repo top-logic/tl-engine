@@ -66,6 +66,28 @@ public class UserInteractionStore {
 	}
 
 	/**
+	 * Registers a pending approval request under a caller-supplied ID.
+	 *
+	 * <p>
+	 * Used by the {@link com.top_logic.tl.ai.core.agent.ApprovalCallback} bridge: the agent loop
+	 * generates the approval request ID and emits it via SSE, then the callback registers a future
+	 * under that same ID so the servlet can resolve it when the user responds.
+	 * </p>
+	 *
+	 * @param approvalRequestId The ID to register under (matches the SSE event's
+	 *                          {@code approvalRequestId}).
+	 * @return A future that completes with the user's response string.
+	 */
+	public CompletableFuture<String> registerApproval(String approvalRequestId) {
+		CompletableFuture<String> future = new CompletableFuture<>();
+		UserInteractionRequest request = new UserInteractionRequest(
+			approvalRequestId, "", "Approval", "approval", null, false,
+			System.currentTimeMillis(), future);
+		_pending.put(approvalRequestId, request);
+		return future;
+	}
+
+	/**
 	 * Resolves a pending request with the user's response.
 	 *
 	 * @param requestId The request ID to resolve.

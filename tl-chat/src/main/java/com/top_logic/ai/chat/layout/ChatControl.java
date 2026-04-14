@@ -85,9 +85,13 @@ public class ChatControl extends AbstractControlBase {
 
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		String contextPath = context.getContextPath();
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 		out.writeAttribute("data-tl-chat", "v1");
+		out.writeAttribute("data-cancel-url", contextPath + "/chat/cancel");
+		out.writeAttribute("data-respond-url", contextPath + "/chat/respond");
+		out.writeAttribute("data-approval-mode-url", contextPath + "/chat/approval-mode");
 		out.writeAttribute("data-chat-messages-id", getID() + "-messages");
 		out.writeAttribute("data-chat-input-id", getID() + "-input");
 		out.writeAttribute("data-chat-button-id", getID() + "-button");
@@ -115,7 +119,6 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 
 		// Load chat client via inline script so it runs when fragment is AJAX-injected
-		String contextPath = context.getContextPath();
 		out.beginScript();
 		out.append("(function(){var s=document.createElement('script');s.src='");
 		out.append(contextPath);

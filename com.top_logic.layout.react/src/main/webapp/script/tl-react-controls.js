@@ -104,7 +104,7 @@ const { useCallback: wt } = e, kt = ({ controlId: l, state: t }) => {
       className: o,
       "aria-invalid": i || void 0
     },
-    /* @__PURE__ */ e.createElement("option", { value: "" }),
+    t.nullable !== !1 && /* @__PURE__ */ e.createElement("option", { value: "" }),
     s.map((m) => /* @__PURE__ */ e.createElement("option", { key: m.value, value: m.value }, m.label))
   ));
 }, { useCallback: Dt } = e, It = ({ controlId: l, state: t }) => {
@@ -665,7 +665,7 @@ const { useCallback: Pt } = e, jt = ({ controlId: l, command: t, label: r, disab
     const k = {
       overflow: b.scrolling || "auto"
     };
-    return b.collapsed ? i && !o ? k.flex = "1 0 0%" : k.flex = "0 0 auto" : N !== void 0 ? k.flex = `0 0 ${N}px` : b.unit === "%" || a ? k.flex = `${b.size} 0 0%` : k.flex = `0 0 ${b.size}px`, b.minSize > 0 && !b.collapsed && (k.minWidth = s ? b.minSize : void 0, k.minHeight = s ? void 0 : b.minSize), k;
+    return b.collapsed ? i && !o ? k.flex = "1 0 0%" : k.flex = "0 0 auto" : N !== void 0 ? k.flex = `0 0 ${N}px` : k.flex = `${b.size} 1 0%`, b.minSize > 0 && !b.collapsed && (k.minWidth = s ? b.minSize : void 0, k.minHeight = s ? void 0 : b.minSize), k;
   }, [s, i, a, o]), h = lt((b, N) => {
     b.preventDefault();
     const k = p.current;
@@ -1583,8 +1583,8 @@ const Se = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className
   const t = Z(), r = t.header, n = t.content, c = t.footer, u = t.snackbar, s = t.dialogManager;
   return /* @__PURE__ */ e.createElement("div", { id: l, className: "tlAppShell" }, r && /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__header" }, /* @__PURE__ */ e.createElement(q, { control: r })), /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__content" }, /* @__PURE__ */ e.createElement(q, { control: n })), c && /* @__PURE__ */ e.createElement("div", { className: "tlAppShell__footer" }, /* @__PURE__ */ e.createElement(q, { control: c })), /* @__PURE__ */ e.createElement(q, { control: u }), s && /* @__PURE__ */ e.createElement(q, { control: s }));
 }, Kn = () => {
-  const t = Z().text ?? "";
-  return /* @__PURE__ */ e.createElement("span", { className: "tlTextCell" }, t);
+  const l = Z(), t = l.text ?? "", r = l.cssClass ?? "", n = r ? `tlText ${r}` : "tlText";
+  return /* @__PURE__ */ e.createElement("span", { className: n }, t);
 }, Yn = {
   "js.table.freezeUpTo": "Freeze up to here",
   "js.table.unfreezeAll": "Unfreeze all"
@@ -1907,7 +1907,7 @@ const Se = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className
   "js.formGroup.collapse": "Collapse",
   "js.formGroup.expand": "Expand"
 }, rl = ({ controlId: l }) => {
-  const t = Z(), r = oe(), n = se(ll), c = t.header, u = t.headerActions ?? [], s = t.collapsible === !0, i = t.collapsed === !0, a = t.border ?? "none", o = t.fullLine === !0, p = t.children ?? [], m = c != null || u.length > 0 || s, f = nl(() => {
+  const t = Z(), r = oe(), n = se(ll), c = t.headerControl ?? null, u = t.headerActions ?? [], s = t.collapsible === !0, i = t.collapsed === !0, a = t.border ?? "none", o = t.fullLine === !0, p = t.children ?? [], m = c != null || u.length > 0 || s, f = nl(() => {
     r("toggleCollapse");
   }, [r]), C = [
     "tlFormGroup",
@@ -1945,7 +1945,7 @@ const Se = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className
         }
       )
     )
-  ), c && /* @__PURE__ */ e.createElement("span", { className: "tlFormGroup__title" }, c), u.length > 0 && /* @__PURE__ */ e.createElement("div", { className: "tlFormGroup__actions" }, u.map((h, E) => /* @__PURE__ */ e.createElement(q, { key: E, control: h })))), /* @__PURE__ */ e.createElement("div", { className: "tlFormGroup__body" }, p.map((h, E) => /* @__PURE__ */ e.createElement(q, { key: E, control: h }))));
+  ), c && /* @__PURE__ */ e.createElement("span", { className: "tlFormGroup__title" }, /* @__PURE__ */ e.createElement(q, { control: c })), u.length > 0 && /* @__PURE__ */ e.createElement("div", { className: "tlFormGroup__actions" }, u.map((h, E) => /* @__PURE__ */ e.createElement(q, { key: E, control: h })))), /* @__PURE__ */ e.createElement("div", { className: "tlFormGroup__body" }, p.map((h, E) => /* @__PURE__ */ e.createElement(q, { key: E, control: h }))));
 }, { useContext: ol, useState: al, useCallback: sl } = e, cl = ({ controlId: l }) => {
   const t = Z(), r = ol(_t), n = t.label ?? "", c = t.required === !0, u = t.error, s = t.warnings, i = t.helpText, a = t.dirty === !0, o = t.labelPosition ?? r.resolvedLabelPosition, p = t.fullLine === !0, m = t.visible !== !1, f = t.field, C = r.readOnly, [h, E] = al(!1), b = sl(() => E((P) => !P), []);
   if (!m) return null;
@@ -3812,7 +3812,7 @@ z("TLDrawer", On);
 z("TLSnackbar", Wn);
 z("TLMenu", Un);
 z("TLAppShell", Vn);
-z("TLTextCell", Kn);
+z("TLText", Kn);
 z("TLTableView", Gn);
 z("TLFormLayout", tl);
 z("TLFormGroup", rl);

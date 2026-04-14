@@ -1352,7 +1352,10 @@
 			if (entries.length > 0) {
 				Welcome.hide();
 			}
-			entries.forEach(entry => {
+			// Group consecutive entries: task_snapshot(s) followed by agent message form one bubble
+			let i = 0;
+			while (i < entries.length) {
+				const entry = entries[i];
 				if (entry.type === 'message') {
 					const msg = entry.messageData;
 					if (msg) {
@@ -1362,8 +1365,28 @@
 							this._renderPersistedAgentMessage(msg);
 						}
 					}
+					i++;
+				} else if (entry.type === 'task_snapshot') {
+					// Collect consecutive task snapshots (usually just one per agent turn)
+					const snapshots = [];
+					while (i < entries.length && entries[i].type === 'task_snapshot') {
+						snapshots.push(entries[i].taskData);
+						i++;
+					}
+					// Next entry should be the agent message
+					let agentMsg = null;
+					if (i < entries.length && entries[i].type === 'message') {
+						const msg = entries[i].messageData;
+						if (msg && msg.role !== 'user') {
+							agentMsg = msg;
+							i++;
+						}
+					}
+					this._renderPersistedTrace(snapshots, agentMsg);
+				} else {
+					i++;
 				}
-			});
+			}
 			Render._scrollToBottom();
 		},
 
@@ -1377,6 +1400,155 @@
 			if (Render._messagesEl) {
 				Render._messagesEl.appendChild(div);
 			}
+		},
+
+		_renderPersistedTrace(snapshots, agentMsg) {
+			const div = document.createElement('div');
+			div.className = 'chat-message chat-message-agent';
+
+			const content = document.createElement('div');
+			content.className = 'chat-bubble chat-bubble-agent';
+
+			// Build trace wrapper (same structure as live Render.appendAssistantBubble)
+			const traceWrapper = document.createElement('div');
+			traceWrapper.className = 'tl-chat-trace-wrapper';
+
+			const traceHeader = document.createElement('div');
+			traceHeader.className = 'tl-chat-trace-header';
+
+			// Count total tool/agent calls across all snapshots
+			let totalEvents = 0;
+			let totalUsage = null;
+			for (const task of snapshots) {
+				if (task && task.timeline) {
+					totalEvents += task.timeline.length;
+				}
+				if (task && task.totalUsage) {
+					totalUsage = task.totalUsage;
+				}
+			}
+
+			const traceTokensEl = document.createElement('span');
+			traceTokensEl.className = 'tl-chat-trace-tokens';
+			if (totalUsage) {
+				const total = (totalUsage.inputTokens || 0) + (totalUsage.outputTokens || 0) + (totalUsage.thinkingTokens || 0);
+				if (total > 0) {
+					traceTokensEl.textContent = Utils.formatTokens(total) + ' tokens';
+					traceTokensEl.addEventListener('click', (e) => {
+						e.stopPropagation();
+						Tokens._showPopover(e, totalUsage);
+					});
+				}
+			}
+
+			const summary = totalEvents > 0
+				? totalEvents + ' tool' + (totalEvents > 1 ? 's' : '') + ' used'
+				: 'Thinking';
+			traceHeader.innerHTML =
+				'<span class="tl-chat-trace-chevron">&#9654;</span>' +
+				'<span class="tl-chat-trace-summary">' + summary + '</span>';
+			traceHeader.appendChild(traceTokensEl);
+
+			const traceBody = document.createElement('div');
+			traceBody.className = 'tl-chat-trace-body';
+			traceBody.style.display = 'none';
+
+			let traceExpanded = false;
+			traceHeader.addEventListener('click', () => {
+				traceExpanded = !traceExpanded;
+				traceBody.style.display = traceExpanded ? '' : 'none';
+				traceHeader.querySelector('.tl-chat-trace-chevron').classList.toggle('expanded', traceExpanded);
+			});
+
+			// Render timeline events
+			const toolsEl = document.createElement('div');
+			toolsEl.className = 'tl-chat-tools-container';
+
+			for (const task of snapshots) {
+				if (!task || !task.timeline) continue;
+				for (const ev of task.timeline) {
+					if (ev.type === 'agent_call') {
+						this._renderPersistedDelegation(toolsEl, ev);
+					} else {
+						this._renderPersistedToolCall(toolsEl, ev);
+					}
+				}
+			}
+
+			traceBody.appendChild(toolsEl);
+			traceWrapper.appendChild(traceHeader);
+			traceWrapper.appendChild(traceBody);
+			content.appendChild(traceWrapper);
+
+			// Agent response text
+			const textEl = document.createElement('div');
+			textEl.className = 'chat-agent-text';
+			if (agentMsg) {
+				textEl.innerHTML = agentMsg.contentHtml || Utils.escapeHtml(agentMsg.content || '');
+			}
+			content.appendChild(textEl);
+
+			div.appendChild(content);
+			if (Render._messagesEl) {
+				Render._messagesEl.appendChild(div);
+			}
+		},
+
+		_renderPersistedToolCall(container, ev) {
+			const el = document.createElement('div');
+			el.className = 'tl-chat-tool';
+
+			const statusClass = ev.status === 'error' ? 'error' : 'success';
+
+			const header = document.createElement('div');
+			header.className = 'tl-chat-tool-header';
+			header.innerHTML =
+				'<span class="tl-chat-status-dot ' + statusClass + '"></span>' +
+				'<span class="tl-chat-tool-name">' + Utils.escapeHtml(ev.toolName || ev.name || '') + '</span>' +
+				'<span class="tl-chat-tool-tokens"></span>' +
+				'<span class="tl-chat-tool-duration">' + (ev.durationMs ? Utils.formatDuration(ev.durationMs) : '') + '</span>' +
+				'<span class="tl-chat-tool-chevron">&#9654;</span>';
+
+			const body = document.createElement('div');
+			body.className = 'tl-chat-tool-body';
+			body.style.display = 'none';
+
+			if (ev.argsJson) {
+				body.innerHTML =
+					'<div class="tl-chat-tool-label">Arguments</div>' +
+					'<pre>' + Utils.escapeHtml(Tools._prettyJson(ev.argsJson)) + '</pre>';
+			}
+			if (ev.result) {
+				const resultDiv = document.createElement('div');
+				resultDiv.innerHTML =
+					'<div class="tl-chat-tool-label">Result</div>' +
+					'<pre>' + Utils.escapeHtml(Tools._truncate(ev.result, 2000)) + '</pre>';
+				body.appendChild(resultDiv);
+			}
+
+			let expanded = false;
+			header.addEventListener('click', () => {
+				expanded = !expanded;
+				body.style.display = expanded ? '' : 'none';
+				header.querySelector('.tl-chat-tool-chevron').classList.toggle('expanded', expanded);
+			});
+
+			el.appendChild(header);
+			el.appendChild(body);
+			container.appendChild(el);
+		},
+
+		_renderPersistedDelegation(container, ev) {
+			const el = document.createElement('div');
+			el.className = 'tl-chat-delegation';
+
+			const header = document.createElement('div');
+			header.className = 'tl-chat-delegation-header';
+			header.innerHTML =
+				'<span class="tl-chat-status-dot success"></span>' +
+				'<span>Agent: ' + Utils.escapeHtml(ev.toAgent || '') + '</span>';
+			el.appendChild(header);
+			container.appendChild(el);
 		},
 
 		_moveToTop(sessionId) {

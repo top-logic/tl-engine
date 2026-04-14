@@ -65,7 +65,7 @@ let _sseConnected = false;
 /**
  * Returns the API base URL (context path with trailing slash).
  */
-function getApiBase(): string {
+export function getApiBase(): string {
   return _contextPath + '/';
 }
 

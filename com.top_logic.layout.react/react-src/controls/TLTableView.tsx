@@ -31,7 +31,7 @@ const MIN_COL_WIDTH = 50;
  * React table component with virtual scrolling, server-driven cell controls,
  * multi-selection with checkbox column, and column resize.
  */
-const TLTableView: React.FC<TLCellProps> = () => {
+const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
@@ -353,7 +353,7 @@ const TLTableView: React.FC<TLCellProps> = () => {
   }, [someSelected]);
 
   return (
-    <div ref={rootRef} className="tlTableView" data-tooltip="dynamic"
+    <div ref={rootRef} id={controlId} className="tlTableView" data-tooltip="dynamic"
       onDragOver={(e) => {
         if (!dragColumnRef.current) return;
         e.preventDefault();

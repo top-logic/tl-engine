@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { isMountedControl } from './tl-react-bridge';
+import { isMountedControl, getApiBase } from './tl-react-bridge';
 import { TooltipPopover, TooltipData } from './TooltipPopover';
 
 const HOVER_DELAY_MS = 400;
@@ -183,7 +183,7 @@ function renderActive(): void {
 
 async function fetchTooltip(controlId: string, key: string): Promise<TooltipData | null> {
   const windowName = (document.body.dataset.windowName as string) ?? '';
-  const url = `/react-api/tooltip?controlId=${encodeURIComponent(controlId)}`
+  const url = getApiBase() + `react-api/tooltip?controlId=${encodeURIComponent(controlId)}`
     + `&key=${encodeURIComponent(key)}`
     + `&windowName=${encodeURIComponent(windowName)}`;
   const resp = await fetch(url, { credentials: 'same-origin' });

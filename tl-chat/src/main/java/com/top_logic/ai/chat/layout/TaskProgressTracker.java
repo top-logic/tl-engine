@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,6 +20,7 @@ import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
  * Session-scoped storage for task progress tracking.
@@ -41,7 +43,12 @@ public class TaskProgressTracker {
 
 	private final LinkedList<ChatTask> _tasks = new LinkedList<>();
 
-	private final ChatSessionManager _sessionManager = new ChatSessionManager();
+	private final ChatSessionManager _sessionManager;
+
+	{
+		_sessionManager = new ChatSessionManager();
+		_sessionManager.setTracker(this);
+	}
 
 	private final ConcurrentHashMap<String, AtomicBoolean> _backgroundAgentInProgress = new ConcurrentHashMap<>();
 
@@ -60,6 +67,12 @@ public class TaskProgressTracker {
 
 	/** Session-scoped approval mode. Persists across messages/processing states. */
 	private volatile ApprovalMode _approvalMode = ApprovalMode.MANUAL;
+
+	/** Tools approved for the current session. */
+	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
+
+	/** Cumulative token usage across all runs in this session. */
+	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
 
 	/**
 	 * Returns the chat for this window. Same instance for add and render so task traces persist.
@@ -258,6 +271,38 @@ public class TaskProgressTracker {
 			}
 			return tracker;
 		}
+	}
+
+	/** Adds a tool to the session-approved set. */
+	public void addSessionApprovedTool(String toolName) {
+		_sessionApprovedTools.add(toolName);
+	}
+
+	/** Returns the set of session-approved tool names. */
+	public Set<String> getSessionApprovedTools() {
+		return Set.copyOf(_sessionApprovedTools);
+	}
+
+	/** Loads session-approved tools (e.g., from persisted metadata). */
+	public void loadSessionApprovedTools(Set<String> tools) {
+		_sessionApprovedTools.clear();
+		_sessionApprovedTools.addAll(tools);
+	}
+
+	/** Adds token usage from a completed run. */
+	public void addTokenUsage(TokenUsage usage) {
+		_cumulativeUsage = _cumulativeUsage.add(usage);
+	}
+
+	/** Returns cumulative token usage. */
+	public TokenUsage getCumulativeUsage() {
+		return _cumulativeUsage;
+	}
+
+	/** Resets session-specific state (approvals and tokens). */
+	public void resetSessionState() {
+		_sessionApprovedTools.clear();
+		_cumulativeUsage = TokenUsage.EMPTY;
 	}
 
 	/**

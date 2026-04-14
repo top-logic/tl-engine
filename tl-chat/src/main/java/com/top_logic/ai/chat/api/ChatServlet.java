@@ -283,10 +283,9 @@ public class ChatServlet extends HttpServlet {
 
 		store.resolve(requestId, response);
 
-		// TODO: Task 5 — addSessionApprovedTool will be added to TaskProgressTracker
-		// if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
-		// 	tracker.addSessionApprovedTool(toolName);
-		// }
+		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
+			tracker.addSessionApprovedTool(toolName);
+		}
 
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());

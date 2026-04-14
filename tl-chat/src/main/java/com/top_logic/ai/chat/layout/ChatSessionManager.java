@@ -49,6 +49,9 @@ public class ChatSessionManager {
 
 	private final Object _lock = new Object();
 
+	/** Back-reference to the owning tracker for metadata serialization. */
+	private volatile TaskProgressTracker _tracker;
+
 	/** LRU cache of per-session state, bounded to {@link #MAX_CACHED_SESSIONS}. */
 	private final Map<String, SessionState> _sessions = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
@@ -73,6 +76,13 @@ public class ChatSessionManager {
 			_chat = chat;
 			_conversationMemory = conversationMemory;
 		}
+	}
+
+	/**
+	 * Sets the owning {@link TaskProgressTracker} for metadata persistence during session switches.
+	 */
+	void setTracker(TaskProgressTracker tracker) {
+		_tracker = tracker;
 	}
 
 	/**
@@ -132,6 +142,12 @@ public class ChatSessionManager {
 			// Persist current session before switching
 			persistActiveSessionInternal();
 
+			// Reset tracker state immediately so it is never retained from the previous session,
+			// regardless of whether the new session is found in the LRU cache or loaded from DB.
+			if (_tracker != null) {
+				_tracker.resetSessionState();
+			}
+
 			// Check LRU cache first
 			SessionState cached = _sessions.get(sessionId);
 			if (cached != null) {
@@ -151,6 +167,11 @@ public class ChatSessionManager {
 						List<ChatEntry> entries = DtoMapper.deserializeEntries(json);
 						chat.loadEntries(entries);
 						rebuildConversationMemory(memory, entries);
+					}
+
+					if (_tracker != null) {
+						String metadataJson = ChatHistoryService.getMetadataJson(session);
+						DtoMapper.loadMetadata(metadataJson, _tracker);
 					}
 				}
 			} catch (Exception ex) {
@@ -186,6 +207,11 @@ public class ChatSessionManager {
 			if (session != null) {
 				String json = DtoMapper.serializeEntries(state._chat.getEntries());
 				ChatHistoryService.saveMessages(session, json);
+
+				if (_tracker != null) {
+					String metadataJson = DtoMapper.serializeMetadata(_tracker);
+					ChatHistoryService.saveMetadata(session, metadataJson);
+				}
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to persist session " + sessionId + ": " + ex.getMessage(), ex,

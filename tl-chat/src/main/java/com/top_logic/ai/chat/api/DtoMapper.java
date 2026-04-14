@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +23,9 @@ import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.MessageDto;
 import com.top_logic.ai.chat.api.messages.PersistedChat;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
+import com.top_logic.ai.chat.api.messages.SessionMetadata;
 import com.top_logic.ai.chat.api.messages.TimelineEventDto;
+import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatEntry;
@@ -32,6 +35,7 @@ import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.ChatToolCall;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.scripting.Converters;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 
 import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringR;
@@ -501,6 +505,57 @@ public final class DtoMapper {
 			return Instant.parse(time);
 		} catch (Exception ex) {
 			return Instant.now();
+		}
+	}
+
+	/**
+	 * Serializes session metadata (approved tools, cumulative token usage) to JSON.
+	 *
+	 * @param tracker
+	 *        The task progress tracker holding session state.
+	 * @return JSON string for persistence.
+	 */
+	public static String serializeMetadata(TaskProgressTracker tracker) {
+		SessionMetadata meta = SessionMetadata.create();
+		for (String tool : tracker.getSessionApprovedTools()) {
+			meta.addApprovedTool(tool);
+		}
+		TokenUsage usage = tracker.getCumulativeUsage();
+		meta.setCumulativeUsage(TokenUsageDto.create()
+			.setInputTokens(usage.inputTokens())
+			.setOutputTokens(usage.outputTokens())
+			.setThinkingTokens(usage.thinkingTokens())
+			.setCacheReadTokens(usage.cacheReadTokens())
+			.setCacheWriteTokens(usage.cacheWriteTokens()));
+		return toJson(meta);
+	}
+
+	/**
+	 * Loads session metadata from JSON into the tracker, restoring approved tools and cumulative
+	 * token usage.
+	 *
+	 * @param json
+	 *        The JSON string from persistence. May be null or empty.
+	 * @param tracker
+	 *        The task progress tracker to populate.
+	 */
+	public static void loadMetadata(String json, TaskProgressTracker tracker) {
+		if (json == null || json.isEmpty()) {
+			return;
+		}
+		try {
+			SessionMetadata meta =
+				SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
+			tracker.loadSessionApprovedTools(new HashSet<>(meta.getApprovedTools()));
+			TokenUsageDto usage = meta.getCumulativeUsage();
+			if (usage != null) {
+				tracker.addTokenUsage(new TokenUsage(
+					usage.getInputTokens(), usage.getOutputTokens(),
+					usage.getThinkingTokens(), usage.getCacheReadTokens(),
+					usage.getCacheWriteTokens()));
+			}
+		} catch (Exception e) {
+			// Corrupted metadata — ignore and start fresh.
 		}
 	}
 }

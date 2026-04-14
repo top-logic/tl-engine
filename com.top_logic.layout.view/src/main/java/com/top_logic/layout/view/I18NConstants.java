@@ -64,6 +64,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_SAVE_VIEW_FAILED__PATH;
 
+	/**
+	 * @en Edit Layout
+	 */
+	public static ResKey DASHBOARD_EDIT;
+
+	/**
+	 * @en Done
+	 */
+	public static ResKey DASHBOARD_DONE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

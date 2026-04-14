@@ -102,6 +102,7 @@ public class ReactDeckPaneControl extends ReactControl {
 		if (index < 0 || index >= _childFactories.size()) {
 			throw new IllegalArgumentException("Index out of bounds: " + index);
 		}
+		ReactControl previousContent = _childCache.get(Integer.valueOf(_activeIndex));
 		_activeIndex = index;
 
 		if (!isSSEAttached()) {
@@ -115,6 +116,13 @@ public class ReactDeckPaneControl extends ReactControl {
 		putState(ACTIVE_INDEX, Integer.valueOf(index));
 		putState(ACTIVE_CHILD, content);
 		commitUpdate(tx);
+
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+		if (isAttached()) {
+			content.attach();
+		}
 	}
 
 	/**
@@ -130,12 +138,37 @@ public class ReactDeckPaneControl extends ReactControl {
 		if (getState(ACTIVE_CHILD) == null) {
 			ReactControl activeChild = getOrCreateChild(_activeIndex);
 			putStateSilent(ACTIVE_CHILD, activeChild);
+			if (isAttached()) {
+				activeChild.attach();
+			}
 		}
 		super.writeAsChild(writer);
 	}
 
 	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
+		if (content != null) {
+			content.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		ReactControl content = _childCache.get(Integer.valueOf(_activeIndex));
+		if (content != null) {
+			content.detach();
+		}
+	}
+
+	@Override
 	protected void cleanupChildren() {
+		ReactControl active = _childCache.get(Integer.valueOf(_activeIndex));
+		if (active != null) {
+			active.detach();
+		}
 		for (ReactControl cached : _childCache.values()) {
 			cached.cleanupTree();
 		}

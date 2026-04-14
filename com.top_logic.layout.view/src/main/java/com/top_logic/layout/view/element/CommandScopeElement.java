@@ -160,7 +160,11 @@ public abstract class CommandScopeElement extends ContainerElement {
 		return new ReactStackControl(context, reactChildren);
 	}
 
-	private List<ViewCommandModel> buildCommandModels(ViewContext context) {
+	/**
+	 * Builds {@link ViewCommandModel}s for all configured commands, resolving per-command input
+	 * channels, executability rules and confirmations.
+	 */
+	protected List<ViewCommandModel> buildCommandModels(ViewContext context) {
 		List<ViewCommandModel> models = new ArrayList<>();
 		for (int i = 0; i < _commands.size() && i < _commandConfigs.size(); i++) {
 			ViewCommand cmd = _commands.get(i);

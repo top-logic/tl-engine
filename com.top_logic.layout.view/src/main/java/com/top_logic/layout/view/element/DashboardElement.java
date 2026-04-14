@@ -25,6 +25,7 @@ import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl.Tile;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.CommandScope;
 
 /**
  * A UI element that renders a responsive dashboard grid of {@link TileElement
@@ -113,7 +114,32 @@ public class DashboardElement implements UIElement {
 		for (TileElement t : ordered) {
 			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context)));
 		}
-		return new ReactDashboardControl(context, _minColWidth, reactTiles, this::storePersonalOrder);
+		ReactDashboardControl control =
+			new ReactDashboardControl(context, _minColWidth, reactTiles, this::storePersonalOrder);
+
+		contributeEditCommands(context, control);
+
+		return control;
+	}
+
+	private void contributeEditCommands(ViewContext context, ReactDashboardControl control) {
+		CommandScope scope = context.getCommandScope();
+		if (scope == null) {
+			return;
+		}
+		DashboardCommandModel edit = DashboardCommandModel.editCommand(control);
+		DashboardCommandModel done = DashboardCommandModel.doneCommand(control);
+		edit.attach();
+		done.attach();
+		scope.addCommand(edit);
+		scope.addCommand(done);
+
+		control.addCleanupAction(() -> {
+			scope.removeCommand(edit);
+			scope.removeCommand(done);
+			edit.detach();
+			done.detach();
+		});
 	}
 
 	private List<TileElement> applyPersonalOrder(List<TileElement> tiles) {

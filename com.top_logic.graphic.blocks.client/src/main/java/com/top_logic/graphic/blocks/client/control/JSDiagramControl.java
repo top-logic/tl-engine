@@ -35,7 +35,9 @@ import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DropRegion;
+import com.top_logic.graphic.flow.data.InitialZoom;
 import com.top_logic.graphic.flow.data.MouseButton;
+
 import com.top_logic.graphic.flow.data.Widget;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
@@ -251,7 +253,7 @@ public class JSDiagramControl extends AbstractJSControl
 					newCtrlW = controlW;
 					newCtrlH = controlH;
 					_viewbox = _svg.getViewBox().getBaseVal();
-					calcZoomLevel();
+					applyInitialZoom(diagram.getInitialZoom());
 
 					Element selectedPart = _control.querySelector(".tlSelected");
 					if (selectedPart != null) {
@@ -339,7 +341,7 @@ public class JSDiagramControl extends AbstractJSControl
 					int zL = (direction < 0 ? zoomLevel : zoomLevel - 10);
 					int level = JsMath.trunc(zL / 100);
 
-					// Anteil für 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
+					// Anteil fï¿½r 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
 					// ist
 					double factor = direction / (JsMath.pow(2, level) * (-10));
 					if (zL < 100) {
@@ -442,6 +444,75 @@ public class JSDiagramControl extends AbstractJSControl
 		double deltaX = left + bbox.getCenterX() - (_viewbox.getCenterX() - _viewbox.getX());
 		double deltaY = top + bbox.getCenterY() - (_viewbox.getCenterY() - _viewbox.getY());
 		panSVG(deltaX, deltaY, true);
+	}
+
+	/**
+	 * Applies the initial zoom policy by resizing the SVG viewbox so that
+	 * {@code zoom factor = controlW / viewBox.width}.
+	 */
+	private void applyInitialZoom(InitialZoom mode) {
+		if (_viewbox == null || controlW == 0 || controlH == 0) {
+			return;
+		}
+		if (mode == null) {
+			mode = InitialZoom.FIXED_100;
+		}
+		double contentW = _diagram.getRoot().getWidth();
+		double contentH = _diagram.getRoot().getHeight();
+		double factor;
+		switch (mode) {
+			case FIXED_50:
+				factor = 0.5;
+				break;
+			case FIXED_75:
+				factor = 0.75;
+				break;
+			case FIXED_150:
+				factor = 1.5;
+				break;
+			case FIXED_200:
+				factor = 2.0;
+				break;
+			case FIT_TO_PAGE:
+				factor = JsMath.min(fitFactor(controlW, contentW), fitFactor(controlH, contentH));
+				factor = JsMath.min(factor, 1.0);
+				break;
+			case FIT_TO_WIDTH:
+				factor = JsMath.min(fitFactor(controlW, contentW), 1.0);
+				break;
+			case FIT_TO_HEIGHT:
+				factor = JsMath.min(fitFactor(controlH, contentH), 1.0);
+				break;
+			case FIT_TO_PAGE_ENLARGE:
+				factor = JsMath.min(fitFactor(controlW, contentW), fitFactor(controlH, contentH));
+				break;
+			case FIT_TO_WIDTH_ENLARGE:
+				factor = fitFactor(controlW, contentW);
+				break;
+			case FIT_TO_HEIGHT_ENLARGE:
+				factor = fitFactor(controlH, contentH);
+				break;
+			case FIXED_100:
+			default:
+				factor = 1.0;
+				break;
+		}
+		if (!(factor > 0) || Double.isInfinite(factor)) {
+			factor = 1.0;
+		}
+		_viewbox.setWidth((float) (controlW / factor));
+		_viewbox.setHeight((float) (controlH / factor));
+		_viewbox.setX(0);
+		_viewbox.setY(0);
+		calcZoomLevel();
+		updateServerViewbox();
+	}
+
+	private static double fitFactor(double control, double content) {
+		if (content <= 0) {
+			return 1.0;
+		}
+		return control / content;
 	}
 
 	private void calcZoomLevel() {

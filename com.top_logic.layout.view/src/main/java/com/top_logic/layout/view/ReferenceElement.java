@@ -110,12 +110,18 @@ public class ReferenceElement implements UIElement {
 			throw new RuntimeException("Failed to load referenced view: " + fullPath, ex);
 		}
 
-		// Create isolated child context (fresh channel namespace, but inherits error sink
-		// and dirty channel from parent scope).
+		// Create isolated child context (fresh channel namespace, but inherits error sink,
+		// dirty channel and command scope from parent). The command scope is shared so
+		// that commands contributed by the referenced view (e.g. a dashboard's edit
+		// command) bubble up to the enclosing app bar.
 		ViewContext childContext = new DefaultViewContext(parentContext);
 		ErrorSink parentErrorSink = parentContext.getErrorSink();
 		if (parentErrorSink != null) {
 			childContext = childContext.withErrorSink(parentErrorSink);
+		}
+		com.top_logic.layout.view.command.CommandScope parentScope = parentContext.getCommandScope();
+		if (parentScope != null) {
+			childContext = childContext.withCommandScope(parentScope);
 		}
 		com.top_logic.layout.view.channel.DirtyChannel parentDirtyChannel = parentContext.getDirtyChannel();
 		if (parentDirtyChannel != null) {

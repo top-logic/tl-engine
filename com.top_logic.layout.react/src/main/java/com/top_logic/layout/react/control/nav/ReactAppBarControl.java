@@ -117,4 +117,19 @@ public class ReactAppBarControl extends ToolbarControl {
 		cleanupToolbarButtons();
 	}
 
+	@Override
+	public void addToolbarButton(ReactControl button) {
+		super.addToolbarButton(button);
+		putState(ACTIONS, getState(TOOLBAR_BUTTONS));
+	}
+
+	@Override
+	public boolean removeToolbarButton(ReactControl button) {
+		boolean removed = super.removeToolbarButton(button);
+		if (removed) {
+			putState(ACTIONS, getState(TOOLBAR_BUTTONS));
+		}
+		return removed;
+	}
+
 }

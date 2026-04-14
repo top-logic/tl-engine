@@ -149,7 +149,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [cols, setCols] = useState<number>(1);
-  const [editMode, setEditMode] = useState<boolean>(false);
+  const editMode = state.editMode === true;
 
   // Recompute column count on resize.
   useEffect(() => {
@@ -234,15 +234,6 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
       ref={containerRef}
       className={'tlDashboard' + (editMode ? ' tlDashboard--edit' : '')}
     >
-      <div className="tlDashboard__toolbar">
-        <button
-          type="button"
-          className={'tlDashboard__editBtn' + (editMode ? ' tlDashboard__editBtn--active' : '')}
-          onClick={() => setEditMode(v => !v)}
-        >
-          {editMode ? 'Done' : 'Edit Layout'}
-        </button>
-      </div>
       <div className="tlDashboard__grid" style={gridStyle}>
         {tiles.map(tile => {
           const p = placementById[tile.id];

@@ -3929,22 +3929,6 @@ button.tlMenu__item--disabled:hover {
   width: 100%;
   box-sizing: border-box;
 }
-.tlDashboard__toolbar {
-  display: flex;
-  justify-content: flex-end;
-}
-.tlDashboard__editBtn {
-  font: inherit;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--color-border, #c0c4cc);
-  background: var(--color-surface, #fff);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.tlDashboard__editBtn--active {
-  background: var(--layer-selected, #e6f0ff);
-  border-color: var(--layer-selected-hover, #3380ff);
-}
 .tlDashboard__grid {
   width: 100%;
 }

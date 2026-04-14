@@ -203,6 +203,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<String> options = _choices.options().stream().map(Class::getName).toList();
 		String currentFqcn = currentClass != null ? currentClass.getName() : null;
 		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
+		typeModel.setMandatory(true);
 
 		LabelProvider labelProvider = new FqcnClassLabelProvider(_choices.options());
 
@@ -225,7 +226,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ReactSelectFormFieldControl typeSelect =
 			new ReactSelectFormFieldControl(_context, typeModel, labelProvider);
-		typeSelect.setRequired(true);
 		return new ReactFormFieldChromeControl(_context, "Type", typeSelect);
 	}
 

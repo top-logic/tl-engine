@@ -49,7 +49,7 @@ const TLSelect: React.FC<TLCellProps> = ({ controlId, state, config }) => {
         className={cls}
         aria-invalid={hasError || undefined}
       >
-        {state.required !== true && <option value=""></option>}
+        {state.mandatory !== true && <option value=""></option>}
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}

@@ -81,15 +81,15 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		List<String> options = _choices.options().stream().map(Class::getName).toList();
 		String currentFqcn = currentClass != null ? currentClass.getName() : null;
 		_typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
+		boolean mandatory = property.isMandatory();
+		_typeModel.setMandatory(mandatory);
 
 		LabelProvider labelProvider = new ConfigListEditorControl.FqcnClassLabelProvider(_choices.options());
 
-		boolean mandatory = property.isMandatory();
 		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || !mandatory);
 		if (showSelector) {
 			ReactSelectFormFieldControl typeSelect =
 				new ReactSelectFormFieldControl(context, _typeModel, labelProvider);
-			typeSelect.setRequired(mandatory);
 			ReactFormFieldChromeControl typeChrome =
 				new ReactFormFieldChromeControl(context, "Type", typeSelect);
 			addChild(typeChrome);

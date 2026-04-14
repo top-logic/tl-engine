@@ -28,13 +28,13 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
+import com.top_logic.ai.chat.api.messages.PersistedChat;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.background.ChatContextAdapter;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -443,22 +443,16 @@ public class ChatServlet extends HttpServlet {
 				response.setMessagesJson(ChatHistoryService.getMessagesJson(session));
 			}
 
-			// Also populate structured entries field
+			// Populate structured entries directly from persisted JSON (no domain round-trip).
+			// Going through deserialize→domain→re-serialize would lose fields like durationMs
+			// and totalUsage that only exist on the DTO, not on the domain objects.
 			String messagesJson = ChatHistoryService.getMessagesJson(session);
-			if (messagesJson != null) {
-				List<ChatEntry> entries = DtoMapper.deserializeEntries(messagesJson);
-				int msgIndex = 0;
-				for (ChatEntry entry : entries) {
-					PersistedChatEntry dto = PersistedChatEntry.create();
-					if (entry instanceof ChatEntry.MessageEntry me) {
-						dto.setType("message");
-						dto.setMessageData(DtoMapper.toMessageDto(me.message(), "m" + msgIndex));
-						msgIndex++;
-					} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
-						dto.setType("task_snapshot");
-						dto.setTaskData(DtoMapper.toCurrentTaskDto(tse.task()));
-					}
-					response.addEntry(dto);
+			if (messagesJson != null && !messagesJson.isEmpty()) {
+				PersistedChat persistedChat = PersistedChat.readPersistedChat(
+					new de.haumacher.msgbuf.json.JsonReader(
+						new de.haumacher.msgbuf.io.StringR(messagesJson)));
+				for (PersistedChatEntry entry : persistedChat.getEntries()) {
+					response.addEntry(entry);
 				}
 			}
 

@@ -205,11 +205,24 @@ public class ChatProcessor {
 			// Run the entry point agent via AgentLoop
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
 			TimelineAgentListener timelineListener = new TimelineAgentListener(tracker);
-			ChatSSEHandler sseHandler = state.getSseHandler();
+
+			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
+			// the JS client reconnects SSE during session creation, and the new connection
+			// may not be ready when /chat/send arrives. Retry briefly to allow it to connect.
+			ChatSSEHandler sseHandler = ChatSSEHandler.findHandler(taskTracker);
+			if (sseHandler == null) {
+				for (int i = 0; i < 10 && sseHandler == null; i++) {
+					Thread.sleep(100);
+					sseHandler = ChatSSEHandler.findHandler(taskTracker);
+				}
+			}
+			state.setSseHandler(sseHandler);
+
 			AgentEventListener listener;
 			if (sseHandler != null) {
 				listener = new CompositeAgentEventListener(List.of(timelineListener, sseHandler));
 			} else {
+				Logger.warn("No SSE handler found for tracker — streaming will not reach the browser.", ChatProcessor.class);
 				listener = timelineListener;
 			}
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
@@ -396,10 +409,9 @@ public class ChatProcessor {
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
 
-		ChatSSEHandler sseHandler = ChatSSEHandler.findHandler(tracker);
-		if (sseHandler != null) {
-			state.setSseHandler(sseHandler);
-		}
+		// SSE handler lookup is deferred to the background task (executeOrchestrator)
+		// to avoid a race condition: the JS client reconnects SSE during session switching,
+		// and the new SSE connection may not be established yet when /chat/send arrives.
 
 		ConversationMemory conversationMemory = tracker.getConversationMemory();
 		// Pass state directly to background task so it is immune to tracker-level overwrites

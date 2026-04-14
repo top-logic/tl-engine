@@ -139,21 +139,26 @@ public class ChatSSEHandler implements AgentEventListener {
 	}
 
 	/**
-	 * Finds the active handler for the given tracker, or {@code null} if none.
+	 * Finds the active (non-closed) handler for the given tracker, or {@code null} if none.
+	 * When multiple handlers exist for the same tracker (during SSE reconnection),
+	 * the non-closed one is preferred.
 	 */
 	public static ChatSSEHandler findHandler(TaskProgressTracker tracker) {
+		ChatSSEHandler candidate = null;
 		for (ChatSSEHandler handler : ACTIVE_HANDLERS) {
-			if (handler._tracker == tracker) {
-				return handler;
+			if (handler._tracker == tracker && !handler._closed.get()) {
+				candidate = handler;
 			}
 		}
-		return null;
+		return candidate;
 	}
 
 	/**
 	 * Starts the SSE event stream.
 	 */
 	public void start() {
+		// Remove stale handlers for the same tracker (e.g. during SSE reconnection)
+		ACTIVE_HANDLERS.removeIf(h -> h._tracker == _tracker && h._closed.get());
 		ACTIVE_HANDLERS.add(this);
 
 		_asyncContext.addListener(new AsyncListener() {

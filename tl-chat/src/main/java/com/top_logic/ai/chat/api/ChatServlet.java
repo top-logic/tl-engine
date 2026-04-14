@@ -70,6 +70,7 @@ public class ChatServlet extends HttpServlet {
 
 	private static final String PATH_SEND = "/send";
 	private static final String PATH_RESPOND = "/respond";
+	private static final String PATH_CANCEL = "/cancel";
 	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
@@ -108,6 +109,10 @@ public class ChatServlet extends HttpServlet {
 		}
 		if (pathInfo.equals(PATH_RESPOND) || pathInfo.equals(PATH_RESPOND + "/")) {
 			handleRespond(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_CANCEL) || pathInfo.equals(PATH_CANCEL + "/")) {
+			handleCancel(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_APPROVAL_MODE) || pathInfo.equals(PATH_APPROVAL_MODE + "/")) {
@@ -246,11 +251,13 @@ public class ChatServlet extends HttpServlet {
 
 		String requestId = null;
 		String response = null;
+		String toolName = null;
 		try {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
 			requestId = (String) parsed.get("requestId");
 			response = (String) parsed.get("response");
+			toolName = (String) parsed.get("toolName");
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
 			return;
@@ -275,6 +282,11 @@ public class ChatServlet extends HttpServlet {
 		}
 
 		store.resolve(requestId, response);
+
+		// TODO: Task 5 — addSessionApprovedTool will be added to TaskProgressTracker
+		// if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
+		// 	tracker.addSessionApprovedTool(toolName);
+		// }
 
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -314,6 +326,24 @@ public class ChatServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
+	}
+
+	private void handleCancel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
+		if (state == null) {
+			resp.setContentType(CONTENT_TYPE_JSON);
+			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+			resp.getWriter().write("{\"cancelled\":false}");
+			return;
+		}
+		Thread agentThread = state.getAgentThread();
+		if (agentThread != null) {
+			agentThread.interrupt();
+		}
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"cancelled\":true}");
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {

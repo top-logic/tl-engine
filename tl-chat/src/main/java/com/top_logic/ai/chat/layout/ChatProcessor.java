@@ -18,8 +18,10 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
+import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
@@ -30,6 +32,7 @@ import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
 import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
+import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.tools.TimelineAgentListener;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
@@ -39,6 +42,8 @@ import com.top_logic.ai.service.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -199,9 +204,17 @@ public class ChatProcessor {
 
 			// Run the entry point agent via AgentLoop
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
-			TimelineAgentListener listener = new TimelineAgentListener(tracker);
+			TimelineAgentListener timelineListener = new TimelineAgentListener(tracker);
+			ChatSSEHandler sseHandler = state.getSseHandler();
+			AgentEventListener listener;
+			if (sseHandler != null) {
+				listener = new CompositeAgentEventListener(List.of(timelineListener, sseHandler));
+			} else {
+				listener = timelineListener;
+			}
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, listener));
+			state.setLastAgentResponse(result);
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
 			taskTracker.completeTask(taskId);
@@ -383,6 +396,11 @@ public class ChatProcessor {
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
 
+		ChatSSEHandler sseHandler = ChatSSEHandler.findHandler(tracker);
+		if (sseHandler != null) {
+			state.setSseHandler(sseHandler);
+		}
+
 		ConversationMemory conversationMemory = tracker.getConversationMemory();
 		// Pass state directly to background task so it is immune to tracker-level overwrites
 		Future<?> future = BACKGROUND_EXECUTOR.submit(
@@ -543,11 +561,25 @@ public class ChatProcessor {
 		@Override
 		public void run() {
 			AIProcessingState state = _state;
+			state.setAgentThread(Thread.currentThread());
 			try {
 				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 					try {
 						executeOrchestrator(_taskTracker, state, _conversationMemory, _userMessage, _attachments);
 						state.completeSuccessfully();
+
+						ChatSSEHandler handler = state.getSseHandler();
+						if (handler != null) {
+							String responseText = state.getLastAgentResponse();
+							if (responseText != null && !responseText.isEmpty()) {
+								String html = Converters.markdownToHtmlString(responseText);
+								MessageCompleteEvent event = MessageCompleteEvent.create()
+									.setContentHtml(html)
+									.setContentText(responseText);
+								handler.sendMessageComplete(event);
+							}
+						}
+
 						return null;
 					} catch (InterruptedException ex) {
 						Thread.currentThread().interrupt();
@@ -562,6 +594,8 @@ public class ChatProcessor {
 			} catch (Exception ex) {
 				Logger.error("Failed to run background task: " + ex.getMessage(), ex, ChatProcessor.class);
 				state.completeWithError(ex);
+			} finally {
+				state.setAgentThread(null);
 			}
 		}
 	}
@@ -595,6 +629,11 @@ public class ChatProcessor {
 
 		// Result accumulation
 		private final List<ChatMessage> _pendingMessages = new ArrayList<>();
+
+		// SSE handler and thread tracking for push-based updates and cancellation
+		private volatile ChatSSEHandler _sseHandler;
+		private volatile Thread _agentThread;
+		private volatile String _lastAgentResponse;
 
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
@@ -777,6 +816,51 @@ public class ChatProcessor {
 		 */
 		public void setUserInteractionStore(UserInteractionStore store) {
 			_userInteractionStore = store;
+		}
+
+		/** The SSE handler for push-based real-time updates; may be null. */
+		public ChatSSEHandler getSseHandler() {
+			return _sseHandler;
+		}
+
+		/**
+		 * Sets the SSE handler.
+		 *
+		 * @param handler
+		 *        The handler; may be null.
+		 */
+		public void setSseHandler(ChatSSEHandler handler) {
+			_sseHandler = handler;
+		}
+
+		/** The thread running the agent; may be null when not executing. */
+		public Thread getAgentThread() {
+			return _agentThread;
+		}
+
+		/**
+		 * Sets the agent thread reference for cancellation support.
+		 *
+		 * @param thread
+		 *        The thread; null to clear.
+		 */
+		public void setAgentThread(Thread thread) {
+			_agentThread = thread;
+		}
+
+		/** The last agent response text; may be null. */
+		public String getLastAgentResponse() {
+			return _lastAgentResponse;
+		}
+
+		/**
+		 * Sets the last agent response text.
+		 *
+		 * @param response
+		 *        The response text.
+		 */
+		public void setLastAgentResponse(String response) {
+			_lastAgentResponse = response;
 		}
 	}
 

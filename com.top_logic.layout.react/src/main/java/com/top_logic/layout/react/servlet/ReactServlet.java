@@ -52,6 +52,8 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
@@ -100,6 +102,8 @@ public class ReactServlet extends TopLogicServlet {
 		String pathInfo = request.getPathInfo();
 		if ("/data".equals(pathInfo)) {
 			handleDataDownload(request, response, session);
+		} else if ("/tooltip".equals(pathInfo)) {
+			handleTooltipRequest(request, response, session);
 		} else if ("/i18n".equals(pathInfo)) {
 			handleI18N(request, response);
 		} else {
@@ -144,6 +148,75 @@ public class ReactServlet extends TopLogicServlet {
 		try (OutputStream out = response.getOutputStream()) {
 			data.deliverTo(out);
 		}
+	}
+
+	private void handleTooltipRequest(HttpServletRequest request, HttpServletResponse response,
+			HttpSession session) throws IOException {
+		String controlId = request.getParameter("controlId");
+		String windowName = request.getParameter("windowName");
+		if (controlId == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId parameter.");
+			return;
+		}
+
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+		ReactCommandTarget control = queue.getControl(controlId);
+		if (!(control instanceof TooltipProvider)) {
+			sendError(response, HttpServletResponse.SC_NOT_FOUND,
+				"Control does not provide tooltips: " + controlId);
+			return;
+		}
+
+		String key = request.getParameter("key");
+		TooltipContent content = ((TooltipProvider) control).getTooltipContent(key);
+		if (content == null) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
+		response.setContentType("application/json; charset=UTF-8");
+		try (PrintWriter out = response.getWriter()) {
+			out.write('{');
+			writeTooltipJsonField(out, "html", content.getHtml());
+			String caption = content.getCaption();
+			if (caption != null) {
+				out.write(',');
+				writeTooltipJsonField(out, "caption", caption);
+			}
+			out.write('}');
+		}
+	}
+
+	private static void writeTooltipJsonField(PrintWriter out, String name, String value) {
+		out.write('"');
+		out.write(name);
+		out.write("\":");
+		writeTooltipJsonString(out, value);
+	}
+
+	private static void writeTooltipJsonString(PrintWriter out, String value) {
+		out.write('"');
+		for (int i = 0; i < value.length(); i++) {
+			char c = value.charAt(i);
+			switch (c) {
+				case '"':  out.write("\\\""); break;
+				case '\\': out.write("\\\\"); break;
+				case '\n': out.write("\\n");  break;
+				case '\r': out.write("\\r");  break;
+				case '\t': out.write("\\t");  break;
+				default:
+					if (c < 0x20) {
+						out.write(String.format("\\u%04x", (int) c));
+					} else {
+						out.write(c);
+					}
+			}
+		}
+		out.write('"');
 	}
 
 	private void handleI18N(HttpServletRequest request, HttpServletResponse response)

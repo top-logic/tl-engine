@@ -1052,14 +1052,139 @@
 	};
 
 	// ========================================================================
-	// Session — Session management (delegates to existing sidebar logic)
+	// Session — Full session management with sidebar
 	// ========================================================================
 	const Session = {
 		currentId: null,
+		_sidebarEl: null,
+		_listEl: null,
 
-		switchTo(sessionId) {
+		init(root) {
+			this._sidebarEl = root.querySelector('.chat-history-panel');
+			this._listEl = root.querySelector('.chat-history-list');
+			if (!this._sidebarEl) return;
+
+			const newBtn = this._sidebarEl.querySelector('.chat-new-btn');
+			if (newBtn) {
+				newBtn.addEventListener('click', () => this.createNew());
+			}
+
+			this.loadList();
+		},
+
+		async loadList() {
+			if (!this._listEl) return;
+			try {
+				const resp = await fetch(URLS.sessions);
+				const data = await resp.json();
+				this._renderList(data.sessions || []);
+			} catch (e) {
+				console.error('[tl-chat] Failed to load sessions:', e);
+			}
+		},
+
+		_renderList(sessions) {
+			if (!this._listEl) return;
+			this._listEl.innerHTML = '';
+			sessions.forEach(s => {
+				const item = document.createElement('div');
+				item.className = 'chat-history-item' + (s.id === this.currentId ? ' active' : '');
+				item.dataset.sessionId = s.id;
+				item.innerHTML =
+					'<span class="chat-history-title">' + Utils.escapeHtml(s.title) + '</span>' +
+					'<button class="chat-history-delete" title="Delete">&times;</button>';
+				item.querySelector('.chat-history-title').addEventListener('click', () => {
+					this.switchTo(s.id);
+				});
+				item.querySelector('.chat-history-delete').addEventListener('click', (e) => {
+					e.stopPropagation();
+					this.deleteSession(s.id, item);
+				});
+				this._listEl.appendChild(item);
+			});
+		},
+
+		async switchTo(sessionId) {
 			this.currentId = sessionId;
 			SSE.connect(sessionId);
+
+			if (this._listEl) {
+				this._listEl.querySelectorAll('.chat-history-item').forEach(el => {
+					el.classList.toggle('active', el.dataset.sessionId === sessionId);
+				});
+			}
+
+			if (sessionId) {
+				try {
+					const resp = await fetch(URLS.sessions + '/' + encodeURIComponent(sessionId));
+					const data = await resp.json();
+					this._renderLoadedSession(data);
+				} catch (e) {
+					console.error('[tl-chat] Failed to load session:', e);
+				}
+			}
+		},
+
+		_renderLoadedSession(data) {
+			if (Render._messagesEl) {
+				Render._messagesEl.innerHTML = '';
+			}
+			const entries = data.entries || [];
+			entries.forEach(entry => {
+				if (entry.type === 'message') {
+					const msg = entry.messageData;
+					if (msg) {
+						if (msg.role === 'user') {
+							Render.appendUserMessage(msg.content || msg.text || '');
+						} else {
+							this._renderPersistedAgentMessage(msg);
+						}
+					}
+				}
+			});
+		},
+
+		_renderPersistedAgentMessage(msg) {
+			const div = document.createElement('div');
+			div.className = 'chat-message chat-message-agent';
+			div.innerHTML =
+				'<div class="chat-avatar">AI</div>' +
+				'<div class="chat-bubble chat-bubble-agent">' +
+				'<div class="chat-agent-text">' + (msg.contentHtml || Utils.escapeHtml(msg.content || '')) + '</div>' +
+				'</div>';
+			if (Render._messagesEl) {
+				Render._messagesEl.appendChild(div);
+			}
+		},
+
+		async createNew() {
+			try {
+				const resp = await fetch(URLS.sessions, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ title: 'New Chat' })
+				});
+				const data = await resp.json();
+				if (data.id) {
+					await this.loadList();
+					this.switchTo(data.id);
+				}
+			} catch (e) {
+				console.error('[tl-chat] Failed to create session:', e);
+			}
+		},
+
+		async deleteSession(sessionId, itemEl) {
+			try {
+				await fetch(URLS.sessions + '/' + encodeURIComponent(sessionId), { method: 'DELETE' });
+				if (itemEl) itemEl.remove();
+				if (sessionId === this.currentId) {
+					this.currentId = null;
+					if (Render._messagesEl) Render._messagesEl.innerHTML = '';
+				}
+			} catch (e) {
+				console.error('[tl-chat] Failed to delete session:', e);
+			}
 		}
 	};
 
@@ -1068,6 +1193,7 @@
 	// ========================================================================
 	function initChat(root) {
 		Render.init(root);
+		Session.init(root);
 
 		const sessionId = root.dataset.sessionId || '';
 		Session.switchTo(sessionId);

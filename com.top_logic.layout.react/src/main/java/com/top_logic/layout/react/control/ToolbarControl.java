@@ -59,7 +59,7 @@ public abstract class ToolbarControl extends ReactControl {
 		boolean removed = _toolbarButtons.remove(button);
 		if (removed) {
 			putState(TOOLBAR_BUTTONS, _toolbarButtons);
-			button.detach();
+			button.cleanupTree();
 		}
 		return removed;
 	}

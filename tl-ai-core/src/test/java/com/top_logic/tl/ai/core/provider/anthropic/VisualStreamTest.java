@@ -52,19 +52,17 @@ public class VisualStreamTest extends TestCase {
 		System.out.println("\n--- Streaming from Anthropic ---\n");
 
 		provider.stream(request, event -> {
-			switch (event) {
-				case StreamEvent.TextDelta delta -> System.out.print(delta.text());
-				case StreamEvent.ThinkingDelta delta -> System.out.print(delta.text());
-				case StreamEvent.ToolCallStart tc -> System.out.print("\n[tool: " + tc.name() + "]");
-				case StreamEvent.ToolCallDelta tc -> System.out.print(tc.partialJson());
-				case StreamEvent.MessageComplete done -> {
-					System.out.println("\n\n--- Done ---");
-					System.out.println("ID:      " + done.id());
-					System.out.println("Model:   " + done.model());
-					System.out.println("Reason:  " + done.finishReason());
-					System.out.println("Tokens:  " + done.usage().inputTokens() + " in / "
-						+ done.usage().outputTokens() + " out");
-				}
+			if (event instanceof StreamEvent.TextDelta delta) System.out.print(delta.text());
+			else if (event instanceof StreamEvent.ThinkingDelta delta) System.out.print(delta.text());
+			else if (event instanceof StreamEvent.ToolCallStart tc) System.out.print("\n[tool: " + tc.name() + "]");
+			else if (event instanceof StreamEvent.ToolCallDelta tc) System.out.print(tc.partialJson());
+			else if (event instanceof StreamEvent.MessageComplete done) {
+				System.out.println("\n\n--- Done ---");
+				System.out.println("ID:      " + done.id());
+				System.out.println("Model:   " + done.model());
+				System.out.println("Reason:  " + done.finishReason());
+				System.out.println("Tokens:  " + done.usage().inputTokens() + " in / "
+					+ done.usage().outputTokens() + " out");
 			}
 		});
 	}

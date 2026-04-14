@@ -102,13 +102,13 @@ public class TestMessage extends TestCase {
 	/** Switch exhaustiveness over Message subtypes. */
 	public void testSwitchExhaustive() {
 		Message msg = new UserMessage("u1", NOW, List.of(new TextContent("test")));
-		String type = switch (msg) {
-			case UserMessage u -> "user";
-			case AssistantMessage a -> "assistant";
-			case ToolResultMessage t -> "tool_result";
-			case SystemMessage s -> "system";
-			case CompactionMarker c -> "compaction";
-		};
+		String type;
+		if (msg instanceof UserMessage) type = "user";
+		else if (msg instanceof AssistantMessage) type = "assistant";
+		else if (msg instanceof ToolResultMessage) type = "tool_result";
+		else if (msg instanceof SystemMessage) type = "system";
+		else if (msg instanceof CompactionMarker) type = "compaction";
+		else throw new IllegalStateException("Unknown message type: " + msg);
 		assertEquals("user", type);
 	}
 }

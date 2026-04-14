@@ -50,16 +50,13 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 
 	@Override
 	public int estimateTokens(Message message) {
-		int content = switch (message) {
-			case UserMessage m -> estimateContentParts(m.content());
-			case AssistantMessage m -> estimateContentParts(m.content());
-			case SystemMessage m -> estimateText(m.content());
-			case ToolResultMessage m -> estimateToolResult(m);
-			case CompactionMarker m -> 0;
-		};
-		if (message instanceof CompactionMarker) {
-			return 0;
-		}
+		if (message instanceof CompactionMarker) return 0;
+		int content;
+		if (message instanceof UserMessage m) content = estimateContentParts(m.content());
+		else if (message instanceof AssistantMessage m) content = estimateContentParts(m.content());
+		else if (message instanceof SystemMessage m) content = estimateText(m.content());
+		else if (message instanceof ToolResultMessage m) content = estimateToolResult(m);
+		else throw new IllegalArgumentException("Unknown message type: " + message.getClass());
 		return content + MESSAGE_OVERHEAD;
 	}
 
@@ -78,24 +75,25 @@ public class ByteBasedTokenEstimator implements TokenEstimator {
 	private int estimateContentParts(List<ContentPart> parts) {
 		int total = 0;
 		for (ContentPart part : parts) {
-			total += switch (part) {
-				case TextContent t -> estimateText(t.text());
-				case ThinkingContent t -> estimateText(t.text());
-				case ImageContent i -> IMAGE_TOKENS;
-				case ToolCall tc -> estimateText(tc.name()) + estimateJson(tc.arguments());
-				case PdfContent p -> estimateText(p.data());
-			};
+			int partTokens;
+			if (part instanceof TextContent t) partTokens = estimateText(t.text());
+			else if (part instanceof ThinkingContent t) partTokens = estimateText(t.text());
+			else if (part instanceof ImageContent) partTokens = IMAGE_TOKENS;
+			else if (part instanceof ToolCall tc) partTokens = estimateText(tc.name()) + estimateJson(tc.arguments());
+			else if (part instanceof PdfContent p) partTokens = estimateText(p.data());
+			else throw new IllegalArgumentException("Unknown content part type: " + part.getClass());
+			total += partTokens;
 		}
 		return total;
 	}
 
 	private int estimateToolResult(ToolResultMessage msg) {
-		return switch (msg.state()) {
-			case ToolState.Completed c -> estimateText(c.result());
-			case ToolState.Failed f -> estimateText(f.error());
-			case ToolState.Pending p -> estimateText(p.arguments());
-			case ToolState.Running r -> estimateText(r.arguments());
-		};
+		ToolState state = msg.state();
+		if (state instanceof ToolState.Completed c) return estimateText(c.result());
+		if (state instanceof ToolState.Failed f) return estimateText(f.error());
+		if (state instanceof ToolState.Pending p) return estimateText(p.arguments());
+		if (state instanceof ToolState.Running r) return estimateText(r.arguments());
+		throw new IllegalArgumentException("Unknown tool state type: " + state.getClass());
 	}
 
 	private int estimateText(String text) {

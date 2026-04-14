@@ -69,12 +69,12 @@ public class TestToolState extends TestCase {
 			new ToolState.Failed("err", Instant.now(), Instant.now())
 		};
 		for (ToolState state : states) {
-			String label = switch (state) {
-				case ToolState.Pending p -> "pending";
-				case ToolState.Running r -> "running";
-				case ToolState.Completed c -> "completed";
-				case ToolState.Failed f -> "failed";
-			};
+			String label;
+			if (state instanceof ToolState.Pending) label = "pending";
+			else if (state instanceof ToolState.Running) label = "running";
+			else if (state instanceof ToolState.Completed) label = "completed";
+			else if (state instanceof ToolState.Failed) label = "failed";
+			else throw new IllegalStateException("Unknown state: " + state);
 			assertNotNull(label);
 		}
 	}

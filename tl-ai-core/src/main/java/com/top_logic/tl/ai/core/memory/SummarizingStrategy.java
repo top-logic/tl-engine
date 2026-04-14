@@ -164,13 +164,21 @@ public class SummarizingStrategy implements CompactionStrategy {
 	private List<Message> prepareForSummarization(List<Message> messages) {
 		List<Message> prepared = new ArrayList<>();
 		for (Message msg : messages) {
-			prepared.add(switch (msg) {
-				case UserMessage u -> stripImages(u);
-				case AssistantMessage a -> stripImagesFromAssistant(a);
-				case ToolResultMessage tr -> truncateToolResult(tr);
-				case SystemMessage s -> s;
-				case CompactionMarker m -> m;
-			});
+			Message result;
+			if (msg instanceof UserMessage u) {
+				result = stripImages(u);
+			} else if (msg instanceof AssistantMessage a) {
+				result = stripImagesFromAssistant(a);
+			} else if (msg instanceof ToolResultMessage tr) {
+				result = truncateToolResult(tr);
+			} else if (msg instanceof SystemMessage) {
+				result = msg;
+			} else if (msg instanceof CompactionMarker) {
+				result = msg;
+			} else {
+				throw new IllegalArgumentException("Unexpected message type: " + msg.getClass());
+			}
+			prepared.add(result);
 		}
 		return prepared;
 	}

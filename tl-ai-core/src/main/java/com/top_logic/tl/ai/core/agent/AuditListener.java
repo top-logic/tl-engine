@@ -26,32 +26,28 @@ public class AuditListener implements AgentEventListener {
 	/** */
 	@Override
 	public void onEvent(AgentEvent event) {
-		switch (event) {
-			case AgentEvent.ToolCallCompleted c ->
-				LOG.log(Level.INFO,
-					"Tool executed: " + c.toolName() + " (" + c.duration().toMillis() + "ms)");
-			case AgentEvent.ToolCallFailed f ->
-				LOG.log(Level.WARNING, "Tool failed: " + f.toolName() + " \u2014 " + f.errorMessage());
-			case AgentEvent.ToolCallDenied d ->
-				LOG.log(Level.WARNING, "Permission denied: " + d.toolName() + " \u2014 " + d.reason());
-			case AgentEvent.TransactionBegan t ->
-				LOG.log(Level.INFO, "Transaction started.");
-			case AgentEvent.TransactionCommitted c -> {
-				if (c.revisionNumber() > 0) {
-					LOG.log(Level.INFO, "Transaction committed (revision " + c.revisionNumber() + ").");
-				} else {
-					LOG.log(Level.INFO, "Transaction committed (no changes).");
-				}
+		if (event instanceof AgentEvent.ToolCallCompleted c) {
+			LOG.log(Level.INFO,
+				"Tool executed: " + c.toolName() + " (" + c.duration().toMillis() + "ms)");
+		} else if (event instanceof AgentEvent.ToolCallFailed f) {
+			LOG.log(Level.WARNING, "Tool failed: " + f.toolName() + " \u2014 " + f.errorMessage());
+		} else if (event instanceof AgentEvent.ToolCallDenied d) {
+			LOG.log(Level.WARNING, "Permission denied: " + d.toolName() + " \u2014 " + d.reason());
+		} else if (event instanceof AgentEvent.TransactionBegan) {
+			LOG.log(Level.INFO, "Transaction started.");
+		} else if (event instanceof AgentEvent.TransactionCommitted c) {
+			if (c.revisionNumber() > 0) {
+				LOG.log(Level.INFO, "Transaction committed (revision " + c.revisionNumber() + ").");
+			} else {
+				LOG.log(Level.INFO, "Transaction committed (no changes).");
 			}
-			case AgentEvent.TransactionRolledBack r ->
-				LOG.log(Level.WARNING, "Transaction rolled back: " + r.reason());
-			case AgentEvent.LockAcquired l ->
-				LOG.log(Level.INFO, "Edit lock acquired.");
-			case AgentEvent.LockFailed l ->
-				LOG.log(Level.WARNING, "Edit lock failed: " + l.reason());
-			default -> {
-				// Other events are not audit-relevant.
-			}
+		} else if (event instanceof AgentEvent.TransactionRolledBack r) {
+			LOG.log(Level.WARNING, "Transaction rolled back: " + r.reason());
+		} else if (event instanceof AgentEvent.LockAcquired) {
+			LOG.log(Level.INFO, "Edit lock acquired.");
+		} else if (event instanceof AgentEvent.LockFailed l) {
+			LOG.log(Level.WARNING, "Edit lock failed: " + l.reason());
 		}
+		// Other events are not audit-relevant.
 	}
 }

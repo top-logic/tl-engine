@@ -581,67 +581,57 @@ public class AgentLoop {
 					ApprovalOutcome.APPROVED_FOR_SESSION));
 			} else {
 				PermissionDecision decision = security.checkApproval(tool, toolCall);
-				switch (decision) {
-					case PermissionDecision.Denied denied -> {
-						String reason = denied.reason();
-						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
-						_turnDeniedCallIds.add(toolCall.id());
-						return errorResult(toolCall, reason);
+				if (decision instanceof PermissionDecision.Denied denied) {
+					String reason = denied.reason();
+					emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
+					_turnDeniedCallIds.add(toolCall.id());
+					return errorResult(toolCall, reason);
+				} else if (decision instanceof PermissionDecision.NeedsApproval needsApproval) {
+					Map<String, Object> parsedArgs;
+					try {
+						parsedArgs = ToolRegistry.parseJson(toolCall.arguments());
+					} catch (IOException e) {
+						parsedArgs = Map.of();
 					}
-					case PermissionDecision.NeedsApproval needsApproval -> {
-						Map<String, Object> parsedArgs;
-						try {
-							parsedArgs = ToolRegistry.parseJson(toolCall.arguments());
-						} catch (IOException e) {
-							parsedArgs = Map.of();
-						}
-						ApprovalRequest request = new ApprovalRequest(
-							tool.name(), toolCall.id(),
-							parsedArgs, tool.mode(),
-							needsApproval.displayReason(),
-							ApprovalRequest.DEFAULT_TIMEOUT);
-						String approvalRequestId = UUID.randomUUID().toString();
-						emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
-							toolCall.id(), approvalRequestId, toolCall.name(),
-							Map.copyOf(request.arguments()), request.displayReason()));
-						ApprovalResult approvalResult = context.approval().requestApproval(request);
-						switch (approvalResult) {
-							case ApprovalResult.Approved approved -> {
-								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
-									toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED));
-								// proceed to execution
-							}
-							case ApprovalResult.ApprovedForSession approvedForSession -> {
-								_sessionApprovedTools.add(tool.name());
-								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
-									toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED_FOR_SESSION));
-								// proceed to execution
-							}
-							case ApprovalResult.Rejected rejected -> {
-								String feedback = rejected.userComment().isBlank()
-									? "User denied tool '" + toolCall.name() + "'."
-									: "User denied tool '" + toolCall.name() + "': "
-										+ rejected.userComment();
-								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
-									toolCall.id(), approvalRequestId, ApprovalOutcome.REJECTED));
-								emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
-								_turnDeniedCallIds.add(toolCall.id());
-								return errorResult(toolCall, feedback);
-							}
-							case ApprovalResult.TimedOut timedOut -> {
-								String feedback = "Approval timed out for tool '" + toolCall.name() + "'.";
-								emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
-									toolCall.id(), approvalRequestId, ApprovalOutcome.TIMED_OUT));
-								emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
-								_turnDeniedCallIds.add(toolCall.id());
-								return errorResult(toolCall, feedback);
-							}
-						}
-					}
-					case PermissionDecision.Allowed allowed -> {
+					ApprovalRequest request = new ApprovalRequest(
+						tool.name(), toolCall.id(),
+						parsedArgs, tool.mode(),
+						needsApproval.displayReason(),
+						ApprovalRequest.DEFAULT_TIMEOUT);
+					String approvalRequestId = UUID.randomUUID().toString();
+					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
+						toolCall.id(), approvalRequestId, toolCall.name(),
+						Map.copyOf(request.arguments()), request.displayReason()));
+					ApprovalResult approvalResult = context.approval().requestApproval(request);
+					if (approvalResult instanceof ApprovalResult.Approved) {
+						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+							toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED));
 						// proceed to execution
+					} else if (approvalResult instanceof ApprovalResult.ApprovedForSession) {
+						_sessionApprovedTools.add(tool.name());
+						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+							toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED_FOR_SESSION));
+						// proceed to execution
+					} else if (approvalResult instanceof ApprovalResult.Rejected rejected) {
+						String feedback = rejected.userComment().isBlank()
+							? "User denied tool '" + toolCall.name() + "'."
+							: "User denied tool '" + toolCall.name() + "': "
+								+ rejected.userComment();
+						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+							toolCall.id(), approvalRequestId, ApprovalOutcome.REJECTED));
+						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
+						_turnDeniedCallIds.add(toolCall.id());
+						return errorResult(toolCall, feedback);
+					} else if (approvalResult instanceof ApprovalResult.TimedOut) {
+						String feedback = "Approval timed out for tool '" + toolCall.name() + "'.";
+						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
+							toolCall.id(), approvalRequestId, ApprovalOutcome.TIMED_OUT));
+						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
+						_turnDeniedCallIds.add(toolCall.id());
+						return errorResult(toolCall, feedback);
 					}
 				}
+				// PermissionDecision.Allowed: proceed to execution
 			}
 		}
 
@@ -772,26 +762,17 @@ public class AgentLoop {
 
 		@Override
 		public void onEvent(StreamEvent event) {
-			switch (event) {
-				case StreamEvent.TextDelta delta -> {
-					_listener.onEvent(new AgentEvent.TextDelta(_runId, _turnNumber, Instant.now(), delta.text()));
-				}
-				case StreamEvent.ThinkingDelta delta -> {
-					_listener.onEvent(new AgentEvent.ThinkingDelta(_runId, _turnNumber, Instant.now(), delta.text()));
-				}
-				case StreamEvent.ToolCallStart start -> {
-					// Accumulated in MessageComplete
-				}
-				case StreamEvent.ToolCallDelta delta -> {
-					// Accumulated in MessageComplete
-				}
-				case StreamEvent.MessageComplete complete -> {
-					_id = complete.id();
-					_finishReason = complete.finishReason();
-					_usage = complete.usage();
-					_content = complete.content();
-				}
+			if (event instanceof StreamEvent.TextDelta delta) {
+				_listener.onEvent(new AgentEvent.TextDelta(_runId, _turnNumber, Instant.now(), delta.text()));
+			} else if (event instanceof StreamEvent.ThinkingDelta delta) {
+				_listener.onEvent(new AgentEvent.ThinkingDelta(_runId, _turnNumber, Instant.now(), delta.text()));
+			} else if (event instanceof StreamEvent.MessageComplete complete) {
+				_id = complete.id();
+				_finishReason = complete.finishReason();
+				_usage = complete.usage();
+				_content = complete.content();
 			}
+			// ToolCallStart and ToolCallDelta: accumulated in MessageComplete
 		}
 
 		/**

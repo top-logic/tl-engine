@@ -19,21 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonReader;
-import de.haumacher.msgbuf.json.JsonToken;
-import de.haumacher.msgbuf.json.JsonWriter;
-
 import com.top_logic.tl.ai.core.message.AssistantMessage;
-import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.PdfContent;
-import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
@@ -48,6 +39,12 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonToken;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * {@link LLMProvider} for the Mistral Chat Completions API.
@@ -183,12 +180,12 @@ public class MistralProvider implements LLMProvider {
 		}
 
 		for (Message msg : messages) {
-			switch (msg) {
-				case SystemMessage ignored -> { /* Handled above via systemPrompt. */ }
-				case CompactionMarker ignored -> { /* Skipped. */ }
-				case UserMessage user -> writeUserMessage(json, user);
-				case AssistantMessage assistant -> writeAssistantMessage(json, assistant);
-				case ToolResultMessage result -> writeToolResult(json, result);
+			if (msg instanceof UserMessage user) {
+				writeUserMessage(json, user);
+			} else if (msg instanceof AssistantMessage assistant) {
+				writeAssistantMessage(json, assistant);
+			} else if (msg instanceof ToolResultMessage result) {
+				writeToolResult(json, result);
 			}
 		}
 		json.endArray();
@@ -205,25 +202,19 @@ public class MistralProvider implements LLMProvider {
 			json.name("content");
 			json.beginArray();
 			for (ContentPart part : user.content()) {
-				switch (part) {
-					case TextContent text -> {
-						json.beginObject();
-						json.name("type").value("text");
-						json.name("text").value(text.text());
-						json.endObject();
-					}
-					case ImageContent image -> {
-						json.beginObject();
-						json.name("type").value("image_url");
-						json.name("image_url");
-						json.beginObject();
-						json.name("url").value(image.url());
-						json.endObject();
-						json.endObject();
-					}
-					case PdfContent ignored -> { /* Mistral does not support PDF natively — skipped. */ }
-					case ToolCall ignored -> { /* Not valid in user messages. */ }
-					case ThinkingContent ignored -> { /* Not valid in user messages. */ }
+				if (part instanceof TextContent text) {
+					json.beginObject();
+					json.name("type").value("text");
+					json.name("text").value(text.text());
+					json.endObject();
+				} else if (part instanceof ImageContent image) {
+					json.beginObject();
+					json.name("type").value("image_url");
+					json.name("image_url");
+					json.beginObject();
+					json.name("url").value(image.url());
+					json.endObject();
+					json.endObject();
 				}
 			}
 			json.endArray();
@@ -295,12 +286,15 @@ public class MistralProvider implements LLMProvider {
 		json.name("tool_call_id").value(result.toolCallId());
 		json.name("name").value(result.toolName());
 
-		String content = switch (result.state()) {
-			case ToolState.Completed c -> c.result();
-			case ToolState.Failed f -> f.error();
-			case ToolState.Pending ignored -> "";
-			case ToolState.Running ignored -> "";
-		};
+		ToolState state = result.state();
+		String content;
+		if (state instanceof ToolState.Completed c) {
+			content = c.result();
+		} else if (state instanceof ToolState.Failed f) {
+			content = f.error();
+		} else {
+			content = "";
+		}
 		json.name("content").value(content);
 		json.endObject();
 	}

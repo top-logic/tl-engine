@@ -195,12 +195,12 @@ public class OpenAIProvider implements LLMProvider {
 	private void writeInput(JsonWriter json, List<Message> messages) throws IOException {
 		json.beginArray();
 		for (Message msg : messages) {
-			switch (msg) {
-				case SystemMessage ignored -> { /* Handled via instructions field. */ }
-				case CompactionMarker ignored -> { /* Skipped. */ }
-				case UserMessage user -> writeUserMessage(json, user);
-				case AssistantMessage assistant -> writeAssistantMessage(json, assistant);
-				case ToolResultMessage result -> writeToolResult(json, result);
+			if (msg instanceof UserMessage user) {
+				writeUserMessage(json, user);
+			} else if (msg instanceof AssistantMessage assistant) {
+				writeAssistantMessage(json, assistant);
+			} else if (msg instanceof ToolResultMessage result) {
+				writeToolResult(json, result);
 			}
 		}
 		json.endArray();
@@ -212,30 +212,24 @@ public class OpenAIProvider implements LLMProvider {
 		json.name("content");
 		json.beginArray();
 		for (ContentPart part : user.content()) {
-			switch (part) {
-				case TextContent text -> {
-					json.beginObject();
-					json.name("type").value("input_text");
-					json.name("text").value(text.text());
-					json.endObject();
-				}
-				case ImageContent image -> {
-					json.beginObject();
-					json.name("type").value("input_image");
-					json.name("image_url").value(image.url());
-					json.endObject();
-				}
-				case PdfContent pdf -> {
-					json.beginObject();
-					json.name("type").value("file");
-					json.name("file");
-					json.beginObject();
-					json.name("data").value("data:" + pdf.mediaType() + ";base64," + pdf.data());
-					json.endObject();
-					json.endObject();
-				}
-				case ToolCall ignored -> { /* Not valid in user messages. */ }
-				case ThinkingContent ignored -> { /* Not valid in user messages. */ }
+			if (part instanceof TextContent text) {
+				json.beginObject();
+				json.name("type").value("input_text");
+				json.name("text").value(text.text());
+				json.endObject();
+			} else if (part instanceof ImageContent image) {
+				json.beginObject();
+				json.name("type").value("input_image");
+				json.name("image_url").value(image.url());
+				json.endObject();
+			} else if (part instanceof PdfContent pdf) {
+				json.beginObject();
+				json.name("type").value("file");
+				json.name("file");
+				json.beginObject();
+				json.name("data").value("data:" + pdf.mediaType() + ";base64," + pdf.data());
+				json.endObject();
+				json.endObject();
 			}
 		}
 		json.endArray();
@@ -244,43 +238,37 @@ public class OpenAIProvider implements LLMProvider {
 
 	private void writeAssistantMessage(JsonWriter json, AssistantMessage assistant) throws IOException {
 		for (ContentPart part : assistant.content()) {
-			switch (part) {
-				case TextContent text -> {
-					json.beginObject();
-					json.name("type").value("message");
-					json.name("role").value("assistant");
-					json.name("content");
-					json.beginArray();
-					json.beginObject();
-					json.name("type").value("output_text");
-					json.name("text").value(text.text());
-					json.endObject();
-					json.endArray();
-					json.endObject();
-				}
-				case ToolCall toolCall -> {
-					json.beginObject();
-					json.name("type").value("function_call");
-					json.name("call_id").value(toolCall.id());
-					json.name("name").value(toolCall.name());
-					String args = toolCall.arguments();
-					json.name("arguments").value(args.isEmpty() ? "{}" : args);
-					json.endObject();
-				}
-				case ThinkingContent thinking -> {
-					json.beginObject();
-					json.name("type").value("reasoning");
-					json.name("summary");
-					json.beginArray();
-					json.beginObject();
-					json.name("type").value("summary_text");
-					json.name("text").value(thinking.text());
-					json.endObject();
-					json.endArray();
-					json.endObject();
-				}
-				case ImageContent ignored -> { /* Not valid in assistant messages. */ }
-				case PdfContent ignored -> { /* Not valid in assistant messages. */ }
+			if (part instanceof TextContent text) {
+				json.beginObject();
+				json.name("type").value("message");
+				json.name("role").value("assistant");
+				json.name("content");
+				json.beginArray();
+				json.beginObject();
+				json.name("type").value("output_text");
+				json.name("text").value(text.text());
+				json.endObject();
+				json.endArray();
+				json.endObject();
+			} else if (part instanceof ToolCall toolCall) {
+				json.beginObject();
+				json.name("type").value("function_call");
+				json.name("call_id").value(toolCall.id());
+				json.name("name").value(toolCall.name());
+				String args = toolCall.arguments();
+				json.name("arguments").value(args.isEmpty() ? "{}" : args);
+				json.endObject();
+			} else if (part instanceof ThinkingContent thinking) {
+				json.beginObject();
+				json.name("type").value("reasoning");
+				json.name("summary");
+				json.beginArray();
+				json.beginObject();
+				json.name("type").value("summary_text");
+				json.name("text").value(thinking.text());
+				json.endObject();
+				json.endArray();
+				json.endObject();
 			}
 		}
 	}
@@ -290,12 +278,15 @@ public class OpenAIProvider implements LLMProvider {
 		json.name("type").value("function_call_output");
 		json.name("call_id").value(result.toolCallId());
 
-		String content = switch (result.state()) {
-			case ToolState.Completed c -> c.result();
-			case ToolState.Failed f -> f.error();
-			case ToolState.Pending ignored -> "";
-			case ToolState.Running ignored -> "";
-		};
+		ToolState state = result.state();
+		String content;
+		if (state instanceof ToolState.Completed c) {
+			content = c.result();
+		} else if (state instanceof ToolState.Failed f) {
+			content = f.error();
+		} else {
+			content = "";
+		}
 		json.name("output").value(content);
 		json.endObject();
 	}

@@ -182,38 +182,36 @@ public class AnthropicProvider implements LLMProvider {
 		while (i < messages.size()) {
 			Message msg = messages.get(i);
 
-			switch (msg) {
-				case SystemMessage ignored -> i++;
-				case CompactionMarker ignored -> i++;
-				case UserMessage user -> {
-					json.beginObject();
-					json.name("role").value("user");
-					json.name("content");
-					writeUserContent(json, user.content());
-					json.endObject();
+			if (msg instanceof SystemMessage) {
+				i++;
+			} else if (msg instanceof CompactionMarker) {
+				i++;
+			} else if (msg instanceof UserMessage user) {
+				json.beginObject();
+				json.name("role").value("user");
+				json.name("content");
+				writeUserContent(json, user.content());
+				json.endObject();
+				i++;
+			} else if (msg instanceof AssistantMessage assistant) {
+				json.beginObject();
+				json.name("role").value("assistant");
+				json.name("content");
+				writeAssistantContent(json, assistant.content());
+				json.endObject();
+				i++;
+			} else if (msg instanceof ToolResultMessage) {
+				json.beginObject();
+				json.name("role").value("user");
+				json.name("content");
+				json.beginArray();
+				while (i < messages.size()
+					&& messages.get(i) instanceof ToolResultMessage tr) {
+					writeToolResult(json, tr);
 					i++;
 				}
-				case AssistantMessage assistant -> {
-					json.beginObject();
-					json.name("role").value("assistant");
-					json.name("content");
-					writeAssistantContent(json, assistant.content());
-					json.endObject();
-					i++;
-				}
-				case ToolResultMessage ignored -> {
-					json.beginObject();
-					json.name("role").value("user");
-					json.name("content");
-					json.beginArray();
-					while (i < messages.size()
-						&& messages.get(i) instanceof ToolResultMessage tr) {
-						writeToolResult(json, tr);
-						i++;
-					}
-					json.endArray();
-					json.endObject();
-				}
+				json.endArray();
+				json.endObject();
 			}
 		}
 		json.endArray();
@@ -222,46 +220,40 @@ public class AnthropicProvider implements LLMProvider {
 	private void writeUserContent(JsonWriter json, List<ContentPart> parts) throws IOException {
 		json.beginArray();
 		for (ContentPart part : parts) {
-			switch (part) {
-				case TextContent text -> {
-					json.beginObject();
-					json.name("type").value("text");
-					json.name("text").value(text.text());
-					json.endObject();
-				}
-				case ImageContent image -> {
-					json.beginObject();
-					json.name("type").value("image");
-					json.name("source");
-					json.beginObject();
-					if (image.url().startsWith("data:")) {
-						String dataUri = image.url();
-						int commaIdx = dataUri.indexOf(',');
-						String base64Data = commaIdx >= 0 ? dataUri.substring(commaIdx + 1) : dataUri;
-						json.name("type").value("base64");
-						json.name("media_type").value(image.mediaType());
-						json.name("data").value(base64Data);
-					} else {
-						json.name("type").value("url");
-						json.name("url").value(image.url());
-					}
-					json.endObject();
-					json.endObject();
-				}
-				case PdfContent pdf -> {
-					json.beginObject();
-					json.name("type").value("document");
-					json.name("source");
-					json.beginObject();
+			if (part instanceof TextContent text) {
+				json.beginObject();
+				json.name("type").value("text");
+				json.name("text").value(text.text());
+				json.endObject();
+			} else if (part instanceof ImageContent image) {
+				json.beginObject();
+				json.name("type").value("image");
+				json.name("source");
+				json.beginObject();
+				if (image.url().startsWith("data:")) {
+					String dataUri = image.url();
+					int commaIdx = dataUri.indexOf(',');
+					String base64Data = commaIdx >= 0 ? dataUri.substring(commaIdx + 1) : dataUri;
 					json.name("type").value("base64");
-					json.name("media_type").value(pdf.mediaType());
-					json.name("data").value(pdf.data());
-					json.endObject();
-					json.endObject();
+					json.name("media_type").value(image.mediaType());
+					json.name("data").value(base64Data);
+				} else {
+					json.name("type").value("url");
+					json.name("url").value(image.url());
 				}
-				case ToolCall ignored -> { /* Not valid in user messages. */ }
-			case ThinkingContent ignored -> { /* Not valid in user messages. */ }
-			}
+				json.endObject();
+				json.endObject();
+			} else if (part instanceof PdfContent pdf) {
+				json.beginObject();
+				json.name("type").value("document");
+				json.name("source");
+				json.beginObject();
+				json.name("type").value("base64");
+				json.name("media_type").value(pdf.mediaType());
+				json.name("data").value(pdf.data());
+				json.endObject();
+				json.endObject();
+			} /* ToolCall and ThinkingContent not valid in user messages. */
 		}
 		json.endArray();
 	}
@@ -269,26 +261,20 @@ public class AnthropicProvider implements LLMProvider {
 	private void writeAssistantContent(JsonWriter json, List<ContentPart> parts) throws IOException {
 		json.beginArray();
 		for (ContentPart part : parts) {
-			switch (part) {
-				case TextContent text -> {
-					json.beginObject();
-					json.name("type").value("text");
-					json.name("text").value(text.text());
-					json.endObject();
-				}
-				case ToolCall toolCall -> {
-					json.beginObject();
-					json.name("type").value("tool_use");
-					json.name("id").value(toolCall.id());
-					json.name("name").value(toolCall.name());
-					String args = toolCall.arguments();
-					json.name("input").jsonValue(args.isEmpty() ? "{}" : args);
-					json.endObject();
-				}
-				case ImageContent ignored -> { /* Not valid in assistant messages. */ }
-				case PdfContent ignored -> { /* Not valid in assistant messages. */ }
-			case ThinkingContent ignored -> { /* Not serialized back to Anthropic. */ }
-			}
+			if (part instanceof TextContent text) {
+				json.beginObject();
+				json.name("type").value("text");
+				json.name("text").value(text.text());
+				json.endObject();
+			} else if (part instanceof ToolCall toolCall) {
+				json.beginObject();
+				json.name("type").value("tool_use");
+				json.name("id").value(toolCall.id());
+				json.name("name").value(toolCall.name());
+				String args = toolCall.arguments();
+				json.name("input").jsonValue(args.isEmpty() ? "{}" : args);
+				json.endObject();
+			} /* ImageContent, PdfContent, ThinkingContent not valid/serialized in assistant messages. */
 		}
 		json.endArray();
 	}
@@ -298,11 +284,15 @@ public class AnthropicProvider implements LLMProvider {
 		json.name("type").value("tool_result");
 		json.name("tool_use_id").value(result.toolCallId());
 
-		String content = switch (result.state()) {
-			case ToolState.Completed c -> c.result();
-			case ToolState.Failed f -> f.error();
-			default -> "";
-		};
+		ToolState state = result.state();
+		String content;
+		if (state instanceof ToolState.Completed c) {
+			content = c.result();
+		} else if (state instanceof ToolState.Failed f) {
+			content = f.error();
+		} else {
+			content = "";
+		}
 		json.name("content").value(content);
 
 		if (result.state() instanceof ToolState.Failed) {

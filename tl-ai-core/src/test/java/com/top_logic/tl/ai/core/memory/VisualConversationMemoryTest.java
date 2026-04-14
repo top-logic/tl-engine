@@ -347,42 +347,36 @@ public class VisualConversationMemoryTest extends TestCase {
 		for (int i = 0; i < messages.size(); i++) {
 			Message msg = messages.get(i);
 			String prefix = ANSI_DIM + "    [" + i + "] " + ANSI_RESET;
-			switch (msg) {
-				case UserMessage u -> {
-					String text = textOf(u.content());
-					System.out.println(prefix + ANSI_BLUE + "User: " + ANSI_RESET + truncate(text, 70));
+			if (msg instanceof UserMessage u) {
+				String text = textOf(u.content());
+				System.out.println(prefix + ANSI_BLUE + "User: " + ANSI_RESET + truncate(text, 70));
+			} else if (msg instanceof AssistantMessage a) {
+				String text = textOf(a.content());
+				boolean hasTools = a.content().stream().anyMatch(ToolCall.class::isInstance);
+				if (hasTools) {
+					long toolCount = a.content().stream().filter(ToolCall.class::isInstance).count();
+					System.out.println(prefix + ANSI_YELLOW + "Assistant: " + ANSI_RESET
+						+ truncate(text, 40) + ANSI_DIM + " [+" + toolCount + " tool call(s)]" + ANSI_RESET);
+				} else {
+					System.out.println(prefix + ANSI_YELLOW + "Assistant: " + ANSI_RESET + truncate(text, 70));
 				}
-				case AssistantMessage a -> {
-					String text = textOf(a.content());
-					boolean hasTools = a.content().stream().anyMatch(ToolCall.class::isInstance);
-					if (hasTools) {
-						long toolCount = a.content().stream().filter(ToolCall.class::isInstance).count();
-						System.out.println(prefix + ANSI_YELLOW + "Assistant: " + ANSI_RESET
-							+ truncate(text, 40) + ANSI_DIM + " [+" + toolCount + " tool call(s)]" + ANSI_RESET);
-					} else {
-						System.out.println(prefix + ANSI_YELLOW + "Assistant: " + ANSI_RESET + truncate(text, 70));
-					}
-				}
-				case ToolResultMessage tr -> {
-					String result = switch (tr.state()) {
-						case ToolState.Completed c -> truncate(c.result(), 50);
-						case ToolState.Failed f -> "ERROR: " + f.error();
-						default -> "...";
-					};
-					System.out.println(prefix + ANSI_GREEN + "Tool(" + tr.toolName() + "): "
-						+ ANSI_RESET + result);
-				}
-				case SystemMessage s -> {
-					System.out.println(prefix + ANSI_MAGENTA + "System: " + ANSI_RESET
-						+ truncate(s.content(), 70));
-				}
-				case CompactionMarker m -> {
-					System.out.println(prefix + ANSI_RED + ANSI_BOLD
-						+ "── COMPACTION ── " + ANSI_RESET + ANSI_DIM
-						+ m.messagesSummarized() + " msgs dropped, was "
-						+ m.tokensBefore() + " tokens, trigger=" + m.trigger()
-						+ ANSI_RESET);
-				}
+			} else if (msg instanceof ToolResultMessage tr) {
+				ToolState st = tr.state();
+				String result;
+				if (st instanceof ToolState.Completed c) result = truncate(c.result(), 50);
+				else if (st instanceof ToolState.Failed f) result = "ERROR: " + f.error();
+				else result = "...";
+				System.out.println(prefix + ANSI_GREEN + "Tool(" + tr.toolName() + "): "
+					+ ANSI_RESET + result);
+			} else if (msg instanceof SystemMessage s) {
+				System.out.println(prefix + ANSI_MAGENTA + "System: " + ANSI_RESET
+					+ truncate(s.content(), 70));
+			} else if (msg instanceof CompactionMarker m) {
+				System.out.println(prefix + ANSI_RED + ANSI_BOLD
+					+ "── COMPACTION ── " + ANSI_RESET + ANSI_DIM
+					+ m.messagesSummarized() + " msgs dropped, was "
+					+ m.tokensBefore() + " tokens, trigger=" + m.trigger()
+					+ ANSI_RESET);
 			}
 		}
 	}

@@ -49,16 +49,10 @@ public final class AgentEventAssertions {
 		Map<String, AgentEvent> starts = new HashMap<>();
 		Map<String, AgentEvent> terminals = new HashMap<>();
 		for (AgentEvent e : events) {
-			switch (e) {
-				case AgentEvent.ToolCallStarted s -> starts.put(s.toolCallId(), s);
-				case AgentEvent.ToolCallCompleted c ->
-					putTerminal(terminals, c.toolCallId(), c);
-				case AgentEvent.ToolCallFailed f ->
-					putTerminal(terminals, f.toolCallId(), f);
-				case AgentEvent.ToolCallDenied d ->
-					putTerminal(terminals, d.toolCallId(), d);
-				default -> { /* ignore */ }
-			}
+			if (e instanceof AgentEvent.ToolCallStarted s) starts.put(s.toolCallId(), s);
+			else if (e instanceof AgentEvent.ToolCallCompleted c) putTerminal(terminals, c.toolCallId(), c);
+			else if (e instanceof AgentEvent.ToolCallFailed f) putTerminal(terminals, f.toolCallId(), f);
+			else if (e instanceof AgentEvent.ToolCallDenied d) putTerminal(terminals, d.toolCallId(), d);
 		}
 		for (String id : starts.keySet()) {
 			Assert.assertTrue("Started tool call " + id + " has no terminal event",

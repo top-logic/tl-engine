@@ -52,21 +52,17 @@ public class TimelineAgentListener implements AgentEventListener {
 
 	@Override
 	public void onEvent(AgentEvent event) {
-		switch (event) {
-			case AgentEvent.ToolCallStarted started -> {
-				if (!started.toolName().startsWith(DELEGATION_PREFIX)) {
-					_pendingArgs.put(started.toolCallId(), started.argsJson());
-				}
+		if (event instanceof AgentEvent.ToolCallStarted started) {
+			if (!started.toolName().startsWith(DELEGATION_PREFIX)) {
+				_pendingArgs.put(started.toolCallId(), started.argsJson());
 			}
-			case AgentEvent.ToolCallCompleted completed -> {
-				if (completed.toolName().startsWith(DELEGATION_PREFIX)) {
-					return;
-				}
-				String argsJson = _pendingArgs.remove(completed.toolCallId());
-				Map<String, Object> args = parseArguments(argsJson);
-				_tracker.recordToolCall(completed.toolName(), args, completed.result());
+		} else if (event instanceof AgentEvent.ToolCallCompleted completed) {
+			if (completed.toolName().startsWith(DELEGATION_PREFIX)) {
+				return;
 			}
-			default -> { /* ignore */ }
+			String argsJson = _pendingArgs.remove(completed.toolCallId());
+			Map<String, Object> args = parseArguments(argsJson);
+			_tracker.recordToolCall(completed.toolName(), args, completed.result());
 		}
 	}
 

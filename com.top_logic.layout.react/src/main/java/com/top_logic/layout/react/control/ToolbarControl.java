@@ -45,6 +45,9 @@ public abstract class ToolbarControl extends ReactControl {
 	public void addToolbarButton(ReactControl button) {
 		_toolbarButtons.add(button);
 		putState(TOOLBAR_BUTTONS, _toolbarButtons);
+		if (isAttached()) {
+			button.attach();
+		}
 	}
 
 	/**
@@ -56,7 +59,7 @@ public abstract class ToolbarControl extends ReactControl {
 		boolean removed = _toolbarButtons.remove(button);
 		if (removed) {
 			putState(TOOLBAR_BUTTONS, _toolbarButtons);
-			button.cleanupTree();
+			button.detach();
 		}
 		return removed;
 	}
@@ -67,6 +70,22 @@ public abstract class ToolbarControl extends ReactControl {
 	protected void cleanupToolbarButtons() {
 		for (ReactControl button : _toolbarButtons) {
 			button.cleanupTree();
+		}
+	}
+
+	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		for (ReactControl btn : _toolbarButtons) {
+			btn.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		for (ReactControl btn : _toolbarButtons) {
+			btn.detach();
 		}
 	}
 }

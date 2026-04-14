@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -17,6 +19,7 @@ import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.view.command.ContextMenuRegionControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
@@ -63,6 +66,8 @@ public class ContextMenuElement extends CommandScopeElement {
 		 * </p>
 		 */
 		@Name(INPUT)
+		@Nullable
+		@Format(ChannelRefFormat.class)
 		ChannelRef getInput();
 	}
 

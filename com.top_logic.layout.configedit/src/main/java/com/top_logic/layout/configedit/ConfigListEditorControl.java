@@ -91,13 +91,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		rebuild(null);
 	}
 
-	/**
-	 * Clears all children and rebuilds them from the current list state.
-	 *
-	 * @param expandItem
-	 *        Element whose group should be rendered expanded; all others stay collapsed. May be
-	 *        {@code null}.
-	 */
 	@Override
 	protected void onCleanup() {
 		removeListeners();
@@ -111,6 +104,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		_listeners.clear();
 	}
 
+	/**
+	 * Clears all children and rebuilds them from the current list state.
+	 *
+	 * @param expandItem
+	 *        Element whose group should be rendered expanded; all others stay collapsed. May be
+	 *        {@code null}.
+	 */
 	@SuppressWarnings("unchecked")
 	private void rebuild(ConfigurationItem expandItem) {
 		removeListeners();

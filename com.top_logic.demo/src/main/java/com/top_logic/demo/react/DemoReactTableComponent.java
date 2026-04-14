@@ -29,7 +29,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
 import com.top_logic.layout.react.control.table.ReactTableControl;
-import com.top_logic.layout.react.control.table.ReactTextCellControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
@@ -144,7 +144,7 @@ public class DemoReactTableComponent extends LayoutComponent {
 
 		LabelProvider labels = MetaLabelProvider.INSTANCE;
 		ReactCellControlProvider cellProvider = (ctx, rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(ctx, labels.getLabel(cellValue));
+			return new ReactTextControl(ctx, labels.getLabel(cellValue));
 		};
 
 		ReactTableControl table = new ReactTableControl(_context, model, cellProvider);
@@ -203,7 +203,7 @@ public class DemoReactTableComponent extends LayoutComponent {
 
 		LabelProvider labels = MetaLabelProvider.INSTANCE;
 		ReactCellControlProvider cellProvider = (ctx, rowObject, columnName, cellValue) -> {
-			return new ReactTextCellControl(ctx, labels.getLabel(cellValue));
+			return new ReactTextControl(ctx, labels.getLabel(cellValue));
 		};
 
 		ReactTableControl table = new ReactTableControl(_context, model.getTable(), cellProvider);

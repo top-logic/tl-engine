@@ -20,7 +20,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.react.control.table.ReactTextCellControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeNode;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
@@ -112,7 +112,7 @@ public class DemoReactTreeComponent extends LayoutComponent {
 				if (node instanceof AbstractMutableTLTreeNode) {
 					businessObject = ((AbstractMutableTLTreeNode<?>) node).getBusinessObject();
 				}
-				return new ReactTextCellControl(ctx, labels.getLabel(businessObject));
+				return new ReactTextControl(ctx, labels.getLabel(businessObject));
 			});
 		tree.setSelectionMode("multi");
 		return tree;

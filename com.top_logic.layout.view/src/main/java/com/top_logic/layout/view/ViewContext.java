@@ -13,6 +13,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ContextMenuOpener;
 import com.top_logic.layout.view.form.FormModel;
 
 /**
@@ -115,6 +116,33 @@ public interface ViewContext extends ReactContext {
 	 *         path, and channels.
 	 */
 	ViewContext withCommandScope(CommandScope scope);
+
+	/**
+	 * The {@link ContextMenuOpener} of the nearest enclosing frame, or {@code null} if no opener is
+	 * in scope.
+	 *
+	 * <p>
+	 * Exactly one opener is instantiated per top-level frame (at the root {@link ViewElement}) and
+	 * bound onto the context before children are created. Child elements dispatch context-menu
+	 * requests via this opener.
+	 * </p>
+	 */
+	ContextMenuOpener getContextMenuOpener();
+
+	/**
+	 * Creates a derived context with the given {@link ContextMenuOpener}.
+	 *
+	 * <p>
+	 * Called by the root {@link ViewElement} to install the frame's opener for all descendant
+	 * elements.
+	 * </p>
+	 *
+	 * @param opener
+	 *        The context menu opener to set.
+	 * @return A new context with the given opener but same display context, personalization path,
+	 *         channels, and command scope.
+	 */
+	ViewContext withContextMenuOpener(ContextMenuOpener opener);
 
 	/**
 	 * Creates a derived context with the given {@link ErrorSink}.

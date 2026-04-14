@@ -19,6 +19,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.command.ContextMenuOpener;
 import com.top_logic.layout.view.form.FormModel;
 
 /**
@@ -48,6 +49,8 @@ public class DefaultViewContext implements ViewContext {
 
 	private DirtyChannel _dirtyChannel;
 
+	private final ContextMenuOpener _contextMenuOpener;
+
 	/**
 	 * Creates a root {@link DefaultViewContext}.
 	 *
@@ -57,7 +60,7 @@ public class DefaultViewContext implements ViewContext {
 	 */
 	public DefaultViewContext(ReactContext reactContext) {
 		this(reactContext, "view", new HashMap<>(), null, null, null, null,
-			resolveReloadListeners(reactContext));
+			resolveReloadListeners(reactContext), null);
 	}
 
 	private static List<ViewReloadListener> resolveReloadListeners(ReactContext reactContext) {
@@ -69,7 +72,8 @@ public class DefaultViewContext implements ViewContext {
 
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
 			Map<String, ViewChannel> channels, CommandScope commandScope, FormModel formModel,
-			ErrorSink errorSink, DirtyChannel dirtyChannel, List<ViewReloadListener> reloadListeners) {
+			ErrorSink errorSink, DirtyChannel dirtyChannel, List<ViewReloadListener> reloadListeners,
+			ContextMenuOpener contextMenuOpener) {
 		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
@@ -78,12 +82,13 @@ public class DefaultViewContext implements ViewContext {
 		_errorSink = errorSink;
 		_dirtyChannel = dirtyChannel;
 		_reloadListeners = reloadListeners;
+		_contextMenuOpener = contextMenuOpener;
 	}
 
 	@Override
 	public ViewContext childContext(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels, _commandScope,
-			_formModel, _errorSink, _dirtyChannel, _reloadListeners);
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
 	}
 
 	@Override
@@ -119,13 +124,24 @@ public class DefaultViewContext implements ViewContext {
 	@Override
 	public ViewContext withCommandScope(CommandScope scope) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formModel, _errorSink,
-			_dirtyChannel, _reloadListeners);
+			_dirtyChannel, _reloadListeners, _contextMenuOpener);
 	}
 
 	@Override
 	public ViewContext withErrorSink(ErrorSink errorSink) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
-			_commandScope, _formModel, errorSink, _dirtyChannel, _reloadListeners);
+			_commandScope, _formModel, errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
+	}
+
+	@Override
+	public ContextMenuOpener getContextMenuOpener() {
+		return _contextMenuOpener;
+	}
+
+	@Override
+	public ViewContext withContextMenuOpener(ContextMenuOpener opener) {
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, _commandScope, _formModel,
+			_errorSink, _dirtyChannel, _reloadListeners, opener);
 	}
 
 	@Override

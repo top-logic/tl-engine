@@ -5,8 +5,10 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -20,8 +22,12 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelFactory;
+import com.top_logic.layout.view.command.ContextMenuOpener;
+import com.top_logic.layout.view.command.ContextMenuOpener.MenuRenderer;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -110,12 +116,45 @@ public class ViewElement implements UIElement {
 			context.registerChannel(name, factory.createChannel(context));
 		}
 
-		if (_content.size() == 1) {
-			return _content.get(0).createControl(context);
+		// Instantiate exactly one ContextMenuOpener per top-level frame and bind it onto the
+		// context so that descendant elements can reach it via context.getContextMenuOpener().
+		// The accompanying ReactMenuControl is attached as a sibling of the content so it
+		// participates in the control tree and gets rendered.
+		// Mutable handler holders: rewired on each opener.open() via MenuRenderer.show() below.
+		// A single ReactMenuControl is constructed once, but its select/close handlers must
+		// vary per invocation. Task 6 will replace these with real setters on the control.
+		Consumer<String>[] selectHolder = new Consumer[] { itemId -> { /* no-op until bound */ } };
+		Runnable[] closeHolder = new Runnable[] { () -> { /* no-op until bound */ } };
+		ReactMenuControl menuControl = new ReactMenuControl(context, null, List.of(),
+			itemId -> selectHolder[0].accept(itemId),
+			() -> closeHolder[0].run());
+		MenuRenderer renderer = new MenuRenderer() {
+			@Override
+			public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
+					Runnable closeHandler) {
+				menuControl.updateItems(items);
+				selectHolder[0] = selectHandler;
+				closeHolder[0] = closeHandler;
+				// TODO: Task 6 - position the menu at the (x, y) pixel coordinates instead of
+				// using anchor-based positioning. For now, clear the anchor as a placeholder.
+				menuControl.setAnchorId(null);
+				menuControl.open();
+			}
+
+			@Override
+			public void hide() {
+				menuControl.close();
+			}
+		};
+		ContextMenuOpener opener = new ContextMenuOpener(renderer);
+		opener.bindReactContext(() -> context);
+		ViewContext frameContext = context.withContextMenuOpener(opener);
+
+		List<ReactControl> children = new ArrayList<>();
+		for (UIElement element : _content) {
+			children.add((ReactControl) element.createControl(frameContext));
 		}
-		List<ReactControl> children = _content.stream()
-			.map(e -> (ReactControl) e.createControl(context))
-			.collect(Collectors.toList());
-		return new ReactStackControl(context, children);
+		children.add(menuControl);
+		return new ReactStackControl(frameContext, children);
 	}
 }

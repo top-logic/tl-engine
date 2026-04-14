@@ -120,25 +120,17 @@ public class ViewElement implements UIElement {
 		// context so that descendant elements can reach it via context.getContextMenuOpener().
 		// The accompanying ReactMenuControl is attached as a sibling of the content so it
 		// participates in the control tree and gets rendered.
-		// Mutable handler holders: rewired on each opener.open() via MenuRenderer.show() below.
-		// A single ReactMenuControl is constructed once, but its select/close handlers must
-		// vary per invocation. Task 6 will replace these with real setters on the control.
-		Consumer<String>[] selectHolder = new Consumer[] { itemId -> { /* no-op until bound */ } };
-		Runnable[] closeHolder = new Runnable[] { () -> { /* no-op until bound */ } };
 		ReactMenuControl menuControl = new ReactMenuControl(context, null, List.of(),
-			itemId -> selectHolder[0].accept(itemId),
-			() -> closeHolder[0].run());
+			itemId -> { /* re-wired via setSelectHandler in MenuRenderer.show() */ },
+			() -> { /* re-wired via setCloseHandler in MenuRenderer.show() */ });
 		MenuRenderer renderer = new MenuRenderer() {
 			@Override
 			public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
 					Runnable closeHandler) {
 				menuControl.updateItems(items);
-				selectHolder[0] = selectHandler;
-				closeHolder[0] = closeHandler;
-				// TODO: Task 6 - position the menu at the (x, y) pixel coordinates instead of
-				// using anchor-based positioning. For now, clear the anchor as a placeholder.
-				menuControl.setAnchorId(null);
-				menuControl.open();
+				menuControl.setSelectHandler(selectHandler);
+				menuControl.setCloseHandler(closeHandler);
+				menuControl.open(x, y);
 			}
 
 			@Override

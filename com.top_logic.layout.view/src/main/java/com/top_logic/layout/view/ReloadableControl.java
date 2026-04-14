@@ -53,14 +53,18 @@ public class ReloadableControl extends ReactCompositeControl implements ViewRelo
 		_viewPath = viewPath;
 		_viewContext = viewContext;
 		viewContext.addViewReloadListener(this);
+		Logger.info("ReloadableControl registered for: " + viewPath, ReloadableControl.class);
 		addCleanupAction(() -> _viewContext.removeViewReloadListener(this));
 	}
 
 	@Override
 	public void viewChanged(Set<String> changedPaths) {
+		Logger.info("ReloadableControl.viewChanged: myPath=" + _viewPath + ", changedPaths=" + changedPaths,
+			ReloadableControl.class);
 		if (!changedPaths.contains(_viewPath)) {
 			return;
 		}
+		Logger.info("ReloadableControl: RELOADING " + _viewPath, ReloadableControl.class);
 
 		// Clean up old children.
 		cleanupChildren();

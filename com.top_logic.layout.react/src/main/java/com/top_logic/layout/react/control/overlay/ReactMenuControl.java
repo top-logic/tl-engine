@@ -31,6 +31,12 @@ public class ReactMenuControl extends ReactControl {
 	/** @see #ReactMenuControl(ReactContext, String, List, Consumer, Runnable) */
 	private static final String ANCHOR_ID = "anchorId";
 
+	/** @see #open(int, int) */
+	private static final String ANCHOR_X = "anchorX";
+
+	/** @see #open(int, int) */
+	private static final String ANCHOR_Y = "anchorY";
+
 	/** @see #open() */
 	private static final String OPEN = "open";
 
@@ -55,7 +61,7 @@ public class ReactMenuControl extends ReactControl {
 	/** Command argument: the selected item identifier. */
 	private static final String ITEM_ID_ARG = "itemId";
 
-	private final Consumer<String> _selectHandler;
+	private Consumer<String> _selectHandler;
 
 	private Runnable _closeHandler;
 
@@ -116,6 +122,34 @@ public class ReactMenuControl extends ReactControl {
 	 */
 	public void open() {
 		putState(OPEN, true);
+	}
+
+	/**
+	 * Opens the menu at the given viewport pixel coordinates.
+	 *
+	 * <p>
+	 * Clears any previously set anchor element and positions the popup absolutely at {@code (x, y)}.
+	 * </p>
+	 */
+	public void open(int x, int y) {
+		putState(ANCHOR_ID, null);
+		putState(ANCHOR_X, x);
+		putState(ANCHOR_Y, y);
+		putState(OPEN, true);
+	}
+
+	/**
+	 * Sets the handler invoked when a menu item is selected.
+	 */
+	public void setSelectHandler(Consumer<String> selectHandler) {
+		_selectHandler = selectHandler;
+	}
+
+	/**
+	 * Sets the handler invoked when the menu is closed without selection.
+	 */
+	public void setCloseHandler(Runnable closeHandler) {
+		_closeHandler = closeHandler;
 	}
 
 	/**

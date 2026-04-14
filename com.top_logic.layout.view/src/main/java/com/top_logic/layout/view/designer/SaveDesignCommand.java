@@ -111,9 +111,19 @@ public class SaveDesignCommand implements ViewCommand {
 		if (viewContext.hasChannel("appContext")) {
 			ViewChannel appContextChannel = viewContext.resolveChannel(new ChannelRef("appContext"));
 			Object appContextValue = appContextChannel.get();
+			com.top_logic.basic.Logger.info(
+				"SaveDesign: appContext type=" + (appContextValue != null ? appContextValue.getClass().getName() : "null")
+				+ ", isViewContext=" + (appContextValue instanceof ViewContext),
+				SaveDesignCommand.class);
 			if (appContextValue instanceof ViewContext appViewContext) {
+				com.top_logic.basic.Logger.info(
+					"SaveDesign: firing viewChanged for paths: " + fileConfigs.keySet(),
+					SaveDesignCommand.class);
 				appViewContext.fireViewChanged(fileConfigs.keySet());
 			}
+		} else {
+			com.top_logic.basic.Logger.info(
+				"SaveDesign: no appContext channel found", SaveDesignCommand.class);
 		}
 
 		return HandlerResult.DEFAULT_RESULT;

@@ -25,6 +25,8 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
 
   const open = state.open === true;
   const anchorId = state.anchorId as string;
+  const anchorX = state.anchorX as number | null | undefined;
+  const anchorY = state.anchorY as number | null | undefined;
   const items = (state.items as MenuItem[]) ?? [];
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -33,14 +35,31 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
 
   const focusableItems = items.filter(it => it.type === 'item' && !it.disabled);
 
-  // Position relative to anchor.
+  // Position relative to anchor or at absolute coordinates.
   useEffect(() => {
-    if (!open || !anchorId) return;
+    if (!open) return;
+    const menuHeight = menuRef.current?.offsetHeight ?? 200;
+    const menuWidth = menuRef.current?.offsetWidth ?? 200;
+
+    if (anchorX != null && anchorY != null) {
+      // Absolute positioning at viewport coordinates (right-click menus).
+      let top = anchorY;
+      let left = anchorX;
+      if (top + menuHeight > window.innerHeight) {
+        top = Math.max(0, window.innerHeight - menuHeight);
+      }
+      if (left + menuWidth > window.innerWidth) {
+        left = Math.max(0, window.innerWidth - menuWidth);
+      }
+      setPosition({ top, left });
+      setFocusedIndex(0);
+      return;
+    }
+
+    if (!anchorId) return;
     const anchor = document.getElementById(anchorId);
     if (!anchor) return;
     const rect = anchor.getBoundingClientRect();
-    const menuHeight = menuRef.current?.offsetHeight ?? 200;
-    const menuWidth = menuRef.current?.offsetWidth ?? 200;
 
     let top = rect.bottom + 4;
     let left = rect.left;
@@ -56,7 +75,7 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
 
     setPosition({ top, left });
     setFocusedIndex(0);
-  }, [open, anchorId]);
+  }, [open, anchorId, anchorX, anchorY]);
 
   const handleClose = useCallback(() => {
     sendCommand('close');

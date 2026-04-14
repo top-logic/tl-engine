@@ -104,12 +104,43 @@ public class ReactTabBarControl extends ReactControl {
 		if (getState(ACTIVE_CONTENT) == null) {
 			ReactControl activeContent = getOrCreateContent(_activeTabId);
 			putStateSilent(ACTIVE_CONTENT, activeContent);
+			if (isAttached()) {
+				activeContent.attach();
+			}
 		}
 		super.writeAsChild(writer);
 	}
 
 	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		if (_activeTabId != null) {
+			ReactControl content = _contentCache.get(_activeTabId);
+			if (content != null) {
+				content.attach();
+			}
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		if (_activeTabId != null) {
+			ReactControl content = _contentCache.get(_activeTabId);
+			if (content != null) {
+				content.detach();
+			}
+		}
+	}
+
+	@Override
 	protected void cleanupChildren() {
+		if (_activeTabId != null) {
+			ReactControl active = _contentCache.get(_activeTabId);
+			if (active != null) {
+				active.detach();
+			}
+		}
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
@@ -130,6 +161,7 @@ public class ReactTabBarControl extends ReactControl {
 		if (tabId.equals(_activeTabId)) {
 			return;
 		}
+		ReactControl previousContent = _contentCache.get(_activeTabId);
 		_activeTabId = tabId;
 
 		if (!isSSEAttached()) {
@@ -144,6 +176,13 @@ public class ReactTabBarControl extends ReactControl {
 		putState(ACTIVE_TAB_ID, tabId);
 		putState(ACTIVE_CONTENT, content);
 		commitUpdate(tx);
+
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+		if (isAttached()) {
+			content.attach();
+		}
 	}
 
 	private ReactControl getOrCreateContent(String tabId) {

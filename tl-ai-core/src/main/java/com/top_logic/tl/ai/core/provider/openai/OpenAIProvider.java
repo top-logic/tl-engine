@@ -20,12 +20,10 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
-import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.PdfContent;
-import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;

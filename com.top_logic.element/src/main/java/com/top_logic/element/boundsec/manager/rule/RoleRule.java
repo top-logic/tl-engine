@@ -27,6 +27,7 @@ import com.top_logic.element.singleton.ElementSingletonManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -300,11 +301,11 @@ public class RoleRule implements RoleProvider {
 
     @Override
 	public Set<BoundObject> getBaseObjects(Object aDestination) {
-    	if ( ! (aDestination instanceof Wrapper)) {
+		if (!(aDestination instanceof TLObject)) {
     		return Collections.emptySet();
     	}
-    	Wrapper theDestination = (Wrapper) aDestination;
-        Set<BoundObject> theCollector = new HashSet<>();
+		TLObject theDestination = (TLObject) aDestination;
+		Set<TLObject> theCollector = new HashSet<>();
         this.getContentBackwards(theDestination, this.path, this.path.size() - 1, theCollector);
 
         Wrapper theBase = this.getBase();
@@ -315,40 +316,40 @@ public class RoleRule implements RoleProvider {
                 return Collections.emptySet();
             }
         } else {
-            for (Iterator it = theCollector.iterator(); it.hasNext(); ) {
+			for (Iterator<TLObject> it = theCollector.iterator(); it.hasNext();) {
                 if (!matches((Wrapper)it.next())) {
                     it.remove();
                 }
             }
-            return theCollector;
+			return (Set) theCollector;
         }
     }
 
-	private void getContent(Wrapper aNode, List aPath, int aPosition, Set aResult) {
+	private void getContent(TLObject aNode, List<PathElement> aPath, int aPosition, Set<TLObject> aResult) {
     	if (aNode == null || !aNode.tValid()) return;
 
-        PathElement thePE = (PathElement) aPath.get(aPosition);
-        Collection theNodeElements = thePE.getValues(aNode);
+		PathElement thePE = aPath.get(aPosition);
+		Collection<? extends TLObject> theNodeElements = thePE.getValues(aNode);
         if (aPath.size() == aPosition + 1) {
         	aResult.addAll(theNodeElements);
         } else {
             int theChildPosition = aPosition + 1;
-            for (Iterator theIt = theNodeElements.iterator(); theIt.hasNext();) {
-                Wrapper theElement = (Wrapper) theIt.next();
+            for (Iterator<? extends TLObject> theIt = theNodeElements.iterator(); theIt.hasNext();) {
+				TLObject theElement = theIt.next();
                 this.getContent(theElement, aPath, theChildPosition, aResult);
             }
         }
     }
 
-    private void getContentBackwards(Wrapper aNode, List aPath, int aPosition, Set aResult) {
-        PathElement thePE = (PathElement) aPath.get(aPosition);
-        Collection theNodeElements = thePE.getSources(aNode);
+	private void getContentBackwards(TLObject aNode, List<PathElement> aPath, int aPosition, Set<TLObject> aResult) {
+		PathElement thePE = aPath.get(aPosition);
+		Collection<? extends TLObject> theNodeElements = thePE.getSources(aNode);
         if (aPosition == 0) {
             aResult.addAll(theNodeElements);
         } else {
             int theChildPosition = aPosition - 1;
-            for (Iterator theIt = theNodeElements.iterator(); theIt.hasNext();) {
-                Wrapper theElement = (Wrapper) theIt.next();
+			for (Iterator<? extends TLObject> theIt = theNodeElements.iterator(); theIt.hasNext();) {
+				TLObject theElement = theIt.next();
                 this.getContentBackwards(theElement, aPath, theChildPosition, aResult);
             }
         }

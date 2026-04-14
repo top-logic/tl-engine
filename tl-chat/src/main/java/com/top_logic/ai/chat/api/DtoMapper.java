@@ -141,6 +141,15 @@ public final class DtoMapper {
 			i++;
 		}
 		dto.setTimeline(timeline);
+		TokenUsage usage = task.getTotalUsage();
+		if (usage != null && !TokenUsage.EMPTY.equals(usage)) {
+			dto.setTotalUsage(TokenUsageDto.create()
+				.setInputTokens(usage.inputTokens())
+				.setOutputTokens(usage.outputTokens())
+				.setThinkingTokens(usage.thinkingTokens())
+				.setCacheReadTokens(usage.cacheReadTokens())
+				.setCacheWriteTokens(usage.cacheWriteTokens()));
+		}
 		return dto;
 	}
 
@@ -175,6 +184,10 @@ public final class DtoMapper {
 			Map<String, Object> args = tc.getArgs();
 			dto.setArgsJson(args != null ? mapToJsonString(args) : "{}");
 			dto.setResult(tc.getResultJson());
+			if (tc.getStartTime() != null && tc.getEndTime() != null) {
+				dto.setDurationMs(tc.getEndTime().toEpochMilli() - tc.getStartTime().toEpochMilli());
+			}
+			dto.setStatus(tc.getStatus().name().toLowerCase());
 		} else {
 			dto.setType("agent_call");
 			dto.setFromAgent(ev.getFromAgent());
@@ -380,6 +393,15 @@ public final class DtoMapper {
 				builder.addTimelineEvent(event);
 			}
 		}
+		TokenUsageDto usageDto = dto.getTotalUsage();
+		if (usageDto != null) {
+			builder.withTotalUsage(new TokenUsage(
+				usageDto.getInputTokens(),
+				usageDto.getOutputTokens(),
+				usageDto.getThinkingTokens(),
+				usageDto.getCacheReadTokens(),
+				usageDto.getCacheWriteTokens()));
+		}
 		return builder.build();
 	}
 
@@ -409,10 +431,13 @@ public final class DtoMapper {
 					// Use empty args on parse failure.
 				}
 			}
-			ChatToolCall toolCall = new ChatToolCall(
-				dto.getToolName() != null ? dto.getToolName() : dto.getName(),
-				args,
-				dto.getResult());
+			String toolName = dto.getToolName() != null ? dto.getToolName() : dto.getName();
+			ChatToolCall toolCall;
+			if ("error".equals(dto.getStatus())) {
+				toolCall = new ChatToolCall(toolName, args, null).error(dto.getResult());
+			} else {
+				toolCall = new ChatToolCall(toolName, args, dto.getResult());
+			}
 			return ChatTimelineEvent.toolCall(toolCall);
 		} else if ("agent_call".equals(dto.getType())) {
 			return ChatTimelineEvent.agentCall(

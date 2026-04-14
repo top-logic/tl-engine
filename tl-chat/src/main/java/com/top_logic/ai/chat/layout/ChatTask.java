@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.top_logic.tl.ai.core.message.TokenUsage;
+
 /**
  * Represents a high-level task in the chat with status tracking and a unified execution timeline
  * (tool calls and agent-to-agent calls).
@@ -53,6 +55,8 @@ public class ChatTask {
 
 	private final List<ChatTimelineEvent> _timelineEvents;
 
+	private final TokenUsage _totalUsage;
+
 	/**
 	 * Creates a new {@link ChatTask} with PENDING status.
 	 *
@@ -61,11 +65,11 @@ public class ChatTask {
 	 */
 	public ChatTask(String description) {
 		this(UUID.randomUUID().toString(), description, TaskStatus.PENDING, Instant.now(), null, null,
-			new ArrayList<>());
+			new ArrayList<>(), TokenUsage.EMPTY);
 	}
 
 	private ChatTask(String id, String description, TaskStatus status, Instant startTime, Instant endTime,
-			String errorMessage, List<ChatTimelineEvent> timelineEvents) {
+			String errorMessage, List<ChatTimelineEvent> timelineEvents, TokenUsage totalUsage) {
 		_id = id;
 		_description = description;
 		_status = status;
@@ -73,6 +77,7 @@ public class ChatTask {
 		_endTime = endTime;
 		_errorMessage = errorMessage;
 		_timelineEvents = new ArrayList<>(timelineEvents);
+		_totalUsage = totalUsage;
 	}
 
 	/**
@@ -125,6 +130,13 @@ public class ChatTask {
 	}
 
 	/**
+	 * Returns the total token usage for the run that produced this task, or {@link TokenUsage#EMPTY}.
+	 */
+	public TokenUsage getTotalUsage() {
+		return _totalUsage;
+	}
+
+	/**
 	 * Returns tool calls from the timeline for backward compatibility.
 	 */
 	public List<ChatToolCall> getToolCalls() {
@@ -159,6 +171,8 @@ public class ChatTask {
 
 		private List<ChatTimelineEvent> _timelineEvents;
 
+		private TokenUsage _totalUsage;
+
 		private Builder(ChatTask task) {
 			_id = task._id;
 			_description = task._description;
@@ -167,6 +181,7 @@ public class ChatTask {
 			_endTime = task._endTime;
 			_errorMessage = task._errorMessage;
 			_timelineEvents = new ArrayList<>(task._timelineEvents);
+			_totalUsage = task._totalUsage;
 		}
 
 		/**
@@ -210,6 +225,14 @@ public class ChatTask {
 		}
 
 		/**
+		 * Sets the total token usage for this task.
+		 */
+		public Builder withTotalUsage(TokenUsage usage) {
+			_totalUsage = usage;
+			return this;
+		}
+
+		/**
 		 * Returns the current list of timeline events (mutable for updates).
 		 */
 		public List<ChatTimelineEvent> getTimelineEvents() {
@@ -220,7 +243,8 @@ public class ChatTask {
 		 * Builds the modified task.
 		 */
 		public ChatTask build() {
-			return new ChatTask(_id, _description, _status, _startTime, _endTime, _errorMessage, _timelineEvents);
+			return new ChatTask(_id, _description, _status, _startTime, _endTime, _errorMessage, _timelineEvents,
+				_totalUsage);
 		}
 	}
 }

@@ -27,6 +27,17 @@ Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTest
 
 **IMPORTANT**: Always build from the project root using `-pl <module-dir>`. NEVER `cd` into a module directory and run Maven there. The project uses a relative local repository (`.m2/repository` via `.mvn/maven.config`), so changing directories causes each module to use its own isolated local repo, leading to missing artifact errors.
 
+### Refreshing the Workspace After a Branch Switch
+
+Switching branches can leave stale jars in the local Maven repo (installed artifacts older than the current sources). A full rebuild is expensive. Use:
+
+```bash
+.claude/scripts/rebuild-stale.sh            # detect + rebuild stale modules
+.claude/scripts/rebuild-stale.sh --dry-run  # only list them
+```
+
+The script enumerates all reactor modules via one `mvn exec:exec` run, compares the newest mtime under each module's `pom.xml` + `src/` against the installed jar in the local Maven repo, and rebuilds only the stale ones in the correct order (`mvn install -pl <list> -am -DskipTests`).
+
 ### Running Tests
 
 Tests are **skipped by default** (`skipTests=true` in tl-parent-all). To run tests:

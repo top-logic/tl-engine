@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
@@ -71,6 +72,15 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * it sends SSE patch events to the client.
 	 */
 	private boolean _rendered;
+
+	/**
+	 * Whether this control is currently attached to the displayed UI tree.
+	 */
+	private boolean _attached;
+
+	private final List<Runnable> _attachListeners = new CopyOnWriteArrayList<>();
+
+	private final List<Runnable> _detachListeners = new CopyOnWriteArrayList<>();
 
 	/**
 	 * Pending batch of state changes accumulated between {@link #beginUpdate()} and
@@ -465,6 +475,110 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
+	 * Whether this control is currently attached to the displayed UI tree.
+	 *
+	 * <p>
+	 * A control is attached between calls to {@link #attach()} and {@link #detach()}. It is
+	 * detached while it exists in memory but is not currently displayed (e.g. the inactive child
+	 * of a one-of-N container like a sidebar, tab-bar or deck-pane). Final disposal is signaled
+	 * separately by {@link #cleanupTree()}.
+	 * </p>
+	 */
+	public final boolean isAttached() {
+		return _attached;
+	}
+
+	/**
+	 * Marks this control as attached (part of the displayed tree) and fires
+	 * {@link #addAttachListener(Runnable) attach listeners}.
+	 *
+	 * <p>
+	 * Idempotent: if already attached, this call is a no-op.
+	 * </p>
+	 */
+	public final void attach() {
+		if (_attached) {
+			return;
+		}
+		_attached = true;
+		for (Runnable l : _attachListeners) {
+			l.run();
+		}
+		propagateAttach();
+	}
+
+	/**
+	 * Marks this control as detached (still in memory but not displayed) and fires
+	 * {@link #addDetachListener(Runnable) detach listeners}.
+	 *
+	 * <p>
+	 * Idempotent: if not attached, this call is a no-op.
+	 * </p>
+	 */
+	public final void detach() {
+		if (!_attached) {
+			return;
+		}
+		propagateDetach();
+		_attached = false;
+		for (Runnable l : _detachListeners) {
+			l.run();
+		}
+	}
+
+	/**
+	 * Registers a listener that fires whenever this control becomes attached.
+	 *
+	 * <p>
+	 * If this control is already attached at registration time, the listener is invoked
+	 * immediately to simplify late registrations.
+	 * </p>
+	 */
+	public final void addAttachListener(Runnable listener) {
+		_attachListeners.add(listener);
+		if (_attached) {
+			listener.run();
+		}
+	}
+
+	/**
+	 * Unregisters a previously added attach listener.
+	 */
+	public final void removeAttachListener(Runnable listener) {
+		_attachListeners.remove(listener);
+	}
+
+	/**
+	 * Registers a listener that fires whenever this control becomes detached.
+	 */
+	public final void addDetachListener(Runnable listener) {
+		_detachListeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a previously added detach listener.
+	 */
+	public final void removeDetachListener(Runnable listener) {
+		_detachListeners.remove(listener);
+	}
+
+	/**
+	 * Hook for subclasses to propagate an {@link #attach()} call to their currently displayed
+	 * children. The default does nothing.
+	 */
+	protected void propagateAttach() {
+		// Default: no children to propagate to.
+	}
+
+	/**
+	 * Hook for subclasses to propagate a {@link #detach()} call to their currently displayed
+	 * children. The default does nothing.
+	 */
+	protected void propagateDetach() {
+		// Default: no children to propagate to.
+	}
+
+	/**
 	 * Hook for composite controls to clean up their children during detach.
 	 *
 	 * <p>
@@ -481,6 +595,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * dynamically removing a child.
 	 */
 	public final void cleanupTree() {
+		detach();
 		cleanupChildren();
 		onCleanup();
 		if (_cleanupActions != null) {

@@ -35,6 +35,8 @@ public class ReactDrawerControl extends ReactControl {
 
 	private ReactControl _child;
 
+	private boolean _open;
+
 	/**
 	 * Creates a drawer with default settings (right position, medium size).
 	 *
@@ -72,13 +74,27 @@ public class ReactDrawerControl extends ReactControl {
 	 * Opens the drawer.
 	 */
 	public void open() {
+		if (_open) {
+			return;
+		}
+		_open = true;
 		putState(OPEN, true);
+		if (isAttached() && _child != null) {
+			_child.attach();
+		}
 	}
 
 	/**
 	 * Closes the drawer.
 	 */
 	public void close() {
+		if (!_open) {
+			return;
+		}
+		if (_child != null) {
+			_child.detach();
+		}
+		_open = false;
 		putState(OPEN, false);
 	}
 
@@ -99,8 +115,30 @@ public class ReactDrawerControl extends ReactControl {
 	 *        The content control to display in the drawer body.
 	 */
 	public void setChild(ReactControl child) {
+		if (_child != null && _open) {
+			_child.detach();
+		}
 		_child = child;
 		putState(CHILD, child);
+		if (child != null && _open && isAttached()) {
+			child.attach();
+		}
+	}
+
+	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		if (_open && _child != null) {
+			_child.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		if (_open && _child != null) {
+			_child.detach();
+		}
 	}
 
 	@Override

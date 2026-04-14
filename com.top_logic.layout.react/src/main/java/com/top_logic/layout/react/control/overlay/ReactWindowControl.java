@@ -154,6 +154,28 @@ public class ReactWindowControl extends ToolbarControl {
 	}
 
 	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		if (_child != null) {
+			_child.attach();
+		}
+		for (ReactControl action : _actions) {
+			action.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		if (_child != null) {
+			_child.detach();
+		}
+		for (ReactControl action : _actions) {
+			action.detach();
+		}
+	}
+
+	@Override
 	protected void cleanupChildren() {
 		if (_child != null) {
 			_child.cleanupTree();

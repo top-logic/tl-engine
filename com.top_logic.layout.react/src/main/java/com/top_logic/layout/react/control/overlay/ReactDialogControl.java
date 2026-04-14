@@ -32,6 +32,8 @@ public class ReactDialogControl extends ReactControl {
 
 	private ReactControl _child;
 
+	private boolean _open;
+
 	/**
 	 * Creates a dialog overlay control.
 	 *
@@ -53,13 +55,27 @@ public class ReactDialogControl extends ReactControl {
 	 * Opens the dialog.
 	 */
 	public void open() {
+		if (_open) {
+			return;
+		}
+		_open = true;
 		putState(OPEN, true);
+		if (isAttached() && _child != null) {
+			_child.attach();
+		}
 	}
 
 	/**
 	 * Closes the dialog.
 	 */
 	public void close() {
+		if (!_open) {
+			return;
+		}
+		if (_child != null) {
+			_child.detach();
+		}
+		_open = false;
 		putState(OPEN, false);
 	}
 
@@ -70,8 +86,30 @@ public class ReactDialogControl extends ReactControl {
 	 *        The content control to display inside the overlay.
 	 */
 	public void setChild(ReactControl child) {
+		if (_child != null && _open) {
+			_child.detach();
+		}
 		_child = child;
 		putState(CHILD, child);
+		if (child != null && _open && isAttached()) {
+			child.attach();
+		}
+	}
+
+	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		if (_open && _child != null) {
+			_child.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		if (_open && _child != null) {
+			_child.detach();
+		}
 	}
 
 	@Override

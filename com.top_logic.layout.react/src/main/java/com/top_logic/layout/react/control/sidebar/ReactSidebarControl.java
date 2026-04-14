@@ -202,6 +202,15 @@ public class ReactSidebarControl extends ReactControl {
 	@Override
 	protected void propagateAttach() {
 		super.propagateAttach();
+		if (_headerContent != null) {
+			_headerContent.attach();
+		}
+		if (_headerCollapsedContent != null) {
+			_headerCollapsedContent.attach();
+		}
+		if (_footerContent != null) {
+			_footerContent.attach();
+		}
 		if (_activeItemId != null) {
 			ReactControl content = _contentCache.get(_activeItemId);
 			if (content != null) {
@@ -213,6 +222,15 @@ public class ReactSidebarControl extends ReactControl {
 	@Override
 	protected void propagateDetach() {
 		super.propagateDetach();
+		if (_headerContent != null) {
+			_headerContent.detach();
+		}
+		if (_headerCollapsedContent != null) {
+			_headerCollapsedContent.detach();
+		}
+		if (_footerContent != null) {
+			_footerContent.detach();
+		}
 		if (_activeItemId != null) {
 			ReactControl content = _contentCache.get(_activeItemId);
 			if (content != null) {

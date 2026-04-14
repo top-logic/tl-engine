@@ -406,7 +406,8 @@
 			btn.textContent = 'Cancel';
 			btn.style.display = 'none';
 			btn.addEventListener('click', () => {
-				fetch(URLS.cancel, { method: 'POST' });
+				fetch(URLS.cancel, { method: 'POST' })
+					.catch(err => console.error('[tl-chat] Cancel request failed:', err));
 			});
 			if (this._sendBtn && this._sendBtn.parentNode) {
 				this._sendBtn.parentNode.insertBefore(btn, this._sendBtn.nextSibling);
@@ -434,6 +435,7 @@
 			this.appendUserMessage(text);
 			this._inputEl.value = '';
 
+			const userBubble = this._messagesEl.lastElementChild;
 			fetch(URLS.send, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -442,6 +444,12 @@
 					sessionId: SSE._sessionId || '',
 					attachments: []
 				})
+			}).catch(err => {
+				console.error('[tl-chat] Send failed:', err);
+				if (userBubble && userBubble.parentNode) {
+					userBubble.remove();
+				}
+				this._inputEl.value = text;
 			});
 		},
 
@@ -593,7 +601,6 @@
 	// ========================================================================
 	const Thinking = {
 		_el: null,
-		_expanded: false,
 
 		updateStreaming() {
 			if (!Render._currentBubble || !Store.currentRun) return;
@@ -610,10 +617,11 @@
 			const body = thinkingEl.querySelector('.tl-chat-thinking-body');
 			const text = Store.currentRun.thinkingBuffer;
 
-			if (preview && !this._expanded) {
+			const expanded = thinkingEl.dataset.expanded === 'true';
+			if (preview && !expanded) {
 				preview.textContent = text.substring(0, 80) + (text.length > 80 ? '...' : '');
 			}
-			if (body && this._expanded) {
+			if (body && expanded) {
 				body.textContent = text;
 			}
 			Render._scrollToBottom();
@@ -636,15 +644,17 @@
 		},
 
 		_toggle(el) {
-			this._expanded = !this._expanded;
+			const wasExpanded = el.dataset.expanded === 'true';
+			const nowExpanded = !wasExpanded;
+			el.dataset.expanded = '' + nowExpanded;
 			const chevron = el.querySelector('.tl-chat-thinking-chevron');
 			const preview = el.querySelector('.tl-chat-thinking-preview');
 			const body = el.querySelector('.tl-chat-thinking-body');
-			if (chevron) chevron.classList.toggle('expanded', this._expanded);
-			if (preview) preview.style.display = this._expanded ? 'none' : '';
+			if (chevron) chevron.classList.toggle('expanded', nowExpanded);
+			if (preview) preview.style.display = nowExpanded ? 'none' : '';
 			if (body) {
-				body.style.display = this._expanded ? '' : 'none';
-				if (this._expanded && Store.currentRun) {
+				body.style.display = nowExpanded ? '' : 'none';
+				if (nowExpanded && Store.currentRun) {
 					body.textContent = Store.currentRun.thinkingBuffer;
 				}
 			}
@@ -730,7 +740,8 @@
 		updateToolCall(toolCallId) {
 			const tc = Store.currentRun.toolCalls.get(toolCallId);
 			if (!tc) return;
-			const el = document.querySelector('[data-tool-call-id="' + toolCallId + '"]');
+			const root = Render._root || document;
+			const el = root.querySelector('[data-tool-call-id="' + toolCallId + '"]');
 			if (!el) return;
 
 			const dot = el.querySelector('.tl-chat-status-dot');
@@ -848,7 +859,7 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body)
-			});
+			}).catch(err => console.error('[tl-chat] Approval response failed:', err));
 			if (outcome === 'APPROVED_FOR_SESSION') {
 				Store.sessionApprovals.add(toolName);
 			}
@@ -892,7 +903,7 @@
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ requestId: data.requestId, response: input.value })
-					});
+					}).catch(err => console.error('[tl-chat] Interaction response failed:', err));
 					el.innerHTML = '<div class="tl-chat-status-pill">Responded</div>';
 				};
 				btn.addEventListener('click', respond);
@@ -915,7 +926,7 @@
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({ requestId: data.requestId, response: btn.dataset.value })
-						});
+						}).catch(err => console.error('[tl-chat] Choice response failed:', err));
 						el.innerHTML = '<div class="tl-chat-status-pill">Selected: ' +
 							Utils.escapeHtml(btn.dataset.value) + '</div>';
 					});

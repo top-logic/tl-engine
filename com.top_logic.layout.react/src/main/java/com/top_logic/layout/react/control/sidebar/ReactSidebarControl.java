@@ -192,12 +192,43 @@ public class ReactSidebarControl extends ReactControl {
 		if (getState(ACTIVE_CONTENT) == null && _activeItemId != null) {
 			ReactControl activeContent = getOrCreateContent(_activeItemId);
 			putStateSilent(ACTIVE_CONTENT, activeContent);
+			if (isAttached()) {
+				activeContent.attach();
+			}
 		}
 		super.writeAsChild(writer);
 	}
 
 	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		if (_activeItemId != null) {
+			ReactControl content = _contentCache.get(_activeItemId);
+			if (content != null) {
+				content.attach();
+			}
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		if (_activeItemId != null) {
+			ReactControl content = _contentCache.get(_activeItemId);
+			if (content != null) {
+				content.detach();
+			}
+		}
+	}
+
+	@Override
 	protected void cleanupChildren() {
+		if (_activeItemId != null) {
+			ReactControl active = _contentCache.get(_activeItemId);
+			if (active != null) {
+				active.detach();
+			}
+		}
 		for (ReactControl cached : _contentCache.values()) {
 			cached.cleanupTree();
 		}
@@ -223,6 +254,7 @@ public class ReactSidebarControl extends ReactControl {
 		if (itemId.equals(_activeItemId)) {
 			return;
 		}
+		ReactControl previousContent = _contentCache.get(_activeItemId);
 		_activeItemId = itemId;
 
 		if (!isSSEAttached()) {
@@ -236,6 +268,13 @@ public class ReactSidebarControl extends ReactControl {
 		putState(ACTIVE_ITEM_ID, itemId);
 		putState(ACTIVE_CONTENT, content);
 		commitUpdate(tx);
+
+		if (previousContent != null) {
+			previousContent.detach();
+		}
+		if (isAttached()) {
+			content.attach();
+		}
 	}
 
 	/**

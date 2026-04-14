@@ -104,6 +104,15 @@
 							<de>Dialog-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="context-menu-demo"
+						icon="bi bi-menu-button-wide"
+					>
+						<view-ref view="demo/context-menu-demo.view.xml"/>
+						<label>
+							<en>Context Menu</en>
+							<de>Kontextmenue</de>
+						</label>
+					</nav-item>
 					<nav-item id="error-handling-demo"
 						icon="bi bi-exclamation-triangle"
 					>

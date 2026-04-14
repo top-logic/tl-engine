@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<view>
+	<panel>
+		<title>
+			<en>Context Menu Demo</en>
+			<de>Kontextmenue-Demo</de>
+		</title>
+		<context-menu>
+			<commands>
+				<generic-command
+					label="Say Hello"
+					placement="CONTEXT_MENU"
+				>
+					<action class="com.top_logic.demo.view.command.SayHelloAction"/>
+				</generic-command>
+				<generic-command
+					label="Delete"
+					placement="CONTEXT_MENU"
+					clique="DELETE"
+				>
+					<action class="com.top_logic.demo.view.command.SayGoodbyeAction"/>
+				</generic-command>
+			</commands>
+			<card variant="elevated">
+				<title>
+					<en>Right-click anywhere in this card to open the context menu.</en>
+					<de>Rechtsklicken Sie in dieser Karte, um das Kontextmenue zu oeffnen.</de>
+				</title>
+			</card>
+		</context-menu>
+	</panel>
+</view>

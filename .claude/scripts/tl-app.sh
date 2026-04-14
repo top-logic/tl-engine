@@ -132,6 +132,7 @@ do_start() {
     mkdir -p "$java_tmpdir"
 
     # Start Maven in the background.
+    echo "Starting on port ${port}..."
     cd "$APP_MODULE"
     nohup mvn -B -Dtl.port="$port" -Djava.io.tmpdir="$java_tmpdir" > "$log" 2>&1 &
     local mvn_pid=$!
@@ -181,11 +182,11 @@ do_start() {
         fi
 
         # If "Server started:" appeared but "up and running" hasn't followed
-        # within 15 seconds, the application failed during initialization.
-        if [[ -n "$server_started_at" ]] && (( elapsed - server_started_at > 15 )); then
-            echo "Error: Application startup failed (server started but app did not become ready)." >&2
+        # within 2 seconds, the application failed during initialization.
+        if [[ -n "$server_started_at" ]] && (( elapsed - server_started_at > 2 )); then
+            echo "Error: Application startup failed." >&2
             echo "Log: $log" >&2
-            grep "ERROR" "$log" >&2 2>/dev/null || true
+            grep -E "ERROR|Exception: " "$log" >&2 2>/dev/null || true
             # Stop Jetty (still running despite failed app init).
             curl -sf "http://localhost:${port}/admin/stop" > /dev/null 2>&1 || true
             exit 1

@@ -133,9 +133,22 @@ public class AppBarElement implements UIElement {
 		// Build command models.
 		List<ViewCommandModel> commandModels = buildCommandModels(context);
 
-		// Create command scope and derived context.
-		CommandScope scope = new CommandScope(commandModels);
-		ViewContext derivedContext = context.withCommandScope(scope);
+		// Use parent scope when available so that commands contributed by descendants
+		// (e.g. form edit commands, dashboard layout edit) surface in the app bar.
+		// Fall back to a private scope if the app bar is used standalone.
+		CommandScope parentScope = context.getCommandScope();
+		CommandScope scope;
+		ViewContext derivedContext;
+		if (parentScope != null) {
+			for (ViewCommandModel model : commandModels) {
+				parentScope.addCommand(model);
+			}
+			scope = parentScope;
+			derivedContext = context;
+		} else {
+			scope = new CommandScope(commandModels);
+			derivedContext = context.withCommandScope(scope);
+		}
 
 		// Create the app bar control.
 		ReactAppBarControl appBar = new ReactAppBarControl(derivedContext, title, _variant, null, List.of());
@@ -145,8 +158,16 @@ public class AppBarElement implements UIElement {
 		syncActionButtons(appBar, derivedContext, scope, actionButtons);
 		scope.addListener(() -> syncActionButtons(appBar, derivedContext, scope, actionButtons));
 
-		// Register cleanup for command model lifecycle.
+		// Register cleanup for command model lifecycle. When using a shared scope,
+		// also remove our contributed commands.
+		final CommandScope cleanupScope = scope;
+		final boolean usingSharedScope = (parentScope != null);
 		appBar.addCleanupAction(() -> {
+			if (usingSharedScope) {
+				for (ViewCommandModel model : commandModels) {
+					cleanupScope.removeCommand(model);
+				}
+			}
 			for (ViewCommandModel model : commandModels) {
 				model.detach();
 			}

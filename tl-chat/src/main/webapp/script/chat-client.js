@@ -131,6 +131,7 @@
 				delegations: new Map(),
 				turnUsage: null,
 				totalUsage: null,
+				cumulativeTokens: 0,
 			};
 		},
 
@@ -300,6 +301,13 @@
 		onTurnCompleted(data) {
 			if (Store.currentRun) {
 				Store.currentRun.turnUsage = data.turnUsage;
+				if (data.turnUsage) {
+					Store.currentRun.cumulativeTokens +=
+						(data.turnUsage.inputTokens || 0) +
+						(data.turnUsage.outputTokens || 0) +
+						(data.turnUsage.thinkingTokens || 0);
+					Render._updateTraceSummary();
+				}
 			}
 		},
 
@@ -395,9 +403,25 @@
 			this._messagesEl = root.querySelector('.chat-messages');
 			this._inputEl = root.querySelector('.chat-input');
 			this._sendBtn = root.querySelector('.chat-button');
+			this._ensureParentHeight(root);
 			this._setupCancelButton();
 			this._setupInput();
 			this._setupAutoScroll();
+		},
+
+		_ensureParentHeight(root) {
+			// Walk up the DOM to find the TL content container and ensure height propagation
+			let el = root.parentElement;
+			while (el && el !== document.body) {
+				const pos = getComputedStyle(el).position;
+				if (pos === 'relative' || pos === 'absolute') {
+					// Found a positioned ancestor — make sure root fills it
+					root.style.position = 'absolute';
+					root.style.inset = '0';
+					break;
+				}
+				el = el.parentElement;
+			}
 		},
 
 		_setupCancelButton() {
@@ -428,29 +452,28 @@
 			}
 		},
 
-		_send() {
+		async _send() {
 			const text = this._inputEl.value.trim();
 			if (!text || State.isActive()) return;
-
-			this.appendUserMessage(text);
 			this._inputEl.value = '';
 
-			const userBubble = this._messagesEl.lastElementChild;
-			fetch(URLS.send, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					text: text,
-					sessionId: SSE._sessionId || '',
-					attachments: []
-				})
-			}).catch(err => {
+			try {
+				// Ensure session exists before appending message (createNew clears the DOM)
+				const sessionId = await Session._ensureSession();
+				this.appendUserMessage(text);
+				await fetch(URLS.send, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						text: text,
+						sessionId: sessionId || '',
+						attachments: []
+					})
+				});
+			} catch (err) {
 				console.error('[tl-chat] Send failed:', err);
-				if (userBubble && userBubble.parentNode) {
-					userBubble.remove();
-				}
 				this._inputEl.value = text;
-			});
+			}
 		},
 
 		_setupAutoScroll() {
@@ -483,23 +506,58 @@
 			const div = document.createElement('div');
 			div.className = 'chat-message chat-message-agent';
 
-			div.innerHTML = '<div class="chat-avatar">AI</div>';
-
 			const content = document.createElement('div');
 			content.className = 'chat-bubble chat-bubble-agent';
+
+			// Collapsible trace wrapper (tools + thinking)
+			const traceWrapper = document.createElement('div');
+			traceWrapper.className = 'tl-chat-trace-wrapper';
+			traceWrapper.style.display = 'none';
+
+			const traceHeader = document.createElement('div');
+			traceHeader.className = 'tl-chat-trace-header';
+			const traceTokensEl = document.createElement('span');
+			traceTokensEl.className = 'tl-chat-trace-tokens';
+			traceTokensEl.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (traceTokensEl._usage) {
+					Tokens._showPopover(e, traceTokensEl._usage);
+				}
+			});
+
+			traceHeader.innerHTML =
+				'<span class="tl-chat-trace-chevron">&#9654;</span>' +
+				'<span class="tl-chat-trace-summary"></span>';
+			traceHeader.appendChild(traceTokensEl);
+
+			const traceBody = document.createElement('div');
+			traceBody.className = 'tl-chat-trace-body';
+			traceBody.style.display = 'none';
+
+			let traceExpanded = false;
+			traceHeader.addEventListener('click', () => {
+				traceExpanded = !traceExpanded;
+				traceBody.style.display = traceExpanded ? '' : 'none';
+				traceHeader.querySelector('.tl-chat-trace-chevron').classList.toggle('expanded', traceExpanded);
+			});
 
 			const thinkingEl = document.createElement('div');
 			thinkingEl.className = 'tl-chat-thinking';
 			thinkingEl.style.display = 'none';
-			content.appendChild(thinkingEl);
-
-			const textEl = document.createElement('div');
-			textEl.className = 'chat-agent-text tl-chat-content-swap';
-			content.appendChild(textEl);
+			traceBody.appendChild(thinkingEl);
 
 			const toolsEl = document.createElement('div');
 			toolsEl.className = 'tl-chat-tools-container';
-			content.appendChild(toolsEl);
+			traceBody.appendChild(toolsEl);
+
+			traceWrapper.appendChild(traceHeader);
+			traceWrapper.appendChild(traceBody);
+			content.appendChild(traceWrapper);
+
+			// Answer text (always visible)
+			const textEl = document.createElement('div');
+			textEl.className = 'chat-agent-text tl-chat-content-swap';
+			content.appendChild(textEl);
 
 			div.appendChild(content);
 			this._messagesEl.appendChild(div);
@@ -507,6 +565,8 @@
 			this._currentBubble = content;
 			this._currentTextEl = textEl;
 			this._currentToolsEl = toolsEl;
+			this._currentTraceWrapper = traceWrapper;
+			this._toolCount = 0;
 			this._scrollToBottom();
 		},
 
@@ -524,12 +584,30 @@
 		},
 
 		swapToRenderedHtml(html) {
-			if (!this._currentTextEl) return;
-			this._currentTextEl.style.opacity = '0';
+			// _currentTextEl may already be null if run_completed arrived before message_complete
+			const el = this._currentTextEl ||
+				(this._messagesEl && this._messagesEl.querySelector(
+					'.chat-message-agent:last-child .tl-chat-content-swap'));
+			if (!el) return;
+			el.style.opacity = '0';
 			setTimeout(() => {
-				this._currentTextEl.innerHTML = html;
-				this._currentTextEl.style.opacity = '1';
+				if (!el.parentNode) return;
+				el.innerHTML = html;
+				el.style.opacity = '1';
 			}, 150);
+		},
+
+		_updateTraceSummary() {
+			if (!this._currentTraceWrapper) return;
+			const summary = this._currentTraceWrapper.querySelector('.tl-chat-trace-summary');
+			if (!summary) return;
+			const n = this._toolCount || 0;
+			summary.textContent = n > 0 ? n + ' tool' + (n > 1 ? 's' : '') + ' used' : 'Thinking';
+			const tokensEl = this._currentTraceWrapper.querySelector('.tl-chat-trace-tokens');
+			if (tokensEl && Store.currentRun && Store.currentRun.cumulativeTokens > 0) {
+				tokensEl.textContent = Utils.formatTokens(Store.currentRun.cumulativeTokens) + ' tokens';
+				tokensEl._usage = Store.currentRun.turnUsage;
+			}
 		},
 
 		finalizeAssistantBubble() {
@@ -537,13 +615,21 @@
 				const cursor = this._currentTextEl.querySelector('.tl-chat-streaming-cursor');
 				if (cursor) cursor.remove();
 			}
-			if (this._currentBubble && Store.currentRun && Store.currentRun.totalUsage) {
-				const badge = Tokens.createBadge(Store.currentRun.totalUsage);
-				this._currentBubble.appendChild(badge);
+			// Final token count update on trace header (uses totalUsage for accuracy)
+			if (this._currentTraceWrapper && Store.currentRun && Store.currentRun.totalUsage) {
+				const usage = Store.currentRun.totalUsage;
+				const total = (usage.inputTokens || 0) + (usage.outputTokens || 0) + (usage.thinkingTokens || 0);
+				const tokensEl = this._currentTraceWrapper.querySelector('.tl-chat-trace-tokens');
+				if (tokensEl && total > 0) {
+					tokensEl.textContent = Utils.formatTokens(total) + ' tokens';
+					tokensEl._usage = usage;
+				}
 			}
 			this._currentBubble = null;
 			this._currentTextEl = null;
 			this._currentToolsEl = null;
+			this._currentTraceWrapper = null;
+			this._toolCount = 0;
 		},
 
 		showCancelledPrompt() {
@@ -610,6 +696,10 @@
 			if (thinkingEl.style.display === 'none') {
 				thinkingEl.style.display = '';
 				this._buildStructure(thinkingEl);
+				// Show trace wrapper when thinking starts
+				if (Render._currentTraceWrapper) {
+					Render._currentTraceWrapper.style.display = '';
+				}
 			}
 			this._el = thinkingEl;
 
@@ -671,12 +761,24 @@
 			const tc = Store.currentRun.toolCalls.get(toolCallId);
 			if (!tc) return;
 
+			// Show trace wrapper and update summary
+			if (Render._currentTraceWrapper) {
+				Render._currentTraceWrapper.style.display = '';
+				Render._toolCount = (Render._toolCount || 0) + 1;
+				Render._updateTraceSummary();
+			}
+
 			if (tc.isDelegation) {
 				this._renderDelegation(container, toolCallId, tc);
 			} else {
 				this._renderTool(container, toolCallId, tc);
 			}
 			Render._scrollToBottom();
+		},
+
+		_estimateTokens(text) {
+			if (!text) return 0;
+			return Math.ceil(text.length / 4);
 		},
 
 		_renderTool(container, id, tc) {
@@ -689,6 +791,7 @@
 			header.innerHTML =
 				'<span class="tl-chat-status-dot running"></span>' +
 				'<span class="tl-chat-tool-name">' + Utils.escapeHtml(tc.name) + '</span>' +
+				'<span class="tl-chat-tool-tokens">~' + Utils.formatTokens(this._estimateTokens(tc.argsJson)) + '</span>' +
 				'<span class="tl-chat-tool-duration"></span>' +
 				'<span class="tl-chat-tool-chevron">&#9654;</span>';
 
@@ -752,6 +855,12 @@
 			const dur = el.querySelector('.tl-chat-tool-duration');
 			if (dur && tc.durationMs != null) {
 				dur.textContent = Utils.formatDuration(tc.durationMs);
+			}
+
+			const tokensEl = el.querySelector('.tl-chat-tool-tokens');
+			if (tokensEl) {
+				const total = this._estimateTokens(tc.argsJson) + this._estimateTokens(tc.result) + this._estimateTokens(tc.error);
+				tokensEl.textContent = '~' + Utils.formatTokens(total);
 			}
 
 			if (tc.status === 'denied') {
@@ -1064,9 +1173,16 @@
 			this._listEl = root.querySelector('.chat-history-list');
 			if (!this._sidebarEl) return;
 
-			const newBtn = this._sidebarEl.querySelector('.chat-new-btn');
+			const newBtn = this._sidebarEl.querySelector('.chat-new-session-btn');
 			if (newBtn) {
 				newBtn.addEventListener('click', () => this.createNew());
+			}
+
+			const toggleBtn = this._sidebarEl.querySelector('.chat-sidebar-toggle');
+			if (toggleBtn) {
+				toggleBtn.addEventListener('click', () => {
+					this._sidebarEl.classList.toggle('open');
+				});
 			}
 
 			this.loadList();
@@ -1083,28 +1199,129 @@
 			}
 		},
 
+		_formatRelativeTime(isoString) {
+			if (!isoString) return '';
+			const date = new Date(isoString);
+			const diffMs = Date.now() - date.getTime();
+			const diffMin = Math.floor(diffMs / 60000);
+			const diffHr = Math.floor(diffMs / 3600000);
+			const diffDay = Math.floor(diffMs / 86400000);
+			if (diffMin < 1) return 'just now';
+			if (diffMin < 60) return diffMin + 'm ago';
+			if (diffHr < 24) return diffHr + 'h ago';
+			if (diffDay < 7) return diffDay + 'd ago';
+			return date.toLocaleDateString();
+		},
+
+		_createSessionItem(session) {
+			const item = document.createElement('div');
+			item.className = 'chat-history-item' + (session.id === this.currentId ? ' active' : '');
+			item.dataset.sessionId = session.id;
+
+			const titleRow = document.createElement('div');
+			titleRow.className = 'chat-history-title-row';
+
+			const title = document.createElement('span');
+			title.className = 'chat-history-title';
+			title.textContent = session.title || 'Untitled';
+
+			let editing = false;
+
+			const startEditing = (e) => {
+				if (e) e.stopPropagation();
+				editing = true;
+				title.setAttribute('contenteditable', 'true');
+				title.classList.add('editing');
+				editBtn.classList.add('editing');
+				title.focus();
+				const range = document.createRange();
+				range.selectNodeContents(title);
+				const sel = window.getSelection();
+				sel.removeAllRanges();
+				sel.addRange(range);
+			};
+
+			const stopEditing = (e) => {
+				if (e) e.stopPropagation();
+				if (!editing) return;
+				editing = false;
+				title.removeAttribute('contenteditable');
+				title.classList.remove('editing');
+				editBtn.classList.remove('editing');
+				const newTitle = title.textContent.trim();
+				if (newTitle && newTitle !== session.title) {
+					session.title = newTitle;
+					fetch(URLS.sessions + '/' + encodeURIComponent(session.id) + '/title', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ title: newTitle })
+					}).catch(err => console.error('[tl-chat] Rename failed:', err));
+				} else if (!newTitle) {
+					title.textContent = session.title || 'Untitled';
+				}
+			};
+
+			title.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') { e.preventDefault(); stopEditing(e); }
+				if (e.key === 'Escape') { e.preventDefault(); title.textContent = session.title || 'Untitled'; stopEditing(e); }
+			});
+			title.addEventListener('blur', () => { setTimeout(() => { if (editing) stopEditing(); }, 150); });
+
+			const editBtn = document.createElement('button');
+			editBtn.className = 'chat-history-edit-btn';
+			editBtn.title = 'Rename';
+			editBtn.innerHTML = '&#9998;';
+			editBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (editing) stopEditing(e); else startEditing(e);
+			});
+
+			const deleteBtn = document.createElement('button');
+			deleteBtn.className = 'chat-history-delete-btn';
+			deleteBtn.textContent = '\u00D7';
+			deleteBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (confirm('Delete this chat?')) {
+					this.deleteSession(session.id, item);
+				}
+			});
+
+			item.addEventListener('click', (e) => {
+				if (e.target === deleteBtn || e.target === editBtn || editing) return;
+				this.switchTo(session.id);
+			});
+
+			const timeEl = document.createElement('span');
+			timeEl.className = 'chat-history-time';
+			timeEl.textContent = this._formatRelativeTime(session.lastUpdated);
+
+			titleRow.appendChild(title);
+			titleRow.appendChild(editBtn);
+			titleRow.appendChild(deleteBtn);
+			item.appendChild(titleRow);
+			item.appendChild(timeEl);
+			return item;
+		},
+
 		_renderList(sessions) {
 			if (!this._listEl) return;
 			this._listEl.innerHTML = '';
 			sessions.forEach(s => {
-				const item = document.createElement('div');
-				item.className = 'chat-history-item' + (s.id === this.currentId ? ' active' : '');
-				item.dataset.sessionId = s.id;
-				item.innerHTML =
-					'<span class="chat-history-title">' + Utils.escapeHtml(s.title) + '</span>' +
-					'<button class="chat-history-delete" title="Delete">&times;</button>';
-				item.querySelector('.chat-history-title').addEventListener('click', () => {
-					this.switchTo(s.id);
-				});
-				item.querySelector('.chat-history-delete').addEventListener('click', (e) => {
-					e.stopPropagation();
-					this.deleteSession(s.id, item);
-				});
-				this._listEl.appendChild(item);
+				this._listEl.appendChild(this._createSessionItem(s));
 			});
 		},
 
+		_resetState() {
+			State.set(State.IDLE);
+			Store.currentRun = null;
+			if (Render._messagesEl) Render._messagesEl.innerHTML = '';
+			Render.updateInputState();
+		},
+
 		async switchTo(sessionId) {
+			if (sessionId === this.currentId) return;
+
+			this._resetState();
 			this.currentId = sessionId;
 			SSE.connect(sessionId);
 
@@ -1130,6 +1347,9 @@
 				Render._messagesEl.innerHTML = '';
 			}
 			const entries = data.entries || [];
+			if (entries.length > 0) {
+				Welcome.hide();
+			}
 			entries.forEach(entry => {
 				if (entry.type === 'message') {
 					const msg = entry.messageData;
@@ -1142,18 +1362,30 @@
 					}
 				}
 			});
+			Render._scrollToBottom();
 		},
 
 		_renderPersistedAgentMessage(msg) {
 			const div = document.createElement('div');
 			div.className = 'chat-message chat-message-agent';
 			div.innerHTML =
-				'<div class="chat-avatar">AI</div>' +
 				'<div class="chat-bubble chat-bubble-agent">' +
 				'<div class="chat-agent-text">' + (msg.contentHtml || Utils.escapeHtml(msg.content || '')) + '</div>' +
 				'</div>';
 			if (Render._messagesEl) {
 				Render._messagesEl.appendChild(div);
+			}
+		},
+
+		_moveToTop(sessionId) {
+			if (!this._listEl) return;
+			const item = this._listEl.querySelector('[data-session-id="' + sessionId + '"]');
+			if (item && item !== this._listEl.firstChild) {
+				this._listEl.insertBefore(item, this._listEl.firstChild);
+			}
+			if (item) {
+				const timeEl = item.querySelector('.chat-history-time');
+				if (timeEl) timeEl.textContent = 'just now';
 			}
 		},
 
@@ -1166,12 +1398,33 @@
 				});
 				const data = await resp.json();
 				if (data.id) {
-					await this.loadList();
-					this.switchTo(data.id);
+					const item = this._createSessionItem(data);
+					if (this._listEl) {
+						if (this._listEl.firstChild) {
+							this._listEl.insertBefore(item, this._listEl.firstChild);
+						} else {
+							this._listEl.appendChild(item);
+						}
+					}
+					// Reuse switchTo — it handles SSE, server-side activation, everything
+					await this.switchTo(data.id);
+					Welcome.show();
 				}
 			} catch (e) {
 				console.error('[tl-chat] Failed to create session:', e);
 			}
+		},
+
+		/**
+		 * Ensures a session exists before sending a message.
+		 * Creates one if Session.currentId is falsy.
+		 * Returns the session ID, or null if creation failed.
+		 */
+		async _ensureSession() {
+			if (this.currentId) return this.currentId;
+			// No session yet — create one and fully activate it via switchTo
+			await this.createNew();
+			return this.currentId;
 		},
 
 		async deleteSession(sessionId, itemEl) {
@@ -1180,7 +1433,13 @@
 				if (itemEl) itemEl.remove();
 				if (sessionId === this.currentId) {
 					this.currentId = null;
-					if (Render._messagesEl) Render._messagesEl.innerHTML = '';
+					this._resetState();
+					const next = this._listEl && this._listEl.querySelector('.chat-history-item');
+					if (next) {
+						this.switchTo(next.dataset.sessionId);
+					} else {
+						Welcome.show();
+					}
 				}
 			} catch (e) {
 				console.error('[tl-chat] Failed to delete session:', e);
@@ -1194,6 +1453,13 @@
 	function initChat(root) {
 		Render.init(root);
 		Session.init(root);
+		Welcome.init(root);
+
+		// Hide welcome if messages were server-rendered
+		const msgs = root.querySelector('.chat-messages');
+		if (msgs && msgs.children.length > 0) {
+			Welcome.hide();
+		}
 
 		const sessionId = root.dataset.sessionId || '';
 		Session.switchTo(sessionId);
@@ -1202,6 +1468,73 @@
 			Render.updateInputState();
 		});
 	}
+
+	// ========================================================================
+	// Welcome — Welcome screen input, send, and prompt chips
+	// ========================================================================
+	const Welcome = {
+		_el: null,
+
+		init(root) {
+			this._el = root.querySelector('.chat-welcome');
+			if (!this._el) return;
+
+			const textarea = this._el.querySelector('.chat-welcome-input');
+			const sendBtn = this._el.querySelector('.chat-welcome-send-btn');
+			const chips = this._el.querySelectorAll('.chat-prompt-chip');
+
+			if (textarea && sendBtn) {
+				sendBtn.addEventListener('click', () => this._sendFromWelcome(textarea));
+				textarea.addEventListener('keydown', (e) => {
+					if (e.key === 'Enter' && !e.shiftKey) {
+						e.preventDefault();
+						this._sendFromWelcome(textarea);
+					}
+				});
+			}
+
+			chips.forEach(chip => {
+				chip.addEventListener('click', () => {
+					const prompt = chip.dataset.prompt || chip.textContent;
+					if (textarea) textarea.value = prompt;
+					this._sendFromWelcome(textarea);
+				});
+			});
+		},
+
+		async _sendFromWelcome(textarea) {
+			if (!textarea) return;
+			const text = textarea.value.trim();
+			if (!text || State.isActive()) return;
+			textarea.value = '';
+
+			try {
+				// Ensure session exists before touching DOM (createNew clears messages)
+				const sessionId = await Session._ensureSession();
+				this.hide();
+				Render.appendUserMessage(text);
+				await fetch(URLS.send, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						text: text,
+						sessionId: sessionId || '',
+						attachments: []
+					})
+				});
+			} catch (err) {
+				console.error('[tl-chat] Send failed:', err);
+			}
+		},
+
+		hide() {
+			if (this._el) this._el.classList.add('hidden');
+		},
+
+		show() {
+			if (this._el) this._el.classList.remove('hidden');
+		}
+	};
 
 	// ========================================================================
 	// Bootstrap — DOM observation and initialization

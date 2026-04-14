@@ -46,11 +46,14 @@
  * Container
  * ======================================== */
 
+/* Ensure the ChatControl fills its TL framework container.
+   The JS init sets position:relative on the nearest positioned ancestor. */
 .chat-control {
     display: flex;
     flex-direction: row;
+    width: 100%;
     height: 100%;
-    position: relative;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -64,7 +67,8 @@
 
 /* Messages container with scrolling */
 .chat-messages {
-	height: 75vh;
+	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
 	padding: 16px;
 	margin-bottom: 10px;
@@ -191,7 +195,10 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	padding: 0 4px;
+	padding: 8px 16px;
+	flex-shrink: 0;
+	border-top: 1px solid var(--chat-border);
+	background: var(--chat-bg);
 }
 
 .chat-input {
@@ -1070,7 +1077,6 @@
 .chat-history-list {
     flex: 1;
     min-height: 0;
-    max-height: 75vh;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0;
@@ -1205,12 +1211,23 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 75vh;
+    flex: 1;
+    min-height: 0;
     padding: 48px 24px;
     text-align: center;
 }
 
 .chat-welcome.hidden {
+    display: none;
+}
+
+/* When welcome is visible, hide the bottom input bar (welcome has its own) */
+.chat-welcome:not(.hidden) ~ .chat-input-section {
+    display: none;
+}
+
+/* When welcome is visible, hide the messages container */
+.chat-welcome:not(.hidden) ~ .chat-messages {
     display: none;
 }
 
@@ -1515,6 +1532,69 @@
 }
 
 /* ========================================
+ * Trace Wrapper (collapsible tool/thinking trace)
+ * ======================================== */
+
+.tl-chat-trace-wrapper {
+	margin-bottom: 8px;
+	border-left: 2px solid var(--chat-border);
+	padding-left: 10px;
+}
+
+.tl-chat-trace-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	padding: 4px 0;
+	font-size: 0.85em;
+	color: var(--chat-text-secondary);
+	user-select: none;
+	transition: color 0.15s;
+}
+
+.tl-chat-trace-header:hover {
+	color: var(--chat-text-primary);
+}
+
+.tl-chat-trace-chevron {
+	font-size: 0.7em;
+	transition: transform 0.2s;
+	display: inline-block;
+}
+
+.tl-chat-trace-chevron.expanded {
+	transform: rotate(90deg);
+}
+
+.tl-chat-trace-summary {
+	font-weight: 500;
+}
+
+.tl-chat-trace-tokens {
+	margin-left: auto;
+	font-size: 0.8em;
+	color: var(--chat-text-muted);
+	background: var(--chat-token-bg);
+	padding: 1px 8px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: color 0.15s;
+}
+
+.tl-chat-trace-tokens:hover {
+	color: var(--chat-text-primary);
+}
+
+.tl-chat-trace-tokens:empty {
+	display: none;
+}
+
+.tl-chat-trace-body {
+	padding: 4px 0;
+}
+
+/* ========================================
  * Thinking Blocks
  * ======================================== */
 
@@ -1570,6 +1650,8 @@
 	font-size: 13px;
 	color: var(--chat-thinking-text);
 	line-height: 1.5;
+	white-space: pre-wrap;
+	word-break: break-word;
 }
 
 /* ========================================
@@ -1624,6 +1706,14 @@
 .tl-chat-tool-name.denied {
 	text-decoration: line-through;
 	color: var(--chat-text-muted);
+}
+
+.tl-chat-tool-tokens {
+	color: var(--chat-text-muted);
+	font-size: 10px;
+	background: var(--chat-token-bg);
+	padding: 1px 6px;
+	border-radius: 8px;
 }
 
 .tl-chat-tool-duration {

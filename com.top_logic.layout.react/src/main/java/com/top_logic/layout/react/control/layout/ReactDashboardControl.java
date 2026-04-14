@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
@@ -36,6 +37,8 @@ public class ReactDashboardControl extends ReactControl {
 	private static final String CHILDREN = "children";
 
 	private static final String ORDER_ARG = "order";
+
+	private static final String EDIT_MODE = "editMode";
 
 	/**
 	 * A single tile of the dashboard.
@@ -84,6 +87,10 @@ public class ReactDashboardControl extends ReactControl {
 
 	private final Consumer<List<String>> _onReorder;
 
+	private boolean _editMode;
+
+	private final List<Runnable> _editModeListeners = new CopyOnWriteArrayList<>();
+
 	/**
 	 * Creates a new {@link ReactDashboardControl}.
 	 *
@@ -102,6 +109,7 @@ public class ReactDashboardControl extends ReactControl {
 		_onReorder = onReorder;
 		putState(MIN_COL_WIDTH, minColWidth);
 		putState(CHILDREN, buildDescriptors());
+		putState(EDIT_MODE, Boolean.FALSE);
 	}
 
 	private List<Map<String, Object>> buildDescriptors() {
@@ -115,6 +123,53 @@ public class ReactDashboardControl extends ReactControl {
 			list.add(d);
 		}
 		return list;
+	}
+
+	/**
+	 * Whether the dashboard is currently in edit mode (drag-to-reorder active).
+	 */
+	public boolean isEditMode() {
+		return _editMode;
+	}
+
+	/**
+	 * Switches edit mode on. Notifies listeners registered via
+	 * {@link #addEditModeListener(Runnable)}.
+	 */
+	public void enterEditMode() {
+		setEditMode(true);
+	}
+
+	/**
+	 * Switches edit mode off. Notifies listeners.
+	 */
+	public void exitEditMode() {
+		setEditMode(false);
+	}
+
+	private void setEditMode(boolean value) {
+		if (_editMode == value) {
+			return;
+		}
+		_editMode = value;
+		putState(EDIT_MODE, Boolean.valueOf(value));
+		for (Runnable l : _editModeListeners) {
+			l.run();
+		}
+	}
+
+	/**
+	 * Registers a listener that fires when {@link #isEditMode()} changes.
+	 */
+	public void addEditModeListener(Runnable listener) {
+		_editModeListeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a previously added edit-mode listener.
+	 */
+	public void removeEditModeListener(Runnable listener) {
+		_editModeListeners.remove(listener);
 	}
 
 	@Override

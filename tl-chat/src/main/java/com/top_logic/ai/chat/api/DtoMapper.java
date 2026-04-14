@@ -257,7 +257,7 @@ public final class DtoMapper {
 	/**
 	 * Converts a {@link Map} to a JSON object string for embedding in msgbuf DTOs.
 	 */
-	private static String mapToJsonString(Map<String, Object> map) {
+	static String mapToJsonString(Map<String, Object> map) {
 		if (map == null || map.isEmpty()) {
 			return "{}";
 		}

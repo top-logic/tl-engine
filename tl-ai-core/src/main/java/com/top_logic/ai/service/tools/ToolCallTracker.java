@@ -80,9 +80,26 @@ public class ToolCallTracker {
 	 * @return The result reference (e.g., "T1", "T2")
 	 */
 	public String recordToolCall(String toolName, Map<String, Object> args, String resultJson) {
+		return recordToolCall(toolName, args, resultJson, 0);
+	}
+
+	/**
+	 * Records a tool call with its result and execution duration.
+	 *
+	 * @param toolName
+	 *        The name of the tool (e.g., {@code listTypes}, {@code listTypeParts})
+	 * @param args
+	 *        The arguments passed to the tool
+	 * @param resultJson
+	 *        The JSON result from the tool
+	 * @param durationMs
+	 *        Execution duration in milliseconds, or 0 if unknown.
+	 * @return The result reference (e.g., "T1", "T2")
+	 */
+	public String recordToolCall(String toolName, Map<String, Object> args, String resultJson, long durationMs) {
 		String resultRef = "T" + _nextResultRef++;
 		_toolCalls.add(new ToolCall(toolName, args, resultRef));
-		_timeline.add(new TraceEntry.ToolCallTraceEntry(toolName, args != null ? args : Map.of(), resultRef));
+		_timeline.add(new TraceEntry.ToolCallTraceEntry(toolName, args != null ? args : Map.of(), resultRef, durationMs));
 
 		// Store the raw JSON
 		_rawResultJsons.put(resultRef, resultJson);

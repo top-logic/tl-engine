@@ -184,7 +184,9 @@ public final class DtoMapper {
 			Map<String, Object> args = tc.getArgs();
 			dto.setArgsJson(args != null ? mapToJsonString(args) : "{}");
 			dto.setResult(tc.getResultJson());
-			if (tc.getStartTime() != null && tc.getEndTime() != null) {
+			if (ev.getDurationMs() > 0) {
+				dto.setDurationMs(ev.getDurationMs());
+			} else if (tc.getStartTime() != null && tc.getEndTime() != null) {
 				dto.setDurationMs(tc.getEndTime().toEpochMilli() - tc.getStartTime().toEpochMilli());
 			}
 			dto.setStatus(tc.getStatus().name().toLowerCase());

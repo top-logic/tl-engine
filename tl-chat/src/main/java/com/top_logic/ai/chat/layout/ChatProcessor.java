@@ -285,7 +285,7 @@ public class ChatProcessor {
 		if (entry instanceof TraceEntry.ToolCallTraceEntry tc) {
 			String resultJson = tracker.getRawResultJsons().get(tc.resultRef());
 			ChatToolCall chatToolCall = new ChatToolCall(tc.toolName(), tc.args(), resultJson);
-			return ChatTimelineEvent.toolCall(chatToolCall);
+			return ChatTimelineEvent.toolCall(chatToolCall, tc.durationMs());
 		}
 		if (entry instanceof TraceEntry.AgentCallTraceEntry ac) {
 			return ChatTimelineEvent.agentCall(ac.fromAgent(), ac.toAgent(), ac.inputSummary(), ac.resultSummary());

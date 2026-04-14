@@ -29,16 +29,18 @@ public class ChatTimelineEvent {
 
 	private final Kind _kind;
 	private final ChatToolCall _toolCall;
+	private final long _durationMs;
 	private final String _fromAgent;
 	private final String _toAgent;
 	private final String _inputSummary;
 	private final String _resultSummary;
 	private final Supplier<String> _resultSummarySupplier;
 
-	private ChatTimelineEvent(Kind kind, ChatToolCall toolCall, String fromAgent, String toAgent,
+	private ChatTimelineEvent(Kind kind, ChatToolCall toolCall, long durationMs, String fromAgent, String toAgent,
 			String inputSummary, String resultSummary, Supplier<String> resultSummarySupplier) {
 		_kind = kind;
 		_toolCall = toolCall;
+		_durationMs = durationMs;
 		_fromAgent = fromAgent;
 		_toAgent = toAgent;
 		_inputSummary = inputSummary;
@@ -50,7 +52,14 @@ public class ChatTimelineEvent {
 	 * Creates a timeline entry for a tool call.
 	 */
 	public static ChatTimelineEvent toolCall(ChatToolCall toolCall) {
-		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, null, null, null, null, null);
+		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, 0, null, null, null, null, null);
+	}
+
+	/**
+	 * Creates a timeline entry for a tool call with explicit duration.
+	 */
+	public static ChatTimelineEvent toolCall(ChatToolCall toolCall, long durationMs) {
+		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, durationMs, null, null, null, null, null);
 	}
 
 	/**
@@ -58,7 +67,7 @@ public class ChatTimelineEvent {
 	 */
 	public static ChatTimelineEvent agentCall(String fromAgent, String toAgent, String inputSummary,
 			String resultSummary) {
-		return new ChatTimelineEvent(Kind.AGENT_CALL, null, fromAgent, toAgent, inputSummary, resultSummary, null);
+		return new ChatTimelineEvent(Kind.AGENT_CALL, null, 0, fromAgent, toAgent, inputSummary, resultSummary, null);
 	}
 
 	/**
@@ -67,7 +76,7 @@ public class ChatTimelineEvent {
 	 */
 	public static ChatTimelineEvent agentCallWithDynamicResult(String fromAgent, String toAgent, String inputSummary,
 			Supplier<String> resultSummarySupplier) {
-		return new ChatTimelineEvent(Kind.AGENT_CALL, null, fromAgent, toAgent, inputSummary, null,
+		return new ChatTimelineEvent(Kind.AGENT_CALL, null, 0, fromAgent, toAgent, inputSummary, null,
 			resultSummarySupplier);
 	}
 
@@ -83,6 +92,11 @@ public class ChatTimelineEvent {
 	 */
 	public ChatToolCall getToolCall() {
 		return _toolCall;
+	}
+
+	/** Execution duration in milliseconds, or 0 if unknown. */
+	public long getDurationMs() {
+		return _durationMs;
 	}
 
 	/** Calling agent when kind is AGENT_CALL. */

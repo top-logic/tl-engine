@@ -62,7 +62,8 @@ public class TimelineAgentListener implements AgentEventListener {
 			}
 			String argsJson = _pendingArgs.remove(completed.toolCallId());
 			Map<String, Object> args = parseArguments(argsJson);
-			_tracker.recordToolCall(completed.toolName(), args, completed.result());
+			long durationMs = completed.duration() != null ? completed.duration().toMillis() : 0;
+			_tracker.recordToolCall(completed.toolName(), args, completed.result(), durationMs);
 		}
 	}
 

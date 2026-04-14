@@ -21,7 +21,7 @@ public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceE
 	TraceEventKind getKind();
 
 	/**
-	 * Tool-call entry: name, args, result reference.
+	 * Tool-call entry: name, args, result reference, and duration.
 	 *
 	 * @param toolName
 	 *        The name of the tool that was called.
@@ -29,8 +29,10 @@ public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceE
 	 *        The arguments passed to the tool.
 	 * @param resultRef
 	 *        The result reference (e.g., "T1", "T2") for this tool call.
+	 * @param durationMs
+	 *        Execution duration in milliseconds, or 0 if unknown.
 	 */
-	record ToolCallTraceEntry(String toolName, Map<String, Object> args, String resultRef)
+	record ToolCallTraceEntry(String toolName, Map<String, Object> args, String resultRef, long durationMs)
 			implements TraceEntry {
 
 		@Override

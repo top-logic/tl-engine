@@ -129,12 +129,14 @@ public class DashboardElement implements UIElement {
 		}
 		DashboardCommandModel edit = DashboardCommandModel.editCommand(control);
 		DashboardCommandModel done = DashboardCommandModel.doneCommand(control);
-		edit.attach();
-		done.attach();
-		scope.addCommand(edit);
-		scope.addCommand(done);
 
-		control.addCleanupAction(() -> {
+		control.addAttachListener(() -> {
+			edit.attach();
+			done.attach();
+			scope.addCommand(edit);
+			scope.addCommand(done);
+		});
+		control.addDetachListener(() -> {
 			scope.removeCommand(edit);
 			scope.removeCommand(done);
 			edit.detach();

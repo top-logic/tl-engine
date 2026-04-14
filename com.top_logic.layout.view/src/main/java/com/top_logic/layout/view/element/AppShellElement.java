@@ -130,7 +130,10 @@ public class AppShellElement implements UIElement {
 		ReactControl content = createSlotControl(scopedContext, _content);
 		ReactControl footer = createSlotControl(scopedContext, _footer);
 
-		return new ReactAppShellControl(context, header, content, footer, snackbar, errorSink);
+		ReactAppShellControl shellControl =
+			new ReactAppShellControl(context, header, content, footer, snackbar, errorSink);
+		shellControl.attach();
+		return shellControl;
 	}
 
 	private static ErrorSink createErrorSink(ReactSnackbarControl snackbar) {

@@ -470,3 +470,204 @@ message InteractionOptionDto {
 	 */
 	string description;
 }
+
+/** SSE event for streaming text delta. */
+message TextDeltaEvent {
+	/** The text chunk. */
+	string text;
+}
+
+/** SSE event for streaming thinking delta. */
+message ThinkingDeltaEvent {
+	/** The thinking text chunk. */
+	string text;
+}
+
+/** SSE event for run started. */
+message RunStartedEvent {
+	/** The run ID. */
+	string runId;
+
+	/** The model being used. */
+	string model;
+}
+
+/** SSE event for run completed. */
+message RunCompletedEvent {
+	/** The run ID. */
+	string runId;
+
+	/** Stop reason: COMPLETE, MAX_TURNS, ERROR, ABORTED. */
+	string reason;
+
+	/** Total token usage for the run. */
+	TokenUsageDto totalUsage;
+}
+
+/** SSE event for turn started. */
+message TurnStartedEvent {
+	/** 1-based turn number. */
+	int turnNumber;
+}
+
+/** SSE event for turn completed. */
+message TurnCompletedEvent {
+	/** 1-based turn number. */
+	int turnNumber;
+
+	/** Token usage for this turn. */
+	TokenUsageDto turnUsage;
+}
+
+/** SSE event for tool call started. */
+message ToolStartedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Arguments as JSON string. */
+	string argsJson;
+}
+
+/** SSE event for tool call completed. */
+message ToolCompletedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Result text. */
+	string result;
+
+	/** Duration in milliseconds. */
+	long durationMs;
+}
+
+/** SSE event for tool call failed. */
+message ToolFailedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Error message. */
+	string errorMessage;
+
+	/** Duration in milliseconds. */
+	long durationMs;
+}
+
+/** SSE event for tool call denied. */
+message ToolDeniedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Denial reason. */
+	string reason;
+}
+
+/** SSE event for approval required. */
+message ApprovalRequiredEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Approval request ID for responding. */
+	string approvalRequestId;
+
+	/** Tool name needing approval. */
+	string toolName;
+
+	/** Arguments as JSON string. */
+	string argsJson;
+
+	/** Human-readable reason for approval. */
+	string displayReason;
+}
+
+/** SSE event for approval resolved. */
+message ApprovalResolvedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Approval request ID. */
+	string approvalRequestId;
+
+	/** Outcome: APPROVED, APPROVED_FOR_SESSION, REJECTED, TIMED_OUT. */
+	string outcome;
+}
+
+/** SSE event for transaction committed. */
+message TransactionCommittedEvent {
+	/** Revision number, -1 if no changes. */
+	long revisionNumber;
+}
+
+/** SSE event for transaction rolled back. */
+message TransactionRolledBackEvent {
+	/** Rollback reason. */
+	string reason;
+}
+
+/** SSE event for provider error. */
+message ProviderErrorEvent {
+	/** Machine-readable error kind: RATE_LIMITED, OVERLOADED, CONTEXT_WINDOW_EXCEEDED, AUTHENTICATION, INVALID_REQUEST, UNKNOWN. */
+	string kind;
+
+	/** Human-readable error message. */
+	string errorMessage;
+}
+
+/** SSE event for compaction started. */
+message CompactionStartedEvent {
+	/** Token count before compaction. */
+	int tokensBefore;
+
+	/** Trigger: reactive or proactive. */
+	string trigger;
+}
+
+/** SSE event for completed assistant message with server-rendered HTML. */
+message MessageCompleteEvent {
+	/** Server-rendered markdown-to-HTML content. */
+	string contentHtml;
+
+	/** Raw markdown text for persistence. */
+	string contentText;
+}
+
+/** Token usage breakdown. */
+message TokenUsageDto {
+	/** Input tokens. */
+	int inputTokens;
+
+	/** Output tokens. */
+	int outputTokens;
+
+	/** Thinking tokens. */
+	int thinkingTokens;
+
+	/** Cache read tokens. */
+	int cacheReadTokens;
+
+	/** Cache write tokens. */
+	int cacheWriteTokens;
+}
+
+/** Session metadata for persistence. */
+message SessionMetadata {
+	/** Tool names approved for this session. */
+	repeated string approvedTools;
+
+	/** Cumulative token usage. */
+	TokenUsageDto cumulativeUsage;
+
+	/** Last model used. */
+	string lastModel;
+}

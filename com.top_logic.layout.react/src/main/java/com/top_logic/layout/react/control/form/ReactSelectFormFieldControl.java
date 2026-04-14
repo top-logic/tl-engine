@@ -26,6 +26,8 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 
 	private static final String OPTIONS = "options";
 
+	private static final String REQUIRED = "required";
+
 	private final LabelProvider _labelProvider;
 
 	/**
@@ -45,6 +47,14 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 		putState(OPTIONS, buildOptionsList(model.getOptions()));
 		model.addOptionsListener((source, newOptions) ->
 			putState(OPTIONS, buildOptionsList(newOptions)));
+	}
+
+	/**
+	 * Whether the select must have a selected option. When {@code true}, the client does not show
+	 * an empty placeholder entry.
+	 */
+	public void setRequired(boolean required) {
+		putState(REQUIRED, required);
 	}
 
 	private List<Map<String, Object>> buildOptionsList(List<?> options) {

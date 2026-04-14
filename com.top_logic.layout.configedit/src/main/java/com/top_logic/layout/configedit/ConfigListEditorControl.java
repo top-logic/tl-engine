@@ -170,7 +170,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		List<ReactControl> bodyChildren = new ArrayList<>();
 		boolean polymorphic = _choices.hasOptions();
-		if (polymorphic) {
+		if (polymorphic && _choices.options().size() > 1) {
 			bodyChildren.add(createTypeSelector(item));
 		}
 		if (!polymorphic || isTypeSelected(item)) {
@@ -225,25 +225,23 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ReactSelectFormFieldControl typeSelect =
 			new ReactSelectFormFieldControl(_context, typeModel, labelProvider);
+		typeSelect.setRequired(true);
 		return new ReactFormFieldChromeControl(_context, "Type", typeSelect);
 	}
 
 	@SuppressWarnings("unchecked")
 	private void onTypeChanged(ConfigurationItem oldItem, Class<?> selected) {
+		if (selected == null) {
+			return;
+		}
 		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
 		int index = items.indexOf(oldItem);
 		if (index < 0) {
 			return;
 		}
-		ConfigurationItem replacement;
-		if (selected == null) {
-			replacement = TypedConfiguration.newConfigItem(
-				(Class<? extends ConfigurationItem>) _property.getDefaultDescriptor().getConfigurationInterface());
-		} else {
-			replacement = PolymorphicOptions.toConfig(_choices.mapping(), selected);
-			ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
-				oldItem, replacement, true);
-		}
+		ConfigurationItem replacement = PolymorphicOptions.toConfig(_choices.mapping(), selected);
+		ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
+			oldItem, replacement, true);
 		items.set(index, replacement);
 		rebuild(replacement);
 	}
@@ -303,8 +301,12 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	@SuppressWarnings("unchecked")
 	private void addElement() {
 		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
-		Class<? extends ConfigurationItem> elementType = resolveNewElementType();
-		ConfigurationItem newItem = TypedConfiguration.newConfigItem(elementType);
+		ConfigurationItem newItem;
+		if (_choices.hasOptions()) {
+			newItem = PolymorphicOptions.toConfig(_choices.mapping(), _choices.options().get(0));
+		} else {
+			newItem = TypedConfiguration.newConfigItem(resolveNewElementType());
+		}
 		items.add(newItem);
 		rebuild(newItem);
 	}

@@ -84,11 +84,14 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 
 		LabelProvider labelProvider = new ConfigListEditorControl.FqcnClassLabelProvider(_choices.options());
 
-		ReactSelectFormFieldControl typeSelect =
-			new ReactSelectFormFieldControl(context, _typeModel, labelProvider);
-		ReactFormFieldChromeControl typeChrome =
-			new ReactFormFieldChromeControl(context, "Type", typeSelect);
-		addChild(typeChrome);
+		if (_choices.hasOptions() && _choices.options().size() > 1) {
+			ReactSelectFormFieldControl typeSelect =
+				new ReactSelectFormFieldControl(context, _typeModel, labelProvider);
+			typeSelect.setRequired(true);
+			ReactFormFieldChromeControl typeChrome =
+				new ReactFormFieldChromeControl(context, "Type", typeSelect);
+			addChild(typeChrome);
+		}
 
 		if (currentValue != null) {
 			_nestedEditor = editorFactory.apply(context, currentValue);
@@ -129,18 +132,15 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	}
 
 	private void onTypeChanged(Class<?> selected) {
+		if (selected == null) {
+			return;
+		}
 		ConfigurationItem oldConfig = (ConfigurationItem) _parentConfig.value(_property);
 
 		if (_nestedEditor != null) {
 			_nestedEditor.cleanupTree();
 			getChildren().remove(_nestedEditor);
 			_nestedEditor = null;
-		}
-
-		if (selected == null) {
-			_parentConfig.update(_property, null);
-			putState("children", getChildren());
-			return;
 		}
 
 		ConfigurationItem newConfig = PolymorphicOptions.toConfig(_choices.mapping(), selected);

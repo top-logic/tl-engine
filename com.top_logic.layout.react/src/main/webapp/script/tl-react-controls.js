@@ -104,7 +104,7 @@ const { useCallback: gt } = e, Ct = ({ controlId: n, state: t }) => {
       className: r,
       "aria-invalid": u || void 0
     },
-    /* @__PURE__ */ e.createElement("option", { value: "" }),
+    t.required !== !0 && /* @__PURE__ */ e.createElement("option", { value: "" }),
     o.map((p) => /* @__PURE__ */ e.createElement("option", { key: p.value, value: p.value }, p.label))
   ));
 }, { useCallback: Tt } = e, xt = ({ controlId: n, state: t }) => {

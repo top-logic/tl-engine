@@ -156,6 +156,13 @@ public class ReactMenuControl extends ReactControl {
 		}
 
 		/**
+		 * Creates a menu item with an icon and an explicit disabled state.
+		 */
+		public static MenuEntry item(String id, String label, String icon, boolean disabled) {
+			return new MenuEntry("item", id, label, icon, disabled);
+		}
+
+		/**
 		 * Creates a separator.
 		 */
 		public static MenuEntry separator() {

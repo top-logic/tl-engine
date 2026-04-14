@@ -99,6 +99,16 @@ message TimelineEventDto {
 	 * Result summary (for agent_call events).
 	 */
 	string resultSummary;
+
+	/**
+	 * Duration in milliseconds (for tool_call events).
+	 */
+	long durationMs;
+
+	/**
+	 * Tool call status: "success" or "error" (for tool_call events).
+	 */
+	string status;
 }
 
 /**
@@ -129,6 +139,11 @@ message CurrentTaskDto {
 	 * List of timeline events (tool calls and agent calls) for this task.
 	 */
 	repeated TimelineEventDto timeline;
+
+	/**
+	 * Total token usage for this task's run.
+	 */
+	TokenUsageDto totalUsage;
 }
 
 /**

@@ -30,6 +30,9 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getTimeline() */
 	public static final String TIMELINE__PROP = "timeline";
 
+	/** @see #getTotalUsage() */
+	public static final String TOTAL_USAGE__PROP = "totalUsage";
+
 	private String _taskId = "";
 
 	private String _status = "";
@@ -39,6 +42,8 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	private String _errorMessage = "";
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.TimelineEventDto> _timeline = new java.util.ArrayList<>();
+
+	private com.top_logic.ai.chat.api.messages.TokenUsageDto _totalUsage = null;
 
 	/**
 	 * Creates a {@link CurrentTaskDto} instance.
@@ -171,6 +176,33 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_timeline.remove(value);
 	}
 
+	/**
+	 * Total token usage for this task's run.
+	 */
+	public final com.top_logic.ai.chat.api.messages.TokenUsageDto getTotalUsage() {
+		return _totalUsage;
+	}
+
+	/**
+	 * @see #getTotalUsage()
+	 */
+	public com.top_logic.ai.chat.api.messages.CurrentTaskDto setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+		internalSetTotalUsage(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTotalUsage()} without chain call utility. */
+	protected final void internalSetTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+		_totalUsage = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getTotalUsage()} has a value.
+	 */
+	public final boolean hasTotalUsage() {
+		return _totalUsage != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return CURRENT_TASK_DTO__TYPE;
@@ -183,7 +215,8 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			STATUS__PROP, 
 			DESCRIPTION__PROP, 
 			ERROR_MESSAGE__PROP, 
-			TIMELINE__PROP);
+			TIMELINE__PROP, 
+			TOTAL_USAGE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -213,6 +246,7 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case DESCRIPTION__PROP: return getDescription();
 			case ERROR_MESSAGE__PROP: return getErrorMessage();
 			case TIMELINE__PROP: return getTimeline();
+			case TOTAL_USAGE__PROP: return getTotalUsage();
 			default: return null;
 		}
 	}
@@ -225,6 +259,7 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 			case ERROR_MESSAGE__PROP: internalSetErrorMessage((String) value); break;
 			case TIMELINE__PROP: internalSetTimeline(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.TimelineEventDto.class, value)); break;
+			case TOTAL_USAGE__PROP: internalSetTotalUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
 		}
 	}
 
@@ -257,6 +292,10 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			x.writeTo(out);
 		}
 		out.endArray();
+		if (hasTotalUsage()) {
+			out.name(TOTAL_USAGE__PROP);
+			getTotalUsage().writeTo(out);
+		}
 	}
 
 	@Override
@@ -276,6 +315,7 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 				setTimeline(newValue);
 			}
 			break;
+			case TOTAL_USAGE__PROP: setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

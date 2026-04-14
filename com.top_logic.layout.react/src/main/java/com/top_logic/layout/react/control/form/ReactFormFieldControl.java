@@ -40,6 +40,9 @@ public class ReactFormFieldControl extends ReactControl {
 	/** State key for whether the field is mandatory. */
 	protected static final String MANDATORY = "mandatory";
 
+	/** State key for whether {@code null} is a legal value for the field. */
+	protected static final String NULLABLE = "nullable";
+
 	/** State key for whether the field has a validation error. */
 	protected static final String HAS_ERROR = "hasError";
 
@@ -99,6 +102,7 @@ public class ReactFormFieldControl extends ReactControl {
 		putState(VALUE, _fieldModel.getValue());
 		setEditable(_fieldModel.isEditable());
 		setMandatory(_fieldModel.isMandatory());
+		putState(NULLABLE, _fieldModel.isNullable());
 		setHasError(_fieldModel.hasError());
 		setHasWarnings(_fieldModel.hasWarnings());
 		if (_fieldModel.hasError()) {

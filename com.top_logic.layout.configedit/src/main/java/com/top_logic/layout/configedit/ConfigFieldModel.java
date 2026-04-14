@@ -44,6 +44,7 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 		_config = config;
 		_property = property;
 		setMandatory(property.isMandatory());
+		setNullable(property.isNullable());
 		config.addConfigurationListener(property, this);
 	}
 

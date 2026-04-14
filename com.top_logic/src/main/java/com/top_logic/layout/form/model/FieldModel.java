@@ -58,6 +58,19 @@ public interface FieldModel {
 	boolean isMandatory();
 
 	/**
+	 * Whether {@code null} is a legal value for this field.
+	 *
+	 * <p>
+	 * Non-nullable fields (e.g. primitive and enum properties without {@code @Nullable}) never hold
+	 * {@code null}; UI controls can suppress "clear" affordances such as an empty placeholder
+	 * option in a select.
+	 * </p>
+	 */
+	default boolean isNullable() {
+		return true;
+	}
+
+	/**
 	 * Whether the field currently has a validation error.
 	 */
 	boolean hasError();

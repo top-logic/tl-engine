@@ -204,6 +204,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		String currentFqcn = currentClass != null ? currentClass.getName() : null;
 		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
 		typeModel.setMandatory(true);
+		typeModel.setNullable(false);
 
 		LabelProvider labelProvider = new FqcnClassLabelProvider(_choices.options());
 

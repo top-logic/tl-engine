@@ -30,6 +30,8 @@ public class AbstractFieldModel implements FieldModel {
 
 	private boolean _mandatory;
 
+	private boolean _nullable = true;
+
 	private ResKey _error;
 
 	private List<ResKey> _warnings = Collections.emptyList();
@@ -135,6 +137,18 @@ public class AbstractFieldModel implements FieldModel {
 		}
 		_mandatory = mandatory;
 		fireValidationChanged();
+	}
+
+	@Override
+	public boolean isNullable() {
+		return _nullable;
+	}
+
+	/**
+	 * Sets whether {@code null} is a legal value for this field.
+	 */
+	public void setNullable(boolean nullable) {
+		_nullable = nullable;
 	}
 
 	@Override

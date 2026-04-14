@@ -81,12 +81,13 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		List<String> options = _choices.options().stream().map(Class::getName).toList();
 		String currentFqcn = currentClass != null ? currentClass.getName() : null;
 		_typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
-		boolean mandatory = property.isMandatory();
-		_typeModel.setMandatory(mandatory);
+		_typeModel.setMandatory(property.isMandatory());
+		boolean nullable = property.isNullable();
+		_typeModel.setNullable(nullable);
 
 		LabelProvider labelProvider = new ConfigListEditorControl.FqcnClassLabelProvider(_choices.options());
 
-		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || !mandatory);
+		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || nullable);
 		if (showSelector) {
 			ReactSelectFormFieldControl typeSelect =
 				new ReactSelectFormFieldControl(context, _typeModel, labelProvider);

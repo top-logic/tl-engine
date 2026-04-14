@@ -31,6 +31,7 @@ import com.top_logic.layout.react.control.nav.ReactAppShellControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.CommandScope;
 
 /**
  * UIElement that wraps {@link ReactAppShellControl}.
@@ -112,8 +113,17 @@ public class AppShellElement implements UIElement {
 			ReactSnackbarControl.Variant.SUCCESS, () -> { /* no-op */ });
 		ErrorSink errorSink = createErrorSink(snackbar);
 
-		// Derive context with error sink for children.
-		ViewContext scopedContext = context.withErrorSink(errorSink);
+		// Establish a shared command scope so that commands contributed by descendant
+		// elements (forms, dashboards, ...) can bubble up to the app bar in the header.
+		// If a parent already provides a scope, reuse it.
+		CommandScope sharedScope = context.getCommandScope();
+		if (sharedScope == null) {
+			sharedScope = new CommandScope(List.of());
+		}
+
+		ViewContext scopedContext = context
+			.withErrorSink(errorSink)
+			.withCommandScope(sharedScope);
 
 		// Create slot controls in the scoped context.
 		ReactControl header = createSlotControl(scopedContext, _header);

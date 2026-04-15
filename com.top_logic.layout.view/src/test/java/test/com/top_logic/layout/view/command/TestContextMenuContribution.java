@@ -6,13 +6,13 @@
 package test.com.top_logic.layout.view.command;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import junit.framework.TestCase;
 
 import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.view.channel.DefaultViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.ContextMenuContribution;
+import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 
 /**
  * Tests for {@link ContextMenuContribution}.
@@ -20,23 +20,28 @@ import com.top_logic.layout.view.command.ContextMenuContribution;
 public class TestContextMenuContribution extends TestCase {
 
 	public void testHoldsTargetAndCommands() {
-		ViewChannel target = new DefaultViewChannel("target");
+		AtomicReference<Object> target = new AtomicReference<>();
+		Consumer<Object> setter = target::set;
 		CommandModel cmd = FakeCommandModels.contextMenu("edit", "Edit", true, true);
 		ContextMenuContribution contribution =
-			new ContextMenuContribution(target, List.of(cmd));
+			new ContextMenuContribution(setter, List.of(cmd));
 
-		assertSame(target, contribution.target());
+		assertSame(setter, contribution.setTarget());
 		assertEquals(List.of(cmd), contribution.commands());
+
+		contribution.setTarget().accept("value");
+		assertEquals("value", target.get());
 	}
 
 	public void testExecutableCommandsFiltersDisabledAndInvisible() {
-		ViewChannel target = new DefaultViewChannel("target");
+		AtomicReference<Object> target = new AtomicReference<>();
+		Consumer<Object> setter = target::set;
 		CommandModel visibleEnabled = FakeCommandModels.contextMenu("a", "A", true, true);
 		CommandModel disabledVisible = FakeCommandModels.contextMenu("b", "B", true, false);
 		CommandModel invisible = FakeCommandModels.contextMenu("c", "C", false, true);
 
 		ContextMenuContribution contribution =
-			new ContextMenuContribution(target, List.of(visibleEnabled, disabledVisible, invisible));
+			new ContextMenuContribution(setter, List.of(visibleEnabled, disabledVisible, invisible));
 
 		assertEquals(
 			List.of(visibleEnabled, disabledVisible),

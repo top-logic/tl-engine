@@ -78,7 +78,7 @@ public class ForwardingReactContext implements ReactContext {
 	}
 
 	@Override
-	public Object getContextMenuOpener() {
+	public com.top_logic.layout.react.control.overlay.ContextMenuOpener getContextMenuOpener() {
 		return _delegate.getContextMenuOpener();
 	}
 }

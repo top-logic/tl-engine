@@ -7,20 +7,22 @@ package com.top_logic.layout.view.command;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.ContextMenuOpener.Targeted;
+import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
 
 /**
  * Chrome control produced by a {@code <context-menu>} view element.
  *
  * <p>
  * Wraps a single child content control and forwards {@code openContextMenu} requests from the
- * client to the {@link ContextMenuOpener} of the enclosing frame, writing the supplied target value
- * into the associated {@link ContextMenuContribution}'s channel before opening the menu.
+ * client to the {@link ContextMenuOpener} of the enclosing frame, reading the current target value
+ * from the injected target supplier before opening the menu.
  * </p>
  */
 public class ContextMenuRegionControl extends ReactControl {
@@ -35,6 +37,8 @@ public class ContextMenuRegionControl extends ReactControl {
 
 	private final ContextMenuContribution _contribution;
 
+	private final Supplier<Object> _targetSupplier;
+
 	private final ContextMenuOpener _opener;
 
 	/**
@@ -45,15 +49,18 @@ public class ContextMenuRegionControl extends ReactControl {
 	 * @param child
 	 *        The child content control whose DOM region triggers the context menu.
 	 * @param contribution
-	 *        The contribution supplying commands and their target channel.
+	 *        The contribution supplying commands.
+	 * @param targetSupplier
+	 *        Supplier for the current target value at click time.
 	 * @param opener
 	 *        The frame's context menu opener.
 	 */
 	public ContextMenuRegionControl(ReactContext context, ReactControl child,
-			ContextMenuContribution contribution, ContextMenuOpener opener) {
+			ContextMenuContribution contribution, Supplier<Object> targetSupplier, ContextMenuOpener opener) {
 		super(context, null, REACT_MODULE);
 		_child = child;
 		_contribution = contribution;
+		_targetSupplier = targetSupplier;
 		_opener = opener;
 
 		putState(CHILD, child);
@@ -68,19 +75,15 @@ public class ContextMenuRegionControl extends ReactControl {
 	}
 
 	/**
-	 * Opens the context menu at the given client coordinates, using the current value of the
-	 * contribution's target channel as the selection target.
+	 * Opens the context menu at the given client coordinates, using the current target supplier
+	 * value as the selection target.
 	 */
 	@ReactCommand("openContextMenu")
 	void handleOpen(Map<String, Object> arguments) {
 		int x = intArg(arguments, "x");
 		int y = intArg(arguments, "y");
-		_opener.open(x, y, List.of(new Targeted(_contribution, targetValue())));
-	}
-
-	private Object targetValue() {
-		ViewChannel target = _contribution.target();
-		return target == null ? null : target.get();
+		Object target = _targetSupplier == null ? null : _targetSupplier.get();
+		_opener.open(x, y, List.of(new Targeted(_contribution, target)));
 	}
 
 	private static int intArg(Map<String, Object> arguments, String key) {

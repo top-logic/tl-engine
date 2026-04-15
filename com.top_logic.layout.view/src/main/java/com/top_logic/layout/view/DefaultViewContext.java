@@ -13,13 +13,13 @@ import java.util.Set;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.ContextMenuOpener;
 import com.top_logic.layout.view.form.FormModel;
 
 /**
@@ -138,7 +138,7 @@ public class DefaultViewContext implements ViewContext {
 		if (_contextMenuOpener != null) {
 			return _contextMenuOpener;
 		}
-		return _reactContext == null ? null : (ContextMenuOpener) _reactContext.getContextMenuOpener();
+		return _reactContext == null ? null : _reactContext.getContextMenuOpener();
 	}
 
 	@Override

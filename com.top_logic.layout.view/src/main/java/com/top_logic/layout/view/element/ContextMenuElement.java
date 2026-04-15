@@ -7,6 +7,8 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
@@ -14,19 +16,19 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.view.command.ContextMenuRegionControl;
+import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.ContextMenuContribution;
-import com.top_logic.layout.view.command.ContextMenuOpener;
+import com.top_logic.layout.view.command.ContextMenuRegionControl;
 import com.top_logic.layout.view.command.ViewCommandModel;
 
 /**
@@ -115,10 +117,13 @@ public class ContextMenuElement extends CommandScopeElement {
 				contextMenuCommands.add(cmd);
 			}
 		}
-		ContextMenuContribution contribution = new ContextMenuContribution(targetChannel, contextMenuCommands);
+		Consumer<Object> setter = target -> targetChannel.set(target);
+		Supplier<Object> targetSupplier = () -> targetChannel.get();
+		ContextMenuContribution contribution = new ContextMenuContribution(setter, contextMenuCommands);
 
 		// Phase 5: Create the region chrome wrapping the content.
-		ContextMenuRegionControl region = new ContextMenuRegionControl(context, content, contribution, opener);
+		ContextMenuRegionControl region =
+			new ContextMenuRegionControl(context, content, contribution, targetSupplier, opener);
 
 		// Phase 6: Lazy attach on render, cleanup on dispose.
 		region.addBeforeWriteAction(() -> {

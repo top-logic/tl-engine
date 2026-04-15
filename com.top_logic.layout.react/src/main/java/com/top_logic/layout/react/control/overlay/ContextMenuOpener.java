@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.view.command;
+package com.top_logic.layout.react.control.overlay;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,11 +21,12 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
  * selections back to the contributing {@link CommandModel}.
  *
  * <p>
- * For each {@link Targeted} contribution the target value is written to the contribution's channel
- * before reading the resulting {@link ContextMenuContribution#visibleCommands()}. Items are ordered
- * by contribution index, separated by a {@link MenuEntry#separator() separator} between
- * contributions and between cliques within a contribution. Wire item IDs are
- * {@code "<contributionIndex>:<commandName>"} so names may collide across contributions.
+ * For each {@link Targeted} contribution the target value is published via the contribution's
+ * {@link ContextMenuContribution#setTarget() setter} before reading the resulting
+ * {@link ContextMenuContribution#visibleCommands()}. Items are ordered by contribution index,
+ * separated by a {@link MenuEntry#separator() separator} between contributions and between cliques
+ * within a contribution. Wire item IDs are {@code "<contributionIndex>:<commandName>"} so names may
+ * collide across contributions.
  * </p>
  *
  * <p>
@@ -53,7 +54,7 @@ public class ContextMenuOpener {
 
 	/**
 	 * Pairing of a {@link ContextMenuContribution} with the concrete target value to publish into
-	 * the contribution's channel.
+	 * the contribution's target sink.
 	 */
 	public record Targeted(ContextMenuContribution contribution, Object target) {
 		// record
@@ -85,13 +86,14 @@ public class ContextMenuOpener {
 	 * Opens a composed context menu at the given coordinates.
 	 *
 	 * <p>
-	 * Writes each target into the corresponding contribution channel, then assembles a flat menu
-	 * from the visible commands. Does nothing if all contributions produce no visible commands.
+	 * Publishes each target through the corresponding contribution's setter, then assembles a flat
+	 * menu from the visible commands. Does nothing if all contributions produce no visible
+	 * commands.
 	 * </p>
 	 */
 	public void open(int x, int y, List<Targeted> contributions) {
 		for (Targeted t : contributions) {
-			t.contribution().target().set(t.target());
+			t.contribution().setTarget().accept(t.target());
 		}
 
 		List<MenuEntry> items = new ArrayList<>();

@@ -6,19 +6,18 @@
 package test.com.top_logic.layout.view.command;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import junit.framework.TestCase;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener.MenuRenderer;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
-import com.top_logic.layout.view.channel.DefaultViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.ContextMenuContribution;
-import com.top_logic.layout.view.command.ContextMenuOpener;
-import com.top_logic.layout.view.command.ContextMenuOpener.MenuRenderer;
-import com.top_logic.layout.view.command.ContextMenuOpener.Targeted;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -27,17 +26,17 @@ import com.top_logic.tool.boundsec.HandlerResult;
 public class TestContextMenuOpener extends TestCase {
 
 	public void testOpenAssemblesMenuFromContributions() {
-		ViewChannel rowTarget = new DefaultViewChannel("rowTarget");
-		ViewChannel cellTarget = new DefaultViewChannel("cellTarget");
+		AtomicReference<Object> rowTarget = new AtomicReference<>();
+		AtomicReference<Object> cellTarget = new AtomicReference<>();
 
 		CommandModel edit = FakeCommandModels.contextMenu("edit", "Edit", true, true);
 		CommandModel delete = FakeCommandModels.contextMenu("delete", "Delete", true, true);
 		CommandModel copy = FakeCommandModels.contextMenu("copy", "Copy Cell", true, true);
 
 		ContextMenuContribution cellContribution =
-			new ContextMenuContribution(cellTarget, List.of(copy));
+			new ContextMenuContribution(cellTarget::set, List.of(copy));
 		ContextMenuContribution rowContribution =
-			new ContextMenuContribution(rowTarget, List.of(edit, delete));
+			new ContextMenuContribution(rowTarget::set, List.of(edit, delete));
 
 		RecordingRenderer renderer = new RecordingRenderer();
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
@@ -60,9 +59,9 @@ public class TestContextMenuOpener extends TestCase {
 	}
 
 	public void testOpenSkipsEmptyContributionsAndDoesNotOpenIfAllEmpty() {
-		ViewChannel t = new DefaultViewChannel("target");
+		AtomicReference<Object> t = new AtomicReference<>();
 		CommandModel invisible = FakeCommandModels.contextMenu("x", "X", false, true);
-		ContextMenuContribution contribution = new ContextMenuContribution(t, List.of(invisible));
+		ContextMenuContribution contribution = new ContextMenuContribution(t::set, List.of(invisible));
 
 		RecordingRenderer renderer = new RecordingRenderer();
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
@@ -73,13 +72,13 @@ public class TestContextMenuOpener extends TestCase {
 	}
 
 	public void testSelectDispatchesToCorrectCommand() {
-		ViewChannel t0 = new DefaultViewChannel("cellTarget");
-		ViewChannel t1 = new DefaultViewChannel("rowTarget");
+		AtomicReference<Object> t0 = new AtomicReference<>();
+		AtomicReference<Object> t1 = new AtomicReference<>();
 		CountingCommandModel cmdA = new CountingCommandModel("edit");
 		CountingCommandModel cmdB = new CountingCommandModel("edit");
 
-		ContextMenuContribution c0 = new ContextMenuContribution(t0, List.of(cmdA));
-		ContextMenuContribution c1 = new ContextMenuContribution(t1, List.of(cmdB));
+		ContextMenuContribution c0 = new ContextMenuContribution(t0::set, List.of(cmdA));
+		ContextMenuContribution c1 = new ContextMenuContribution(t1::set, List.of(cmdB));
 
 		RecordingRenderer renderer = new RecordingRenderer();
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);

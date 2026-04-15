@@ -30,12 +30,12 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.nav.ReactAppShellControl;
+import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.ContextMenuOpener;
 
 /**
  * UIElement that wraps {@link ReactAppShellControl}.
@@ -158,7 +158,7 @@ public class AppShellElement implements UIElement {
 		// instances that are constructed without inheriting the opener).
 		ReactContext openerContext = new ForwardingReactContext(scopedContext) {
 			@Override
-			public Object getContextMenuOpener() {
+			public ContextMenuOpener getContextMenuOpener() {
 				return opener;
 			}
 		};

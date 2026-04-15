@@ -3,48 +3,48 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.view.command;
+package com.top_logic.layout.react.control.overlay;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
- * Declarative contribution to a context menu: one {@link ViewChannel} providing the
- * target object, and the {@link CommandModel}s that consume it.
+ * Declarative contribution to a context menu: one target setter and the {@link CommandModel}s that
+ * consume it.
  *
  * <p>
- * Runtime-only; views create these, controls receive them.
+ * Runtime-only; constructed by view-layer code, consumed by {@link ContextMenuOpener}.
  * </p>
  */
 public final class ContextMenuContribution {
 
-	private final ViewChannel _target;
+	private final Consumer<Object> _setTarget;
 
 	private final List<CommandModel> _commands;
 
 	/**
 	 * Creates a {@link ContextMenuContribution}.
 	 *
-	 * @param target
-	 *        The channel carrying the target object for the contributed commands.
+	 * @param setTarget
+	 *        Sink that publishes the target object for the contributed commands.
 	 * @param commands
 	 *        The commands to contribute. Copied defensively.
 	 */
-	public ContextMenuContribution(ViewChannel target, Collection<? extends CommandModel> commands) {
-		_target = target;
+	public ContextMenuContribution(Consumer<Object> setTarget, Collection<? extends CommandModel> commands) {
+		_setTarget = setTarget;
 		_commands = Collections.unmodifiableList(new ArrayList<>(commands));
 	}
 
 	/**
-	 * The channel carrying the target object for this contribution's commands.
+	 * Sink for publishing the target object for this contribution's commands.
 	 */
-	public ViewChannel target() {
-		return _target;
+	public Consumer<Object> setTarget() {
+		return _setTarget;
 	}
 
 	/**

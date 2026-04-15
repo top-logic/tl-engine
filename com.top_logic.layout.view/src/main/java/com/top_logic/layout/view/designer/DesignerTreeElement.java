@@ -22,8 +22,9 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
-import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
@@ -107,9 +108,10 @@ public class DesignerTreeElement implements UIElement {
 		DefaultSingleSelectionModel<Object> selectionModel =
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER);
 
-		// 4. Create the ReactTreeControl using MetaResourceControlProvider for node labels.
+		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
+		//    DesignTreeNode's display label and JavaDoc tooltip.
 		ReactTreeControl treeControl =
-			new ReactTreeControl(context, treeModel, selectionModel, MetaResourceControlProvider.INSTANCE);
+			new ReactTreeControl(context, treeModel, selectionModel, DESIGN_NODE_CONTROL_PROVIDER);
 
 		// 5. Wire selection: push selected DesignTreeNode to the selection channel.
 		ChannelRef selectionRef = _config.getSelection();
@@ -251,6 +253,25 @@ public class DesignerTreeElement implements UIElement {
 		item.put("label", label);
 		return item;
 	}
+
+	/**
+	 * Provider that renders a {@link DesignTreeNode} as a {@link ReactTextControl}, using the
+	 * node's {@link DesignTreeNode#getDisplayLabel() display label} and
+	 * {@link DesignTreeNode#getTooltipHtml() tooltip HTML}.
+	 */
+	private static final ReactControlProvider DESIGN_NODE_CONTROL_PROVIDER = (context, model) -> {
+		Object target = model instanceof DefaultTreeUINode node ? node.getBusinessObject() : model;
+		if (target instanceof DesignTreeNode designNode) {
+			String label = designNode.getDisplayLabel();
+			ReactTextControl control = new ReactTextControl(context, label);
+			String tooltip = designNode.getTooltipHtml();
+			if (tooltip != null && !tooltip.isEmpty()) {
+				control.setTooltip(tooltip, label, true);
+			}
+			return control;
+		}
+		return new ReactTextControl(context, String.valueOf(model));
+	};
 
 	private TreeBuilder<DefaultTreeUINode> createTreeBuilder() {
 		return new TreeBuilder<>() {

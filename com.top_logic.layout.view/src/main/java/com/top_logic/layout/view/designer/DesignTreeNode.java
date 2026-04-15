@@ -127,6 +127,25 @@ public abstract class DesignTreeNode {
 	}
 
 	/**
+	 * The text shown for this node in the designer tree. Subclasses override to customize.
+	 */
+	public String getDisplayLabel() {
+		String label = getLabel();
+		if (label != null) {
+			return getTagName() + " \"" + label + "\"";
+		}
+		return getTagName();
+	}
+
+	/**
+	 * Rich tooltip HTML for this node (typically derived from JavaDoc), or {@code null} if no
+	 * tooltip is available.
+	 */
+	public String getTooltipHtml() {
+		return null;
+	}
+
+	/**
 	 * The {@link PropertyDescriptor} of a virtual group node, or {@code null} for config nodes.
 	 */
 	public PropertyDescriptor getProperty() {
@@ -135,10 +154,6 @@ public abstract class DesignTreeNode {
 
 	@Override
 	public String toString() {
-		String label = getLabel();
-		if (label != null) {
-			return getTagName() + " \"" + label + "\"";
-		}
-		return getTagName();
+		return getDisplayLabel();
 	}
 }

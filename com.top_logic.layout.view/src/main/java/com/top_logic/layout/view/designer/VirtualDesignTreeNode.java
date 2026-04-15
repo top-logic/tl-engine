@@ -7,6 +7,7 @@ package com.top_logic.layout.view.designer;
 
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link DesignTreeNode} representing a virtual property group (e.g. "header", "content",
@@ -37,5 +38,15 @@ public class VirtualDesignTreeNode extends DesignTreeNode {
 	@Override
 	public String getTagName() {
 		return Labels.propertyLabel(_property, false);
+	}
+
+	@Override
+	public String getDisplayLabel() {
+		return Labels.propertyLabel(_property, false);
+	}
+
+	@Override
+	public String getTooltipHtml() {
+		return Resources.getInstance().getString(_property.labelKey(null).tooltip(), null);
 	}
 }

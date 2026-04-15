@@ -12,7 +12,9 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigTagName;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link DesignTreeNode} bound to a {@link ConfigurationItem}.
@@ -80,5 +82,11 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public String getTooltipHtml() {
+		ResKey classKey = ResKey.forClass(_config.descriptor().getConfigurationInterface());
+		return Resources.getInstance().getString(classKey.tooltip(), null);
 	}
 }

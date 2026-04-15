@@ -10,6 +10,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - footer:   ChildDescriptor | null  (optional, fixed height)
  * - snackbar: ChildDescriptor         (built-in notification service)
  * - dialogManager: ChildDescriptor   (built-in dialog manager)
+ * - menuOverlay:  ChildDescriptor   (built-in menu overlay)
  */
 const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -19,6 +20,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const footer = state.footer as unknown;
   const snackbar = state.snackbar as unknown;
   const dialogManager = state.dialogManager as unknown;
+  const menuOverlay = state.menuOverlay as unknown;
 
   return (
     <div id={controlId} className="tlAppShell">
@@ -37,6 +39,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       <TLChild control={snackbar} />
       {dialogManager && <TLChild control={dialogManager} />}
+      {menuOverlay && <TLChild control={menuOverlay} />}
     </div>
   );
 };

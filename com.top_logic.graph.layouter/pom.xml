@@ -17,6 +17,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

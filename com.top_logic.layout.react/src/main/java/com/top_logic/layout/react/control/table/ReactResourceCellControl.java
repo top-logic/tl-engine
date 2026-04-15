@@ -9,6 +9,8 @@ import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -27,7 +29,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * layer.
  * </p>
  */
-public class ReactResourceCellControl extends ReactControl {
+public class ReactResourceCellControl extends ReactControl implements TooltipProvider {
 
 	/**
 	 * Listener that is notified when the user clicks a linked resource cell.
@@ -56,7 +58,10 @@ public class ReactResourceCellControl extends ReactControl {
 
 	private static final String CSS_CLASS = "cssClass";
 
-	private static final String TOOLTIP = "tooltip";
+	private static final String HAS_TOOLTIP = "hasTooltip";
+
+	/** Key expected by {@link #getTooltipContent(String)}. */
+	private static final String TOOLTIP_KEY = "tooltip";
 
 	private static final String HAS_LINK = "hasLink";
 
@@ -77,6 +82,8 @@ public class ReactResourceCellControl extends ReactControl {
 	private final boolean _useLink;
 
 	private Object _rowObject;
+
+	private String _tooltipHtml;
 
 	private GotoListener _gotoListener;
 
@@ -147,12 +154,21 @@ public class ReactResourceCellControl extends ReactControl {
 			}
 
 			String tooltip = _provider.getTooltip(value);
-			if (tooltip != null) {
-				putState(TOOLTIP, tooltip);
-			}
+			_tooltipHtml = (tooltip == null || tooltip.isEmpty()) ? null : tooltip;
+		} else {
+			_tooltipHtml = null;
 		}
+		putState(HAS_TOOLTIP, _tooltipHtml != null);
 
 		putState(HAS_LINK, Boolean.valueOf(_useLink && value != null));
+	}
+
+	@Override
+	public TooltipContent getTooltipContent(String key) {
+		if (!TOOLTIP_KEY.equals(key) || _tooltipHtml == null) {
+			return null;
+		}
+		return new TooltipContent(_tooltipHtml, null, true);
 	}
 
 	private void resolveIcon(Object value) {

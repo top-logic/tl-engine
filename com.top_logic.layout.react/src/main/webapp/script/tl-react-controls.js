@@ -2042,20 +2042,21 @@ const Se = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className
     /* @__PURE__ */ e.createElement("line", { x1: "8", y1: "6", x2: "8", y2: "10", stroke: "currentColor", strokeWidth: "1.2" }),
     /* @__PURE__ */ e.createElement("circle", { cx: "8", cy: "12", r: "0.8", fill: "currentColor" })
   ), /* @__PURE__ */ e.createElement("span", null, h)))), !f && u && v && /* @__PURE__ */ e.createElement("div", { className: "tlFormField__helpText" }, u));
-}, cl = () => {
-  const l = Z(), t = le(), n = l.iconCss, r = l.iconSrc, i = l.label, s = l.cssClass, a = l.tooltip, u = l.hasLink, c = n ? /* @__PURE__ */ e.createElement("i", { className: n }) : r ? /* @__PURE__ */ e.createElement("img", { src: r, className: "tlTypeIcon", alt: "" }) : null, o = /* @__PURE__ */ e.createElement(e.Fragment, null, c, i && /* @__PURE__ */ e.createElement("span", { className: "tlResourceLabel" }, i)), m = e.useCallback((b) => {
-    b.preventDefault(), t("goto", {});
-  }, [t]), p = ["tlResourceCell", s].filter(Boolean).join(" ");
-  return u ? /* @__PURE__ */ e.createElement(
+}, cl = ({ controlId: l }) => {
+  const t = Z(), n = le(), r = t.iconCss, i = t.iconSrc, s = t.label, a = t.cssClass, u = t.hasTooltip === !0, c = t.hasLink, o = r ? /* @__PURE__ */ e.createElement("i", { className: r }) : i ? /* @__PURE__ */ e.createElement("img", { src: i, className: "tlTypeIcon", alt: "" }) : null, m = /* @__PURE__ */ e.createElement(e.Fragment, null, o, s && /* @__PURE__ */ e.createElement("span", { className: "tlResourceLabel" }, s)), p = e.useCallback((f) => {
+    f.preventDefault(), n("goto", {});
+  }, [n]), b = ["tlResourceCell", a].filter(Boolean).join(" "), L = u ? "key:tooltip" : void 0;
+  return c ? /* @__PURE__ */ e.createElement(
     "a",
     {
-      className: p,
+      id: l,
+      className: b,
       href: "#",
-      onClick: m,
-      "data-tooltip": a ? `text:${a}` : void 0
+      onClick: p,
+      "data-tooltip": L
     },
-    o
-  ) : /* @__PURE__ */ e.createElement("span", { className: p, "data-tooltip": a ? `text:${a}` : void 0 }, o);
+    m
+  ) : /* @__PURE__ */ e.createElement("span", { id: l, className: b, "data-tooltip": L }, m);
 }, il = 20, ul = () => {
   const l = Z(), t = le(), n = l.nodes ?? [], r = l.selectionMode ?? "single", i = l.dragEnabled ?? !1, s = l.dropEnabled ?? !1, a = l.dropIndicatorNodeId ?? null, u = l.dropIndicatorPosition ?? null, [c, o] = e.useState(-1), m = e.useRef(null), p = e.useCallback((h, w) => {
     t(w ? "collapse" : "expand", { nodeId: h });

@@ -9,10 +9,10 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - iconCss?: string    - CSS icon class (e.g. "bi bi-person-fill")
  * - iconSrc?: string    - image URL for non-CSS icons
  * - cssClass?: string   - type-specific CSS class
- * - tooltip?: string    - plain text tooltip
+ * - hasTooltip: boolean - whether the server provides a rich tooltip (fetched lazily)
  * - hasLink: boolean    - whether clicking navigates to the object
  */
-const TLResourceCell: React.FC<TLCellProps> = () => {
+const TLResourceCell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
 
@@ -20,7 +20,7 @@ const TLResourceCell: React.FC<TLCellProps> = () => {
   const iconSrc = state.iconSrc as string | undefined;
   const label = state.label as string | undefined;
   const cssClass = state.cssClass as string | undefined;
-  const tooltip = state.tooltip as string | undefined;
+  const hasTooltip = state.hasTooltip === true;
   const hasLink = state.hasLink as boolean;
 
   const icon = iconCss
@@ -42,14 +42,16 @@ const TLResourceCell: React.FC<TLCellProps> = () => {
   }, [sendCommand]);
 
   const className = ['tlResourceCell', cssClass].filter(Boolean).join(' ');
+  const tooltipAttr = hasTooltip ? 'key:tooltip' : undefined;
 
   if (hasLink) {
     return (
       <a
+        id={controlId}
         className={className}
         href="#"
         onClick={handleClick}
-        data-tooltip={tooltip ? `text:${tooltip}` : undefined}
+        data-tooltip={tooltipAttr}
       >
         {content}
       </a>
@@ -57,7 +59,7 @@ const TLResourceCell: React.FC<TLCellProps> = () => {
   }
 
   return (
-    <span className={className} data-tooltip={tooltip ? `text:${tooltip}` : undefined}>
+    <span id={controlId} className={className} data-tooltip={tooltipAttr}>
       {content}
     </span>
   );

@@ -144,6 +144,11 @@ message CurrentTaskDto {
 	 * Total token usage for this task's run.
 	 */
 	TokenUsageDto totalUsage;
+
+	/**
+	 * Accumulated extended-thinking text from the LLM.
+	 */
+	string thinkingText;
 }
 
 /**

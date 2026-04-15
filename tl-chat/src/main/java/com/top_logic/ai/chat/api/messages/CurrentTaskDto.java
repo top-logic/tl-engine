@@ -33,6 +33,9 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getTotalUsage() */
 	public static final String TOTAL_USAGE__PROP = "totalUsage";
 
+	/** @see #getThinkingText() */
+	public static final String THINKING_TEXT__PROP = "thinkingText";
+
 	private String _taskId = "";
 
 	private String _status = "";
@@ -44,6 +47,8 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.TimelineEventDto> _timeline = new java.util.ArrayList<>();
 
 	private com.top_logic.ai.chat.api.messages.TokenUsageDto _totalUsage = null;
+
+	private String _thinkingText = "";
 
 	/**
 	 * Creates a {@link CurrentTaskDto} instance.
@@ -203,6 +208,26 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 		return _totalUsage != null;
 	}
 
+	/**
+	 * Accumulated extended-thinking text from the LLM.
+	 */
+	public final String getThinkingText() {
+		return _thinkingText;
+	}
+
+	/**
+	 * @see #getThinkingText()
+	 */
+	public com.top_logic.ai.chat.api.messages.CurrentTaskDto setThinkingText(String value) {
+		internalSetThinkingText(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getThinkingText()} without chain call utility. */
+	protected final void internalSetThinkingText(String value) {
+		_thinkingText = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CURRENT_TASK_DTO__TYPE;
@@ -216,7 +241,8 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			DESCRIPTION__PROP, 
 			ERROR_MESSAGE__PROP, 
 			TIMELINE__PROP, 
-			TOTAL_USAGE__PROP);
+			TOTAL_USAGE__PROP, 
+			THINKING_TEXT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -247,6 +273,7 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case ERROR_MESSAGE__PROP: return getErrorMessage();
 			case TIMELINE__PROP: return getTimeline();
 			case TOTAL_USAGE__PROP: return getTotalUsage();
+			case THINKING_TEXT__PROP: return getThinkingText();
 			default: return null;
 		}
 	}
@@ -260,6 +287,7 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case ERROR_MESSAGE__PROP: internalSetErrorMessage((String) value); break;
 			case TIMELINE__PROP: internalSetTimeline(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.TimelineEventDto.class, value)); break;
 			case TOTAL_USAGE__PROP: internalSetTotalUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
+			case THINKING_TEXT__PROP: internalSetThinkingText((String) value); break;
 		}
 	}
 
@@ -296,6 +324,8 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			out.name(TOTAL_USAGE__PROP);
 			getTotalUsage().writeTo(out);
 		}
+		out.name(THINKING_TEXT__PROP);
+		out.value(getThinkingText());
 	}
 
 	@Override
@@ -316,6 +346,7 @@ public class CurrentTaskDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 			}
 			break;
 			case TOTAL_USAGE__PROP: setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case THINKING_TEXT__PROP: setThinkingText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

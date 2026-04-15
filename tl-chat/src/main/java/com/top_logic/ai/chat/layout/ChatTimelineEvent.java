@@ -24,7 +24,9 @@ public class ChatTimelineEvent {
 		/** A tool was invoked. */
 		TOOL_CALL,
 		/** One agent delegated to another. */
-		AGENT_CALL
+		AGENT_CALL,
+		/** Intermediate text output from the LLM. */
+		OUTPUT
 	}
 
 	private final Kind _kind;
@@ -35,9 +37,10 @@ public class ChatTimelineEvent {
 	private final String _inputSummary;
 	private final String _resultSummary;
 	private final Supplier<String> _resultSummarySupplier;
+	private final String _outputText;
 
 	private ChatTimelineEvent(Kind kind, ChatToolCall toolCall, long durationMs, String fromAgent, String toAgent,
-			String inputSummary, String resultSummary, Supplier<String> resultSummarySupplier) {
+			String inputSummary, String resultSummary, Supplier<String> resultSummarySupplier, String outputText) {
 		_kind = kind;
 		_toolCall = toolCall;
 		_durationMs = durationMs;
@@ -46,20 +49,21 @@ public class ChatTimelineEvent {
 		_inputSummary = inputSummary;
 		_resultSummary = resultSummary;
 		_resultSummarySupplier = resultSummarySupplier;
+		_outputText = outputText;
 	}
 
 	/**
 	 * Creates a timeline entry for a tool call.
 	 */
 	public static ChatTimelineEvent toolCall(ChatToolCall toolCall) {
-		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, 0, null, null, null, null, null);
+		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, 0, null, null, null, null, null, null);
 	}
 
 	/**
 	 * Creates a timeline entry for a tool call with explicit duration.
 	 */
 	public static ChatTimelineEvent toolCall(ChatToolCall toolCall, long durationMs) {
-		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, durationMs, null, null, null, null, null);
+		return new ChatTimelineEvent(Kind.TOOL_CALL, toolCall, durationMs, null, null, null, null, null, null);
 	}
 
 	/**
@@ -67,7 +71,8 @@ public class ChatTimelineEvent {
 	 */
 	public static ChatTimelineEvent agentCall(String fromAgent, String toAgent, String inputSummary,
 			String resultSummary) {
-		return new ChatTimelineEvent(Kind.AGENT_CALL, null, 0, fromAgent, toAgent, inputSummary, resultSummary, null);
+		return new ChatTimelineEvent(Kind.AGENT_CALL, null, 0, fromAgent, toAgent, inputSummary, resultSummary, null,
+			null);
 	}
 
 	/**
@@ -77,7 +82,14 @@ public class ChatTimelineEvent {
 	public static ChatTimelineEvent agentCallWithDynamicResult(String fromAgent, String toAgent, String inputSummary,
 			Supplier<String> resultSummarySupplier) {
 		return new ChatTimelineEvent(Kind.AGENT_CALL, null, 0, fromAgent, toAgent, inputSummary, null,
-			resultSummarySupplier);
+			resultSummarySupplier, null);
+	}
+
+	/**
+	 * Creates a timeline entry for intermediate text output from the LLM.
+	 */
+	public static ChatTimelineEvent output(String text) {
+		return new ChatTimelineEvent(Kind.OUTPUT, null, 0, null, null, null, null, null, text);
 	}
 
 	/**
@@ -112,6 +124,11 @@ public class ChatTimelineEvent {
 	/** Input/work-order summary when kind is AGENT_CALL. */
 	public String getInputSummary() {
 		return _inputSummary;
+	}
+
+	/** Text content when kind is OUTPUT; null otherwise. */
+	public String getOutputText() {
+		return _outputText;
 	}
 
 	/** Result summary when kind is AGENT_CALL (read at call time; may be updated if using dynamic result). */

@@ -57,6 +57,8 @@ public class ChatTask {
 
 	private final TokenUsage _totalUsage;
 
+	private final String _thinkingText;
+
 	/**
 	 * Creates a new {@link ChatTask} with PENDING status.
 	 *
@@ -65,11 +67,11 @@ public class ChatTask {
 	 */
 	public ChatTask(String description) {
 		this(UUID.randomUUID().toString(), description, TaskStatus.PENDING, Instant.now(), null, null,
-			new ArrayList<>(), TokenUsage.EMPTY);
+			new ArrayList<>(), TokenUsage.EMPTY, "");
 	}
 
 	private ChatTask(String id, String description, TaskStatus status, Instant startTime, Instant endTime,
-			String errorMessage, List<ChatTimelineEvent> timelineEvents, TokenUsage totalUsage) {
+			String errorMessage, List<ChatTimelineEvent> timelineEvents, TokenUsage totalUsage, String thinkingText) {
 		_id = id;
 		_description = description;
 		_status = status;
@@ -78,6 +80,7 @@ public class ChatTask {
 		_errorMessage = errorMessage;
 		_timelineEvents = new ArrayList<>(timelineEvents);
 		_totalUsage = totalUsage;
+		_thinkingText = thinkingText != null ? thinkingText : "";
 	}
 
 	/**
@@ -137,6 +140,13 @@ public class ChatTask {
 	}
 
 	/**
+	 * Returns the accumulated extended-thinking text, or empty string if none.
+	 */
+	public String getThinkingText() {
+		return _thinkingText;
+	}
+
+	/**
 	 * Returns tool calls from the timeline for backward compatibility.
 	 */
 	public List<ChatToolCall> getToolCalls() {
@@ -173,6 +183,8 @@ public class ChatTask {
 
 		private TokenUsage _totalUsage;
 
+		private String _thinkingText;
+
 		private Builder(ChatTask task) {
 			_id = task._id;
 			_description = task._description;
@@ -182,6 +194,7 @@ public class ChatTask {
 			_errorMessage = task._errorMessage;
 			_timelineEvents = new ArrayList<>(task._timelineEvents);
 			_totalUsage = task._totalUsage;
+			_thinkingText = task._thinkingText;
 		}
 
 		/**
@@ -233,6 +246,14 @@ public class ChatTask {
 		}
 
 		/**
+		 * Sets the accumulated extended-thinking text.
+		 */
+		public Builder withThinkingText(String thinkingText) {
+			_thinkingText = thinkingText;
+			return this;
+		}
+
+		/**
 		 * Returns the current list of timeline events (mutable for updates).
 		 */
 		public List<ChatTimelineEvent> getTimelineEvents() {
@@ -244,7 +265,7 @@ public class ChatTask {
 		 */
 		public ChatTask build() {
 			return new ChatTask(_id, _description, _status, _startTime, _endTime, _errorMessage, _timelineEvents,
-				_totalUsage);
+				_totalUsage, _thinkingText);
 		}
 	}
 }

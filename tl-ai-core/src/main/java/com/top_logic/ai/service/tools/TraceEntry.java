@@ -13,7 +13,7 @@ import java.util.Map;
  * @see ToolCallTracker#getTimeline()
  */
 public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceEntry.AgentCallTraceEntry,
-		TraceEntry.MutableAgentCallTraceEntry {
+		TraceEntry.MutableAgentCallTraceEntry, TraceEntry.OutputTraceEntry {
 
 	/**
 	 * Whether this entry is a tool call or an agent call.
@@ -121,6 +121,20 @@ public sealed interface TraceEntry permits TraceEntry.ToolCallTraceEntry, TraceE
 		 */
 		public void setResultSummary(String resultSummary) {
 			_resultSummary = resultSummary != null ? resultSummary : "";
+		}
+	}
+
+	/**
+	 * Intermediate text output from the LLM, produced alongside tool calls.
+	 *
+	 * @param text
+	 *        The text output.
+	 */
+	record OutputTraceEntry(String text) implements TraceEntry {
+
+		@Override
+		public TraceEventKind getKind() {
+			return TraceEventKind.OUTPUT;
 		}
 	}
 }

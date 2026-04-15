@@ -66,7 +66,9 @@ public class ToolCallTracker {
 	private final Map<String, String> _rawResultJsons = new HashMap<>();
 	private final List<TraceEntry> _timeline = new ArrayList<>();
 	private final List<TraceEntry.MutableAgentCallTraceEntry> _incompleteAgentCalls = new ArrayList<>();
+	private final StringBuilder _thinkingBuffer = new StringBuilder();
 	private int _nextResultRef = 1;
+	private volatile long[] _totalUsage;
 
 	/**
 	 * Records a tool call and its result.
@@ -203,6 +205,64 @@ public class ToolCallTracker {
 	}
 
 	/**
+	 * Records an intermediate text output from the LLM (produced alongside tool calls).
+	 *
+	 * @param text
+	 *        The text output.
+	 */
+	public void recordOutput(String text) {
+		if (text != null && !text.isEmpty()) {
+			_timeline.add(new TraceEntry.OutputTraceEntry(text));
+		}
+	}
+
+	/**
+	 * Appends a chunk of extended-thinking text.
+	 *
+	 * @param text
+	 *        The thinking text chunk.
+	 */
+	public void appendThinking(String text) {
+		if (text != null && !text.isEmpty()) {
+			_thinkingBuffer.append(text);
+		}
+	}
+
+	/**
+	 * Returns the accumulated thinking text, or empty string if none.
+	 */
+	public String getThinkingText() {
+		return _thinkingBuffer.toString();
+	}
+
+	/**
+	 * Stores the total token usage for the completed run.
+	 *
+	 * @param inputTokens
+	 *        Input tokens.
+	 * @param outputTokens
+	 *        Output tokens.
+	 * @param thinkingTokens
+	 *        Thinking tokens.
+	 * @param cacheReadTokens
+	 *        Cache read tokens.
+	 * @param cacheWriteTokens
+	 *        Cache write tokens.
+	 */
+	public void setTotalUsage(int inputTokens, int outputTokens, int thinkingTokens,
+			int cacheReadTokens, int cacheWriteTokens) {
+		_totalUsage = new long[] { inputTokens, outputTokens, thinkingTokens, cacheReadTokens, cacheWriteTokens };
+	}
+
+	/**
+	 * Returns the total token usage as {@code [input, output, thinking, cacheRead, cacheWrite]},
+	 * or null if not recorded.
+	 */
+	public long[] getTotalUsage() {
+		return _totalUsage;
+	}
+
+	/**
 	 * Clears all recorded tool calls, agent calls, and results.
 	 */
 	public void clear() {
@@ -211,6 +271,8 @@ public class ToolCallTracker {
 		_rawResultJsons.clear();
 		_timeline.clear();
 		_incompleteAgentCalls.clear();
+		_thinkingBuffer.setLength(0);
 		_nextResultRef = 1;
+		_totalUsage = null;
 	}
 }

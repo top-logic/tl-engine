@@ -39,6 +39,7 @@ import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.ai.service.tools.TimelineAgentListener;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
@@ -294,6 +295,9 @@ public class ChatProcessor {
 			return ChatTimelineEvent.agentCallWithDynamicResult(mac.fromAgent(), mac.toAgent(), mac.inputSummary(),
 				mac::resultSummary);
 		}
+		if (entry instanceof TraceEntry.OutputTraceEntry out) {
+			return ChatTimelineEvent.output(out.text());
+		}
 		return null;
 	}
 
@@ -346,9 +350,15 @@ public class ChatProcessor {
 				if (currentTaskId != null) {
 					ChatTask task = taskTracker.getTask(currentTaskId);
 					if (task != null) {
-						task = task.toBuilder()
-							.withTotalUsage(taskTracker.getCumulativeUsage())
-							.build();
+						ChatTask.Builder b = task.toBuilder()
+							.withTotalUsage(resolveTokenUsage(tracker, taskTracker));
+						if (tracker != null) {
+							String thinking = tracker.getThinkingText();
+							if (!thinking.isEmpty()) {
+								b.withThinkingText(thinking);
+							}
+						}
+						task = b.build();
 					}
 					chat.addTaskSnapshot(task);
 				}
@@ -365,9 +375,15 @@ public class ChatProcessor {
 					if (currentTaskId != null) {
 						ChatTask task = taskTracker.getTask(currentTaskId);
 						if (task != null) {
-							task = task.toBuilder()
-								.withTotalUsage(taskTracker.getCumulativeUsage())
-								.build();
+							ChatTask.Builder b = task.toBuilder()
+								.withTotalUsage(resolveTokenUsage(tracker, taskTracker));
+							if (tracker != null) {
+								String thinking = tracker.getThinkingText();
+								if (!thinking.isEmpty()) {
+									b.withThinkingText(thinking);
+								}
+							}
+							task = b.build();
 						}
 						chat.addTaskSnapshot(task);
 					}
@@ -382,6 +398,16 @@ public class ChatProcessor {
 			}
 			return hasUpdates;
 		}
+	}
+
+	private static TokenUsage resolveTokenUsage(ToolCallTracker toolTracker, TaskProgressTracker taskTracker) {
+		if (toolTracker != null) {
+			long[] usage = toolTracker.getTotalUsage();
+			if (usage != null && usage.length == 5) {
+				return new TokenUsage((int) usage[0], (int) usage[1], (int) usage[2], (int) usage[3], (int) usage[4]);
+			}
+		}
+		return taskTracker.getCumulativeUsage();
 	}
 
 	/**

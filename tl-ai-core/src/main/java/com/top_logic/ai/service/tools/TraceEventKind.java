@@ -14,5 +14,8 @@ public enum TraceEventKind {
 	TOOL_CALL,
 
 	/** One agent delegated to another ({@code fromAgent}, {@code toAgent}, work order summary, result summary). */
-	AGENT_CALL
+	AGENT_CALL,
+
+	/** Intermediate text output from the LLM (produced alongside tool calls, before the final answer). */
+	OUTPUT
 }

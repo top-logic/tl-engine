@@ -99,15 +99,28 @@ public class AskUserTool {
 			String response = request.getFuture().get(INTERACTION_TIMEOUT_MINUTES, TimeUnit.MINUTES);
 			Logger.info("User responded to interaction " + request.getId() + ": " + response,
 				AskUserTool.class);
+			if ("cancelled".equals(response)) {
+				return "The user cancelled this request. Do not retry the same question. "
+					+ "Instead, write your final answer acknowledging the cancellation and ask "
+					+ "the user how they would like to proceed (without using the askUser tool).";
+			}
 			return response;
 		} catch (TimeoutException e) {
 			Logger.warn("User interaction timed out (id: " + request.getId() + ")", AskUserTool.class);
 			store.resolve(request.getId(), "timeout");
-			return "timeout";
+			return "The user interaction timed out. Write your final answer and ask how they would "
+				+ "like to proceed (without using the askUser tool).";
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			Logger.info("User interaction interrupted/cancelled (id: " + request.getId() + ")",
+				AskUserTool.class);
+			return "The user cancelled this request. Do not retry the same question. "
+				+ "Instead, write your final answer acknowledging the cancellation and ask "
+				+ "the user how they would like to proceed (without using the askUser tool).";
 		} catch (Exception e) {
 			Logger.error("User interaction failed (id: " + request.getId() + "): " + e.getMessage(),
 				e, AskUserTool.class);
-			return "error: " + e.getMessage();
+			return "error: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
 		}
 	}
 

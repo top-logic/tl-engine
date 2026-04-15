@@ -1788,6 +1788,32 @@
 }
 
 /* ========================================
+ * Output (Intermediate LLM Text) in Tool Trace
+ * ======================================== */
+
+.tl-chat-tool-name-fixed {
+	font-weight: 500;
+	color: var(--chat-text-primary);
+	flex-shrink: 0;
+}
+
+.tl-chat-output-summary {
+	color: var(--chat-text-secondary);
+	overflow: hidden;
+	white-space: nowrap;
+	flex: 1;
+	min-width: 0;
+}
+
+.tl-chat-output-content {
+	padding: 6px 10px;
+	font-size: 13px;
+	line-height: 1.5;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+/* ========================================
  * Approval Banner
  * ======================================== */
 
@@ -1848,6 +1874,33 @@
 	background: var(--chat-status-error);
 	color: white;
 	border-color: var(--chat-status-error);
+}
+
+.tl-chat-choice-options {
+	flex-direction: column;
+	gap: 6px;
+}
+
+.tl-chat-choice-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	border-radius: var(--chat-radius-sm);
+	border: 1px solid var(--chat-border);
+	background: var(--chat-surface);
+	font-size: 12px;
+	cursor: pointer;
+	transition: background 0.1s;
+}
+
+.tl-chat-choice-label:hover {
+	filter: brightness(1.05);
+}
+
+.tl-chat-choice-desc {
+	color: var(--chat-text-secondary);
+	font-size: 11px;
 }
 
 .tl-chat-approval-comment {

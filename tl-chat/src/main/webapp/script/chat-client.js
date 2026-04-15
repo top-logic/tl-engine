@@ -120,6 +120,7 @@
 		currentRun: null,
 		sessionApprovals: new Set(),
 		cumulativeUsage: null,
+		activeInteractionRequestId: null,
 
 		resetRun() {
 			this.currentRun = {
@@ -127,6 +128,7 @@
 				model: null,
 				textBuffer: '',
 				thinkingBuffer: '',
+				pendingOutputText: null,
 				toolCalls: new Map(),
 				delegations: new Map(),
 				turnUsage: null,
@@ -313,6 +315,12 @@
 
 		onTextDelta(data) {
 			if (Store.currentRun) {
+				// New text arriving — flush any pending output from a previous turn into the trace
+				if (Store.currentRun.pendingOutputText) {
+					Tools.renderOutput(Store.currentRun.pendingOutputText);
+					Store.currentRun.pendingOutputText = null;
+					Render.clearStreamingText();
+				}
 				Store.currentRun.textBuffer += data.text;
 				Render.updateStreamingText();
 			}
@@ -326,6 +334,11 @@
 		},
 
 		onToolStarted(data) {
+			// Stash text for later — it stays visible until the next turn's text arrives
+			if (Store.currentRun && Store.currentRun.textBuffer.length > 0) {
+				Store.currentRun.pendingOutputText = Store.currentRun.textBuffer;
+				Store.currentRun.textBuffer = '';
+			}
 			Store.addToolCall(data.toolCallId, data.toolName, data.argsJson);
 			Tools.renderToolCall(data.toolCallId);
 		},
@@ -359,7 +372,7 @@
 			}
 		},
 
-		onLockAcquired(data) { Timeline.addPill('Lock acquired', ''); },
+		onLockAcquired(data) { /* No UI */ },
 		onTxBegan(data) { /* No UI */ },
 		onTxCommitted(data) {
 			if (data.revisionNumber >= 0) {
@@ -378,7 +391,10 @@
 			Render.swapToRenderedHtml(data.contentHtml);
 		},
 
-		onUserInteraction(data) { Approval.showInteraction(data); },
+		onUserInteraction(data) {
+			console.log('[tl-chat] user_interaction:', JSON.stringify(data));
+			Approval.showInteraction(data);
+		},
 
 		onApprovalMode(data) { /* Track mode changes */ },
 	};
@@ -455,7 +471,24 @@
 
 		async _send() {
 			const text = this._inputEl.value.trim();
-			if (!text || State.isActive()) return;
+			if (!text) return;
+
+			// During an active askUser interaction, route input as the tool response
+			if (Store.activeInteractionRequestId) {
+				this._inputEl.value = '';
+				const reqId = Store.activeInteractionRequestId;
+				Store.activeInteractionRequestId = null;
+				Approval._removeInteractionUI();
+				if (this._inputEl) { this._inputEl.disabled = false; this._inputEl.placeholder = 'Type a message...'; }
+				fetch(URLS.respond, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ requestId: reqId, response: text })
+				}).catch(err => console.error('[tl-chat] Interaction response failed:', err));
+				return;
+			}
+
+			if (State.isActive()) return;
 			this._inputEl.value = '';
 
 			try {
@@ -571,6 +604,12 @@
 			this._scrollToBottom();
 		},
 
+		clearStreamingText() {
+			if (this._currentTextEl) {
+				this._currentTextEl.innerHTML = '';
+			}
+		},
+
 		updateStreamingText() {
 			if (!this._currentTextEl || !Store.currentRun) return;
 			if (this._rafId) return;
@@ -612,6 +651,11 @@
 		},
 
 		finalizeAssistantBubble() {
+			// Flush any pending output into the trace before finalizing
+			if (Store.currentRun && Store.currentRun.pendingOutputText) {
+				Tools.renderOutput(Store.currentRun.pendingOutputText);
+				Store.currentRun.pendingOutputText = null;
+			}
 			if (this._currentTextEl) {
 				const cursor = this._currentTextEl.querySelector('.tl-chat-streaming-cursor');
 				if (cursor) cursor.remove();
@@ -756,6 +800,44 @@
 	// Tools — Tool call rendering
 	// ========================================================================
 	const Tools = {
+		renderOutput(text) {
+			const container = Render._currentToolsEl;
+			if (!container || !text) return;
+
+			if (Render._currentTraceWrapper) {
+				Render._currentTraceWrapper.style.display = '';
+			}
+
+			const el = document.createElement('div');
+			el.className = 'tl-chat-tool';
+
+			const header = document.createElement('div');
+			header.className = 'tl-chat-tool-header';
+			const stripped = text.replace(/\s+/g, ' ').trim();
+			const preview = stripped.length > 60 ? stripped.substring(0, 60) + '...' : stripped;
+			header.innerHTML =
+				'<span class="tl-chat-status-dot success"></span>' +
+				'<span class="tl-chat-tool-name-fixed">Output</span>' +
+				'<span class="tl-chat-output-summary">' + Utils.escapeHtml(preview) + '</span>' +
+				'<span class="tl-chat-tool-tokens">~' + Utils.formatTokens(this._estimateTokens(text)) + ' tokens</span>' +
+				'<span class="tl-chat-tool-chevron">&#9654;</span>';
+
+			const body = document.createElement('div');
+			body.className = 'tl-chat-tool-body';
+			body.style.display = 'none';
+			body.innerHTML = '<div class="tl-chat-output-content">' + Markdown.basicFormat(text) + '</div>';
+
+			let expanded = false;
+			header.addEventListener('click', () => {
+				expanded = !expanded;
+				body.style.display = expanded ? '' : 'none';
+				header.querySelector('.tl-chat-tool-chevron').classList.toggle('expanded', expanded);
+			});
+			el.appendChild(header);
+			el.appendChild(body);
+			container.appendChild(el);
+		},
+
 		renderToolCall(toolCallId) {
 			const container = Render._currentToolsEl;
 			if (!container) return;
@@ -792,7 +874,7 @@
 			header.innerHTML =
 				'<span class="tl-chat-status-dot running"></span>' +
 				'<span class="tl-chat-tool-name">' + Utils.escapeHtml(tc.name) + '</span>' +
-				'<span class="tl-chat-tool-tokens">~' + Utils.formatTokens(this._estimateTokens(tc.argsJson)) + '</span>' +
+				'<span class="tl-chat-tool-tokens">~' + Utils.formatTokens(this._estimateTokens(tc.argsJson)) + ' tokens</span>' +
 				'<span class="tl-chat-tool-duration"></span>' +
 				'<span class="tl-chat-tool-chevron">&#9654;</span>';
 
@@ -861,7 +943,7 @@
 			const tokensEl = el.querySelector('.tl-chat-tool-tokens');
 			if (tokensEl) {
 				const total = this._estimateTokens(tc.argsJson) + this._estimateTokens(tc.result) + this._estimateTokens(tc.error);
-				tokensEl.textContent = '~' + Utils.formatTokens(total);
+				tokensEl.textContent = '~' + Utils.formatTokens(total) + ' tokens';
 			}
 
 			if (tc.status === 'denied') {
@@ -997,52 +1079,92 @@
 			const section = Render._inputSection;
 			if (!section) return;
 
+			// Track active interaction so the chat input can respond
+			Store.activeInteractionRequestId = data.requestId;
+			this._interactionEl = null;
+
+			// Enable the input field so user can type a custom answer
+			if (Render._inputEl) {
+				Render._inputEl.disabled = false;
+				Render._inputEl.placeholder = 'Type your answer or pick below...';
+				Render._inputEl.focus();
+			}
+
 			const el = document.createElement('div');
 			el.className = 'tl-chat-approval';
+			this._interactionEl = el;
+
+			const dismiss = () => {
+				Store.activeInteractionRequestId = null;
+				el.remove();
+				this._interactionEl = null;
+				if (Render._inputEl) { Render._inputEl.disabled = false; Render._inputEl.placeholder = 'Type a message...'; }
+			};
+
+			const respond = (response) => {
+				fetch(URLS.respond, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ requestId: data.requestId, response: response })
+				}).catch(err => console.error('[tl-chat] Interaction response failed:', err));
+				dismiss();
+			};
 
 			if (data.type === 'text') {
 				el.innerHTML =
 					'<div class="tl-chat-approval-header">' + Utils.escapeHtml(data.header || 'Input requested') + '</div>' +
 					'<div class="tl-chat-approval-reason">' + (data.questionHtml || Utils.escapeHtml(data.question)) + '</div>' +
-					'<div class="tl-chat-approval-comment" style="display:flex">' +
-					'<input type="text" placeholder="Your response...">' +
-					'<button class="tl-chat-approval-btn allow">Send</button>' +
+					'<div class="tl-chat-approval-actions">' +
+					'<button class="tl-chat-approval-btn deny">Cancel</button>' +
 					'</div>';
-				const input = el.querySelector('input');
-				const btn = el.querySelector('.tl-chat-approval-btn');
-				const respond = () => {
-					fetch(URLS.respond, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ requestId: data.requestId, response: input.value })
-					}).catch(err => console.error('[tl-chat] Interaction response failed:', err));
-					el.innerHTML = '<div class="tl-chat-status-pill">Responded</div>';
-				};
-				btn.addEventListener('click', respond);
-				input.addEventListener('keydown', (e) => { if (e.key === 'Enter') respond(); });
+				el.querySelector('.deny').addEventListener('click', () => respond('cancelled'));
 			} else if (data.type === 'choice') {
-				let optionsHtml = '<div class="tl-chat-approval-actions">';
-				(data.options || []).forEach(opt => {
-					const label = typeof opt === 'string' ? opt : opt.label;
-					optionsHtml += '<button class="tl-chat-approval-btn" data-value="' +
-						Utils.escapeHtml(label) + '">' + Utils.escapeHtml(label) + '</button>';
-				});
-				optionsHtml += '</div>';
-				el.innerHTML =
-					'<div class="tl-chat-approval-header">' + Utils.escapeHtml(data.header || 'Choose') + '</div>' +
-					'<div class="tl-chat-approval-reason">' + (data.questionHtml || Utils.escapeHtml(data.question)) + '</div>' +
-					optionsHtml;
-				el.querySelectorAll('[data-value]').forEach(btn => {
-					btn.addEventListener('click', () => {
-						fetch(URLS.respond, {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ requestId: data.requestId, response: btn.dataset.value })
-						}).catch(err => console.error('[tl-chat] Choice response failed:', err));
-						el.innerHTML = '<div class="tl-chat-status-pill">Selected: ' +
-							Utils.escapeHtml(btn.dataset.value) + '</div>';
+				const multiSelect = data.multiSelect === true;
+
+				if (multiSelect) {
+					let optionsHtml = '<div class="tl-chat-choice-options">';
+					(data.options || []).forEach(opt => {
+						const label = typeof opt === 'string' ? opt : opt.label;
+						optionsHtml += '<label class="tl-chat-choice-label">' +
+							'<input type="checkbox" value="' + Utils.escapeHtml(label) + '"> ' +
+							Utils.escapeHtml(label) + '</label>';
 					});
-				});
+					optionsHtml += '</div>';
+
+					el.innerHTML =
+						'<div class="tl-chat-approval-header">' + Utils.escapeHtml(data.header || 'Choose') + '</div>' +
+						'<div class="tl-chat-approval-reason">' + (data.questionHtml || Utils.escapeHtml(data.question)) + '</div>' +
+						optionsHtml +
+						'<div class="tl-chat-approval-actions">' +
+						'<button class="tl-chat-approval-btn allow tl-chat-submit-btn">Submit</button>' +
+						'<button class="tl-chat-approval-btn deny">Cancel</button>' +
+						'</div>';
+
+					el.querySelector('.tl-chat-submit-btn').addEventListener('click', () => {
+						const checked = Array.from(el.querySelectorAll('input[type="checkbox"]:checked'))
+							.map(cb => cb.value);
+						if (checked.length === 0) return;
+						respond(checked.join(', '));
+					});
+				} else {
+					// Single-select: original button layout
+					let optionsHtml = '<div class="tl-chat-approval-actions">';
+					(data.options || []).forEach(opt => {
+						const label = typeof opt === 'string' ? opt : opt.label;
+						optionsHtml += '<button class="tl-chat-approval-btn" data-value="' +
+							Utils.escapeHtml(label) + '">' + Utils.escapeHtml(label) + '</button>';
+					});
+					optionsHtml += '</div>';
+
+					el.innerHTML =
+						'<div class="tl-chat-approval-header">' + Utils.escapeHtml(data.header || 'Choose') + '</div>' +
+						'<div class="tl-chat-approval-reason">' + (data.questionHtml || Utils.escapeHtml(data.question)) + '</div>' +
+						optionsHtml;
+
+					el.querySelectorAll('[data-value]').forEach(btn => {
+						btn.addEventListener('click', () => respond(btn.dataset.value));
+					});
+				}
 			} else {
 				this.showPrompt({
 					approvalRequestId: data.requestId,
@@ -1053,6 +1175,13 @@
 			}
 
 			section.insertBefore(el, section.firstChild);
+		},
+
+		_removeInteractionUI() {
+			if (this._interactionEl) {
+				this._interactionEl.remove();
+				this._interactionEl = null;
+			}
 		}
 	};
 
@@ -1419,12 +1548,16 @@
 			// Count total tool/agent calls across all snapshots
 			let totalEvents = 0;
 			let totalUsage = null;
+			let thinkingText = '';
 			for (const task of snapshots) {
 				if (task && task.timeline) {
 					totalEvents += task.timeline.length;
 				}
 				if (task && task.totalUsage) {
 					totalUsage = task.totalUsage;
+				}
+				if (task && task.thinkingText) {
+					thinkingText = task.thinkingText;
 				}
 			}
 
@@ -1467,7 +1600,9 @@
 			for (const task of snapshots) {
 				if (!task || !task.timeline) continue;
 				for (const ev of task.timeline) {
-					if (ev.type === 'agent_call') {
+					if (ev.type === 'output') {
+						this._renderPersistedOutput(toolsEl, ev);
+					} else if (ev.type === 'agent_call') {
 						this._renderPersistedDelegation(toolsEl, ev);
 					} else {
 						this._renderPersistedToolCall(toolsEl, ev);
@@ -1475,6 +1610,31 @@
 				}
 			}
 
+			if (thinkingText) {
+				const thinkingEl = document.createElement('div');
+				thinkingEl.className = 'tl-chat-thinking';
+				const thinkingHeader = document.createElement('div');
+				thinkingHeader.className = 'tl-chat-thinking-header';
+				const preview = thinkingText.substring(0, 80) + (thinkingText.length > 80 ? '...' : '');
+				thinkingHeader.innerHTML =
+					'<span class="tl-chat-thinking-chevron">&#9654;</span>' +
+					'<span>Thinking</span>' +
+					'<span class="tl-chat-thinking-preview">' + Utils.escapeHtml(preview) + '</span>';
+				const thinkingBody = document.createElement('div');
+				thinkingBody.className = 'tl-chat-thinking-body';
+				thinkingBody.style.display = 'none';
+				thinkingBody.textContent = thinkingText;
+				thinkingHeader.addEventListener('click', () => {
+					const expanded = thinkingEl.dataset.expanded === 'true';
+					thinkingEl.dataset.expanded = '' + !expanded;
+					thinkingHeader.querySelector('.tl-chat-thinking-chevron').classList.toggle('expanded', !expanded);
+					thinkingHeader.querySelector('.tl-chat-thinking-preview').style.display = !expanded ? 'none' : '';
+					thinkingBody.style.display = !expanded ? '' : 'none';
+				});
+				thinkingEl.appendChild(thinkingHeader);
+				thinkingEl.appendChild(thinkingBody);
+				traceBody.appendChild(thinkingEl);
+			}
 			traceBody.appendChild(toolsEl);
 			traceWrapper.appendChild(traceHeader);
 			traceWrapper.appendChild(traceBody);
@@ -1505,7 +1665,7 @@
 			header.innerHTML =
 				'<span class="tl-chat-status-dot ' + statusClass + '"></span>' +
 				'<span class="tl-chat-tool-name">' + Utils.escapeHtml(ev.toolName || ev.name || '') + '</span>' +
-				'<span class="tl-chat-tool-tokens"></span>' +
+				'<span class="tl-chat-tool-tokens">~' + Utils.formatTokens(Tools._estimateTokens(ev.argsJson) + Tools._estimateTokens(ev.result)) + ' tokens</span>' +
 				'<span class="tl-chat-tool-duration">' + (ev.durationMs ? Utils.formatDuration(ev.durationMs) : '') + '</span>' +
 				'<span class="tl-chat-tool-chevron">&#9654;</span>';
 
@@ -1548,6 +1708,39 @@
 				'<span class="tl-chat-status-dot success"></span>' +
 				'<span>Agent: ' + Utils.escapeHtml(ev.toAgent || '') + '</span>';
 			el.appendChild(header);
+			container.appendChild(el);
+		},
+
+		_renderPersistedOutput(container, ev) {
+			const text = ev.result || '';
+			if (!text) return;
+			const el = document.createElement('div');
+			el.className = 'tl-chat-tool';
+
+			const header = document.createElement('div');
+			header.className = 'tl-chat-tool-header';
+			const stripped = text.replace(/\s+/g, ' ').trim();
+			const preview = stripped.length > 60 ? stripped.substring(0, 60) + '...' : stripped;
+			header.innerHTML =
+				'<span class="tl-chat-status-dot success"></span>' +
+				'<span class="tl-chat-tool-name-fixed">Output</span>' +
+				'<span class="tl-chat-output-summary">' + Utils.escapeHtml(preview) + '</span>' +
+				'<span class="tl-chat-tool-tokens">~' + Utils.formatTokens(Tools._estimateTokens(text)) + ' tokens</span>' +
+				'<span class="tl-chat-tool-chevron">&#9654;</span>';
+
+			const body = document.createElement('div');
+			body.className = 'tl-chat-tool-body';
+			body.style.display = 'none';
+			body.innerHTML = '<div class="tl-chat-output-content">' + Markdown.basicFormat(text) + '</div>';
+
+			let expanded = false;
+			header.addEventListener('click', () => {
+				expanded = !expanded;
+				body.style.display = expanded ? '' : 'none';
+				header.querySelector('.tl-chat-tool-chevron').classList.toggle('expanded', expanded);
+			});
+			el.appendChild(header);
+			el.appendChild(body);
 			container.appendChild(el);
 		},
 

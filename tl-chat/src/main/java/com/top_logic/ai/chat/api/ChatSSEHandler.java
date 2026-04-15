@@ -295,6 +295,7 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setRunId(e.runId())
 				.setModel(e.model())));
 		} else if (event instanceof AgentEvent.RunCompleted e) {
+			_tracker.addTokenUsage(e.totalUsage());
 			sendEvent("run_completed", DtoMapper.toJson(RunCompletedEvent.create()
 				.setRunId(e.runId())
 				.setReason(e.reason().name())

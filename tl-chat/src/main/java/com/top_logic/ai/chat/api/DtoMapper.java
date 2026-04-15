@@ -150,6 +150,10 @@ public final class DtoMapper {
 				.setCacheReadTokens(usage.cacheReadTokens())
 				.setCacheWriteTokens(usage.cacheWriteTokens()));
 		}
+		String thinkingText = task.getThinkingText();
+		if (thinkingText != null && !thinkingText.isEmpty()) {
+			dto.setThinkingText(thinkingText);
+		}
 		return dto;
 	}
 
@@ -176,6 +180,11 @@ public final class DtoMapper {
 	public static TimelineEventDto toTimelineEventDto(ChatTimelineEvent ev, String id) {
 		TimelineEventDto dto = TimelineEventDto.create();
 		dto.setId(id);
+		if (ev.getKind() == ChatTimelineEvent.Kind.OUTPUT) {
+			dto.setType("output");
+			dto.setResult(ev.getOutputText());
+			return dto;
+		}
 		if (ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && ev.getToolCall() != null) {
 			ChatToolCall tc = ev.getToolCall();
 			dto.setType("tool_call");
@@ -404,6 +413,10 @@ public final class DtoMapper {
 				usageDto.getCacheReadTokens(),
 				usageDto.getCacheWriteTokens()));
 		}
+		String thinkingText = dto.getThinkingText();
+		if (thinkingText != null && !thinkingText.isEmpty()) {
+			builder.withThinkingText(thinkingText);
+		}
 		return builder.build();
 	}
 
@@ -424,6 +437,9 @@ public final class DtoMapper {
 	}
 
 	private static ChatTimelineEvent fromTimelineEventDto(TimelineEventDto dto) {
+		if ("output".equals(dto.getType())) {
+			return ChatTimelineEvent.output(dto.getResult());
+		}
 		if ("tool_call".equals(dto.getType())) {
 			Map<String, Object> args = new LinkedHashMap<>();
 			if (dto.getArgsJson() != null && !dto.getArgsJson().isEmpty()) {

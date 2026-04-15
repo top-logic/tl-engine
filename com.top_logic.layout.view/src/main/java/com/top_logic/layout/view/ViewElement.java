@@ -5,10 +5,8 @@
  */
 package com.top_logic.layout.view;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -22,12 +20,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
-import com.top_logic.layout.react.control.overlay.ReactMenuControl;
-import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelFactory;
-import com.top_logic.layout.view.command.ContextMenuOpener;
-import com.top_logic.layout.view.command.ContextMenuOpener.MenuRenderer;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -116,37 +110,12 @@ public class ViewElement implements UIElement {
 			context.registerChannel(name, factory.createChannel(context));
 		}
 
-		// Instantiate exactly one ContextMenuOpener per top-level frame and bind it onto the
-		// context so that descendant elements can reach it via context.getContextMenuOpener().
-		// The accompanying ReactMenuControl is attached as a sibling of the content so it
-		// participates in the control tree and gets rendered.
-		ReactMenuControl menuControl = new ReactMenuControl(context, null, List.of(),
-			itemId -> { /* re-wired via setSelectHandler in MenuRenderer.show() */ },
-			() -> { /* re-wired via setCloseHandler in MenuRenderer.show() */ });
-		MenuRenderer renderer = new MenuRenderer() {
-			@Override
-			public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
-					Runnable closeHandler) {
-				menuControl.updateItems(items);
-				menuControl.setSelectHandler(selectHandler);
-				menuControl.setCloseHandler(closeHandler);
-				menuControl.open(x, y);
-			}
-
-			@Override
-			public void hide() {
-				menuControl.close();
-			}
-		};
-		ContextMenuOpener opener = new ContextMenuOpener(renderer);
-		opener.bindReactContext(() -> context);
-		ViewContext frameContext = context.withContextMenuOpener(opener);
-
-		List<ReactControl> children = new ArrayList<>();
-		for (UIElement element : _content) {
-			children.add((ReactControl) element.createControl(frameContext));
+		if (_content.size() == 1) {
+			return _content.get(0).createControl(context);
 		}
-		children.add(menuControl);
-		return new ReactStackControl(frameContext, children);
+		List<ReactControl> children = _content.stream()
+			.map(e -> (ReactControl) e.createControl(context))
+			.collect(Collectors.toList());
+		return new ReactStackControl(context, children);
 	}
 }

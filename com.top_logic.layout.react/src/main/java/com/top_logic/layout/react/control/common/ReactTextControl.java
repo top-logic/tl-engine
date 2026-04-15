@@ -6,6 +6,8 @@
 package com.top_logic.layout.react.control.common;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -21,11 +23,22 @@ import com.top_logic.layout.react.control.ReactControl;
  * {@link com.top_logic.layout.LabelProvider}.
  * </p>
  */
-public class ReactTextControl extends ReactControl {
+public class ReactTextControl extends ReactControl implements TooltipProvider {
 
 	private static final String TEXT = "text";
 
 	private static final String CSS_CLASS = "cssClass";
+
+	private static final String HAS_TOOLTIP = "hasTooltip";
+
+	/** Key expected by {@link #getTooltipContent(String)}. */
+	private static final String TOOLTIP_KEY = "tooltip";
+
+	private String _tooltipHtml;
+
+	private String _tooltipCaption;
+
+	private boolean _tooltipInteractive;
 
 	/**
 	 * Creates a {@link ReactTextControl} without an extra CSS class.
@@ -65,5 +78,31 @@ public class ReactTextControl extends ReactControl {
 	 */
 	public void setCssClass(String cssClass) {
 		putState(CSS_CLASS, cssClass != null ? cssClass : "");
+	}
+
+	/**
+	 * Sets a rich tooltip shown on hover.
+	 *
+	 * @param html
+	 *        Sanitized tooltip HTML, or {@code null} to clear.
+	 * @param caption
+	 *        Optional caption, or {@code null}.
+	 * @param interactive
+	 *        When {@code true}, the popover remains open while the pointer hovers over it so the
+	 *        user can select and copy content.
+	 */
+	public void setTooltip(String html, String caption, boolean interactive) {
+		_tooltipHtml = (html == null || html.isEmpty()) ? null : html;
+		_tooltipCaption = caption;
+		_tooltipInteractive = interactive;
+		putState(HAS_TOOLTIP, _tooltipHtml != null);
+	}
+
+	@Override
+	public TooltipContent getTooltipContent(String key) {
+		if (!TOOLTIP_KEY.equals(key) || _tooltipHtml == null) {
+			return null;
+		}
+		return new TooltipContent(_tooltipHtml, _tooltipCaption, _tooltipInteractive);
 	}
 }

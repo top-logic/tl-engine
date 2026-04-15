@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
@@ -103,16 +104,17 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =
 						createPolymorphicGroup(context, label, config, property);
+					polyGroup.setHeader(createGroupHeader(context, property));
 					addChild(polyGroup);
 				} else {
 					ConfigurationAccess configAccess = property.getConfigurationAccess();
 					ConfigurationItem nested = configAccess.getConfig(config.value(property));
 					if (nested != null) {
 						ConfigEditorControl nestedEditor = createNestedEditor(context, nested);
-						String label = resolveLabel(property);
 						ReactFormGroupControl group = new ReactFormGroupControl(
-							context, label, true, false, "subtle", true,
+							context, null, true, false, "subtle", true,
 							List.of(), List.of(nestedEditor));
+						group.setHeader(createGroupHeader(context, property));
 						addChild(group);
 					}
 				}
@@ -120,12 +122,12 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			}
 
 			if (property.kind() == PropertyKind.LIST) {
-				String listLabel = resolveLabel(property);
 				ConfigListEditorControl listEditor =
 					new ConfigListEditorControl(context, config, property);
 				ReactFormGroupControl listGroup = new ReactFormGroupControl(
-					context, listLabel, true, false, "default", false,
+					context, null, true, false, "default", false,
 					List.of(), List.of(listEditor));
+				listGroup.setHeader(createGroupHeader(context, property));
 				addChild(listGroup);
 				continue;
 			}
@@ -170,6 +172,20 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	protected String resolveTooltip(PropertyDescriptor property) {
 		return Resources.getInstance().getString(property.labelKey(null).tooltip(), null);
+	}
+
+	/**
+	 * Creates a header {@link ReactTextControl} for a property group (ITEM/LIST), carrying the
+	 * property's label and, if available, its JavaDoc tooltip.
+	 */
+	protected ReactTextControl createGroupHeader(ReactContext context, PropertyDescriptor property) {
+		String label = resolveLabel(property);
+		ReactTextControl header = new ReactTextControl(context, label);
+		String tooltip = resolveTooltip(property);
+		if (tooltip != null && !tooltip.isEmpty()) {
+			header.setTooltip(tooltip, label, true);
+		}
+		return header;
 	}
 
 	/**

@@ -244,30 +244,37 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Registers this control as a {@link ModelListener} on the given scope for the current object.
+	 * Sets the {@link ModelScope} this control should observe for changes to its current object.
 	 *
 	 * <p>
-	 * Called lazily on first render via {@code addBeforeWriteAction}, matching the
-	 * {@link com.top_logic.layout.view.model.ObservableTableModel} pattern.
+	 * Listener registration happens via {@link #onAttach()}/{@link #onDetach()} hooks, so the
+	 * listener is active only while this control is displayed.
 	 * </p>
 	 *
 	 * @param scope
 	 *        The model scope to observe.
 	 */
-	public void attach(ModelScope scope) {
-		if (_modelScope != null) {
-			return; // Already attached.
+	public void setModelScope(ModelScope scope) {
+		if (_modelScope == scope) {
+			return;
+		}
+		if (isAttached()) {
+			deregisterModelListener();
 		}
 		_modelScope = scope;
+		if (isAttached()) {
+			registerModelListener();
+		}
+	}
+
+	@Override
+	protected void onAttach() {
 		registerModelListener();
 	}
 
-	/**
-	 * Removes all model listeners and releases the scope reference.
-	 */
-	public void detach() {
+	@Override
+	protected void onDetach() {
 		deregisterModelListener();
-		_modelScope = null;
 	}
 
 	private void registerModelListener() {

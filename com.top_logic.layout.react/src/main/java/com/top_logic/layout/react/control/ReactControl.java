@@ -501,6 +501,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 			return;
 		}
 		_attached = true;
+		onAttach();
 		for (Runnable l : _attachListeners) {
 			l.run();
 		}
@@ -521,9 +522,33 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		}
 		propagateDetach();
 		_attached = false;
+		onDetach();
 		for (Runnable l : _detachListeners) {
 			l.run();
 		}
+	}
+
+	/**
+	 * Hook for subclasses to react to this control becoming attached (displayed).
+	 *
+	 * <p>
+	 * Called after the attached flag is set but before attach listeners fire. Default does nothing.
+	 * </p>
+	 */
+	protected void onAttach() {
+		// Default: no-op.
+	}
+
+	/**
+	 * Hook for subclasses to react to this control becoming detached (no longer displayed).
+	 *
+	 * <p>
+	 * Called after the attached flag is cleared but before detach listeners fire. Default does
+	 * nothing.
+	 * </p>
+	 */
+	protected void onDetach() {
+		// Default: no-op.
 	}
 
 	/**

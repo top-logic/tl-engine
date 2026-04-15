@@ -372,11 +372,8 @@ public class FormElement extends ContainerElement {
 			formControl.enterEditMode();
 		}
 
-		// 12. Lazy attach model listener on render, cleanup on dispose.
-		formControl.addBeforeWriteAction(() -> {
-			formControl.attach(context.getModelScope());
-		});
-		formControl.addCleanupAction(formControl::detach);
+		// 12. Model listener registration is tied to the control's attach/detach lifecycle.
+		formControl.setModelScope(context.getModelScope());
 
 		return formControl;
 	}

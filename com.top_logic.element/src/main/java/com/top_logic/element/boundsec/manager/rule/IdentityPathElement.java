@@ -31,8 +31,8 @@ public class IdentityPathElement implements PathElement {
 	 * path element does not traverse any reference.
 	 */
 	@Override
-	public Collection<? extends TLObject> getSources(TLObject destination) {
-		return CollectionUtil.intoList(destination);
+	public BaseObjects<? extends Collection<? extends TLObject>> getSources(TLObject destination) {
+		return BaseObjects.of(CollectionUtil.intoList(destination));
 	}
 
 	/**
@@ -50,9 +50,9 @@ public class IdentityPathElement implements PathElement {
 	}
 
 	@Override
-	public Collection<? extends TLObject> getPathBase(TLObject element, TLStructuredTypePart part,
-			Supplier<?> partValue) {
-		return CollectionUtil.intoList(element);
+	public BaseObjects<? extends Collection<? extends TLObject>> getPathBase(TLObject element,
+			TLStructuredTypePart part, Supplier<?> partValue) {
+		return BaseObjects.of(CollectionUtil.intoList(element));
 	}
 
 	@Override

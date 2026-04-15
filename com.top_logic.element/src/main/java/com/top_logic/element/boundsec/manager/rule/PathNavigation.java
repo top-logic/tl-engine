@@ -86,13 +86,13 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
     }
     
 	@Override
-	public Collection<? extends TLObject> getSources(TLObject destination) {
-		return this.getValues(destination, false);
+	public BaseObjects<? extends Collection<? extends TLObject>> getSources(TLObject destination) {
+		return BaseObjects.of(getValues(destination, false));
     }
 
 	@Override
-	public Collection<? extends TLObject> getPathBase(TLObject element, TLStructuredTypePart part,
-			Supplier<?> partValue) {
+	public BaseObjects<? extends Collection<? extends TLObject>> getPathBase(TLObject element,
+			TLStructuredTypePart part, Supplier<?> partValue) {
 		Collection<? extends TLObject> baseElements;
 		if (isInverse()) {
 			@SuppressWarnings("unchecked")
@@ -102,7 +102,7 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		} else {
 			baseElements = Collections.singleton(element);
 		}
-		return baseElements;
+		return BaseObjects.of(baseElements);
 	}
 
 	@Override

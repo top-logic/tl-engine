@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.base.cluster.ClusterManager;
@@ -29,6 +30,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.StorageException;
@@ -138,13 +140,18 @@ public class StorageAccessManager extends ElementAccessManager {
      * Saves the objects on an update security process, on which rule based roles are
      * invalid and must be recalculated. 
      */
-    protected Collection<BoundObject> invalidObjects;
+	protected Collection<BoundObject> _invalidObjects;
 
     /**
      * Saves the objects on an update security process, on which rule based roles for a given role are
      * invalid and must be recalculated. 
      */
-    protected Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = new HashMap<>();
+	protected Map<BoundRole, Set<BoundObject>> _invalidObjectsByRole = new HashMap<>();
+
+	/**
+	 * Saves the rules on an update security process which are invalid and must be recalculated.
+	 */
+	protected Set<RoleProvider> _invalidRules;
 
 	/** @see Config#getRebuildStrategy() */
 	private final RebuildStrategy _rebuildStrategy;
@@ -216,28 +223,55 @@ public class StorageAccessManager extends ElementAccessManager {
     }
 
     /**
-     * Adds objects whose roles were invalidated while an update process. Call this method
-     * at the begin of an update process, and call {@link #removeInvalidObjects}
-     * with the same collection after the update process is finished.
-     *
-     * @param anInvalidObjectsList
-     *        a collection of wrapper whose roles have become invalid
-     */
-    public void setInvalidObjects(Collection<BoundObject> anInvalidObjectsList, Map<BoundRole, Set<BoundObject>> someInvalidObjectsByRole) {
-        invalidObjects       = anInvalidObjectsList;
-        invalidObjectsByRole = someInvalidObjectsByRole;
+	 * Adds objects whose roles were invalidated while an update process. Call this method at the
+	 * begin of an update process, and call {@link #removeInvalidObjects} after the update process
+	 * is finished.
+	 *
+	 * @param anInvalidObjectsList
+	 *        The stored value for all roles for objects in the collection is invalid.
+	 * @param someInvalidObjectsByRole
+	 *        For each role the stored value for each object have become invalid.
+	 * @param invalidRules
+	 *        Each entry for elements in that match one of the rules is invalid.
+	 * 
+	 * @see #removeInvalidObjects()
+	 */
+	public void setInvalidObjects(Collection<BoundObject> anInvalidObjectsList,
+			Map<BoundRole, Set<BoundObject>> someInvalidObjectsByRole, Set<RoleProvider> invalidRules) {
+		if (_invalidObjects != null) {
+			throw failUpdateInProgress(anInvalidObjectsList, someInvalidObjectsByRole, invalidRules);
+		}
+		_invalidObjects = Objects.requireNonNull(anInvalidObjectsList);
+		_invalidObjectsByRole = Objects.requireNonNull(someInvalidObjectsByRole);
+		_invalidRules = Objects.requireNonNull(invalidRules);
     }
 
+	private IllegalStateException failUpdateInProgress(Collection<BoundObject> anInvalidObjectsList,
+			Map<BoundRole, Set<BoundObject>> someInvalidObjectsByRole, Set<RoleProvider> invalidRules) {
+		StringBuilder error = new StringBuilder();
+		error.append("Concurrent update in StorageAccessManager ");
+		error.append(this);
+		error.append(". Current values: ");
+		error.append("InvalidObjects: ").append(_invalidObjects);
+		error.append("InvalidObjectsByRole: ").append(_invalidObjectsByRole);
+		error.append("InvalidRules: ").append(_invalidRules);
+		error.append(". New values: ");
+		error.append("InvalidObjects: ").append(anInvalidObjectsList);
+		error.append("InvalidObjectsByRole: ").append(someInvalidObjectsByRole);
+		error.append("InvalidRules: ").append(invalidRules);
+		throw new IllegalStateException(error.toString());
+	}
+
     /**
-     * Removes objects whose roles were invalidated while an update process. Call this
-     * method at the end of an update process, and call
-     * {@link #setInvalidObjects(Collection, Map)} with the same collection at the beginning of
-     * an update process.
-     */
+	 * Removes objects whose roles were invalidated while an update process. Call this method at the
+	 * end of an update process.
+	 * 
+	 * @see #setInvalidObjects(Collection, Map, Set)
+	 */
     public void removeInvalidObjects() {
-        invalidObjects = null;
-        invalidObjectsByRole = null;
-        
+		_invalidObjects = null;
+		_invalidObjectsByRole = null;
+		_invalidRules = null;
     }
 
 
@@ -465,10 +499,21 @@ public class StorageAccessManager extends ElementAccessManager {
     }
     
     private boolean isInvalid(BoundObject aBO, BoundRole aRole) {
-    	if (invalidObjects != null && invalidObjects.contains(aBO)) return true;
-    	if (invalidObjectsByRole == null) return false;
-    	Set<BoundObject> theInvalidForRole = invalidObjectsByRole.get(aRole);
-    	if (theInvalidForRole != null && theInvalidForRole.contains(aBO)) return true;
+		if (_invalidObjects == null) {
+			// Check whether the update process has started.
+			return false;
+		}
+		if (_invalidObjects.contains(aBO)) {
+			return true;
+		}
+		if (_invalidObjectsByRole.getOrDefault(aRole, Collections.emptySet()).contains(aBO)) {
+			return true;
+		}
+		if (!_invalidRules.isEmpty()) {
+			if (_invalidRules.stream().anyMatch(rule -> rule.matches(aBO))) {
+				return true;
+			}
+		}
     	return false;
     }
 

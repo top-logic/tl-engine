@@ -140,11 +140,6 @@ public class TestConfigEditorControl extends TestCase {
 		}
 
 		@Override
-		protected String resolveHelpText(PropertyDescriptor property) {
-			return null;
-		}
-
-		@Override
 		protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
 			return new TestableConfigEditorControl(context, nested);
 		}
@@ -342,7 +337,7 @@ public class TestConfigEditorControl extends TestCase {
 		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
 		PropertyDescriptor handlerProp = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER);
 
-		java.util.List<Class<?>> options =
+		java.util.List<Object> options =
 			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, handlerProp).options();
 
 		assertTrue("Options should contain HandlerAConfig", options.contains(HandlerAConfig.class));

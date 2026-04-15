@@ -63,6 +63,8 @@ public class ContextMenuOpener {
 
 	private List<Targeted> _active = List.of();
 
+	private List<List<CommandModel>> _activeCommands = List.of();
+
 	private Supplier<ReactContext> _contextSupplier;
 
 	/**
@@ -93,39 +95,44 @@ public class ContextMenuOpener {
 		}
 
 		List<MenuEntry> items = new ArrayList<>();
+		List<List<CommandModel>> perContributionCommands = new ArrayList<>();
 		boolean anything = false;
 		for (int i = 0; i < contributions.size(); i++) {
-			List<CommandModel> commands = contributions.get(i).contribution().visibleCommands();
-			if (commands.isEmpty()) {
-				continue;
+			List<CommandModel> visible = contributions.get(i).contribution().visibleCommands();
+			List<CommandModel> sorted;
+			if (visible.isEmpty()) {
+				sorted = List.of();
+			} else {
+				sorted = new ArrayList<>(visible);
+				sorted.sort(Comparator.comparing(cmd -> nullSafe(cmd.getClique())));
+				if (anything) {
+					items.add(MenuEntry.separator());
+				}
+				appendCliqued(items, i, sorted);
+				anything = true;
 			}
-			if (anything) {
-				items.add(MenuEntry.separator());
-			}
-			appendCliqued(items, i, commands);
-			anything = true;
+			perContributionCommands.add(sorted);
 		}
 		if (!anything) {
 			return;
 		}
 
 		_active = List.copyOf(contributions);
+		_activeCommands = perContributionCommands;
 		_renderer.show(x, y, items, this::handleSelect, this::handleClose);
 	}
 
-	private static void appendCliqued(List<MenuEntry> out, int contributionIndex, List<CommandModel> commands) {
-		List<CommandModel> sorted = new ArrayList<>(commands);
-		sorted.sort(Comparator.comparing(cmd -> nullSafe(cmd.getClique())));
-
+	private static void appendCliqued(List<MenuEntry> out, int contributionIndex, List<CommandModel> sorted) {
 		String currentClique = null;
 		boolean first = true;
-		for (CommandModel cmd : sorted) {
+		for (int j = 0; j < sorted.size(); j++) {
+			CommandModel cmd = sorted.get(j);
 			String clique = nullSafe(cmd.getClique());
 			if (!first && !clique.equals(currentClique)) {
 				out.add(MenuEntry.separator());
 			}
 			out.add(MenuEntry.item(
-				contributionIndex + ":" + cmd.getName(),
+				contributionIndex + ":" + j,
 				cmd.getLabel(),
 				encodeIcon(cmd.getImage()),
 				!cmd.isExecutable()));
@@ -147,28 +154,21 @@ public class ContextMenuOpener {
 
 	private void handleSelect(String itemId) {
 		int colon = itemId.indexOf(':');
-		int idx = Integer.parseInt(itemId.substring(0, colon));
-		String name = itemId.substring(colon + 1);
-		Targeted t = _active.get(idx);
-		CommandModel cmd = findCommand(t.contribution().commands(), name);
+		int contributionIdx = Integer.parseInt(itemId.substring(0, colon));
+		int commandIdx = Integer.parseInt(itemId.substring(colon + 1));
+		List<CommandModel> commands = _activeCommands.get(contributionIdx);
+		CommandModel cmd = commandIdx < commands.size() ? commands.get(commandIdx) : null;
 		if (cmd != null && cmd.isExecutable()) {
 			cmd.executeCommand(currentReactContext());
 		}
 		_renderer.hide();
 		_active = List.of();
+		_activeCommands = List.of();
 	}
 
 	private void handleClose() {
 		_active = List.of();
-	}
-
-	private static CommandModel findCommand(List<CommandModel> list, String name) {
-		for (CommandModel cmd : list) {
-			if (name.equals(cmd.getName())) {
-				return cmd;
-			}
-		}
-		return null;
+		_activeCommands = List.of();
 	}
 
 	/**

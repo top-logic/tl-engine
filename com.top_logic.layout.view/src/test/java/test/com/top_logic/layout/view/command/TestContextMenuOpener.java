@@ -51,10 +51,10 @@ public class TestContextMenuOpener extends TestCase {
 
 		List<MenuEntry> items = renderer.lastItems;
 		assertEquals(4, items.size());
-		assertEquals("0:copy", items.get(0).id());
+		assertEquals("0:0", items.get(0).id());
 		assertEquals("separator", items.get(1).type());
-		assertEquals("1:edit", items.get(2).id());
-		assertEquals("1:delete", items.get(3).id());
+		assertEquals("1:0", items.get(2).id());
+		assertEquals("1:1", items.get(3).id());
 		assertEquals(10, renderer.lastX);
 		assertEquals(20, renderer.lastY);
 	}
@@ -85,7 +85,7 @@ public class TestContextMenuOpener extends TestCase {
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
 
 		opener.open(0, 0, List.of(new Targeted(c0, "obj0"), new Targeted(c1, "obj1")));
-		renderer.selectHandler.accept("1:edit");
+		renderer.selectHandler.accept("1:0");
 
 		assertEquals(0, cmdA.invocations);
 		assertEquals(1, cmdB.invocations);

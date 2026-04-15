@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<view>
+	<app-shell>
+		<content>
+			<panel>
+				<title>
+					<en>Sub-Window</en>
+					<de>Unterfenster</de>
+				</title>
+				<context-menu>
+					<commands>
+						<generic-command placement="CONTEXT_MENU">
+							<label>
+								<en>Hello from sub-window</en>
+								<de>Hallo aus Unterfenster</de>
+							</label>
+							<action class="com.top_logic.demo.view.command.SayHelloAction"/>
+						</generic-command>
+						<generic-command
+							placement="CONTEXT_MENU"
+							clique="DELETE"
+						>
+							<label>
+								<en>Goodbye from sub-window</en>
+								<de>Tschuess aus Unterfenster</de>
+							</label>
+							<action class="com.top_logic.demo.view.command.SayGoodbyeAction"/>
+						</generic-command>
+					</commands>
+					<card variant="elevated">
+						<title>
+							<en>Right-click in this sub-window to open the context menu.</en>
+							<de>Rechtsklicken Sie in diesem Unterfenster, um das Kontextmenue zu oeffnen.</de>
+						</title>
+						<demo-counter/>
+					</card>
+				</context-menu>
+			</panel>
+		</content>
+	</app-shell>
+</view>

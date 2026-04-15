@@ -39,6 +39,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for icon-only mode (image shown, label used as tooltip). */
 	private static final String ICON_ONLY = "iconOnly";
 
+	/** State key for an explicit button tooltip (plain text). */
+	private static final String TOOLTIP = "tooltip";
+
 	private final ButtonAction _action;
 
 	private CommandModel _model;
@@ -81,6 +84,7 @@ public class ReactButtonControl extends ReactControl {
 		setDisabled(!model.isExecutable());
 		setHidden(!model.isVisible());
 		setImage(model.getImage());
+		setTooltip(model.getTooltip());
 		model.addStateChangeListener(_modelChangeHandler);
 	}
 
@@ -121,6 +125,13 @@ public class ReactButtonControl extends ReactControl {
 		putState(ICON_ONLY, iconOnly);
 	}
 
+	/**
+	 * Sets the button tooltip text. {@code null} or empty clears the tooltip.
+	 */
+	public void setTooltip(String tooltip) {
+		putState(TOOLTIP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+	}
+
 	private void putImageState(ThemeImage image) {
 		if (image != null) {
 			putState(IMAGE, image.resolve().toEncodedForm());
@@ -148,6 +159,7 @@ public class ReactButtonControl extends ReactControl {
 		setLabel(_model.getLabel());
 		setDisabled(!_model.isExecutable());
 		setHidden(!_model.isVisible());
+		setTooltip(_model.getTooltip());
 	}
 
 }

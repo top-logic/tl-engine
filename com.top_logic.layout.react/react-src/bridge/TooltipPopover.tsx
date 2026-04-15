@@ -5,10 +5,12 @@ import {
   offset,
   flip,
   shift,
+  arrow,
   useDismiss,
   useRole,
   useInteractions,
   FloatingPortal,
+  FloatingArrow,
 } from '@floating-ui/react';
 
 export interface TooltipData {
@@ -30,18 +32,19 @@ export interface TooltipPopoverProps {
 
 export function TooltipPopover(props: TooltipPopoverProps) {
   const { anchor, data, onClose, onEnter, onLeave } = props;
+  const arrowRef = React.useRef<SVGSVGElement>(null);
 
-  const { refs, floatingStyles, context } = useFloating({
+  // Set the anchor synchronously during render so the first layout pass already has a reference.
+  // Using useEffect would defer this by one commit, causing a visible 0,0 flash before the first
+  // positioning update arrives.
+  const { refs, floatingStyles, context, isPositioned } = useFloating({
     open: true,
     onOpenChange: (open) => { if (!open) onClose(); },
     placement: 'top',
-    middleware: [offset(8), flip(), shift({ padding: 8 })],
+    elements: { reference: anchor },
+    middleware: [offset(10), flip(), shift({ padding: 8 }), arrow({ element: arrowRef })],
     whileElementsMounted: autoUpdate,
   });
-
-  React.useEffect(() => {
-    refs.setReference(anchor);
-  }, [anchor, refs]);
 
   const dismiss = useDismiss(context, { outsidePress: true, escapeKey: true });
   const role = useRole(context, { role: 'tooltip' });
@@ -51,7 +54,7 @@ export function TooltipPopover(props: TooltipPopoverProps) {
     <FloatingPortal>
       <div
         ref={refs.setFloating}
-        style={floatingStyles}
+        style={{ ...floatingStyles, visibility: isPositioned ? 'visible' : 'hidden' }}
         className="tl-tooltip-popover"
         onPointerEnter={onEnter}
         onPointerLeave={onLeave}
@@ -66,6 +69,13 @@ export function TooltipPopover(props: TooltipPopoverProps) {
         ) : (
           <div className="tl-tooltip-body">{data.text ?? ''}</div>
         )}
+        <FloatingArrow
+          ref={arrowRef}
+          context={context}
+          className="tl-tooltip-arrow"
+          width={12}
+          height={6}
+        />
       </div>
     </FloatingPortal>
   );

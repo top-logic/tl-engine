@@ -45,6 +45,9 @@ public interface ViewCommand {
 		/** Configuration name for {@link #getImage()}. */
 		String IMAGE = "image";
 
+		/** Configuration name for {@link #getTooltip()}. */
+		String TOOLTIP = "tooltip";
+
 		/** Configuration name for {@link #getCssClasses()}. */
 		String CSS_CLASSES = "css-classes";
 
@@ -94,6 +97,13 @@ public interface ViewCommand {
 		@Name(IMAGE)
 		@Nullable
 		ThemeImage getImage();
+
+		/**
+		 * The tooltip shown on hover for this command's button.
+		 */
+		@Name(TOOLTIP)
+		@Nullable
+		ResKey getTooltip();
 
 		/**
 		 * Additional CSS classes to apply to the command's UI element.

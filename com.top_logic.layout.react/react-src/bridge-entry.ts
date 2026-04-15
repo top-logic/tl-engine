@@ -19,8 +19,6 @@ export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
 export { default as TLChild } from './bridge/TLChild';
 export type { ChildDescriptor } from './bridge/TLChild';
-export { Tooltip } from './bridge/Tooltip';
-export type { TooltipProps, TooltipSpec } from './bridge/Tooltip';
 
 // Re-export React so that control bundles use the SAME React instance.
 //

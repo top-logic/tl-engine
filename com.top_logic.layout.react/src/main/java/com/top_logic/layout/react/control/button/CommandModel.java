@@ -58,6 +58,13 @@ public interface CommandModel {
 	ThemeImage getImage();
 
 	/**
+	 * The resolved tooltip text for the command button, or {@code null} if no tooltip is set.
+	 */
+	default String getTooltip() {
+		return null;
+	}
+
+	/**
 	 * Whether the command is currently executable.
 	 */
 	boolean isExecutable();

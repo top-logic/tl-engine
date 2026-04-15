@@ -191,6 +191,10 @@
 							<en>Designer</en>
 							<de>Designer</de>
 						</label>
+						<tooltip>
+							<en>Open the view designer to edit the current page.</en>
+							<de>Öffnet den View-Designer zur Bearbeitung der aktuellen Seite.</de>
+						</tooltip>
 					</open-designer>
 				</commands>
 				<title>

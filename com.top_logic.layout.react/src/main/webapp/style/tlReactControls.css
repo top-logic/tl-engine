@@ -3868,25 +3868,56 @@ button.tlMenu__item--disabled:hover {
   color: var(--text-on-color, #fff);
 }
 
-/* Rich tooltip popover (see tooltip-host.ts / TooltipPopover.tsx). */
+/*
+ * Rich tooltip popover (see tooltip-host.ts / TooltipPopover.tsx).
+ * Visually aligned with the legacy .tooltip styles in themes.core/core.css.
+ */
+@keyframes tl-tooltip-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 .tl-tooltip-popover {
-  background: var(--layer-01, #fff);
-  color: var(--text-primary, #1c1c1c);
-  border: 1px solid var(--border-subtle-01, #c6c6c6);
-  border-radius: 4px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-  padding: 10px 12px;
-  max-width: 420px;
-  font-size: 13px;
-  line-height: 1.4;
-  z-index: 10000;
+  --tl-tt-padding: var(--spacing-02);
+  background-color: var(--background-inverse);
+  color: var(--text-inverse);
+  border-radius: 6px;
+  filter: drop-shadow(var(--shadow-menu));
+  max-width: 500px;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.5;
+  z-index: 9999999999999999;
+  cursor: text;
   user-select: text;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  animation: tl-tooltip-in 140ms ease-out;
 }
 .tl-tooltip-caption {
+  padding: calc(var(--tl-tt-padding) / 2) 12px;
+  line-height: 1.5;
   font-weight: 600;
-  margin-bottom: 6px;
-  border-bottom: 1px solid var(--border-subtle-01, #e0e0e0);
-  padding-bottom: 4px;
+}
+.tl-tooltip-body {
+  overflow-y: auto;
+  white-space: normal;
+  overflow-wrap: break-word;
+  padding: var(--tl-tt-padding) 0.75rem;
+  line-height: 1.5;
+  text-align: left;
+  color: inherit;
+}
+.tl-tooltip-body * {
+  color: inherit;
+  line-height: 1.5;
 }
 .tl-tooltip-body p:first-child { margin-top: 0; }
 .tl-tooltip-body p:last-child  { margin-bottom: 0; }
+.tl-tooltip-body :is(ol, ul) {
+  padding-left: 0.75rem;
+}
+.tl-tooltip-arrow {
+  fill: var(--background-inverse);
+}

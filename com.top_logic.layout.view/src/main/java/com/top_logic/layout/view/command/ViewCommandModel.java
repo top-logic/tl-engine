@@ -96,6 +96,17 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getImage();
 	}
 
+	@Override
+	public String getTooltip() {
+		ResKey key = _config.getTooltip();
+		if (key == null) {
+			return null;
+		}
+		return ResourcesModule.getInstance()
+			.getBundle(Locale.getDefault())
+			.getString(key);
+	}
+
 	/**
 	 * The command's CSS classes.
 	 */

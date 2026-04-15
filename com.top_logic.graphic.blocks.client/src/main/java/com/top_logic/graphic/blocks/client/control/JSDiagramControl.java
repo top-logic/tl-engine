@@ -468,7 +468,12 @@ public class JSDiagramControl extends AbstractJSControl
 				factor = 0.75;
 				break;
 			case FIXED_150:
-				factor = 1.5;
+				// The interactive zoom display in calcZoomLevel() uses a non-linear scale above
+				// 100%: each "level" doubles the factor, and zoomLevel = level*100 + fract*100
+				// where viewbox/control = (2 - fract) / 2^level. Solving for "150%"
+				// (level=1, fract=0.5) yields a real factor of (2-0.5)/2 = 0.75 viewbox ratio,
+				// i.e. 4/3 — not 1.5. Using 1.5 here would make the display read "167%".
+				factor = 4.0 / 3.0;
 				break;
 			case FIXED_200:
 				factor = 2.0;

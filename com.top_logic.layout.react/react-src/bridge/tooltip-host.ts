@@ -170,12 +170,13 @@ function cancelClose(): void {
 }
 
 function renderActive(): void {
-  if (!_root) return;
+  if (!_root || !_hostDiv) return;
   if (!_active) { _root.render(null); return; }
   const { anchor, data } = _active;
   _root.render(
     React.createElement(TooltipPopover, {
       anchor, data,
+      portalRoot: _hostDiv,
       onClose: () => { _active = null; renderActive(); },
       onEnter: cancelClose,
       onLeave: scheduleClose,

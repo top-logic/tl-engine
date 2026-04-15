@@ -31,13 +31,15 @@ export interface TooltipData {
 export interface TooltipPopoverProps {
   anchor: Element;
   data: TooltipData;
+  /** Element used as the portal target for the floating popover (e.g. the per-window tooltip host). */
+  portalRoot: HTMLElement;
   onClose: () => void;
   onEnter: () => void;
   onLeave: () => void;
 }
 
 export function TooltipPopover(props: TooltipPopoverProps) {
-  const { anchor, data, onClose, onEnter, onLeave } = props;
+  const { anchor, data, portalRoot, onClose, onEnter, onLeave } = props;
   const arrowRef = React.useRef<SVGSVGElement>(null);
 
   // Set the anchor synchronously during render so the first layout pass already has a reference.
@@ -57,14 +59,14 @@ export function TooltipPopover(props: TooltipPopoverProps) {
   const { getFloatingProps } = useInteractions([dismiss, role]);
 
   return (
-    <FloatingPortal>
+    <FloatingPortal root={portalRoot}>
       <div
         ref={refs.setFloating}
         style={data.interactive ? floatingStyles : { ...floatingStyles, pointerEvents: 'none' }}
         className={'tl-tooltip-popover' + (data.interactive ? ' tl-tooltip-popover--interactive' : '')}
+        {...getFloatingProps()}
         onPointerEnter={onEnter}
         onPointerLeave={onLeave}
-        {...getFloatingProps()}
       >
         {data.caption ? <div className="tl-tooltip-caption">{data.caption}</div> : null}
         {data.html != null ? (

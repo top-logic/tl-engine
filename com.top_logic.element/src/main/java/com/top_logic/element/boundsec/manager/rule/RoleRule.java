@@ -300,20 +300,23 @@ public class RoleRule implements RoleProvider {
     }
 
     @Override
-	public Set<BoundObject> getBaseObjects(Object aDestination) {
+	public BaseObjects<Set<BoundObject>> getBaseObjects(Object aDestination) {
 		if (!(aDestination instanceof TLObject)) {
-    		return Collections.emptySet();
+			return BaseObjects.of(Collections.emptySet());
     	}
 		TLObject theDestination = (TLObject) aDestination;
 		Set<TLObject> theCollector = new HashSet<>();
-        this.getContentBackwards(theDestination, this.path, this.path.size() - 1, theCollector);
+        boolean couldBeComputed = this.getContentBackwards(theDestination, this.path, this.path.size() - 1, theCollector);
+		if (!couldBeComputed) {
+			return BaseObjects.all();
+		}
 
         Wrapper theBase = this.getBase();
         if (theBase != null) {
             if (theCollector.contains(theBase)) {
-                return ElementAccessHelper.getTargetObjects(this);
+				return BaseObjects.of(ElementAccessHelper.getTargetObjects(this));
             } else {
-                return Collections.emptySet();
+				return BaseObjects.of(Collections.emptySet());
             }
         } else {
 			for (Iterator<TLObject> it = theCollector.iterator(); it.hasNext();) {
@@ -321,7 +324,7 @@ public class RoleRule implements RoleProvider {
                     it.remove();
                 }
             }
-			return (Set) theCollector;
+			return BaseObjects.of((Set) theCollector);
         }
     }
 
@@ -341,18 +344,26 @@ public class RoleRule implements RoleProvider {
         }
     }
 
-	private void getContentBackwards(TLObject aNode, List<PathElement> aPath, int aPosition, Set<TLObject> aResult) {
+	private boolean getContentBackwards(TLObject aNode, List<PathElement> aPath, int aPosition, Set<TLObject> aResult) {
 		PathElement thePE = aPath.get(aPosition);
-		Collection<? extends TLObject> theNodeElements = thePE.getSources(aNode);
+		BaseObjects<? extends Collection<? extends TLObject>> nodeElements = thePE.getSources(aNode);
+		if (nodeElements.isAll()) {
+			return false;
+		}
+		Collection<? extends TLObject> theNodeElements = nodeElements.get();
         if (aPosition == 0) {
             aResult.addAll(theNodeElements);
         } else {
             int theChildPosition = aPosition - 1;
 			for (Iterator<? extends TLObject> theIt = theNodeElements.iterator(); theIt.hasNext();) {
 				TLObject theElement = theIt.next();
-                this.getContentBackwards(theElement, aPath, theChildPosition, aResult);
+				boolean couldBeComputed = this.getContentBackwards(theElement, aPath, theChildPosition, aResult);
+				if (!couldBeComputed) {
+					return false;
+				}
             }
         }
+		return true;
     }
 
     /**

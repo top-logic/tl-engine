@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -27,7 +29,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
-import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.StorageException;
@@ -61,6 +62,20 @@ public class ElementSecurityStorage extends SecurityStorage {
 		super(context, config);
     }
 
+	@Override
+	public void startUp(AccessManager accessManager) {
+		if (!(accessManager instanceof ElementAccessManager)) {
+			throw new IllegalArgumentException(
+				"Cannot get instance of ElementAccessManager. Configured AccessManager must be instanceof ElementAccessManager.");
+		}
+		super.startUp(accessManager);
+	}
+
+	@Override
+	protected ElementAccessManager getAccessManager() {
+		return (ElementAccessManager) super.getAccessManager();
+	}
+
     /**
 	 * Updates the database entries based on rules by reevaluating affected rules for affected
 	 * business objects.
@@ -70,23 +85,23 @@ public class ElementSecurityStorage extends SecurityStorage {
 	 * storage.
 	 *
 	 * @param aChangesInformation
-	 *        a Map of {@link RoleRule} -> {@link Collection} of {@link Wrapper} containing all
-	 *        rules and business objects affected by a change
+	 *        A {@link Map} of {@link RoleProvider} -> {@link Collection} of {@link Wrapper}
+	 *        containing all rules and business objects affected by a change
+	 * @param invalidRules
+	 *        A {@link Set} of {@link RoleProvider} containing invalid rules.
 	 * @throws StorageException
 	 *         if some error occurs while requesting the database
 	 */
     @Override
-    public void internalUpdateSecurity(Object aChangesInformation) throws StorageException {
+	public void internalUpdateSecurity(Object aChangesInformation, Object invalidRules) throws StorageException {
         if (!(aChangesInformation instanceof Map)) {
             throw new IllegalArgumentException("aChangesInformation must be instanceof Map.");
         }
-        if (!(getAccessManager() instanceof ElementAccessManager)) {
-            throw new StorageException("Cannot get instance of ElementAccessManager. Configured AccessManager must be instanceof ElementAccessManager.");
-        }
-
+		if (!(invalidRules instanceof Set)) {
+			throw new IllegalArgumentException("invalidRules must be instanceof Set.");
+		}
         Map<RoleProvider,Collection<BoundObject>> theChangedMap = (Map<RoleProvider,Collection<BoundObject>>) aChangesInformation;
-        ElementAccessManager                      theAM         = (ElementAccessManager)getAccessManager();
-
+		ElementAccessManager theAM = getAccessManager();
         // vector for insert parameters - group, object, role, rule
 		Object[] theVector = new Object[] { null, null, null, null };
 
@@ -96,10 +111,9 @@ public class ElementSecurityStorage extends SecurityStorage {
 		List<Object[]> batchInserts = new ArrayList<>();
 		Map<Object, Object> sharedIds = new HashMap<>();
 
+		// Cache mode has no real effect when using incremental updates
+		theAM.beginCacheMode();
         try {
-            // Cache mode has no real effect when using incremental updates
-            theAM.beginCacheMode();
-
             // Iterator <RoleRule>
             long startTime = System.currentTimeMillis();
             for (RoleProvider theRule : theChangedMap.keySet()) {
@@ -200,11 +214,35 @@ public class ElementSecurityStorage extends SecurityStorage {
             multiDeleteAndInsert(batchRemoves, batchInserts);
 			sharedIds = null; // release memory
 
-            Logger.debug("ElementSecurityStorage: Reevaluate rules in second step with " + iCount + " inserts : " + DebugHelper.getTime(System.currentTimeMillis() - startTime), ElementSecurityStorage.class);
+			fullRebuildRules(theAM, (Set<RoleProvider>) invalidRules);
+
+			int numberBatches = iCount;
+			Logger
+				.debug(
+					() -> "ElementSecurityStorage: Reevaluate rules in second step with " + numberBatches
+							+ " inserts : " + DebugHelper.getTime(System.currentTimeMillis() - startTime),
+					ElementSecurityStorage.class);
         }
         finally {
             theAM.endCacheMode();
         }
+	}
+
+	/**
+	 * Rebuilds the security storage for the given {@link RoleProvider rules}.
+	 */
+	protected void fullRebuildRules(ElementAccessManager accessManager, Set<RoleProvider> invalidRules)
+			throws StorageException {
+		if (invalidRules.isEmpty()) {
+			return;
+		}
+		try {
+			int removedEntries = executor.removeReasons(invalidRules.stream().map(accessManager::getPersitancyId).iterator());
+			Logger.debug(() -> "Removed " + removedEntries + " for invalid rules.", ElementSecurityStorage.class);
+		} catch (SQLException e) {
+			throw new StorageException("Error while requesting the database.", e);
+		}
+		computeRoles(invalidRules);
 	}
 
 	protected void flushDeleteAndInsert(List<Object[]> batchRemoves, List<Object[]> batchInserts, Map<?, ?> sharedIds) throws StorageException {
@@ -249,13 +287,10 @@ public class ElementSecurityStorage extends SecurityStorage {
      */
     @Override
     protected void doComputeRoles() throws StorageException {
-        AccessManager theAM = getAccessManager();
-        if (!(theAM instanceof ElementAccessManager)) {
-            throw new StorageException("Cannot get instance of ElementAccessManager");
-        }
+		ElementAccessManager theAM = getAccessManager();
         super.doComputeRoles();
 
-        ((ElementAccessManager)theAM).beginCacheMode();
+		theAM.beginCacheMode();
         try {
             Logger.info("Computing rules...", ElementSecurityStorage.class);
 			StopWatch sw = StopWatch.createStartedWatch();
@@ -263,7 +298,7 @@ public class ElementSecurityStorage extends SecurityStorage {
 			Logger.info("Computing of rules completed in " + sw + ".", ElementSecurityStorage.class);
         }
         finally {
-            ((ElementAccessManager)theAM).endCacheMode();
+			theAM.endCacheMode();
         }
     }
 
@@ -276,23 +311,57 @@ public class ElementSecurityStorage extends SecurityStorage {
 	 *         if some error occurs while requesting the database
 	 */
     protected void computeMERuleBasedRoles() throws StorageException {
-        Logger.info("Computing ME rules...", ElementSecurityStorage.class);
+		Logger.info("Computing ME rules...", ElementSecurityStorage.class);
 		StopWatch sw = StopWatch.createStartedWatch();
+
+		RoleComputationResult counter = internalComputeMERuleBasedRoles(getAccessManager().getResolvedMERules());
+
+		Logger.info("Done in " + sw + ". Executed " + counter.executions() + " ME based rules (business objects: "
+				+ counter.objects() + ", rules: " + counter.rules() + "). Computed entries: " + counter.entries() + ".",
+			ElementSecurityStorage.class);
+	}
+
+	/**
+	 * Creates the database entries for the given rules.
+	 *
+	 * @throws StorageException
+	 *         if some error occurs while requesting the database
+	 */
+	protected void computeRoles(Collection<? extends RoleProvider> rules) throws StorageException {
+		Map<TLClass, Collection<RoleProvider>> allRules = getAccessManager().getResolvedMERules();
+		Map<TLClass, Collection<RoleProvider>> filtered = new HashMap<>();
+		for (Entry<TLClass, Collection<RoleProvider>> e : allRules.entrySet()) {
+			HashSet<RoleProvider> rulesForType = new HashSet<>(e.getValue());
+			rulesForType.retainAll(rules);
+			if (!rulesForType.isEmpty()) {
+				filtered.put(e.getKey(), rulesForType);
+			}
+		}
+
+		internalComputeMERuleBasedRoles(filtered);
+	}
+
+	/**
+	 * Creates the database entries for the given types.
+	 * 
+	 * @param rulesByType
+	 *        Mapping from the type to the rules for which roles must be computed.
+	 */
+	protected RoleComputationResult internalComputeMERuleBasedRoles(Map<TLClass, Collection<RoleProvider>> rulesByType)
+			throws StorageException {
         int counterBOs = 0, counterRules = 0, counterExecs = 0, counterEntries = 0;
-        ElementAccessManager theAM = (ElementAccessManager)getAccessManager();
 
 		List<Object[]> batchInserts = new ArrayList<>();
 		Map<Object, Object> sharedIds = new HashMap<>();
 
         // Vector for insert parameters - group, object, role, rule
 		Object[] theVector = new Object[] { null, null, null, null };
+		ElementAccessManager am = getAccessManager();
 
-		Map<TLClass, Collection<RoleProvider>> theMetaElements = theAM.getResolvedMERules();
-
-		Iterator<TLClass> itME = theMetaElements.keySet().iterator();
+		Iterator<TLClass> itME = rulesByType.keySet().iterator();
         while (itME.hasNext()) {
 			TLClass theME = itME.next();
-			Collection<RoleProvider> theRules = theMetaElements.get(theME);
+			Collection<RoleProvider> theRules = rulesByType.get(theME);
             counterRules += theRules.size();
 
 			try (CloseableIterator<Wrapper> theObjectIterator =
@@ -306,7 +375,7 @@ public class ElementSecurityStorage extends SecurityStorage {
 					while (itRule.hasNext()) {
 						RoleProvider theRule = itRule.next();
 					    theVector[2] = roleId(theRule);
-					    theVector[3] = theAM.getPersitancyId(theRule);
+						theVector[3] = am.getPersitancyId(theRule);
 						Collection<Group> theGroups = theRule.getGroups((BoundObject) theBusinessObject);
 					    counterExecs++;
 
@@ -327,10 +396,11 @@ public class ElementSecurityStorage extends SecurityStorage {
             }
         }
 		multiInsert(batchInserts);
-		Logger.info(
-			"Done in " + sw + ". Executed " + counterExecs + " ME based rules (business objects: " + counterBOs
-				+ ", rules: " + counterRules + "). Computed entries: " + counterEntries + ".",
-			ElementSecurityStorage.class);
+
+		return new RoleComputationResult(counterBOs, counterRules, counterExecs, counterEntries);
+	}
+
+	private static record RoleComputationResult(int objects, int rules, int executions, int entries) {
 	}
 
 	private Object roleId(RoleProvider theRule) {

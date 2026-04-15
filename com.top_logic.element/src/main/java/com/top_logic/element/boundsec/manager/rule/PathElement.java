@@ -55,11 +55,12 @@ public interface PathElement {
 	 * @param destination
 	 *        The object to determine the sources for. Must not be <code>null</code>.
 	 * @return The objects that reach {@code destination} by following this path element. Never
-	 *         <code>null</code>.
+	 *         <code>null</code>. When no sources can be computed, then {@link BaseObjects#all()} is
+	 *         returned.
 	 * 
 	 * @see #getValues(TLObject)
 	 */
-	Collection<? extends TLObject> getSources(TLObject destination);
+	BaseObjects<? extends Collection<? extends TLObject>> getSources(TLObject destination);
 
 	/**
 	 * Determines base objects for this {@link PathElement} when the value for the given part in the
@@ -75,8 +76,12 @@ public interface PathElement {
 	 *        Supplier for the value of the element. <b> Attention:</b> When the part is a multiple
 	 *        reference then the value does not contain all referenced objects but only the
 	 *        difference to the value before.
+	 * 
+	 * @return When no base elements can be computed, then {@link BaseObjects#all()} is returned.
+	 * 
 	 */
-	Collection<? extends TLObject> getPathBase(TLObject element, TLStructuredTypePart part, Supplier<?> partValue);
+	BaseObjects<? extends Collection<? extends TLObject>> getPathBase(TLObject element, TLStructuredTypePart part,
+			Supplier<?> partValue);
 
 	/**
 	 * Appends a machine-readable identifier for this path element to the given output.

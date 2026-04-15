@@ -20,6 +20,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
+import com.top_logic.element.boundsec.manager.rule.BaseObjects;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
 import com.top_logic.element.meta.AttributeOperations;
@@ -323,8 +324,8 @@ public class ElementAccessHelper {
 	 *        Supplier delivering values for the part. When the part is a multiple reference, then
 	 *        the part value may not deliver all values.
 	 */
-	public static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject obj, TLStructuredTypePart part,
-			Supplier<?> partValue) {
+	public static BaseObjects<Set<BoundObject>> navigateRoleRuleBackwards(RoleRule rule, TLObject obj,
+			TLStructuredTypePart part, Supplier<?> partValue) {
 
 		List<PathElement> path = rule.getPath();
 
@@ -340,14 +341,32 @@ public class ElementAccessHelper {
 		return navigateRoleRuleBackwards(rule, obj, part, partValue, partIndexes);
 	}
 
-	private static Set<BoundObject> navigateRoleRuleBackwards(RoleRule rule, TLObject base, TLStructuredTypePart part,
+	private static BaseObjects<Set<BoundObject>> navigateRoleRuleBackwards(RoleRule rule, TLObject base,
+			TLStructuredTypePart part,
 			Supplier<?> partValue, List<Integer> indexes) {
 		List<PathElement> path = rule.getPath();
 		Set<BoundObject> theResult = new HashSet<>();
 		for (Integer index : indexes) {
-			PathElement thePE = path.get(index.intValue());
-			Collection<? extends TLObject> theWrapper = thePE.getPathBase(base, part, partValue);
-			addBaseObjects(path, index.intValue(), theWrapper, theResult);
+			int idx = index.intValue();
+			PathElement thePE = path.get(idx);
+			BaseObjects<? extends Collection<? extends TLObject>> theWrapper = thePE.getPathBase(base, part, partValue);
+			if (theWrapper.isAll()) {
+				return BaseObjects.all();
+			}
+			Collection<? extends TLObject> sources = theWrapper.get();
+			for (int pos = idx - 1; pos >= 0; pos--) {
+				Set<TLObject> newSources = new HashSet<>();
+				PathElement newPE = path.get(pos);
+				for (TLObject source : sources) {
+					BaseObjects<? extends Collection<? extends TLObject>> baseObjects = newPE.getSources(source);
+					if (baseObjects.isAll()) {
+						return BaseObjects.all();
+					}
+					newSources.addAll(baseObjects.get());
+				}
+				sources = newSources;
+			}
+			uncheckedAddAll(sources, theResult);
 		}
 
 		// handle base object
@@ -362,12 +381,12 @@ public class ElementAccessHelper {
 				}
 			}
 
-			return theResult;
+			return BaseObjects.of(theResult);
 		} else {
 			if (theResult.contains(theBaseObject)) {
-				return getTargetObjects(rule);
+				return BaseObjects.of(getTargetObjects(rule));
 			} else {
-				return Collections.emptySet();
+				return BaseObjects.of(Collections.emptySet());
 			}
 		}
 	}
@@ -394,25 +413,7 @@ public class ElementAccessHelper {
 		return theResult;
     }
 
-	private static void addBaseObjects(List<PathElement> aPath, int aPos, Collection<? extends TLObject> someSources,
-			Set<BoundObject> someResult) {
-        if (aPos == 0) {
-            uncheckedAddAll(someSources, someResult);
-        } else {
-			Set<TLObject> theNewSources = new HashSet<>();
-            int           theNewPos     = aPos - 1;
-            PathElement   thePE         = aPath.get(theNewPos);
-			for (Iterator<? extends TLObject> theIt = someSources.iterator(); theIt.hasNext();) {
-				TLObject theSource = theIt.next();
-				theNewSources.addAll(thePE.getSources(theSource));
-            }
-            addBaseObjects(aPath, theNewPos, theNewSources, someResult);
-        }
-    }
-
-
-
-    /**
+	/**
 	 * Gets a set with the given type and all specializations.
 	 *
 	 * @param aMetaElement

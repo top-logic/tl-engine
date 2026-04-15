@@ -32,6 +32,7 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.util.Computation;
+import com.top_logic.element.boundsec.manager.rule.BaseObjects;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
@@ -189,6 +190,9 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		/* Collection of all objects for which a {@link BoundedRole#ROLE_ASSIGNMENT_TYPE role
 		 * assignment} was created or deleted. */
 		Set<BoundObject> invalidObjects = new HashSet<>();
+		/* All {@link RoleProvider} for which no invalid objects could be determined. The security
+		 * storage for these rules must be rebuild. */
+		Set<RoleProvider> invalidRules = new HashSet<>();
 
 		securityStorage.begin(aHandler);
 		
@@ -196,7 +200,6 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		Set<TLObject> addedDirectRoles = new HashSet<>();
 		Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> removed = new HashMap<>();
 		Set<TLObject> removedDirectRoles = new HashSet<>();
-
 		if (!creations.isEmpty()) {
 			for (TLObjectCreation creation : creations) {
 				TLObject createdObject = creation.object();
@@ -310,7 +313,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			TLObject object = e.getKey();
 			e.getValue().entrySet()
 				.forEach(entry -> handleReference(object, entry.getKey(), entry.getValue(),
-					rulesToObjectsMap, true));
+					rulesToObjectsMap, invalidRules, true));
 		}
 		kb.withoutModifications(() -> {
 			for (TLObject removedDirectRole : removedDirectRoles) {
@@ -320,19 +323,19 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 				TLObject object = e.getKey();
 				e.getValue().entrySet()
 					.forEach(entry -> handleReference(object, entry.getKey(), entry.getValue(),
-						rulesToDeletedObjectsMap, false));
+						rulesToDeletedObjectsMap, invalidRules, false));
 			}
 			return null;
 		});
 
 		handleInheritance(kb, someRemoved.values(), newRoleAssignments, deletedRoleAssignments, rulesToObjectsMap,
-			rulesToDeletedObjectsMap);
-		handleNewObjects(creations, rulesToObjectsMap);
+			rulesToDeletedObjectsMap, invalidRules);
+		handleNewObjects(creations, rulesToObjectsMap, invalidRules);
 
 		getLogHandler().logSecurityUpdate(change, rulesToObjectsMap, invalidObjects);
 
 		Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = mergeValuesByRole(rulesToObjectsMap);
-		updateSecurityStorage(someRemoved, invalidObjects, invalidObjectsByRole, rulesToObjectsMap);
+		updateSecurityStorage(someRemoved, invalidObjects, invalidObjectsByRole, rulesToObjectsMap, invalidRules);
 	}
 
 		private static void put(Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> map, TLObject object, TLStructuredTypePart ref,
@@ -346,7 +349,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 	 * attribute; e.g. inherit a role from a root object to all instances of a certain type.
 	 */
 	private void handleNewObjects(List<TLObjectCreation> creations,
-			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap) {
+			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap, Set<RoleProvider> invalidRules) {
 		Map<TLClass, Collection<RoleProvider>> meRules = accessManager.getResolvedMERules();
 
 		for (TLObjectCreation creation : creations) {
@@ -357,6 +360,10 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			} else {
 				Collection<RoleProvider> rulesForType = meRules.getOrDefault(objType, Collections.emptyList());
 				for (RoleProvider rule : rulesForType) {
+					if (invalidRules.contains(rule)) {
+						// Rule is completely rebuild.
+						continue;
+					}
 					add(rulesToObjectsMap, rule, (BoundObject) createdObject);
 				}
 			}
@@ -365,29 +372,31 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 
 	private void updateSecurityStorage(Map<TLID, KnowledgeItem> someRemoved,
 			Collection<BoundObject> invalidObjects, Map<BoundRole, Set<BoundObject>> invalidObjectsByRole,
-			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap) {
+			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap, Set<RoleProvider> invalidRules) {
 		long start = System.currentTimeMillis();
 		try {
 			// Set invalid objects
-			if (accessManager instanceof StorageAccessManager) {
-				((StorageAccessManager) accessManager).setInvalidObjects(invalidObjects, invalidObjectsByRole);
+			if (accessManager instanceof StorageAccessManager sam) {
+				sam.setInvalidObjects(invalidObjects, invalidObjectsByRole, invalidRules);
 			}
+			try {
+				try { // remove security entries of removed objects
+					securityStorage.removeObjects(someRemoved);
+				} catch (StorageException ex) {
+					Logger.error("Failed to remove security entries of removed objects.", ex, this);
+				}
 
-			try { // remove security entries of removed objects
-				securityStorage.removeObjects(someRemoved);
-			} catch (StorageException ex) {
-				Logger.error("Failed to remove security entries of removed objects.", ex, this);
-			}
-
-			try { // update security entries of changed objects
-				securityStorage.updateSecurity(rulesToObjectsMap);
-			} catch (StorageException ex) {
-				Logger.error("Failed to update security entries of changed objects.", ex, this);
+				try { // update security entries of changed objects
+					securityStorage.updateSecurity(rulesToObjectsMap, invalidRules);
+				} catch (StorageException ex) {
+					Logger.error("Failed to update security entries of changed objects.", ex, this);
+				}
+			} finally {
+				if (accessManager instanceof StorageAccessManager sam) {
+					sam.removeInvalidObjects();
+				}
 			}
 		} finally {
-			if (accessManager instanceof StorageAccessManager) {
-				((StorageAccessManager) accessManager).removeInvalidObjects();
-			}
 			long delta = System.currentTimeMillis() - start;
 			if (delta > 3000) {
 				Logger.warn("Incremental security update needed " + DebugHelper.getTime(delta),
@@ -398,14 +407,26 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 
 	private void handleReference(TLObject baseObject, TLStructuredTypePart part,
 			Supplier<?> partValue, Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap,
-			boolean isAdded) {
+			Set<RoleProvider> invalidRules, boolean isAdded) {
 		try {
 			for (Iterator<RoleProvider> theIt = accessManager.getRules(part).iterator(); theIt.hasNext();) {
 				RoleProvider theRule = theIt.next();
-				if (theRule instanceof RoleRule) {
-					Set<BoundObject> theBaseObjects =
-						ElementAccessHelper.navigateRoleRuleBackwards((RoleRule) theRule, baseObject,
-							part, partValue);
+				if (invalidRules.contains(theRule)) {
+					/* Rule must be completely recomputed. Remove potentially previously added
+					 * elements. */
+					rulesToObjectsMap.remove(theRule);
+					continue;
+				}
+				if (!(theRule instanceof RoleRule)) {
+					continue;
+				}
+
+				BaseObjects<Set<BoundObject>> baseObjects =
+					ElementAccessHelper.navigateRoleRuleBackwards((RoleRule) theRule, baseObject, part, partValue);
+				if (baseObjects.isAll()) {
+					invalidRules.add(theRule);
+				} else {
+					Set<BoundObject> theBaseObjects = baseObjects.get();
 					if (!CollectionUtil.isEmptyOrNull(theBaseObjects)) {
 						addAll(rulesToObjectsMap, theRule, theBaseObjects);
 					}
@@ -450,11 +471,12 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			Map<BoundRole, Set<Object>> newRoleAssignments,
 			Map<BoundRole, Set<Object>> deletedRoleAssignments,
 			Map<RoleProvider, Set<BoundObject>> rulesToObjectsMap,
-			Map<RoleProvider, Set<BoundObject>> rulesToDeletedObjectsMap) {
+			Map<RoleProvider, Set<BoundObject>> rulesToDeletedObjectsMap, Set<RoleProvider> invalidRules) {
 
 		/* For each role we have a set of affected objects */
 		for (Entry<BoundRole, Set<Object>> entry : newRoleAssignments.entrySet()) {
-			addInheritedRules(rulesToObjectsMap, entry.getKey(), entry.getValue(), Collections.emptySet());
+			addInheritedRules(rulesToObjectsMap, entry.getKey(), entry.getValue(), Collections.emptySet(),
+				invalidRules);
 		}
 
 		kb.withoutModifications(new Computation<Void>() {
@@ -462,10 +484,11 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 			@Override
 			public Void run() {
 				for (Entry<BoundRole, Set<Object>> entry : deletedRoleAssignments.entrySet()) {
-					addInheritedRules(rulesToObjectsMap, entry.getKey(), entry.getValue(), removed);
+					addInheritedRules(rulesToObjectsMap, entry.getKey(), entry.getValue(), removed, invalidRules);
 				}
 				for (Entry<RoleProvider, Set<BoundObject>> entry : rulesToDeletedObjectsMap.entrySet()) {
-					addInheritedRules(rulesToObjectsMap, entry.getKey().getRole(), entry.getValue(), removed);
+					addInheritedRules(rulesToObjectsMap, entry.getKey().getRole(), entry.getValue(), removed,
+						invalidRules);
 				}
 				return null;
 			}
@@ -484,7 +507,7 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 
 			for (Entry<RoleProvider, Set<BoundObject>> entry : theRulesToObjectsToBeConsidered.entrySet()) {
 				addInheritedRules(someMoreRulesToObjects, entry.getKey().getRole(), entry.getValue(),
-					Collections.emptySet());
+					Collections.emptySet(), invalidRules);
 			}
             // finally we add all the new entries to the original "rules to be considered" map
             // in order to return the enriched map to the calling method
@@ -520,17 +543,30 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 	 * @param removed
 	 *        All removed items. Only elements that are not contained in this collection must be
 	 *        stored in <code>out</code>.
+	 * @param invalidRules
+	 *        Set of {@link RoleProvider} for which no base objects could be determined. A complete
+	 *        rebuild for these rules must be performed.
 	 */
 	private void addInheritedRules(Map<RoleProvider, Set<BoundObject>> out, BoundRole role,
-			Collection<?> objects, Collection<KnowledgeItem> removed) {
+			Collection<?> objects, Collection<KnowledgeItem> removed, Set<RoleProvider> invalidRules) {
 
 		/* We take all inheritance rules that declare the given role as source role. */
 		for (RoleProvider inheritRule : accessManager.getRulesWithSourceRole(role, Type.inheritance)) {
 			/* For each inheritance rule we determine the affected base objects starting from
 			 * the objects affected by the given role assignment. All these objects are added to
 			 * the new "rules to be considered" map. */
+			if (invalidRules.contains(inheritRule)) {
+				continue;
+			}
 			for (Object object : objects) {
-				Set<BoundObject> baseObjects = inheritRule.getBaseObjects(object);
+				BaseObjects<Set<BoundObject>> baseObjectsObj = inheritRule.getBaseObjects(object);
+				if (baseObjectsObj.isAll()) {
+					invalidRules.add(inheritRule);
+					// inherited rule is completely invalid
+					break;
+				}
+				Set<BoundObject> baseObjects = baseObjectsObj.get();
+
 				if (CollectionUtil.isEmptyOrNull(baseObjects)) {
 					continue;
 				}
@@ -565,6 +601,8 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 				}
 		    }
 		}
+		/* For rebuild roles no objects are stored in "out". These rules are handled explicit. */
+		out.keySet().removeAll(invalidRules);
 	}
 
 	private void mergeMaps(

@@ -590,6 +590,26 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.iconSelect.chooseIcon")
 	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
 
+	// -- Window client-side i18n keys --
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.window.close")
+	public static ResKey JS_WINDOW_CLOSE;
+
+	/**
+	 * @en Maximize
+	 */
+	@CustomKey("js.window.maximize")
+	public static ResKey JS_WINDOW_MAXIMIZE;
+
+	/**
+	 * @en Restore
+	 */
+	@CustomKey("js.window.restore")
+	public static ResKey JS_WINDOW_RESTORE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

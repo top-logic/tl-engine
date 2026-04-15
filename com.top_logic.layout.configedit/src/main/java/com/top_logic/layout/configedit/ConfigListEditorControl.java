@@ -21,7 +21,6 @@ import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
-import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -199,19 +198,22 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	private ReactFormFieldChromeControl createTypeSelector(ConfigurationItem item) {
-		Class<?> currentClass = PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), item);
-		List<String> options = _choices.options().stream().map(Class::getName).toList();
-		String currentFqcn = currentClass != null ? currentClass.getName() : null;
-		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
+		List<Object> rawOptions = _choices.options();
+		List<String> keys = new ArrayList<>(rawOptions.size());
+		for (int i = 0; i < rawOptions.size(); i++) {
+			keys.add(PolymorphicOptions.keyFor(i));
+		}
+		String currentKey = PolymorphicOptions.keyForItem(rawOptions, _choices.mapping(), item);
+		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		typeModel.setMandatory(true);
 		typeModel.setNullable(false);
 
-		LabelProvider labelProvider = new FqcnClassLabelProvider(_choices.options());
+		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(rawOptions);
 
 		typeModel.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				onTypeChanged(item, resolveClass(_choices.options(), (String) newValue));
+				onTypeChanged(item, PolymorphicOptions.optionForKey(rawOptions, (String) newValue));
 			}
 
 			@Override
@@ -231,7 +233,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void onTypeChanged(ConfigurationItem oldItem, Class<?> selected) {
+	private void onTypeChanged(ConfigurationItem oldItem, Object selected) {
 		if (selected == null) {
 			return;
 		}
@@ -240,7 +242,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		if (index < 0) {
 			return;
 		}
-		ConfigurationItem replacement = PolymorphicOptions.toConfig(_choices.mapping(), selected);
+		ConfigurationItem replacement = (ConfigurationItem) _choices.mapping().toSelection(selected);
 		ConfigCopier.copyContent(new DefaultInstantiationContext(ConfigListEditorControl.class),
 			oldItem, replacement, true);
 		items.set(index, replacement);
@@ -248,44 +250,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	private boolean isTypeSelected(ConfigurationItem item) {
-		return PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), item) != null;
-	}
-
-	static Class<?> resolveClass(List<Class<?>> options, String fqcn) {
-		if (fqcn == null) {
-			return null;
-		}
-		for (Class<?> cls : options) {
-			if (cls.getName().equals(fqcn)) {
-				return cls;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * {@link LabelProvider} that receives a fully-qualified class name and delegates to
-	 * {@link ClassLabelProvider} once the {@link Class} has been resolved against a known option
-	 * list.
-	 */
-	static final class FqcnClassLabelProvider implements LabelProvider {
-
-		private final List<Class<?>> _options;
-
-		private final ClassLabelProvider _delegate = new ClassLabelProvider();
-
-		FqcnClassLabelProvider(List<Class<?>> options) {
-			_options = options;
-		}
-
-		@Override
-		public String getLabel(Object object) {
-			if (!(object instanceof String fqcn) || fqcn.isEmpty()) {
-				return "";
-			}
-			Class<?> cls = resolveClass(_options, fqcn);
-			return cls != null ? _delegate.getLabel(cls) : fqcn;
-		}
+		return _choices.mapping() != null
+			&& _choices.mapping().asOption(_choices.options(), item) != null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -304,7 +270,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<ConfigurationItem> items = (List<ConfigurationItem>) _parentConfig.value(_property);
 		ConfigurationItem newItem;
 		if (_choices.hasOptions()) {
-			newItem = PolymorphicOptions.toConfig(_choices.mapping(), _choices.options().get(0));
+			newItem = (ConfigurationItem) _choices.mapping().toSelection(_choices.options().get(0));
 		} else {
 			newItem = TypedConfiguration.newConfigItem(resolveNewElementType());
 		}

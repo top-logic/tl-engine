@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -76,15 +77,18 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 
 		ConfigurationItem currentValue = (ConfigurationItem) parentConfig.value(property);
-		Class<?> currentClass = PolymorphicOptions.fromConfig(_choices.mapping(), _choices.options(), currentValue);
-		List<String> options = _choices.options().stream().map(Class::getName).toList();
-		String currentFqcn = currentClass != null ? currentClass.getName() : null;
-		_typeModel = new SimpleSelectFieldModel(currentFqcn, options, false);
+		List<Object> rawOptions = _choices.options();
+		List<String> keys = new ArrayList<>(rawOptions.size());
+		for (int i = 0; i < rawOptions.size(); i++) {
+			keys.add(PolymorphicOptions.keyFor(i));
+		}
+		String currentKey = PolymorphicOptions.keyForItem(rawOptions, _choices.mapping(), currentValue);
+		_typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
 		_typeModel.setMandatory(property.isMandatory());
 		boolean nullable = property.isNullable();
 		_typeModel.setNullable(nullable);
 
-		LabelProvider labelProvider = new ConfigListEditorControl.FqcnClassLabelProvider(_choices.options());
+		LabelProvider labelProvider = PolymorphicOptions.indexLabelProvider(rawOptions);
 
 		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || nullable);
 		if (showSelector) {
@@ -103,7 +107,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_typeChangeListener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				onTypeChanged(ConfigListEditorControl.resolveClass(_choices.options(), (String) newValue));
+				onTypeChanged(PolymorphicOptions.optionForKey(_choices.options(), (String) newValue));
 			}
 
 			@Override
@@ -133,7 +137,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		return _nestedEditor;
 	}
 
-	private void onTypeChanged(Class<?> selected) {
+	private void onTypeChanged(Object selected) {
 		ConfigurationItem oldConfig = (ConfigurationItem) _parentConfig.value(_property);
 
 		if (_nestedEditor != null) {
@@ -148,7 +152,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 			return;
 		}
 
-		ConfigurationItem newConfig = PolymorphicOptions.toConfig(_choices.mapping(), selected);
+		ConfigurationItem newConfig = (ConfigurationItem) _choices.mapping().toSelection(selected);
 		if (oldConfig != null) {
 			ConfigCopier.copyContent(new DefaultInstantiationContext(PolymorphicItemControl.class),
 				oldConfig, newConfig, true);

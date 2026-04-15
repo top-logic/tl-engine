@@ -6,20 +6,21 @@
 package com.top_logic.layout.configedit;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.config.customization.ProgrammaticCustomizations;
-import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.provider.label.ClassLabelProvider;
 
 /**
  * Adapter that looks up the polymorphic options for a {@link PropertyDescriptor} through
@@ -28,9 +29,10 @@ import com.top_logic.layout.form.values.edit.OptionMapping;
  *
  * <p>
  * Produces the same option list and {@link OptionMapping} that the declarative form editor would
- * use, including {@link com.top_logic.layout.form.values.edit.annotation.Options @Options}
- * function evaluation, impl-class / config-class branching via
- * {@link PropertyDescriptor#getInstanceType()}, hidden-class filtering and sorting.
+ * use. The options are returned as opaque {@code Object}s; callers must consult the accompanying
+ * {@link OptionMapping} to convert between options and stored configuration values. No assumption
+ * is made about whether the options are {@link Class} objects, {@link ConfigurationItem}s, or
+ * domain-specific values produced by an {@code @Options} function.
  * </p>
  */
 public class PolymorphicOptions {
@@ -39,11 +41,13 @@ public class PolymorphicOptions {
 
 	private static final AnnotationCustomizations CUSTOMIZATIONS = new ProgrammaticCustomizations();
 
+	private static final ClassLabelProvider CLASS_LABELS = new ClassLabelProvider();
+
 	/**
-	 * Result of resolving the polymorphic options for a property: the option classes and the
+	 * Result of resolving the polymorphic options for a property: the raw option list and the
 	 * {@link OptionMapping} that translates between option and stored configuration value.
 	 */
-	public record Choices(List<Class<?>> options, OptionMapping mapping) {
+	public record Choices(List<Object> options, OptionMapping mapping) {
 
 		/** Empty {@link Choices} (no options, {@code null} mapping). */
 		public static final Choices NONE = new Choices(List.of(), null);
@@ -71,43 +75,102 @@ public class PolymorphicOptions {
 		}
 		OptionMapping mapping = Fields.optionMapping(provider);
 		Iterable<?> raw = provider.get(parentConfig);
-		List<Class<?>> classes = collectOptions(raw);
-		return new Choices(classes, mapping);
+		List<Object> options = new ArrayList<>();
+		if (raw != null) {
+			for (Object item : raw) {
+				options.add(item);
+			}
+		}
+		return new Choices(options, mapping);
 	}
 
 	/**
-	 * Converts a user-picked option class to the value to store in the property.
+	 * Renders a human-readable label for an option value.
+	 *
+	 * <p>
+	 * Used by the type-selector select field. Handles the common option types produced by
+	 * {@link Fields#optionProvider(DeclarativeFormOptions)}: {@link Class} (default for polymorphic
+	 * properties without {@code @Options}), {@link PolymorphicConfiguration} (default instances
+	 * carrying an implementation class), or any other object (falls back to {@code toString()}).
+	 * </p>
 	 */
-	public static ConfigurationItem toConfig(OptionMapping mapping, Class<?> selected) {
-		return (ConfigurationItem) mapping.toSelection(selected);
+	public static String labelFor(Object option) {
+		if (option == null) {
+			return "";
+		}
+		if (option instanceof Class<?> cls) {
+			return CLASS_LABELS.getLabel(cls);
+		}
+		if (option instanceof PolymorphicConfiguration<?> cfg) {
+			Class<?> impl = cfg.getImplementationClass();
+			if (impl != null) {
+				return CLASS_LABELS.getLabel(impl);
+			}
+		}
+		return option.toString();
 	}
 
 	/**
-	 * Converts a currently-stored configuration value back to the option class identifying it in
-	 * an option list.
+	 * A {@link LabelProvider} resolving index-based option keys (as {@link String}) to their
+	 * {@link #labelFor(Object) labels}.
 	 */
-	public static Class<?> fromConfig(OptionMapping mapping, Iterable<Class<?>> allOptions,
-			ConfigurationItem item) {
-		if (item == null) {
+	public static LabelProvider indexLabelProvider(List<?> options) {
+		return value -> {
+			if (!(value instanceof String key) || key.isEmpty()) {
+				return "";
+			}
+			int idx = parseIndex(key);
+			if (idx < 0 || idx >= options.size()) {
+				return key;
+			}
+			return labelFor(options.get(idx));
+		};
+	}
+
+	/**
+	 * Computes the index-based string key for an option at the given position.
+	 */
+	public static String keyFor(int index) {
+		return Integer.toString(index);
+	}
+
+	/**
+	 * Resolves an index-based key back to the option at that position, or {@code null} if the key
+	 * is unknown.
+	 */
+	public static Object optionForKey(List<?> options, String key) {
+		int idx = parseIndex(key);
+		if (idx < 0 || idx >= options.size()) {
 			return null;
 		}
-		return (Class<?>) mapping.asOption(allOptions, item);
+		return options.get(idx);
 	}
 
-	private static List<Class<?>> collectOptions(Iterable<?> raw) {
-		List<Class<?>> result = new ArrayList<>();
-		Iterator<?> iterator;
-		if (raw instanceof OptionModel<?> model) {
-			iterator = model.iterator();
-		} else if (raw != null) {
-			iterator = raw.iterator();
-		} else {
-			return result;
+	/**
+	 * Finds the index-based key for the option currently represented by the given configuration
+	 * item, using the {@link OptionMapping} to invert the mapping.
+	 */
+	public static String keyForItem(List<?> options, OptionMapping mapping, Object item) {
+		if (item == null || mapping == null) {
+			return null;
 		}
-		while (iterator.hasNext()) {
-			result.add((Class<?>) iterator.next());
+		Object option = mapping.asOption(options, item);
+		if (option == null) {
+			return null;
 		}
-		return result;
+		int idx = options.indexOf(option);
+		return idx >= 0 ? keyFor(idx) : null;
+	}
+
+	private static int parseIndex(String key) {
+		if (key == null) {
+			return -1;
+		}
+		try {
+			return Integer.parseInt(key);
+		} catch (NumberFormatException ex) {
+			return -1;
+		}
 	}
 
 	private static DeclarativeFormOptions declarativeOptions(PropertyDescriptor property) {

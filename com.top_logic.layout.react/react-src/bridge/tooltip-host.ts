@@ -4,7 +4,8 @@ import { isMountedControl, getApiBase } from './tl-react-bridge';
 import { TooltipPopover, TooltipData } from './TooltipPopover';
 
 const HOVER_DELAY_MS = 400;
-const CLOSE_DELAY_MS = 150;
+const CLOSE_DELAY_MS_PASSIVE = 150;
+const CLOSE_DELAY_MS_INTERACTIVE = 400;
 
 export interface TooltipResolveDetail {
   target: Element;
@@ -152,11 +153,12 @@ function scheduleOpen(anchor: Element, pending: Promise<TooltipData | null>): vo
 }
 
 function scheduleClose(): void {
+  const delay = _active?.data.interactive ? CLOSE_DELAY_MS_INTERACTIVE : CLOSE_DELAY_MS_PASSIVE;
   _closeTimer = window.setTimeout(() => {
     _closeTimer = null;
     _active = null;
     renderActive();
-  }, CLOSE_DELAY_MS);
+  }, delay);
 }
 
 function cancelOpen(): void {

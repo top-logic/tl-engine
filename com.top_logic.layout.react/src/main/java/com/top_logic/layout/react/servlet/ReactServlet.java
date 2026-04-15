@@ -187,6 +187,9 @@ public class ReactServlet extends TopLogicServlet {
 				out.write(',');
 				writeTooltipJsonField(out, "caption", caption);
 			}
+			if (content.isInteractive()) {
+				out.write(",\"interactive\":true");
+			}
 			out.write('}');
 		}
 	}

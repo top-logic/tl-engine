@@ -19,12 +19,32 @@ public final class TooltipContent {
 
 	private final String _caption;
 
+	private final boolean _interactive;
+
 	/**
-	 * Creates content with the given HTML body and optional caption.
+	 * Creates a passive tooltip (closes when the pointer leaves the anchor; not focusable).
 	 */
 	public TooltipContent(String html, String caption) {
+		this(html, caption, false);
+	}
+
+	/**
+	 * Creates tooltip content.
+	 *
+	 * @param html
+	 *        Sanitized HTML body.
+	 * @param caption
+	 *        Optional caption shown above the body.
+	 * @param interactive
+	 *        When {@code true}, the popover stays open while the pointer hovers over it,
+	 *        enabling text selection, copy and link navigation (use for help pages with code
+	 *        snippets). When {@code false}, it disappears as soon as the pointer leaves the
+	 *        anchor (use for short labels).
+	 */
+	public TooltipContent(String html, String caption, boolean interactive) {
 		_html = html;
 		_caption = caption;
+		_interactive = interactive;
 	}
 
 	/**
@@ -39,5 +59,12 @@ public final class TooltipContent {
 	 */
 	public String getCaption() {
 		return _caption;
+	}
+
+	/**
+	 * Whether the popover should remain open while the pointer is over it.
+	 */
+	public boolean isInteractive() {
+		return _interactive;
 	}
 }

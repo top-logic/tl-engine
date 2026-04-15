@@ -20,6 +20,12 @@ export interface TooltipData {
   text?: string;
   /** Optional caption above body. */
   caption?: string;
+  /**
+   * When true, the popover stays open while the pointer hovers over it — enabling
+   * text selection, copy, and link navigation. Use for help pages with code snippets.
+   * Default: passive (pointer-events disabled on the popover).
+   */
+  interactive?: boolean;
 }
 
 export interface TooltipPopoverProps {
@@ -37,7 +43,7 @@ export function TooltipPopover(props: TooltipPopoverProps) {
   // Set the anchor synchronously during render so the first layout pass already has a reference.
   // Using useEffect would defer this by one commit, causing a visible 0,0 flash before the first
   // positioning update arrives.
-  const { refs, floatingStyles, context, isPositioned } = useFloating({
+  const { refs, floatingStyles, context } = useFloating({
     open: true,
     onOpenChange: (open) => { if (!open) onClose(); },
     placement: 'top',
@@ -54,8 +60,8 @@ export function TooltipPopover(props: TooltipPopoverProps) {
     <FloatingPortal>
       <div
         ref={refs.setFloating}
-        style={{ ...floatingStyles, visibility: isPositioned ? 'visible' : 'hidden' }}
-        className="tl-tooltip-popover"
+        style={data.interactive ? floatingStyles : { ...floatingStyles, pointerEvents: 'none' }}
+        className={'tl-tooltip-popover' + (data.interactive ? ' tl-tooltip-popover--interactive' : '')}
         onPointerEnter={onEnter}
         onPointerLeave={onLeave}
         {...getFloatingProps()}

@@ -8,17 +8,21 @@
 		</title>
 		<context-menu>
 			<commands>
-				<generic-command
-					label="Say Hello"
-					placement="CONTEXT_MENU"
-				>
+				<generic-command placement="CONTEXT_MENU">
+					<label>
+						<en>Say Hello</en>
+						<de>Hallo sagen</de>
+					</label>
 					<action class="com.top_logic.demo.view.command.SayHelloAction"/>
 				</generic-command>
 				<generic-command
-					label="Delete"
 					placement="CONTEXT_MENU"
 					clique="DELETE"
 				>
+					<label>
+						<en>Say Goodbye</en>
+						<de>Tschuess sagen</de>
+					</label>
 					<action class="com.top_logic.demo.view.command.SayGoodbyeAction"/>
 				</generic-command>
 			</commands>

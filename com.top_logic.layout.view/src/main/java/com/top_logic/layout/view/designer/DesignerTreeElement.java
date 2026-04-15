@@ -266,7 +266,7 @@ public class DesignerTreeElement implements UIElement {
 			ReactTextControl control = new ReactTextControl(context, label);
 			String tooltip = designNode.getTooltipHtml();
 			if (tooltip != null && !tooltip.isEmpty()) {
-				control.setTooltip(tooltip, label, true);
+				control.setTooltip(tooltip, label, false);
 			}
 			return control;
 		}

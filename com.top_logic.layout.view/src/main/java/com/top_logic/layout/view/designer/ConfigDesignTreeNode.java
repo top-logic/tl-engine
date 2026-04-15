@@ -11,6 +11,7 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigTagName;
@@ -86,7 +87,15 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 
 	@Override
 	public String getTooltipHtml() {
-		ResKey classKey = ResKey.forClass(_config.descriptor().getConfigurationInterface());
-		return Resources.getInstance().getString(classKey.tooltip(), null);
+		// For a UI element node, prefer the implementation class' JavaDoc (the element help),
+		// falling back to the configuration interface if the implementation class is not set.
+		Class<?> keyClass = null;
+		if (_config instanceof PolymorphicConfiguration<?> pc) {
+			keyClass = pc.getImplementationClass();
+		}
+		if (keyClass == null) {
+			keyClass = _config.descriptor().getConfigurationInterface();
+		}
+		return Resources.getInstance().getString(ResKey.forClass(keyClass).tooltip(), null);
 	}
 }

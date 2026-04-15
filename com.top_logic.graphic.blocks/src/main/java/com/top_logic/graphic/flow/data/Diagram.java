@@ -42,6 +42,9 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	/** @see #getViewBoxHeight() */
 	String VIEW_BOX_HEIGHT__PROP = "viewBoxHeight";
 
+	/** @see #getInitialZoom() */
+	String INITIAL_ZOOM__PROP = "initialZoom";
+
 	/**
 	 * The top-level diagram element.
 	 */
@@ -156,6 +159,17 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	 * @see #getViewBoxHeight()
 	 */
 	com.top_logic.graphic.flow.data.Diagram setViewBoxHeight(double value);
+
+	/**
+	 * The zoom level to apply when the diagram is first displayed, when the model changes,
+	 * or when the view is refreshed. The user can still adjust the zoom interactively afterwards.
+	 */
+	com.top_logic.graphic.flow.data.InitialZoom getInitialZoom();
+
+	/**
+	 * @see #getInitialZoom()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setInitialZoom(com.top_logic.graphic.flow.data.InitialZoom value);
 
 	@Override
 	com.top_logic.graphic.flow.data.Diagram setCssClass(String value);

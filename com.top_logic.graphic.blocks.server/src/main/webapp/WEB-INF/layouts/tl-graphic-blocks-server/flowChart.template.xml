@@ -18,6 +18,7 @@
 
 					<property name="defaultSelection"/>
 					<property name="multiSelection"/>
+					<property name="initialZoom"/>
 					<property name="isSecurityMaster"/>
 
 					<property name="toolbar"/>
@@ -62,11 +63,15 @@
 		<property name="onSelectionChange"
 			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
 		/>
+		<property name="initialZoom"
+			type="com.top_logic.graphic.flow.data.InitialZoom"
+		/>
 	</properties>
 
 	<flowChart name="Chart"
 		defaultSelection="${defaultSelection}"
 		dialogs="${dialogs}"
+		initialZoom="${initialZoom}"
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		modelBuilder="${modelBuilder}"

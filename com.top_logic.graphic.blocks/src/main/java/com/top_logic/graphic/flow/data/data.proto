@@ -57,6 +57,56 @@ message Diagram extends Widget {
 	
 	/** Height of the view box. */
 	double viewBoxHeight;
+
+	/**
+	 * The zoom level to apply when the diagram is first displayed, when the model changes,
+	 * or when the view is refreshed. The user can still adjust the zoom interactively afterwards.
+	 */
+	InitialZoom initialZoom;
+}
+
+/**
+ * Initial zoom policy applied when a {@link Diagram} is (re-)displayed.
+ *
+ * <p>
+ * The fixed variants set an absolute zoom factor. The fit variants scale the diagram such that
+ * it fits into the available viewport; by default fit variants never enlarge above 100%.
+ * The <code>_ENLARGE</code> variants allow scaling beyond 100% to fill the viewport.
+ * </p>
+ */
+enum InitialZoom {
+	/** Fixed zoom at 100% (1:1). Default. */
+	FIXED_100;
+
+	/** Fixed zoom at 50%. */
+	FIXED_50;
+
+	/** Fixed zoom at 75%. */
+	FIXED_75;
+
+	/** Fixed zoom at 150%. */
+	FIXED_150;
+
+	/** Fixed zoom at 200%. */
+	FIXED_200;
+
+	/** Scale to fit the entire diagram into the viewport, but never enlarge above 100%. */
+	FIT_TO_PAGE;
+
+	/** Scale to fit the diagram width into the viewport, but never enlarge above 100%. */
+	FIT_TO_WIDTH;
+
+	/** Scale to fit the diagram height into the viewport, but never enlarge above 100%. */
+	FIT_TO_HEIGHT;
+
+	/** Scale to fit the entire diagram into the viewport, enlarging above 100% if needed. */
+	FIT_TO_PAGE_ENLARGE;
+
+	/** Scale to fit the diagram width into the viewport, enlarging above 100% if needed. */
+	FIT_TO_WIDTH_ENLARGE;
+
+	/** Scale to fit the diagram height into the viewport, enlarging above 100% if needed. */
+	FIT_TO_HEIGHT_ENLARGE;
 }
 
 /** A rectangular region of a {@link Diagram}. */
@@ -343,22 +393,22 @@ enum ImageOrientation {
 	/** The image is flipped horizontally. */
     flipH;
     
-	/** The image is rotated by 180°. */
+	/** The image is rotated by 180ï¿½. */
     rotate180;
     
 	/** The image is flipped vertically. */
 	flipV;
 	
-	/** The image is flipped horizontally, and rotated by 270° counter-clockwise. */
+	/** The image is flipped horizontally, and rotated by 270ï¿½ counter-clockwise. */
 	flipH_rotate270;
 	
-	/** The image is rotated by 90° counter-clockwise. */
+	/** The image is rotated by 90ï¿½ counter-clockwise. */
 	rotate90;
 
-	/** The image is flipped horizontally and rotated by 90° counter-clockwise. */
+	/** The image is flipped horizontally and rotated by 90ï¿½ counter-clockwise. */
 	flipH_rotate90;
 
-	/** The image is rotated by 270° counter-clockwise. */
+	/** The image is rotated by 270ï¿½ counter-clockwise. */
 	rotate270;
 }
 

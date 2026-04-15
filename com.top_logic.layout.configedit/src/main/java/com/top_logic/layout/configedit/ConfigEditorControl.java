@@ -135,13 +135,16 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			ReactControl input = ConfigFieldDispatch.createPlainControl(context, model);
 
 			String label = resolveLabel(property);
-			String helpText = resolveHelpText(property);
+			String tooltip = resolveTooltip(property);
 			String labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
 				? "after" : null;
 
 			ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(
-				context, label, model.isMandatory(), false, null, helpText, labelPosition,
+				context, label, model.isMandatory(), false, null, null, labelPosition,
 				false, true, input);
+			if (tooltip != null && !tooltip.isEmpty()) {
+				chrome.setTooltip(tooltip, label, true);
+			}
 			addChild(chrome);
 		}
 	}
@@ -158,13 +161,13 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Resolves the help text (tooltip) for the given property.
+	 * Resolves the property's tooltip HTML, derived from the getter's JavaDoc. Returned verbatim
+	 * (HTML), or {@code null} if no tooltip is defined.
 	 *
 	 * @param property
 	 *        The property descriptor.
-	 * @return The help text, or {@code null} if none.
 	 */
-	protected String resolveHelpText(PropertyDescriptor property) {
+	protected String resolveTooltip(PropertyDescriptor property) {
 		return Labels.propertyLabel(property, "@tooltip", true);
 	}
 

@@ -65,6 +65,8 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 
 	private String _tooltipCaption;
 
+	private boolean _tooltipInteractive;
+
 	/**
 	 * Creates a form field chrome wrapper.
 	 *
@@ -218,8 +220,24 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        Optional caption, or {@code null}.
 	 */
 	public void setTooltip(String html, String caption) {
+		setTooltip(html, caption, false);
+	}
+
+	/**
+	 * Sets the rich tooltip shown on the field label.
+	 *
+	 * @param html
+	 *        Sanitized tooltip HTML, or {@code null} to clear.
+	 * @param caption
+	 *        Optional caption, or {@code null}.
+	 * @param interactive
+	 *        When {@code true}, the popover remains open while the pointer hovers over it, so the
+	 *        user can select and copy content (e.g. JavaDoc with code snippets).
+	 */
+	public void setTooltip(String html, String caption, boolean interactive) {
 		_tooltipHtml = (html == null || html.isEmpty()) ? null : html;
 		_tooltipCaption = caption;
+		_tooltipInteractive = interactive;
 		putState(HAS_TOOLTIP, _tooltipHtml != null);
 	}
 
@@ -231,7 +249,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		if (_tooltipHtml == null) {
 			return null;
 		}
-		return new TooltipContent(_tooltipHtml, _tooltipCaption);
+		return new TooltipContent(_tooltipHtml, _tooltipCaption, _tooltipInteractive);
 	}
 
 	@Override

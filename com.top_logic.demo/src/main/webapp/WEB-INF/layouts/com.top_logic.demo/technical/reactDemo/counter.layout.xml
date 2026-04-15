@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactCounterComponent"
 				name="reactCounterDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.counter.component">
+					<en>Counter</en>
+					<de>Zähler</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

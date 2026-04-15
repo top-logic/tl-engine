@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoAudioRecorderComponent"
 				name="reactAudioRecorderDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.audioRecorder.component">
+					<en>Audio Recorder</en>
+					<de>Audiorekorder</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

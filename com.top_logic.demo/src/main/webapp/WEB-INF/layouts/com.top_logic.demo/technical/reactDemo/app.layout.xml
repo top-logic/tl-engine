@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactAppComponent"
 				name="reactAppDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.app.component">
+					<en>App</en>
+					<de>App</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactTreeComponent"
 				name="reactTreeDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.tree.component">
+					<en>Tree</en>
+					<de>Baum</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactLayoutComponent"
 				name="reactLayoutDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.layout.component">
+					<en>Layout</en>
+					<de>Layout</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

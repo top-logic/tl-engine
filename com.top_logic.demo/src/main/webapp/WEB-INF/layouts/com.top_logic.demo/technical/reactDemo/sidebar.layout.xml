@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactSidebarComponent"
 				name="reactSidebarDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.sidebar.component">
+					<en>Sidebar</en>
+					<de>Seitenleiste</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

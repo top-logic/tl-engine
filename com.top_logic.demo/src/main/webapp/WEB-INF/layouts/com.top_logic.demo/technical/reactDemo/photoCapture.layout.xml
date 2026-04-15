@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoPhotoCaptureComponent"
 				name="reactPhotoCaptureDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.photoCapture.component">
+					<en>Photo Capture</en>
+					<de>Fotoaufnahme</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

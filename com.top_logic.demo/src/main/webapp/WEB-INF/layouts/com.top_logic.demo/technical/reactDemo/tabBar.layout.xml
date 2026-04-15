@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactTabBarComponent"
 				name="reactTabBarDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.tabBar.component">
+					<en>Tab Bar</en>
+					<de>Tableiste</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

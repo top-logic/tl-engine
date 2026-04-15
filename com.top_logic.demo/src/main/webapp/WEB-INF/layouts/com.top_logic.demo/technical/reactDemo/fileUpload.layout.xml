@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoFileUploadComponent"
 				name="reactFileUploadDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.fileUpload.component">
+					<en>File Upload</en>
+					<de>Datei-Upload</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

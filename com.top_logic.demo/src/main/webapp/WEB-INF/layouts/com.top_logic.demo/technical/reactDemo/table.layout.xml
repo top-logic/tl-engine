@@ -12,7 +12,12 @@
 		<components>
 			<component class="com.top_logic.demo.react.DemoReactTableComponent"
 				name="reactTableDemo"
-			/>
+			>
+				<titleKey key="dynamic.reactDemo.table.component">
+					<en>Table</en>
+					<de>Tabelle</de>
+				</titleKey>
+			</component>
 		</components>
 	</arguments>
 </config:template-call>

@@ -9,6 +9,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
+import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 
@@ -52,6 +53,8 @@ public class ReactAppShellControl extends ReactControl {
 
 	private static final String DIALOG_MANAGER = "dialogManager";
 
+	private static final String MENU_OVERLAY = "menuOverlay";
+
 	private final ReactControl _header;
 
 	private final ReactControl _content;
@@ -61,6 +64,8 @@ public class ReactAppShellControl extends ReactControl {
 	private final ReactSnackbarControl _snackbar;
 
 	private final ReactDialogManagerControl _dialogManager;
+
+	private final ReactMenuControl _menuControl;
 
 	private final ErrorSink _errorSink;
 
@@ -79,15 +84,19 @@ public class ReactAppShellControl extends ReactControl {
 	 *        The snackbar control for notifications.
 	 * @param errorSink
 	 *        The error sink that routes messages to the snackbar.
+	 * @param menuControl
+	 *        The shared {@link ReactMenuControl} mounted as app-shell overlay, or {@code null} if no
+	 *        context-menu overlay is required.
 	 */
 	public ReactAppShellControl(ReactContext context, ReactControl header, ReactControl content, ReactControl footer,
-			ReactSnackbarControl snackbar, ErrorSink errorSink) {
+			ReactSnackbarControl snackbar, ErrorSink errorSink, ReactMenuControl menuControl) {
 		super(context, null, REACT_MODULE);
 		_header = header;
 		_content = content;
 		_footer = footer;
 		_snackbar = snackbar;
 		_dialogManager = new ReactDialogManagerControl(context);
+		_menuControl = menuControl;
 		_errorSink = errorSink;
 
 		if (header != null) {
@@ -99,6 +108,9 @@ public class ReactAppShellControl extends ReactControl {
 		}
 		putState(SNACKBAR, _snackbar);
 		putState(DIALOG_MANAGER, _dialogManager);
+		if (_menuControl != null) {
+			putState(MENU_OVERLAY, _menuControl);
+		}
 	}
 
 	/**
@@ -169,6 +181,9 @@ public class ReactAppShellControl extends ReactControl {
 		}
 		_snackbar.cleanupTree();
 		_dialogManager.cleanupTree();
+		if (_menuControl != null) {
+			_menuControl.cleanupTree();
+		}
 	}
 
 }

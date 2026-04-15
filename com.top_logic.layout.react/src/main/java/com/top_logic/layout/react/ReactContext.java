@@ -72,6 +72,20 @@ public interface ReactContext {
 	ModelScope getModelScope();
 
 	/**
+	 * The {@code ContextMenuOpener} mounted at the app-shell level, or {@code null} if none.
+	 *
+	 * <p>
+	 * Returned as {@link Object} to avoid a module-level dependency cycle between
+	 * {@code tl-layout-react} and {@code tl-layout-view} (the concrete type
+	 * {@code com.top_logic.layout.view.command.ContextMenuOpener} lives in {@code tl-layout-view}
+	 * which already depends on {@code tl-layout-react}). Callers in the view layer cast the result.
+	 * </p>
+	 */
+	default Object getContextMenuOpener() {
+		return null;
+	}
+
+	/**
 	 * Creates a {@link ReactContext} adapter from an old-world
 	 * {@link com.top_logic.layout.DisplayContext}.
 	 *

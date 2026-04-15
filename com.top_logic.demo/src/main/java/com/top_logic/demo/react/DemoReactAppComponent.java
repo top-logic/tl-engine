@@ -182,7 +182,7 @@ public class DemoReactAppComponent extends LayoutComponent {
 		_bottomBar = new ReactBottomBarControl(ctx, bottomItems, PAGE_DASHBOARD, this::handleBottomBarSelect);
 
 		// Assemble the shell.
-		_appShell = new ReactAppShellControl(ctx, header, _sidebar, _bottomBar, snackbar, errorSink);
+		_appShell = new ReactAppShellControl(ctx, header, _sidebar, _bottomBar, snackbar, errorSink, null);
 	}
 
 	// -- Sidebar --

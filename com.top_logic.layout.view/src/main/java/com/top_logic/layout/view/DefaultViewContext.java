@@ -135,7 +135,10 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public ContextMenuOpener getContextMenuOpener() {
-		return _contextMenuOpener;
+		if (_contextMenuOpener != null) {
+			return _contextMenuOpener;
+		}
+		return _reactContext == null ? null : (ContextMenuOpener) _reactContext.getContextMenuOpener();
 	}
 
 	@Override

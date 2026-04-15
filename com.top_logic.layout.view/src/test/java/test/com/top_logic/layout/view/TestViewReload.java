@@ -11,6 +11,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -26,6 +27,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.PanelElement;
 
@@ -56,7 +58,7 @@ public class TestViewReload extends TestCase {
 
 			ViewElement.Config config1 = parseViewFile(tempFile);
 			PanelElement.Config panel1 = (PanelElement.Config) config1.getContent().get(0);
-			assertEquals("Version 1", panel1.getTitle());
+			assertEquals(ResKey.builder().add(Locale.ENGLISH, "Version 1").build(), panel1.getTitle());
 
 			// Wait to ensure the file timestamp changes (ext4 has 1-second resolution).
 			long timestampBefore = tempFile.lastModified();
@@ -72,7 +74,7 @@ public class TestViewReload extends TestCase {
 			// Re-parse and verify updated content.
 			ViewElement.Config config2 = parseViewFile(tempFile);
 			PanelElement.Config panel2 = (PanelElement.Config) config2.getContent().get(0);
-			assertEquals("Version 2", panel2.getTitle());
+			assertEquals(ResKey.builder().add(Locale.ENGLISH, "Version 2").build(), panel2.getTitle());
 		} finally {
 			tempFile.delete();
 		}

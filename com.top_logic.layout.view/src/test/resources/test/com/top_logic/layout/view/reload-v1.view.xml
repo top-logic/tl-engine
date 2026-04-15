@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<panel title="Version 1"/>
+	<panel>
+		<title>
+			<en>Version 1</en>
+		</title>
+	</panel>
 </view>

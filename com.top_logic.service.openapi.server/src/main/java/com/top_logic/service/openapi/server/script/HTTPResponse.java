@@ -22,7 +22,14 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 
 /**
  * Creates an HTTP response object to deliver to an {@link HttpServletResponse}.
- * 
+ *
+ * <p>
+ * Supports textual payloads (JSON, plain text, XML, ...) as well as binary payloads.
+ * Pass a {@link com.top_logic.basic.io.binary.BinaryData}, a {@code byte[]}, or an
+ * {@link java.io.InputStream} as the {@code content} argument to stream raw bytes
+ * with a matching {@code contentType} such as {@code image/png} or {@code application/pdf}.
+ * </p>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class HTTPResponse extends GenericMethod {

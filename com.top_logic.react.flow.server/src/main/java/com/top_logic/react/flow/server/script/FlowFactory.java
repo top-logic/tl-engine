@@ -1672,17 +1672,19 @@ public class FlowFactory extends TLScriptFunctions {
 	public static GanttAxis ganttAxis(
 			@Mandatory String providerId,
 			double rangeMin,
-			double rangeMax) {
+			double rangeMax,
+			Double zoom) {
+		double pixelsPerUnit = zoom != null ? zoom : 1.0;
 		AxisProviderService svc = AxisProviderService.Module.INSTANCE.getImplementationInstance();
 		AxisProvider provider = (svc != null) ? svc.lookup(providerId) : null;
 		List<GanttTick> ticks = provider != null
-			? provider.ticksFor(rangeMin, rangeMax, 1.0)
+			? provider.ticksFor(rangeMin, rangeMax, pixelsPerUnit)
 			: java.util.Collections.emptyList();
-		double snap = provider != null ? provider.snapGranularity(1.0) : 1.0;
+		double snap = provider != null ? provider.snapGranularity(pixelsPerUnit) : 1.0;
 		return GanttAxis.create()
 			.setProviderId(providerId)
 			.setRangeMin(rangeMin).setRangeMax(rangeMax)
-			.setCurrentZoom(1.0).setSnapGranularity(snap)
+			.setCurrentZoom(pixelsPerUnit).setSnapGranularity(snap)
 			.setCurrentTicks(ticks);
 	}
 

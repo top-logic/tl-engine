@@ -22,7 +22,7 @@ e2 = reactFlowGanttEdge(id: "e2", sourceItemId: "build", sourceEndpoint: "END", 
 
 freeze = reactFlowGanttRangeDeco(id: "freeze", from: 20485, to: 20488, color: "rgba(255,100,100,0.3)", label: "Freeze");
 
-axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20495);
+axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20495, zoom: 20);
 
 reactFlowGantt(
 	rootRows: list($r_design, $r_impl, $r_test),

@@ -23,8 +23,6 @@ public class ToolContext {
 	// TODO: Add ProgressReporter — Pillar 7 (Human-in-the-Loop). Long-running tools
 	//   should report progress (e.g., "processing 50 of 200 records") so the UI can
 	//   display status. Interface: progress(String message) or progress(int current, int total).
-	// TODO: Add AgentContext — for sub-agent delegation. Carries parent agent identity,
-	//   delegation depth, shared memory references.
 
 	/** Context with no security restrictions, auto-approval, and no transaction. For tests and trusted internal use. */
 	public static final ToolContext EMPTY =
@@ -38,6 +36,8 @@ public class ToolContext {
 
 	private final Set<String> _sessionApprovedTools;
 
+	private final int _delegationDepth;
+
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
@@ -46,7 +46,7 @@ public class ToolContext {
 	 * @param transaction the transaction scope for the current agent run
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval, TransactionScope transaction) {
-		this(security, approval, transaction, Set.of());
+		this(security, approval, transaction, Set.of(), 0);
 	}
 
 	/**
@@ -60,10 +60,7 @@ public class ToolContext {
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools) {
-		_security = Objects.requireNonNull(security, "Security context must not be null.");
-		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
-		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
-		_sessionApprovedTools = sessionApprovedTools != null ? sessionApprovedTools : Set.of();
+		this(security, approval, transaction, sessionApprovedTools, 0);
 	}
 
 	/**
@@ -75,6 +72,15 @@ public class ToolContext {
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval) {
 		this(security, approval, TransactionScope.NOOP);
+	}
+
+	private ToolContext(SecurityContext security, ApprovalCallback approval,
+			TransactionScope transaction, Set<String> sessionApprovedTools, int delegationDepth) {
+		_security = Objects.requireNonNull(security, "Security context must not be null.");
+		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
+		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
+		_sessionApprovedTools = sessionApprovedTools != null ? sessionApprovedTools : Set.of();
+		_delegationDepth = delegationDepth;
 	}
 
 	/**
@@ -113,5 +119,26 @@ public class ToolContext {
 	 */
 	public Set<String> sessionApprovedTools() {
 		return _sessionApprovedTools;
+	}
+
+	/**
+	 * The current delegation depth.
+	 *
+	 * <p>Zero for the top-level agent, incremented by one for each level of sub-agent delegation.</p>
+	 */
+	public int delegationDepth() {
+		return _delegationDepth;
+	}
+
+	/**
+	 * Creates a copy of this context for a delegated sub-agent run.
+	 *
+	 * <p>The returned context has the delegation depth incremented by one and uses the given
+	 * child transaction scope. All other fields are inherited from this context.</p>
+	 *
+	 * @param childTransaction the transaction scope for the sub-agent run
+	 */
+	public ToolContext forDelegation(TransactionScope childTransaction) {
+		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools, _delegationDepth + 1);
 	}
 }

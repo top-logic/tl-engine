@@ -52,6 +52,12 @@ public class GanttMilestone_Impl extends com.top_logic.react.flow.data.impl.Gant
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttMilestone setRowModel(java.lang.Object value) {
+		internalSetRowModel(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttMilestone setRowId(String value) {
 		internalSetRowId(value);
 		return this;

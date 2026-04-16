@@ -21,11 +21,17 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getUserObject() */
 	String USER_OBJECT__PROP = "userObject";
 
+	/** @see #getSourceModel() */
+	String SOURCE_MODEL__PROP = "sourceModel";
+
 	/** @see #getSourceItemId() */
 	String SOURCE_ITEM_ID__PROP = "sourceItemId";
 
 	/** @see #getSourceEndpoint() */
 	String SOURCE_ENDPOINT__PROP = "sourceEndpoint";
+
+	/** @see #getTargetModel() */
+	String TARGET_MODEL__PROP = "targetModel";
 
 	/** @see #getTargetItemId() */
 	String TARGET_ITEM_ID__PROP = "targetItemId";
@@ -37,7 +43,7 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	String ENFORCE__PROP = "enforce";
 
 	/**
-	 * Opaque identifier, unique within a {@link GanttLayout}.
+	 * Opaque identifier, unique within a {@link GanttLayout}. Populated by the {@code gantt(...)} aggregator.
 	 */
 	String getId();
 
@@ -64,7 +70,24 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	boolean hasUserObject();
 
 	/**
-	 * ID of the source item.
+	 * Business object identifying the source item. Resolved to
+	 * {@link #getSourceItemId() sourceItemId} by the {@code gantt(...)} aggregator.
+	 */
+	java.lang.Object getSourceModel();
+
+	/**
+	 * @see #getSourceModel()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setSourceModel(java.lang.Object value);
+
+	/**
+	 * Checks, whether {@link #getSourceModel()} has a value.
+	 */
+	boolean hasSourceModel();
+
+	/**
+	 * ID of the source item. Wire-format field; populated by the {@code gantt(...)} aggregator
+	 * from {@link #getSourceModel() sourceModel}.
 	 */
 	String getSourceItemId();
 
@@ -84,7 +107,24 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttEdge setSourceEndpoint(com.top_logic.react.flow.data.GanttEndpoint value);
 
 	/**
-	 * ID of the target item.
+	 * Business object identifying the target item. Resolved to
+	 * {@link #getTargetItemId() targetItemId} by the {@code gantt(...)} aggregator.
+	 */
+	java.lang.Object getTargetModel();
+
+	/**
+	 * @see #getTargetModel()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setTargetModel(java.lang.Object value);
+
+	/**
+	 * Checks, whether {@link #getTargetModel()} has a value.
+	 */
+	boolean hasTargetModel();
+
+	/**
+	 * ID of the target item. Wire-format field; populated by the {@code gantt(...)} aggregator
+	 * from {@link #getTargetModel() targetModel}.
 	 */
 	String getTargetItemId();
 

@@ -34,6 +34,9 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	/** @see #getUserObject() */
 	String USER_OBJECT__PROP = "userObject";
 
+	/** @see #getRelevantForModels() */
+	String RELEVANT_FOR_MODELS__PROP = "relevantForModels";
+
 	/** @see #getColor() */
 	String COLOR__PROP = "color";
 
@@ -50,7 +53,7 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	TypeKind kind();
 
 	/**
-	 * Opaque identifier, unique within a {@link GanttLayout}.
+	 * Opaque identifier, unique within a {@link GanttLayout}. Populated by the {@code gantt(...)} aggregator.
 	 */
 	String getId();
 
@@ -75,6 +78,28 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	 * Checks, whether {@link #getUserObject()} has a value.
 	 */
 	boolean hasUserObject();
+
+	/**
+	 * Business objects identifying the rows this decoration applies to. Resolved to
+	 * {@link #getRelevantFor() relevantFor} IDs by the {@code gantt(...)} aggregator.
+	 * {@code null} or empty means: all rows.
+	 */
+	java.util.List<java.lang.Object> getRelevantForModels();
+
+	/**
+	 * @see #getRelevantForModels()
+	 */
+	com.top_logic.react.flow.data.GanttDecoration setRelevantForModels(java.util.List<? extends java.lang.Object> value);
+
+	/**
+	 * Adds a value to the {@link #getRelevantForModels()} list.
+	 */
+	com.top_logic.react.flow.data.GanttDecoration addRelevantForModel(java.lang.Object value);
+
+	/**
+	 * Removes a value from the {@link #getRelevantForModels()} list.
+	 */
+	void removeRelevantForModel(java.lang.Object value);
 
 	/**
 	 * CSS-style color.
@@ -113,7 +138,8 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	com.top_logic.react.flow.data.GanttDecoration setCanMove(boolean value);
 
 	/**
-	 * Optional restriction: which rows this decoration applies to.
+	 * Optional restriction: which rows this decoration applies to. Wire-format field; populated
+	 * by the {@code gantt(...)} aggregator from {@link #getRelevantForModels() relevantForModels}.
 	 * Empty list means: all rows.
 	 */
 	java.util.List<String> getRelevantFor();

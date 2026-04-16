@@ -34,6 +34,9 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getUserObject() */
 	String USER_OBJECT__PROP = "userObject";
 
+	/** @see #getRowModel() */
+	String ROW_MODEL__PROP = "rowModel";
+
 	/** @see #getRowId() */
 	String ROW_ID__PROP = "rowId";
 
@@ -56,7 +59,7 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	TypeKind kind();
 
 	/**
-	 * Opaque identifier, unique within a {@link GanttLayout}.
+	 * Opaque identifier, unique within a {@link GanttLayout}. Populated by the {@code gantt(...)} aggregator.
 	 */
 	String getId();
 
@@ -83,7 +86,24 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	boolean hasUserObject();
 
 	/**
-	 * Reference to the {@link GanttRow#getId()} this item lives in.
+	 * Business object identifying the row this item lives in. Resolved to
+	 * {@link #getRowId() rowId} by the {@code gantt(...)} aggregator.
+	 */
+	java.lang.Object getRowModel();
+
+	/**
+	 * @see #getRowModel()
+	 */
+	com.top_logic.react.flow.data.GanttItem setRowModel(java.lang.Object value);
+
+	/**
+	 * Checks, whether {@link #getRowModel()} has a value.
+	 */
+	boolean hasRowModel();
+
+	/**
+	 * Reference to the {@link GanttRow#getId()} this item lives in. Wire-format field; populated by
+	 * the {@code gantt(...)} aggregator from {@link #getRowModel() rowModel}.
 	 */
 	String getRowId();
 

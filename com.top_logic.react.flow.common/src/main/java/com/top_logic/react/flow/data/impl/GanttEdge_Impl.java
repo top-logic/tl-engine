@@ -9,9 +9,13 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 
 	private transient java.lang.Object _userObject = null;
 
+	private transient java.lang.Object _sourceModel = null;
+
 	private String _sourceItemId = "";
 
 	private com.top_logic.react.flow.data.GanttEndpoint _sourceEndpoint = com.top_logic.react.flow.data.GanttEndpoint.START;
+
+	private transient java.lang.Object _targetModel = null;
 
 	private String _targetItemId = "";
 
@@ -70,6 +74,29 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	}
 
 	@Override
+	public final java.lang.Object getSourceModel() {
+		return _sourceModel;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setSourceModel(java.lang.Object value) {
+		internalSetSourceModel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSourceModel()} without chain call utility. */
+	protected final void internalSetSourceModel(java.lang.Object value) {
+		_listener.beforeSet(this, SOURCE_MODEL__PROP, value);
+		_sourceModel = value;
+		_listener.afterChanged(this, SOURCE_MODEL__PROP);
+	}
+
+	@Override
+	public final boolean hasSourceModel() {
+		return _sourceModel != null;
+	}
+
+	@Override
 	public final String getSourceItemId() {
 		return _sourceItemId;
 	}
@@ -104,6 +131,29 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		_listener.beforeSet(this, SOURCE_ENDPOINT__PROP, value);
 		_sourceEndpoint = value;
 		_listener.afterChanged(this, SOURCE_ENDPOINT__PROP);
+	}
+
+	@Override
+	public final java.lang.Object getTargetModel() {
+		return _targetModel;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setTargetModel(java.lang.Object value) {
+		internalSetTargetModel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTargetModel()} without chain call utility. */
+	protected final void internalSetTargetModel(java.lang.Object value) {
+		_listener.beforeSet(this, TARGET_MODEL__PROP, value);
+		_targetModel = value;
+		_listener.afterChanged(this, TARGET_MODEL__PROP);
+	}
+
+	@Override
+	public final boolean hasTargetModel() {
+		return _targetModel != null;
 	}
 
 	@Override
@@ -172,8 +222,10 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
 			USER_OBJECT__PROP, 
+			SOURCE_MODEL__PROP, 
 			SOURCE_ITEM_ID__PROP, 
 			SOURCE_ENDPOINT__PROP, 
+			TARGET_MODEL__PROP, 
 			TARGET_ITEM_ID__PROP, 
 			TARGET_ENDPOINT__PROP, 
 			ENFORCE__PROP);
@@ -184,7 +236,9 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
-				USER_OBJECT__PROP));
+				USER_OBJECT__PROP, 
+				SOURCE_MODEL__PROP, 
+				TARGET_MODEL__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -203,8 +257,10 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		switch (field) {
 			case ID__PROP: return getId();
 			case USER_OBJECT__PROP: return getUserObject();
+			case SOURCE_MODEL__PROP: return getSourceModel();
 			case SOURCE_ITEM_ID__PROP: return getSourceItemId();
 			case SOURCE_ENDPOINT__PROP: return getSourceEndpoint();
+			case TARGET_MODEL__PROP: return getTargetModel();
 			case TARGET_ITEM_ID__PROP: return getTargetItemId();
 			case TARGET_ENDPOINT__PROP: return getTargetEndpoint();
 			case ENFORCE__PROP: return getEnforce();
@@ -217,8 +273,10 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
+			case SOURCE_MODEL__PROP: internalSetSourceModel((java.lang.Object) value); break;
 			case SOURCE_ITEM_ID__PROP: internalSetSourceItemId((String) value); break;
 			case SOURCE_ENDPOINT__PROP: internalSetSourceEndpoint((com.top_logic.react.flow.data.GanttEndpoint) value); break;
+			case TARGET_MODEL__PROP: internalSetTargetModel((java.lang.Object) value); break;
 			case TARGET_ITEM_ID__PROP: internalSetTargetItemId((String) value); break;
 			case TARGET_ENDPOINT__PROP: internalSetTargetEndpoint((com.top_logic.react.flow.data.GanttEndpoint) value); break;
 			case ENFORCE__PROP: internalSetEnforce((com.top_logic.react.flow.data.GanttEnforce) value); break;
@@ -256,12 +314,26 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 				}
 				break;
 			}
+			case SOURCE_MODEL__PROP: {
+				if (hasSourceModel()) {
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
 			case SOURCE_ITEM_ID__PROP: {
 				out.value(getSourceItemId());
 				break;
 			}
 			case SOURCE_ENDPOINT__PROP: {
 				getSourceEndpoint().writeTo(out);
+				break;
+			}
+			case TARGET_MODEL__PROP: {
+				if (hasTargetModel()) {
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case TARGET_ITEM_ID__PROP: {

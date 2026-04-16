@@ -35,6 +35,9 @@ public interface GanttMilestone extends GanttItem {
 	com.top_logic.react.flow.data.GanttMilestone setUserObject(java.lang.Object value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttMilestone setRowModel(java.lang.Object value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttMilestone setRowId(String value);
 
 	@Override

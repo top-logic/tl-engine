@@ -112,6 +112,12 @@ public class GanttSpan_Impl extends com.top_logic.react.flow.data.impl.GanttItem
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttSpan setRowModel(java.lang.Object value) {
+		internalSetRowModel(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttSpan setRowId(String value) {
 		internalSetRowId(value);
 		return this;

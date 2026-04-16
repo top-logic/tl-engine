@@ -92,6 +92,18 @@ public class GanttRangeDecoration_Impl extends com.top_logic.react.flow.data.imp
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttRangeDecoration setRelevantForModels(java.util.List<? extends java.lang.Object> value) {
+		internalSetRelevantForModels(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttRangeDecoration addRelevantForModel(java.lang.Object value) {
+		internalAddRelevantForModel(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttRangeDecoration setColor(String value) {
 		internalSetColor(value);
 		return this;

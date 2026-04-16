@@ -62,6 +62,12 @@ public interface GanttRangeDecoration extends GanttDecoration {
 	com.top_logic.react.flow.data.GanttRangeDecoration setUserObject(java.lang.Object value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttRangeDecoration setRelevantForModels(java.util.List<? extends java.lang.Object> value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttRangeDecoration addRelevantForModel(java.lang.Object value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttRangeDecoration setColor(String value);
 
 	@Override

@@ -968,7 +968,7 @@ enum GanttEnforce {
 
 /** A dependency edge between two Gantt items. */
 message GanttEdge {
-	/** Opaque identifier, unique within a {@link GanttLayout}. */
+	/** Opaque identifier, unique within a {@link GanttLayout}. Populated by the {@code gantt(...)} aggregator. */
 	string id;
 
 	/**
@@ -978,13 +978,31 @@ message GanttEdge {
 	 */
 	transient java.lang.Object userObject;
 
-	/** ID of the source item. */
+	/**
+	 * Business object identifying the source item. Resolved to
+	 * {@link #getSourceItemId() sourceItemId} by the {@code gantt(...)} aggregator.
+	 */
+	transient java.lang.Object sourceModel;
+
+	/**
+	 * ID of the source item. Wire-format field; populated by the {@code gantt(...)} aggregator
+	 * from {@link #getSourceModel() sourceModel}.
+	 */
 	string sourceItemId;
 
 	/** Which end of the source item the edge attaches to. */
 	GanttEndpoint sourceEndpoint;
 
-	/** ID of the target item. */
+	/**
+	 * Business object identifying the target item. Resolved to
+	 * {@link #getTargetItemId() targetItemId} by the {@code gantt(...)} aggregator.
+	 */
+	transient java.lang.Object targetModel;
+
+	/**
+	 * ID of the target item. Wire-format field; populated by the {@code gantt(...)} aggregator
+	 * from {@link #getTargetModel() targetModel}.
+	 */
 	string targetItemId;
 
 	/** Which end of the target item the edge attaches to. */
@@ -996,7 +1014,7 @@ message GanttEdge {
 
 /** Abstract base for entries on a Gantt time axis. */
 abstract message GanttItem {
-	/** Opaque identifier, unique within a {@link GanttLayout}. */
+	/** Opaque identifier, unique within a {@link GanttLayout}. Populated by the {@code gantt(...)} aggregator. */
 	string id;
 
 	/**
@@ -1006,7 +1024,16 @@ abstract message GanttItem {
 	 */
 	transient java.lang.Object userObject;
 
-	/** Reference to the {@link GanttRow#id} this item lives in. */
+	/**
+	 * Business object identifying the row this item lives in. Resolved to
+	 * {@link #getRowId() rowId} by the {@code gantt(...)} aggregator.
+	 */
+	transient java.lang.Object rowModel;
+
+	/**
+	 * Reference to the {@link GanttRow#id} this item lives in. Wire-format field; populated by
+	 * the {@code gantt(...)} aggregator from {@link #getRowModel() rowModel}.
+	 */
 	string rowId;
 
 	/**
@@ -1059,7 +1086,7 @@ message GanttMilestone extends GanttItem {
 
 /** Abstract base for Gantt chart decorations (lines, ranges). */
 abstract message GanttDecoration {
-	/** Opaque identifier, unique within a {@link GanttLayout}. */
+	/** Opaque identifier, unique within a {@link GanttLayout}. Populated by the {@code gantt(...)} aggregator. */
 	string id;
 
 	/**
@@ -1068,6 +1095,13 @@ abstract message GanttDecoration {
 	 * {@link #getId() id} is derived for client-side cross-references.
 	 */
 	transient java.lang.Object userObject;
+
+	/**
+	 * Business objects identifying the rows this decoration applies to. Resolved to
+	 * {@link #getRelevantFor() relevantFor} IDs by the {@code gantt(...)} aggregator.
+	 * {@code null} or empty means: all rows.
+	 */
+	transient repeated java.lang.Object relevantForModels;
 
 	/** CSS-style color. */
 	string color;
@@ -1083,7 +1117,8 @@ abstract message GanttDecoration {
 	bool canMove;
 
 	/**
-	 * Optional restriction: which rows this decoration applies to.
+	 * Optional restriction: which rows this decoration applies to. Wire-format field; populated
+	 * by the {@code gantt(...)} aggregator from {@link #getRelevantForModels() relevantForModels}.
 	 * Empty list means: all rows.
 	 */
 	repeated string relevantFor;

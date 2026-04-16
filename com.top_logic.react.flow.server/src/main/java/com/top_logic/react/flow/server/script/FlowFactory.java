@@ -1548,14 +1548,6 @@ public class FlowFactory extends TLScriptFunctions {
 		return edge;
 	}
 
-	/** Internal counter for ID generation (per JVM, stable across factory calls). */
-	private static final java.util.concurrent.atomic.AtomicLong GANTT_ID_COUNTER =
-		new java.util.concurrent.atomic.AtomicLong();
-
-	private static String nextGanttId(String prefix) {
-		return prefix + "-" + GANTT_ID_COUNTER.incrementAndGet();
-	}
-
 	@SideEffectFree
 	@Label("Create Gantt row")
 	public static GanttRow ganttRow(
@@ -1563,7 +1555,6 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory Box label,
 			List<GanttRow> children) {
 		GanttRow row = GanttRow.create()
-			.setId(nextGanttId("gr"))
 			.setUserObject(model)
 			.setLabel(label);
 		if (children != null) {
@@ -1576,7 +1567,7 @@ public class FlowFactory extends TLScriptFunctions {
 	@Label("Create Gantt span item")
 	public static GanttSpan ganttSpan(
 			@Mandatory Object model,
-			@Mandatory GanttRow row,
+			@Mandatory Object rowModel,
 			@Mandatory Box box,
 			double start,
 			double end,
@@ -1587,9 +1578,8 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean canBeEdgeSource,
 			Boolean canBeEdgeTarget) {
 		GanttSpan span = GanttSpan.create()
-			.setId(nextGanttId("gi"))
 			.setUserObject(model)
-			.setRowId(row.getId())
+			.setRowModel(rowModel)
 			.setBox(box)
 			.setStart(start).setEnd(end);
 		if (canMoveTime != null) span.setCanMoveTime(canMoveTime);
@@ -1605,7 +1595,7 @@ public class FlowFactory extends TLScriptFunctions {
 	@Label("Create Gantt milestone item")
 	public static GanttMilestone ganttMilestone(
 			@Mandatory Object model,
-			@Mandatory GanttRow row,
+			@Mandatory Object rowModel,
 			@Mandatory Box box,
 			double at,
 			Boolean canMoveTime,
@@ -1613,9 +1603,8 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean canBeEdgeSource,
 			Boolean canBeEdgeTarget) {
 		GanttMilestone milestone = GanttMilestone.create()
-			.setId(nextGanttId("gi"))
 			.setUserObject(model)
-			.setRowId(row.getId())
+			.setRowModel(rowModel)
 			.setBox(box)
 			.setAt(at);
 		if (canMoveTime != null) milestone.setCanMoveTime(canMoveTime);
@@ -1629,16 +1618,15 @@ public class FlowFactory extends TLScriptFunctions {
 	@Label("Create Gantt edge")
 	public static GanttEdge ganttEdge(
 			@Mandatory Object model,
-			@Mandatory GanttItem source,
+			@Mandatory Object sourceModel,
 			@Mandatory GanttEndpoint sourceEndpoint,
-			@Mandatory GanttItem target,
+			@Mandatory Object targetModel,
 			@Mandatory GanttEndpoint targetEndpoint,
 			GanttEnforce enforce) {
 		return GanttEdge.create()
-			.setId(nextGanttId("ge"))
 			.setUserObject(model)
-			.setSourceItemId(source.getId()).setSourceEndpoint(sourceEndpoint)
-			.setTargetItemId(target.getId()).setTargetEndpoint(targetEndpoint)
+			.setSourceModel(sourceModel).setSourceEndpoint(sourceEndpoint)
+			.setTargetModel(targetModel).setTargetEndpoint(targetEndpoint)
 			.setEnforce(enforce != null ? enforce : GanttEnforce.STRICT);
 	}
 
@@ -1649,18 +1637,15 @@ public class FlowFactory extends TLScriptFunctions {
 			double at,
 			String color,
 			Box label,
-			List<GanttRow> relevantFor,
+			List<Object> relevantFor,
 			Boolean canMove) {
 		GanttLineDecoration deco = GanttLineDecoration.create()
-			.setId(nextGanttId("gd"))
 			.setUserObject(model)
 			.setAt(at)
 			.setColor(color != null ? color : "#c02020")
 			.setLabel(label);
 		if (relevantFor != null) {
-			java.util.List<String> ids = new java.util.ArrayList<>(relevantFor.size());
-			for (GanttRow r : relevantFor) { ids.add(r.getId()); }
-			deco.setRelevantFor(ids);
+			deco.setRelevantForModels(relevantFor);
 		}
 		if (canMove != null) deco.setCanMove(canMove);
 		return deco;
@@ -1674,19 +1659,16 @@ public class FlowFactory extends TLScriptFunctions {
 			double to,
 			String color,
 			Box label,
-			List<GanttRow> relevantFor,
+			List<Object> relevantFor,
 			Boolean canMove,
 			Boolean canResize) {
 		GanttRangeDecoration deco = GanttRangeDecoration.create()
-			.setId(nextGanttId("gd"))
 			.setUserObject(model)
 			.setFrom(from).setTo(to)
 			.setColor(color != null ? color : "rgba(255, 220, 120, 0.35)")
 			.setLabel(label);
 		if (relevantFor != null) {
-			java.util.List<String> ids = new java.util.ArrayList<>(relevantFor.size());
-			for (GanttRow r : relevantFor) { ids.add(r.getId()); }
-			deco.setRelevantFor(ids);
+			deco.setRelevantForModels(relevantFor);
 		}
 		if (canMove != null) deco.setCanMove(canMove);
 		if (canResize != null) deco.setCanResize(canResize);
@@ -1722,6 +1704,64 @@ public class FlowFactory extends TLScriptFunctions {
 			List<GanttEdge> edges,
 			List<GanttDecoration> decorations,
 			@Mandatory GanttAxis axis) {
+
+		// 1. Assign row IDs depth-first, build userObject -> rowId index.
+		java.util.Map<Object, String> _rowIdByModel = new java.util.HashMap<>();
+		long[] _rowCounter = { 0 };
+		for (GanttRow _root : rootRows) {
+			assignRowIds(_root, _rowCounter, _rowIdByModel);
+		}
+
+		// 2. Assign item IDs, resolve their rowId from rowModel via the index.
+		java.util.Map<Object, String> _itemIdByModel = new java.util.HashMap<>();
+		long _itemCounter = 0;
+		for (GanttItem _item : items) {
+			String _id = "gi-" + (++_itemCounter);
+			_item.setId(_id);
+			Object _rowModel = _item.getRowModel();
+			String _rowId = _rowIdByModel.get(_rowModel);
+			if (_rowId == null) {
+				throw new IllegalArgumentException(
+					"Gantt item refers to unknown row business object: " + _rowModel);
+			}
+			_item.setRowId(_rowId);
+			if (_item.getUserObject() != null) {
+				_itemIdByModel.put(_item.getUserObject(), _id);
+			}
+		}
+
+		// 3. Resolve edge source/target.
+		long _edgeCounter = 0;
+		if (edges != null) {
+			for (GanttEdge _edge : edges) {
+				_edge.setId("ge-" + (++_edgeCounter));
+				_edge.setSourceItemId(requireItemId(_itemIdByModel, _edge.getSourceModel(), "source"));
+				_edge.setTargetItemId(requireItemId(_itemIdByModel, _edge.getTargetModel(), "target"));
+			}
+		}
+
+		// 4. Resolve decoration relevantFor.
+		long _decoCounter = 0;
+		if (decorations != null) {
+			for (GanttDecoration _deco : decorations) {
+				_deco.setId("gd-" + (++_decoCounter));
+				List<Object> _models = _deco.getRelevantForModels();
+				if (_models != null && !_models.isEmpty()) {
+					java.util.List<String> _ids = new java.util.ArrayList<>(_models.size());
+					for (Object _m : _models) {
+						String _rowId = _rowIdByModel.get(_m);
+						if (_rowId == null) {
+							throw new IllegalArgumentException(
+								"Gantt decoration relevantFor references unknown row: " + _m);
+						}
+						_ids.add(_rowId);
+					}
+					_deco.setRelevantFor(_ids);
+				}
+			}
+		}
+
+		// 5. Build the layout.
 		GanttLayout layout = GanttLayout.create()
 			.setRootRows(rootRows)
 			.setItems(items)
@@ -1757,6 +1797,26 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		layout.setContents(contents);
 		return layout;
+	}
+
+	private static void assignRowIds(GanttRow _row, long[] _counter, java.util.Map<Object, String> _idx) {
+		String _id = "gr-" + (++_counter[0]);
+		_row.setId(_id);
+		if (_row.getUserObject() != null) {
+			_idx.put(_row.getUserObject(), _id);
+		}
+		for (GanttRow _child : _row.getChildren()) {
+			assignRowIds(_child, _counter, _idx);
+		}
+	}
+
+	private static String requireItemId(java.util.Map<Object, String> _idx, Object _model, String _role) {
+		String _id = _idx.get(_model);
+		if (_id == null) {
+			throw new IllegalArgumentException(
+				"Gantt edge refers to unknown " + _role + " item business object: " + _model);
+		}
+		return _id;
 	}
 
 	private static void addRowLabelsToContents(GanttRow row, List<Box> contents) {

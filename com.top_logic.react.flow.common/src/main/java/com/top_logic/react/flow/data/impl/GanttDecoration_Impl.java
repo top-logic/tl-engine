@@ -9,6 +9,23 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 
 	private transient java.lang.Object _userObject = null;
 
+	private transient final java.util.List<java.lang.Object> _relevantForModels = new de.haumacher.msgbuf.util.ReferenceList<java.lang.Object>() {
+		@Override
+		protected void beforeAdd(int index, java.lang.Object element) {
+			_listener.beforeAdd(GanttDecoration_Impl.this, RELEVANT_FOR_MODELS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, java.lang.Object element) {
+			_listener.afterRemove(GanttDecoration_Impl.this, RELEVANT_FOR_MODELS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttDecoration_Impl.this, RELEVANT_FOR_MODELS__PROP);
+		}
+	};
+
 	private String _color = "";
 
 	private com.top_logic.react.flow.data.Box _label = null;
@@ -78,6 +95,40 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	@Override
 	public final boolean hasUserObject() {
 		return _userObject != null;
+	}
+
+	@Override
+	public final java.util.List<java.lang.Object> getRelevantForModels() {
+		return _relevantForModels;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttDecoration setRelevantForModels(java.util.List<? extends java.lang.Object> value) {
+		internalSetRelevantForModels(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRelevantForModels()} without chain call utility. */
+	protected final void internalSetRelevantForModels(java.util.List<? extends java.lang.Object> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'relevantForModels' cannot be null.");
+		_relevantForModels.clear();
+		_relevantForModels.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttDecoration addRelevantForModel(java.lang.Object value) {
+		internalAddRelevantForModel(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addRelevantForModel(java.lang.Object)} without chain call utility. */
+	protected final void internalAddRelevantForModel(java.lang.Object value) {
+		_relevantForModels.add(value);
+	}
+
+	@Override
+	public final void removeRelevantForModel(java.lang.Object value) {
+		_relevantForModels.remove(value);
 	}
 
 	@Override
@@ -177,6 +228,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
 			USER_OBJECT__PROP, 
+			RELEVANT_FOR_MODELS__PROP, 
 			COLOR__PROP, 
 			LABEL__PROP, 
 			CAN_MOVE__PROP, 
@@ -188,7 +240,8 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
-				USER_OBJECT__PROP));
+				USER_OBJECT__PROP, 
+				RELEVANT_FOR_MODELS__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -207,6 +260,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		switch (field) {
 			case ID__PROP: return getId();
 			case USER_OBJECT__PROP: return getUserObject();
+			case RELEVANT_FOR_MODELS__PROP: return getRelevantForModels();
 			case COLOR__PROP: return getColor();
 			case LABEL__PROP: return getLabel();
 			case CAN_MOVE__PROP: return isCanMove();
@@ -220,6 +274,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
+			case RELEVANT_FOR_MODELS__PROP: internalSetRelevantForModels(de.haumacher.msgbuf.util.Conversions.asList(java.lang.Object.class, value)); break;
 			case COLOR__PROP: internalSetColor((String) value); break;
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CAN_MOVE__PROP: internalSetCanMove((boolean) value); break;
@@ -260,6 +315,13 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 				} else {
 					out.nullValue();
 				}
+				break;
+			}
+			case RELEVANT_FOR_MODELS__PROP: {
+				out.beginArray();
+				for (java.lang.Object x : getRelevantForModels()) {
+				}
+				out.endArray();
 				break;
 			}
 			case COLOR__PROP: {

@@ -52,6 +52,18 @@ public class GanttLineDecoration_Impl extends com.top_logic.react.flow.data.impl
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttLineDecoration setRelevantForModels(java.util.List<? extends java.lang.Object> value) {
+		internalSetRelevantForModels(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLineDecoration addRelevantForModel(java.lang.Object value) {
+		internalAddRelevantForModel(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttLineDecoration setColor(String value) {
 		internalSetColor(value);
 		return this;

@@ -5,10 +5,12 @@
  */
 package test.com.top_logic.react.flow.server.layout;
 
+import java.io.StringWriter;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
@@ -19,6 +21,7 @@ import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.GanttTick;
 import com.top_logic.react.flow.data.Padding;
 import com.top_logic.react.flow.data.Text;
+import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.server.ui.AWTContext;
 import com.top_logic.react.flow.svg.RenderContext;
 
@@ -99,6 +102,30 @@ public class TestGanttLayout extends TestCase {
 			.setId(id).setRowId(rowId)
 			.setStart(start).setEnd(end)
 			.setBox(cell(label));
+	}
+
+	public void testAxisRenderingProducesTickOutput() throws Exception {
+		GanttLayout layout = GanttLayout.create()
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(row("r1", "Row 1")));
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		String svg = renderToSvg(d);
+
+		// The three ticks defined in axis(0,100) should all show up in the rendered output.
+		assertTrue("tick '0' label appears", svg.contains(">0<"));
+		assertTrue("tick '50' label appears", svg.contains(">50<"));
+		assertTrue("tick '100' label appears", svg.contains(">100<"));
+	}
+
+	private static String renderToSvg(Diagram d) throws Exception {
+		StringWriter buffer = new StringWriter();
+		try (TagWriter tagWriter = new TagWriter(buffer);
+				SvgTagWriter svgWriter = new SvgTagWriter(tagWriter)) {
+			d.draw(svgWriter);
+		}
+		return buffer.toString();
 	}
 
 	public void testDistributeSizeUsesGivenWidth() {

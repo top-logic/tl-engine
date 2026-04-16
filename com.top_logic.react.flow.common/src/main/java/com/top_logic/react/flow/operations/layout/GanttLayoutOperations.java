@@ -6,6 +6,7 @@
 package com.top_logic.react.flow.operations.layout;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.react.flow.data.Box;
@@ -15,6 +16,7 @@ import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttMilestone;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
+import com.top_logic.react.flow.data.GanttTick;
 import com.top_logic.react.flow.operations.BoxOperations;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
@@ -97,7 +99,87 @@ public interface GanttLayoutOperations extends BoxOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		// Implemented in Tasks 11-14.
+		GanttLayout self = (GanttLayout) this;
+		drawAxis(self, out);
+		drawRowLanes(self, out);
+		drawDecorations(self, out);
+		for (Box content : self.getContents()) {
+			out.write(content);
+		}
+		drawEdges(self, out);
+	}
+
+	private static void drawAxis(GanttLayout self, SvgWriter out) {
+		GanttAxis axis = self.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double rangeMin = axis.getRangeMin();
+		double x0 = self.getX() + self.getRowLabelWidth();
+		double y0 = self.getY();
+		double w = self.getWidth() - self.getRowLabelWidth();
+		double h = self.getAxisHeight();
+
+		// Header background rectangle.
+		out.beginGroup();
+		out.writeCssClass("gantt-axis");
+
+		out.beginRect(x0, y0, w, h);
+		out.setFill("#f8f8f8");
+		out.setStroke("#c0c0c0");
+		out.setStrokeWidth(1.0);
+		out.endRect();
+
+		// For each tick: vertical line + label.
+		List<GanttTick> ticks = axis.getCurrentTicks();
+		for (GanttTick tick : ticks) {
+			double emphasis = tick.getEmphasis();
+			double strokeWidth = 0.5 + 1.5 * Math.min(1.0, Math.max(0.0, emphasis));
+			double tickX = x0 + (tick.getPosition() - rangeMin) * zoom;
+
+			// Vertical tick line from top to bottom of the axis header.
+			out.beginPath();
+			out.setStroke("#707070");
+			out.setStrokeWidth(strokeWidth);
+			out.setFill("none");
+			out.beginData();
+			out.moveToAbs(tickX, y0);
+			out.lineToAbs(tickX, y0 + h);
+			out.endData();
+			out.endPath();
+
+			// Tick label near the bottom of the axis header.
+			String label = tick.getLabel();
+			if (label != null && !label.isEmpty()) {
+				out.beginText(tickX + 2, y0 + h - 4, label);
+				out.setFill("#303030");
+				out.setStroke("none");
+				out.endText();
+			}
+		}
+
+		// Bottom border line for the axis header.
+		out.beginPath();
+		out.setStroke("#c0c0c0");
+		out.setStrokeWidth(1.0);
+		out.setFill("none");
+		out.beginData();
+		out.moveToAbs(x0, y0 + h);
+		out.lineToAbs(x0 + w, y0 + h);
+		out.endData();
+		out.endPath();
+
+		out.endGroup();
+	}
+
+	private static void drawRowLanes(GanttLayout self, SvgWriter out) {
+		// Task 12.
+	}
+
+	private static void drawDecorations(GanttLayout self, SvgWriter out) {
+		// Task 14.
+	}
+
+	private static void drawEdges(GanttLayout self, SvgWriter out) {
+		// Task 13.
 	}
 
 	private static void indexRows(GanttRow row, Map<String, Integer> idx, int[] counter) {

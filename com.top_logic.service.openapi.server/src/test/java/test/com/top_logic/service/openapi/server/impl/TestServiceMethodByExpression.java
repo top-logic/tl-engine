@@ -117,4 +117,15 @@ public class TestServiceMethodByExpression {
 		assertEquals("application/octet-stream", resp.getContentType());
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
+
+	@Test
+	public void wrappedBinaryHonorsExplicitContentType() throws Exception {
+		byte[] payload = "Hello,World\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+		_method.writeResponse(new Response(200, payload, "text/csv; charset=utf-8"), resp);
+
+		assertEquals("text/csv; charset=utf-8", resp.getContentType());
+		assertArrayEquals(payload, resp.bodyBytes());
+	}
 }

@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.session;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -142,10 +143,11 @@ public sealed interface Part {
 	record SystemPart(String id, Instant timestamp,
 			SystemEventType eventType, String details) implements Part {}
 
-	/** Sub-agent delegation with child session reference. */
+	/** Sub-agent delegation with nested child parts for full event streaming. */
 	record DelegationPart(
 			String id, Instant timestamp, String fromAgent, String toAgent,
 			String inputSummary, String resultSummary,
+			List<Part> childParts,
 			String childSessionId, long durationMs
 	) implements Part {
 
@@ -153,14 +155,14 @@ public sealed interface Part {
 		public static DelegationPart started(String id, Instant timestamp,
 				String fromAgent, String toAgent, String inputSummary) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
-				inputSummary, null, null, 0L);
+				inputSummary, null, new ArrayList<>(), null, 0L);
 		}
 
 		/** */
 		public DelegationPart completed(String resultSummary,
 				String childSessionId, long durationMs) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
-				inputSummary, resultSummary, childSessionId, durationMs);
+				inputSummary, resultSummary, childParts, childSessionId, durationMs);
 		}
 	}
 

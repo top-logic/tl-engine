@@ -52,8 +52,8 @@ public class Response {
 	 * If the value is a {@link com.top_logic.basic.io.binary.BinaryData}, a {@code byte[]},
 	 * or a {@link java.io.InputStream}, the raw bytes are streamed to
 	 * {@link HttpServletResponse#getOutputStream()}. Otherwise the value is written to
-	 * {@link HttpServletResponse#getWriter()} - either as JSON (for the default
-	 * {@code application/json} content type) or via {@link String#valueOf(Object)}.
+	 * {@link HttpServletResponse#getWriter()} - as JSON when the {@link #getContentType()
+	 * content type} is {@code application/json}, or via {@link String#valueOf(Object)}.
 	 * </p>
 	 *
 	 * <p>
@@ -66,7 +66,16 @@ public class Response {
 	}
 
 	/**
-	 * Content type of {@link #getResult()}.
+	 * Content type of {@link #getResult()}, or <code>null</code> to derive a sensible default
+	 * from the result value.
+	 *
+	 * <p>
+	 * When <code>null</code> (or empty) the type is chosen based on the runtime type of
+	 * {@link #getResult()}: a {@link com.top_logic.basic.io.binary.BinaryData}'s own
+	 * content type takes precedence; raw {@code byte[]} and {@link java.io.InputStream}
+	 * default to {@code application/octet-stream}; collections and maps default to
+	 * {@code application/json}; everything else defaults to {@code text/plain}.
+	 * </p>
 	 */
 	public String getContentType() {
 		return _contentType;

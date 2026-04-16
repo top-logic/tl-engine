@@ -23,14 +23,38 @@ public class TestServiceMethodByExpression {
 		new ServiceMethodByExpression("/t", Collections.emptyList(), false, null);
 
 	@Test
-	public void rawResultIsJsonSerialized() throws Exception {
+	public void rawStringIsTextPlain() throws Exception {
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
 
 		_method.writeResponse("hello", resp);
 
 		assertEquals(200, resp.getStatus());
+		assertEquals("text/plain", resp.getContentType());
+		assertEquals("hello", resp.bodyString());
+	}
+
+	@Test
+	public void rawMapIsJsonSerialized() throws Exception {
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+
+		_method.writeResponse(java.util.Map.of("greeting", "hello"), resp);
+
+		assertEquals(200, resp.getStatus());
 		assertEquals("application/json", resp.getContentType());
-		assertEquals("\"hello\"", resp.bodyString());
+		assertEquals("{\"greeting\":\"hello\"}", resp.bodyString());
+	}
+
+	@Test
+	public void wrappedBinaryDataWithoutContentTypeUsesBinaryDefault() throws Exception {
+		byte[] payload = new byte[] { 1, 2, 3 };
+		com.top_logic.basic.io.binary.BinaryData data =
+			com.top_logic.basic.io.binary.BinaryDataFactory.createBinaryData(payload, "image/jpeg");
+
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+		_method.writeResponse(new Response(200, data, null), resp);
+
+		assertEquals("image/jpeg", resp.getContentType());
+		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
 	@Test

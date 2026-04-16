@@ -118,8 +118,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		resp.setStatus(status);
 
 		if (isBinary(body)) {
-			resp.setContentType(contentType);
-			writeBinary(body, resp.getOutputStream());
+			writeBinary(body, contentType, resp);
 		} else {
 			writeText(body, contentType, resp);
 		}
@@ -154,7 +153,9 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		return value instanceof BinaryData || value instanceof byte[] || value instanceof InputStream;
 	}
 
-	private static void writeBinary(Object value, OutputStream out) throws IOException {
+	private static void writeBinary(Object value, String contentType, HttpServletResponse resp) throws IOException {
+		resp.setContentType(contentType);
+		OutputStream out = resp.getOutputStream();
 		if (value instanceof BinaryData) {
 			((BinaryData) value).deliverTo(out);
 		} else if (value instanceof byte[]) {

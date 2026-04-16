@@ -6,6 +6,8 @@
 package com.top_logic.service.openapi.server.impl;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +18,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.json.JsonUtilities;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -85,44 +89,79 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	 */
 	@FrameworkInternal
 	public void writeResponse(Object result, HttpServletResponse resp) throws IOException {
+		int status;
 		String contentType;
 		String charset;
-		int status;
-		String content;
+		Object body;
+
 		if (result instanceof Response) {
 			Response response = ((Response) result);
 			status = response.getStatus();
-			if (response.getResult() == null) {
+			body = response.getResult();
+			if (body == null) {
 				resp.sendError(status);
 				return;
 			}
 			try {
 				MimeType mimeType = new MimeType(response.getContentType());
-				if (JsonUtilities.JSON_CONTENT_TYPE.equals(mimeType.getBaseType())) {
-					content = JSON.toString(response.getResult());
-				} else {
-					content = String.valueOf(response.getResult());
-				}
 				contentType = mimeType.getBaseType();
 				charset = mimeType.getParameter("charset");
-				if (charset == null) {
-					charset = "utf-8";
-				}
 			} catch (MimeTypeParseException ex) {
 				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
 					.fill(response.getContentType(), ex.getMessage()), ex);
 			}
 		} else {
 			status = HttpServletResponse.SC_OK;
-			contentType = JsonUtilities.JSON_CONTENT_TYPE;
-			charset = JsonUtilities.DEFAULT_JSON_ENCODING;
-			content = JSON.toString(result);
+			body = result;
+			if (isBinary(body)) {
+				contentType = "application/octet-stream";
+				charset = null;
+			} else {
+				contentType = JsonUtilities.JSON_CONTENT_TYPE;
+				charset = JsonUtilities.DEFAULT_JSON_ENCODING;
+			}
 		}
 
 		resp.setStatus(status);
 		resp.setContentType(contentType);
-		resp.setCharacterEncoding(charset);
-		resp.getWriter().write(content);
+
+		if (isBinary(body)) {
+			writeBinary(body, resp.getOutputStream());
+		} else {
+			if (charset == null) {
+				charset = "utf-8";
+			}
+			resp.setCharacterEncoding(charset);
+			String content;
+			if (result instanceof Response) {
+				if (JsonUtilities.JSON_CONTENT_TYPE.equals(contentType)) {
+					content = JSON.toString(body);
+				} else {
+					content = String.valueOf(body);
+				}
+			} else {
+				content = JSON.toString(body);
+			}
+			resp.getWriter().write(content);
+		}
+	}
+
+	private static boolean isBinary(Object value) {
+		return value instanceof BinaryData || value instanceof byte[] || value instanceof InputStream;
+	}
+
+	private static void writeBinary(Object value, OutputStream out) throws IOException {
+		if (value instanceof BinaryData) {
+			((BinaryData) value).deliverTo(out);
+		} else if (value instanceof byte[]) {
+			out.write((byte[]) value);
+		} else if (value instanceof InputStream) {
+			try (InputStream in = (InputStream) value) {
+				StreamUtilities.copyStreamContents(in, out);
+			}
+		} else {
+			throw new IllegalStateException("Not a binary value: " + value.getClass().getName());
+		}
 	}
 
 	private Object inInteraction(Map<String, Object> arguments) throws ComputationFailure {

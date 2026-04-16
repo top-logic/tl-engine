@@ -82,4 +82,39 @@ public class TestServiceMethodByExpression {
 		assertEquals("image/png", resp.getContentType());
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
+
+	@Test
+	public void wrappedByteArrayStreamsRawBytes() throws Exception {
+		byte[] payload = "binary-bytes".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+		_method.writeResponse(new Response(200, payload, "application/octet-stream"), resp);
+
+		assertEquals("application/octet-stream", resp.getContentType());
+		assertArrayEquals(payload, resp.bodyBytes());
+	}
+
+	@Test
+	public void wrappedInputStreamStreamsRawBytes() throws Exception {
+		byte[] payload = "stream-bytes".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+		java.io.InputStream in = new java.io.ByteArrayInputStream(payload);
+
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+		_method.writeResponse(new Response(200, in, "application/pdf"), resp);
+
+		assertEquals("application/pdf", resp.getContentType());
+		assertArrayEquals(payload, resp.bodyBytes());
+	}
+
+	@Test
+	public void rawByteArrayDefaultsToOctetStream() throws Exception {
+		byte[] payload = new byte[] { 1, 2, 3, 4, 5 };
+
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+		_method.writeResponse(payload, resp);
+
+		assertEquals(200, resp.getStatus());
+		assertEquals("application/octet-stream", resp.getContentType());
+		assertArrayEquals(payload, resp.bodyBytes());
+	}
 }

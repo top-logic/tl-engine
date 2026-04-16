@@ -923,3 +923,36 @@ message GanttTick {
 	/** Emphasis in [0..1] — renderer interpolates stroke width and label prominence. */
 	double emphasis;
 }
+
+/** Which end of an item a Gantt edge attaches to. */
+enum GanttEndpoint {
+	START;
+	END;
+}
+
+/** Semantic of a Gantt edge. */
+enum GanttEnforce {
+	/** Operation is blocked when the constraint would be violated. */
+	STRICT;
+	/** Operation is allowed; violation is marked visually (red edge). */
+	WARN;
+	/** Purely decorative relation; no time constraint. */
+	NONE;
+}
+
+/** A dependency edge between two Gantt items. */
+message GanttEdge {
+	string id;
+
+	/** ID of the source item. */
+	string sourceItemId;
+
+	GanttEndpoint sourceEndpoint;
+
+	/** ID of the target item. */
+	string targetItemId;
+
+	GanttEndpoint targetEndpoint;
+
+	GanttEnforce enforce;
+}

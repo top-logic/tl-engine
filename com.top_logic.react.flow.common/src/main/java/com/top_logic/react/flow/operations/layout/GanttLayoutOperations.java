@@ -85,7 +85,14 @@ public interface GanttLayoutOperations extends BoxOperations {
 
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		GanttLayout self = (GanttLayout) this;
 		computeIntrinsicSize(context, offsetX, offsetY);
+		if (width > self.getWidth()) {
+			self.setWidth(width);
+		}
+		if (height > self.getHeight()) {
+			self.setHeight(height);
+		}
 	}
 
 	@Override

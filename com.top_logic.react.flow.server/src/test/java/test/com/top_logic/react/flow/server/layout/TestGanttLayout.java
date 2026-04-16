@@ -100,4 +100,26 @@ public class TestGanttLayout extends TestCase {
 			.setStart(start).setEnd(end)
 			.setBox(cell(label));
 	}
+
+	public void testDistributeSizeUsesGivenWidth() {
+		GanttLayout layout = GanttLayout.create()
+			.setRowHeight(32.0)
+			.setAxisHeight(24.0)
+			.setRowLabelWidth(200.0)
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(row("r1", "Row 1")));
+
+		Diagram d = Diagram.create().setRoot(layout);
+		d.setViewBoxWidth(800);
+		d.setViewBoxHeight(100);
+		d.layout(new AWTContext(12f));
+
+		// Intrinsic width = rowLabelWidth + (rangeMax - rangeMin) * zoom = 200 + 100 * 1 = 300.
+		// Since ViewBox is 800, distributeSize should expand width to 800.
+		// DiagramOperations.layout() calls distributeSize with intrinsic width, NOT viewBox width.
+		// So we call distributeSize directly to verify the expand-to-fill behaviour.
+		RenderContext context = new AWTContext(12f);
+		layout.distributeSize(context, 0, 0, 800, 100);
+		assertEquals("width", 800.0, layout.getWidth(), 0.5);
+	}
 }

@@ -60,9 +60,27 @@ public class ConversationLogListener implements AgentEventListener {
 
 	private final Map<String, Part.DelegationPart> _activeDelegations = new ConcurrentHashMap<>();
 
+	/**
+	 * Optional parent listener that receives delegated child-agent events which must reach the
+	 * browser (e.g. approval requests). Set by the chat layer after constructing the composite
+	 * listener so that sub-agent approval prompts are forwarded to the SSE handler.
+	 */
+	private volatile AgentEventListener _parentListener;
+
 	/** */
 	public ConversationLogListener(ConversationLog log) {
 		_log = log;
+	}
+
+	/**
+	 * Sets the parent listener that child-agent events (approval requests) should be forwarded to.
+	 *
+	 * <p>
+	 * Must be called after the composite listener (including the SSE handler) has been assembled.
+	 * </p>
+	 */
+	public void setParentListener(AgentEventListener parentListener) {
+		_parentListener = parentListener;
 	}
 
 	@Override
@@ -412,6 +430,14 @@ public class ConversationLogListener implements AgentEventListener {
 					}
 					return p;
 				});
+			} else if (event instanceof AgentEvent.ApprovalRequired
+				|| event instanceof AgentEvent.ApprovalResolved) {
+				// Bubble approval events up to the parent listener (SSE handler)
+				// so the browser can show the approval dialog for sub-agent tools.
+				AgentEventListener parent = _parentListener;
+				if (parent != null) {
+					parent.onEvent(event);
+				}
 			} else if (event instanceof AgentEvent.RunCompleted) {
 				flushChildBuffers(dp);
 			}

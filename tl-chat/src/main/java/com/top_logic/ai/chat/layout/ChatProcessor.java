@@ -214,6 +214,8 @@ public class ChatProcessor {
 				Logger.warn("No SSE handler found for tracker — streaming will not reach the browser.", ChatProcessor.class);
 				listener = logListener;
 			}
+			// Allow sub-agent approval events to bubble up to the SSE handler
+			logListener.setParentListener(listener);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener));
 			state.setLastAgentResponse(result);

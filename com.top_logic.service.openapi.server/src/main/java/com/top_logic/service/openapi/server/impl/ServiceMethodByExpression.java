@@ -23,6 +23,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -70,15 +71,15 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	@Override
 	public void handleRequest(Person account, Map<String, Object> arguments, HttpServletResponse resp)
 			throws IOException, ComputationFailure {
-		Object result;
+		ComputationEx2<Void, ComputationFailure, IOException> job = () -> {
+			writeResponse(inInteraction(arguments), resp);
+			return null;
+		};
 		if (account == null) {
-			result = ThreadContextManager.inSystemInteraction(ServiceMethodBuilderByExpression.class,
-				() -> inInteraction(arguments));
+			ThreadContextManager.inSystemInteraction(ServiceMethodBuilderByExpression.class, job);
 		} else {
-			result = TLContextManager.inPersonContext(account, () -> inInteraction(arguments));
+			TLContextManager.inPersonContext(account, job);
 		}
-
-		writeResponse(result, resp);
 	}
 
 	/**

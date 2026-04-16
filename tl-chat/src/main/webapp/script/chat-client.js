@@ -1773,8 +1773,54 @@
 			header.innerHTML =
 				'<span class="tl-chat-status-dot success"></span>' +
 				'<span>Agent: ' + Utils.escapeHtml(del.toAgent || '') + '</span>' +
-				(del.durationMs ? '<span class="tl-chat-tool-duration">' + Utils.formatDuration(del.durationMs) + '</span>' : '');
+				(del.durationMs ? '<span class="tl-chat-tool-duration">' + Utils.formatDuration(del.durationMs) + '</span>' : '') +
+				'<span class="tl-chat-tool-chevron">&#9654;</span>';
 			el.appendChild(header);
+
+			const childContainer = document.createElement('div');
+			childContainer.className = 'tl-chat-delegation-tools';
+			childContainer.style.display = 'none';
+
+			if (del.childParts && del.childParts.length > 0) {
+				for (const childPart of del.childParts) {
+					const childType = childPart.type;
+					if (childType === 'tool_call' && childPart.toolCallData) {
+						this._renderToolCallPart(childContainer, childPart.toolCallData);
+					} else if (childType === 'text' && childPart.textData && childPart.textData.text) {
+						const textEl = document.createElement('div');
+						textEl.className = 'tl-chat-delegation-result';
+						textEl.innerHTML = Utils.renderMarkdown(childPart.textData.text);
+						childContainer.appendChild(textEl);
+					} else if (childType === 'thinking' && childPart.thinkingData && childPart.thinkingData.text) {
+						const thinkEl = document.createElement('div');
+						thinkEl.className = 'tl-chat-thinking';
+						thinkEl.textContent = childPart.thinkingData.text;
+						childContainer.appendChild(thinkEl);
+					} else if (childType === 'error' && childPart.errorData) {
+						const errEl = document.createElement('div');
+						errEl.className = 'tl-chat-error';
+						errEl.textContent = childPart.errorData.errorMessage || childPart.errorData.kind;
+						childContainer.appendChild(errEl);
+					}
+				}
+			}
+
+			if (del.resultSummary) {
+				const resultEl = document.createElement('div');
+				resultEl.className = 'tl-chat-delegation-result';
+				resultEl.textContent = del.resultSummary;
+				childContainer.appendChild(resultEl);
+			}
+
+			el.appendChild(childContainer);
+
+			let expanded = false;
+			header.addEventListener('click', () => {
+				expanded = !expanded;
+				childContainer.style.display = expanded ? '' : 'none';
+				header.querySelector('.tl-chat-tool-chevron').classList.toggle('expanded', expanded);
+			});
+
 			container.appendChild(el);
 		},
 

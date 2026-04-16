@@ -69,7 +69,31 @@ public class TestGanttLayout extends TestCase {
 		return Border.create().setContent(Padding.create().setAll(2.0).setContent(Text.create().setValue(label)));
 	}
 
-	@SuppressWarnings("unused")
+	public void testSpanPositionedAtTimeAndRow() {
+		GanttSpan span = span("s1", "r2", 10.0, 30.0, "Task 1");
+
+		GanttLayout layout = GanttLayout.create()
+			.setRowHeight(32.0)
+			.setAxisHeight(24.0)
+			.setRowLabelWidth(200.0)
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(
+				row("r1", "Row 1"),
+				row("r2", "Row 2")))
+			.setItems(Arrays.asList(span));
+		layout.addContent(span.getBox());
+
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		// r2 is the second row (index 1). Expected y = axisHeight + 1 * rowHeight + 2 = 58.
+		// Expected x = rowLabelWidth + 10 * zoom = 210.
+		assertEquals("span.x", 210.0, span.getBox().getX(), 0.5);
+		assertEquals("span.y", 58.0, span.getBox().getY(), 0.5);
+		// Width = (end - start) * zoom = 20. Height = rowHeight - 4.
+		assertEquals("span.width", 20.0, span.getBox().getWidth(), 0.5);
+	}
+
 	private static GanttSpan span(String id, String rowId, double start, double end, String label) {
 		return GanttSpan.create()
 			.setId(id).setRowId(rowId)

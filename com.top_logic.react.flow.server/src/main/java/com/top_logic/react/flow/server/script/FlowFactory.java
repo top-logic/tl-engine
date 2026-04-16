@@ -1568,10 +1568,23 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory String rowId,
 			@Mandatory Box box,
 			double start,
-			double end) {
-		return GanttSpan.create()
+			double end,
+			Boolean canMoveTime,
+			Boolean canMoveRow,
+			Boolean canResizeStart,
+			Boolean canResizeEnd,
+			Boolean canBeEdgeSource,
+			Boolean canBeEdgeTarget) {
+		GanttSpan span = GanttSpan.create()
 			.setId(id).setRowId(rowId).setBox(box)
 			.setStart(start).setEnd(end);
+		if (canMoveTime != null) span.setCanMoveTime(canMoveTime);
+		if (canMoveRow != null) span.setCanMoveRow(canMoveRow);
+		if (canResizeStart != null) span.setCanResizeStart(canResizeStart);
+		if (canResizeEnd != null) span.setCanResizeEnd(canResizeEnd);
+		if (canBeEdgeSource != null) span.setCanBeEdgeSource(canBeEdgeSource);
+		if (canBeEdgeTarget != null) span.setCanBeEdgeTarget(canBeEdgeTarget);
+		return span;
 	}
 
 	@SideEffectFree
@@ -1580,10 +1593,19 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory String id,
 			@Mandatory String rowId,
 			@Mandatory Box box,
-			double at) {
-		return GanttMilestone.create()
+			double at,
+			Boolean canMoveTime,
+			Boolean canMoveRow,
+			Boolean canBeEdgeSource,
+			Boolean canBeEdgeTarget) {
+		GanttMilestone milestone = GanttMilestone.create()
 			.setId(id).setRowId(rowId).setBox(box)
 			.setAt(at);
+		if (canMoveTime != null) milestone.setCanMoveTime(canMoveTime);
+		if (canMoveRow != null) milestone.setCanMoveRow(canMoveRow);
+		if (canBeEdgeSource != null) milestone.setCanBeEdgeSource(canBeEdgeSource);
+		if (canBeEdgeTarget != null) milestone.setCanBeEdgeTarget(canBeEdgeTarget);
+		return milestone;
 	}
 
 	@SideEffectFree
@@ -1609,7 +1631,8 @@ public class FlowFactory extends TLScriptFunctions {
 			double at,
 			String color,
 			String label,
-			List<String> relevantFor) {
+			List<String> relevantFor,
+			Boolean canMove) {
 		GanttLineDecoration deco = GanttLineDecoration.create()
 			.setId(id).setAt(at)
 			.setColor(color != null ? color : "#c02020")
@@ -1617,6 +1640,7 @@ public class FlowFactory extends TLScriptFunctions {
 		if (relevantFor != null) {
 			deco.setRelevantFor(relevantFor);
 		}
+		if (canMove != null) deco.setCanMove(canMove);
 		return deco;
 	}
 
@@ -1628,7 +1652,9 @@ public class FlowFactory extends TLScriptFunctions {
 			double to,
 			String color,
 			String label,
-			List<String> relevantFor) {
+			List<String> relevantFor,
+			Boolean canMove,
+			Boolean canResize) {
 		GanttRangeDecoration deco = GanttRangeDecoration.create()
 			.setId(id).setFrom(from).setTo(to)
 			.setColor(color != null ? color : "rgba(255, 220, 120, 0.35)")
@@ -1636,6 +1662,8 @@ public class FlowFactory extends TLScriptFunctions {
 		if (relevantFor != null) {
 			deco.setRelevantFor(relevantFor);
 		}
+		if (canMove != null) deco.setCanMove(canMove);
+		if (canResize != null) deco.setCanResize(canResize);
 		return deco;
 	}
 
@@ -1645,7 +1673,8 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory String providerId,
 			double rangeMin,
 			double rangeMax) {
-		AxisProvider provider = AxisProviderService.Module.INSTANCE.getImplementationInstance().lookup(providerId);
+		AxisProviderService svc = AxisProviderService.Module.INSTANCE.getImplementationInstance();
+		AxisProvider provider = (svc != null) ? svc.lookup(providerId) : null;
 		List<GanttTick> ticks = provider != null
 			? provider.ticksFor(rangeMin, rangeMax, 1.0)
 			: java.util.Collections.emptyList();

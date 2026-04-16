@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -24,10 +23,17 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
  * Creates an HTTP response object to deliver to an {@link HttpServletResponse}.
  *
  * <p>
- * Supports textual payloads (JSON, plain text, XML, ...) as well as binary payloads.
- * Pass a {@link com.top_logic.basic.io.binary.BinaryData}, a {@code byte[]}, or an
- * {@link java.io.InputStream} as the {@code content} argument to stream raw bytes
- * with a matching {@code contentType} such as {@code image/png} or {@code application/pdf}.
+ * Supports textual payloads (JSON, plain text, XML, ...) as well as binary payloads. Pass a
+ * {@link com.top_logic.basic.io.binary.BinaryData}, a {@code byte[]}, or an
+ * {@link java.io.InputStream} as the {@code content} argument to stream raw bytes.
+ * </p>
+ *
+ * <p>
+ * The {@code contentType} argument is optional. When omitted, a sensible default is derived
+ * from the {@code content}: a {@link com.top_logic.basic.io.binary.BinaryData}'s own content
+ * type takes precedence; raw {@code byte[]} and {@link java.io.InputStream} default to
+ * {@code application/octet-stream}; collections and maps default to {@code application/json};
+ * everything else defaults to {@code text/plain}.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -68,7 +74,7 @@ public class HTTPResponse extends GenericMethod {
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("statusCode")
 			.optional("content")
-			.optional("contentType", JsonUtilities.JSON_CONTENT_TYPE_HEADER)
+			.optional("contentType")
 			.build();
 
 		/**

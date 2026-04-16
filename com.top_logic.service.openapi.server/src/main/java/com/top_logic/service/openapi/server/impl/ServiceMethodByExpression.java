@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.server.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -94,9 +95,8 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		Object body;
 		int status;
 		String contentType;
-		boolean wrapped = result instanceof Response;
 
-		if (wrapped) {
+		if (result instanceof Response) {
 			Response response = ((Response) result);
 			status = response.getStatus();
 			body = response.getResult();
@@ -108,7 +108,11 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		} else {
 			status = HttpServletResponse.SC_OK;
 			body = result;
-			contentType = isBinary(body) ? defaultBinaryContentType(body) : JsonUtilities.JSON_CONTENT_TYPE;
+			contentType = null;
+		}
+
+		if (contentType == null || contentType.isEmpty()) {
+			contentType = defaultContentType(body);
 		}
 
 		resp.setStatus(status);
@@ -117,26 +121,20 @@ public class ServiceMethodByExpression implements ServiceMethod {
 			resp.setContentType(contentType);
 			writeBinary(body, resp.getOutputStream());
 		} else {
-			writeText(body, contentType, wrapped, resp);
+			writeText(body, contentType, resp);
 		}
 	}
 
-	private static void writeText(Object body, String contentType, boolean wrapped, HttpServletResponse resp)
-			throws IOException {
+	private static void writeText(Object body, String contentType, HttpServletResponse resp) throws IOException {
 		String baseType;
 		String charset;
-		if (wrapped) {
-			try {
-				MimeType mimeType = new MimeType(contentType);
-				baseType = mimeType.getBaseType();
-				charset = mimeType.getParameter("charset");
-			} catch (MimeTypeParseException ex) {
-				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
-					.fill(contentType, ex.getMessage()), ex);
-			}
-		} else {
-			baseType = JsonUtilities.JSON_CONTENT_TYPE;
-			charset = JsonUtilities.DEFAULT_JSON_ENCODING;
+		try {
+			MimeType mimeType = new MimeType(contentType);
+			baseType = mimeType.getBaseType();
+			charset = mimeType.getParameter("charset");
+		} catch (MimeTypeParseException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
+				.fill(contentType, ex.getMessage()), ex);
 		}
 		if (charset == null) {
 			charset = "utf-8";
@@ -170,14 +168,21 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		}
 	}
 
-	private static String defaultBinaryContentType(Object value) {
+	private static String defaultContentType(Object value) {
 		if (value instanceof BinaryData) {
 			String contentType = ((BinaryData) value).getContentType();
 			if (contentType != null && !contentType.isEmpty()) {
 				return contentType;
 			}
+			return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
 		}
-		return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
+		if (value instanceof byte[] || value instanceof InputStream) {
+			return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
+		}
+		if (value instanceof Map || value instanceof Collection) {
+			return JsonUtilities.JSON_CONTENT_TYPE;
+		}
+		return "text/plain";
 	}
 
 	private Object inInteraction(Map<String, Object> arguments) throws ComputationFailure {

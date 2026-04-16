@@ -942,23 +942,28 @@ enum GanttEnforce {
 
 /** A dependency edge between two Gantt items. */
 message GanttEdge {
+	/** Opaque identifier, unique within a {@link GanttLayout}. */
 	string id;
 
 	/** ID of the source item. */
 	string sourceItemId;
 
+	/** Which end of the source item the edge attaches to. */
 	GanttEndpoint sourceEndpoint;
 
 	/** ID of the target item. */
 	string targetItemId;
 
+	/** Which end of the target item the edge attaches to. */
 	GanttEndpoint targetEndpoint;
 
+	/** Constraint semantic applied to this edge (STRICT, WARN, or NONE). */
 	GanttEnforce enforce;
 }
 
 /** Abstract base for entries on a Gantt time axis. */
 abstract message GanttItem {
+	/** Opaque identifier, unique within a {@link GanttLayout}. */
 	string id;
 
 	/** Reference to the {@link GanttRow#id} this item lives in. */
@@ -975,27 +980,43 @@ abstract message GanttItem {
 	@Ref
 	Box box;
 
+	/** Whether the user may drag this item along the time axis. */
 	bool canMoveTime = true;
+
+	/** Whether the user may drag this item to a different row. */
 	bool canMoveRow = true;
+
+	/** Whether a new dependency edge may originate from this item. */
 	bool canBeEdgeSource = true;
+
+	/** Whether a new dependency edge may terminate at this item. */
 	bool canBeEdgeTarget = true;
 }
 
 /** A task with start and end on the time axis. */
 message GanttSpan extends GanttItem {
+	/** Start position (layout units at zoom 100%). */
 	double start;
+
+	/** End position (layout units at zoom 100%); must be {@code >= start}. */
 	double end;
+
+	/** Whether the user may drag the left (start) edge to change the start. */
 	bool canResizeStart = true;
+
+	/** Whether the user may drag the right (end) edge to change the end. */
 	bool canResizeEnd = true;
 }
 
 /** A milestone (point in time). */
 message GanttMilestone extends GanttItem {
+	/** Position of the milestone on the time axis (layout units at zoom 100%). */
 	double at;
 }
 
 /** Abstract base for Gantt chart decorations (lines, ranges). */
 abstract message GanttDecoration {
+	/** Opaque identifier, unique within a {@link GanttLayout}. */
 	string id;
 
 	/** CSS-style color. */
@@ -1004,6 +1025,7 @@ abstract message GanttDecoration {
 	/** Label shown near the decoration. */
 	string label;
 
+	/** Whether the user may drag the decoration along the time axis. */
 	bool canMove;
 
 	/**
@@ -1015,13 +1037,19 @@ abstract message GanttDecoration {
 
 /** Vertical line at a single position on the time axis. */
 message GanttLineDecoration extends GanttDecoration {
+	/** Position of the line on the time axis (layout units at zoom 100%). */
 	double at;
 }
 
 /** Coloured range between two positions. */
 message GanttRangeDecoration extends GanttDecoration {
+	/** Start position of the range (layout units at zoom 100%). */
 	double from;
+
+	/** End position of the range (layout units at zoom 100%); must be {@code >= from}. */
 	double to;
+
+	/** Whether the user may drag the range's edges to resize it. */
 	bool canResize;
 }
 

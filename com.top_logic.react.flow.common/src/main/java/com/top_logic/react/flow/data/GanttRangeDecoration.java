@@ -24,6 +24,9 @@ public interface GanttRangeDecoration extends GanttDecoration {
 	/** @see #isCanResize() */
 	String CAN_RESIZE__PROP = "canResize";
 
+	/**
+	 * Start position of the range (layout units at zoom 100%).
+	 */
 	double getFrom();
 
 	/**
@@ -31,6 +34,9 @@ public interface GanttRangeDecoration extends GanttDecoration {
 	 */
 	com.top_logic.react.flow.data.GanttRangeDecoration setFrom(double value);
 
+	/**
+	 * End position of the range (layout units at zoom 100%); must be {@code >= from}.
+	 */
 	double getTo();
 
 	/**
@@ -38,6 +44,9 @@ public interface GanttRangeDecoration extends GanttDecoration {
 	 */
 	com.top_logic.react.flow.data.GanttRangeDecoration setTo(double value);
 
+	/**
+	 * Whether the user may drag the range's edges to resize it.
+	 */
 	boolean isCanResize();
 
 	/**

@@ -46,6 +46,9 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	/** The type code of this instance. */
 	TypeKind kind();
 
+	/**
+	 * Opaque identifier, unique within a {@link GanttLayout}.
+	 */
 	String getId();
 
 	/**
@@ -73,6 +76,9 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	 */
 	com.top_logic.react.flow.data.GanttDecoration setLabel(String value);
 
+	/**
+	 * Whether the user may drag the decoration along the time axis.
+	 */
 	boolean isCanMove();
 
 	/**

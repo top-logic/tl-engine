@@ -33,6 +33,9 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getEnforce() */
 	String ENFORCE__PROP = "enforce";
 
+	/**
+	 * Opaque identifier, unique within a {@link GanttLayout}.
+	 */
 	String getId();
 
 	/**
@@ -50,6 +53,9 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 */
 	com.top_logic.react.flow.data.GanttEdge setSourceItemId(String value);
 
+	/**
+	 * Which end of the source item the edge attaches to.
+	 */
 	com.top_logic.react.flow.data.GanttEndpoint getSourceEndpoint();
 
 	/**
@@ -67,6 +73,9 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 */
 	com.top_logic.react.flow.data.GanttEdge setTargetItemId(String value);
 
+	/**
+	 * Which end of the target item the edge attaches to.
+	 */
 	com.top_logic.react.flow.data.GanttEndpoint getTargetEndpoint();
 
 	/**
@@ -74,6 +83,9 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 */
 	com.top_logic.react.flow.data.GanttEdge setTargetEndpoint(com.top_logic.react.flow.data.GanttEndpoint value);
 
+	/**
+	 * Constraint semantic applied to this edge (STRICT, WARN, or NONE).
+	 */
 	com.top_logic.react.flow.data.GanttEnforce getEnforce();
 
 	/**

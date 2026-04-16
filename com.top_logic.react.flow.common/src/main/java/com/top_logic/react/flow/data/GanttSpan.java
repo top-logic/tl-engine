@@ -27,6 +27,9 @@ public interface GanttSpan extends GanttItem {
 	/** @see #isCanResizeEnd() */
 	String CAN_RESIZE_END__PROP = "canResizeEnd";
 
+	/**
+	 * Start position (layout units at zoom 100%).
+	 */
 	double getStart();
 
 	/**
@@ -34,6 +37,9 @@ public interface GanttSpan extends GanttItem {
 	 */
 	com.top_logic.react.flow.data.GanttSpan setStart(double value);
 
+	/**
+	 * End position (layout units at zoom 100%); must be {@code >= start}.
+	 */
 	double getEnd();
 
 	/**
@@ -41,6 +47,9 @@ public interface GanttSpan extends GanttItem {
 	 */
 	com.top_logic.react.flow.data.GanttSpan setEnd(double value);
 
+	/**
+	 * Whether the user may drag the left (start) edge to change the start.
+	 */
 	boolean isCanResizeStart();
 
 	/**
@@ -48,6 +57,9 @@ public interface GanttSpan extends GanttItem {
 	 */
 	com.top_logic.react.flow.data.GanttSpan setCanResizeStart(boolean value);
 
+	/**
+	 * Whether the user may drag the right (end) edge to change the end.
+	 */
 	boolean isCanResizeEnd();
 
 	/**

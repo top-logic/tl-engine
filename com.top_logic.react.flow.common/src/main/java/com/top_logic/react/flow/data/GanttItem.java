@@ -52,6 +52,9 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** The type code of this instance. */
 	TypeKind kind();
 
+	/**
+	 * Opaque identifier, unique within a {@link GanttLayout}.
+	 */
 	String getId();
 
 	/**
@@ -89,6 +92,9 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 */
 	boolean hasBox();
 
+	/**
+	 * Whether the user may drag this item along the time axis.
+	 */
 	boolean isCanMoveTime();
 
 	/**
@@ -96,6 +102,9 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 */
 	com.top_logic.react.flow.data.GanttItem setCanMoveTime(boolean value);
 
+	/**
+	 * Whether the user may drag this item to a different row.
+	 */
 	boolean isCanMoveRow();
 
 	/**
@@ -103,6 +112,9 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 */
 	com.top_logic.react.flow.data.GanttItem setCanMoveRow(boolean value);
 
+	/**
+	 * Whether a new dependency edge may originate from this item.
+	 */
 	boolean isCanBeEdgeSource();
 
 	/**
@@ -110,6 +122,9 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 */
 	com.top_logic.react.flow.data.GanttItem setCanBeEdgeSource(boolean value);
 
+	/**
+	 * Whether a new dependency edge may terminate at this item.
+	 */
 	boolean isCanBeEdgeTarget();
 
 	/**

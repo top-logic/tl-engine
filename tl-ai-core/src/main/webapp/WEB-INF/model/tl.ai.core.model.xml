@@ -61,6 +61,11 @@
 							fullQualifiedName="tl.ai.core:Agent#skills"
 							type="tl.ai.core:Skill"
 						/>
+						<field
+							attribute="delegations"
+							fullQualifiedName="tl.ai.core:Agent#delegations"
+							type="tl.ai.core:Agent"
+						/>
 						<group>
 							<field
 								attribute="maxRetries"
@@ -105,6 +110,7 @@
 				>
 					<annotations>
 						<multi-line/>
+						<size-constraint/>
 					</annotations>
 				</property>
 				<property name="model"
@@ -121,6 +127,7 @@
 				>
 					<annotations>
 						<multi-line/>
+						<size-constraint/>
 					</annotations>
 				</property>
 				<property name="maxTokens"
@@ -156,6 +163,12 @@
 					kind="forwards"
 					multiple="true"
 					type="Skill"
+				/>
+				<reference name="delegations"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Agent"
 				/>
 			</attributes>
 		</class>

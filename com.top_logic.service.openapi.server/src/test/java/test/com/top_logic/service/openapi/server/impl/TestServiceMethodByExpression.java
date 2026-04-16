@@ -56,6 +56,20 @@ public class TestServiceMethodByExpression {
 	}
 
 	@Test
+	public void rawBinaryDataUsesOwnContentType() throws Exception {
+		byte[] payload = new byte[] { (byte) 0x89, 'P', 'N', 'G' };
+		com.top_logic.basic.io.binary.BinaryData data =
+			com.top_logic.basic.io.binary.BinaryDataFactory.createBinaryData(payload, "image/png");
+
+		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
+		_method.writeResponse(data, resp);
+
+		assertEquals(200, resp.getStatus());
+		assertEquals("image/png", resp.getContentType());
+		assertArrayEquals(payload, resp.bodyBytes());
+	}
+
+	@Test
 	public void wrappedBinaryDataStreamsRawBytes() throws Exception {
 		byte[] payload = new byte[] { (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
 		com.top_logic.basic.io.binary.BinaryData data =

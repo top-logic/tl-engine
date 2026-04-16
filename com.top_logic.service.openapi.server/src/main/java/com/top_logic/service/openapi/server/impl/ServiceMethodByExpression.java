@@ -114,7 +114,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 			status = HttpServletResponse.SC_OK;
 			body = result;
 			if (isBinary(body)) {
-				contentType = "application/octet-stream";
+				contentType = defaultBinaryContentType(body);
 				charset = null;
 			} else {
 				contentType = JsonUtilities.JSON_CONTENT_TYPE;
@@ -133,14 +133,10 @@ public class ServiceMethodByExpression implements ServiceMethod {
 			}
 			resp.setCharacterEncoding(charset);
 			String content;
-			if (result instanceof Response) {
-				if (JsonUtilities.JSON_CONTENT_TYPE.equals(contentType)) {
-					content = JSON.toString(body);
-				} else {
-					content = String.valueOf(body);
-				}
-			} else {
+			if (JsonUtilities.JSON_CONTENT_TYPE.equals(contentType)) {
 				content = JSON.toString(body);
+			} else {
+				content = String.valueOf(body);
 			}
 			resp.getWriter().write(content);
 		}
@@ -162,6 +158,16 @@ public class ServiceMethodByExpression implements ServiceMethod {
 		} else {
 			throw new IllegalStateException("Not a binary value: " + value.getClass().getName());
 		}
+	}
+
+	private static String defaultBinaryContentType(Object value) {
+		if (value instanceof BinaryData) {
+			String contentType = ((BinaryData) value).getContentType();
+			if (contentType != null && !contentType.isEmpty()) {
+				return contentType;
+			}
+		}
+		return "application/octet-stream";
 	}
 
 	private Object inInteraction(Map<String, Object> arguments) throws ComputationFailure {

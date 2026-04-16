@@ -91,12 +91,12 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	 */
 	@FrameworkInternal
 	public final void writeResponse(Object result, HttpServletResponse resp) throws IOException {
+		Object body;
 		int status;
 		String contentType;
-		String charset;
-		Object body;
+		boolean wrapped = result instanceof Response;
 
-		if (result instanceof Response) {
+		if (wrapped) {
 			Response response = ((Response) result);
 			status = response.getStatus();
 			body = response.getResult();
@@ -104,44 +104,52 @@ public class ServiceMethodByExpression implements ServiceMethod {
 				resp.sendError(status);
 				return;
 			}
-			try {
-				MimeType mimeType = new MimeType(response.getContentType());
-				contentType = mimeType.getBaseType();
-				charset = mimeType.getParameter("charset");
-			} catch (MimeTypeParseException ex) {
-				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
-					.fill(response.getContentType(), ex.getMessage()), ex);
-			}
+			contentType = response.getContentType();
 		} else {
 			status = HttpServletResponse.SC_OK;
 			body = result;
-			if (isBinary(body)) {
-				contentType = defaultBinaryContentType(body);
-				charset = null;
-			} else {
-				contentType = JsonUtilities.JSON_CONTENT_TYPE;
-				charset = JsonUtilities.DEFAULT_JSON_ENCODING;
-			}
+			contentType = isBinary(body) ? defaultBinaryContentType(body) : JsonUtilities.JSON_CONTENT_TYPE;
 		}
 
 		resp.setStatus(status);
-		resp.setContentType(contentType);
 
 		if (isBinary(body)) {
+			resp.setContentType(contentType);
 			writeBinary(body, resp.getOutputStream());
 		} else {
-			if (charset == null) {
-				charset = "utf-8";
-			}
-			resp.setCharacterEncoding(charset);
-			String content;
-			if (JsonUtilities.JSON_CONTENT_TYPE.equals(contentType)) {
-				content = JSON.toString(body);
-			} else {
-				content = String.valueOf(body);
-			}
-			resp.getWriter().write(content);
+			writeText(body, contentType, wrapped, resp);
 		}
+	}
+
+	private static void writeText(Object body, String contentType, boolean wrapped, HttpServletResponse resp)
+			throws IOException {
+		String baseType;
+		String charset;
+		if (wrapped) {
+			try {
+				MimeType mimeType = new MimeType(contentType);
+				baseType = mimeType.getBaseType();
+				charset = mimeType.getParameter("charset");
+			} catch (MimeTypeParseException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
+					.fill(contentType, ex.getMessage()), ex);
+			}
+		} else {
+			baseType = JsonUtilities.JSON_CONTENT_TYPE;
+			charset = JsonUtilities.DEFAULT_JSON_ENCODING;
+		}
+		if (charset == null) {
+			charset = "utf-8";
+		}
+		resp.setContentType(baseType);
+		resp.setCharacterEncoding(charset);
+		String content;
+		if (JsonUtilities.JSON_CONTENT_TYPE.equals(baseType)) {
+			content = JSON.toString(body);
+		} else {
+			content = String.valueOf(body);
+		}
+		resp.getWriter().write(content);
 	}
 
 	private static boolean isBinary(Object value) {

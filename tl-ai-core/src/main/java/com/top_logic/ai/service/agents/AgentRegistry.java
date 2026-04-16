@@ -88,12 +88,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 */
 	public static final String DELEGATES_PLACEHOLDER = "<<AVAILABLE_DELEGATES>>";
 
-	/**
-	 * Maximum number of messages retained in each sub-agent's conversation memory. Uses a sliding
-	 * window so that repeated calls to the same sub-agent within (or across) user messages preserve
-	 * recent conversation history.
-	 */
-	static final int SUB_AGENT_MEMORY_MAX_MESSAGES = 20;
 
 	/**
 	 * Configuration interface for {@link AgentRegistry}.
@@ -493,17 +487,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		return "";
 	}
 
-	/**
-	 * Computes the canonical tool name for delegating to the given target agent.
-	 *
-	 * @param targetName
-	 *        The target agent name as declared in the configuration.
-	 * @return The tool name in the format {@code delegate_to_<name>} with hyphens replaced by
-	 *         underscores.
-	 */
-	static String delegationToolName(String targetName) {
-		return "delegate_to_" + targetName.replace('-', '_');
-	}
 
 	/**
 	 * Builds the model-to-provider index from the provider configurations.

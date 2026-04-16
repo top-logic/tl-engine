@@ -53,19 +53,9 @@ public class TestAgentRegistry extends TestCase {
 		assertEquals("No placeholder here", result);
 	}
 
-	public void testDelegationToolName() {
-		assertEquals("delegate_to_ModelExplorer", AgentRegistry.delegationToolName("ModelExplorer"));
-		assertEquals("delegate_to_TLScript_Agent", AgentRegistry.delegationToolName("TLScript-Agent"));
-	}
-
 	public void testPlaceholderConstants() {
 		assertEquals("<<AVAILABLE_TOOLS>>", AgentRegistry.TOOLS_PLACEHOLDER);
 		assertEquals("<<AVAILABLE_DELEGATES>>", AgentRegistry.DELEGATES_PLACEHOLDER);
-	}
-
-	/** */
-	public void testSubAgentMemoryConstant() {
-		assertEquals(20, AgentRegistry.SUB_AGENT_MEMORY_MAX_MESSAGES);
 	}
 
 	/**

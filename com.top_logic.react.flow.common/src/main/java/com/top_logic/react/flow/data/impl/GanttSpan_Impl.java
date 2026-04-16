@@ -112,6 +112,12 @@ public class GanttSpan_Impl extends com.top_logic.react.flow.data.impl.GanttItem
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttSpan setBox(com.top_logic.react.flow.data.Box value) {
+		internalSetBox(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttSpan setCanMoveTime(boolean value) {
 		internalSetCanMoveTime(value);
 		return this;

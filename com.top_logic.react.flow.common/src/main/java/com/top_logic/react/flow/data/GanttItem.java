@@ -34,6 +34,9 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getRowId() */
 	String ROW_ID__PROP = "rowId";
 
+	/** @see #getBox() */
+	String BOX__PROP = "box";
+
 	/** @see #isCanMoveTime() */
 	String CAN_MOVE_TIME__PROP = "canMoveTime";
 
@@ -65,6 +68,26 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #getRowId()
 	 */
 	com.top_logic.react.flow.data.GanttItem setRowId(String value);
+
+	/**
+	 * Rendering content; positioned by the layout, drawn via its own operations.
+	 *
+	 * <p>
+	 * The box is owned by the enclosing {@link GanttLayout#getContents() contents},
+	 * not by this item.
+	 * </p>
+	 */
+	com.top_logic.react.flow.data.Box getBox();
+
+	/**
+	 * @see #getBox()
+	 */
+	com.top_logic.react.flow.data.GanttItem setBox(com.top_logic.react.flow.data.Box value);
+
+	/**
+	 * Checks, whether {@link #getBox()} has a value.
+	 */
+	boolean hasBox();
 
 	boolean isCanMoveTime();
 

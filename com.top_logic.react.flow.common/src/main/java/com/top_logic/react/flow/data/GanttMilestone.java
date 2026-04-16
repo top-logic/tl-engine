@@ -32,6 +32,9 @@ public interface GanttMilestone extends GanttItem {
 	com.top_logic.react.flow.data.GanttMilestone setRowId(String value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttMilestone setBox(com.top_logic.react.flow.data.Box value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttMilestone setCanMoveTime(boolean value);
 
 	@Override

@@ -964,6 +964,17 @@ abstract message GanttItem {
 	/** Reference to the {@link GanttRow#id} this item lives in. */
 	string rowId;
 
+	/**
+	 * Rendering content; positioned by the layout, drawn via its own operations.
+	 *
+	 * <p>
+	 * The box is owned by the enclosing {@link GanttLayout#getContents() contents},
+	 * not by this item.
+	 * </p>
+	 */
+	@Ref
+	Box box;
+
 	bool canMoveTime = true;
 	bool canMoveRow = true;
 	bool canBeEdgeSource = true;

@@ -9,6 +9,8 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 
 	private String _rowId = "";
 
+	private com.top_logic.react.flow.data.Box _box = null;
+
 	private boolean _canMoveTime = true;
 
 	private boolean _canMoveRow = true;
@@ -58,6 +60,29 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		_listener.beforeSet(this, ROW_ID__PROP, value);
 		_rowId = value;
 		_listener.afterChanged(this, ROW_ID__PROP);
+	}
+
+	@Override
+	public final com.top_logic.react.flow.data.Box getBox() {
+		return _box;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttItem setBox(com.top_logic.react.flow.data.Box value) {
+		internalSetBox(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getBox()} without chain call utility. */
+	protected final void internalSetBox(com.top_logic.react.flow.data.Box value) {
+		_listener.beforeSet(this, BOX__PROP, value);
+		_box = value;
+		_listener.afterChanged(this, BOX__PROP);
+	}
+
+	@Override
+	public final boolean hasBox() {
+		return _box != null;
 	}
 
 	@Override
@@ -137,6 +162,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
 			ROW_ID__PROP, 
+			BOX__PROP, 
 			CAN_MOVE_TIME__PROP, 
 			CAN_MOVE_ROW__PROP, 
 			CAN_BE_EDGE_SOURCE__PROP, 
@@ -167,6 +193,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		switch (field) {
 			case ID__PROP: return getId();
 			case ROW_ID__PROP: return getRowId();
+			case BOX__PROP: return getBox();
 			case CAN_MOVE_TIME__PROP: return isCanMoveTime();
 			case CAN_MOVE_ROW__PROP: return isCanMoveRow();
 			case CAN_BE_EDGE_SOURCE__PROP: return isCanBeEdgeSource();
@@ -180,6 +207,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
 			case ROW_ID__PROP: internalSetRowId((String) value); break;
+			case BOX__PROP: internalSetBox((com.top_logic.react.flow.data.Box) value); break;
 			case CAN_MOVE_TIME__PROP: internalSetCanMoveTime((boolean) value); break;
 			case CAN_MOVE_ROW__PROP: internalSetCanMoveRow((boolean) value); break;
 			case CAN_BE_EDGE_SOURCE__PROP: internalSetCanBeEdgeSource((boolean) value); break;
@@ -194,6 +222,10 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		out.value(getId());
 		out.name(ROW_ID__PROP);
 		out.value(getRowId());
+		if (hasBox()) {
+			out.name(BOX__PROP);
+			getBox().writeTo(scope, out);
+		}
 		out.name(CAN_MOVE_TIME__PROP);
 		out.value(isCanMoveTime());
 		out.name(CAN_MOVE_ROW__PROP);
@@ -213,6 +245,14 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 			}
 			case ROW_ID__PROP: {
 				out.value(getRowId());
+				break;
+			}
+			case BOX__PROP: {
+				if (hasBox()) {
+					getBox().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case CAN_MOVE_TIME__PROP: {
@@ -240,6 +280,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		switch (field) {
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ROW_ID__PROP: setRowId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case BOX__PROP: setBox(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case CAN_MOVE_TIME__PROP: setCanMoveTime(in.nextBoolean()); break;
 			case CAN_MOVE_ROW__PROP: setCanMoveRow(in.nextBoolean()); break;
 			case CAN_BE_EDGE_SOURCE__PROP: setCanBeEdgeSource(in.nextBoolean()); break;

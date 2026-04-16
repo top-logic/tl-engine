@@ -52,6 +52,12 @@ public class GanttMilestone_Impl extends com.top_logic.react.flow.data.impl.Gant
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttMilestone setBox(com.top_logic.react.flow.data.Box value) {
+		internalSetBox(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttMilestone setCanMoveTime(boolean value) {
 		internalSetCanMoveTime(value);
 		return this;

@@ -62,6 +62,9 @@ public interface GanttSpan extends GanttItem {
 	com.top_logic.react.flow.data.GanttSpan setRowId(String value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttSpan setBox(com.top_logic.react.flow.data.Box value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttSpan setCanMoveTime(boolean value);
 
 	@Override

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.react.flow.data.GanttTick;
+import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.server.axis.AxisProvider;
 
 /**
@@ -56,7 +57,7 @@ public class DaysSinceEpochAxisProvider implements AxisProvider {
 				: d.getMonth().name().substring(0, 3);
 			ticks.add(GanttTick.create()
 				.setPosition(d.toEpochDay())
-				.setLabel(label)
+				.setLabel(Text.create().setValue(label))
 				.setEmphasis(emphasis));
 		}
 		return ticks;

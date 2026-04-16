@@ -7,7 +7,7 @@ public class GanttTick_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 
 	private double _position = 0.0d;
 
-	private String _label = "";
+	private com.top_logic.react.flow.data.Box _label = null;
 
 	private double _emphasis = 0.0d;
 
@@ -39,21 +39,26 @@ public class GanttTick_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	}
 
 	@Override
-	public final String getLabel() {
+	public final com.top_logic.react.flow.data.Box getLabel() {
 		return _label;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttTick setLabel(String value) {
+	public com.top_logic.react.flow.data.GanttTick setLabel(com.top_logic.react.flow.data.Box value) {
 		internalSetLabel(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getLabel()} without chain call utility. */
-	protected final void internalSetLabel(String value) {
+	protected final void internalSetLabel(com.top_logic.react.flow.data.Box value) {
 		_listener.beforeSet(this, LABEL__PROP, value);
 		_label = value;
 		_listener.afterChanged(this, LABEL__PROP);
+	}
+
+	@Override
+	public final boolean hasLabel() {
+		return _label != null;
 	}
 
 	@Override
@@ -120,7 +125,7 @@ public class GanttTick_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	public void set(String field, Object value) {
 		switch (field) {
 			case POSITION__PROP: internalSetPosition((double) value); break;
-			case LABEL__PROP: internalSetLabel((String) value); break;
+			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case EMPHASIS__PROP: internalSetEmphasis((double) value); break;
 		}
 	}
@@ -130,8 +135,10 @@ public class GanttTick_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		super.writeFields(scope, out);
 		out.name(POSITION__PROP);
 		out.value(getPosition());
-		out.name(LABEL__PROP);
-		out.value(getLabel());
+		if (hasLabel()) {
+			out.name(LABEL__PROP);
+			getLabel().writeTo(scope, out);
+		}
 		out.name(EMPHASIS__PROP);
 		out.value(getEmphasis());
 	}
@@ -144,7 +151,11 @@ public class GanttTick_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 				break;
 			}
 			case LABEL__PROP: {
-				out.value(getLabel());
+				if (hasLabel()) {
+					getLabel().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case EMPHASIS__PROP: {
@@ -159,7 +170,7 @@ public class GanttTick_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case POSITION__PROP: setPosition(in.nextDouble()); break;
-			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case LABEL__PROP: setLabel(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case EMPHASIS__PROP: setEmphasis(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
 		}

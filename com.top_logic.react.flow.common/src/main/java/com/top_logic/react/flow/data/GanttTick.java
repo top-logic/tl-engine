@@ -35,14 +35,26 @@ public interface GanttTick extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttTick setPosition(double value);
 
 	/**
-	 * Label drawn at the tick.
+	 * Label box drawn at the tick.
+	 *
+	 * <p>
+	 * Using a {@link Box} instead of a plain string gives the {@link AxisProvider} full control
+	 * over the label appearance: emphasis ticks can carry bold text, coloured year markers, etc.,
+	 * without any special-casing in the chart rendering code. The label is owned by
+	 * {@link GanttLayout#getContents()} and rendered through the standard contents dispatch.
+	 * </p>
 	 */
-	String getLabel();
+	com.top_logic.react.flow.data.Box getLabel();
 
 	/**
 	 * @see #getLabel()
 	 */
-	com.top_logic.react.flow.data.GanttTick setLabel(String value);
+	com.top_logic.react.flow.data.GanttTick setLabel(com.top_logic.react.flow.data.Box value);
+
+	/**
+	 * Checks, whether {@link #getLabel()} has a value.
+	 */
+	boolean hasLabel();
 
 	/**
 	 * Emphasis in [0..1] — renderer interpolates stroke width and label prominence.

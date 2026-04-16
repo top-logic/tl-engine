@@ -149,6 +149,16 @@ public interface GanttLayoutOperations extends BoxOperations {
 			}
 		}
 
+		// --- Pass 1c: compute intrinsic sizes of tick label boxes ---
+		if (axis != null) {
+			for (GanttTick tick : axis.getCurrentTicks()) {
+				Box tickLabel = tick.getLabel();
+				if (tickLabel != null) {
+					tickLabel.computeIntrinsicSize(context, 0, 0);
+				}
+			}
+		}
+
 		// --- Aggregate: compute column width and per-row total heights ---
 		double columnWidth = Math.max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding);
 
@@ -205,6 +215,22 @@ public interface GanttLayoutOperations extends BoxOperations {
 			double labelW = columnWidth - 2 * rowLabelPadding - depth * indentWidth;
 			double labelH = rowTotalHeight[i] - 2 * rowPadding;
 			label.distributeSize(context, labelX, labelY, Math.max(0, labelW), labelH);
+		}
+
+		// --- Pass 2c: distribute final positions and sizes for tick label boxes ---
+		if (axis != null) {
+			double columnWidth2 = columnWidth;
+			double x0 = offsetX + columnWidth2;
+			for (GanttTick tick : axis.getCurrentTicks()) {
+				Box tickLabel = tick.getLabel();
+				if (tickLabel == null) {
+					continue;
+				}
+				double tickX = x0 + (tick.getPosition() - rangeMin) * zoom;
+				double labelW = tickLabel.getWidth();
+				double labelH = tickLabel.getHeight();
+				tickLabel.distributeSize(context, tickX + 2, offsetY + axisHeight - labelH - 2, labelW, labelH);
+			}
 		}
 
 		self.setX(offsetX);
@@ -303,14 +329,8 @@ public interface GanttLayoutOperations extends BoxOperations {
 			out.endData();
 			out.endPath();
 
-			// Tick label near the bottom of the axis header.
-			String label = tick.getLabel();
-			if (label != null && !label.isEmpty()) {
-				out.beginText(tickX + 2, y0 + h - 4, label);
-				out.setFill("#303030");
-				out.setStroke("none");
-				out.endText();
-			}
+			// Tick label boxes are drawn via the standard contents dispatch in draw() — see
+			// GanttLayout.contents which includes tick label boxes added by FlowFactory.gantt.
 		}
 
 		// Bottom border line for the axis header.

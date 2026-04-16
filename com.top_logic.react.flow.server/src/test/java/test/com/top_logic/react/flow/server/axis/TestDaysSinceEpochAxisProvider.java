@@ -10,7 +10,9 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.GanttTick;
+import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.server.axis.providers.DaysSinceEpochAxisProvider;
 
 /** Tests for {@link DaysSinceEpochAxisProvider}. */
@@ -22,8 +24,16 @@ public class TestDaysSinceEpochAxisProvider extends TestCase {
 		List<GanttTick> ticks = new DaysSinceEpochAxisProvider().ticksFor(from, to, 1.0);
 
 		assertEquals("one tick per month in the year", 12, ticks.size());
-		assertEquals("year label in January", "2026", ticks.get(0).getLabel());
-		assertEquals("month abbreviation", "FEB", ticks.get(1).getLabel());
+		assertEquals("year label in January", "2026", tickLabelValue(ticks.get(0)));
+		assertEquals("month abbreviation", "FEB", tickLabelValue(ticks.get(1)));
+	}
+
+	/** Returns the text value of a tick's label Box (must be a {@link Text} box). */
+	private static String tickLabelValue(GanttTick tick) {
+		Box label = tick.getLabel();
+		assertNotNull("tick has a label box", label);
+		assertTrue("label box is a Text", label instanceof Text);
+		return ((Text) label).getValue();
 	}
 
 	public void testGetIdReturnsDefault() {

@@ -926,8 +926,18 @@ message GanttTick {
 	/** Position of the tick on the axis; see {@link GanttAxis} for position semantics. */
 	double position;
 
-	/** Label drawn at the tick. */
-	string label;
+	/**
+	 * Label box drawn at the tick.
+	 *
+	 * <p>
+	 * Using a {@link Box} instead of a plain string gives the {@link AxisProvider} full control
+	 * over the label appearance: emphasis ticks can carry bold text, coloured year markers, etc.,
+	 * without any special-casing in the chart rendering code. The label is owned by
+	 * {@link GanttLayout#getContents()} and rendered through the standard contents dispatch.
+	 * </p>
+	 */
+	@Ref
+	Box label;
 
 	/** Emphasis in [0..1] — renderer interpolates stroke width and label prominence. */
 	double emphasis;

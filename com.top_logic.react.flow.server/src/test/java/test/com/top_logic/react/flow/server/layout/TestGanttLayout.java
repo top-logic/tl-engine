@@ -78,6 +78,15 @@ public class TestGanttLayout extends TestCase {
 		for (GanttRow root : rows) {
 			addRowLabels(layout, root);
 		}
+		// Add tick label boxes to contents so they are rendered via standard dispatch.
+		GanttAxis axis = layout.getAxis();
+		if (axis != null) {
+			for (GanttTick tick : axis.getCurrentTicks()) {
+				if (tick.getLabel() != null) {
+					layout.addContent(tick.getLabel());
+				}
+			}
+		}
 	}
 
 	private static void addRowLabels(GanttLayout layout, GanttRow row) {
@@ -103,7 +112,10 @@ public class TestGanttLayout extends TestCase {
 	}
 
 	private static GanttTick tick(double pos, String label, double emphasis) {
-		return GanttTick.create().setPosition(pos).setLabel(label).setEmphasis(emphasis);
+		return GanttTick.create()
+			.setPosition(pos)
+			.setLabel(Text.create().setValue(label))
+			.setEmphasis(emphasis);
 	}
 
 	private static Box cell(String label) {

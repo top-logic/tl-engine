@@ -1715,6 +1715,13 @@ public class FlowFactory extends TLScriptFunctions {
 		for (GanttRow root : rootRows) {
 			addRowLabelsToContents(root, contents);
 		}
+		if (axis != null) {
+			for (GanttTick tick : axis.getCurrentTicks()) {
+				if (tick.getLabel() != null) {
+					contents.add(tick.getLabel());
+				}
+			}
+		}
 		layout.setContents(contents);
 		return layout;
 	}

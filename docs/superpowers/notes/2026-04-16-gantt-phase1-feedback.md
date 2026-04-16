@@ -95,6 +95,21 @@ Betroffene Stellen:
 
 ---
 
+## Design-Entscheidungen (nicht zu ändern)
+
+Diese Asymmetrien sind **bewusst** und sollten beim Nachziehen nicht "aus Konsistenz" geglättet werden:
+
+### D1. Unterschiedliche Defaults für `can*`-Flags zwischen Items und Decorations
+
+- **Items (`GanttItem`, `GanttSpan`):** `canMoveTime`, `canMoveRow`, `canResizeStart`, `canResizeEnd`, `canBeEdgeSource`, `canBeEdgeTarget` defaulten alle auf `true`.
+- **Decorations (`GanttDecoration`, `GanttRangeDecoration`):** `canMove` und `canResize` defaulten auf `false`.
+
+**Warum:** Items sind die primäre Interaktionsfläche des Charts — Tasks werden planmäßig verschoben, resized, verknüpft. Bei Decorations (Heute-Linie, Freeze-Zeitraum, Release-Fenster) sind die meisten in der Praxis statisch; Verschieben/Resize ist der **Sonderfall**, der explizit aktiviert werden muss.
+
+Nicht angleichen.
+
+---
+
 ## Process
 
 Neue Punkte hier unten anhängen. Wenn die Liste „rund" ist, einen Implementierungs-Plan ableiten und als Batch abarbeiten.

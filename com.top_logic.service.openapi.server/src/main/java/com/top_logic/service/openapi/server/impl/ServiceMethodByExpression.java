@@ -14,6 +14,7 @@ import jakarta.activation.MimeTypeParseException;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -79,9 +80,10 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	 * Writes the given script result to the HTTP response.
 	 *
 	 * <p>
-	 * Exposed as public to allow direct unit testing from test packages.
+	 * Exposed for direct unit testing; not intended to be called by application code.
 	 * </p>
 	 */
+	@FrameworkInternal
 	public void writeResponse(Object result, HttpServletResponse resp) throws IOException {
 		String contentType;
 		String charset;

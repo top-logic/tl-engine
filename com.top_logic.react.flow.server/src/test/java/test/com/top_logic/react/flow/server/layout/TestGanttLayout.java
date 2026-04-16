@@ -33,9 +33,19 @@ import com.top_logic.react.flow.svg.RenderContext;
 /** Tests for {@link com.top_logic.react.flow.operations.layout.GanttLayoutOperations}. */
 public class TestGanttLayout extends TestCase {
 
+	/** Default rowMinContentHeight used by GanttLayout. */
+	private static final double ROW_MIN_CONTENT_HEIGHT = 24.0;
+
+	/** Default rowPadding used by GanttLayout. */
+	private static final double ROW_PADDING = 4.0;
+
+	/** Default row total height = ROW_MIN_CONTENT_HEIGHT + 2 * ROW_PADDING. */
+	private static final double DEFAULT_ROW_TOTAL_HEIGHT = ROW_MIN_CONTENT_HEIGHT + 2 * ROW_PADDING; // 32
+
 	public void testLayoutHeightScalesWithRows() {
 		GanttLayout layout = GanttLayout.create()
-			.setRowHeight(32.0)
+			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
+			.setRowPadding(ROW_PADDING)
 			.setAxisHeight(24.0)
 			.setRowLabelWidth(200.0)
 			.setAxis(axis(0, 100))
@@ -49,8 +59,8 @@ public class TestGanttLayout extends TestCase {
 		RenderContext context = new AWTContext(12f);
 		d.layout(context);
 
-		// 3 rows * 32 px + 24 axis = 120
-		assertEquals("height", 24.0 + 3 * 32.0, layout.getHeight());
+		// 3 empty rows * (24 + 2*4) + 24 axis = 3*32 + 24 = 120
+		assertEquals("height", 24.0 + 3 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeight());
 	}
 
 	private static GanttRow row(String id, String label) {
@@ -81,7 +91,8 @@ public class TestGanttLayout extends TestCase {
 		GanttSpan span = span("s1", "r2", 10.0, 30.0, "Task 1");
 
 		GanttLayout layout = GanttLayout.create()
-			.setRowHeight(32.0)
+			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
+			.setRowPadding(ROW_PADDING)
 			.setAxisHeight(24.0)
 			.setRowLabelWidth(200.0)
 			.setAxis(axis(0, 100))
@@ -94,11 +105,14 @@ public class TestGanttLayout extends TestCase {
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new AWTContext(12f));
 
-		// r2 is the second row (index 1). Expected y = axisHeight + 1 * rowHeight + 2 = 58.
-		// Expected x = rowLabelWidth + 10 * zoom = 210.
+		// r2 is the second row (index 1).
+		// Row 0 (r1): no items -> content height = ROW_MIN_CONTENT_HEIGHT=24, total = 32.
+		// Row 1 (r2): span intrinsic height <= ROW_MIN_CONTENT_HEIGHT -> content height = 24, total = 32.
+		// span.y = axisHeight + row0Total + rowPadding = 24 + 32 + 4 = 60.
+		// span.x = rowLabelWidth + 10 * zoom = 210.
 		assertEquals("span.x", 210.0, span.getBox().getX(), 0.5);
-		assertEquals("span.y", 58.0, span.getBox().getY(), 0.5);
-		// Width = (end - start) * zoom = 20. Height = rowHeight - 4.
+		assertEquals("span.y", 24.0 + DEFAULT_ROW_TOTAL_HEIGHT + ROW_PADDING, span.getBox().getY(), 0.5);
+		// Width = (end - start) * zoom = 20.
 		assertEquals("span.width", 20.0, span.getBox().getWidth(), 0.5);
 	}
 
@@ -238,7 +252,8 @@ public class TestGanttLayout extends TestCase {
 
 	public void testDistributeSizeUsesGivenWidth() {
 		GanttLayout layout = GanttLayout.create()
-			.setRowHeight(32.0)
+			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
+			.setRowPadding(ROW_PADDING)
 			.setAxisHeight(24.0)
 			.setRowLabelWidth(200.0)
 			.setAxis(axis(0, 100))
@@ -256,5 +271,104 @@ public class TestGanttLayout extends TestCase {
 		RenderContext context = new AWTContext(12f);
 		layout.distributeSize(context, 0, 0, 800, 100);
 		assertEquals("width", 800.0, layout.getWidth(), 0.5);
+	}
+
+	/**
+	 * Verifies that a row grows taller when it contains an item whose intrinsic height exceeds
+	 * {@code rowMinContentHeight}.
+	 *
+	 * <p>
+	 * We use a tall item box (intrinsic height = 60) placed in row "r1". The expected row total
+	 * height is {@code 60 + 2 * rowPadding = 68}. The overall layout height should be
+	 * {@code axisHeight + row0Total + row1Total = 24 + 68 + 32 = 124} (row "r2" has no items
+	 * so it stays at the minimum 32).
+	 * </p>
+	 */
+	public void testRowGrowsWithTallItem() {
+		// Create a tall box: we use a Border with inner Padding and a fixed-height spacer.
+		// To produce a reliably tall intrinsic height we construct a Box subclass that
+		// reports a fixed height from computeIntrinsicSize and ignores distributeSize for height.
+		double tallIntrinsicHeight = 60.0;
+		double spanWidth = 20.0; // (end=30 - start=10) * zoom=1
+
+		TallBox tallBox = new TallBox(tallIntrinsicHeight);
+
+		GanttSpan tallSpan = GanttSpan.create()
+			.setId("tall").setRowId("r1")
+			.setStart(10.0).setEnd(30.0)
+			.setBox(tallBox);
+
+		GanttLayout layout = GanttLayout.create()
+			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
+			.setRowPadding(ROW_PADDING)
+			.setAxisHeight(24.0)
+			.setRowLabelWidth(200.0)
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(
+				row("r1", "Row 1"),
+				row("r2", "Row 2")))
+			.setItems(Arrays.asList(tallSpan));
+		layout.addContent(tallBox);
+
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		double row0Total = tallIntrinsicHeight + 2 * ROW_PADDING; // 68
+		double row1Total = ROW_MIN_CONTENT_HEIGHT + 2 * ROW_PADDING; // 32
+		double expectedHeight = 24.0 + row0Total + row1Total; // 124
+
+		assertEquals("layout height grows with tall item", expectedHeight, layout.getHeight(), 0.5);
+
+		// The item's distributed height must equal the row content height (= tallIntrinsicHeight).
+		assertEquals("tall item height = row content height", tallIntrinsicHeight, tallBox.getHeight(), 0.5);
+
+		// The item's y position must be axisHeight + rowPadding = 24 + 4 = 28.
+		assertEquals("tall item y", 24.0 + ROW_PADDING, tallBox.getY(), 0.5);
+
+		// Width must be forced to span width.
+		assertEquals("tall item width", spanWidth, tallBox.getWidth(), 0.5);
+	}
+
+	// -----------------------------------------------------------------------
+	// Helper: a Box whose intrinsic height is fixed (simulates a tall widget).
+	// distributeSize stores whatever coordinates the layout assigns.
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Test-only Box implementation that reports a fixed intrinsic height from
+	 * {@code computeIntrinsicSize} and stores whatever dimensions are assigned by
+	 * {@code distributeSize}.
+	 *
+	 * <p>
+	 * Extends {@link com.top_logic.react.flow.data.impl.Border_Impl} (a concrete Box subclass)
+	 * purely to satisfy the abstract-method contract of the msgbuf hierarchy. The standard
+	 * {@code computeIntrinsicSize} / {@code distributeSize} implementations are replaced to give
+	 * predictable, test-controlled dimensions.
+	 * </p>
+	 */
+	private static class TallBox extends com.top_logic.react.flow.data.impl.Border_Impl {
+
+		private final double _fixedHeight;
+
+		TallBox(double fixedHeight) {
+			_fixedHeight = fixedHeight;
+		}
+
+		@Override
+		public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+			setX(offsetX);
+			setY(offsetY);
+			// Width is intentionally left 0 here; the layout forces span width via distributeSize.
+			setWidth(0);
+			setHeight(_fixedHeight);
+		}
+
+		@Override
+		public void distributeSize(RenderContext context, double x, double y, double width, double height) {
+			setX(x);
+			setY(y);
+			setWidth(width);
+			setHeight(height);
+		}
 	}
 }

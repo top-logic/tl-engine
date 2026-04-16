@@ -1130,8 +1130,18 @@ message GanttAxis {
 /**
  * A layout placing {@link GanttItem} boxes along a time axis, grouped into rows.
  *
+ * <p>
+ * Row heights are computed per-row from the maximum item intrinsic height plus padding, with
+ * {@link #rowMinContentHeight} as a floor. The effective total height of a row is:
+ * {@code max(rowMinContentHeight, max(item.intrinsicHeight in row)) + 2 * rowPadding}.
+ * All items in the same row receive the same final content height so that neighbouring boxes
+ * can grow together.
+ * </p>
+ *
+ * <p>
  * Inherits {@code contents} from {@link Layout} — the layout populates it with the
  * {@link GanttItem#box} elements so that standard layout/render dispatch reaches them.
+ * </p>
  */
 @Operations("com.top_logic.react.flow.operations.layout.GanttLayoutOperations")
 message GanttLayout extends Layout {
@@ -1150,8 +1160,25 @@ message GanttLayout extends Layout {
 	/** Time axis configuration. */
 	GanttAxis axis;
 
-	/** Height allocated per row, in pixels at zoom 100%. */
-	double rowHeight = 32.0;
+	/**
+	 * Minimum height of the content area of any row (excluding padding), in pixels at zoom 100%.
+	 *
+	 * <p>
+	 * The actual row content height is {@code max(rowMinContentHeight, max item intrinsic height)}.
+	 * Add {@link #rowPadding} (top and bottom) to get the total row height.
+	 * </p>
+	 */
+	double rowMinContentHeight = 24.0;
+
+	/**
+	 * Vertical inset (top and bottom each) inserted between item boxes and the row lane boundaries,
+	 * in pixels.
+	 *
+	 * <p>
+	 * The total row height is {@code max(rowMinContentHeight, max item intrinsic height) + 2 * rowPadding}.
+	 * </p>
+	 */
+	double rowPadding = 4.0;
 
 	/** Horizontal indentation per row hierarchy level, in pixels. */
 	double indentWidth = 16.0;

@@ -37,14 +37,17 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * ticks from {@code axis.currentTicks}, draws row-lane backgrounds, edges (orthogonal), and
  * decorations.
  * </p>
+ *
+ * <p>
+ * Layout uses a two-pass algorithm: pass 1 calls
+ * {@link Box#computeIntrinsicSize(RenderContext, double, double)} on every item box and records
+ * per-row maximum intrinsic heights. Pass 2 calls
+ * {@link Box#distributeSize(RenderContext, double, double, double, double)} on every item box
+ * with the final cell dimensions so that all boxes in the same row grow to the same height.
+ * Span widths are forced to {@code (end - start) * zoom}; milestone widths are intrinsic.
+ * </p>
  */
 public interface GanttLayoutOperations extends BoxOperations {
-
-	/** Vertical inset from the row top edge to the item box top edge. */
-	double ITEM_TOP_INSET = 2.0;
-
-	/** Total vertical padding consumed by top and bottom insets combined ({@code 2 * ITEM_TOP_INSET}). */
-	double ITEM_VERTICAL_PADDING_TOTAL = 2 * ITEM_TOP_INSET;
 
 	/** Left padding between the row x-origin (or indent) and the row-label text. */
 	double ROW_LABEL_LEFT_PADDING = 4.0;
@@ -61,56 +64,114 @@ public interface GanttLayoutOperations extends BoxOperations {
 	/** Stroke width for informational (NONE) dependency edges. */
 	double EDGE_STROKE_WIDTH_THIN = 0.8;
 
+	/**
+	 * Geometry of a single row: its Y start (inclusive), Y end (exclusive), and total height.
+	 */
+	record RowGeometry(double yStart, double yEnd) {
+
+		/** Total height of the row (lane height). */
+		double height() {
+			return yEnd - yStart;
+		}
+	}
+
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		GanttLayout self = (GanttLayout) this;
 		GanttAxis axis = self.getAxis();
 
-		Map<String, Integer> rowIndex = new HashMap<>();
+		// Build depth-first row index map.
+		Map<String, Integer> rowIndex = new LinkedHashMap<>();
 		int[] counter = new int[] { 0 };
 		for (GanttRow root : self.getRootRows()) {
 			indexRows(root, rowIndex, counter);
 		}
+		int totalRows = counter[0];
 
 		double zoom = axis.getCurrentZoom();
 		double rangeMin = axis.getRangeMin();
 		double labelWidth = self.getRowLabelWidth();
-		double rowHeight = self.getRowHeight();
+		double rowMinContentHeight = self.getRowMinContentHeight();
+		double rowPadding = self.getRowPadding();
 		double axisHeight = self.getAxisHeight();
+
+		// --- Pass 1: compute intrinsic sizes, record per-row max content height ---
+		double[] rowMaxContentHeight = new double[totalRows];
+		for (int i = 0; i < totalRows; i++) {
+			rowMaxContentHeight[i] = rowMinContentHeight;
+		}
 
 		for (GanttItem item : self.getItems()) {
 			Integer idx = rowIndex.get(item.getRowId());
 			if (idx == null) {
 				continue;
 			}
-			double y = offsetY + axisHeight + idx * rowHeight + ITEM_TOP_INSET;
 			Box box = item.getBox();
 			if (box == null) {
 				continue;
 			}
+			// Provide a temporary position for intrinsic sizing (exact position comes in pass 2).
+			double tmpX;
+			double tmpY = offsetY + axisHeight + rowPadding; // rough y, refined in pass 2
+			if (item instanceof GanttSpan span) {
+				tmpX = offsetX + labelWidth + (span.getStart() - rangeMin) * zoom;
+			} else if (item instanceof GanttMilestone ms) {
+				tmpX = offsetX + labelWidth + (ms.getAt() - rangeMin) * zoom;
+			} else {
+				continue;
+			}
+			box.computeIntrinsicSize(context, tmpX, tmpY);
+			double intrinsicHeight = box.getHeight();
+			if (intrinsicHeight > rowMaxContentHeight[idx]) {
+				rowMaxContentHeight[idx] = intrinsicHeight;
+			}
+		}
+
+		// --- Aggregate: compute per-row total height and cumulative Y offsets ---
+		double[] rowTotalHeight = new double[totalRows];
+		double[] rowYStart = new double[totalRows];
+		double cumulativeY = offsetY + axisHeight;
+		for (int i = 0; i < totalRows; i++) {
+			rowTotalHeight[i] = rowMaxContentHeight[i] + 2 * rowPadding;
+			rowYStart[i] = cumulativeY;
+			cumulativeY += rowTotalHeight[i];
+		}
+		double totalHeight = cumulativeY - offsetY;
+
+		// --- Pass 2: distribute final positions and sizes ---
+		for (GanttItem item : self.getItems()) {
+			Integer idx = rowIndex.get(item.getRowId());
+			if (idx == null) {
+				continue;
+			}
+			Box box = item.getBox();
+			if (box == null) {
+				continue;
+			}
+			double contentHeight = rowTotalHeight[idx] - 2 * rowPadding;
+			double itemY = rowYStart[idx] + rowPadding;
+
 			if (item instanceof GanttSpan span) {
 				double x = offsetX + labelWidth + (span.getStart() - rangeMin) * zoom;
 				double w = (span.getEnd() - span.getStart()) * zoom;
-				box.computeIntrinsicSize(context, x, y);
-				box.setX(x);
-				box.setY(y);
-				box.setWidth(w);
-				box.setHeight(rowHeight - ITEM_VERTICAL_PADDING_TOTAL);
+				box.distributeSize(context, x, itemY, w, contentHeight);
 			} else if (item instanceof GanttMilestone ms) {
-				double r = (rowHeight - ITEM_VERTICAL_PADDING_TOTAL) / 2.0;
+				// Milestone: intrinsic width, centred on 'at'.
+				double r = contentHeight / 2.0;
 				double cx = offsetX + labelWidth + (ms.getAt() - rangeMin) * zoom;
-				box.computeIntrinsicSize(context, cx - r, y);
-				box.setX(cx - r);
-				box.setY(y);
-				box.setWidth(2 * r);
-				box.setHeight(2 * r);
+				double msW = box.getWidth(); // intrinsic width from pass 1
+				if (msW <= 0) {
+					msW = 2 * r;
+				}
+				double x = cx - msW / 2.0;
+				box.distributeSize(context, x, itemY, msW, contentHeight);
 			}
 		}
 
 		self.setX(offsetX);
 		self.setY(offsetY);
 		self.setWidth(labelWidth + (axis.getRangeMax() - rangeMin) * zoom);
-		self.setHeight(axisHeight + counter[0] * rowHeight);
+		self.setHeight(totalHeight);
 	}
 
 	@Override
@@ -202,26 +263,42 @@ public interface GanttLayoutOperations extends BoxOperations {
 		double x0 = self.getX();
 		double y0 = self.getY() + self.getAxisHeight();
 		double totalWidth = self.getWidth();
-		double rowHeight = self.getRowHeight();
+		double rowMinContentHeight = self.getRowMinContentHeight();
+		double rowPadding = self.getRowPadding();
 		double labelWidth = self.getRowLabelWidth();
 		double indentWidth = self.getIndentWidth();
+
+		// Build row geometry map for per-row Y positions.
+		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, y0);
 
 		out.beginGroup();
 		out.writeCssClass("tl-gantt-lanes");
 
 		int[] rowIndex = new int[] { 0 };
 		for (GanttRow root : self.getRootRows()) {
-			drawRowLane(root, 0, x0, y0, totalWidth, rowHeight, labelWidth, indentWidth, out, rowIndex);
+			drawRowLane(root, 0, x0, totalWidth, rowMinContentHeight, rowPadding, labelWidth, indentWidth,
+				rowGeometry, out, rowIndex);
 		}
 
 		out.endGroup();
 	}
 
 	private static void drawRowLane(GanttRow row, int depth,
-			double x0, double lanesTop, double totalWidth, double rowHeight,
-			double labelWidth, double indentWidth, SvgWriter out, int[] rowIndex) {
+			double x0, double totalWidth, double rowMinContentHeight, double rowPadding,
+			double labelWidth, double indentWidth,
+			Map<String, RowGeometry> rowGeometry, SvgWriter out, int[] rowIndex) {
 		int idx = rowIndex[0]++;
-		double rowY = lanesTop + idx * rowHeight;
+		RowGeometry geom = rowGeometry.get(row.getId());
+		double rowY;
+		double rowHeight;
+		if (geom != null) {
+			rowY = geom.yStart();
+			rowHeight = geom.height();
+		} else {
+			// Fallback (should not happen in normal usage).
+			rowY = 0;
+			rowHeight = rowMinContentHeight + 2 * rowPadding;
+		}
 
 		// Alternating background.
 		String fillColor = (idx % 2 == 0) ? "#ffffff" : "#f5f5f5";
@@ -256,7 +333,8 @@ public interface GanttLayoutOperations extends BoxOperations {
 
 		// Recurse into children.
 		for (GanttRow child : row.getChildren()) {
-			drawRowLane(child, depth + 1, x0, lanesTop, totalWidth, rowHeight, labelWidth, indentWidth, out, rowIndex);
+			drawRowLane(child, depth + 1, x0, totalWidth, rowMinContentHeight, rowPadding, labelWidth, indentWidth,
+				rowGeometry, out, rowIndex);
 		}
 	}
 
@@ -266,7 +344,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 			return;
 		}
 
-		// Build depth-first row index map.
+		// Build depth-first row index map and row geometry.
 		LinkedHashMap<String, Integer> rowIndex = new LinkedHashMap<>();
 		int[] counter = new int[] { 0 };
 		for (GanttRow root : self.getRootRows()) {
@@ -274,13 +352,27 @@ public interface GanttLayoutOperations extends BoxOperations {
 		}
 		int totalRows = counter[0];
 
+		double axisHeight = self.getAxisHeight();
+		double lanesTop = self.getY() + axisHeight;
+		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, lanesTop);
+
+		// Compute total chart height (from first row start to last row end).
+		double chartY0 = lanesTop;
+		double chartY1 = lanesTop; // will be updated to the bottom of the last row
+		if (!rowGeometry.isEmpty()) {
+			for (RowGeometry g : rowGeometry.values()) {
+				if (g.yEnd() > chartY1) {
+					chartY1 = g.yEnd();
+				}
+			}
+		} else {
+			chartY1 = chartY0 + totalRows * (self.getRowMinContentHeight() + 2 * self.getRowPadding());
+		}
+
 		GanttAxis axis = self.getAxis();
 		double zoom = axis.getCurrentZoom();
 		double rangeMin = axis.getRangeMin();
 		double rowLabelWidth = self.getRowLabelWidth();
-		double rowHeight = self.getRowHeight();
-		double axisHeight = self.getAxisHeight();
-		double chartY0 = self.getY() + axisHeight;
 		double chartX0 = self.getX() + rowLabelWidth;
 
 		out.beginGroup();
@@ -293,28 +385,28 @@ public interface GanttLayoutOperations extends BoxOperations {
 			double y1;
 			if (relevantFor == null || relevantFor.isEmpty()) {
 				y0 = chartY0;
-				y1 = chartY0 + totalRows * rowHeight;
+				y1 = chartY1;
 			} else {
-				int minIdx = Integer.MAX_VALUE;
-				int maxIdx = Integer.MIN_VALUE;
+				double minY = Double.MAX_VALUE;
+				double maxY = Double.MIN_VALUE;
 				for (String rowId : relevantFor) {
-					Integer idx = rowIndex.get(rowId);
-					if (idx != null) {
-						if (idx < minIdx) {
-							minIdx = idx;
+					RowGeometry geom = rowGeometry.get(rowId);
+					if (geom != null) {
+						if (geom.yStart() < minY) {
+							minY = geom.yStart();
 						}
-						if (idx > maxIdx) {
-							maxIdx = idx;
+						if (geom.yEnd() > maxY) {
+							maxY = geom.yEnd();
 						}
 					}
 				}
-				if (minIdx == Integer.MAX_VALUE) {
+				if (minY == Double.MAX_VALUE) {
 					// No matching rows — fall back to full chart.
 					y0 = chartY0;
-					y1 = chartY0 + totalRows * rowHeight;
+					y1 = chartY1;
 				} else {
-					y0 = chartY0 + minIdx * rowHeight;
-					y1 = chartY0 + (maxIdx + 1) * rowHeight;
+					y0 = minY;
+					y1 = maxY;
 				}
 			}
 
@@ -444,6 +536,61 @@ public interface GanttLayoutOperations extends BoxOperations {
 		}
 
 		out.endGroup();
+	}
+
+	/**
+	 * Builds a map from row ID to {@link RowGeometry} using the same two-pass height computation
+	 * as {@link #computeIntrinsicSize}, based on the already-laid-out item boxes.
+	 *
+	 * <p>
+	 * This is called during drawing, after {@code computeIntrinsicSize} has already populated
+	 * every item box's {@code height} field.
+	 * </p>
+	 */
+	private static Map<String, RowGeometry> buildRowGeometry(GanttLayout self, double lanesTop) {
+		double rowMinContentHeight = self.getRowMinContentHeight();
+		double rowPadding = self.getRowPadding();
+
+		// Build ordered row index map.
+		LinkedHashMap<String, Integer> rowIndex = new LinkedHashMap<>();
+		int[] counter = new int[] { 0 };
+		for (GanttRow root : self.getRootRows()) {
+			indexRows(root, rowIndex, counter);
+		}
+		int totalRows = counter[0];
+
+		// Compute per-row max content height from already-distributed item boxes.
+		double[] rowMaxContentHeight = new double[totalRows];
+		for (int i = 0; i < totalRows; i++) {
+			rowMaxContentHeight[i] = rowMinContentHeight;
+		}
+		for (GanttItem item : self.getItems()) {
+			Integer idx = rowIndex.get(item.getRowId());
+			if (idx == null) {
+				continue;
+			}
+			Box box = item.getBox();
+			if (box == null) {
+				continue;
+			}
+			double h = box.getHeight();
+			if (h > rowMaxContentHeight[idx]) {
+				rowMaxContentHeight[idx] = h;
+			}
+		}
+
+		// Build geometry map in row-definition order.
+		Map<String, RowGeometry> result = new LinkedHashMap<>();
+		double[] rowNames = null; // we'll iterate the entry set
+		double y = lanesTop;
+		int i = 0;
+		for (Map.Entry<String, Integer> entry : rowIndex.entrySet()) {
+			double rowHeight = rowMaxContentHeight[i] + 2 * rowPadding;
+			result.put(entry.getKey(), new RowGeometry(y, y + rowHeight));
+			y += rowHeight;
+			i++;
+		}
+		return result;
 	}
 
 	private static double endpointX(GanttItem item, GanttEndpoint endpoint) {

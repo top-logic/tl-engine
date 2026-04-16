@@ -75,7 +75,9 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 
 	private com.top_logic.react.flow.data.GanttAxis _axis = null;
 
-	private double _rowHeight = 32.0;
+	private double _rowMinContentHeight = 24.0;
+
+	private double _rowPadding = 4.0;
 
 	private double _indentWidth = 16.0;
 
@@ -257,21 +259,39 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 	}
 
 	@Override
-	public final double getRowHeight() {
-		return _rowHeight;
+	public final double getRowMinContentHeight() {
+		return _rowMinContentHeight;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttLayout setRowHeight(double value) {
-		internalSetRowHeight(value);
+	public com.top_logic.react.flow.data.GanttLayout setRowMinContentHeight(double value) {
+		internalSetRowMinContentHeight(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getRowHeight()} without chain call utility. */
-	protected final void internalSetRowHeight(double value) {
-		_listener.beforeSet(this, ROW_HEIGHT__PROP, value);
-		_rowHeight = value;
-		_listener.afterChanged(this, ROW_HEIGHT__PROP);
+	/** Internal setter for {@link #getRowMinContentHeight()} without chain call utility. */
+	protected final void internalSetRowMinContentHeight(double value) {
+		_listener.beforeSet(this, ROW_MIN_CONTENT_HEIGHT__PROP, value);
+		_rowMinContentHeight = value;
+		_listener.afterChanged(this, ROW_MIN_CONTENT_HEIGHT__PROP);
+	}
+
+	@Override
+	public final double getRowPadding() {
+		return _rowPadding;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRowPadding(double value) {
+		internalSetRowPadding(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRowPadding()} without chain call utility. */
+	protected final void internalSetRowPadding(double value) {
+		_listener.beforeSet(this, ROW_PADDING__PROP, value);
+		_rowPadding = value;
+		_listener.afterChanged(this, ROW_PADDING__PROP);
 	}
 
 	@Override
@@ -402,7 +422,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			EDGES__PROP, 
 			DECORATIONS__PROP, 
 			AXIS__PROP, 
-			ROW_HEIGHT__PROP, 
+			ROW_MIN_CONTENT_HEIGHT__PROP, 
+			ROW_PADDING__PROP, 
 			INDENT_WIDTH__PROP, 
 			AXIS_HEIGHT__PROP, 
 			ROW_LABEL_WIDTH__PROP);
@@ -440,7 +461,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case EDGES__PROP: return getEdges();
 			case DECORATIONS__PROP: return getDecorations();
 			case AXIS__PROP: return getAxis();
-			case ROW_HEIGHT__PROP: return getRowHeight();
+			case ROW_MIN_CONTENT_HEIGHT__PROP: return getRowMinContentHeight();
+			case ROW_PADDING__PROP: return getRowPadding();
 			case INDENT_WIDTH__PROP: return getIndentWidth();
 			case AXIS_HEIGHT__PROP: return getAxisHeight();
 			case ROW_LABEL_WIDTH__PROP: return getRowLabelWidth();
@@ -456,7 +478,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case EDGES__PROP: internalSetEdges(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttEdge.class, value)); break;
 			case DECORATIONS__PROP: internalSetDecorations(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttDecoration.class, value)); break;
 			case AXIS__PROP: internalSetAxis((com.top_logic.react.flow.data.GanttAxis) value); break;
-			case ROW_HEIGHT__PROP: internalSetRowHeight((double) value); break;
+			case ROW_MIN_CONTENT_HEIGHT__PROP: internalSetRowMinContentHeight((double) value); break;
+			case ROW_PADDING__PROP: internalSetRowPadding((double) value); break;
 			case INDENT_WIDTH__PROP: internalSetIndentWidth((double) value); break;
 			case AXIS_HEIGHT__PROP: internalSetAxisHeight((double) value); break;
 			case ROW_LABEL_WIDTH__PROP: internalSetRowLabelWidth((double) value); break;
@@ -495,8 +518,10 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			out.name(AXIS__PROP);
 			getAxis().writeTo(scope, out);
 		}
-		out.name(ROW_HEIGHT__PROP);
-		out.value(getRowHeight());
+		out.name(ROW_MIN_CONTENT_HEIGHT__PROP);
+		out.value(getRowMinContentHeight());
+		out.name(ROW_PADDING__PROP);
+		out.value(getRowPadding());
 		out.name(INDENT_WIDTH__PROP);
 		out.value(getIndentWidth());
 		out.name(AXIS_HEIGHT__PROP);
@@ -548,8 +573,12 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 				}
 				break;
 			}
-			case ROW_HEIGHT__PROP: {
-				out.value(getRowHeight());
+			case ROW_MIN_CONTENT_HEIGHT__PROP: {
+				out.value(getRowMinContentHeight());
+				break;
+			}
+			case ROW_PADDING__PROP: {
+				out.value(getRowPadding());
 				break;
 			}
 			case INDENT_WIDTH__PROP: {
@@ -612,7 +641,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			}
 			break;
 			case AXIS__PROP: setAxis(com.top_logic.react.flow.data.GanttAxis.readGanttAxis(scope, in)); break;
-			case ROW_HEIGHT__PROP: setRowHeight(in.nextDouble()); break;
+			case ROW_MIN_CONTENT_HEIGHT__PROP: setRowMinContentHeight(in.nextDouble()); break;
+			case ROW_PADDING__PROP: setRowPadding(in.nextDouble()); break;
 			case INDENT_WIDTH__PROP: setIndentWidth(in.nextDouble()); break;
 			case AXIS_HEIGHT__PROP: setAxisHeight(in.nextDouble()); break;
 			case ROW_LABEL_WIDTH__PROP: setRowLabelWidth(in.nextDouble()); break;

@@ -3,8 +3,18 @@ package com.top_logic.react.flow.data;
 /**
  * A layout placing {@link GanttItem} boxes along a time axis, grouped into rows.
  *
+ * <p>
+ * Row heights are computed per-row from the maximum item intrinsic height plus padding, with
+ * {@link #getRowMinContentHeight()} as a floor. The effective total height of a row is:
+ * {@code max(rowMinContentHeight, max(item.intrinsicHeight in row)) + 2 * rowPadding}.
+ * All items in the same row receive the same final content height so that neighbouring boxes
+ * can grow together.
+ * </p>
+ *
+ * <p>
  * Inherits {@code contents} from {@link Layout} — the layout populates it with the
  * {@link GanttItem#getBox()} elements so that standard layout/render dispatch reaches them.
+ * </p>
  */
 public interface GanttLayout extends Layout, com.top_logic.react.flow.operations.layout.GanttLayoutOperations {
 
@@ -33,8 +43,11 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	/** @see #getAxis() */
 	String AXIS__PROP = "axis";
 
-	/** @see #getRowHeight() */
-	String ROW_HEIGHT__PROP = "rowHeight";
+	/** @see #getRowMinContentHeight() */
+	String ROW_MIN_CONTENT_HEIGHT__PROP = "rowMinContentHeight";
+
+	/** @see #getRowPadding() */
+	String ROW_PADDING__PROP = "rowPadding";
 
 	/** @see #getIndentWidth() */
 	String INDENT_WIDTH__PROP = "indentWidth";
@@ -141,14 +154,34 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	boolean hasAxis();
 
 	/**
-	 * Height allocated per row, in pixels at zoom 100%.
+	 * Minimum height of the content area of any row (excluding padding), in pixels at zoom 100%.
+	 *
+	 * <p>
+	 * The actual row content height is {@code max(rowMinContentHeight, max item intrinsic height)}.
+	 * Add {@link #getRowPadding()} (top and bottom) to get the total row height.
+	 * </p>
 	 */
-	double getRowHeight();
+	double getRowMinContentHeight();
 
 	/**
-	 * @see #getRowHeight()
+	 * @see #getRowMinContentHeight()
 	 */
-	com.top_logic.react.flow.data.GanttLayout setRowHeight(double value);
+	com.top_logic.react.flow.data.GanttLayout setRowMinContentHeight(double value);
+
+	/**
+	 * Vertical inset (top and bottom each) inserted between item boxes and the row lane boundaries,
+	 * in pixels.
+	 *
+	 * <p>
+	 * The total row height is {@code max(rowMinContentHeight, max item intrinsic height) + 2 * rowPadding}.
+	 * </p>
+	 */
+	double getRowPadding();
+
+	/**
+	 * @see #getRowPadding()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setRowPadding(double value);
 
 	/**
 	 * Horizontal indentation per row hierarchy level, in pixels.

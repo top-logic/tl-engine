@@ -27,12 +27,11 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ContextMenuRegionControl;
 import com.top_logic.layout.view.command.ViewCommandModel;
 
 /**
- * A {@link CommandScopeElement} that exposes its contained commands as entries of a context menu
+ * A {@link CommandCarrierElement} that exposes its contained commands as entries of a context menu
  * rather than toolbar buttons.
  *
  * <p>
@@ -44,7 +43,7 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  * enclosing frame's {@link ContextMenuOpener}.
  * </p>
  */
-public class ContextMenuElement extends CommandScopeElement {
+public class ContextMenuElement extends CommandCarrierElement {
 
 	/**
 	 * Default channel name used when no explicit {@code input} reference is configured.
@@ -55,7 +54,7 @@ public class ContextMenuElement extends CommandScopeElement {
 	 * Configuration for {@link ContextMenuElement}.
 	 */
 	@TagName("context-menu")
-	public interface Config extends CommandScopeElement.Config {
+	public interface Config extends CommandCarrierElement.Config {
 
 		@Override
 		@ClassDefault(ContextMenuElement.class)
@@ -100,42 +99,29 @@ public class ContextMenuElement extends CommandScopeElement {
 
 		ViewChannel targetChannel = resolveOrRegisterTargetChannel(context);
 
-		// Phase 1: Build command models.
+		// Build command models directly from configuration (no scope).
 		List<ViewCommandModel> commandModels = buildCommandModels(context);
 
-		// Phase 2: Create command scope and derived context.
-		CommandScope scope = new CommandScope(commandModels);
-		ViewContext derivedContext = context.withCommandScope(scope);
+		// Merge children into a single content control.
+		ReactControl content = createContent(context);
 
-		// Phase 3: Create child content.
-		ReactControl content = createContent(derivedContext);
-
-		// Phase 4: Collect context-menu commands into a single contribution.
+		// Filter command models for context-menu placement.
 		List<CommandModel> contextMenuCommands = new ArrayList<>();
-		for (CommandModel cmd : scope.getAllCommands()) {
-			if (CommandModel.PLACEMENT_CONTEXT_MENU.equals(cmd.getPlacement())) {
-				contextMenuCommands.add(cmd);
+		for (ViewCommandModel model : commandModels) {
+			if (CommandModel.PLACEMENT_CONTEXT_MENU.equals(model.getPlacement())) {
+				contextMenuCommands.add(model);
 			}
 		}
+
 		Consumer<Object> setter = target -> targetChannel.set(target);
 		Supplier<Object> targetSupplier = () -> targetChannel.get();
 		ContextMenuContribution contribution = new ContextMenuContribution(setter, contextMenuCommands);
 
-		// Phase 5: Create the region chrome wrapping the content.
 		ContextMenuRegionControl region =
 			new ContextMenuRegionControl(context, content, contribution, targetSupplier, opener);
 
-		// Phase 6: Lazy attach on render, cleanup on dispose.
-		region.addBeforeWriteAction(() -> {
-			for (ViewCommandModel model : commandModels) {
-				model.attach();
-			}
-		});
-		region.addCleanupAction(() -> {
-			for (ViewCommandModel model : commandModels) {
-				model.detach();
-			}
-		});
+		// Lazy attach on render, cleanup on dispose.
+		registerLifecycle(commandModels, region);
 
 		return region;
 	}
@@ -148,16 +134,5 @@ public class ContextMenuElement extends CommandScopeElement {
 		ViewChannel channel = new DefaultViewChannel(DEFAULT_TARGET_CHANNEL);
 		context.registerChannel(DEFAULT_TARGET_CHANNEL, channel);
 		return channel;
-	}
-
-	/**
-	 * Unused for {@link ContextMenuElement}; {@link #createControl(ViewContext)} is overridden to
-	 * produce a non-toolbar chrome control directly.
-	 */
-	@Override
-	protected com.top_logic.layout.react.control.ToolbarControl createChromeControl(ViewContext context,
-			ReactControl content) {
-		throw new UnsupportedOperationException(
-			"ContextMenuElement does not use a ToolbarControl chrome; createControl() is overridden.");
 	}
 }

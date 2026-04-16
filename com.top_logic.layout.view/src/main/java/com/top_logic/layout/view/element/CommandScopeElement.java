@@ -5,36 +5,21 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.EntryTag;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
-import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
 import com.top_logic.layout.view.command.CommandPlacement;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
 
 /**
  * Base class for {@link UIElement}s that establish a {@link CommandScope} and synchronize toolbar
@@ -42,62 +27,33 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
  *
  * <p>
  * Subclasses implement {@link #createChromeControl(ViewContext, ReactControl)} to create their
- * specific chrome (panel, window, etc.). This base class handles:
+ * specific chrome (panel, window, etc.). This class adds, on top of
+ * {@link CommandCarrierElement}:
  * </p>
  * <ul>
- * <li>Building {@link ViewCommandModel}s from configured commands</li>
  * <li>Creating a {@link CommandScope} and derived {@link ViewContext}</li>
- * <li>Creating child content controls</li>
  * <li>Synchronizing toolbar-placed commands as buttons on the chrome control</li>
- * <li>Cleanup of command models</li>
  * </ul>
  */
-public abstract class CommandScopeElement extends ContainerElement {
+public abstract class CommandScopeElement extends CommandCarrierElement {
 
 	/**
 	 * Configuration for {@link CommandScopeElement}.
+	 *
+	 * <p>
+	 * Commands with {@link CommandPlacement#TOOLBAR TOOLBAR} placement are automatically rendered
+	 * in the element's toolbar. Commands are available to child elements via the command scope.
+	 * </p>
 	 */
-	public interface Config extends ContainerElement.Config {
-
-		/** Configuration name for {@link #getCommands()}. */
-		String COMMANDS = "commands";
-
-		/**
-		 * Commands scoped to this element.
-		 *
-		 * <p>
-		 * These commands are available to child elements via the command scope. Commands with
-		 * {@link CommandPlacement#TOOLBAR TOOLBAR} placement are automatically rendered in the
-		 * element's toolbar.
-		 * </p>
-		 */
-		@Name(COMMANDS)
-		@EntryTag("command")
-		@TreeProperty
-		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+	public interface Config extends CommandCarrierElement.Config {
+		// Inherits getCommands() from CommandCarrierElement.Config.
 	}
-
-	private final List<ViewCommand> _commands;
-
-	private final List<ViewCommand.Config> _commandConfigs;
 
 	/**
 	 * Creates a new {@link CommandScopeElement}.
 	 */
 	protected CommandScopeElement(InstantiationContext context, Config config) {
 		super(context, config);
-
-		_commands = new ArrayList<>();
-		_commandConfigs = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewCommand> cmdConfig : config.getCommands()) {
-			ViewCommand cmd = context.getInstance(cmdConfig);
-			if (cmd != null) {
-				_commands.add(cmd);
-				if (cmdConfig instanceof ViewCommand.Config) {
-					_commandConfigs.add((ViewCommand.Config) cmdConfig);
-				}
-			}
-		}
 	}
 
 	@Override
@@ -121,16 +77,7 @@ public abstract class CommandScopeElement extends ContainerElement {
 		scope.addListener(() -> syncToolbarButtons(chrome, context, scope, toolbarButtons));
 
 		// Phase 6: Lazy attach on render, cleanup on dispose.
-		chrome.addBeforeWriteAction(() -> {
-			for (ViewCommandModel model : commandModels) {
-				model.attach();
-			}
-		});
-		chrome.addCleanupAction(() -> {
-			for (ViewCommandModel model : commandModels) {
-				model.detach();
-			}
-		});
+		registerLifecycle(commandModels, chrome);
 
 		return chrome;
 	}
@@ -145,67 +92,6 @@ public abstract class CommandScopeElement extends ContainerElement {
 	 * @return The chrome control (panel, window, etc.) that provides toolbar button support.
 	 */
 	protected abstract ToolbarControl createChromeControl(ViewContext context, ReactControl content);
-
-	/**
-	 * Creates a single content control from the children.
-	 */
-	protected ReactControl createContent(ViewContext context) {
-		List<IReactControl> childControls = createChildControls(context);
-		if (childControls.size() == 1) {
-			return (ReactControl) childControls.get(0);
-		}
-		List<ReactControl> reactChildren = childControls.stream()
-			.map(c -> (ReactControl) c)
-			.collect(Collectors.toList());
-		return new ReactStackControl(context, reactChildren);
-	}
-
-	/**
-	 * Builds {@link ViewCommandModel}s for all configured commands, resolving per-command input
-	 * channels, executability rules and confirmations.
-	 */
-	protected List<ViewCommandModel> buildCommandModels(ViewContext context) {
-		List<ViewCommandModel> models = new ArrayList<>();
-		for (int i = 0; i < _commands.size() && i < _commandConfigs.size(); i++) {
-			ViewCommand cmd = _commands.get(i);
-			ViewCommand.Config cmdConfig = _commandConfigs.get(i);
-
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
-
-			ViewExecutabilityRule rule = buildExecutabilityRule(cmdConfig);
-			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
-
-			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
-			models.add(model);
-		}
-		return models;
-	}
-
-	private ViewExecutabilityRule buildExecutabilityRule(ViewCommand.Config cmdConfig) {
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs = cmdConfig.getExecutability();
-		if (ruleConfigs.isEmpty()) {
-			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
-		}
-		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(CommandScopeElement.class);
-		List<ViewExecutabilityRule> rules = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewExecutabilityRule> ruleConfig : ruleConfigs) {
-			ViewExecutabilityRule rule = instantiation.getInstance(ruleConfig);
-			if (rule != null) {
-				rules.add(rule);
-			}
-		}
-		return CombinedViewExecutabilityRule.combine(rules);
-	}
-
-	private ViewCommandConfirmation buildConfirmation(ViewCommand.Config cmdConfig) {
-		PolymorphicConfiguration<? extends ViewCommandConfirmation> confirmConfig = cmdConfig.getConfirmation();
-		if (confirmConfig == null) {
-			return null;
-		}
-		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(CommandScopeElement.class);
-		return instantiation.getInstance(confirmConfig);
-	}
 
 	private void syncToolbarButtons(ToolbarControl chrome, ViewContext context,
 			CommandScope scope, Map<CommandModel, ReactButtonControl> toolbarButtons) {

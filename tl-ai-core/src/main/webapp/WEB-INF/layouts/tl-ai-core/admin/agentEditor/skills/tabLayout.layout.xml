@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_b62d6f22_eca0_4959_bdb6_1cd9daa31620">
+		<tabLabel key="dynamic.dfc74d14-0e28-4ec1-bd25-7a2720e56723">
+			<en>Skills</en>
+			<de>Skills</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="tl-ai-core/admin/agentEditor/skills/innerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

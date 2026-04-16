@@ -77,6 +77,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.react.flow.data.VerticalLayout}. */
 		VERTICAL_LAYOUT,
 
+		/** Type literal for {@link com.top_logic.react.flow.data.GanttLayout}. */
+		GANTT_LAYOUT,
+
 		/** Type literal for {@link com.top_logic.react.flow.data.PolygonalChain}. */
 		POLYGONAL_CHAIN,
 
@@ -226,6 +229,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GridLayout.create(); break;
+			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.VerticalLayout.create(); break;
 			default: in.skipValue(); result = null; break;

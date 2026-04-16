@@ -11,6 +11,9 @@ public interface Layout extends Box {
 		/** Visit case for {@link com.top_logic.react.flow.data.GridLayout}.*/
 		R visit(com.top_logic.react.flow.data.GridLayout self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.react.flow.data.GanttLayout}.*/
+		R visit(com.top_logic.react.flow.data.GanttLayout self, A arg) throws E;
+
 	}
 
 	/** @see #getContents() */
@@ -71,6 +74,7 @@ public interface Layout extends Box {
 		int id = in.nextInt();
 		switch (type) {
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GridLayout.create(); break;
+			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.VerticalLayout.create(); break;
 			default: in.skipValue(); result = null; break;

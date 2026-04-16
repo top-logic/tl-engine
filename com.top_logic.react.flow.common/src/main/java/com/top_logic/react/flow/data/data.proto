@@ -1045,3 +1045,39 @@ message GanttAxis {
 	/** Ticks computed for the current zoom. */
 	repeated GanttTick currentTicks;
 }
+
+/**
+ * A layout placing {@link GanttItem} boxes along a time axis, grouped into rows.
+ *
+ * Inherits {@code contents} from {@link Layout} — the layout populates it with the
+ * {@link GanttItem#box} elements so that standard layout/render dispatch reaches them.
+ */
+@Operations("com.top_logic.react.flow.operations.layout.GanttLayoutOperations")
+message GanttLayout extends Layout {
+	/** Root rows of the forest. */
+	repeated GanttRow rootRows;
+
+	/** All items in the chart (referenced by row via {@link GanttItem#rowId}). */
+	repeated GanttItem items;
+
+	/** Dependency edges between items. */
+	repeated GanttEdge edges;
+
+	/** Decorations overlaid on the chart (lines, ranges). */
+	repeated GanttDecoration decorations;
+
+	/** Time axis configuration. */
+	GanttAxis axis;
+
+	/** Height allocated per row, in pixels at zoom 100%. */
+	double rowHeight = 32.0;
+
+	/** Horizontal indentation per row hierarchy level, in pixels. */
+	double indentWidth = 16.0;
+
+	/** Height of the axis header, in pixels. */
+	double axisHeight = 24.0;
+
+	/** Width of the row label column, in pixels. */
+	double rowLabelWidth = 200.0;
+}

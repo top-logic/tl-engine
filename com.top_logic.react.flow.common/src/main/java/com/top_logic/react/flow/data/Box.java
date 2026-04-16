@@ -139,6 +139,7 @@ public interface Box extends Widget, com.top_logic.react.flow.operations.BoxOper
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GridLayout.create(); break;
+			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.VerticalLayout.create(); break;
 			default: in.skipValue(); result = null; break;

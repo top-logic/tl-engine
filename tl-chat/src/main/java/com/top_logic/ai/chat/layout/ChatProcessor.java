@@ -432,8 +432,7 @@ public class ChatProcessor {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session != null) {
 					String json = DtoMapper.serializeMessages(chat.getMessages());
-					ChatHistoryService.saveMessages(session, json);
-					ChatHistoryService.touchLastUpdated(session);
+					ChatHistoryService.saveMessagesAndTouch(session, json);
 				}
 				return null;
 			});
@@ -455,8 +454,7 @@ public class ChatProcessor {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session != null) {
 					String json = ConversationLogSerializer.toJson(convLog);
-					ChatHistoryService.saveMessages(session, json);
-					ChatHistoryService.touchLastUpdated(session);
+					ChatHistoryService.saveMessagesAndTouch(session, json);
 				}
 				return null;
 			});

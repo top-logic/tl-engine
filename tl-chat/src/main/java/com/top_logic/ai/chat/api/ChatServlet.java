@@ -585,8 +585,7 @@ public class ChatServlet extends HttpServlet {
 			final String messagesJson = body.getMessagesJson();
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
 			if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
-				ChatHistoryService.saveMessages(session, messagesJson);
-				ChatHistoryService.touchLastUpdated(session);
+				ChatHistoryService.saveMessagesAndTouch(session, messagesJson);
 				resp.setStatus(HttpServletResponse.SC_OK);
 			} else {
 				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);

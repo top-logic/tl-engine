@@ -242,12 +242,8 @@ public class ChatSessionManager {
 				} else {
 					json = DtoMapper.serializeMessages(state._chat.getMessages());
 				}
-				ChatHistoryService.saveMessages(session, json);
-
-				if (_tracker != null) {
-					String metadataJson = DtoMapper.serializeMetadata(_tracker);
-					ChatHistoryService.saveMetadata(session, metadataJson);
-				}
+				String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
+				ChatHistoryService.saveMessagesAndMetadata(session, json, metadataJson);
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to persist session " + sessionId + ": " + ex.getMessage(), ex,

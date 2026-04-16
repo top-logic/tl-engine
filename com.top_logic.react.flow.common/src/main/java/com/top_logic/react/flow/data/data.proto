@@ -956,3 +956,29 @@ message GanttEdge {
 
 	GanttEnforce enforce;
 }
+
+/** Abstract base for entries on a Gantt time axis. */
+abstract message GanttItem {
+	string id;
+
+	/** Reference to the {@link GanttRow#id} this item lives in. */
+	string rowId;
+
+	bool canMoveTime = true;
+	bool canMoveRow = true;
+	bool canBeEdgeSource = true;
+	bool canBeEdgeTarget = true;
+}
+
+/** A task with start and end on the time axis. */
+message GanttSpan extends GanttItem {
+	double start;
+	double end;
+	bool canResizeStart = true;
+	bool canResizeEnd = true;
+}
+
+/** A milestone (point in time). */
+message GanttMilestone extends GanttItem {
+	double at;
+}

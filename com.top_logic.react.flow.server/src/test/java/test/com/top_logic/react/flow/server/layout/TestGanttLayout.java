@@ -15,6 +15,9 @@ import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.GanttAxis;
+import com.top_logic.react.flow.data.GanttEdge;
+import com.top_logic.react.flow.data.GanttEndpoint;
+import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
@@ -161,6 +164,33 @@ public class TestGanttLayout extends TestCase {
 		// Indentation is encoded as the x coordinate of the label's text element.
 		// We don't parse SVG for exact coordinates — just confirming both labels render
 		// is sufficient for Phase 1 (visual verification happens in Task 20).
+	}
+
+	public void testEdgesRenderInOutput() throws Exception {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+
+		GanttEdge edge = GanttEdge.create()
+			.setId("e1")
+			.setSourceItemId("a")
+			.setSourceEndpoint(GanttEndpoint.END)
+			.setTargetItemId("b")
+			.setTargetEndpoint(GanttEndpoint.START)
+			.setEnforce(GanttEnforce.STRICT);
+
+		GanttLayout layout = GanttLayout.create()
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2")))
+			.setItems(Arrays.asList(a, b))
+			.setEdges(Arrays.asList(edge));
+		layout.addContent(a.getBox());
+		layout.addContent(b.getBox());
+
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		String svg = renderToSvg(d);
+		assertTrue("edge group present", svg.contains("tl-gantt-edges"));
 	}
 
 	public void testDistributeSizeUsesGivenWidth() {

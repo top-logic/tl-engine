@@ -11,6 +11,9 @@ import java.util.Map;
 
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.GanttAxis;
+import com.top_logic.react.flow.data.GanttEdge;
+import com.top_logic.react.flow.data.GanttEndpoint;
+import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttItem;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttMilestone;
@@ -237,7 +240,91 @@ public interface GanttLayoutOperations extends BoxOperations {
 	}
 
 	private static void drawEdges(GanttLayout self, SvgWriter out) {
-		// Task 13.
+		List<GanttEdge> edges = self.getEdges();
+		if (edges == null || edges.isEmpty()) {
+			return;
+		}
+
+		// Build lookup map from item id to item.
+		Map<String, GanttItem> itemById = new HashMap<>();
+		for (GanttItem item : self.getItems()) {
+			itemById.put(item.getId(), item);
+		}
+
+		out.beginGroup();
+		out.writeCssClass("tl-gantt-edges");
+
+		for (GanttEdge edge : edges) {
+			GanttItem sourceItem = itemById.get(edge.getSourceItemId());
+			GanttItem targetItem = itemById.get(edge.getTargetItemId());
+			if (sourceItem == null || targetItem == null) {
+				continue;
+			}
+
+			GanttEndpoint sourceEndpoint = edge.getSourceEndpoint();
+			GanttEndpoint targetEndpoint = edge.getTargetEndpoint();
+
+			double sx = endpointX(sourceItem, sourceEndpoint);
+			double sy = centerY(sourceItem);
+			double tx = endpointX(targetItem, targetEndpoint);
+			double ty = centerY(targetItem);
+
+			// Horizontal offset to route outside the box:
+			// START side: go left (-6), END side: go right (+6).
+			double sOffset = (sourceEndpoint == GanttEndpoint.START) ? -6.0 : 6.0;
+			double tOffset = (targetEndpoint == GanttEndpoint.START) ? -6.0 : 6.0;
+
+			double midY = (sy + ty) / 2.0;
+
+			// Stroke style based on enforce mode.
+			GanttEnforce enforce = edge.getEnforce();
+			String strokeColor;
+			double strokeWidth;
+			boolean dashed;
+			if (enforce == GanttEnforce.WARN) {
+				strokeColor = "#d01030";
+				strokeWidth = 1.2;
+				dashed = false;
+			} else if (enforce == GanttEnforce.NONE) {
+				strokeColor = "#606060";
+				strokeWidth = 0.8;
+				dashed = true;
+			} else {
+				// STRICT (default)
+				strokeColor = "#606060";
+				strokeWidth = 1.2;
+				dashed = false;
+			}
+
+			out.beginPath();
+			out.setStroke(strokeColor);
+			out.setStrokeWidth(strokeWidth);
+			out.setFill("none");
+			if (dashed) {
+				out.setStrokeDasharray(4.0, 3.0);
+			}
+			out.beginData();
+			out.moveToAbs(sx, sy);
+			out.lineToAbs(sx + sOffset, sy);
+			out.lineToAbs(sx + sOffset, midY);
+			out.lineToAbs(tx + tOffset, midY);
+			out.lineToAbs(tx + tOffset, ty);
+			out.lineToAbs(tx, ty);
+			out.endData();
+			out.endPath();
+		}
+
+		out.endGroup();
+	}
+
+	private static double endpointX(GanttItem item, GanttEndpoint endpoint) {
+		Box b = item.getBox();
+		return endpoint == GanttEndpoint.START ? b.getX() : b.getX() + b.getWidth();
+	}
+
+	private static double centerY(GanttItem item) {
+		Box b = item.getBox();
+		return b.getY() + b.getHeight() / 2.0;
 	}
 
 	private static void indexRows(GanttRow row, Map<String, Integer> idx, int[] counter) {

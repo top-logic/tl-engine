@@ -20,6 +20,7 @@ import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.json.JsonUtilities;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -88,7 +89,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	 * </p>
 	 */
 	@FrameworkInternal
-	public void writeResponse(Object result, HttpServletResponse resp) throws IOException {
+	public final void writeResponse(Object result, HttpServletResponse resp) throws IOException {
 		int status;
 		String contentType;
 		String charset;
@@ -167,7 +168,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 				return contentType;
 			}
 		}
-		return "application/octet-stream";
+		return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
 	}
 
 	private Object inInteraction(Map<String, Object> arguments) throws ComputationFailure {

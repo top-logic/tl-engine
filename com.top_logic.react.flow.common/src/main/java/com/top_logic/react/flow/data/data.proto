@@ -1044,8 +1044,12 @@ abstract message GanttDecoration {
 	/** CSS-style color. */
 	string color;
 
-	/** Label shown near the decoration. */
-	string label;
+	/**
+	 * Label box drawn near the decoration. The box is owned by the enclosing
+	 * {@link GanttLayout#getContents() contents}, not by this decoration.
+	 */
+	@Ref
+	Box label;
 
 	/** Whether the user may drag the decoration along the time axis. */
 	bool canMove;

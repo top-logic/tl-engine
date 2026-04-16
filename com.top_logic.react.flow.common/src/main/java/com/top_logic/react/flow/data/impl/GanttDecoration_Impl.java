@@ -9,7 +9,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 
 	private String _color = "";
 
-	private String _label = "";
+	private com.top_logic.react.flow.data.Box _label = null;
 
 	private boolean _canMove = false;
 
@@ -74,21 +74,26 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	}
 
 	@Override
-	public final String getLabel() {
+	public final com.top_logic.react.flow.data.Box getLabel() {
 		return _label;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttDecoration setLabel(String value) {
+	public com.top_logic.react.flow.data.GanttDecoration setLabel(com.top_logic.react.flow.data.Box value) {
 		internalSetLabel(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getLabel()} without chain call utility. */
-	protected final void internalSetLabel(String value) {
+	protected final void internalSetLabel(com.top_logic.react.flow.data.Box value) {
 		_listener.beforeSet(this, LABEL__PROP, value);
 		_label = value;
 		_listener.afterChanged(this, LABEL__PROP);
+	}
+
+	@Override
+	public final boolean hasLabel() {
+		return _label != null;
 	}
 
 	@Override
@@ -188,7 +193,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
 			case COLOR__PROP: internalSetColor((String) value); break;
-			case LABEL__PROP: internalSetLabel((String) value); break;
+			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CAN_MOVE__PROP: internalSetCanMove((boolean) value); break;
 			case RELEVANT_FOR__PROP: internalSetRelevantFor(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
@@ -201,8 +206,10 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		out.value(getId());
 		out.name(COLOR__PROP);
 		out.value(getColor());
-		out.name(LABEL__PROP);
-		out.value(getLabel());
+		if (hasLabel()) {
+			out.name(LABEL__PROP);
+			getLabel().writeTo(scope, out);
+		}
 		out.name(CAN_MOVE__PROP);
 		out.value(isCanMove());
 		out.name(RELEVANT_FOR__PROP);
@@ -225,7 +232,11 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 				break;
 			}
 			case LABEL__PROP: {
-				out.value(getLabel());
+				if (hasLabel()) {
+					getLabel().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case CAN_MOVE__PROP: {
@@ -249,7 +260,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		switch (field) {
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case COLOR__PROP: setColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case LABEL__PROP: setLabel(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case CAN_MOVE__PROP: setCanMove(in.nextBoolean()); break;
 			case RELEVANT_FOR__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();

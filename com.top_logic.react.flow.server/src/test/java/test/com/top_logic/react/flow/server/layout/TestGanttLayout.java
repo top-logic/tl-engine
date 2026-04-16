@@ -15,6 +15,7 @@ import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.GanttAxis;
+import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
 import com.top_logic.react.flow.data.GanttEnforce;
@@ -84,6 +85,15 @@ public class TestGanttLayout extends TestCase {
 			for (GanttTick tick : axis.getCurrentTicks()) {
 				if (tick.getLabel() != null) {
 					layout.addContent(tick.getLabel());
+				}
+			}
+		}
+		// Add decoration label boxes to contents so they are rendered via standard dispatch.
+		java.util.List<GanttDecoration> decos = layout.getDecorations();
+		if (decos != null) {
+			for (GanttDecoration deco : decos) {
+				if (deco.getLabel() != null) {
+					layout.addContent(deco.getLabel());
 				}
 			}
 		}
@@ -253,7 +263,7 @@ public class TestGanttLayout extends TestCase {
 			.setId("freeze")
 			.setFrom(60.0).setTo(80.0)
 			.setColor("rgba(255,80,80,0.3)")
-			.setLabel("Freeze");
+			.setLabel(Text.create().setValue("Freeze"));
 
 		GanttLayout layout = GanttLayout.create()
 			.setAxis(axis(0, 100))
@@ -272,7 +282,7 @@ public class TestGanttLayout extends TestCase {
 			.setId("today")
 			.setAt(50.0)
 			.setColor("#3070d0")
-			.setLabel("Today");
+			.setLabel(Text.create().setValue("Today"));
 
 		GanttLayout layout = GanttLayout.create()
 			.setAxis(axis(0, 100))

@@ -62,7 +62,7 @@ public interface GanttRangeDecoration extends GanttDecoration {
 	com.top_logic.react.flow.data.GanttRangeDecoration setColor(String value);
 
 	@Override
-	com.top_logic.react.flow.data.GanttRangeDecoration setLabel(String value);
+	com.top_logic.react.flow.data.GanttRangeDecoration setLabel(com.top_logic.react.flow.data.Box value);
 
 	@Override
 	com.top_logic.react.flow.data.GanttRangeDecoration setCanMove(boolean value);

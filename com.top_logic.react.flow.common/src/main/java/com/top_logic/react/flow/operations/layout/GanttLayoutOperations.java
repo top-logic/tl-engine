@@ -159,6 +159,17 @@ public interface GanttLayoutOperations extends BoxOperations {
 			}
 		}
 
+		// --- Pass 1d: compute intrinsic sizes of decoration label boxes ---
+		List<GanttDecoration> decos = self.getDecorations();
+		if (decos != null) {
+			for (GanttDecoration deco : decos) {
+				Box decoLabel = deco.getLabel();
+				if (decoLabel != null) {
+					decoLabel.computeIntrinsicSize(context, 0, 0);
+				}
+			}
+		}
+
 		// --- Aggregate: compute column width and per-row total heights ---
 		double columnWidth = Math.max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding);
 
@@ -230,6 +241,46 @@ public interface GanttLayoutOperations extends BoxOperations {
 				double labelW = tickLabel.getWidth();
 				double labelH = tickLabel.getHeight();
 				tickLabel.distributeSize(context, tickX + 2, offsetY + axisHeight - labelH - 2, labelW, labelH);
+			}
+		}
+
+		// --- Pass 2d: distribute final positions and sizes for decoration label boxes ---
+		if (decos != null && !decos.isEmpty()) {
+			double chartX0 = offsetX + columnWidth;
+			double lanesTop2 = offsetY + axisHeight;
+			for (GanttDecoration deco : decos) {
+				Box decoLabel = deco.getLabel();
+				if (decoLabel == null) {
+					continue;
+				}
+				// Determine y0 for this decoration (top of its vertical extent).
+				List<String> relevantFor = deco.getRelevantFor();
+				double decoY0;
+				if (relevantFor == null || relevantFor.isEmpty()) {
+					decoY0 = lanesTop2;
+				} else {
+					double minY = Double.MAX_VALUE;
+					for (String rowId : relevantFor) {
+						Integer rowIdx = rowIndex.get(rowId);
+						if (rowIdx != null && rowYStart[rowIdx] < minY) {
+							minY = rowYStart[rowIdx];
+						}
+					}
+					decoY0 = (minY == Double.MAX_VALUE) ? lanesTop2 : minY;
+				}
+
+				double labelX;
+				if (deco instanceof GanttLineDecoration line) {
+					labelX = chartX0 + (line.getAt() - rangeMin) * zoom + 2.0;
+				} else if (deco instanceof GanttRangeDecoration range) {
+					labelX = chartX0 + (range.getFrom() - rangeMin) * zoom + 2.0;
+				} else {
+					labelX = chartX0 + 2.0;
+				}
+				double labelY = decoY0 + 10.0;
+				double labelW = decoLabel.getWidth();
+				double labelH = decoLabel.getHeight();
+				decoLabel.distributeSize(context, labelX, labelY, labelW, labelH);
 			}
 		}
 
@@ -499,13 +550,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 				out.endData();
 				out.endPath();
 
-				String label = line.getLabel();
-				if (label != null && !label.isEmpty()) {
-					out.beginText(x + 2, y0 + 10, label);
-					out.setFill(color);
-					out.setStroke("none");
-					out.endText();
-				}
+				// Label box is rendered through the standard contents dispatch in draw().
 			} else if (decoration instanceof GanttRangeDecoration range) {
 				double xFrom = chartX0 + (range.getFrom() - rangeMin) * zoom;
 				double xTo = chartX0 + (range.getTo() - rangeMin) * zoom;
@@ -519,13 +564,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 				out.setStroke("none");
 				out.endRect();
 
-				String label = range.getLabel();
-				if (label != null && !label.isEmpty()) {
-					out.beginText(xFrom + 2, y0 + 10, label);
-					out.setFill("#303030");
-					out.setStroke("none");
-					out.endText();
-				}
+				// Label box is rendered through the standard contents dispatch in draw().
 			}
 		}
 

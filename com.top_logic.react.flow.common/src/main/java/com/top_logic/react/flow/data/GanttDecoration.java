@@ -67,14 +67,20 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	com.top_logic.react.flow.data.GanttDecoration setColor(String value);
 
 	/**
-	 * Label shown near the decoration.
+	 * Label box drawn near the decoration. The box is owned by the enclosing
+	 * {@link GanttLayout#getContents() contents}, not by this decoration.
 	 */
-	String getLabel();
+	com.top_logic.react.flow.data.Box getLabel();
 
 	/**
 	 * @see #getLabel()
 	 */
-	com.top_logic.react.flow.data.GanttDecoration setLabel(String value);
+	com.top_logic.react.flow.data.GanttDecoration setLabel(com.top_logic.react.flow.data.Box value);
+
+	/**
+	 * Checks, whether {@link #getLabel()} has a value.
+	 */
+	boolean hasLabel();
 
 	/**
 	 * Whether the user may drag the decoration along the time axis.

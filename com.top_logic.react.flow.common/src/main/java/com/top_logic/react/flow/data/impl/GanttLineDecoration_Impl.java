@@ -52,7 +52,7 @@ public class GanttLineDecoration_Impl extends com.top_logic.react.flow.data.impl
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttLineDecoration setLabel(String value) {
+	public com.top_logic.react.flow.data.GanttLineDecoration setLabel(com.top_logic.react.flow.data.Box value) {
 		internalSetLabel(value);
 		return this;
 	}

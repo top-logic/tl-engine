@@ -20,7 +20,7 @@ qa    = reactFlowGanttSpan(id: "qa",   rowId: "r-test",   box: reactFlowBorder(r
 e1 = reactFlowGanttEdge(id: "e1", sourceItemId: "spec",  sourceEndpoint: "END",   targetItemId: "build", targetEndpoint: "START", enforce: "STRICT");
 e2 = reactFlowGanttEdge(id: "e2", sourceItemId: "build", sourceEndpoint: "END",   targetItemId: "beta",  targetEndpoint: "START", enforce: "WARN");
 
-freeze = reactFlowGanttRangeDeco(id: "freeze", from: 20485, to: 20488, color: "rgba(255,100,100,0.3)", label: "Freeze");
+freeze = reactFlowGanttRangeDeco(id: "freeze", from: 20485, to: 20488, color: "rgba(255,100,100,0.3)", label: reactFlowText("Freeze"));
 
 axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20495, zoom: 20);
 

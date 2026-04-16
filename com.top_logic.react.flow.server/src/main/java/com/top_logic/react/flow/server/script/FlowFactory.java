@@ -1630,13 +1630,13 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory String id,
 			double at,
 			String color,
-			String label,
+			Box label,
 			List<String> relevantFor,
 			Boolean canMove) {
 		GanttLineDecoration deco = GanttLineDecoration.create()
 			.setId(id).setAt(at)
 			.setColor(color != null ? color : "#c02020")
-			.setLabel(label != null ? label : "");
+			.setLabel(label);
 		if (relevantFor != null) {
 			deco.setRelevantFor(relevantFor);
 		}
@@ -1651,14 +1651,14 @@ public class FlowFactory extends TLScriptFunctions {
 			double from,
 			double to,
 			String color,
-			String label,
+			Box label,
 			List<String> relevantFor,
 			Boolean canMove,
 			Boolean canResize) {
 		GanttRangeDecoration deco = GanttRangeDecoration.create()
 			.setId(id).setFrom(from).setTo(to)
 			.setColor(color != null ? color : "rgba(255, 220, 120, 0.35)")
-			.setLabel(label != null ? label : "");
+			.setLabel(label);
 		if (relevantFor != null) {
 			deco.setRelevantFor(relevantFor);
 		}
@@ -1719,6 +1719,13 @@ public class FlowFactory extends TLScriptFunctions {
 			for (GanttTick tick : axis.getCurrentTicks()) {
 				if (tick.getLabel() != null) {
 					contents.add(tick.getLabel());
+				}
+			}
+		}
+		if (decorations != null) {
+			for (GanttDecoration deco : decorations) {
+				if (deco.getLabel() != null) {
+					contents.add(deco.getLabel());
 				}
 			}
 		}

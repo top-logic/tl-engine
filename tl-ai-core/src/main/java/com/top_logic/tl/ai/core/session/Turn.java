@@ -1,0 +1,181 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.session;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.top_logic.tl.ai.core.message.TokenUsage;
+
+/**
+ * One user-assistant cycle in a conversation.
+ *
+ * <p>A turn groups the user's input parts and the assistant's output parts
+ * (text, tool calls, approvals, interactions, etc.).</p>
+ *
+ * <p><b>Important:</b> One Turn corresponds to one user request, NOT one
+ * AgentLoop iteration. A single user message may trigger multiple AgentLoop
+ * turns (LLM call - tool execution - LLM call - ...). All of those iterations
+ * accumulate parts and token usage into this single Turn.</p>
+ */
+public class Turn {
+
+	/** Observer for part lifecycle events within a turn. */
+	public interface Observer {
+
+		/** Called when a new part is added to the turn. */
+		void onPartAdded(Turn turn, Part part);
+
+		/** Called when an existing part is updated (e.g., tool call completed). */
+		void onPartUpdated(Turn turn, Part part);
+	}
+
+	private final String _id;
+
+	private final int _turnNumber;
+
+	private final Instant _timestamp;
+
+	private volatile List<Part> _userParts = List.of();
+
+	private final CopyOnWriteArrayList<Part> _assistantParts = new CopyOnWriteArrayList<>();
+
+	private final CopyOnWriteArrayList<Observer> _observers = new CopyOnWriteArrayList<>();
+
+	private volatile String _model;
+
+	private volatile String _provider;
+
+	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
+
+	/**
+	 * Creates a new turn.
+	 *
+	 * @param id         unique turn identifier
+	 * @param turnNumber 1-based turn number within the session
+	 */
+	public Turn(String id, int turnNumber) {
+		_id = id;
+		_turnNumber = turnNumber;
+		_timestamp = Instant.now();
+	}
+
+	/** */
+	public String id() {
+		return _id;
+	}
+
+	/** */
+	public int turnNumber() {
+		return _turnNumber;
+	}
+
+	/** */
+	public Instant timestamp() {
+		return _timestamp;
+	}
+
+	/** */
+	public List<Part> userParts() {
+		return _userParts;
+	}
+
+	/** */
+	public void setUserParts(List<Part> parts) {
+		_userParts = List.copyOf(parts);
+	}
+
+	/** */
+	public List<Part> assistantParts() {
+		return List.copyOf(_assistantParts);
+	}
+
+	/**
+	 * Find a part by ID, searching from the end (most recent first).
+	 *
+	 * @return the part, or {@code null} if not found
+	 */
+	public Part findPart(String partId) {
+		for (int i = _assistantParts.size() - 1; i >= 0; i--) {
+			Part p = _assistantParts.get(i);
+			if (p.id().equals(partId)) {
+				return p;
+			}
+		}
+		return null;
+	}
+
+	/** Append a new part and notify observers. */
+	public void addAssistantPart(Part part) {
+		_assistantParts.add(part);
+		for (Observer obs : _observers) {
+			obs.onPartAdded(this, part);
+		}
+	}
+
+	/**
+	 * Replace an existing part by ID and notify observers.
+	 *
+	 * <p>Used for state transitions (e.g., tool RUNNING to COMPLETED).
+	 * Searches from the end since recent parts are most likely to be updated.</p>
+	 */
+	public void updatePart(String partId, Part updated) {
+		for (int i = _assistantParts.size() - 1; i >= 0; i--) {
+			if (_assistantParts.get(i).id().equals(partId)) {
+				_assistantParts.set(i, updated);
+				break;
+			}
+		}
+		for (Observer obs : _observers) {
+			obs.onPartUpdated(this, updated);
+		}
+	}
+
+	/** */
+	public void addObserver(Observer observer) {
+		_observers.add(observer);
+	}
+
+	/** */
+	public void removeObserver(Observer observer) {
+		_observers.remove(observer);
+	}
+
+	/** */
+	public String model() {
+		return _model;
+	}
+
+	/** */
+	public void setModel(String model) {
+		_model = model;
+	}
+
+	/** */
+	public String provider() {
+		return _provider;
+	}
+
+	/** */
+	public void setProvider(String provider) {
+		_provider = provider;
+	}
+
+	/**
+	 * Cumulative token usage across all AgentLoop iterations in this turn.
+	 */
+	public TokenUsage cumulativeUsage() {
+		return _cumulativeUsage;
+	}
+
+	/**
+	 * Add token usage from one AgentLoop iteration.
+	 */
+	public void addUsage(TokenUsage turnUsage) {
+		_cumulativeUsage = _cumulativeUsage.add(turnUsage);
+	}
+}

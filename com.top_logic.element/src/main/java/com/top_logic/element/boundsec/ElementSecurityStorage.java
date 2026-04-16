@@ -29,11 +29,12 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
-import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.StorageException;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -242,7 +243,7 @@ public class ElementSecurityStorage extends SecurityStorage {
 		} catch (SQLException e) {
 			throw new StorageException("Error while requesting the database.", e);
 		}
-		computeRoles(invalidRules);
+		computeRoles(invalidRules, true);
 	}
 
 	protected void flushDeleteAndInsert(List<Object[]> batchRemoves, List<Object[]> batchInserts, Map<?, ?> sharedIds) throws StorageException {
@@ -314,7 +315,8 @@ public class ElementSecurityStorage extends SecurityStorage {
 		Logger.info("Computing ME rules...", ElementSecurityStorage.class);
 		StopWatch sw = StopWatch.createStartedWatch();
 
-		RoleComputationResult counter = internalComputeMERuleBasedRoles(getAccessManager().getResolvedMERules());
+		RoleComputationResult counter =
+			internalComputeMERuleBasedRoles(getAccessManager().getResolvedMERules(), false);
 
 		Logger.info("Done in " + sw + ". Executed " + counter.executions() + " ME based rules (business objects: "
 				+ counter.objects() + ", rules: " + counter.rules() + "). Computed entries: " + counter.entries() + ".",
@@ -327,7 +329,8 @@ public class ElementSecurityStorage extends SecurityStorage {
 	 * @throws StorageException
 	 *         if some error occurs while requesting the database
 	 */
-	protected void computeRoles(Collection<? extends RoleProvider> rules) throws StorageException {
+	protected void computeRoles(Collection<? extends RoleProvider> rules, boolean inTransaction)
+			throws StorageException {
 		Map<TLClass, Collection<RoleProvider>> allRules = getAccessManager().getResolvedMERules();
 		Map<TLClass, Collection<RoleProvider>> filtered = new HashMap<>();
 		for (Entry<TLClass, Collection<RoleProvider>> e : allRules.entrySet()) {
@@ -338,7 +341,7 @@ public class ElementSecurityStorage extends SecurityStorage {
 			}
 		}
 
-		internalComputeMERuleBasedRoles(filtered);
+		internalComputeMERuleBasedRoles(filtered, inTransaction);
 	}
 
 	/**
@@ -346,9 +349,11 @@ public class ElementSecurityStorage extends SecurityStorage {
 	 * 
 	 * @param rulesByType
 	 *        Mapping from the type to the rules for which roles must be computed.
+	 * @param inTransaction
+	 *        Whether the uncommitted changes has to be considered.
 	 */
-	protected RoleComputationResult internalComputeMERuleBasedRoles(Map<TLClass, Collection<RoleProvider>> rulesByType)
-			throws StorageException {
+	protected RoleComputationResult internalComputeMERuleBasedRoles(Map<TLClass, Collection<RoleProvider>> rulesByType,
+			boolean inTransaction) throws StorageException {
         int counterBOs = 0, counterRules = 0, counterExecs = 0, counterEntries = 0;
 
 		List<Object[]> batchInserts = new ArrayList<>();
@@ -364,10 +369,10 @@ public class ElementSecurityStorage extends SecurityStorage {
 			Collection<RoleProvider> theRules = rulesByType.get(theME);
             counterRules += theRules.size();
 
-			try (CloseableIterator<Wrapper> theObjectIterator =
-				MetaElementUtil.iterateDirectInstances(theME, Wrapper.class)) {
-                while (theObjectIterator.hasNext()) {
-					Wrapper theBusinessObject = theObjectIterator.next();
+			try (CloseableIterator<TLObject> objects =
+				AttributeOperations.allDirectInstances(theME, inTransaction, TLObject.class)) {
+				while (objects.hasNext()) {
+					TLObject theBusinessObject = objects.next();
 					theVector[1] = objectId(theBusinessObject);
 					counterBOs++;
 

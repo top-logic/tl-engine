@@ -156,7 +156,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 
     /**
 	 * Checks the given collection of BoundObjects and returns only these objects, on which the
-	 * given person has on of the given roles.
+	 * given person has one of the given roles.
 	 *
 	 * @param user
 	 *        the person to check

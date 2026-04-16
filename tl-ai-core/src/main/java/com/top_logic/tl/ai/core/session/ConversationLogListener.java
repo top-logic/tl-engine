@@ -1,0 +1,393 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.session;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.event.ApprovalOutcome;
+
+/**
+ * Converts {@link AgentEvent}s into {@link Part}s and appends them to a
+ * {@link ConversationLog}.
+ *
+ * <p>Replaces {@code TimelineAgentListener} and {@code ToolCallTracking}.</p>
+ *
+ * <h2>Turn mapping</h2>
+ * <p>One ConversationLog {@link Turn} = one user request = one agent Run.
+ * The AgentLoop's internal turns (multiple LLM iterations) all accumulate
+ * parts within the same Turn. The Turn is created by {@code ChatProcessor}
+ * before the agent starts; this listener reuses it.</p>
+ *
+ * <h2>Text streaming</h2>
+ * <p>Text deltas are buffered internally and flushed to a {@link Part.TextPart}
+ * before the first tool call or at run end. Real-time SSE streaming of deltas
+ * is handled separately by {@code ChatSSEHandler}.</p>
+ *
+ * <h2>AskUser interactions</h2>
+ * <p>Not modeled as AgentEvents. {@code AskUserTool} calls
+ * {@link #recordInteractionStarted} and {@link #resolveInteraction} directly
+ * via a thread-local reference to this listener.</p>
+ */
+public class ConversationLogListener implements AgentEventListener {
+
+	private final ConversationLog _log;
+
+	private final StringBuilder _textBuffer = new StringBuilder();
+
+	private final StringBuilder _thinkingBuffer = new StringBuilder();
+
+	/** */
+	public ConversationLogListener(ConversationLog log) {
+		_log = log;
+	}
+
+	@Override
+	public void onEvent(AgentEvent event) {
+		if (event instanceof AgentEvent.RunStarted e) {
+			handleRunStarted(e);
+		} else if (event instanceof AgentEvent.RunCompleted) {
+			handleRunCompleted();
+		} else if (event instanceof AgentEvent.TurnStarted) {
+			// AgentLoop internal turn — do NOT create a new ConversationLog Turn
+		} else if (event instanceof AgentEvent.TurnCompleted e) {
+			handleTurnCompleted(e);
+		} else if (event instanceof AgentEvent.TextDelta e) {
+			_textBuffer.append(e.text());
+		} else if (event instanceof AgentEvent.ThinkingDelta e) {
+			_thinkingBuffer.append(e.text());
+		} else if (event instanceof AgentEvent.ToolCallStarted e) {
+			handleToolCallStarted(e);
+		} else if (event instanceof AgentEvent.ToolCallCompleted e) {
+			handleToolCallCompleted(e);
+		} else if (event instanceof AgentEvent.ToolCallFailed e) {
+			handleToolCallFailed(e);
+		} else if (event instanceof AgentEvent.ToolCallDenied e) {
+			handleToolCallDenied(e);
+		} else if (event instanceof AgentEvent.ToolCallResultTruncated) {
+			// Informational — not stored as a separate part
+		} else if (event instanceof AgentEvent.ApprovalRequired e) {
+			handleApprovalRequired(e);
+		} else if (event instanceof AgentEvent.ApprovalResolved e) {
+			handleApprovalResolved(e);
+		} else if (event instanceof AgentEvent.CompactionStarted e) {
+			handleCompactionStarted(e);
+		} else if (event instanceof AgentEvent.CompactionCompleted e) {
+			handleCompactionCompleted(e);
+		} else if (event instanceof AgentEvent.ProviderError e) {
+			handleProviderError(e);
+		} else if (event instanceof AgentEvent.LockAcquired
+				|| event instanceof AgentEvent.LockFailed) {
+			// Not stored as parts
+		} else if (event instanceof AgentEvent.TransactionBegan e) {
+			handleTransactionBegan(e);
+		} else if (event instanceof AgentEvent.TransactionCommitted e) {
+			handleTransactionCommitted(e);
+		} else if (event instanceof AgentEvent.TransactionRolledBack e) {
+			handleTransactionRolledBack(e);
+		}
+	}
+
+	// ---- Run lifecycle ----
+
+	private void handleRunStarted(AgentEvent.RunStarted e) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			turn = _log.startTurn();
+		}
+		turn.setModel(e.model());
+	}
+
+	private void handleRunCompleted() {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			flushTextBuffer(turn);
+			flushThinkingBuffer(turn);
+		}
+		_log.completeTurn();
+	}
+
+	private void handleTurnCompleted(AgentEvent.TurnCompleted e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addUsage(e.turnUsage());
+		}
+	}
+
+	// ---- Tool calls ----
+
+	private void handleToolCallStarted(AgentEvent.ToolCallStarted e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			flushTextBuffer(turn);
+			flushThinkingBuffer(turn);
+			Part.ToolCallPart part = Part.ToolCallPart.started(
+				e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson());
+			turn.addAssistantPart(part);
+		}
+	}
+
+	private void handleToolCallCompleted(AgentEvent.ToolCallCompleted e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part existing = turn.findPart(e.toolCallId());
+			if (existing instanceof Part.ToolCallPart tc) {
+				turn.updatePart(e.toolCallId(),
+					tc.completed(e.result(), e.duration()));
+			}
+		}
+	}
+
+	private void handleToolCallFailed(AgentEvent.ToolCallFailed e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part existing = turn.findPart(e.toolCallId());
+			if (existing instanceof Part.ToolCallPart tc) {
+				turn.updatePart(e.toolCallId(),
+					tc.failed(e.errorMessage(), e.duration()));
+			}
+		}
+	}
+
+	private void handleToolCallDenied(AgentEvent.ToolCallDenied e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			flushTextBuffer(turn);
+			Part.ToolCallPart denied = Part.ToolCallPart.denied(
+				e.toolCallId(), e.timestamp(), e.toolName(), "", e.reason());
+			turn.addAssistantPart(denied);
+		}
+	}
+
+	// ---- Approvals ----
+
+	private void handleApprovalRequired(AgentEvent.ApprovalRequired e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part.ApprovalPart part = Part.ApprovalPart.pending(
+				e.approvalRequestId(), e.timestamp(), e.toolCallId(),
+				e.toolName(), argsMapToJson(e.args()), e.displayReason());
+			turn.addAssistantPart(part);
+		}
+	}
+
+	private void handleApprovalResolved(AgentEvent.ApprovalResolved e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part existing = turn.findPart(e.approvalRequestId());
+			if (existing instanceof Part.ApprovalPart ap) {
+				Part.ApprovalDecision decision = mapOutcome(e.outcome());
+				turn.updatePart(ap.id(),
+					ap.resolve(decision, null, Instant.now()));
+			}
+		}
+	}
+
+	// ---- Compaction ----
+
+	private void handleCompactionStarted(AgentEvent.CompactionStarted e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.CompactionPart(
+				UUID.randomUUID().toString(), e.timestamp(),
+				e.tokensBefore(), 0, e.trigger()));
+		}
+	}
+
+	private void handleCompactionCompleted(AgentEvent.CompactionCompleted e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			List<Part> parts = turn.assistantParts();
+			for (int i = parts.size() - 1; i >= 0; i--) {
+				Part p = parts.get(i);
+				if (p instanceof Part.CompactionPart cp) {
+					turn.updatePart(cp.id(), new Part.CompactionPart(
+						cp.id(), cp.timestamp(), cp.tokensBefore(),
+						e.result().tokensAfter(), cp.trigger()));
+					break;
+				}
+			}
+		}
+	}
+
+	// ---- Errors ----
+
+	private void handleProviderError(AgentEvent.ProviderError e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.ErrorPart(
+				UUID.randomUUID().toString(), e.timestamp(),
+				e.kind(), e.message()));
+		}
+	}
+
+	// ---- Transactions ----
+
+	private void handleTransactionBegan(AgentEvent.TransactionBegan e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.TransactionPart(
+				UUID.randomUUID().toString(), e.timestamp(),
+				Part.TransactionType.BEGAN, -1, null));
+		}
+	}
+
+	private void handleTransactionCommitted(AgentEvent.TransactionCommitted e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.TransactionPart(
+				UUID.randomUUID().toString(), e.timestamp(),
+				Part.TransactionType.COMMITTED, e.revisionNumber(), null));
+		}
+	}
+
+	private void handleTransactionRolledBack(AgentEvent.TransactionRolledBack e) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.TransactionPart(
+				UUID.randomUUID().toString(), e.timestamp(),
+				Part.TransactionType.ROLLED_BACK, -1, e.reason()));
+		}
+	}
+
+	// ---- AskUser interaction support ----
+
+	/**
+	 * Record the start of an askUser interaction. Returns the part ID.
+	 */
+	public String recordInteractionStarted(String interactionType, String question,
+			String header, List<String> options, boolean multiSelect) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			return null;
+		}
+		String id = "interaction-" + UUID.randomUUID().toString().substring(0, 8);
+		Part.InteractionPart part = Part.InteractionPart.pending(
+			id, Instant.now(), interactionType, question, header, options, multiSelect);
+		turn.addAssistantPart(part);
+		return id;
+	}
+
+	/**
+	 * Resolve a pending interaction with the user's response.
+	 */
+	public void resolveInteraction(String partId, String userResponse) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part existing = turn.findPart(partId);
+			if (existing instanceof Part.InteractionPart ip) {
+				turn.updatePart(partId, ip.resolve(userResponse, Instant.now()));
+			}
+		}
+	}
+
+	/**
+	 * Resolve an approval with a user comment.
+	 */
+	public void resolveApproval(String approvalRequestId,
+			Part.ApprovalDecision decision, String userComment) {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part existing = turn.findPart(approvalRequestId);
+			if (existing instanceof Part.ApprovalPart ap) {
+				turn.updatePart(ap.id(),
+					ap.resolve(decision, userComment, Instant.now()));
+			}
+		}
+	}
+
+	/** */
+	public void recordCancellation() {
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			turn.addAssistantPart(new Part.SystemPart(
+				UUID.randomUUID().toString(), Instant.now(),
+				Part.SystemEventType.CANCELLED, "User cancelled processing"));
+		}
+	}
+
+	private void flushTextBuffer(Turn turn) {
+		if (_textBuffer.length() > 0) {
+			turn.addAssistantPart(new Part.TextPart(
+				UUID.randomUUID().toString(), Instant.now(),
+				_textBuffer.toString()));
+			_textBuffer.setLength(0);
+		}
+	}
+
+	private void flushThinkingBuffer(Turn turn) {
+		if (_thinkingBuffer.length() > 0) {
+			turn.addAssistantPart(new Part.ThinkingPart(
+				UUID.randomUUID().toString(), Instant.now(),
+				_thinkingBuffer.toString()));
+			_thinkingBuffer.setLength(0);
+		}
+	}
+
+	private static Part.ApprovalDecision mapOutcome(ApprovalOutcome outcome) {
+		switch (outcome) {
+			case APPROVED:
+				return Part.ApprovalDecision.APPROVED;
+			case APPROVED_FOR_SESSION:
+				return Part.ApprovalDecision.APPROVED_FOR_SESSION;
+			case REJECTED:
+				return Part.ApprovalDecision.DENIED;
+			case TIMED_OUT:
+				return Part.ApprovalDecision.TIMED_OUT;
+			default:
+				throw new IllegalArgumentException("Unknown outcome: " + outcome);
+		}
+	}
+
+	private static String argsMapToJson(Map<String, Object> map) {
+		if (map == null || map.isEmpty()) {
+			return "{}";
+		}
+		StringBuilder sb = new StringBuilder("{");
+		boolean first = true;
+		for (var entry : map.entrySet()) {
+			if (!first) sb.append(",");
+			sb.append("\"");
+			appendEscaped(sb, entry.getKey());
+			sb.append("\":\"");
+			appendEscaped(sb, String.valueOf(entry.getValue()));
+			sb.append("\"");
+			first = false;
+		}
+		sb.append("}");
+		return sb.toString();
+	}
+
+	private static void appendEscaped(StringBuilder sb, String value) {
+		for (int i = 0; i < value.length(); i++) {
+			char c = value.charAt(i);
+			switch (c) {
+				case '"':
+					sb.append("\\\"");
+					break;
+				case '\\':
+					sb.append("\\\\");
+					break;
+				case '\n':
+					sb.append("\\n");
+					break;
+				case '\r':
+					sb.append("\\r");
+					break;
+				case '\t':
+					sb.append("\\t");
+					break;
+				default:
+					sb.append(c);
+					break;
+			}
+		}
+	}
+}

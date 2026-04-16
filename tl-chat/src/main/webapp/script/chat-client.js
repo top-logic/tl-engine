@@ -1477,6 +1477,17 @@
 			if (Render._messagesEl) {
 				Render._messagesEl.innerHTML = '';
 			}
+
+			// V2 format: turn-based
+			const turns = data.turns || [];
+			if (turns.length > 0) {
+				Welcome.hide();
+				this._renderTurns(turns);
+				Render._scrollToBottom();
+				return;
+			}
+
+			// V1 fallback: entry-based
 			const entries = data.entries || [];
 			if (entries.length > 0) {
 				Welcome.hide();
@@ -1517,6 +1528,337 @@
 				}
 			}
 			Render._scrollToBottom();
+		},
+
+		_renderTurns(turns) {
+			for (const turn of turns) {
+				// Render user message(s)
+				const userParts = turn.userParts || [];
+				for (const part of userParts) {
+					if (part.type === 'text' && part.textData) {
+						Render.appendUserMessage(part.textData.text || '');
+					}
+				}
+
+				// Categorize assistant parts
+				const assistantParts = turn.assistantParts || [];
+				const toolCalls = [];
+				const approvals = [];
+				const interactions = [];
+				const delegations = [];
+				let textContent = '';
+				let thinkingText = '';
+				let wasCancelled = false;
+
+				for (const part of assistantParts) {
+					switch (part.type) {
+						case 'tool_call': toolCalls.push(part.toolCallData); break;
+						case 'approval': approvals.push(part.approvalData); break;
+						case 'interaction': interactions.push(part.interactionData); break;
+						case 'delegation': delegations.push(part.delegationData); break;
+						case 'text': textContent += (part.textData ? part.textData.text : ''); break;
+						case 'thinking': thinkingText += (part.thinkingData ? part.thinkingData.text : ''); break;
+						case 'system':
+							if (part.systemData && part.systemData.eventType === 'CANCELLED') {
+								wasCancelled = true;
+							}
+							break;
+						case 'error':
+							if (part.errorData) {
+								textContent += 'Error: ' + (part.errorData.errorMessage || part.errorData.kind || 'Unknown error');
+							}
+							break;
+					}
+				}
+
+				const hasTrace = toolCalls.length > 0 || approvals.length > 0 ||
+					interactions.length > 0 || delegations.length > 0 || thinkingText;
+
+				if (hasTrace) {
+					this._renderTurnTrace(toolCalls, approvals, interactions, delegations, thinkingText, turn.usage, textContent);
+				} else if (textContent) {
+					this._renderPersistedAgentMessage({ content: textContent });
+				}
+
+				if (wasCancelled) {
+					const cancelDiv = document.createElement('div');
+					cancelDiv.className = 'chat-message chat-message-agent';
+					cancelDiv.innerHTML = '<div class="chat-bubble chat-bubble-agent">' +
+						'<div class="chat-agent-text"><em>Processing was cancelled</em></div></div>';
+					if (Render._messagesEl) {
+						Render._messagesEl.appendChild(cancelDiv);
+					}
+				}
+			}
+		},
+
+		_renderTurnTrace(toolCalls, approvals, interactions, delegations, thinkingText, usage, textContent) {
+			const div = document.createElement('div');
+			div.className = 'chat-message chat-message-agent';
+			const content = document.createElement('div');
+			content.className = 'chat-bubble chat-bubble-agent';
+
+			// Build trace wrapper
+			const traceWrapper = document.createElement('div');
+			traceWrapper.className = 'tl-chat-trace-wrapper';
+			const traceHeader = document.createElement('div');
+			traceHeader.className = 'tl-chat-trace-header';
+
+			const totalEvents = toolCalls.length + delegations.length;
+			const traceTokensEl = document.createElement('span');
+			traceTokensEl.className = 'tl-chat-trace-tokens';
+			if (usage) {
+				const total = (usage.inputTokens || 0) + (usage.outputTokens || 0) + (usage.thinkingTokens || 0);
+				if (total > 0) {
+					traceTokensEl.textContent = Utils.formatTokens(total) + ' tokens';
+					traceTokensEl.addEventListener('click', (e) => {
+						e.stopPropagation();
+						Tokens._showPopover(e, usage);
+					});
+				}
+			}
+
+			const summary = totalEvents > 0
+				? totalEvents + ' tool' + (totalEvents > 1 ? 's' : '') + ' used'
+				: 'Thinking';
+			traceHeader.innerHTML =
+				'<span class="tl-chat-trace-chevron">&#9654;</span>' +
+				'<span class="tl-chat-trace-summary">' + summary + '</span>';
+			traceHeader.appendChild(traceTokensEl);
+
+			const traceBody = document.createElement('div');
+			traceBody.className = 'tl-chat-trace-body';
+			traceBody.style.display = 'none';
+
+			let traceExpanded = false;
+			traceHeader.addEventListener('click', () => {
+				traceExpanded = !traceExpanded;
+				traceBody.style.display = traceExpanded ? '' : 'none';
+				traceHeader.querySelector('.tl-chat-trace-chevron').classList.toggle('expanded', traceExpanded);
+			});
+
+			// Render thinking
+			if (thinkingText) {
+				const thinkingEl = document.createElement('div');
+				thinkingEl.className = 'tl-chat-thinking';
+				const thinkingHeader = document.createElement('div');
+				thinkingHeader.className = 'tl-chat-thinking-header';
+				const preview = thinkingText.substring(0, 80) + (thinkingText.length > 80 ? '...' : '');
+				thinkingHeader.innerHTML =
+					'<span class="tl-chat-thinking-chevron">&#9654;</span>' +
+					'<span>Thinking</span>' +
+					'<span class="tl-chat-thinking-preview">' + Utils.escapeHtml(preview) + '</span>';
+				const thinkingBody = document.createElement('div');
+				thinkingBody.className = 'tl-chat-thinking-body';
+				thinkingBody.style.display = 'none';
+				thinkingBody.textContent = thinkingText;
+				thinkingHeader.addEventListener('click', () => {
+					const expanded = thinkingEl.dataset.expanded === 'true';
+					thinkingEl.dataset.expanded = '' + !expanded;
+					thinkingHeader.querySelector('.tl-chat-thinking-chevron').classList.toggle('expanded', !expanded);
+					thinkingHeader.querySelector('.tl-chat-thinking-preview').style.display = !expanded ? 'none' : '';
+					thinkingBody.style.display = !expanded ? '' : 'none';
+				});
+				thinkingEl.appendChild(thinkingHeader);
+				thinkingEl.appendChild(thinkingBody);
+				traceBody.appendChild(thinkingEl);
+			}
+
+			const toolsEl = document.createElement('div');
+			toolsEl.className = 'tl-chat-tools-container';
+
+			// Render tool calls
+			for (const tc of toolCalls) {
+				this._renderToolCallPart(toolsEl, tc);
+			}
+
+			// Render delegations
+			for (const del of delegations) {
+				this._renderDelegationPart(toolsEl, del);
+			}
+
+			// Render approvals
+			for (const ap of approvals) {
+				this._renderApprovalPart(toolsEl, ap);
+			}
+
+			// Render interactions
+			for (const inter of interactions) {
+				this._renderInteractionPart(toolsEl, inter);
+			}
+
+			traceBody.appendChild(toolsEl);
+			traceWrapper.appendChild(traceHeader);
+			traceWrapper.appendChild(traceBody);
+			content.appendChild(traceWrapper);
+
+			// Agent response text
+			if (textContent) {
+				const textEl = document.createElement('div');
+				textEl.className = 'chat-agent-text';
+				textEl.innerHTML = Markdown.basicFormat(textContent);
+				content.appendChild(textEl);
+			}
+
+			div.appendChild(content);
+			if (Render._messagesEl) {
+				Render._messagesEl.appendChild(div);
+			}
+		},
+
+		_renderToolCallPart(container, tc) {
+			const el = document.createElement('div');
+			el.className = 'tl-chat-tool';
+
+			const isDenied = tc.status === 'DENIED';
+			const isFailed = tc.status === 'FAILED';
+			const statusClass = (isDenied || isFailed) ? 'error' : 'success';
+
+			const header = document.createElement('div');
+			header.className = 'tl-chat-tool-header';
+			header.innerHTML =
+				'<span class="tl-chat-status-dot ' + statusClass + '"></span>' +
+				'<span class="tl-chat-tool-name">' + Utils.escapeHtml(tc.toolName || '') + '</span>' +
+				(isDenied ? '<span class="tl-chat-tool-denied">denied</span>' : '') +
+				'<span class="tl-chat-tool-tokens">~' + Utils.formatTokens(Tools._estimateTokens(tc.argsJson) + Tools._estimateTokens(tc.result)) + ' tokens</span>' +
+				'<span class="tl-chat-tool-duration">' + (tc.durationMs ? Utils.formatDuration(tc.durationMs) : '') + '</span>' +
+				'<span class="tl-chat-tool-chevron">&#9654;</span>';
+
+			const body = document.createElement('div');
+			body.className = 'tl-chat-tool-body';
+			body.style.display = 'none';
+
+			if (tc.argsJson) {
+				body.innerHTML =
+					'<div class="tl-chat-tool-label">Arguments</div>' +
+					'<pre>' + Utils.escapeHtml(Tools._prettyJson(tc.argsJson)) + '</pre>';
+			}
+			if (isDenied && tc.denyReason) {
+				const deniedDiv = document.createElement('div');
+				deniedDiv.innerHTML =
+					'<div class="tl-chat-tool-label">Denied</div>' +
+					'<pre>' + Utils.escapeHtml(tc.denyReason) + '</pre>';
+				body.appendChild(deniedDiv);
+			} else if (isFailed && tc.errorMessage) {
+				const errorDiv = document.createElement('div');
+				errorDiv.innerHTML =
+					'<div class="tl-chat-tool-label">Error</div>' +
+					'<pre>' + Utils.escapeHtml(tc.errorMessage) + '</pre>';
+				body.appendChild(errorDiv);
+			} else if (tc.result) {
+				const resultDiv = document.createElement('div');
+				resultDiv.innerHTML =
+					'<div class="tl-chat-tool-label">Result</div>' +
+					'<pre>' + Utils.escapeHtml(Tools._truncate(tc.result, 2000)) + '</pre>';
+				body.appendChild(resultDiv);
+			}
+
+			let expanded = false;
+			header.addEventListener('click', () => {
+				expanded = !expanded;
+				body.style.display = expanded ? '' : 'none';
+				header.querySelector('.tl-chat-tool-chevron').classList.toggle('expanded', expanded);
+			});
+
+			el.appendChild(header);
+			el.appendChild(body);
+			container.appendChild(el);
+		},
+
+		_renderDelegationPart(container, del) {
+			const el = document.createElement('div');
+			el.className = 'tl-chat-delegation';
+			const header = document.createElement('div');
+			header.className = 'tl-chat-delegation-header';
+			header.innerHTML =
+				'<span class="tl-chat-status-dot success"></span>' +
+				'<span>Agent: ' + Utils.escapeHtml(del.toAgent || '') + '</span>' +
+				(del.durationMs ? '<span class="tl-chat-tool-duration">' + Utils.formatDuration(del.durationMs) + '</span>' : '');
+			el.appendChild(header);
+			container.appendChild(el);
+		},
+
+		_renderApprovalPart(container, ap) {
+			const el = document.createElement('div');
+			el.className = 'tl-chat-tool';
+
+			const decision = ap.decision || '';
+			let icon, label;
+			switch (decision) {
+				case 'APPROVED': icon = '\u2713'; label = 'Approved'; break;
+				case 'APPROVED_FOR_SESSION': icon = '\u2713\u2713'; label = 'Approved for session'; break;
+				case 'DENIED': icon = '\u2717'; label = 'Denied'; break;
+				case 'TIMED_OUT': icon = '\u23F1'; label = 'Timed out'; break;
+				default: icon = '?'; label = 'Pending'; break;
+			}
+			const statusClass = decision === 'DENIED' ? 'error' : (decision === 'TIMED_OUT' ? 'warning' : 'success');
+
+			const header = document.createElement('div');
+			header.className = 'tl-chat-tool-header';
+			header.innerHTML =
+				'<span class="tl-chat-status-dot ' + statusClass + '"></span>' +
+				'<span class="tl-chat-tool-name">' + Utils.escapeHtml(ap.toolName || 'Approval') + '</span>' +
+				'<span class="tl-chat-approval-decision">' + icon + ' ' + label + '</span>';
+
+			if (ap.userComment || ap.displayReason) {
+				const body = document.createElement('div');
+				body.className = 'tl-chat-tool-body';
+				body.style.display = 'none';
+				if (ap.displayReason) {
+					body.innerHTML += '<div class="tl-chat-tool-label">Reason</div><pre>' + Utils.escapeHtml(ap.displayReason) + '</pre>';
+				}
+				if (ap.userComment) {
+					body.innerHTML += '<div class="tl-chat-tool-label">Comment</div><pre>' + Utils.escapeHtml(ap.userComment) + '</pre>';
+				}
+				let expanded = false;
+				header.addEventListener('click', () => {
+					expanded = !expanded;
+					body.style.display = expanded ? '' : 'none';
+				});
+				header.innerHTML += '<span class="tl-chat-tool-chevron">&#9654;</span>';
+				el.appendChild(header);
+				el.appendChild(body);
+			} else {
+				el.appendChild(header);
+			}
+
+			container.appendChild(el);
+		},
+
+		_renderInteractionPart(container, interaction) {
+			const el = document.createElement('div');
+			el.className = 'tl-chat-tool';
+
+			const header = document.createElement('div');
+			header.className = 'tl-chat-tool-header';
+			header.innerHTML =
+				'<span class="tl-chat-status-dot ' + (interaction.userResponse ? 'success' : 'warning') + '"></span>' +
+				'<span class="tl-chat-tool-name">User Input</span>' +
+				'<span class="tl-chat-interaction-type">' + Utils.escapeHtml(interaction.interactionType || '') + '</span>';
+
+			const body = document.createElement('div');
+			body.className = 'tl-chat-tool-body';
+			body.style.display = 'none';
+
+			if (interaction.question) {
+				body.innerHTML += '<div class="tl-chat-tool-label">Question</div><pre>' + Utils.escapeHtml(interaction.question) + '</pre>';
+			}
+			if (interaction.userResponse) {
+				body.innerHTML += '<div class="tl-chat-tool-label">Response</div><pre>' + Utils.escapeHtml(interaction.userResponse) + '</pre>';
+			} else {
+				body.innerHTML += '<div class="tl-chat-tool-label">Response</div><pre>No response</pre>';
+			}
+
+			let expanded = false;
+			header.addEventListener('click', () => {
+				expanded = !expanded;
+				body.style.display = expanded ? '' : 'none';
+			});
+			header.innerHTML += '<span class="tl-chat-tool-chevron">&#9654;</span>';
+
+			el.appendChild(header);
+			el.appendChild(body);
+			container.appendChild(el);
 		},
 
 		_renderPersistedAgentMessage(msg) {

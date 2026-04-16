@@ -30,6 +30,8 @@ import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.PersistedChat;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
+import com.top_logic.ai.chat.api.messages.PersistedConversationV2;
+import com.top_logic.ai.chat.api.messages.PersistedTurn;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.background.ChatContextAdapter;
@@ -38,6 +40,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
@@ -460,8 +463,12 @@ public class ChatServlet extends HttpServlet {
 
 			// Return serialized messages from the now-active Chat
 			if (tracker != null) {
-				String messagesJson2 = DtoMapper.serializeMessages(tracker.getChat().getMessages());
-				response.setMessagesJson(messagesJson2);
+				ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
+				if (convLog.turnCount() > 0) {
+					response.setMessagesJson(ConversationLogSerializer.toJson(convLog));
+				} else {
+					response.setMessagesJson(DtoMapper.serializeMessages(tracker.getChat().getMessages()));
+				}
 			} else {
 				response.setMessagesJson(ChatHistoryService.getMessagesJson(session));
 			}
@@ -471,11 +478,22 @@ public class ChatServlet extends HttpServlet {
 			// and totalUsage that only exist on the DTO, not on the domain objects.
 			String messagesJson = ChatHistoryService.getMessagesJson(session);
 			if (messagesJson != null && !messagesJson.isEmpty()) {
-				PersistedChat persistedChat = PersistedChat.readPersistedChat(
-					new de.haumacher.msgbuf.json.JsonReader(
-						new de.haumacher.msgbuf.io.StringR(messagesJson)));
-				for (PersistedChatEntry entry : persistedChat.getEntries()) {
-					response.addEntry(entry);
+				if (messagesJson.trim().startsWith("{")) {
+					// V2 format — parse as PersistedConversationV2, add turns
+					PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
+						new de.haumacher.msgbuf.json.JsonReader(
+							new de.haumacher.msgbuf.io.StringR(messagesJson)));
+					for (PersistedTurn turn : conv.getTurns()) {
+						response.addTurn(turn);
+					}
+				} else {
+					// V1 format — parse as PersistedChat, add entries
+					PersistedChat persistedChat = PersistedChat.readPersistedChat(
+						new de.haumacher.msgbuf.json.JsonReader(
+							new de.haumacher.msgbuf.io.StringR(messagesJson)));
+					for (PersistedChatEntry entry : persistedChat.getEntries()) {
+						response.addEntry(entry);
+					}
 				}
 			}
 

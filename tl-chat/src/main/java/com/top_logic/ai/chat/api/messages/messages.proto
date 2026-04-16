@@ -361,9 +361,14 @@ message ChatSessionDetailResponse {
 	string messagesJson;
 
 	/**
-	 * Structured entries (messages + task snapshots). Preferred over messagesJson.
+	 * Structured entries (messages + task snapshots). V1 format.
 	 */
 	repeated PersistedChatEntry entries;
+
+	/**
+	 * Turn-based entries (V2 format). When present, takes precedence over entries.
+	 */
+	repeated PersistedTurn turns;
 }
 
 /**

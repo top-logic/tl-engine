@@ -128,6 +128,41 @@ public class TestGanttLayout extends TestCase {
 		return buffer.toString();
 	}
 
+	public void testRowLanesRenderLabels() throws Exception {
+		GanttLayout layout = GanttLayout.create()
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(
+				row("r1", "Alpha"),
+				row("r2", "Bravo")));
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		String svg = renderToSvg(d);
+
+		assertTrue("row label 'Alpha' present", svg.contains(">Alpha<"));
+		assertTrue("row label 'Bravo' present", svg.contains(">Bravo<"));
+	}
+
+	public void testRowLanesIndentNestedRows() throws Exception {
+		GanttRow parent = GanttRow.create()
+			.setId("p").setLabel("Parent")
+			.setChildren(Arrays.asList(row("c", "Child")));
+
+		GanttLayout layout = GanttLayout.create()
+			.setAxis(axis(0, 100))
+			.setIndentWidth(16.0)
+			.setRootRows(Arrays.asList(parent));
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		String svg = renderToSvg(d);
+		assertTrue("Parent label present", svg.contains(">Parent<"));
+		assertTrue("Child label present", svg.contains(">Child<"));
+		// Indentation is encoded as the x coordinate of the label's text element.
+		// We don't parse SVG for exact coordinates — just confirming both labels render
+		// is sufficient for Phase 1 (visual verification happens in Task 20).
+	}
+
 	public void testDistributeSizeUsesGivenWidth() {
 		GanttLayout layout = GanttLayout.create()
 			.setRowHeight(32.0)

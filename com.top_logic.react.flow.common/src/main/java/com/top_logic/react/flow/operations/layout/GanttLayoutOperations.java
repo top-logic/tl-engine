@@ -171,7 +171,65 @@ public interface GanttLayoutOperations extends BoxOperations {
 	}
 
 	private static void drawRowLanes(GanttLayout self, SvgWriter out) {
-		// Task 12.
+		double x0 = self.getX();
+		double y0 = self.getY() + self.getAxisHeight();
+		double totalWidth = self.getWidth();
+		double rowHeight = self.getRowHeight();
+		double labelWidth = self.getRowLabelWidth();
+		double indentWidth = self.getIndentWidth();
+
+		out.beginGroup();
+		out.writeCssClass("tl-gantt-lanes");
+
+		int[] rowIndex = new int[] { 0 };
+		for (GanttRow root : self.getRootRows()) {
+			drawRowLane(root, 0, x0, y0, totalWidth, rowHeight, labelWidth, indentWidth, out, rowIndex);
+		}
+
+		out.endGroup();
+	}
+
+	private static void drawRowLane(GanttRow row, int depth,
+			double x0, double lanesTop, double totalWidth, double rowHeight,
+			double labelWidth, double indentWidth, SvgWriter out, int[] rowIndex) {
+		int idx = rowIndex[0]++;
+		double rowY = lanesTop + idx * rowHeight;
+
+		// Alternating background.
+		String fillColor = (idx % 2 == 0) ? "#ffffff" : "#f5f5f5";
+		out.beginRect(x0, rowY, totalWidth, rowHeight);
+		out.setFill(fillColor);
+		out.setStroke("#e0e0e0");
+		out.setStrokeWidth(1.0);
+		out.endRect();
+
+		// Row label, indented by depth.
+		double labelX = x0 + 4.0 + depth * indentWidth;
+		double labelY = rowY + rowHeight / 2.0 + 4.0; // vertically centred (approx.)
+		String label = row.getLabel();
+		if (label != null && !label.isEmpty()) {
+			out.beginText(labelX, labelY, label);
+			out.setFill("#303030");
+			out.setStroke("none");
+			out.endText();
+		}
+
+		// Vertical separator between label column and chart area.
+		double sepX = x0 + labelWidth;
+		out.beginPath();
+		out.setStroke("#e0e0e0");
+		out.setStrokeWidth(1.0);
+		out.setFill("none");
+		out.beginData();
+		out.moveToAbs(sepX, rowY);
+		out.lineToAbs(sepX, rowY + rowHeight);
+		out.endData();
+		out.endPath();
+
+		// Recurse into children.
+		for (GanttRow child : row.getChildren()) {
+			drawRowLane(child, depth + 1, x0, lanesTop, totalWidth, rowHeight, labelWidth, indentWidth, out, rowIndex);
+		}
 	}
 
 	private static void drawDecorations(GanttLayout self, SvgWriter out) {

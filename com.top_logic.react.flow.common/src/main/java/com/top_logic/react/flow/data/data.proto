@@ -1024,3 +1024,24 @@ message GanttRangeDecoration extends GanttDecoration {
 	double to;
 	bool canResize;
 }
+
+/** Time axis configuration for a {@link GanttLayout}. */
+message GanttAxis {
+	/** Name of the server-side axis provider that computes ticks and snap data. */
+	string providerId;
+
+	/** Minimum representable position (zoom 100%). */
+	double rangeMin;
+
+	/** Maximum representable position (zoom 100%). */
+	double rangeMax;
+
+	/** Current zoom (pixels per position unit). Written by the client on zoom changes. */
+	double currentZoom = 1.0;
+
+	/** Granularity for client-side drag snap, in position units. */
+	double snapGranularity = 1.0;
+
+	/** Ticks computed for the current zoom. */
+	repeated GanttTick currentTicks;
+}

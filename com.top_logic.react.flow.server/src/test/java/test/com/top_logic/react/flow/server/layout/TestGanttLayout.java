@@ -19,6 +19,8 @@ import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
 import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttLayout;
+import com.top_logic.react.flow.data.GanttLineDecoration;
+import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.GanttTick;
@@ -191,6 +193,43 @@ public class TestGanttLayout extends TestCase {
 
 		String svg = renderToSvg(d);
 		assertTrue("edge group present", svg.contains("tl-gantt-edges"));
+	}
+
+	public void testRangeDecorationRendersWithLabel() throws Exception {
+		GanttRangeDecoration freeze = GanttRangeDecoration.create()
+			.setId("freeze")
+			.setFrom(60.0).setTo(80.0)
+			.setColor("rgba(255,80,80,0.3)")
+			.setLabel("Freeze");
+
+		GanttLayout layout = GanttLayout.create()
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(row("r1", "Row 1")))
+			.setDecorations(Arrays.asList(freeze));
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		String svg = renderToSvg(d);
+		assertTrue("decoration group", svg.contains("tl-gantt-decorations"));
+		assertTrue("decoration label", svg.contains(">Freeze<"));
+	}
+
+	public void testLineDecorationRendersAtPosition() throws Exception {
+		GanttLineDecoration today = GanttLineDecoration.create()
+			.setId("today")
+			.setAt(50.0)
+			.setColor("#3070d0")
+			.setLabel("Today");
+
+		GanttLayout layout = GanttLayout.create()
+			.setAxis(axis(0, 100))
+			.setRootRows(Arrays.asList(row("r1", "Row 1")))
+			.setDecorations(Arrays.asList(today));
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		String svg = renderToSvg(d);
+		assertTrue("line decoration label", svg.contains(">Today<"));
 	}
 
 	public void testDistributeSizeUsesGivenWidth() {

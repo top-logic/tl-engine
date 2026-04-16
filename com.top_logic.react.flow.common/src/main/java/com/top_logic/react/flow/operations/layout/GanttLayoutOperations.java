@@ -6,17 +6,21 @@
 package com.top_logic.react.flow.operations.layout;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.GanttAxis;
+import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
 import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttItem;
 import com.top_logic.react.flow.data.GanttLayout;
+import com.top_logic.react.flow.data.GanttLineDecoration;
 import com.top_logic.react.flow.data.GanttMilestone;
+import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.GanttTick;
@@ -236,7 +240,111 @@ public interface GanttLayoutOperations extends BoxOperations {
 	}
 
 	private static void drawDecorations(GanttLayout self, SvgWriter out) {
-		// Task 14.
+		List<GanttDecoration> decorations = self.getDecorations();
+		if (decorations == null || decorations.isEmpty()) {
+			return;
+		}
+
+		// Build depth-first row index map.
+		LinkedHashMap<String, Integer> rowIndex = new LinkedHashMap<>();
+		int[] counter = new int[] { 0 };
+		for (GanttRow root : self.getRootRows()) {
+			indexRows(root, rowIndex, counter);
+		}
+		int totalRows = counter[0];
+
+		GanttAxis axis = self.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double rangeMin = axis.getRangeMin();
+		double rowLabelWidth = self.getRowLabelWidth();
+		double rowHeight = self.getRowHeight();
+		double axisHeight = self.getAxisHeight();
+		double chartY0 = self.getY() + axisHeight;
+		double chartX0 = self.getX() + rowLabelWidth;
+
+		out.beginGroup();
+		out.writeCssClass("tl-gantt-decorations");
+
+		for (GanttDecoration decoration : decorations) {
+			// Compute vertical extent.
+			List<String> relevantFor = decoration.getRelevantFor();
+			double y0;
+			double y1;
+			if (relevantFor == null || relevantFor.isEmpty()) {
+				y0 = chartY0;
+				y1 = chartY0 + totalRows * rowHeight;
+			} else {
+				int minIdx = Integer.MAX_VALUE;
+				int maxIdx = Integer.MIN_VALUE;
+				for (String rowId : relevantFor) {
+					Integer idx = rowIndex.get(rowId);
+					if (idx != null) {
+						if (idx < minIdx) {
+							minIdx = idx;
+						}
+						if (idx > maxIdx) {
+							maxIdx = idx;
+						}
+					}
+				}
+				if (minIdx == Integer.MAX_VALUE) {
+					// No matching rows — fall back to full chart.
+					y0 = chartY0;
+					y1 = chartY0 + totalRows * rowHeight;
+				} else {
+					y0 = chartY0 + minIdx * rowHeight;
+					y1 = chartY0 + (maxIdx + 1) * rowHeight;
+				}
+			}
+
+			if (decoration instanceof GanttLineDecoration line) {
+				double x = chartX0 + (line.getAt() - rangeMin) * zoom;
+				String color = line.getColor();
+				if (color == null || color.isEmpty()) {
+					color = "#606060";
+				}
+
+				out.beginPath();
+				out.setStroke(color);
+				out.setStrokeWidth(1.5);
+				out.setFill("none");
+				out.beginData();
+				out.moveToAbs(x, y0);
+				out.lineToAbs(x, y1);
+				out.endData();
+				out.endPath();
+
+				String label = line.getLabel();
+				if (label != null && !label.isEmpty()) {
+					out.beginText(x + 2, y0 + 10, label);
+					out.setFill(color);
+					out.setStroke("none");
+					out.endText();
+				}
+			} else if (decoration instanceof GanttRangeDecoration range) {
+				double xFrom = chartX0 + (range.getFrom() - rangeMin) * zoom;
+				double xTo = chartX0 + (range.getTo() - rangeMin) * zoom;
+				String color = range.getColor();
+				if (color == null || color.isEmpty()) {
+					color = "rgba(100,100,100,0.2)";
+				}
+
+				out.beginRect(xFrom, y0, xTo - xFrom, y1 - y0);
+				out.setFill(color);
+				out.setStroke("none");
+				out.endRect();
+
+				String label = range.getLabel();
+				if (label != null && !label.isEmpty()) {
+					out.beginText(xFrom + 2, y0 + 10, label);
+					out.setFill("#303030");
+					out.setStroke("none");
+					out.endText();
+				}
+			}
+		}
+
+		out.endGroup();
 	}
 
 	private static void drawEdges(GanttLayout self, SvgWriter out) {

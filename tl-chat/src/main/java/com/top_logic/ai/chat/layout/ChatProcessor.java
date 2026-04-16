@@ -17,14 +17,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.ConversationLogSerializer;
-import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -74,29 +72,6 @@ import com.top_logic.tl.ai.core.session.Turn;
  * </p>
  */
 public class ChatProcessor {
-
-	/** Funny placeholder descriptions for in-progress chat tasks. */
-	public static final String[] CHAT_TASK_PLACEHOLDERS = {
-		"Flabbergasting...",
-		"Contemplating...",
-		"Warming up neurons...",
-		"Consulting the oracle...",
-		"Assembling thoughts...",
-		"Polishing the answer...",
-		"Thinking really hard...",
-		"Consulting ancient scrolls...",
-		"Loading infinite wisdom...",
-		"Brewing ideas...",
-		"Reticulating splines...",
-		"Herding cats...",
-		"Convincing the AI...",
-		"Spinning up...",
-	};
-
-	/** */
-	static String randomChatTaskPlaceholder() {
-		return CHAT_TASK_PLACEHOLDERS[ThreadLocalRandom.current().nextInt(CHAT_TASK_PLACEHOLDERS.length)];
-	}
 
 	/** Background thread pool for AI operations. */
 	private static final ExecutorService BACKGROUND_EXECUTOR =
@@ -418,27 +393,6 @@ public class ChatProcessor {
 			tracker.getSessionManager().persistActiveSession();
 		} catch (Exception ex) {
 			Logger.error("Failed to persist chat messages: " + ex.getMessage(), ex, ChatProcessor.class);
-		}
-	}
-
-	/**
-	 * Persists the given chat's messages to a specific session by ID.
-	 * Used by the background task to persist to the correct session even if the user has
-	 * switched sessions.
-	 */
-	static void persistMessagesForSession(String sessionId, Chat chat) {
-		try {
-			ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
-				TLObject session = ChatHistoryService.findSessionById(sessionId);
-				if (session != null) {
-					String json = DtoMapper.serializeMessages(chat.getMessages());
-					ChatHistoryService.saveMessagesAndTouch(session, json);
-				}
-				return null;
-			});
-		} catch (Exception ex) {
-			Logger.error("Failed to persist chat messages for session " + sessionId + ": " + ex.getMessage(),
-				ex, ChatProcessor.class);
 		}
 	}
 
@@ -778,15 +732,6 @@ public class ChatProcessor {
 			}
 		}
 
-		/** Cancels the background task. */
-		public void cancel() {
-			synchronized (_lock) {
-				if (_backgroundTask != null) {
-					_backgroundTask.cancel(true);
-				}
-			}
-		}
-
 		/** The error if processing failed; null otherwise. */
 		public Throwable getError() {
 			return _error;
@@ -815,11 +760,6 @@ public class ChatProcessor {
 		 */
 		public void setTaskStore(TaskStore store) {
 			_taskStore = store;
-		}
-
-		/** The task store; may be {@code null}. */
-		public TaskStore getTaskStore() {
-			return _taskStore;
 		}
 
 		/** The conversation log for structured event recording; may be null. */
@@ -956,11 +896,6 @@ public class ChatProcessor {
 		/** Creates a busy send result (AI is already processing). */
 		public static SendResult busy() {
 			return new SendResult(null, true);
-		}
-
-		/** Creates an error send result (send failed). */
-		public static SendResult error() {
-			return new SendResult(null, false);
 		}
 
 		/** The task ID if successful; null otherwise. */

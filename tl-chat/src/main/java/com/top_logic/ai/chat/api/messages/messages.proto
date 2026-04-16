@@ -257,31 +257,6 @@ message ConnectedEvent {
 }
 
 /**
- * SSE task status event payload.
- */
-message TaskStatusEvent {
-	/**
-	 * Task identifier.
-	 */
-	string taskId;
-
-	/**
-	 * Task status string (e.g. "in_progress", "completed", "error").
-	 */
-	string status;
-
-	/**
-	 * Human-readable task description.
-	 */
-	string description;
-
-	/**
-	 * Error message if status is "error"; null otherwise.
-	 */
-	string errorMessage;
-}
-
-/**
  * SSE heartbeat event payload.
  */
 message HeartbeatEvent {
@@ -409,36 +384,6 @@ message PersistedChat {
 	 * All entries in display order.
 	 */
 	repeated PersistedChatEntry entries;
-}
-
-/**
- * SSE event payload for agent task create/update events.
- */
-message AgentTaskEvent {
-	/**
-	 * Task ID.
-	 */
-	string taskId;
-
-	/**
-	 * Task subject/title.
-	 */
-	string subject;
-
-	/**
-	 * Present continuous form for UI spinner display.
-	 */
-	string activeForm;
-
-	/**
-	 * Current status: "pending", "in_progress", "completed", "deleted".
-	 */
-	string status;
-
-	/**
-	 * Assigned agent name, or empty.
-	 */
-	string owner;
 }
 
 /**

@@ -187,8 +187,8 @@ public class ChatSessionManager {
 				if (session != null) {
 					String json = ChatHistoryService.getMessagesJson(session);
 					if (json != null && !json.isEmpty()) {
-						// Try V2 format first (ConversationLog), fall back to V1 (ChatEntry)
-						if (json.contains("\"turns\"")) {
+						// V2 format is a JSON object (starts with '{'), V1 is a JSON array ('[')
+						if (json.trim().startsWith("{")) {
 							convLog = ConversationLogSerializer.fromJson(json);
 							ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
 						} else {

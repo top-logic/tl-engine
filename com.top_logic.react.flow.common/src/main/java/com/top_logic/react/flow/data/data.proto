@@ -993,3 +993,34 @@ message GanttSpan extends GanttItem {
 message GanttMilestone extends GanttItem {
 	double at;
 }
+
+/** Abstract base for Gantt chart decorations (lines, ranges). */
+abstract message GanttDecoration {
+	string id;
+
+	/** CSS-style color. */
+	string color;
+
+	/** Label shown near the decoration. */
+	string label;
+
+	bool canMove;
+
+	/**
+	 * Optional restriction: which rows this decoration applies to.
+	 * Empty list means: all rows.
+	 */
+	repeated string relevantFor;
+}
+
+/** Vertical line at a single position on the time axis. */
+message GanttLineDecoration extends GanttDecoration {
+	double at;
+}
+
+/** Coloured range between two positions. */
+message GanttRangeDecoration extends GanttDecoration {
+	double from;
+	double to;
+	bool canResize;
+}

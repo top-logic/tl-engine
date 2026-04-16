@@ -23,6 +23,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatSSEHandler;
+import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
@@ -38,10 +39,8 @@ import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.scripting.Converters;
-import com.top_logic.ai.service.tools.TimelineAgentListener;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.ai.service.tools.ToolCallTracker;
-import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.ai.service.tools.task.TaskStore;
 import com.top_logic.ai.service.tools.task.TaskStoreBinding;
@@ -62,6 +61,11 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.Turn;
 
 /**
  * Background processing logic for the chat component.
@@ -131,9 +135,14 @@ public class ChatProcessor {
 			return;
 		}
 
-		ToolCallTracker tracker = new ToolCallTracker();
-		ToolCallTracking.setTracker(tracker);
-		state.setToolCallTracker(tracker);
+		ConversationLog convLog = state.getConversationLog();
+		if (convLog == null) {
+			convLog = new ConversationLog();
+			state.setConversationLog(convLog);
+		}
+		ConversationLogListener logListener = new ConversationLogListener(convLog);
+		ConversationLogListenerBinding.setListener(logListener);
+		state.setLogListener(logListener);
 
 		TaskStore taskStore = new TaskStore();
 		TaskStoreBinding.setStore(taskStore);
@@ -218,7 +227,6 @@ public class ChatProcessor {
 
 			// Run the entry point agent via AgentLoop
 			String entryPointAgent = agentRegistry.getEntryPointAgentName();
-			TimelineAgentListener timelineListener = new TimelineAgentListener(tracker);
 
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection
@@ -232,12 +240,14 @@ public class ChatProcessor {
 			}
 			state.setSseHandler(sseHandler);
 
+			// SSE handler still receives raw AgentEvents for text_delta streaming.
+			// ConversationLogListener handles structured recording via ConversationLog.
 			AgentEventListener listener;
 			if (sseHandler != null) {
-				listener = new CompositeAgentEventListener(List.of(timelineListener, sseHandler));
+				listener = new CompositeAgentEventListener(List.of(logListener, sseHandler));
 			} else {
 				Logger.warn("No SSE handler found for tracker — streaming will not reach the browser.", ChatProcessor.class);
-				listener = timelineListener;
+				listener = logListener;
 			}
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener));
@@ -254,13 +264,13 @@ public class ChatProcessor {
 			}
 			applyPollUpdates(state, chat, taskTracker);
 
-			// Persist messages to the session this task was started for (not the currently active one)
+			// Persist using ConversationLog instead of Chat entries
 			String sessionId = state.getSessionId();
 			if (sessionId == null) {
 				sessionId = taskTracker.getActiveSessionId();
 			}
 			if (sessionId != null) {
-				persistMessagesForSession(sessionId, chat);
+				persistConversationLog(sessionId, state.getConversationLog());
 			}
 
 			// Trigger post-turn background agents
@@ -270,8 +280,8 @@ public class ChatProcessor {
 			taskTracker.failTask(taskId, formatErrorMessage(ex));
 			throw ex;
 		} finally {
-			ToolCallTracking.setTracker(null);
-			state.setToolCallTracker(null);
+			ConversationLogListenerBinding.clear();
+			state.setLogListener(null);
 			TaskStoreBinding.setStore(null);
 			state.setTaskStore(null);
 			UserInteractionStoreBinding.setStore(null);
@@ -460,6 +470,14 @@ public class ChatProcessor {
 		state.setChat(capturedChat);
 		state.setSessionId(capturedSessionId);
 
+		// Create ConversationLog Turn before submitting background task
+		String messageText = userMessage != null ? userMessage.trim() : "";
+		ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
+		Turn turn = convLog.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart(
+			UUID.randomUUID().toString(), Instant.now(), messageText)));
+		state.setConversationLog(convLog);
+
 		// SSE handler lookup is deferred to the background task (executeOrchestrator)
 		// to avoid a race condition: the JS client reconnects SSE during session switching,
 		// and the new SSE connection may not be established yet when /chat/send arrives.
@@ -517,6 +535,29 @@ public class ChatProcessor {
 			});
 		} catch (Exception ex) {
 			Logger.error("Failed to persist chat messages for session " + sessionId + ": " + ex.getMessage(),
+				ex, ChatProcessor.class);
+		}
+	}
+
+	/**
+	 * Persists a {@link ConversationLog} to a specific session by ID.
+	 */
+	static void persistConversationLog(String sessionId, ConversationLog convLog) {
+		if (convLog == null) {
+			return;
+		}
+		try {
+			ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
+				TLObject session = ChatHistoryService.findSessionById(sessionId);
+				if (session != null) {
+					String json = ConversationLogSerializer.toJson(convLog);
+					ChatHistoryService.saveMessages(session, json);
+					ChatHistoryService.touchLastUpdated(session);
+				}
+				return null;
+			});
+		} catch (Exception ex) {
+			Logger.error("Failed to persist conversation log for session " + sessionId + ": " + ex.getMessage(),
 				ex, ChatProcessor.class);
 		}
 	}
@@ -746,10 +787,14 @@ public class ChatProcessor {
 		// Current task ID for progress tracking
 		private volatile String _currentTaskId = null;
 
-		// Tool call tracking for real-time updates
+		// Tool call tracking for real-time updates (kept for applyPollUpdates compatibility)
 		private volatile ToolCallTracker _toolCallTracker = null;
 		private volatile TaskStore _taskStore = null;
 		private final AtomicInteger _lastSeenToolCallCount = new AtomicInteger(0);
+
+		// ConversationLog-based recording
+		private volatile ConversationLog _conversationLog = null;
+		private volatile ConversationLogListener _logListener = null;
 
 		// Session context: captured at creation, never changes.
 		// Ensures background task writes to the correct Chat even if the user switches sessions.
@@ -913,6 +958,36 @@ public class ChatProcessor {
 		 */
 		public void setLastSeenToolCallCount(int count) {
 			_lastSeenToolCallCount.set(count);
+		}
+
+		/** The conversation log for structured event recording; may be null. */
+		public ConversationLog getConversationLog() {
+			return _conversationLog;
+		}
+
+		/**
+		 * Sets the conversation log.
+		 *
+		 * @param log
+		 *        The conversation log; may be null.
+		 */
+		public void setConversationLog(ConversationLog log) {
+			_conversationLog = log;
+		}
+
+		/** The conversation log listener; may be null when not processing. */
+		public ConversationLogListener getLogListener() {
+			return _logListener;
+		}
+
+		/**
+		 * Sets the conversation log listener.
+		 *
+		 * @param listener
+		 *        The listener; may be null to clear.
+		 */
+		public void setLogListener(ConversationLogListener listener) {
+			_logListener = listener;
 		}
 
 		/** The session ID this processing state belongs to; set once at creation. */

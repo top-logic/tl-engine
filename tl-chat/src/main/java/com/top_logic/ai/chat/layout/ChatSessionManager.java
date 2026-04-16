@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
@@ -23,6 +24,8 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 
 /**
  * Manages per-session in-memory state ({@link Chat} + {@link ConversationMemory}) with LRU caching.
@@ -71,6 +74,8 @@ public class ChatSessionManager {
 
 		ConversationMemory _conversationMemory;
 
+		ConversationLog _conversationLog;
+
 		/** */
 		SessionState(Chat chat, ConversationMemory conversationMemory) {
 			_chat = chat;
@@ -117,6 +122,23 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * Returns the active session's {@link ConversationLog}, creating one if it does not exist.
+	 * Returns a transient log if no session is active.
+	 */
+	public ConversationLog getOrCreateConversationLog() {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state != null) {
+				if (state._conversationLog == null) {
+					state._conversationLog = new ConversationLog();
+				}
+				return state._conversationLog;
+			}
+			return new ConversationLog();
+		}
+	}
+
+	/**
 	 * Returns the active session ID, or null if none.
 	 */
 	public String getActiveSessionId() {
@@ -158,15 +180,22 @@ public class ChatSessionManager {
 			// Load from database
 			Chat chat = new Chat();
 			ConversationMemory memory = createDefaultMemory();
+			ConversationLog convLog = null;
 
 			try {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session != null) {
 					String json = ChatHistoryService.getMessagesJson(session);
 					if (json != null && !json.isEmpty()) {
-						List<ChatEntry> entries = DtoMapper.deserializeEntries(json);
-						chat.loadEntries(entries);
-						rebuildConversationMemory(memory, entries);
+						// Try V2 format first (ConversationLog), fall back to V1 (ChatEntry)
+						if (json.contains("\"turns\"")) {
+							convLog = ConversationLogSerializer.fromJson(json);
+							ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
+						} else {
+							List<ChatEntry> entries = DtoMapper.deserializeEntries(json);
+							chat.loadEntries(entries);
+							rebuildConversationMemory(memory, entries);
+						}
 					}
 
 					if (_tracker != null) {
@@ -179,7 +208,9 @@ public class ChatSessionManager {
 					ChatSessionManager.class);
 			}
 
-			_sessions.put(sessionId, new SessionState(chat, memory));
+			SessionState newState = new SessionState(chat, memory);
+			newState._conversationLog = convLog;
+			_sessions.put(sessionId, newState);
 			_activeSessionId = sessionId;
 		}
 	}
@@ -205,7 +236,12 @@ public class ChatSessionManager {
 		try {
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
 			if (session != null) {
-				String json = DtoMapper.serializeEntries(state._chat.getEntries());
+				String json;
+				if (state._conversationLog != null) {
+					json = ConversationLogSerializer.toJson(state._conversationLog);
+				} else {
+					json = DtoMapper.serializeEntries(state._chat.getEntries());
+				}
 				ChatHistoryService.saveMessages(session, json);
 
 				if (_tracker != null) {

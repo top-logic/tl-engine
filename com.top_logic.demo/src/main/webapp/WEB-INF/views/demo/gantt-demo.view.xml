@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view>
+	<panel>
+		<title>
+			<en>Gantt Demo</en>
+			<de>Gantt-Demo</de>
+		</title>
+		<flow-diagram>
+			<inputs/>
+			<createChart><![CDATA[{
+r_design = reactFlowGanttRow(id: "r-design", label: "Design");
+r_impl   = reactFlowGanttRow(id: "r-impl",   label: "Implementation");
+r_test   = reactFlowGanttRow(id: "r-test",   label: "Testing");
+
+spec  = reactFlowGanttSpan(id: "spec",  rowId: "r-design", box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20461);
+build = reactFlowGanttSpan(id: "build", rowId: "r-impl",   box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20461, end: 20478);
+beta  = reactFlowGanttMilestone(id: "beta", rowId: "r-test", box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"), all: 3)), at: 20478);
+qa    = reactFlowGanttSpan(id: "qa",   rowId: "r-test",   box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20478, end: 20490);
+
+e1 = reactFlowGanttEdge(id: "e1", sourceItemId: "spec",  sourceEndpoint: "END",   targetItemId: "build", targetEndpoint: "START", enforce: "STRICT");
+e2 = reactFlowGanttEdge(id: "e2", sourceItemId: "build", sourceEndpoint: "END",   targetItemId: "beta",  targetEndpoint: "START", enforce: "WARN");
+
+freeze = reactFlowGanttRangeDeco(id: "freeze", from: 20485, to: 20488, color: "rgba(255,100,100,0.3)", label: "Freeze");
+
+axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20495);
+
+reactFlowGantt(
+	rootRows: list($r_design, $r_impl, $r_test),
+	items:    list($spec, $build, $beta, $qa),
+	edges:    list($e1, $e2),
+	decorations: list($freeze),
+	axis: $axis
+)
+}]]></createChart>
+		</flow-diagram>
+	</panel>
+</view>

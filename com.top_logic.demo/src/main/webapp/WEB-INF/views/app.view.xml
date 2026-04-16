@@ -158,6 +158,15 @@
 							<de>Modul-Graph</de>
 						</label>
 					</nav-item>
+					<nav-item id="gantt-demo"
+						icon="bi bi-bar-chart-steps"
+					>
+						<view-ref view="demo/gantt-demo.view.xml"/>
+						<label>
+							<en>Gantt Demo</en>
+							<de>Gantt-Demo</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="settings"
 						icon="bi bi-gear"

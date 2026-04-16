@@ -80,6 +80,21 @@ Achsen-, Lane- und Decoration-Farben sind als String-Literale inline (`#f8f8f8`,
 
 ---
 
+### 8. `GanttRangeDecoration.canResize` aufspalten (Refactor / Modell-Konsistenz)
+
+Auf `GanttSpan` sind `canResizeStart` und `canResizeEnd` getrennt steuerbar (klassischer Gantt-Fall: fester Start, verschiebbares Ende). Auf `GanttRangeDecoration` gibt es dagegen nur ein einzelnes `canResize`-Flag. Das ist asymmetrisch und war nicht bewusst so gewählt.
+
+Analoges Szenario für Range-Decorations: eine Freeze-Phase mit festem Anfang (Go-Live-Datum) und variablem Ende (je nach Testfortschritt) kann aktuell nicht ausgedrückt werden.
+
+Betroffene Stellen:
+- Proto: `GanttRangeDecoration` in `data.proto` — `canResize` → `canResizeFrom` + `canResizeTo`
+- Factory: `FlowFactory.ganttRangeDeco` — Parameter aufspalten
+- Rendering: aktuell ignoriert `drawDecorations` die Flags ohnehin (Phase 2 bringt Interaktion), aber die Spec-Stelle braucht ein Update
+
+**Ziel:** Zwei unabhängige Flags `canResizeFrom` / `canResizeTo`, analog zum Span-Muster.
+
+---
+
 ## Process
 
 Neue Punkte hier unten anhängen. Wenn die Liste „rund" ist, einen Implementierungs-Plan ableiten und als Batch abarbeiten.

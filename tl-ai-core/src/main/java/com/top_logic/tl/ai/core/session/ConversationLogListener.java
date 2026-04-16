@@ -9,6 +9,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -38,11 +40,30 @@ import com.top_logic.tl.ai.core.agent.event.ApprovalOutcome;
  */
 public class ConversationLogListener implements AgentEventListener {
 
+	private static final ThreadLocal<ConversationLogListener> CURRENT = new ThreadLocal<>();
+
+	/** */
+	public static ConversationLogListener current() {
+		return CURRENT.get();
+	}
+
+	/** */
+	public static void setCurrent(ConversationLogListener listener) {
+		CURRENT.set(listener);
+	}
+
+	/** */
+	public static void clearCurrent() {
+		CURRENT.remove();
+	}
+
 	private final ConversationLog _log;
 
 	private final StringBuilder _textBuffer = new StringBuilder();
 
 	private final StringBuilder _thinkingBuffer = new StringBuilder();
+
+	private final Map<String, Part.DelegationPart> _activeDelegations = new ConcurrentHashMap<>();
 
 	/** */
 	public ConversationLogListener(ConversationLog log) {
@@ -312,6 +333,121 @@ public class ConversationLogListener implements AgentEventListener {
 				Part.SystemEventType.CANCELLED, "User cancelled processing"));
 		}
 	}
+
+	// ---- Delegation lifecycle ----
+
+	/**
+	 * Record the start of a delegation. Returns the delegation part ID.
+	 */
+	public String recordDelegationStarted(String fromAgent, String toAgent, String inputSummary) {
+		Turn turn = _log.currentTurn();
+		if (turn == null) {
+			return null;
+		}
+		flushTextBuffer(turn);
+		flushThinkingBuffer(turn);
+		String id = "delegation-" + UUID.randomUUID().toString().substring(0, 8);
+		Part.DelegationPart part = Part.DelegationPart.started(id, Instant.now(), fromAgent, toAgent, inputSummary);
+		turn.addAssistantPart(part);
+		_activeDelegations.put(id, part);
+		return id;
+	}
+
+	/**
+	 * Returns a listener that forwards events into the delegation's child parts.
+	 */
+	public AgentEventListener delegationListener(String delegationId) {
+		return new DelegationForwardingListener(delegationId);
+	}
+
+	/**
+	 * Resolve a completed delegation with result summary and duration.
+	 */
+	public void resolveDelegation(String delegationId, String resultSummary, long durationMs) {
+		_activeDelegations.remove(delegationId);
+		Turn turn = _log.currentTurn();
+		if (turn != null) {
+			Part existing = turn.findPart(delegationId);
+			if (existing instanceof Part.DelegationPart dp) {
+				turn.updatePart(delegationId, dp.completed(resultSummary, null, durationMs));
+			}
+		}
+	}
+
+	// ---- Delegation forwarding inner class ----
+
+	private class DelegationForwardingListener implements AgentEventListener {
+
+		private final String _delegationId;
+
+		private final StringBuilder _childTextBuffer = new StringBuilder();
+
+		private final StringBuilder _childThinkingBuffer = new StringBuilder();
+
+		DelegationForwardingListener(String delegationId) {
+			_delegationId = delegationId;
+		}
+
+		@Override
+		public void onEvent(AgentEvent event) {
+			Part.DelegationPart dp = _activeDelegations.get(_delegationId);
+			if (dp == null) {
+				return;
+			}
+
+			if (event instanceof AgentEvent.TextDelta e) {
+				_childTextBuffer.append(e.text());
+			} else if (event instanceof AgentEvent.ThinkingDelta e) {
+				_childThinkingBuffer.append(e.text());
+			} else if (event instanceof AgentEvent.ToolCallStarted e) {
+				flushChildBuffers(dp);
+				dp.childParts().add(Part.ToolCallPart.started(
+					e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson()));
+			} else if (event instanceof AgentEvent.ToolCallCompleted e) {
+				updateChildPart(dp, e.toolCallId(), p -> {
+					if (p instanceof Part.ToolCallPart tc) {
+						return tc.completed(e.result(), e.duration());
+					}
+					return p;
+				});
+			} else if (event instanceof AgentEvent.ToolCallFailed e) {
+				updateChildPart(dp, e.toolCallId(), p -> {
+					if (p instanceof Part.ToolCallPart tc) {
+						return tc.failed(e.errorMessage(), e.duration());
+					}
+					return p;
+				});
+			} else if (event instanceof AgentEvent.RunCompleted) {
+				flushChildBuffers(dp);
+			}
+		}
+
+		private void flushChildBuffers(Part.DelegationPart dp) {
+			if (_childTextBuffer.length() > 0) {
+				dp.childParts().add(new Part.TextPart(
+					UUID.randomUUID().toString(), Instant.now(), _childTextBuffer.toString()));
+				_childTextBuffer.setLength(0);
+			}
+			if (_childThinkingBuffer.length() > 0) {
+				dp.childParts().add(new Part.ThinkingPart(
+					UUID.randomUUID().toString(), Instant.now(), _childThinkingBuffer.toString()));
+				_childThinkingBuffer.setLength(0);
+			}
+		}
+
+		private void updateChildPart(Part.DelegationPart dp, String partId,
+				Function<Part, Part> updater) {
+			List<Part> parts = dp.childParts();
+			for (int i = parts.size() - 1; i >= 0; i--) {
+				if (parts.get(i).id().equals(partId)) {
+					parts.set(i, updater.apply(parts.get(i)));
+					break;
+				}
+			}
+		}
+	}
+
+	// ---- Buffer flushing ----
 
 	private void flushTextBuffer(Turn turn) {
 		if (_textBuffer.length() > 0) {

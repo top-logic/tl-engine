@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -118,6 +120,18 @@ public class DelegationTool implements Tool {
 		}
 		userPrompt.append("## Task\n\n").append(task);
 
+		ConversationLogListener logListener = ConversationLogListener.current();
+		String delegationId = null;
+		AgentEventListener childListener = event -> {};
+		Instant startTime = Instant.now();
+
+		if (logListener != null) {
+			delegationId = logListener.recordDelegationStarted("parent", _targetAgentName, task);
+			if (delegationId != null) {
+				childListener = logListener.delegationListener(delegationId);
+			}
+		}
+
 		try {
 			AgentLoop targetLoop = _loopFactory.buildAgentLoop(_targetAgentName);
 			Conversation conversation = new Conversation();
@@ -128,10 +142,19 @@ public class DelegationTool implements Tool {
 			conversation.add(userMessage);
 
 			ToolContext childContext = context.forDelegation(TransactionScope.NOOP);
-			AgentResult result = targetLoop.run(conversation, childContext, event -> {});
+			AgentResult result = targetLoop.run(conversation, childContext, childListener);
 
-			return extractFinalText(conversation, result);
+			String finalText = extractFinalText(conversation, result);
+			if (logListener != null && delegationId != null) {
+				long durationMs = Duration.between(startTime, Instant.now()).toMillis();
+				logListener.resolveDelegation(delegationId, truncate(finalText, 200), durationMs);
+			}
+			return finalText;
 		} catch (Exception e) {
+			if (logListener != null && delegationId != null) {
+				long durationMs = Duration.between(startTime, Instant.now()).toMillis();
+				logListener.resolveDelegation(delegationId, "ERROR: " + e.getMessage(), durationMs);
+			}
 			Logger.error("Delegation to " + _targetAgentName + " failed.", e, DelegationTool.class);
 			return "ERROR: Delegation to " + _targetAgentName + " failed: " + e.getMessage();
 		}
@@ -159,6 +182,13 @@ public class DelegationTool implements Tool {
 			}
 		}
 		return sb.isEmpty() ? null : sb.toString();
+	}
+
+	private static String truncate(String text, int maxLen) {
+		if (text == null || text.length() <= maxLen) {
+			return text;
+		}
+		return text.substring(0, maxLen) + "...";
 	}
 
 	/**

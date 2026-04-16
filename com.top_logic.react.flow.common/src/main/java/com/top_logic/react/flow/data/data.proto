@@ -897,5 +897,29 @@ message PolygonalChain extends Box {
 /** A box whose content is clipped. */
 @Operations("com.top_logic.react.flow.operations.ClipBoxOperations")
 message ClipBox extends Decoration {
-  // Nothing additional here	
+  // Nothing additional here
+}
+
+/** A row in a {@link GanttLayout}. Rows form a forest (tree of trees). */
+message GanttRow {
+	/** Opaque identifier, unique within a {@link GanttLayout}. */
+	string id;
+
+	/** Human-readable label shown at the row header. */
+	string label;
+
+	/** Child rows forming a hierarchy. Phase 1 renders the tree flat with indentation. */
+	repeated GanttRow children;
+}
+
+/** A tick on the Gantt time axis. */
+message GanttTick {
+	/** Position in layout units (pixels at zoom 100%). */
+	double position;
+
+	/** Label drawn at the tick. */
+	string label;
+
+	/** Emphasis in [0..1] — renderer interpolates stroke width and label prominence. */
+	double emphasis;
 }

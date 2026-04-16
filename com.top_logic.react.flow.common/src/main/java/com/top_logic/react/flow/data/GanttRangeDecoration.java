@@ -25,7 +25,7 @@ public interface GanttRangeDecoration extends GanttDecoration {
 	String CAN_RESIZE__PROP = "canResize";
 
 	/**
-	 * Start position of the range (layout units at zoom 100%).
+	 * Start position of the range on the axis; see {@link GanttAxis} for position semantics.
 	 */
 	double getFrom();
 
@@ -35,7 +35,8 @@ public interface GanttRangeDecoration extends GanttDecoration {
 	com.top_logic.react.flow.data.GanttRangeDecoration setFrom(double value);
 
 	/**
-	 * End position of the range (layout units at zoom 100%); must be {@code >= from}.
+	 * End position of the range on the axis; see {@link GanttAxis} for position semantics.
+	 * Must satisfy {@code to >= from}.
 	 */
 	double getTo();
 

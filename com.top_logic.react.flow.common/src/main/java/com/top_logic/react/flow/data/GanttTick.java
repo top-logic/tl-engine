@@ -25,7 +25,7 @@ public interface GanttTick extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	String EMPHASIS__PROP = "emphasis";
 
 	/**
-	 * Position in layout units (pixels at zoom 100%).
+	 * Position of the tick on the axis; see {@link GanttAxis} for position semantics.
 	 */
 	double getPosition();
 

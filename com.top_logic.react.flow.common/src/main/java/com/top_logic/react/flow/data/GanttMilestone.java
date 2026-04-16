@@ -19,7 +19,7 @@ public interface GanttMilestone extends GanttItem {
 	String AT__PROP = "at";
 
 	/**
-	 * Position of the milestone on the time axis (layout units at zoom 100%).
+	 * Position of the milestone on the axis; see {@link GanttAxis} for position semantics.
 	 */
 	double getAt();
 

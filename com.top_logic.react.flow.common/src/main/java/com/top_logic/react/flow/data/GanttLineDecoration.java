@@ -19,7 +19,7 @@ public interface GanttLineDecoration extends GanttDecoration {
 	String AT__PROP = "at";
 
 	/**
-	 * Position of the line on the time axis (layout units at zoom 100%).
+	 * Position of the line on the axis; see {@link GanttAxis} for position semantics.
 	 */
 	double getAt();
 

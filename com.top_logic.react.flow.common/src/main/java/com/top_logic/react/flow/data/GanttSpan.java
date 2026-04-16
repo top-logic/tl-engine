@@ -28,7 +28,7 @@ public interface GanttSpan extends GanttItem {
 	String CAN_RESIZE_END__PROP = "canResizeEnd";
 
 	/**
-	 * Start position (layout units at zoom 100%).
+	 * Start position on the axis; see {@link GanttAxis} for position semantics.
 	 */
 	double getStart();
 
@@ -38,7 +38,8 @@ public interface GanttSpan extends GanttItem {
 	com.top_logic.react.flow.data.GanttSpan setStart(double value);
 
 	/**
-	 * End position (layout units at zoom 100%); must be {@code >= start}.
+	 * End position on the axis; see {@link GanttAxis} for position semantics.
+	 * Must satisfy {@code end >= start}.
 	 */
 	double getEnd();
 

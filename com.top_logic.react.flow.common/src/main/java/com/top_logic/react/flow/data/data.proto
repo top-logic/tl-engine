@@ -914,7 +914,7 @@ message GanttRow {
 
 /** A tick on the Gantt time axis. */
 message GanttTick {
-	/** Position in layout units (pixels at zoom 100%). */
+	/** Position of the tick on the axis; see {@link GanttAxis} for position semantics. */
 	double position;
 
 	/** Label drawn at the tick. */
@@ -995,10 +995,13 @@ abstract message GanttItem {
 
 /** A task with start and end on the time axis. */
 message GanttSpan extends GanttItem {
-	/** Start position (layout units at zoom 100%). */
+	/** Start position on the axis; see {@link GanttAxis} for position semantics. */
 	double start;
 
-	/** End position (layout units at zoom 100%); must be {@code >= start}. */
+	/**
+	 * End position on the axis; see {@link GanttAxis} for position semantics.
+	 * Must satisfy {@code end >= start}.
+	 */
 	double end;
 
 	/** Whether the user may drag the left (start) edge to change the start. */
@@ -1010,7 +1013,7 @@ message GanttSpan extends GanttItem {
 
 /** A milestone (point in time). */
 message GanttMilestone extends GanttItem {
-	/** Position of the milestone on the time axis (layout units at zoom 100%). */
+	/** Position of the milestone on the axis; see {@link GanttAxis} for position semantics. */
 	double at;
 }
 
@@ -1037,40 +1040,90 @@ abstract message GanttDecoration {
 
 /** Vertical line at a single position on the time axis. */
 message GanttLineDecoration extends GanttDecoration {
-	/** Position of the line on the time axis (layout units at zoom 100%). */
+	/** Position of the line on the axis; see {@link GanttAxis} for position semantics. */
 	double at;
 }
 
 /** Coloured range between two positions. */
 message GanttRangeDecoration extends GanttDecoration {
-	/** Start position of the range (layout units at zoom 100%). */
+	/** Start position of the range on the axis; see {@link GanttAxis} for position semantics. */
 	double from;
 
-	/** End position of the range (layout units at zoom 100%); must be {@code >= from}. */
+	/**
+	 * End position of the range on the axis; see {@link GanttAxis} for position semantics.
+	 * Must satisfy {@code to >= from}.
+	 */
 	double to;
 
 	/** Whether the user may drag the range's edges to resize it. */
 	bool canResize;
 }
 
-/** Time axis configuration for a {@link GanttLayout}. */
+/**
+ * Time axis configuration for a {@link GanttLayout}.
+ *
+ * <h3>Positions vs. TimeValues</h3>
+ *
+ * <p>
+ * All numeric position-like fields in the Gantt model ({@link #getRangeMin},
+ * {@link #getRangeMax}, {@link GanttTick#getPosition}, {@link GanttSpan#getStart},
+ * {@link GanttSpan#getEnd}, {@link GanttMilestone#getAt}, {@link GanttLineDecoration#getAt},
+ * {@link GanttRangeDecoration#getFrom}, {@link GanttRangeDecoration#getTo}) are
+ * <strong>positions in layout units</strong> — plain doubles shipped with the
+ * synchronised diagram model and used on the client for geometric layout, hit-testing
+ * and rendering.
+ * </p>
+ *
+ * <p>
+ * The application-specific <em>time value</em> (e.g. {@code java.time.LocalDate},
+ * a sprint identifier, a millisecond timestamp) is <strong>not</strong> part of this
+ * model and never travels to the client. It lives only server-side, inside the
+ * application's axis provider. The provider converts between its opaque time values
+ * and chart positions via {@code toPosition(timeValue) → position} /
+ * {@code fromPosition(position) → timeValue}; the client sees only the result.
+ * </p>
+ *
+ * <p>
+ * By convention, one position unit at {@link #getCurrentZoom() zoom 1.0} corresponds
+ * to one pixel on the chart. What one position unit <em>means in domain terms</em>
+ * (e.g. one day, one sprint, one second) is defined by the axis provider referenced
+ * by {@link #getProviderId() providerId}.
+ * </p>
+ */
 message GanttAxis {
-	/** Name of the server-side axis provider that computes ticks and snap data. */
+	/**
+	 * Name of the server-side axis provider that computes ticks and snap data, and
+	 * converts between the application's opaque time values and chart positions.
+	 */
 	string providerId;
 
-	/** Minimum representable position (zoom 100%). */
+	/**
+	 * Lowest position representable on the axis, in layout units (pixels at zoom 1.0).
+	 * The domain meaning of one unit is defined by the associated {@link AxisProvider}.
+	 */
 	double rangeMin;
 
-	/** Maximum representable position (zoom 100%). */
+	/**
+	 * Highest position representable on the axis, in layout units (pixels at zoom 1.0).
+	 * The domain meaning of one unit is defined by the associated {@link AxisProvider}.
+	 */
 	double rangeMax;
 
-	/** Current zoom (pixels per position unit). Written by the client on zoom changes. */
+	/**
+	 * Current zoom factor: number of pixels per position unit. {@code 1.0} renders one
+	 * position unit as one pixel. Written by the client on zoom changes; the server reacts
+	 * by recomputing {@link #getCurrentTicks() ticks} and {@link #getSnapGranularity snap
+	 * granularity} via the provider.
+	 */
 	double currentZoom = 1.0;
 
-	/** Granularity for client-side drag snap, in position units. */
+	/**
+	 * Granularity used by the client to snap drag positions, in position units (not pixels).
+	 * A value of {@code 1.0} means: snap to the nearest integer position unit.
+	 */
 	double snapGranularity = 1.0;
 
-	/** Ticks computed for the current zoom. */
+	/** Axis ticks computed for the current zoom, produced by the {@link AxisProvider}. */
 	repeated GanttTick currentTicks;
 }
 

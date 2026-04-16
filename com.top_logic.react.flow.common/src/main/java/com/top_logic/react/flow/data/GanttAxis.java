@@ -2,6 +2,34 @@ package com.top_logic.react.flow.data;
 
 /**
  * Time axis configuration for a {@link GanttLayout}.
+ *
+ * <h3>Positions vs. TimeValues</h3>
+ *
+ * <p>
+ * All numeric position-like fields in the Gantt model ({@link #getRangeMin},
+	 * {@link #getRangeMax}, {@link GanttTick#getPosition}, {@link GanttSpan#getStart},
+	 * {@link GanttSpan#getEnd}, {@link GanttMilestone#getAt}, {@link GanttLineDecoration#getAt},
+	 * {@link GanttRangeDecoration#getFrom}, {@link GanttRangeDecoration#getTo}) are
+ * <strong>positions in layout units</strong> — plain doubles shipped with the
+ * synchronised diagram model and used on the client for geometric layout, hit-testing
+ * and rendering.
+ * </p>
+ *
+ * <p>
+ * The application-specific <em>time value</em> (e.g. {@code java.time.LocalDate},
+ * a sprint identifier, a millisecond timestamp) is <strong>not</strong> part of this
+ * model and never travels to the client. It lives only server-side, inside the
+ * application's axis provider. The provider converts between its opaque time values
+ * and chart positions via {@code toPosition(timeValue) → position} /
+ * {@code fromPosition(position) → timeValue}; the client sees only the result.
+ * </p>
+ *
+ * <p>
+ * By convention, one position unit at {@link #getCurrentZoom() zoom 1.0} corresponds
+ * to one pixel on the chart. What one position unit <em>means in domain terms</em>
+ * (e.g. one day, one sprint, one second) is defined by the axis provider referenced
+ * by {@link #getProviderId() providerId}.
+ * </p>
  */
 public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 
@@ -34,7 +62,8 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	String CURRENT_TICKS__PROP = "currentTicks";
 
 	/**
-	 * Name of the server-side axis provider that computes ticks and snap data.
+	 * Name of the server-side axis provider that computes ticks and snap data, and
+	 * converts between the application's opaque time values and chart positions.
 	 */
 	String getProviderId();
 
@@ -44,7 +73,8 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttAxis setProviderId(String value);
 
 	/**
-	 * Minimum representable position (zoom 100%).
+	 * Lowest position representable on the axis, in layout units (pixels at zoom 1.0).
+	 * The domain meaning of one unit is defined by the associated {@link AxisProvider}.
 	 */
 	double getRangeMin();
 
@@ -54,7 +84,8 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttAxis setRangeMin(double value);
 
 	/**
-	 * Maximum representable position (zoom 100%).
+	 * Highest position representable on the axis, in layout units (pixels at zoom 1.0).
+	 * The domain meaning of one unit is defined by the associated {@link AxisProvider}.
 	 */
 	double getRangeMax();
 
@@ -64,7 +95,10 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttAxis setRangeMax(double value);
 
 	/**
-	 * Current zoom (pixels per position unit). Written by the client on zoom changes.
+	 * Current zoom factor: number of pixels per position unit. {@code 1.0} renders one
+	 * position unit as one pixel. Written by the client on zoom changes; the server reacts
+	 * by recomputing {@link #getCurrentTicks() ticks} and {@link #getSnapGranularity snap
+	 * granularity} via the provider.
 	 */
 	double getCurrentZoom();
 
@@ -74,7 +108,8 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttAxis setCurrentZoom(double value);
 
 	/**
-	 * Granularity for client-side drag snap, in position units.
+	 * Granularity used by the client to snap drag positions, in position units (not pixels).
+	 * A value of {@code 1.0} means: snap to the nearest integer position unit.
 	 */
 	double getSnapGranularity();
 
@@ -84,7 +119,7 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttAxis setSnapGranularity(double value);
 
 	/**
-	 * Ticks computed for the current zoom.
+	 * Axis ticks computed for the current zoom, produced by the {@link AxisProvider}.
 	 */
 	java.util.List<com.top_logic.react.flow.data.GanttTick> getCurrentTicks();
 

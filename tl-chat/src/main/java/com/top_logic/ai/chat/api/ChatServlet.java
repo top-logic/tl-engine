@@ -38,6 +38,8 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
@@ -290,6 +292,21 @@ public class ChatServlet extends HttpServlet {
 		}
 		store.resolve(requestId, resolvedResponse);
 
+		// Record the approval decision in the conversation log
+		ConversationLogListener logListener = state.getLogListener();
+		if (logListener != null) {
+			if ("APPROVED_FOR_SESSION".equals(response)) {
+				logListener.resolveApproval(requestId,
+					Part.ApprovalDecision.APPROVED_FOR_SESSION, null);
+			} else if (resolvedResponse.startsWith("REJECTED")) {
+				logListener.resolveApproval(requestId,
+					Part.ApprovalDecision.DENIED, comment);
+			} else {
+				logListener.resolveApproval(requestId,
+					Part.ApprovalDecision.APPROVED, null);
+			}
+		}
+
 		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
 			tracker.addSessionApprovedTool(toolName);
 		}
@@ -343,6 +360,13 @@ public class ChatServlet extends HttpServlet {
 			resp.getWriter().write("{\"cancelled\":false}");
 			return;
 		}
+
+		// Record cancellation in the conversation log before interrupting
+		ConversationLogListener logListener = state.getLogListener();
+		if (logListener != null) {
+			logListener.recordCancellation();
+		}
+
 		Thread agentThread = state.getAgentThread();
 		if (agentThread != null) {
 			agentThread.interrupt();

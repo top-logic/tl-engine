@@ -690,6 +690,9 @@ message SessionMetadata {
 
 	/** Last model used. */
 	string lastModel;
+
+	/** Current approval mode (e.g. AUTO_APPROVE, ALWAYS_ASK). */
+	string approvalMode;
 }
 
 // ---- New turn-based persistence format (v2) ----

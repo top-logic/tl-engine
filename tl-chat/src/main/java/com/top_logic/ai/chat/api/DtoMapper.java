@@ -14,6 +14,7 @@ import java.util.Map;
 
 import java.util.LinkedHashMap;
 
+import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
@@ -570,6 +571,7 @@ public final class DtoMapper {
 			.setThinkingTokens(usage.thinkingTokens())
 			.setCacheReadTokens(usage.cacheReadTokens())
 			.setCacheWriteTokens(usage.cacheWriteTokens()));
+		meta.setApprovalMode(tracker.getApprovalMode().name());
 		return toJson(meta);
 	}
 
@@ -596,6 +598,10 @@ public final class DtoMapper {
 					usage.getInputTokens(), usage.getOutputTokens(),
 					usage.getThinkingTokens(), usage.getCacheReadTokens(),
 					usage.getCacheWriteTokens()));
+			}
+			String mode = meta.getApprovalMode();
+			if (mode != null && !mode.isEmpty()) {
+				tracker.setApprovalMode(ApprovalMode.valueOf(mode));
 			}
 		} catch (Exception e) {
 			// Corrupted metadata — ignore and start fresh.

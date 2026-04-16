@@ -40,6 +40,21 @@ import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.react.flow.data.Align;
 import com.top_logic.react.flow.data.Alignment;
+import com.top_logic.react.flow.data.GanttAxis;
+import com.top_logic.react.flow.data.GanttDecoration;
+import com.top_logic.react.flow.data.GanttEdge;
+import com.top_logic.react.flow.data.GanttEndpoint;
+import com.top_logic.react.flow.data.GanttEnforce;
+import com.top_logic.react.flow.data.GanttItem;
+import com.top_logic.react.flow.data.GanttLayout;
+import com.top_logic.react.flow.data.GanttLineDecoration;
+import com.top_logic.react.flow.data.GanttMilestone;
+import com.top_logic.react.flow.data.GanttRangeDecoration;
+import com.top_logic.react.flow.data.GanttRow;
+import com.top_logic.react.flow.data.GanttSpan;
+import com.top_logic.react.flow.data.GanttTick;
+import com.top_logic.react.flow.server.axis.AxisProvider;
+import com.top_logic.react.flow.server.axis.AxisProviderService;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ClickTarget;
@@ -1531,6 +1546,143 @@ public class FlowFactory extends TLScriptFunctions {
 			edge.setDecorations(decorations);
 		}
 		return edge;
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt row")
+	public static GanttRow ganttRow(
+			@Mandatory String id,
+			@Mandatory String label,
+			List<GanttRow> children) {
+		GanttRow row = GanttRow.create().setId(id).setLabel(label);
+		if (children != null) {
+			row.setChildren(children);
+		}
+		return row;
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt span item")
+	public static GanttSpan ganttSpan(
+			@Mandatory String id,
+			@Mandatory String rowId,
+			@Mandatory Box box,
+			double start,
+			double end) {
+		return GanttSpan.create()
+			.setId(id).setRowId(rowId).setBox(box)
+			.setStart(start).setEnd(end);
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt milestone item")
+	public static GanttMilestone ganttMilestone(
+			@Mandatory String id,
+			@Mandatory String rowId,
+			@Mandatory Box box,
+			double at) {
+		return GanttMilestone.create()
+			.setId(id).setRowId(rowId).setBox(box)
+			.setAt(at);
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt edge")
+	public static GanttEdge ganttEdge(
+			@Mandatory String id,
+			@Mandatory String sourceItemId,
+			@Mandatory GanttEndpoint sourceEndpoint,
+			@Mandatory String targetItemId,
+			@Mandatory GanttEndpoint targetEndpoint,
+			GanttEnforce enforce) {
+		return GanttEdge.create()
+			.setId(id)
+			.setSourceItemId(sourceItemId).setSourceEndpoint(sourceEndpoint)
+			.setTargetItemId(targetItemId).setTargetEndpoint(targetEndpoint)
+			.setEnforce(enforce != null ? enforce : GanttEnforce.STRICT);
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt line decoration")
+	public static GanttLineDecoration ganttLineDeco(
+			@Mandatory String id,
+			double at,
+			String color,
+			String label,
+			List<String> relevantFor) {
+		GanttLineDecoration deco = GanttLineDecoration.create()
+			.setId(id).setAt(at)
+			.setColor(color != null ? color : "#c02020")
+			.setLabel(label != null ? label : "");
+		if (relevantFor != null) {
+			deco.setRelevantFor(relevantFor);
+		}
+		return deco;
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt range decoration")
+	public static GanttRangeDecoration ganttRangeDeco(
+			@Mandatory String id,
+			double from,
+			double to,
+			String color,
+			String label,
+			List<String> relevantFor) {
+		GanttRangeDecoration deco = GanttRangeDecoration.create()
+			.setId(id).setFrom(from).setTo(to)
+			.setColor(color != null ? color : "rgba(255, 220, 120, 0.35)")
+			.setLabel(label != null ? label : "");
+		if (relevantFor != null) {
+			deco.setRelevantFor(relevantFor);
+		}
+		return deco;
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt axis")
+	public static GanttAxis ganttAxis(
+			@Mandatory String providerId,
+			double rangeMin,
+			double rangeMax) {
+		AxisProvider provider = AxisProviderService.Module.INSTANCE.getImplementationInstance().lookup(providerId);
+		List<GanttTick> ticks = provider != null
+			? provider.ticksFor(rangeMin, rangeMax, 1.0)
+			: java.util.Collections.emptyList();
+		double snap = provider != null ? provider.snapGranularity(1.0) : 1.0;
+		return GanttAxis.create()
+			.setProviderId(providerId)
+			.setRangeMin(rangeMin).setRangeMax(rangeMax)
+			.setCurrentZoom(1.0).setSnapGranularity(snap)
+			.setCurrentTicks(ticks);
+	}
+
+	@SideEffectFree
+	@Label("Create Gantt layout")
+	public static GanttLayout gantt(
+			@Mandatory List<GanttRow> rootRows,
+			@Mandatory List<GanttItem> items,
+			List<GanttEdge> edges,
+			List<GanttDecoration> decorations,
+			@Mandatory GanttAxis axis) {
+		GanttLayout layout = GanttLayout.create()
+			.setRootRows(rootRows)
+			.setItems(items)
+			.setAxis(axis);
+		if (edges != null) {
+			layout.setEdges(edges);
+		}
+		if (decorations != null) {
+			layout.setDecorations(decorations);
+		}
+		List<Box> contents = new java.util.ArrayList<>(items.size());
+		for (GanttItem it : items) {
+			if (it.getBox() != null) {
+				contents.add(it.getBox());
+			}
+		}
+		layout.setContents(contents);
+		return layout;
 	}
 
 }

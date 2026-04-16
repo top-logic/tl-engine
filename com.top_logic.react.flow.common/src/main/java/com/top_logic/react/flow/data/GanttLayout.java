@@ -55,8 +55,14 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	/** @see #getAxisHeight() */
 	String AXIS_HEIGHT__PROP = "axisHeight";
 
-	/** @see #getRowLabelWidth() */
-	String ROW_LABEL_WIDTH__PROP = "rowLabelWidth";
+	/** @see #getRowLabelMinWidth() */
+	String ROW_LABEL_MIN_WIDTH__PROP = "rowLabelMinWidth";
+
+	/** @see #getRowLabelPadding() */
+	String ROW_LABEL_PADDING__PROP = "rowLabelPadding";
+
+	/** @see #getColumnWidth() */
+	String COLUMN_WIDTH__PROP = "columnWidth";
 
 	/**
 	 * Root rows of the forest.
@@ -204,14 +210,51 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	com.top_logic.react.flow.data.GanttLayout setAxisHeight(double value);
 
 	/**
-	 * Width of the row label column, in pixels.
+	 * Minimum width of the row label column, in pixels.
+	 *
+	 * <p>
+	 * The effective column width is
+	 * {@code max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding)} so the column
+	 * grows automatically to fit the widest label across all rows.
+	 * </p>
 	 */
-	double getRowLabelWidth();
+	double getRowLabelMinWidth();
 
 	/**
-	 * @see #getRowLabelWidth()
+	 * @see #getRowLabelMinWidth()
 	 */
-	com.top_logic.react.flow.data.GanttLayout setRowLabelWidth(double value);
+	com.top_logic.react.flow.data.GanttLayout setRowLabelMinWidth(double value);
+
+	/**
+	 * Horizontal inset (left and right each) between the label column border and each label box,
+	 * in pixels.
+	 *
+	 * <p>
+	 * The effective content width offered to each label box is
+	 * {@code columnWidth - 2 * rowLabelPadding - depth * indentWidth}.
+	 * </p>
+	 */
+	double getRowLabelPadding();
+
+	/**
+	 * @see #getRowLabelPadding()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setRowLabelPadding(double value);
+
+	/**
+	 * The effective label column width as computed by the layout algorithm, in pixels.
+	 *
+	 * <p>
+	 * This is the result of {@code max(rowLabelMinWidth, maxLabelIntrinsic + 2 * rowLabelPadding)}
+	 * and is stored here so that the drawing pass can use it without recomputation.
+	 * </p>
+	 */
+	double getColumnWidth();
+
+	/**
+	 * @see #getColumnWidth()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setColumnWidth(double value);
 
 	@Override
 	com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value);

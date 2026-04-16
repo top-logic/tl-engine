@@ -8,9 +8,9 @@
 		<flow-diagram>
 			<inputs/>
 			<createChart><![CDATA[{
-r_design = reactFlowGanttRow(id: "r-design", label: "Design");
-r_impl   = reactFlowGanttRow(id: "r-impl",   label: "Implementation");
-r_test   = reactFlowGanttRow(id: "r-test",   label: "Testing");
+r_design = reactFlowGanttRow(id: "r-design", label: reactFlowBorder(reactFlowPadding(reactFlowText("Design"),       all: 4)));
+r_impl   = reactFlowGanttRow(id: "r-impl",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Implementation"), all: 4)));
+r_test   = reactFlowGanttRow(id: "r-test",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Testing"),        all: 4)));
 
 spec  = reactFlowGanttSpan(id: "spec",  rowId: "r-design", box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20461);
 build = reactFlowGanttSpan(id: "build", rowId: "r-impl",   box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20461, end: 20478);

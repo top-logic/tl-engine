@@ -905,8 +905,17 @@ message GanttRow {
 	/** Opaque identifier, unique within a {@link GanttLayout}. */
 	string id;
 
-	/** Human-readable label shown at the row header. */
-	string label;
+	/**
+	 * Rendering content shown at the row header.
+	 *
+	 * <p>
+	 * The box is owned by the enclosing {@link GanttLayout#getContents() contents} and is
+	 * positioned by the layout algorithm. Applications can use any {@link Box} subtype here:
+	 * plain text, icon+text, badges, etc.
+	 * </p>
+	 */
+	@Ref
+	Box label;
 
 	/** Child rows forming a hierarchy. Phase 1 renders the tree flat with indentation. */
 	repeated GanttRow children;
@@ -1186,6 +1195,35 @@ message GanttLayout extends Layout {
 	/** Height of the axis header, in pixels. */
 	double axisHeight = 24.0;
 
-	/** Width of the row label column, in pixels. */
-	double rowLabelWidth = 200.0;
+	/**
+	 * Minimum width of the row label column, in pixels.
+	 *
+	 * <p>
+	 * The effective column width is
+	 * {@code max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding)} so the column
+	 * grows automatically to fit the widest label across all rows.
+	 * </p>
+	 */
+	double rowLabelMinWidth = 200.0;
+
+	/**
+	 * Horizontal inset (left and right each) between the label column border and each label box,
+	 * in pixels.
+	 *
+	 * <p>
+	 * The effective content width offered to each label box is
+	 * {@code columnWidth - 2 * rowLabelPadding - depth * indentWidth}.
+	 * </p>
+	 */
+	double rowLabelPadding = 4.0;
+
+	/**
+	 * The effective label column width as computed by the layout algorithm, in pixels.
+	 *
+	 * <p>
+	 * This is the result of {@code max(rowLabelMinWidth, maxLabelIntrinsic + 2 * rowLabelPadding)}
+	 * and is stored here so that the drawing pass can use it without recomputation.
+	 * </p>
+	 */
+	transient double columnWidth;
 }

@@ -39,6 +39,9 @@ public class TestGanttLayout extends TestCase {
 	/** Default rowPadding used by GanttLayout. */
 	private static final double ROW_PADDING = 4.0;
 
+	/** Default rowLabelPadding used by GanttLayout. */
+	private static final double ROW_LABEL_PADDING = 4.0;
+
 	/** Default row total height = ROW_MIN_CONTENT_HEIGHT + 2 * ROW_PADDING. */
 	private static final double DEFAULT_ROW_TOTAL_HEIGHT = ROW_MIN_CONTENT_HEIGHT + 2 * ROW_PADDING; // 32
 
@@ -47,12 +50,12 @@ public class TestGanttLayout extends TestCase {
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
 			.setAxisHeight(24.0)
-			.setRowLabelWidth(200.0)
-			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(
-				row("r1", "Row 1"),
-				row("r2", "Row 2"),
-				row("r3", "Row 3")));
+			.setRowLabelMinWidth(200.0)
+			.setAxis(axis(0, 100));
+		addRowsWithLabels(layout, Arrays.asList(
+			row("r1", "Row 1"),
+			row("r2", "Row 2"),
+			row("r3", "Row 3")));
 
 		Diagram d = Diagram.create().setRoot(layout);
 
@@ -63,8 +66,28 @@ public class TestGanttLayout extends TestCase {
 		assertEquals("height", 24.0 + 3 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeight());
 	}
 
+	/** Creates a row with a Box label wrapping the given text string. */
 	private static GanttRow row(String id, String label) {
-		return GanttRow.create().setId(id).setLabel(label);
+		Box labelBox = Border.create().setContent(Padding.create().setAll(2.0).setContent(Text.create().setValue(label)));
+		return GanttRow.create().setId(id).setLabel(labelBox);
+	}
+
+	/** Sets the root rows on the layout and adds all label boxes to the layout's contents list. */
+	private static void addRowsWithLabels(GanttLayout layout, java.util.List<GanttRow> rows) {
+		layout.setRootRows(rows);
+		for (GanttRow root : rows) {
+			addRowLabels(layout, root);
+		}
+	}
+
+	private static void addRowLabels(GanttLayout layout, GanttRow row) {
+		Box label = row.getLabel();
+		if (label != null) {
+			layout.addContent(label);
+		}
+		for (GanttRow child : row.getChildren()) {
+			addRowLabels(layout, child);
+		}
 	}
 
 	private static GanttAxis axis(double min, double max) {
@@ -94,12 +117,12 @@ public class TestGanttLayout extends TestCase {
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
 			.setAxisHeight(24.0)
-			.setRowLabelWidth(200.0)
+			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(
-				row("r1", "Row 1"),
-				row("r2", "Row 2")))
 			.setItems(Arrays.asList(span));
+		addRowsWithLabels(layout, Arrays.asList(
+			row("r1", "Row 1"),
+			row("r2", "Row 2")));
 		layout.addContent(span.getBox());
 
 		Diagram d = Diagram.create().setRoot(layout);
@@ -109,7 +132,7 @@ public class TestGanttLayout extends TestCase {
 		// Row 0 (r1): no items -> content height = ROW_MIN_CONTENT_HEIGHT=24, total = 32.
 		// Row 1 (r2): span intrinsic height <= ROW_MIN_CONTENT_HEIGHT -> content height = 24, total = 32.
 		// span.y = axisHeight + row0Total + rowPadding = 24 + 32 + 4 = 60.
-		// span.x = rowLabelWidth + 10 * zoom = 210.
+		// span.x = columnWidth (>=200) + 10 * zoom. Labels are small, so columnWidth = rowLabelMinWidth = 200.
 		assertEquals("span.x", 210.0, span.getBox().getX(), 0.5);
 		assertEquals("span.y", 24.0 + DEFAULT_ROW_TOTAL_HEIGHT + ROW_PADDING, span.getBox().getY(), 0.5);
 		// Width = (end - start) * zoom = 20.
@@ -125,8 +148,8 @@ public class TestGanttLayout extends TestCase {
 
 	public void testAxisRenderingProducesTickOutput() throws Exception {
 		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(row("r1", "Row 1")));
+			.setAxis(axis(0, 100));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new AWTContext(12f));
 
@@ -149,37 +172,37 @@ public class TestGanttLayout extends TestCase {
 
 	public void testRowLanesRenderLabels() throws Exception {
 		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(
-				row("r1", "Alpha"),
-				row("r2", "Bravo")));
+			.setAxis(axis(0, 100));
+		addRowsWithLabels(layout, Arrays.asList(
+			row("r1", "Alpha"),
+			row("r2", "Bravo")));
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new AWTContext(12f));
 
 		String svg = renderToSvg(d);
 
+		// Label boxes are in contents and drawn via standard dispatch — Text.value appears in SVG.
 		assertTrue("row label 'Alpha' present", svg.contains(">Alpha<"));
 		assertTrue("row label 'Bravo' present", svg.contains(">Bravo<"));
 	}
 
 	public void testRowLanesIndentNestedRows() throws Exception {
-		GanttRow parent = GanttRow.create()
-			.setId("p").setLabel("Parent")
-			.setChildren(Arrays.asList(row("c", "Child")));
+		GanttRow child = row("c", "Child");
+		GanttRow parent = row("p", "Parent");
+		parent.setChildren(Arrays.asList(child));
 
 		GanttLayout layout = GanttLayout.create()
 			.setAxis(axis(0, 100))
-			.setIndentWidth(16.0)
-			.setRootRows(Arrays.asList(parent));
+			.setIndentWidth(16.0);
+		addRowsWithLabels(layout, Arrays.asList(parent));
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new AWTContext(12f));
 
 		String svg = renderToSvg(d);
 		assertTrue("Parent label present", svg.contains(">Parent<"));
 		assertTrue("Child label present", svg.contains(">Child<"));
-		// Indentation is encoded as the x coordinate of the label's text element.
-		// We don't parse SVG for exact coordinates — just confirming both labels render
-		// is sufficient for Phase 1 (visual verification happens in Task 20).
+		// Indentation is reflected in the label box x position (depth * indentWidth offset).
+		// We confirm both labels render; visual verification via browser.
 	}
 
 	public void testEdgesRenderInOutput() throws Exception {
@@ -196,9 +219,9 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2")))
 			.setItems(Arrays.asList(a, b))
 			.setEdges(Arrays.asList(edge));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2")));
 		layout.addContent(a.getBox());
 		layout.addContent(b.getBox());
 
@@ -222,8 +245,8 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(row("r1", "Row 1")))
 			.setDecorations(Arrays.asList(freeze));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new AWTContext(12f));
 
@@ -241,8 +264,8 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(row("r1", "Row 1")))
 			.setDecorations(Arrays.asList(today));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new AWTContext(12f));
 
@@ -255,16 +278,16 @@ public class TestGanttLayout extends TestCase {
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
 			.setAxisHeight(24.0)
-			.setRowLabelWidth(200.0)
-			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(row("r1", "Row 1")));
+			.setRowLabelMinWidth(200.0)
+			.setAxis(axis(0, 100));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
 
 		Diagram d = Diagram.create().setRoot(layout);
 		d.setViewBoxWidth(800);
 		d.setViewBoxHeight(100);
 		d.layout(new AWTContext(12f));
 
-		// Intrinsic width = rowLabelWidth + (rangeMax - rangeMin) * zoom = 200 + 100 * 1 = 300.
+		// Intrinsic width = columnWidth + (rangeMax - rangeMin) * zoom >= 200 + 100 * 1 = 300.
 		// Since ViewBox is 800, distributeSize should expand width to 800.
 		// DiagramOperations.layout() calls distributeSize with intrinsic width, NOT viewBox width.
 		// So we call distributeSize directly to verify the expand-to-fill behaviour.
@@ -302,12 +325,12 @@ public class TestGanttLayout extends TestCase {
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
 			.setAxisHeight(24.0)
-			.setRowLabelWidth(200.0)
+			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100))
-			.setRootRows(Arrays.asList(
-				row("r1", "Row 1"),
-				row("r2", "Row 2")))
 			.setItems(Arrays.asList(tallSpan));
+		addRowsWithLabels(layout, Arrays.asList(
+			row("r1", "Row 1"),
+			row("r2", "Row 2")));
 		layout.addContent(tallBox);
 
 		Diagram d = Diagram.create().setRoot(layout);
@@ -327,6 +350,44 @@ public class TestGanttLayout extends TestCase {
 
 		// Width must be forced to span width.
 		assertEquals("tall item width", spanWidth, tallBox.getWidth(), 0.5);
+	}
+
+	/**
+	 * Verifies that the label column grows when a row label has an intrinsic width larger than
+	 * {@code rowLabelMinWidth}.
+	 *
+	 * <p>
+	 * We place a {@link WideBox} label (intrinsic width = 320) into a row. With
+	 * {@code rowLabelMinWidth = 200} and {@code rowLabelPadding = 4}, the effective column width
+	 * should be {@code max(200, 320 + 2*4) = 328}. The overall layout width should then be
+	 * {@code 328 + (rangeMax - rangeMin) * zoom = 328 + 100 = 428}.
+	 * </p>
+	 */
+	public void testRowLabelColumnGrowsWithWideLabel() {
+		double wideIntrinsicWidth = 320.0;
+		WideBox wideLabel = new WideBox(wideIntrinsicWidth);
+
+		GanttRow wideRow = GanttRow.create().setId("wide").setLabel(wideLabel);
+
+		GanttLayout layout = GanttLayout.create()
+			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
+			.setRowPadding(ROW_PADDING)
+			.setAxisHeight(24.0)
+			.setRowLabelMinWidth(200.0)
+			.setRowLabelPadding(ROW_LABEL_PADDING)
+			.setAxis(axis(0, 100));
+		layout.setRootRows(Arrays.asList(wideRow));
+		layout.addContent(wideLabel);
+
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+
+		// columnWidth = max(200, 320 + 2*4) = 328
+		double expectedColumnWidth = Math.max(200.0, wideIntrinsicWidth + 2 * ROW_LABEL_PADDING);
+		// total width = columnWidth + (100 - 0) * 1 = 428
+		double expectedWidth = expectedColumnWidth + 100.0;
+		assertEquals("layout width grows with wide label", expectedWidth, layout.getWidth(), 0.5);
+		assertEquals("column width stored on layout", expectedColumnWidth, layout.getColumnWidth(), 0.5);
 	}
 
 	// -----------------------------------------------------------------------
@@ -361,6 +422,40 @@ public class TestGanttLayout extends TestCase {
 			// Width is intentionally left 0 here; the layout forces span width via distributeSize.
 			setWidth(0);
 			setHeight(_fixedHeight);
+		}
+
+		@Override
+		public void distributeSize(RenderContext context, double x, double y, double width, double height) {
+			setX(x);
+			setY(y);
+			setWidth(width);
+			setHeight(height);
+		}
+	}
+
+	/**
+	 * Test-only Box implementation that reports a fixed intrinsic width from
+	 * {@code computeIntrinsicSize} and stores whatever dimensions are assigned by
+	 * {@code distributeSize}.
+	 *
+	 * <p>
+	 * Used to verify that the label column grows to fit a wide label box.
+	 * </p>
+	 */
+	private static class WideBox extends com.top_logic.react.flow.data.impl.Border_Impl {
+
+		private final double _fixedWidth;
+
+		WideBox(double fixedWidth) {
+			_fixedWidth = fixedWidth;
+		}
+
+		@Override
+		public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+			setX(offsetX);
+			setY(offsetY);
+			setWidth(_fixedWidth);
+			setHeight(0);
 		}
 
 		@Override

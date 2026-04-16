@@ -1552,7 +1552,7 @@ public class FlowFactory extends TLScriptFunctions {
 	@Label("Create Gantt row")
 	public static GanttRow ganttRow(
 			@Mandatory String id,
-			@Mandatory String label,
+			@Mandatory Box label,
 			List<GanttRow> children) {
 		GanttRow row = GanttRow.create().setId(id).setLabel(label);
 		if (children != null) {
@@ -1712,8 +1712,21 @@ public class FlowFactory extends TLScriptFunctions {
 				contents.add(it.getBox());
 			}
 		}
+		for (GanttRow root : rootRows) {
+			addRowLabelsToContents(root, contents);
+		}
 		layout.setContents(contents);
 		return layout;
+	}
+
+	private static void addRowLabelsToContents(GanttRow row, List<Box> contents) {
+		Box label = row.getLabel();
+		if (label != null) {
+			contents.add(label);
+		}
+		for (GanttRow child : row.getChildren()) {
+			addRowLabelsToContents(child, contents);
+		}
 	}
 
 }

@@ -35,14 +35,25 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttRow setId(String value);
 
 	/**
-	 * Human-readable label shown at the row header.
+	 * Rendering content shown at the row header.
+	 *
+	 * <p>
+	 * The box is owned by the enclosing {@link GanttLayout#getContents() contents} and is
+	 * positioned by the layout algorithm. Applications can use any {@link Box} subtype here:
+	 * plain text, icon+text, badges, etc.
+	 * </p>
 	 */
-	String getLabel();
+	com.top_logic.react.flow.data.Box getLabel();
 
 	/**
 	 * @see #getLabel()
 	 */
-	com.top_logic.react.flow.data.GanttRow setLabel(String value);
+	com.top_logic.react.flow.data.GanttRow setLabel(com.top_logic.react.flow.data.Box value);
+
+	/**
+	 * Checks, whether {@link #getLabel()} has a value.
+	 */
+	boolean hasLabel();
 
 	/**
 	 * Child rows forming a hierarchy. Phase 1 renders the tree flat with indentation.

@@ -7,7 +7,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 
 	private String _id = "";
 
-	private String _label = "";
+	private com.top_logic.react.flow.data.Box _label = null;
 
 	private final java.util.List<com.top_logic.react.flow.data.GanttRow> _children = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GanttRow>() {
 		@Override
@@ -54,21 +54,26 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	}
 
 	@Override
-	public final String getLabel() {
+	public final com.top_logic.react.flow.data.Box getLabel() {
 		return _label;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttRow setLabel(String value) {
+	public com.top_logic.react.flow.data.GanttRow setLabel(com.top_logic.react.flow.data.Box value) {
 		internalSetLabel(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getLabel()} without chain call utility. */
-	protected final void internalSetLabel(String value) {
+	protected final void internalSetLabel(com.top_logic.react.flow.data.Box value) {
 		_listener.beforeSet(this, LABEL__PROP, value);
 		_label = value;
 		_listener.afterChanged(this, LABEL__PROP);
+	}
+
+	@Override
+	public final boolean hasLabel() {
+		return _label != null;
 	}
 
 	@Override
@@ -151,7 +156,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	public void set(String field, Object value) {
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
-			case LABEL__PROP: internalSetLabel((String) value); break;
+			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CHILDREN__PROP: internalSetChildren(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttRow.class, value)); break;
 		}
 	}
@@ -161,8 +166,10 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 		super.writeFields(scope, out);
 		out.name(ID__PROP);
 		out.value(getId());
-		out.name(LABEL__PROP);
-		out.value(getLabel());
+		if (hasLabel()) {
+			out.name(LABEL__PROP);
+			getLabel().writeTo(scope, out);
+		}
 		out.name(CHILDREN__PROP);
 		out.beginArray();
 		for (com.top_logic.react.flow.data.GanttRow x : getChildren()) {
@@ -179,7 +186,11 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 				break;
 			}
 			case LABEL__PROP: {
-				out.value(getLabel());
+				if (hasLabel()) {
+					getLabel().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case CHILDREN__PROP: {
@@ -198,7 +209,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case LABEL__PROP: setLabel(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case CHILDREN__PROP: {
 				java.util.List<com.top_logic.react.flow.data.GanttRow> newValue = new java.util.ArrayList<>();
 				in.beginArray();

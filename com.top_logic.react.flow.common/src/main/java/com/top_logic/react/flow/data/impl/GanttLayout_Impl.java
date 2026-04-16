@@ -83,7 +83,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 
 	private double _axisHeight = 24.0;
 
-	private double _rowLabelWidth = 200.0;
+	private double _rowLabelMinWidth = 200.0;
+
+	private double _rowLabelPadding = 4.0;
+
+	private transient double _columnWidth = 0.0d;
 
 	/**
 	 * Creates a {@link GanttLayout_Impl} instance.
@@ -331,21 +335,57 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 	}
 
 	@Override
-	public final double getRowLabelWidth() {
-		return _rowLabelWidth;
+	public final double getRowLabelMinWidth() {
+		return _rowLabelMinWidth;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttLayout setRowLabelWidth(double value) {
-		internalSetRowLabelWidth(value);
+	public com.top_logic.react.flow.data.GanttLayout setRowLabelMinWidth(double value) {
+		internalSetRowLabelMinWidth(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getRowLabelWidth()} without chain call utility. */
-	protected final void internalSetRowLabelWidth(double value) {
-		_listener.beforeSet(this, ROW_LABEL_WIDTH__PROP, value);
-		_rowLabelWidth = value;
-		_listener.afterChanged(this, ROW_LABEL_WIDTH__PROP);
+	/** Internal setter for {@link #getRowLabelMinWidth()} without chain call utility. */
+	protected final void internalSetRowLabelMinWidth(double value) {
+		_listener.beforeSet(this, ROW_LABEL_MIN_WIDTH__PROP, value);
+		_rowLabelMinWidth = value;
+		_listener.afterChanged(this, ROW_LABEL_MIN_WIDTH__PROP);
+	}
+
+	@Override
+	public final double getRowLabelPadding() {
+		return _rowLabelPadding;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRowLabelPadding(double value) {
+		internalSetRowLabelPadding(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRowLabelPadding()} without chain call utility. */
+	protected final void internalSetRowLabelPadding(double value) {
+		_listener.beforeSet(this, ROW_LABEL_PADDING__PROP, value);
+		_rowLabelPadding = value;
+		_listener.afterChanged(this, ROW_LABEL_PADDING__PROP);
+	}
+
+	@Override
+	public final double getColumnWidth() {
+		return _columnWidth;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setColumnWidth(double value) {
+		internalSetColumnWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getColumnWidth()} without chain call utility. */
+	protected final void internalSetColumnWidth(double value) {
+		_listener.beforeSet(this, COLUMN_WIDTH__PROP, value);
+		_columnWidth = value;
+		_listener.afterChanged(this, COLUMN_WIDTH__PROP);
 	}
 
 	@Override
@@ -426,7 +466,9 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			ROW_PADDING__PROP, 
 			INDENT_WIDTH__PROP, 
 			AXIS_HEIGHT__PROP, 
-			ROW_LABEL_WIDTH__PROP);
+			ROW_LABEL_MIN_WIDTH__PROP, 
+			ROW_LABEL_PADDING__PROP, 
+			COLUMN_WIDTH__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -439,7 +481,7 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.TRANSIENT_PROPERTIES);
 		tmp.addAll(java.util.Arrays.asList(
-				));
+				COLUMN_WIDTH__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -465,7 +507,9 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case ROW_PADDING__PROP: return getRowPadding();
 			case INDENT_WIDTH__PROP: return getIndentWidth();
 			case AXIS_HEIGHT__PROP: return getAxisHeight();
-			case ROW_LABEL_WIDTH__PROP: return getRowLabelWidth();
+			case ROW_LABEL_MIN_WIDTH__PROP: return getRowLabelMinWidth();
+			case ROW_LABEL_PADDING__PROP: return getRowLabelPadding();
+			case COLUMN_WIDTH__PROP: return getColumnWidth();
 			default: return super.get(field);
 		}
 	}
@@ -482,7 +526,9 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case ROW_PADDING__PROP: internalSetRowPadding((double) value); break;
 			case INDENT_WIDTH__PROP: internalSetIndentWidth((double) value); break;
 			case AXIS_HEIGHT__PROP: internalSetAxisHeight((double) value); break;
-			case ROW_LABEL_WIDTH__PROP: internalSetRowLabelWidth((double) value); break;
+			case ROW_LABEL_MIN_WIDTH__PROP: internalSetRowLabelMinWidth((double) value); break;
+			case ROW_LABEL_PADDING__PROP: internalSetRowLabelPadding((double) value); break;
+			case COLUMN_WIDTH__PROP: internalSetColumnWidth((double) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -526,8 +572,10 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 		out.value(getIndentWidth());
 		out.name(AXIS_HEIGHT__PROP);
 		out.value(getAxisHeight());
-		out.name(ROW_LABEL_WIDTH__PROP);
-		out.value(getRowLabelWidth());
+		out.name(ROW_LABEL_MIN_WIDTH__PROP);
+		out.value(getRowLabelMinWidth());
+		out.name(ROW_LABEL_PADDING__PROP);
+		out.value(getRowLabelPadding());
 	}
 
 	@Override
@@ -589,8 +637,16 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 				out.value(getAxisHeight());
 				break;
 			}
-			case ROW_LABEL_WIDTH__PROP: {
-				out.value(getRowLabelWidth());
+			case ROW_LABEL_MIN_WIDTH__PROP: {
+				out.value(getRowLabelMinWidth());
+				break;
+			}
+			case ROW_LABEL_PADDING__PROP: {
+				out.value(getRowLabelPadding());
+				break;
+			}
+			case COLUMN_WIDTH__PROP: {
+				out.value(getColumnWidth());
 				break;
 			}
 			default: super.writeFieldValue(scope, out, field);
@@ -645,7 +701,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case ROW_PADDING__PROP: setRowPadding(in.nextDouble()); break;
 			case INDENT_WIDTH__PROP: setIndentWidth(in.nextDouble()); break;
 			case AXIS_HEIGHT__PROP: setAxisHeight(in.nextDouble()); break;
-			case ROW_LABEL_WIDTH__PROP: setRowLabelWidth(in.nextDouble()); break;
+			case ROW_LABEL_MIN_WIDTH__PROP: setRowLabelMinWidth(in.nextDouble()); break;
+			case ROW_LABEL_PADDING__PROP: setRowLabelPadding(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

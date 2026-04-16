@@ -79,10 +79,10 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	 * Writes the given script result to the HTTP response.
 	 *
 	 * <p>
-	 * Package-private to allow direct unit testing.
+	 * Exposed as public to allow direct unit testing from test packages.
 	 * </p>
 	 */
-	void writeResponse(Object result, HttpServletResponse resp) throws IOException {
+	public void writeResponse(Object result, HttpServletResponse resp) throws IOException {
 		String contentType;
 		String charset;
 		int status;

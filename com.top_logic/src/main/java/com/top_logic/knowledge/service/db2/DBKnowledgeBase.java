@@ -53,7 +53,6 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.CloseableIterator;
-import com.top_logic.basic.col.CloseableIteratorAdapter;
 import com.top_logic.basic.col.ComparatorChain;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.LongRange;
@@ -1943,29 +1942,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		checkQuery(query, queryArguments.getArguments());
 		
 		CompiledQuery<E> compiledQuery = compileQuery(query);
-		final ConnectionPool pool = getConnectionPool();
-		boolean statementReturned = false;
-		final PooledConnection readConnection = pool.borrowReadConnection();
-		try {
-			final CloseableIterator<E> searchResult = compiledQuery.searchStream(readConnection, queryArguments);
-			CloseableIteratorAdapter<E> adaptedResult = new CloseableIteratorAdapter<>(searchResult) {
-
-				@Override
-				protected void internalClose() {
-					try {
-						searchResult.close();
-					} finally {
-						pool.releaseReadConnection(readConnection);
-					}
-				}
-			};
-			statementReturned = true;
-			return adaptedResult;
-		} finally {
-			if (!statementReturned) {
-				pool.releaseReadConnection(readConnection);
-			}
-		}
+		return compiledQuery.searchStream(queryArguments);
 	}
 
 	@Override

@@ -46,11 +46,19 @@ public class Response {
 	}
 
 	/**
-	 * The actual result to write to {@link HttpServletResponse#getWriter()}.
-	 * 
+	 * The actual result to deliver in the HTTP response body.
+	 *
 	 * <p>
-	 * When the result is <code>null</code> the response is treated as error and the containers
-	 * default page for error with code {@link #getStatus()} is delivered.
+	 * If the value is a {@link com.top_logic.basic.io.binary.BinaryData}, a {@code byte[]},
+	 * or a {@link java.io.InputStream}, the raw bytes are streamed to
+	 * {@link HttpServletResponse#getOutputStream()}. Otherwise the value is written to
+	 * {@link HttpServletResponse#getWriter()} - either as JSON (for the default
+	 * {@code application/json} content type) or via {@link String#valueOf(Object)}.
+	 * </p>
+	 *
+	 * <p>
+	 * When the result is <code>null</code> the response is treated as error and the
+	 * container's default page for the error with code {@link #getStatus()} is delivered.
 	 * </p>
 	 */
 	public Object getResult() {

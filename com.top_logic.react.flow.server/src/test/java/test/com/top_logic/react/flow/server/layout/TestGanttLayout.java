@@ -193,6 +193,10 @@ public class TestGanttLayout extends TestCase {
 
 		String svg = renderToSvg(d);
 		assertTrue("edge group present", svg.contains("tl-gantt-edges"));
+		// Inside the edge group, an SVG <path> must appear (orthogonal route).
+		int groupStart = svg.indexOf("tl-gantt-edges");
+		String afterGroup = svg.substring(groupStart);
+		assertTrue("path element present in edge group", afterGroup.indexOf("<path") >= 0);
 	}
 
 	public void testRangeDecorationRendersWithLabel() throws Exception {

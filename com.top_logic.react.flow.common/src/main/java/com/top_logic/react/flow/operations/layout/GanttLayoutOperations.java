@@ -40,6 +40,27 @@ import com.top_logic.react.flow.svg.SvgWriter;
  */
 public interface GanttLayoutOperations extends BoxOperations {
 
+	/** Vertical inset from the row top edge to the item box top edge. */
+	double ITEM_TOP_INSET = 2.0;
+
+	/** Total vertical padding consumed by top and bottom insets combined ({@code 2 * ITEM_TOP_INSET}). */
+	double ITEM_VERTICAL_PADDING_TOTAL = 2 * ITEM_TOP_INSET;
+
+	/** Left padding between the row x-origin (or indent) and the row-label text. */
+	double ROW_LABEL_LEFT_PADDING = 4.0;
+
+	/** Horizontal stub length for orthogonal edge routing (pixels offset from item edge). */
+	double EDGE_HORIZONTAL_STUB = 6.0;
+
+	/** Stroke width for the decoration line marker. */
+	double DECORATION_LINE_STROKE_WIDTH = 1.5;
+
+	/** Stroke width for normal (STRICT / WARN) dependency edges. */
+	double EDGE_STROKE_WIDTH_NORMAL = 1.2;
+
+	/** Stroke width for informational (NONE) dependency edges. */
+	double EDGE_STROKE_WIDTH_THIN = 0.8;
+
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		GanttLayout self = (GanttLayout) this;
@@ -62,7 +83,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 			if (idx == null) {
 				continue;
 			}
-			double y = offsetY + axisHeight + idx * rowHeight + 2;
+			double y = offsetY + axisHeight + idx * rowHeight + ITEM_TOP_INSET;
 			Box box = item.getBox();
 			if (box == null) {
 				continue;
@@ -74,9 +95,9 @@ public interface GanttLayoutOperations extends BoxOperations {
 				box.setX(x);
 				box.setY(y);
 				box.setWidth(w);
-				box.setHeight(rowHeight - 4);
+				box.setHeight(rowHeight - ITEM_VERTICAL_PADDING_TOTAL);
 			} else if (item instanceof GanttMilestone ms) {
-				double r = (rowHeight - 4) / 2.0;
+				double r = (rowHeight - ITEM_VERTICAL_PADDING_TOTAL) / 2.0;
 				double cx = offsetX + labelWidth + (ms.getAt() - rangeMin) * zoom;
 				box.computeIntrinsicSize(context, cx - r, y);
 				box.setX(cx - r);
@@ -127,7 +148,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 
 		// Header background rectangle.
 		out.beginGroup();
-		out.writeCssClass("gantt-axis");
+		out.writeCssClass("tl-gantt-axis");
 
 		out.beginRect(x0, y0, w, h);
 		out.setFill("#f8f8f8");
@@ -211,7 +232,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 		out.endRect();
 
 		// Row label, indented by depth.
-		double labelX = x0 + 4.0 + depth * indentWidth;
+		double labelX = x0 + ROW_LABEL_LEFT_PADDING + depth * indentWidth;
 		double labelY = rowY + rowHeight / 2.0 + 4.0; // vertically centred (approx.)
 		String label = row.getLabel();
 		if (label != null && !label.isEmpty()) {
@@ -306,7 +327,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 
 				out.beginPath();
 				out.setStroke(color);
-				out.setStrokeWidth(1.5);
+				out.setStrokeWidth(DECORATION_LINE_STROKE_WIDTH);
 				out.setFill("none");
 				out.beginData();
 				out.moveToAbs(x, y0);
@@ -378,9 +399,9 @@ public interface GanttLayoutOperations extends BoxOperations {
 			double ty = centerY(targetItem);
 
 			// Horizontal offset to route outside the box:
-			// START side: go left (-6), END side: go right (+6).
-			double sOffset = (sourceEndpoint == GanttEndpoint.START) ? -6.0 : 6.0;
-			double tOffset = (targetEndpoint == GanttEndpoint.START) ? -6.0 : 6.0;
+			// START side: go left (-EDGE_HORIZONTAL_STUB), END side: go right (+EDGE_HORIZONTAL_STUB).
+			double sOffset = (sourceEndpoint == GanttEndpoint.START) ? -EDGE_HORIZONTAL_STUB : EDGE_HORIZONTAL_STUB;
+			double tOffset = (targetEndpoint == GanttEndpoint.START) ? -EDGE_HORIZONTAL_STUB : EDGE_HORIZONTAL_STUB;
 
 			double midY = (sy + ty) / 2.0;
 
@@ -391,16 +412,16 @@ public interface GanttLayoutOperations extends BoxOperations {
 			boolean dashed;
 			if (enforce == GanttEnforce.WARN) {
 				strokeColor = "#d01030";
-				strokeWidth = 1.2;
+				strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
 				dashed = false;
 			} else if (enforce == GanttEnforce.NONE) {
 				strokeColor = "#606060";
-				strokeWidth = 0.8;
+				strokeWidth = EDGE_STROKE_WIDTH_THIN;
 				dashed = true;
 			} else {
 				// STRICT (default)
 				strokeColor = "#606060";
-				strokeWidth = 1.2;
+				strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
 				dashed = false;
 			}
 

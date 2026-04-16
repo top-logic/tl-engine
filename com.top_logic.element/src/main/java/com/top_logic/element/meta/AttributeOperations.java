@@ -56,6 +56,8 @@ import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.search.CompiledQuery;
+import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.InstancesQueryBuilder;
 import com.top_logic.knowledge.search.MonomorphicQueryBuilder;
 import com.top_logic.knowledge.search.SetExpression;
@@ -64,6 +66,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
+import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.knowledge.service.xml.annotation.InstancesQueryAnnotation;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Document;
@@ -465,7 +468,44 @@ public class AttributeOperations {
 		return new DefaultListOptionModel<>(options);
 	}
 
-	static <T extends TLObject> CloseableIterator<T> allDirectInstances(TLClass type, Class<T> expectedType) {
+	/**
+	 * Iterator through all direct instances of the given type.
+	 * 
+	 * <p>
+	 * Changes in the current transaction are not considered.
+	 * </p>
+	 * 
+	 * <p>
+	 * <b>Note:</b> The resulting iterator must be closed after iteration to prevent resource leaks!
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type to find direct instances of.
+	 * @return {@link CloseableIterator} of instances.
+	 * 
+	 * @see #allDirectInstances(TLClass, boolean, Class)
+	 */
+	public static <T extends TLObject> CloseableIterator<T> allDirectInstances(TLClass type, Class<T> expectedType) {
+		return allDirectInstances(type, false, expectedType);
+
+	}
+
+	/**
+	 * Iterator through all direct instances of the given type.
+	 * 
+	 * <p>
+	 * <b>Note:</b> The resulting iterator must be closed after iteration to prevent resource leaks!
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type to find direct instances of.
+	 * @param inTransaction
+	 *        Whether changes in the transaction must be considered.
+	 * 
+	 * @return {@link CloseableIterator} of instances.
+	 */
+	public static <T extends TLObject> CloseableIterator<T> allDirectInstances(TLClass type, boolean inTransaction,
+			Class<T> expectedType) {
 		if (type == null || type.isAbstract()) {
 			return EmptyClosableIterator.getInstance();
 		}
@@ -479,7 +519,7 @@ public class AttributeOperations {
 				// Invalid model configuration.
 				return EmptyClosableIterator.getInstance();
 			}
-			return instancesInTable(kb, expectedType, tableType, Collections.singleton(type));
+			return instancesInTable(kb, expectedType, tableType, Collections.singleton(type), inTransaction);
 		} catch (UnknownTypeException ex) {
 			Logger.error("Undefined table '" + tableName + "' for type '" + type + "'.", ex);
 			return EmptyClosableIterator.getInstance();
@@ -530,7 +570,7 @@ public class AttributeOperations {
 					try {
 						MOClass tableType = (MOClass) _tableRepository.getType(tableName);
 
-						return instancesInTable(_kb, expectedType, tableType, types);
+						return instancesInTable(_kb, expectedType, tableType, types, false);
 					} catch (UnknownTypeException ex) {
 						Logger.error("Undefined table '" + tableName + "' for type '" + type + "'.", ex);
 						return EmptyClosableIterator.getInstance();
@@ -561,9 +601,16 @@ public class AttributeOperations {
 	}
 
 	static <T extends TLObject> CloseableIterator<T> instancesInTable(KnowledgeBase kb, Class<T> expectedType,
-			MOClass tableType, Set<TLClass> types) {
-		SetExpression query = tableQuery(tableType, types);
-		return kb.<T>searchStream(queryResolved(query, expectedType));
+			MOClass tableType, Set<TLClass> types, boolean inTransaction) {
+		if (inTransaction) {
+			Expression instancesFilter = instancesFilter(tableType, types);
+			SimpleQuery<T> simpleQuery = SimpleQuery.queryResolved(expectedType, tableType, instancesFilter);
+			CompiledQuery<T> compileSimpleQuery = kb.compileSimpleQuery(simpleQuery);
+			return compileSimpleQuery.searchStream();
+		} else {
+			SetExpression query = tableQuery(tableType, types);
+			return kb.<T> searchStream(queryResolved(query, expectedType));
+		}
 	}
 
 	/**
@@ -579,6 +626,20 @@ public class AttributeOperations {
 	 *         from the given table.
 	 */
 	public static SetExpression tableQuery(MOClass tableType, Set<TLClass> types) {
+		return filter(allOf(tableType), instancesFilter(tableType, types));
+	}
+
+	/**
+	 * {@link KnowledgeBase} filtering a table to match all instances of the concrete
+	 * {@link TLClass}es from the given table.
+	 * 
+	 * @param tableType
+	 *        The {@link MOClass#getName() table} in which each {@link TLClass} store its instances.
+	 * @param types
+	 *        The concrete types of objects to resolve (excluding subtypes). See
+	 *        {@link #typesByTableName(TLClass)}.
+	 */
+	private static Expression instancesFilter(MOClass tableType, Set<TLClass> types) {
 		if (tableType instanceof MOKnowledgeItem) {
 			InstancesQueryBuilder builder = ((MOKnowledgeItem) tableType).getInstancesQueryBuilder();
 			if (builder == null ) {
@@ -591,9 +652,9 @@ public class AttributeOperations {
 						"No " + InstancesQueryBuilder.class + " and no " + InstancesQueryAnnotation.class + " annotation for table " + tableType + ".");
 				}
 			}
-			return builder.createInstancesQuery(tableType, types);
+			return builder.createInstancesFilter(tableType, types);
 		} else {
-			return MonomorphicQueryBuilder.INSTANCE.createInstancesQuery(tableType, types);
+			return MonomorphicQueryBuilder.INSTANCE.createInstancesFilter(tableType, types);
 		}
 	}
 

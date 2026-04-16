@@ -25,6 +25,7 @@ import com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent;
 import com.top_logic.ai.chat.api.messages.ApprovalResolvedEvent;
 import com.top_logic.ai.chat.api.messages.CompactionStartedEvent;
 import com.top_logic.ai.chat.api.messages.ConnectedEvent;
+import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -284,6 +285,10 @@ public class ChatSSEHandler implements AgentEventListener {
 	}
 
 	private void emitAgentEvent(AgentEvent event) {
+		if (event instanceof AgentEvent.DelegatedEvent delegated) {
+			emitDelegatedEvent(delegated);
+			return;
+		}
 		if (event instanceof AgentEvent.RunStarted e) {
 			sendEvent("run_started", DtoMapper.toJson(RunStartedEvent.create()
 				.setRunId(e.runId())
@@ -368,6 +373,61 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setKind(e.kind())
 				.setErrorMessage(e.message())));
 		}
+	}
+
+	private void emitDelegatedEvent(AgentEvent.DelegatedEvent delegated) {
+		AgentEvent child = delegated.childEvent();
+		String innerType;
+		String innerData;
+
+		if (child instanceof AgentEvent.TextDelta e) {
+			innerType = "text_delta";
+			innerData = DtoMapper.toJson(TextDeltaEvent.create().setText(e.text()));
+		} else if (child instanceof AgentEvent.ThinkingDelta e) {
+			innerType = "thinking_delta";
+			innerData = DtoMapper.toJson(ThinkingDeltaEvent.create().setText(e.text()));
+		} else if (child instanceof AgentEvent.ToolCallStarted e) {
+			innerType = "tool_started";
+			innerData = DtoMapper.toJson(ToolStartedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName()).setArgsJson(e.argsJson()));
+		} else if (child instanceof AgentEvent.ToolCallCompleted e) {
+			innerType = "tool_completed";
+			innerData = DtoMapper.toJson(ToolCompletedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName())
+				.setResult(e.result()).setDurationMs(e.duration().toMillis()));
+		} else if (child instanceof AgentEvent.ToolCallFailed e) {
+			innerType = "tool_failed";
+			innerData = DtoMapper.toJson(ToolFailedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName())
+				.setErrorMessage(e.errorMessage()).setDurationMs(e.duration().toMillis()));
+		} else if (child instanceof AgentEvent.ApprovalRequired e) {
+			innerType = "approval_required";
+			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()
+				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
+				.setToolName(e.toolName()).setArgsJson(DtoMapper.mapToJsonString(e.args()))
+				.setDisplayReason(e.displayReason()));
+		} else if (child instanceof AgentEvent.ApprovalResolved e) {
+			innerType = "approval_resolved";
+			innerData = DtoMapper.toJson(ApprovalResolvedEvent.create()
+				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
+				.setOutcome(e.outcome().name()));
+		} else if (child instanceof AgentEvent.RunCompleted e) {
+			innerType = "run_completed";
+			innerData = DtoMapper.toJson(RunCompletedEvent.create()
+				.setRunId(e.runId()).setReason(e.reason().name())
+				.setTotalUsage(mapTokenUsage(e.totalUsage())));
+		} else if (child instanceof AgentEvent.TurnCompleted e) {
+			innerType = "turn_completed";
+			innerData = DtoMapper.toJson(TurnCompletedEvent.create()
+				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage())));
+		} else {
+			return;
+		}
+
+		sendEvent("delegation_event", DtoMapper.toJson(DelegationEventWrapper.create()
+			.setDelegationToolCallId(delegated.delegationToolCallId())
+			.setEventType(innerType)
+			.setEventData(innerData)));
 	}
 
 	private void pollUserInteractions() {

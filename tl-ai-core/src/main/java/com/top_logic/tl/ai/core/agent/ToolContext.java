@@ -38,6 +38,8 @@ public class ToolContext {
 
 	private final int _delegationDepth;
 
+	private final String _toolCallId;
+
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
@@ -46,7 +48,7 @@ public class ToolContext {
 	 * @param transaction the transaction scope for the current agent run
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval, TransactionScope transaction) {
-		this(security, approval, transaction, Set.of(), 0);
+		this(security, approval, transaction, Set.of(), 0, null);
 	}
 
 	/**
@@ -60,7 +62,7 @@ public class ToolContext {
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools) {
-		this(security, approval, transaction, sessionApprovedTools, 0);
+		this(security, approval, transaction, sessionApprovedTools, 0, null);
 	}
 
 	/**
@@ -75,12 +77,14 @@ public class ToolContext {
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
-			TransactionScope transaction, Set<String> sessionApprovedTools, int delegationDepth) {
+			TransactionScope transaction, Set<String> sessionApprovedTools,
+			int delegationDepth, String toolCallId) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
 		_sessionApprovedTools = sessionApprovedTools != null ? sessionApprovedTools : Set.of();
 		_delegationDepth = delegationDepth;
+		_toolCallId = toolCallId;
 	}
 
 	/**
@@ -131,6 +135,26 @@ public class ToolContext {
 	}
 
 	/**
+	 * The tool call ID currently being executed, or {@code null} if not set.
+	 *
+	 * <p>
+	 * Set by the agent loop before executing each tool. Used by {@code DelegationTool} to identify
+	 * its own tool call ID so child events can be routed to the correct delegation in the UI.
+	 * </p>
+	 */
+	public String toolCallId() {
+		return _toolCallId;
+	}
+
+	/**
+	 * Returns a copy of this context with the given tool call ID.
+	 */
+	public ToolContext withToolCallId(String toolCallId) {
+		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, toolCallId);
+	}
+
+	/**
 	 * Creates a copy of this context for a delegated sub-agent run.
 	 *
 	 * <p>The returned context has the delegation depth incremented by one and uses the given
@@ -139,6 +163,7 @@ public class ToolContext {
 	 * @param childTransaction the transaction scope for the sub-agent run
 	 */
 	public ToolContext forDelegation(TransactionScope childTransaction) {
-		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools, _delegationDepth + 1);
+		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
+			_delegationDepth + 1, null);
 	}
 }

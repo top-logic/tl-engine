@@ -132,7 +132,8 @@ public class DelegationTool implements Tool {
 		if (logListener != null) {
 			delegationId = logListener.recordDelegationStarted(_parentAgentName, _targetAgentName, task);
 			if (delegationId != null) {
-				childListener = logListener.delegationListener(delegationId);
+				String parentToolCallId = context.toolCallId();
+				childListener = logListener.delegationListener(delegationId, parentToolCallId);
 			}
 		}
 

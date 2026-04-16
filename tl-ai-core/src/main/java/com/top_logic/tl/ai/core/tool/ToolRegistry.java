@@ -166,7 +166,8 @@ public class ToolRegistry implements ToolExecutor {
 		}
 
 		try {
-			String result = tool.execute(args, context);
+			ToolContext execContext = context.withToolCallId(toolCall.id());
+			String result = tool.execute(args, execContext);
 			Instant end = Instant.now();
 			return new ToolResultMessage(
 				UUID.randomUUID().toString(), Instant.now(),

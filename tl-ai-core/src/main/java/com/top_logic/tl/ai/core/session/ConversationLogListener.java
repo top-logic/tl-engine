@@ -367,10 +367,17 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
-	 * Returns a listener that forwards events into the delegation's child parts.
+	 * Returns a listener that forwards events into the delegation's child parts and bubbles
+	 * UI-relevant events (tool calls, text, approval) to the parent listener wrapped in
+	 * {@link AgentEvent.DelegatedEvent}.
+	 *
+	 * @param delegationId       the ConversationLog part ID for this delegation
+	 * @param delegationToolCallId the parent agent's tool call ID for the {@code delegate_to_*}
+	 *                            tool, used by the SSE handler to route events to the correct
+	 *                            delegation in the browser
 	 */
-	public AgentEventListener delegationListener(String delegationId) {
-		return new DelegationForwardingListener(delegationId);
+	public AgentEventListener delegationListener(String delegationId, String delegationToolCallId) {
+		return new DelegationForwardingListener(delegationId, delegationToolCallId);
 	}
 
 	/**
@@ -393,12 +400,15 @@ public class ConversationLogListener implements AgentEventListener {
 
 		private final String _delegationId;
 
+		private final String _delegationToolCallId;
+
 		private final StringBuilder _childTextBuffer = new StringBuilder();
 
 		private final StringBuilder _childThinkingBuffer = new StringBuilder();
 
-		DelegationForwardingListener(String delegationId) {
+		DelegationForwardingListener(String delegationId, String delegationToolCallId) {
 			_delegationId = delegationId;
+			_delegationToolCallId = delegationToolCallId;
 		}
 
 		@Override
@@ -410,12 +420,15 @@ public class ConversationLogListener implements AgentEventListener {
 
 			if (event instanceof AgentEvent.TextDelta e) {
 				_childTextBuffer.append(e.text());
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ThinkingDelta e) {
 				_childThinkingBuffer.append(e.text());
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ToolCallStarted e) {
 				flushChildBuffers(dp);
 				dp.childParts().add(Part.ToolCallPart.started(
 					e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson()));
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ToolCallCompleted e) {
 				updateChildPart(dp, e.toolCallId(), p -> {
 					if (p instanceof Part.ToolCallPart tc) {
@@ -423,6 +436,7 @@ public class ConversationLogListener implements AgentEventListener {
 					}
 					return p;
 				});
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ToolCallFailed e) {
 				updateChildPart(dp, e.toolCallId(), p -> {
 					if (p instanceof Part.ToolCallPart tc) {
@@ -430,16 +444,28 @@ public class ConversationLogListener implements AgentEventListener {
 					}
 					return p;
 				});
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ApprovalRequired
 				|| event instanceof AgentEvent.ApprovalResolved) {
-				// Bubble approval events up to the parent listener (SSE handler)
-				// so the browser can show the approval dialog for sub-agent tools.
-				AgentEventListener parent = _parentListener;
-				if (parent != null) {
-					parent.onEvent(event);
-				}
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.RunCompleted) {
 				flushChildBuffers(dp);
+				forwardToParent(event);
+			} else if (event instanceof AgentEvent.TurnCompleted) {
+				forwardToParent(event);
+			}
+		}
+
+		/**
+		 * Wraps the child event in a {@link AgentEvent.DelegatedEvent} and forwards it to the
+		 * parent listener so the SSE handler can route it to the correct delegation in the browser.
+		 */
+		private void forwardToParent(AgentEvent childEvent) {
+			AgentEventListener parent = _parentListener;
+			if (parent != null) {
+				parent.onEvent(new AgentEvent.DelegatedEvent(
+					childEvent.runId(), childEvent.turnNumber(), childEvent.timestamp(),
+					_delegationToolCallId, childEvent));
 			}
 		}
 

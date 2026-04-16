@@ -573,6 +573,25 @@ message ApprovalResolvedEvent {
 	string outcome;
 }
 
+/**
+ * SSE wrapper for child-agent events forwarded during delegation.
+ *
+ * <p>
+ * Carries the parent delegation's tool call ID so the browser can route child events
+ * (tool calls, text deltas, token usage) to the correct delegation container.
+ * </p>
+ */
+message DelegationEventWrapper {
+	/** The parent agent's tool call ID for the delegate_to_* tool. */
+	string delegationToolCallId;
+
+	/** The inner SSE event type (e.g. "tool_started", "text_delta", "run_completed"). */
+	string eventType;
+
+	/** The inner event data as JSON string. */
+	string eventData;
+}
+
 /** SSE event for transaction committed. */
 message TransactionCommittedEvent {
 	/** Revision number, -1 if no changes. */

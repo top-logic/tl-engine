@@ -176,6 +176,20 @@ public sealed interface AgentEvent {
 	record CompactionCompleted(String runId, int turnNumber, Instant timestamp,
 			CompactionResult result) implements AgentEvent {}
 
+	// ---------- Delegation ----------
+
+	/**
+	 * Wrapper for child-agent events forwarded to the parent's listener chain.
+	 *
+	 * <p>
+	 * The {@code delegationToolCallId} is the parent agent's tool call ID for the
+	 * {@code delegate_to_*} tool, enabling the SSE handler and browser to route child events to
+	 * the correct delegation container.
+	 * </p>
+	 */
+	record DelegatedEvent(String runId, int turnNumber, Instant timestamp,
+			String delegationToolCallId, AgentEvent childEvent) implements AgentEvent {}
+
 	// ---------- Errors ----------
 
 	/**

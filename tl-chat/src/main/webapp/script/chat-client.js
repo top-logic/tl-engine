@@ -227,6 +227,7 @@
 				provider_error: Handlers.onProviderError,
 				message_complete: Handlers.onMessageComplete,
 				user_interaction: Handlers.onUserInteraction,
+				delegation_event: Handlers.onDelegationEvent,
 				approval_mode: Handlers.onApprovalMode,
 			};
 
@@ -397,6 +398,53 @@
 		},
 
 		onApprovalMode(data) { /* Track mode changes */ },
+
+		onDelegationEvent(data) {
+			const delId = data.delegationToolCallId;
+			const del = Store.currentRun ? Store.currentRun.delegations.get(delId) : null;
+			if (!del) return;
+
+			const innerType = data.eventType;
+			const inner = typeof data.eventData === 'string' ? JSON.parse(data.eventData) : data.eventData;
+
+			if (innerType === 'tool_started') {
+				del.childToolCallIds.push(inner.toolCallId);
+				Store.addToolCall(inner.toolCallId, inner.toolName, inner.argsJson);
+				Tools.renderChildToolCall(delId, inner.toolCallId);
+			} else if (innerType === 'tool_completed') {
+				Store.completeToolCall(inner.toolCallId, inner.result, inner.durationMs);
+				Tools.updateToolCall(inner.toolCallId);
+			} else if (innerType === 'tool_failed') {
+				Store.failToolCall(inner.toolCallId, inner.errorMessage, inner.durationMs);
+				Tools.updateToolCall(inner.toolCallId);
+			} else if (innerType === 'text_delta') {
+				if (!del.textBuffer) del.textBuffer = '';
+				del.textBuffer += inner.text;
+				Render._updateDelegationText(delId);
+			} else if (innerType === 'thinking_delta') {
+				if (!del.thinkingBuffer) del.thinkingBuffer = '';
+				del.thinkingBuffer += inner.text;
+			} else if (innerType === 'approval_required') {
+				State.set(State.AWAITING_APPROVAL);
+				Approval.showPrompt(inner);
+				Render.updateInputState();
+			} else if (innerType === 'approval_resolved') {
+				Approval.resolvePrompt(inner);
+				if (State.get() === State.AWAITING_APPROVAL) {
+					State.set(State.STREAMING);
+					Render.updateInputState();
+				}
+			} else if (innerType === 'turn_completed' && inner.turnUsage) {
+				if (!del.tokenUsage) del.tokenUsage = { inputTokens: 0, outputTokens: 0, thinkingTokens: 0 };
+				del.tokenUsage.inputTokens += inner.turnUsage.inputTokens || 0;
+				del.tokenUsage.outputTokens += inner.turnUsage.outputTokens || 0;
+				del.tokenUsage.thinkingTokens += inner.turnUsage.thinkingTokens || 0;
+				Render._updateDelegationHeader(delId);
+			} else if (innerType === 'run_completed' && inner.totalUsage) {
+				del.totalUsage = inner.totalUsage;
+				Render._updateDelegationHeader(delId);
+			}
+		},
 	};
 
 	// ========================================================================
@@ -647,6 +695,33 @@
 			if (tokensEl && Store.currentRun && Store.currentRun.cumulativeTokens > 0) {
 				tokensEl.textContent = Utils.formatTokens(Store.currentRun.cumulativeTokens) + ' tokens';
 				tokensEl._usage = Store.currentRun.turnUsage;
+			}
+		},
+
+		_updateDelegationText(delegationToolCallId) {
+			const root = this._root || document;
+			const delEl = root.querySelector('[data-tool-call-id="' + delegationToolCallId + '"]');
+			if (!delEl) return;
+			const textEl = delEl.querySelector('.tl-chat-delegation-text');
+			if (!textEl) return;
+			const del = Store.currentRun.delegations.get(delegationToolCallId);
+			if (!del || !del.textBuffer) return;
+			textEl.innerHTML = Utils.renderMarkdown(del.textBuffer);
+			this._scrollToBottom();
+		},
+
+		_updateDelegationHeader(delegationToolCallId) {
+			const root = this._root || document;
+			const delEl = root.querySelector('[data-tool-call-id="' + delegationToolCallId + '"]');
+			if (!delEl) return;
+			const tokensEl = delEl.querySelector('.tl-chat-delegation-tokens');
+			if (!tokensEl) return;
+			const del = Store.currentRun.delegations.get(delegationToolCallId);
+			if (!del) return;
+			const usage = del.totalUsage || del.tokenUsage;
+			if (usage) {
+				const total = (usage.inputTokens || 0) + (usage.outputTokens || 0) + (usage.thinkingTokens || 0);
+				tokensEl.textContent = Utils.formatTokens(total) + ' tokens';
 			}
 		},
 
@@ -913,14 +988,41 @@
 			header.innerHTML =
 				'<span class="tl-chat-status-dot running"></span>' +
 				'<span>Agent: ' + Utils.escapeHtml(del.toAgent) + '</span>' +
-				'<span class="tl-chat-tool-duration"></span>';
+				'<span class="tl-chat-delegation-tokens"></span>' +
+				'<span class="tl-chat-tool-duration"></span>' +
+				'<span class="tl-chat-tool-chevron">&#9654;</span>';
 			el.appendChild(header);
 
 			const childContainer = document.createElement('div');
 			childContainer.className = 'tl-chat-delegation-tools';
 			el.appendChild(childContainer);
 
+			const textEl = document.createElement('div');
+			textEl.className = 'tl-chat-delegation-text';
+			childContainer.appendChild(textEl);
+
+			let expanded = true;
+			header.addEventListener('click', () => {
+				expanded = !expanded;
+				childContainer.style.display = expanded ? '' : 'none';
+				header.querySelector('.tl-chat-tool-chevron').classList.toggle('expanded', expanded);
+			});
+
 			container.appendChild(el);
+		},
+
+		renderChildToolCall(delegationToolCallId, childToolCallId) {
+			const root = Render._root || document;
+			const delEl = root.querySelector('[data-tool-call-id="' + delegationToolCallId + '"]');
+			if (!delEl) return;
+			const childContainer = delEl.querySelector('.tl-chat-delegation-tools');
+			if (!childContainer) return;
+
+			const tc = Store.currentRun.toolCalls.get(childToolCallId);
+			if (!tc) return;
+
+			this._renderTool(childContainer, childToolCallId, tc);
+			Render._scrollToBottom();
 		},
 
 		updateToolCall(toolCallId) {

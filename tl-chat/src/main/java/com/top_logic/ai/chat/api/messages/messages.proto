@@ -864,6 +864,9 @@ message DelegationPartDto {
 
 	/** Duration of the delegation in milliseconds. */
 	long durationMs;
+
+	/** Nested child parts from the sub-agent's execution. */
+	repeated PersistedPart childParts;
 }
 
 /** System event part. */

@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.top_logic.ai.chat.api.messages.ApprovalPartDto;
 import com.top_logic.ai.chat.api.messages.CompactionPartDto;
@@ -204,6 +205,11 @@ public final class ConversationLogSerializer {
 			data.setResultSummary(nullToEmpty(dp.resultSummary()));
 			data.setChildSessionId(nullToEmpty(dp.childSessionId()));
 			data.setDurationMs(dp.durationMs());
+			if (dp.childParts() != null) {
+				for (Part childPart : dp.childParts()) {
+					data.addChildPart(toPartDto(childPart));
+				}
+			}
 			dto.setDelegationData(data);
 		} else if (part instanceof Part.SystemPart sp) {
 			dto.setType(TYPE_SYSTEM);
@@ -294,12 +300,17 @@ public final class ConversationLogSerializer {
 			}
 			case TYPE_DELEGATION: {
 				DelegationPartDto data = dto.getDelegationData();
+				List<Part> childParts = new ArrayList<>();
+				for (PersistedPart childDto : data.getChildParts()) {
+					childParts.add(fromPartDto(childDto));
+				}
 				return new Part.DelegationPart(
 					id, timestamp,
 					emptyToNull(data.getFromAgent()),
 					emptyToNull(data.getToAgent()),
 					emptyToNull(data.getInputSummary()),
 					emptyToNull(data.getResultSummary()),
+					childParts,
 					emptyToNull(data.getChildSessionId()),
 					data.getDurationMs());
 			}

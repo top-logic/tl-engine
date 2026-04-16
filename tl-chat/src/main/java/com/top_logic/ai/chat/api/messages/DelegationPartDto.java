@@ -33,6 +33,9 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** @see #getDurationMs() */
 	public static final String DURATION_MS__PROP = "durationMs";
 
+	/** @see #getChildParts() */
+	public static final String CHILD_PARTS__PROP = "childParts";
+
 	private String _fromAgent = "";
 
 	private String _toAgent = "";
@@ -44,6 +47,8 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	private String _childSessionId = "";
 
 	private long _durationMs = 0L;
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> _childParts = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link DelegationPartDto} instance.
@@ -174,6 +179,48 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		_durationMs = value;
 	}
 
+	/**
+	 * Nested child parts from the sub-agent's execution.
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> getChildParts() {
+		return _childParts;
+	}
+
+	/**
+	 * @see #getChildParts()
+	 */
+	public com.top_logic.ai.chat.api.messages.DelegationPartDto setChildParts(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedPart> value) {
+		internalSetChildParts(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getChildParts()} without chain call utility. */
+	protected final void internalSetChildParts(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedPart> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'childParts' cannot be null.");
+		_childParts.clear();
+		_childParts.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getChildParts()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.DelegationPartDto addChildPart(com.top_logic.ai.chat.api.messages.PersistedPart value) {
+		internalAddChildPart(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addChildPart(com.top_logic.ai.chat.api.messages.PersistedPart)} without chain call utility. */
+	protected final void internalAddChildPart(com.top_logic.ai.chat.api.messages.PersistedPart value) {
+		_childParts.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getChildParts()} list.
+	 */
+	public final void removeChildPart(com.top_logic.ai.chat.api.messages.PersistedPart value) {
+		_childParts.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return DELEGATION_PART_DTO__TYPE;
@@ -187,7 +234,8 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			INPUT_SUMMARY__PROP, 
 			RESULT_SUMMARY__PROP, 
 			CHILD_SESSION_ID__PROP, 
-			DURATION_MS__PROP);
+			DURATION_MS__PROP, 
+			CHILD_PARTS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -218,6 +266,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case RESULT_SUMMARY__PROP: return getResultSummary();
 			case CHILD_SESSION_ID__PROP: return getChildSessionId();
 			case DURATION_MS__PROP: return getDurationMs();
+			case CHILD_PARTS__PROP: return getChildParts();
 			default: return null;
 		}
 	}
@@ -231,6 +280,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case RESULT_SUMMARY__PROP: internalSetResultSummary((String) value); break;
 			case CHILD_SESSION_ID__PROP: internalSetChildSessionId((String) value); break;
 			case DURATION_MS__PROP: internalSetDurationMs((long) value); break;
+			case CHILD_PARTS__PROP: internalSetChildParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedPart.class, value)); break;
 		}
 	}
 
@@ -261,6 +311,12 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		out.value(getChildSessionId());
 		out.name(DURATION_MS__PROP);
 		out.value(getDurationMs());
+		out.name(CHILD_PARTS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.PersistedPart x : getChildParts()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -272,6 +328,16 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case RESULT_SUMMARY__PROP: setResultSummary(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CHILD_SESSION_ID__PROP: setChildSessionId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DURATION_MS__PROP: setDurationMs(in.nextLong()); break;
+			case CHILD_PARTS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.PersistedPart.readPersistedPart(in));
+				}
+				in.endArray();
+				setChildParts(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

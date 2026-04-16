@@ -14,7 +14,6 @@ package com.top_logic.ai.service.tools.task;
  * execution and cleared afterwards.
  * </p>
  *
- * @see com.top_logic.ai.service.tools.ToolCallTracking
  */
 public class TaskStoreBinding {
 

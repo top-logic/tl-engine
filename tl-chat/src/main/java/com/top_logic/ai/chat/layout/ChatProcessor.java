@@ -39,7 +39,6 @@ import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.scripting.Converters;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.ai.service.tools.task.TaskStore;
 import com.top_logic.ai.service.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;

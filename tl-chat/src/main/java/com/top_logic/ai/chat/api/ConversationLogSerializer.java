@@ -6,10 +6,8 @@
 package com.top_logic.ai.chat.api;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.List;
 
 import com.top_logic.ai.chat.api.messages.ApprovalPartDto;
 import com.top_logic.ai.chat.api.messages.CompactionPartDto;

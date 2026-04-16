@@ -24,11 +24,16 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getLastModel() */
 	public static final String LAST_MODEL__PROP = "lastModel";
 
+	/** @see #getApprovalMode() */
+	public static final String APPROVAL_MODE__PROP = "approvalMode";
+
 	private final java.util.List<String> _approvedTools = new java.util.ArrayList<>();
 
 	private com.top_logic.ai.chat.api.messages.TokenUsageDto _cumulativeUsage = null;
 
 	private String _lastModel = "";
+
+	private String _approvalMode = "";
 
 	/**
 	 * Creates a {@link SessionMetadata} instance.
@@ -127,6 +132,26 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		_lastModel = value;
 	}
 
+	/**
+	 * Current approval mode (e.g. AUTO_APPROVE, ALWAYS_ASK).
+	 */
+	public final String getApprovalMode() {
+		return _approvalMode;
+	}
+
+	/**
+	 * @see #getApprovalMode()
+	 */
+	public com.top_logic.ai.chat.api.messages.SessionMetadata setApprovalMode(String value) {
+		internalSetApprovalMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getApprovalMode()} without chain call utility. */
+	protected final void internalSetApprovalMode(String value) {
+		_approvalMode = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SESSION_METADATA__TYPE;
@@ -137,7 +162,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		java.util.List<String> local = java.util.Arrays.asList(
 			APPROVED_TOOLS__PROP, 
 			CUMULATIVE_USAGE__PROP, 
-			LAST_MODEL__PROP);
+			LAST_MODEL__PROP, 
+			APPROVAL_MODE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -165,6 +191,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case APPROVED_TOOLS__PROP: return getApprovedTools();
 			case CUMULATIVE_USAGE__PROP: return getCumulativeUsage();
 			case LAST_MODEL__PROP: return getLastModel();
+			case APPROVAL_MODE__PROP: return getApprovalMode();
 			default: return null;
 		}
 	}
@@ -175,6 +202,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case APPROVED_TOOLS__PROP: internalSetApprovedTools(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case CUMULATIVE_USAGE__PROP: internalSetCumulativeUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
 			case LAST_MODEL__PROP: internalSetLastModel((String) value); break;
+			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
 		}
 	}
 
@@ -205,6 +233,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		}
 		out.name(LAST_MODEL__PROP);
 		out.value(getLastModel());
+		out.name(APPROVAL_MODE__PROP);
+		out.value(getApprovalMode());
 	}
 
 	@Override
@@ -222,6 +252,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			break;
 			case CUMULATIVE_USAGE__PROP: setCumulativeUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case LAST_MODEL__PROP: setLastModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -10,9 +10,9 @@ import java.util.Map;
 
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.service.scripting.AIScriptFunctions;
-import com.top_logic.ai.service.tools.ToolCallTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.tl.ai.core.session.Part;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -61,8 +61,8 @@ public class JudgeClient {
 	 *        Complete model XML (authoritative source of truth)
 	 * @param agentAnswer
 	 *        The agent's actual answer
-	 * @param toolTrace
-	 *        List of tool calls with arguments and result references
+	 * @param toolCalls
+	 *        List of tool call parts from the conversation log
 	 * @param toolResults
 	 *        Map of result references to minimized tool result data
 	 * @param judgeSystemPrompt
@@ -73,7 +73,7 @@ public class JudgeClient {
 		String userPrompt,
 		String modelXml,
 		String agentAnswer,
-		List<ToolCallTracker.ToolCall> toolTrace,
+		List<Part.ToolCallPart> toolCalls,
 		Map<String, Object> toolResults,
 		String judgeSystemPrompt
 	) {
@@ -82,7 +82,7 @@ public class JudgeClient {
 			() -> {
 				try {
 					String judgeUserPrompt = buildPromptBasedUserMessageWithToolTrace(
-						userPrompt, modelXml, agentAnswer, toolTrace, toolResults);
+						userPrompt, modelXml, agentAnswer, toolCalls, toolResults);
 
 					List<Object> messages = List.of(
 						Map.of("role", "system", "content", judgeSystemPrompt),
@@ -105,7 +105,7 @@ public class JudgeClient {
 		String userPrompt,
 		String modelXml,
 		String agentAnswer,
-		List<ToolCallTracker.ToolCall> toolTrace,
+		List<Part.ToolCallPart> toolCalls,
 		Map<String, Object> toolResults
 	) {
 		try {
@@ -120,12 +120,11 @@ public class JudgeClient {
 				// Write tool_trace array
 				json.name("tool_trace");
 				json.beginArray();
-				for (ToolCallTracker.ToolCall call : toolTrace) {
+				for (Part.ToolCallPart call : toolCalls) {
 					json.beginObject();
-					json.name("tool").value(call.getTool());
-					json.name("args");
-					writeJsonValue(json, call.getArgs());
-					json.name("result_ref").value(call.getResultRef());
+					json.name("tool").value(call.toolName());
+					json.name("args").value(call.argsJson());
+					json.name("result_ref").value(call.id());
 					json.endObject();
 				}
 				json.endArray();

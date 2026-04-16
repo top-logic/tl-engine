@@ -24,6 +24,8 @@ import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -347,6 +349,22 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 		return ThreadContextManager.inSystemInteraction(
 			ModelExplorerScoringTestBase.class,
 			() -> AIScriptFunctions.agentChat("ModelExplorer", prompt));
+	}
+
+	/**
+	 * Runs the ModelExplorer agent with the given prompt and records events in the conversation log.
+	 *
+	 * @param prompt
+	 *        The user prompt to send to the agent.
+	 * @param log
+	 *        The conversation log to record events into.
+	 * @return The agent's answer as a string.
+	 */
+	protected String runModelExplorer(String prompt, ConversationLog log) {
+		ConversationLogListener listener = new ConversationLogListener(log);
+		return ThreadContextManager.inSystemInteraction(
+			ModelExplorerScoringTestBase.class,
+			() -> AIScriptFunctions.agentChatWithListener("ModelExplorer", prompt, listener));
 	}
 
 	/**

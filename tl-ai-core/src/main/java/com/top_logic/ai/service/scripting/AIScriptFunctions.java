@@ -23,6 +23,7 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tl.ai.core.agent.AgentConfig;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -266,6 +267,27 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return The response from the AI Agent.
 	 */
 	public static String agentChat(String agentName, String userMessage) {
+		return agentChatWithListener(agentName, userMessage, event -> { });
+	}
+
+	/**
+	 * Call an AI Agent from the Registry with an event listener.
+	 *
+	 * <p>
+	 * Not exposed as a TL-Script function — uses a distinct name to avoid ambiguity in the script
+	 * registry.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        The agent name from the Agent Registry.
+	 * @param userMessage
+	 *        The user message to prompt the Agent with.
+	 * @param listener
+	 *        Receives progress events during the run.
+	 * @return The response from the AI Agent.
+	 */
+	public static String agentChatWithListener(String agentName, String userMessage,
+			AgentEventListener listener) {
 		AgentRegistry registry = AgentRegistry.getInstance();
 		if (registry == null) {
 			throw new RuntimeException("AgentRegistry is not available");
@@ -277,7 +299,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			Instant.now(),
 			List.of(new TextContent(userMessage))));
 
-		return registry.runAgent(agentName, conversation, null, event -> { });
+		return registry.runAgent(agentName, conversation, null, listener);
 	}
 
 	/**

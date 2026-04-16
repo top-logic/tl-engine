@@ -72,6 +72,17 @@ public class ServiceMethodByExpression implements ServiceMethod {
 			result = TLContextManager.inPersonContext(account, () -> inInteraction(arguments));
 		}
 
+		writeResponse(result, resp);
+	}
+
+	/**
+	 * Writes the given script result to the HTTP response.
+	 *
+	 * <p>
+	 * Package-private to allow direct unit testing.
+	 * </p>
+	 */
+	void writeResponse(Object result, HttpServletResponse resp) throws IOException {
 		String contentType;
 		String charset;
 		int status;

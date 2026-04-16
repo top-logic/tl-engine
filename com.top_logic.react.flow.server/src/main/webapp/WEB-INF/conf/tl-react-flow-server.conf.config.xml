@@ -10,5 +10,12 @@
 				</additional-files>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.react.flow.server.axis.AxisProviderService">
+			<instance>
+				<providers>
+					<provider class="com.top_logic.react.flow.server.axis.providers.DaysSinceEpochAxisProvider"/>
+				</providers>
+			</instance>
+		</config>
 	</services>
 </application>

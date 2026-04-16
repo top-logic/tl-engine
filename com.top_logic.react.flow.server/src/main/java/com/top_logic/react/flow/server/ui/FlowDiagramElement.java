@@ -39,6 +39,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.react.flow.callback.DiagramHandler;
+import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.server.control.FlowDiagramControl;
 import com.top_logic.util.model.ModelService;
@@ -241,6 +242,9 @@ public class FlowDiagramElement implements UIElement {
 		Object result = _createChart.executeWith(args);
 		if (result instanceof Diagram) {
 			return (Diagram) result;
+		}
+		if (result instanceof Box) {
+			return Diagram.create().setRoot((Box) result);
 		}
 		return Diagram.create();
 	}

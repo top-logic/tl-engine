@@ -40,8 +40,6 @@ import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.ai.service.tools.ToolCallTracker;
-import com.top_logic.ai.service.tools.TraceEntry;
 import com.top_logic.ai.service.tools.task.TaskStore;
 import com.top_logic.ai.service.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;
@@ -290,28 +288,6 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Converts a {@link TraceEntry} to a {@link ChatTimelineEvent}.
-	 */
-	static ChatTimelineEvent toChatTimelineEvent(TraceEntry entry, ToolCallTracker tracker) {
-		if (entry instanceof TraceEntry.ToolCallTraceEntry tc) {
-			String resultJson = tracker.getRawResultJsons().get(tc.resultRef());
-			ChatToolCall chatToolCall = new ChatToolCall(tc.toolName(), tc.args(), resultJson);
-			return ChatTimelineEvent.toolCall(chatToolCall, tc.durationMs());
-		}
-		if (entry instanceof TraceEntry.AgentCallTraceEntry ac) {
-			return ChatTimelineEvent.agentCall(ac.fromAgent(), ac.toAgent(), ac.inputSummary(), ac.resultSummary());
-		}
-		if (entry instanceof TraceEntry.MutableAgentCallTraceEntry mac) {
-			return ChatTimelineEvent.agentCallWithDynamicResult(mac.fromAgent(), mac.toAgent(), mac.inputSummary(),
-				mac::resultSummary);
-		}
-		if (entry instanceof TraceEntry.OutputTraceEntry out) {
-			return ChatTimelineEvent.output(out.text());
-		}
-		return null;
-	}
-
-	/**
 	 * Applies poll updates for the given state to chat and {@code taskTracker}. Clears tracker and
 	 * cancels polling when processing is done.
 	 *
@@ -327,32 +303,10 @@ public class ChatProcessor {
 		}
 
 		// Synchronize on the state to prevent concurrent calls (from SSE handler poll,
-		// /chat/updates servlet, or overlapping SSE reconnects) from reading the same
-		// {@code lastSeenToolCallCount} and adding duplicate timeline events.
+		// /chat/updates servlet, or overlapping SSE reconnects) from double-processing.
 		synchronized (state) {
 			boolean hasUpdates = false;
 			String currentTaskId = state.getCurrentTaskId();
-
-			// Sync timeline events FIRST so the task snapshot (below) includes all tool calls.
-			// Previously this ran after the snapshot, causing completed tasks to be persisted
-			// with an empty timeline when tool calls and completion arrived in the same poll cycle.
-			ToolCallTracker tracker = state.getToolCallTracker();
-			if (currentTaskId != null && tracker != null) {
-				List<TraceEntry> timeline = tracker.getTimeline();
-				int currentCount = timeline.size();
-				int lastSeen = state.getLastSeenToolCallCount();
-				if (currentCount > lastSeen) {
-					for (int i = lastSeen; i < currentCount; i++) {
-						TraceEntry entry = timeline.get(i);
-						ChatTimelineEvent chatEv = toChatTimelineEvent(entry, tracker);
-						if (chatEv != null) {
-							taskTracker.addTimelineEvent(currentTaskId, chatEv);
-						}
-					}
-					state.setLastSeenToolCallCount(currentCount);
-					hasUpdates = true;
-				}
-			}
 
 			// Check for new messages (agent response when task completes)
 			List<ChatMessage> newMessages = state.consumePendingMessages();
@@ -361,12 +315,10 @@ public class ChatProcessor {
 					ChatTask task = taskTracker.getTask(currentTaskId);
 					if (task != null) {
 						ChatTask.Builder b = task.toBuilder()
-							.withTotalUsage(resolveTokenUsage(tracker, taskTracker));
-						if (tracker != null) {
-							String thinking = tracker.getThinkingText();
-							if (!thinking.isEmpty()) {
-								b.withThinkingText(thinking);
-							}
+							.withTotalUsage(resolveTokenUsage(state, taskTracker));
+						String thinking = resolveThinkingText(state);
+						if (!thinking.isEmpty()) {
+							b.withThinkingText(thinking);
 						}
 						task = b.build();
 					}
@@ -386,12 +338,10 @@ public class ChatProcessor {
 						ChatTask task = taskTracker.getTask(currentTaskId);
 						if (task != null) {
 							ChatTask.Builder b = task.toBuilder()
-								.withTotalUsage(resolveTokenUsage(tracker, taskTracker));
-							if (tracker != null) {
-								String thinking = tracker.getThinkingText();
-								if (!thinking.isEmpty()) {
-									b.withThinkingText(thinking);
-								}
+								.withTotalUsage(resolveTokenUsage(state, taskTracker));
+							String thinking = resolveThinkingText(state);
+							if (!thinking.isEmpty()) {
+								b.withThinkingText(thinking);
 							}
 							task = b.build();
 						}
@@ -410,14 +360,40 @@ public class ChatProcessor {
 		}
 	}
 
-	private static TokenUsage resolveTokenUsage(ToolCallTracker toolTracker, TaskProgressTracker taskTracker) {
-		if (toolTracker != null) {
-			long[] usage = toolTracker.getTotalUsage();
-			if (usage != null && usage.length == 5) {
-				return new TokenUsage((int) usage[0], (int) usage[1], (int) usage[2], (int) usage[3], (int) usage[4]);
+	private static TokenUsage resolveTokenUsage(AIProcessingState state, TaskProgressTracker taskTracker) {
+		ConversationLog convLog = state.getConversationLog();
+		if (convLog != null) {
+			List<Turn> turns = convLog.turns();
+			if (!turns.isEmpty()) {
+				Turn lastTurn = turns.get(turns.size() - 1);
+				TokenUsage usage = lastTurn.cumulativeUsage();
+				if (usage != null && !usage.equals(TokenUsage.EMPTY)) {
+					return usage;
+				}
 			}
 		}
 		return taskTracker.getCumulativeUsage();
+	}
+
+	private static String resolveThinkingText(AIProcessingState state) {
+		ConversationLog convLog = state.getConversationLog();
+		if (convLog == null) {
+			return "";
+		}
+		List<Turn> turns = convLog.turns();
+		if (turns.isEmpty()) {
+			return "";
+		}
+		Turn lastTurn = turns.get(turns.size() - 1);
+		StringBuilder sb = null;
+		for (Part part : lastTurn.assistantParts()) {
+			if (part instanceof Part.ThinkingPart tp) {
+				if (sb == null) sb = new StringBuilder();
+				if (sb.length() > 0) sb.append("\n");
+				sb.append(tp.text());
+			}
+		}
+		return sb != null ? sb.toString() : "";
 	}
 
 	/**
@@ -787,10 +763,7 @@ public class ChatProcessor {
 		// Current task ID for progress tracking
 		private volatile String _currentTaskId = null;
 
-		// Tool call tracking for real-time updates (kept for applyPollUpdates compatibility)
-		private volatile ToolCallTracker _toolCallTracker = null;
 		private volatile TaskStore _taskStore = null;
-		private final AtomicInteger _lastSeenToolCallCount = new AtomicInteger(0);
 
 		// ConversationLog-based recording
 		private volatile ConversationLog _conversationLog = null;
@@ -909,28 +882,6 @@ public class ChatProcessor {
 		}
 
 		/**
-		 * Sets the tool call tracker for monitoring real-time tool call events.
-		 *
-		 * @param tracker
-		 *        The tool call tracker; may be null.
-		 */
-		public void setToolCallTracker(ToolCallTracker tracker) {
-			_toolCallTracker = tracker;
-			if (tracker != null) {
-				// Reset only when starting a new processing round (non-null tracker).
-				// Do NOT reset when clearing (null) to avoid a race where the SSE poller
-				// reads the tracker reference before it becomes null but reads the count
-				// after it was reset to 0, causing all events to be re-added as duplicates.
-				_lastSeenToolCallCount.set(0);
-			}
-		}
-
-		/** The tool call tracker; may be null. */
-		public ToolCallTracker getToolCallTracker() {
-			return _toolCallTracker;
-		}
-
-		/**
 		 * Sets the task store for agent task tracking.
 		 *
 		 * @param store
@@ -943,21 +894,6 @@ public class ChatProcessor {
 		/** The task store; may be {@code null}. */
 		public TaskStore getTaskStore() {
 			return _taskStore;
-		}
-
-		/** The number of tool calls last seen by the polling mechanism. */
-		public int getLastSeenToolCallCount() {
-			return _lastSeenToolCallCount.get();
-		}
-
-		/**
-		 * Updates the last seen tool call count.
-		 *
-		 * @param count
-		 *        The new count.
-		 */
-		public void setLastSeenToolCallCount(int count) {
-			_lastSeenToolCallCount.set(count);
 		}
 
 		/** The conversation log for structured event recording; may be null. */

@@ -13,7 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.config.ConfigSchemaTool;
 import com.top_logic.ai.service.tools.model.messages.AnnotationListResponse;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
@@ -191,12 +190,8 @@ public class ModelAnnotationBrowserTool {
 					return buildResponse(responseData, annotations);
 				});
 
-			// Track and log
-			Map<String, Object> args = new HashMap<>();
-			args.put("targetRef", targetRef);
-			args.put("includeInherited", includeInherited);
-			ToolCallTracking.recordIfTracking("getCurrentAnnotations", args, result);
-			Logger.info(ToolCallTracking.formatToolCall("getCurrentAnnotations", args, result),
+			Logger.info("getCurrentAnnotations(targetRef=\"" + targetRef + "\", includeInherited=" + includeInherited
+				+ ") -> " + (result != null ? result.length() : 0) + " chars",
 				ModelAnnotationBrowserTool.class);
 			return result;
 

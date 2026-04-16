@@ -379,7 +379,6 @@ public class ChatServlet extends HttpServlet {
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(true));
 
-		// Sync timeline events from ToolCallTracker to TaskProgressTracker before returning updates
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state != null) {
 			ChatProcessor.applyPollUpdates(state, tracker.getChat(), tracker);

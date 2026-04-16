@@ -10,7 +10,6 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.top_logic.ai.service.tools.ToolCallTracking;
 import com.top_logic.ai.service.tools.model.messages.AnnotationEditorResponse;
 import com.top_logic.ai.service.tools.util.DataClassSerializer;
 import com.top_logic.basic.CalledByReflection;
@@ -101,9 +100,8 @@ public class ModelAnnotationEditorTool {
 				ModelAnnotationEditorTool.class,
 				() -> doSetAnnotation(targetRef, configInterfaceName, configJson));
 
-			Map<String, Object> args = buildArgs(targetRef, configInterfaceName);
-			ToolCallTracking.recordIfTracking("addAnnotation", args, result);
-			Logger.info(ToolCallTracking.formatToolCall("addAnnotation", args, result),
+			Logger.info("addAnnotation(targetRef=\"" + targetRef + "\", configInterfaceName=\""
+				+ configInterfaceName + "\") -> " + (result != null ? result.length() : 0) + " chars",
 				ModelAnnotationEditorTool.class);
 			return result;
 

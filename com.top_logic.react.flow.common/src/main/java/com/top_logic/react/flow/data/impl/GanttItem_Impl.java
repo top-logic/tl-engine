@@ -7,6 +7,8 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 
 	private String _id = "";
 
+	private transient java.lang.Object _userObject = null;
+
 	private String _rowId = "";
 
 	private com.top_logic.react.flow.data.Box _box = null;
@@ -42,6 +44,29 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		_listener.beforeSet(this, ID__PROP, value);
 		_id = value;
 		_listener.afterChanged(this, ID__PROP);
+	}
+
+	@Override
+	public final java.lang.Object getUserObject() {
+		return _userObject;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttItem setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getUserObject()} without chain call utility. */
+	protected final void internalSetUserObject(java.lang.Object value) {
+		_listener.beforeSet(this, USER_OBJECT__PROP, value);
+		_userObject = value;
+		_listener.afterChanged(this, USER_OBJECT__PROP);
+	}
+
+	@Override
+	public final boolean hasUserObject() {
+		return _userObject != null;
 	}
 
 	@Override
@@ -161,6 +186,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
+			USER_OBJECT__PROP, 
 			ROW_ID__PROP, 
 			BOX__PROP, 
 			CAN_MOVE_TIME__PROP, 
@@ -174,7 +200,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
-				));
+				USER_OBJECT__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -192,6 +218,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 	public Object get(String field) {
 		switch (field) {
 			case ID__PROP: return getId();
+			case USER_OBJECT__PROP: return getUserObject();
 			case ROW_ID__PROP: return getRowId();
 			case BOX__PROP: return getBox();
 			case CAN_MOVE_TIME__PROP: return isCanMoveTime();
@@ -206,6 +233,7 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 	public void set(String field, Object value) {
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
+			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case ROW_ID__PROP: internalSetRowId((String) value); break;
 			case BOX__PROP: internalSetBox((com.top_logic.react.flow.data.Box) value); break;
 			case CAN_MOVE_TIME__PROP: internalSetCanMoveTime((boolean) value); break;
@@ -241,6 +269,13 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		switch (field) {
 			case ID__PROP: {
 				out.value(getId());
+				break;
+			}
+			case USER_OBJECT__PROP: {
+				if (hasUserObject()) {
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case ROW_ID__PROP: {

@@ -32,6 +32,9 @@ public interface GanttLineDecoration extends GanttDecoration {
 	com.top_logic.react.flow.data.GanttLineDecoration setId(String value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttLineDecoration setUserObject(java.lang.Object value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttLineDecoration setColor(String value);
 
 	@Override

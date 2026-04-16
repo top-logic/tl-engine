@@ -31,6 +31,9 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	/** @see #getId() */
 	String ID__PROP = "id";
 
+	/** @see #getUserObject() */
+	String USER_OBJECT__PROP = "userObject";
+
 	/** @see #getColor() */
 	String COLOR__PROP = "color";
 
@@ -55,6 +58,23 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	 * @see #getId()
 	 */
 	com.top_logic.react.flow.data.GanttDecoration setId(String value);
+
+	/**
+	 * Application-defined business object backing this decoration.
+	 * Server-only (transient); used as the identity from which the technical
+	 * {@link #getId() id} is derived for client-side cross-references.
+	 */
+	java.lang.Object getUserObject();
+
+	/**
+	 * @see #getUserObject()
+	 */
+	com.top_logic.react.flow.data.GanttDecoration setUserObject(java.lang.Object value);
+
+	/**
+	 * Checks, whether {@link #getUserObject()} has a value.
+	 */
+	boolean hasUserObject();
 
 	/**
 	 * CSS-style color.

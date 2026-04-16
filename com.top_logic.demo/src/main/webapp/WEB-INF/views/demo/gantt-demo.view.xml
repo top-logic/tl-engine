@@ -8,19 +8,19 @@
 		<flow-diagram>
 			<inputs/>
 			<createChart><![CDATA[{
-r_design = reactFlowGanttRow(id: "r-design", label: reactFlowBorder(reactFlowPadding(reactFlowText("Design"),       all: 4)));
-r_impl   = reactFlowGanttRow(id: "r-impl",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Implementation"), all: 4)));
-r_test   = reactFlowGanttRow(id: "r-test",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Testing"),        all: 4)));
+r_design = reactFlowGanttRow(model: "row:design", label: reactFlowBorder(reactFlowPadding(reactFlowText("Design"),         all: 4)));
+r_impl   = reactFlowGanttRow(model: "row:impl",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Implementation"), all: 4)));
+r_test   = reactFlowGanttRow(model: "row:test",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Testing"),        all: 4)));
 
-spec  = reactFlowGanttSpan(id: "spec",  rowId: "r-design", box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20461);
-build = reactFlowGanttSpan(id: "build", rowId: "r-impl",   box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20461, end: 20478);
-beta  = reactFlowGanttMilestone(id: "beta", rowId: "r-test", box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"), all: 3)), at: 20478);
-qa    = reactFlowGanttSpan(id: "qa",   rowId: "r-test",   box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20478, end: 20490);
+spec  = reactFlowGanttSpan(model: "task:spec",  row: $r_design, box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20461);
+build = reactFlowGanttSpan(model: "task:build", row: $r_impl,   box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20461, end: 20478);
+beta  = reactFlowGanttMilestone(model: "task:beta", row: $r_test, box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"), all: 3)), at: 20478);
+qa    = reactFlowGanttSpan(model: "task:qa",   row: $r_test,   box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20478, end: 20490);
 
-e1 = reactFlowGanttEdge(id: "e1", sourceItemId: "spec",  sourceEndpoint: "END",   targetItemId: "build", targetEndpoint: "START", enforce: "STRICT");
-e2 = reactFlowGanttEdge(id: "e2", sourceItemId: "build", sourceEndpoint: "END",   targetItemId: "beta",  targetEndpoint: "START", enforce: "WARN");
+e1 = reactFlowGanttEdge(model: "dep:spec->build", source: $spec,  sourceEndpoint: "END", target: $build, targetEndpoint: "START", enforce: "STRICT");
+e2 = reactFlowGanttEdge(model: "dep:build->beta", source: $build, sourceEndpoint: "END", target: $beta,  targetEndpoint: "START", enforce: "WARN");
 
-freeze = reactFlowGanttRangeDeco(id: "freeze", from: 20485, to: 20488, color: "rgba(255,100,100,0.3)", label: reactFlowText("Freeze"));
+freeze = reactFlowGanttRangeDeco(model: "deco:freeze", from: 20485, to: 20488, color: "rgba(255,100,100,0.3)", label: reactFlowText("Freeze"));
 
 axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20495, zoom: 20);
 

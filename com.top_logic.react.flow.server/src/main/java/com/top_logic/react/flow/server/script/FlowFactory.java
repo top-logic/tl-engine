@@ -1548,13 +1548,24 @@ public class FlowFactory extends TLScriptFunctions {
 		return edge;
 	}
 
+	/** Internal counter for ID generation (per JVM, stable across factory calls). */
+	private static final java.util.concurrent.atomic.AtomicLong GANTT_ID_COUNTER =
+		new java.util.concurrent.atomic.AtomicLong();
+
+	private static String nextGanttId(String prefix) {
+		return prefix + "-" + GANTT_ID_COUNTER.incrementAndGet();
+	}
+
 	@SideEffectFree
 	@Label("Create Gantt row")
 	public static GanttRow ganttRow(
-			@Mandatory String id,
+			@Mandatory Object model,
 			@Mandatory Box label,
 			List<GanttRow> children) {
-		GanttRow row = GanttRow.create().setId(id).setLabel(label);
+		GanttRow row = GanttRow.create()
+			.setId(nextGanttId("gr"))
+			.setUserObject(model)
+			.setLabel(label);
 		if (children != null) {
 			row.setChildren(children);
 		}
@@ -1564,8 +1575,8 @@ public class FlowFactory extends TLScriptFunctions {
 	@SideEffectFree
 	@Label("Create Gantt span item")
 	public static GanttSpan ganttSpan(
-			@Mandatory String id,
-			@Mandatory String rowId,
+			@Mandatory Object model,
+			@Mandatory GanttRow row,
 			@Mandatory Box box,
 			double start,
 			double end,
@@ -1576,7 +1587,10 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean canBeEdgeSource,
 			Boolean canBeEdgeTarget) {
 		GanttSpan span = GanttSpan.create()
-			.setId(id).setRowId(rowId).setBox(box)
+			.setId(nextGanttId("gi"))
+			.setUserObject(model)
+			.setRowId(row.getId())
+			.setBox(box)
 			.setStart(start).setEnd(end);
 		if (canMoveTime != null) span.setCanMoveTime(canMoveTime);
 		if (canMoveRow != null) span.setCanMoveRow(canMoveRow);
@@ -1590,8 +1604,8 @@ public class FlowFactory extends TLScriptFunctions {
 	@SideEffectFree
 	@Label("Create Gantt milestone item")
 	public static GanttMilestone ganttMilestone(
-			@Mandatory String id,
-			@Mandatory String rowId,
+			@Mandatory Object model,
+			@Mandatory GanttRow row,
 			@Mandatory Box box,
 			double at,
 			Boolean canMoveTime,
@@ -1599,7 +1613,10 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean canBeEdgeSource,
 			Boolean canBeEdgeTarget) {
 		GanttMilestone milestone = GanttMilestone.create()
-			.setId(id).setRowId(rowId).setBox(box)
+			.setId(nextGanttId("gi"))
+			.setUserObject(model)
+			.setRowId(row.getId())
+			.setBox(box)
 			.setAt(at);
 		if (canMoveTime != null) milestone.setCanMoveTime(canMoveTime);
 		if (canMoveRow != null) milestone.setCanMoveRow(canMoveRow);
@@ -1611,34 +1628,39 @@ public class FlowFactory extends TLScriptFunctions {
 	@SideEffectFree
 	@Label("Create Gantt edge")
 	public static GanttEdge ganttEdge(
-			@Mandatory String id,
-			@Mandatory String sourceItemId,
+			@Mandatory Object model,
+			@Mandatory GanttItem source,
 			@Mandatory GanttEndpoint sourceEndpoint,
-			@Mandatory String targetItemId,
+			@Mandatory GanttItem target,
 			@Mandatory GanttEndpoint targetEndpoint,
 			GanttEnforce enforce) {
 		return GanttEdge.create()
-			.setId(id)
-			.setSourceItemId(sourceItemId).setSourceEndpoint(sourceEndpoint)
-			.setTargetItemId(targetItemId).setTargetEndpoint(targetEndpoint)
+			.setId(nextGanttId("ge"))
+			.setUserObject(model)
+			.setSourceItemId(source.getId()).setSourceEndpoint(sourceEndpoint)
+			.setTargetItemId(target.getId()).setTargetEndpoint(targetEndpoint)
 			.setEnforce(enforce != null ? enforce : GanttEnforce.STRICT);
 	}
 
 	@SideEffectFree
 	@Label("Create Gantt line decoration")
 	public static GanttLineDecoration ganttLineDeco(
-			@Mandatory String id,
+			@Mandatory Object model,
 			double at,
 			String color,
 			Box label,
-			List<String> relevantFor,
+			List<GanttRow> relevantFor,
 			Boolean canMove) {
 		GanttLineDecoration deco = GanttLineDecoration.create()
-			.setId(id).setAt(at)
+			.setId(nextGanttId("gd"))
+			.setUserObject(model)
+			.setAt(at)
 			.setColor(color != null ? color : "#c02020")
 			.setLabel(label);
 		if (relevantFor != null) {
-			deco.setRelevantFor(relevantFor);
+			java.util.List<String> ids = new java.util.ArrayList<>(relevantFor.size());
+			for (GanttRow r : relevantFor) { ids.add(r.getId()); }
+			deco.setRelevantFor(ids);
 		}
 		if (canMove != null) deco.setCanMove(canMove);
 		return deco;
@@ -1647,20 +1669,24 @@ public class FlowFactory extends TLScriptFunctions {
 	@SideEffectFree
 	@Label("Create Gantt range decoration")
 	public static GanttRangeDecoration ganttRangeDeco(
-			@Mandatory String id,
+			@Mandatory Object model,
 			double from,
 			double to,
 			String color,
 			Box label,
-			List<String> relevantFor,
+			List<GanttRow> relevantFor,
 			Boolean canMove,
 			Boolean canResize) {
 		GanttRangeDecoration deco = GanttRangeDecoration.create()
-			.setId(id).setFrom(from).setTo(to)
+			.setId(nextGanttId("gd"))
+			.setUserObject(model)
+			.setFrom(from).setTo(to)
 			.setColor(color != null ? color : "rgba(255, 220, 120, 0.35)")
 			.setLabel(label);
 		if (relevantFor != null) {
-			deco.setRelevantFor(relevantFor);
+			java.util.List<String> ids = new java.util.ArrayList<>(relevantFor.size());
+			for (GanttRow r : relevantFor) { ids.add(r.getId()); }
+			deco.setRelevantFor(ids);
 		}
 		if (canMove != null) deco.setCanMove(canMove);
 		if (canResize != null) deco.setCanResize(canResize);

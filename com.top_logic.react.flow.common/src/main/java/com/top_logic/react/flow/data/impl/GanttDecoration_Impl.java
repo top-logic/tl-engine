@@ -7,6 +7,8 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 
 	private String _id = "";
 
+	private transient java.lang.Object _userObject = null;
+
 	private String _color = "";
 
 	private com.top_logic.react.flow.data.Box _label = null;
@@ -53,6 +55,29 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		_listener.beforeSet(this, ID__PROP, value);
 		_id = value;
 		_listener.afterChanged(this, ID__PROP);
+	}
+
+	@Override
+	public final java.lang.Object getUserObject() {
+		return _userObject;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttDecoration setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getUserObject()} without chain call utility. */
+	protected final void internalSetUserObject(java.lang.Object value) {
+		_listener.beforeSet(this, USER_OBJECT__PROP, value);
+		_userObject = value;
+		_listener.afterChanged(this, USER_OBJECT__PROP);
+	}
+
+	@Override
+	public final boolean hasUserObject() {
+		return _userObject != null;
 	}
 
 	@Override
@@ -151,6 +176,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
+			USER_OBJECT__PROP, 
 			COLOR__PROP, 
 			LABEL__PROP, 
 			CAN_MOVE__PROP, 
@@ -162,7 +188,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
-				));
+				USER_OBJECT__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -180,6 +206,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	public Object get(String field) {
 		switch (field) {
 			case ID__PROP: return getId();
+			case USER_OBJECT__PROP: return getUserObject();
 			case COLOR__PROP: return getColor();
 			case LABEL__PROP: return getLabel();
 			case CAN_MOVE__PROP: return isCanMove();
@@ -192,6 +219,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	public void set(String field, Object value) {
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
+			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case COLOR__PROP: internalSetColor((String) value); break;
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CAN_MOVE__PROP: internalSetCanMove((boolean) value); break;
@@ -225,6 +253,13 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		switch (field) {
 			case ID__PROP: {
 				out.value(getId());
+				break;
+			}
+			case USER_OBJECT__PROP: {
+				if (hasUserObject()) {
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case COLOR__PROP: {

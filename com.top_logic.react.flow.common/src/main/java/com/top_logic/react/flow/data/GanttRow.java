@@ -18,6 +18,9 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getId() */
 	String ID__PROP = "id";
 
+	/** @see #getUserObject() */
+	String USER_OBJECT__PROP = "userObject";
+
 	/** @see #getLabel() */
 	String LABEL__PROP = "label";
 
@@ -33,6 +36,23 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #getId()
 	 */
 	com.top_logic.react.flow.data.GanttRow setId(String value);
+
+	/**
+	 * Application-defined business object backing this row.
+	 * Server-only (transient); used as the identity from which the technical
+	 * {@link #getId() id} is derived for client-side cross-references.
+	 */
+	java.lang.Object getUserObject();
+
+	/**
+	 * @see #getUserObject()
+	 */
+	com.top_logic.react.flow.data.GanttRow setUserObject(java.lang.Object value);
+
+	/**
+	 * Checks, whether {@link #getUserObject()} has a value.
+	 */
+	boolean hasUserObject();
 
 	/**
 	 * Rendering content shown at the row header.

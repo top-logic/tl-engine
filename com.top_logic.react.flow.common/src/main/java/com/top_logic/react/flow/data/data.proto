@@ -906,6 +906,13 @@ message GanttRow {
 	string id;
 
 	/**
+	 * Application-defined business object backing this row.
+	 * Server-only (transient); used as the identity from which the technical
+	 * {@link #getId() id} is derived for client-side cross-references.
+	 */
+	transient java.lang.Object userObject;
+
+	/**
 	 * Rendering content shown at the row header.
 	 *
 	 * <p>
@@ -964,6 +971,13 @@ message GanttEdge {
 	/** Opaque identifier, unique within a {@link GanttLayout}. */
 	string id;
 
+	/**
+	 * Application-defined business object backing this edge.
+	 * Server-only (transient); used as the identity from which the technical
+	 * {@link #getId() id} is derived for client-side cross-references.
+	 */
+	transient java.lang.Object userObject;
+
 	/** ID of the source item. */
 	string sourceItemId;
 
@@ -984,6 +998,13 @@ message GanttEdge {
 abstract message GanttItem {
 	/** Opaque identifier, unique within a {@link GanttLayout}. */
 	string id;
+
+	/**
+	 * Application-defined business object backing this item.
+	 * Server-only (transient); used as the identity from which the technical
+	 * {@link #getId() id} is derived for client-side cross-references.
+	 */
+	transient java.lang.Object userObject;
 
 	/** Reference to the {@link GanttRow#id} this item lives in. */
 	string rowId;
@@ -1040,6 +1061,13 @@ message GanttMilestone extends GanttItem {
 abstract message GanttDecoration {
 	/** Opaque identifier, unique within a {@link GanttLayout}. */
 	string id;
+
+	/**
+	 * Application-defined business object backing this decoration.
+	 * Server-only (transient); used as the identity from which the technical
+	 * {@link #getId() id} is derived for client-side cross-references.
+	 */
+	transient java.lang.Object userObject;
 
 	/** CSS-style color. */
 	string color;

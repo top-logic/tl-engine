@@ -72,6 +72,9 @@ public interface GanttSpan extends GanttItem {
 	com.top_logic.react.flow.data.GanttSpan setId(String value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttSpan setUserObject(java.lang.Object value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttSpan setRowId(String value);
 
 	@Override

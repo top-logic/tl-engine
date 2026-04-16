@@ -86,6 +86,12 @@ public class GanttRangeDecoration_Impl extends com.top_logic.react.flow.data.imp
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttRangeDecoration setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttRangeDecoration setColor(String value) {
 		internalSetColor(value);
 		return this;

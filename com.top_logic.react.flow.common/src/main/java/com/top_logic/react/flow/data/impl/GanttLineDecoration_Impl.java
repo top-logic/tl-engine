@@ -46,6 +46,12 @@ public class GanttLineDecoration_Impl extends com.top_logic.react.flow.data.impl
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttLineDecoration setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttLineDecoration setColor(String value) {
 		internalSetColor(value);
 		return this;

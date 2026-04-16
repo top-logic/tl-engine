@@ -7,6 +7,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 
 	private String _id = "";
 
+	private transient java.lang.Object _userObject = null;
+
 	private com.top_logic.react.flow.data.Box _label = null;
 
 	private final java.util.List<com.top_logic.react.flow.data.GanttRow> _children = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.react.flow.data.GanttRow>() {
@@ -51,6 +53,29 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 		_listener.beforeSet(this, ID__PROP, value);
 		_id = value;
 		_listener.afterChanged(this, ID__PROP);
+	}
+
+	@Override
+	public final java.lang.Object getUserObject() {
+		return _userObject;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttRow setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getUserObject()} without chain call utility. */
+	protected final void internalSetUserObject(java.lang.Object value) {
+		_listener.beforeSet(this, USER_OBJECT__PROP, value);
+		_userObject = value;
+		_listener.afterChanged(this, USER_OBJECT__PROP);
+	}
+
+	@Override
+	public final boolean hasUserObject() {
+		return _userObject != null;
 	}
 
 	@Override
@@ -119,6 +144,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
+			USER_OBJECT__PROP, 
 			LABEL__PROP, 
 			CHILDREN__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -128,7 +154,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
-				));
+				USER_OBJECT__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -146,6 +172,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	public Object get(String field) {
 		switch (field) {
 			case ID__PROP: return getId();
+			case USER_OBJECT__PROP: return getUserObject();
 			case LABEL__PROP: return getLabel();
 			case CHILDREN__PROP: return getChildren();
 			default: return super.get(field);
@@ -156,6 +183,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	public void set(String field, Object value) {
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
+			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CHILDREN__PROP: internalSetChildren(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttRow.class, value)); break;
 		}
@@ -183,6 +211,13 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 		switch (field) {
 			case ID__PROP: {
 				out.value(getId());
+				break;
+			}
+			case USER_OBJECT__PROP: {
+				if (hasUserObject()) {
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case LABEL__PROP: {

@@ -178,6 +178,7 @@ public class AgentFactory {
 		@SuppressWarnings("unchecked")
 		Collection<TLObject> delegations = (Collection<TLObject>) agent.tValueByName("delegations");
 		if (delegations != null && !delegations.isEmpty()) {
+			String parentName = (String) agent.tValueByName("name");
 			for (TLObject target : delegations) {
 				String targetName = (String) target.tValueByName("name");
 				String targetDesc = (String) target.tValueByName("description");
@@ -185,7 +186,7 @@ public class AgentFactory {
 					continue;
 				}
 				String toolName = "delegate_to_" + targetName.replace('-', '_');
-				registry.register(new DelegationTool(toolName, targetDesc, targetName, this::buildAgentLoop));
+				registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this::buildAgentLoop));
 			}
 		}
 

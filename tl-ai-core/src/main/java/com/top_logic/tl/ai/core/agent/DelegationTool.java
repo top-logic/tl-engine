@@ -58,6 +58,8 @@ public class DelegationTool implements Tool {
 
 	private final String _targetAgentName;
 
+	private final String _parentAgentName;
+
 	private final AgentLoopFactory _loopFactory;
 
 	/**
@@ -66,13 +68,15 @@ public class DelegationTool implements Tool {
 	 * @param toolName          the tool name exposed to the LLM (e.g. {@code delegate_to_researcher})
 	 * @param targetDescription human-readable description of the target agent's capabilities
 	 * @param targetAgentName   the registry name of the target agent
+	 * @param parentAgentName   the name of the agent that owns this delegation tool
 	 * @param loopFactory       factory for building the target agent's loop
 	 */
 	public DelegationTool(String toolName, String targetDescription,
-			String targetAgentName, AgentLoopFactory loopFactory) {
+			String targetAgentName, String parentAgentName, AgentLoopFactory loopFactory) {
 		_toolName = toolName;
 		_targetDescription = targetDescription != null ? targetDescription : targetAgentName;
 		_targetAgentName = targetAgentName;
+		_parentAgentName = parentAgentName != null ? parentAgentName : "parent";
 		_loopFactory = loopFactory;
 	}
 
@@ -126,7 +130,7 @@ public class DelegationTool implements Tool {
 		Instant startTime = Instant.now();
 
 		if (logListener != null) {
-			delegationId = logListener.recordDelegationStarted("parent", _targetAgentName, task);
+			delegationId = logListener.recordDelegationStarted(_parentAgentName, _targetAgentName, task);
 			if (delegationId != null) {
 				childListener = logListener.delegationListener(delegationId);
 			}

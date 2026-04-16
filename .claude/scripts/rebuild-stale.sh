@@ -2,7 +2,7 @@
 #
 # Find all reactor modules whose installed artifact in the local Maven
 # repository is older than their sources (or missing), then rebuild just
-# those modules in the correct order via `mvn install -pl ... -am`.
+# those modules in the correct order via `mvn install -pl ...`.
 #
 # Usage:
 #   ./rebuild-stale.sh            # detect and rebuild
@@ -75,9 +75,9 @@ if [[ $DRY_RUN -eq 1 ]]; then
     exit 0
 fi
 
-# -pl with comma-separated relative paths, -am to also build the upstream
+# -pl with comma-separated relative paths
 # dependencies that the stale modules need (in correct reactor order).
 IFS=','; list="${stale_paths[*]}"; unset IFS
 
-echo ">>> Running: mvn -B install -pl <stale> -am -DskipTests" >&2
-exec mvn -B install -pl "$list" -am -DskipTests
+echo ">>> Running: mvn -B install -pl <stale>" >&2
+exec mvn -B install -pl "$list"

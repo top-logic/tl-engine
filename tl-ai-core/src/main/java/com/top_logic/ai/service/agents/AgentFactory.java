@@ -17,6 +17,7 @@ import com.top_logic.tl.ai.core.agent.AgentConfig;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.agent.DelegationTool;
 import com.top_logic.tl.ai.core.tool.Tool;
 
 /**
@@ -99,6 +100,7 @@ public class AgentFactory {
 
 		String systemPrompt = (String) agent.tValueByName("systemPrompt");
 		systemPrompt = injectSkills(agent, systemPrompt);
+		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
 
 		Integer maxTokens = (Integer) agent.tValueByName("maxTokens");
 		int maxOutputTokens = maxTokens != null ? maxTokens : AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS;
@@ -172,6 +174,21 @@ public class AgentFactory {
 			registry.register(tool);
 		}
 
+		// Inject delegation tools from the agent's delegations reference
+		@SuppressWarnings("unchecked")
+		Collection<TLObject> delegations = (Collection<TLObject>) agent.tValueByName("delegations");
+		if (delegations != null && !delegations.isEmpty()) {
+			for (TLObject target : delegations) {
+				String targetName = (String) target.tValueByName("name");
+				String targetDesc = (String) target.tValueByName("description");
+				if (targetName == null || targetName.isBlank()) {
+					continue;
+				}
+				String toolName = "delegate_to_" + targetName.replace('-', '_');
+				registry.register(new DelegationTool(toolName, targetDesc, targetName, this::buildAgentLoop));
+			}
+		}
+
 		return registry.freeze();
 	}
 
@@ -207,5 +224,37 @@ public class AgentFactory {
 
 		String base = systemPrompt != null ? systemPrompt : "";
 		return base + skillSection;
+	}
+
+	/**
+	 * Injects descriptions of available delegate agents into the system prompt.
+	 */
+	private String injectDelegateDescriptions(TLObject agent, String systemPrompt) {
+		@SuppressWarnings("unchecked")
+		Collection<TLObject> delegations = (Collection<TLObject>) agent.tValueByName("delegations");
+		if (delegations == null || delegations.isEmpty()) {
+			return systemPrompt != null ? systemPrompt : "";
+		}
+
+		StringBuilder section = new StringBuilder();
+		section.append("\n\n### Available Delegates\n\n");
+		section.append("You can delegate tasks to these specialized agents:\n\n");
+
+		for (TLObject target : delegations) {
+			String targetName = (String) target.tValueByName("name");
+			String targetDesc = (String) target.tValueByName("description");
+			if (targetName == null) continue;
+
+			String toolName = "delegate_to_" + targetName.replace('-', '_');
+			section.append("- **").append(targetName).append("** (`").append(toolName).append("`): ");
+			section.append(targetDesc != null ? targetDesc : "No description").append("\n");
+		}
+
+		String base = systemPrompt != null ? systemPrompt : "";
+
+		if (base.contains(AgentRegistry.DELEGATES_PLACEHOLDER)) {
+			return base.replace(AgentRegistry.DELEGATES_PLACEHOLDER, section.toString());
+		}
+		return base + section;
 	}
 }

@@ -40,21 +40,16 @@ import com.top_logic.tl.ai.core.agent.event.ApprovalOutcome;
  */
 public class ConversationLogListener implements AgentEventListener {
 
-	private static final ThreadLocal<ConversationLogListener> CURRENT = new ThreadLocal<>();
-
-	/** */
+	/**
+	 * Returns the {@link ConversationLogListener} bound to the current thread, or {@code null}.
+	 *
+	 * <p>
+	 * Delegates to {@link ConversationLogListenerBinding#getListener()} so that the listener set by
+	 * {@code ChatProcessor} is visible to tools like {@code DelegationTool}.
+	 * </p>
+	 */
 	public static ConversationLogListener current() {
-		return CURRENT.get();
-	}
-
-	/** */
-	public static void setCurrent(ConversationLogListener listener) {
-		CURRENT.set(listener);
-	}
-
-	/** */
-	public static void clearCurrent() {
-		CURRENT.remove();
+		return ConversationLogListenerBinding.getListener();
 	}
 
 	private final ConversationLog _log;

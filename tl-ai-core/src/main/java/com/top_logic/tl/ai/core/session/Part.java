@@ -7,8 +7,8 @@ package com.top_logic.tl.ai.core.session;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A content unit within a {@link Turn}. Each variant represents a different type
@@ -155,7 +155,7 @@ public sealed interface Part {
 		public static DelegationPart started(String id, Instant timestamp,
 				String fromAgent, String toAgent, String inputSummary) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
-				inputSummary, null, new ArrayList<>(), null, 0L);
+				inputSummary, null, new CopyOnWriteArrayList<>(), null, 0L);
 		}
 
 		/** */

@@ -706,7 +706,7 @@
 			if (!textEl) return;
 			const del = Store.currentRun.delegations.get(delegationToolCallId);
 			if (!del || !del.textBuffer) return;
-			textEl.innerHTML = Utils.renderMarkdown(del.textBuffer);
+			textEl.innerHTML = Markdown.basicFormat(del.textBuffer);
 			this._scrollToBottom();
 		},
 
@@ -1891,7 +1891,7 @@
 					} else if (childType === 'text' && childPart.textData && childPart.textData.text) {
 						const textEl = document.createElement('div');
 						textEl.className = 'tl-chat-delegation-result';
-						textEl.innerHTML = Utils.renderMarkdown(childPart.textData.text);
+						textEl.innerHTML = Markdown.basicFormat(childPart.textData.text);
 						childContainer.appendChild(textEl);
 					} else if (childType === 'thinking' && childPart.thinkingData && childPart.thinkingData.text) {
 						const thinkEl = document.createElement('div');

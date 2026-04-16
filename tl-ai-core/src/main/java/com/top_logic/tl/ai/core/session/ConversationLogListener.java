@@ -369,12 +369,13 @@ public class ConversationLogListener implements AgentEventListener {
 	/**
 	 * Returns a listener that forwards events into the delegation's child parts and bubbles
 	 * UI-relevant events (tool calls, text, approval) to the parent listener wrapped in
-	 * {@link AgentEvent.DelegatedEvent}.
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.DelegatedEvent}.
 	 *
-	 * @param delegationId       the ConversationLog part ID for this delegation
-	 * @param delegationToolCallId the parent agent's tool call ID for the {@code delegate_to_*}
-	 *                            tool, used by the SSE handler to route events to the correct
-	 *                            delegation in the browser
+	 * @param delegationId
+	 *        the ConversationLog part ID for this delegation
+	 * @param delegationToolCallId
+	 *        the parent agent's tool call ID for the {@code delegate_to_*} tool, used by the SSE
+	 *        handler to route events to the correct delegation in the browser
 	 */
 	public AgentEventListener delegationListener(String delegationId, String delegationToolCallId) {
 		return new DelegationForwardingListener(delegationId, delegationToolCallId);
@@ -457,8 +458,10 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 
 		/**
-		 * Wraps the child event in a {@link AgentEvent.DelegatedEvent} and forwards it to the
-		 * parent listener so the SSE handler can route it to the correct delegation in the browser.
+		 * Wraps the child event in a
+		 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.DelegatedEvent} and forwards it to
+		 * the parent listener so the SSE handler can route it to the correct delegation in the
+		 * browser.
 		 */
 		private void forwardToParent(AgentEvent childEvent) {
 			AgentEventListener parent = _parentListener;

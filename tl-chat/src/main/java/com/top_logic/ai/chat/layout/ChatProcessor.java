@@ -119,7 +119,6 @@ public class ChatProcessor {
 
 	/**
 	 * Executes user message through the AgentRegistry entry point agent.
-	 * Sets trace so AgentCall and ToolCall events are visible in the UI timeline.
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
@@ -158,7 +157,6 @@ public class ChatProcessor {
 			boolean hasText = userMessage != null && !userMessage.trim().isEmpty();
 			if (!hasText && !hasAttachments) {
 				state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
-				taskTracker.completeTask(taskId);
 				return;
 			}
 			String trimmed = hasText ? userMessage.trim() : "[See attached files]";
@@ -167,13 +165,10 @@ public class ChatProcessor {
 			if (agentRegistry == null) {
 				state.addPendingMessage(
 					new ChatMessage("Agent", "AgentRegistry is not available. Please ensure the service is started."));
-				taskTracker.completeTask(taskId);
 				return;
 			}
 
 			// Execute pre-turn background agents synchronously with model-level timeout.
-			// The timeout is enforced at the LLM HTTP client level (not via Future.cancel())
-			// to avoid thread-pool poisoning from lingering interrupt flags.
 			List<String> preTurnAgents = agentRegistry.getBackgroundAgents(
 				PreTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
 			for (String preTurnAgent : preTurnAgents) {
@@ -191,7 +186,6 @@ public class ChatProcessor {
 					ExecutionResult execResult = bgExecutor.execute(preTurnAgent, bgContext);
 					if (execResult.isBlocked()) {
 						state.addPendingMessage(new ChatMessage("System", execResult.blockReason()));
-						taskTracker.completeTask(taskId);
 						return;
 					}
 				} catch (Exception ex) {
@@ -200,7 +194,6 @@ public class ChatProcessor {
 					if (failPolicy == PreTurnTrigger.FailPolicy.CLOSED) {
 						state.addPendingMessage(new ChatMessage("System",
 							"Message blocked: safety check failed for agent '" + preTurnAgent + "'"));
-						taskTracker.completeTask(taskId);
 						return;
 					}
 					// OPEN: continue to Orchestrator
@@ -252,7 +245,6 @@ public class ChatProcessor {
 			state.setLastAgentResponse(result);
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
-			taskTracker.completeTask(taskId);
 
 			// Flush pending messages (including agent response) into Chat before persisting,
 			// so the persisted data includes the agent's response.
@@ -272,10 +264,9 @@ public class ChatProcessor {
 			}
 
 			// Trigger post-turn background agents
-			triggerPostTurnAgents(taskTracker, trimmed, result, taskTracker.getTask(taskId));
+			triggerPostTurnAgents(taskTracker, trimmed, result);
 
 		} catch (Exception ex) {
-			taskTracker.failTask(taskId, formatErrorMessage(ex));
 			throw ex;
 		} finally {
 			ConversationLogListenerBinding.clear();
@@ -311,19 +302,6 @@ public class ChatProcessor {
 			// Check for new messages (agent response when task completes)
 			List<ChatMessage> newMessages = state.consumePendingMessages();
 			if (!newMessages.isEmpty()) {
-				if (currentTaskId != null) {
-					ChatTask task = taskTracker.getTask(currentTaskId);
-					if (task != null) {
-						ChatTask.Builder b = task.toBuilder()
-							.withTotalUsage(resolveTokenUsage(state, taskTracker));
-						String thinking = resolveThinkingText(state);
-						if (!thinking.isEmpty()) {
-							b.withThinkingText(thinking);
-						}
-						task = b.build();
-					}
-					chat.addTaskSnapshot(task);
-				}
 				for (ChatMessage msg : newMessages) {
 					chat.addMessage(msg);
 				}
@@ -334,19 +312,6 @@ public class ChatProcessor {
 			if (!state.isProcessing()) {
 				Throwable error = state.getError();
 				if (error != null) {
-					if (currentTaskId != null) {
-						ChatTask task = taskTracker.getTask(currentTaskId);
-						if (task != null) {
-							ChatTask.Builder b = task.toBuilder()
-								.withTotalUsage(resolveTokenUsage(state, taskTracker));
-							String thinking = resolveThinkingText(state);
-							if (!thinking.isEmpty()) {
-								b.withThinkingText(thinking);
-							}
-							task = b.build();
-						}
-						chat.addTaskSnapshot(task);
-					}
 					String errorMsg = "Error: " + formatErrorMessage(error);
 					if (error instanceof InterruptedException) {
 						errorMsg = "Processing was cancelled";
@@ -358,42 +323,6 @@ public class ChatProcessor {
 			}
 			return hasUpdates;
 		}
-	}
-
-	private static TokenUsage resolveTokenUsage(AIProcessingState state, TaskProgressTracker taskTracker) {
-		ConversationLog convLog = state.getConversationLog();
-		if (convLog != null) {
-			List<Turn> turns = convLog.turns();
-			if (!turns.isEmpty()) {
-				Turn lastTurn = turns.get(turns.size() - 1);
-				TokenUsage usage = lastTurn.cumulativeUsage();
-				if (usage != null && !usage.equals(TokenUsage.EMPTY)) {
-					return usage;
-				}
-			}
-		}
-		return taskTracker.getCumulativeUsage();
-	}
-
-	private static String resolveThinkingText(AIProcessingState state) {
-		ConversationLog convLog = state.getConversationLog();
-		if (convLog == null) {
-			return "";
-		}
-		List<Turn> turns = convLog.turns();
-		if (turns.isEmpty()) {
-			return "";
-		}
-		Turn lastTurn = turns.get(turns.size() - 1);
-		StringBuilder sb = null;
-		for (Part part : lastTurn.assistantParts()) {
-			if (part instanceof Part.ThinkingPart tp) {
-				if (sb == null) sb = new StringBuilder();
-				if (sb.length() > 0) sb.append("\n");
-				sb.append(tp.text());
-			}
-		}
-		return sb != null ? sb.toString() : "";
 	}
 
 	/**
@@ -435,7 +364,7 @@ public class ChatProcessor {
 
 		AIProcessingState state = new AIProcessingState();
 		state.startProcessing();
-		String taskId = tracker.startTask(randomChatTaskPlaceholder());
+		String taskId = tracker.generateTaskId();
 		state.setCurrentTaskId(taskId);
 		tracker.addProcessingState(taskId, state);
 
@@ -483,7 +412,7 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Persists the current chat state (messages + task snapshots) to the active session.
+	 * Persists the current chat state to the active session.
 	 */
 	static void persistMessages(TaskProgressTracker tracker, String sessionId) {
 		try {
@@ -494,7 +423,7 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Persists the given chat's entries to a specific session by ID.
+	 * Persists the given chat's messages to a specific session by ID.
 	 * Used by the background task to persist to the correct session even if the user has
 	 * switched sessions.
 	 */
@@ -503,7 +432,7 @@ public class ChatProcessor {
 			ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session != null) {
-					String json = DtoMapper.serializeEntries(chat.getEntries());
+					String json = DtoMapper.serializeMessages(chat.getMessages());
 					ChatHistoryService.saveMessages(session, json);
 					ChatHistoryService.touchLastUpdated(session);
 				}
@@ -547,7 +476,7 @@ public class ChatProcessor {
 	 * </p>
 	 */
 	static void triggerPostTurnAgents(TaskProgressTracker taskTracker, String userMessage,
-			String agentResponse, ChatTask completedTask) {
+			String agentResponse) {
 		AgentRegistry agentRegistry = AgentRegistry.getInstance();
 		if (agentRegistry == null) {
 			return;
@@ -568,7 +497,7 @@ public class ChatProcessor {
 			BACKGROUND_EXECUTOR.submit(() -> {
 				try {
 					ChatContext context = ChatContext.lastTurn(name,
-						userMessage, agentResponse, completedTask, capturedChat);
+						userMessage, agentResponse, capturedChat);
 					ExecutionResult execResult = bgExecutor.execute(name, context);
 					if (execResult.isBlocked()) {
 						// Post-turn block: add system message with block reason

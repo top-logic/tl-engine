@@ -43,28 +43,27 @@ public class TestBackgroundContext extends TestCase {
 
 	/** lastTurn factory sets trigger type to "post-turn". */
 	public void testChatContextLastTurnTriggerType() {
-		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "Hello", "Hi there", null, null);
+		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "Hello", "Hi there", null);
 
 		assertEquals("post-turn", ctx.getTriggerType());
 	}
 
 	/** lastTurn factory stores user message and agent response. */
 	public void testChatContextLastTurnFields() {
-		Object mockTask = new Object();
-		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "What is X?", "X is Y.", mockTask, null);
+		Object mockChat = new Object();
+		ChatContext ctx = ChatContext.lastTurn("ReviewAgent", "What is X?", "X is Y.", mockChat);
 
 		assertEquals("ReviewAgent", ctx.getAgentName());
 		assertEquals("What is X?", ctx.getUserMessage());
 		assertEquals("X is Y.", ctx.getAgentResponse());
-		assertSame(mockTask, ctx.getCompletedTask());
-		assertNull("Chat should be null when not provided", ctx.getChat());
+		assertSame(mockChat, ctx.getChat());
 	}
 
-	/** lastTurn with null task. */
-	public void testChatContextLastTurnNullTask() {
-		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null, null);
+	/** lastTurn with null chat. */
+	public void testChatContextLastTurnNullChat() {
+		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null);
 
-		assertNull(ctx.getCompletedTask());
+		assertNull(ctx.getChat());
 	}
 
 	// --- ChatContext.preTurn() ---
@@ -86,12 +85,11 @@ public class TestBackgroundContext extends TestCase {
 		assertSame(mockChat, ctx.getChat());
 		assertNull("UserMessage should be null for preTurn", ctx.getUserMessage());
 		assertNull("AgentResponse should be null for preTurn", ctx.getAgentResponse());
-		assertNull("CompletedTask should be null for preTurn", ctx.getCompletedTask());
 	}
 
 	/** lastTurn factory does not set pending user message. */
 	public void testChatContextLastTurnNoPendingMessage() {
-		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null, null);
+		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null);
 
 		assertNull("PendingUserMessage should be null for lastTurn", ctx.getPendingUserMessage());
 	}
@@ -111,7 +109,7 @@ public class TestBackgroundContext extends TestCase {
 
 	/** ChatContext is-a BackgroundContext. */
 	public void testChatContextIsBackgroundContext() {
-		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null, null);
+		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null);
 
 		assertTrue(ctx instanceof BackgroundContext);
 	}

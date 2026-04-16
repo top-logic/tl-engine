@@ -42,7 +42,6 @@ import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
 import com.top_logic.ai.chat.api.messages.TurnCompletedEvent;
 import com.top_logic.ai.chat.api.messages.TurnStartedEvent;
 import com.top_logic.ai.chat.layout.Chat;
-import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
@@ -227,12 +226,7 @@ public class ChatSSEHandler implements AgentEventListener {
 
 	private void sendConnectedEvent() {
 		Chat chat = _tracker.getChat();
-		int messageCount = 0;
-		for (ChatEntry entry : chat.getEntries()) {
-			if (entry instanceof ChatEntry.MessageEntry) {
-				messageCount++;
-			}
-		}
+		int messageCount = chat.getMessages().size();
 
 		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
 		boolean processing = false;

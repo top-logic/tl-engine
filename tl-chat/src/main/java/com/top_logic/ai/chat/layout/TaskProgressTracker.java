@@ -5,16 +5,12 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.service.approval.ApprovalMode;
@@ -23,25 +19,17 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
- * Session-scoped storage for task progress tracking.
+ * Session-scoped storage for chat state and processing management.
  *
  * <p>
- * This tracker stores task progress information associated with a {@link WindowScope}, making it
- * persist across UI navigation within the same session. It implements an LRU eviction strategy to
- * prevent unbounded growth.
+ * This tracker stores session state associated with a {@link WindowScope}, making it
+ * persist across UI navigation within the same session.
  * </p>
  */
 public class TaskProgressTracker {
 
-	/** Maximum number of tasks to keep in memory. */
-	private static final int MAX_TASKS = 50;
-
 	/** Static storage keyed by WindowScope (weak references for automatic cleanup). */
 	private static final Map<WindowScope, TaskProgressTracker> TRACKERS = new WeakHashMap<>();
-
-	private final Object _lock = new Object();
-
-	private final LinkedList<ChatTask> _tasks = new LinkedList<>();
 
 	private final ChatSessionManager _sessionManager;
 
@@ -75,7 +63,7 @@ public class TaskProgressTracker {
 	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
 
 	/**
-	 * Returns the chat for this window. Same instance for add and render so task traces persist.
+	 * Returns the chat for this window. Same instance for add and render so messages persist.
 	 */
 	public Chat getChat() {
 		return _sessionManager.getActiveChat();
@@ -306,136 +294,11 @@ public class TaskProgressTracker {
 	}
 
 	/**
-	 * Starts a new task with the given description.
+	 * Generates a unique task ID for tracking a processing request.
 	 *
-	 * @param description
-	 *        The task description.
-	 * @return The unique task ID.
+	 * @return A unique task ID.
 	 */
-	public String startTask(String description) {
-		ChatTask task = new ChatTask(description);
-		ChatTask startedTask = task.toBuilder()
-			.withStatus(ChatTask.TaskStatus.IN_PROGRESS)
-			.build();
-
-		synchronized (_lock) {
-			_tasks.addFirst(startedTask);
-			enforceMaxSize();
-		}
-
-		return startedTask.getId();
-	}
-
-	/**
-	 * Updates an existing task using the provided updater function.
-	 *
-	 * @param taskId
-	 *        The task ID to update.
-	 * @param updater
-	 *        Consumer that modifies the task builder.
-	 */
-	public void updateTask(String taskId, Consumer<ChatTask.Builder> updater) {
-		synchronized (_lock) {
-			for (int i = 0; i < _tasks.size(); i++) {
-				ChatTask task = _tasks.get(i);
-				if (task.getId().equals(taskId)) {
-					ChatTask.Builder builder = task.toBuilder();
-					updater.accept(builder);
-					_tasks.set(i, builder.build());
-					break;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Adds a tool call to the specified task.
-	 *
-	 * @param taskId
-	 *        The task ID to add the tool call to.
-	 * @param toolCall
-	 *        The tool call to add.
-	 */
-	public void addToolCall(String taskId, ChatToolCall toolCall) {
-		updateTask(taskId, builder -> builder.addToolCall(toolCall));
-	}
-
-	/**
-	 * Adds a timeline event (tool call or agent call) to the specified task.
-	 *
-	 * @param taskId
-	 *        The task ID to add the event to.
-	 * @param event
-	 *        The timeline event to add.
-	 */
-	public void addTimelineEvent(String taskId, ChatTimelineEvent event) {
-		updateTask(taskId, builder -> builder.addTimelineEvent(event));
-	}
-
-	/**
-	 * Marks a task as completed successfully.
-	 *
-	 * @param taskId
-	 *        The task ID to complete.
-	 */
-	public void completeTask(String taskId) {
-		updateTask(taskId, builder -> {
-			builder.withStatus(ChatTask.TaskStatus.COMPLETED);
-			builder.withEndTime(Instant.now());
-		});
-	}
-
-	/**
-	 * Marks a task as failed with an error message.
-	 *
-	 * @param taskId
-	 *        The task ID to fail.
-	 * @param error
-	 *        The error message.
-	 */
-	public void failTask(String taskId, String error) {
-		updateTask(taskId, builder -> {
-			builder.withStatus(ChatTask.TaskStatus.ERROR);
-			builder.withError(error);
-			builder.withEndTime(Instant.now());
-		});
-	}
-
-	/**
-	 * Returns a task by ID, or null if not found.
-	 *
-	 * @param taskId
-	 *        The task ID.
-	 * @return The task, or null.
-	 */
-	public ChatTask getTask(String taskId) {
-		synchronized (_lock) {
-			for (ChatTask task : _tasks) {
-				if (task.getId().equals(taskId)) {
-					return task;
-				}
-			}
-			return null;
-		}
-	}
-
-	/**
-	 * Returns a copy of all tasks for rendering.
-	 *
-	 * @return Unmodifiable list of all tasks (most recent first).
-	 */
-	public List<ChatTask> getAllTasks() {
-		synchronized (_lock) {
-			return new ArrayList<>(_tasks);
-		}
-	}
-
-	/**
-	 * Enforces the maximum task limit by removing oldest tasks.
-	 */
-	private void enforceMaxSize() {
-		while (_tasks.size() > MAX_TASKS) {
-			_tasks.removeLast();
-		}
+	public String generateTaskId() {
+		return UUID.randomUUID().toString();
 	}
 }

@@ -67,7 +67,7 @@ public class ChatSessionManager {
 	private volatile String _activeSessionId;
 
 	/**
-	 * Per-session in-memory state: the chat entries and the AI's conversation memory.
+	 * Per-session in-memory state: the chat messages and the AI's conversation memory.
 	 */
 	static class SessionState {
 		final Chat _chat;
@@ -192,9 +192,9 @@ public class ChatSessionManager {
 							convLog = ConversationLogSerializer.fromJson(json);
 							ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
 						} else {
-							List<ChatEntry> entries = DtoMapper.deserializeEntries(json);
-							chat.loadEntries(entries);
-							rebuildConversationMemory(memory, entries);
+							List<ChatMessage> messages = DtoMapper.deserializeMessages(json);
+							chat.loadMessages(messages);
+							rebuildConversationMemory(memory, messages);
 						}
 					}
 
@@ -216,7 +216,7 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Persists the active session's full state (messages + task snapshots) to the database.
+	 * Persists the active session's full state (messages) to the database.
 	 */
 	public void persistActiveSession() {
 		synchronized (_lock) {
@@ -240,7 +240,7 @@ public class ChatSessionManager {
 				if (state._conversationLog != null) {
 					json = ConversationLogSerializer.toJson(state._conversationLog);
 				} else {
-					json = DtoMapper.serializeEntries(state._chat.getEntries());
+					json = DtoMapper.serializeMessages(state._chat.getMessages());
 				}
 				ChatHistoryService.saveMessages(session, json);
 
@@ -256,25 +256,22 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Rebuilds a {@link ConversationMemory} from persisted chat entries by replaying user and
+	 * Rebuilds a {@link ConversationMemory} from persisted chat messages by replaying user and
 	 * assistant messages into the underlying {@link Conversation}.
 	 */
-	private static void rebuildConversationMemory(ConversationMemory memory, List<ChatEntry> entries) {
+	private static void rebuildConversationMemory(ConversationMemory memory, List<ChatMessage> messages) {
 		Conversation conversation = memory.conversation();
-		for (ChatEntry entry : entries) {
-			if (entry instanceof ChatEntry.MessageEntry me) {
-				ChatMessage msg = me.message();
-				String role = msg.getUser();
-				if ("Agent".equals(role) || "AI".equals(role)) {
-					conversation.add(new AssistantMessage(
-						UUID.randomUUID().toString(), Instant.now(),
-						List.of(new TextContent(msg.getText())),
-						TokenUsage.EMPTY, "stop"));
-				} else if (!"System".equals(role)) {
-					conversation.add(new UserMessage(
-						UUID.randomUUID().toString(), Instant.now(),
-						List.of(new TextContent(msg.getText()))));
-				}
+		for (ChatMessage msg : messages) {
+			String role = msg.getUser();
+			if ("Agent".equals(role) || "AI".equals(role)) {
+				conversation.add(new AssistantMessage(
+					UUID.randomUUID().toString(), Instant.now(),
+					List.of(new TextContent(msg.getText())),
+					TokenUsage.EMPTY, "stop"));
+			} else if (!"System".equals(role)) {
+				conversation.add(new UserMessage(
+					UUID.randomUUID().toString(), Instant.now(),
+					List.of(new TextContent(msg.getText()))));
 			}
 		}
 	}

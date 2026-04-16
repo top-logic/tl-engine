@@ -458,10 +458,10 @@ public class ChatServlet extends HttpServlet {
 				.setId(sessionId)
 				.setTitle(ChatHistoryService.getTitle(session));
 
-			// Return serialized entries from the now-active Chat
+			// Return serialized messages from the now-active Chat
 			if (tracker != null) {
-				String entriesJson = DtoMapper.serializeEntries(tracker.getChat().getEntries());
-				response.setMessagesJson(entriesJson);
+				String messagesJson2 = DtoMapper.serializeMessages(tracker.getChat().getMessages());
+				response.setMessagesJson(messagesJson2);
 			} else {
 				response.setMessagesJson(ChatHistoryService.getMessagesJson(session));
 			}

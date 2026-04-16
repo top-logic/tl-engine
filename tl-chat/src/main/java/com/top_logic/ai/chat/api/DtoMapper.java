@@ -12,28 +12,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import java.util.LinkedHashMap;
-
 import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
-import com.top_logic.ai.chat.api.messages.CurrentTaskDto;
 import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.MessageDto;
 import com.top_logic.ai.chat.api.messages.PersistedChat;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SessionMetadata;
-import com.top_logic.ai.chat.api.messages.TimelineEventDto;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
 import com.top_logic.ai.chat.layout.Chat;
-import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatMessage;
-import com.top_logic.ai.chat.layout.ChatTask;
-import com.top_logic.ai.chat.layout.ChatTimelineEvent;
-import com.top_logic.ai.chat.layout.ChatToolCall;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.service.scripting.Converters;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -68,21 +60,12 @@ public final class DtoMapper {
 		Chat chat = tracker.getChat();
 		List<MessageDto> messages = new ArrayList<>();
 		int index = 0;
-		for (ChatEntry entry : chat.getEntries()) {
-			if (entry instanceof ChatEntry.MessageEntry me) {
-				messages.add(toMessageDto(me.message(), "m" + index));
-				index++;
-			}
+		for (ChatMessage msg : chat.getMessages()) {
+			messages.add(toMessageDto(msg, "m" + index));
+			index++;
 		}
 		response.setMessages(messages);
 		response.setProcessing(processing);
-
-		if (currentTaskId != null) {
-			ChatTask task = tracker.getTask(currentTaskId);
-			if (task != null) {
-				response.setCurrentTask(toCurrentTaskDto(task));
-			}
-		}
 		return response;
 	}
 
@@ -118,94 +101,6 @@ public final class DtoMapper {
 					.setMimeType(att.mimeType())
 					.setSize(att.size()));
 			}
-		}
-		return dto;
-	}
-
-	/**
-	 * Converts a {@link ChatTask} to a {@link CurrentTaskDto}.
-	 *
-	 * @param task
-	 *        The chat task to convert.
-	 * @return The current task DTO.
-	 */
-	public static CurrentTaskDto toCurrentTaskDto(ChatTask task) {
-		CurrentTaskDto dto = CurrentTaskDto.create();
-		dto.setTaskId(task.getId());
-		dto.setStatus(task.getStatus().name().toLowerCase());
-		dto.setDescription(descriptionFor(task));
-		dto.setErrorMessage(task.getErrorMessage());
-		List<TimelineEventDto> timeline = new ArrayList<>();
-		int i = 0;
-		for (ChatTimelineEvent ev : task.getTimelineEvents()) {
-			timeline.add(toTimelineEventDto(ev, "e" + i));
-			i++;
-		}
-		dto.setTimeline(timeline);
-		TokenUsage usage = task.getTotalUsage();
-		if (usage != null && !TokenUsage.EMPTY.equals(usage)) {
-			dto.setTotalUsage(TokenUsageDto.create()
-				.setInputTokens(usage.inputTokens())
-				.setOutputTokens(usage.outputTokens())
-				.setThinkingTokens(usage.thinkingTokens())
-				.setCacheReadTokens(usage.cacheReadTokens())
-				.setCacheWriteTokens(usage.cacheWriteTokens()));
-		}
-		String thinkingText = task.getThinkingText();
-		if (thinkingText != null && !thinkingText.isEmpty()) {
-			dto.setThinkingText(thinkingText);
-		}
-		return dto;
-	}
-
-	private static String descriptionFor(ChatTask task) {
-		ChatTask.TaskStatus status = task.getStatus();
-		if (status == ChatTask.TaskStatus.COMPLETED) {
-			return "Completed";
-		}
-		if (status == ChatTask.TaskStatus.ERROR) {
-			return "Failed";
-		}
-		return task.getDescription();
-	}
-
-	/**
-	 * Converts a {@link ChatTimelineEvent} to a {@link TimelineEventDto}.
-	 *
-	 * @param ev
-	 *        The timeline event to convert.
-	 * @param id
-	 *        The event ID.
-	 * @return The timeline event DTO.
-	 */
-	public static TimelineEventDto toTimelineEventDto(ChatTimelineEvent ev, String id) {
-		TimelineEventDto dto = TimelineEventDto.create();
-		dto.setId(id);
-		if (ev.getKind() == ChatTimelineEvent.Kind.OUTPUT) {
-			dto.setType("output");
-			dto.setResult(ev.getOutputText());
-			return dto;
-		}
-		if (ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL && ev.getToolCall() != null) {
-			ChatToolCall tc = ev.getToolCall();
-			dto.setType("tool_call");
-			dto.setToolName(tc.getToolName());
-			dto.setName(tc.getToolName());
-			Map<String, Object> args = tc.getArgs();
-			dto.setArgsJson(args != null ? mapToJsonString(args) : "{}");
-			dto.setResult(tc.getResultJson());
-			if (ev.getDurationMs() > 0) {
-				dto.setDurationMs(ev.getDurationMs());
-			} else if (tc.getStartTime() != null && tc.getEndTime() != null) {
-				dto.setDurationMs(tc.getEndTime().toEpochMilli() - tc.getStartTime().toEpochMilli());
-			}
-			dto.setStatus(tc.getStatus().name().toLowerCase());
-		} else {
-			dto.setType("agent_call");
-			dto.setFromAgent(ev.getFromAgent());
-			dto.setToAgent(ev.getToAgent());
-			dto.setInputSummary(ev.getInputSummary());
-			dto.setResultSummary(ev.getResultSummary());
 		}
 		return dto;
 	}
@@ -319,46 +214,39 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Serializes a list of {@link ChatEntry} objects to a JSON string for persistence.
+	 * Serializes a list of {@link ChatMessage} objects to a JSON string for persistence.
+	 * This is the V1 format used as a fallback; new sessions use {@link ConversationLogSerializer}.
 	 *
-	 * @param entries
-	 *        The chat entries (messages and task snapshots).
-	 * @return JSON string suitable for storing in the <code>ChatSession.messages</code> CLOB.
+	 * @param messages
+	 *        The chat messages.
+	 * @return JSON string suitable for storing in the {@code ChatSession.messages} CLOB.
 	 */
-	public static String serializeEntries(List<ChatEntry> entries) {
+	public static String serializeMessages(List<ChatMessage> messages) {
 		PersistedChat chat = PersistedChat.create();
 		int messageIndex = 0;
-		for (ChatEntry entry : entries) {
+		for (ChatMessage msg : messages) {
 			PersistedChatEntry dto = PersistedChatEntry.create();
-			if (entry instanceof ChatEntry.MessageEntry me) {
-				dto.setType("message");
-				dto.setMessageData(toMessageDto(me.message(), "m" + messageIndex));
-				messageIndex++;
-			} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
-				dto.setType("task_snapshot");
-				dto.setTaskData(toCurrentTaskDto(tse.task()));
-			} else {
-				continue;
-			}
+			dto.setType("message");
+			dto.setMessageData(toMessageDto(msg, "m" + messageIndex));
+			messageIndex++;
 			chat.addEntry(dto);
 		}
 		return toJson(chat);
 	}
 
 	/**
-	 * Deserializes a JSON string (from <code>ChatSession.messages</code> CLOB) back into {@link ChatEntry}
-	 * objects.
+	 * Deserializes a JSON string (V1 format) back into {@link ChatMessage} objects.
 	 *
 	 * @param json
 	 *        The JSON string. May be null or empty.
-	 * @return List of chat entries, never null.
+	 * @return List of chat messages, never null.
 	 */
-	public static List<ChatEntry> deserializeEntries(String json) {
+	public static List<ChatMessage> deserializeMessages(String json) {
 		if (json == null || json.isEmpty()) {
 			return new ArrayList<>();
 		}
 
-		List<ChatEntry> result = new ArrayList<>();
+		List<ChatMessage> result = new ArrayList<>();
 		try {
 			PersistedChat chat = PersistedChat.readPersistedChat(new JsonReader(new StringR(json)));
 			for (PersistedChatEntry entry : chat.getEntries()) {
@@ -375,11 +263,9 @@ public final class DtoMapper {
 						msg.getContent(),
 						timestamp,
 						attachments);
-					result.add(new ChatEntry.MessageEntry(chatMsg));
-				} else if ("task_snapshot".equals(entry.getType()) && entry.getTaskData() != null) {
-					ChatTask task = fromCurrentTaskDto(entry.getTaskData());
-					result.add(new ChatEntry.TaskSnapshotEntry(task));
+					result.add(chatMsg);
 				}
+				// task_snapshot entries from V1 format are silently skipped
 			}
 		} catch (Exception ex) {
 			// Fall back to legacy format (plain message array)
@@ -389,122 +275,10 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Converts a {@link CurrentTaskDto} back to a {@link ChatTask} (for loading persisted
-	 * snapshots).
-	 */
-	static ChatTask fromCurrentTaskDto(CurrentTaskDto dto) {
-		ChatTask task = new ChatTask(dto.getDescription() != null ? dto.getDescription() : "");
-		ChatTask.Builder builder = task.toBuilder();
-		builder.withStatus(parseTaskStatus(dto.getStatus()));
-		if (dto.getErrorMessage() != null) {
-			builder.withError(dto.getErrorMessage());
-		}
-		for (TimelineEventDto evDto : dto.getTimeline()) {
-			ChatTimelineEvent event = fromTimelineEventDto(evDto);
-			if (event != null) {
-				builder.addTimelineEvent(event);
-			}
-		}
-		TokenUsageDto usageDto = dto.getTotalUsage();
-		if (usageDto != null) {
-			builder.withTotalUsage(new TokenUsage(
-				usageDto.getInputTokens(),
-				usageDto.getOutputTokens(),
-				usageDto.getThinkingTokens(),
-				usageDto.getCacheReadTokens(),
-				usageDto.getCacheWriteTokens()));
-		}
-		String thinkingText = dto.getThinkingText();
-		if (thinkingText != null && !thinkingText.isEmpty()) {
-			builder.withThinkingText(thinkingText);
-		}
-		return builder.build();
-	}
-
-	private static ChatTask.TaskStatus parseTaskStatus(String status) {
-		if (status == null) {
-			return ChatTask.TaskStatus.COMPLETED;
-		}
-		switch (status) {
-			case "in_progress":
-				return ChatTask.TaskStatus.IN_PROGRESS;
-			case "error":
-				return ChatTask.TaskStatus.ERROR;
-			case "pending":
-				return ChatTask.TaskStatus.PENDING;
-			default:
-				return ChatTask.TaskStatus.COMPLETED;
-		}
-	}
-
-	private static ChatTimelineEvent fromTimelineEventDto(TimelineEventDto dto) {
-		if ("output".equals(dto.getType())) {
-			return ChatTimelineEvent.output(dto.getResult());
-		}
-		if ("tool_call".equals(dto.getType())) {
-			Map<String, Object> args = new LinkedHashMap<>();
-			if (dto.getArgsJson() != null && !dto.getArgsJson().isEmpty()) {
-				try {
-					args = parseJsonToMap(dto.getArgsJson());
-				} catch (Exception ignored) {
-					// Use empty args on parse failure.
-				}
-			}
-			String toolName = dto.getToolName() != null ? dto.getToolName() : dto.getName();
-			ChatToolCall toolCall;
-			if ("error".equals(dto.getStatus())) {
-				toolCall = new ChatToolCall(toolName, args, null).error(dto.getResult());
-			} else {
-				toolCall = new ChatToolCall(toolName, args, dto.getResult());
-			}
-			return ChatTimelineEvent.toolCall(toolCall);
-		} else if ("agent_call".equals(dto.getType())) {
-			return ChatTimelineEvent.agentCall(
-				dto.getFromAgent(), dto.getToAgent(),
-				dto.getInputSummary(), dto.getResultSummary());
-		}
-		return null;
-	}
-
-	private static Map<String, Object> parseJsonToMap(String jsonStr) {
-		Map<String, Object> result = new LinkedHashMap<>();
-		try {
-			JsonReader reader = new JsonReader(new StringR(jsonStr));
-			reader.beginObject();
-			while (reader.hasNext()) {
-				String key = reader.nextName();
-				Object value = readJsonValue(reader);
-				result.put(key, value);
-			}
-			reader.endObject();
-		} catch (Exception ignored) {
-			// Return partial result on parse failure.
-		}
-		return result;
-	}
-
-	private static Object readJsonValue(JsonReader reader) throws IOException {
-		switch (reader.peek()) {
-			case STRING:
-				return reader.nextString();
-			case NUMBER:
-				return reader.nextDouble();
-			case BOOLEAN:
-				return reader.nextBoolean();
-			case NULL:
-				reader.nextNull();
-				return null;
-			default:
-				reader.skipValue();
-				return null;
-		}
-	}
-
-	/**
 	 * Parses the legacy message-only JSON format: [{role, text, timestamp}, ...].
 	 */
-	private static List<ChatEntry> deserializeLegacyMessages(String json) {
-		List<ChatEntry> result = new ArrayList<>();
+	private static List<ChatMessage> deserializeLegacyMessages(String json) {
+		List<ChatMessage> result = new ArrayList<>();
 		try {
 			JsonReader reader = new JsonReader(new StringR(json));
 			reader.beginArray();
@@ -527,7 +301,7 @@ public final class DtoMapper {
 				}
 				reader.endObject();
 				if (role != null && text != null) {
-					result.add(new ChatEntry.MessageEntry(new ChatMessage(role, text)));
+					result.add(new ChatMessage(role, text));
 				}
 			}
 			reader.endArray();

@@ -41,20 +41,34 @@ Script files live under `src/test/` with the naming convention `Test*.script.xml
 <module>/src/test/.../scripted/<feature>/TestFoo.script.xml
 ```
 
+## Default Workflow: Just Run It
+
+**Do NOT investigate aliases, env files, or config mappings upfront.** Most tests run without any special setup. Start the test directly with the command above. Only if it fails with a recognizable error, follow the recovery steps below.
+
 ## Important Notes
 
 - **Sandbox**: Tests write to the filesystem (database, temp files, config). They will fail with "Read-only file system" if sandboxed. Run without sandbox restrictions.
-- **Aliases**: Some tests require aliases (e.g. `%TEST_OPEN_API_URL%`). A missing alias causes `No alias available or value empty` errors. Aliases are mapped to system properties or environment variables via `${env:<name>}` expressions in a config XML file under `WEB-INF/conf/` (e.g. `DemoConf.xml`). Grep for the alias name to find the mapping and the expected property name. If values are not available locally, ask the user to provide a shell file with `export <name>=<value>` lines (e.g. `~/.claude/test-env.sh`) and source it before running the test.
-  - **NEVER read the contents of the env file** (no `cat`, `Read`, `head`, `tail`, `grep` on its contents, no `env | grep` after sourcing, no echoing variable values). The file contains secrets that must not leave the local machine — any tool output could be transmitted over the network. Source it blind (`source ~/.claude/test-env.sh && mvn ...` in a single command) and trust that the user set the required variables. If a variable is missing, the test will fail with a clear alias error — only then ask the user to add it, without inspecting what is already there.
 - **metaConf.txt.orig**: If a previous test run crashed, a leftover `src/test/webapp/WEB-INF/conf/metaConf.txt.orig` file blocks startup. Re-running the test once clears it automatically, then run again.
 - **Duration**: Scripted tests start a full application instance. Expect 1-5 minutes depending on test complexity.
 - **Eclipse equivalent**: Each app module has a launch config named `<App> - Test selection` (e.g. "Demo - Test selection") that does the same thing with `-DTestAll.target="${selected_resource_loc}"`.
+
+## Reactive Recovery: Missing Aliases
+
+**Only trigger this section if the test run fails with `No alias available or value empty` (or a similar `%SOME_NAME%` alias error).** Do not search for aliases before the first run.
+
+Steps once such an error appears:
+1. Grep the config XML files under `<module>/src/main/webapp/WEB-INF/conf/` (e.g. `DemoConf.xml`) for the failing alias name to find its `${env:<name>}` mapping — this tells you the expected environment variable name.
+2. Check whether `~/.claude/test-env.sh` exists. If so, source it blind and re-run in a single command: `source ~/.claude/test-env.sh && mvn ...`.
+3. If the same alias still fails, ask the user to add the missing `export <name>=<value>` line to their env file.
+
+**NEVER read the contents of the env file** (no `cat`, `Read`, `head`, `tail`, `grep` on its contents, no `env | grep` after sourcing, no echoing variable values). The file contains secrets that must not leave the local machine. Source it blind and trust the user to set required variables; let a missing variable surface as a test failure rather than inspecting the file.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---------|-----|
+| Searching for aliases before running the test | Just run the test first — aliases only matter if the run fails with an alias error |
 | Running in sandbox mode | Disable sandbox — tests need filesystem write access |
 | Test fails with "metaConf.txt.orig" | Run test again — first run cleans up, second run succeeds |
-| Missing alias errors | Pass as `-Dtl_test_<name>=<value>` system property (see notes above) |
+| Missing alias errors | Follow the Reactive Recovery section above |
 | Wrong module directory | `cd` into the application module that contains the test, not the engine root |

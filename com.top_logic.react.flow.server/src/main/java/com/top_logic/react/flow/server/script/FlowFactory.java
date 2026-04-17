@@ -1571,10 +1571,13 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory Box box,
 			double start,
 			double end,
+			Boolean canMove,
 			Boolean canMoveTime,
 			Boolean canMoveRow,
+			Boolean canResize,
 			Boolean canResizeStart,
 			Boolean canResizeEnd,
+			Boolean canBeEdge,
 			Boolean canBeEdgeSource,
 			Boolean canBeEdgeTarget) {
 		GanttSpan span = GanttSpan.create()
@@ -1582,10 +1585,13 @@ public class FlowFactory extends TLScriptFunctions {
 			.setRowModel(rowModel)
 			.setBox(box)
 			.setStart(start).setEnd(end);
+		if (canMove != null) { span.setCanMoveTime(canMove); span.setCanMoveRow(canMove); }
 		if (canMoveTime != null) span.setCanMoveTime(canMoveTime);
 		if (canMoveRow != null) span.setCanMoveRow(canMoveRow);
+		if (canResize != null) { span.setCanResizeStart(canResize); span.setCanResizeEnd(canResize); }
 		if (canResizeStart != null) span.setCanResizeStart(canResizeStart);
 		if (canResizeEnd != null) span.setCanResizeEnd(canResizeEnd);
+		if (canBeEdge != null) { span.setCanBeEdgeSource(canBeEdge); span.setCanBeEdgeTarget(canBeEdge); }
 		if (canBeEdgeSource != null) span.setCanBeEdgeSource(canBeEdgeSource);
 		if (canBeEdgeTarget != null) span.setCanBeEdgeTarget(canBeEdgeTarget);
 		return span;
@@ -1598,8 +1604,10 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory Object rowModel,
 			@Mandatory Box box,
 			double at,
+			Boolean canMove,
 			Boolean canMoveTime,
 			Boolean canMoveRow,
+			Boolean canBeEdge,
 			Boolean canBeEdgeSource,
 			Boolean canBeEdgeTarget) {
 		GanttMilestone milestone = GanttMilestone.create()
@@ -1607,8 +1615,10 @@ public class FlowFactory extends TLScriptFunctions {
 			.setRowModel(rowModel)
 			.setBox(box)
 			.setAt(at);
+		if (canMove != null) { milestone.setCanMoveTime(canMove); milestone.setCanMoveRow(canMove); }
 		if (canMoveTime != null) milestone.setCanMoveTime(canMoveTime);
 		if (canMoveRow != null) milestone.setCanMoveRow(canMoveRow);
+		if (canBeEdge != null) { milestone.setCanBeEdgeSource(canBeEdge); milestone.setCanBeEdgeTarget(canBeEdge); }
 		if (canBeEdgeSource != null) milestone.setCanBeEdgeSource(canBeEdgeSource);
 		if (canBeEdgeTarget != null) milestone.setCanBeEdgeTarget(canBeEdgeTarget);
 		return milestone;

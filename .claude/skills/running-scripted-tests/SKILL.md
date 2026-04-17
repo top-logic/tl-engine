@@ -31,6 +31,8 @@ mvn test -DskipTests=false \
 | `-DTestAll.target=<path>` | Relative path to the `.script.xml` file from the module root |
 | `-DTestAll.recursive=true` | Process sub-actions recursively |
 
+**Do NOT pipe the `mvn` output through `tail`, `head`, `grep`, or any other filter.** The Bash tool already persists the full command output to a file and shows you a preview. Piping through `tail -N` discards everything before the last N lines — and since the application prints thousands of shutdown log lines, truncated output typically contains only shutdown noise, with the actual test output (assertion messages, script-level `log` actions) lost. Run `mvn` unfiltered; afterwards, use `Grep` on the persisted output file to find specific messages.
+
 ## Finding Scripts
 
 Script files live under `src/test/` with the naming convention `Test*.script.xml`:

@@ -36,14 +36,14 @@ Tests are **skipped by default** (`skipTests=true` in tl-parent-all). To run tes
 cd com.top_logic.basic
 mvn test -DskipTests=false
 
-# Run single test class (use the FULLY QUALIFIED name)
-mvn test -DskipTests=false -Dtest=fully.qualified.ClassName
+# Run single test class
+mvn test -DskipTests=false -Dtest=ClassName
+
+# Run specific test method
+mvn test -DskipTests=false -Dtest=ClassName#methodName
 ```
 
-**Important**:
-- Tests require database configuration. Many tests use H2 in-memory databases, but some require specific database drivers (MySQL, Oracle, PostgreSQL, DB2, MS SQL Server).
-- Surefire in `tl-parent-core` is configured with `<includes><include>test/TestAll.java</include></includes>`. A `-Dtest=...` invocation only reliably overrides that filter when the **fully qualified class name** is given; a simple class name can be swallowed.
-- `-Dtest=Class#method` does **not** work for tests that have a `suite()` method (most TopLogic tests): the suite's setup (XMLProperties init, service startup) is skipped and the test fails with `Cannot start configuration service`.
+**Important**: Tests require database configuration. Many tests use H2 in-memory databases, but some require specific database drivers (MySQL, Oracle, PostgreSQL, DB2, MS SQL Server).
 
 ### Other Useful Commands
 

@@ -1,0 +1,51 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.redo([maxEntries[, includeSubtree]])</code>
+	<code>redo()</code>
+</pre>
+<h2>Description</h2>
+<p>Re-applies the most recent undo performed within the considered change-log window. The revert ChangeSet with the highest revision number is itself reverted, which restores the original change.</p>
+<p><strong>The function does not open or commit a transaction.</strong> Commit and rollback handling is the responsibility of the surrounding script.</p>
+<p>The parameters mirror those of <a class="tlObject" data-custom="false" href="?page=changeLog&amp;uuid=489d4ea1-3820-4fe1-9d2f-b04830ff7077">changeLog</a> and determine which window of the change history is inspected.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>The subtree root; <code class="hljs inlineCode">null</code> operates on the global application.</td>
+   <td>no</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>maxEntries</td>
+   <td>Integer</td>
+   <td>Upper bound on the number of change-log entries considered. A value less than or equal to 0 means unlimited.</td>
+   <td>no</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>includeSubtree</td>
+   <td>Boolean</td>
+   <td>Whether the entire composition subtree is considered or only the object itself. Ignored when <code class="hljs inlineCode">object</code> is absent.</td>
+   <td>no</td>
+   <td>true</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> List of resource keys</p>
+<p>List of problems raised during the redo; empty when the redo ran cleanly or when no revertable undo was found.</p>
+<h2>Examples</h2>
+<h3>Example 1</h3>
+<pre>	<code>$project.redo()</code>
+</pre>
+<p>Re-applies the undo most recently performed on the project.</p>

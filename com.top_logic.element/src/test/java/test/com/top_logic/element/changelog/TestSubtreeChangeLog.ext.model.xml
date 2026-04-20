@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="test.com.top_logic.element.changelog.TestSubtreeChangeLog">
+		<class name="Node">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="children"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Node"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

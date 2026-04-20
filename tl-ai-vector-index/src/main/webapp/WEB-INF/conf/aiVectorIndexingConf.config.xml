@@ -7,7 +7,6 @@
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
 		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
-		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -25,6 +24,19 @@
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
 				mistral-api-key="%MISTRAL_API_KEY%"
 			/>
+		</config>
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
+			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
+				<protocols>
+					<protocol value="knowledgerepository" />
+					<protocol value="knowledge" />
+					<protocol value="repository" />
+				</protocols>
+				<meta-objects>
+					<meta-object value="Document" />
+					<meta-object value="GenericObject" />
+				</meta-objects>
+			</instance>
 		</config>
 	</services>
 </application>

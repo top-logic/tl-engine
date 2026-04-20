@@ -4,21 +4,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.ai.vector.index;
-//
-
-//import java.io.File;
-//import java.io.IOException;
-//import java.nio.file.Path;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
-//import com.top_logic.basic.StringServices;
-//import com.top_logic.basic.col.Maybe;
-//import com.top_logic.basic.config.ApplicationConfig;
-//import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.dob.identifier.ObjectKey;
-//import com.top_logic.knowledge.indexing.IndexException;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 
 /**

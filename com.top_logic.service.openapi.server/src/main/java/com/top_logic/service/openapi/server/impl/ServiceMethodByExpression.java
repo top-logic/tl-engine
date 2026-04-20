@@ -19,8 +19,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.json.JsonUtilities;
+import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.StreamUtilities;
-import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -150,14 +150,19 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	}
 
 	private static boolean isBinary(Object value) {
-		return value instanceof BinaryData || value instanceof byte[] || value instanceof InputStream;
+		return value instanceof BinaryDataSource || value instanceof BinaryContent || value instanceof byte[]
+			|| value instanceof InputStream;
 	}
 
 	private static void writeBinary(Object value, String contentType, HttpServletResponse resp) throws IOException {
 		resp.setContentType(contentType);
 		OutputStream out = resp.getOutputStream();
-		if (value instanceof BinaryData) {
-			((BinaryData) value).deliverTo(out);
+		if (value instanceof BinaryDataSource source) {
+			source.deliverTo(out);
+		} else if (value instanceof BinaryContent content) {
+			try (InputStream in = content.getStream()) {
+				StreamUtilities.copyStreamContents(in, out);
+			}
 		} else if (value instanceof byte[]) {
 			out.write((byte[]) value);
 		} else if (value instanceof InputStream) {
@@ -170,11 +175,14 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	}
 
 	private static String defaultContentType(Object value) {
-		if (value instanceof BinaryData) {
-			String contentType = ((BinaryData) value).getContentType();
-			if (contentType != null && !contentType.isEmpty()) {
-				return contentType;
+		if (value instanceof BinaryDataSource data) {
+			String contentType = data.getContentType();
+			if (contentType == null || contentType.isEmpty()) {
+				return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
 			}
+			return contentType;
+		}
+		if (value instanceof BinaryContent) {
 			return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
 		}
 		if (value instanceof byte[] || value instanceof InputStream) {

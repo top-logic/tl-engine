@@ -10,7 +10,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.model.ChangeSet;
@@ -262,6 +264,19 @@ public final class ChangeSetReverter {
 	}
 
 	private static ChangeSet findNewestRevert(Collection<ChangeSet> log) {
+		// Reverts that have themselves been re-applied via a redo are no longer pending and must
+		// be skipped — otherwise a second redoLast() would target the same revert again and
+		// attempt to re-apply an already-applied change.
+		Set<Long> alreadyRedone = new HashSet<>();
+		for (ChangeSet cs : log) {
+			if (cs.isRedo()) {
+				long origRev = cs.origRevision();
+				if (origRev >= 0) {
+					alreadyRedone.add(origRev);
+				}
+			}
+		}
+
 		ChangeSet newest = null;
 		long newestRev = Long.MIN_VALUE;
 		for (ChangeSet cs : log) {
@@ -270,6 +285,9 @@ public final class ChangeSetReverter {
 				continue;
 			}
 			long rev = revert.getRevision().getCommitNumber();
+			if (alreadyRedone.contains(rev)) {
+				continue;
+			}
 			if (rev > newestRev) {
 				newestRev = rev;
 				newest = revert;

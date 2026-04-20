@@ -205,6 +205,46 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 	}
 
 	/**
+	 * Sequence {@code ch1, ch2, undo, ch3, ch4, undo, redo, redo}: the second redo must walk past
+	 * the already-redone revert and re-apply the earlier undone change.
+	 */
+	public void testRedoLastWalksPastAlreadyRedone() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+
+		// ch1: rename to "v1"
+		rename(child, "v1");
+		// ch2: rename to "v2"
+		rename(child, "v2");
+		// undo ch2: back to "v1"
+		ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals("v1", child.tValueByName("name"));
+
+		// ch3: rename to "v3"
+		rename(child, "v3");
+		// ch4: rename to "v4"
+		rename(child, "v4");
+		// undo ch4: back to "v3"
+		ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals("v3", child.tValueByName("name"));
+
+		// redo: restore ch4 => "v4"
+		ChangeSetReverter.redoLast(root, 0, true);
+		assertEquals("v4", child.tValueByName("name"));
+
+		// redo again: the revert of ch4 is already redone, so the next pending revert is of ch2.
+		// Re-applying ch2 on top of "v4" means the "v2 overwrites whatever"-update replays:
+		// the rename from its base (old "child") to "v2" is now applied to current "v4", with a
+		// reported conflict. The merged value for a single-valued property is newValue="v2".
+		List<ResKey> problems = ChangeSetReverter.redoLast(root, 0, true);
+		assertEquals("v2", child.tValueByName("name"));
+		// The base-vs-current mismatch is reported as a problem; the merge nevertheless picks the
+		// new value.
+		assertFalse("Conflict expected when replaying an earlier change on a diverged state.",
+			problems.isEmpty());
+	}
+
+	/**
 	 * Changes outside the subtree are ignored by {@link ChangeSetReverter#undoLast(TLObject, int, boolean)}.
 	 */
 	public void testUndoLastIgnoresOtherSubtree() {

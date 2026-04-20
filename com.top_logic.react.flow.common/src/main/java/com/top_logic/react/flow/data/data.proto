@@ -928,28 +928,6 @@ message GanttRow {
 	repeated GanttRow children;
 }
 
-/** A tick on the Gantt time axis. */
-message GanttTick {
-	/** Position of the tick on the axis; see {@link GanttAxis} for position semantics. */
-	double position;
-
-	/**
-	 * Label box drawn at the tick.
-	 *
-	 * <p>
-	 * Using a {@link Box} instead of a plain string gives the {@link AxisProvider} full control
-	 * over the label appearance: emphasis ticks can carry bold text, coloured year markers, etc.,
-	 * without any special-casing in the chart rendering code. The label is owned by
-	 * {@link GanttLayout#getContents()} and rendered through the standard contents dispatch.
-	 * </p>
-	 */
-	@Ref
-	Box label;
-
-	/** Emphasis in [0..1] — renderer interpolates stroke width and label prominence. */
-	double emphasis;
-}
-
 /** Which end of an item a Gantt edge attaches to. */
 enum GanttEndpoint {
 	START;
@@ -1158,7 +1136,7 @@ message GanttRangeDecoration extends GanttDecoration {
  *
  * <p>
  * All numeric position-like fields in the Gantt model ({@link #getRangeMin},
- * {@link #getRangeMax}, {@link GanttTick#getPosition}, {@link GanttSpan#getStart},
+ * {@link #getRangeMax}, {@link GanttSpan#getStart},
  * {@link GanttSpan#getEnd}, {@link GanttPoint#getAt}, {@link GanttLineDecoration#getAt},
  * {@link GanttRangeDecoration#getFrom}, {@link GanttRangeDecoration#getTo}) are
  * <strong>positions in layout units</strong> — plain doubles shipped with the
@@ -1204,8 +1182,7 @@ message GanttAxis {
 	/**
 	 * Current zoom factor: number of pixels per position unit. {@code 1.0} renders one
 	 * position unit as one pixel. Written by the client on zoom changes; the server reacts
-	 * by recomputing {@link #getCurrentTicks() ticks} and {@link #getSnapGranularity snap
-	 * granularity} via the provider.
+	 * by recomputing {@link #getSnapGranularity snap granularity} via the provider.
 	 */
 	double currentZoom = 1.0;
 
@@ -1215,8 +1192,6 @@ message GanttAxis {
 	 */
 	double snapGranularity = 1.0;
 
-	/** Axis ticks computed for the current zoom, produced by the {@link AxisProvider}. */
-	repeated GanttTick currentTicks;
 }
 
 /**
@@ -1274,9 +1249,6 @@ message GanttLayout extends Layout {
 
 	/** Horizontal indentation per row hierarchy level, in pixels. */
 	double indentWidth = 16.0;
-
-	/** Height of the axis header, in pixels. */
-	double axisHeight = 24.0;
 
 	/**
 	 * Minimum width of the row label column, in pixels.

@@ -52,9 +52,6 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	/** @see #getIndentWidth() */
 	String INDENT_WIDTH__PROP = "indentWidth";
 
-	/** @see #getAxisHeight() */
-	String AXIS_HEIGHT__PROP = "axisHeight";
-
 	/** @see #getRowLabelMinWidth() */
 	String ROW_LABEL_MIN_WIDTH__PROP = "rowLabelMinWidth";
 
@@ -198,16 +195,6 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	 * @see #getIndentWidth()
 	 */
 	com.top_logic.react.flow.data.GanttLayout setIndentWidth(double value);
-
-	/**
-	 * Height of the axis header, in pixels.
-	 */
-	double getAxisHeight();
-
-	/**
-	 * @see #getAxisHeight()
-	 */
-	com.top_logic.react.flow.data.GanttLayout setAxisHeight(double value);
 
 	/**
 	 * Minimum width of the row label column, in pixels.

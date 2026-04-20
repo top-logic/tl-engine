@@ -7,7 +7,7 @@ package com.top_logic.react.flow.data;
  *
  * <p>
  * All numeric position-like fields in the Gantt model ({@link #getRangeMin},
-	 * {@link #getRangeMax}, {@link GanttTick#getPosition}, {@link GanttSpan#getStart},
+	 * {@link #getRangeMax}, {@link GanttSpan#getStart},
 	 * {@link GanttSpan#getEnd}, {@link GanttPoint#getAt}, {@link GanttLineDecoration#getAt},
 	 * {@link GanttRangeDecoration#getFrom}, {@link GanttRangeDecoration#getTo}) are
  * <strong>positions in layout units</strong> — plain doubles shipped with the
@@ -58,9 +58,6 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getSnapGranularity() */
 	String SNAP_GRANULARITY__PROP = "snapGranularity";
 
-	/** @see #getCurrentTicks() */
-	String CURRENT_TICKS__PROP = "currentTicks";
-
 	/**
 	 * Name of the server-side axis provider that computes ticks and snap data, and
 	 * converts between the application's opaque time values and chart positions.
@@ -97,8 +94,7 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/**
 	 * Current zoom factor: number of pixels per position unit. {@code 1.0} renders one
 	 * position unit as one pixel. Written by the client on zoom changes; the server reacts
-	 * by recomputing {@link #getCurrentTicks() ticks} and {@link #getSnapGranularity snap
-	 * granularity} via the provider.
+	 * by recomputing {@link #getSnapGranularity snap granularity} via the provider.
 	 */
 	double getCurrentZoom();
 
@@ -117,26 +113,6 @@ public interface GanttAxis extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #getSnapGranularity()
 	 */
 	com.top_logic.react.flow.data.GanttAxis setSnapGranularity(double value);
-
-	/**
-	 * Axis ticks computed for the current zoom, produced by the {@link AxisProvider}.
-	 */
-	java.util.List<com.top_logic.react.flow.data.GanttTick> getCurrentTicks();
-
-	/**
-	 * @see #getCurrentTicks()
-	 */
-	com.top_logic.react.flow.data.GanttAxis setCurrentTicks(java.util.List<? extends com.top_logic.react.flow.data.GanttTick> value);
-
-	/**
-	 * Adds a value to the {@link #getCurrentTicks()} list.
-	 */
-	com.top_logic.react.flow.data.GanttAxis addCurrentTick(com.top_logic.react.flow.data.GanttTick value);
-
-	/**
-	 * Removes a value from the {@link #getCurrentTicks()} list.
-	 */
-	void removeCurrentTick(com.top_logic.react.flow.data.GanttTick value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttAxis readGanttAxis(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

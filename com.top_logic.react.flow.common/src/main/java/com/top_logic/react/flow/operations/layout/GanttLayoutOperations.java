@@ -23,7 +23,6 @@ import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
-import com.top_logic.react.flow.data.GanttTick;
 import com.top_logic.react.flow.operations.BoxOperations;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -34,9 +33,8 @@ import com.top_logic.react.flow.svg.SvgWriter;
  *
  * <p>
  * Places {@link GanttItem} boxes along the X axis according to their {@code start}/{@code end}
- * (or {@code at}) positions, and along the Y axis according to the item's row. Renders axis
- * ticks from {@code axis.currentTicks}, draws row-lane backgrounds, edges (orthogonal), and
- * decorations.
+ * (or {@code at}) positions, and along the Y axis according to the item's row. Draws
+ * row-lane backgrounds, edges (orthogonal), and decorations.
  * </p>
  *
  * <p>
@@ -90,7 +88,6 @@ public interface GanttLayoutOperations extends BoxOperations {
 		double rowLabelPadding = self.getRowLabelPadding();
 		double rowMinContentHeight = self.getRowMinContentHeight();
 		double rowPadding = self.getRowPadding();
-		double axisHeight = self.getAxisHeight();
 		double indentWidth = self.getIndentWidth();
 
 		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
@@ -113,18 +110,22 @@ public interface GanttLayoutOperations extends BoxOperations {
 			}
 			// Provide a temporary position for intrinsic sizing (exact position comes in pass 2).
 			double tmpX;
-			double tmpY = offsetY + axisHeight + rowPadding; // rough y, refined in pass 2
+			double tmpY = offsetY + rowPadding; // rough y, refined in pass 2
 			if (item instanceof GanttSpan span) {
 				tmpX = offsetX + tmpLabelWidth + (span.getStart() - rangeMin) * zoom;
-			} else if (item instanceof GanttPoint ms) {
-				tmpX = offsetX + tmpLabelWidth + (ms.getAt() - rangeMin) * zoom;
-			} else {
-				continue;
-			}
-			box.computeIntrinsicSize(context, tmpX, tmpY);
-			double intrinsicHeight = box.getHeight();
-			if (intrinsicHeight > rowMaxContentHeight[idx]) {
-				rowMaxContentHeight[idx] = intrinsicHeight;
+				box.computeIntrinsicSize(context, tmpX, tmpY);
+				double intrinsicHeight = box.getHeight();
+				if (intrinsicHeight > rowMaxContentHeight[idx]) {
+					rowMaxContentHeight[idx] = intrinsicHeight;
+				}
+			} else if (item instanceof GanttPoint pt) {
+				box.computeIntrinsicSize(context, 0, 0);
+				// Accept whatever intrinsic size the box reports.
+				// Width and height may be 0 (e.g. empty FloatingLayout) — that's OK.
+				double intrinsicHeight = box.getHeight();
+				if (intrinsicHeight > rowMaxContentHeight[idx]) {
+					rowMaxContentHeight[idx] = intrinsicHeight;
+				}
 			}
 		}
 
@@ -139,7 +140,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 			int depth = rowDepth(row, self.getRootRows());
 			// Label x is rough; what matters here is the intrinsic width.
 			double tmpX = offsetX + rowLabelPadding + depth * indentWidth;
-			double tmpY = offsetY + axisHeight + rowPadding;
+			double tmpY = offsetY + rowPadding;
 			label.computeIntrinsicSize(context, tmpX, tmpY);
 			double labelW = label.getWidth() + depth * indentWidth;
 			if (labelW > maxLabelIntrinsicWidth) {
@@ -147,17 +148,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 			}
 		}
 
-		// --- Pass 1c: compute intrinsic sizes of tick label boxes ---
-		if (axis != null) {
-			for (GanttTick tick : axis.getCurrentTicks()) {
-				Box tickLabel = tick.getLabel();
-				if (tickLabel != null) {
-					tickLabel.computeIntrinsicSize(context, 0, 0);
-				}
-			}
-		}
-
-		// --- Pass 1d: compute intrinsic sizes of decoration label boxes ---
+		// --- Pass 1c: compute intrinsic sizes of decoration label boxes ---
 		List<GanttDecoration> decos = self.getDecorations();
 		if (decos != null) {
 			for (GanttDecoration deco : decos) {
@@ -173,7 +164,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 
 		double[] rowTotalHeight = new double[totalRows];
 		double[] rowYStart = new double[totalRows];
-		double cumulativeY = offsetY + axisHeight;
+		double cumulativeY = offsetY;
 		for (int i = 0; i < totalRows; i++) {
 			rowTotalHeight[i] = rowMaxContentHeight[i] + 2 * rowPadding;
 			rowYStart[i] = cumulativeY;
@@ -198,16 +189,11 @@ public interface GanttLayoutOperations extends BoxOperations {
 				double x = offsetX + columnWidth + (span.getStart() - rangeMin) * zoom;
 				double w = (span.getEnd() - span.getStart()) * zoom;
 				box.distributeSize(context, x, itemY, w, contentHeight);
-			} else if (item instanceof GanttPoint ms) {
-				// Point: intrinsic width, centred on 'at'.
-				double r = contentHeight / 2.0;
-				double cx = offsetX + columnWidth + (ms.getAt() - rangeMin) * zoom;
-				double msW = box.getWidth(); // intrinsic width from pass 1
-				if (msW <= 0) {
-					msW = 2 * r;
-				}
-				double x = cx - msW / 2.0;
-				box.distributeSize(context, x, itemY, msW, contentHeight);
+			} else if (item instanceof GanttPoint pt) {
+				double cx = offsetX + columnWidth + (pt.getAt() - rangeMin) * zoom;
+				double w = box.getWidth();
+				// Give the full row content height so it can grow with siblings.
+				box.distributeSize(context, cx - w / 2.0, itemY, w, contentHeight);
 			}
 		}
 
@@ -226,26 +212,10 @@ public interface GanttLayoutOperations extends BoxOperations {
 			label.distributeSize(context, labelX, labelY, Math.max(0, labelW), labelH);
 		}
 
-		// --- Pass 2c: distribute final positions and sizes for tick label boxes ---
-		if (axis != null) {
-			double columnWidth2 = columnWidth;
-			double x0 = offsetX + columnWidth2;
-			for (GanttTick tick : axis.getCurrentTicks()) {
-				Box tickLabel = tick.getLabel();
-				if (tickLabel == null) {
-					continue;
-				}
-				double tickX = x0 + (tick.getPosition() - rangeMin) * zoom;
-				double labelW = tickLabel.getWidth();
-				double labelH = tickLabel.getHeight();
-				tickLabel.distributeSize(context, tickX + 2, offsetY + axisHeight - labelH - 2, labelW, labelH);
-			}
-		}
-
-		// --- Pass 2d: distribute final positions and sizes for decoration label boxes ---
+		// --- Pass 2c: distribute final positions and sizes for decoration label boxes ---
 		if (decos != null && !decos.isEmpty()) {
 			double chartX0 = offsetX + columnWidth;
-			double lanesTop2 = offsetY + axisHeight;
+			double lanesTop2 = offsetY;
 			for (GanttDecoration deco : decos) {
 				Box decoLabel = deco.getLabel();
 				if (decoLabel == null) {
@@ -331,7 +301,6 @@ public interface GanttLayoutOperations extends BoxOperations {
 	@Override
 	default void draw(SvgWriter out) {
 		GanttLayout self = (GanttLayout) this;
-		drawAxis(self, out);
 		drawRowLanes(self, out);
 		drawDecorations(self, out);
 		for (Box content : self.getContents()) {
@@ -340,65 +309,9 @@ public interface GanttLayoutOperations extends BoxOperations {
 		drawEdges(self, out);
 	}
 
-	private static void drawAxis(GanttLayout self, SvgWriter out) {
-		GanttAxis axis = self.getAxis();
-		double zoom = axis.getCurrentZoom();
-		double rangeMin = axis.getRangeMin();
-		double columnWidth = self.getColumnWidth();
-		double x0 = self.getX() + columnWidth;
-		double y0 = self.getY();
-		double w = self.getWidth() - columnWidth;
-		double h = self.getAxisHeight();
-
-		// Header background rectangle.
-		out.beginGroup();
-		out.writeCssClass("tl-gantt-axis");
-
-		out.beginRect(x0, y0, w, h);
-		out.setFill("#f8f8f8");
-		out.setStroke("#c0c0c0");
-		out.setStrokeWidth(1.0);
-		out.endRect();
-
-		// For each tick: vertical line + label.
-		List<GanttTick> ticks = axis.getCurrentTicks();
-		for (GanttTick tick : ticks) {
-			double emphasis = tick.getEmphasis();
-			double strokeWidth = 0.5 + 1.5 * Math.min(1.0, Math.max(0.0, emphasis));
-			double tickX = x0 + (tick.getPosition() - rangeMin) * zoom;
-
-			// Vertical tick line from top to bottom of the axis header.
-			out.beginPath();
-			out.setStroke("#707070");
-			out.setStrokeWidth(strokeWidth);
-			out.setFill("none");
-			out.beginData();
-			out.moveToAbs(tickX, y0);
-			out.lineToAbs(tickX, y0 + h);
-			out.endData();
-			out.endPath();
-
-			// Tick label boxes are drawn via the standard contents dispatch in draw() — see
-			// GanttLayout.contents which includes tick label boxes added by FlowFactory.gantt.
-		}
-
-		// Bottom border line for the axis header.
-		out.beginPath();
-		out.setStroke("#c0c0c0");
-		out.setStrokeWidth(1.0);
-		out.setFill("none");
-		out.beginData();
-		out.moveToAbs(x0, y0 + h);
-		out.lineToAbs(x0 + w, y0 + h);
-		out.endData();
-		out.endPath();
-
-		out.endGroup();
-	}
-
 	private static void drawRowLanes(GanttLayout self, SvgWriter out) {
 		double x0 = self.getX();
-		double y0 = self.getY() + self.getAxisHeight();
+		double y0 = self.getY();
 		double totalWidth = self.getWidth();
 		double rowMinContentHeight = self.getRowMinContentHeight();
 		double rowPadding = self.getRowPadding();
@@ -473,8 +386,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 		}
 
 		// Build row geometry (uses already-laid-out item boxes after computeIntrinsicSize).
-		double axisHeight = self.getAxisHeight();
-		double lanesTop = self.getY() + axisHeight;
+		double lanesTop = self.getY();
 		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, lanesTop);
 
 		// Compute total chart height (from first row start to last row end).

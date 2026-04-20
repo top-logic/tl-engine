@@ -1,0 +1,36 @@
+<h2>Syntax</h2>
+<pre>	<code>revertChanges($changes)</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Nimmt die übergebenen Änderungen (<code class="hljs inlineCode">tl.changelog:ChangeSet</code>) innerhalb der bereits geöffneten Transaktion zurück. Die Reihenfolge innerhalb der übergebenen Liste ist unerheblich: Die Funktion sortiert intern absteigend nach Revision und nimmt die jüngste Änderung zuerst zurück.</p>
+<p><strong>Die Funktion öffnet selbst keine Transaktion und führt kein Commit aus.</strong> Das umgebende Skript ist für das Commit- und Rollback-Handling verantwortlich.</p>
+<p>Zurückgeliefert wird die Liste der Probleme (Ressourcenschlüssel), die während der Rücknahme aufgetreten sind. Eine leere Liste bedeutet, dass alle Rücknahmen ohne Konflikt ausgeführt wurden.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>changes</td>
+   <td>Liste von <code class="hljs inlineCode">tl.changelog:ChangeSet</code></td>
+   <td>Die Änderungen, die zurückgenommen werden sollen. Kann auch ein einzelner ChangeSet sein.</td>
+   <td>ja</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Liste von Ressourcenschlüsseln</p>
+<p>Liste der während der Rücknahme aufgetretenen Probleme; leer bei fehlerfreier Ausführung.</p>
+<h2>Beispiele</h2>
+<h3>Beispiel 1</h3>
+<pre>	<code>revertChanges($project.changeLog())</code>
+</pre>
+<p>Setzt ein Projekt inklusive aller Unterobjekte auf den Zustand zurück, den es vor der ersten in der Historie enthaltenen Änderung hatte. Das Skript, das diesen Ausdruck enthält, muss die Änderung anschließend committen.</p>

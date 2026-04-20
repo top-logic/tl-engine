@@ -1,0 +1,53 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.changeLog([maxEntries[, includeSubtree]])</code>
+</pre>
+<h2>Description</h2>
+<p>Returns the list of changes (<code class="hljs inlineCode">tl.changelog:ChangeSet</code>) affecting the given business object.</p>
+<p>When <code class="hljs inlineCode">includeSubtree</code> is set (the default), changes to objects that were in the composition subtree of the given object at the time of the change are also included. When set to <code class="hljs inlineCode">false</code>, only changes to the object itself are returned.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Business object</td>
+   <td>The business object whose change history shall be returned.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>maxEntries</td>
+   <td>Integer</td>
+   <td>Limits the number of returned entries, newest first. A value less than or equal to 0 means unlimited.</td>
+   <td>no</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>includeSubtree</td>
+   <td>Boolean</td>
+   <td>Whether the entire composition subtree is considered (<code class="hljs inlineCode">true</code>) or only the object itself (<code class="hljs inlineCode">false</code>).</td>
+   <td>no</td>
+   <td>true</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> List of <code class="hljs inlineCode">tl.changelog:ChangeSet</code></p>
+<p>The list of changes in ascending revision order.</p>
+<h2>Examples</h2>
+<h3>Example 1</h3>
+<pre>	<code>$project.changeLog()</code>
+</pre>
+<p>Returns every change to the project and to every contained sub-object.</p>
+<h3>Example 2</h3>
+<pre>	<code>$project.changeLog(10, false)</code>
+</pre>
+<p>Returns the ten most recent changes made directly to the project object (without sub-objects).</p>

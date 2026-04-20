@@ -25,6 +25,9 @@
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			image="css:fa-solid fa-right-left"
 		>
+			<target>
+				<null/>
+			</target>
 			<resourceKey key="dynamic.dbbc4d87-a9d0-4b89-a1b2-bb32b23c5d6c">
 				<en>My latest changes</en>
 				<de>Meine letzten Änderungen</de>

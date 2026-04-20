@@ -7,6 +7,7 @@ package test.com.top_logic.react.flow.server.layout;
 
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -14,6 +15,8 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
+import com.top_logic.react.flow.data.DragEdge;
+import com.top_logic.react.flow.data.DropArea;
 import com.top_logic.react.flow.data.GanttAxis;
 import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
@@ -26,6 +29,7 @@ import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.Padding;
 import com.top_logic.react.flow.data.Text;
+import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.server.ui.AWTContext;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -369,6 +373,84 @@ public class TestGanttLayout extends TestCase {
 		double expectedWidth = expectedColumnWidth + 100.0;
 		assertEquals("layout width grows with wide label", expectedWidth, layout.getWidth(), 0.5);
 		assertEquals("column width stored on layout", expectedColumnWidth, layout.getColumnWidth(), 0.5);
+	}
+
+	// -----------------------------------------------------------------------
+	// DragController tests
+	// -----------------------------------------------------------------------
+
+	public void testCanMoveTrueByDefault() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		assertTrue("canMove", ((DragController) layout).canMove(span.getBox()));
+	}
+
+	public void testCanMoveFalseWhenBothDisabled() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		span.setCanMoveTime(false);
+		span.setCanMoveRow(false);
+		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		assertFalse("canMove disabled", ((DragController) layout).canMove(span.getBox()));
+	}
+
+	public void testCanResizeSpanEast() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		GanttLayout layout = buildLayoutWithSpan(span, "r1");
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		assertTrue("resize east", ((DragController) layout).canResize(span.getBox(), DragEdge.E));
+		assertFalse("no resize north", ((DragController) layout).canResize(span.getBox(), DragEdge.N));
+	}
+
+	public void testGetDropAreasAllRowsWhenMovable() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		List<DropArea> areas = ((DragController) layout).getDropAreas(span.getBox());
+		assertEquals("one area per row", 2, areas.size());
+	}
+
+	public void testGetDropAreasRestrictedWhenCanMoveRowFalse() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		span.setCanMoveRow(false);
+		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		List<DropArea> areas = ((DragController) layout).getDropAreas(span.getBox());
+		assertEquals("only current row", 1, areas.size());
+	}
+
+	public void testConstrainMoveSnapsX() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
+		layout.getAxis().setSnapGranularity(1.0);
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		double[] result = ((DragController) layout).constrainMove(span.getBox(), 205.7, span.getBox().getY());
+		// snap granularity = 1.0, zoom = 1.0 -> integer snap; chartX0 = columnWidth (200), 205.7 -> 206
+		assertEquals("snapped X", 206.0, result[0], 0.5);
+	}
+
+	/** Builds a GanttLayout with a span item and the given row IDs. */
+	private GanttLayout buildLayoutWithSpan(GanttSpan span, String... rowIds) {
+		java.util.List<GanttRow> rows = new java.util.ArrayList<>();
+		for (String id : rowIds) {
+			rows.add(row(id, "Row " + id));
+		}
+		GanttLayout layout = GanttLayout.create()
+			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
+			.setRowPadding(ROW_PADDING)
+			.setRowLabelMinWidth(200.0)
+			.setAxis(axis(0, 100))
+			.setItems(Arrays.asList(span));
+		addRowsWithLabels(layout, rows);
+		layout.addContent(span.getBox());
+		return layout;
 	}
 
 	// -----------------------------------------------------------------------

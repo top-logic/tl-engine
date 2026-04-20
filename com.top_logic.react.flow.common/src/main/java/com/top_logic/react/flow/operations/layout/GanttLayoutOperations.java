@@ -5,12 +5,15 @@
  */
 package com.top_logic.react.flow.operations.layout;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.data.DragEdge;
+import com.top_logic.react.flow.data.DropArea;
 import com.top_logic.react.flow.data.GanttAxis;
 import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
@@ -24,6 +27,7 @@ import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.operations.BoxOperations;
+import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
@@ -46,7 +50,7 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * Span widths are forced to {@code (end - start) * zoom}; milestone widths are intrinsic.
  * </p>
  */
-public interface GanttLayoutOperations extends BoxOperations {
+public interface GanttLayoutOperations extends BoxOperations, DragController {
 
 	/** Horizontal stub length for orthogonal edge routing (pixels offset from item edge). */
 	double EDGE_HORIZONTAL_STUB = 6.0;
@@ -648,5 +652,244 @@ public interface GanttLayoutOperations extends BoxOperations {
 		for (GanttRow child : row.getChildren()) {
 			indexRows(child, idx, counter, rowList);
 		}
+	}
+
+	// -----------------------------------------------------------------------
+	// DragController implementation
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Finds the {@link GanttItem} whose box is identical to the given box (identity comparison).
+	 * Returns {@code null} if no item owns this box.
+	 */
+	private static GanttItem findItemByBox(GanttLayout layout, Box box) {
+		for (GanttItem item : layout.getItems()) {
+			if (item.getBox() == box) {
+				return item;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	default boolean canMove(Box box) {
+		GanttLayout self = (GanttLayout) this;
+		GanttItem item = findItemByBox(self, box);
+		if (item == null) {
+			return false;
+		}
+		return item.isCanMoveTime() || item.isCanMoveRow();
+	}
+
+	@Override
+	default boolean canResize(Box box, DragEdge edge) {
+		GanttLayout self = (GanttLayout) this;
+		GanttItem item = findItemByBox(self, box);
+		if (item == null || !(item instanceof GanttSpan)) {
+			return false;
+		}
+		GanttSpan span = (GanttSpan) item;
+		switch (edge) {
+			case W: return span.isCanResizeStart();
+			case E: return span.isCanResizeEnd();
+			default: return false;
+		}
+	}
+
+	@Override
+	default List<DropArea> getDropAreas(Box box) {
+		GanttLayout self = (GanttLayout) this;
+		GanttItem item = findItemByBox(self, box);
+		if (item == null) {
+			return new ArrayList<>();
+		}
+
+		boolean canMoveRow = item.isCanMoveRow();
+		boolean canMoveTime = item.isCanMoveTime();
+		String currentRowId = item.getRowId();
+
+		GanttAxis axis = self.getAxis();
+		double columnWidth = self.getColumnWidth();
+		double chartWidth = (axis.getRangeMax() - axis.getRangeMin()) * axis.getCurrentZoom();
+
+		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
+
+		List<DropArea> areas = new ArrayList<>();
+		for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
+			String rowId = entry.getKey();
+			if (!canMoveRow && !rowId.equals(currentRowId)) {
+				// Only include the current row if row change is disabled.
+				continue;
+			}
+			RowGeometry geom = entry.getValue();
+
+			double areaX;
+			double areaWidth;
+			if (canMoveTime) {
+				areaX = self.getX() + columnWidth;
+				areaWidth = chartWidth;
+			} else {
+				// Restrict to the box's current x/width so only row change is possible.
+				areaX = box.getX();
+				areaWidth = box.getWidth();
+			}
+
+			DropArea area = DropArea.create()
+				.setX(areaX)
+				.setY(geom.yStart())
+				.setWidth(areaWidth)
+				.setHeight(geom.height());
+			areas.add(area);
+		}
+		return areas;
+	}
+
+	@Override
+	default double[] constrainMove(Box box, double proposedX, double proposedY) {
+		GanttLayout self = (GanttLayout) this;
+		GanttItem item = findItemByBox(self, box);
+		GanttAxis axis = self.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double snap = axis.getSnapGranularity();
+		double columnWidth = self.getColumnWidth();
+		double rangeMin = axis.getRangeMin();
+		double rangeMax = axis.getRangeMax();
+		double chartX0 = self.getX() + columnWidth;
+		double chartX1 = self.getX() + columnWidth + (rangeMax - rangeMin) * zoom;
+
+		// Compute snapped X.
+		double resultX;
+		if (item != null && !item.isCanMoveTime()) {
+			resultX = box.getX();
+		} else {
+			double snapPixels = snap * zoom;
+			if (snapPixels > 0) {
+				resultX = Math.round((proposedX - chartX0) / snapPixels) * snapPixels + chartX0;
+			} else {
+				resultX = proposedX;
+			}
+			// Clamp to chart boundaries.
+			resultX = Math.max(chartX0, Math.min(chartX1 - box.getWidth(), resultX));
+		}
+
+		// Compute snapped Y: snap to nearest valid row.
+		double resultY;
+		if (item != null && !item.isCanMoveRow()) {
+			resultY = box.getY();
+		} else {
+			// Find the nearest drop area Y.
+			List<DropArea> areas = getDropAreas(box);
+			double rowPadding = self.getRowPadding();
+			double bestY = proposedY;
+			double bestDist = Double.MAX_VALUE;
+			for (DropArea area : areas) {
+				double candidateY = area.getY() + rowPadding;
+				double dist = Math.abs(proposedY - candidateY);
+				if (dist < bestDist) {
+					bestDist = dist;
+					bestY = candidateY;
+				}
+			}
+			resultY = bestY;
+		}
+
+		return new double[] { resultX, resultY };
+	}
+
+	@Override
+	default double constrainResize(Box box, DragEdge edge, double proposedEdgePos) {
+		GanttLayout self = (GanttLayout) this;
+		GanttAxis axis = self.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double snap = axis.getSnapGranularity();
+		double columnWidth = self.getColumnWidth();
+		double chartX0 = self.getX() + columnWidth;
+
+		// Snap to grid.
+		double snapPixels = snap * zoom;
+		double snapped;
+		if (snapPixels > 0) {
+			snapped = Math.round((proposedEdgePos - chartX0) / snapPixels) * snapPixels + chartX0;
+		} else {
+			snapped = proposedEdgePos;
+		}
+
+		double minWidth = snapPixels > 0 ? snapPixels : 1.0;
+
+		switch (edge) {
+			case W:
+				// West edge: constrain so width >= minWidth.
+				return Math.min(snapped, box.getX() + box.getWidth() - minWidth);
+			case E:
+				// East edge: constrain so width >= minWidth.
+				return Math.max(snapped, box.getX() + minWidth);
+			default:
+				return proposedEdgePos;
+		}
+	}
+
+	@Override
+	default void commitDrag(Box box, double finalX, double finalY, double finalWidth, double finalHeight) {
+		GanttLayout self = (GanttLayout) this;
+		GanttItem item = findItemByBox(self, box);
+		if (item == null) {
+			return;
+		}
+
+		GanttAxis axis = self.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double rangeMin = axis.getRangeMin();
+		double columnWidth = self.getColumnWidth();
+		double layoutX = self.getX();
+
+		// Determine if row changed.
+		boolean rowChanged = Math.abs(finalY - box.getY()) > 0.5;
+		if (rowChanged) {
+			// Find target row from Y position using row geometry.
+			Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
+			String targetRowId = item.getRowId(); // default to current
+			double rowPadding = self.getRowPadding();
+			for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
+				RowGeometry geom = entry.getValue();
+				double rowContentY = geom.yStart() + rowPadding;
+				if (Math.abs(finalY - rowContentY) < 0.5) {
+					targetRowId = entry.getKey();
+					break;
+				}
+				// Also match if finalY is within the row bounds.
+				if (finalY >= geom.yStart() && finalY < geom.yEnd()) {
+					targetRowId = entry.getKey();
+					break;
+				}
+			}
+			item.setRowId(targetRowId);
+		}
+
+		// Update item time position.
+		if (item instanceof GanttSpan) {
+			GanttSpan span = (GanttSpan) item;
+			boolean xChanged = Math.abs(finalX - box.getX()) > 0.5;
+			boolean wChanged = Math.abs(finalWidth - box.getWidth()) > 0.5;
+			if (xChanged || wChanged) {
+				double newStart = (finalX - layoutX - columnWidth) / zoom + rangeMin;
+				double newEnd = (finalX + finalWidth - layoutX - columnWidth) / zoom + rangeMin;
+				span.setStart(newStart);
+				span.setEnd(newEnd);
+			}
+		} else if (item instanceof GanttPoint) {
+			GanttPoint pt = (GanttPoint) item;
+			boolean xChanged = Math.abs(finalX - box.getX()) > 0.5;
+			if (xChanged) {
+				// Center position of the box.
+				double cx = finalX + finalWidth / 2.0;
+				double newAt = (cx - layoutX - columnWidth) / zoom + rangeMin;
+				pt.setAt(newAt);
+			}
+		}
+	}
+
+	@Override
+	default void cancelDrag(Box box) {
+		// No persistent state to clean up.
 	}
 }

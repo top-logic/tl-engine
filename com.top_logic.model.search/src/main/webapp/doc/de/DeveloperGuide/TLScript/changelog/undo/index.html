@@ -1,0 +1,55 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.undo([maxEntries[, includeSubtree]])</code>
+	<code>undo()</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Nimmt innerhalb der aktuellen Transaktion die neueste „echte" Änderung zurück, die im betrachteten Fenster der Änderungshistorie gefunden wird. „Echt" bedeutet: Die Änderung wurde noch nicht zurückgenommen und ist selbst keine Rücknahme.</p>
+<p><strong>Die Funktion öffnet selbst keine Transaktion und führt kein Commit aus.</strong> Das umgebende Skript ist für Commit und Rollback verantwortlich.</p>
+<p>Die Parameter entsprechen denen von <a class="tlObject" data-custom="false" href="?page=changeLog&amp;uuid=489d4ea1-3820-4fe1-9d2f-b04830ff7077">changeLog</a> und bestimmen, welches Fenster der Änderungshistorie betrachtet wird.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt</td>
+   <td>Der Unterbaum-Wurzel; <code class="hljs inlineCode">null</code> bedeutet die globale Anwendung.</td>
+   <td>nein</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>maxEntries</td>
+   <td>Ganzzahl</td>
+   <td>Begrenzt die Anzahl der betrachteten Historien-Einträge. Ein Wert kleiner oder gleich 0 bedeutet keine Begrenzung.</td>
+   <td>nein</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>includeSubtree</td>
+   <td>Wahrheitswert</td>
+   <td>Legt fest, ob der komplette Kompositions-Unterbaum berücksichtigt wird oder nur das Objekt selbst. Ignoriert bei fehlendem <code class="hljs inlineCode">object</code>.</td>
+   <td>nein</td>
+   <td>true</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Liste von Ressourcenschlüsseln</p>
+<p>Liste der während der Rücknahme aufgetretenen Probleme; leer bei fehlerfreier Ausführung oder wenn keine rücknehmbare Änderung gefunden wurde.</p>
+<h2>Beispiele</h2>
+<h3>Beispiel 1</h3>
+<pre>	<code>$project.undo()</code>
+</pre>
+<p>Nimmt die neueste echte Änderung im Kompositions-Unterbaum des Projektes zurück.</p>
+<h3>Beispiel 2</h3>
+<pre>	<code>undo(null, 50)</code>
+</pre>
+<p>Nimmt die neueste echte Änderung der gesamten Anwendung zurück, indem die letzten 50 Einträge der globalen Historie betrachtet werden.</p>

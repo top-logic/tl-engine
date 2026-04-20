@@ -26,9 +26,7 @@
 			image="css:fa-solid fa-right-left"
 			targetComponent="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 		>
-			<target>
-				<null/>
-			</target>
+			<target class="com.top_logic.layout.channel.linking.impl.NullLinking"/>
 			<resourceKey key="dynamic.dbbc4d87-a9d0-4b89-a1b2-bb32b23c5d6c">
 				<en>My latest changes</en>
 				<de>Meine letzten Änderungen</de>

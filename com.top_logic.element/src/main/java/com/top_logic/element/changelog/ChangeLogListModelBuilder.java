@@ -28,6 +28,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -127,7 +128,7 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 
 	@Override
 	public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
-		return aModel == null;
+		return aModel == null || aModel instanceof TLObject;
 	}
 
 	@Override
@@ -151,7 +152,7 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 			startRev = hm.getRevision(1);
 		}
 
-		return new ChangeLogBuilder(kb, model)
+		ChangeLogBuilder builder = new ChangeLogBuilder(kb, model)
 			.setAuthor(config.getAllUsers() ? null : TLContext.currentUser())
 			.setStartRev(startRev)
 			.setNumberEntries(getConfig().getMaxEntries())
@@ -159,8 +160,13 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 			.setExcludedModules(getConfig().getExcludedModules()
 				.stream()
 				.map(TLModelPartRef::qualifiedName)
-				.collect(Collectors.toSet()))
-			.build();
+				.collect(Collectors.toSet()));
+
+		if (businessModel instanceof TLObject root) {
+			builder.setFilter(new SubtreeFilter(root));
+		}
+
+		return builder.build();
 	}
 
 	@Override

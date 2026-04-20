@@ -18,6 +18,12 @@ public interface GanttLineDecoration extends GanttDecoration {
 	/** @see #getAt() */
 	String AT__PROP = "at";
 
+	/** @see #getStrokeWidth() */
+	String STROKE_WIDTH__PROP = "strokeWidth";
+
+	/** @see #getDashes() */
+	String DASHES__PROP = "dashes";
+
 	/**
 	 * Position of the line on the axis; see {@link GanttAxis} for position semantics.
 	 */
@@ -27,6 +33,36 @@ public interface GanttLineDecoration extends GanttDecoration {
 	 * @see #getAt()
 	 */
 	com.top_logic.react.flow.data.GanttLineDecoration setAt(double value);
+
+	/**
+	 * Stroke width of the line in pixels.
+	 */
+	double getStrokeWidth();
+
+	/**
+	 * @see #getStrokeWidth()
+	 */
+	com.top_logic.react.flow.data.GanttLineDecoration setStrokeWidth(double value);
+
+	/**
+	 * Dash pattern (alternating dash/gap lengths in pixels). Empty = solid.
+	 */
+	java.util.List<Double> getDashes();
+
+	/**
+	 * @see #getDashes()
+	 */
+	com.top_logic.react.flow.data.GanttLineDecoration setDashes(java.util.List<? extends Double> value);
+
+	/**
+	 * Adds a value to the {@link #getDashes()} list.
+	 */
+	com.top_logic.react.flow.data.GanttLineDecoration addDash(double value);
+
+	/**
+	 * Removes a value from the {@link #getDashes()} list.
+	 */
+	void removeDash(double value);
 
 	@Override
 	com.top_logic.react.flow.data.GanttLineDecoration setId(String value);

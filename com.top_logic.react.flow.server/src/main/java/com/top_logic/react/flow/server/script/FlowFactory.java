@@ -1648,7 +1648,9 @@ public class FlowFactory extends TLScriptFunctions {
 			String color,
 			Box label,
 			List<Object> relevantFor,
-			Boolean canMove) {
+			Boolean canMove,
+			Double strokeWidth,
+			List<Double> dashes) {
 		GanttLineDecoration deco = GanttLineDecoration.create()
 			.setUserObject(model)
 			.setAt(at)
@@ -1658,6 +1660,8 @@ public class FlowFactory extends TLScriptFunctions {
 			deco.setRelevantForModels(relevantFor);
 		}
 		if (canMove != null) deco.setCanMove(canMove);
+		if (strokeWidth != null) deco.setStrokeWidth(strokeWidth);
+		if (dashes != null && !dashes.isEmpty()) deco.setDashes(dashes);
 		return deco;
 	}
 

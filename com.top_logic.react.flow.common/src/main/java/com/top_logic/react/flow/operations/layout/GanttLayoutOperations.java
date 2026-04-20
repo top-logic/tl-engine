@@ -25,6 +25,7 @@ import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.GanttTick;
 import com.top_logic.react.flow.operations.BoxOperations;
+import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 
@@ -51,9 +52,6 @@ public interface GanttLayoutOperations extends BoxOperations {
 
 	/** Horizontal stub length for orthogonal edge routing (pixels offset from item edge). */
 	double EDGE_HORIZONTAL_STUB = 6.0;
-
-	/** Stroke width for the decoration line marker. */
-	double DECORATION_LINE_STROKE_WIDTH = 1.5;
 
 	/** Stroke width for normal (STRICT / WARN) dependency edges. */
 	double EDGE_STROKE_WIDTH_NORMAL = 1.2;
@@ -540,10 +538,19 @@ public interface GanttLayoutOperations extends BoxOperations {
 					color = "#606060";
 				}
 
+				double sw = line.getStrokeWidth();
+				if (sw <= 0.0) {
+					sw = 1.0;
+				}
+
 				out.beginPath();
 				out.setStroke(color);
-				out.setStrokeWidth(DECORATION_LINE_STROKE_WIDTH);
+				out.setStrokeWidth(sw);
 				out.setFill("none");
+				List<Double> dashes = line.getDashes();
+				if (dashes != null && !dashes.isEmpty()) {
+					out.setStrokeDasharray(DiagramUtil.doubleArray(dashes));
+				}
 				out.beginData();
 				out.moveToAbs(x, y0);
 				out.lineToAbs(x, y1);

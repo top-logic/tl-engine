@@ -1128,6 +1128,12 @@ abstract message GanttDecoration {
 message GanttLineDecoration extends GanttDecoration {
 	/** Position of the line on the axis; see {@link GanttAxis} for position semantics. */
 	double at;
+
+	/** Stroke width of the line in pixels. */
+	double strokeWidth = 1.0;
+
+	/** Dash pattern (alternating dash/gap lengths in pixels). Empty = solid. */
+	repeated double dashes;
 }
 
 /** Coloured range between two positions. */

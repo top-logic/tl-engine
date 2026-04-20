@@ -1,9 +1,11 @@
 <h2>Syntax</h2>
 <pre>	<code>$object.changeLog([maxEntries[, includeSubtree]])</code>
+	<code>changeLog()</code>
 </pre>
 <h2>Description</h2>
 <p>Returns the list of changes (<code class="hljs inlineCode">tl.changelog:ChangeSet</code>) affecting the given business object.</p>
 <p>When <code class="hljs inlineCode">includeSubtree</code> is set (the default), changes to objects that were in the composition subtree of the given object at the time of the change are also included. When set to <code class="hljs inlineCode">false</code>, only changes to the object itself are returned.</p>
+<p>When <code class="hljs inlineCode">object</code> is omitted or <code class="hljs inlineCode">null</code>, the global application change log is returned (no subtree filter). In that case, <code class="hljs inlineCode">maxEntries</code> should typically be used to keep the result size manageable.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -19,9 +21,9 @@
   <tr>
    <td>object</td>
    <td>Business object</td>
-   <td>The business object whose change history shall be returned.</td>
-   <td>yes</td>
-   <td></td>
+   <td>The business object whose change history shall be returned. Passing <code class="hljs inlineCode">null</code> or omitting the argument returns the global application change log.</td>
+   <td>no</td>
+   <td>null</td>
   </tr>
   <tr>
    <td>maxEntries</td>
@@ -51,3 +53,7 @@
 <pre>	<code>$project.changeLog(10, false)</code>
 </pre>
 <p>Returns the ten most recent changes made directly to the project object (without sub-objects).</p>
+<h3>Example 3</h3>
+<pre>	<code>changeLog(null, 50)</code>
+</pre>
+<p>Returns the 50 most recent changes of the entire application, with no subtree restriction.</p>

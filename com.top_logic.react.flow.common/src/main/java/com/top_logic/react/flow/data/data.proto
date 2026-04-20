@@ -1282,3 +1282,30 @@ message GanttLayout extends Layout {
 	 */
 	transient double columnWidth;
 }
+
+/** Edge of a box for resize operations. */
+enum DragEdge {
+	/** Top edge. */
+	N;
+	/** Right edge. */
+	E;
+	/** Bottom edge. */
+	S;
+	/** Left edge. */
+	W;
+}
+
+/** A rectangular region where a box may be dropped during drag. */
+message DropArea {
+	/** X coordinate of the top-left corner (layout units). */
+	double x;
+
+	/** Y coordinate of the top-left corner (layout units). */
+	double y;
+
+	/** Width of the area (layout units). */
+	double width;
+
+	/** Height of the area (layout units). */
+	double height;
+}

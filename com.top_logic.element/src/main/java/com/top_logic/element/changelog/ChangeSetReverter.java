@@ -24,6 +24,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.model.ModelService;
 
@@ -169,6 +170,96 @@ public final class ChangeSetReverter {
 		assert kb == ModelService.getApplicationModel().tKnowledgeBase();
 
 		return revertAll(kb, collected, transactionMessage);
+	}
+
+	/**
+	 * Undoes the newest real change that has not yet been reverted.
+	 *
+	 * <p>
+	 * "Real" means the change is neither a revert nor has itself been reverted. If no such change
+	 * exists within the considered window, the method is a no-op and returns an empty list. The
+	 * revert is performed in the caller's active transaction — the method does not open or commit
+	 * a transaction.
+	 * </p>
+	 *
+	 * @param root
+	 *        Optional subtree root; {@code null} means the global change log.
+	 * @param maxEntries
+	 *        Upper bound on the change log window inspected; {@code <= 0} means unlimited.
+	 * @param includeSubtree
+	 *        When {@code root} is given: {@code true} considers the whole composition subtree;
+	 *        {@code false} only {@code root} itself. Ignored when {@code root} is {@code null}.
+	 * @return Aggregated problems from the revert; empty when no change was eligible or the revert
+	 *         was clean.
+	 */
+	public static List<ResKey> undoLast(TLObject root, int maxEntries, boolean includeSubtree) {
+		ChangeSet target = findLastRealChange(readLog(root, maxEntries, includeSubtree));
+		if (target == null) {
+			return Collections.emptyList();
+		}
+		return revertAll(Collections.singletonList(target));
+	}
+
+	/**
+	 * Re-applies the most recent undo within the considered change log window.
+	 *
+	 * <p>
+	 * Concretely: the original change whose revert has the largest commit number is located; the
+	 * revert ChangeSet itself is reverted, which restores the original change. No transaction is
+	 * opened or committed.
+	 * </p>
+	 *
+	 * @see #undoLast(TLObject, int, boolean) for the parameter semantics.
+	 */
+	public static List<ResKey> redoLast(TLObject root, int maxEntries, boolean includeSubtree) {
+		ChangeSet revertToUndo = findNewestRevert(readLog(root, maxEntries, includeSubtree));
+		if (revertToUndo == null) {
+			return Collections.emptyList();
+		}
+		return revertAll(Collections.singletonList(revertToUndo));
+	}
+
+	private static Collection<ChangeSet> readLog(TLObject root, int maxEntries, boolean includeSubtree) {
+		KnowledgeBase kb = root != null ? root.tKnowledgeBase() : PersistencyLayer.getKnowledgeBase();
+		TLModel model = ModelService.getApplicationModel();
+		ChangeLogBuilder builder = new ChangeLogBuilder(kb, model);
+		if (root != null) {
+			builder.setFilter(new SubtreeFilter(root, includeSubtree));
+		}
+		if (maxEntries > 0) {
+			builder.setNumberEntries(maxEntries);
+		}
+		@SuppressWarnings("unchecked")
+		Collection<ChangeSet> result = (Collection<ChangeSet>) builder.build();
+		return result;
+	}
+
+	private static ChangeSet findLastRealChange(Collection<ChangeSet> log) {
+		// Log is ascending; the newest real change is the last one matching.
+		ChangeSet result = null;
+		for (ChangeSet cs : log) {
+			if (cs.getRevertedBy() == null && !cs.isRevert()) {
+				result = cs;
+			}
+		}
+		return result;
+	}
+
+	private static ChangeSet findNewestRevert(Collection<ChangeSet> log) {
+		ChangeSet newest = null;
+		long newestRev = Long.MIN_VALUE;
+		for (ChangeSet cs : log) {
+			ChangeSet revert = cs.getRevertedBy();
+			if (revert == null) {
+				continue;
+			}
+			long rev = revert.getRevision().getCommitNumber();
+			if (rev > newestRev) {
+				newestRev = rev;
+				newest = revert;
+			}
+		}
+		return newest;
 	}
 
 }

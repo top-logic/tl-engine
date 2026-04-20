@@ -30,6 +30,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 REVERTED__MSG;
 
+	/**
+	 * @en Cannot redo: a regular change has been made after the most recent undo.
+	 */
+	public static ResKey ERROR_CANNOT_REDO_CHAIN_BROKEN;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

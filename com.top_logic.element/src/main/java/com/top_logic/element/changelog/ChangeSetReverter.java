@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -211,16 +212,30 @@ public final class ChangeSetReverter {
 	 * Re-applies the most recent undo within the considered change log window.
 	 *
 	 * <p>
-	 * Concretely: the original change whose revert has the largest commit number is located; the
-	 * revert ChangeSet itself is reverted, which restores the original change. The method opens a
-	 * dedicated transaction with the correct revert commit message so that future
-	 * {@code undoLast} / {@code redoLast} calls recognize the operation.
+	 * Concretely: the original change whose revert has the largest commit number and is itself
+	 * not yet redone is located; the revert ChangeSet itself is reverted, which restores the
+	 * original change.
+	 * </p>
+	 *
+	 * <p>
+	 * A redo is only allowed when the trailing tail of the change log consists exclusively of
+	 * undos/redos — i.e. no regular forward change has been committed since the most recent
+	 * pending undo. If a real change interrupts the undo stack, the method throws a
+	 * {@link TopLogicException} to reflect that the redo stack has been invalidated.
+	 * </p>
+	 *
+	 * <p>
+	 * The method opens a dedicated transaction with the correct revert commit message so that
+	 * future {@code undoLast} / {@code redoLast} calls recognize the operation.
 	 * </p>
 	 *
 	 * @see #undoLast(TLObject, int, boolean) for the parameter semantics.
+	 *
+	 * @throws TopLogicException
+	 *         when a pending undo exists but a newer regular change has broken the redo stack.
 	 */
 	public static List<ResKey> redoLast(TLObject root, int maxEntries, boolean includeSubtree) {
-		ChangeSet revertToUndo = findNewestRevert(readLog(root, maxEntries, includeSubtree));
+		ChangeSet revertToUndo = findNewestPendingRevert(readLog(root, maxEntries, includeSubtree));
 		if (revertToUndo == null) {
 			return Collections.emptyList();
 		}
@@ -263,10 +278,9 @@ public final class ChangeSetReverter {
 		return result;
 	}
 
-	private static ChangeSet findNewestRevert(Collection<ChangeSet> log) {
-		// Reverts that have themselves been re-applied via a redo are no longer pending and must
-		// be skipped — otherwise a second redoLast() would target the same revert again and
-		// attempt to re-apply an already-applied change.
+	private static ChangeSet findNewestPendingRevert(Collection<ChangeSet> log) {
+		// Collect revisions of reverts that have been re-applied via a redo — those are no
+		// longer pending.
 		Set<Long> alreadyRedone = new HashSet<>();
 		for (ChangeSet cs : log) {
 			if (cs.isRedo()) {
@@ -277,23 +291,53 @@ public final class ChangeSetReverter {
 			}
 		}
 
-		ChangeSet newest = null;
-		long newestRev = Long.MIN_VALUE;
+		// Determine:
+		//   - the newest pending revert (candidate for redo), and
+		//   - the newest revision of an effectively-active real change (something that is neither
+		//     a revert nor a redo, and either was never reverted or whose revert has been redone).
+		// A redo is only valid if the candidate revert is newer than any real change — otherwise
+		// the redo stack has been invalidated by regular forward work.
+		ChangeSet candidate = null;
+		long candidateRev = Long.MIN_VALUE;
+		long newestRealChangeRev = Long.MIN_VALUE;
+
 		for (ChangeSet cs : log) {
+			if (cs.isRevert() || cs.isRedo()) {
+				// These are bookkeeping change sets, not real forward changes.
+				continue;
+			}
+			long csRev = cs.getRevision().getCommitNumber();
 			ChangeSet revert = cs.getRevertedBy();
 			if (revert == null) {
+				if (csRev > newestRealChangeRev) {
+					newestRealChangeRev = csRev;
+				}
 				continue;
 			}
-			long rev = revert.getRevision().getCommitNumber();
-			if (alreadyRedone.contains(rev)) {
-				continue;
-			}
-			if (rev > newestRev) {
-				newestRev = rev;
-				newest = revert;
+			long revRev = revert.getRevision().getCommitNumber();
+			if (alreadyRedone.contains(revRev)) {
+				// The revert was undone — cs is effectively an active real change again.
+				if (csRev > newestRealChangeRev) {
+					newestRealChangeRev = csRev;
+				}
+			} else {
+				if (revRev > candidateRev) {
+					candidateRev = revRev;
+					candidate = revert;
+				}
 			}
 		}
-		return newest;
+
+		if (candidate == null) {
+			// No pending undo; nothing to redo. Not an error condition.
+			return null;
+		}
+		if (newestRealChangeRev > candidateRev) {
+			// A real change happened after the newest pending undo — the redo stack was cleared
+			// by that forward action, so redo is no longer meaningful.
+			throw new TopLogicException(I18NConstants.ERROR_CANNOT_REDO_CHAIN_BROKEN);
+		}
+		return candidate;
 	}
 
 }

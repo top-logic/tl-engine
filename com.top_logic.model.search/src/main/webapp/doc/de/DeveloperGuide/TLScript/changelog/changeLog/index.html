@@ -1,9 +1,11 @@
 <h2>Syntax</h2>
 <pre>	<code>$object.changeLog([maxEntries[, includeSubtree]])</code>
+	<code>changeLog()</code>
 </pre>
 <h2>Beschreibung</h2>
 <p>Liefert die Liste der Änderungen (<code class="hljs inlineCode">tl.changelog:ChangeSet</code>), die das angegebene Fachobjekt betreffen.</p>
 <p>Ist <code class="hljs inlineCode">includeSubtree</code> gesetzt (Standard), werden auch Änderungen an Objekten berücksichtigt, die sich zum Zeitpunkt der Änderung im Kompositions-Unterbaum des Objektes befanden. Wird der Parameter auf <code class="hljs inlineCode">false</code> gesetzt, werden ausschließlich Änderungen am Objekt selbst zurückgeliefert.</p>
+<p>Wird kein <code class="hljs inlineCode">object</code> übergeben oder <code class="hljs inlineCode">null</code>, so wird die globale Änderungshistorie der Anwendung zurückgeliefert (ohne Unterbaum-Einschränkung). In diesem Fall empfiehlt sich die Nutzung von <code class="hljs inlineCode">maxEntries</code>, um die Ergebnismenge zu begrenzen.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -19,9 +21,9 @@
   <tr>
    <td>object</td>
    <td>Fachobjekt</td>
-   <td>Das Fachobjekt, für das die Änderungen ermittelt werden sollen.</td>
-   <td>ja</td>
-   <td></td>
+   <td>Das Fachobjekt, für das die Änderungen ermittelt werden sollen. <code class="hljs inlineCode">null</code> oder weglassen liefert die globale Änderungshistorie der Anwendung.</td>
+   <td>nein</td>
+   <td>null</td>
   </tr>
   <tr>
    <td>maxEntries</td>
@@ -51,3 +53,7 @@
 <pre>	<code>$project.changeLog(10, false)</code>
 </pre>
 <p>Liefert die zehn neuesten Änderungen, die direkt am Projekt-Objekt vorgenommen wurden (ohne Unterobjekte).</p>
+<h3>Beispiel 3</h3>
+<pre>	<code>changeLog(null, 50)</code>
+</pre>
+<p>Liefert die 50 neuesten Änderungen der gesamten Anwendung, ohne Unterbaum-Einschränkung.</p>

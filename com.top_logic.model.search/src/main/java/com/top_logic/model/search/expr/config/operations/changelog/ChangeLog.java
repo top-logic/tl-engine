@@ -15,6 +15,7 @@ import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.SubtreeFilter;
 import com.top_logic.element.changelog.model.TlChangelogFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -26,12 +27,17 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.util.model.ModelService;
 
 /**
- * TL-Script function {@code changeLog(obj [, maxEntries [, includeSubtree]])}.
+ * TL-Script function {@code changeLog([obj [, maxEntries [, includeSubtree]]])}.
  *
  * <p>
  * Returns the list of {@code tl.changelog:ChangeSet}s that affect the given object. When
  * {@code includeSubtree} is {@code true} (default), the entire composition subtree rooted at
  * {@code obj} is considered; when {@code false}, only changes to {@code obj} itself.
+ * </p>
+ *
+ * <p>
+ * When {@code obj} is {@code null} (or not given), the global application change log is returned
+ * without any subtree filter. Combine with {@code maxEntries} to keep the result size manageable.
  * </p>
  *
  * <p>
@@ -60,17 +66,16 @@ public class ChangeLog extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		TLObject obj = asTLObject(arguments[0]);
-		if (obj == null) {
-			return Collections.emptyList();
-		}
+		TLObject obj = arguments[0] == null ? null : asTLObject(arguments[0]);
 
 		int maxEntries = arguments.length > 1 && arguments[1] != null ? asInt(arguments[1]) : 0;
 		boolean includeSubtree = arguments.length > 2 && arguments[2] != null ? asBoolean(arguments[2]) : true;
 
-		KnowledgeBase kb = obj.tKnowledgeBase();
-		ChangeLogBuilder builder = new ChangeLogBuilder(kb, ModelService.getApplicationModel())
-			.setFilter(new SubtreeFilter(obj, includeSubtree));
+		KnowledgeBase kb = obj != null ? obj.tKnowledgeBase() : PersistencyLayer.getKnowledgeBase();
+		ChangeLogBuilder builder = new ChangeLogBuilder(kb, ModelService.getApplicationModel());
+		if (obj != null) {
+			builder.setFilter(new SubtreeFilter(obj, includeSubtree));
+		}
 		if (maxEntries > 0) {
 			builder.setNumberEntries(maxEntries);
 		}
@@ -83,7 +88,7 @@ public class ChangeLog extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<ChangeLog> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("object")
+			.optional("object")
 			.optional("maxEntries")
 			.optional("includeSubtree")
 			.build();

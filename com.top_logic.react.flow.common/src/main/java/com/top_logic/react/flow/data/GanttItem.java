@@ -11,8 +11,8 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 		/** Type literal for {@link com.top_logic.react.flow.data.GanttSpan}. */
 		GANTT_SPAN,
 
-		/** Type literal for {@link com.top_logic.react.flow.data.GanttMilestone}. */
-		GANTT_MILESTONE,
+		/** Type literal for {@link com.top_logic.react.flow.data.GanttPoint}. */
+		GANTT_POINT,
 		;
 
 	}
@@ -23,8 +23,8 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 		/** Visit case for {@link com.top_logic.react.flow.data.GanttSpan}.*/
 		R visit(com.top_logic.react.flow.data.GanttSpan self, A arg) throws E;
 
-		/** Visit case for {@link com.top_logic.react.flow.data.GanttMilestone}.*/
-		R visit(com.top_logic.react.flow.data.GanttMilestone self, A arg) throws E;
+		/** Visit case for {@link com.top_logic.react.flow.data.GanttPoint}.*/
+		R visit(com.top_logic.react.flow.data.GanttPoint self, A arg) throws E;
 
 	}
 
@@ -183,7 +183,7 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 		int id = in.nextInt();
 		switch (type) {
 			case GanttSpan.GANTT_SPAN__TYPE: result = com.top_logic.react.flow.data.GanttSpan.create(); break;
-			case GanttMilestone.GANTT_MILESTONE__TYPE: result = com.top_logic.react.flow.data.GanttMilestone.create(); break;
+			case GanttPoint.GANTT_POINT__TYPE: result = com.top_logic.react.flow.data.GanttPoint.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
 		if (result != null) {

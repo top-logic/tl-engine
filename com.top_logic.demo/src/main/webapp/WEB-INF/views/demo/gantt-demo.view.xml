@@ -14,7 +14,7 @@ r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowBorder(react
 
 spec  = reactFlowGanttSpan(model: "task:spec",  rowModel: "phase:design", box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20461);
 build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",   box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20461, end: 20478);
-beta  = reactFlowGanttMilestone(model: "milestone:beta", rowModel: "phase:test", box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"), all: 3)), at: 20478);
+beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test", box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"), all: 3)), at: 20478);
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",   box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20478, end: 20490);
 
 e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",      targetEndpoint: "START", enforce: "STRICT");

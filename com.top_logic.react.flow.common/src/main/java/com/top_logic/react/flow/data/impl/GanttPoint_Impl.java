@@ -1,24 +1,24 @@
 package com.top_logic.react.flow.data.impl;
 
 /**
- * Implementation of {@link com.top_logic.react.flow.data.GanttMilestone}.
+ * Implementation of {@link com.top_logic.react.flow.data.GanttPoint}.
  */
-public class GanttMilestone_Impl extends com.top_logic.react.flow.data.impl.GanttItem_Impl implements com.top_logic.react.flow.data.GanttMilestone {
+public class GanttPoint_Impl extends com.top_logic.react.flow.data.impl.GanttItem_Impl implements com.top_logic.react.flow.data.GanttPoint {
 
 	private double _at = 0.0d;
 
 	/**
-	 * Creates a {@link GanttMilestone_Impl} instance.
+	 * Creates a {@link GanttPoint_Impl} instance.
 	 *
-	 * @see com.top_logic.react.flow.data.GanttMilestone#create()
+	 * @see com.top_logic.react.flow.data.GanttPoint#create()
 	 */
-	public GanttMilestone_Impl() {
+	public GanttPoint_Impl() {
 		super();
 	}
 
 	@Override
 	public TypeKind kind() {
-		return TypeKind.GANTT_MILESTONE;
+		return TypeKind.GANTT_POINT;
 	}
 
 	@Override
@@ -27,7 +27,7 @@ public class GanttMilestone_Impl extends com.top_logic.react.flow.data.impl.Gant
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setAt(double value) {
+	public com.top_logic.react.flow.data.GanttPoint setAt(double value) {
 		internalSetAt(value);
 		return this;
 	}
@@ -40,62 +40,62 @@ public class GanttMilestone_Impl extends com.top_logic.react.flow.data.impl.Gant
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setId(String value) {
+	public com.top_logic.react.flow.data.GanttPoint setId(String value) {
 		internalSetId(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setUserObject(java.lang.Object value) {
+	public com.top_logic.react.flow.data.GanttPoint setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setRowModel(java.lang.Object value) {
+	public com.top_logic.react.flow.data.GanttPoint setRowModel(java.lang.Object value) {
 		internalSetRowModel(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setRowId(String value) {
+	public com.top_logic.react.flow.data.GanttPoint setRowId(String value) {
 		internalSetRowId(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setBox(com.top_logic.react.flow.data.Box value) {
+	public com.top_logic.react.flow.data.GanttPoint setBox(com.top_logic.react.flow.data.Box value) {
 		internalSetBox(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setCanMoveTime(boolean value) {
+	public com.top_logic.react.flow.data.GanttPoint setCanMoveTime(boolean value) {
 		internalSetCanMoveTime(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setCanMoveRow(boolean value) {
+	public com.top_logic.react.flow.data.GanttPoint setCanMoveRow(boolean value) {
 		internalSetCanMoveRow(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setCanBeEdgeSource(boolean value) {
+	public com.top_logic.react.flow.data.GanttPoint setCanBeEdgeSource(boolean value) {
 		internalSetCanBeEdgeSource(value);
 		return this;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttMilestone setCanBeEdgeTarget(boolean value) {
+	public com.top_logic.react.flow.data.GanttPoint setCanBeEdgeTarget(boolean value) {
 		internalSetCanBeEdgeTarget(value);
 		return this;
 	}
 
 	@Override
 	public String jsonType() {
-		return GANTT_MILESTONE__TYPE;
+		return GANTT_POINT__TYPE;
 	}
 
 	@SuppressWarnings("hiding")

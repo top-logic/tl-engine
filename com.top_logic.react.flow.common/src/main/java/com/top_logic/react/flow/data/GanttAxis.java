@@ -8,7 +8,7 @@ package com.top_logic.react.flow.data;
  * <p>
  * All numeric position-like fields in the Gantt model ({@link #getRangeMin},
 	 * {@link #getRangeMax}, {@link GanttTick#getPosition}, {@link GanttSpan#getStart},
-	 * {@link GanttSpan#getEnd}, {@link GanttMilestone#getAt}, {@link GanttLineDecoration#getAt},
+	 * {@link GanttSpan#getEnd}, {@link GanttPoint#getAt}, {@link GanttLineDecoration#getAt},
 	 * {@link GanttRangeDecoration#getFrom}, {@link GanttRangeDecoration#getTo}) are
  * <strong>positions in layout units</strong> — plain doubles shipped with the
  * synchronised diagram model and used on the client for geometric layout, hit-testing

@@ -1078,9 +1078,9 @@ message GanttSpan extends GanttItem {
 	bool canResizeEnd = true;
 }
 
-/** A milestone (point in time). */
-message GanttMilestone extends GanttItem {
-	/** Position of the milestone on the axis; see {@link GanttAxis} for position semantics. */
+/** A point item positioned at a single time on the axis. */
+message GanttPoint extends GanttItem {
+	/** Position of the point on the axis; see {@link GanttAxis} for position semantics. */
 	double at;
 }
 
@@ -1153,7 +1153,7 @@ message GanttRangeDecoration extends GanttDecoration {
  * <p>
  * All numeric position-like fields in the Gantt model ({@link #getRangeMin},
  * {@link #getRangeMax}, {@link GanttTick#getPosition}, {@link GanttSpan#getStart},
- * {@link GanttSpan#getEnd}, {@link GanttMilestone#getAt}, {@link GanttLineDecoration#getAt},
+ * {@link GanttSpan#getEnd}, {@link GanttPoint#getAt}, {@link GanttLineDecoration#getAt},
  * {@link GanttRangeDecoration#getFrom}, {@link GanttRangeDecoration#getTo}) are
  * <strong>positions in layout units</strong> — plain doubles shipped with the
  * synchronised diagram model and used on the client for geometric layout, hit-testing

@@ -48,7 +48,7 @@ import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttItem;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttLineDecoration;
-import com.top_logic.react.flow.data.GanttMilestone;
+import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
@@ -1598,8 +1598,8 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	@SideEffectFree
-	@Label("Create Gantt milestone item")
-	public static GanttMilestone ganttMilestone(
+	@Label("Create Gantt point item")
+	public static GanttPoint ganttPoint(
 			@Mandatory Object model,
 			@Mandatory Object rowModel,
 			@Mandatory Box box,
@@ -1610,7 +1610,7 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean canBeEdge,
 			Boolean canBeEdgeSource,
 			Boolean canBeEdgeTarget) {
-		GanttMilestone milestone = GanttMilestone.create()
+		GanttPoint milestone = GanttPoint.create()
 			.setUserObject(model)
 			.setRowModel(rowModel)
 			.setBox(box)

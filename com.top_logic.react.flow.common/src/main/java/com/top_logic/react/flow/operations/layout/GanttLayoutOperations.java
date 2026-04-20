@@ -19,7 +19,7 @@ import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttItem;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttLineDecoration;
-import com.top_logic.react.flow.data.GanttMilestone;
+import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
@@ -118,7 +118,7 @@ public interface GanttLayoutOperations extends BoxOperations {
 			double tmpY = offsetY + axisHeight + rowPadding; // rough y, refined in pass 2
 			if (item instanceof GanttSpan span) {
 				tmpX = offsetX + tmpLabelWidth + (span.getStart() - rangeMin) * zoom;
-			} else if (item instanceof GanttMilestone ms) {
+			} else if (item instanceof GanttPoint ms) {
 				tmpX = offsetX + tmpLabelWidth + (ms.getAt() - rangeMin) * zoom;
 			} else {
 				continue;
@@ -200,8 +200,8 @@ public interface GanttLayoutOperations extends BoxOperations {
 				double x = offsetX + columnWidth + (span.getStart() - rangeMin) * zoom;
 				double w = (span.getEnd() - span.getStart()) * zoom;
 				box.distributeSize(context, x, itemY, w, contentHeight);
-			} else if (item instanceof GanttMilestone ms) {
-				// Milestone: intrinsic width, centred on 'at'.
+			} else if (item instanceof GanttPoint ms) {
+				// Point: intrinsic width, centred on 'at'.
 				double r = contentHeight / 2.0;
 				double cx = offsetX + columnWidth + (ms.getAt() - rangeMin) * zoom;
 				double msW = box.getWidth(); // intrinsic width from pass 1

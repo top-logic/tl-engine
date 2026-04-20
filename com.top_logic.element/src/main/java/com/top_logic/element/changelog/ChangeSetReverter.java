@@ -176,18 +176,21 @@ public final class ChangeSetReverter {
 	}
 
 	/**
-	 * Undoes the newest real change that has not yet been reverted.
+	 * Locates the {@link ChangeSet} an {@code undo} operation should revert.
 	 *
 	 * <p>
-	 * "Real" means the change is neither a revert nor has itself been reverted. If no such change
-	 * exists within the considered window, the method is a no-op and returns an empty list.
+	 * Returns the newest "real" change in the considered change log window that has not yet been
+	 * reverted. "Real" means it is neither a revert nor a redo, and either has no pending revert
+	 * or its revert has already been re-applied (redone). Returns {@code null} when no such
+	 * change exists.
 	 * </p>
 	 *
 	 * <p>
-	 * The method opens a dedicated transaction with the correct revert commit message so that the
-	 * resulting revision is recognized by {@link ChangeSet#isRevert()} and the
-	 * {@link ChangeLogBuilder} pair-deduplication — a subsequent {@code undoLast} call will then
-	 * find the next real change.
+	 * Callers that need fine-grained control over transaction and conflict handling (e.g. a
+	 * {@link com.top_logic.tool.boundsec.CommandHandler}) use this method to identify the target
+	 * and then open their own transaction with {@code target.revert().getMessage()} as the commit
+	 * message. For simple programmatic use cases, {@link #undoLast(TLObject, int, boolean)}
+	 * wraps both steps.
 	 * </p>
 	 *
 	 * @param root
@@ -197,11 +200,43 @@ public final class ChangeSetReverter {
 	 * @param includeSubtree
 	 *        When {@code root} is given: {@code true} considers the whole composition subtree;
 	 *        {@code false} only {@code root} itself. Ignored when {@code root} is {@code null}.
-	 * @return Aggregated problems from the revert; empty when no change was eligible or the revert
-	 *         was clean.
+	 */
+	public static ChangeSet findUndoCandidate(TLObject root, int maxEntries, boolean includeSubtree) {
+		return findLastRealChange(readLog(root, maxEntries, includeSubtree));
+	}
+
+	/**
+	 * Locates the revert {@link ChangeSet} a {@code redo} operation should re-apply.
+	 *
+	 * <p>
+	 * Returns the revert with the highest commit number that is itself not yet redone. A redo is
+	 * only valid when the trailing tail of the change log consists exclusively of undos/redos.
+	 * If a regular forward change interrupted the undo stack, the method throws a
+	 * {@link TopLogicException} ({@link I18NConstants#ERROR_CANNOT_REDO_CHAIN_BROKEN}). Returns
+	 * {@code null} when no pending undo exists.
+	 * </p>
+	 *
+	 * @see #findUndoCandidate(TLObject, int, boolean) for the parameter semantics.
+	 *
+	 * @throws TopLogicException
+	 *         when a pending undo exists but a newer regular change has broken the redo stack.
+	 */
+	public static ChangeSet findRedoCandidate(TLObject root, int maxEntries, boolean includeSubtree) {
+		return findNewestPendingRevert(readLog(root, maxEntries, includeSubtree));
+	}
+
+	/**
+	 * Convenience wrapper around {@link #findUndoCandidate(TLObject, int, boolean)} that also
+	 * opens a dedicated transaction with the correct revert commit message and commits.
+	 *
+	 * <p>
+	 * A no-op (empty result) is returned when no change is eligible. For callers that need
+	 * conflict-aware commit control, use {@link #findUndoCandidate(TLObject, int, boolean)}
+	 * directly and manage the transaction themselves.
+	 * </p>
 	 */
 	public static List<ResKey> undoLast(TLObject root, int maxEntries, boolean includeSubtree) {
-		ChangeSet target = findLastRealChange(readLog(root, maxEntries, includeSubtree));
+		ChangeSet target = findUndoCandidate(root, maxEntries, includeSubtree);
 		if (target == null) {
 			return Collections.emptyList();
 		}
@@ -209,37 +244,19 @@ public final class ChangeSetReverter {
 	}
 
 	/**
-	 * Re-applies the most recent undo within the considered change log window.
+	 * Convenience wrapper around {@link #findRedoCandidate(TLObject, int, boolean)} that opens a
+	 * dedicated transaction with the correct revert commit message and commits.
 	 *
-	 * <p>
-	 * Concretely: the original change whose revert has the largest commit number and is itself
-	 * not yet redone is located; the revert ChangeSet itself is reverted, which restores the
-	 * original change.
-	 * </p>
-	 *
-	 * <p>
-	 * A redo is only allowed when the trailing tail of the change log consists exclusively of
-	 * undos/redos — i.e. no regular forward change has been committed since the most recent
-	 * pending undo. If a real change interrupts the undo stack, the method throws a
-	 * {@link TopLogicException} to reflect that the redo stack has been invalidated.
-	 * </p>
-	 *
-	 * <p>
-	 * The method opens a dedicated transaction with the correct revert commit message so that
-	 * future {@code undoLast} / {@code redoLast} calls recognize the operation.
-	 * </p>
-	 *
-	 * @see #undoLast(TLObject, int, boolean) for the parameter semantics.
-	 *
+	 * @see #undoLast(TLObject, int, boolean)
 	 * @throws TopLogicException
 	 *         when a pending undo exists but a newer regular change has broken the redo stack.
 	 */
 	public static List<ResKey> redoLast(TLObject root, int maxEntries, boolean includeSubtree) {
-		ChangeSet revertToUndo = findNewestPendingRevert(readLog(root, maxEntries, includeSubtree));
-		if (revertToUndo == null) {
+		ChangeSet target = findRedoCandidate(root, maxEntries, includeSubtree);
+		if (target == null) {
 			return Collections.emptyList();
 		}
-		return runSingleRevert(root, revertToUndo);
+		return runSingleRevert(root, target);
 	}
 
 	private static List<ResKey> runSingleRevert(TLObject root, ChangeSet target) {

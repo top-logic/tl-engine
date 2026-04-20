@@ -24,6 +24,7 @@
 		<open-handler id="openChangeLogDialog"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			image="css:fa-solid fa-right-left"
+			targetComponent="admin/myLatestChanges/lastChangesTable.layout.xml#Table"
 		>
 			<target>
 				<null/>

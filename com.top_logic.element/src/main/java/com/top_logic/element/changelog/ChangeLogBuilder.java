@@ -103,6 +103,8 @@ public class ChangeLogBuilder {
 
 	private Set<String> _excludeModules = Collections.emptySet();
 
+	private ChangeFilter _filter;
+
 	/**
 	 * Creates a {@link ChangeLogBuilder}.
 	 */
@@ -200,6 +202,25 @@ public class ChangeLogBuilder {
 	}
 
 	/**
+	 * Optional {@link ChangeFilter} restricting which {@link Change}s are included in the result.
+	 *
+	 * <p>
+	 * {@code null} means no filtering beyond the builder's own options.
+	 * </p>
+	 */
+	public ChangeFilter getFilter() {
+		return _filter;
+	}
+
+	/**
+	 * @see #getFilter()
+	 */
+	public ChangeLogBuilder setFilter(ChangeFilter filter) {
+		_filter = filter;
+		return this;
+	}
+
+	/**
 	 * Maximal number of entries to display.
 	 */
 	public int getNumberEntries() {
@@ -229,7 +250,9 @@ public class ChangeLogBuilder {
 
 		Map<Long, com.top_logic.element.changelog.model.ChangeSet> revertedBy = new HashMap<>();
 
-		List<LongRange> revisionRanges = getRevisionRanges();
+		Revision effectiveStartRev = _filter == null ? _startRev : _filter.adjustStartRev(_startRev);
+
+		List<LongRange> revisionRanges = getRevisionRanges(effectiveStartRev);
 		processRevisions:
 		for (int i = revisionRanges.size() - 1; i >= 0; i--) {
 			LongRange range = revisionRanges.get(i);
@@ -363,7 +386,9 @@ public class ChangeLogBuilder {
 				}
 
 				ChangeSetAnalyzer analyzer = new ChangeSetAnalyzer(changeSet);
-				if (!_includeTechnical && !analyzer.hasChanges()) {
+				if ((!_includeTechnical || _filter != null) && !analyzer.hasChanges()) {
+					// When a filter is active, a change set that has no changes passing the filter
+					// must not be reported, regardless of the _includeTechnical setting.
 					continue;
 				}
 
@@ -381,8 +406,8 @@ public class ChangeLogBuilder {
 		}
 	}
 
-	private List<LongRange> getRevisionRanges() {
-		long startRev = _startRev.getCommitNumber();
+	private List<LongRange> getRevisionRanges(Revision effectiveStartRev) {
+		long startRev = effectiveStartRev.getCommitNumber();
 		long stopRev = _stopRev.getCommitNumber();
 		if (_author == null) {
 			return LongRangeSet.range(startRev, stopRev);
@@ -497,6 +522,13 @@ public class ChangeLogBuilder {
 		 * Whether the {@link ChangeSet} contains relevant changes.
 		 */
 		public boolean hasChanges() {
+			if (_filter != null) {
+				// With a filter, any of the early-exit heuristics below would observe unfiltered
+				// changes (including changes accumulated in _updates before processUpdates), so
+				// force a full analysis to ensure the filter is applied before answering.
+				analyze(AnalyseState.FULL);
+				return !_changes.isEmpty();
+			}
 			switch(_state) {
 				case FULL:
 					return !_changes.isEmpty();
@@ -756,6 +788,9 @@ public class ChangeLogBuilder {
 		}
 
 		private void registerChange(Change change) {
+			if (_filter != null && !_filter.accept(change)) {
+				return;
+			}
 			_changes.add(change);
 		}
 

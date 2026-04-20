@@ -15,6 +15,8 @@ import test.com.top_logic.element.meta.TestWithModelExtension;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.ChangeSetReverter;
+import com.top_logic.element.changelog.I18NConstants;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
@@ -205,43 +207,35 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 	}
 
 	/**
-	 * Sequence {@code ch1, ch2, undo, ch3, ch4, undo, redo, redo}: the second redo must walk past
-	 * the already-redone revert and re-apply the earlier undone change.
+	 * Sequence {@code ch1, ch2, undo, ch3, ch4, undo, redo, redo}: the first redo restores ch4;
+	 * the second redo must fail because a regular change (ch3, ch4) intervened between the
+	 * older pending undo (of ch2) and the freshly redone state.
 	 */
-	public void testRedoLastWalksPastAlreadyRedone() {
+	public void testRedoLastFailsWhenRedoStackBroken() {
 		TLObject root = createNode(null, "root");
 		TLObject child = createNode(root, "child");
 
-		// ch1: rename to "v1"
-		rename(child, "v1");
-		// ch2: rename to "v2"
-		rename(child, "v2");
-		// undo ch2: back to "v1"
-		ChangeSetReverter.undoLast(root, 0, true);
+		rename(child, "v1");                           // ch1
+		rename(child, "v2");                           // ch2
+		ChangeSetReverter.undoLast(root, 0, true);     // undo(ch2) → "v1"
 		assertEquals("v1", child.tValueByName("name"));
 
-		// ch3: rename to "v3"
-		rename(child, "v3");
-		// ch4: rename to "v4"
-		rename(child, "v4");
-		// undo ch4: back to "v3"
-		ChangeSetReverter.undoLast(root, 0, true);
+		rename(child, "v3");                           // ch3
+		rename(child, "v4");                           // ch4
+		ChangeSetReverter.undoLast(root, 0, true);     // undo(ch4) → "v3"
 		assertEquals("v3", child.tValueByName("name"));
 
-		// redo: restore ch4 => "v4"
-		ChangeSetReverter.redoLast(root, 0, true);
+		ChangeSetReverter.redoLast(root, 0, true);     // redo → "v4"
 		assertEquals("v4", child.tValueByName("name"));
 
-		// redo again: the revert of ch4 is already redone, so the next pending revert is of ch2.
-		// Re-applying ch2 on top of "v4" means the "v2 overwrites whatever"-update replays:
-		// the rename from its base (old "child") to "v2" is now applied to current "v4", with a
-		// reported conflict. The merged value for a single-valued property is newValue="v2".
-		List<ResKey> problems = ChangeSetReverter.redoLast(root, 0, true);
-		assertEquals("v2", child.tValueByName("name"));
-		// The base-vs-current mismatch is reported as a problem; the merge nevertheless picks the
-		// new value.
-		assertFalse("Conflict expected when replaying an earlier change on a diverged state.",
-			problems.isEmpty());
+		try {
+			ChangeSetReverter.redoLast(root, 0, true);
+			fail("Second redo must fail because ch3/ch4 broke the redo stack above ch2.");
+		} catch (TopLogicException expected) {
+			assertEquals(I18NConstants.ERROR_CANNOT_REDO_CHAIN_BROKEN, expected.getErrorKey());
+		}
+		assertEquals("State must be unchanged after the failed redo.",
+			"v4", child.tValueByName("name"));
 	}
 
 	/**

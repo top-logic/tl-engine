@@ -197,6 +197,32 @@
 					navigate="true"
 					type="ChangeSet"
 				/>
+				<property name="isRevert"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.element.changelog.model.ChangeSet#isRevert()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="isRedo"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.element.changelog.model.ChangeSet#isRedo()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<interface name="Modification">

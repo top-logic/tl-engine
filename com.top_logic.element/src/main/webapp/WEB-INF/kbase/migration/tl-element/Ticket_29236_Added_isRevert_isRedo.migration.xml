@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29236_Added_isRevert_isRedo"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-property name="tl.changelog:ChangeSet#isRevert"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.element.changelog.model.ChangeSet#isRevert()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<create-property name="tl.changelog:ChangeSet#isRedo"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<storage-algorithm>
+					<derived-storage>
+						<expression-evaluation>
+							<method-call method="com.top_logic.element.changelog.model.ChangeSet#isRedo()"/>
+						</expression-evaluation>
+					</derived-storage>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+	</processors>
+	<post-processors/>
+</migration>

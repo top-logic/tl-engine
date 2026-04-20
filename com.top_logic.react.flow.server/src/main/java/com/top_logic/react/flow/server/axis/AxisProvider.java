@@ -5,23 +5,14 @@
  */
 package com.top_logic.react.flow.server.axis;
 
-import java.util.List;
-
-import com.top_logic.react.flow.data.GanttTick;
-
 /**
  * Server-side axis implementation for a {@link com.top_logic.react.flow.data.GanttLayout}.
  *
  * <p>
- * A provider encapsulates application-specific time semantics by computing axis ticks for a given
- * visible range and zoom level, plus a snap granularity for client-side drag rounding. Applications
- * register providers in the {@link AxisProviderService} and reference them from
+ * A provider encapsulates application-specific time semantics by computing axis rows and items for
+ * a given visible range and zoom level, plus a snap granularity for client-side drag rounding.
+ * Applications register providers in the {@link AxisProviderService} and reference them from
  * {@link com.top_logic.react.flow.data.GanttAxis#getProviderId()}.
- * </p>
- *
- * <p>
- * Phase 1 of the Gantt chart calls only {@link #ticksFor} and {@link #snapGranularity}. The
- * broader axis interface (toPosition/fromPosition/formatLong) is added in later phases.
  * </p>
  */
 public interface AxisProvider {
@@ -32,7 +23,9 @@ public interface AxisProvider {
 	String getId();
 
 	/**
-	 * Compute axis ticks covering the given position range at the given zoom level.
+	 * Build axis rows and items for the given range and zoom. The returned rows become part of the
+	 * chart's row forest; items become regular Gantt items. The provider decides how many levels to
+	 * produce based on the zoom.
 	 *
 	 * @param rangeMin
 	 *        minimum position (layout units at zoom 100%)
@@ -41,7 +34,7 @@ public interface AxisProvider {
 	 * @param pixelsPerUnit
 	 *        current zoom factor (1.0 = 100%)
 	 */
-	List<GanttTick> ticksFor(double rangeMin, double rangeMax, double pixelsPerUnit);
+	AxisContent buildAxis(double rangeMin, double rangeMax, double pixelsPerUnit);
 
 	/**
 	 * Snap granularity (layout units) for the given zoom level. Client uses this during drag to

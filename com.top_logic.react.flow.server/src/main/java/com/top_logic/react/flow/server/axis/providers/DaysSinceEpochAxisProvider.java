@@ -10,13 +10,18 @@ import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.react.flow.data.GanttTick;
+import com.top_logic.react.flow.data.GanttItem;
+import com.top_logic.react.flow.data.GanttPoint;
+import com.top_logic.react.flow.data.GanttRow;
+import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.Text;
+import com.top_logic.react.flow.server.axis.AxisContent;
 import com.top_logic.react.flow.server.axis.AxisProvider;
 
 /**
- * {@link AxisProvider} that interprets positions as days since 1970-01-01 and emits month and
- * year ticks. Used by the Gantt demo; applications will usually register their own provider.
+ * {@link AxisProvider} that interprets positions as days since 1970-01-01 and emits year rows with
+ * span items and month rows with point items. Used by the Gantt demo; applications will usually
+ * register their own provider.
  */
 public class DaysSinceEpochAxisProvider implements AxisProvider {
 
@@ -41,31 +46,73 @@ public class DaysSinceEpochAxisProvider implements AxisProvider {
 	}
 
 	@Override
-	public List<GanttTick> ticksFor(double rangeMin, double rangeMax, double pixelsPerUnit) {
-		List<GanttTick> ticks = new ArrayList<>();
+	public AxisContent buildAxis(double rangeMin, double rangeMax, double pixelsPerUnit) {
+		List<GanttRow> rows = new ArrayList<>();
+		List<GanttItem> items = new ArrayList<>();
+
+		// Row user objects used to link items to rows.
+		String yearRowModel = "axis:years";
+		String monthRowModel = "axis:months";
+
+		GanttRow yearRow = GanttRow.create()
+			.setUserObject(yearRowModel)
+			.setLabel(Text.create().setValue("Year"));
+		GanttRow monthRow = GanttRow.create()
+			.setUserObject(monthRowModel)
+			.setLabel(Text.create().setValue("Month"));
+
+		rows.add(yearRow);
+		rows.add(monthRow);
+
 		LocalDate min = LocalDate.ofEpochDay((long) Math.floor(rangeMin));
 		LocalDate max = LocalDate.ofEpochDay((long) Math.ceil(rangeMax));
 
+		// Year spans: one bar per year covering Jan 1 to Dec 31.
+		int firstYear = min.getYear();
+		int lastYear = max.getYear();
+		for (int year = firstYear; year <= lastYear; year++) {
+			LocalDate janFirst = LocalDate.of(year, Month.JANUARY, 1);
+			LocalDate decLast = LocalDate.of(year, Month.DECEMBER, 31);
+			GanttSpan yearSpan = GanttSpan.create()
+				.setUserObject("year:" + year)
+				.setRowModel(yearRowModel)
+				.setStart(janFirst.toEpochDay())
+				.setEnd(decLast.toEpochDay())
+				.setBox(Text.create().setValue(String.valueOf(year)))
+				.setCanMoveTime(false)
+				.setCanMoveRow(false)
+				.setCanResizeStart(false)
+				.setCanResizeEnd(false)
+				.setCanBeEdgeSource(false)
+				.setCanBeEdgeTarget(false);
+			items.add(yearSpan);
+		}
+
+		// Month points: one point per month start within range.
 		LocalDate firstOfMonth = min.withDayOfMonth(1);
 		if (firstOfMonth.isBefore(min)) {
 			firstOfMonth = firstOfMonth.plusMonths(1);
 		}
 		for (LocalDate d = firstOfMonth; !d.isAfter(max); d = d.plusMonths(1)) {
-			double emphasis = (d.getMonth() == Month.JANUARY) ? 1.0 : 0.35;
-			String label = (d.getMonth() == Month.JANUARY)
-				? String.valueOf(d.getYear())
-				: d.getMonth().name().substring(0, 3);
-			ticks.add(GanttTick.create()
-				.setPosition(d.toEpochDay())
-				.setLabel(Text.create().setValue(label))
-				.setEmphasis(emphasis));
+			String abbr = d.getMonth().name().substring(0, 3);
+			GanttPoint monthPoint = GanttPoint.create()
+				.setUserObject("month:" + d.getYear() + "-" + d.getMonthValue())
+				.setRowModel(monthRowModel)
+				.setAt(d.toEpochDay())
+				.setBox(Text.create().setValue(abbr))
+				.setCanMoveTime(false)
+				.setCanMoveRow(false)
+				.setCanBeEdgeSource(false)
+				.setCanBeEdgeTarget(false);
+			items.add(monthPoint);
 		}
-		return ticks;
+
+		return new AxisContent(rows, items);
 	}
 
 	@Override
 	public double snapGranularity(double pixelsPerUnit) {
-		// Snap to whole days — finer granularity could be added when zoomed in.
+		// Snap to whole days -- finer granularity could be added when zoomed in.
 		return 1.0;
 	}
 }

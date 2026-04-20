@@ -52,7 +52,7 @@ import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
-import com.top_logic.react.flow.data.GanttTick;
+import com.top_logic.react.flow.server.axis.AxisContent;
 import com.top_logic.react.flow.server.axis.AxisProvider;
 import com.top_logic.react.flow.server.axis.AxisProviderService;
 import com.top_logic.react.flow.data.Border;
@@ -1699,15 +1699,27 @@ public class FlowFactory extends TLScriptFunctions {
 		double pixelsPerUnit = zoom != null ? zoom : 1.0;
 		AxisProviderService svc = AxisProviderService.Module.INSTANCE.getImplementationInstance();
 		AxisProvider provider = (svc != null) ? svc.lookup(providerId) : null;
-		List<GanttTick> ticks = provider != null
-			? provider.ticksFor(rangeMin, rangeMax, pixelsPerUnit)
-			: java.util.Collections.emptyList();
 		double snap = provider != null ? provider.snapGranularity(pixelsPerUnit) : 1.0;
 		return GanttAxis.create()
 			.setProviderId(providerId)
 			.setRangeMin(rangeMin).setRangeMax(rangeMax)
-			.setCurrentZoom(pixelsPerUnit).setSnapGranularity(snap)
-			.setCurrentTicks(ticks);
+			.setCurrentZoom(pixelsPerUnit).setSnapGranularity(snap);
+	}
+
+	@SideEffectFree
+	@Label("Build axis rows and items from a registered axis provider")
+	public static AxisContent ganttAxisContent(
+			@Mandatory String providerId,
+			double rangeMin,
+			double rangeMax,
+			Double zoom) {
+		double pixelsPerUnit = zoom != null ? zoom : 1.0;
+		AxisProviderService svc = AxisProviderService.Module.INSTANCE.getImplementationInstance();
+		AxisProvider provider = (svc != null) ? svc.lookup(providerId) : null;
+		if (provider == null) {
+			return new AxisContent(java.util.Collections.emptyList(), java.util.Collections.emptyList());
+		}
+		return provider.buildAxis(rangeMin, rangeMax, pixelsPerUnit);
 	}
 
 	@SideEffectFree
@@ -1794,13 +1806,6 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		for (GanttRow root : rootRows) {
 			addRowLabelsToContents(root, contents);
-		}
-		if (axis != null) {
-			for (GanttTick tick : axis.getCurrentTicks()) {
-				if (tick.getLabel() != null) {
-					contents.add(tick.getLabel());
-				}
-			}
 		}
 		if (decorations != null) {
 			for (GanttDecoration deco : decorations) {

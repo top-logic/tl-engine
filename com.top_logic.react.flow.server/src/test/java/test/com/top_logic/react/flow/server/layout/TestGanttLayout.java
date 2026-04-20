@@ -24,7 +24,6 @@ import com.top_logic.react.flow.data.GanttLineDecoration;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
-import com.top_logic.react.flow.data.GanttTick;
 import com.top_logic.react.flow.data.Padding;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
@@ -50,7 +49,6 @@ public class TestGanttLayout extends TestCase {
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
-			.setAxisHeight(24.0)
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100));
 		addRowsWithLabels(layout, Arrays.asList(
@@ -63,8 +61,8 @@ public class TestGanttLayout extends TestCase {
 		RenderContext context = new AWTContext(12f);
 		d.layout(context);
 
-		// 3 empty rows * (24 + 2*4) + 24 axis = 3*32 + 24 = 120
-		assertEquals("height", 24.0 + 3 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeight());
+		// 3 empty rows * (24 + 2*4) = 3*32 = 96
+		assertEquals("height", 3 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeight());
 	}
 
 	/** Creates a row with a Box label wrapping the given text string. */
@@ -78,15 +76,6 @@ public class TestGanttLayout extends TestCase {
 		layout.setRootRows(rows);
 		for (GanttRow root : rows) {
 			addRowLabels(layout, root);
-		}
-		// Add tick label boxes to contents so they are rendered via standard dispatch.
-		GanttAxis axis = layout.getAxis();
-		if (axis != null) {
-			for (GanttTick tick : axis.getCurrentTicks()) {
-				if (tick.getLabel() != null) {
-					layout.addContent(tick.getLabel());
-				}
-			}
 		}
 		// Add decoration label boxes to contents so they are rendered via standard dispatch.
 		java.util.List<GanttDecoration> decos = layout.getDecorations();
@@ -114,18 +103,7 @@ public class TestGanttLayout extends TestCase {
 			.setProviderId("test")
 			.setRangeMin(min)
 			.setRangeMax(max)
-			.setCurrentZoom(1.0)
-			.setCurrentTicks(Arrays.asList(
-				tick(0, "0", 1.0),
-				tick(50, "50", 0.5),
-				tick(100, "100", 1.0)));
-	}
-
-	private static GanttTick tick(double pos, String label, double emphasis) {
-		return GanttTick.create()
-			.setPosition(pos)
-			.setLabel(Text.create().setValue(label))
-			.setEmphasis(emphasis);
+			.setCurrentZoom(1.0);
 	}
 
 	private static Box cell(String label) {
@@ -138,7 +116,6 @@ public class TestGanttLayout extends TestCase {
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
-			.setAxisHeight(24.0)
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100))
 			.setItems(Arrays.asList(span));
@@ -153,10 +130,10 @@ public class TestGanttLayout extends TestCase {
 		// r2 is the second row (index 1).
 		// Row 0 (r1): no items -> content height = ROW_MIN_CONTENT_HEIGHT=24, total = 32.
 		// Row 1 (r2): span intrinsic height <= ROW_MIN_CONTENT_HEIGHT -> content height = 24, total = 32.
-		// span.y = axisHeight + row0Total + rowPadding = 24 + 32 + 4 = 60.
+		// span.y = row0Total + rowPadding = 32 + 4 = 36.
 		// span.x = columnWidth (>=200) + 10 * zoom. Labels are small, so columnWidth = rowLabelMinWidth = 200.
 		assertEquals("span.x", 210.0, span.getBox().getX(), 0.5);
-		assertEquals("span.y", 24.0 + DEFAULT_ROW_TOTAL_HEIGHT + ROW_PADDING, span.getBox().getY(), 0.5);
+		assertEquals("span.y", DEFAULT_ROW_TOTAL_HEIGHT + ROW_PADDING, span.getBox().getY(), 0.5);
 		// Width = (end - start) * zoom = 20.
 		assertEquals("span.width", 20.0, span.getBox().getWidth(), 0.5);
 	}
@@ -166,21 +143,6 @@ public class TestGanttLayout extends TestCase {
 			.setId(id).setRowId(rowId)
 			.setStart(start).setEnd(end)
 			.setBox(cell(label));
-	}
-
-	public void testAxisRenderingProducesTickOutput() throws Exception {
-		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100));
-		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
-		Diagram d = Diagram.create().setRoot(layout);
-		d.layout(new AWTContext(12f));
-
-		String svg = renderToSvg(d);
-
-		// The three ticks defined in axis(0,100) should all show up in the rendered output.
-		assertTrue("tick '0' label appears", svg.contains(">0<"));
-		assertTrue("tick '50' label appears", svg.contains(">50<"));
-		assertTrue("tick '100' label appears", svg.contains(">100<"));
 	}
 
 	private static String renderToSvg(Diagram d) throws Exception {
@@ -299,7 +261,6 @@ public class TestGanttLayout extends TestCase {
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
-			.setAxisHeight(24.0)
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100));
 		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
@@ -325,7 +286,7 @@ public class TestGanttLayout extends TestCase {
 	 * <p>
 	 * We use a tall item box (intrinsic height = 60) placed in row "r1". The expected row total
 	 * height is {@code 60 + 2 * rowPadding = 68}. The overall layout height should be
-	 * {@code axisHeight + row0Total + row1Total = 24 + 68 + 32 = 124} (row "r2" has no items
+	 * {@code row0Total + row1Total = 68 + 32 = 100} (row "r2" has no items
 	 * so it stays at the minimum 32).
 	 * </p>
 	 */
@@ -346,7 +307,6 @@ public class TestGanttLayout extends TestCase {
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
-			.setAxisHeight(24.0)
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100))
 			.setItems(Arrays.asList(tallSpan));
@@ -360,15 +320,15 @@ public class TestGanttLayout extends TestCase {
 
 		double row0Total = tallIntrinsicHeight + 2 * ROW_PADDING; // 68
 		double row1Total = ROW_MIN_CONTENT_HEIGHT + 2 * ROW_PADDING; // 32
-		double expectedHeight = 24.0 + row0Total + row1Total; // 124
+		double expectedHeight = row0Total + row1Total; // 100
 
 		assertEquals("layout height grows with tall item", expectedHeight, layout.getHeight(), 0.5);
 
 		// The item's distributed height must equal the row content height (= tallIntrinsicHeight).
 		assertEquals("tall item height = row content height", tallIntrinsicHeight, tallBox.getHeight(), 0.5);
 
-		// The item's y position must be axisHeight + rowPadding = 24 + 4 = 28.
-		assertEquals("tall item y", 24.0 + ROW_PADDING, tallBox.getY(), 0.5);
+		// The item's y position must be rowPadding = 4.
+		assertEquals("tall item y", ROW_PADDING, tallBox.getY(), 0.5);
 
 		// Width must be forced to span width.
 		assertEquals("tall item width", spanWidth, tallBox.getWidth(), 0.5);
@@ -394,7 +354,6 @@ public class TestGanttLayout extends TestCase {
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
 			.setRowPadding(ROW_PADDING)
-			.setAxisHeight(24.0)
 			.setRowLabelMinWidth(200.0)
 			.setRowLabelPadding(ROW_LABEL_PADDING)
 			.setAxis(axis(0, 100));

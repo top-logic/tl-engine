@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 
 import java.util.Collections;
 
-import org.junit.Test;
+import junit.framework.TestCase;
 
 import com.top_logic.service.openapi.server.impl.ServiceMethodByExpression;
 import com.top_logic.service.openapi.server.script.Response;
@@ -17,13 +17,13 @@ import com.top_logic.service.openapi.server.script.Response;
 /**
  * Tests for {@link ServiceMethodByExpression#writeResponse(Object, jakarta.servlet.http.HttpServletResponse)}.
  */
-public class TestServiceMethodByExpression {
+@SuppressWarnings("javadoc")
+public class TestServiceMethodByExpression extends TestCase {
 
 	private final ServiceMethodByExpression _method =
 		new ServiceMethodByExpression("/t", Collections.emptyList(), false, null);
 
-	@Test
-	public void rawStringIsTextPlain() throws Exception {
+	public void testRawStringIsTextPlain() throws Exception {
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
 
 		_method.writeResponse("hello", resp);
@@ -33,8 +33,7 @@ public class TestServiceMethodByExpression {
 		assertEquals("hello", resp.bodyString());
 	}
 
-	@Test
-	public void rawMapIsJsonSerialized() throws Exception {
+	public void testRawMapIsJsonSerialized() throws Exception {
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
 
 		_method.writeResponse(java.util.Map.of("greeting", "hello"), resp);
@@ -44,8 +43,7 @@ public class TestServiceMethodByExpression {
 		assertEquals("{\"greeting\":\"hello\"}", resp.bodyString());
 	}
 
-	@Test
-	public void wrappedBinaryDataWithoutContentTypeUsesBinaryDefault() throws Exception {
+	public void testWrappedBinaryDataWithoutContentTypeUsesBinaryDefault() throws Exception {
 		byte[] payload = new byte[] { 1, 2, 3 };
 		com.top_logic.basic.io.binary.BinaryData data =
 			com.top_logic.basic.io.binary.BinaryDataFactory.createBinaryData(payload, "image/jpeg");
@@ -57,8 +55,7 @@ public class TestServiceMethodByExpression {
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
-	@Test
-	public void wrappedPlainTextUsesStringValueOf() throws Exception {
+	public void testWrappedPlainTextUsesStringValueOf() throws Exception {
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
 
 		_method.writeResponse(new Response(201, "hi", "text/plain; charset=utf-8"), resp);
@@ -69,8 +66,7 @@ public class TestServiceMethodByExpression {
 		assertEquals("hi", resp.bodyString());
 	}
 
-	@Test
-	public void nullResultInWrapperSendsError() throws Exception {
+	public void testNullResultInWrapperSendsError() throws Exception {
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
 
 		_method.writeResponse(new Response(404, null, "text/plain"), resp);
@@ -79,8 +75,7 @@ public class TestServiceMethodByExpression {
 		assertEquals(404, resp.errorStatus());
 	}
 
-	@Test
-	public void rawBinaryDataUsesOwnContentType() throws Exception {
+	public void testRawBinaryDataUsesOwnContentType() throws Exception {
 		byte[] payload = new byte[] { (byte) 0x89, 'P', 'N', 'G' };
 		com.top_logic.basic.io.binary.BinaryData data =
 			com.top_logic.basic.io.binary.BinaryDataFactory.createBinaryData(payload, "image/png");
@@ -93,8 +88,7 @@ public class TestServiceMethodByExpression {
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
-	@Test
-	public void wrappedBinaryDataStreamsRawBytes() throws Exception {
+	public void testWrappedBinaryDataStreamsRawBytes() throws Exception {
 		byte[] payload = new byte[] { (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A };
 		com.top_logic.basic.io.binary.BinaryData data =
 			com.top_logic.basic.io.binary.BinaryDataFactory.createBinaryData(payload, "image/png");
@@ -107,8 +101,7 @@ public class TestServiceMethodByExpression {
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
-	@Test
-	public void wrappedByteArrayStreamsRawBytes() throws Exception {
+	public void testWrappedByteArrayStreamsRawBytes() throws Exception {
 		byte[] payload = "binary-bytes".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
 
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
@@ -118,8 +111,7 @@ public class TestServiceMethodByExpression {
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
-	@Test
-	public void wrappedInputStreamStreamsRawBytes() throws Exception {
+	public void testWrappedInputStreamStreamsRawBytes() throws Exception {
 		byte[] payload = "stream-bytes".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
 		java.io.InputStream in = new java.io.ByteArrayInputStream(payload);
 
@@ -130,8 +122,7 @@ public class TestServiceMethodByExpression {
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
-	@Test
-	public void rawByteArrayDefaultsToOctetStream() throws Exception {
+	public void testRawByteArrayDefaultsToOctetStream() throws Exception {
 		byte[] payload = new byte[] { 1, 2, 3, 4, 5 };
 
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();
@@ -142,8 +133,7 @@ public class TestServiceMethodByExpression {
 		assertArrayEquals(payload, resp.bodyBytes());
 	}
 
-	@Test
-	public void wrappedBinaryHonorsExplicitContentType() throws Exception {
+	public void testWrappedBinaryHonorsExplicitContentType() throws Exception {
 		byte[] payload = "Hello,World\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();

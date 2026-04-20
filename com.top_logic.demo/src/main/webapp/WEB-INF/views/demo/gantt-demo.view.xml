@@ -8,27 +8,74 @@
 		<flow-diagram>
 			<inputs/>
 			<createChart><![CDATA[{
+/* === Axis rows (appear first) === */
+
+r_year   = reactFlowGanttRow(model: "axis:year",   label: reactFlowText("Year"));
+r_months = reactFlowGanttRow(model: "axis:months", label: reactFlowText("Month"));
+
+/* Jan 1 2026 = day 20454, Dec 31 2026 = day 20819 */
+year2026 = reactFlowGanttSpan(
+	model: "axis:year:2026", rowModel: "axis:year",
+	box: reactFlowBorder(reactFlowPadding(reactFlowText("2026"), all: 4)),
+	start: 20454, end: 20819,
+	canMove: false, canResize: false, canBeEdge: false);
+
+/* Month start points: Feb=20485, Mar=20513, Apr=20544, May=20574 */
+mFeb = reactFlowGanttPoint(model: "axis:month:feb", rowModel: "axis:months",
+	box: reactFlowText("Feb"), at: 20485,
+	canMove: false, canBeEdge: false);
+mMar = reactFlowGanttPoint(model: "axis:month:mar", rowModel: "axis:months",
+	box: reactFlowText("Mar"), at: 20513,
+	canMove: false, canBeEdge: false);
+mApr = reactFlowGanttPoint(model: "axis:month:apr", rowModel: "axis:months",
+	box: reactFlowText("Apr"), at: 20544,
+	canMove: false, canBeEdge: false);
+mMay = reactFlowGanttPoint(model: "axis:month:may", rowModel: "axis:months",
+	box: reactFlowText("May"), at: 20574,
+	canMove: false, canBeEdge: false);
+
+/* === Data rows === */
+
 r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowBorder(reactFlowPadding(reactFlowText("Design"),         all: 4)));
 r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Implementation"), all: 4)));
 r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Testing"),        all: 4)));
 
-spec  = reactFlowGanttSpan(model: "task:spec",  rowModel: "phase:design", box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20461);
-build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",   box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20461, end: 20478);
-beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test", box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"), all: 3)), at: 20478);
-qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",   box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20478, end: 20490);
+/* === Items === */
 
-e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",      targetEndpoint: "START", enforce: "STRICT");
-e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta",  targetEndpoint: "START", enforce: "WARN");
+spec  = reactFlowGanttSpan(model: "task:spec",  rowModel: "phase:design",
+	box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20485);
+build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",
+	box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20485, end: 20544);
+beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
+	box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"),  all: 3)), at: 20544);
+qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
+	box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20544, end: 20574);
 
-freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20485, to: 20488, color: "rgba(255,100,100,0.3)", label: reactFlowText("Freeze"));
+/* === Edges === */
 
-axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20495, zoom: 20);
+e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT");
+e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta", targetEndpoint: "START", enforce: "WARN");
+
+/* === Decorations === */
+
+/* Grid lines at month boundaries */
+gl_feb = reactFlowGanttLineDeco(model: "grid:feb", at: 20485, color: "#888888", strokeWidth: 0.5);
+gl_mar = reactFlowGanttLineDeco(model: "grid:mar", at: 20513, color: "#888888", strokeWidth: 0.5);
+gl_apr = reactFlowGanttLineDeco(model: "grid:apr", at: 20544, color: "#888888", strokeWidth: 0.5);
+gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "#888888", strokeWidth: 0.5);
+
+/* Freeze range */
+freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)", label: reactFlowText("Freeze"));
+
+/* === Axis config === */
+
+axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20600, zoom: 8);
 
 reactFlowGantt(
-	rootRows: list($r_design, $r_impl, $r_test),
-	items:    list($spec, $build, $beta, $qa),
-	edges:    list($e1, $e2),
-	decorations: list($freeze),
+	rootRows:    list($r_year, $r_months, $r_design, $r_impl, $r_test),
+	items:       list($year2026, $mFeb, $mMar, $mApr, $mMay, $spec, $build, $beta, $qa),
+	edges:       list($e1, $e2),
+	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze),
 	axis: $axis
 )
 }]]></createChart>

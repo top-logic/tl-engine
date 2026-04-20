@@ -1,2 +1,9 @@
 <p>TopLogic keeps a change history for every business object. These functions allow querying the changes of a business object and reverting them if needed.</p>
-<p>A change is a business object of type <code class="hljs inlineCode">tl.changelog:ChangeSet</code>.</p>
+<p>A change is a business object of type <code class="hljs inlineCode">tl.changelog:ChangeSet</code>. The following attributes are available on a ChangeSet (selection):</p>
+<ul>
+ <li><code class="hljs inlineCode">revision</code> – the revision of the change.</li>
+ <li><code class="hljs inlineCode">author</code> / <code class="hljs inlineCode">date</code> / <code class="hljs inlineCode">message</code> – metadata of the change.</li>
+ <li><code class="hljs inlineCode">revertedBy</code> – when the change has been reverted, the revert ChangeSet; otherwise <code class="hljs inlineCode">null</code>.</li>
+ <li><code class="hljs inlineCode">isRevert</code> – whether this ChangeSet itself undoes a previous change.</li>
+ <li><code class="hljs inlineCode">isRedo</code> – whether this ChangeSet itself re-applies a previously reverted change.</li>
+</ul>

@@ -1,2 +1,9 @@
 <p>TopLogic führt eine Änderungshistorie für alle Fachobjekte. Mit diesen Funktionen können die an einem Fachobjekt vorgenommenen Änderungen abgefragt und bei Bedarf zurückgenommen werden.</p>
-<p>Eine Änderung ist ein Fachobjekt vom Typ <code class="hljs inlineCode">tl.changelog:ChangeSet</code>.</p>
+<p>Eine Änderung ist ein Fachobjekt vom Typ <code class="hljs inlineCode">tl.changelog:ChangeSet</code>. Für jeden ChangeSet stehen folgende Attribute zur Verfügung (Auswahl):</p>
+<ul>
+ <li><code class="hljs inlineCode">revision</code> – die Revision der Änderung.</li>
+ <li><code class="hljs inlineCode">author</code> / <code class="hljs inlineCode">date</code> / <code class="hljs inlineCode">message</code> – Metadaten der Änderung.</li>
+ <li><code class="hljs inlineCode">revertedBy</code> – wenn die Änderung zurückgenommen wurde, der ChangeSet der Rücknahme; sonst <code class="hljs inlineCode">null</code>.</li>
+ <li><code class="hljs inlineCode">isRevert</code> – ob es sich um die Rücknahme einer anderen Änderung handelt.</li>
+ <li><code class="hljs inlineCode">isRedo</code> – ob es sich um die Wiederherstellung einer zurückgenommenen Änderung handelt.</li>
+</ul>

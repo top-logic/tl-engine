@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.element.changelog;
@@ -15,16 +15,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.top_logic.base.context.TLSessionContext;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.SessionContext;
@@ -36,29 +32,15 @@ import com.top_logic.basic.db.sql.SQLSelect;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
-import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MOAttribute;
-import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
-import com.top_logic.element.changelog.model.trans.TransientCreation;
-import com.top_logic.element.changelog.model.trans.TransientDeletion;
-import com.top_logic.element.changelog.model.trans.TransientModification;
-import com.top_logic.element.changelog.model.trans.TransientUpdate;
-import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.model.cache.ElementModelCacheService;
 import com.top_logic.element.model.cache.ModelTables;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
-import com.top_logic.knowledge.event.ItemChange;
-import com.top_logic.knowledge.event.ItemDeletion;
-import com.top_logic.knowledge.event.ItemUpdate;
-import com.top_logic.knowledge.event.ObjectCreation;
-import com.top_logic.knowledge.objects.KnowledgeItem;
-import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -67,14 +49,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.RevisionType;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
-import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -153,7 +129,7 @@ public class ChangeLogBuilder {
 
 	/**
 	 * The account for which to produce the change log.
-	 * 
+	 *
 	 * <p>
 	 * <code>null</code> for a system-wide change log.
 	 * </p>
@@ -304,12 +280,12 @@ public class ChangeLogBuilder {
 
 		List<com.top_logic.element.changelog.model.ChangeSet> logsInRange =
 			readChangesDescending(start, stop);
-		
+
 		for (Iterator<com.top_logic.element.changelog.model.ChangeSet> it = logsInRange.iterator(); it
 			.hasNext();) {
 			com.top_logic.element.changelog.model.ChangeSet cs1 = it.next();
 			long commitNumber = cs1.getRevision().getCommitNumber();
-		
+
 			com.top_logic.element.changelog.model.ChangeSet undoCS = revertedBy.remove(commitNumber);
 			if (undoCS != null) {
 				// Connect CS with its undo CS.
@@ -320,7 +296,7 @@ public class ChangeLogBuilder {
 				toDelete.add(undoCS);
 				continue;
 			}
-		
+
 			if (cs1.isRevert()) {
 				long revertedRevision = cs1.origRevision();
 				if (revertedRevision != -1) {
@@ -329,7 +305,7 @@ public class ChangeLogBuilder {
 				}
 			}
 		}
-		
+
 		log.addAll(logsInRange);
 
 		Comparator<com.top_logic.element.changelog.model.ChangeSet> revisionOrder = Comparator
@@ -385,7 +361,8 @@ public class ChangeLogBuilder {
 					continue;
 				}
 
-				ChangeSetAnalyzer analyzer = new ChangeSetAnalyzer(changeSet);
+				ChangeSetAnalyzer analyzer =
+					new ChangeSetAnalyzer(_kb, _modelTables, _excludeModules, changeSet).setFilter(_filter);
 				if ((!_includeTechnical || _filter != null) && !analyzer.hasChanges()) {
 					// When a filter is active, a change set that has no changes passing the filter
 					// must not be reported, regardless of the _includeTechnical setting.
@@ -459,476 +436,6 @@ public class ChangeLogBuilder {
 	}
 
 	/**
-	 * Internal state of the analysis of a {@link ChangeSetAnalyzer}
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	private static enum AnalyseState {
-
-		/** Not analysed yet. */
-		NO,
-
-		/**
-		 * Partially analysed: {@link ChangeSetAnalyzer#hasChanges()} answers with the correct
-		 * value.
-		 */
-		PARTIAL,
-
-		/**
-		 * Fully analysed:
-		 * {@link ChangeSetAnalyzer#applyChanges(com.top_logic.element.changelog.model.ChangeSet)}
-		 * can be applied.
-		 */
-		FULL;
-	}
-
-	private class ChangeSetAnalyzer {
-
-		private final ChangeSet _changeSet;
-
-		/** Mapping from an object to the parts that were updated in {@link #_changeSet}. */
-		private final Map<TLObject, Set<TLStructuredTypePart>> _updates = new HashMap<>();
-
-		/**
-		 * {@link Change}s to apply to a {@link com.top_logic.element.changelog.model.ChangeSet}.
-		 */
-		private final List<Change> _changes = new ArrayList<>();
-
-		/**
-		 * Adaptions for {@link #_changes} to execute before they are applied to a
-		 * {@link com.top_logic.element.changelog.model.ChangeSet}.
-		 */
-		private final List<Runnable> _adaptions = new ArrayList<>();
-
-		private final Iterator<ObjectCreation> _remainingCreations;
-
-		private final Iterator<ItemUpdate> _remainingUpdates;
-
-		private final Iterator<ItemDeletion> _remainingDeletions;
-
-		private AnalyseState _state = AnalyseState.NO;
-
-		/**
-		 * Creates a {@link ChangeSetAnalyzer}.
-		 */
-		public ChangeSetAnalyzer(ChangeSet changeSet) {
-			_changeSet = changeSet;
-			_remainingCreations = _changeSet.getCreations().iterator();
-			_remainingUpdates = _changeSet.getUpdates().iterator();
-			_remainingDeletions = _changeSet.getDeletions().iterator();
-		}
-
-		/**
-		 * Whether the {@link ChangeSet} contains relevant changes.
-		 */
-		public boolean hasChanges() {
-			if (_filter != null) {
-				// With a filter, any of the early-exit heuristics below would observe unfiltered
-				// changes (including changes accumulated in _updates before processUpdates), so
-				// force a full analysis to ensure the filter is applied before answering.
-				analyze(AnalyseState.FULL);
-				return !_changes.isEmpty();
-			}
-			switch(_state) {
-				case FULL:
-					return !_changes.isEmpty();
-				case NO:
-					analyze(AnalyseState.PARTIAL);
-					assert _state != AnalyseState.NO;
-					return hasChanges();
-				case PARTIAL:
-					return !(_changes.isEmpty() && _updates.isEmpty());
-			}
-			throw new IllegalStateException("No such enum " + _state);
-		}
-
-		/**
-		 * Applies the {@link Change}s to the given
-		 * {@link com.top_logic.element.changelog.model.ChangeSet}.
-		 */
-		public void applyChanges(com.top_logic.element.changelog.model.ChangeSet out) {
-			analyze(AnalyseState.FULL);
-			_adaptions.forEach(Runnable::run);
-			_changes.forEach(out::addChange);
-		}
-
-		private void analyze(AnalyseState completeness) {
-			if (_state.ordinal() >= completeness.ordinal()) {
-				// already analysed
-				return;
-			}
-			switch (completeness) {
-				case FULL:
-					analyzeCreations(false);
-					analyzeUpdates(false);
-					analyzeDeletions(false);
-
-					processUpdates();
-
-					_state = AnalyseState.FULL;
-					break;
-				case NO:
-					// is not called.
-					assert false;
-					break;
-				case PARTIAL:
-					boolean creationFound = analyzeCreations(true);
-					if (creationFound) {
-						_state = AnalyseState.PARTIAL;
-						break;
-					}
-					boolean updatesFound = analyzeUpdates(true);
-					if (updatesFound) {
-						_state = AnalyseState.PARTIAL;
-						break;
-					}
-					boolean deletionsFound = analyzeDeletions(true);
-					if (deletionsFound) {
-						_state = AnalyseState.PARTIAL;
-						break;
-					}
-					assert _updates.isEmpty();
-					assert _changes.isEmpty();
-					assert _adaptions.isEmpty();
-					_state = AnalyseState.FULL;
-					break;
-			}
-			assert _state.ordinal() >= completeness.ordinal();
-		}
-
-		private void processUpdates() {
-			for (Entry<TLObject, Set<TLStructuredTypePart>> entry : _updates.entrySet()) {
-				TransientUpdate change = new TransientUpdate();
-
-				TLObject newObject = entry.getKey();
-				change.setObject(newObject);
-
-				TLObject oldObject = resolve(inRevision(newObject.tId(), previousRevision())).getWrapper();
-				change.setOldObject(oldObject);
-
-				for (TLStructuredTypePart part : entry.getValue()) {
-					TransientModification modification = new TransientModification();
-					modification.setPart(part);
-
-					// Cast should not be necessary, since a setter of a multiple property should
-					// not expect modifyable collections.
-					modification.setOldValue((Collection<Object>) CollectionUtil.asList(oldObject.tValue(part)));
-					modification.setNewValue((Collection<Object>) CollectionUtil.asList(newObject.tValue(part)));
-
-					change.addModification(modification);
-				}
-
-				registerChange(change);
-			}
-		}
-
-		private long previousRevision() {
-			return _changeSet.getRevision() - 1;
-		}
-
-		/**
-		 * Analyzes creations in the given {@link ChangeSet} and transfers them to the given model
-		 * change set.
-		 * 
-		 * @param stopOnChange
-		 *        Whether processing must be stopped when a change was detected.
-		 * @return <code>true</code> iff <code>stopOnChange</code> was <code>true</code> and a
-		 *         change was detected.
-		 */
-		private boolean analyzeCreations(boolean stopOnChange) {
-			if (_remainingCreations.hasNext()) {
-				// All object IDs of objects created in the current change set.
-				Set<ObjectKey> createdKeys =
-					_changeSet.getCreations()
-						.stream()
-						.map(ObjectCreation::getOriginalObject)
-						.collect(Collectors.toSet());
-				do {
-					ObjectCreation creation = _remainingCreations.next();
-					MetaObject table = creation.getObjectType();
-					boolean technicalUpdate = analyzeTechnicalUpdate(_changeSet.getRevision(), table, createdKeys, creation);
-
-					List<TLClass> classes = _modelTables.getClassesForTable(table);
-					if (classes.isEmpty()) {
-						// A pure technical object.
-						if (stopOnChange && technicalUpdate) {
-							return true;
-						} else {
-							continue;
-						}
-					}
-
-					TLObject object = resolve(creation.getOriginalObject()).getWrapper();
-					if (excludedByModule(object) || isPersistentCacheObject(object)) {
-						if (stopOnChange && technicalUpdate) {
-							return true;
-						} else {
-							continue;
-						}
-					}
-
-					// Record a creation.
-					TransientCreation change = new TransientCreation();
-					change.setObject(object);
-
-					updateImplicit(change, object, createdKeys);
-
-					registerChange(change);
-					if (stopOnChange) {
-						return true;
-					}
-				} while (_remainingCreations.hasNext());
-			}
-			return false;
-		}
-
-		/**
-		 * Updates {@link Change#getImplicit()}.
-		 * 
-		 * <p>
-		 * Note: Determining the value can be expensive and the value is not needed for determining
-		 * {@link #hasChanges()}. So the value is updated lazy when applying the {@link #_changes}.
-		 * </p>
-		 */
-		private void updateImplicit(Change change, TLObject object, Set<ObjectKey> keys) {
-			_adaptions.add(() -> {
-				TLObject container = object.tContainer();
-				change.setImplicit(container != null && keys.contains(container.tId()));
-			});
-		}
-
-		private boolean isPersistentCacheObject(TLObject object) {
-			return TLAnnotations.isPersistentCache(object.tType());
-		}
-
-		private boolean isPersistentCacheAttribute(TLStructuredTypePart part) {
-			return TLAnnotations.isPersistentCache(part);
-		}
-
-		/**
-		 * Analyzes updates in the given {@link ChangeSet} and caches them for later.
-		 * 
-		 * @param stopOnChange
-		 *        Whether processing must be stopped when a change was detected.
-		 * @return <code>true</code> iff <code>stopOnChange</code> was <code>true</code> and a
-		 *         change was detected.
-		 * 
-		 * @see #processUpdates()
-		 */
-		private boolean analyzeUpdates(boolean stopOnChange) {
-			while (_remainingUpdates.hasNext()) {
-				ItemUpdate update = _remainingUpdates.next();
-				MetaObject table = update.getObjectType();
-				boolean technicalUpdate =
-					analyzeTechnicalUpdate(_changeSet.getRevision(), table, Collections.emptySet(), update);
-		
-				List<TLClass> classes = _modelTables.getClassesForTable(table);
-				if (classes.isEmpty()) {
-					// A pure technical object.
-					if (stopOnChange && technicalUpdate) {
-						return true;
-					} else {
-						continue;
-					}
-				}
-		
-				TLObject newObject = resolve(update.getOriginalObject()).getWrapper();
-				if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
-					if (stopOnChange && technicalUpdate) {
-						return true;
-					} else {
-						continue;
-					}
-				}
-		
-				// Record an update.
-				Set<TLStructuredTypePart> changedParts = enter(newObject);
-		
-				Map<String, Object> valueUpdates = update.getValues();
-				Map<String, Object> oldValues = update.getOldValues();
-				TLStructuredType type = newObject.tType();
-		
-				Map<String, TLStructuredTypePart> partByColumn = _modelTables.lookupColumnBinding(type);
-				for (Entry<String, Object> valueUpdate : valueUpdates.entrySet()) {
-					String storageAttribute = valueUpdate.getKey();
-
-					Object newValue = valueUpdate.getValue();
-					Object oldValue = oldValues.get(storageAttribute);
-
-					if (Utils.equals(newValue, oldValue)) {
-						// A value was provided in an update event for technical reasons, without
-						// the value being changed.
-						continue;
-					}
-
-					TLStructuredTypePart part = partByColumn.get(storageAttribute);
-					if (part == null) {
-						// A change that has no model representation, ignore.
-						continue;
-					}
-					if (isPersistentCacheAttribute(part)) {
-						// Value is just a persistent cache, ignore.
-						continue;
-					}
-
-					changedParts.add(part);
-				}
-				if (stopOnChange) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		/**
-		 * Marks the given object as changed and retrieves the set of changed parts.
-		 */
-		private Set<TLStructuredTypePart> enter(TLObject newObject) {
-			return _updates.computeIfAbsent(newObject, x -> new HashSet<>());
-		}
-
-		private void registerChange(Change change) {
-			if (_filter != null && !_filter.accept(change)) {
-				return;
-			}
-			_changes.add(change);
-		}
-
-		/**
-		 * Analyzes deletions in the given {@link ChangeSet} and transfers them to the given model
-		 * change set.
-		 * 
-		 * @param stopOnChange
-		 *        Whether processing must be stopped when a change was detected.
-		 * @return <code>true</code> iff <code>stopOnChange</code> was <code>true</code> and a
-		 *         change was detected.
-		 */
-		private boolean analyzeDeletions(boolean stopOnChange) {
-			if (_remainingDeletions.hasNext()) {
-				long previousRev = previousRevision();
-				Set<ObjectKey> deletedKeys = _changeSet.getDeletions()
-					.stream()
-					.map(c -> inRevision(c.getObjectId(), previousRev))
-					.collect(Collectors.toSet());
-				do {
-					ItemDeletion deletion = _remainingDeletions.next();
-					MetaObject table = deletion.getObjectType();
-					boolean technicalUpdate =
-						analyzeTechnicalUpdate(_changeSet.getRevision(), table, deletedKeys, deletion);
-
-					List<TLClass> classes = _modelTables.getClassesForTable(table);
-					if (classes.isEmpty()) {
-						// A pure technical object.
-						if (stopOnChange && technicalUpdate) {
-							return true;
-						} else {
-							continue;
-						}
-					}
-
-					KnowledgeItem item = resolve(inRevision(deletion.getObjectId(), previousRev));
-					TLObject object = item.getWrapper();
-					if (excludedByModule(object) || isPersistentCacheObject(object)) {
-						if (stopOnChange && technicalUpdate) {
-							return true;
-						} else {
-							continue;
-						}
-					}
-
-					// Record a deletion.
-					TransientDeletion change = new TransientDeletion();
-					change.setObject(object);
-
-					updateImplicit(change, object, deletedKeys);
-
-					registerChange(change);
-					if (stopOnChange) {
-						return true;
-					}
-				} while (_remainingDeletions.hasNext());
-			}
-			return false;
-		}
-
-		private boolean analyzeTechnicalUpdate(long revision, MetaObject table, Set<ObjectKey> createdDeletedKeys,
-				ItemChange change) {
-			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
-			if (descriptors.isEmpty()) {
-				// Table is not used to store value of foreign objects.
-				return false;
-			}
-
-			boolean technicalUpdate = false;
-			for (AssociationStorageDescriptor descriptor : descriptors.values()) {
-				// A row that stores (part of) an attribute value of some object.
-				ObjectKey objId = descriptor.getBaseObjectId(change.getValues());
-				if (objId != null) {
-					// Note: A table storing values for other objects is not required to do so for
-					// every row. An example is the inline collection storage, which may optionally
-					// associate value objects with container objects by storing a foreign key value
-					// in the table of the value object.
-
-					ObjectKey oldId = inRevision(objId, revision - 1);
-					ObjectKey newId = inRevision(objId, revision);
-					if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
-						// Part of a created or deleted object, no additional change.
-						continue;
-					}
-
-					TLObject newObject = resolve(newId).getWrapper();
-					if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
-						continue;
-					}
-					ObjectKey partId = descriptor.getPartId(change.getValues());
-					if (partId == null) {
-						Logger.error("Unable to determine part id for update of '"
-								+ MetaLabelProvider.INSTANCE.getLabel(newObject) + "' in revision '" + revision
-								+ "': Changes: " + change.getValues() + ", table: " + table + ", descriptor: "
-								+ descriptor,
-							ChangeLogBuilder.class);
-						continue;
-					}
-					KnowledgeItem partKI = resolve(partId);
-					if (partKI == null) {
-						/* Part is deleted in the meanwhile. It is possible to display the
-						 * change, but not to revert it. */
-
-						// Assume, part was (in the worst case) deleted together with the change
-						// (clearing a reference).
-						partKI = resolve(inRevision(partId, revision - 1));
-						if (partKI == null) {
-							// Part was created together with the change.
-							partKI = resolve(inRevision(partId, revision));
-						}
-					}
-					TLStructuredTypePart part = partKI.getWrapper();
-					if (isPersistentCacheAttribute(part)) {
-						// Value is just a persistent cache, ignore.
-						continue;
-					}
-
-					enter(newObject).add(part);
-					technicalUpdate = true;
-				}
-			}
-			return technicalUpdate;
-		}
-	}
-
-	private KnowledgeItem resolve(ObjectKey key) {
-		return _kb.resolveObjectKey(key);
-	}
-
-	private static ObjectKey inRevision(ObjectBranchId objId, long rev) {
-		return objId.toObjectKey(rev);
-	}
-
-	private static ObjectKey inRevision(ObjectKey objId, long rev) {
-		return new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName());
-	}
-
-	/**
 	 * Lookup the account that was the author of the given {@link Revision}, or <code>null</code>
 	 * for a technical transaction.
 	 */
@@ -936,7 +443,7 @@ public class ChangeLogBuilder {
 		String authorSpec = revision.getAuthor();
 		Person author;
 		if (authorSpec.startsWith(SessionContext.PERSON_ID_PREFIX)) {
-			KnowledgeItem authorItem = _kb.resolveObjectKey(
+			com.top_logic.knowledge.objects.KnowledgeItem authorItem = _kb.resolveObjectKey(
 				new DefaultObjectKey(
 					_hm.getTrunk().getBranchId(), revision.getCommitNumber(),
 					_kb.getMORepository().getMetaObject(Person.OBJECT_NAME),
@@ -948,16 +455,8 @@ public class ChangeLogBuilder {
 		return author;
 	}
 
-	boolean excludedByModule(TLObject obj) {
-		if (_excludeModules.isEmpty()) {
-			return false;
-		}
-		TLModule module = obj.tType().getModule();
-		return isExcludedModule(module);
-	}
-
 	boolean isExcludedModule(TLModule module) {
 		return _excludeModules.contains(module.getName());
 	}
-	
+
 }

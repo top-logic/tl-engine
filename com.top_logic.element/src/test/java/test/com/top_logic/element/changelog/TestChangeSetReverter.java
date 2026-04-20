@@ -141,6 +141,88 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertEquals("root", root.tValueByName("name"));
 	}
 
+	/**
+	 * {@link ChangeSetReverter#undoLast(TLObject, int, boolean)} reverts the newest real change.
+	 */
+	public void testUndoLast() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		rename(child, "child-1");
+		rename(child, "child-2");
+
+		List<ResKey> problems = ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals(List.of(), problems);
+
+		// Most recent rename was "child-2", so undoLast brings us back to "child-1".
+		assertEquals("child-1", child.tValueByName("name"));
+	}
+
+	/**
+	 * Two calls to {@link ChangeSetReverter#undoLast(TLObject, int, boolean)} undo two
+	 * consecutive real changes.
+	 */
+	public void testUndoLastTwice() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		rename(child, "child-1");
+		rename(child, "child-2");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals("child-1", child.tValueByName("name"));
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	/**
+	 * {@link ChangeSetReverter#redoLast(TLObject, int, boolean)} re-applies the most recent undo.
+	 */
+	public void testRedoLastRestoresUndoneChange() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		rename(child, "child-1");
+
+		ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals("child", child.tValueByName("name"));
+
+		List<ResKey> problems = ChangeSetReverter.redoLast(root, 0, true);
+		assertEquals(List.of(), problems);
+		assertEquals("child-1", child.tValueByName("name"));
+	}
+
+	/**
+	 * {@link ChangeSetReverter#redoLast(TLObject, int, boolean)} is a no-op when there is no undo
+	 * to re-apply.
+	 */
+	public void testRedoLastNoop() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		rename(child, "child-1");
+
+		List<ResKey> problems = ChangeSetReverter.redoLast(root, 0, true);
+		assertEquals(List.of(), problems);
+		assertEquals("child-1", child.tValueByName("name"));
+	}
+
+	/**
+	 * Changes outside the subtree are ignored by {@link ChangeSetReverter#undoLast(TLObject, int, boolean)}.
+	 */
+	public void testUndoLastIgnoresOtherSubtree() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+		rename(child, "child-1");
+
+		TLObject other = createNode(null, "other");
+		rename(other, "other-2");
+
+		// The newest real change in the application is "other-2", but for root's subtree the
+		// newest is the rename of child. undoLast(root) must undo that, not touch "other".
+		ChangeSetReverter.undoLast(root, 0, true);
+
+		assertEquals("child", child.tValueByName("name"));
+		assertEquals("Sibling subtree must be untouched.", "other-2", other.tValueByName("name"));
+	}
+
 	private TLObject createNode(TLObject parent, String name) {
 		try (Transaction tx = beginTX()) {
 			TLObject node = _factory.createObject(_nodeType, parent);

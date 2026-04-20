@@ -177,9 +177,14 @@ public final class ChangeSetReverter {
 	 *
 	 * <p>
 	 * "Real" means the change is neither a revert nor has itself been reverted. If no such change
-	 * exists within the considered window, the method is a no-op and returns an empty list. The
-	 * revert is performed in the caller's active transaction — the method does not open or commit
-	 * a transaction.
+	 * exists within the considered window, the method is a no-op and returns an empty list.
+	 * </p>
+	 *
+	 * <p>
+	 * The method opens a dedicated transaction with the correct revert commit message so that the
+	 * resulting revision is recognized by {@link ChangeSet#isRevert()} and the
+	 * {@link ChangeLogBuilder} pair-deduplication — a subsequent {@code undoLast} call will then
+	 * find the next real change.
 	 * </p>
 	 *
 	 * @param root
@@ -197,7 +202,7 @@ public final class ChangeSetReverter {
 		if (target == null) {
 			return Collections.emptyList();
 		}
-		return revertAll(Collections.singletonList(target));
+		return runSingleRevert(root, target);
 	}
 
 	/**
@@ -205,8 +210,9 @@ public final class ChangeSetReverter {
 	 *
 	 * <p>
 	 * Concretely: the original change whose revert has the largest commit number is located; the
-	 * revert ChangeSet itself is reverted, which restores the original change. No transaction is
-	 * opened or committed.
+	 * revert ChangeSet itself is reverted, which restores the original change. The method opens a
+	 * dedicated transaction with the correct revert commit message so that future
+	 * {@code undoLast} / {@code redoLast} calls recognize the operation.
 	 * </p>
 	 *
 	 * @see #undoLast(TLObject, int, boolean) for the parameter semantics.
@@ -216,7 +222,17 @@ public final class ChangeSetReverter {
 		if (revertToUndo == null) {
 			return Collections.emptyList();
 		}
-		return revertAll(Collections.singletonList(revertToUndo));
+		return runSingleRevert(root, revertToUndo);
+	}
+
+	private static List<ResKey> runSingleRevert(TLObject root, ChangeSet target) {
+		KnowledgeBase kb = root != null ? root.tKnowledgeBase() : PersistencyLayer.getKnowledgeBase();
+		TransientChangeSet undo = target.revert();
+		try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
+			List<ResKey> problems = new ArrayList<>(undo.apply());
+			tx.commit();
+			return problems;
+		}
 	}
 
 	private static Collection<ChangeSet> readLog(TLObject root, int maxEntries, boolean includeSubtree) {

@@ -49,26 +49,27 @@ public final class ChangeSetReverter {
 	}
 
 	/**
-	 * Reverts all given {@link ChangeSet}s in a single transaction.
+	 * Reverts all given {@link ChangeSet}s <strong>within the caller's active transaction</strong>.
 	 *
 	 * <p>
-	 * The change sets are processed in <strong>descending</strong> revision order: newest first,
-	 * so that each revert is applied on top of a state consistent with having already undone the
-	 * later changes. Redo-of-revert semantics are <em>not</em> applied here; callers that want
-	 * those should follow {@code getRevertedBy()} before calling this method.
+	 * The change sets are processed in descending revision order (newest first), so that each
+	 * revert is applied on top of a state consistent with having already undone the later
+	 * changes. Redo-of-revert semantics are <em>not</em> applied; callers that want them should
+	 * follow {@code getRevertedBy()} before calling.
 	 * </p>
 	 *
-	 * @param kb
-	 *        The {@link KnowledgeBase} to commit against.
+	 * <p>
+	 * This method does <strong>not</strong> open or commit a transaction. The caller is
+	 * responsible for running it inside an active {@link Transaction} and deciding whether to
+	 * commit or roll back based on the returned problem list.
+	 * </p>
+	 *
 	 * @param changeSets
 	 *        The change sets to undo. May be in any order and may be empty.
-	 * @param transactionMessage
-	 *        The log message for the resulting transaction.
 	 * @return Aggregated problems reported by the individual {@code apply()} calls. An empty list
 	 *         means the revert was clean.
 	 */
-	public static List<ResKey> revertAll(KnowledgeBase kb, Collection<? extends ChangeSet> changeSets,
-			ResKey transactionMessage) {
+	public static List<ResKey> revertAll(Collection<? extends ChangeSet> changeSets) {
 		if (changeSets.isEmpty()) {
 			return Collections.emptyList();
 		}
@@ -79,10 +80,26 @@ public final class ChangeSetReverter {
 			.reversed());
 
 		List<ResKey> problems = new ArrayList<>();
+		for (ChangeSet cs : ordered) {
+			problems.addAll(cs.revert().apply());
+		}
+		return problems;
+	}
+
+	/**
+	 * Transactional wrapper around {@link #revertAll(Collection)}: opens a transaction on
+	 * {@code kb}, runs the reverts and commits.
+	 *
+	 * @see #revertAll(Collection)
+	 */
+	public static List<ResKey> revertAll(KnowledgeBase kb, Collection<? extends ChangeSet> changeSets,
+			ResKey transactionMessage) {
+		if (changeSets.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<ResKey> problems;
 		try (Transaction tx = kb.beginTransaction(transactionMessage)) {
-			for (ChangeSet cs : ordered) {
-				problems.addAll(cs.revert().apply());
-			}
+			problems = revertAll(changeSets);
 			tx.commit();
 		}
 		return problems;

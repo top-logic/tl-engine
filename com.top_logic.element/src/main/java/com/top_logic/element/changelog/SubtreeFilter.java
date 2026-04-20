@@ -52,6 +52,8 @@ public class SubtreeFilter implements ChangeFilter {
 
 	private final Revision _rootCreation;
 
+	private final boolean _includeSubtree;
+
 	/**
 	 * Per-revision cache: <code>(revision commit number) -&gt; (unversioned id) -&gt; in subtree</code>.
 	 *
@@ -63,16 +65,30 @@ public class SubtreeFilter implements ChangeFilter {
 	private final Map<Long, Map<ObjectReference, Boolean>> _cache = new HashMap<>();
 
 	/**
+	 * Creates a {@link SubtreeFilter} that accepts the root and the entire composition subtree.
+	 *
+	 * @param subtreeRoot
+	 *        The root object {@code R}. Must not be {@code null}.
+	 */
+	public SubtreeFilter(TLObject subtreeRoot) {
+		this(subtreeRoot, true);
+	}
+
+	/**
 	 * Creates a {@link SubtreeFilter}.
 	 *
 	 * @param subtreeRoot
-	 *        The root object {@code R} of the composition subtree to filter for. Must not be
-	 *        {@code null}.
+	 *        The root object {@code R}. Must not be {@code null}.
+	 * @param includeSubtree
+	 *        If {@code true}, accepts every change to an object in the composition subtree of
+	 *        {@code subtreeRoot}. If {@code false}, only changes to {@code subtreeRoot} itself are
+	 *        accepted; descendants are ignored.
 	 */
-	public SubtreeFilter(TLObject subtreeRoot) {
+	public SubtreeFilter(TLObject subtreeRoot, boolean includeSubtree) {
 		_root = subtreeRoot;
 		_rootIdentity = WrapperHistoryUtils.getUnversionedIdentity(subtreeRoot);
 		_rootCreation = WrapperHistoryUtils.getCreateRevision(subtreeRoot);
+		_includeSubtree = includeSubtree;
 	}
 
 	/**
@@ -98,6 +114,9 @@ public class SubtreeFilter implements ChangeFilter {
 		TLObject obj = change.getObject();
 		if (obj == null) {
 			return false;
+		}
+		if (!_includeSubtree) {
+			return WrapperHistoryUtils.getUnversionedIdentity(obj).equals(_rootIdentity);
 		}
 		long revision = obj.tId().getHistoryContext();
 		return inSubtree(obj, revision);

@@ -46,11 +46,19 @@ public class Response {
 	}
 
 	/**
-	 * The actual result to write to {@link HttpServletResponse#getWriter()}.
-	 * 
+	 * The actual result to deliver in the HTTP response body.
+	 *
 	 * <p>
-	 * When the result is <code>null</code> the response is treated as error and the containers
-	 * default page for error with code {@link #getStatus()} is delivered.
+	 * If the value is a {@link com.top_logic.basic.io.binary.BinaryData}, a {@code byte[]},
+	 * or a {@link java.io.InputStream}, the raw bytes are streamed to
+	 * {@link HttpServletResponse#getOutputStream()}. Otherwise the value is written to
+	 * {@link HttpServletResponse#getWriter()} - as JSON when the {@link #getContentType()
+	 * content type} is {@code application/json}, or via {@link String#valueOf(Object)}.
+	 * </p>
+	 *
+	 * <p>
+	 * When the result is <code>null</code> the response is treated as error and the
+	 * container's default page for the error with code {@link #getStatus()} is delivered.
 	 * </p>
 	 */
 	public Object getResult() {
@@ -58,7 +66,16 @@ public class Response {
 	}
 
 	/**
-	 * Content type of {@link #getResult()}.
+	 * Content type of {@link #getResult()}, or <code>null</code> to derive a sensible default
+	 * from the result value.
+	 *
+	 * <p>
+	 * When <code>null</code> (or empty) the type is chosen based on the runtime type of
+	 * {@link #getResult()}: a {@link com.top_logic.basic.io.binary.BinaryData}'s own
+	 * content type takes precedence; raw {@code byte[]} and {@link java.io.InputStream}
+	 * default to {@code application/octet-stream}; collections and maps default to
+	 * {@code application/json}; everything else defaults to {@code text/plain}.
+	 * </p>
 	 */
 	public String getContentType() {
 		return _contentType;

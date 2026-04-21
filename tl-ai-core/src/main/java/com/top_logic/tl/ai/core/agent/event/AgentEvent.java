@@ -190,7 +190,16 @@ public sealed interface AgentEvent {
 	record DelegatedEvent(String runId, int turnNumber, Instant timestamp,
 			String delegationToolCallId, AgentEvent childEvent) implements AgentEvent {}
 
-	// ---------- Errors ----------
+	// ---------- Task updates ----------
+
+/**
+ * Emitted when the task list changes (create, update, or delete).
+ * Carries the full task list as a JSON snapshot (PersistedTaskStore format).
+ */
+record TaskUpdated(String runId, int turnNumber, Instant timestamp,
+		String tasksJson) implements AgentEvent {}
+
+// ---------- Errors ----------
 
 	/**
 	 * Emitted on an unrecoverable provider error. The loop stops after this event.

@@ -27,6 +27,9 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getApprovalMode() */
 	public static final String APPROVAL_MODE__PROP = "approvalMode";
 
+	/** @see #getTasksJson() */
+	public static final String TASKS_JSON__PROP = "tasksJson";
+
 	private final java.util.List<String> _approvedTools = new java.util.ArrayList<>();
 
 	private com.top_logic.ai.chat.api.messages.TokenUsageDto _cumulativeUsage = null;
@@ -34,6 +37,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	private String _lastModel = "";
 
 	private String _approvalMode = "";
+
+	private String _tasksJson = "";
 
 	/**
 	 * Creates a {@link SessionMetadata} instance.
@@ -152,6 +157,26 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		_approvalMode = value;
 	}
 
+	/**
+	 * Serialized TaskStore JSON (PersistedTaskStore format).
+	 */
+	public final String getTasksJson() {
+		return _tasksJson;
+	}
+
+	/**
+	 * @see #getTasksJson()
+	 */
+	public com.top_logic.ai.chat.api.messages.SessionMetadata setTasksJson(String value) {
+		internalSetTasksJson(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTasksJson()} without chain call utility. */
+	protected final void internalSetTasksJson(String value) {
+		_tasksJson = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SESSION_METADATA__TYPE;
@@ -163,7 +188,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			APPROVED_TOOLS__PROP, 
 			CUMULATIVE_USAGE__PROP, 
 			LAST_MODEL__PROP, 
-			APPROVAL_MODE__PROP);
+			APPROVAL_MODE__PROP, 
+			TASKS_JSON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -192,6 +218,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case CUMULATIVE_USAGE__PROP: return getCumulativeUsage();
 			case LAST_MODEL__PROP: return getLastModel();
 			case APPROVAL_MODE__PROP: return getApprovalMode();
+			case TASKS_JSON__PROP: return getTasksJson();
 			default: return null;
 		}
 	}
@@ -203,6 +230,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case CUMULATIVE_USAGE__PROP: internalSetCumulativeUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
 			case LAST_MODEL__PROP: internalSetLastModel((String) value); break;
 			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
+			case TASKS_JSON__PROP: internalSetTasksJson((String) value); break;
 		}
 	}
 
@@ -235,6 +263,8 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 		out.value(getLastModel());
 		out.name(APPROVAL_MODE__PROP);
 		out.value(getApprovalMode());
+		out.name(TASKS_JSON__PROP);
+		out.value(getTasksJson());
 	}
 
 	@Override
@@ -253,6 +283,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 			case CUMULATIVE_USAGE__PROP: setCumulativeUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case LAST_MODEL__PROP: setLastModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case TASKS_JSON__PROP: setTasksJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

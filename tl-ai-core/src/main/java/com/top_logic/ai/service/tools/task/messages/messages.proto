@@ -110,3 +110,63 @@ message TaskListResponse {
 	 */
 	repeated TaskSummary tasks;
 }
+
+/**
+ * A single task serialized for persistence.
+ */
+message PersistedTask {
+	/**
+	 * Unique task identifier.
+	 */
+	string id;
+
+	/**
+	 * Brief title for the task.
+	 */
+	string subject;
+
+	/**
+	 * Detailed description of what needs to be done.
+	 */
+	string description;
+
+	/**
+	 * Present continuous form shown while in progress.
+	 */
+	string activeForm;
+
+	/**
+	 * Current status (pending, in_progress, completed).
+	 */
+	string status;
+
+	/**
+	 * Agent or user assigned to the task.
+	 */
+	string owner;
+
+	/**
+	 * Task IDs that this task blocks.
+	 */
+	repeated string blocks;
+
+	/**
+	 * Task IDs that must complete before this task can start.
+	 */
+	repeated string blockedBy;
+}
+
+/**
+ * Full task store state for persistence.
+ */
+message PersistedTaskStore {
+	/**
+	 * Highest task ID ever assigned (prevents ID reuse after deletion).
+	 */
+	int highWaterMark;
+
+	/**
+	 * All tasks in creation order.
+	 */
+	repeated PersistedTask tasks;
+}

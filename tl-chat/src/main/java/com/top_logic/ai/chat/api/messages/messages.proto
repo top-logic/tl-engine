@@ -662,6 +662,9 @@ message SessionMetadata {
 
 	/** Current approval mode (e.g. AUTO_APPROVE, ALWAYS_ASK). */
 	string approvalMode;
+
+	/** Serialized TaskStore JSON (PersistedTaskStore format). */
+	string tasksJson;
 }
 
 // ---- New turn-based persistence format (v2) ----

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="TestScriptPathElement">
+		<annotations>
+			<package-binding
+				implementation-package="test.com.top_logic.model.search.model.testScriptPathElement.impl"
+				interface-package="test.com.top_logic.model.search.model.testScriptPathElement"
+			/>
+		</annotations>
+		<interface name="Named">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<class name="Assignment">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<reference name="readers"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
+				<reference name="writers"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
+				<reference name="plant"
+					mandatory="true"
+					type="Plant"
+				/>
+				<reference name="area"
+					mandatory="true"
+					type="ZArea"
+				/>
+			</attributes>
+		</class>
+		<class name="Plant">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+		</class>
+		<class name="ZArea">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+		</class>
+		<class name="ZAreaInstance">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+
+			<attributes>
+				<reference name="template"
+					mandatory="true"
+					type="ZArea"
+				/>
+			</attributes>
+		</class>
+		<class name="Assembly">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<reference name="area"
+					mandatory="true"
+					type="ZAreaInstance"
+				/>
+				<reference name="plant"
+					mandatory="true"
+					type="Plant"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -478,6 +478,33 @@ public class TestScriptPathElement extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * Tests that a script-step expression navigating through a derived (computed) attribute is
+	 * rejected as a configuration error at construction time.
+	 */
+	public void testDerivedAttributeIsConfigurationError() {
+		try {
+			newPathByExpression(
+				"assembly -> $assembly.get(`TestScriptPathElement:Assembly#derivedAssignments`)");
+			fail("Expected ConfigurationError for derived attribute in script-step expression.");
+		} catch (ConfigurationError ex) {
+			/* The ConfigurationError from context.error() is wrapped by the reflective instantiation
+			 * framework (DefaultConfigConstructorScheme), so the outer getMessage() does not carry
+			 * the original text. Walk the cause chain to verify our error was reported. */
+			Throwable cause = ex;
+			boolean foundDerived = false;
+			while (cause != null) {
+				String msg = cause.getMessage();
+				if (msg != null && msg.contains("derived")) {
+					foundDerived = true;
+					break;
+				}
+				cause = cause.getCause();
+			}
+			assertTrue("Error message chain should mention 'derived'", foundDerived);
+		}
+	}
+
 	private void assertSources(Set<? extends TLObject> expected, PathByExpression path, TLObject destination) {
 		BaseObjects<? extends Collection<? extends TLObject>> sources = path.getSources(destination);
 		assertFalse(sources.isAll());

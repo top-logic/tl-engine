@@ -113,6 +113,13 @@ public class TestScriptPathElementFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
+	 * Lookup {@link Assembly#DERIVED_ASSIGNMENTS_ATTR} of {@link Assembly}.
+	 */
+	public static com.top_logic.model.TLReference getDerivedAssignmentsAssemblyAttr() {
+		return (com.top_logic.model.TLReference) getAssemblyType().getPart(Assembly.DERIVED_ASSIGNMENTS_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Assembly#PLANT_ATTR} of {@link Assembly}.
 	 */
 	public static com.top_logic.model.TLReference getPlantAssemblyAttr() {

@@ -54,6 +54,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.visit.GenericDescendingVisitor;
 import com.top_logic.model.search.expr.visit.ToString;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -529,6 +530,14 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 		SearchExpression search = SearchBuilder.toSearchExpression(model, config.getExpression());
 		search = QueryExecutor.resolve(model, search);
 		_relevantParts = extractParts(search);
+		for (TLStructuredTypePart part : _relevantParts) {
+			if (part.isDerived()) {
+				context.error("Script-step expression navigates through derived (computed) attribute '"
+					+ TLModelUtil.qualifiedName(part)
+					+ "'. Derived attributes do not fire change notifications and cannot be tracked"
+					+ " for role-rule invalidation.");
+			}
+		}
 		_chain = extractChain(search);
 	}
 

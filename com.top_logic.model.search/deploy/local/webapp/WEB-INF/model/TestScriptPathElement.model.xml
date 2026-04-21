@@ -74,6 +74,16 @@
 					mandatory="true"
 					type="Plant"
 				/>
+				<reference name="derivedAssignments"
+					multiple="true"
+					type="Assignment"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="assembly -> $assembly.get(`TestScriptPathElement:Assembly#area`).get(`TestScriptPathElement:ZAreaInstance#template`).referers(`TestScriptPathElement:Assignment#area`)"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

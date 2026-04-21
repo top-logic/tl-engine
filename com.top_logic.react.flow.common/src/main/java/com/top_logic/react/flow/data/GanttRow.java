@@ -30,6 +30,12 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #isAcceptsDrop() */
 	String ACCEPTS_DROP__PROP = "acceptsDrop";
 
+	/** @see #getBackgroundColor() */
+	String BACKGROUND_COLOR__PROP = "backgroundColor";
+
+	/** @see #getBorderColor() */
+	String BORDER_COLOR__PROP = "borderColor";
+
 	/**
 	 * Opaque identifier, unique within a {@link GanttLayout}.
 	 */
@@ -107,6 +113,36 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #isAcceptsDrop()
 	 */
 	com.top_logic.react.flow.data.GanttRow setAcceptsDrop(boolean value);
+
+	/**
+	 * Background color of the row lane. Empty = transparent (no background drawn).
+	 */
+	String getBackgroundColor();
+
+	/**
+	 * @see #getBackgroundColor()
+	 */
+	com.top_logic.react.flow.data.GanttRow setBackgroundColor(String value);
+
+	/**
+	 * Checks, whether {@link #getBackgroundColor()} has a value.
+	 */
+	boolean hasBackgroundColor();
+
+	/**
+	 * Stroke color of the row lane border. Empty = no border.
+	 */
+	String getBorderColor();
+
+	/**
+	 * @see #getBorderColor()
+	 */
+	com.top_logic.react.flow.data.GanttRow setBorderColor(String value);
+
+	/**
+	 * Checks, whether {@link #getBorderColor()} has a value.
+	 */
+	boolean hasBorderColor();
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttRow readGanttRow(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

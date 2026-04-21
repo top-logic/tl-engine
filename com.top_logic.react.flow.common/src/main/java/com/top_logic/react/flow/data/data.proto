@@ -929,6 +929,14 @@ message GanttRow {
 
 	/** Whether items may be dropped into this row during drag. Default true. */
 	bool acceptsDrop = true;
+
+	/** Background color of the row lane. Empty = transparent (no background drawn). */
+	@Nullable
+	string backgroundColor;
+
+	/** Stroke color of the row lane border. Empty = no border. */
+	@Nullable
+	string borderColor;
 }
 
 /** Which end of an item a Gantt edge attaches to. */

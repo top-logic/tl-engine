@@ -30,6 +30,10 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 
 	private boolean _acceptsDrop = true;
 
+	private String _backgroundColor = null;
+
+	private String _borderColor = null;
+
 	/**
 	 * Creates a {@link GanttRow_Impl} instance.
 	 *
@@ -156,6 +160,52 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	}
 
 	@Override
+	public final String getBackgroundColor() {
+		return _backgroundColor;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttRow setBackgroundColor(String value) {
+		internalSetBackgroundColor(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getBackgroundColor()} without chain call utility. */
+	protected final void internalSetBackgroundColor(String value) {
+		_listener.beforeSet(this, BACKGROUND_COLOR__PROP, value);
+		_backgroundColor = value;
+		_listener.afterChanged(this, BACKGROUND_COLOR__PROP);
+	}
+
+	@Override
+	public final boolean hasBackgroundColor() {
+		return _backgroundColor != null;
+	}
+
+	@Override
+	public final String getBorderColor() {
+		return _borderColor;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttRow setBorderColor(String value) {
+		internalSetBorderColor(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getBorderColor()} without chain call utility. */
+	protected final void internalSetBorderColor(String value) {
+		_listener.beforeSet(this, BORDER_COLOR__PROP, value);
+		_borderColor = value;
+		_listener.afterChanged(this, BORDER_COLOR__PROP);
+	}
+
+	@Override
+	public final boolean hasBorderColor() {
+		return _borderColor != null;
+	}
+
+	@Override
 	public String jsonType() {
 		return GANTT_ROW__TYPE;
 	}
@@ -167,7 +217,9 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			USER_OBJECT__PROP, 
 			LABEL__PROP, 
 			CHILDREN__PROP, 
-			ACCEPTS_DROP__PROP);
+			ACCEPTS_DROP__PROP, 
+			BACKGROUND_COLOR__PROP, 
+			BORDER_COLOR__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -197,6 +249,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case LABEL__PROP: return getLabel();
 			case CHILDREN__PROP: return getChildren();
 			case ACCEPTS_DROP__PROP: return isAcceptsDrop();
+			case BACKGROUND_COLOR__PROP: return getBackgroundColor();
+			case BORDER_COLOR__PROP: return getBorderColor();
 			default: return super.get(field);
 		}
 	}
@@ -209,6 +263,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CHILDREN__PROP: internalSetChildren(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttRow.class, value)); break;
 			case ACCEPTS_DROP__PROP: internalSetAcceptsDrop((boolean) value); break;
+			case BACKGROUND_COLOR__PROP: internalSetBackgroundColor((String) value); break;
+			case BORDER_COLOR__PROP: internalSetBorderColor((String) value); break;
 		}
 	}
 
@@ -229,6 +285,14 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 		out.endArray();
 		out.name(ACCEPTS_DROP__PROP);
 		out.value(isAcceptsDrop());
+		if (hasBackgroundColor()) {
+			out.name(BACKGROUND_COLOR__PROP);
+			out.value(getBackgroundColor());
+		}
+		if (hasBorderColor()) {
+			out.name(BORDER_COLOR__PROP);
+			out.value(getBorderColor());
+		}
 	}
 
 	@Override
@@ -265,6 +329,22 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 				out.value(isAcceptsDrop());
 				break;
 			}
+			case BACKGROUND_COLOR__PROP: {
+				if (hasBackgroundColor()) {
+					out.value(getBackgroundColor());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case BORDER_COLOR__PROP: {
+				if (hasBorderColor()) {
+					out.value(getBorderColor());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -285,6 +365,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			}
 			break;
 			case ACCEPTS_DROP__PROP: setAcceptsDrop(in.nextBoolean()); break;
+			case BACKGROUND_COLOR__PROP: setBackgroundColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case BORDER_COLOR__PROP: setBorderColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(scope, in, field);
 		}
 	}

@@ -1554,7 +1554,9 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory Object model,
 			@Mandatory Box label,
 			List<GanttRow> children,
-			Boolean acceptsDrop) {
+			Boolean acceptsDrop,
+			String backgroundColor,
+			String borderColor) {
 		GanttRow row = GanttRow.create()
 			.setUserObject(model)
 			.setLabel(label);
@@ -1564,6 +1566,8 @@ public class FlowFactory extends TLScriptFunctions {
 		if (acceptsDrop != null) {
 			row.setAcceptsDrop(acceptsDrop);
 		}
+		if (backgroundColor != null) row.setBackgroundColor(backgroundColor);
+		if (borderColor != null) row.setBorderColor(borderColor);
 		return row;
 	}
 

@@ -353,28 +353,37 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 			rowHeight = rowMinContentHeight + 2 * rowPadding;
 		}
 
-		// Alternating background.
-		String fillColor = (idx % 2 == 0) ? "#ffffff" : "#f5f5f5";
-		out.beginRect(x0, rowY, totalWidth, rowHeight);
-		out.setFill(fillColor);
-		out.setStroke("#e0e0e0");
-		out.setStrokeWidth(1.0);
-		out.endRect();
+		// Row background and border from application-defined properties.
+		String bgColor = row.getBackgroundColor();
+		String bdColor = row.getBorderColor();
+		if (bgColor != null && !bgColor.isEmpty() || bdColor != null && !bdColor.isEmpty()) {
+			out.beginRect(x0, rowY, totalWidth, rowHeight);
+			out.setFill(bgColor != null && !bgColor.isEmpty() ? bgColor : "none");
+			if (bdColor != null && !bdColor.isEmpty()) {
+				out.setStroke(bdColor);
+				out.setStrokeWidth(1.0);
+			} else {
+				out.setStroke("none");
+			}
+			out.endRect();
+		}
 
 		// Note: row labels are drawn via the standard contents dispatch in draw() — no inline text
 		// rendering here. The label box was positioned by computeIntrinsicSize pass 2b.
 
 		// Vertical separator between label column and chart area.
-		double sepX = x0 + columnWidth;
-		out.beginPath();
-		out.setStroke("#e0e0e0");
-		out.setStrokeWidth(1.0);
-		out.setFill("none");
-		out.beginData();
-		out.moveToAbs(sepX, rowY);
-		out.lineToAbs(sepX, rowY + rowHeight);
-		out.endData();
-		out.endPath();
+		if (bdColor != null && !bdColor.isEmpty()) {
+			double sepX = x0 + columnWidth;
+			out.beginPath();
+			out.setStroke(bdColor);
+			out.setStrokeWidth(1.0);
+			out.setFill("none");
+			out.beginData();
+			out.moveToAbs(sepX, rowY);
+			out.lineToAbs(sepX, rowY + rowHeight);
+			out.endData();
+			out.endPath();
+		}
 
 		// Recurse into children.
 		for (GanttRow child : row.getChildren()) {

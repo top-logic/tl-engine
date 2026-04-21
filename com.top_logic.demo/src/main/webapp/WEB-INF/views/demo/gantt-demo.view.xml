@@ -10,8 +10,8 @@
 			<createChart><![CDATA[{
 /* === Axis rows (appear first) === */
 
-r_year   = reactFlowGanttRow(model: "axis:year",   label: reactFlowText("Year"),   acceptsDrop: false);
-r_months = reactFlowGanttRow(model: "axis:months", label: reactFlowText("Month"), acceptsDrop: false);
+r_year   = reactFlowGanttRow(model: "axis:year",   label: reactFlowText("Year"),   acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0");
+r_months = reactFlowGanttRow(model: "axis:months", label: reactFlowText("Month"), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0");
 
 /* Jan 1 2026 = day 20454, Dec 31 2026 = day 20819 */
 year2026 = reactFlowGanttSpan(
@@ -36,9 +36,9 @@ mMay = reactFlowGanttPoint(model: "axis:month:may", rowModel: "axis:months",
 
 /* === Data rows === */
 
-r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4));
-r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4));
-r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4));
+r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
+r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
+r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
 
 /* === Items === */
 

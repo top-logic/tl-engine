@@ -230,13 +230,12 @@ public class ChatProcessor {
 			}
 			applyPollUpdates(state, chat, taskTracker);
 
-			// Persist using ConversationLog instead of Chat entries
+			// Persist conversation log, task store, and metadata in a single write
 			String sessionId = state.getSessionId();
 			if (sessionId == null) {
 				sessionId = taskTracker.getActiveSessionId();
 			}
 			if (sessionId != null) {
-				persistConversationLog(sessionId, state.getConversationLog());
 				persistMessages(taskTracker, sessionId);
 			}
 

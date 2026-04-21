@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
+import com.top_logic.ai.service.tools.task.TaskStore;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
@@ -346,6 +347,10 @@ public final class DtoMapper {
 			.setCacheReadTokens(usage.cacheReadTokens())
 			.setCacheWriteTokens(usage.cacheWriteTokens()));
 		meta.setApprovalMode(tracker.getApprovalMode().name());
+		TaskStore taskStore = tracker.getActiveTaskStore();
+		if (taskStore != null) {
+			meta.setTasksJson(taskStore.toJson());
+		}
 		return toJson(meta);
 	}
 
@@ -379,6 +384,27 @@ public final class DtoMapper {
 			}
 		} catch (Exception e) {
 			// Corrupted metadata — ignore and start fresh.
+		}
+	}
+
+	/**
+	 * Loads a {@link TaskStore} from the metadata JSON string.
+	 *
+	 * @param json
+	 *        The metadata JSON; may be null or empty.
+	 * @return A TaskStore populated from the metadata, or an empty store.
+	 */
+	public static TaskStore loadTaskStore(String json) {
+		if (json == null || json.isEmpty()) {
+			return new TaskStore();
+		}
+		try {
+			SessionMetadata meta =
+				SessionMetadata.readSessionMetadata(new JsonReader(new StringR(json)));
+			String tasksJson = meta.getTasksJson();
+			return TaskStore.fromJson(tasksJson);
+		} catch (Exception e) {
+			return new TaskStore();
 		}
 	}
 }

@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.service.approval.ApprovalMode;
+import com.top_logic.ai.service.tools.task.TaskStore;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -225,6 +226,13 @@ public class TaskProgressTracker {
 	 */
 	public void setActiveSessionId(String sessionId) {
 		_sessionManager.switchSession(sessionId);
+	}
+
+	/**
+	 * Returns the active session's {@link TaskStore}.
+	 */
+	public TaskStore getActiveTaskStore() {
+		return _sessionManager.getActiveTaskStore();
 	}
 
 	/**

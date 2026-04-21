@@ -26,6 +26,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.ai.service.tools.task.TaskStore;
 
 /**
  * Manages per-session in-memory state ({@link Chat} + {@link ConversationMemory}) with LRU caching.
@@ -76,10 +77,13 @@ public class ChatSessionManager {
 
 		ConversationLog _conversationLog;
 
+		TaskStore _taskStore;
+
 		/** */
 		SessionState(Chat chat, ConversationMemory conversationMemory) {
 			_chat = chat;
 			_conversationMemory = conversationMemory;
+			_taskStore = new TaskStore();
 		}
 	}
 
@@ -139,6 +143,23 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * Returns the active session's {@link TaskStore}. Returns a transient empty store if no
+	 * session is active.
+	 */
+	public TaskStore getActiveTaskStore() {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state != null) {
+				if (state._taskStore == null) {
+					state._taskStore = new TaskStore();
+				}
+				return state._taskStore;
+			}
+			return new TaskStore();
+		}
+	}
+
+	/**
 	 * Returns the active session ID, or null if none.
 	 */
 	public String getActiveSessionId() {
@@ -181,6 +202,7 @@ public class ChatSessionManager {
 			Chat chat = new Chat();
 			ConversationMemory memory = createDefaultMemory();
 			ConversationLog convLog = null;
+			TaskStore loadedTaskStore = new TaskStore();
 
 			try {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
@@ -201,6 +223,7 @@ public class ChatSessionManager {
 					if (_tracker != null) {
 						String metadataJson = ChatHistoryService.getMetadataJson(session);
 						DtoMapper.loadMetadata(metadataJson, _tracker);
+						loadedTaskStore = DtoMapper.loadTaskStore(metadataJson);
 					}
 				}
 			} catch (Exception ex) {
@@ -210,6 +233,7 @@ public class ChatSessionManager {
 
 			SessionState newState = new SessionState(chat, memory);
 			newState._conversationLog = convLog;
+			newState._taskStore = loadedTaskStore;
 			_sessions.put(sessionId, newState);
 			_activeSessionId = sessionId;
 		}

@@ -48,6 +48,14 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		if (!(part instanceof TLReference)) {
 			throw new ConfigurationError(I18NConstants.NOT_A_REFERENCE__PART.fill(part));
 		}
+		if (((TLReference) part).isDerived()) {
+			// Do not check definition, because this may be an abstract attribute. Abstract
+			// attributes are derived: See NoStorage#isReadOnly.
+			context.error("Path-navigation references derived (computed) attribute '"
+					+ TLModelUtil.qualifiedName(part)
+					+ "'. Derived attributes do not fire change notifications and cannot be tracked"
+					+ " for role-rule invalidation.");
+		}
 		_reference = (TLReference) ((TLReference) part).getDefinition();
 	}
 

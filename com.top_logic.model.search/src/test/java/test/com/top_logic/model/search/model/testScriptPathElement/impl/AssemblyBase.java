@@ -27,6 +27,15 @@ public interface AssemblyBase extends test.com.top_logic.model.search.model.test
 	String AREA_ATTR = "area";
 
 	/**
+	 * Part <code>derivedAssignments</code> of <code>Assembly</code>
+	 * 
+	 * <p>
+	 * Declared as <code>TestScriptPathElement:Assignment</code> in configuration.
+	 * </p>
+	 */
+	String DERIVED_ASSIGNMENTS_ATTR = "derivedAssignments";
+
+	/**
 	 * Part <code>plant</code> of <code>Assembly</code>
 	 * 
 	 * <p>
@@ -47,6 +56,14 @@ public interface AssemblyBase extends test.com.top_logic.model.search.model.test
 	 */
 	default void setArea(test.com.top_logic.model.search.model.testScriptPathElement.ZAreaInstance newValue) {
 		tUpdateByName(AREA_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #DERIVED_ASSIGNMENTS_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<? extends test.com.top_logic.model.search.model.testScriptPathElement.Assignment> getDerivedAssignments() {
+		return (java.util.Set<? extends test.com.top_logic.model.search.model.testScriptPathElement.Assignment>) tValueByName(DERIVED_ASSIGNMENTS_ATTR);
 	}
 
 	/**

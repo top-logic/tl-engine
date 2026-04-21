@@ -108,7 +108,6 @@ public class VectorIndexingService extends DefaultIndexingService {
 
 			while (iterator.hasNext()) {
 				AttributedWrapper instance = (AttributedWrapper) iterator.next();
-
 				this.indexContent(new VectorIndexContentObject(instance.tHandle()));
 			}
 

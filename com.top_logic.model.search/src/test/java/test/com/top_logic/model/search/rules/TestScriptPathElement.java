@@ -479,6 +479,52 @@ public class TestScriptPathElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests a script-step expression without a lambda argument. Such an expression ignores the base
+	 * object and always returns the same set. {@link PathByExpression#getSources} and
+	 * {@link PathByExpression#getPathBase} must always return {@link BaseObjects#all()} because
+	 * there is no base-object dependency to invert.
+	 */
+	public void testNoArgument() {
+		// Expression has no lambda: returns all assignments whose plant is non-null,
+		// ignoring the base object entirely.
+		PathByExpression path = newPathByExpression(
+			"all(`TestScriptPathElement:Assignment`)"
+				+ ".filter(a -> $a.get(`TestScriptPathElement:Assignment#plant`) != null)");
+		Plant plant1;
+		ZArea z1;
+		ZAreaInstance zai1;
+		Assembly assembly1;
+		Assignment assign1;
+		Assignment assign2;
+		try (Transaction tx = beginTX()) {
+			plant1 = createPlant("plant1");
+			z1 = createZArea("z1");
+			zai1 = createZAreaInstance(z1);
+			assembly1 = createAssembly("assembly1", zai1, plant1);
+			assign1 = createAssignment("assign1", plant1, z1);
+			assign2 = createAssignment("assign2", plant1, z1);
+			tx.commit();
+		}
+		// all() only sees committed objects, so we query after the commit above.
+		try (Transaction tx = beginTX()) {
+			// getValues ignores the base -- both assignments match the filter.
+			Collection<? extends TLObject> values = path.getValues(assembly1);
+			assertTrue("getValues must include assign1", values.contains(assign1));
+			assertTrue("getValues must include assign2", values.contains(assign2));
+			// Result is the same regardless of the base argument.
+			assertEquals(toSet(values), toSet(path.getValues(assign1)));
+
+			// getSources has no lambda to invert -- must fall back to BaseObjects.all().
+			assertTrue(path.getSources(assign1).isAll());
+
+			// getPathBase has no base dependency -- must fall back to BaseObjects.all().
+			assertPathBaseIsAll(path, assign1, TestScriptPathElementFactory.getAreaAssignmentAttr());
+
+			tx.rollback();
+		}
+	}
+
+	/**
 	 * Tests that a script-step expression navigating through a derived (computed) attribute is
 	 * rejected as a configuration error at construction time.
 	 */

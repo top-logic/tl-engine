@@ -579,6 +579,8 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 */
 	private static List<Step> extractChain(SearchExpression expression) {
 		if (!(expression instanceof Lambda lambda)) {
+			/* In this case getValues() does not depend on the input. When any attribute value
+			 * changes, it is necessary to re-compute this path for all objects. */
 			return null;
 		}
 		return extractSubChain(lambda.getBody(), lambda.getName(), new HashMap<>());

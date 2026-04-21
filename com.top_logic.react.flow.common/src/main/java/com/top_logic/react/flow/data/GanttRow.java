@@ -33,6 +33,9 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getRowPadding() */
 	String ROW_PADDING__PROP = "rowPadding";
 
+	/** @see #getMinContentHeight() */
+	String MIN_CONTENT_HEIGHT__PROP = "minContentHeight";
+
 	/** @see #getBackgroundColor() */
 	String BACKGROUND_COLOR__PROP = "backgroundColor";
 
@@ -126,6 +129,16 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #getRowPadding()
 	 */
 	com.top_logic.react.flow.data.GanttRow setRowPadding(double value);
+
+	/**
+	 * Minimum content height for this row, in pixels.
+	 */
+	double getMinContentHeight();
+
+	/**
+	 * @see #getMinContentHeight()
+	 */
+	com.top_logic.react.flow.data.GanttRow setMinContentHeight(double value);
 
 	/**
 	 * Background color of the row lane. Empty = transparent (no background drawn).

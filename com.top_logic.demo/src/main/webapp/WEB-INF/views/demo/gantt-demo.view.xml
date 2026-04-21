@@ -8,36 +8,36 @@
 		<flow-diagram>
 			<inputs/>
 			<createChart><![CDATA[{
-/* === Axis rows (rowPadding: 0 so items fill the entire row height) === */
+/* === Axis rows (rowPadding: 0, minContentHeight: 0 so items fill the entire row height) === */
 
-r_year    = reactFlowGanttRow(model: "axis:year",    label: reactFlowPadding(reactFlowText("Year"),    all: 4), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0);
-r_months  = reactFlowGanttRow(model: "axis:months",  label: reactFlowPadding(reactFlowText("Month"),   all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0);
-r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(reactFlowText("Markers"), all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0);
+r_year    = reactFlowGanttRow(model: "axis:year",    label: reactFlowPadding(reactFlowText("Year"),    all: 4), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 0);
+r_months  = reactFlowGanttRow(model: "axis:months",  label: reactFlowPadding(reactFlowText("Month"),   all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 0);
+r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(reactFlowText("Markers"), all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 0);
 
 /* Jan 1 2026 = day 20454, Dec 31 2026 = day 20819 */
 year2026 = reactFlowGanttSpan(
 	model: "axis:year:2026", rowModel: "axis:year",
-	box: reactFlowFill(reactFlowPadding(reactFlowText("2026"), all: 4), fill: "#e0e0e0"),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("2026"), all: 4), vAlign: "CENTER")),
 	start: 20454, end: 20819,
 	canMove: false, canResize: false, canBeEdge: false);
 
-/* Month spans with alternating fills */
+/* Month spans with borders */
 mFeb = reactFlowGanttSpan(model: "m:feb", rowModel: "axis:months",
-	box: reactFlowFill(reactFlowPadding(reactFlowText("Feb"), all: 2), fill: "#e8e8e8"),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Feb"), all: 2), vAlign: "CENTER")),
 	start: 20485, end: 20513, canMove: false, canResize: false, canBeEdge: false);
 mMar = reactFlowGanttSpan(model: "m:mar", rowModel: "axis:months",
-	box: reactFlowFill(reactFlowPadding(reactFlowText("Mar"), all: 2), fill: "#f4f4f4"),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Mar"), all: 2), vAlign: "CENTER")),
 	start: 20513, end: 20544, canMove: false, canResize: false, canBeEdge: false);
 mApr = reactFlowGanttSpan(model: "m:apr", rowModel: "axis:months",
-	box: reactFlowFill(reactFlowPadding(reactFlowText("Apr"), all: 2), fill: "#e8e8e8"),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Apr"), all: 2), vAlign: "CENTER")),
 	start: 20544, end: 20574, canMove: false, canResize: false, canBeEdge: false);
 mMay = reactFlowGanttSpan(model: "m:may", rowModel: "axis:months",
-	box: reactFlowFill(reactFlowPadding(reactFlowText("May"), all: 2), fill: "#f4f4f4"),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("May"), all: 2), vAlign: "CENTER")),
 	start: 20574, end: 20600, canMove: false, canResize: false, canBeEdge: false);
 
 /* Freeze label in Markers row */
 freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers",
-	box: reactFlowFill(reactFlowPadding(reactFlowText("Freeze"), all: 2), fill: "rgba(255,100,100,0.3)"),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Freeze"), all: 2), vAlign: "CENTER")),
 	start: 20513, end: 20520, canMove: false, canResize: false, canBeEdge: false);
 
 /* === Data rows (default rowPadding: 4) === */

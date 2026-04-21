@@ -1557,7 +1557,8 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean acceptsDrop,
 			String backgroundColor,
 			String borderColor,
-			Double rowPadding) {
+			Double rowPadding,
+			Double minContentHeight) {
 		GanttRow row = GanttRow.create()
 			.setUserObject(model)
 			.setLabel(label);
@@ -1570,6 +1571,7 @@ public class FlowFactory extends TLScriptFunctions {
 		if (backgroundColor != null) row.setBackgroundColor(backgroundColor);
 		if (borderColor != null) row.setBorderColor(borderColor);
 		if (rowPadding != null) row.setRowPadding(rowPadding);
+		if (minContentHeight != null) row.setMinContentHeight(minContentHeight);
 		return row;
 	}
 

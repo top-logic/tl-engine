@@ -933,6 +933,9 @@ message GanttRow {
 	/** Vertical padding (top + bottom) inside this row, in pixels. */
 	double rowPadding = 4.0;
 
+	/** Minimum content height for this row, in pixels. */
+	double minContentHeight = 24.0;
+
 	/** Background color of the row lane. Empty = transparent (no background drawn). */
 	@Nullable
 	string backgroundColor;
@@ -1280,15 +1283,7 @@ message GanttLayout extends Layout {
 	/** Time axis configuration. */
 	GanttAxis axis;
 
-	/**
-	 * Minimum height of the content area of any row (excluding padding), in pixels at zoom 100%.
-	 *
-	 * <p>
-	 * The actual row content height is {@code max(rowMinContentHeight, max item intrinsic height)}.
-	 * Add {@link GanttRow#getRowPadding() rowPadding} (per row, top and bottom) to get the total row height.
-	 * </p>
-	 */
-	double rowMinContentHeight = 24.0;
+	/* rowMinContentHeight moved to GanttRow.minContentHeight (per-row). */
 
 	/** Horizontal indentation per row hierarchy level, in pixels. */
 	double indentWidth = 16.0;

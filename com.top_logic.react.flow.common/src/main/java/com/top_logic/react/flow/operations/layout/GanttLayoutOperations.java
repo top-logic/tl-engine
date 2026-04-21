@@ -90,13 +90,12 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		double rangeMin = axis.getRangeMin();
 		double rowLabelMinWidth = self.getRowLabelMinWidth();
 		double rowLabelPadding = self.getRowLabelPadding();
-		double rowMinContentHeight = self.getRowMinContentHeight();
 		double indentWidth = self.getIndentWidth();
 
 		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
 		double[] rowMaxContentHeight = new double[totalRows];
 		for (int i = 0; i < totalRows; i++) {
-			rowMaxContentHeight[i] = rowMinContentHeight;
+			rowMaxContentHeight[i] = rowList.get(i).getMinContentHeight();
 		}
 
 		// Use a preliminary label column width for rough x positions during intrinsic sizing.
@@ -321,7 +320,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		double x0 = self.getX();
 		double y0 = self.getY();
 		double totalWidth = self.getWidth();
-		double rowMinContentHeight = self.getRowMinContentHeight();
 		double columnWidth = self.getColumnWidth();
 
 		// Build row geometry map for per-row Y positions.
@@ -332,7 +330,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 
 		int[] rowIndex = new int[] { 0 };
 		for (GanttRow root : self.getRootRows()) {
-			drawRowLane(root, x0, totalWidth, rowMinContentHeight, columnWidth,
+			drawRowLane(root, x0, totalWidth, columnWidth,
 				rowGeometry, out, rowIndex);
 		}
 
@@ -340,7 +338,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	}
 
 	private static void drawRowLane(GanttRow row,
-			double x0, double totalWidth, double rowMinContentHeight,
+			double x0, double totalWidth,
 			double columnWidth,
 			Map<String, RowGeometry> rowGeometry, SvgWriter out, int[] rowIndex) {
 		int idx = rowIndex[0]++;
@@ -353,7 +351,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		} else {
 			// Fallback (should not happen in normal usage).
 			rowY = 0;
-			rowHeight = rowMinContentHeight + 2 * row.getRowPadding();
+			rowHeight = row.getMinContentHeight() + 2 * row.getRowPadding();
 		}
 
 		// Row background and border from application-defined properties.
@@ -390,7 +388,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 
 		// Recurse into children.
 		for (GanttRow child : row.getChildren()) {
-			drawRowLane(child, x0, totalWidth, rowMinContentHeight, columnWidth,
+			drawRowLane(child, x0, totalWidth, columnWidth,
 				rowGeometry, out, rowIndex);
 		}
 	}
@@ -416,7 +414,12 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 				}
 			}
 		} else {
-			chartY1 = chartY0 + totalRows * self.getRowMinContentHeight();
+			// Fallback: sum up per-row min content heights (no padding in this rough estimate).
+			double fallbackHeight = 0;
+			for (GanttRow root : self.getRootRows()) {
+				fallbackHeight += sumMinContentHeight(root);
+			}
+			chartY1 = chartY0 + fallbackHeight;
 		}
 
 		GanttAxis axis = self.getAxis();
@@ -599,8 +602,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	 * </p>
 	 */
 	private static Map<String, RowGeometry> buildRowGeometry(GanttLayout self, double lanesTop) {
-		double rowMinContentHeight = self.getRowMinContentHeight();
-
 		// Build ordered row index map and row list (to look up per-row padding).
 		LinkedHashMap<String, Integer> rowIndex = new LinkedHashMap<>();
 		List<GanttRow> rowList = new java.util.ArrayList<>();
@@ -613,7 +614,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		// Compute per-row max content height from already-distributed item boxes.
 		double[] rowMaxContentHeight = new double[totalRows];
 		for (int i = 0; i < totalRows; i++) {
-			rowMaxContentHeight[i] = rowMinContentHeight;
+			rowMaxContentHeight[i] = rowList.get(i).getMinContentHeight();
 		}
 		for (GanttItem item : self.getItems()) {
 			Integer idx = rowIndex.get(item.getRowId());
@@ -685,6 +686,15 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		for (GanttRow child : row.getChildren()) {
 			indexRows(child, idx, counter, rowList);
 		}
+	}
+
+	/** Sums the {@link GanttRow#getMinContentHeight()} of a row and all its descendants. */
+	private static double sumMinContentHeight(GanttRow row) {
+		double sum = row.getMinContentHeight();
+		for (GanttRow child : row.getChildren()) {
+			sum += sumMinContentHeight(child);
+		}
+		return sum;
 	}
 
 	// -----------------------------------------------------------------------

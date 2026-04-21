@@ -5,7 +5,7 @@ package com.top_logic.react.flow.data;
  *
  * <p>
  * Row heights are computed per-row from the maximum item intrinsic height plus padding, with
- * {@link #getRowMinContentHeight()} as a floor. The effective total height of a row is:
+ * {@link #rowMinContentHeight} as a floor. The effective total height of a row is:
  * {@code max(rowMinContentHeight, max(item.intrinsicHeight in row)) + 2 * rowPadding}.
  * All items in the same row receive the same final content height so that neighbouring boxes
  * can grow together.
@@ -42,9 +42,6 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 
 	/** @see #getAxis() */
 	String AXIS__PROP = "axis";
-
-	/** @see #getRowMinContentHeight() */
-	String ROW_MIN_CONTENT_HEIGHT__PROP = "rowMinContentHeight";
 
 	/** @see #getIndentWidth() */
 	String INDENT_WIDTH__PROP = "indentWidth";
@@ -152,21 +149,6 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	 * Checks, whether {@link #getAxis()} has a value.
 	 */
 	boolean hasAxis();
-
-	/**
-	 * Minimum height of the content area of any row (excluding padding), in pixels at zoom 100%.
-	 *
-	 * <p>
-	 * The actual row content height is {@code max(rowMinContentHeight, max item intrinsic height)}.
-	 * Add {@link GanttRow#getRowPadding() rowPadding} (per row, top and bottom) to get the total row height.
-	 * </p>
-	 */
-	double getRowMinContentHeight();
-
-	/**
-	 * @see #getRowMinContentHeight()
-	 */
-	com.top_logic.react.flow.data.GanttLayout setRowMinContentHeight(double value);
 
 	/**
 	 * Horizontal indentation per row hierarchy level, in pixels.

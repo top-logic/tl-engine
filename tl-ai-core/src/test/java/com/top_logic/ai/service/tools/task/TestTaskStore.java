@@ -362,6 +362,27 @@ public class TestTaskStore extends TestCase {
 	}
 
 	/**
+	 * Verifies that countUncompleted() counts pending and in_progress tasks.
+	 */
+	public void testCountUncompleted() {
+		assertEquals(0, _store.countUncompleted());
+
+		_store.createTask("A", "d", "f");
+		_store.createTask("B", "d", "f");
+		_store.createTask("C", "d", "f");
+		assertEquals(3, _store.countUncompleted());
+
+		_store.updateTask("1", TaskStore.STATUS_IN_PROGRESS, null, null, null, null, null, null);
+		assertEquals("in_progress counts as uncompleted", 3, _store.countUncompleted());
+
+		_store.updateTask("1", TaskStore.STATUS_COMPLETED, null, null, null, null, null, null);
+		assertEquals("completed should not count", 2, _store.countUncompleted());
+
+		_store.updateTask("2", TaskStore.STATUS_DELETED, null, null, null, null, null, null);
+		assertEquals("deleted should not count", 1, _store.countUncompleted());
+	}
+
+	/**
 	 * Verifies that all fields can be updated simultaneously in a single call.
 	 */
 	public void testUpdateAllFieldsAtOnce() {

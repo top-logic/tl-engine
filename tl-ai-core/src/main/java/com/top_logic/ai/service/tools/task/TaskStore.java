@@ -172,6 +172,21 @@ public class TaskStore {
 	}
 
 	/**
+	 * Returns the number of tasks that are not yet completed (status is {@value #STATUS_PENDING}
+	 * or {@value #STATUS_IN_PROGRESS}).
+	 */
+	public synchronized int countUncompleted() {
+		int count = 0;
+		for (AgentTask task : _tasks.values()) {
+			String status = task.getStatus();
+			if (STATUS_PENDING.equals(status) || STATUS_IN_PROGRESS.equals(status)) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
 	 * Serializes this store to a JSON string using msgbuf's {@link PersistedTaskStore} format.
 	 *
 	 * @return The JSON representation of this store.

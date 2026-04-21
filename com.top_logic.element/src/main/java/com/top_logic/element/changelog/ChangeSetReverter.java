@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
@@ -353,7 +354,8 @@ public final class ChangeSetReverter {
 		if (newestRealChangeRev > candidateRev) {
 			// A real change happened after the newest pending undo - the redo stack was cleared
 			// by that forward action, so redo is no longer meaningful.
-			throw new TopLogicException(I18NConstants.ERROR_CANNOT_REDO_CHAIN_BROKEN);
+			throw new TopLogicException(I18NConstants.ERROR_CANNOT_REDO_CHAIN_BROKEN)
+				.initSeverity(ErrorSeverity.WARNING);
 		}
 		return candidate;
 	}

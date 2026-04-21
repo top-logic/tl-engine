@@ -32,11 +32,9 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dsa.util.MimeTypes;
-import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.IndexException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
@@ -47,9 +45,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.layout.provider.LabelProviderService;
-import com.top_logic.model.TLClass;
-import com.top_logic.model.TLObject;
 
 import dev.langchain4j.community.store.embedding.jvector.JVectorEmbeddingStore;
 import dev.langchain4j.data.embedding.Embedding;
@@ -234,6 +229,15 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	/** Whether to reindex all objects in the vector store on startup. */
 	private final boolean shouldReindexingOnRestart;
+
+	/**
+	 * Getter for the configuration - should reindex be executed upon service restart.
+	 * 
+	 * @return boolean value - should we reindex on restart or not.
+	 */
+	public boolean getShouldReindexingOnRestart() {
+		return this.shouldReindexingOnRestart;
+	}
 
 	/**
 	 * Protected constructor for singleton pattern. Initialization with a given index location. Creates
@@ -460,56 +464,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		HistoryManager historyManager = HistoryUtils.getHistoryManager(PersistencyLayer.getKnowledgeBase());
 		this.myThread = new VectorThread(this, this, historyManager);
 		this.myThread.start();
-
-		if (this.shouldReindexingOnRestart) {
-			Logger.info("shouldReindexingOnRestart=true scheduling background re-index.", VectorIndex.class);
-			Thread reindexer = new Thread(() ->
-				ThreadContextManager.inSystemInteraction(VectorIndex.class, () -> {
-					for (String modelFqn : this.vectorIndexModels) {
-						if (modelFqn.trim().isEmpty()) {
-							continue;
-						}
-						try {
-							String[] parts = modelFqn.split(":");
-							if (parts.length != 2) {
-								Logger.warn("Invalid FQN '" + modelFqn + "'. Expected 'module:type'.", VectorIndex.class);
-								continue;
-							}
-							TLClass type = MetaElementUtil.getGlobalType(parts[0], parts[1]);
-							if (type == null) {
-								Logger.warn("Type not found: " + modelFqn, VectorIndex.class);
-								continue;
-							}
-							List<TLObject> instances = MetaElementUtil.getAllInstancesOf(type, TLObject.class);
-							Logger.info("Re-indexing " + instances.size() + " instances of " + modelFqn, VectorIndex.class);
-							for (TLObject instance : instances) {
-								if (!(instance instanceof com.top_logic.knowledge.wrap.Wrapper)) {
-									continue;
-								}
-								@SuppressWarnings("deprecation")
-								KnowledgeObject ko = ((com.top_logic.knowledge.wrap.Wrapper) instance).getWrappedObject();
-								if (ko == null) {
-									continue;
-								}
-								String label = LabelProviderService.getLabel(instance);
-								String text = label != null ? label : "";
-								this.addContent(new ContentObject() {
-									@Override
-									public KnowledgeObject getKnowledgeObject() { return ko; }
-									@Override
-									public String getContent() throws IndexException { return text; }
-									@Override
-									public String getDescription() throws IndexException { return null; }
-								});
-							}
-						} catch (Exception e) {
-							Logger.error("Re-index failed for model " + modelFqn, e, VectorIndex.class);
-						}
-					}
-				}), "VectorIndex-Reindexer");
-			reindexer.setDaemon(true);
-			reindexer.start();
-		}
 
 		Logger.info("Initiated Vector", VectorIndex.class);
 	}

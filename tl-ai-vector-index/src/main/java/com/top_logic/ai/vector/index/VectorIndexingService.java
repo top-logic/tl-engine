@@ -11,19 +11,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.dob.identifier.ObjectKey;
-<<<<<<< Upstream, based on master
-=======
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.kbbased.AttributedWrapper;
->>>>>>> f2097e1 Fix comment from Bernhard https://git.top-logic.com/TopLogic/tl-ai/pulls/86#issuecomment-118360
 import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.indexing.DefaultIndexingService;
 import com.top_logic.knowledge.indexing.IndexException;
-<<<<<<< Upstream, based on master
-=======
 import com.top_logic.model.TLObject;
->>>>>>> f2097e1 Fix comment from Bernhard https://git.top-logic.com/TopLogic/tl-ai/pulls/86#issuecomment-118360
 
 /**
  * Vector Index implementation of the {@link com.top_logic.knowledge.indexing.IndexingService}.
@@ -36,6 +30,12 @@ public class VectorIndexingService extends DefaultIndexingService {
 	/** The Vector index */
 	private final VectorIndex index;
 
+	/**
+	 * @param context
+	 * 		Context
+	 * @param config
+	 * 		Config
+	 */
 	public VectorIndexingService(InstantiationContext context, DefaultIndexingServiceConfig config) {
 		super(context, config);
 		this.index = VectorIndex.getInstance();
@@ -44,6 +44,10 @@ public class VectorIndexingService extends DefaultIndexingService {
 	@Override
 	protected void startUp() {
 		super.startUp();
+
+		if (this.index.getShouldReindexingOnRestart()) {
+			this.rebuildIndex();
+		}
 	}
 
 	@Override
@@ -84,11 +88,9 @@ public class VectorIndexingService extends DefaultIndexingService {
 	}
 
 	@Override
-<<<<<<< Upstream, based on master
-=======
 	public void rebuildIndex() {
-		Logger.info("Start rebuilding search index", DefaultIndexingService.class);
 		resetIndex();
+		Logger.info("Start rebuilding search index", DefaultIndexingService.class);
 
 		for (String modelFqn : this.index.getVectorIndexModels()) {
 			if (modelFqn.trim().isEmpty()) {
@@ -106,7 +108,10 @@ public class VectorIndexingService extends DefaultIndexingService {
 
 			while (iterator.hasNext()) {
 				AttributedWrapper instance = (AttributedWrapper) iterator.next();
+
 				this.indexContent(new VectorIndexContentObject(instance.tHandle()));
+
+//				this.indexContent(WrapperContentObject(instance));
 			}
 
 			iterator.close();
@@ -117,7 +122,6 @@ public class VectorIndexingService extends DefaultIndexingService {
 	}
 
 	@Override
->>>>>>> f2097e1 Fix comment from Bernhard https://git.top-logic.com/TopLogic/tl-ai/pulls/86#issuecomment-118360
 	public void stopIndex() {
 		index.shutDown();
 	}

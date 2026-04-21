@@ -8,6 +8,8 @@ package com.top_logic.ai.vector.index;
 
 import com.top_logic.knowledge.indexing.ContentObject;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.searching.DefaultFullTextBuffer;
+import com.top_logic.knowledge.wrap.Wrapper;
 
 /**
  * Class that implements {@link ContentObject} interface for Vector Indexing
@@ -19,12 +21,15 @@ public class VectorIndexContentObject implements ContentObject {
 
 	String description;
 
+	Wrapper _wrapper;
+
 	/**
 	 * @param ko
 	 *        Knowledge object
 	 */
 	public VectorIndexContentObject(KnowledgeObject ko) {
 		this.ko = ko;
+		this._wrapper = ko.getWrapper();
 	}
 
 	@Override
@@ -34,8 +39,9 @@ public class VectorIndexContentObject implements ContentObject {
 
 	@Override
 	public String getContent() {
-
-		return content;
+		DefaultFullTextBuffer buffer = new DefaultFullTextBuffer();
+		this._wrapper.generateFullText(buffer);
+		return buffer.toString();
 	}
 
 	@Override

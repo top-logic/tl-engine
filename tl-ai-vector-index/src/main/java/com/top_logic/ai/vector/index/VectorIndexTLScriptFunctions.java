@@ -197,9 +197,14 @@ public class VectorIndexTLScriptFunctions extends TLScriptFunctions {
 			searchType = type.toString();
 		}
 
+		List<Map<String, Object>> results = new ArrayList<>();
+
+		if (query == null || searchType == null) {
+			return results;
+		}
+
 		List<EmbeddingMatch<TextSegment>> matches =
 			VectorIndex.getInstance().searchVectorIndex(query, searchType, limit, scoreThreshold);
-		List<Map<String, Object>> results = new ArrayList<>();
 
 		Map<String, Map<String, Object>> objectsToFetch = new HashMap<>();
 		JSONParser parser = new JSONParser();

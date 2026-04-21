@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import com.top_logic.ai.service.tools.task.messages.PersistedTask;
 import com.top_logic.ai.service.tools.task.messages.PersistedTaskStore;
 import com.top_logic.basic.Logger;
@@ -57,8 +58,9 @@ public class TaskStore {
 	private AgentEventListener _listener;
 
 	/**
-	 * Sets the event listener that receives {@link AgentEvent.TaskUpdated} events on every
-	 * task mutation. Pass {@code null} to clear.
+	 * Sets the event listener that receives
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.TaskUpdated} events on every task
+	 * mutation. Pass {@code null} to clear.
 	 */
 	public synchronized void setListener(AgentEventListener listener) {
 		_listener = listener;

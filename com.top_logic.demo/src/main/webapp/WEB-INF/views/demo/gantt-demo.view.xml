@@ -17,27 +17,27 @@ r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(rea
 /* Jan 1 2026 = day 20454, Dec 31 2026 = day 20819 */
 year2026 = reactFlowGanttSpan(
 	model: "axis:year:2026", rowModel: "axis:year",
-	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("2026"), all: 4), vAlign: "CENTER")),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("2026"), all: 4), vAlign: "middle")),
 	start: 20454, end: 20819,
 	canMove: false, canResize: false, canBeEdge: false);
 
 /* Month spans with borders */
 mFeb = reactFlowGanttSpan(model: "m:feb", rowModel: "axis:months",
-	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Feb"), all: 2), vAlign: "CENTER")),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Feb"), all: 2), vAlign: "middle")),
 	start: 20485, end: 20513, canMove: false, canResize: false, canBeEdge: false);
 mMar = reactFlowGanttSpan(model: "m:mar", rowModel: "axis:months",
-	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Mar"), all: 2), vAlign: "CENTER")),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Mar"), all: 2), vAlign: "middle")),
 	start: 20513, end: 20544, canMove: false, canResize: false, canBeEdge: false);
 mApr = reactFlowGanttSpan(model: "m:apr", rowModel: "axis:months",
-	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Apr"), all: 2), vAlign: "CENTER")),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Apr"), all: 2), vAlign: "middle")),
 	start: 20544, end: 20574, canMove: false, canResize: false, canBeEdge: false);
 mMay = reactFlowGanttSpan(model: "m:may", rowModel: "axis:months",
-	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("May"), all: 2), vAlign: "CENTER")),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("May"), all: 2), vAlign: "middle")),
 	start: 20574, end: 20600, canMove: false, canResize: false, canBeEdge: false);
 
 /* Freeze label in Markers row */
 freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers",
-	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Freeze"), all: 2), vAlign: "CENTER")),
+	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Freeze"), all: 2), vAlign: "middle")),
 	start: 20513, end: 20520, canMove: false, canResize: false, canBeEdge: false);
 
 /* === Data rows (default rowPadding: 4) === */

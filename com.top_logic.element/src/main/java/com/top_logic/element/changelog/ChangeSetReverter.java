@@ -281,8 +281,7 @@ public final class ChangeSetReverter {
 		if (windowSize > 0) {
 			builder.setNumberEntries(windowSize);
 		}
-		@SuppressWarnings("unchecked")
-		Collection<ChangeSet> result = (Collection<ChangeSet>) builder.build();
+		Collection<ChangeSet> result = builder.build();
 		return result;
 	}
 

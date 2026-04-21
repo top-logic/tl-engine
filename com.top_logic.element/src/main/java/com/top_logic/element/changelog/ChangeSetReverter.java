@@ -169,7 +169,7 @@ public final class ChangeSetReverter {
 			}
 		}
 
-		// Validate that ModelService still sees the same KB (sanity — avoids silent mis-routing).
+		// Validate that ModelService still sees the same KB (sanity - avoids silent mis-routing).
 		assert kb == ModelService.getApplicationModel().tKnowledgeBase();
 
 		return revertAll(kb, collected, transactionMessage);
@@ -297,7 +297,7 @@ public final class ChangeSetReverter {
 	}
 
 	private static ChangeSet findNewestPendingRevert(Collection<ChangeSet> log) {
-		// Collect revisions of reverts that have been re-applied via a redo — those are no
+		// Collect revisions of reverts that have been re-applied via a redo - those are no
 		// longer pending.
 		Set<Long> alreadyRedone = new HashSet<>();
 		for (ChangeSet cs : log) {
@@ -313,7 +313,7 @@ public final class ChangeSetReverter {
 		//   - the newest pending revert (candidate for redo), and
 		//   - the newest revision of an effectively-active real change (something that is neither
 		//     a revert nor a redo, and either was never reverted or whose revert has been redone).
-		// A redo is only valid if the candidate revert is newer than any real change — otherwise
+		// A redo is only valid if the candidate revert is newer than any real change - otherwise
 		// the redo stack has been invalidated by regular forward work.
 		ChangeSet candidate = null;
 		long candidateRev = Long.MIN_VALUE;
@@ -334,7 +334,7 @@ public final class ChangeSetReverter {
 			}
 			long revRev = revert.getRevision().getCommitNumber();
 			if (alreadyRedone.contains(revRev)) {
-				// The revert was undone — cs is effectively an active real change again.
+				// The revert was undone - cs is effectively an active real change again.
 				if (csRev > newestRealChangeRev) {
 					newestRealChangeRev = csRev;
 				}
@@ -351,7 +351,7 @@ public final class ChangeSetReverter {
 			return null;
 		}
 		if (newestRealChangeRev > candidateRev) {
-			// A real change happened after the newest pending undo — the redo stack was cleared
+			// A real change happened after the newest pending undo - the redo stack was cleared
 			// by that forward action, so redo is no longer meaningful.
 			throw new TopLogicException(I18NConstants.ERROR_CANNOT_REDO_CHAIN_BROKEN);
 		}

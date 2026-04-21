@@ -257,33 +257,6 @@ public class TestTaskStore extends TestCase {
 	}
 
 	/**
-	 * Verifies that the version counter starts at 0 and increments on each create and update
-	 * operation.
-	 */
-	public void testVersionIncrements() {
-		assertEquals("Initial version should be 0", 0, _store.getVersion());
-
-		_store.createTask("Task", "d", "f");
-		assertEquals("Version should increment on create", 1, _store.getVersion());
-
-		_store.updateTask("1", TaskStore.STATUS_IN_PROGRESS, null, null, null, null, null, null);
-		assertEquals("Version should increment on update", 2, _store.getVersion());
-
-		_store.updateTask("1", TaskStore.STATUS_DELETED, null, null, null, null, null, null);
-		assertEquals("Version should increment on delete", 3, _store.getVersion());
-	}
-
-	/**
-	 * Verifies that updating a non-existent task does NOT increment the version.
-	 */
-	public void testVersionNotIncrementedOnFailedUpdate() {
-		assertEquals(0, _store.getVersion());
-
-		_store.updateTask("999", TaskStore.STATUS_COMPLETED, null, null, null, null, null, null);
-		assertEquals("Version should not change for non-existent task", 0, _store.getVersion());
-	}
-
-	/**
 	 * Verifies that toJson/fromJson round-trips all task fields including dependencies.
 	 */
 	public void testSerializationRoundTrip() {

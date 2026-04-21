@@ -15,8 +15,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.top_logic.ai.service.tools.task.messages.PersistedTask;
 import com.top_logic.ai.service.tools.task.messages.PersistedTaskStore;
 import com.top_logic.basic.Logger;
@@ -32,9 +30,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * Thread-safe in-memory store for agent tasks within a single AI processing session.
  *
  * <p>
- * Maintains tasks with auto-incrementing string IDs and a version counter for SSE delta detection.
- * All public methods are synchronized to ensure thread safety. Tasks are stored in creation order
- * using a {@link LinkedHashMap}.
+ * Maintains tasks with auto-incrementing string IDs. All public methods are synchronized to ensure
+ * thread safety. Tasks are stored in creation order using a {@link LinkedHashMap}.
  * </p>
  */
 public class TaskStore {
@@ -53,41 +50,25 @@ public class TaskStore {
 
 	private final Map<String, AgentTask> _tasks = new LinkedHashMap<>();
 
-	private final AtomicInteger _version = new AtomicInteger(0);
-
 	private int _highWaterMark = 0;
 
 	private int _nextId = 1;
 
 	private AgentEventListener _listener;
 
-	private String _runId;
-
-	private int _turnNumber;
-
 	/**
 	 * Sets the event listener that receives {@link AgentEvent.TaskUpdated} events on every
 	 * task mutation. Pass {@code null} to clear.
 	 */
-	public synchronized void setListener(AgentEventListener listener, String runId, int turnNumber) {
+	public synchronized void setListener(AgentEventListener listener) {
 		_listener = listener;
-		_runId = runId;
-		_turnNumber = turnNumber;
-	}
-
-	/**
-	 * Updates the turn number for subsequent events.
-	 */
-	public synchronized void setTurnNumber(int turnNumber) {
-		_turnNumber = turnNumber;
 	}
 
 	private void fireTaskUpdated() {
 		AgentEventListener listener = _listener;
 		if (listener != null) {
 			try {
-				listener.onEvent(new AgentEvent.TaskUpdated(
-					_runId != null ? _runId : "", _turnNumber, Instant.now(), toJson()));
+				listener.onEvent(new AgentEvent.TaskUpdated("", 0, Instant.now(), toJson()));
 			} catch (Exception ex) {
 				Logger.error("Failed to fire TaskUpdated event.", ex, TaskStore.class);
 			}
@@ -114,7 +95,6 @@ public class TaskStore {
 		task.setActiveForm(activeForm);
 		task.setStatus(STATUS_PENDING);
 		_tasks.put(id, task);
-		_version.incrementAndGet();
 		fireTaskUpdated();
 		return task;
 	}
@@ -196,19 +176,8 @@ public class TaskStore {
 			}
 		}
 
-		_version.incrementAndGet();
 		fireTaskUpdated();
 		return task;
-	}
-
-	/**
-	 * Returns the current version counter. The version is incremented on every create or update
-	 * operation, allowing clients to detect changes via SSE polling.
-	 *
-	 * @return The current version number.
-	 */
-	public synchronized int getVersion() {
-		return _version.get();
 	}
 
 	/**

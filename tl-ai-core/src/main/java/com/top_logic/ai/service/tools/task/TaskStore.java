@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.service.tools.task;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,6 +15,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.top_logic.ai.service.tools.task.messages.PersistedTask;
+import com.top_logic.ai.service.tools.task.messages.PersistedTaskStore;
+import com.top_logic.basic.Logger;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * Thread-safe in-memory store for agent tasks within a single AI processing session.
@@ -42,6 +52,8 @@ public class TaskStore {
 
 	private final AtomicInteger _version = new AtomicInteger(0);
 
+	private int _highWaterMark = 0;
+
 	private int _nextId = 1;
 
 	/**
@@ -57,6 +69,7 @@ public class TaskStore {
 	 */
 	public synchronized AgentTask createTask(String subject, String description, String activeForm) {
 		String id = String.valueOf(_nextId++);
+		_highWaterMark = Math.max(_highWaterMark, Integer.parseInt(id));
 		AgentTask task = new AgentTask(id);
 		task.setSubject(subject);
 		task.setDescription(description);
@@ -137,6 +150,7 @@ public class TaskStore {
 		}
 		if (status != null) {
 			if (STATUS_DELETED.equals(status)) {
+				_highWaterMark = Math.max(_highWaterMark, Integer.parseInt(taskId));
 				_tasks.remove(taskId);
 			} else {
 				task.setStatus(status);
@@ -155,6 +169,82 @@ public class TaskStore {
 	 */
 	public synchronized int getVersion() {
 		return _version.get();
+	}
+
+	/**
+	 * Serializes this store to a JSON string using msgbuf's {@link PersistedTaskStore} format.
+	 *
+	 * @return The JSON representation of this store.
+	 */
+	public synchronized String toJson() {
+		PersistedTaskStore persisted = PersistedTaskStore.create()
+			.setHighWaterMark(_highWaterMark);
+
+		for (AgentTask task : _tasks.values()) {
+			PersistedTask pt = PersistedTask.create()
+				.setId(task.getId())
+				.setSubject(task.getSubject() != null ? task.getSubject() : "")
+				.setDescription(task.getDescription() != null ? task.getDescription() : "")
+				.setActiveForm(task.getActiveForm() != null ? task.getActiveForm() : "")
+				.setStatus(task.getStatus() != null ? task.getStatus() : "")
+				.setOwner(task.getOwner() != null ? task.getOwner() : "");
+
+			for (String blockId : task._blocks) {
+				pt.addBlock(blockId);
+			}
+			for (String blockedById : task._blockedBy) {
+				pt.addBlockedBy(blockedById);
+			}
+			persisted.addTask(pt);
+		}
+
+		StringW sw = new StringW();
+		try (JsonWriter jw = new JsonWriter(sw)) {
+			persisted.writeTo(jw);
+		} catch (IOException ex) {
+			Logger.error("Failed to serialize TaskStore to JSON.", ex, TaskStore.class);
+			return "{}";
+		}
+		return sw.toString();
+	}
+
+	/**
+	 * Deserializes a {@link TaskStore} from a JSON string previously produced by {@link #toJson()}.
+	 *
+	 * @param json
+	 *        The JSON string, or {@code null}/{@code ""} for an empty store.
+	 * @return The restored store, never {@code null}.
+	 */
+	public static TaskStore fromJson(String json) {
+		TaskStore store = new TaskStore();
+		if (json == null || json.isEmpty()) {
+			return store;
+		}
+
+		try {
+			PersistedTaskStore persisted =
+				PersistedTaskStore.readPersistedTaskStore(new JsonReader(new StringR(json)));
+
+			store._highWaterMark = persisted.getHighWaterMark();
+			store._nextId = persisted.getHighWaterMark() + 1;
+
+			for (PersistedTask pt : persisted.getTasks()) {
+				AgentTask task = new AgentTask(pt.getId());
+				task.setSubject(pt.getSubject());
+				task.setDescription(pt.getDescription());
+				task.setActiveForm(pt.getActiveForm());
+				task.setStatus(pt.getStatus());
+				task.setOwner(pt.getOwner().isEmpty() ? null : pt.getOwner());
+
+				task._blocks.addAll(pt.getBlocks());
+				task._blockedBy.addAll(pt.getBlockedBy());
+
+				store._tasks.put(pt.getId(), task);
+			}
+		} catch (IOException ex) {
+			Logger.error("Failed to deserialize TaskStore from JSON.", ex, TaskStore.class);
+		}
+		return store;
 	}
 
 	/**

@@ -284,6 +284,84 @@ public class TestTaskStore extends TestCase {
 	}
 
 	/**
+	 * Verifies that toJson/fromJson round-trips all task fields including dependencies.
+	 */
+	public void testSerializationRoundTrip() {
+		_store.createTask("Task A", "desc A", "Doing A");
+		_store.createTask("Task B", "desc B", "Doing B");
+		_store.updateTask("1", TaskStore.STATUS_IN_PROGRESS, null, null, null, "agent-1",
+			Arrays.asList("2"), null);
+		_store.updateTask("2", null, null, null, null, null, null, Arrays.asList("1"));
+
+		String json = _store.toJson();
+		assertNotNull("JSON should not be null", json);
+		assertFalse("JSON should not be empty", json.isEmpty());
+
+		TaskStore restored = TaskStore.fromJson(json);
+		List<AgentTask> tasks = restored.getAllTasks();
+		assertEquals("Should have 2 tasks", 2, tasks.size());
+
+		AgentTask a = restored.getTask("1");
+		assertEquals("Task A", a.getSubject());
+		assertEquals("desc A", a.getDescription());
+		assertEquals("Doing A", a.getActiveForm());
+		assertEquals(TaskStore.STATUS_IN_PROGRESS, a.getStatus());
+		assertEquals("agent-1", a.getOwner());
+		assertTrue(a.getBlocks().contains("2"));
+
+		AgentTask b = restored.getTask("2");
+		assertEquals("Task B", b.getSubject());
+		assertTrue(b.getBlockedBy().contains("1"));
+	}
+
+	/**
+	 * Verifies that the high-water mark prevents ID reuse after deletion and serialization.
+	 */
+	public void testHighWaterMarkPreservesAcrossRoundTrip() {
+		_store.createTask("Task 1", "d", "f");
+		_store.createTask("Task 2", "d", "f");
+		_store.createTask("Task 3", "d", "f");
+		_store.updateTask("2", TaskStore.STATUS_DELETED, null, null, null, null, null, null);
+
+		String json = _store.toJson();
+		TaskStore restored = TaskStore.fromJson(json);
+
+		// Next ID should be 4 (not 3, even though task 2 was deleted)
+		AgentTask next = restored.createTask("Task 4", "d", "f");
+		assertEquals("ID should skip deleted ID 2 via high-water mark", "4", next.getId());
+	}
+
+	/**
+	 * Verifies that fromJson with null returns an empty store.
+	 */
+	public void testFromJsonNull() {
+		TaskStore restored = TaskStore.fromJson(null);
+		assertNotNull(restored);
+		assertTrue(restored.getAllTasks().isEmpty());
+	}
+
+	/**
+	 * Verifies that fromJson with empty string returns an empty store.
+	 */
+	public void testFromJsonEmpty() {
+		TaskStore restored = TaskStore.fromJson("");
+		assertNotNull(restored);
+		assertTrue(restored.getAllTasks().isEmpty());
+	}
+
+	/**
+	 * Verifies that an empty store serializes and deserializes correctly.
+	 */
+	public void testSerializationEmptyStore() {
+		String json = _store.toJson();
+		TaskStore restored = TaskStore.fromJson(json);
+		assertTrue(restored.getAllTasks().isEmpty());
+		// New tasks should start at ID 1
+		AgentTask task = restored.createTask("First", "d", "f");
+		assertEquals("1", task.getId());
+	}
+
+	/**
 	 * Verifies that all fields can be updated simultaneously in a single call.
 	 */
 	public void testUpdateAllFieldsAtOnce() {

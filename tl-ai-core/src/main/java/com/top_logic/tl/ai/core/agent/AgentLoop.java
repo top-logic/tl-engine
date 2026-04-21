@@ -508,7 +508,7 @@ public class AgentLoop {
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
-		ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+		ExecutorService executor = Executors.newCachedThreadPool();
 		try {
 			List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
 
@@ -531,7 +531,7 @@ public class AgentLoop {
 				reportResult(batch.get(i), results.get(i), listener, runId, turn, _turnDeniedCallIds);
 			}
 		} finally {
-			executor.close();
+			executor.shutdown();
 		}
 	}
 

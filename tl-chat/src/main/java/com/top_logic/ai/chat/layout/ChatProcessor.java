@@ -212,6 +212,7 @@ public class ChatProcessor {
 			}
 			// Allow sub-agent approval events to bubble up to the SSE handler
 			logListener.setParentListener(listener);
+			taskStore.setListener(listener, UUID.randomUUID().toString(), 0);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener));
 			state.setLastAgentResponse(result);
@@ -243,6 +244,7 @@ public class ChatProcessor {
 		} finally {
 			ConversationLogListenerBinding.clear();
 			state.setLogListener(null);
+			taskStore.setListener(null, null, 0);
 			TaskStoreBinding.setStore(null);
 			UserInteractionStoreBinding.setStore(null);
 			state.setUserInteractionStore(null);

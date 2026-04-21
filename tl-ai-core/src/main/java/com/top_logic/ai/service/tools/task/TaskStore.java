@@ -6,6 +6,7 @@
 package com.top_logic.ai.service.tools.task;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,6 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.top_logic.ai.service.tools.task.messages.PersistedTask;
 import com.top_logic.ai.service.tools.task.messages.PersistedTaskStore;
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -56,6 +59,41 @@ public class TaskStore {
 
 	private int _nextId = 1;
 
+	private AgentEventListener _listener;
+
+	private String _runId;
+
+	private int _turnNumber;
+
+	/**
+	 * Sets the event listener that receives {@link AgentEvent.TaskUpdated} events on every
+	 * task mutation. Pass {@code null} to clear.
+	 */
+	public synchronized void setListener(AgentEventListener listener, String runId, int turnNumber) {
+		_listener = listener;
+		_runId = runId;
+		_turnNumber = turnNumber;
+	}
+
+	/**
+	 * Updates the turn number for subsequent events.
+	 */
+	public synchronized void setTurnNumber(int turnNumber) {
+		_turnNumber = turnNumber;
+	}
+
+	private void fireTaskUpdated() {
+		AgentEventListener listener = _listener;
+		if (listener != null) {
+			try {
+				listener.onEvent(new AgentEvent.TaskUpdated(
+					_runId != null ? _runId : "", _turnNumber, Instant.now(), toJson()));
+			} catch (Exception ex) {
+				Logger.error("Failed to fire TaskUpdated event.", ex, TaskStore.class);
+			}
+		}
+	}
+
 	/**
 	 * Creates a new task with the given properties and status {@value #STATUS_PENDING}.
 	 *
@@ -77,6 +115,7 @@ public class TaskStore {
 		task.setStatus(STATUS_PENDING);
 		_tasks.put(id, task);
 		_version.incrementAndGet();
+		fireTaskUpdated();
 		return task;
 	}
 
@@ -158,6 +197,7 @@ public class TaskStore {
 		}
 
 		_version.incrementAndGet();
+		fireTaskUpdated();
 		return task;
 	}
 

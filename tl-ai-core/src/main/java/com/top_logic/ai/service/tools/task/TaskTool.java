@@ -70,7 +70,11 @@ public class TaskTool {
 		+ " Do NOT use for single, trivial tasks. Tasks start as 'pending'. Always provide activeForm."
 		+ " Use imperative form for subject (e.g. 'Create user model'),"
 		+ " present continuous for activeForm (e.g. 'Creating user model')."
-		+ " Returns the task ID for later updates via updateTask.")
+		+ " Returns the task ID for later updates via updateTask."
+		+ " IMPORTANT: Call listTasks first to avoid creating duplicate tasks."
+		+ " Create your task list once per conversation — on subsequent turns,"
+		+ " update existing tasks rather than recreating."
+		+ " Mark each task completed immediately when done, do not batch completions.")
 	public String createTask(
 			@P("Brief title for the task") String subject,
 			@P("Detailed description of what needs to be done") String description,
@@ -90,7 +94,15 @@ public class TaskTool {
 				.setStatus(task.getStatus())
 				.setSubject(task.getSubject());
 
-			return DataClassSerializer.toJson(response, TaskTool.class, "createTask()", args);
+			String result = DataClassSerializer.toJson(response, TaskTool.class, "createTask()", args);
+
+			int uncompleted = store.countUncompleted();
+			if (uncompleted > 3) {
+				result = result + "\n\nNote: You have " + uncompleted
+					+ " uncompleted tasks. Consider completing existing tasks before creating more."
+					+ " Use listTasks to review current tasks.";
+			}
+			return result;
 		} catch (Exception ex) {
 			Logger.error("createTask() error: " + ex.getMessage(), ex, TaskTool.class);
 			return DataClassSerializer.errorToJson(
@@ -124,7 +136,8 @@ public class TaskTool {
 		+ " Set status to 'completed' ONLY when the task is FULLY done."
 		+ " If blocked or encountering errors, keep status as 'in_progress'."
 		+ " Use 'deleted' to remove a task that is no longer needed."
-		+ " After completing a task, call listTasks to find the next one.")
+		+ " After completing a task, call listTasks to find the next one."
+		+ " Mark tasks completed immediately, do not batch completions.")
 	public String updateTask(
 			@P("The ID of the task to update") String taskId,
 			@P("New status (pending, in_progress, completed, deleted)") String status,
@@ -177,7 +190,8 @@ public class TaskTool {
 	@ToolMethod(description = "List all tasks with their ID, subject, status, owner, and blockedBy dependencies."
 		+ " Use to see available work, check overall progress, or find the next task after completing one."
 		+ " Prefer working on tasks in ID order (lowest first)."
-		+ " Tasks with non-empty blockedBy cannot be started until their blockers are completed.")
+		+ " Tasks with non-empty blockedBy cannot be started until their blockers are completed."
+		+ " Call this BEFORE creating new tasks to check what already exists.")
 	public String listTasks() {
 
 		Map<String, Object> args = new HashMap<>();

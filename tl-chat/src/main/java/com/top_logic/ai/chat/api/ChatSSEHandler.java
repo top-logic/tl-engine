@@ -39,6 +39,7 @@ import com.top_logic.ai.chat.api.messages.ToolDeniedEvent;
 import com.top_logic.ai.chat.api.messages.ToolFailedEvent;
 import com.top_logic.ai.chat.api.messages.ToolStartedEvent;
 import com.top_logic.ai.chat.api.messages.TransactionCommittedEvent;
+import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
 import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
 import com.top_logic.ai.chat.api.messages.TurnCompletedEvent;
 import com.top_logic.ai.chat.api.messages.TurnStartedEvent;
@@ -368,6 +369,9 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setTrigger(e.trigger())));
 		} else if (event instanceof AgentEvent.CompactionCompleted) {
 			// Not surfaced to UI
+		} else if (event instanceof AgentEvent.TaskUpdated e) {
+			sendEvent("task_update", DtoMapper.toJson(TaskUpdateEvent.create()
+				.setTasksJson(e.tasksJson())));
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())

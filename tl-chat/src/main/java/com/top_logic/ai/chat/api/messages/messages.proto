@@ -622,6 +622,12 @@ message CompactionStartedEvent {
 	string trigger;
 }
 
+/** SSE event for task list update. Carries the full task list snapshot. */
+message TaskUpdateEvent {
+	/** Full task list as JSON (PersistedTaskStore format from TaskStore.toJson()). */
+	string tasksJson;
+}
+
 /** SSE event for completed assistant message with server-rendered HTML. */
 message MessageCompleteEvent {
 	/** Server-rendered markdown-to-HTML content. */

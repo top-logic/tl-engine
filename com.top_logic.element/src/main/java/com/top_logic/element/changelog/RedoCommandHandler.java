@@ -49,9 +49,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * When the undo stack has been invalidated by a regular forward change committed after the most
- * recent undo, the underlying {@link ChangeSetReverter#findRedoCandidate(TLObject, int, boolean)}
- * raises a {@link TopLogicException}; this handler lets it propagate so the standard error UI
- * informs the user.
+ * recent undo, a {@link TopLogicException} is thrown; this handler lets it propagate so the
+ * standard error UI informs the user.
  * </p>
  */
 @InApp

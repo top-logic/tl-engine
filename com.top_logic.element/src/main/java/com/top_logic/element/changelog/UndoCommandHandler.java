@@ -55,8 +55,8 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 		/** @see #isCheckConflicts() */
 		String CHECK_CONFLICTS = "check-conflicts";
 
-		/** @see #getMaxEntries() */
-		String MAX_ENTRIES = "max-entries";
+		/** @see #getWindowSize() */
+		String WINDOW_SIZE = "window-size";
 
 		/** @see #getIncludeSubtree() */
 		String INCLUDE_SUBTREE = "include-subtree";
@@ -69,13 +69,13 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 		boolean isCheckConflicts();
 
 		/**
-		 * Upper bound for the number of change log entries inspected to locate the change to
-		 * undo. {@code 0} (default) means unlimited.
+		 * How many of the most recent change log entries are inspected to locate the change to
+		 * undo. {@code 0} (default) means no limit. This bounds the search, not the result.
 		 */
-		@Name(MAX_ENTRIES)
+		@Name(WINDOW_SIZE)
 		@IntDefault(0)
-		@Label("Number entries")
-		int getMaxEntries();
+		@Label("Search window size")
+		int getWindowSize();
 
 		/**
 		 * Whether the entire composition subtree of the target model is considered when
@@ -106,7 +106,7 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 		TLObject root = model instanceof TLObject tlModel ? tlModel : null;
 		Config cfg = config();
 
-		ChangeSet target = ChangeSetReverter.findUndoCandidate(root, cfg.getMaxEntries(), cfg.getIncludeSubtree());
+		ChangeSet target = ChangeSetReverter.findUndoCandidate(root, cfg.getWindowSize(), cfg.getIncludeSubtree());
 		if (target == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}

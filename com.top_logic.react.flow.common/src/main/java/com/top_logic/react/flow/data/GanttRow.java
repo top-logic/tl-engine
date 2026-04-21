@@ -30,6 +30,9 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #isAcceptsDrop() */
 	String ACCEPTS_DROP__PROP = "acceptsDrop";
 
+	/** @see #getRowPadding() */
+	String ROW_PADDING__PROP = "rowPadding";
+
 	/** @see #getBackgroundColor() */
 	String BACKGROUND_COLOR__PROP = "backgroundColor";
 
@@ -113,6 +116,16 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #isAcceptsDrop()
 	 */
 	com.top_logic.react.flow.data.GanttRow setAcceptsDrop(boolean value);
+
+	/**
+	 * Vertical padding (top + bottom) inside this row, in pixels.
+	 */
+	double getRowPadding();
+
+	/**
+	 * @see #getRowPadding()
+	 */
+	com.top_logic.react.flow.data.GanttRow setRowPadding(double value);
 
 	/**
 	 * Background color of the row lane. Empty = transparent (no background drawn).

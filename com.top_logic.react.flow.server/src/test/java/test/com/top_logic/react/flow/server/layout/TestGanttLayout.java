@@ -52,7 +52,7 @@ public class TestGanttLayout extends TestCase {
 	public void testLayoutHeightScalesWithRows() {
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
-			.setRowPadding(ROW_PADDING)
+
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100));
 		addRowsWithLabels(layout, Arrays.asList(
@@ -119,7 +119,7 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
-			.setRowPadding(ROW_PADDING)
+
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100))
 			.setItems(Arrays.asList(span));
@@ -264,7 +264,7 @@ public class TestGanttLayout extends TestCase {
 	public void testDistributeSizeUsesGivenWidth() {
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
-			.setRowPadding(ROW_PADDING)
+
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100));
 		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
@@ -310,7 +310,7 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
-			.setRowPadding(ROW_PADDING)
+
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100))
 			.setItems(Arrays.asList(tallSpan));
@@ -357,7 +357,7 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
-			.setRowPadding(ROW_PADDING)
+
 			.setRowLabelMinWidth(200.0)
 			.setRowLabelPadding(ROW_LABEL_PADDING)
 			.setAxis(axis(0, 100));
@@ -444,7 +444,7 @@ public class TestGanttLayout extends TestCase {
 		}
 		GanttLayout layout = GanttLayout.create()
 			.setRowMinContentHeight(ROW_MIN_CONTENT_HEIGHT)
-			.setRowPadding(ROW_PADDING)
+
 			.setRowLabelMinWidth(200.0)
 			.setAxis(axis(0, 100))
 			.setItems(Arrays.asList(span));

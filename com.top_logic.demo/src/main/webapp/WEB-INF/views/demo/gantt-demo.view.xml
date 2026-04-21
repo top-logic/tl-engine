@@ -8,33 +8,39 @@
 		<flow-diagram>
 			<inputs/>
 			<createChart><![CDATA[{
-/* === Axis rows (appear first) === */
+/* === Axis rows (rowPadding: 0 so items fill the entire row height) === */
 
-r_year   = reactFlowGanttRow(model: "axis:year",   label: reactFlowText("Year"),   acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0");
-r_months = reactFlowGanttRow(model: "axis:months", label: reactFlowText("Month"), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0");
+r_year    = reactFlowGanttRow(model: "axis:year",    label: reactFlowPadding(reactFlowText("Year"),    all: 4), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0);
+r_months  = reactFlowGanttRow(model: "axis:months",  label: reactFlowPadding(reactFlowText("Month"),   all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0);
+r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(reactFlowText("Markers"), all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0);
 
 /* Jan 1 2026 = day 20454, Dec 31 2026 = day 20819 */
 year2026 = reactFlowGanttSpan(
 	model: "axis:year:2026", rowModel: "axis:year",
-	box: reactFlowBorder(reactFlowPadding(reactFlowText("2026"), all: 4)),
+	box: reactFlowFill(reactFlowPadding(reactFlowText("2026"), all: 4), fill: "#e0e0e0"),
 	start: 20454, end: 20819,
 	canMove: false, canResize: false, canBeEdge: false);
 
-/* Month start points: Feb=20485, Mar=20513, Apr=20544, May=20574 */
-mFeb = reactFlowGanttPoint(model: "axis:month:feb", rowModel: "axis:months",
-	box: reactFlowText("Feb"), at: 20485,
-	canMove: false, canBeEdge: false);
-mMar = reactFlowGanttPoint(model: "axis:month:mar", rowModel: "axis:months",
-	box: reactFlowText("Mar"), at: 20513,
-	canMove: false, canBeEdge: false);
-mApr = reactFlowGanttPoint(model: "axis:month:apr", rowModel: "axis:months",
-	box: reactFlowText("Apr"), at: 20544,
-	canMove: false, canBeEdge: false);
-mMay = reactFlowGanttPoint(model: "axis:month:may", rowModel: "axis:months",
-	box: reactFlowText("May"), at: 20574,
-	canMove: false, canBeEdge: false);
+/* Month spans with alternating fills */
+mFeb = reactFlowGanttSpan(model: "m:feb", rowModel: "axis:months",
+	box: reactFlowFill(reactFlowPadding(reactFlowText("Feb"), all: 2), fill: "#e8e8e8"),
+	start: 20485, end: 20513, canMove: false, canResize: false, canBeEdge: false);
+mMar = reactFlowGanttSpan(model: "m:mar", rowModel: "axis:months",
+	box: reactFlowFill(reactFlowPadding(reactFlowText("Mar"), all: 2), fill: "#f4f4f4"),
+	start: 20513, end: 20544, canMove: false, canResize: false, canBeEdge: false);
+mApr = reactFlowGanttSpan(model: "m:apr", rowModel: "axis:months",
+	box: reactFlowFill(reactFlowPadding(reactFlowText("Apr"), all: 2), fill: "#e8e8e8"),
+	start: 20544, end: 20574, canMove: false, canResize: false, canBeEdge: false);
+mMay = reactFlowGanttSpan(model: "m:may", rowModel: "axis:months",
+	box: reactFlowFill(reactFlowPadding(reactFlowText("May"), all: 2), fill: "#f4f4f4"),
+	start: 20574, end: 20600, canMove: false, canResize: false, canBeEdge: false);
 
-/* === Data rows === */
+/* Freeze label in Markers row */
+freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers",
+	box: reactFlowFill(reactFlowPadding(reactFlowText("Freeze"), all: 2), fill: "rgba(255,100,100,0.3)"),
+	start: 20513, end: 20520, canMove: false, canResize: false, canBeEdge: false);
+
+/* === Data rows (default rowPadding: 4) === */
 
 r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
 r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
@@ -75,16 +81,16 @@ gl_mar = reactFlowGanttLineDeco(model: "grid:mar", at: 20513, color: "#888888", 
 gl_apr = reactFlowGanttLineDeco(model: "grid:apr", at: 20544, color: "#888888", strokeWidth: 0.5);
 gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "#888888", strokeWidth: 0.5);
 
-/* Freeze range */
-freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)", label: reactFlowText("Freeze"));
+/* Freeze range (colored strip — no label here, label is in Markers row) */
+freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)");
 
 /* === Axis config === */
 
 axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20600, zoom: 8);
 
 reactFlowGantt(
-	rootRows:    list($r_year, $r_months, $r_design, $r_impl, $r_test),
-	items:       list($year2026, $mFeb, $mMar, $mApr, $mMay, $spec, $build, $beta, $qa, $fixed_row, $no_resize),
+	rootRows:    list($r_year, $r_months, $r_markers, $r_design, $r_impl, $r_test),
+	items:       list($year2026, $mFeb, $mMar, $mApr, $mMay, $freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize),
 	edges:       list($e1, $e2),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze),
 	axis: $axis

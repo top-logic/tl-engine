@@ -30,6 +30,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 
 	private boolean _acceptsDrop = true;
 
+	private double _rowPadding = 4.0;
+
 	private String _backgroundColor = null;
 
 	private String _borderColor = null;
@@ -160,6 +162,24 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	}
 
 	@Override
+	public final double getRowPadding() {
+		return _rowPadding;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttRow setRowPadding(double value) {
+		internalSetRowPadding(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRowPadding()} without chain call utility. */
+	protected final void internalSetRowPadding(double value) {
+		_listener.beforeSet(this, ROW_PADDING__PROP, value);
+		_rowPadding = value;
+		_listener.afterChanged(this, ROW_PADDING__PROP);
+	}
+
+	@Override
 	public final String getBackgroundColor() {
 		return _backgroundColor;
 	}
@@ -218,6 +238,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			LABEL__PROP, 
 			CHILDREN__PROP, 
 			ACCEPTS_DROP__PROP, 
+			ROW_PADDING__PROP, 
 			BACKGROUND_COLOR__PROP, 
 			BORDER_COLOR__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -249,6 +270,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case LABEL__PROP: return getLabel();
 			case CHILDREN__PROP: return getChildren();
 			case ACCEPTS_DROP__PROP: return isAcceptsDrop();
+			case ROW_PADDING__PROP: return getRowPadding();
 			case BACKGROUND_COLOR__PROP: return getBackgroundColor();
 			case BORDER_COLOR__PROP: return getBorderColor();
 			default: return super.get(field);
@@ -263,6 +285,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CHILDREN__PROP: internalSetChildren(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttRow.class, value)); break;
 			case ACCEPTS_DROP__PROP: internalSetAcceptsDrop((boolean) value); break;
+			case ROW_PADDING__PROP: internalSetRowPadding((double) value); break;
 			case BACKGROUND_COLOR__PROP: internalSetBackgroundColor((String) value); break;
 			case BORDER_COLOR__PROP: internalSetBorderColor((String) value); break;
 		}
@@ -285,6 +308,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 		out.endArray();
 		out.name(ACCEPTS_DROP__PROP);
 		out.value(isAcceptsDrop());
+		out.name(ROW_PADDING__PROP);
+		out.value(getRowPadding());
 		if (hasBackgroundColor()) {
 			out.name(BACKGROUND_COLOR__PROP);
 			out.value(getBackgroundColor());
@@ -329,6 +354,10 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 				out.value(isAcceptsDrop());
 				break;
 			}
+			case ROW_PADDING__PROP: {
+				out.value(getRowPadding());
+				break;
+			}
 			case BACKGROUND_COLOR__PROP: {
 				if (hasBackgroundColor()) {
 					out.value(getBackgroundColor());
@@ -365,6 +394,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			}
 			break;
 			case ACCEPTS_DROP__PROP: setAcceptsDrop(in.nextBoolean()); break;
+			case ROW_PADDING__PROP: setRowPadding(in.nextDouble()); break;
 			case BACKGROUND_COLOR__PROP: setBackgroundColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case BORDER_COLOR__PROP: setBorderColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(scope, in, field);

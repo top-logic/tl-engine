@@ -91,7 +91,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		double rowLabelMinWidth = self.getRowLabelMinWidth();
 		double rowLabelPadding = self.getRowLabelPadding();
 		double rowMinContentHeight = self.getRowMinContentHeight();
-		double rowPadding = self.getRowPadding();
 		double indentWidth = self.getIndentWidth();
 
 		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
@@ -114,7 +113,9 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 			}
 			// Provide a temporary position for intrinsic sizing (exact position comes in pass 2).
 			double tmpX;
-			double tmpY = offsetY + rowPadding; // rough y, refined in pass 2
+			GanttRow itemRow = rowList.get(idx);
+			double itemRowPadding = itemRow.getRowPadding();
+			double tmpY = offsetY + itemRowPadding; // rough y, refined in pass 2
 			if (item instanceof GanttSpan span) {
 				tmpX = offsetX + tmpLabelWidth + (span.getStart() - rangeMin) * zoom;
 				box.computeIntrinsicSize(context, tmpX, tmpY);
@@ -144,7 +145,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 			int depth = rowDepth(row, self.getRootRows());
 			// Label x is rough; what matters here is the intrinsic width.
 			double tmpX = offsetX + rowLabelPadding + depth * indentWidth;
-			double tmpY = offsetY + rowPadding;
+			double tmpY = offsetY + row.getRowPadding();
 			label.computeIntrinsicSize(context, tmpX, tmpY);
 			double labelW = label.getWidth() + depth * indentWidth;
 			if (labelW > maxLabelIntrinsicWidth) {
@@ -170,7 +171,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		double[] rowYStart = new double[totalRows];
 		double cumulativeY = offsetY;
 		for (int i = 0; i < totalRows; i++) {
-			rowTotalHeight[i] = rowMaxContentHeight[i] + 2 * rowPadding;
+			double rp = rowList.get(i).getRowPadding();
+			rowTotalHeight[i] = rowMaxContentHeight[i] + 2 * rp;
 			rowYStart[i] = cumulativeY;
 			cumulativeY += rowTotalHeight[i];
 		}
@@ -186,8 +188,9 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 			if (box == null) {
 				continue;
 			}
-			double contentHeight = rowTotalHeight[idx] - 2 * rowPadding;
-			double itemY = rowYStart[idx] + rowPadding;
+			double rp = rowList.get(idx).getRowPadding();
+			double contentHeight = rowTotalHeight[idx] - 2 * rp;
+			double itemY = rowYStart[idx] + rp;
 
 			if (item instanceof GanttSpan span) {
 				double x = offsetX + columnWidth + (span.getStart() - rangeMin) * zoom;
@@ -209,10 +212,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 				continue;
 			}
 			int depth = rowDepth(row, self.getRootRows());
+			double rp = row.getRowPadding();
 			double labelX = offsetX + rowLabelPadding + depth * indentWidth;
-			double labelY = rowYStart[i] + rowPadding;
+			double labelY = rowYStart[i] + rp;
 			double labelW = columnWidth - 2 * rowLabelPadding - depth * indentWidth;
-			double labelH = rowTotalHeight[i] - 2 * rowPadding;
+			double labelH = rowTotalHeight[i] - 2 * rp;
 			label.distributeSize(context, labelX, labelY, Math.max(0, labelW), labelH);
 		}
 
@@ -318,7 +322,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		double y0 = self.getY();
 		double totalWidth = self.getWidth();
 		double rowMinContentHeight = self.getRowMinContentHeight();
-		double rowPadding = self.getRowPadding();
 		double columnWidth = self.getColumnWidth();
 
 		// Build row geometry map for per-row Y positions.
@@ -329,7 +332,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 
 		int[] rowIndex = new int[] { 0 };
 		for (GanttRow root : self.getRootRows()) {
-			drawRowLane(root, x0, totalWidth, rowMinContentHeight, rowPadding, columnWidth,
+			drawRowLane(root, x0, totalWidth, rowMinContentHeight, columnWidth,
 				rowGeometry, out, rowIndex);
 		}
 
@@ -337,7 +340,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	}
 
 	private static void drawRowLane(GanttRow row,
-			double x0, double totalWidth, double rowMinContentHeight, double rowPadding,
+			double x0, double totalWidth, double rowMinContentHeight,
 			double columnWidth,
 			Map<String, RowGeometry> rowGeometry, SvgWriter out, int[] rowIndex) {
 		int idx = rowIndex[0]++;
@@ -350,7 +353,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		} else {
 			// Fallback (should not happen in normal usage).
 			rowY = 0;
-			rowHeight = rowMinContentHeight + 2 * rowPadding;
+			rowHeight = rowMinContentHeight + 2 * row.getRowPadding();
 		}
 
 		// Row background and border from application-defined properties.
@@ -387,7 +390,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 
 		// Recurse into children.
 		for (GanttRow child : row.getChildren()) {
-			drawRowLane(child, x0, totalWidth, rowMinContentHeight, rowPadding, columnWidth,
+			drawRowLane(child, x0, totalWidth, rowMinContentHeight, columnWidth,
 				rowGeometry, out, rowIndex);
 		}
 	}
@@ -413,7 +416,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 				}
 			}
 		} else {
-			chartY1 = chartY0 + totalRows * (self.getRowMinContentHeight() + 2 * self.getRowPadding());
+			chartY1 = chartY0 + totalRows * self.getRowMinContentHeight();
 		}
 
 		GanttAxis axis = self.getAxis();
@@ -597,13 +600,13 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	 */
 	private static Map<String, RowGeometry> buildRowGeometry(GanttLayout self, double lanesTop) {
 		double rowMinContentHeight = self.getRowMinContentHeight();
-		double rowPadding = self.getRowPadding();
 
-		// Build ordered row index map.
+		// Build ordered row index map and row list (to look up per-row padding).
 		LinkedHashMap<String, Integer> rowIndex = new LinkedHashMap<>();
+		List<GanttRow> rowList = new java.util.ArrayList<>();
 		int[] counter = new int[] { 0 };
 		for (GanttRow root : self.getRootRows()) {
-			indexRows(root, rowIndex, counter);
+			indexRows(root, rowIndex, counter, rowList);
 		}
 		int totalRows = counter[0];
 
@@ -629,11 +632,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 
 		// Build geometry map in row-definition order.
 		Map<String, RowGeometry> result = new LinkedHashMap<>();
-		double[] rowNames = null; // we'll iterate the entry set
 		double y = lanesTop;
 		int i = 0;
 		for (Map.Entry<String, Integer> entry : rowIndex.entrySet()) {
-			double rowHeight = rowMaxContentHeight[i] + 2 * rowPadding;
+			double rp = rowList.get(i).getRowPadding();
+			double rowHeight = rowMaxContentHeight[i] + 2 * rp;
 			result.put(entry.getKey(), new RowGeometry(y, y + rowHeight));
 			y += rowHeight;
 			i++;
@@ -848,11 +851,23 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		} else {
 			// Find the nearest drop area Y.
 			List<DropArea> areas = getDropAreas(box);
-			double rowPadding = self.getRowPadding();
+			Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
+			Map<String, GanttRow> rowsById = buildRowIndex(self);
 			double bestY = proposedY;
 			double bestDist = Double.MAX_VALUE;
 			for (DropArea area : areas) {
-				double candidateY = area.getY() + rowPadding;
+				// Find the row that starts at area.getY() to get its padding.
+				double areaRowPadding = 4.0; // default fallback
+				for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
+					if (Math.abs(entry.getValue().yStart() - area.getY()) < 0.5) {
+						GanttRow areaRow = rowsById.get(entry.getKey());
+						if (areaRow != null) {
+							areaRowPadding = areaRow.getRowPadding();
+						}
+						break;
+					}
+				}
+				double candidateY = area.getY() + areaRowPadding;
 				double dist = Math.abs(proposedY - candidateY);
 				if (dist < bestDist) {
 					bestDist = dist;
@@ -916,11 +931,13 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		if (rowChanged) {
 			// Find target row from Y position using row geometry.
 			Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
+			Map<String, GanttRow> rowsById = buildRowIndex(self);
 			String targetRowId = item.getRowId(); // default to current
-			double rowPadding = self.getRowPadding();
 			for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
 				RowGeometry geom = entry.getValue();
-				double rowContentY = geom.yStart() + rowPadding;
+				GanttRow entryRow = rowsById.get(entry.getKey());
+				double rp = entryRow != null ? entryRow.getRowPadding() : 4.0;
+				double rowContentY = geom.yStart() + rp;
 				if (Math.abs(finalY - rowContentY) < 0.5) {
 					targetRowId = entry.getKey();
 					break;

@@ -51,6 +51,13 @@ beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
 	box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20544, end: 20574);
 
+fixed_row = reactFlowGanttSpan(model: "task:fixed-row", rowModel: "phase:design",
+	box: reactFlowBorder(reactFlowPadding(reactFlowText("Fixed Row"), all: 3)),
+	start: 20470, end: 20478, canMoveRow: false);
+no_resize = reactFlowGanttSpan(model: "task:no-resize", rowModel: "phase:impl",
+	box: reactFlowBorder(reactFlowPadding(reactFlowText("No Resize"), all: 3)),
+	start: 20490, end: 20500, canResize: false);
+
 /* === Edges === */
 
 e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT");
@@ -73,7 +80,7 @@ axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, range
 
 reactFlowGantt(
 	rootRows:    list($r_year, $r_months, $r_design, $r_impl, $r_test),
-	items:       list($year2026, $mFeb, $mMar, $mApr, $mMay, $spec, $build, $beta, $qa),
+	items:       list($year2026, $mFeb, $mMar, $mApr, $mMay, $spec, $build, $beta, $qa, $fixed_row, $no_resize),
 	edges:       list($e1, $e2),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze),
 	axis: $axis

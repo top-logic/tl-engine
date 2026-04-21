@@ -56,6 +56,7 @@ import elemental2.dom.EventListener;
 import elemental2.dom.HTMLDivElement;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
+import elemental2.dom.PointerEvent;
 import elemental2.dom.ResizeObserver;
 import elemental2.dom.ResizeObserverCallback;
 import elemental2.dom.ResizeObserverEntry;
@@ -114,7 +115,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		}
 	}
 
-	private OMSVGDocument _svgDoc;
+	OMSVGDocument _svgDoc;
 
 	private Element _control;
 
@@ -124,7 +125,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private Scope _scope;
 
-	private Diagram _diagram;
+	Diagram _diagram;
 
 	private final String _controlId;
 
@@ -171,6 +172,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private StateListener _stateListener;
 
+	private DragHandler _dragHandler;
+
 	private EventListener _panningSVG;
 	private EventListener _startDraggingSVG;
 	private EventListener _dropSVG;
@@ -179,6 +182,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private EventListener _resetZoom;
 	private EventListener _mouseEnter;
 	private EventListener _mouseLeave;
+
+	private EventListener _pointerDown;
+	private EventListener _pointerMove;
+	private EventListener _pointerUp;
+	private EventListener _keyDownEsc;
 
 	/**
 	 * Creates a {@link FlowDiagramClientControl}.
@@ -443,6 +451,93 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_control.addEventListener("wheel", _zoomOrScrollSVG);
 		_control.addEventListener("pointerenter", _mouseEnter);
 		_control.addEventListener("pointerleave", _mouseLeave);
+
+		setupDragListeners();
+	}
+
+	private void setupDragListeners() {
+		_dragHandler = new DragHandler(this, _svg);
+
+		Element svgElement = Js.cast(_svg.getElement());
+
+		_pointerDown = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				PointerEvent pe = (PointerEvent) evt;
+				// Only handle left mouse button (button 0).
+				if (pe.button != 0) {
+					return;
+				}
+				Element target = (Element) pe.target;
+				if (_dragHandler.tryStart(pe.clientX, pe.clientY, target)) {
+					// Capture the pointer so we get move/up events even outside the SVG.
+					svgElement.setPointerCapture(pe.pointerId);
+					pe.stopPropagation();
+					pe.preventDefault();
+				}
+			}
+		};
+
+		_pointerMove = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				if (!_dragHandler.isActive()) {
+					return;
+				}
+				PointerEvent pe = (PointerEvent) evt;
+				_dragHandler.onMove(pe.clientX, pe.clientY);
+				pe.stopPropagation();
+				pe.preventDefault();
+			}
+		};
+
+		_pointerUp = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				if (!_dragHandler.isActive()) {
+					return;
+				}
+				PointerEvent pe = (PointerEvent) evt;
+				svgElement.releasePointerCapture(pe.pointerId);
+				_dragHandler.commit();
+				// Trigger change notification to send model updates to server.
+				onChange();
+				pe.stopPropagation();
+				pe.preventDefault();
+			}
+		};
+
+		_keyDownEsc = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				if (!_dragHandler.isActive()) {
+					return;
+				}
+				KeyboardEvent ke = (KeyboardEvent) evt;
+				if ("Escape".equals(ke.key)) {
+					_dragHandler.cancel();
+					ke.stopPropagation();
+					ke.preventDefault();
+				}
+			}
+		};
+
+		svgElement.addEventListener("pointerdown", _pointerDown);
+		svgElement.addEventListener("pointermove", _pointerMove);
+		svgElement.addEventListener("pointerup", _pointerUp);
+		DomGlobal.window.addEventListener("keydown", _keyDownEsc);
+
+		injectDragStyles();
+	}
+
+	/**
+	 * Injects a <code>&lt;style&gt;</code> element into the SVG for the drag source CSS class.
+	 */
+	private void injectDragStyles() {
+		OMSVGElement style = (OMSVGElement) _svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+		style.getElement().setInnerText(
+			"." + DragHandler.DRAG_SOURCE_CLASS + " { opacity: 0.3; pointer-events: none; }");
+		_svg.insertBefore(style, _svg.getFirstChild());
 	}
 
 	private void setupResizeObserver() {
@@ -952,6 +1047,20 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_control.removeEventListener("wheel", _zoomOrScrollSVG);
 		_control.removeEventListener("pointerenter", _mouseEnter);
 		_control.removeEventListener("pointerleave", _mouseLeave);
+
+		// Clean up drag listeners.
+		if (_svg != null) {
+			Element svgElement = Js.cast(_svg.getElement());
+			svgElement.removeEventListener("pointerdown", _pointerDown);
+			svgElement.removeEventListener("pointermove", _pointerMove);
+			svgElement.removeEventListener("pointerup", _pointerUp);
+		}
+		DomGlobal.window.removeEventListener("keydown", _keyDownEsc);
+
+		// Cancel active drag if any.
+		if (_dragHandler != null && _dragHandler.isActive()) {
+			_dragHandler.cancel();
+		}
 
 		// Clean up global listeners.
 		DomGlobal.window.removeEventListener("dragover", _panningSVG);

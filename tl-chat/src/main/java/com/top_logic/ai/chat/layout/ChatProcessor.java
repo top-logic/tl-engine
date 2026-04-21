@@ -22,10 +22,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatSSEHandler;
-import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
-import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
@@ -41,7 +39,6 @@ import com.top_logic.ai.service.tools.task.TaskStore;
 import com.top_logic.ai.service.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -117,7 +114,6 @@ public class ChatProcessor {
 
 		TaskStore taskStore = taskTracker.getActiveTaskStore();
 		TaskStoreBinding.setStore(taskStore);
-		state.setTaskStore(taskStore);
 
 		UserInteractionStore interactionStore = new UserInteractionStore(taskTracker.getApprovalMode());
 		UserInteractionStoreBinding.setStore(interactionStore);
@@ -398,28 +394,6 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Persists a {@link ConversationLog} to a specific session by ID.
-	 */
-	static void persistConversationLog(String sessionId, ConversationLog convLog) {
-		if (convLog == null) {
-			return;
-		}
-		try {
-			ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
-				TLObject session = ChatHistoryService.findSessionById(sessionId);
-				if (session != null) {
-					String json = ConversationLogSerializer.toJson(convLog);
-					ChatHistoryService.saveMessagesAndTouch(session, json);
-				}
-				return null;
-			});
-		} catch (Exception ex) {
-			Logger.error("Failed to persist conversation log for session " + sessionId + ": " + ex.getMessage(),
-				ex, ChatProcessor.class);
-		}
-	}
-
-	/**
 	 * Triggers all post-turn background agents to evaluate the completed agent turn.
 	 *
 	 * <p>
@@ -644,8 +618,6 @@ public class ChatProcessor {
 		// Current task ID for progress tracking
 		private volatile String _currentTaskId = null;
 
-		private volatile TaskStore _taskStore = null;
-
 		// ConversationLog-based recording
 		private volatile ConversationLog _conversationLog = null;
 		private volatile ConversationLogListener _logListener = null;
@@ -751,16 +723,6 @@ public class ChatProcessor {
 		/** The current task ID. */
 		public String getCurrentTaskId() {
 			return _currentTaskId;
-		}
-
-		/**
-		 * Sets the task store for agent task tracking.
-		 *
-		 * @param store
-		 *        The task store; may be {@code null}.
-		 */
-		public void setTaskStore(TaskStore store) {
-			_taskStore = store;
 		}
 
 		/** The conversation log for structured event recording; may be null. */

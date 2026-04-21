@@ -6,7 +6,6 @@
 package com.top_logic.model.search.expr.config.operations.changelog;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;

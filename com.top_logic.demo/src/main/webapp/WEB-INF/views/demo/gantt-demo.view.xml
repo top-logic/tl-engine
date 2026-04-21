@@ -10,9 +10,9 @@
 			<createChart><![CDATA[{
 /* === Axis rows (rowPadding: 0, minContentHeight: 0 so items fill the entire row height) === */
 
-r_year    = reactFlowGanttRow(model: "axis:year",    label: reactFlowPadding(reactFlowText("Year"),    all: 4), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 0);
-r_months  = reactFlowGanttRow(model: "axis:months",  label: reactFlowPadding(reactFlowText("Month"),   all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 0);
-r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(reactFlowText("Markers"), all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 0);
+r_year    = reactFlowGanttRow(model: "axis:year",    label: reactFlowPadding(reactFlowText("Year"),    all: 4), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 32);
+r_months  = reactFlowGanttRow(model: "axis:months",  label: reactFlowPadding(reactFlowText("Month"),   all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 32);
+r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(reactFlowText("Markers"), all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 32);
 
 /* Jan 1 2026 = day 20454, Dec 31 2026 = day 20819 */
 year2026 = reactFlowGanttSpan(
@@ -37,7 +37,7 @@ mMay = reactFlowGanttSpan(model: "m:may", rowModel: "axis:months",
 
 /* Freeze label in Markers row */
 freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers",
-	box: reactFlowBorder(reactFlowAlign(reactFlowPadding(reactFlowText("Freeze"), all: 2), vAlign: "middle")),
+	box: reactFlowFill(reactFlowAlign(reactFlowPadding(reactFlowText("Freeze"), all: 2), vAlign: "middle"), fill: "rgba(255,100,100,0.3)"),
 	start: 20513, end: 20520, canMove: false, canResize: false, canBeEdge: false);
 
 /* === Data rows (default rowPadding: 4) === */

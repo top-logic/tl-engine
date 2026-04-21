@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -45,6 +46,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * change across the whole application.
  * </p>
  */
+@InApp
 public class UndoCommandHandler extends AbstractCommandHandler {
 
 	/**
@@ -70,10 +72,12 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 
 		/**
 		 * How many of the most recent change log entries are inspected to locate the change to
-		 * undo. {@code 0} (default) means no limit. This bounds the search, not the result.
+		 * undo. {@code 0} means no limit. This bounds the search, not the result. The default of
+		 * 50 keeps an interactive Undo button responsive even on a long-lived application; raise
+		 * it (or set to {@code 0}) only when older changes must remain reachable.
 		 */
 		@Name(WINDOW_SIZE)
-		@IntDefault(0)
+		@IntDefault(50)
 		@Label("Search window size")
 		int getWindowSize();
 

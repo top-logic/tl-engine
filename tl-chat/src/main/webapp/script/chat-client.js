@@ -404,7 +404,7 @@
 			if (data.tasksJson) {
 				try {
 					const taskData = JSON.parse(data.tasksJson);
-					TaskPanel.update(taskData.items || []);
+					TaskPanel.update(taskData.tasks || []);
 				} catch (e) {
 					console.error('[tl-chat] Failed to parse task update:', e);
 				}
@@ -513,7 +513,7 @@
 			let html = '';
 
 			// Header
-			html += '<div class="chat-task-panel-header" onclick="TaskPanel.toggle()">';
+			html += '<div class="chat-task-panel-header">';
 			html += '<span class="chat-task-panel-toggle">\u25BC</span>';
 			html += '<span>Tasks</span>';
 			html += '<span class="chat-task-panel-count">' + completed + '/' + total + ' completed</span>';
@@ -532,7 +532,7 @@
 					           : '\u25CB';
 					html += '<div class="chat-task-panel-item" data-status="' + item.status + '">';
 					html += '<span class="task-icon">' + icon + '</span>';
-					html += '<span class="task-label">' + this._escapeHtml(item.subject) + '</span>';
+					html += '<span class="task-label">' + Utils.escapeHtml(item.subject) + '</span>';
 					html += '</div>';
 				}
 			}
@@ -540,6 +540,11 @@
 
 			this._el.innerHTML = html;
 			this._el.classList.toggle('collapsed', this._collapsed);
+
+			const header = this._el.querySelector('.chat-task-panel-header');
+			if (header) {
+				header.addEventListener('click', () => TaskPanel.toggle());
+			}
 		},
 
 		_truncate(tasks) {
@@ -606,15 +611,7 @@
 			}
 		},
 
-		_escapeHtml(text) {
-			const div = document.createElement('div');
-			div.textContent = text;
-			return div.innerHTML;
-		}
 	};
-
-	// Expose toggle for inline onclick handler
-	window.TaskPanel = TaskPanel;
 
 	// ========================================================================
 	// Render — DOM rendering

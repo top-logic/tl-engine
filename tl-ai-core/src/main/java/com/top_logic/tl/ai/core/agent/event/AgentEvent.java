@@ -192,14 +192,14 @@ public sealed interface AgentEvent {
 
 	// ---------- Task updates ----------
 
-/**
- * Emitted when the task list changes (create, update, or delete).
- * Carries the full task list as a JSON snapshot (PersistedTaskStore format).
- */
-record TaskUpdated(String runId, int turnNumber, Instant timestamp,
-		String tasksJson) implements AgentEvent {}
+	/**
+	 * Emitted when the task list changes (create, update, or delete).
+	 * Carries the full task list as a JSON snapshot (PersistedTaskStore format).
+	 */
+	record TaskUpdated(String runId, int turnNumber, Instant timestamp,
+			String tasksJson) implements AgentEvent {}
 
-// ---------- Errors ----------
+	// ---------- Errors ----------
 
 	/**
 	 * Emitted on an unrecoverable provider error. The loop stops after this event.

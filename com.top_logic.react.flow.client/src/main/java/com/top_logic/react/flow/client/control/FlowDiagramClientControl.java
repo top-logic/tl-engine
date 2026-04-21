@@ -350,6 +350,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_startDraggingSVG = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
+				// If our DragHandler owns this gesture, suppress the native drag (pan).
+				if (_dragHandler != null && _dragHandler.isActive()) {
+					evt.preventDefault();
+					return;
+				}
+
 				DragEvent event = (DragEvent) evt;
 				_dragStartX = event.clientX;
 				_dragStartY = event.clientY;
@@ -469,11 +475,16 @@ public class FlowDiagramClientControl implements DiagramContext {
 					return;
 				}
 				Element target = (Element) pe.target;
+				DomGlobal.console.log("[DragDebug] pointerdown on: " + target.tagName
+					+ " id=" + target.id);
 				if (_dragHandler.tryStart(pe.clientX, pe.clientY, target)) {
+					DomGlobal.console.log("[DragDebug] drag started!");
 					// Capture the pointer so we get move/up events even outside the SVG.
 					svgElement.setPointerCapture(pe.pointerId);
 					pe.stopPropagation();
 					pe.preventDefault();
+				} else {
+					DomGlobal.console.log("[DragDebug] no drag target found.");
 				}
 			}
 		};
@@ -952,6 +963,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 		};
 
 		for (SharedGraphNode dirty : dirtyNodes) {
+			if (!(dirty instanceof Widget)) {
+				continue;
+			}
 			Widget widget = (Widget) dirty;
 			if (widget.getClientId() != null) {
 				widget.draw(updateWriter);
@@ -966,9 +980,25 @@ public class FlowDiagramClientControl implements DiagramContext {
 				String id = _nextId.createId();
 				svgElement.setId(id);
 				((Widget) model).setClientId(id);
+				attachWidget(svgElement.getElement(), model);
 			}
 		};
 	}
+
+	/**
+	 * Attaches a model Widget to a DOM element as a JS property for fast lookup.
+	 * The widget travels with the DOM element — no external map needed.
+	 */
+	private static native void attachWidget(com.google.gwt.dom.client.Element element, Object widget) /*-{
+		element.__tlWidget = widget;
+	}-*/;
+
+	/**
+	 * Retrieves the model Widget attached to a DOM element, or {@code null}.
+	 */
+	static native Object getAttachedWidget(elemental2.dom.Element element) /*-{
+		return element.__tlWidget || null;
+	}-*/;
 
 	@SuppressWarnings("unusable-by-js")
 	@Override

@@ -361,69 +361,26 @@ class DragHandler {
 	}
 
 	/**
-	 * Walks up the DOM from the given element to find a Box by matching clientIds in the
-	 * diagram model.
+	 * Walks up the DOM from the given element to find a Box. Each SVG element
+	 * that represents a model Widget has the Widget attached directly as a JS
+	 * property ({@code __tlWidget}) — no external map needed.
 	 */
 	private Box findBoxFromElement(elemental2.dom.Element element) {
 		elemental2.dom.Element current = element;
+		int depth = 0;
 		while (current != null) {
-			String id = current.id;
-			if (id != null && !id.isEmpty()) {
-				Widget widget = findWidgetById(id, _control._diagram.getRoot());
-				if (widget instanceof Box) {
-					return (Box) widget;
-				}
+			Object widget = FlowDiagramClientControl.getAttachedWidget(current);
+			DomGlobal.console.log("[DragDebug] walk[" + depth + "]: <" + current.tagName
+				+ "> id=" + current.id + " widget=" + (widget != null ? widget.getClass().getName() : "null"));
+			if (widget instanceof Box) {
+				return (Box) widget;
 			}
 			current = current.parentElement;
+			depth++;
+			if (depth > 30) break; // safety
 		}
 		return null;
 	}
-
-	/**
-	 * Recursively searches for a Widget with the given clientId.
-	 */
-	private Widget findWidgetById(String clientId, Widget widget) {
-		if (widget == null) {
-			return null;
-		}
-		if (clientId.equals(widget.getClientId())) {
-			return widget;
-		}
-		// Traverse children. Boxes that are Layouts or Decorations contain children.
-		Widget found = searchChildren(clientId, widget);
-		return found;
-	}
-
-	/**
-	 * Search children of the given widget for the target clientId.
-	 */
-	private native Widget searchChildren(String clientId, Widget widget) /*-{
-		// msgbuf objects expose properties directly. Walk all property values
-		// looking for objects with a clientId.
-		if (!widget) return null;
-
-		// Use the Java-based visitor pattern: iterate through all own properties
-		// looking for child Widgets.
-		var props = Object.keys(widget);
-		for (var i = 0; i < props.length; i++) {
-			var val = widget[props[i]];
-			if (val && typeof val === 'object') {
-				if (Array.isArray(val)) {
-					for (var j = 0; j < val.length; j++) {
-						var item = val[j];
-						if (item && item.clientId !== undefined) {
-							var result = this.@com.top_logic.react.flow.client.control.DragHandler::findWidgetById(Ljava/lang/String;Lcom/top_logic/react/flow/data/Widget;)(clientId, item);
-							if (result) return result;
-						}
-					}
-				} else if (val.clientId !== undefined) {
-					var result = this.@com.top_logic.react.flow.client.control.DragHandler::findWidgetById(Ljava/lang/String;Lcom/top_logic/react/flow/data/Widget;)(clientId, val);
-					if (result) return result;
-				}
-			}
-		}
-		return null;
-	}-*/;
 
 	/**
 	 * Converts client (screen) coordinates to SVG diagram coordinates using the

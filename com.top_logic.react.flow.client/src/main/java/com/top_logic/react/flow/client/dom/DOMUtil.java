@@ -95,7 +95,10 @@ public class DOMUtil {
 		if (!result) {
 			return "";
 		}
-		return result.baseVal || result;
+		if (result.baseVal !== undefined) {
+			return result.baseVal;
+		}
+		return result;
 	}-*/;
 
 	static String trimClassName(String className) {

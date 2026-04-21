@@ -133,6 +133,9 @@
  	  <plugin>
 		<groupId>net.ltgt.gwt.maven</groupId>
 		<artifactId>gwt-maven-plugin</artifactId>
+		<configuration>
+			<style>PRETTY</style>
+		</configuration>
  	  </plugin>
   	</plugins>
   </build>

@@ -36,26 +36,26 @@ mMay = reactFlowGanttPoint(model: "axis:month:may", rowModel: "axis:months",
 
 /* === Data rows === */
 
-r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowBorder(reactFlowPadding(reactFlowText("Design"),         all: 4)));
-r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Implementation"), all: 4)));
-r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowBorder(reactFlowPadding(reactFlowText("Testing"),        all: 4)));
+r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4));
+r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4));
+r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4));
 
 /* === Items === */
 
 spec  = reactFlowGanttSpan(model: "task:spec",  rowModel: "phase:design",
-	box: reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), start: 20454, end: 20485);
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), fill: "#d4e6f9"), start: 20454, end: 20485);
 build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",
-	box: reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), start: 20485, end: 20544);
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), fill: "#c8e6c9"), start: 20485, end: 20544);
 beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
-	box: reactFlowBorder(reactFlowPadding(reactFlowText("Beta"),  all: 3)), at: 20544);
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Beta"),  all: 3)), fill: "#fff3cd"), at: 20544);
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
-	box: reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), start: 20544, end: 20574);
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), fill: "#f8d7da"), start: 20544, end: 20574);
 
 fixed_row = reactFlowGanttSpan(model: "task:fixed-row", rowModel: "phase:design",
-	box: reactFlowBorder(reactFlowPadding(reactFlowText("Fixed Row"), all: 3)),
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Fixed Row"), all: 3)), fill: "#e0d4f9"),
 	start: 20470, end: 20478, canMoveRow: false);
 no_resize = reactFlowGanttSpan(model: "task:no-resize", rowModel: "phase:impl",
-	box: reactFlowBorder(reactFlowPadding(reactFlowText("No Resize"), all: 3)),
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("No Resize"), all: 3)), fill: "#fce4b8"),
 	start: 20490, end: 20500, canResize: false);
 
 /* === Edges === */

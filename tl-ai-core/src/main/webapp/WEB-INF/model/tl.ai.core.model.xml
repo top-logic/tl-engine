@@ -218,6 +218,7 @@
 				>
 					<annotations>
 						<multi-line/>
+						<size-constraint/>
 					</annotations>
 				</property>
 				<property name="content"
@@ -225,6 +226,7 @@
 				>
 					<annotations>
 						<multi-line/>
+						<size-constraint/>
 					</annotations>
 				</property>
 				<reference name="agents"

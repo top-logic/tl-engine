@@ -5,6 +5,9 @@
  */
 package com.top_logic.ai.vector.index;
 
+import static dev.langchain4j.data.document.Metadata.*;
+import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.*;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +59,9 @@ import dev.langchain4j.model.mistralai.MistralAiEmbeddingModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest.EmbeddingSearchRequestBuilder;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.filter.Filter;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
@@ -169,6 +174,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		void setShouldReindexingOnRestart(boolean value);
 
 	}
+
+	private static final String META_TL_TYPE_KEY = "TopLogic-type";
 
 	private static final boolean DEBUG = Logger.isDebugEnabled(VectorIndex.class);
 
@@ -455,7 +462,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.myThread.start();
 
 		if (this.shouldReindexingOnRestart) {
-			Logger.info("shouldReindexingOnRestart=true — scheduling background re-index.", VectorIndex.class);
+			Logger.info("shouldReindexingOnRestart=true scheduling background re-index.", VectorIndex.class);
 			Thread reindexer = new Thread(() ->
 				ThreadContextManager.inSystemInteraction(VectorIndex.class, () -> {
 					for (String modelFqn : this.vectorIndexModels) {
@@ -665,13 +672,10 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			Object val = fd.getAttributeValue(key);
 			joContent.put(indexKey, val == null ? null : val.toString());
 		}
+//		joContent.put("objectKey", aDoc.tId().asString());
 		joContent.put("_text", content);
 		content = joContent.toJSONString();
 
-		System.out
-			.println("DEBUG: [VectorIndex] Indexing document id=" + documentId + " name=" + joContent.get("name"));
-		System.out.println("DEBUG: [VectorIndex] Content preview: "
-			+ (content.length() > 50 ? content.substring(0, 50) + "..." : content));
 
 		HashMap<String, ArrayList<String>> associations = new HashMap<>();
 
@@ -733,7 +737,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			"id", this.getDocumentUUID(documentId).toString(),
 			// "internalId", value(payload.get(associationKeyName)),
 			"description", description,
-			"TopLogic-type", aDoc.getWrapper().tType().toString(),
+			META_TL_TYPE_KEY, aDoc.getWrapper().tType().toString(),
 			"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
 			"TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
 			"content", joContent);
@@ -760,7 +764,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 */
 	protected void deleteDocument(ObjectKey key) {
 		String uuid = this.getDocumentUUID(key.toString()).toString();
-		System.out.println("DEBUG: Removing document from vector store: " + key + " (UUID: " + uuid + ")");
 		this.vectorStore.remove(uuid);
 
 		// Persist to disk if using JVector
@@ -775,8 +778,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	private Embedding getDocumentEmbedding(String content) {
-		Logger.info("Embed the content with Mistral Embedding client...", VectorThread.class);
-
 		Embedding embeddingsResponse = this.embeddingModel.embed(content).content();
 
 		return embeddingsResponse;
@@ -793,12 +794,19 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	public void storeToVectorStore(String documentId, JSONObject payload) {
 		String pl = payload.toJSONString();
 		String uuid = this.getDocumentUUID(documentId).toString();
-		System.out.println("DEBUG: Storing document to vector store: " + documentId + " (UUID: " + uuid + ")");
-		System.out.println("DEBUG: Content: " + pl);
+
+		TextSegment content;
+
+		try {
+			content = TextSegment.from(pl, metadata(META_TL_TYPE_KEY, payload.get(META_TL_TYPE_KEY).toString()));
+		} catch (Exception e) {
+			content = TextSegment.from(pl);
+		}
+
 		this.vectorStore.addAll(
 			List.of(this.getDocumentUUID(documentId).toString()),
 			List.of(this.getDocumentEmbedding(pl)),
-			List.of(TextSegment.from(pl)));
+			List.of(content));
 
 		// Persist to disk if using JVector
 		if (vectorStore instanceof JVectorEmbeddingStore) {
@@ -836,10 +844,12 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * 
 	 * @param query
 	 *        Search query text
+	 * @param scoreThreshold
+	 *        Score treshhold for the search - number between 0 and 1
 	 * @return List of matching documents with similarity scores
 	 */
-	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Double scoreThreshhold) {
-		return this.searchVectorIndex(query, DEFAULT_MAX_RESULTS, scoreThreshhold);
+	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Double scoreThreshold) {
+		return this.searchVectorIndex(query, DEFAULT_MAX_RESULTS, scoreThreshold);
 	}
 
 	/**
@@ -852,16 +862,54 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * 
 	 * @param query
 	 *        Search query text
+	 * @param limit
+	 *        Integer return limit value - search will not return more than limit results
+	 * @param scoreThreshold
+	 *        Score treshhold for the search - number between 0 and 1
+	 * 
 	 * @return List of matching documents with similarity scores
 	 */
-	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Integer limit, Double scoreThreshhold) {
-		Embedding queryEmbedding = this.getDocumentEmbedding(query);
+	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, Integer limit, Double scoreThreshold) {
+		return this.searchVectorIndex(query, null, DEFAULT_MAX_RESULTS, scoreThreshold);
+	}
 
-		EmbeddingSearchRequest embeddingSearchRequest = EmbeddingSearchRequest.builder()
+	/**
+	 * Searches the vector index for documents similar to the query. This function can filter the
+	 * results by meta key TopLogic-type. Only works for Vector databases which support Meta Keys.
+	 * For example does not work with jvector, but works with Qdrant database.
+	 * 
+	 * <p>
+	 * Returns at most {@value #DEFAULT_MAX_RESULTS} results. Use
+	 * {@link #searchVectorIndex(String, String, Integer, Double)} to control the limit explicitly.
+	 * </p>
+	 * 
+	 * @param query
+	 *        Search query text
+	 * @param objectType
+	 *        Filter Vector index search results by provided object type in the TopLogic-type key
+	 * @param scoreThreshold
+	 *        Score threshold for the search - number between 0 and 1
+	 * @param limit
+	 *        Integer return limit value - search will not return more than limit results
+	 * @return List of matching documents with similarity scores
+	 */
+	public List<EmbeddingMatch<TextSegment>> searchVectorIndex(String query, String objectType, Integer limit,
+			Double scoreThreshold) {
+		Embedding queryEmbedding = this.getDocumentEmbedding(query);
+		EmbeddingSearchRequestBuilder embeddingSearchRequestBuilder = EmbeddingSearchRequest.builder()
 			.queryEmbedding(queryEmbedding)
 			.maxResults(limit)
-			.minScore(scoreThreshhold)
-			.build();
+			.minScore(scoreThreshold);
+
+		EmbeddingSearchRequest embeddingSearchRequest;
+
+		if (objectType != null) {
+			Filter objectTypeMeta = metadataKey(META_TL_TYPE_KEY).isEqualTo(objectType);
+
+			embeddingSearchRequestBuilder.filter(objectTypeMeta);
+		}
+
+		embeddingSearchRequest = embeddingSearchRequestBuilder.build();
 
 		return this.vectorStore.search(embeddingSearchRequest).matches();
 	}

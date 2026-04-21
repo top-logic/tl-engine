@@ -7,8 +7,6 @@
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
 		           <module key="com.top_logic.ai.vector.index.VectorIndex$Module" value="true" />
-		           <module key="com.top_logic.knowledge.indexing.DefaultIndexingService$Module" value="true" />
-		           <module key="com.top_logic.ai.vector.index.VectorIndexingService$Module" value="true" />
 				</modules>
 			</instance>
 		</config>
@@ -21,7 +19,13 @@
 			</instance>
 		</config>
 		
-		<config service-class="com.top_logic.knowledge.indexing.IndexingService" >
+		<!-- Production Vector Store Configuration overriding Java defaults -->
+		<config service-class="com.top_logic.ai.vector.index.VectorIndex">
+			<instance class="com.top_logic.ai.vector.index.VectorIndex"
+				mistral-api-key="%MISTRAL_API_KEY%"
+			/>
+		</config>
+		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
 			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">
 				<protocols>
 					<protocol value="knowledgerepository" />
@@ -33,13 +37,6 @@
 					<meta-object value="GenericObject" />
 				</meta-objects>
 			</instance>
-		</config>
-		
-		<!-- Production Vector Store Configuration overriding Java defaults -->
-		<config service-class="com.top_logic.ai.vector.index.VectorIndex">
-			<instance class="com.top_logic.ai.vector.index.VectorIndex"
-				mistral-api-key="%MISTRAL_API_KEY%"
-			/>
 		</config>
 	</services>
 </application>

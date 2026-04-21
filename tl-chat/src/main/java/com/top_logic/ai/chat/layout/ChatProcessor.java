@@ -115,7 +115,7 @@ public class ChatProcessor {
 		ConversationLogListenerBinding.setListener(logListener);
 		state.setLogListener(logListener);
 
-		TaskStore taskStore = new TaskStore();
+		TaskStore taskStore = taskTracker.getActiveTaskStore();
 		TaskStoreBinding.setStore(taskStore);
 		state.setTaskStore(taskStore);
 
@@ -237,6 +237,7 @@ public class ChatProcessor {
 			}
 			if (sessionId != null) {
 				persistConversationLog(sessionId, state.getConversationLog());
+				persistMessages(taskTracker, sessionId);
 			}
 
 			// Trigger post-turn background agents
@@ -248,7 +249,6 @@ public class ChatProcessor {
 			ConversationLogListenerBinding.clear();
 			state.setLogListener(null);
 			TaskStoreBinding.setStore(null);
-			state.setTaskStore(null);
 			UserInteractionStoreBinding.setStore(null);
 			state.setUserInteractionStore(null);
 		}

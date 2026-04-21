@@ -21,7 +21,49 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 
 	private com.top_logic.react.flow.data.GanttEndpoint _targetEndpoint = com.top_logic.react.flow.data.GanttEndpoint.START;
 
-	private com.top_logic.react.flow.data.GanttEnforce _enforce = com.top_logic.react.flow.data.GanttEnforce.STRICT;
+	private com.top_logic.react.flow.data.GanttEnforce _enforce = com.top_logic.react.flow.data.GanttEnforce.NONE;
+
+	private String _strokeColor = "#606060";
+
+	private double _strokeWidth = 1.0;
+
+	private final java.util.List<Double> _dashes = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
+		@Override
+		protected void beforeAdd(int index, Double element) {
+			_listener.beforeAdd(GanttEdge_Impl.this, DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, Double element) {
+			_listener.afterRemove(GanttEdge_Impl.this, DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttEdge_Impl.this, DASHES__PROP);
+		}
+	};
+
+	private String _violatedStrokeColor = null;
+
+	private double _violatedStrokeWidth = 0.0d;
+
+	private final java.util.List<Double> _violatedDashes = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
+		@Override
+		protected void beforeAdd(int index, Double element) {
+			_listener.beforeAdd(GanttEdge_Impl.this, VIOLATED_DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, Double element) {
+			_listener.afterRemove(GanttEdge_Impl.this, VIOLATED_DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttEdge_Impl.this, VIOLATED_DASHES__PROP);
+		}
+	};
 
 	/**
 	 * Creates a {@link GanttEdge_Impl} instance.
@@ -213,6 +255,149 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	}
 
 	@Override
+	public final String getStrokeColor() {
+		return _strokeColor;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setStrokeColor(String value) {
+		internalSetStrokeColor(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStrokeColor()} without chain call utility. */
+	protected final void internalSetStrokeColor(String value) {
+		_listener.beforeSet(this, STROKE_COLOR__PROP, value);
+		_strokeColor = value;
+		_listener.afterChanged(this, STROKE_COLOR__PROP);
+	}
+
+	@Override
+	public final double getStrokeWidth() {
+		return _strokeWidth;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setStrokeWidth(double value) {
+		internalSetStrokeWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStrokeWidth()} without chain call utility. */
+	protected final void internalSetStrokeWidth(double value) {
+		_listener.beforeSet(this, STROKE_WIDTH__PROP, value);
+		_strokeWidth = value;
+		_listener.afterChanged(this, STROKE_WIDTH__PROP);
+	}
+
+	@Override
+	public final java.util.List<Double> getDashes() {
+		return _dashes;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setDashes(java.util.List<? extends Double> value) {
+		internalSetDashes(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDashes()} without chain call utility. */
+	protected final void internalSetDashes(java.util.List<? extends Double> value) {
+		_dashes.clear();
+		_dashes.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge addDash(double value) {
+		internalAddDash(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addDash(double)} without chain call utility. */
+	protected final void internalAddDash(double value) {
+		_dashes.add(value);
+	}
+
+	@Override
+	public final void removeDash(double value) {
+		_dashes.remove(value);
+	}
+
+	@Override
+	public final String getViolatedStrokeColor() {
+		return _violatedStrokeColor;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setViolatedStrokeColor(String value) {
+		internalSetViolatedStrokeColor(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViolatedStrokeColor()} without chain call utility. */
+	protected final void internalSetViolatedStrokeColor(String value) {
+		_listener.beforeSet(this, VIOLATED_STROKE_COLOR__PROP, value);
+		_violatedStrokeColor = value;
+		_listener.afterChanged(this, VIOLATED_STROKE_COLOR__PROP);
+	}
+
+	@Override
+	public final boolean hasViolatedStrokeColor() {
+		return _violatedStrokeColor != null;
+	}
+
+	@Override
+	public final double getViolatedStrokeWidth() {
+		return _violatedStrokeWidth;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setViolatedStrokeWidth(double value) {
+		internalSetViolatedStrokeWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViolatedStrokeWidth()} without chain call utility. */
+	protected final void internalSetViolatedStrokeWidth(double value) {
+		_listener.beforeSet(this, VIOLATED_STROKE_WIDTH__PROP, value);
+		_violatedStrokeWidth = value;
+		_listener.afterChanged(this, VIOLATED_STROKE_WIDTH__PROP);
+	}
+
+	@Override
+	public final java.util.List<Double> getViolatedDashes() {
+		return _violatedDashes;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setViolatedDashes(java.util.List<? extends Double> value) {
+		internalSetViolatedDashes(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViolatedDashes()} without chain call utility. */
+	protected final void internalSetViolatedDashes(java.util.List<? extends Double> value) {
+		_violatedDashes.clear();
+		_violatedDashes.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge addViolatedDash(double value) {
+		internalAddViolatedDash(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addViolatedDash(double)} without chain call utility. */
+	protected final void internalAddViolatedDash(double value) {
+		_violatedDashes.add(value);
+	}
+
+	@Override
+	public final void removeViolatedDash(double value) {
+		_violatedDashes.remove(value);
+	}
+
+	@Override
 	public String jsonType() {
 		return GANTT_EDGE__TYPE;
 	}
@@ -228,7 +413,13 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			TARGET_MODEL__PROP, 
 			TARGET_ITEM_ID__PROP, 
 			TARGET_ENDPOINT__PROP, 
-			ENFORCE__PROP);
+			ENFORCE__PROP, 
+			STROKE_COLOR__PROP, 
+			STROKE_WIDTH__PROP, 
+			DASHES__PROP, 
+			VIOLATED_STROKE_COLOR__PROP, 
+			VIOLATED_STROKE_WIDTH__PROP, 
+			VIOLATED_DASHES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -264,6 +455,12 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case TARGET_ITEM_ID__PROP: return getTargetItemId();
 			case TARGET_ENDPOINT__PROP: return getTargetEndpoint();
 			case ENFORCE__PROP: return getEnforce();
+			case STROKE_COLOR__PROP: return getStrokeColor();
+			case STROKE_WIDTH__PROP: return getStrokeWidth();
+			case DASHES__PROP: return getDashes();
+			case VIOLATED_STROKE_COLOR__PROP: return getViolatedStrokeColor();
+			case VIOLATED_STROKE_WIDTH__PROP: return getViolatedStrokeWidth();
+			case VIOLATED_DASHES__PROP: return getViolatedDashes();
 			default: return super.get(field);
 		}
 	}
@@ -280,6 +477,12 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case TARGET_ITEM_ID__PROP: internalSetTargetItemId((String) value); break;
 			case TARGET_ENDPOINT__PROP: internalSetTargetEndpoint((com.top_logic.react.flow.data.GanttEndpoint) value); break;
 			case ENFORCE__PROP: internalSetEnforce((com.top_logic.react.flow.data.GanttEnforce) value); break;
+			case STROKE_COLOR__PROP: internalSetStrokeColor((String) value); break;
+			case STROKE_WIDTH__PROP: internalSetStrokeWidth((double) value); break;
+			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
+			case VIOLATED_STROKE_COLOR__PROP: internalSetViolatedStrokeColor((String) value); break;
+			case VIOLATED_STROKE_WIDTH__PROP: internalSetViolatedStrokeWidth((double) value); break;
+			case VIOLATED_DASHES__PROP: internalSetViolatedDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 		}
 	}
 
@@ -298,6 +501,28 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		getTargetEndpoint().writeTo(out);
 		out.name(ENFORCE__PROP);
 		getEnforce().writeTo(out);
+		out.name(STROKE_COLOR__PROP);
+		out.value(getStrokeColor());
+		out.name(STROKE_WIDTH__PROP);
+		out.value(getStrokeWidth());
+		out.name(DASHES__PROP);
+		out.beginArray();
+		for (double x : getDashes()) {
+			out.value(x);
+		}
+		out.endArray();
+		if (hasViolatedStrokeColor()) {
+			out.name(VIOLATED_STROKE_COLOR__PROP);
+			out.value(getViolatedStrokeColor());
+		}
+		out.name(VIOLATED_STROKE_WIDTH__PROP);
+		out.value(getViolatedStrokeWidth());
+		out.name(VIOLATED_DASHES__PROP);
+		out.beginArray();
+		for (double x : getViolatedDashes()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -348,6 +573,42 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 				getEnforce().writeTo(out);
 				break;
 			}
+			case STROKE_COLOR__PROP: {
+				out.value(getStrokeColor());
+				break;
+			}
+			case STROKE_WIDTH__PROP: {
+				out.value(getStrokeWidth());
+				break;
+			}
+			case DASHES__PROP: {
+				out.beginArray();
+				for (double x : getDashes()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
+			case VIOLATED_STROKE_COLOR__PROP: {
+				if (hasViolatedStrokeColor()) {
+					out.value(getViolatedStrokeColor());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case VIOLATED_STROKE_WIDTH__PROP: {
+				out.value(getViolatedStrokeWidth());
+				break;
+			}
+			case VIOLATED_DASHES__PROP: {
+				out.beginArray();
+				for (double x : getViolatedDashes()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -361,7 +622,59 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case TARGET_ITEM_ID__PROP: setTargetItemId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TARGET_ENDPOINT__PROP: setTargetEndpoint(com.top_logic.react.flow.data.GanttEndpoint.readGanttEndpoint(in)); break;
 			case ENFORCE__PROP: setEnforce(com.top_logic.react.flow.data.GanttEnforce.readGanttEnforce(in)); break;
+			case STROKE_COLOR__PROP: setStrokeColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case STROKE_WIDTH__PROP: setStrokeWidth(in.nextDouble()); break;
+			case DASHES__PROP: {
+				java.util.List<Double> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(in.nextDouble());
+				}
+				in.endArray();
+				setDashes(newValue);
+			}
+			break;
+			case VIOLATED_STROKE_COLOR__PROP: setViolatedStrokeColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case VIOLATED_STROKE_WIDTH__PROP: setViolatedStrokeWidth(in.nextDouble()); break;
+			case VIOLATED_DASHES__PROP: {
+				java.util.List<Double> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(in.nextDouble());
+				}
+				in.endArray();
+				setViolatedDashes(newValue);
+			}
+			break;
 			default: super.readField(scope, in, field);
+		}
+	}
+
+	@Override
+	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
+		switch (field) {
+			case DASHES__PROP: {
+				out.value(((double) element));
+				break;
+			}
+			case VIOLATED_DASHES__PROP: {
+				out.value(((double) element));
+				break;
+			}
+			default: super.writeElement(scope, out, field, element);
+		}
+	}
+
+	@Override
+	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case DASHES__PROP: {
+				return in.nextDouble();
+			}
+			case VIOLATED_DASHES__PROP: {
+				return in.nextDouble();
+			}
+			default: return super.readElement(scope, in, field);
 		}
 	}
 

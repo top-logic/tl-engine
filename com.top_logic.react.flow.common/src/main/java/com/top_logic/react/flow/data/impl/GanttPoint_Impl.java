@@ -94,6 +94,30 @@ public class GanttPoint_Impl extends com.top_logic.react.flow.data.impl.GanttIte
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttPoint setValidDropTargets(java.util.List<? extends java.lang.Object> value) {
+		internalSetValidDropTargets(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttPoint addValidDropTarget(java.lang.Object value) {
+		internalAddValidDropTarget(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttPoint setValidDropTargetIds(java.util.List<? extends String> value) {
+		internalSetValidDropTargetIds(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttPoint addValidDropTargetId(String value) {
+		internalAddValidDropTargetId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return GANTT_POINT__TYPE;
 	}

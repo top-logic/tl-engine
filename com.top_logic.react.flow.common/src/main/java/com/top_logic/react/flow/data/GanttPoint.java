@@ -55,6 +55,18 @@ public interface GanttPoint extends GanttItem {
 	@Override
 	com.top_logic.react.flow.data.GanttPoint setCanBeEdgeTarget(boolean value);
 
+	@Override
+	com.top_logic.react.flow.data.GanttPoint setValidDropTargets(java.util.List<? extends java.lang.Object> value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttPoint addValidDropTarget(java.lang.Object value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttPoint setValidDropTargetIds(java.util.List<? extends String> value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttPoint addValidDropTargetId(String value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttPoint readGanttPoint(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

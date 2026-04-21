@@ -926,6 +926,9 @@ message GanttRow {
 
 	/** Child rows forming a hierarchy. Phase 1 renders the tree flat with indentation. */
 	repeated GanttRow children;
+
+	/** Whether items may be dropped into this row during drag. Default true. */
+	bool acceptsDrop = true;
 }
 
 /** Which end of an item a Gantt edge attaches to. */
@@ -934,14 +937,13 @@ enum GanttEndpoint {
 	END;
 }
 
-/** Semantic of a Gantt edge. */
+/** Constraint enforcement mode for a Gantt edge. */
 enum GanttEnforce {
-	/** Operation is blocked when the constraint would be violated. */
-	STRICT;
-	/** Operation is allowed; violation is marked visually (red edge). */
-	WARN;
-	/** Purely decorative relation; no time constraint. */
+	/** No constraint enforcement; the edge is purely visual. Violated style is still
+	 *  applied if defined (based on endpoint position comparison). */
 	NONE;
+	/** Drag operations are blocked when the constraint would be violated. */
+	STRICT;
 }
 
 /** A dependency edge between two Gantt items. */
@@ -986,8 +988,30 @@ message GanttEdge {
 	/** Which end of the target item the edge attaches to. */
 	GanttEndpoint targetEndpoint;
 
-	/** Constraint semantic applied to this edge (STRICT, WARN, or NONE). */
+	/** Constraint enforcement mode (NONE or STRICT). */
 	GanttEnforce enforce;
+
+	/** Stroke color for the normal (non-violated) state. */
+	string strokeColor = "#606060";
+
+	/** Line thickness in pixels for the normal state. */
+	double strokeWidth = 1.0;
+
+	/** Dash pattern for the normal state (alternating dash/gap lengths in pixels). Empty = solid. */
+	repeated double dashes;
+
+	/**
+	 * Stroke color applied when the constraint is violated (enforce != NONE and
+	 * source endpoint position > target endpoint position). Empty = use normal strokeColor.
+	 */
+	@Nullable
+	string violatedStrokeColor;
+
+	/** Line thickness when violated. Zero = use normal strokeWidth. */
+	double violatedStrokeWidth;
+
+	/** Dash pattern when violated. Empty = use normal dashes. */
+	repeated double violatedDashes;
 }
 
 /** Abstract base for entries on a Gantt time axis. */
@@ -1036,6 +1060,24 @@ abstract message GanttItem {
 
 	/** Whether a new dependency edge may terminate at this item. */
 	bool canBeEdgeTarget = true;
+
+	/**
+	 * Business objects of the rows where this item may be dropped. Resolved to row IDs
+	 * by the {@code gantt(...)} aggregator.
+	 *
+	 * <p>
+	 * Empty list means: all rows with {@link GanttRow#isAcceptsDrop() acceptsDrop = true}.
+	 * When set, only the listed rows are valid drop targets (intersected with acceptsDrop).
+	 * </p>
+	 */
+	transient repeated java.lang.Object validDropTargets;
+
+	/**
+	 * Wire-format list of valid drop target row IDs. Populated by the {@code gantt(...)}
+	 * aggregator from {@link #getValidDropTargets() validDropTargets}. Empty means: all
+	 * rows with {@link GanttRow#isAcceptsDrop() acceptsDrop = true}.
+	 */
+	repeated string validDropTargetIds;
 }
 
 /** A task with start and end on the time axis. */

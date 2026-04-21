@@ -478,13 +478,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 				DomGlobal.console.log("[DragDebug] pointerdown on: " + target.tagName
 					+ " id=" + target.id);
 				if (_dragHandler.tryStart(pe.clientX, pe.clientY, target)) {
-					DomGlobal.console.log("[DragDebug] drag started!");
 					// Capture the pointer so we get move/up events even outside the SVG.
 					svgElement.setPointerCapture(pe.pointerId);
+					// Set active-drag cursor.
+					_svg.getElement().getStyle().setProperty("cursor", _dragHandler.isResizing() ? "ew-resize" : "grabbing");
 					pe.stopPropagation();
 					pe.preventDefault();
-				} else {
-					DomGlobal.console.log("[DragDebug] no drag target found.");
 				}
 			}
 		};
@@ -492,13 +491,17 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_pointerMove = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
-				if (!_dragHandler.isActive()) {
-					return;
-				}
 				PointerEvent pe = (PointerEvent) evt;
-				_dragHandler.onMove(pe.clientX, pe.clientY);
-				pe.stopPropagation();
-				pe.preventDefault();
+				if (_dragHandler.isActive()) {
+					_dragHandler.onMove(pe.clientX, pe.clientY);
+					pe.stopPropagation();
+					pe.preventDefault();
+				} else {
+					// Hover feedback: show resize/move cursors.
+					String cursor = _dragHandler.detectCursor(pe.clientX, pe.clientY,
+						(elemental2.dom.Element) pe.target);
+					_svg.getElement().getStyle().setProperty("cursor", cursor);
+				}
 			}
 		};
 
@@ -510,9 +513,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 				}
 				PointerEvent pe = (PointerEvent) evt;
 				svgElement.releasePointerCapture(pe.pointerId);
+				_svg.getElement().getStyle().setProperty("cursor", "default");
 				_dragHandler.commit();
-				// Trigger change notification to send model updates to server.
+				// Send the model changes (start/end/rowId) to the server.
 				onChange();
+				// Re-layout and re-render from the updated model.
+				relayout();
 				pe.stopPropagation();
 				pe.preventDefault();
 			}
@@ -527,6 +533,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				KeyboardEvent ke = (KeyboardEvent) evt;
 				if ("Escape".equals(ke.key)) {
 					_dragHandler.cancel();
+					_svg.getElement().getStyle().setProperty("cursor", "default");
 					ke.stopPropagation();
 					ke.preventDefault();
 				}
@@ -783,6 +790,35 @@ public class FlowDiagramClientControl implements DiagramContext {
 	/**
 	 * Called after some user-initiated changes occurred in the UI.
 	 */
+	/**
+	 * Re-computes the layout from the current model state and re-renders the SVG.
+	 * Called after a drag commit to reflect the model changes visually.
+	 */
+	void relayout() {
+		if (_diagram == null) {
+			return;
+		}
+
+		_diagram.layout(_renderContext);
+
+		// Clear all SVG children and re-draw.
+		OMNode child = _svg.getFirstChild();
+		while (child != null) {
+			OMNode next = child.getNextSibling();
+			_svg.removeChild(child);
+			child = next;
+		}
+
+		_diagram.draw(svgBuilder());
+
+		// Re-inject the drag styles (lost during SVG clear).
+		injectDragStyles();
+
+		// Drop transient layout-induced scope changes.
+		_scope.dropChanges();
+		_scope.reset();
+	}
+
 	void onChange(Object... args) {
 		try {
 			if (!_scope.hasChanges()) {

@@ -28,6 +28,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 		}
 	};
 
+	private boolean _acceptsDrop = true;
+
 	/**
 	 * Creates a {@link GanttRow_Impl} instance.
 	 *
@@ -136,6 +138,24 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	}
 
 	@Override
+	public final boolean isAcceptsDrop() {
+		return _acceptsDrop;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttRow setAcceptsDrop(boolean value) {
+		internalSetAcceptsDrop(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isAcceptsDrop()} without chain call utility. */
+	protected final void internalSetAcceptsDrop(boolean value) {
+		_listener.beforeSet(this, ACCEPTS_DROP__PROP, value);
+		_acceptsDrop = value;
+		_listener.afterChanged(this, ACCEPTS_DROP__PROP);
+	}
+
+	@Override
 	public String jsonType() {
 		return GANTT_ROW__TYPE;
 	}
@@ -146,7 +166,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			ID__PROP, 
 			USER_OBJECT__PROP, 
 			LABEL__PROP, 
-			CHILDREN__PROP);
+			CHILDREN__PROP, 
+			ACCEPTS_DROP__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -175,6 +196,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case USER_OBJECT__PROP: return getUserObject();
 			case LABEL__PROP: return getLabel();
 			case CHILDREN__PROP: return getChildren();
+			case ACCEPTS_DROP__PROP: return isAcceptsDrop();
 			default: return super.get(field);
 		}
 	}
@@ -186,6 +208,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CHILDREN__PROP: internalSetChildren(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttRow.class, value)); break;
+			case ACCEPTS_DROP__PROP: internalSetAcceptsDrop((boolean) value); break;
 		}
 	}
 
@@ -204,6 +227,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			x.writeTo(scope, out);
 		}
 		out.endArray();
+		out.name(ACCEPTS_DROP__PROP);
+		out.value(isAcceptsDrop());
 	}
 
 	@Override
@@ -236,6 +261,10 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 				out.endArray();
 				break;
 			}
+			case ACCEPTS_DROP__PROP: {
+				out.value(isAcceptsDrop());
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -255,6 +284,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 				setChildren(newValue);
 			}
 			break;
+			case ACCEPTS_DROP__PROP: setAcceptsDrop(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

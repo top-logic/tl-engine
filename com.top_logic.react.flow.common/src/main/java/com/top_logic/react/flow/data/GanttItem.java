@@ -55,6 +55,12 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #isCanBeEdgeTarget() */
 	String CAN_BE_EDGE_TARGET__PROP = "canBeEdgeTarget";
 
+	/** @see #getValidDropTargets() */
+	String VALID_DROP_TARGETS__PROP = "validDropTargets";
+
+	/** @see #getValidDropTargetIds() */
+	String VALID_DROP_TARGET_IDS__PROP = "validDropTargetIds";
+
 	/** The type code of this instance. */
 	TypeKind kind();
 
@@ -171,6 +177,54 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #isCanBeEdgeTarget()
 	 */
 	com.top_logic.react.flow.data.GanttItem setCanBeEdgeTarget(boolean value);
+
+	/**
+	 * Business objects of the rows where this item may be dropped. Resolved to row IDs
+	 * by the {@code gantt(...)} aggregator.
+	 *
+	 * <p>
+	 * Empty list means: all rows with {@link GanttRow#isAcceptsDrop() acceptsDrop = true}.
+	 * When set, only the listed rows are valid drop targets (intersected with acceptsDrop).
+	 * </p>
+	 */
+	java.util.List<java.lang.Object> getValidDropTargets();
+
+	/**
+	 * @see #getValidDropTargets()
+	 */
+	com.top_logic.react.flow.data.GanttItem setValidDropTargets(java.util.List<? extends java.lang.Object> value);
+
+	/**
+	 * Adds a value to the {@link #getValidDropTargets()} list.
+	 */
+	com.top_logic.react.flow.data.GanttItem addValidDropTarget(java.lang.Object value);
+
+	/**
+	 * Removes a value from the {@link #getValidDropTargets()} list.
+	 */
+	void removeValidDropTarget(java.lang.Object value);
+
+	/**
+	 * Wire-format list of valid drop target row IDs. Populated by the {@code gantt(...)}
+	 * aggregator from {@link #getValidDropTargets() validDropTargets}. Empty means: all
+	 * rows with {@link GanttRow#isAcceptsDrop() acceptsDrop = true}.
+	 */
+	java.util.List<String> getValidDropTargetIds();
+
+	/**
+	 * @see #getValidDropTargetIds()
+	 */
+	com.top_logic.react.flow.data.GanttItem setValidDropTargetIds(java.util.List<? extends String> value);
+
+	/**
+	 * Adds a value to the {@link #getValidDropTargetIds()} list.
+	 */
+	com.top_logic.react.flow.data.GanttItem addValidDropTargetId(String value);
+
+	/**
+	 * Removes a value from the {@link #getValidDropTargetIds()} list.
+	 */
+	void removeValidDropTargetId(String value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttItem readGanttItem(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

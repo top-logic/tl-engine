@@ -1553,12 +1553,16 @@ public class FlowFactory extends TLScriptFunctions {
 	public static GanttRow ganttRow(
 			@Mandatory Object model,
 			@Mandatory Box label,
-			List<GanttRow> children) {
+			List<GanttRow> children,
+			Boolean acceptsDrop) {
 		GanttRow row = GanttRow.create()
 			.setUserObject(model)
 			.setLabel(label);
 		if (children != null) {
 			row.setChildren(children);
+		}
+		if (acceptsDrop != null) {
+			row.setAcceptsDrop(acceptsDrop);
 		}
 		return row;
 	}
@@ -1579,7 +1583,8 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean canResizeEnd,
 			Boolean canBeEdge,
 			Boolean canBeEdgeSource,
-			Boolean canBeEdgeTarget) {
+			Boolean canBeEdgeTarget,
+			List<Object> validDropTargets) {
 		GanttSpan span = GanttSpan.create()
 			.setUserObject(model)
 			.setRowModel(rowModel)
@@ -1594,6 +1599,7 @@ public class FlowFactory extends TLScriptFunctions {
 		if (canBeEdge != null) { span.setCanBeEdgeSource(canBeEdge); span.setCanBeEdgeTarget(canBeEdge); }
 		if (canBeEdgeSource != null) span.setCanBeEdgeSource(canBeEdgeSource);
 		if (canBeEdgeTarget != null) span.setCanBeEdgeTarget(canBeEdgeTarget);
+		if (validDropTargets != null) span.setValidDropTargets(validDropTargets);
 		return span;
 	}
 
@@ -1632,12 +1638,25 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory GanttEndpoint sourceEndpoint,
 			@Mandatory Object targetModel,
 			@Mandatory GanttEndpoint targetEndpoint,
-			GanttEnforce enforce) {
-		return GanttEdge.create()
+			GanttEnforce enforce,
+			String strokeColor,
+			Double strokeWidth,
+			List<Double> dashes,
+			String violatedStrokeColor,
+			Double violatedStrokeWidth,
+			List<Double> violatedDashes) {
+		GanttEdge edge = GanttEdge.create()
 			.setUserObject(model)
 			.setSourceModel(sourceModel).setSourceEndpoint(sourceEndpoint)
 			.setTargetModel(targetModel).setTargetEndpoint(targetEndpoint)
-			.setEnforce(enforce != null ? enforce : GanttEnforce.STRICT);
+			.setEnforce(enforce != null ? enforce : GanttEnforce.NONE);
+		if (strokeColor != null) edge.setStrokeColor(strokeColor);
+		if (strokeWidth != null) edge.setStrokeWidth(strokeWidth);
+		if (dashes != null && !dashes.isEmpty()) edge.setDashes(dashes);
+		if (violatedStrokeColor != null) edge.setViolatedStrokeColor(violatedStrokeColor);
+		if (violatedStrokeWidth != null) edge.setViolatedStrokeWidth(violatedStrokeWidth);
+		if (violatedDashes != null && !violatedDashes.isEmpty()) edge.setViolatedDashes(violatedDashes);
+		return edge;
 	}
 
 	@SideEffectFree
@@ -1753,6 +1772,18 @@ public class FlowFactory extends TLScriptFunctions {
 			_item.setRowId(_rowId);
 			if (_item.getUserObject() != null) {
 				_itemIdByModel.put(_item.getUserObject(), _id);
+			}
+			// Resolve validDropTargets (business objects) to validDropTargetIds.
+			java.util.List<Object> _dropTargets = _item.getValidDropTargets();
+			if (_dropTargets != null && !_dropTargets.isEmpty()) {
+				java.util.List<String> _dropIds = new java.util.ArrayList<>(_dropTargets.size());
+				for (Object _target : _dropTargets) {
+					String _targetRowId = _rowIdByModel.get(_target);
+					if (_targetRowId != null) {
+						_dropIds.add(_targetRowId);
+					}
+				}
+				_item.setValidDropTargetIds(_dropIds);
 			}
 		}
 

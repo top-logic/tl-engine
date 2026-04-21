@@ -23,6 +23,40 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 
 	private boolean _canBeEdgeTarget = true;
 
+	private transient final java.util.List<java.lang.Object> _validDropTargets = new de.haumacher.msgbuf.util.ReferenceList<java.lang.Object>() {
+		@Override
+		protected void beforeAdd(int index, java.lang.Object element) {
+			_listener.beforeAdd(GanttItem_Impl.this, VALID_DROP_TARGETS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, java.lang.Object element) {
+			_listener.afterRemove(GanttItem_Impl.this, VALID_DROP_TARGETS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttItem_Impl.this, VALID_DROP_TARGETS__PROP);
+		}
+	};
+
+	private final java.util.List<String> _validDropTargetIds = new de.haumacher.msgbuf.util.ReferenceList<String>() {
+		@Override
+		protected void beforeAdd(int index, String element) {
+			_listener.beforeAdd(GanttItem_Impl.this, VALID_DROP_TARGET_IDS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, String element) {
+			_listener.afterRemove(GanttItem_Impl.this, VALID_DROP_TARGET_IDS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GanttItem_Impl.this, VALID_DROP_TARGET_IDS__PROP);
+		}
+	};
+
 	/**
 	 * Creates a {@link GanttItem_Impl} instance.
 	 */
@@ -207,6 +241,73 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		_listener.afterChanged(this, CAN_BE_EDGE_TARGET__PROP);
 	}
 
+	@Override
+	public final java.util.List<java.lang.Object> getValidDropTargets() {
+		return _validDropTargets;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttItem setValidDropTargets(java.util.List<? extends java.lang.Object> value) {
+		internalSetValidDropTargets(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getValidDropTargets()} without chain call utility. */
+	protected final void internalSetValidDropTargets(java.util.List<? extends java.lang.Object> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'validDropTargets' cannot be null.");
+		_validDropTargets.clear();
+		_validDropTargets.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttItem addValidDropTarget(java.lang.Object value) {
+		internalAddValidDropTarget(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addValidDropTarget(java.lang.Object)} without chain call utility. */
+	protected final void internalAddValidDropTarget(java.lang.Object value) {
+		_validDropTargets.add(value);
+	}
+
+	@Override
+	public final void removeValidDropTarget(java.lang.Object value) {
+		_validDropTargets.remove(value);
+	}
+
+	@Override
+	public final java.util.List<String> getValidDropTargetIds() {
+		return _validDropTargetIds;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttItem setValidDropTargetIds(java.util.List<? extends String> value) {
+		internalSetValidDropTargetIds(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getValidDropTargetIds()} without chain call utility. */
+	protected final void internalSetValidDropTargetIds(java.util.List<? extends String> value) {
+		_validDropTargetIds.clear();
+		_validDropTargetIds.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttItem addValidDropTargetId(String value) {
+		internalAddValidDropTargetId(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addValidDropTargetId(String)} without chain call utility. */
+	protected final void internalAddValidDropTargetId(String value) {
+		_validDropTargetIds.add(value);
+	}
+
+	@Override
+	public final void removeValidDropTargetId(String value) {
+		_validDropTargetIds.remove(value);
+	}
+
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
@@ -218,7 +319,9 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 			CAN_MOVE_TIME__PROP, 
 			CAN_MOVE_ROW__PROP, 
 			CAN_BE_EDGE_SOURCE__PROP, 
-			CAN_BE_EDGE_TARGET__PROP);
+			CAN_BE_EDGE_TARGET__PROP, 
+			VALID_DROP_TARGETS__PROP, 
+			VALID_DROP_TARGET_IDS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -227,7 +330,8 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
 				USER_OBJECT__PROP, 
-				ROW_MODEL__PROP));
+				ROW_MODEL__PROP, 
+				VALID_DROP_TARGETS__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -253,6 +357,8 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 			case CAN_MOVE_ROW__PROP: return isCanMoveRow();
 			case CAN_BE_EDGE_SOURCE__PROP: return isCanBeEdgeSource();
 			case CAN_BE_EDGE_TARGET__PROP: return isCanBeEdgeTarget();
+			case VALID_DROP_TARGETS__PROP: return getValidDropTargets();
+			case VALID_DROP_TARGET_IDS__PROP: return getValidDropTargetIds();
 			default: return super.get(field);
 		}
 	}
@@ -269,6 +375,8 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 			case CAN_MOVE_ROW__PROP: internalSetCanMoveRow((boolean) value); break;
 			case CAN_BE_EDGE_SOURCE__PROP: internalSetCanBeEdgeSource((boolean) value); break;
 			case CAN_BE_EDGE_TARGET__PROP: internalSetCanBeEdgeTarget((boolean) value); break;
+			case VALID_DROP_TARGETS__PROP: internalSetValidDropTargets(de.haumacher.msgbuf.util.Conversions.asList(java.lang.Object.class, value)); break;
+			case VALID_DROP_TARGET_IDS__PROP: internalSetValidDropTargetIds(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
 	}
 
@@ -291,6 +399,12 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 		out.value(isCanBeEdgeSource());
 		out.name(CAN_BE_EDGE_TARGET__PROP);
 		out.value(isCanBeEdgeTarget());
+		out.name(VALID_DROP_TARGET_IDS__PROP);
+		out.beginArray();
+		for (String x : getValidDropTargetIds()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -342,6 +456,21 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 				out.value(isCanBeEdgeTarget());
 				break;
 			}
+			case VALID_DROP_TARGETS__PROP: {
+				out.beginArray();
+				for (java.lang.Object x : getValidDropTargets()) {
+				}
+				out.endArray();
+				break;
+			}
+			case VALID_DROP_TARGET_IDS__PROP: {
+				out.beginArray();
+				for (String x : getValidDropTargetIds()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -356,7 +485,38 @@ public abstract class GanttItem_Impl extends de.haumacher.msgbuf.graph.AbstractS
 			case CAN_MOVE_ROW__PROP: setCanMoveRow(in.nextBoolean()); break;
 			case CAN_BE_EDGE_SOURCE__PROP: setCanBeEdgeSource(in.nextBoolean()); break;
 			case CAN_BE_EDGE_TARGET__PROP: setCanBeEdgeTarget(in.nextBoolean()); break;
+			case VALID_DROP_TARGET_IDS__PROP: {
+				java.util.List<String> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
+				}
+				in.endArray();
+				setValidDropTargetIds(newValue);
+			}
+			break;
 			default: super.readField(scope, in, field);
+		}
+	}
+
+	@Override
+	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
+		switch (field) {
+			case VALID_DROP_TARGET_IDS__PROP: {
+				out.value(((String) element));
+				break;
+			}
+			default: super.writeElement(scope, out, field, element);
+		}
+	}
+
+	@Override
+	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case VALID_DROP_TARGET_IDS__PROP: {
+				return de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in);
+			}
+			default: return super.readElement(scope, in, field);
 		}
 	}
 

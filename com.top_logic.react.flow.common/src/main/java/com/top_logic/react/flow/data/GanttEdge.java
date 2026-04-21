@@ -42,6 +42,24 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getEnforce() */
 	String ENFORCE__PROP = "enforce";
 
+	/** @see #getStrokeColor() */
+	String STROKE_COLOR__PROP = "strokeColor";
+
+	/** @see #getStrokeWidth() */
+	String STROKE_WIDTH__PROP = "strokeWidth";
+
+	/** @see #getDashes() */
+	String DASHES__PROP = "dashes";
+
+	/** @see #getViolatedStrokeColor() */
+	String VIOLATED_STROKE_COLOR__PROP = "violatedStrokeColor";
+
+	/** @see #getViolatedStrokeWidth() */
+	String VIOLATED_STROKE_WIDTH__PROP = "violatedStrokeWidth";
+
+	/** @see #getViolatedDashes() */
+	String VIOLATED_DASHES__PROP = "violatedDashes";
+
 	/**
 	 * Opaque identifier, unique within a {@link GanttLayout}. Populated by the {@code gantt(...)} aggregator.
 	 */
@@ -144,7 +162,7 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttEdge setTargetEndpoint(com.top_logic.react.flow.data.GanttEndpoint value);
 
 	/**
-	 * Constraint semantic applied to this edge (STRICT, WARN, or NONE).
+	 * Constraint enforcement mode (NONE or STRICT).
 	 */
 	com.top_logic.react.flow.data.GanttEnforce getEnforce();
 
@@ -152,6 +170,92 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #getEnforce()
 	 */
 	com.top_logic.react.flow.data.GanttEdge setEnforce(com.top_logic.react.flow.data.GanttEnforce value);
+
+	/**
+	 * Stroke color for the normal (non-violated) state.
+	 */
+	String getStrokeColor();
+
+	/**
+	 * @see #getStrokeColor()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setStrokeColor(String value);
+
+	/**
+	 * Line thickness in pixels for the normal state.
+	 */
+	double getStrokeWidth();
+
+	/**
+	 * @see #getStrokeWidth()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setStrokeWidth(double value);
+
+	/**
+	 * Dash pattern for the normal state (alternating dash/gap lengths in pixels). Empty = solid.
+	 */
+	java.util.List<Double> getDashes();
+
+	/**
+	 * @see #getDashes()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setDashes(java.util.List<? extends Double> value);
+
+	/**
+	 * Adds a value to the {@link #getDashes()} list.
+	 */
+	com.top_logic.react.flow.data.GanttEdge addDash(double value);
+
+	/**
+	 * Removes a value from the {@link #getDashes()} list.
+	 */
+	void removeDash(double value);
+
+	/**
+	 * Stroke color applied when the constraint is violated (enforce != NONE and
+	 * source endpoint position > target endpoint position). Empty = use normal strokeColor.
+	 */
+	String getViolatedStrokeColor();
+
+	/**
+	 * @see #getViolatedStrokeColor()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setViolatedStrokeColor(String value);
+
+	/**
+	 * Checks, whether {@link #getViolatedStrokeColor()} has a value.
+	 */
+	boolean hasViolatedStrokeColor();
+
+	/**
+	 * Line thickness when violated. Zero = use normal strokeWidth.
+	 */
+	double getViolatedStrokeWidth();
+
+	/**
+	 * @see #getViolatedStrokeWidth()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setViolatedStrokeWidth(double value);
+
+	/**
+	 * Dash pattern when violated. Empty = use normal dashes.
+	 */
+	java.util.List<Double> getViolatedDashes();
+
+	/**
+	 * @see #getViolatedDashes()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setViolatedDashes(java.util.List<? extends Double> value);
+
+	/**
+	 * Adds a value to the {@link #getViolatedDashes()} list.
+	 */
+	com.top_logic.react.flow.data.GanttEdge addViolatedDash(double value);
+
+	/**
+	 * Removes a value from the {@link #getViolatedDashes()} list.
+	 */
+	void removeViolatedDash(double value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttEdge readGanttEdge(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

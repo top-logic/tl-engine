@@ -99,6 +99,13 @@ class DragHandler {
 	}
 
 	/**
+	 * Whether the active drag is a resize (not a move).
+	 */
+	boolean isResizing() {
+		return _active && _edge != null;
+	}
+
+	/**
 	 * Attempts to start a drag session from a pointer-down event.
 	 *
 	 * @param clientX
@@ -128,18 +135,14 @@ class DragHandler {
 		// Walk up the Box parent tree to find a DragController.
 		DragController controller = null;
 		Box controllerChild = null;
-		DragEdge edge = detectEdge(hitBox, svgX, svgY);
 
 		Box current = hitBox;
 		while (current != null) {
 			Widget parent = current.getParent();
 			if (parent instanceof DragController) {
 				DragController candidate = (DragController) parent;
-				if (edge != null && candidate.canResize(current, edge)) {
-					controller = candidate;
-					controllerChild = current;
-					break;
-				} else if (edge == null && candidate.canMove(current)) {
+				if (candidate.canMove(current) || candidate.canResize(current, DragEdge.E)
+					|| candidate.canResize(current, DragEdge.W)) {
 					controller = candidate;
 					controllerChild = current;
 					break;
@@ -153,6 +156,19 @@ class DragHandler {
 		}
 
 		if (controller == null) {
+			return false;
+		}
+
+		// Detect edge on the controllerChild (the outermost item box),
+		// NOT on the innermost hitBox (e.g. a Text inside Padding inside Border).
+		DragEdge edge = detectEdge(controllerChild, svgX, svgY);
+
+		// If edge detected but resize not allowed, fall back to move.
+		if (edge != null && !controller.canResize(controllerChild, edge)) {
+			edge = null;
+		}
+		// If no edge and move not allowed, abort.
+		if (edge == null && !controller.canMove(controllerChild)) {
 			return false;
 		}
 
@@ -308,6 +324,62 @@ class DragHandler {
 		_controllerChild = null;
 		_edge = null;
 		_dropAreas = null;
+	}
+
+	/**
+	 * Determines the appropriate CSS cursor for the current hover position.
+	 * Called on every pointermove when no drag is active.
+	 *
+	 * @return CSS cursor value: {@code "ew-resize"}, {@code "grab"}, or {@code "default"}.
+	 */
+	String detectCursor(double clientX, double clientY, elemental2.dom.Element targetElement) {
+		Box hitBox = findBoxFromElement(targetElement);
+		if (hitBox == null) {
+			return "default";
+		}
+
+		double[] svgCoords = clientToSvg(clientX, clientY);
+		double svgX = svgCoords[0];
+		double svgY = svgCoords[1];
+
+		// Find DragController parent.
+		Box controllerChild = null;
+		DragController controller = null;
+
+		Box current = hitBox;
+		while (current != null) {
+			Widget parent = current.getParent();
+			if (parent instanceof DragController) {
+				DragController candidate = (DragController) parent;
+				if (candidate.canMove(current) || candidate.canResize(current, DragEdge.E)
+					|| candidate.canResize(current, DragEdge.W)) {
+					controller = candidate;
+					controllerChild = current;
+					break;
+				}
+			}
+			if (parent instanceof Box) {
+				current = (Box) parent;
+			} else {
+				break;
+			}
+		}
+
+		if (controller == null) {
+			return "default";
+		}
+
+		DragEdge edge = detectEdge(controllerChild, svgX, svgY);
+		if (edge == DragEdge.W && controller.canResize(controllerChild, DragEdge.W)) {
+			return "ew-resize";
+		}
+		if (edge == DragEdge.E && controller.canResize(controllerChild, DragEdge.E)) {
+			return "ew-resize";
+		}
+		if (controller.canMove(controllerChild)) {
+			return "grab";
+		}
+		return "default";
 	}
 
 	/**

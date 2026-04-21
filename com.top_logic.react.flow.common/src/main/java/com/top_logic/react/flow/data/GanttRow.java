@@ -27,6 +27,9 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getChildren() */
 	String CHILDREN__PROP = "children";
 
+	/** @see #isAcceptsDrop() */
+	String ACCEPTS_DROP__PROP = "acceptsDrop";
+
 	/**
 	 * Opaque identifier, unique within a {@link GanttLayout}.
 	 */
@@ -94,6 +97,16 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * Removes a value from the {@link #getChildren()} list.
 	 */
 	void removeChildren(com.top_logic.react.flow.data.GanttRow value);
+
+	/**
+	 * Whether items may be dropped into this row during drag. Default true.
+	 */
+	boolean isAcceptsDrop();
+
+	/**
+	 * @see #isAcceptsDrop()
+	 */
+	com.top_logic.react.flow.data.GanttRow setAcceptsDrop(boolean value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttRow readGanttRow(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

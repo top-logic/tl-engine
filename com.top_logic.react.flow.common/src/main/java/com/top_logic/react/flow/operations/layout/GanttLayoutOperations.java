@@ -55,7 +55,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	/** Horizontal stub length for orthogonal edge routing (pixels offset from item edge). */
 	double EDGE_HORIZONTAL_STUB = 6.0;
 
-	/** Stroke width for normal (STRICT / WARN) dependency edges. */
+	/** Default stroke width for dependency edges. */
 	double EDGE_STROKE_WIDTH_NORMAL = 1.2;
 
 	/** Stroke width for informational (NONE) dependency edges. */
@@ -531,32 +531,37 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 
 			double midY = (sy + ty) / 2.0;
 
-			// Stroke style based on enforce mode.
-			GanttEnforce enforce = edge.getEnforce();
+			// Visual properties from the edge (application-defined).
+			// Switch to violated style if constraint is violated and a violated style is defined.
+			boolean hasViolatedStyle = edge.getViolatedStrokeColor() != null
+				&& !edge.getViolatedStrokeColor().isEmpty();
+			boolean violated = hasViolatedStyle
+				&& isConstraintViolated(sourceItem, sourceEndpoint, targetItem, targetEndpoint);
+
 			String strokeColor;
 			double strokeWidth;
-			boolean dashed;
-			if (enforce == GanttEnforce.WARN) {
-				strokeColor = "#d01030";
-				strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
-				dashed = false;
-			} else if (enforce == GanttEnforce.NONE) {
-				strokeColor = "#606060";
-				strokeWidth = EDGE_STROKE_WIDTH_THIN;
-				dashed = true;
+			List<Double> dashes;
+			if (violated && edge.getViolatedStrokeColor() != null && !edge.getViolatedStrokeColor().isEmpty()) {
+				strokeColor = edge.getViolatedStrokeColor();
+				strokeWidth = edge.getViolatedStrokeWidth() > 0 ? edge.getViolatedStrokeWidth() : edge.getStrokeWidth();
+				List<Double> vd = edge.getViolatedDashes();
+				dashes = (vd != null && !vd.isEmpty()) ? vd : edge.getDashes();
 			} else {
-				// STRICT (default)
-				strokeColor = "#606060";
-				strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
-				dashed = false;
+				strokeColor = edge.getStrokeColor();
+				strokeWidth = edge.getStrokeWidth();
+				dashes = edge.getDashes();
 			}
+			if (strokeColor == null || strokeColor.isEmpty()) strokeColor = "#606060";
+			if (strokeWidth <= 0) strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
 
 			out.beginPath();
 			out.setStroke(strokeColor);
 			out.setStrokeWidth(strokeWidth);
 			out.setFill("none");
-			if (dashed) {
-				out.setStrokeDasharray(4.0, 3.0);
+			if (dashes != null && !dashes.isEmpty()) {
+				double[] dashArray = new double[dashes.size()];
+				for (int i = 0; i < dashes.size(); i++) dashArray[i] = dashes.get(i);
+				out.setStrokeDasharray(dashArray);
 			}
 			out.beginData();
 			out.moveToAbs(sx, sy);
@@ -637,6 +642,22 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		return b.getY() + b.getHeight() / 2.0;
 	}
 
+	/**
+	 * Checks whether a dependency constraint is violated based on the endpoint positions.
+	 *
+	 * <p>
+	 * The constraint says: the source endpoint position must be &le; the target endpoint
+	 * position (in the time dimension). For FS (END→START): source.end &le; target.start.
+	 * For SS (START→START): source.start &le; target.start. Etc.
+	 * </p>
+	 */
+	private static boolean isConstraintViolated(GanttItem source, GanttEndpoint sourceEnd,
+			GanttItem target, GanttEndpoint targetEnd) {
+		double sourcePos = endpointX(source, sourceEnd);
+		double targetPos = endpointX(target, targetEnd);
+		return sourcePos > targetPos;
+	}
+
 	private static void indexRows(GanttRow row, Map<String, Integer> idx, int[] counter) {
 		idx.put(row.getId(), counter[0]);
 		counter[0]++;
@@ -708,19 +729,43 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		boolean canMoveTime = item.isCanMoveTime();
 		String currentRowId = item.getRowId();
 
+		// Item-specific drop target restriction (empty = no restriction).
+		List<String> validTargetIds = item.getValidDropTargetIds();
+		boolean hasTargetRestriction = validTargetIds != null && !validTargetIds.isEmpty();
+
 		GanttAxis axis = self.getAxis();
 		double columnWidth = self.getColumnWidth();
 		double chartWidth = (axis.getRangeMax() - axis.getRangeMin()) * axis.getCurrentZoom();
 
 		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
+		Map<String, GanttRow> rowsById = buildRowIndex(self);
 
 		List<DropArea> areas = new ArrayList<>();
 		for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
 			String rowId = entry.getKey();
+
+			// 1. canMoveRow=false → only current row.
 			if (!canMoveRow && !rowId.equals(currentRowId)) {
-				// Only include the current row if row change is disabled.
 				continue;
 			}
+
+			// 2. Row.acceptsDrop=false → skip (e.g. axis rows).
+			GanttRow row = rowsById.get(rowId);
+			if (row != null && !row.isAcceptsDrop()) {
+				// Always include the item's current row even if acceptsDrop is false,
+				// so the item doesn't "jump" out of an axis row it was placed in.
+				if (!rowId.equals(currentRowId)) {
+					continue;
+				}
+			}
+
+			// 3. validDropTargetIds set → only listed rows.
+			if (hasTargetRestriction && !validTargetIds.contains(rowId)) {
+				if (!rowId.equals(currentRowId)) {
+					continue;
+				}
+			}
+
 			RowGeometry geom = entry.getValue();
 
 			double areaX;
@@ -729,7 +774,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 				areaX = self.getX() + columnWidth;
 				areaWidth = chartWidth;
 			} else {
-				// Restrict to the box's current x/width so only row change is possible.
 				areaX = box.getX();
 				areaWidth = box.getWidth();
 			}
@@ -742,6 +786,22 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 			areas.add(area);
 		}
 		return areas;
+	}
+
+	/** Builds a map from row ID to GanttRow for the full row forest. */
+	private static Map<String, GanttRow> buildRowIndex(GanttLayout layout) {
+		Map<String, GanttRow> result = new LinkedHashMap<>();
+		for (GanttRow root : layout.getRootRows()) {
+			collectRows(root, result);
+		}
+		return result;
+	}
+
+	private static void collectRows(GanttRow row, Map<String, GanttRow> index) {
+		index.put(row.getId(), row);
+		for (GanttRow child : row.getChildren()) {
+			collectRows(child, index);
+		}
 	}
 
 	@Override

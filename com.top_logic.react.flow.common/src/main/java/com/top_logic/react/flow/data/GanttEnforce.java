@@ -1,24 +1,20 @@
 package com.top_logic.react.flow.data;
 
 /**
- * Semantic of a Gantt edge.
+ * Constraint enforcement mode for a Gantt edge.
  */
 public enum GanttEnforce implements de.haumacher.msgbuf.data.ProtocolEnum {
 
 	/**
-	 * Operation is blocked when the constraint would be violated.
-	 */
-	STRICT("STRICT"),
-
-	/**
-	 * Operation is allowed; violation is marked visually (red edge).
-	 */
-	WARN("WARN"),
-
-	/**
-	 * Purely decorative relation; no time constraint.
+	 * No constraint enforcement; the edge is purely visual. Violated style is still
+	 *  applied if defined (based on endpoint position comparison).
 	 */
 	NONE("NONE"),
+
+	/**
+	 * Drag operations are blocked when the constraint would be violated.
+	 */
+	STRICT("STRICT"),
 
 	;
 
@@ -42,11 +38,10 @@ public enum GanttEnforce implements de.haumacher.msgbuf.data.ProtocolEnum {
 	public static GanttEnforce valueOfProtocol(String protocolName) {
 		if (protocolName == null) { return null; }
 		switch (protocolName) {
-			case "STRICT": return STRICT;
-			case "WARN": return WARN;
 			case "NONE": return NONE;
+			case "STRICT": return STRICT;
 		}
-		return STRICT;
+		return NONE;
 	}
 
 	/** Writes this instance to the given output. */
@@ -62,9 +57,8 @@ public enum GanttEnforce implements de.haumacher.msgbuf.data.ProtocolEnum {
 	/** Writes this instance to the given binary output. */
 	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
 		switch (this) {
-			case STRICT: out.value(1); break;
-			case WARN: out.value(2); break;
-			case NONE: out.value(3); break;
+			case NONE: out.value(1); break;
+			case STRICT: out.value(2); break;
 			default: out.value(0);
 		}
 	}
@@ -72,10 +66,9 @@ public enum GanttEnforce implements de.haumacher.msgbuf.data.ProtocolEnum {
 	/** Reads a new instance from the given binary reader. */
 	public static GanttEnforce readGanttEnforce(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
 		switch (in.nextInt()) {
-			case 1: return STRICT;
-			case 2: return WARN;
-			case 3: return NONE;
-			default: return STRICT;
+			case 1: return NONE;
+			case 2: return STRICT;
+			default: return NONE;
 		}
 	}
 }

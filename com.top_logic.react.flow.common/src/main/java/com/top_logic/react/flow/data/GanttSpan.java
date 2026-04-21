@@ -95,6 +95,18 @@ public interface GanttSpan extends GanttItem {
 	@Override
 	com.top_logic.react.flow.data.GanttSpan setCanBeEdgeTarget(boolean value);
 
+	@Override
+	com.top_logic.react.flow.data.GanttSpan setValidDropTargets(java.util.List<? extends java.lang.Object> value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttSpan addValidDropTarget(java.lang.Object value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttSpan setValidDropTargetIds(java.util.List<? extends String> value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttSpan addValidDropTargetId(String value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttSpan readGanttSpan(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

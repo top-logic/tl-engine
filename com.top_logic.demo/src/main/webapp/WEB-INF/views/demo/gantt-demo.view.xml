@@ -10,8 +10,8 @@
 			<createChart><![CDATA[{
 /* === Axis rows (appear first) === */
 
-r_year   = reactFlowGanttRow(model: "axis:year",   label: reactFlowText("Year"));
-r_months = reactFlowGanttRow(model: "axis:months", label: reactFlowText("Month"));
+r_year   = reactFlowGanttRow(model: "axis:year",   label: reactFlowText("Year"),   acceptsDrop: false);
+r_months = reactFlowGanttRow(model: "axis:months", label: reactFlowText("Month"), acceptsDrop: false);
 
 /* Jan 1 2026 = day 20454, Dec 31 2026 = day 20819 */
 year2026 = reactFlowGanttSpan(
@@ -45,7 +45,8 @@ r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reac
 spec  = reactFlowGanttSpan(model: "task:spec",  rowModel: "phase:design",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), fill: "#d4e6f9"), start: 20454, end: 20485);
 build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",
-	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), fill: "#c8e6c9"), start: 20485, end: 20544);
+	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), fill: "#c8e6c9"), start: 20485, end: 20544,
+	validDropTargets: list("phase:impl", "phase:test"));
 beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Beta"),  all: 3)), fill: "#fff3cd"), at: 20544);
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
@@ -60,8 +61,11 @@ no_resize = reactFlowGanttSpan(model: "task:no-resize", rowModel: "phase:impl",
 
 /* === Edges === */
 
-e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT");
-e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta", targetEndpoint: "START", enforce: "WARN");
+e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT",
+	strokeColor: "#808080", dashes: list(4, 3));
+e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta", targetEndpoint: "START",
+	strokeColor: "#808080",
+	violatedStrokeColor: "#d01030", violatedStrokeWidth: 2.0);
 
 /* === Decorations === */
 

@@ -229,6 +229,7 @@
 				user_interaction: Handlers.onUserInteraction,
 				delegation_event: Handlers.onDelegationEvent,
 				approval_mode: Handlers.onApprovalMode,
+				task_update: Handlers.onTaskUpdate,
 			};
 
 			for (const [type, handler] of Object.entries(handlers)) {
@@ -399,6 +400,17 @@
 
 		onApprovalMode(data) { /* Track mode changes */ },
 
+		onTaskUpdate(data) {
+			if (data.tasksJson) {
+				try {
+					const taskData = JSON.parse(data.tasksJson);
+					TaskPanel.update(taskData.items || []);
+				} catch (e) {
+					console.error('[tl-chat] Failed to parse task update:', e);
+				}
+			}
+		},
+
 		onDelegationEvent(data) {
 			const delId = data.delegationToolCallId;
 			const del = Store.currentRun ? Store.currentRun.delegations.get(delId) : null;
@@ -448,6 +460,163 @@
 	};
 
 	// ========================================================================
+	// TaskPanel — persistent task panel displayed above the input area
+	// ========================================================================
+
+	/** Persistent task panel displayed above the input area. */
+	const TaskPanel = {
+		_el: null,
+		_tasks: [],
+		_manualToggle: false,
+		_collapsed: false,
+
+		init(root) {
+			this._el = root.querySelector('.chat-task-panel');
+		},
+
+		reset() {
+			this._tasks = [];
+			this._manualToggle = false;
+			this._collapsed = false;
+			if (this._el) {
+				this._el.classList.remove('visible');
+				this._el.innerHTML = '';
+			}
+		},
+
+		update(tasks) {
+			this._tasks = tasks;
+			if (!this._el) return;
+
+			if (tasks.length === 0) {
+				this._el.classList.remove('visible');
+				return;
+			}
+
+			// Auto-collapse when all completed (unless user manually toggled)
+			const allDone = tasks.every(t => t.status === 'completed');
+			if (!this._manualToggle) {
+				this._collapsed = allDone;
+			}
+
+			this._el.classList.add('visible');
+			this._render(tasks);
+		},
+
+		_render(tasks) {
+			const completed = tasks.filter(t => t.status === 'completed').length;
+			const total = tasks.length;
+
+			// Build visible items with truncation
+			const visible = this._truncate(tasks);
+
+			let html = '';
+
+			// Header
+			html += '<div class="chat-task-panel-header" onclick="TaskPanel.toggle()">';
+			html += '<span class="chat-task-panel-toggle">\u25BC</span>';
+			html += '<span>Tasks</span>';
+			html += '<span class="chat-task-panel-count">' + completed + '/' + total + ' completed</span>';
+			html += '</div>';
+
+			// Body
+			html += '<div class="chat-task-panel-body">';
+			for (const item of visible) {
+				if (item.collapsed) {
+					html += '<div class="chat-task-panel-collapsed-row">';
+					html += '\u00B7\u00B7\u00B7 ' + item.count + ' more task' + (item.count > 1 ? 's' : '') + ' \u00B7\u00B7\u00B7';
+					html += '</div>';
+				} else {
+					const icon = item.status === 'completed' ? '\u2713'
+					           : item.status === 'in_progress' ? '\u25C9'
+					           : '\u25CB';
+					html += '<div class="chat-task-panel-item" data-status="' + item.status + '">';
+					html += '<span class="task-icon">' + icon + '</span>';
+					html += '<span class="task-label">' + this._escapeHtml(item.subject) + '</span>';
+					html += '</div>';
+				}
+			}
+			html += '</div>';
+
+			this._el.innerHTML = html;
+			this._el.classList.toggle('collapsed', this._collapsed);
+		},
+
+		_truncate(tasks) {
+			if (tasks.length <= 5) {
+				return tasks;
+			}
+
+			// Find in-progress task index
+			const inProgressIdx = tasks.findIndex(t => t.status === 'in_progress');
+
+			// Last 4 tasks by array position
+			const lastFourStart = tasks.length - 4;
+
+			// Determine which indices to show
+			const showIndices = new Set();
+
+			// Always show the in-progress task
+			if (inProgressIdx >= 0) {
+				showIndices.add(inProgressIdx);
+			}
+
+			// Always show the last 4
+			for (let i = lastFourStart; i < tasks.length; i++) {
+				showIndices.add(i);
+			}
+
+			// If we have fewer than 5 visible, add from the end until we have 5
+			if (showIndices.size < 5) {
+				for (let i = tasks.length - 1; i >= 0 && showIndices.size < 5; i--) {
+					showIndices.add(i);
+				}
+			}
+
+			// Build result with collapse marker
+			const result = [];
+			let collapsedCount = 0;
+			let collapseInserted = false;
+
+			for (let i = 0; i < tasks.length; i++) {
+				if (showIndices.has(i)) {
+					if (collapsedCount > 0 && !collapseInserted) {
+						result.push({ collapsed: true, count: collapsedCount });
+						collapseInserted = true;
+					}
+					result.push(tasks[i]);
+				} else {
+					collapsedCount++;
+				}
+			}
+
+			// Safety: if collapsed items at the end
+			if (collapsedCount > 0 && !collapseInserted) {
+				result.push({ collapsed: true, count: collapsedCount });
+			}
+
+			return result;
+		},
+
+		toggle() {
+			this._manualToggle = true;
+			this._collapsed = !this._collapsed;
+			if (this._el) {
+				this._el.classList.toggle('collapsed', this._collapsed);
+			}
+		},
+
+		_escapeHtml(text) {
+			const div = document.createElement('div');
+			div.textContent = text;
+			return div.innerHTML;
+		}
+	};
+
+	// Expose toggle for inline onclick handler
+	window.TaskPanel = TaskPanel;
+
+	// ========================================================================
 	// Render — DOM rendering
 	// ========================================================================
 	const Render = {
@@ -472,6 +641,7 @@
 			this._setupCancelButton();
 			this._setupInput();
 			this._setupAutoScroll();
+			TaskPanel.init(root);
 		},
 
 		_ensureParentHeight(root) {
@@ -1548,6 +1718,7 @@
 			State.set(State.IDLE);
 			Store.currentRun = null;
 			if (Render._messagesEl) Render._messagesEl.innerHTML = '';
+			TaskPanel.reset();
 			Render.updateInputState();
 		},
 

@@ -90,6 +90,17 @@ public interface DragController {
 	 */
 	void cancelDrag(Box box);
 
+	/**
+	 * Converts SVG root coordinates to the layout coordinate space of this controller's
+	 * children. Override this when the controller applies a viewport transform (e.g. scroll)
+	 * that shifts the visual position of items relative to their layout coordinates.
+	 *
+	 * @return two-element array {@code {layoutX, layoutY}}
+	 */
+	default double[] svgToLayout(double svgX, double svgY) {
+		return new double[] { svgX, svgY };
+	}
+
 	// -----------------------------------------------------------------------
 	// Viewport pan support (drag-to-pan on empty space)
 	// -----------------------------------------------------------------------

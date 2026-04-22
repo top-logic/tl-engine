@@ -163,9 +163,14 @@ class DragHandler {
 			return tryStartPan(hitBox, svgX, svgY);
 		}
 
+		// Convert SVG root coordinates to layout coordinates (accounts for scroll offset).
+		double[] layoutCoords = controller.svgToLayout(svgX, svgY);
+		double layoutX = layoutCoords[0];
+		double layoutY = layoutCoords[1];
+
 		// Detect edge on the controllerChild (the outermost item box),
 		// NOT on the innermost hitBox (e.g. a Text inside Padding inside Border).
-		DragEdge edge = detectEdge(controllerChild, svgX, svgY);
+		DragEdge edge = detectEdge(controllerChild, layoutX, layoutY);
 
 		// If edge detected but resize not allowed, fall back to move.
 		if (edge != null && !controller.canResize(controllerChild, edge)) {
@@ -180,8 +185,8 @@ class DragHandler {
 		_target = hitBox;
 		_controllerChild = controllerChild;
 		_edge = edge;
-		_startSvgX = svgX;
-		_startSvgY = svgY;
+		_startSvgX = layoutX;
+		_startSvgY = layoutY;
 
 		// Use the controller child for position/size (it's the direct child of the controller).
 		_origX = _controllerChild.getX();
@@ -229,11 +234,12 @@ class DragHandler {
 		}
 
 		double[] svgCoords = clientToSvg(clientX, clientY);
-		double svgX = svgCoords[0];
-		double svgY = svgCoords[1];
+		double[] layoutCoords = _controller.svgToLayout(svgCoords[0], svgCoords[1]);
+		double layoutX = layoutCoords[0];
+		double layoutY = layoutCoords[1];
 
-		double dx = svgX - _startSvgX;
-		double dy = svgY - _startSvgY;
+		double dx = layoutX - _startSvgX;
+		double dy = layoutY - _startSvgY;
 
 		if (_edge == null) {
 			// Move mode: apply delta to original position, then constrain.
@@ -390,7 +396,8 @@ class DragHandler {
 			return "default";
 		}
 
-		DragEdge edge = detectEdge(controllerChild, svgX, svgY);
+		double[] layoutCoords = controller.svgToLayout(svgX, svgY);
+		DragEdge edge = detectEdge(controllerChild, layoutCoords[0], layoutCoords[1]);
 		if (edge == DragEdge.W && controller.canResize(controllerChild, DragEdge.W)) {
 			return "ew-resize";
 		}

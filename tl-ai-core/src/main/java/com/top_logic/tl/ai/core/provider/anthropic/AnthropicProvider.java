@@ -134,7 +134,7 @@ public class AnthropicProvider implements LLMProvider {
 		}
 	}
 
-	private String buildRequestJson(ProviderRequest request) throws ProviderException {
+	String buildRequestJson(ProviderRequest request) throws ProviderException {
 		StringW buffer = new StringW();
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginObject();
@@ -143,7 +143,17 @@ public class AnthropicProvider implements LLMProvider {
 			json.name("stream").value(true);
 
 			if (request.systemPrompt() != null && !request.systemPrompt().isEmpty()) {
-				json.name("system").value(request.systemPrompt());
+				json.name("system");
+				json.beginArray();
+				json.beginObject();
+				json.name("type").value("text");
+				json.name("text").value(request.systemPrompt());
+				json.name("cache_control");
+				json.beginObject();
+				json.name("type").value("ephemeral");
+				json.endObject();
+				json.endObject();
+				json.endArray();
 			}
 
 			json.name("messages");

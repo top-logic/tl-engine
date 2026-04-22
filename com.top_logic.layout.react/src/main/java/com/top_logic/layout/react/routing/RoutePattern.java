@@ -58,22 +58,22 @@ public final class RoutePattern {
 	 * Compiles a pattern string into a {@link RoutePattern}.
 	 *
 	 * @param pattern
-	 *        The pattern string (e.g., {@code /property/:id} or {@code /*}).
+	 *        The pattern string. May or may not start with {@code /} (both forms accepted,
+	 *        since routes are always relative). Examples: {@code "property/:id"},
+	 *        {@code "/property/:id"}, {@code "dashboard"}, {@code "*"}.
 	 * @param itemId
 	 *        A logical identifier for the route item associated with this pattern.
 	 * @return A compiled pattern ready for matching.
 	 * @throws IllegalArgumentException
-	 *         If the pattern is null, empty, or does not start with {@code /}.
+	 *         If the pattern is null or empty.
 	 */
 	public static RoutePattern compile(String pattern, String itemId) {
 		if (pattern == null || pattern.isEmpty()) {
 			throw new IllegalArgumentException("Pattern must not be null or empty.");
 		}
-		if (pattern.charAt(0) != '/') {
-			throw new IllegalArgumentException("Pattern must start with '/': " + pattern);
-		}
 
-		String body = pattern.substring(1);
+		// Strip optional leading slash — routes are always relative.
+		String body = pattern.startsWith("/") ? pattern.substring(1) : pattern;
 
 		if (WILDCARD.equals(body)) {
 			return new RoutePattern(pattern, itemId, true, List.of());

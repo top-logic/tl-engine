@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.Abstract;
  * <ul>
  * <li>{@link PostTurnTrigger} - fires after a chat turn completes</li>
  * <li>{@link PreTurnTrigger} - fires before a chat turn is processed</li>
- * <li>{@link ScheduledTrigger} - fires on a time-based schedule</li>
  * </ul>
  */
 @Abstract

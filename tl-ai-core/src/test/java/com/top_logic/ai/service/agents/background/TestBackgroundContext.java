@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.service.agents.background;
 
-import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
 
@@ -13,7 +12,7 @@ import junit.framework.TestCase;
 
 /**
  * Tests for the {@link BackgroundContext} hierarchy:
- * {@link BackgroundContext}, {@link ChatContext}, and {@link ApplicationContext}.
+ * {@link BackgroundContext} and {@link ChatContext}.
  */
 public class TestBackgroundContext extends TestCase {
 
@@ -94,29 +93,11 @@ public class TestBackgroundContext extends TestCase {
 		assertNull("PendingUserMessage should be null for lastTurn", ctx.getPendingUserMessage());
 	}
 
-	// --- ApplicationContext.scheduled() ---
-
-	/** scheduled factory sets trigger type and source. */
-	public void testApplicationContextScheduled() {
-		ApplicationContext ctx = ApplicationContext.scheduled("DailyReport");
-
-		assertEquals("DailyReport", ctx.getAgentName());
-		assertEquals("scheduled", ctx.getTriggerType());
-		assertEquals("scheduler", ctx.getTriggerSource());
-	}
-
 	// --- Inheritance ---
 
 	/** ChatContext is-a BackgroundContext. */
 	public void testChatContextIsBackgroundContext() {
 		ChatContext ctx = ChatContext.lastTurn("agent", "msg", "resp", null);
-
-		assertTrue(ctx instanceof BackgroundContext);
-	}
-
-	/** ApplicationContext is-a BackgroundContext. */
-	public void testApplicationContextIsBackgroundContext() {
-		ApplicationContext ctx = ApplicationContext.scheduled("agent");
 
 		assertTrue(ctx instanceof BackgroundContext);
 	}

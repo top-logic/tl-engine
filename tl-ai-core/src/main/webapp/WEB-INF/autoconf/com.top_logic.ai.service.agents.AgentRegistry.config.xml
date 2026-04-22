@@ -551,7 +551,6 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 					config:interface="com.top_logic.ai.service.agents.background.BackgroundAgentConfig"
 					description="Background quality reviewer. Analyzes conversation transcripts for quality issues (incorrect answers, bad delegations, tool misuse, unhelpful responses, inefficiency) and creates Gitea tickets for problems found."
 					tools="gitea.create_gitea_issue"
-					scope="CHAT"
 				>
 					<trigger config:interface=""/>
 					<input config:interface="com.top_logic.ai.service.agents.background.input.ChatContextInput"

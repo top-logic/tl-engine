@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.service.agents.background;
 
-import com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope;
 import com.top_logic.ai.service.agents.background.input.CustomInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.agents.background.input.ChatContextInput.Content;
@@ -28,15 +27,6 @@ import junit.framework.TestCase;
  * </p>
  */
 public class TestBackgroundConfig extends TestCase {
-
-	// --- Scope enum ---
-
-	/** Both scope values exist. */
-	public void testScopeValues() {
-		assertEquals(2, Scope.values().length);
-		assertNotNull(Scope.CHAT);
-		assertNotNull(Scope.APPLICATION);
-	}
 
 	// --- PreTurnTrigger ---
 
@@ -99,10 +89,6 @@ public class TestBackgroundConfig extends TestCase {
 		assertNotNull(trigger);
 		assertTrue(trigger instanceof TriggerConfig);
 	}
-
-	// --- ScheduledTrigger ---
-	// Note: ScheduledTrigger uses PolymorphicConfiguration<SchedulingAlgorithm> which
-	// requires TypeIndex. Integration tests cover ScheduledTrigger instantiation.
 
 	// --- Input configs ---
 

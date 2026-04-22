@@ -119,23 +119,18 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Returns the names of all background agents matching the given trigger type and scope.
+	 * Returns the names of all background agents matching the given trigger type.
 	 *
 	 * @param triggerType
 	 *        The trigger configuration class to match (e.g. {@code PostTurnTrigger.class}).
-	 * @param scope
-	 *        The scope to match (e.g.
-	 *        {@link com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope#CHAT}).
 	 * @return A list of agent names with matching background configuration; never null.
 	 */
-	public List<String> getBackgroundAgents(
-			Class<? extends TriggerConfig> triggerType, BackgroundAgentConfig.Scope scope) {
+	public List<String> getBackgroundAgents(Class<? extends TriggerConfig> triggerType) {
 		AgentRegistry registry = AgentRegistry.getInstance();
 		List<String> result = new ArrayList<>();
 		for (Map.Entry<String, com.top_logic.ai.service.agents.AgentConfig> entry
 				: registry.getConfig().getAgents().entrySet()) {
 			if (!(entry.getValue() instanceof BackgroundAgentConfig bgConfig)) continue;
-			if (bgConfig.getScope() != scope) continue;
 			TriggerConfig triggerCfg = bgConfig.getTrigger();
 			if (triggerCfg != null && triggerType.isInstance(triggerCfg)) {
 				result.add(entry.getKey());

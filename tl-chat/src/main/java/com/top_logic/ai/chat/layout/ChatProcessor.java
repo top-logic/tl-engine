@@ -135,7 +135,7 @@ public class ChatProcessor {
 
 			// Execute pre-turn background agents synchronously with model-level timeout.
 			List<String> preTurnAgents = agentFactory.getBackgroundAgents(
-				PreTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
+				PreTurnTrigger.class);
 			for (String preTurnAgent : preTurnAgents) {
 				BackgroundAgentConfig bgConfig =
 					(BackgroundAgentConfig) agentFactory.getAgentConfig(preTurnAgent);
@@ -403,7 +403,7 @@ public class ChatProcessor {
 		AgentFactory agentFactory = AgentFactory.getInstance();
 
 		List<String> postTurnAgents = agentFactory.getBackgroundAgents(
-			PostTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
+			PostTurnTrigger.class);
 
 		Chat capturedChat = taskTracker.getChat();
 		BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor();

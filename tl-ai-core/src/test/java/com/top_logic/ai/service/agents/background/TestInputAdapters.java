@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.service.agents.background;
 
-import com.top_logic.ai.service.agents.background.context.ApplicationContext;
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.input.CustomInput;
@@ -49,11 +48,9 @@ public class TestInputAdapters extends TestCase {
 
 		BackgroundContext base = new BackgroundContext("agent", "test");
 		ChatContext chat = ChatContext.lastTurn("agent", "msg", "resp", null);
-		ApplicationContext app = ApplicationContext.scheduled("agent");
 
 		assertEquals("fixed input", adapter.gatherInput(base));
 		assertEquals("fixed input", adapter.gatherInput(chat));
-		assertEquals("fixed input", adapter.gatherInput(app));
 	}
 
 	/** Adapter handles multiline custom messages. */
@@ -89,7 +86,7 @@ public class TestInputAdapters extends TestCase {
 		ScriptInputAdapter adapter = new ScriptInputAdapter(config);
 
 		assertEquals("testScript()",
-			adapter.gatherInput(ApplicationContext.scheduled("agent")));
+			adapter.gatherInput(new BackgroundContext("agent", "scheduled")));
 		assertEquals("testScript()",
 			adapter.gatherInput(ChatContext.lastTurn("agent", "m", "r", null)));
 	}

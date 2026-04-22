@@ -46,6 +46,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.cs.TLObjectChange;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.model.cs.TLObjectCreation;
 import com.top_logic.model.cs.TLObjectDeletion;
@@ -201,34 +202,11 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 		Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> removed = new HashMap<>();
 		Set<TLObject> removedDirectRoles = new HashSet<>();
 		if (!creations.isEmpty()) {
-			for (TLObjectCreation creation : creations) {
-				TLObject createdObject = creation.object();
-				TLStructuredType objType = createdObject.tType();
-				if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
-					addedDirectRoles.add(createdObject);
-				} else {
-					objType.getAllParts().stream()
-						.forEach(part -> {
-							put(added, createdObject, part,	() -> createdObject.tValue(part));
-						});
-				}
-			}
+			handleCreationAndDeletion(creations, added, addedDirectRoles);
 		}
 		if (!deletions.isEmpty()) {
 			kb.withoutModifications(() -> {
-				for (TLObjectDeletion deletion : deletions) {
-					TLObject deletedObject = deletion.object();
-
-					TLStructuredType objType = deletedObject.tType();
-					if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
-						removedDirectRoles.add(deletedObject);
-					} else {
-						objType.getAllParts().stream()
-							.forEach(part -> {
-								put(removed, deletedObject, part, () -> deletedObject.tValue(part));
-							});
-					}
-				}
+				handleCreationAndDeletion(deletions, removed, removedDirectRoles);
 				return null;
 			});
 		}
@@ -336,6 +314,34 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 
 		Map<BoundRole, Set<BoundObject>> invalidObjectsByRole = mergeValuesByRole(rulesToObjectsMap);
 		updateSecurityStorage(someRemoved, invalidObjects, invalidObjectsByRole, rulesToObjectsMap, invalidRules);
+	}
+
+	/**
+	 * Handles both {@link TLObjectCreation} and {@link TLObjectDeletion}. In this case all
+	 * attributes are treated as changed.
+	 * 
+	 * @param changes
+	 *        Collection of creations or deletions.
+	 * @param changedParts
+	 *        Map to store values for the created or deleted object
+	 * @param directRoles
+	 *        Collection to store element in the case when the created or deleted object is a direct
+	 *        role assignment.
+	 */
+	private void handleCreationAndDeletion(List<? extends TLObjectChange> changes,
+			Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> changedParts, Set<TLObject> directRoles) {
+		for (TLObjectChange change : changes) {
+			TLObject changedObject = change.object();
+			TLStructuredType objType = changedObject.tType();
+			if (BoundedRole.ROLE_ASSIGNMENT_TYPE.equals(TLModelUtil.qualifiedName(objType))) {
+				directRoles.add(changedObject);
+			} else {
+				objType.getAllParts().stream()
+					.forEach(part -> {
+						put(changedParts, changedObject, part, () -> changedObject.tValue(part));
+					});
+			}
+		}
 	}
 
 		private static void put(Map<TLObject, Map<TLStructuredTypePart, Supplier<?>>> map, TLObject object, TLStructuredTypePart ref,

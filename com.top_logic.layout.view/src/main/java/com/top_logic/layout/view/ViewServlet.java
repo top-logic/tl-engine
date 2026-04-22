@@ -33,6 +33,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.protocol.RouteChangeEvent;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
@@ -93,6 +95,8 @@ public class ViewServlet extends TopLogicServlet {
 		// MainLayout setup that is specific to the traditional layout engine.
 		ensureSubSession(request, windowName);
 
+		String routePath = extractRoutePath(pathInfo, windowName);
+
 		// Check if this is a programmatically opened window with a control provider.
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
@@ -103,6 +107,7 @@ public class ViewServlet extends TopLogicServlet {
 			if (controlProvider != null) {
 				ReactContext displayContext = new DefaultReactContext(
 					request.getContextPath(), windowName, sseQueue, windowRegistry);
+				wireRouteManager(displayContext, sseQueue, routePath);
 				ReactControl rootControl = controlProvider.createControl(
 					displayContext, windowEntry.getModel());
 				windowEntry.setRootControl(rootControl);
@@ -125,6 +130,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReactContext displayContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
+		wireRouteManager(displayContext, sseQueue, routePath);
 		ViewContext viewContext = new DefaultViewContext(displayContext);
 
 		IReactControl rootControl = new ReloadableControl(viewPath, viewContext,
@@ -198,6 +204,70 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		return firstSegment;
+	}
+
+	/**
+	 * Extracts the route path from the URL (everything after the window name segment, excluding the
+	 * view file name).
+	 *
+	 * <p>
+	 * For URL {@code /v1a2b3c/property/42}, returns {@code "property/42"}. The window name is
+	 * always the first segment, and the route is everything after it that is not a view file name
+	 * (i.e. does not end with {@code .view.xml}).
+	 * </p>
+	 *
+	 * @return The route path without leading slash, or {@code null} if no route is present.
+	 */
+	private String extractRoutePath(String pathInfo, String windowName) {
+		if (pathInfo == null || windowName == null) {
+			return null;
+		}
+		String normalized = pathInfo.startsWith("/") ? pathInfo.substring(1) : pathInfo;
+		if (!normalized.startsWith(windowName)) {
+			return null;
+		}
+		String afterWindow = normalized.substring(windowName.length());
+		if (afterWindow.startsWith("/")) {
+			afterWindow = afterWindow.substring(1);
+		}
+		if (afterWindow.isEmpty()) {
+			return null;
+		}
+		// If the remainder is a view file name, it is not a route.
+		if (afterWindow.endsWith(".view.xml")) {
+			return null;
+		}
+		return afterWindow;
+	}
+
+	/**
+	 * Wires the {@link RouteManager} from the given context to the SSE queue.
+	 *
+	 * <p>
+	 * Sets the pending URL on the route manager (for deep-link resolution) and installs a URL
+	 * change handler that pushes {@link RouteChangeEvent}s via SSE. Also stores the route manager
+	 * on the SSE queue so that {@link com.top_logic.layout.react.servlet.ReactServlet} can look it
+	 * up for handling {@code navigateToRoute} commands.
+	 * </p>
+	 */
+	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String routePath) {
+		RouteManager routeManager = context.getRouteManager();
+		if (routeManager == null) {
+			return;
+		}
+
+		if (routePath != null && !routePath.isEmpty()) {
+			routeManager.setPendingUrl(routePath);
+		}
+
+		routeManager.setUrlChangeHandler((url, replace) -> {
+			RouteChangeEvent event = RouteChangeEvent.create()
+				.setUrl(url)
+				.setReplace(replace);
+			sseQueue.enqueue(event);
+		});
+
+		sseQueue.setRouteManager(routeManager);
 	}
 
 	/**

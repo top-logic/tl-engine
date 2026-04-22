@@ -61,7 +61,9 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.Property;
+import com.top_logic.layout.react.protocol.RouteVetoEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
@@ -348,6 +350,10 @@ public class ReactServlet extends TopLogicServlet {
 			sendSuccess(response);
 			return;
 		}
+		if ("navigateToRoute".equals(commandName)) {
+			handleNavigateToRoute(request, response, session, windowName, arguments);
+			return;
+		}
 
 		if (controlId == null || commandName == null) {
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing controlId or command.");
@@ -404,6 +410,50 @@ public class ReactServlet extends TopLogicServlet {
 			}
 		} finally {
 			requestLock.unlock();
+		}
+	}
+
+	/**
+	 * Handles the {@code navigateToRoute} global command sent by the client when the browser's
+	 * popstate event fires (e.g. when the user presses Back/Forward).
+	 *
+	 * <p>
+	 * Looks up the {@link RouteManager} from the {@link SSEUpdateQueue} and calls
+	 * {@link RouteManager#navigateToRoute(String)}. If a veto exception is thrown (e.g. dirty
+	 * channel prevents navigation), a {@link RouteVetoEvent} is sent via SSE to restore the
+	 * browser URL.
+	 * </p>
+	 */
+	private void handleNavigateToRoute(HttpServletRequest request, HttpServletResponse response,
+			HttpSession session, String windowName, Map<String, Object> arguments) throws IOException {
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		if (queue == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+
+		RouteManager routeManager = queue.getRouteManager();
+		if (routeManager == null) {
+			Logger.warn("No RouteManager found for window '" + windowName + "'.", ReactServlet.class);
+			sendSuccess(response);
+			return;
+		}
+
+		String url = arguments != null ? (String) arguments.get("url") : null;
+		if (url == null) {
+			url = "";
+		}
+
+		try {
+			routeManager.navigateToRoute(url);
+			sendSuccess(response);
+		} catch (Exception ex) {
+			Logger.info("Route navigation vetoed for url '" + url + "': " + ex.getMessage(),
+				ReactServlet.class);
+			RouteVetoEvent veto = RouteVetoEvent.create()
+				.setCurrentUrl(routeManager.currentUrl());
+			queue.enqueue(veto);
+			sendSuccess(response);
 		}
 	}
 

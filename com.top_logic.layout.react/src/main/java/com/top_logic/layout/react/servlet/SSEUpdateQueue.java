@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -80,6 +81,8 @@ public class SSEUpdateQueue {
 
 	private DialogManager _dialogManager;
 
+	private RouteManager _routeManager;
+
 	/**
 	 * Retrieves or creates the {@link SSEUpdateQueue} for the given session.
 	 *
@@ -129,6 +132,23 @@ public class SSEUpdateQueue {
 	 */
 	public void setDialogManager(DialogManager dialogManager) {
 		_dialogManager = dialogManager;
+	}
+
+	/**
+	 * The {@link RouteManager} for the current window, or {@code null} if none is installed.
+	 */
+	public RouteManager getRouteManager() {
+		return _routeManager;
+	}
+
+	/**
+	 * Sets the {@link RouteManager} for the current window.
+	 *
+	 * @param routeManager
+	 *        The route manager to install.
+	 */
+	public void setRouteManager(RouteManager routeManager) {
+		_routeManager = routeManager;
 	}
 
 	/**

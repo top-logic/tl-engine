@@ -147,8 +147,8 @@ public class ViewElement implements UIElement {
 			context.registerChannel(name, factory.createChannel(context));
 		}
 
-		// Phase 2b: Register param-binding participants after channels are fully set up.
-		List<ParamBindingParticipant> participants = registerParamBindings(context);
+		// Phase 2b: Create param-binding participants (registered on attach, not here).
+		List<ParamBindingParticipant> participants = createParamBindingParticipants(context);
 
 		// Phase 3: Create content controls.
 		IReactControl rootControl;
@@ -161,10 +161,15 @@ public class ViewElement implements UIElement {
 			rootControl = new ReactStackControl(context, children);
 		}
 
-		// Phase 4: Wire cleanup — unregister participants on detach.
+		// Phase 4: Wire attach/detach — register/unregister participants with RouteManager.
 		if (!participants.isEmpty() && rootControl instanceof ReactControl rc) {
 			RouteManager rm = context.getRouteManager();
 			if (rm != null) {
+				rc.addAttachListener(() -> {
+					for (ParamBindingParticipant p : participants) {
+						rm.register(p);
+					}
+				});
 				rc.addDetachListener(() -> {
 					for (ParamBindingParticipant p : participants) {
 						rm.unregister(p);
@@ -177,12 +182,13 @@ public class ViewElement implements UIElement {
 	}
 
 	/**
-	 * Processes {@code <param-bindings>} configuration: resolves each binding's channel and registers
-	 * a {@link ParamBindingParticipant} with the {@link RouteManager}.
+	 * Creates {@link ParamBindingParticipant}s for each configured {@code <param-bindings>} entry.
+	 * The participants are NOT registered with the RouteManager here — registration is handled
+	 * by the attach/detach listeners in Phase 4 to support cached view re-attachment.
 	 *
-	 * @return The list of registered participants (empty if none configured or no RouteManager).
+	 * @return The list of participants (empty if none configured or no RouteManager).
 	 */
-	private List<ParamBindingParticipant> registerParamBindings(ViewContext context) {
+	private List<ParamBindingParticipant> createParamBindingParticipants(ViewContext context) {
 		if (_paramBindings.isEmpty()) {
 			return List.of();
 		}
@@ -197,7 +203,6 @@ public class ViewElement implements UIElement {
 			ViewChannel channel = context.resolveChannel(new ChannelRef(binding.getChannel()));
 			ParamBindingParticipant participant = new ParamBindingParticipant(
 				binding.getRouteParam(), channel);
-			rm.register(participant);
 			result.add(participant);
 		}
 		return result;

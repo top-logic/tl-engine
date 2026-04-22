@@ -3,7 +3,15 @@
 <view>
 	<channels>
 		<channel name="selectedObject"/>
+		<derived-channel name="objectName"
+			inputs="selectedObject"
+			expr="obj -> if($obj != null, $obj.get(`DemoTypes:DemoTypes.A#name`), null)"
+			reverse="name -> if($name != null, singleElement(filter(all(`DemoTypes:A`), o -> $o.get(`DemoTypes:DemoTypes.A#name`) == $name)), null)"
+		/>
 	</channels>
+	<param-bindings>
+		<bind channel="objectName" route-param="objectName"/>
+	</param-bindings>
 	<split-panel
 		orientation="horizontal"
 		resizable="true"

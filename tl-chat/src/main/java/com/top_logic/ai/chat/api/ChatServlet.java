@@ -34,8 +34,6 @@ import com.top_logic.ai.chat.api.messages.PersistedConversationV2;
 import com.top_logic.ai.chat.api.messages.PersistedTurn;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
-import com.top_logic.ai.chat.background.ChatContextAdapter;
-import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
@@ -43,7 +41,6 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.ai.service.agents.background.input.ChatContextInput;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
@@ -89,16 +86,6 @@ public class ChatServlet extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
-
-		// Register chat-specific adapters with BackgroundAgentExecutor
-		BackgroundAgentExecutor.registerInputAdapterFactory(
-			ChatContextInput.class, cfg -> new ChatContextAdapter((ChatContextInput) cfg));
-	}
-
-	@Override
-	public void destroy() {
-		BackgroundAgentExecutor.unregisterInputAdapterFactory(ChatContextInput.class);
-		super.destroy();
 	}
 
 	@Override

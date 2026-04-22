@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.service.approval.ApprovalMode;
@@ -38,8 +37,6 @@ public class TaskProgressTracker {
 		_sessionManager = new ChatSessionManager();
 		_sessionManager.setTracker(this);
 	}
-
-	private final ConcurrentHashMap<String, AtomicBoolean> _backgroundAgentInProgress = new ConcurrentHashMap<>();
 
 	/**
 	 * Active AI processing states keyed by task ID. Supports concurrent processing (e.g. when two
@@ -182,26 +179,6 @@ public class TaskProgressTracker {
 	/** Sets the session-scoped approval mode. */
 	public void setApprovalMode(ApprovalMode mode) {
 		_approvalMode = mode;
-	}
-
-	/**
-	 * Attempts to start a background agent. Returns true if the agent was not already running.
-	 * Uses compare-and-set for thread-safe debouncing per agent.
-	 */
-	public boolean tryStartBackgroundAgent(String agentName) {
-		return _backgroundAgentInProgress
-			.computeIfAbsent(agentName, k -> new AtomicBoolean(false))
-			.compareAndSet(false, true);
-	}
-
-	/**
-	 * Marks a background agent as finished, allowing it to be triggered again.
-	 */
-	public void finishBackgroundAgent(String agentName) {
-		AtomicBoolean flag = _backgroundAgentInProgress.get(agentName);
-		if (flag != null) {
-			flag.set(false);
-		}
 	}
 
 	/**

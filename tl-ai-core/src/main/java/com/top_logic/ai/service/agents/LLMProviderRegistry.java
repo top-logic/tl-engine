@@ -25,7 +25,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
-import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
@@ -60,13 +59,6 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	public interface Config<I extends LLMProviderRegistry> extends ConfiguredManagedClass.Config<I> {
 
 		/**
-		 * Configuration property name for agents.
-		 *
-		 * @see #getAgents()
-		 */
-		String AGENTS = "agents";
-
-		/**
 		 * Configuration property name for providers.
 		 *
 		 * @see #getProviders()
@@ -79,20 +71,6 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		 * @see #getDefaultModel()
 		 */
 		String DEFAULT_MODEL = "default-model";
-
-		/**
-		 * The configured agents, keyed by {@link AgentConfig#getName() agent name}.
-		 *
-		 * <p>
-		 * Legacy property retained for compatibility with callers that still read agent configs
-		 * from the XML configuration. Will be removed once all agent resolution is KB-based.
-		 * </p>
-		 */
-		@Name(AGENTS)
-		@DefaultContainer
-		@EntryTag("agent")
-		@Key(AgentConfig.NAME_ATTRIBUTE)
-		Map<String, AgentConfig> getAgents();
 
 		/**
 		 * The configured LLM providers, keyed by provider name.

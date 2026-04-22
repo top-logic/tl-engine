@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.service.agents;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -13,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
-import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.ai.service.skills.Skill;
 import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
@@ -94,49 +91,6 @@ public class AgentFactory {
 			}
 		}
 		throw new IllegalStateException("No entry point agent defined in the knowledge base.");
-	}
-
-	/**
-	 * Returns the {@link com.top_logic.ai.service.agents.AgentConfig} for the given agent name.
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @return The agent configuration.
-	 * @throws RuntimeException
-	 *         if no agent with the given name is configured.
-	 */
-	public com.top_logic.ai.service.agents.AgentConfig getAgentConfig(String name) {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
-		Map<String, com.top_logic.ai.service.agents.AgentConfig> agents =
-			registry.getConfig().getAgents();
-		com.top_logic.ai.service.agents.AgentConfig config = agents.get(name);
-		if (config == null) {
-			throw new RuntimeException(
-				"No agent configured with name '" + name + "'. Available: " +
-					agents.keySet());
-		}
-		return config;
-	}
-
-	/**
-	 * Returns the names of all background agents matching the given trigger type.
-	 *
-	 * @param triggerType
-	 *        The trigger configuration class to match (e.g. {@code PostTurnTrigger.class}).
-	 * @return A list of agent names with matching background configuration; never null.
-	 */
-	public List<String> getBackgroundAgents(Class<? extends TriggerConfig> triggerType) {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
-		List<String> result = new ArrayList<>();
-		for (Map.Entry<String, com.top_logic.ai.service.agents.AgentConfig> entry
-				: registry.getConfig().getAgents().entrySet()) {
-			if (!(entry.getValue() instanceof BackgroundAgentConfig bgConfig)) continue;
-			TriggerConfig triggerCfg = bgConfig.getTrigger();
-			if (triggerCfg != null && triggerType.isInstance(triggerCfg)) {
-				result.add(entry.getKey());
-			}
-		}
-		return result;
 	}
 
 	/**

@@ -101,19 +101,13 @@ public class BackgroundAgentExecutor {
 	 *
 	 * @param agentName
 	 *        The name of the background agent to execute.
+	 * @param bgConfig
+	 *        The background agent configuration.
 	 * @param context
 	 *        The execution context providing access to chat history and session data.
 	 * @return The {@link ExecutionResult} containing the LLM response and any block reason.
-	 * @throws IllegalArgumentException
-	 *         if the agent has no background configuration.
 	 */
-	public ExecutionResult execute(String agentName, BackgroundContext context) {
-		com.top_logic.ai.service.agents.AgentConfig agentConfig =
-			AgentFactory.getInstance().getAgentConfig(agentName);
-		if (!(agentConfig instanceof BackgroundAgentConfig bgConfig)) {
-			throw new IllegalArgumentException("Agent '" + agentName + "' is not a BackgroundAgentConfig");
-		}
-
+	public ExecutionResult execute(String agentName, BackgroundAgentConfig bgConfig, BackgroundContext context) {
 		// 1. Resolve input: pre-turn always includes the pending user message
 		String input;
 		if (bgConfig.getTrigger() instanceof PreTurnTrigger && context instanceof ChatContext chatContext) {

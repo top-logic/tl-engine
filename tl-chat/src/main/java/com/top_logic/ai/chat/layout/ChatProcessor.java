@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,12 +24,6 @@ import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.service.agents.AgentFactory;
-import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
-import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
-import com.top_logic.ai.service.agents.background.ExecutionResult;
-import com.top_logic.ai.service.agents.background.context.ChatContext;
-import com.top_logic.ai.service.agents.background.trigger.PostTurnTrigger;
-import com.top_logic.ai.service.agents.background.trigger.PreTurnTrigger;
 import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
@@ -133,38 +126,6 @@ public class ChatProcessor {
 
 			AgentFactory agentFactory = AgentFactory.getInstance();
 
-			// Execute pre-turn background agents synchronously with model-level timeout.
-			List<String> preTurnAgents = agentFactory.getBackgroundAgents(
-				PreTurnTrigger.class);
-			for (String preTurnAgent : preTurnAgents) {
-				BackgroundAgentConfig bgConfig =
-					(BackgroundAgentConfig) agentFactory.getAgentConfig(preTurnAgent);
-				PreTurnTrigger trigger = (PreTurnTrigger) bgConfig.getTrigger();
-				long timeoutMs = trigger.getTimeout();
-				PreTurnTrigger.FailPolicy failPolicy = trigger.getFailPolicy();
-
-				Duration timeoutOverride = timeoutMs > 0 ? Duration.ofMillis(timeoutMs) : null;
-				BackgroundAgentExecutor bgExecutor =
-					new BackgroundAgentExecutor(timeoutOverride);
-				try {
-					ChatContext bgContext = ChatContext.preTurn(preTurnAgent, trimmed, taskTracker.getChat());
-					ExecutionResult execResult = bgExecutor.execute(preTurnAgent, bgContext);
-					if (execResult.isBlocked()) {
-						state.addPendingMessage(new ChatMessage("System", execResult.blockReason()));
-						return;
-					}
-				} catch (Exception ex) {
-					Logger.error("Pre-turn agent '" + preTurnAgent + "' failed: " + ex.getMessage(),
-						ex, ChatProcessor.class);
-					if (failPolicy == PreTurnTrigger.FailPolicy.CLOSED) {
-						state.addPendingMessage(new ChatMessage("System",
-							"Message blocked: safety check failed for agent '" + preTurnAgent + "'"));
-						return;
-					}
-					// OPEN: continue to Orchestrator
-				}
-			}
-
 			// Build user message with content parts (text + attachments)
 			List<ContentPart> contentParts = new ArrayList<>();
 			contentParts.add(new TextContent(trimmed));
@@ -230,9 +191,6 @@ public class ChatProcessor {
 			if (sessionId != null) {
 				persistMessages(taskTracker, sessionId);
 			}
-
-			// Trigger post-turn background agents
-			triggerPostTurnAgents(taskTracker, trimmed, result);
 
 		} catch (Exception ex) {
 			throw ex;
@@ -387,49 +345,6 @@ public class ChatProcessor {
 			tracker.getSessionManager().persistActiveSession();
 		} catch (Exception ex) {
 			Logger.error("Failed to persist chat messages: " + ex.getMessage(), ex, ChatProcessor.class);
-		}
-	}
-
-	/**
-	 * Triggers all post-turn background agents to evaluate the completed agent turn.
-	 *
-	 * <p>
-	 * Uses {@link TaskProgressTracker#tryStartBackgroundAgent(String)} for per-agent debounce.
-	 * Each agent runs on {@link #BACKGROUND_EXECUTOR} as a fire-and-forget task.
-	 * </p>
-	 */
-	static void triggerPostTurnAgents(TaskProgressTracker taskTracker, String userMessage,
-			String agentResponse) {
-		AgentFactory agentFactory = AgentFactory.getInstance();
-
-		List<String> postTurnAgents = agentFactory.getBackgroundAgents(
-			PostTurnTrigger.class);
-
-		Chat capturedChat = taskTracker.getChat();
-		BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor();
-
-		for (String agentName : postTurnAgents) {
-			if (!taskTracker.tryStartBackgroundAgent(agentName)) {
-				continue; // debounce: already running
-			}
-
-			String name = agentName; // effectively final for lambda
-			BACKGROUND_EXECUTOR.submit(() -> {
-				try {
-					ChatContext context = ChatContext.lastTurn(name,
-						userMessage, agentResponse, capturedChat);
-					ExecutionResult execResult = bgExecutor.execute(name, context);
-					if (execResult.isBlocked()) {
-						// Post-turn block: add system message with block reason
-						capturedChat.addMessage(new ChatMessage("System", execResult.blockReason()));
-					}
-				} catch (Exception ex) {
-					Logger.error("Background agent '" + name + "' failed: " + ex.getMessage(),
-						ex, ChatProcessor.class);
-				} finally {
-					taskTracker.finishBackgroundAgent(name);
-				}
-			});
 		}
 	}
 

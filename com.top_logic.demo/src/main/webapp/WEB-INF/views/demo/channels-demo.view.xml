@@ -6,7 +6,7 @@
 		<derived-channel name="companyId"
 			inputs="selectedCompany"
 			expr="c -> if($c != null, $c.get(`Contacts:Contact.all#name`), null)"
-			reverse="id -> if($id != null, singleton(filter(all(`Contacts:CompanyContact`), c -> $c.get(`Contacts:Contact.all#name`) == $id)), null)"
+			reverse="id -> if($id != null, singleElement(filter(all(`Contacts:CompanyContact`), c -> $c.get(`Contacts:Contact.all#name`) == $id)), null)"
 		/>
 	</channels>
 	<param-bindings>

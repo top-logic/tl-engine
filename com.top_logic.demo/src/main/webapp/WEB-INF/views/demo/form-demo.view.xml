@@ -7,7 +7,15 @@
 			expr="person -> $person.get(`tl.accounts:Person#contact`)"
 			inputs="selectedPerson"
 		/>
+		<derived-channel name="personName"
+			inputs="selectedPerson"
+			expr="person -> if($person != null, $person.get(`tl.accounts:Person#name`), null)"
+			reverse="name -> if($name != null, singleElement(filter(all(`tl.accounts:Person`), p -> $p.get(`tl.accounts:Person#name`) == $name)), null)"
+		/>
 	</channels>
+	<param-bindings>
+		<bind channel="personName" route-param="personName"/>
+	</param-bindings>
 	<split-panel
 		orientation="horizontal"
 		resizable="true"

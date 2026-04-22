@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.routing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -177,6 +178,31 @@ public final class RoutePattern {
 		return _itemId;
 	}
 
+	/**
+	 * Whether this pattern is a wildcard ({@code /*}) that matches any path.
+	 */
+	public boolean isWildcard() {
+		return _wildcard;
+	}
+
+	/**
+	 * The names of the parameter placeholders in this pattern, in order.
+	 *
+	 * <p>
+	 * For a pattern like {@code /property/:estateId}, this returns {@code ["estateId"]}. For
+	 * patterns without parameters (static or wildcard), the result is empty.
+	 * </p>
+	 */
+	public List<String> paramNames() {
+		List<String> names = new ArrayList<>();
+		for (String segment : _segments) {
+			if (segment.charAt(0) == PARAM_PREFIX) {
+				names.add(segment.substring(1));
+			}
+		}
+		return Collections.unmodifiableList(names);
+	}
+
 	@Override
 	public String toString() {
 		return _patternString;
@@ -192,10 +218,16 @@ public final class RoutePattern {
 		while (start < len) {
 			int slash = path.indexOf('/', start);
 			if (slash < 0) {
-				result.add(path.substring(start));
+				String segment = path.substring(start);
+				if (!segment.isEmpty()) {
+					result.add(segment);
+				}
 				break;
 			}
-			result.add(path.substring(start, slash));
+			String segment = path.substring(start, slash);
+			if (!segment.isEmpty()) {
+				result.add(segment);
+			}
 			start = slash + 1;
 		}
 		return result;

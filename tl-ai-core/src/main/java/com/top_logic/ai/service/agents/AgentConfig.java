@@ -81,7 +81,6 @@ import com.top_logic.model.annotate.LabelPosition;
 	AgentConfig.TIMEOUT_SECONDS,
 	AgentConfig.MAX_RETRIES,
 	AgentConfig.TOOLS,
-	AgentConfig.SKILLS,
 })
 public interface AgentConfig extends NamedConfigMandatory {
 
@@ -144,9 +143,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 
 	/** @see #getTools() */
 	String TOOLS = "tools";
-
-	/** @see #getSkills() */
-	String SKILLS = "skills";
 
 	/** @see #isThinkingCapable() */
 	String IS_THINKING_CAPABLE = "is-thinking-capable";
@@ -496,19 +492,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 	@Options(fun = AllToolNames.class)
 	List<String> getTools();
 
-	/**
-	 * Comma-separated list of skill IDs available to this agent.
-	 *
-	 * <p>
-	 * Skills are referenced by their registered name in the {@link AgentRegistry} configuration.
-	 * </p>
-	 * 
-	 */
-	@Name(SKILLS)
-	@Format(CommaSeparatedStrings.class)
-	@Options(fun = AllSkillNames.class)
-	List<String> getSkills();
-
 	// --- Option provider functions ---
 
 	/**
@@ -548,21 +531,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 				return Collections.emptyList();
 			}
 			return new ArrayList<>(registry.getModelNames());
-		}
-	}
-
-	/**
-	 * Provides all skill names from the {@link AgentRegistry}'s configuration as selection options.
-	 */
-	class AllSkillNames extends Function0<List<String>> {
-
-		@Override
-		public List<String> apply() {
-			AgentRegistry registry = AgentRegistry.getInstance();
-			if (registry == null) {
-				return Collections.emptyList();
-			}
-			return new ArrayList<>(registry.getConfig().getSkills().keySet());
 		}
 	}
 

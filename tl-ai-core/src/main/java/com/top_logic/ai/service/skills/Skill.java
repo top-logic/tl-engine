@@ -10,20 +10,17 @@ package com.top_logic.ai.service.skills;
  * {@link SkillTool}.
  *
  * <p>
- * Skills are loaded from classpath resource files ({@code .md}) with optional YAML frontmatter for
- * metadata, and managed by {@link SkillRegistry}. Agents discover available skills via a catalog in
- * their system prompt and load them at runtime by calling {@code loadSkill(id)}.
+ * Skills are stored in the knowledge base. Agents discover available skills via a catalog in their
+ * system prompt and load them at runtime by calling {@code loadSkill(id)}.
  * </p>
  *
  * @param id
- *        Unique skill identifier derived from the resource path (e.g.
- *        {@code "shared/prompting-ModelExplorer"}). Used by the agent to call
- *        {@code loadSkill(id)}.
+ *        Unique skill identifier. Used by the agent to call {@code loadSkill(id)}.
  * @param description
- *        Human-readable description from YAML frontmatter. Defaults to the id if not specified.
+ *        Human-readable description shown in the system prompt catalog.
  * @param content
- *        The actual prompt text (frontmatter stripped).
+ *        The actual prompt text.
  */
 public record Skill(String id, String description, String content) {
-	// No mode distinction — all skills are loaded on demand via loadSkill().
+	// Immutable value object — no additional methods needed.
 }

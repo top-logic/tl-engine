@@ -5,76 +5,50 @@
  */
 package com.top_logic.ai.service.skills;
 
-import java.util.List;
+import java.util.Map;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
- * Tool that allows agents to discover and load skills at runtime.
+ * Tool that allows agents to load skills at runtime.
  *
  * <p>
- * Each instance is scoped to a specific agent name, exposing only the skills registered for that
- * agent.
+ * Each instance is scoped to a specific agent's skill set. The agent sees a catalog of skill names
+ * and descriptions in its system prompt and calls {@code loadSkill} to retrieve the full content.
  * </p>
  */
 public class SkillTool {
 
-	private final SkillRegistry _registry;
-
-	private final String _agentName;
+	private final Map<String, Skill> _skills;
 
 	/**
-	 * Creates a skill tool scoped to the given agent name.
+	 * Creates a skill tool with the given skills.
 	 *
-	 * @param registry
-	 *        The skill registry.
-	 * @param agentName
-	 *        The agent name as declared in the agent configuration.
+	 * @param skills
+	 *        Map of skill id to {@link Skill}, representing all skills available to this agent.
 	 */
-	public SkillTool(SkillRegistry registry, String agentName) {
-		_registry = registry;
-		_agentName = agentName;
-	}
-
-	/**
-	 * Lists all skills available for this agent.
-	 *
-	 * <p>
-	 * This method is used internally by the system prompt builder to generate the skill catalog. It
-	 * is not exposed as a tool because the catalog is already present in the system prompt.
-	 * </p>
-	 *
-	 * @return Formatted skill catalog with names and descriptions.
-	 */
-	public String listAvailableSkills() {
-		List<Skill> skills = _registry.getSkillsFor(_agentName);
-		if (skills.isEmpty()) {
-			return "No skills available for this agent.";
-		}
-		StringBuilder sb = new StringBuilder();
-		sb.append("Available skills (use loadSkill with the skill id to load one):\n");
-		for (Skill skill : skills) {
-			sb.append("- `").append(skill.id()).append("`: ").append(skill.description()).append("\n");
-		}
-		return sb.toString();
+	public SkillTool(Map<String, Skill> skills) {
+		_skills = skills;
 	}
 
 	/**
 	 * Loads a skill by its id, returning its full content.
 	 *
 	 * @param skillId
-	 *        The skill id from the catalog (e.g. {@code "shared/prompting-ModelExplorer"}).
+	 *        The skill id from the catalog.
 	 * @return The full skill content, or an error message if not available.
 	 */
-	@ToolMethod(description = "Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.")
-	public String loadSkill(@P("Skill id from the catalog, e.g. 'shared/prompting-ModelExplorer'") String skillId) {
-		List<Skill> skills = _registry.getSkillsFor(_agentName);
-		for (Skill skill : skills) {
-			if (skill.id().equals(skillId)) {
-				return skill.content();
-			}
+	@ToolMethod(
+		description = "Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.",
+		mode = ToolMode.READ,
+		concurrencySafe = true)
+	public String loadSkill(@P("Skill id from the catalog") String skillId) {
+		Skill skill = _skills.get(skillId);
+		if (skill == null) {
+			return "Skill '" + skillId + "' is not available for this agent. Available: " + _skills.keySet();
 		}
-		return "Skill '" + skillId + "' is not available for this agent.";
+		return skill.content();
 	}
 }

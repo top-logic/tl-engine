@@ -7,10 +7,14 @@ package com.top_logic.ai.service.agents;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.ai.service.skills.Skill;
+import com.top_logic.ai.service.skills.SkillTool;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
+import com.top_logic.tl.ai.core.tool.AnnotatedTools;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentConfig;
@@ -36,6 +40,12 @@ import com.top_logic.tl.ai.core.tool.Tool;
 public class AgentFactory {
 
 	private static final AgentFactory INSTANCE = new AgentFactory();
+
+	/**
+	 * Placeholder marker in system prompts for the skill catalog. When present, the catalog replaces
+	 * this marker. Otherwise, the catalog is appended at the end.
+	 */
+	static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";
 
 	/** */
 	public static AgentFactory getInstance() {
@@ -159,19 +169,25 @@ public class AgentFactory {
 
 		@SuppressWarnings("unchecked")
 		Collection<String> toolNames = (Collection<String>) agent.tValueByName("tools");
-		if (toolNames == null || toolNames.isEmpty()) {
-			return registry.freeze();
+		if (toolNames != null && !toolNames.isEmpty()) {
+			ToolRegistry serviceRegistry = ToolRegistry.getInstance();
+
+			for (String toolName : toolNames) {
+				Tool tool = serviceRegistry.getTool(toolName);
+				if (tool == null) {
+					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
+					continue;
+				}
+				registry.register(tool);
+			}
 		}
 
-		ToolRegistry serviceRegistry = ToolRegistry.getInstance();
-
-		for (String toolName : toolNames) {
-			Tool tool = serviceRegistry.getTool(toolName);
-			if (tool == null) {
-				Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
-				continue;
+		// Inject skill tool if the agent has skills
+		SkillTool skillTool = buildSkillTool(agent);
+		if (skillTool != null) {
+			for (Tool tool : AnnotatedTools.from(skillTool)) {
+				registry.register(tool);
 			}
-			registry.register(tool);
 		}
 
 		// Inject delegation tools from the agent's delegations reference
@@ -194,37 +210,59 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Reads skill references from the agent and injects their content into the system prompt.
+	 * Builds a {@link SkillTool} for the agent's KB skills, or {@code null} if the agent has no
+	 * skills.
+	 */
+	private SkillTool buildSkillTool(TLObject agent) {
+		@SuppressWarnings("unchecked")
+		Set<? extends TLObject> skills = (Set<? extends TLObject>) agent.tValueByName("skills");
+		if (skills == null || skills.isEmpty()) {
+			return null;
+		}
+
+		Map<String, Skill> skillMap = new LinkedHashMap<>();
+		for (TLObject skill : skills) {
+			String name = (String) skill.tValueByName("name");
+			String description = (String) skill.tValueByName("description");
+			String content = (String) skill.tValueByName("content");
+			if (name != null && content != null) {
+				skillMap.put(name, new Skill(name, description, content));
+			}
+		}
+		return skillMap.isEmpty() ? null : new SkillTool(skillMap);
+	}
+
+	/**
+	 * Reads skill references from the agent and injects a catalog of available skill names and
+	 * descriptions into the system prompt. Full skill content is loaded on demand via
+	 * {@link SkillTool}.
 	 */
 	private String injectSkills(TLObject agent, String systemPrompt) {
 		@SuppressWarnings("unchecked")
 		Set<? extends TLObject> skills = (Set<? extends TLObject>) agent.tValueByName("skills");
+		String base = systemPrompt != null ? systemPrompt : "";
+
 		if (skills == null || skills.isEmpty()) {
-			return systemPrompt != null ? systemPrompt : "";
+			// Remove placeholder if present, even when there are no skills.
+			return base.replace(SKILLS_PLACEHOLDER, "");
 		}
 
-		StringBuilder skillSection = new StringBuilder();
-		skillSection.append("\n\n### Available Skills\n\n");
+		StringBuilder catalog = new StringBuilder();
+		catalog.append("### Available Skills\n\n");
+		catalog.append("You have specialized skills. ");
+		catalog.append("Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
 
 		for (TLObject skill : skills) {
 			String skillName = (String) skill.tValueByName("name");
 			String skillDescription = (String) skill.tValueByName("description");
-			String skillContent = (String) skill.tValueByName("content");
-
 			if (skillName != null) {
-				skillSection.append("#### ").append(skillName);
-				if (skillDescription != null) {
-					skillSection.append(" — ").append(skillDescription);
-				}
-				skillSection.append("\n\n");
-				if (skillContent != null) {
-					skillSection.append(skillContent).append("\n\n");
-				}
+				catalog.append("- `").append(skillName).append("`: ");
+				catalog.append(skillDescription != null ? skillDescription : "No description");
+				catalog.append("\n");
 			}
 		}
 
-		String base = systemPrompt != null ? systemPrompt : "";
-		return base + skillSection;
+		return AgentRegistry.replacePlaceholderOrAppend(base, SKILLS_PLACEHOLDER, catalog.toString());
 	}
 
 	/**

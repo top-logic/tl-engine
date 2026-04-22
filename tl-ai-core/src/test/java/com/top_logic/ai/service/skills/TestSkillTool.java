@@ -5,49 +5,41 @@
  */
 package com.top_logic.ai.service.skills;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
+/** */
 public class TestSkillTool extends TestCase {
 
-	private SkillRegistry _registry;
+	private SkillTool _tool;
 
 	@Override
 	protected void setUp() {
-		_registry = new SkillRegistry();
-		_registry.registerAgentSkills("test-agent",
-			List.of("test/frontmatter-skill", "test/sample-skill"));
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		skills.put("test/frontmatter-skill",
+			new Skill("test/frontmatter-skill", "A test skill with frontmatter", "FRONTMATTER RULE content"));
+		skills.put("test/sample-skill",
+			new Skill("test/sample-skill", "test/sample-skill", "SAMPLE RULE content"));
+		_tool = new SkillTool(skills);
 	}
 
-	public void testListAvailableSkills() {
-		SkillTool tool = new SkillTool(_registry, "test-agent");
-		String result = tool.listAvailableSkills();
-		assertTrue("Should list frontmatter skill", result.contains("test/frontmatter-skill"));
-		assertTrue("Should include description", result.contains("A test skill with frontmatter"));
-		assertTrue("Should list sample skill", result.contains("test/sample-skill"));
-	}
-
+	/** */
 	public void testLoadSkillReturnsContent() {
-		SkillTool tool = new SkillTool(_registry, "test-agent");
-		String result = tool.loadSkill("test/frontmatter-skill");
+		String result = _tool.loadSkill("test/frontmatter-skill");
 		assertTrue("Should contain skill content", result.contains("FRONTMATTER RULE"));
-		assertFalse("Should NOT contain frontmatter", result.contains("description:"));
 	}
 
+	/** */
 	public void testLoadSkillRejectsUnregisteredSkill() {
-		SkillTool tool = new SkillTool(_registry, "test-agent");
-		String result = tool.loadSkill("nonexistent/skill");
+		String result = _tool.loadSkill("nonexistent/skill");
 		assertTrue("Should return error message", result.contains("not available"));
 	}
 
-	public void testListAvailableSkillsEmptyWhenNoneRegistered() {
-		SkillRegistry registry = new SkillRegistry();
-		registry.registerAgentSkills("empty-agent", Collections.emptyList());
-		SkillTool tool = new SkillTool(registry, "empty-agent");
-		String result = tool.listAvailableSkills();
-		assertTrue("Should indicate no skills available",
-			result.contains("No on-demand skills"));
+	/** */
+	public void testLoadSkillListsAvailableOnError() {
+		String result = _tool.loadSkill("nonexistent/skill");
+		assertTrue("Should list available skills", result.contains("test/frontmatter-skill"));
 	}
 }

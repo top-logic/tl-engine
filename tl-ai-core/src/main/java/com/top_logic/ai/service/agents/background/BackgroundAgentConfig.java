@@ -66,7 +66,6 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 	AgentConfig.TIMEOUT_SECONDS,
 	AgentConfig.MAX_RETRIES,
 	AgentConfig.TOOLS,
-	AgentConfig.SKILLS,
 })
 public interface BackgroundAgentConfig extends AgentConfig {
 

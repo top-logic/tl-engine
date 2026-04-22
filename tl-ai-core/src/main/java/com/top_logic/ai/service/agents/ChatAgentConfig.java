@@ -47,7 +47,6 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 	AgentConfig.MAX_RETRIES,
 	AgentConfig.TOOLS,
 	ChatAgentConfig.DELEGATIONS,
-	AgentConfig.SKILLS,
 })
 public interface ChatAgentConfig extends AgentConfig {
 

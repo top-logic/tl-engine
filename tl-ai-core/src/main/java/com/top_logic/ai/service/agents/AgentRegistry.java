@@ -22,7 +22,6 @@ import de.haumacher.msgbuf.json.JsonReader;
 
 import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
-import com.top_logic.ai.service.skills.SkillConfig;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -55,12 +54,12 @@ import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 
 /**
- * Registry of runtime-configurable agents, skills, and LLM provider connections.
+ * Registry of runtime-configurable agents and LLM provider connections.
  *
  * <p>
  * Each agent is declared in XML via {@link AgentConfig} and holds its LLM model name, optional
- * thinking parameters, system prompt, tools, and skills. Skills are declared via
- * {@link SkillConfig}. LLM provider connections are configured via {@link ProviderConfig}.
+ * thinking parameters, system prompt, and tools. LLM provider connections are configured via
+ * {@link ProviderConfig}.
  * </p>
  *
  * <p>
@@ -70,7 +69,6 @@ import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
  * </p>
  *
  * @see AgentConfig
- * @see SkillConfig
  * @see ProviderConfig
  * @see AgentLoop
  */
@@ -102,13 +100,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		String AGENTS = "agents";
 
 		/**
-		 * Configuration property name for skills.
-		 *
-		 * @see #getSkills()
-		 */
-		String SKILLS = "skills";
-
-		/**
 		 * Configuration property name for providers.
 		 *
 		 * @see #getProviders()
@@ -134,19 +125,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		@EntryTag("agent")
 		@Key(AgentConfig.NAME_ATTRIBUTE)
 		Map<String, AgentConfig> getAgents();
-
-		/**
-		 * The configured skills, keyed by {@link SkillConfig#getName() skill name}.
-		 *
-		 * <p>
-		 * Each entry defines a reusable skill with its description and prompt content. Skills
-		 * are referenced by name from {@link AgentConfig#getSkills()}.
-		 * </p>
-		 */
-		@Name(SKILLS)
-		@EntryTag("skill")
-		@Key(SkillConfig.NAME_ATTRIBUTE)
-		Map<String, SkillConfig> getSkills();
 
 		/**
 		 * The configured LLM providers, keyed by provider name.

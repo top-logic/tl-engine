@@ -52,7 +52,7 @@ public interface StackOperations extends BoxOperations {
 		out.beginGroup();
 		out.attachModel(self());
 		for (Box content : self().getContents()) {
-			content.draw(out);
+			out.write(content);
 		}
 		out.endGroup();
 	}

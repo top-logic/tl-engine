@@ -14,11 +14,14 @@ import java.util.UUID;
 import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.service.agents.LLMProviderRegistry;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
+import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -45,11 +48,14 @@ public class ChatSessionManager {
 
 	/**
 	 * Default context window budget for chat session memory. This is a generous default that allows
-	 * the {@link TruncatingStrategy} to keep enough context for multi-turn conversations. The
+	 * the compaction strategy to keep enough context for multi-turn conversations. The
 	 * actual model context window is enforced by the agent loop; this budget only controls how many
 	 * messages the session memory retains.
 	 */
 	private static final int DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000;
+
+	/** Maximum output tokens for conversation summarization. */
+	private static final int SUMMARIZATION_MAX_OUTPUT_TOKENS = 2048;
 
 	private final Object _lock = new Object();
 
@@ -297,10 +303,38 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Creates a default {@link ConversationMemory} with truncating strategy.
+	 * Creates a default {@link ConversationMemory} with summarization strategy.
+	 *
+	 * <p>
+	 * Uses the system's default model from {@link LLMProviderRegistry} for summarization.
+	 * Falls back to truncation if no default model is configured or if the registry is not
+	 * available.
+	 * </p>
 	 */
 	private static ConversationMemory createDefaultMemory() {
-		CompactionStrategy strategy = new TruncatingStrategy();
+		CompactionStrategy strategy = createCompactionStrategy();
 		return ConversationMemory.withDefaults(strategy, DEFAULT_CONTEXT_WINDOW_TOKENS);
+	}
+
+	private static CompactionStrategy createCompactionStrategy() {
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		if (registry == null) {
+			Logger.warn("LLMProviderRegistry not available, falling back to truncation.", ChatSessionManager.class);
+			return new TruncatingStrategy();
+		}
+		String defaultModel = registry.getConfig().getDefaultModel();
+		if (defaultModel == null || defaultModel.isBlank()) {
+			Logger.warn("No default model configured, falling back to truncation.", ChatSessionManager.class);
+			return new TruncatingStrategy();
+		}
+		LLMProvider provider;
+		try {
+			provider = registry.buildProvider(defaultModel);
+		} catch (IllegalStateException ex) {
+			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
+				ChatSessionManager.class);
+			return new TruncatingStrategy();
+		}
+		return new SummarizingStrategy(provider, defaultModel, SUMMARIZATION_MAX_OUTPUT_TOKENS);
 	}
 }

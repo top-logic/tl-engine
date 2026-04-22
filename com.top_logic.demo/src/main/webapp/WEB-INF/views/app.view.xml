@@ -17,6 +17,7 @@
 					</nav-item>
 					<nav-item id="dashboard-layout-demo"
 						icon="bi bi-grid-1x2"
+						route="/dashboard-layout"
 					>
 						<label>
 							<en>Dashboard Layout</en>
@@ -36,6 +37,7 @@
 					</nav-item>
 					<nav-item id="split-demo"
 						icon="bi bi-layout-split"
+						route="/split"
 					>
 						<view-ref view="demo/split-demo.view.xml"/>
 						<label>
@@ -45,6 +47,7 @@
 					</nav-item>
 					<nav-item id="channels-demo"
 						icon="bi bi-table"
+						route="/channels"
 					>
 						<view-ref view="demo/channels-demo.view.xml"/>
 						<label>
@@ -64,6 +67,7 @@
 					</nav-item>
 					<nav-item id="input-controls-demo"
 						icon="bi bi-input-cursor"
+						route="/input-controls"
 					>
 						<view-ref view="demo/input-controls-demo.view.xml"/>
 						<label>
@@ -83,6 +87,7 @@
 					</nav-item>
 					<nav-item id="tlscript-editor-demo"
 						icon="bi bi-code-square"
+						route="/tlscript"
 					>
 						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 						<label>
@@ -92,6 +97,7 @@
 					</nav-item>
 					<nav-item id="config-editor-demo"
 						icon="bi bi-sliders"
+						route="/config-editor"
 					>
 						<view-ref view="demo/config-editor-demo.view.xml"/>
 						<label>
@@ -101,6 +107,7 @@
 					</nav-item>
 					<nav-item id="dialog-demo"
 						icon="bi bi-window-stack"
+						route="/dialogs"
 					>
 						<view-ref view="demo/dialog-demo.view.xml"/>
 						<label>
@@ -110,6 +117,7 @@
 					</nav-item>
 					<nav-item id="context-menu-demo"
 						icon="bi bi-menu-button-wide"
+						route="/context-menu"
 					>
 						<view-ref view="demo/context-menu-demo.view.xml"/>
 						<label>
@@ -119,6 +127,7 @@
 					</nav-item>
 					<nav-item id="error-handling-demo"
 						icon="bi bi-exclamation-triangle"
+						route="/errors"
 					>
 						<view-ref view="demo/error-handling-demo.view.xml"/>
 						<label>
@@ -128,6 +137,7 @@
 					</nav-item>
 					<nav-item id="constraint-test"
 						icon="bi bi-check-circle"
+						route="/constraints"
 					>
 						<view-ref view="demo/constraint-test.view.xml"/>
 						<label>
@@ -137,6 +147,7 @@
 					</nav-item>
 					<nav-item id="flow-diagram-demo"
 						icon="bi bi-diagram-3"
+						route="/flow-diagram"
 					>
 						<view-ref view="demo/flow-diagram-demo.view.xml"/>
 						<label>
@@ -146,6 +157,7 @@
 					</nav-item>
 					<nav-item id="graph-layout-demo"
 						icon="bi bi-diagram-2"
+						route="/graph-layout"
 					>
 						<view-ref view="demo/graph-layout-demo.view.xml"/>
 						<label>
@@ -155,6 +167,7 @@
 					</nav-item>
 					<nav-item id="module-graph-demo"
 						icon="bi bi-bezier2"
+						route="/module-graph"
 					>
 						<view-ref view="demo/module-graph-demo.view.xml"/>
 						<label>
@@ -172,23 +185,16 @@
 						</label>
 					</nav-item>
 					<separator/>
-					<nav-item id="routing-nested"
-						icon="bi bi-signpost"
-						route="/nested"
-					>
-						<view-ref view="demo/routing-nested-demo.view.xml"/>
-						<label>
-							<en>Nested Routing</en>
-							<de>Verschachteltes Routing</de>
-						</label>
-					</nav-item>
+					<!-- Intentionally NOT routed: demonstrates that items
+					     without a route attribute do not produce URL segments
+					     and are not affected by browser back/forward. -->
 					<nav-item id="settings"
 						icon="bi bi-gear"
 					>
 						<view-ref view="demo/settings.view.xml"/>
 						<label>
-							<en>Settings</en>
-							<de>Einstellungen</de>
+							<en>Settings (no routing)</en>
+							<de>Einstellungen (kein Routing)</de>
 						</label>
 					</nav-item>
 				</items>
@@ -234,7 +240,7 @@
 						</label>
 						<tooltip>
 							<en>Open the view designer to edit the current page.</en>
-							<de>Öffnet den View-Designer zur Bearbeitung der aktuellen Seite.</de>
+							<de>Oeffnet den View-Designer zur Bearbeitung der aktuellen Seite.</de>
 						</tooltip>
 					</open-designer>
 				</commands>

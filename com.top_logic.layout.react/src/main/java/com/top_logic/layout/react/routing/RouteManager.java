@@ -35,6 +35,8 @@ public final class RouteManager {
 
 	private RouteUrlChangeHandler _urlChangeHandler;
 
+	private boolean _suppressNotifications;
+
 	/**
 	 * Creates a new {@link RouteManager}.
 	 */
@@ -97,11 +99,20 @@ public final class RouteManager {
 	public void navigateToRoute(String url) {
 		_pendingUrl = url;
 
-		for (RoutingParticipant participant : new ArrayList<>(_participants)) {
-			if (_pendingUrl == null || _pendingUrl.isEmpty()) {
-				break;
+		// Suppress URL change notifications during back/forward navigation.
+		// The browser URL is already correct (changed by popstate); the server
+		// is just syncing its internal state. Sending a RouteChangeEvent would
+		// push a duplicate history entry that cancels the back navigation.
+		_suppressNotifications = true;
+		try {
+			for (RoutingParticipant participant : new ArrayList<>(_participants)) {
+				if (_pendingUrl == null || _pendingUrl.isEmpty()) {
+					break;
+				}
+				tryResolvePending(participant);
 			}
-			tryResolvePending(participant);
+		} finally {
+			_suppressNotifications = false;
 		}
 	}
 
@@ -181,6 +192,9 @@ public final class RouteManager {
 	}
 
 	private void notifyUrlChange(boolean replace) {
+		if (_suppressNotifications) {
+			return;
+		}
 		if (_urlChangeHandler != null) {
 			_urlChangeHandler.onUrlChange(currentUrl(), replace);
 		}

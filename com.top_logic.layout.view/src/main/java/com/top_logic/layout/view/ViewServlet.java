@@ -340,8 +340,10 @@ public class ViewServlet extends TopLogicServlet {
 		out.writeScript("var base = ");
 		out.writeJsString(basePath);
 		out.writeScript(";");
+		out.writeScript("var routePath = location.pathname.substring(base.length);");
+		out.writeScript("if (routePath.charAt(0) !== '/') routePath = '/' + routePath;");
 		out.writeScript("var suffix = location.search + location.hash;");
-		out.writeScript("window.location.replace(base + '/' + encodeURIComponent(wn) + '/' + suffix);");
+		out.writeScript("window.location.replace(base + '/' + encodeURIComponent(wn) + routePath + suffix);");
 		out.writeScript("})();");
 		out.endScript();
 

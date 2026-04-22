@@ -3,7 +3,7 @@
 <view>
 	<tab-bar active-tab="overview">
 		<tabs>
-			<tab id="overview">
+			<tab id="overview" route="/overview">
 				<label>
 					<en>Overview</en>
 					<de>&#xDC;bersicht</de>
@@ -23,7 +23,7 @@
 					</demo-counter>
 				</card>
 			</tab>
-			<tab id="details">
+			<tab id="details" route="/details">
 				<label>
 					<en>Details</en>
 					<de>Details</de>
@@ -43,10 +43,12 @@
 					</button>
 				</card>
 			</tab>
+			<!-- Intentionally NOT routed: demonstrates that tabs without
+			     a route attribute do not produce URL segments. -->
 			<tab id="history">
 				<label>
-					<en>History</en>
-					<de>Verlauf</de>
+					<en>History (no routing)</en>
+					<de>Verlauf (kein Routing)</de>
 				</label>
 				<card>
 					<title>

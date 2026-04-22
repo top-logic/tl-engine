@@ -42,14 +42,14 @@ freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers
 
 /* === Data rows (default rowPadding: 4) === */
 
-r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
-r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
-r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
-r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
-r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
-r_review = reactFlowGanttRow(model: "phase:review", label: reactFlowPadding(reactFlowText("Review"),        all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
-r_launch = reactFlowGanttRow(model: "phase:launch", label: reactFlowPadding(reactFlowText("Launch"),        all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
-r_maint  = reactFlowGanttRow(model: "phase:maint",  label: reactFlowPadding(reactFlowText("Maintenance"),   all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
+r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), borderColor: "#e0e0e0");
+r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), borderColor: "#e0e0e0");
+r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), borderColor: "#e0e0e0");
+r_review = reactFlowGanttRow(model: "phase:review", label: reactFlowPadding(reactFlowText("Review"),        all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+r_launch = reactFlowGanttRow(model: "phase:launch", label: reactFlowPadding(reactFlowText("Launch"),        all: 4), borderColor: "#e0e0e0");
+r_maint  = reactFlowGanttRow(model: "phase:maint",  label: reactFlowPadding(reactFlowText("Maintenance"),   all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
 
 /* === Items === */
 

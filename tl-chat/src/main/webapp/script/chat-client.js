@@ -1719,7 +1719,7 @@
 			Render.updateInputState();
 		},
 
-		async switchTo(sessionId) {
+		async switchTo(sessionId, skipLoad) {
 			if (sessionId === this.currentId) return;
 
 			this._resetState();
@@ -1732,7 +1732,7 @@
 				});
 			}
 
-			if (sessionId) {
+			if (sessionId && !skipLoad) {
 				try {
 					const resp = await fetch(URLS.sessions + '/' + encodeURIComponent(sessionId));
 					const data = await resp.json();
@@ -2431,8 +2431,8 @@
 							this._listEl.appendChild(item);
 						}
 					}
-					// Reuse switchTo — it handles SSE, server-side activation, everything
-					await this.switchTo(data.id);
+					// Skip the GET — session was just created, nothing to load
+					await this.switchTo(data.id, true);
 					Welcome.show();
 				}
 			} catch (e) {

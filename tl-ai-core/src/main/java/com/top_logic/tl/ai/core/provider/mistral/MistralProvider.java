@@ -79,6 +79,13 @@ public class MistralProvider implements LLMProvider {
 		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
 	}
 
+	/**
+	 * Undocumented Mistral API limit: request bodies above ~32 KB cause the connection to hang
+	 * indefinitely with no response. Confirmed via curl — this is a server-side infrastructure
+	 * issue (likely a reverse proxy), not a client bug. Guard with a conservative threshold.
+	 */
+	private static final int MAX_REQUEST_BODY_BYTES = 30_000;
+
 	private static HttpClient defaultHttpClient() {
 		return HttpClient.newBuilder()
 			.connectTimeout(Duration.ofSeconds(30))
@@ -91,6 +98,13 @@ public class MistralProvider implements LLMProvider {
 		Objects.requireNonNull(handler, "Handler must not be null.");
 
 		String body = buildRequestJson(request);
+
+		int bodyBytes = body.getBytes(StandardCharsets.UTF_8).length;
+		if (bodyBytes > MAX_REQUEST_BODY_BYTES) {
+			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 0,
+				"Request body (" + bodyBytes + " bytes) exceeds Mistral's ~32 KB limit. "
+					+ "Reduce the system prompt or number of tools, or use a different provider.");
+		}
 
 		HttpRequest httpRequest = HttpRequest.newBuilder()
 			.uri(URI.create(_baseUrl + "/v1/chat/completions"))
@@ -108,7 +122,6 @@ public class MistralProvider implements LLMProvider {
 			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
 				"Connection failed: " + e.getMessage(), e);
 		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
 			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
 		}
 

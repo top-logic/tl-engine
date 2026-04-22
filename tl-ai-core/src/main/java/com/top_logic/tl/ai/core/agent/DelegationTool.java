@@ -134,11 +134,15 @@ public class DelegationTool implements Tool {
 			if (delegationId != null) {
 				String parentToolCallId = context.toolCallId();
 				childListener = logListener.delegationListener(delegationId, parentToolCallId);
+			} else {
+				Logger.warn("Delegation to " + _targetAgentName
+					+ ": recordDelegationStarted returned null (currentTurn is null?)", DelegationTool.class);
 			}
 		}
 
 		try {
 			AgentLoop targetLoop = _loopFactory.buildAgentLoop(_targetAgentName);
+
 			Conversation conversation = new Conversation();
 			UserMessage userMessage = new UserMessage(
 				UUID.randomUUID().toString(),

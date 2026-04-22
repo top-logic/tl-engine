@@ -415,15 +415,27 @@ public class ChatSSEHandler implements AgentEventListener {
 			innerData = DtoMapper.toJson(ApprovalResolvedEvent.create()
 				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
 				.setOutcome(e.outcome().name()));
+		} else if (child instanceof AgentEvent.RunStarted e) {
+			innerType = "run_started";
+			innerData = DtoMapper.toJson(RunStartedEvent.create()
+				.setRunId(e.runId()).setModel(e.model()));
 		} else if (child instanceof AgentEvent.RunCompleted e) {
 			innerType = "run_completed";
 			innerData = DtoMapper.toJson(RunCompletedEvent.create()
 				.setRunId(e.runId()).setReason(e.reason().name())
 				.setTotalUsage(mapTokenUsage(e.totalUsage())));
+		} else if (child instanceof AgentEvent.TurnStarted e) {
+			innerType = "turn_started";
+			innerData = DtoMapper.toJson(TurnStartedEvent.create()
+				.setTurnNumber(e.turnNumber()));
 		} else if (child instanceof AgentEvent.TurnCompleted e) {
 			innerType = "turn_completed";
 			innerData = DtoMapper.toJson(TurnCompletedEvent.create()
 				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage())));
+		} else if (child instanceof AgentEvent.ProviderError e) {
+			innerType = "provider_error";
+			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
+				.setKind(e.kind()).setErrorMessage(e.message()));
 		} else {
 			return;
 		}

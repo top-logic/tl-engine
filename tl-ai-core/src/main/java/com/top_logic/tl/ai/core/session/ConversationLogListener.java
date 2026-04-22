@@ -449,6 +449,10 @@ public class ConversationLogListener implements AgentEventListener {
 			} else if (event instanceof AgentEvent.ApprovalRequired
 				|| event instanceof AgentEvent.ApprovalResolved) {
 				forwardToParent(event);
+			} else if (event instanceof AgentEvent.RunStarted
+				|| event instanceof AgentEvent.TurnStarted
+				|| event instanceof AgentEvent.ProviderError) {
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.RunCompleted) {
 				flushChildBuffers(dp);
 				forwardToParent(event);

@@ -7,6 +7,14 @@
 				implementation-package="test.com.top_logic.model.search.model.testScriptPathElement.impl"
 				interface-package="test.com.top_logic.model.search.model.testScriptPathElement"
 			/>
+			<singletons>
+				<singleton name="ROOT1"
+					type="Plants"
+				/>
+				<singleton name="ROOT2"
+					type="Plants"
+				/>
+			</singletons>
 		</annotations>
 		<interface name="Named">
 			<attributes>
@@ -43,6 +51,28 @@
 			<generalizations>
 				<generalization type="Named"/>
 			</generalizations>
+		</class>
+		<class name="Plants">
+			<generalizations>
+				<generalization type="Plant"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					override="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<!-- Singletons must be created without additional input. -->
+						<default-value>
+							<string value="Plant collection"/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="plants"
+					multiple="true"
+					type="Plant"
+				/>
+			</attributes>
 		</class>
 		<class name="ZArea">
 			<generalizations>

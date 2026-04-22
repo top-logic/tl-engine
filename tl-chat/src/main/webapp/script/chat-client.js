@@ -1404,7 +1404,6 @@
 						optionsHtml +
 						'<div class="tl-chat-approval-actions">' +
 						'<button class="tl-chat-approval-btn allow tl-chat-submit-btn">Submit</button>' +
-						'<button class="tl-chat-approval-btn deny">Cancel</button>' +
 						'</div>';
 
 					el.querySelector('.tl-chat-submit-btn').addEventListener('click', () => {

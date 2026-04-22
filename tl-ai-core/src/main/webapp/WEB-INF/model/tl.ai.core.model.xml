@@ -83,6 +83,11 @@
 								type="tl.core:Integer"
 							/>
 							<field
+								attribute="maxToolResultChars"
+								fullQualifiedName="tl.ai.core:Agent#maxToolResultChars"
+								type="tl.core:Integer"
+							/>
+							<field
 								attribute="temperature"
 								fullQualifiedName="tl.ai.core:Agent#temperature"
 								type="tl.core:Double"
@@ -143,6 +148,9 @@
 					type="tl.core:Integer"
 				/>
 				<property name="maxRetries"
+					type="tl.core:Integer"
+				/>
+				<property name="maxToolResultChars"
 					type="tl.core:Integer"
 				/>
 				<property name="entryPoint"

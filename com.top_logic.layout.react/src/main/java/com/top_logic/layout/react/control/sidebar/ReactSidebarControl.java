@@ -20,6 +20,11 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
+import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteMatch;
+import com.top_logic.layout.react.routing.RoutePattern;
+import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -50,7 +55,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * mode)</li>
  * </ul>
  */
-public class ReactSidebarControl extends ReactControl {
+public class ReactSidebarControl extends ReactControl implements RoutingParticipant {
 
 	private static final String REACT_MODULE = "TLSidebar";
 
@@ -95,6 +100,8 @@ public class ReactSidebarControl extends ReactControl {
 	private String _activeItemId;
 
 	private boolean _collapsed;
+
+	private final List<RouteChangeListener> _routeChangeListeners = new ArrayList<>();
 
 	/**
 	 * Creates a new {@link ReactSidebarControl}.
@@ -293,6 +300,16 @@ public class ReactSidebarControl extends ReactControl {
 		if (isAttached()) {
 			content.attach();
 		}
+
+		// After successful selection, notify route listeners.
+		NavigationItem newItem = findNavItem(_activeItemId, _items);
+		if (newItem != null && newItem.getRoute() != null) {
+			RoutePattern pattern = RoutePattern.compile(newItem.getRoute(), newItem.getId());
+			RouteSegment segment = new RouteSegment(pattern.produce(Map.of()));
+			for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
+				listener.onRouteChange(this, segment);
+			}
+		}
 	}
 
 	/**
@@ -413,6 +430,54 @@ public class ReactSidebarControl extends ReactControl {
 			}
 		}
 		return null;
+	}
+
+	// -- RoutingParticipant --
+
+	@Override
+	public List<RoutePattern> declaredRoutes() {
+		List<RoutePattern> routes = new ArrayList<>();
+		collectRoutes(routes, _items);
+		return routes;
+	}
+
+	private void collectRoutes(List<RoutePattern> routes, List<SidebarItem> items) {
+		for (SidebarItem item : items) {
+			if (item instanceof NavigationItem) {
+				String route = ((NavigationItem) item).getRoute();
+				if (route != null) {
+					routes.add(RoutePattern.compile(route, item.getId()));
+				}
+			}
+			if (item instanceof GroupItem) {
+				collectRoutes(routes, ((GroupItem) item).getChildren());
+			}
+		}
+	}
+
+	@Override
+	public void activateRoute(RouteMatch match) {
+		selectItem(match.itemId());
+	}
+
+	@Override
+	public RouteSegment activeRouteSegment() {
+		NavigationItem activeItem = findNavItem(_activeItemId, _items);
+		if (activeItem != null && activeItem.getRoute() != null) {
+			RoutePattern pattern = RoutePattern.compile(activeItem.getRoute(), activeItem.getId());
+			return new RouteSegment(pattern.produce(Map.of()));
+		}
+		return null;
+	}
+
+	@Override
+	public void addRouteChangeListener(RouteChangeListener listener) {
+		_routeChangeListeners.add(listener);
+	}
+
+	@Override
+	public void removeRouteChangeListener(RouteChangeListener listener) {
+		_routeChangeListeners.remove(listener);
 	}
 
 	// -- Commands --

@@ -19,6 +19,7 @@ interface SidebarItemBase {
 interface NavItem extends SidebarItemBase {
   type: 'nav';
   badge?: string;
+  hidden?: boolean;
 }
 
 interface CommandItemInfo extends SidebarItemBase {
@@ -58,6 +59,7 @@ function collectFocusable(
   const result: FocusableEntry[] = [];
   for (const item of items) {
     if (item.type === 'nav') {
+      if ((item as NavItem).hidden) continue;
       result.push({ id: item.id, type: 'nav', groupId: parentGroupId });
     } else if (item.type === 'command') {
       result.push({ id: item.id, type: 'command', groupId: parentGroupId });
@@ -204,6 +206,7 @@ const SidebarGroupFlyout: React.FC<{
     <div className="tlSidebar__flyout" ref={flyoutRef} role="menu" style={style}>
       <div className="tlSidebar__flyoutHeader">{item.label}</div>
       {item.children.map(child => {
+        if (child.type === 'nav' && (child as NavItem).hidden) return null;
         if (child.type === 'nav' || child.type === 'command') {
           const isActive = child.type === 'nav' && child.id === activeItemId;
           return (
@@ -363,6 +366,7 @@ const SidebarItemRenderer: React.FC<{
        flyoutGroupId, onOpenFlyout, onCloseFlyout }) => {
   switch (item.type) {
     case 'nav':
+      if ((item as NavItem).hidden) return null;
       return <SidebarNavItem item={item} active={item.id === activeItemId}
         collapsed={collapsed} onSelect={onSelect}
         tabIndex={focusedId === item.id ? 0 : -1}

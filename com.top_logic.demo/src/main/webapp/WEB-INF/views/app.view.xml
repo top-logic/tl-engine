@@ -7,6 +7,7 @@
 				<items>
 					<nav-item id="dashboard"
 						icon="bi bi-speedometer2"
+						route="/dashboard"
 					>
 						<view-ref view="demo/dashboard.view.xml"/>
 						<label>
@@ -25,6 +26,7 @@
 					</nav-item>
 					<nav-item id="tabs-demo"
 						icon="bi bi-layout-text-window-reverse"
+						route="/tabs"
 					>
 						<view-ref view="demo/tabs-demo.view.xml"/>
 						<label>
@@ -52,6 +54,7 @@
 					</nav-item>
 					<nav-item id="form-demo"
 						icon="bi bi-pencil-square"
+						route="/forms"
 					>
 						<view-ref view="demo/form-demo.view.xml"/>
 						<label>
@@ -70,6 +73,7 @@
 					</nav-item>
 					<nav-item id="chart-demo"
 						icon="bi bi-bar-chart-line"
+						route="/charts"
 					>
 						<view-ref view="demo/chart-demo.view.xml"/>
 						<label>
@@ -168,6 +172,16 @@
 						</label>
 					</nav-item>
 					<separator/>
+					<nav-item id="routing-nested"
+						icon="bi bi-signpost"
+						route="/nested"
+					>
+						<view-ref view="demo/routing-nested-demo.view.xml"/>
+						<label>
+							<en>Nested Routing</en>
+							<de>Verschachteltes Routing</de>
+						</label>
+					</nav-item>
 					<nav-item id="settings"
 						icon="bi bi-gear"
 					>

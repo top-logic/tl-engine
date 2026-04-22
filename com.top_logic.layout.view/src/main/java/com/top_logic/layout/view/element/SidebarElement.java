@@ -118,6 +118,9 @@ public class SidebarElement implements UIElement {
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
+		/** Configuration name for {@link #getRoute()}. */
+		String ROUTE = "route";
+
 		/**
 		 * The unique item identifier.
 		 */
@@ -135,6 +138,17 @@ public class SidebarElement implements UIElement {
 		 */
 		@Name(ICON)
 		String getIcon();
+
+		/**
+		 * The route pattern for this item, or empty if this item is not route-forming.
+		 *
+		 * <p>
+		 * When set, selecting this sidebar item will update the browser URL to include the given
+		 * route segment (e.g. "/dashboard").
+		 * </p>
+		 */
+		@Name(ROUTE)
+		String getRoute();
 
 		/**
 		 * The content elements shown when this item is selected.
@@ -167,6 +181,8 @@ public class SidebarElement implements UIElement {
 
 		private final String _icon;
 
+		private final String _route;
+
 		private final List<UIElement> _children;
 
 		/**
@@ -177,6 +193,7 @@ public class SidebarElement implements UIElement {
 			_id = config.getId();
 			_label = config.getLabel();
 			_icon = config.getIcon();
+			_route = config.getRoute();
 			_children = config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
@@ -186,8 +203,12 @@ public class SidebarElement implements UIElement {
 		public SidebarItem createSidebarItem(ViewContext context) {
 			String label = Resources.getInstance().getString(_label);
 			DirtyChannel dirtyChannel = new DirtyChannel();
-			return new NavigationItem(_id, label, _icon,
+			NavigationItem item = new NavigationItem(_id, label, _icon,
 				() -> createContent(_children, context, dirtyChannel), dirtyChannel);
+			if (_route != null && !_route.isEmpty()) {
+				item.withRoute(_route);
+			}
+			return item;
 		}
 	}
 

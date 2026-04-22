@@ -84,6 +84,9 @@ public class TabBarElement implements UIElement {
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
+		/** Configuration name for {@link #getRoute()}. */
+		String ROUTE = "route";
+
 		/**
 		 * The unique tab identifier.
 		 */
@@ -95,6 +98,17 @@ public class TabBarElement implements UIElement {
 		 */
 		@Name(LABEL)
 		ResKey getLabel();
+
+		/**
+		 * The route pattern for this tab, or empty if this tab is not route-forming.
+		 *
+		 * <p>
+		 * When set, selecting this tab will update the browser URL to include the given route
+		 * segment (e.g. "/featured").
+		 * </p>
+		 */
+		@Name(ROUTE)
+		String getRoute();
 
 		/**
 		 * The content elements shown when this tab is active.
@@ -120,7 +134,8 @@ public class TabBarElement implements UIElement {
 				.map(context::getInstance)
 				.collect(Collectors.toList());
 			String label = Resources.getInstance().getString(tabConfig.getLabel());
-			_tabs.add(new TabEntry(tabConfig.getId(), label, children));
+			String route = tabConfig.getRoute();
+			_tabs.add(new TabEntry(tabConfig.getId(), label, route, children));
 		}
 		_activeTab = config.getActiveTab();
 	}
@@ -130,8 +145,12 @@ public class TabBarElement implements UIElement {
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
 			DirtyChannel dirtyChannel = new DirtyChannel();
-			tabDefs.add(new TabDefinition(entry._id, entry._label,
-				() -> createContent(entry._children, context, dirtyChannel), dirtyChannel));
+			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
+				() -> createContent(entry._children, context, dirtyChannel), dirtyChannel);
+			if (entry._route != null && !entry._route.isEmpty()) {
+				tabDef.withRoute(entry._route);
+			}
+			tabDefs.add(tabDef);
 		}
 		String activeTab = _activeTab != null && !_activeTab.isEmpty() ? _activeTab : null;
 		return new ReactTabBarControl(context, null, tabDefs, activeTab);
@@ -151,6 +170,6 @@ public class TabBarElement implements UIElement {
 		return new ReactStackControl(tabContext, children);
 	}
 
-	private record TabEntry(String _id, String _label, List<UIElement> _children) {
+	private record TabEntry(String _id, String _label, String _route, List<UIElement> _children) {
 	}
 }

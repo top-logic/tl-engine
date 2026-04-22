@@ -104,13 +104,12 @@ public class TabBarElement implements UIElement {
 		 *
 		 * <p>
 		 * By default (not set), the tab's {@link #getId() ID} is used as the route
-		 * segment. Set to an empty string ({@code route=""}) to explicitly opt out of
-		 * routing. Set to a custom value to use a route segment different from the ID.
+		 * segment. Set to {@code "none"} to explicitly opt out of routing. Set to a
+		 * custom value to use a route segment different from the ID.
 		 * Routes are always relative (no leading slash).
 		 * </p>
 		 */
 		@Name(ROUTE)
-		@com.top_logic.basic.config.annotation.Nullable
 		String getRoute();
 
 		/**

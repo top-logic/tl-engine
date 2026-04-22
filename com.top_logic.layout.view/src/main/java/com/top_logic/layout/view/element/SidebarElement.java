@@ -144,16 +144,12 @@ public class SidebarElement implements UIElement {
 		 *
 		 * <p>
 		 * By default (not set), the item's {@link #getId() ID} is used as the route
-		 * segment. Set to an empty string ({@code route=""}) to explicitly opt out of
-		 * routing. Set to a custom value to use a route segment different from the ID.
-		 * </p>
-		 *
-		 * <p>
+		 * segment. Set to {@code "none"} to explicitly opt out of routing. Set to a
+		 * custom value to use a route segment different from the ID.
 		 * Routes are always relative (no leading slash).
 		 * </p>
 		 */
 		@Name(ROUTE)
-		@com.top_logic.basic.config.annotation.Nullable
 		String getRoute();
 
 		/**
@@ -234,12 +230,30 @@ public class SidebarElement implements UIElement {
 	 *        The element's ID (used as fallback).
 	 * @return The effective route segment, or {@code null} if not routed.
 	 */
+	/** Value for the {@code route} attribute that explicitly disables routing. */
+	public static final String NO_ROUTE = "none";
+
+	/**
+	 * Resolves the effective route segment for a navigation element.
+	 *
+	 * <p>
+	 * Convention: empty string (not set in XML) means use the element's ID as route.
+	 * {@code "none"} means explicitly not routed. Any other value is used as-is
+	 * (custom route different from ID). Leading slashes are stripped.
+	 * </p>
+	 *
+	 * @param configuredRoute
+	 *        The configured route value (empty string if not set).
+	 * @param id
+	 *        The element's ID (used as fallback).
+	 * @return The effective route segment, or {@code null} if not routed.
+	 */
 	public static String resolveRoute(String configuredRoute, String id) {
-		if (configuredRoute == null) {
+		if (configuredRoute == null || configuredRoute.isEmpty()) {
 			// Not set -> use ID as route.
 			return id;
 		}
-		if (configuredRoute.isEmpty()) {
+		if (NO_ROUTE.equals(configuredRoute)) {
 			// Explicitly opted out of routing.
 			return null;
 		}

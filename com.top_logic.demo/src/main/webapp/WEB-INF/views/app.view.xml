@@ -173,7 +173,7 @@
 					     not affected by browser back/forward. -->
 					<nav-item id="settings"
 						icon="bi bi-gear"
-						route=""
+						route="none"
 					>
 						<view-ref view="demo/settings.view.xml"/>
 						<label>

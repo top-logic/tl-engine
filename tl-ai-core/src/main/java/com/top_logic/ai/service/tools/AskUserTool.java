@@ -57,7 +57,8 @@ public class AskUserTool {
 	 */
 	@ToolMethod(description = "Ask the user a question and wait for their response. "
 		+ "Use for approvals before model changes, clarifying ambiguous requests, "
-		+ "presenting choices, or getting feedback on plans.")
+		+ "presenting choices, or getting feedback on plans.",
+		mode = com.top_logic.tl.ai.core.tool.ToolMode.READ)
 	public String askUser(
 			@P("The question to present") String question,
 			@P("Short label (e.g. 'Approval', 'Clarify')") String header,

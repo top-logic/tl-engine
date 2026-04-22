@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class UserInteractionStore {
 
 	private final Map<String, UserInteractionRequest> _pending = new ConcurrentHashMap<>();
+	private final Map<String, CompletableFuture<String>> _approvalFutures = new ConcurrentHashMap<>();
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 	private volatile ApprovalMode _mode;
 
@@ -80,10 +81,7 @@ public class UserInteractionStore {
 	 */
 	public CompletableFuture<String> registerApproval(String approvalRequestId) {
 		CompletableFuture<String> future = new CompletableFuture<>();
-		UserInteractionRequest request = new UserInteractionRequest(
-			approvalRequestId, "", "Approval", "approval", null, false,
-			System.currentTimeMillis(), future);
-		_pending.put(approvalRequestId, request);
+		_approvalFutures.put(approvalRequestId, future);
 		return future;
 	}
 
@@ -97,6 +95,11 @@ public class UserInteractionStore {
 		UserInteractionRequest request = _pending.remove(requestId);
 		if (request != null) {
 			request.getFuture().complete(response);
+			return;
+		}
+		CompletableFuture<String> approvalFuture = _approvalFutures.remove(requestId);
+		if (approvalFuture != null) {
+			approvalFuture.complete(response);
 		}
 	}
 

@@ -446,6 +446,8 @@ public class ConversationLogListener implements AgentEventListener {
 					return p;
 				});
 				forwardToParent(event);
+			} else if (event instanceof AgentEvent.ToolCallDenied) {
+				forwardToParent(event);
 			} else if (event instanceof AgentEvent.ApprovalRequired
 				|| event instanceof AgentEvent.ApprovalResolved) {
 				forwardToParent(event);

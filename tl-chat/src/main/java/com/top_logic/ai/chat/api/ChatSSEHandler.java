@@ -432,6 +432,11 @@ public class ChatSSEHandler implements AgentEventListener {
 			innerType = "turn_completed";
 			innerData = DtoMapper.toJson(TurnCompletedEvent.create()
 				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage())));
+		} else if (child instanceof AgentEvent.ToolCallDenied e) {
+			innerType = "tool_denied";
+			innerData = DtoMapper.toJson(ToolDeniedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName())
+				.setReason(e.reason()));
 		} else if (child instanceof AgentEvent.ProviderError e) {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
@@ -456,19 +461,18 @@ public class ChatSSEHandler implements AgentEventListener {
 			return;
 		}
 		for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
-			// Skip tool-approval requests — they are delivered via the AgentEvent.ApprovalRequired
-			// path, not via polling. Only poll for askUser-style interactions (text, choice).
-			if ("approval".equals(req.getType())) {
-				continue;
-			}
 			if (!_emittedInteractionIds.contains(req.getId())) {
+				Logger.info("Emitting user interaction event (id: " + req.getId()
+					+ ", type: " + req.getType() + ", header: " + req.getHeader() + ")",
+					ChatSSEHandler.class);
 				try {
 					sendEvent("user_interaction", DtoMapper.toJson(
 						DtoMapper.toUserInteractionEvent(req)));
+					_emittedInteractionIds.add(req.getId());
 				} catch (Exception e) {
-					Logger.error("Failed to emit user interaction event", e, ChatSSEHandler.class);
+					Logger.error("Failed to emit user interaction event (id: " + req.getId()
+						+ ", type: " + req.getType() + ")", e, ChatSSEHandler.class);
 				}
-				_emittedInteractionIds.add(req.getId());
 			}
 		}
 	}

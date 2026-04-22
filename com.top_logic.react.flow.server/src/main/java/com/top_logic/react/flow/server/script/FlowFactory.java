@@ -1756,7 +1756,8 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory List<GanttItem> items,
 			List<GanttEdge> edges,
 			List<GanttDecoration> decorations,
-			@Mandatory GanttAxis axis) {
+			@Mandatory GanttAxis axis,
+			Integer frozenRows) {
 
 		// 1. Assign row IDs depth-first, build userObject -> rowId index.
 		java.util.Map<Object, String> _rowIdByModel = new java.util.HashMap<>();
@@ -1836,6 +1837,9 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		if (decorations != null) {
 			layout.setDecorations(decorations);
+		}
+		if (frozenRows != null && frozenRows > 0) {
+			layout.setFrozenRows(frozenRows);
 		}
 		List<Box> contents = new java.util.ArrayList<>(items.size());
 		for (GanttItem it : items) {

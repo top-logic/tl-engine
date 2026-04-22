@@ -324,6 +324,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	default void draw(SvgWriter out) {
 		GanttLayout self = (GanttLayout) this;
 
+		// Create a wrapping group linked to the GanttLayout model.
+		// This triggers linkModel() in the SVGBuilder, which assigns clientId
+		// and attaches __tlWidget for DOM-to-model lookup.
+		out.beginGroup(self);
+
 		double x0 = self.getX();
 		double y0 = self.getY();
 		double totalW = self.getWidth();
@@ -347,6 +352,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 				out.write(content);
 			}
 			drawEdges(self, out);
+			out.endGroup();
 			return;
 		}
 
@@ -430,6 +436,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		drawRowLanes(self, out, frozenRowIds, true, false);
 		drawRowLabels(self, out, frozenRowIds, true);
 		out.endGroup();
+
+		out.endGroup(); // Close wrapping group from beginGroup(self).
 	}
 
 	/**

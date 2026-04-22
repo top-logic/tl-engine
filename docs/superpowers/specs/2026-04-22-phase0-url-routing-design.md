@@ -414,53 +414,51 @@ Methoden auf, die auch ein normaler Klick aufruft.
 (`v1a2b3c`, erzeugt per `crypto.getRandomValues()` im Bootstrap-JS) und damit
 nicht teilbar/bookmarkbar.
 
-**Aenderung:** Der Window-Name wird aus dem URL-Pfad entfernt. Er fliesst
-ausschliesslich ueber:
-- `window.name` (Browser-Property, ueberlebt Navigationen im selben Tab)
-- SSE-Query-Param: `react-api/events?windowName=v1a2b3c` (bereits so)
-- Command-Requests: als Header oder Body-Parameter (bereits so)
+**Aenderung:** Der Window-Name bleibt intern im URL-Pfad (Server-seitig),
+wird aber per `history.replaceState` aus der Adressleiste entfernt.
 
-Die sichtbare URL wird zur **reinen Route**: `/{contextPath}/view/property/42`
+**Sichtbare URL** (was der User sieht): `/{contextPath}/view/property/42`
+**Server-URL** (was der Server verarbeitet): `/{contextPath}/view/{windowName}/property/42`
 
-**ViewServlet-Aenderung:**
-1. URL kommt rein: `/demo/view/property/42`
-2. ViewServlet liest `window.name` aus einem Custom-Header
-   (z. B. `X-TL-Window-Name`, gesetzt vom Bootstrap-JS) oder aus einem Cookie
-3. Falls kein `window.name` vorhanden: Bootstrap-Page erzeugt einen via
-   `crypto.getRandomValues()`, speichert ihn in `window.name`, **laedt die
-   gleiche URL** nochmal (kein Redirect auf eine andere URL, Pfad bleibt gleich)
-4. ViewServlet extrahiert den Route-Teil aus dem Pfad (alles nach `/view/`)
-5. `RouteManager` wird erzeugt mit `pendingUrl = "property/42"`
-6. Control-Baum wird aufgebaut (AppShell, Content-Slot)
+**Subsession-Mechanik:**
+- `window.name` wird vom Bootstrap-JS erzeugt und ueberlebt F5 im selben Tab
+- Bei Tab-Clone: `window.name` wird NICHT mitgeklont → Bootstrap erzeugt
+  eine neue Subsession mit demselben Navigations-Pfad
+- F5 kostet einen Extra-Roundtrip (Bootstrap → `window.name` lesen → Redirect
+  mit Window-Name → Server baut den State)
 
 **Sequenz bei direktem Einstieg ueber URL `/demo/view/item/42`:**
 
 ```
-1. HTTP-Request: GET /demo/view/item/42
-   Header: X-TL-Window-Name: v1a2b3c (vom Bootstrap-JS gesetzt)
-2. ViewServlet: Session + SubSession fuer Window v1a2b3c
-3. ReactContext + RouteManager werden erzeugt
+1. GET /demo/view/item/42 (kein Window-Name im Pfad)
+2. ViewServlet: kein Window-Name → Bootstrap-Page ausliefern
+3. Bootstrap-JS: window.name lesen (existiert bei F5) oder neu erzeugen
+4. Redirect zu /demo/view/v1a2b3c/item/42
+5. ViewServlet: Window-Name v1a2b3c + Route "item/42"
+   → Session + SubSession fuer Window v1a2b3c
+6. ReactContext + RouteManager werden erzeugt
    RouteManager.pendingUrl = "item/42"
-4. View-Config laden → AppShell aufbauen → Content-Slot materialisiert
-   (z. B. eine Sidebar)
-5. Sidebar.attach() → ist RoutingParticipant → register()
-6. RouteManager sieht: pending URL hat unverbrauchte Segmente
+7. View-Config laden → AppShell aufbauen → Content-Slot materialisiert
+8. RoutingParticipant.attach() → register()
+9. RouteManager: pending URL hat unverbrauchte Segmente
    → prueft declaredRoutes(): findet /item/:itemId
-   → activateRoute({pattern: "/item/:itemId", params: {itemId: "42"}})
-   → selectItem("detail") → Lazy-Materialisierung von detail.view.xml
-7. detail.view.xml laedt:
-   → Kanaele werden instanziiert (selectedItem, itemId)
-   → <param-bindings>: RouteManager schreibt "42" in Kanal itemId
-   → reverse-Ausdruck: selectedItem aufgeloest
-   → Form materialisiert mit dem aufgeloesten Objekt
-8. Falls detail.view.xml verschachtelte RoutingParticipants enthaelt:
-   → deren attach() triggert weitere Segment-Aufloesung
-   → hier: keine weiteren Segmente → fertig
-9. Erster SSE-Flush: Client rendert den Detail-Screen
+   → activateRoute() → Lazy-Materialisierung
+10. Param-Bindings greifen, Kanaele werden befuellt
+11. Erster SSE-Flush: Client rendert den Detail-Screen
+12. Client: history.replaceState(null, '', '/demo/view/item/42')
+    → Window-Name verschwindet aus der Adressleiste
 ```
 
-Kein Zwischenblitz, kein falscher Screen, kein statisches Manifest.
-Saubere, teilbare, bookmarkbare URLs ohne technische Session-Artefakte.
+Ab diesem Zeitpunkt schreiben alle Route-Aenderungen (`pushState`/`replaceState`)
+URLs **ohne** Window-Name. Saubere, teilbare, bookmarkbare URLs.
+
+**F5:** URL ist `/demo/view/item/42` (ohne Window-Name) → Schritt 1-12 erneut.
+`window.name` existiert noch → selbe Subsession wird wiederhergestellt.
+
+**Tab-Clone:** `window.name` nicht kopiert → neue Subsession → selber
+Navigations-Pfad wird frisch aufgeloest.
+
+**Bookmark/Teilen:** URL ohne Window-Name → funktioniert als neuer Einstiegspunkt.
 
 ### 3.11 URL-Komposition aus verschachtelten Participants
 

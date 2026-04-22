@@ -356,8 +356,9 @@ public class TestToolRegistry extends TestCase {
 		assertNotNull(toolResult);
 		assertInstanceOf(ToolState.Completed.class, toolResult.state());
 		String result = ((ToolState.Completed) toolResult.state()).result();
-		assertTrue("Result should be truncated", result.contains("[Result truncated:"));
-		assertTrue("Result should mention total size", result.contains("10000 chars total"));
+		assertTrue("Result should contain truncation marker", result.contains("chars truncated"));
+		assertTrue("Head should be preserved", result.startsWith("x".repeat(50)));
+		assertTrue("Tail should be preserved", result.endsWith("x".repeat(50)));
 	}
 
 	// --- Helper: mock provider (same pattern as TestAgentLoop) ---

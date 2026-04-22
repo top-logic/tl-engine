@@ -152,12 +152,14 @@ public class AgentFactory {
 		LLMProvider provider = buildProvider(coreConfig.model());
 		com.top_logic.tl.ai.core.tool.ToolRegistry registry = buildToolRegistry(agentObj);
 
+		int maxToolResultChars = resolveMaxToolResultChars(agentObj);
+
 		AgentLoop loop;
 		if (conversationMemory != null) {
-			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory);
+			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory, maxToolResultChars);
 			loop.run(context, listener);
 		} else {
-			loop = new AgentLoop(coreConfig, provider, registry);
+			loop = new AgentLoop(coreConfig, provider, registry, maxToolResultChars);
 			loop.run(conversation, context, listener);
 		}
 
@@ -229,7 +231,9 @@ public class AgentFactory {
 		LLMProvider provider = buildProvider(config.model());
 		com.top_logic.tl.ai.core.tool.ToolRegistry registry = buildToolRegistry(agent);
 
-		return new AgentLoop(config, provider, registry);
+		int maxToolResultChars = resolveMaxToolResultChars(agent);
+
+		return new AgentLoop(config, provider, registry, maxToolResultChars);
 	}
 
 	/**
@@ -256,6 +260,11 @@ public class AgentFactory {
 		Map<String, Object> modelOptions = buildModelOptions(agent);
 
 		return new AgentConfig(model, systemPrompt, AgentConfig.DEFAULT_MAX_TURNS, maxOutputTokens, modelOptions);
+	}
+
+	private static int resolveMaxToolResultChars(TLObject agent) {
+		Integer value = (Integer) agent.tValueByName("maxToolResultChars");
+		return value != null && value > 0 ? value : AgentLoop.DEFAULT_MAX_RESULT_CHARS;
 	}
 
 	/**

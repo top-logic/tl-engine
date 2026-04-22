@@ -129,11 +129,29 @@ public class AgentLoop {
 	 */
 	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry,
 			ConversationMemory memory) {
+		this(config, provider, registry, memory, DEFAULT_MAX_RESULT_CHARS);
+	}
+
+	/**
+	 * Creates a new agent loop with memory-aware context management and configurable result
+	 * truncation.
+	 *
+	 * @param config           loop configuration
+	 * @param provider         LLM provider for streaming responses
+	 * @param registry         tool registry for tool lookup and execution
+	 * @param memory           conversation memory with token tracking and compaction
+	 * @param maxResultChars   maximum characters per tool result before truncation
+	 */
+	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry,
+			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
 		_registry = Objects.requireNonNull(registry, "Registry must not be null.");
 		_memory = Objects.requireNonNull(memory, "Memory must not be null.");
-		_maxResultChars = DEFAULT_MAX_RESULT_CHARS;
+		if (maxResultChars <= 0) {
+			throw new IllegalArgumentException("maxResultChars must be positive.");
+		}
+		_maxResultChars = maxResultChars;
 	}
 
 	private static Instant now() {
@@ -665,8 +683,13 @@ public class AgentLoop {
 			return result;
 		}
 
-		String truncated = text.substring(0, _maxResultChars)
-			+ "\n\n[Result truncated: " + text.length() + " chars total, showing first " + _maxResultChars + "]";
+		int halfBudget = _maxResultChars / 2;
+		String head = text.substring(0, halfBudget);
+		String tail = text.substring(text.length() - halfBudget);
+		int droppedChars = text.length() - head.length() - tail.length();
+		String truncated = head
+			+ "\n\n[... " + droppedChars + " chars truncated ...]\n\n"
+			+ tail;
 
 		emit(listener, new AgentEvent.ToolCallResultTruncated(runId, turn, now(),
 			result.toolCallId(), result.toolName(), text.length(), truncated.length()));

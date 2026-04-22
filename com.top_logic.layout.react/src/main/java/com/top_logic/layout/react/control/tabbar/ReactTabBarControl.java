@@ -17,6 +17,11 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
+import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteMatch;
+import com.top_logic.layout.react.routing.RoutePattern;
+import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.routing.RoutingParticipant;
 
 import de.haumacher.msgbuf.json.JsonWriter;
 
@@ -38,7 +43,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * {@code null})</li>
  * </ul>
  */
-public class ReactTabBarControl extends ReactControl {
+public class ReactTabBarControl extends ReactControl implements RoutingParticipant {
 
 	private static final String REACT_MODULE = "TLTabBar";
 
@@ -62,6 +67,8 @@ public class ReactTabBarControl extends ReactControl {
 	private final LinkedHashMap<String, ReactControl> _contentCache = new LinkedHashMap<>();
 
 	private String _activeTabId;
+
+	private final List<RouteChangeListener> _routeChangeListeners = new ArrayList<>();
 
 	/**
 	 * Creates a new {@link ReactTabBarControl}.
@@ -183,6 +190,16 @@ public class ReactTabBarControl extends ReactControl {
 		if (isAttached()) {
 			content.attach();
 		}
+
+		// After successful selection, notify route listeners.
+		TabDefinition newTab = findTab(tabId);
+		if (newTab.getRoute() != null) {
+			RoutePattern pattern = RoutePattern.compile(newTab.getRoute(), newTab.getId());
+			RouteSegment segment = new RouteSegment(pattern.produce(Map.of()));
+			for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
+				listener.onRouteChange(this, segment);
+			}
+		}
 	}
 
 	private ReactControl getOrCreateContent(String tabId) {
@@ -204,6 +221,45 @@ public class ReactTabBarControl extends ReactControl {
 			}
 		}
 		throw new IllegalArgumentException("Unknown tab ID: " + tabId);
+	}
+
+	// -- RoutingParticipant --
+
+	@Override
+	public List<RoutePattern> declaredRoutes() {
+		List<RoutePattern> routes = new ArrayList<>();
+		for (TabDefinition tab : _tabDefinitions) {
+			String route = tab.getRoute();
+			if (route != null) {
+				routes.add(RoutePattern.compile(route, tab.getId()));
+			}
+		}
+		return routes;
+	}
+
+	@Override
+	public void activateRoute(RouteMatch match) {
+		selectTab(match.itemId());
+	}
+
+	@Override
+	public RouteSegment activeRouteSegment() {
+		TabDefinition activeTab = findTab(_activeTabId);
+		if (activeTab.getRoute() != null) {
+			RoutePattern pattern = RoutePattern.compile(activeTab.getRoute(), activeTab.getId());
+			return new RouteSegment(pattern.produce(Map.of()));
+		}
+		return null;
+	}
+
+	@Override
+	public void addRouteChangeListener(RouteChangeListener listener) {
+		_routeChangeListeners.add(listener);
+	}
+
+	@Override
+	public void removeRouteChangeListener(RouteChangeListener listener) {
+		_routeChangeListeners.remove(listener);
 	}
 
 	// -- Commands --

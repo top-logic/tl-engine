@@ -18,6 +18,8 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -532,23 +534,36 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * Hook for subclasses to react to this control becoming attached (displayed).
 	 *
 	 * <p>
-	 * Called after the attached flag is set but before attach listeners fire. Default does nothing.
+	 * Called after the attached flag is set but before attach listeners fire. If this control
+	 * implements {@link RoutingParticipant}, it is automatically registered with the
+	 * {@link RouteManager}.
 	 * </p>
 	 */
 	protected void onAttach() {
-		// Default: no-op.
+		if (this instanceof RoutingParticipant rp) {
+			RouteManager rm = _reactContext.getRouteManager();
+			if (rm != null) {
+				rm.register(rp);
+			}
+		}
 	}
 
 	/**
 	 * Hook for subclasses to react to this control becoming detached (no longer displayed).
 	 *
 	 * <p>
-	 * Called after the attached flag is cleared but before detach listeners fire. Default does
-	 * nothing.
+	 * Called after the attached flag is cleared but before detach listeners fire. If this control
+	 * implements {@link RoutingParticipant}, it is automatically unregistered from the
+	 * {@link RouteManager}.
 	 * </p>
 	 */
 	protected void onDetach() {
-		// Default: no-op.
+		if (this instanceof RoutingParticipant rp) {
+			RouteManager rm = _reactContext.getRouteManager();
+			if (rm != null) {
+				rm.unregister(rp);
+			}
+		}
 	}
 
 	/**

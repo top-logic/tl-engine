@@ -28,6 +28,8 @@ public class TabDefinition {
 
 	private final DirtyChannel _dirtyChannel;
 
+	private String _route;
+
 	/**
 	 * Creates a new {@link TabDefinition}.
 	 *
@@ -73,6 +75,25 @@ public class TabDefinition {
 	 */
 	public DirtyChannel getDirtyChannel() {
 		return _dirtyChannel;
+	}
+
+	/**
+	 * The route pattern for this tab, or {@code null} if this tab is not route-forming.
+	 */
+	public String getRoute() {
+		return _route;
+	}
+
+	/**
+	 * Sets the route pattern for this tab.
+	 *
+	 * @param route
+	 *        The route pattern (e.g. "/settings"), or {@code null} for no route.
+	 * @return This instance for fluent chaining.
+	 */
+	public TabDefinition withRoute(String route) {
+		_route = route;
+		return this;
 	}
 
 }

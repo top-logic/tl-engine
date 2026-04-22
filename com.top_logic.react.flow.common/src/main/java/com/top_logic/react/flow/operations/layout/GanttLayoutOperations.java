@@ -31,8 +31,6 @@ import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
-import com.top_logic.react.flow.svg.event.SVGPanEvent;
-import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 
@@ -54,7 +52,7 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  * Span widths are forced to {@code (end - start) * zoom}; milestone widths are intrinsic.
  * </p>
  */
-public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler, SVGPanHandler {
+public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler {
 
 	/** Horizontal stub length for orthogonal edge routing (pixels offset from item edge). */
 	double EDGE_HORIZONTAL_STUB = 6.0;
@@ -339,7 +337,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		// and attaches __tlWidget for DOM-to-model lookup.
 		out.beginGroup(self);
 		out.attachOnWheel(this, self);
-		out.attachOnPan(this, self);
 
 		double x0 = self.getX();
 		double y0 = self.getY();
@@ -1328,34 +1325,26 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	// -----------------------------------------------------------------------
-	// SVGPanHandler implementation (drag-to-pan on empty space)
+	// DragController pan support (drag-to-pan on empty space)
 	// -----------------------------------------------------------------------
 
 	@Override
-	default void onPan(SVGPanEvent event) {
-		GanttLayout self = (GanttLayout) this;
-		if (self.getFrozenRows() <= 0) {
-			return;
-		}
-
-		switch (event.getPhase()) {
-			case START:
-				self.setPanStartX(event.getX());
-				self.setPanStartY(event.getY());
-				self.setPanStartScrollX(self.getScrollX());
-				self.setPanStartScrollY(self.getScrollY());
-				break;
-
-			case MOVE:
-				handlePanMove(self, event);
-				break;
-
-			case END:
-				break;
-		}
+	default boolean canPan() {
+		return ((GanttLayout) this).getFrozenRows() > 0;
 	}
 
-	private static void handlePanMove(GanttLayout self, SVGPanEvent event) {
+	@Override
+	default void startPan(double svgX, double svgY) {
+		GanttLayout self = (GanttLayout) this;
+		self.setPanStartX(svgX);
+		self.setPanStartY(svgY);
+		self.setPanStartScrollX(self.getScrollX());
+		self.setPanStartScrollY(self.getScrollY());
+	}
+
+	@Override
+	default void panTo(double svgX, double svgY) {
+		GanttLayout self = (GanttLayout) this;
 		GanttAxis axis = self.getAxis();
 		double zoom = axis.getCurrentZoom();
 		double colW = self.getColumnWidth();
@@ -1370,8 +1359,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double maxScrollY = Math.max(0, dataH - viewportContentH);
 
 		// Delta in SVG coordinates (inverted: dragging right = scroll left).
-		double deltaSvgX = event.getX() - self.getPanStartX();
-		double deltaSvgY = event.getY() - self.getPanStartY();
+		double deltaSvgX = svgX - self.getPanStartX();
+		double deltaSvgY = svgY - self.getPanStartY();
 
 		double newScrollX = self.getPanStartScrollX() - deltaSvgX / zoom;
 		double newScrollY = self.getPanStartScrollY() - deltaSvgY;
@@ -1381,11 +1370,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		self.setScrollX(newScrollX);
 		self.setScrollY(newScrollY);
-
-		applyViewportTransforms(self, event);
 	}
 
-	private static void applyViewportTransforms(GanttLayout self, SVGPanEvent event) {
+	@Override
+	default void renderPan(PanRenderer renderer) {
+		GanttLayout self = (GanttLayout) this;
 		String ganttId = self.getClientId();
 		if (ganttId == null) {
 			return;
@@ -1394,10 +1383,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
 		double scrollY = self.getScrollY();
 
-		event.updateTransform(ganttId + "-scroll-deco", -scrollXPx, 0);
-		event.updateTransform(ganttId + "-scroll-content", -scrollXPx, -scrollY);
-		event.updateTransform(ganttId + "-scroll-sidebar", 0, -scrollY);
-		event.updateTransform(ganttId + "-scroll-header", -scrollXPx, 0);
+		renderer.setTranslate(ganttId + "-scroll-deco", -scrollXPx, 0);
+		renderer.setTranslate(ganttId + "-scroll-content", -scrollXPx, -scrollY);
+		renderer.setTranslate(ganttId + "-scroll-sidebar", 0, -scrollY);
+		renderer.setTranslate(ganttId + "-scroll-header", -scrollXPx, 0);
 	}
 
 	private static void applyViewportTransforms(GanttLayout self, SVGWheelEvent event) {

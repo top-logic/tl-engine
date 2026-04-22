@@ -77,6 +77,9 @@ class DragHandler {
 	/** Whether a drag session is currently active. */
 	private boolean _active;
 
+	/** Whether a viewport pan session is active (mutually exclusive with item drag). */
+	private boolean _panning;
+
 	/** The SVG element of the original box (to dim/undim). */
 	private OMSVGElement _originalSvgElement;
 
@@ -92,10 +95,10 @@ class DragHandler {
 	}
 
 	/**
-	 * Whether a drag session is active.
+	 * Whether a drag or pan session is active.
 	 */
 	boolean isActive() {
-		return _active;
+		return _active || _panning;
 	}
 
 	/**
@@ -156,7 +159,8 @@ class DragHandler {
 		}
 
 		if (controller == null) {
-			return false;
+			// No item drag — try viewport pan on the nearest DragController.
+			return tryStartPan(hitBox, svgX, svgY);
 		}
 
 		// Detect edge on the controllerChild (the outermost item box),
@@ -167,9 +171,9 @@ class DragHandler {
 		if (edge != null && !controller.canResize(controllerChild, edge)) {
 			edge = null;
 		}
-		// If no edge and move not allowed, abort.
+		// If no edge and move not allowed, try pan instead.
 		if (edge == null && !controller.canMove(controllerChild)) {
-			return false;
+			return tryStartPan(hitBox, svgX, svgY);
 		}
 
 		_controller = controller;
@@ -214,6 +218,12 @@ class DragHandler {
 	 * Updates the drag based on a pointer-move event.
 	 */
 	void onMove(double clientX, double clientY) {
+		if (_panning) {
+			double[] svgCoords = clientToSvg(clientX, clientY);
+			_controller.panTo(svgCoords[0], svgCoords[1]);
+			_controller.renderPan(DragHandler.this::nativeSetTranslate);
+			return;
+		}
 		if (!_active) {
 			return;
 		}
@@ -283,6 +293,12 @@ class DragHandler {
 	 * Commits the drag on pointer-up.
 	 */
 	void commit() {
+		if (_panning) {
+			_controller.endPan();
+			_panning = false;
+			_controller = null;
+			return;
+		}
 		if (!_active) {
 			return;
 		}
@@ -298,6 +314,11 @@ class DragHandler {
 	 * Cancels the drag (e.g., ESC key).
 	 */
 	void cancel() {
+		if (_panning) {
+			_panning = false;
+			_controller = null;
+			return;
+		}
 		if (!_active) {
 			return;
 		}
@@ -473,6 +494,39 @@ class DragHandler {
 		}
 		return screenPixels;
 	}
+
+	/**
+	 * Tries to start a viewport pan session. Walks the box parent tree to find a
+	 * DragController that supports pan.
+	 */
+	private boolean tryStartPan(Box hitBox, double svgX, double svgY) {
+		Box current = hitBox;
+		while (current != null) {
+			Widget parent = current.getParent();
+			if (parent instanceof DragController) {
+				DragController candidate = (DragController) parent;
+				if (candidate.canPan()) {
+					_controller = candidate;
+					_panning = true;
+					_startSvgX = svgX;
+					_startSvgY = svgY;
+					candidate.startPan(svgX, svgY);
+					return true;
+				}
+			}
+			if (parent instanceof Box) {
+				current = (Box) parent;
+			} else {
+				break;
+			}
+		}
+		return false;
+	}
+
+	private native void nativeSetTranslate(String id, double tx, double ty) /*-{
+		var el = $doc.getElementById(id);
+		if (el) el.setAttribute('transform', 'translate(' + tx + ',' + ty + ')');
+	}-*/;
 
 	private double[] clientToSvg(double clientX, double clientY) {
 		OMSVGPoint point = _svg.createSVGPoint();

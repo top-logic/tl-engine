@@ -89,4 +89,62 @@ public interface DragController {
 	 * Implementations should clean up any cached state (e.g., drop area maps).
 	 */
 	void cancelDrag(Box box);
+
+	// -----------------------------------------------------------------------
+	// Viewport pan support (drag-to-pan on empty space)
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Whether the controller supports viewport panning. If {@code true}, the drag
+	 * system falls back to panning when no draggable item is found under the cursor.
+	 */
+	default boolean canPan() {
+		return false;
+	}
+
+	/**
+	 * Called when a viewport pan starts (pointer down on empty space, past threshold).
+	 *
+	 * @param svgX
+	 *        Start position in SVG coordinates.
+	 * @param svgY
+	 *        Start position in SVG coordinates.
+	 */
+	default void startPan(double svgX, double svgY) {
+	}
+
+	/**
+	 * Called on each frame during a viewport pan.
+	 *
+	 * @param svgX
+	 *        Current position in SVG coordinates.
+	 * @param svgY
+	 *        Current position in SVG coordinates.
+	 */
+	default void panTo(double svgX, double svgY) {
+	}
+
+	/**
+	 * Called when the viewport pan ends (pointer up).
+	 */
+	default void endPan() {
+	}
+
+	/**
+	 * Callback for applying pan-related SVG transform updates.
+	 */
+	interface PanRenderer {
+		/** Sets the {@code transform} attribute on the element with the given ID. */
+		void setTranslate(String elementId, double tx, double ty);
+	}
+
+	/**
+	 * Applies the current scroll state as SVG transforms. Called by the drag system
+	 * after {@link #panTo} to update the visual representation without a full re-layout.
+	 *
+	 * @param renderer
+	 *        Callback for DOM manipulation (provided by the client-side drag handler).
+	 */
+	default void renderPan(PanRenderer renderer) {
+	}
 }

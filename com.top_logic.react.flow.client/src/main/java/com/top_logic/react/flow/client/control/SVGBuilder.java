@@ -664,14 +664,25 @@ public class SVGBuilder implements SvgWriter {
 			handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.END, x, y));
 		};
 
+		// Suppress HTML5 drag on this element (the container div may have draggable="true"
+		// for diagram-level pan, which would steal pointer events from our pan handler).
+		elemental2.dom.EventListener dragStartBlocker = evt -> {
+			if (panning[0]) {
+				evt.preventDefault();
+				evt.stopPropagation();
+			}
+		};
+
 		element.addEventListener("pointerdown", downListener);
 		element.addEventListener("pointermove", moveListener);
 		element.addEventListener("pointerup", upListener);
+		element.addEventListener("dragstart", dragStartBlocker);
 
 		return () -> {
 			element.removeEventListener("pointerdown", downListener);
 			element.removeEventListener("pointermove", moveListener);
 			element.removeEventListener("pointerup", upListener);
+			element.removeEventListener("dragstart", dragStartBlocker);
 		};
 	}
 

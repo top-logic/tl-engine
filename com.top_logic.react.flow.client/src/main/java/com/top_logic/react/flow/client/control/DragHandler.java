@@ -500,19 +500,16 @@ class DragHandler {
 	 * DragController that supports pan.
 	 */
 	private boolean tryStartPan(Box hitBox, double svgX, double svgY) {
+		// Check hitBox itself (e.g. GanttLayout IS the DragController).
+		if (hitBox instanceof DragController && ((DragController) hitBox).canPan()) {
+			return startPanSession((DragController) hitBox, svgX, svgY);
+		}
+		// Walk up the parent tree.
 		Box current = hitBox;
 		while (current != null) {
 			Widget parent = current.getParent();
-			if (parent instanceof DragController) {
-				DragController candidate = (DragController) parent;
-				if (candidate.canPan()) {
-					_controller = candidate;
-					_panning = true;
-					_startSvgX = svgX;
-					_startSvgY = svgY;
-					candidate.startPan(svgX, svgY);
-					return true;
-				}
+			if (parent instanceof DragController && ((DragController) parent).canPan()) {
+				return startPanSession((DragController) parent, svgX, svgY);
 			}
 			if (parent instanceof Box) {
 				current = (Box) parent;
@@ -521,6 +518,15 @@ class DragHandler {
 			}
 		}
 		return false;
+	}
+
+	private boolean startPanSession(DragController controller, double svgX, double svgY) {
+		_controller = controller;
+		_panning = true;
+		_startSvgX = svgX;
+		_startSvgY = svgY;
+		controller.startPan(svgX, svgY);
+		return true;
 	}
 
 	private native void nativeSetTranslate(String id, double tx, double ty) /*-{

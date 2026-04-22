@@ -125,13 +125,14 @@ public class OpenAIProvider implements LLMProvider {
 		}
 	}
 
-	private String buildRequestJson(ProviderRequest request) throws ProviderException {
+	String buildRequestJson(ProviderRequest request) throws ProviderException {
 		StringW buffer = new StringW();
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginObject();
 			json.name("model").value(request.model());
 			json.name("max_output_tokens").value((long) request.maxOutputTokens());
 			json.name("stream").value(true);
+			json.name("store").value(true);
 
 			if (request.systemPrompt() != null && !request.systemPrompt().isEmpty()) {
 				json.name("instructions").value(request.systemPrompt());

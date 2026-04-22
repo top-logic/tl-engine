@@ -1145,8 +1145,63 @@ public class FlowDiagramClientControl implements DiagramContext {
 		if (el) el.setAttribute('transform', 'translate(' + tx + ',' + ty + ')');
 	}-*/;
 
+	/**
+	 * Handles zoom (Ctrl+wheel) inside a GanttLayout.
+	 * Changes pixelsPerUnit and triggers re-layout.
+	 */
 	private void ganttZoom(GanttLayout gantt, WheelEvent event) {
-		// Implemented in Task 7.
+		GanttAxis axis = gantt.getAxis();
+		double currentZoom = axis.getCurrentZoom();
+
+		// Compute new zoom level.
+		double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
+		double direction = JsMath.sign(delta);
+		// Zoom in (delta < 0) = increase pixelsPerUnit, zoom out (delta > 0) = decrease.
+		double factor = 1.0 - direction * 0.1;
+		double newZoom = currentZoom * factor;
+
+		// Clamp to reasonable range.
+		double minZoom = 0.5;
+		double maxZoom = 100.0;
+		newZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+
+		if (Math.abs(newZoom - currentZoom) < 0.001) {
+			return;
+		}
+
+		// Adjust scrollX to keep the mouse position stable.
+		double colW = gantt.getColumnWidth();
+		double x0 = gantt.getX();
+
+		// Convert mouse client coords to SVG coords.
+		double mouseXInChart = event.offsetX * getFactor() - x0 - colW;
+		if (mouseXInChart < 0) {
+			mouseXInChart = 0;
+		}
+
+		// Time value under the mouse before zoom.
+		double scrollXPxBefore = gantt.getScrollX() * currentZoom;
+		double timeUnderMouse = (mouseXInChart + scrollXPxBefore) / currentZoom + axis.getRangeMin();
+
+		// After zoom, the same time value should be at the same screen position.
+		double newScrollXPx = (timeUnderMouse - axis.getRangeMin()) * newZoom - mouseXInChart;
+		double newScrollX = newScrollXPx / newZoom;
+
+		// Clamp scrollX.
+		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * newZoom;
+		double viewportContentW = gantt.getWidth() - colW;
+		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / newZoom);
+		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
+
+		// Apply.
+		axis.setCurrentZoom(newZoom);
+		gantt.setScrollX(newScrollX);
+
+		// Re-layout and re-draw (positions change with zoom).
+		relayout();
+
+		// Sync changes to server.
+		onChange();
 	}
 
 	@SuppressWarnings("unusable-by-js")

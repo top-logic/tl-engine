@@ -31,6 +31,8 @@ import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
+import com.top_logic.react.flow.svg.event.SVGPanEvent;
+import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 
@@ -52,7 +54,7 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  * Span widths are forced to {@code (end - start) * zoom}; milestone widths are intrinsic.
  * </p>
  */
-public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler {
+public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler, SVGPanHandler {
 
 	/** Horizontal stub length for orthogonal edge routing (pixels offset from item edge). */
 	double EDGE_HORIZONTAL_STUB = 6.0;
@@ -343,11 +345,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double totalW = self.getWidth();
 		double totalH = self.getHeight();
 
-		// Background rect ensures wheel events are captured even over empty areas.
+		// Background rect ensures wheel/pointer events are captured even over empty areas.
 		// SVG <g> elements only receive events where painted content exists.
+		// The pan handler is on the background rect (not the wrapping group) so it only
+		// fires for clicks on empty space — clicks on items bubble to the DragHandler instead.
 		out.beginRect(x0, y0, totalW, totalH);
 		out.setFill("transparent");
 		out.writeAttribute("pointer-events", "all");
+		out.attachOnPan(this, self);
 		out.endRect();
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();
@@ -1321,6 +1326,79 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		self.setScrollX(newScrollX);
 
 		event.requestRelayout();
+	}
+
+	// -----------------------------------------------------------------------
+	// SVGPanHandler implementation (drag-to-pan on empty space)
+	// -----------------------------------------------------------------------
+
+	@Override
+	default void onPan(SVGPanEvent event) {
+		GanttLayout self = (GanttLayout) this;
+		if (self.getFrozenRows() <= 0) {
+			return;
+		}
+
+		switch (event.getPhase()) {
+			case START:
+				self.setPanStartX(event.getX());
+				self.setPanStartY(event.getY());
+				self.setPanStartScrollX(self.getScrollX());
+				self.setPanStartScrollY(self.getScrollY());
+				break;
+
+			case MOVE:
+				handlePanMove(self, event);
+				break;
+
+			case END:
+				break;
+		}
+	}
+
+	private static void handlePanMove(GanttLayout self, SVGPanEvent event) {
+		GanttAxis axis = self.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double colW = self.getColumnWidth();
+		double headerH = self.getHeaderHeight();
+		double dataH = self.getDataHeight();
+
+		double viewportContentW = self.getWidth() - colW;
+		double viewportContentH = self.getHeight() - headerH;
+		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * zoom;
+
+		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
+		double maxScrollY = Math.max(0, dataH - viewportContentH);
+
+		// Delta in SVG coordinates (inverted: dragging right = scroll left).
+		double deltaSvgX = event.getX() - self.getPanStartX();
+		double deltaSvgY = event.getY() - self.getPanStartY();
+
+		double newScrollX = self.getPanStartScrollX() - deltaSvgX / zoom;
+		double newScrollY = self.getPanStartScrollY() - deltaSvgY;
+
+		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
+		newScrollY = Math.max(0, Math.min(maxScrollY, newScrollY));
+
+		self.setScrollX(newScrollX);
+		self.setScrollY(newScrollY);
+
+		applyViewportTransforms(self, event);
+	}
+
+	private static void applyViewportTransforms(GanttLayout self, SVGPanEvent event) {
+		String ganttId = self.getClientId();
+		if (ganttId == null) {
+			return;
+		}
+
+		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
+		double scrollY = self.getScrollY();
+
+		event.updateTransform(ganttId + "-scroll-deco", -scrollXPx, 0);
+		event.updateTransform(ganttId + "-scroll-content", -scrollXPx, -scrollY);
+		event.updateTransform(ganttId + "-scroll-sidebar", 0, -scrollY);
+		event.updateTransform(ganttId + "-scroll-header", -scrollXPx, 0);
 	}
 
 	private static void applyViewportTransforms(GanttLayout self, SVGWheelEvent event) {

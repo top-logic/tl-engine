@@ -43,6 +43,8 @@ import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGDropEvent;
 import com.top_logic.react.flow.svg.event.SVGDropHandler;
+import com.top_logic.react.flow.svg.event.SVGPanEvent;
+import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.react.flow.data.ImageAlign;
@@ -612,6 +614,101 @@ public class SVGBuilder implements SvgWriter {
 			dragOver.removeHandler();
 		};
 	}
+
+	@Override
+	public Registration attachOnPan(SVGPanHandler handler, Object sender) {
+		if (_current == null) {
+			throw new IllegalStateException(
+				"The last built SVG element is closed. In this state it is not possible to add a "
+					+ SVGPanHandler.class.getName()
+					+ "! Please make sure the handler is added within the desired element before its content.");
+		}
+		elemental2.dom.Element element = jsinterop.base.Js.uncheckedCast(_current.getElement());
+		OMSVGSVGElement svgRoot = _root;
+		final double[] panStart = new double[2]; // startX, startY in SVG coords
+		final boolean[] panning = {false};
+
+		elemental2.dom.EventListener downListener = evt -> {
+			elemental2.dom.PointerEvent pe = (elemental2.dom.PointerEvent) evt;
+			panning[0] = true;
+			panStart[0] = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
+			panStart[1] = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
+			nativeSetPointerCapture(element, pe.pointerId);
+			pe.stopPropagation();
+			pe.preventDefault();
+
+			handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.START,
+				panStart[0], panStart[1]));
+		};
+
+		elemental2.dom.EventListener moveListener = evt -> {
+			if (!panning[0]) return;
+			elemental2.dom.PointerEvent pe = (elemental2.dom.PointerEvent) evt;
+			double x = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
+			double y = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
+			pe.stopPropagation();
+			pe.preventDefault();
+
+			handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.MOVE, x, y));
+		};
+
+		elemental2.dom.EventListener upListener = evt -> {
+			if (!panning[0]) return;
+			panning[0] = false;
+			elemental2.dom.PointerEvent pe = (elemental2.dom.PointerEvent) evt;
+			double x = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
+			double y = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
+			nativeReleasePointerCapture(element, pe.pointerId);
+			pe.stopPropagation();
+
+			handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.END, x, y));
+		};
+
+		element.addEventListener("pointerdown", downListener);
+		element.addEventListener("pointermove", moveListener);
+		element.addEventListener("pointerup", upListener);
+
+		return () -> {
+			element.removeEventListener("pointerdown", downListener);
+			element.removeEventListener("pointermove", moveListener);
+			element.removeEventListener("pointerup", upListener);
+		};
+	}
+
+	private SVGPanEvent createPanEvent(Object sender, SVGPanEvent.Phase phase, double x, double y) {
+		return new SVGPanEvent() {
+			@Override
+			public Object getSender() { return sender; }
+
+			@Override
+			public SVGPanEvent.Phase getPhase() { return phase; }
+
+			@Override
+			public double getX() { return x; }
+
+			@Override
+			public double getY() { return y; }
+
+			@Override
+			public void updateTransform(String elementId, double translateX, double translateY) {
+				nativeSetTranslate(elementId, translateX, translateY);
+			}
+
+			@Override
+			public void stopPropagation() {}
+
+			@Override
+			public void preventDefault() {}
+		};
+	}
+
+	private static native void nativeSetPointerCapture(elemental2.dom.Element el, double pointerId) /*-{
+		el.setPointerCapture(pointerId);
+	}-*/;
+
+	private static native void nativeReleasePointerCapture(elemental2.dom.Element el, double pointerId) /*-{
+		el.releasePointerCapture(pointerId);
+	}-*/;
 
 	@Override
 	public Registration attachOnWheel(SVGWheelHandler handler, Object sender) {

@@ -410,11 +410,15 @@ class DragHandler {
 		double relX = svgX - absX;
 		double relY = svgY - absY;
 
+		// Scale the threshold to SVG units so it's always EDGE_THRESHOLD screen pixels,
+		// regardless of the current diagram zoom level.
+		double threshold = screenPixelsToSvg(EDGE_THRESHOLD);
+
 		// Check proximity to each edge.
-		boolean nearLeft = relX < EDGE_THRESHOLD;
-		boolean nearRight = (w - relX) < EDGE_THRESHOLD;
-		boolean nearTop = relY < EDGE_THRESHOLD;
-		boolean nearBottom = (h - relY) < EDGE_THRESHOLD;
+		boolean nearLeft = relX < threshold;
+		boolean nearRight = (w - relX) < threshold;
+		boolean nearTop = relY < threshold;
+		boolean nearBottom = (h - relY) < threshold;
 
 		// Prefer horizontal edges (E/W) for Gantt charts since resize is typically left/right.
 		if (nearLeft) {
@@ -458,6 +462,18 @@ class DragHandler {
 	 * Converts client (screen) coordinates to SVG diagram coordinates using the
 	 * SVG element's CTM (current transformation matrix).
 	 */
+	/**
+	 * Converts a distance in screen pixels to SVG coordinate units using the CTM scale factor.
+	 */
+	private double screenPixelsToSvg(double screenPixels) {
+		OMSVGMatrix ctm = _svg.getScreenCTM();
+		if (ctm != null) {
+			// getA() is the horizontal scale factor (screen pixels per SVG unit).
+			return screenPixels / ctm.getA();
+		}
+		return screenPixels;
+	}
+
 	private double[] clientToSvg(double clientX, double clientY) {
 		OMSVGPoint point = _svg.createSVGPoint();
 		point.setX((float) clientX);

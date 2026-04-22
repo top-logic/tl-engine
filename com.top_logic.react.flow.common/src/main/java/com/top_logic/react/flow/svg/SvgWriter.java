@@ -12,6 +12,8 @@ import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGDropHandler;
+import com.top_logic.react.flow.svg.event.SVGPanEvent;
+import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.react.flow.data.ImageAlign;
@@ -510,6 +512,39 @@ public interface SvgWriter extends AutoCloseable {
 	default Registration attachOnDrop(SVGDropHandler handler, Object sender) {
 		// Ignore by default. This is only supported in specialized writers that build interactive
 		// DOM trees.
+		return Registration.NONE;
+	}
+
+	/**
+	 * Attaches a callback to the currently created SVG element that is called when the user
+	 * scrolls the mouse wheel over it.
+	 *
+	 * <p>
+	 * This is an optional method that is only supported for special writers that construct
+	 * interactive documents. In all other cases, calls to this method are ignored.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The callback that is invoked upon wheel action.
+	 * @param sender
+	 *        The user object to pass to the invoked callback. See
+	 *        {@link SVGWheelEvent#getSender()}.
+	 */
+	/**
+	 * Attaches a drag-to-pan handler to the currently created SVG element.
+	 *
+	 * <p>
+	 * The handler receives pointer events (down/move/up) with SVG coordinates. Pointer
+	 * capture is managed by the implementation. This is an optional method for interactive
+	 * writers only.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The callback invoked on pan gestures.
+	 * @param sender
+	 *        The user object to pass to the invoked callback.
+	 */
+	default Registration attachOnPan(SVGPanHandler handler, Object sender) {
 		return Registration.NONE;
 	}
 

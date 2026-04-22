@@ -70,6 +70,18 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	/** @see #getDataHeight() */
 	String DATA_HEIGHT__PROP = "dataHeight";
 
+	/** @see #getPanStartX() */
+	String PAN_START_X__PROP = "panStartX";
+
+	/** @see #getPanStartY() */
+	String PAN_START_Y__PROP = "panStartY";
+
+	/** @see #getPanStartScrollX() */
+	String PAN_START_SCROLL_X__PROP = "panStartScrollX";
+
+	/** @see #getPanStartScrollY() */
+	String PAN_START_SCROLL_Y__PROP = "panStartScrollY";
+
 	/**
 	 * Root rows of the forest.
 	 */
@@ -290,6 +302,46 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	 * @see #getDataHeight()
 	 */
 	com.top_logic.react.flow.data.GanttLayout setDataHeight(double value);
+
+	/**
+	 * Pan start X coordinate in SVG space (set on pointer down).
+	 */
+	double getPanStartX();
+
+	/**
+	 * @see #getPanStartX()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setPanStartX(double value);
+
+	/**
+	 * Pan start Y coordinate in SVG space (set on pointer down).
+	 */
+	double getPanStartY();
+
+	/**
+	 * @see #getPanStartY()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setPanStartY(double value);
+
+	/**
+	 * ScrollX value at the start of a pan gesture.
+	 */
+	double getPanStartScrollX();
+
+	/**
+	 * @see #getPanStartScrollX()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setPanStartScrollX(double value);
+
+	/**
+	 * ScrollY value at the start of a pan gesture.
+	 */
+	double getPanStartScrollY();
+
+	/**
+	 * @see #getPanStartScrollY()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setPanStartScrollY(double value);
 
 	@Override
 	com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value);

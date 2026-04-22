@@ -1363,6 +1363,18 @@ message GanttLayout extends Layout {
 	 * Used for scroll bounds: {@code maxScrollY = max(0, dataHeight - viewportContentHeight)}.
 	 */
 	transient double dataHeight;
+
+	/** Pan start X coordinate in SVG space (set on pointer down). */
+	transient double panStartX;
+
+	/** Pan start Y coordinate in SVG space (set on pointer down). */
+	transient double panStartY;
+
+	/** ScrollX value at the start of a pan gesture. */
+	transient double panStartScrollX;
+
+	/** ScrollY value at the start of a pan gesture. */
+	transient double panStartScrollY;
 }
 
 /** Edge of a box for resize operations. */

@@ -93,6 +93,14 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 
 	private transient double _dataHeight = 0.0d;
 
+	private transient double _panStartX = 0.0d;
+
+	private transient double _panStartY = 0.0d;
+
+	private transient double _panStartScrollX = 0.0d;
+
+	private transient double _panStartScrollY = 0.0d;
+
 	/**
 	 * Creates a {@link GanttLayout_Impl} instance.
 	 *
@@ -429,6 +437,78 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 	}
 
 	@Override
+	public final double getPanStartX() {
+		return _panStartX;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartX(double value) {
+		internalSetPanStartX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartX()} without chain call utility. */
+	protected final void internalSetPanStartX(double value) {
+		_listener.beforeSet(this, PAN_START_X__PROP, value);
+		_panStartX = value;
+		_listener.afterChanged(this, PAN_START_X__PROP);
+	}
+
+	@Override
+	public final double getPanStartY() {
+		return _panStartY;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartY(double value) {
+		internalSetPanStartY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartY()} without chain call utility. */
+	protected final void internalSetPanStartY(double value) {
+		_listener.beforeSet(this, PAN_START_Y__PROP, value);
+		_panStartY = value;
+		_listener.afterChanged(this, PAN_START_Y__PROP);
+	}
+
+	@Override
+	public final double getPanStartScrollX() {
+		return _panStartScrollX;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartScrollX(double value) {
+		internalSetPanStartScrollX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartScrollX()} without chain call utility. */
+	protected final void internalSetPanStartScrollX(double value) {
+		_listener.beforeSet(this, PAN_START_SCROLL_X__PROP, value);
+		_panStartScrollX = value;
+		_listener.afterChanged(this, PAN_START_SCROLL_X__PROP);
+	}
+
+	@Override
+	public final double getPanStartScrollY() {
+		return _panStartScrollY;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanStartScrollY(double value) {
+		internalSetPanStartScrollY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanStartScrollY()} without chain call utility. */
+	protected final void internalSetPanStartScrollY(double value) {
+		_listener.beforeSet(this, PAN_START_SCROLL_Y__PROP, value);
+		_panStartScrollY = value;
+		_listener.afterChanged(this, PAN_START_SCROLL_Y__PROP);
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value) {
 		internalSetContents(value);
 		return this;
@@ -510,7 +590,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			SCROLL_Y__PROP, 
 			FROZEN_ROWS__PROP, 
 			HEADER_HEIGHT__PROP, 
-			DATA_HEIGHT__PROP);
+			DATA_HEIGHT__PROP, 
+			PAN_START_X__PROP, 
+			PAN_START_Y__PROP, 
+			PAN_START_SCROLL_X__PROP, 
+			PAN_START_SCROLL_Y__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -525,7 +609,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 		tmp.addAll(java.util.Arrays.asList(
 				COLUMN_WIDTH__PROP, 
 				HEADER_HEIGHT__PROP, 
-				DATA_HEIGHT__PROP));
+				DATA_HEIGHT__PROP, 
+				PAN_START_X__PROP, 
+				PAN_START_Y__PROP, 
+				PAN_START_SCROLL_X__PROP, 
+				PAN_START_SCROLL_Y__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -556,6 +644,10 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case FROZEN_ROWS__PROP: return getFrozenRows();
 			case HEADER_HEIGHT__PROP: return getHeaderHeight();
 			case DATA_HEIGHT__PROP: return getDataHeight();
+			case PAN_START_X__PROP: return getPanStartX();
+			case PAN_START_Y__PROP: return getPanStartY();
+			case PAN_START_SCROLL_X__PROP: return getPanStartScrollX();
+			case PAN_START_SCROLL_Y__PROP: return getPanStartScrollY();
 			default: return super.get(field);
 		}
 	}
@@ -577,6 +669,10 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case FROZEN_ROWS__PROP: internalSetFrozenRows((int) value); break;
 			case HEADER_HEIGHT__PROP: internalSetHeaderHeight((double) value); break;
 			case DATA_HEIGHT__PROP: internalSetDataHeight((double) value); break;
+			case PAN_START_X__PROP: internalSetPanStartX((double) value); break;
+			case PAN_START_Y__PROP: internalSetPanStartY((double) value); break;
+			case PAN_START_SCROLL_X__PROP: internalSetPanStartScrollX((double) value); break;
+			case PAN_START_SCROLL_Y__PROP: internalSetPanStartScrollY((double) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -703,6 +799,22 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			}
 			case DATA_HEIGHT__PROP: {
 				out.value(getDataHeight());
+				break;
+			}
+			case PAN_START_X__PROP: {
+				out.value(getPanStartX());
+				break;
+			}
+			case PAN_START_Y__PROP: {
+				out.value(getPanStartY());
+				break;
+			}
+			case PAN_START_SCROLL_X__PROP: {
+				out.value(getPanStartScrollX());
+				break;
+			}
+			case PAN_START_SCROLL_Y__PROP: {
+				out.value(getPanStartScrollY());
 				break;
 			}
 			default: super.writeFieldValue(scope, out, field);

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -583,7 +584,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			 * changes, it is necessary to re-compute this path for all objects. */
 			return null;
 		}
-		return extractSubChain(lambda.getBody(), lambda.getName(), new HashMap<>());
+		return extractSubChain(lambda.getBody(), lambda.getKey(), new HashMap<>());
 	}
 
 	/**
@@ -600,21 +601,26 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 * @param body
 	 *        the expression to decompose
 	 * @param paramName
-	 *        the outer lambda's parameter name (the chain terminates when this {@link Var} is
-	 *        found)
+	 *        {@link Lambda#getKey()} of the outermost lambda; the chain terminates when a
+	 *        {@link Var} whose {@link Var#getKey()} matches this constant is found
 	 * @param bindings
 	 *        mutable map of let-bindings accumulated so far; updated in place as new let-bindings
 	 *        are encountered; the caller must ensure each branch receives an independent copy
 	 * @return steps in application order, or {@code null} if the body is not a supported chain
 	 */
-	private static List<Step> extractSubChain(SearchExpression body, Object paramName,
-			Map<Object, SearchExpression> bindings) {
+	private static List<Step> extractSubChain(SearchExpression body, NamedConstant paramName,
+			Map<NamedConstant, SearchExpression> bindings) {
 		return extractSubChain(body, paramName, Collections.emptyMap(), bindings);
 	}
 
 	/**
+	 * @param body
+	 *        the expression to decompose
+	 * @param paramName
+	 *        {@link Lambda#getKey()} of the innermost active lambda; the walk terminates when a
+	 *        {@link Var} whose {@link Var#getKey()} is identical to this constant is encountered
 	 * @param outerAccumulators
-	 *        Maps each enclosing lambda's parameter name to the {@link LetBindingStep} list that
+	 *        maps each enclosing lambda's {@link Lambda#getKey()} to the {@link LetBindingStep} list that
 	 *        collects outer-side chains found at <em>any</em> nesting depth below that lambda. When
 	 *        a filter predicate comparison references a variable from an outer scope, the extracted
 	 *        chain is added to the list for the matching outer parameter and ends up at
@@ -622,10 +628,17 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 *        the same list object is shared across nesting levels, a deeply nested reference (e.g.
 	 *        two filter levels deep) writes directly into the correct level's accumulator without
 	 *        extra propagation.
+	 * @param bindings
+	 *        mutable map from a let-binding lambda's {@link Lambda#getKey()} to its binding
+	 *        expression, accumulated as {@code Call(Lambda("var", body), value)} nodes are
+	 *        traversed; used to substitute variable references encountered later in the walk; the
+	 *        caller must pass an independent copy for each branch so that bindings from one branch
+	 *        do not leak into another
+	 * @return steps in application order, or {@code null} if the body is not a supported chain
 	 */
-	private static List<Step> extractSubChain(SearchExpression body, Object paramName,
-			Map<Object, List<LetBindingStep>> outerAccumulators,
-			Map<Object, SearchExpression> bindings) {
+	private static List<Step> extractSubChain(SearchExpression body, NamedConstant paramName,
+			Map<NamedConstant, List<LetBindingStep>> outerAccumulators,
+			Map<NamedConstant, SearchExpression> bindings) {
 		SearchExpression current = body;
 		// Collect from outermost (last applied) to innermost (first applied).
 		List<Step> steps = new ArrayList<>();
@@ -650,9 +663,9 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 				// pendingLetBindings below. All deeper levels already in outerAccumulators are
 				// passed through unchanged so they remain reachable even from nested filters.
 				List<LetBindingStep> filterOuterSteps = new ArrayList<>();
-				Map<Object, List<LetBindingStep>> innerAccumulators = new HashMap<>(outerAccumulators);
+				Map<NamedConstant, List<LetBindingStep>> innerAccumulators = new HashMap<>(outerAccumulators);
 				innerAccumulators.put(paramName, filterOuterSteps);
-				List<Step> predicateChain = extractSubChain(filterLambda.getBody(), filterLambda.getName(),
+				List<Step> predicateChain = extractSubChain(filterLambda.getBody(), filterLambda.getKey(),
 					innerAccumulators, new HashMap<>(bindings));
 				pendingLetBindings.addAll(filterOuterSteps);
 				// If the predicate couldn't be fully analysed AND it contains TLStructuredTypePart
@@ -670,9 +683,9 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 				// Register the current paramName so that filters inside the map() body can track
 				// references to variables from this scope.
 				List<LetBindingStep> foreachOuterSteps = new ArrayList<>();
-				Map<Object, List<LetBindingStep>> foreachAccumulators = new HashMap<>(outerAccumulators);
+				Map<NamedConstant, List<LetBindingStep>> foreachAccumulators = new HashMap<>(outerAccumulators);
 				foreachAccumulators.put(paramName, foreachOuterSteps);
-				List<Step> innerChain = extractSubChain(innerLambda.getBody(), innerLambda.getName(),
+				List<Step> innerChain = extractSubChain(innerLambda.getBody(), innerLambda.getKey(),
 					foreachAccumulators, new HashMap<>(bindings));
 				pendingLetBindings.addAll(foreachOuterSteps);
 				if (innerChain == null) {
@@ -685,7 +698,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			} else if (current instanceof Call call && call.getFunction() instanceof Lambda letLambda) {
 				// Let-binding: TL-Script { varName = call.getArgument(); letLambda.getBody() }.
 				// Record the binding so that filter predicates can resolve the variable.
-				bindings.put(letLambda.getName(), call.getArgument());
+				bindings.put(letLambda.getKey(), call.getArgument());
 				// Extract an invertible sub-chain for the binding expression itself. This allows
 				// getPathBase to compute precise base objects when any part in the binding changes.
 				List<Step> bindingChain = extractSubChain(call.getArgument(), paramName,
@@ -753,21 +766,21 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 				return binaryPredicateStep(binaryOp.getLeft(), binaryOp.getRight(), paramName,
 					outerAccumulators, bindings, steps, pendingLetBindings);
 			} else if (current instanceof Var var) {
-				if (paramName.equals(var.getName())) {
+				if (paramName == var.getKey()) {
 					steps.addAll(pendingLetBindings);
 					Collections.reverse(steps);
 					return steps;
 				}
 				// Substitute let-binding variable references so the chain can continue through
 				// them.
-				SearchExpression bound = bindings.get(var.getName());
+				SearchExpression bound = bindings.get(var.getKey());
 				if (bound != null) {
 					current = bound;
 				} else {
 					// Outer-lambda parameter reference: register the current path as a
 					// LetBindingStep
 					// in the enclosing level's accumulator and return an empty chain as a terminal.
-					List<LetBindingStep> outerList = outerAccumulators.get(var.getName());
+					List<LetBindingStep> outerList = outerAccumulators.get(var.getKey());
 					if (outerList != null) {
 						List<Step> outerChain = new ArrayList<>(steps);
 						outerChain.addAll(pendingLetBindings);
@@ -798,9 +811,10 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 * back to {@link BaseObjects#all()} when any external part changes.</li>
 	 * </ul>
 	 */
-	private static List<Step> binaryPredicateStep(SearchExpression left, SearchExpression right, Object paramName,
-			Map<Object, List<LetBindingStep>> outerAccumulators, Map<Object, SearchExpression> bindings,
-			List<Step> steps, List<LetBindingStep> pendingLetBindings) {
+	private static List<Step> binaryPredicateStep(SearchExpression left, SearchExpression right,
+			NamedConstant paramName, Map<NamedConstant, List<LetBindingStep>> outerAccumulators,
+			Map<NamedConstant, SearchExpression> bindings, List<Step> steps,
+			List<LetBindingStep> pendingLetBindings) {
 		List<Step> leftSteps = extractSubChain(left, paramName, outerAccumulators, new HashMap<>(bindings));
 		List<Step> rightSteps = extractSubChain(right, paramName, outerAccumulators, new HashMap<>(bindings));
 		if (leftSteps == null && rightSteps == null) {

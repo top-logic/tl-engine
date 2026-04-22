@@ -20,7 +20,6 @@ import com.top_logic.ai.demo.test.agent.improver.TestResult;
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorer;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
-import com.top_logic.ai.service.agents.AgentFactory;
 import com.top_logic.ai.service.agents.LLMProviderRegistry;
 import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -369,19 +368,12 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 	}
 
 	/**
-	 * Loads the ModelExplorer system prompt from {@link AgentFactory} configuration.
+	 * Loads the ModelExplorer system prompt.
 	 */
 	protected String loadModelExplorerSystemPrompt() {
-		try {
-			AgentFactory factory = AgentFactory.getInstance();
-			String systemPrompt = factory.getAgentConfig("ModelExplorer").getSystemPrompt();
-			if (systemPrompt == null || systemPrompt.isEmpty()) {
-				throw new RuntimeException("ModelExplorer system prompt is empty");
-			}
-			return systemPrompt;
-		} catch (Exception ex) {
-			throw new RuntimeException("Failed to load ModelExplorer system prompt: " + ex.getMessage(), ex);
-		}
+		throw new UnsupportedOperationException(
+			"Agent definitions moved from XML config to knowledge base. "
+				+ "This test needs to be updated to load the system prompt from KB.");
 	}
 
 	/**

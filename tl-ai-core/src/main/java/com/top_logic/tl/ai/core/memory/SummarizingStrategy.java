@@ -49,12 +49,12 @@ public class SummarizingStrategy implements CompactionStrategy {
 		+ "Preserve ALL of the following in your summary:\n"
 		+ "1. Primary request and user's intent\n"
 		+ "2. Key technical context and decisions made\n"
-		+ "3. Files, resources, and code sections referenced (include key snippets)\n"
-		+ "4. Errors encountered and how they were resolved\n"
-		+ "5. Work completed so far\n"
-		+ "6. Pending tasks and next steps\n"
-		+ "7. Current working state\n\n"
-		+ "Be precise. Include file names, function names, and specific values.\n"
+		+ "3. Model types, objects, and resources referenced\n"
+		+ "4. Tool calls made and their outcomes\n"
+		+ "5. Errors encountered and how they were resolved\n"
+		+ "6. Work completed so far\n"
+		+ "7. Pending tasks and next steps\n\n"
+		+ "Be precise. Include type names, object identifiers, tool names, and specific values.\n"
 		+ "Do not include meta-commentary about the summarization process.";
 
 	private final LLMProvider _provider;

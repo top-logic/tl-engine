@@ -625,49 +625,69 @@ public class SVGBuilder implements SvgWriter {
 		}
 		elemental2.dom.Element element = jsinterop.base.Js.uncheckedCast(_current.getElement());
 		OMSVGSVGElement svgRoot = _root;
-		final double[] panStart = new double[2]; // startX, startY in SVG coords
-		final boolean[] panning = {false};
+
+		// Pan state: [0]=startClientX, [1]=startClientY, [2]=pointerId
+		final double[] panStart = new double[3];
+		// [0]=pending (pointerdown seen, waiting for threshold), [1]=active (panning)
+		final boolean[] panState = {false, false};
+		double panThreshold = 5.0; // screen pixels before pan starts
 
 		elemental2.dom.EventListener downListener = evt -> {
 			elemental2.dom.PointerEvent pe = (elemental2.dom.PointerEvent) evt;
-			panning[0] = true;
-			panStart[0] = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
-			panStart[1] = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
-			nativeSetPointerCapture(element, pe.pointerId);
-			pe.stopPropagation();
-			pe.preventDefault();
-
-			handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.START,
-				panStart[0], panStart[1]));
+			// Don't stop propagation — let item drag and other handlers see the event.
+			// Just record the start position for potential pan.
+			panState[0] = true; // pending
+			panState[1] = false; // not yet active
+			panStart[0] = pe.clientX;
+			panStart[1] = pe.clientY;
+			panStart[2] = pe.pointerId;
 		};
 
 		elemental2.dom.EventListener moveListener = evt -> {
-			if (!panning[0]) return;
+			if (!panState[0] && !panState[1]) return;
 			elemental2.dom.PointerEvent pe = (elemental2.dom.PointerEvent) evt;
-			double x = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
-			double y = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
-			pe.stopPropagation();
-			pe.preventDefault();
 
-			handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.MOVE, x, y));
+			if (panState[0] && !panState[1]) {
+				// Pending: check if mouse moved past threshold.
+				double dx = pe.clientX - panStart[0];
+				double dy = pe.clientY - panStart[1];
+				if (dx * dx + dy * dy < panThreshold * panThreshold) {
+					return; // Not yet — could still be a click.
+				}
+				// Activate pan: capture pointer, notify handler.
+				panState[0] = false;
+				panState[1] = true;
+				nativeSetPointerCapture(element, panStart[2]);
+
+				double svgX = clientToSvgX(svgRoot, panStart[0], panStart[1]);
+				double svgY = clientToSvgY(svgRoot, panStart[0], panStart[1]);
+				handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.START, svgX, svgY));
+			}
+
+			if (panState[1]) {
+				double x = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
+				double y = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
+				pe.stopPropagation();
+				pe.preventDefault();
+				handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.MOVE, x, y));
+			}
 		};
 
 		elemental2.dom.EventListener upListener = evt -> {
-			if (!panning[0]) return;
-			panning[0] = false;
-			elemental2.dom.PointerEvent pe = (elemental2.dom.PointerEvent) evt;
-			double x = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
-			double y = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
-			nativeReleasePointerCapture(element, pe.pointerId);
-			pe.stopPropagation();
-
-			handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.END, x, y));
+			if (panState[1]) {
+				elemental2.dom.PointerEvent pe = (elemental2.dom.PointerEvent) evt;
+				double x = clientToSvgX(svgRoot, pe.clientX, pe.clientY);
+				double y = clientToSvgY(svgRoot, pe.clientX, pe.clientY);
+				nativeReleasePointerCapture(element, pe.pointerId);
+				handler.onPan(createPanEvent(sender, SVGPanEvent.Phase.END, x, y));
+			}
+			panState[0] = false;
+			panState[1] = false;
 		};
 
-		// Suppress HTML5 drag on this element (the container div may have draggable="true"
-		// for diagram-level pan, which would steal pointer events from our pan handler).
+		// Suppress HTML5 drag when pan is active.
 		elemental2.dom.EventListener dragStartBlocker = evt -> {
-			if (panning[0]) {
+			if (panState[0] || panState[1]) {
 				evt.preventDefault();
 				evt.stopPropagation();
 			}

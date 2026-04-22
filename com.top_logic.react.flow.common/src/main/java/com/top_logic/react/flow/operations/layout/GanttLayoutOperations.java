@@ -345,15 +345,18 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double totalW = self.getWidth();
 		double totalH = self.getHeight();
 
-		// Background rect ensures wheel/pointer events are captured even over empty areas.
-		// SVG <g> elements only receive events where painted content exists.
-		// The pan handler is on the background rect (not the wrapping group) so it only
-		// fires for clicks on empty space — clicks on items bubble to the DragHandler instead.
+		// Background rect ensures wheel events are captured even over empty areas
+		// (SVG <g> elements only receive events where painted content exists).
+		// pointer-events:none so it doesn't interfere with item clicks/drag.
 		out.beginRect(x0, y0, totalW, totalH);
 		out.setFill("transparent");
-		out.writeAttribute("pointer-events", "all");
-		out.attachOnPan(this, self);
+		out.writeAttribute("pointer-events", "none");
 		out.endRect();
+
+		// Pan handler on the wrapping group — fires for all pointer events in the
+		// GanttLayout area. The handler only starts panning after a threshold distance
+		// to avoid interfering with item clicks.
+		out.attachOnPan(this, self);
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();
 		double scrollX = self.getScrollX();

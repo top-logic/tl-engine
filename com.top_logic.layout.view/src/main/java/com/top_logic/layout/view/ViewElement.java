@@ -22,6 +22,8 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelFactory;
+import com.top_logic.layout.view.routing.ParamBindingConfig;
+import com.top_logic.layout.view.routing.QueryBindingConfig;
 
 /**
  * The mandatory root element of every {@code .view.xml} file.
@@ -72,6 +74,33 @@ public class ViewElement implements UIElement {
 		@DefaultContainer
 		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+
+		/** Configuration name for {@link #getParamBindings()}. */
+		String PARAM_BINDINGS = "param-bindings";
+
+		/**
+		 * Bindings from URL route parameters to view channels.
+		 *
+		 * <p>
+		 * Route parameters are values extracted from the URL path (e.g., {@code /view/123} where
+		 * {@code 123} is a route parameter).
+		 * </p>
+		 */
+		@Name(PARAM_BINDINGS)
+		List<ParamBindingConfig> getParamBindings();
+
+		/** Configuration name for {@link #getQueryBindings()}. */
+		String QUERY_BINDINGS = "query-bindings";
+
+		/**
+		 * Bindings from URL query parameters to view channels.
+		 *
+		 * <p>
+		 * Query parameters are values from the query string (e.g., {@code ?type=foo&sort=name}).
+		 * </p>
+		 */
+		@Name(QUERY_BINDINGS)
+		List<QueryBindingConfig> getQueryBindings();
 	}
 
 	private final List<Map.Entry<String, ChannelFactory>> _channelEntries;

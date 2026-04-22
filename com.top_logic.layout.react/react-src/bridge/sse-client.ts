@@ -85,6 +85,16 @@ function createEventSource(url: string): void {
   };
 
   _eventSource.onerror = () => {
+    if (_eventSource && _eventSource.readyState === EventSource.CLOSED) {
+      // HTTP error (e.g. 401 after server restart) — session is gone.
+      // Redirect to trigger re-login instead of retrying endlessly.
+      console.warn('[TLReact] SSE connection permanently closed (session lost). Reloading page.');
+      if (_heartbeatCheckInterval) {
+        clearInterval(_heartbeatCheckInterval);
+      }
+      window.location.reload();
+      return;
+    }
     console.warn('[TLReact] SSE connection error, will reconnect automatically.');
   };
 }

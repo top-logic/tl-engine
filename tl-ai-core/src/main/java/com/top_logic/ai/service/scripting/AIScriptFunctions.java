@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.top_logic.ai.service.agents.AgentFactory;
-import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.LLMProviderRegistry;
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
@@ -42,7 +42,7 @@ import com.top_logic.tl.ai.core.tool.Tool;
  *
  * <p>
  * This class provides functional-style access to chat completions from TL-Script. All functions
- * use the tl-ai-core provider abstraction via {@link AgentRegistry}, {@link AgentFactory},
+ * use the tl-ai-core provider abstraction via {@link LLMProviderRegistry}, {@link AgentFactory},
  * and {@link AgentLoop}.
  * </p>
  *
@@ -58,7 +58,7 @@ import com.top_logic.tl.ai.core.tool.Tool;
 public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
-	 * Returns a list of all available model names from the {@link AgentRegistry}.
+	 * Returns a list of all available model names from the {@link LLMProviderRegistry}.
 	 *
 	 * <p>
 	 * Model names can be passed to the {@link #chat(List, String, Object, Collection)} function to
@@ -68,7 +68,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return An immutable list of all configured model names.
 	 */
 	public static List<String> models() {
-		return AgentRegistry.getInstance().getModelNames();
+		return LLMProviderRegistry.getInstance().getModelNames();
 	}
 
 	/**
@@ -176,7 +176,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        </ul>
 	 * @param model
 	 *        The model name to use, or {@code null} to use the default model configured in
-	 *        {@link AgentRegistry}.
+	 *        {@link LLMProviderRegistry}.
 	 * @param responseFormat
 	 *        The response format specification. Can be:
 	 *        <ul>
@@ -193,7 +193,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
-		AgentRegistry registry = AgentRegistry.getInstance();
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 		String modelName = model != null ? model : registry.getConfig().getDefaultModel();
 
 		// Build system prompt and user messages from the input

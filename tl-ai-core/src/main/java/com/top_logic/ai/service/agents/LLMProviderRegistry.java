@@ -41,22 +41,23 @@ import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 
 /**
- * Registry of LLM provider connections and agent configurations.
+ * Registry of LLM provider connections.
  *
  * <p>
- * LLM provider connections are configured via {@link ProviderConfig}. Agent execution is handled
- * by {@link AgentFactory}.
+ * Manages provider configurations (API keys, base URLs, model lists) and creates
+ * {@link LLMProvider} instances for given model names. Agent execution is handled by
+ * {@link AgentFactory}.
  * </p>
  *
  * @see ProviderConfig
  * @see AgentFactory
  */
-public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
+public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegistry.Config<?>> {
 
 	/**
-	 * Configuration interface for {@link AgentRegistry}.
+	 * Configuration interface for {@link LLMProviderRegistry}.
 	 */
-	public interface Config<I extends AgentRegistry> extends ConfiguredManagedClass.Config<I> {
+	public interface Config<I extends LLMProviderRegistry> extends ConfiguredManagedClass.Config<I> {
 
 		/**
 		 * Configuration property name for agents.
@@ -83,7 +84,8 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		 * The configured agents, keyed by {@link AgentConfig#getName() agent name}.
 		 *
 		 * <p>
-		 * Each entry defines one agent with its model, prompt, tools, and skills.
+		 * Legacy property retained for compatibility with callers that still read agent configs
+		 * from the XML configuration. Will be removed once all agent resolution is KB-based.
 		 * </p>
 		 */
 		@Name(AGENTS)
@@ -184,7 +186,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		String getVersion();
 	}
 
-	private static volatile AgentRegistry _instance;
+	private static volatile LLMProviderRegistry _instance;
 
 	/**
 	 * Index mapping model names to their provider config name. Built at startup from the
@@ -193,7 +195,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	private Map<String, String> _modelProviderIndex;
 
 	/**
-	 * Creates a new {@link AgentRegistry} from configuration.
+	 * Creates a new {@link LLMProviderRegistry} from configuration.
 	 *
 	 * @param context
 	 *        The instantiation context for error reporting.
@@ -201,16 +203,16 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	 *        The service configuration.
 	 */
 	@CalledByReflection
-	public AgentRegistry(InstantiationContext context, Config<?> config) {
+	public LLMProviderRegistry(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
 	/**
-	 * Returns the singleton instance of the {@link AgentRegistry}.
+	 * Returns the singleton instance of the {@link LLMProviderRegistry}.
 	 *
 	 * @return The service instance, or {@code null} if not yet started.
 	 */
-	public static AgentRegistry getInstance() {
+	public static LLMProviderRegistry getInstance() {
 		return _instance;
 	}
 
@@ -222,10 +224,10 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		// Build model name index from provider configs
 		_modelProviderIndex = buildModelProviderIndex(getConfig().getProviders());
 
-		Logger.info("AgentRegistry started with " +
+		Logger.info("LLMProviderRegistry started with " +
 			getConfig().getProviders().size() + " provider(s). " +
 			"Agent and skill definitions are resolved from the knowledge base at runtime.",
-			AgentRegistry.class);
+			LLMProviderRegistry.class);
 	}
 
 	@Override
@@ -307,7 +309,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			}
 			if (!discovered.isEmpty()) {
 				Logger.info("Discovered " + discovered.size() + " model(s) from provider '"
-					+ providerName + "'.", AgentRegistry.class);
+					+ providerName + "'.", LLMProviderRegistry.class);
 			}
 		}
 
@@ -365,7 +367,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 				Logger.warn(
 					"Model discovery failed for provider '" + providerName
 						+ "': HTTP " + response.statusCode(),
-					AgentRegistry.class);
+					LLMProviderRegistry.class);
 				return List.of();
 			}
 
@@ -373,7 +375,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		} catch (Exception ex) {
 			Logger.warn(
 				"Model discovery failed for provider '" + providerName + "': " + ex.getMessage(),
-				AgentRegistry.class);
+				LLMProviderRegistry.class);
 			return List.of();
 		}
 	}
@@ -435,7 +437,7 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			reader.endObject();
 		} catch (Exception ex) {
 			Logger.warn("Failed to parse model list JSON: " + ex.getMessage(),
-				AgentRegistry.class);
+				LLMProviderRegistry.class);
 		}
 		return models;
 	}
@@ -529,22 +531,22 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Module for {@link AgentRegistry}.
+	 * Module for {@link LLMProviderRegistry}.
 	 */
-	public static final class Module extends TypedRuntimeModule<AgentRegistry> {
+	public static final class Module extends TypedRuntimeModule<LLMProviderRegistry> {
 
 		/**
-		 * Singleton {@link AgentRegistry.Module} instance.
+		 * Singleton {@link LLMProviderRegistry.Module} instance.
 		 */
-		public static final AgentRegistry.Module INSTANCE = new AgentRegistry.Module();
+		public static final LLMProviderRegistry.Module INSTANCE = new LLMProviderRegistry.Module();
 
 		private Module() {
 			// Singleton constructor
 		}
 
 		@Override
-		public Class<AgentRegistry> getImplementation() {
-			return AgentRegistry.class;
+		public Class<LLMProviderRegistry> getImplementation() {
+			return LLMProviderRegistry.class;
 		}
 	}
 }

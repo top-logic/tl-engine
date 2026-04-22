@@ -43,7 +43,7 @@ import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.model.annotate.LabelPosition;
 
 /**
- * Configuration for a single agent in the {@link AgentRegistry}.
+ * Configuration for a single agent in the {@link LLMProviderRegistry}.
  *
  * <p>
  * Each agent is identified by a unique name (provided by {@link NamedConfigMandatory}) and defines
@@ -183,7 +183,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * The LLM model name to use for this agent (e.g. {@code "claude-sonnet-4-20250514"}).
 	 *
 	 * <p>
-	 * Options are populated from the models listed in the {@link AgentRegistry} provider configs.
+	 * Options are populated from the models listed in the {@link LLMProviderRegistry} provider configs.
 	 * </p>
 	 */
 	@Name(MODEL)
@@ -484,7 +484,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 *
 	 * <p>
 	 * Each name maps to a well-known tool class. Tools are instantiated at runtime by the
-	 * {@link AgentRegistry}.
+	 * {@link LLMProviderRegistry}.
 	 * </p>
 	 */
 	@Name(TOOLS)
@@ -520,13 +520,13 @@ public interface AgentConfig extends NamedConfigMandatory {
 	}
 
 	/**
-	 * Provides all model names registered in {@link AgentRegistry} as selection options.
+	 * Provides all model names registered in {@link LLMProviderRegistry} as selection options.
 	 */
 	class AllModelNames extends Function0<List<String>> {
 
 		@Override
 		public List<String> apply() {
-			AgentRegistry registry = AgentRegistry.getInstance();
+			LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 			if (registry == null) {
 				return Collections.emptyList();
 			}
@@ -545,32 +545,6 @@ public interface AgentConfig extends NamedConfigMandatory {
 				return Collections.emptyList();
 			}
 			return new ArrayList<>(ToolRegistry.getInstance().getToolNames());
-		}
-	}
-
-	/**
-	 * Provides the names of all {@link ChatAgentConfig} agents as delegation targets.
-	 *
-	 * <p>
-	 * Background agents are excluded because they do not participate in the orchestration chain and
-	 * cannot be delegated to.
-	 * </p>
-	 */
-	class AllChatAgentNames extends Function0<List<String>> {
-
-		@Override
-		public List<String> apply() {
-			AgentRegistry registry = AgentRegistry.getInstance();
-			if (registry == null) {
-				return Collections.emptyList();
-			}
-			List<String> result = new ArrayList<>();
-			for (java.util.Map.Entry<String, AgentConfig> entry : registry.getConfig().getAgents().entrySet()) {
-				if (entry.getValue() instanceof ChatAgentConfig) {
-					result.add(entry.getKey());
-				}
-			}
-			return result;
 		}
 	}
 
@@ -760,12 +734,12 @@ public interface AgentConfig extends NamedConfigMandatory {
 		if (modelName == null || modelName.isEmpty()) {
 			return null;
 		}
-		AgentRegistry registry = AgentRegistry.getInstance();
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 		if (registry == null) {
 			return null;
 		}
-		Map<String, AgentRegistry.ProviderConfig> providers = registry.getConfig().getProviders();
-		for (Map.Entry<String, AgentRegistry.ProviderConfig> entry : providers.entrySet()) {
+		Map<String, LLMProviderRegistry.ProviderConfig> providers = registry.getConfig().getProviders();
+		for (Map.Entry<String, LLMProviderRegistry.ProviderConfig> entry : providers.entrySet()) {
 			List<String> models = entry.getValue().getModels();
 			if (models != null && models.contains(modelName)) {
 				return entry.getKey();
@@ -918,7 +892,7 @@ public interface AgentConfig extends NamedConfigMandatory {
 	 * Note: This constraint is <b>not</b> attached to the property annotation because the
 	 * framework defaults nullable enum properties to their first constant
 	 * ({@link ThinkingType#ADAPTIVE}) even when the user did not set a value. Validation happens at
-	 * runtime in {@link AgentRegistry} instead.
+	 * runtime in {@link LLMProviderRegistry} instead.
 	 * </p>
 	 */
 	class ThinkingTypeSupportsAdaptiveConstraint extends GenericValueDependency<ThinkingType, Boolean> {

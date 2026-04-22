@@ -54,7 +54,7 @@ import com.top_logic.tl.ai.core.tool.ToolMode;
  *
  * <p>
  * Register this tool via {@link com.top_logic.tl.ai.core.tool.AnnotatedTools} and assign it to an
- * agent through the {@link com.top_logic.ai.service.agents.AgentRegistry} configuration.
+ * agent through the {@link com.top_logic.ai.service.agents.LLMProviderRegistry} configuration.
  * </p>
  */
 public class AnnotationDefinitionExplorerTool {

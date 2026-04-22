@@ -25,7 +25,7 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * {@code tl.ai.core:Agent}.
  * </p>
  *
- * @see AgentRegistry#getModelNames()
+ * @see LLMProviderRegistry#getModelNames()
  */
 @InApp
 public class AllModelNamesGenerator extends ListGeneratorAdaptor {
@@ -46,7 +46,7 @@ public class AllModelNamesGenerator extends ListGeneratorAdaptor {
 
 	@Override
 	public List<?> generateList(EditContext editContext) {
-		AgentRegistry registry = AgentRegistry.getInstance();
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 		if (registry == null) {
 			return Collections.emptyList();
 		}

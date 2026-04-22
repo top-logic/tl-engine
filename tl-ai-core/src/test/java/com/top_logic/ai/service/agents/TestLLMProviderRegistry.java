@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.ai.service.tools.registry.ToolRegistry;
 
-public class TestAgentRegistry extends TestCase {
+public class TestLLMProviderRegistry extends TestCase {
 
 	/**
 	 * Verifies the qualified tool name convention: names from {@link ToolRegistry} use the format
@@ -58,18 +58,4 @@ public class TestAgentRegistry extends TestCase {
 		assertEquals("<<AVAILABLE_DELEGATES>>", AgentFactory.DELEGATES_PLACEHOLDER);
 	}
 
-	/**
-	 * Documents the entry-point validation contract: exactly one agent must be marked.
-	 * The actual validation runs in {@link AgentRegistry#startUp()}.
-	 */
-	public void testEntryPointValidationContract() {
-		// The entry-point property must exist on AgentConfig
-		// and default to false (via @BooleanDefault)
-		// Startup validates: 0 entry points -> RuntimeException
-		// Startup validates: 2+ entry points -> RuntimeException
-		// Startup validates: exactly 1 -> stores name in _entryPointAgentName
-
-		// Verify the property name constant matches the expected XML attribute
-		assertEquals("entry-point", ChatAgentConfig.ENTRY_POINT);
-	}
 }

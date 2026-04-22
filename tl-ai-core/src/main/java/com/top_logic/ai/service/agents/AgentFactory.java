@@ -42,7 +42,7 @@ import com.top_logic.tl.ai.core.tool.Tool;
  * <p>
  * This is the primary entry point for constructing agents from model-based definitions
  * ({@code tl.ai.core:Agent} instances). It delegates provider creation to
- * {@link AgentRegistry#buildProvider(String)} and tool resolution to the service-level
+ * {@link LLMProviderRegistry#buildProvider(String)} and tool resolution to the service-level
  * {@link ToolRegistry}.
  * </p>
  *
@@ -106,7 +106,7 @@ public class AgentFactory {
 	 *         if no agent with the given name is configured.
 	 */
 	public com.top_logic.ai.service.agents.AgentConfig getAgentConfig(String name) {
-		AgentRegistry registry = AgentRegistry.getInstance();
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 		Map<String, com.top_logic.ai.service.agents.AgentConfig> agents =
 			registry.getConfig().getAgents();
 		com.top_logic.ai.service.agents.AgentConfig config = agents.get(name);
@@ -126,7 +126,7 @@ public class AgentFactory {
 	 * @return A list of agent names with matching background configuration; never null.
 	 */
 	public List<String> getBackgroundAgents(Class<? extends TriggerConfig> triggerType) {
-		AgentRegistry registry = AgentRegistry.getInstance();
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 		List<String> result = new ArrayList<>();
 		for (Map.Entry<String, com.top_logic.ai.service.agents.AgentConfig> entry
 				: registry.getConfig().getAgents().entrySet()) {
@@ -284,8 +284,8 @@ public class AgentFactory {
 	AgentConfig buildConfig(TLObject agent) {
 		String model = (String) agent.tValueByName("model");
 		if (model == null || model.isBlank()) {
-			AgentRegistry agentRegistry = AgentRegistry.getInstance();
-			model = agentRegistry != null ? agentRegistry.getConfig().getDefaultModel() : null;
+			LLMProviderRegistry providerRegistry = LLMProviderRegistry.getInstance();
+			model = providerRegistry != null ? providerRegistry.getConfig().getDefaultModel() : null;
 		}
 		if (model == null) {
 			throw new IllegalStateException(
@@ -327,13 +327,13 @@ public class AgentFactory {
 	 * Creates an {@link LLMProvider} for the given model name.
 	 *
 	 * <p>
-	 * Delegates to {@link AgentRegistry#buildProvider(String)}.
+	 * Delegates to {@link LLMProviderRegistry#buildProvider(String)}.
 	 * </p>
 	 */
 	LLMProvider buildProvider(String modelName) {
-		AgentRegistry registry = AgentRegistry.getInstance();
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 		if (registry == null) {
-			throw new IllegalStateException("AgentRegistry is not available.");
+			throw new IllegalStateException("LLMProviderRegistry is not available.");
 		}
 		return registry.buildProvider(modelName);
 	}

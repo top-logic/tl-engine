@@ -5,10 +5,10 @@
  -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
-		<config service-class="com.top_logic.ai.service.agents.AgentRegistry"
+		<config service-class="com.top_logic.ai.service.agents.LLMProviderRegistry"
 			config:override="true"
 		>
-			<instance class="com.top_logic.ai.service.agents.AgentRegistry"
+			<instance class="com.top_logic.ai.service.agents.LLMProviderRegistry"
 				default-model="mistral-large-latest"
 			>
 				<providers>

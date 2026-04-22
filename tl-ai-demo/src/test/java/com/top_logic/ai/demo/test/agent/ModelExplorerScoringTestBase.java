@@ -21,7 +21,7 @@ import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorer;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
 import com.top_logic.ai.service.agents.AgentFactory;
-import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.LLMProviderRegistry;
 import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -392,7 +392,7 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 
 		modules.add(com.top_logic.util.model.ModelService.Module.INSTANCE);
 		modules.add(com.top_logic.layout.provider.LabelProviderService.Module.INSTANCE);
-		modules.add(AgentRegistry.Module.INSTANCE);
+		modules.add(LLMProviderRegistry.Module.INSTANCE);
 
 		modules.addAll(Arrays.asList(additionalModules));
 

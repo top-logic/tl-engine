@@ -15,8 +15,8 @@
 				<modules>
 					<!-- Tool Registry for managing AI tool providers -->
 					<module key="com.top_logic.ai.service.tools.registry.ToolRegistry$Module" value="true"/>
-					<!-- Agent Registry for runtime-configurable agent definitions -->
-					<module key="com.top_logic.ai.service.agents.AgentRegistry$Module" value="true"/>
+					<!-- LLM Provider Registry for AI provider connections -->
+					<module key="com.top_logic.ai.service.agents.LLMProviderRegistry$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -154,7 +154,7 @@
 			</instance>
 		</config>
 
-		<!-- Provider credentials are configured via AgentRegistry providers section.
+		<!-- Provider credentials are configured via LLMProviderRegistry providers section.
 		     Override in application-specific autoconf files. -->
 	</services>
 </application>

@@ -51,7 +51,8 @@ public interface TreeConnectionOperations extends Drawable {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 
 		TreeConnector parent = self().getParent();
 

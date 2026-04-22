@@ -55,14 +55,7 @@ public interface SvgWriter extends AutoCloseable {
 	/**
 	 * Starts a <code>g</code> tag.
 	 */
-	void beginGroup(Object model);
-
-	/**
-	 * Starts an anonymous <code>g</code> tag.
-	 */
-	default void beginGroup() {
-		beginGroup(null);
-	}
+	void beginGroup();
 
 	/**
 	 * Writes a <code>translate</code> <code>transform</code> attribute.
@@ -101,16 +94,9 @@ public interface SvgWriter extends AutoCloseable {
 	void endGroup();
 
 	/**
-	 * Starts an anonymous <code>path</code> tag.
-	 */
-	default void beginPath() {
-		beginPath(null);
-	}
-
-	/**
 	 * Starts a <code>path</code> tag.
 	 */
-	void beginPath(Object model);
+	void beginPath();
 
 	/**
 	 * Starts a <code>data</code> attribute.
@@ -241,16 +227,9 @@ public interface SvgWriter extends AutoCloseable {
 	void endPath();
 
 	/**
-	 * Starts an anonymous {@value SvgConstants#POLYLINE} tag.
-	 */
-	default void beginPolyline() {
-		beginPolyline(null);
-	}
-
-	/**
 	 * Starts a {@value SvgConstants#POLYLINE} tag.
 	 */
-	void beginPolyline(Object model);
+	void beginPolyline();
 
 	/**
 	 * Closes a {@value SvgConstants#POLYLINE} tag.
@@ -258,16 +237,9 @@ public interface SvgWriter extends AutoCloseable {
 	void endPolyline();
 
 	/**
-	 * Starts an anonymous {@value SvgConstants#POLYGON} tag.
-	 */
-	default void beginPolygon() {
-		beginPolygon(null);
-	}
-
-	/**
 	 * Starts a {@value SvgConstants#POLYGON} tag.
 	 */
-	void beginPolygon(Object model);
+	void beginPolygon();
 
 	/**
 	 * Closes a {@value SvgConstants#POLYGON} tag.
@@ -275,16 +247,9 @@ public interface SvgWriter extends AutoCloseable {
 	void endPolygon();
 
 	/**
-	 * Starts an anonymous {@value SvgConstants#CLIP_PATH} tag.
-	 */
-	default void beginClipPath() {
-		beginClipPath(null);
-	}
-
-	/**
 	 * Starts a {@value SvgConstants#CLIP_PATH} tag.
 	 */
-	void beginClipPath(Object model);
+	void beginClipPath();
 
 	/**
 	 * Closes a {@value SvgConstants#CLIP_PATH} tag.
@@ -488,6 +453,24 @@ public interface SvgWriter extends AutoCloseable {
 		// Ignore by default. This is only supported in specialized writers that build interactive
 		// DOM trees.
 		return Registration.NONE;
+	}
+
+	/**
+	 * Attaches a model object to the currently created SVG element. The model is linked
+	 * for interactive DOM-to-model lookup (e.g. by the drag handler).
+	 *
+	 * <p>
+	 * Call this after creating the element (e.g. after {@code beginGroup()},
+	 * {@code beginRect(...)}, {@code beginText(...)}) and before closing it.
+	 * </p>
+	 *
+	 * <p>
+	 * This is an optional method for interactive writers only. Non-interactive writers
+	 * ignore it.
+	 * </p>
+	 */
+	default void attachModel(Object model) {
+		// No-op for non-interactive writers.
 	}
 
 	/**

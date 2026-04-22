@@ -335,7 +335,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		// Create a wrapping group linked to the GanttLayout model.
 		// This triggers linkModel() in the SVGBuilder, which assigns clientId
 		// and attaches __tlWidget for DOM-to-model lookup.
-		out.beginGroup(self);
+		out.beginGroup();
+		out.attachModel(self);
 		out.attachOnWheel(this, self);
 
 		double x0 = self.getX();
@@ -1323,20 +1324,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		self.setScrollX(newScrollX);
 
 		event.requestRelayout();
-	}
-
-	@Override
-	default Box findItemAt(double layoutX, double layoutY) {
-		GanttLayout self = (GanttLayout) this;
-		for (GanttItem item : self.getItems()) {
-			Box box = item.getBox();
-			if (box != null
-				&& layoutX >= box.getX() && layoutX <= box.getX() + box.getWidth()
-				&& layoutY >= box.getY() && layoutY <= box.getY() + box.getHeight()) {
-				return box;
-			}
-		}
-		return null;
 	}
 
 	@Override

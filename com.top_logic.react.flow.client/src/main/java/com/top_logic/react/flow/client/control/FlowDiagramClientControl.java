@@ -885,10 +885,15 @@ public class FlowDiagramClientControl implements DiagramContext {
 			// --- Hierarchical begin/end (change parent) ---
 
 			@Override
-			public void beginGroup(Object model) {
-				if (tryBeginElement(model, true)) return;
+			public void beginGroup() {
 				if (_updateDepth > 0) _updateDepth++;
-				super.beginGroup(model);
+				super.beginGroup();
+			}
+
+			@Override
+			public void attachModel(Object model) {
+				if (tryBeginElement(model, true)) return;
+				super.attachModel(model);
 			}
 
 			@Override
@@ -898,10 +903,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 			}
 
 			@Override
-			public void beginClipPath(Object model) {
-				if (tryBeginElement(model, true)) return;
+			public void beginClipPath() {
 				if (_updateDepth > 0) _updateDepth++;
-				super.beginClipPath(model);
+				super.beginClipPath();
 			}
 
 			@Override
@@ -910,25 +914,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 				super.endClipPath();
 			}
 
-			// --- Leaf begin/end (don't change parent) ---
-
-			@Override
-			public void beginPath(Object model) {
-				if (tryBeginElement(model, false)) return;
-				super.beginPath(model);
-			}
-
-			@Override
-			public void beginPolyline(Object model) {
-				if (tryBeginElement(model, false)) return;
-				super.beginPolyline(model);
-			}
-
-			@Override
-			public void beginPolygon(Object model) {
-				if (tryBeginElement(model, false)) return;
-				super.beginPolygon(model);
-			}
+			// Note: beginPath/Polyline/Polygon no longer take model parameters.
+			// Model attachment is handled via attachModel() which does the
+			// element lookup for incremental updates.
 
 			// --- Shared logic ---
 
@@ -1018,6 +1006,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				((Widget) model).setClientId(id);
 				attachWidget(svgElement.getElement(), model);
 			}
+
 		};
 		builder.setRelayoutCallback(() -> {
 			relayout();

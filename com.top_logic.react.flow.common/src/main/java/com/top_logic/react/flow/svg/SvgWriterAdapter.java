@@ -36,8 +36,13 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void beginGroup(Object model) {
-		_impl.beginGroup(model);
+	public void beginGroup() {
+		_impl.beginGroup();
+	}
+
+	@Override
+	public void attachModel(Object model) {
+		_impl.attachModel(model);
 	}
 
 	@Override
@@ -56,23 +61,23 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void beginPath(Object model) {
-		_impl.beginPath(model);
+	public void beginPath() {
+		_impl.beginPath();
 	}
 
 	@Override
-	public void beginPolygon(Object model) {
-		_impl.beginPolygon(model);
+	public void beginPolygon() {
+		_impl.beginPolygon();
 	}
 
 	@Override
-	public void beginPolyline(Object model) {
-		_impl.beginPolyline(model);
+	public void beginPolyline() {
+		_impl.beginPolyline();
 	}
 
 	@Override
-	public void beginClipPath(Object model) {
-		_impl.beginClipPath(model);
+	public void beginClipPath() {
+		_impl.beginClipPath();
 	}
 
 	@Override

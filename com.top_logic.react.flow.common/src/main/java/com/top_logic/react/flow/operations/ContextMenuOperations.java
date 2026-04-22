@@ -28,7 +28,8 @@ public interface ContextMenuOperations extends DecorationOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 
 		int id = ((AbstractSharedGraphNode) self()).id();
 		if (id != 0) {

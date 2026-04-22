@@ -56,7 +56,8 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 			clickHandler.cancel();
 		}
 
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 		String cssClass = self().isSelected() ? TL_SELECTED : TL_CAN_SELECT;
 		if (!StringServicesShared.isEmpty(self().getCssClass())) {
 			cssClass += " " + self().getCssClass();

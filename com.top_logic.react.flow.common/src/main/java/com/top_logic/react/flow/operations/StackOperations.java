@@ -49,9 +49,12 @@ public interface StackOperations extends BoxOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
+		out.beginGroup();
+		out.attachModel(self());
 		for (Box content : self().getContents()) {
 			content.draw(out);
 		}
+		out.endGroup();
 	}
 
 }

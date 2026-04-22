@@ -72,7 +72,8 @@ public interface BorderOperations extends DecorationOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 
 		drawContent(out);
 

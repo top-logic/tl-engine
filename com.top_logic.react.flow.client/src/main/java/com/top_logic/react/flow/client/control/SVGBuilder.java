@@ -148,12 +148,17 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void beginGroup(Object model) {
+	public void beginGroup() {
 		OMSVGGElement next = _doc.createSVGGElement();
 		_parent.appendChild(next);
 		setParent(next);
+	}
 
-		created(next, model);
+	@Override
+	public void attachModel(Object model) {
+		if (_current != null && model != null) {
+			created(_current, model);
+		}
 	}
 
 	@Override
@@ -187,28 +192,22 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void beginPath(Object model) {
+	public void beginPath() {
 		OMSVGPathElement path = _doc.createSVGPathElement();
 		appendChild(path);
-
-		created(path, model);
 	}
 
 	@Override
-	public void beginPolyline(Object model) {
+	public void beginPolyline() {
 		OMSVGPolylineElement polyline = _doc.createSVGPolylineElement();
 		appendChild(polyline);
-
-		created(polyline, model);
 		_current = polyline;
 	}
 
 	@Override
-	public void beginPolygon(Object model) {
+	public void beginPolygon() {
 		OMSVGPolygonElement polygon = _doc.createSVGPolygonElement();
 		appendChild(polygon);
-
-		created(polygon, model);
 		_current = polygon;
 	}
 
@@ -223,12 +222,10 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void beginClipPath(Object model) {
+	public void beginClipPath() {
 		OMSVGClipPathElement clipPath = _doc.createSVGClipPathElement();
 		_parent.appendChild(clipPath);
 		setParent(clipPath);
-
-		created(clipPath, model);
 	}
 
 	@Override

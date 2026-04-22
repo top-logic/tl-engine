@@ -24,7 +24,8 @@ public interface FillOperations extends DecorationOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 
 		out.beginPath();
 		out.writeCssClass(self().getCssClass());

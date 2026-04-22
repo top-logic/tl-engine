@@ -61,7 +61,8 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 			clickHandler.cancel();
 		}
 
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 
 		if (selectable) {
 			String cssClass = self().isSelected()

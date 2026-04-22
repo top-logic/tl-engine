@@ -37,7 +37,8 @@ public interface DropRegionOperations extends DecorationOperations, SVGDropHandl
 			clickHandler.cancel();
 		}
 
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 		out.writeCssClass(self().getCssClass());
 		self().setHandlerRegistration(out.attachOnDrop(this, self()));
 		{

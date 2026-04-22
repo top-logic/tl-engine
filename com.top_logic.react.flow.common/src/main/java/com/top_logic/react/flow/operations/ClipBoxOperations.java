@@ -31,7 +31,8 @@ public interface ClipBoxOperations extends DecorationOperations {
 
 	@Override
 	default void drawContent(SvgWriter out) {
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 
 		out.beginGroup();
 		out.writeAttribute("clip-path", "url(#" + getClipPathID() + ")");

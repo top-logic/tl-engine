@@ -30,7 +30,8 @@ public interface TooltipOperations extends DecorationOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.beginGroup(self());
+		out.beginGroup();
+		out.attachModel(self());
 		out.writeCssClass(self().getCssClass());
 
 		// Tooltip template for the poor. This is rendered on the client where TL tools are not

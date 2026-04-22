@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -337,6 +338,10 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 				directRoles.add(changedObject);
 			} else {
 				objType.getAllParts().stream()
+					/* Changes on derived attributes are not reported, therefore it is not possible
+					 * to define RoleRules with derived attributes. Therefore it is not necessary to
+					 * check derived attributes in creations and deletions. */
+					.filter(Predicate.not(TLStructuredTypePart::isDerived))
 					.forEach(part -> {
 						put(changedParts, changedObject, part, () -> changedObject.tValue(part));
 					});

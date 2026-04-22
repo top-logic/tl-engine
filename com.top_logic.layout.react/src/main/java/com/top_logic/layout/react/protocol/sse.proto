@@ -164,3 +164,24 @@ message WindowFocusEvent extends SSEEvent {
 	/** The window ID to focus. */
 	string windowId;
 }
+
+/**
+ * Tells the client to update the browser URL (pushState or replaceState).
+ * Sent after a route-forming navigation on the server.
+ */
+message RouteChangeEvent extends SSEEvent {
+	/** The new URL path to display in the browser address bar (relative to view base). */
+	string url;
+
+	/** If true, use replaceState instead of pushState (no new history entry). */
+	boolean replace;
+}
+
+/**
+ * Tells the client to correct the URL after a vetoed back-navigation.
+ * Sent when a dirty-channel veto prevents the requested navigation.
+ */
+message RouteVetoEvent extends SSEEvent {
+	/** The current (correct) URL to restore in the address bar. */
+	string currentUrl;
+}

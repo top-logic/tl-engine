@@ -19,6 +19,12 @@ import {
   type WindowCloseEventData,
   type WindowFocusEventData,
 } from './window-manager';
+import {
+  handleRouteChangeEvent,
+  handleRouteVetoEvent,
+  type RouteChangeEventData,
+  type RouteVetoEventData,
+} from './route-sync';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -180,6 +186,12 @@ function dispatch(data: unknown): void {
       break;
     case 'WindowFocusEvent':
       handleWindowFocus(payload as unknown as WindowFocusEventData);
+      break;
+    case 'RouteChangeEvent':
+      handleRouteChangeEvent(payload as unknown as RouteChangeEventData);
+      break;
+    case 'RouteVetoEvent':
+      handleRouteVetoEvent(payload as unknown as RouteVetoEventData);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

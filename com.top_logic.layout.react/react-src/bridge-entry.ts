@@ -44,6 +44,10 @@ import { subscribe as sseSubscribe, unsubscribe as sseUnsubscribe } from './brid
 import { initSelfCloseNotification } from './bridge/window-manager';
 initSelfCloseNotification();
 
+// Initialize client-side route synchronization (pushState/popstate handling).
+import { initRouteSync } from './bridge/route-sync';
+initRouteSync();
+
 // Initialize per-window tooltip host (delegate handler + popover portal root).
 import { initTooltipHost } from './bridge/tooltip-host';
 if (document.readyState === 'loading') {

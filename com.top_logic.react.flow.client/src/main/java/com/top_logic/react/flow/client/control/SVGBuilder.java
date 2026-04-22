@@ -43,6 +43,8 @@ import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGDropEvent;
 import com.top_logic.react.flow.svg.event.SVGDropHandler;
+import com.top_logic.react.flow.svg.event.SVGWheelEvent;
+import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageScale;
 
@@ -600,6 +602,69 @@ public class SVGBuilder implements SvgWriter {
 			registration.removeHandler();
 			dragOver.removeHandler();
 		};
+	}
+
+	@Override
+	public Registration attachOnWheel(SVGWheelHandler handler, Object sender) {
+		if (_current == null) {
+			throw new IllegalStateException(
+				"The last built SVG element is closed. In this state it is not possible to add a "
+					+ SVGWheelHandler.class.getName()
+					+ "! Please make sure the handler is added within the desired element before its content.");
+		}
+		elemental2.dom.Element element = jsinterop.base.Js.uncheckedCast(_current.getElement());
+		elemental2.dom.EventListener listener = evt -> {
+			elemental2.dom.WheelEvent we = (elemental2.dom.WheelEvent) evt;
+			handler.onWheel(new SVGWheelEvent() {
+				@Override
+				public Object getSender() {
+					return sender;
+				}
+
+				@Override
+				public double getDeltaX() {
+					return we.deltaX;
+				}
+
+				@Override
+				public double getDeltaY() {
+					return we.deltaY;
+				}
+
+				@Override
+				public boolean isCtrlKey() {
+					return we.ctrlKey;
+				}
+
+				@Override
+				public boolean isShiftKey() {
+					return we.shiftKey;
+				}
+
+				@Override
+				public double getOffsetX() {
+					return we.offsetX;
+				}
+
+				@Override
+				public double getOffsetY() {
+					return we.offsetY;
+				}
+
+				@Override
+				public void stopPropagation() {
+					we.stopPropagation();
+					we.stopImmediatePropagation();
+				}
+
+				@Override
+				public void preventDefault() {
+					we.preventDefault();
+				}
+			});
+		};
+		element.addEventListener("wheel", listener);
+		return () -> element.removeEventListener("wheel", listener);
 	}
 
 	private void created(OMSVGElement svgElement, Object model) {

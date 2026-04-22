@@ -12,6 +12,8 @@ import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGDropHandler;
+import com.top_logic.react.flow.svg.event.SVGWheelEvent;
+import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageScale;
 
@@ -506,6 +508,27 @@ public interface SvgWriter extends AutoCloseable {
 	 *        {@link SVGClickEvent#getSender()}.
 	 */
 	default Registration attachOnDrop(SVGDropHandler handler, Object sender) {
+		// Ignore by default. This is only supported in specialized writers that build interactive
+		// DOM trees.
+		return Registration.NONE;
+	}
+
+	/**
+	 * Attaches a callback to the currently created SVG element that is called when the user
+	 * scrolls the mouse wheel over it.
+	 *
+	 * <p>
+	 * This is an optional method that is only supported for special writers that construct
+	 * interactive documents. In all other cases, calls to this method are ignored.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The callback that is invoked upon wheel action.
+	 * @param sender
+	 *        The user object to pass to the invoked callback. See
+	 *        {@link SVGWheelEvent#getSender()}.
+	 */
+	default Registration attachOnWheel(SVGWheelHandler handler, Object sender) {
 		// Ignore by default. This is only supported in specialized writers that build interactive
 		// DOM trees.
 		return Registration.NONE;

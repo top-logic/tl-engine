@@ -20,6 +20,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import test.com.top_logic.model.search.model.testScriptPathElement.Assembly;
 import test.com.top_logic.model.search.model.testScriptPathElement.Assignment;
 import test.com.top_logic.model.search.model.testScriptPathElement.Plant;
+import test.com.top_logic.model.search.model.testScriptPathElement.Plants;
 import test.com.top_logic.model.search.model.testScriptPathElement.TestScriptPathElementFactory;
 import test.com.top_logic.model.search.model.testScriptPathElement.ZArea;
 import test.com.top_logic.model.search.model.testScriptPathElement.ZAreaInstance;
@@ -70,9 +71,16 @@ public class TestScriptPathElement extends BasicTestCase {
 		}
 	};
 
+	private Plants _root1;
+
+	private Plants _root2;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+
+		_root1 = factory().getRoot1Singleton();
+		_root2 = factory().getRoot2Singleton();
 		_kb = PersistencyLayer.getKnowledgeBase();
 		_kb.addUpdateListener(_creationListener);
 	}
@@ -230,9 +238,9 @@ public class TestScriptPathElement extends BasicTestCase {
 	}
 
 	/**
-	 * Tests {@link PathByExpression#getPathBase} for a filter predicate that accesses an
-	 * attribute of the filter element directly ({@code AccessStep} in the predicate chain) and
-	 * compares it to an outer expression ({@code OuterSideStep} in the predicate chain).
+	 * Tests {@link PathByExpression#getPathBase} for a filter predicate that accesses an attribute
+	 * of the filter element directly ({@code AccessStep} in the predicate chain) and compares it to
+	 * an outer expression ({@code OuterSideStep} in the predicate chain).
 	 */
 	public void testFilterWithPredicateChain() {
 		PathByExpression path = newPathByExpression("assembly -> $assembly"
@@ -265,6 +273,88 @@ public class TestScriptPathElement extends BasicTestCase {
 			// LetBindingStep at chain position 0: when Assembly#plant changes on assembly1
 			// -> assembly1 is the outer lambda parameter, returned directly as base object
 			assertPathBase(set(assembly1), path, assembly1,
+				TestScriptPathElementFactory.getPlantAssemblyAttr());
+
+			tx.commit();
+		}
+	}
+
+	/**
+	 * Tests {@link PathByExpression#getSources} and {@link PathByExpression#getPathBase} for a
+	 * union whose one branch is rooted in a singleton constant ({@code ROOT1}).
+	 *
+	 * <ul>
+	 * <li>When a destination object is in the singleton's collection, every base assembly could
+	 * contribute it via the constant branch, so {@link PathByExpression#getSources} must return
+	 * {@link BaseObjects#all()}.</li>
+	 * <li>When the destination is not in the singleton's collection, only assemblies whose plant
+	 * equals the destination contribute via the parameter branch.</li>
+	 * <li>{@link PathByExpression#getPathBase} for {@code Plants#plants} on {@code ROOT1} must
+	 * return {@link BaseObjects#all()}: ROOT1 is the anchor for that step in the constant chain.
+	 * The same change on a different {@code Plants} object must yield an empty set.</li>
+	 * </ul>
+	 */
+	public void testUnionWithSingleton() {
+		PathByExpression path = newPathByExpression("assembly -> "
+			+ "$assembly.get(`TestScriptPathElement:Assembly#plant`)"
+			+ ".union(`TestScriptPathElement#ROOT1`.get(`TestScriptPathElement:Plants#plants`))");
+		try (Transaction tx = beginTX()) {
+			Plant plantInRoot1 = addPlant(_root1, "plantInRoot1");
+			Plant plantNotInRoot1 = createPlant("plantNotInRoot1");
+			Assembly assemblyA = createAssembly("assemblyA", createZAreaInstance(createZArea("z1")), plantNotInRoot1);
+			Assembly assemblyB = createAssembly("assemblyB", createZAreaInstance(createZArea("z2")), plantInRoot1);
+
+			// plantInRoot1 is reachable from any assembly via the constant branch -> all()
+			assertTrue(path.getSources(plantInRoot1).isAll());
+			// plantNotInRoot1 is only reachable from assemblyA via the parameter branch
+			assertSources(set(assemblyA), path, plantNotInRoot1);
+
+			// Plants#plants on ROOT1 is the anchor of the constant chain -> all()
+			assertPathBaseIsAll(path, _root1, TestScriptPathElementFactory.getPlantsPlantsAttr());
+			// Plants#plants on ROOT2 is not the anchor of ROOT1's chain -> empty (irrelevant)
+			assertEquals(set(), getPathBase(path, _root2, TestScriptPathElementFactory.getPlantsPlantsAttr()));
+			// Assembly#plant on assemblyA: parameter-branch AccessStep -> assemblyA itself
+			assertPathBase(set(assemblyA), path, assemblyA,
+				TestScriptPathElementFactory.getPlantAssemblyAttr());
+
+			tx.commit();
+		}
+	}
+
+	/**
+	 * Tests {@link PathByExpression#getSources} and {@link PathByExpression#getPathBase} for a
+	 * union whose two extra branches are each rooted in a different singleton ({@code ROOT1} and
+	 * {@code ROOT2}).
+	 *
+	 * <p>
+	 * Both singletons are tracked independently: a change to {@code Plants#plants} on either one
+	 * triggers a full recompute ({@link BaseObjects#all()}), while the same change on an unrelated
+	 * {@code Plants} object is correctly identified as irrelevant (empty set).
+	 * </p>
+	 */
+	public void testUnionTwoSingletons() {
+		PathByExpression path = newPathByExpression("assembly -> "
+			+ "$assembly.get(`TestScriptPathElement:Assembly#plant`)"
+			+ ".union(`TestScriptPathElement#ROOT1`.get(`TestScriptPathElement:Plants#plants`))"
+			+ ".union(`TestScriptPathElement#ROOT2`.get(`TestScriptPathElement:Plants#plants`))");
+		try (Transaction tx = beginTX()) {
+			Plant plantInRoot1 = addPlant(_root1, "plantInRoot1");
+			Plant plantInRoot2 = addPlant(_root2, "plantInRoot2");
+			Plant plantInNeither = createPlant("plantInNeither");
+			Assembly assemblyA = createAssembly("assemblyA", createZAreaInstance(createZArea("z1")), plantInNeither);
+
+			// Both constant branches -> all() for plants in either singleton
+			assertTrue(path.getSources(plantInRoot1).isAll());
+			assertTrue(path.getSources(plantInRoot2).isAll());
+			// plantInNeither only reachable via parameter branch -> {assemblyA}
+			assertSources(set(assemblyA), path, plantInNeither);
+
+			// ROOT1 is the anchor for the ROOT1 constant branch -> all()
+			assertPathBaseIsAll(path, _root1, TestScriptPathElementFactory.getPlantsPlantsAttr());
+			// ROOT2 is the anchor for the ROOT2 constant branch -> all()
+			assertPathBaseIsAll(path, _root2, TestScriptPathElementFactory.getPlantsPlantsAttr());
+			// Assembly#plant on assemblyA: only affects the parameter branch -> {assemblyA}
+			assertPathBase(set(assemblyA), path, assemblyA,
 				TestScriptPathElementFactory.getPlantAssemblyAttr());
 
 			tx.commit();
@@ -596,6 +686,12 @@ public class TestScriptPathElement extends BasicTestCase {
 		Plant plant = factory().createPlant();
 		plant.setName(name);
 		return plant;
+	}
+
+	private Plant addPlant(Plants plants, String name) {
+		Plant newPlant = createPlant(name);
+		plants.addPlant(newPlant);
+		return newPlant;
 	}
 
 	private ZArea createZArea(String name) {

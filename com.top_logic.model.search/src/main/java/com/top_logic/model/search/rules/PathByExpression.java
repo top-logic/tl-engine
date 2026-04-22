@@ -45,6 +45,7 @@ import com.top_logic.model.search.expr.Foreach;
 import com.top_logic.model.search.expr.IfElse;
 import com.top_logic.model.search.expr.Intersection;
 import com.top_logic.model.search.expr.Lambda;
+import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.Referers;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.UnaryOperation;
@@ -338,10 +339,98 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	}
 
 	/**
+	 * {@link Step} representing a navigation sub-chain rooted in a fixed {@link Literal}
+	 * {@link TLObject}, followed by an arbitrary sequence of navigation {@link Step}s accumulated
+	 * by {@link PathByExpression#extractSubChain} before reaching the literal terminus.
+	 *
+	 * <p>
+	 * Used when one branch of a union/intersection is not reachable from the lambda parameter but
+	 * evaluates to a deterministic constant value. This allows the branch to participate in both
+	 * inverse navigation and change-tracking without forcing a full {@link BaseObjects#all()}
+	 * fallback.
+	 * </p>
+	 *
+	 * <ul>
+	 * <li>{@link #applyInverse}: navigates backward from the given object through the inverse of
+	 * each step and checks whether {@link #root} is reachable. If yes (obj is in the constant
+	 * result), every base object contributes obj through this branch, so {@code null}
+	 * ({@link BaseObjects#all()}) is returned. If no, an empty set is returned.</li>
+	 * <li>{@link #pivot}: for {@link AccessStep}s in the chain, precisely identifies the anchor
+	 * object whose attribute must change to affect the result. For all other step types (e.g.
+	 * {@link ReferersStep}, {@link FilterStep}), falls back conservatively to {@code null}
+	 * ({@link BaseObjects#all()}).</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * {@link #steps} is stored in the same accumulation order as the enclosing
+	 * {@link #extractSubChain} walk (outermost step first, innermost last). Both
+	 * {@link #applyInverse} and {@link #pivot} navigate backward through these steps using
+	 * {@link Step#applyInverse}.
+	 * </p>
+	 */
+	private record ConstantBranchStep(TLObject root, List<Step> steps) implements Step {
+
+		@Override
+		public Collection<? extends TLObject> applyInverse(TLObject obj) {
+			Collection<? extends TLObject> current = Collections.singleton(obj);
+			for (int i = 0; i < steps.size(); i++) {
+				current = applyInverseToAll(steps.get(i), current);
+				if (current == null) {
+					// Can't determine whether obj is in the result: fall back to BaseObjects.all().
+					return null;
+				}
+			}
+			// obj IS in the constant result: every base object contributes obj through this branch.
+			if (current.contains(root)) {
+				return null;
+			}
+			return Collections.emptySet();
+		}
+
+		@Override
+		public boolean usesPart(TLStructuredTypePart part) {
+			return chainUsesPart(steps, part);
+		}
+
+		@Override
+		public Collection<? extends TLObject> pivot(TLObject element, TLStructuredTypePart part,
+				Supplier<?> partValue) {
+			for (int i = 0; i < steps.size(); i++) {
+				if (!steps.get(i).usesPart(part)) {
+					continue;
+				}
+				// Check whether element is the anchor for step i: navigate backward from element
+				// through the steps that precede step i in forward order (indices i+1..size-1 in
+				// accumulation order) and check whether root is reachable.
+				Collection<? extends TLObject> current = Collections.singleton(element);
+				for (int j = i + 1; j < steps.size(); j++) {
+					current = applyInverseToAll(steps.get(j), current);
+					if (current == null) {
+						return null; // cannot determine -> conservative
+					}
+				}
+				if (current.contains(root)) {
+					return null; // element is the anchor; the change is relevant
+				}
+			}
+			return Collections.emptySet();
+		}
+
+	}
+
+	/**
 	 * Step for a comparison or boolean predicate where one operand can be traced back to the
 	 * filter-lambda parameter (the {@link #knownChain}) while the other operand references
 	 * {@link TLStructuredTypePart}s that are not reachable from any enclosing lambda parameter (the
 	 * {@link #externalParts}).
+	 *
+	 * <p>
+	 * Constant sub-expressions (those rooted in a {@link Literal} {@link TLObject}) on the external
+	 * side are handled by {@link #extractSubChain} returning a {@link ConstantBranchStep}, which
+	 * causes the predicate to be represented as a {@link BranchStep} instead of an
+	 * {@link ExternalPredicateStep}. This step therefore only appears when the external side is
+	 * genuinely dynamic (not a known constant).
+	 * </p>
 	 *
 	 * <p>
 	 * When a part from {@link #knownChain} changes, the affected filter elements are determined
@@ -792,6 +881,13 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 					}
 					return null;
 				}
+			} else if (current instanceof Literal literal && literal.getValue() instanceof TLObject literalObj) {
+				// The walk has reached a constant root (a Literal holding a TLObject). Wrap the
+				// accumulated steps in a ConstantBranchStep so the caller treats this constant
+				// sub-chain just like a parameter-rooted chain.
+				// pendingLetBindings here would be for variables not used by the constant literal;
+				// they are discarded because the constant output does not depend on them.
+				return Collections.singletonList(new ConstantBranchStep(literalObj, new ArrayList<>(steps)));
 			} else {
 				return null; // unsupported expression node
 			}
@@ -803,7 +899,9 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 * after both sub-chains have been extracted.
 	 *
 	 * <ul>
-	 * <li>Both non-null: {@link BranchStep}.</li>
+	 * <li>Both non-null: {@link BranchStep}. This includes the case where one side is a
+	 * {@link ConstantBranchStep} returned by {@link #extractSubChain} for a constant
+	 * {@link Literal}-rooted sub-expression.</li>
 	 * <li>Both null: {@code null} (unanalysable).</li>
 	 * <li>One null with no {@link TLStructuredTypePart} references: {@link BranchStep} with an
 	 * empty side (safe, no external parts to miss).</li>

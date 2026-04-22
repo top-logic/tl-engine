@@ -328,10 +328,10 @@ public interface DerivedChannelConfig extends ChannelConfig {
     reverse="id -> resolve(`EstateManagement.Sales:Estate`, $id)"/>
 ```
 
-`objectId()` und `resolve()` sind TL-Script-Funktionen. `objectId()` gibt die
-technische TLID als String zurück. `resolve()` sucht das Objekt anhand der ID.
-Ob die ID technisch (TLID) oder fachlich (z. B. `Estate-42`) ist, entscheidet
-der TL-Script-Ausdruck — das Framework macht keine Annahmen.
+Die konkreten TL-Script-Ausdruecke sind anwendungsspezifisch. Anwendungen
+verwenden fachliche Schluessel (z. B. das `name`-Attribut eines Objekts),
+nicht interne Objekt-IDs. Das Framework macht keine Annahmen ueber die
+ID-Semantik — der TL-Script-Ausdruck entscheidet.
 
 ### 3.7 SSE-Erweiterungen
 
@@ -407,32 +407,60 @@ Die bestehende Dirty-Channel-Mechanik in `ReactSidebarControl` und
 `ReactTabBarControl` bleibt unverändert. Der RouteManager ruft die gleichen
 Methoden auf, die auch ein normaler Klick aufruft.
 
-### 3.10 Deep-Link-Auflösung beim Session-Start
+### 3.10 Deep-Link-Aufloesung beim Session-Start
 
-Sequenz bei direktem Einstieg über URL `/item/42`:
+**URL-Struktur:** Die ViewServlet-URL hat aktuell die Form
+`/{contextPath}/view/{windowName}/`. Der Window-Name ist session-spezifisch
+(`v1a2b3c`, erzeugt per `crypto.getRandomValues()` im Bootstrap-JS) und damit
+nicht teilbar/bookmarkbar.
+
+**Aenderung:** Der Window-Name wird aus dem URL-Pfad entfernt. Er fliesst
+ausschliesslich ueber:
+- `window.name` (Browser-Property, ueberlebt Navigationen im selben Tab)
+- SSE-Query-Param: `react-api/events?windowName=v1a2b3c` (bereits so)
+- Command-Requests: als Header oder Body-Parameter (bereits so)
+
+Die sichtbare URL wird zur **reinen Route**: `/{contextPath}/view/property/42`
+
+**ViewServlet-Aenderung:**
+1. URL kommt rein: `/demo/view/property/42`
+2. ViewServlet liest `window.name` aus einem Custom-Header
+   (z. B. `X-TL-Window-Name`, gesetzt vom Bootstrap-JS) oder aus einem Cookie
+3. Falls kein `window.name` vorhanden: Bootstrap-Page erzeugt einen via
+   `crypto.getRandomValues()`, speichert ihn in `window.name`, **laedt die
+   gleiche URL** nochmal (kein Redirect auf eine andere URL, Pfad bleibt gleich)
+4. ViewServlet extrahiert den Route-Teil aus dem Pfad (alles nach `/view/`)
+5. `RouteManager` wird erzeugt mit `pendingUrl = "property/42"`
+6. Control-Baum wird aufgebaut (AppShell, Content-Slot)
+
+**Sequenz bei direktem Einstieg ueber URL `/demo/view/item/42`:**
 
 ```
-1. HTTP-Request mit URL /item/42
-2. Session-Aufbau: ReactContext + RouteManager werden erzeugt
-3. RouteManager speichert "/item/42" als pending URL
-4. AppShell wird aufgebaut → baut Content-Slot (z. B. Sidebar)
-5. Sidebar.attach() → Sidebar ist RoutingParticipant → register()
+1. HTTP-Request: GET /demo/view/item/42
+   Header: X-TL-Window-Name: v1a2b3c (vom Bootstrap-JS gesetzt)
+2. ViewServlet: Session + SubSession fuer Window v1a2b3c
+3. ReactContext + RouteManager werden erzeugt
+   RouteManager.pendingUrl = "item/42"
+4. View-Config laden → AppShell aufbauen → Content-Slot materialisiert
+   (z. B. eine Sidebar)
+5. Sidebar.attach() → ist RoutingParticipant → register()
 6. RouteManager sieht: pending URL hat unverbrauchte Segmente
-   → prüft Sidebar.declaredRoutes(): findet /item/:itemId
-   → Sidebar.activateRoute({pattern: "/item/:itemId", params: {itemId: "42"}})
+   → prueft declaredRoutes(): findet /item/:itemId
+   → activateRoute({pattern: "/item/:itemId", params: {itemId: "42"}})
    → selectItem("detail") → Lazy-Materialisierung von detail.view.xml
-7. detail.view.xml lädt:
-   → Kanäle werden instanziiert (selectedItem, itemId)
+7. detail.view.xml laedt:
+   → Kanaele werden instanziiert (selectedItem, itemId)
    → <param-bindings>: RouteManager schreibt "42" in Kanal itemId
-   → reverse-Ausdruck: selectedItem = resolve("my.module:MyType", "42")
-   → Form materialisiert mit dem aufgelösten Objekt
-8. Falls detail.view.xml verschachtelte RoutingParticipants enthält:
-   → deren attach() triggert weitere Segment-Auflösung
+   → reverse-Ausdruck: selectedItem aufgeloest
+   → Form materialisiert mit dem aufgeloesten Objekt
+8. Falls detail.view.xml verschachtelte RoutingParticipants enthaelt:
+   → deren attach() triggert weitere Segment-Aufloesung
    → hier: keine weiteren Segmente → fertig
 9. Erster SSE-Flush: Client rendert den Detail-Screen
 ```
 
 Kein Zwischenblitz, kein falscher Screen, kein statisches Manifest.
+Saubere, teilbare, bookmarkbare URLs ohne technische Session-Artefakte.
 
 ### 3.11 URL-Komposition aus verschachtelten Participants
 
@@ -522,31 +550,28 @@ aktiven Participant angehängt.
 
 ---
 
-## 6. Offene Fragen (implementierungsrelevant, vor Plan zu klaeren)
+## 6. Geklaerte Fragen
 
-1. **`objectId()` TL-Script-Funktion**: Existiert die bereits, oder muss sie neu
-   implementiert werden? Falls neu: soll sie die technische TLID oder eine
-   konfigurierbare fachliche ID zurueckgeben?
+1. **`objectId()` / `resolve()`**: Ausgeklammert fuer Phase 0. Anwendungen
+   verwenden fachliche Schluessel (z. B. `name`-Attribut), nicht interne
+   Objekt-IDs. Der TL-Script-Ausdruck im `reverse`-Attribut ist frei
+   konfigurierbar — die Demo kann ein einfaches Attribut-Lookup verwenden.
 
-2. **`resolve()` TL-Script-Funktion**: Lookup-Semantik (by TLID, by attribute,
-   by name)? Fehlerbehandlung bei nicht gefundener ID?
+2. **Initial-URL-Transport**: ViewServlet extrahiert den Route-Teil aus dem
+   HTTP-Request-Pfad (alles nach `/view/`). Der Window-Name fliesst ueber
+   `window.name` (Browser-Property) + Custom-Header, nicht ueber den URL-Pfad.
+   Siehe Sektion 3.10.
 
-3. **Initial-URL-Transport**: Wie kommt die URL aus dem HTTP-Request in den
-   RouteManager? Ueber den Session-Aufbau-Mechanismus? Ueber einen initialen
-   SSE-Handshake? Ueber die initiale JavaScript-Ausfuehrung im Browser (d.h.
-   der Client sendet `window.location` als erstes Command)?
-
-4. **Relative vs. absolute Routen**: Sind Route-Patterns immer relativ zum
-   Parent-Participant? Oder koennen sie absolut sein? Empfehlung: immer relativ,
-   da absolute Routen die Kompositionsfaehigkeit brechen wuerden.
+3. **Relative vs. absolute Routen**: Nur relative Routen. Absolute Routen
+   wuerden die Kompositionsfaehigkeit verschachtelter Participants brechen.
 
 ## 7. Offene Fragen (Edge-Cases, zur Implementierungszeit)
 
-5. **Mehrere RoutingParticipants auf gleicher Ebene**: Kann das passieren?
+1. **Mehrere RoutingParticipants auf gleicher Ebene**: Kann das passieren?
    Falls ja: welcher hat Vorrang beim Segment-Matching?
 
-6. **URL-Encoding**: Wie werden Sonderzeichen in Param-Werten behandelt?
+2. **URL-Encoding**: Wie werden Sonderzeichen in Param-Werten behandelt?
    Standard-URL-Encoding?
 
-7. **`hidden`-Attribut auf NavigationItem.Config**: Muss als Config-Property
+3. **`hidden`-Attribut auf NavigationItem.Config**: Muss als Config-Property
    spezifiziert werden (existiert noch nicht).

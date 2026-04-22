@@ -339,6 +339,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		// and attaches __tlWidget for DOM-to-model lookup.
 		out.beginGroup(self);
 		out.attachOnWheel(this, self);
+		out.attachOnPan(this, self);
 
 		double x0 = self.getX();
 		double y0 = self.getY();
@@ -352,11 +353,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.setFill("transparent");
 		out.writeAttribute("pointer-events", "none");
 		out.endRect();
-
-		// Pan handler on the wrapping group — fires for all pointer events in the
-		// GanttLayout area. The handler only starts panning after a threshold distance
-		// to avoid interfering with item clicks.
-		out.attachOnPan(this, self);
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();
 		double scrollX = self.getScrollX();

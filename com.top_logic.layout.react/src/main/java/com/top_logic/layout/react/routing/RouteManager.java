@@ -37,6 +37,8 @@ public final class RouteManager {
 
 	private boolean _suppressNotifications;
 
+	private String _lastNotifiedUrl;
+
 	/**
 	 * Creates a new {@link RouteManager}.
 	 */
@@ -206,8 +208,14 @@ public final class RouteManager {
 		if (_suppressNotifications) {
 			return;
 		}
+		String url = currentUrl();
+		if (url.equals(_lastNotifiedUrl) && !replace) {
+			// URL unchanged — skip duplicate pushState that would pollute the history.
+			return;
+		}
+		_lastNotifiedUrl = url;
 		if (_urlChangeHandler != null) {
-			_urlChangeHandler.onUrlChange(currentUrl(), replace);
+			_urlChangeHandler.onUrlChange(url, replace);
 		}
 	}
 }

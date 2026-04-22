@@ -19,6 +19,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for validating and executing TLScript code.
@@ -71,7 +72,7 @@ public class TLScriptTool {
 	 *        The TLScript code to validate.
 	 * @return JSON object indicating validation success or containing error details.
 	 */
-	@ToolMethod(description = "Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.")
+	@ToolMethod(description = "Validate TLScript code syntax, model references, and type compatibility. Returns validation status and error details if invalid.", mode = ToolMode.READ)
 	public String validateTLScript(
 			@P("TLScript code to validate") String script) {
 		return ThreadContextManager.inSystemInteraction(

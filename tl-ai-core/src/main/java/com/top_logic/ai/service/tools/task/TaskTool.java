@@ -22,6 +22,7 @@ import com.top_logic.ai.service.tools.util.DataClassSerializer;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for managing agent tasks within a processing session.
@@ -74,7 +75,7 @@ public class TaskTool {
 		+ " IMPORTANT: Call listTasks first to avoid creating duplicate tasks."
 		+ " Create your task list once per conversation — on subsequent turns,"
 		+ " update existing tasks rather than recreating."
-		+ " Mark each task completed immediately when done, do not batch completions.")
+		+ " Mark each task completed immediately when done, do not batch completions.", mode = ToolMode.READ)
 	public String createTask(
 			@P("Brief title for the task") String subject,
 			@P("Detailed description of what needs to be done") String description,
@@ -137,7 +138,7 @@ public class TaskTool {
 		+ " If blocked or encountering errors, keep status as 'in_progress'."
 		+ " Use 'deleted' to remove a task that is no longer needed."
 		+ " After completing a task, call listTasks to find the next one."
-		+ " Mark tasks completed immediately, do not batch completions.")
+		+ " Mark tasks completed immediately, do not batch completions.", mode = ToolMode.READ)
 	public String updateTask(
 			@P("The ID of the task to update") String taskId,
 			@P("New status (pending, in_progress, completed, deleted)") String status,
@@ -191,7 +192,7 @@ public class TaskTool {
 		+ " Use to see available work, check overall progress, or find the next task after completing one."
 		+ " Prefer working on tasks in ID order (lowest first)."
 		+ " Tasks with non-empty blockedBy cannot be started until their blockers are completed."
-		+ " Call this BEFORE creating new tasks to check what already exists.")
+		+ " Call this BEFORE creating new tasks to check what already exists.", mode = ToolMode.READ)
 	public String listTasks() {
 
 		Map<String, Object> args = new HashMap<>();

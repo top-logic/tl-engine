@@ -29,6 +29,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for listing TLScript functions and retrieving documentation.
@@ -71,7 +72,7 @@ public class TLScriptReferenceTool {
 	 *
 	 * @return JSON object containing the list of function names.
 	 */
-	@ToolMethod(description = "List all available TLScript functions and methods. Returns function names that can be used in TLScript expressions.")
+	@ToolMethod(description = "List all available TLScript functions and methods. Returns function names that can be used in TLScript expressions.", mode = ToolMode.READ)
 	public String listTLScriptFunctions() {
 		Map<String, Object> args = new HashMap<>();
 
@@ -108,7 +109,7 @@ public class TLScriptReferenceTool {
 	 * @return JSON object containing the function documentation if available, or an error message
 	 *         if not found.
 	 */
-	@ToolMethod(description = "Get detailed documentation for a specific TLScript function. Returns signature, description, and usage information.")
+	@ToolMethod(description = "Get detailed documentation for a specific TLScript function. Returns signature, description, and usage information.", mode = ToolMode.READ)
 	public String getTLScriptFunctionDocumentation(
 			@P("Name of the TLScript function") String functionName) {
 

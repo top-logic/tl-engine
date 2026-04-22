@@ -50,6 +50,7 @@ import com.top_logic.util.Resources;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for accessing TopLogic instance data from the knowledge base.
@@ -113,7 +114,7 @@ public class InstanceBrowserTool {
 	 * @return JSON object with paginated instance TIDs and pagination metadata, or error JSON if
 	 *         type not found.
 	 */
-	@ToolMethod(description = "Get a paginated list of instances for a specific type. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.")
+	@ToolMethod(description = "Get a paginated list of instances for a specific type. Use limit parameter to control page size (default: 100, max: 1000). Use cursor from previous response to get next page.", mode = ToolMode.READ)
 	public String listInstances(
 			@P("The module containing the type") String moduleName,
 			@P("The name of the type") String typeName,
@@ -272,7 +273,7 @@ public class InstanceBrowserTool {
 	 *        The TopLogic identifier in format "TypeName:id".
 	 * @return JSON object with instance details, or error JSON if instance not found.
 	 */
-	@ToolMethod(description = "Get detailed information about a single instance by its TID including all attributes and values")
+	@ToolMethod(description = "Get detailed information about a single instance by its TID including all attributes and values", mode = ToolMode.READ)
 	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid) {
 
 		try {

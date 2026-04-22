@@ -51,6 +51,7 @@ import com.top_logic.util.model.ModelService;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for listing available annotation types for TopLogic model elements.
@@ -101,7 +102,7 @@ public class SearchAnnotationTool {
 	 * @return JSON object listing all applicable annotation types.
 	 */
 	@ToolMethod(description = "List all available annotation types for a given model element. "
-		+ "Returns every applicable annotation that can be set on the target.")
+		+ "Returns every applicable annotation that can be set on the target.", mode = ToolMode.READ)
 	public String listAvailableAnnotations(
 			@P("Target reference (e.g. 'module:Type#part')") String targetRef) {
 

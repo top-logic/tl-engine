@@ -108,7 +108,7 @@ public class ModelSearchTool {
 	 *        reference). Null or empty = search all kinds.
 	 * @return JSON object with search results and relevance scores.
 	 */
-	@ToolMethod(description = "Search for model elements by name, label, or description. Returns top 10 matches with relevance scores.", mode = ToolMode.USER_SCOPED)
+	@ToolMethod(description = "Search for model elements by name, label, or description. Returns top 10 matches with relevance scores.", mode = ToolMode.READ)
 	public String searchModel(
 			@P("Search query string (case-insensitive)") String query,
 			@P("Optional: Limit to specific modules") List<String> moduleFilter,

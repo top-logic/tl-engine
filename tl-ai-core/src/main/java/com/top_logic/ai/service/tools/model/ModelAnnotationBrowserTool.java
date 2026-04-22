@@ -39,6 +39,7 @@ import de.haumacher.msgbuf.io.StringW;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for browsing annotations on TopLogic model elements (modules, types, parts, enumerations,
@@ -142,7 +143,7 @@ public class ModelAnnotationBrowserTool {
 	 *        {@code false}.
 	 * @return JSON string containing annotation information, or error JSON if the operation fails.
 	 */
-	@ToolMethod(description = "Get all annotations currently set on a model element (module, type, enumeration, part, classifier) with optional inheritance")
+	@ToolMethod(description = "Get all annotations currently set on a model element (module, type, enumeration, part, classifier) with optional inheritance", mode = ToolMode.READ)
 	public String getCurrentAnnotations(
 			@P("Target reference in format 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Include inherited annotations from supertypes/definitions (default: false)") Boolean includeInherited) {

@@ -35,6 +35,7 @@ import com.top_logic.util.model.ModelService;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for analyzing TopLogic type dependencies and relationships.
@@ -88,7 +89,7 @@ public class TypeAnalysisTool {
 	 *        The fully qualified type name in format "module:TypeName" (e.g., "tl.core:TLObject").
 	 * @return JSON object with usage information, or error JSON if type not found.
 	 */
-	@ToolMethod(description = "Find all usages of a type in the model (properties, references, and classes extending it)")
+	@ToolMethod(description = "Find all usages of a type in the model (properties, references, and classes extending it)", mode = ToolMode.READ)
 	public String findTypeUsages(
 			@P("The qualified type name in format 'module:TypeName'") String qualifiedTypeName) {
 
@@ -176,7 +177,7 @@ public class TypeAnalysisTool {
 	 *        The name of the part to analyze.
 	 * @return JSON object with part usage information, or error JSON if type or part not found.
 	 */
-	@ToolMethod(description = "Find where a specific part (property or reference) is defined and inherited")
+	@ToolMethod(description = "Find where a specific part (property or reference) is defined and inherited", mode = ToolMode.READ)
 	public String findPartUsages(
 			@P("The qualified type name of the owner in format 'module:TypeName'") String ownerTypeQualifiedName,
 			@P("The name of the part to analyze") String partName) {

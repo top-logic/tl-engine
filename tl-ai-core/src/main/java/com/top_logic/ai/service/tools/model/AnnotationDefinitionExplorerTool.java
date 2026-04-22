@@ -29,6 +29,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 
 import com.top_logic.tl.ai.core.tool.P;
 import com.top_logic.tl.ai.core.tool.ToolMethod;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * Tool for exploring annotation definition schemas.
@@ -94,7 +95,7 @@ public class AnnotationDefinitionExplorerTool {
 	 *        "com.top_logic.model.annotate.Visibility")
 	 * @return JSON schema description, or error JSON if class not found or invalid
 	 */
-	@ToolMethod(description = "Describe the schema definition of an annotation configuration interface")
+	@ToolMethod(description = "Describe the schema definition of an annotation configuration interface", mode = ToolMode.READ)
 	public String describeAnnotation(
 			@P("Fully-qualified configuration interface class name") String configInterfaceName) {
 

@@ -97,7 +97,7 @@ public class DelegationTool implements Tool {
 
 	@Override
 	public ToolMode mode() {
-		return ToolMode.USER_SCOPED;
+		return ToolMode.READ;
 	}
 
 	@Override

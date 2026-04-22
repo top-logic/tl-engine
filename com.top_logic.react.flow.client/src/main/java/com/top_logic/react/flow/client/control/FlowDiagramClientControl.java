@@ -32,8 +32,6 @@ import com.top_logic.react.flow.control.FlowControlCommon;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
-import com.top_logic.react.flow.data.GanttAxis;
-import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.model.Drawable;
@@ -401,32 +399,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 			@Override
 			public void handleEvent(Event evt) {
 				WheelEvent event = (WheelEvent) evt;
-
-				// Check if event is inside a GanttLayout -- route to Gantt scroll.
-				elemental2.dom.Element target = (elemental2.dom.Element) event.target;
-				GanttLayout ganttLayout = findGanttLayoutAt(target);
-				if (ganttLayout != null && ganttLayout.getFrozenRows() > 0) {
-					event.preventDefault();
-					event.stopImmediatePropagation();
-
-					if (event.ctrlKey) {
-						ganttZoom(ganttLayout, event);
-					} else {
-						double scrollFactor = getWheelScrollFactor(evt);
-						double deltaX;
-						double deltaY;
-						if (event.shiftKey) {
-							deltaX = event.deltaY * scrollFactor;
-							deltaY = event.deltaX * scrollFactor;
-						} else {
-							deltaX = event.deltaX * scrollFactor;
-							deltaY = event.deltaY * scrollFactor;
-						}
-						ganttScroll(ganttLayout, deltaX, deltaY);
-					}
-					return;
-				}
-
 				if (event.ctrlKey) {
 					double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
 					double direction = JsMath.sign(delta);
@@ -1038,7 +1010,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	private SVGBuilder svgBuilder() {
-		return new SVGBuilder(_svgDoc, _svg) {
+		SVGBuilder builder = new SVGBuilder(_svgDoc, _svg) {
 			@Override
 			protected void linkModel(OMSVGElement svgElement, Object model) {
 				String id = _nextId.createId();
@@ -1047,6 +1019,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 				attachWidget(svgElement.getElement(), model);
 			}
 		};
+		builder.setRelayoutCallback(() -> {
+			relayout();
+			onChange();
+		});
+		return builder;
 	}
 
 	/**
@@ -1068,142 +1045,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * Walks DOM parent chain from event target to find a {@link GanttLayout}.
 	 * Returns null if the event target is not inside a GanttLayout.
 	 */
-	private GanttLayout findGanttLayoutAt(elemental2.dom.Element target) {
-		elemental2.dom.Element current = target;
-		for (int i = 0; i < 50 && current != null; i++) {
-			Object widget = getAttachedWidget(current);
-			if (widget instanceof GanttLayout) {
-				return (GanttLayout) widget;
-			}
-			current = current.parentElement;
-		}
-		return null;
-	}
-
-	/**
-	 * Handles scroll within a GanttLayout viewport.
-	 * Updates scrollX/scrollY and applies transforms to the viewport SVG groups.
-	 */
-	private void ganttScroll(GanttLayout gantt, double deltaX, double deltaY) {
-		GanttAxis axis = gantt.getAxis();
-		double zoom = axis.getCurrentZoom();
-		double rangeMin = axis.getRangeMin();
-		double rangeMax = axis.getRangeMax();
-		double colW = gantt.getColumnWidth();
-		double headerH = gantt.getHeaderHeight();
-		double dataH = gantt.getDataHeight();
-		double totalW = gantt.getWidth();
-		double totalH = gantt.getHeight();
-
-		// Viewport content dimensions.
-		double viewportContentW = totalW - colW;
-		double viewportContentH = totalH - headerH;
-
-		// Virtual content dimensions.
-		double virtualContentW = (rangeMax - rangeMin) * zoom;
-
-		// Max scroll bounds.
-		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
-		double maxScrollY = Math.max(0, dataH - viewportContentH);
-
-		// Convert deltas to scroll units.
-		double factor = getFactor();
-		double newScrollX = gantt.getScrollX() + deltaX * factor / zoom;
-		double newScrollY = gantt.getScrollY() + deltaY * factor;
-
-		// Clamp.
-		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
-		newScrollY = Math.max(0, Math.min(maxScrollY, newScrollY));
-
-		gantt.setScrollX(newScrollX);
-		gantt.setScrollY(newScrollY);
-
-		// Apply transforms to SVG groups.
-		applyGanttViewportTransforms(gantt);
-	}
-
-	/**
-	 * Updates the translate transforms on the GanttLayout's viewport scroll groups.
-	 */
-	private void applyGanttViewportTransforms(GanttLayout gantt) {
-		String ganttId = gantt.getClientId();
-		if (ganttId == null) {
-			return;
-		}
-
-		double scrollXPx = gantt.getScrollX() * gantt.getAxis().getCurrentZoom();
-		double scrollY = gantt.getScrollY();
-
-		setTranslateById(ganttId + "-scroll-deco", -scrollXPx, 0);
-		setTranslateById(ganttId + "-scroll-content", -scrollXPx, -scrollY);
-		setTranslateById(ganttId + "-scroll-sidebar", 0, -scrollY);
-		setTranslateById(ganttId + "-scroll-header", -scrollXPx, 0);
-	}
-
-	private native void setTranslateById(String id, double tx, double ty) /*-{
-		var el = $doc.getElementById(id);
-		if (el) el.setAttribute('transform', 'translate(' + tx + ',' + ty + ')');
-	}-*/;
-
-	/**
-	 * Handles zoom (Ctrl+wheel) inside a GanttLayout.
-	 * Changes pixelsPerUnit and triggers re-layout.
-	 */
-	private void ganttZoom(GanttLayout gantt, WheelEvent event) {
-		GanttAxis axis = gantt.getAxis();
-		double currentZoom = axis.getCurrentZoom();
-
-		// Compute new zoom level.
-		double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
-		double direction = JsMath.sign(delta);
-		// Zoom in (delta < 0) = increase pixelsPerUnit, zoom out (delta > 0) = decrease.
-		double factor = 1.0 - direction * 0.1;
-		double newZoom = currentZoom * factor;
-
-		// Clamp to reasonable range.
-		double minZoom = 0.5;
-		double maxZoom = 100.0;
-		newZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
-
-		if (Math.abs(newZoom - currentZoom) < 0.001) {
-			return;
-		}
-
-		// Adjust scrollX to keep the mouse position stable.
-		double colW = gantt.getColumnWidth();
-		double x0 = gantt.getX();
-
-		// Convert mouse client coords to SVG coords.
-		double mouseXInChart = event.offsetX * getFactor() - x0 - colW;
-		if (mouseXInChart < 0) {
-			mouseXInChart = 0;
-		}
-
-		// Time value under the mouse before zoom.
-		double scrollXPxBefore = gantt.getScrollX() * currentZoom;
-		double timeUnderMouse = (mouseXInChart + scrollXPxBefore) / currentZoom + axis.getRangeMin();
-
-		// After zoom, the same time value should be at the same screen position.
-		double newScrollXPx = (timeUnderMouse - axis.getRangeMin()) * newZoom - mouseXInChart;
-		double newScrollX = newScrollXPx / newZoom;
-
-		// Clamp scrollX.
-		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * newZoom;
-		double viewportContentW = gantt.getWidth() - colW;
-		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / newZoom);
-		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
-
-		// Apply.
-		axis.setCurrentZoom(newZoom);
-		gantt.setScrollX(newScrollX);
-
-		// Re-layout and re-draw (positions change with zoom).
-		relayout();
-
-		// Sync changes to server.
-		onChange();
-	}
-
 	@SuppressWarnings("unusable-by-js")
 	@Override
 	public void processClick(ClickTarget node, List<MouseButton> pressedButtons) {

@@ -63,6 +63,8 @@ public class SVGBuilder implements SvgWriter {
 
 	private OMSVGElement _current;
 
+	private Runnable _relayoutCallback = () -> {};
+
 	/**
 	 * Creates a {@link SVGBuilder}.
 	 *
@@ -90,6 +92,13 @@ public class SVGBuilder implements SvgWriter {
 		_root = root;
 		_parent = parent;
 		_current = parent;
+	}
+
+	/**
+	 * Sets the callback invoked when {@link SVGWheelEvent#requestRelayout()} is called.
+	 */
+	public void setRelayoutCallback(Runnable callback) {
+		_relayoutCallback = callback;
 	}
 
 	/**
@@ -613,6 +622,7 @@ public class SVGBuilder implements SvgWriter {
 					+ "! Please make sure the handler is added within the desired element before its content.");
 		}
 		elemental2.dom.Element element = jsinterop.base.Js.uncheckedCast(_current.getElement());
+		Runnable relayout = _relayoutCallback;
 		elemental2.dom.EventListener listener = evt -> {
 			elemental2.dom.WheelEvent we = (elemental2.dom.WheelEvent) evt;
 			handler.onWheel(new SVGWheelEvent() {
@@ -661,11 +671,26 @@ public class SVGBuilder implements SvgWriter {
 				public void preventDefault() {
 					we.preventDefault();
 				}
+
+				@Override
+				public void updateTransform(String elementId, double translateX, double translateY) {
+					nativeSetTranslate(elementId, translateX, translateY);
+				}
+
+				@Override
+				public void requestRelayout() {
+					relayout.run();
+				}
 			});
 		};
 		element.addEventListener("wheel", listener);
 		return () -> element.removeEventListener("wheel", listener);
 	}
+
+	private static native void nativeSetTranslate(String id, double tx, double ty) /*-{
+		var el = $doc.getElementById(id);
+		if (el) el.setAttribute('transform', 'translate(' + tx + ',' + ty + ')');
+	}-*/;
 
 	private void created(OMSVGElement svgElement, Object model) {
 		if (model != null) {

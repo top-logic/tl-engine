@@ -31,6 +31,8 @@ import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
+import com.top_logic.react.flow.svg.event.SVGWheelEvent;
+import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 
 /**
  * Layout and rendering operations for {@link GanttLayout}.
@@ -50,7 +52,7 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * Span widths are forced to {@code (end - start) * zoom}; milestone widths are intrinsic.
  * </p>
  */
-public interface GanttLayoutOperations extends BoxOperations, DragController {
+public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler {
 
 	/** Horizontal stub length for orthogonal edge routing (pixels offset from item edge). */
 	double EDGE_HORIZONTAL_STUB = 6.0;
@@ -328,6 +330,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		// This triggers linkModel() in the SVGBuilder, which assigns clientId
 		// and attaches __tlWidget for DOM-to-model lookup.
 		out.beginGroup(self);
+		out.attachOnWheel(this, self);
 
 		double x0 = self.getX();
 		double y0 = self.getY();
@@ -1198,6 +1201,118 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	@Override
 	default void cancelDrag(Box box) {
 		// No persistent state to clean up.
+	}
+
+	// -----------------------------------------------------------------------
+	// SVGWheelHandler implementation (viewport scroll and zoom)
+	// -----------------------------------------------------------------------
+
+	@Override
+	default void onWheel(SVGWheelEvent event) {
+		GanttLayout self = (GanttLayout) this;
+		if (self.getFrozenRows() <= 0) {
+			// No viewport — let the event propagate to the diagram.
+			return;
+		}
+
+		// Always consume the event to prevent diagram-level pan/zoom.
+		event.stopPropagation();
+		event.preventDefault();
+
+		if (event.isCtrlKey()) {
+			handleGanttZoom(self, event);
+		} else {
+			handleGanttScroll(self, event);
+		}
+	}
+
+	private static void handleGanttScroll(GanttLayout self, SVGWheelEvent event) {
+		GanttAxis axis = self.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double colW = self.getColumnWidth();
+		double headerH = self.getHeaderHeight();
+		double dataH = self.getDataHeight();
+
+		double viewportContentW = self.getWidth() - colW;
+		double viewportContentH = self.getHeight() - headerH;
+		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * zoom;
+
+		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
+		double maxScrollY = Math.max(0, dataH - viewportContentH);
+
+		double deltaX;
+		double deltaY;
+		if (event.isShiftKey()) {
+			deltaX = event.getDeltaY();
+			deltaY = event.getDeltaX();
+		} else {
+			deltaX = event.getDeltaX();
+			deltaY = event.getDeltaY();
+		}
+
+		double newScrollX = self.getScrollX() + deltaX / zoom;
+		double newScrollY = self.getScrollY() + deltaY;
+
+		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
+		newScrollY = Math.max(0, Math.min(maxScrollY, newScrollY));
+
+		self.setScrollX(newScrollX);
+		self.setScrollY(newScrollY);
+
+		applyViewportTransforms(self, event);
+	}
+
+	private static void handleGanttZoom(GanttLayout self, SVGWheelEvent event) {
+		GanttAxis axis = self.getAxis();
+		double currentZoom = axis.getCurrentZoom();
+
+		double delta = event.getDeltaY() == 0 ? event.getDeltaX() : event.getDeltaY();
+		double direction = Math.signum(delta);
+		double factor = 1.0 - direction * 0.1;
+		double newZoom = currentZoom * factor;
+
+		double minZoom = 0.5;
+		double maxZoom = 100.0;
+		newZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+
+		if (Math.abs(newZoom - currentZoom) < 0.001) {
+			return;
+		}
+
+		// Adjust scrollX to keep the mouse position stable.
+		double colW = self.getColumnWidth();
+		double mouseXInChart = Math.max(0, event.getOffsetX() - colW);
+
+		double scrollXPxBefore = self.getScrollX() * currentZoom;
+		double timeUnderMouse = (mouseXInChart + scrollXPxBefore) / currentZoom + axis.getRangeMin();
+
+		double newScrollXPx = (timeUnderMouse - axis.getRangeMin()) * newZoom - mouseXInChart;
+		double newScrollX = newScrollXPx / newZoom;
+
+		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * newZoom;
+		double viewportContentW = self.getWidth() - colW;
+		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / newZoom);
+		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
+
+		axis.setCurrentZoom(newZoom);
+		self.setScrollX(newScrollX);
+
+		event.requestRelayout();
+	}
+
+	private static void applyViewportTransforms(GanttLayout self, SVGWheelEvent event) {
+		String ganttId = self.getClientId();
+		if (ganttId == null) {
+			return;
+		}
+
+		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
+		double scrollY = self.getScrollY();
+
+		event.updateTransform(ganttId + "-scroll-deco", -scrollXPx, 0);
+		event.updateTransform(ganttId + "-scroll-content", -scrollXPx, -scrollY);
+		event.updateTransform(ganttId + "-scroll-sidebar", 0, -scrollY);
+		event.updateTransform(ganttId + "-scroll-header", -scrollXPx, 0);
 	}
 
 	/**

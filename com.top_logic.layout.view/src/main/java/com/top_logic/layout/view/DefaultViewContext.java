@@ -208,6 +208,11 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
+	public com.top_logic.layout.react.routing.RouteManager getRouteManager() {
+		return _reactContext.getRouteManager();
+	}
+
+	@Override
 	public void addViewReloadListener(ViewReloadListener listener) {
 		_reloadListeners.add(listener);
 	}

@@ -3,7 +3,15 @@
 <view>
 	<channels>
 		<channel name="selectedCompany"/>
+		<derived-channel name="companyId"
+			inputs="selectedCompany"
+			expr="c -> if($c != null, $c.get(`Contacts:Contact.all#name`), null)"
+			reverse="id -> if($id != null, singleton(filter(all(`Contacts:CompanyContact`), c -> $c.get(`Contacts:Contact.all#name`) == $id)), null)"
+		/>
 	</channels>
+	<param-bindings>
+		<bind channel="companyId" route-param="companyId"/>
+	</param-bindings>
 	<split-panel
 		orientation="horizontal"
 		resizable="true"

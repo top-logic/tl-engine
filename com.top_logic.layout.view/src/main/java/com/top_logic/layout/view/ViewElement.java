@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,9 +21,13 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelFactory;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.routing.ParamBindingConfig;
+import com.top_logic.layout.view.routing.ParamBindingParticipant;
 import com.top_logic.layout.view.routing.QueryBindingConfig;
 
 /**
@@ -105,6 +110,8 @@ public class ViewElement implements UIElement {
 
 	private final List<Map.Entry<String, ChannelFactory>> _channelEntries;
 
+	private final List<ParamBindingConfig> _paramBindings;
+
 	private final List<UIElement> _content;
 
 	/**
@@ -115,6 +122,7 @@ public class ViewElement implements UIElement {
 		_channelEntries = config.getChannels().stream()
 			.map(cc -> Map.entry(cc.getName(), context.getInstance(cc)))
 			.collect(Collectors.toList());
+		_paramBindings = config.getParamBindings();
 		List<PolymorphicConfiguration<? extends UIElement>> contentList = config.getContent();
 		if (contentList.isEmpty()) {
 			context.error("View element must have at least one content element.");
@@ -139,12 +147,59 @@ public class ViewElement implements UIElement {
 			context.registerChannel(name, factory.createChannel(context));
 		}
 
+		// Phase 2b: Register param-binding participants after channels are fully set up.
+		List<ParamBindingParticipant> participants = registerParamBindings(context);
+
+		// Phase 3: Create content controls.
+		IReactControl rootControl;
 		if (_content.size() == 1) {
-			return _content.get(0).createControl(context);
+			rootControl = _content.get(0).createControl(context);
+		} else {
+			List<ReactControl> children = _content.stream()
+				.map(e -> (ReactControl) e.createControl(context))
+				.collect(Collectors.toList());
+			rootControl = new ReactStackControl(context, children);
 		}
-		List<ReactControl> children = _content.stream()
-			.map(e -> (ReactControl) e.createControl(context))
-			.collect(Collectors.toList());
-		return new ReactStackControl(context, children);
+
+		// Phase 4: Wire cleanup — unregister participants on detach.
+		if (!participants.isEmpty() && rootControl instanceof ReactControl rc) {
+			RouteManager rm = context.getRouteManager();
+			if (rm != null) {
+				rc.addDetachListener(() -> {
+					for (ParamBindingParticipant p : participants) {
+						rm.unregister(p);
+					}
+				});
+			}
+		}
+
+		return rootControl;
+	}
+
+	/**
+	 * Processes {@code <param-bindings>} configuration: resolves each binding's channel and registers
+	 * a {@link ParamBindingParticipant} with the {@link RouteManager}.
+	 *
+	 * @return The list of registered participants (empty if none configured or no RouteManager).
+	 */
+	private List<ParamBindingParticipant> registerParamBindings(ViewContext context) {
+		if (_paramBindings.isEmpty()) {
+			return List.of();
+		}
+
+		RouteManager rm = context.getRouteManager();
+		if (rm == null) {
+			return List.of();
+		}
+
+		List<ParamBindingParticipant> result = new ArrayList<>();
+		for (ParamBindingConfig binding : _paramBindings) {
+			ViewChannel channel = context.resolveChannel(new ChannelRef(binding.getChannel()));
+			ParamBindingParticipant participant = new ParamBindingParticipant(
+				binding.getRouteParam(), channel);
+			rm.register(participant);
+			result.add(participant);
+		}
+		return result;
 	}
 }

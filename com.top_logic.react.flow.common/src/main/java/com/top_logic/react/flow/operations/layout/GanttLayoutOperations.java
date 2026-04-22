@@ -323,22 +323,129 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	@Override
 	default void draw(SvgWriter out) {
 		GanttLayout self = (GanttLayout) this;
-		drawRowLanes(self, out);
-		drawDecorations(self, out);
-		for (Box content : self.getContents()) {
-			out.write(content);
-		}
-		drawEdges(self, out);
-	}
 
-	private static void drawRowLanes(GanttLayout self, SvgWriter out) {
 		double x0 = self.getX();
 		double y0 = self.getY();
+		double totalW = self.getWidth();
+		double totalH = self.getHeight();
+		double colW = self.getColumnWidth();
+		double headerH = self.getHeaderHeight();
+		double scrollX = self.getScrollX();
+		double scrollY = self.getScrollY();
+		double zoom = self.getAxis().getCurrentZoom();
+		double scrollXPx = scrollX * zoom;
+
+		// Determine frozen row IDs.
+		java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
+		boolean hasViewport = self.getFrozenRows() > 0;
+
+		if (!hasViewport) {
+			// No frozen rows — draw everything flat (original behavior).
+			drawRowLanes(self, out, null, true, true);
+			drawDecorations(self, out);
+			for (Box content : self.getContents()) {
+				out.write(content);
+			}
+			drawEdges(self, out);
+			return;
+		}
+
+		// --- Define clip regions ---
+		String ganttId = self.getClientId();
+		String clipCorner = ganttId + "-clip-corner";
+		String clipHeader = ganttId + "-clip-header";
+		String clipSidebar = ganttId + "-clip-sidebar";
+		String clipContent = ganttId + "-clip-content";
+		String clipDecorations = ganttId + "-clip-deco";
+
+		emitClipPath(out, clipCorner, x0, y0, colW, headerH);
+		emitClipPath(out, clipHeader, x0 + colW, y0, totalW - colW, headerH);
+		emitClipPath(out, clipSidebar, x0, y0 + headerH, colW, totalH - headerH);
+		emitClipPath(out, clipContent, x0 + colW, y0 + headerH, totalW - colW, totalH - headerH);
+		emitClipPath(out, clipDecorations, x0 + colW, y0, totalW - colW, totalH);
+
+		// --- 1. Decorations group (scroll X only, spans full height) ---
+		out.beginGroup();
+		out.writeAttribute("clip-path", "url(#" + clipDecorations + ")");
+		out.writeCssClass("tl-gantt-vp-decorations");
+		out.beginGroup();
+		out.writeId(ganttId + "-scroll-deco");
+		out.translate(-scrollXPx, 0);
+		drawDecorations(self, out);
+		out.endGroup();
+		out.endGroup();
+
+		// --- 2. Content group (scroll X+Y) ---
+		out.beginGroup();
+		out.writeAttribute("clip-path", "url(#" + clipContent + ")");
+		out.writeCssClass("tl-gantt-vp-content");
+		out.beginGroup();
+		out.writeId(ganttId + "-scroll-content");
+		out.translate(-scrollXPx, -scrollY);
+		drawRowLanes(self, out, frozenRowIds, false, true);
+		drawItemBoxes(self, out, frozenRowIds, false);
+		drawEdges(self, out);
+		out.endGroup();
+		out.endGroup();
+
+		// --- 3. Sidebar group (scroll Y only) ---
+		out.beginGroup();
+		out.writeAttribute("clip-path", "url(#" + clipSidebar + ")");
+		out.writeCssClass("tl-gantt-vp-sidebar");
+		out.beginRect(x0, y0 + headerH, colW, totalH - headerH);
+		out.setFill("#ffffff");
+		out.setStroke("none");
+		out.endRect();
+		out.beginGroup();
+		out.writeId(ganttId + "-scroll-sidebar");
+		out.translate(0, -scrollY);
+		drawRowLabels(self, out, frozenRowIds, false);
+		out.endGroup();
+		out.endGroup();
+
+		// --- 4. Header group (scroll X only) ---
+		out.beginGroup();
+		out.writeAttribute("clip-path", "url(#" + clipHeader + ")");
+		out.writeCssClass("tl-gantt-vp-header");
+		out.beginRect(x0 + colW, y0, totalW - colW, headerH);
+		out.setFill("#ffffff");
+		out.setStroke("none");
+		out.endRect();
+		out.beginGroup();
+		out.writeId(ganttId + "-scroll-header");
+		out.translate(-scrollXPx, 0);
+		drawRowLanes(self, out, frozenRowIds, true, false);
+		drawItemBoxes(self, out, frozenRowIds, true);
+		out.endGroup();
+		out.endGroup();
+
+		// --- 5. Corner group (no scroll) ---
+		out.beginGroup();
+		out.writeAttribute("clip-path", "url(#" + clipCorner + ")");
+		out.writeCssClass("tl-gantt-vp-corner");
+		out.beginRect(x0, y0, colW, headerH);
+		out.setFill("#ffffff");
+		out.setStroke("none");
+		out.endRect();
+		drawRowLanes(self, out, frozenRowIds, true, false);
+		drawRowLabels(self, out, frozenRowIds, true);
+		out.endGroup();
+	}
+
+	/**
+	 * Draws row lane backgrounds and borders.
+	 *
+	 * @param frozenRowIds set of frozen row IDs (null = no viewport, draw all)
+	 * @param drawFrozen if true, draw lanes for rows IN frozenRowIds
+	 * @param drawData if true, draw lanes for rows NOT IN frozenRowIds
+	 */
+	private static void drawRowLanes(GanttLayout self, SvgWriter out,
+			java.util.Set<String> frozenRowIds, boolean drawFrozen, boolean drawData) {
+		double x0 = self.getX();
 		double totalWidth = self.getWidth();
 		double columnWidth = self.getColumnWidth();
 
-		// Build row geometry map for per-row Y positions.
-		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, y0);
+		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
 
 		out.beginGroup();
 		out.writeCssClass("tl-gantt-lanes");
@@ -346,65 +453,146 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		int[] rowIndex = new int[] { 0 };
 		for (GanttRow root : self.getRootRows()) {
 			drawRowLane(root, x0, totalWidth, columnWidth,
-				rowGeometry, out, rowIndex);
+				rowGeometry, out, rowIndex, frozenRowIds, drawFrozen, drawData);
 		}
 
 		out.endGroup();
 	}
 
 	private static void drawRowLane(GanttRow row,
-			double x0, double totalWidth,
-			double columnWidth,
-			Map<String, RowGeometry> rowGeometry, SvgWriter out, int[] rowIndex) {
+			double x0, double totalWidth, double columnWidth,
+			Map<String, RowGeometry> rowGeometry, SvgWriter out, int[] rowIndex,
+			java.util.Set<String> frozenRowIds, boolean drawFrozen, boolean drawData) {
 		int idx = rowIndex[0]++;
-		RowGeometry geom = rowGeometry.get(row.getId());
-		double rowY;
-		double rowHeight;
-		if (geom != null) {
-			rowY = geom.yStart();
-			rowHeight = geom.height();
-		} else {
-			// Fallback (should not happen in normal usage).
-			rowY = 0;
-			rowHeight = row.getMinContentHeight() + 2 * row.getRowPadding();
-		}
 
-		// Row background and border from application-defined properties.
-		String bgColor = row.getBackgroundColor();
-		String bdColor = row.getBorderColor();
-		if (bgColor != null && !bgColor.isEmpty() || bdColor != null && !bdColor.isEmpty()) {
-			out.beginRect(x0, rowY, totalWidth, rowHeight);
-			out.setFill(bgColor != null && !bgColor.isEmpty() ? bgColor : "none");
-			if (bdColor != null && !bdColor.isEmpty()) {
-				out.setStroke(bdColor);
-				out.setStrokeWidth(1.0);
-			} else {
-				out.setStroke("none");
+		boolean isFrozen = frozenRowIds != null && frozenRowIds.contains(row.getId());
+		boolean shouldDraw = (isFrozen && drawFrozen) || (!isFrozen && drawData)
+			|| frozenRowIds == null;
+
+		if (shouldDraw) {
+			RowGeometry geom = rowGeometry.get(row.getId());
+			if (geom != null) {
+				double rowY = geom.yStart();
+				double rowHeight = geom.height();
+
+				String bgColor = row.getBackgroundColor();
+				String bdColor = row.getBorderColor();
+				if (bgColor != null && !bgColor.isEmpty() || bdColor != null && !bdColor.isEmpty()) {
+					out.beginRect(x0, rowY, totalWidth, rowHeight);
+					out.setFill(bgColor != null && !bgColor.isEmpty() ? bgColor : "none");
+					if (bdColor != null && !bdColor.isEmpty()) {
+						out.setStroke(bdColor);
+						out.setStrokeWidth(1.0);
+					} else {
+						out.setStroke("none");
+					}
+					out.endRect();
+				}
+
+				if (bdColor != null && !bdColor.isEmpty()) {
+					double sepX = x0 + columnWidth;
+					out.beginPath();
+					out.setStroke(bdColor);
+					out.setStrokeWidth(1.0);
+					out.setFill("none");
+					out.beginData();
+					out.moveToAbs(sepX, rowY);
+					out.lineToAbs(sepX, rowY + rowHeight);
+					out.endData();
+					out.endPath();
+				}
 			}
-			out.endRect();
 		}
 
-		// Note: row labels are drawn via the standard contents dispatch in draw() — no inline text
-		// rendering here. The label box was positioned by computeIntrinsicSize pass 2b.
-
-		// Vertical separator between label column and chart area.
-		if (bdColor != null && !bdColor.isEmpty()) {
-			double sepX = x0 + columnWidth;
-			out.beginPath();
-			out.setStroke(bdColor);
-			out.setStrokeWidth(1.0);
-			out.setFill("none");
-			out.beginData();
-			out.moveToAbs(sepX, rowY);
-			out.lineToAbs(sepX, rowY + rowHeight);
-			out.endData();
-			out.endPath();
-		}
-
-		// Recurse into children.
 		for (GanttRow child : row.getChildren()) {
 			drawRowLane(child, x0, totalWidth, columnWidth,
-				rowGeometry, out, rowIndex);
+				rowGeometry, out, rowIndex, frozenRowIds, drawFrozen, drawData);
+		}
+	}
+
+	private static void emitClipPath(SvgWriter out, String id, double x, double y, double w, double h) {
+		out.beginClipPath();
+		out.writeAttribute("id", id);
+		out.beginRect(x, y, w, h);
+		out.endRect();
+		out.endClipPath();
+	}
+
+	/**
+	 * Returns the set of row IDs that belong to frozen (header) rows.
+	 */
+	private static java.util.Set<String> buildFrozenRowIds(GanttLayout self) {
+		java.util.Set<String> frozen = new java.util.HashSet<>();
+		int frozenCount = self.getFrozenRows();
+		List<GanttRow> roots = self.getRootRows();
+		for (int i = 0; i < Math.min(frozenCount, roots.size()); i++) {
+			collectRowIds(roots.get(i), frozen);
+		}
+		return frozen;
+	}
+
+	private static void collectRowIds(GanttRow row, java.util.Set<String> ids) {
+		ids.add(row.getId());
+		for (GanttRow child : row.getChildren()) {
+			collectRowIds(child, ids);
+		}
+	}
+
+	/**
+	 * Draws item boxes for either frozen or data rows.
+	 *
+	 * @param frozenRowIds set of frozen row IDs
+	 * @param drawFrozen if true, draw items in frozen rows; if false, draw items in data rows
+	 */
+	private static void drawItemBoxes(GanttLayout self, SvgWriter out,
+			java.util.Set<String> frozenRowIds, boolean drawFrozen) {
+		for (GanttItem item : self.getItems()) {
+			boolean isFrozen = frozenRowIds.contains(item.getRowId());
+			if (isFrozen == drawFrozen) {
+				Box box = item.getBox();
+				if (box != null) {
+					out.write(box);
+				}
+			}
+		}
+		// Draw decoration labels in the content region (non-frozen).
+		if (!drawFrozen) {
+			List<GanttDecoration> decos = self.getDecorations();
+			if (decos != null) {
+				for (GanttDecoration deco : decos) {
+					Box label = deco.getLabel();
+					if (label != null) {
+						out.write(label);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Draws row label boxes for either frozen or data rows.
+	 *
+	 * @param frozenRowIds set of frozen row IDs
+	 * @param drawFrozen if true, draw labels for frozen rows; if false, draw labels for data rows
+	 */
+	private static void drawRowLabels(GanttLayout self, SvgWriter out,
+			java.util.Set<String> frozenRowIds, boolean drawFrozen) {
+		for (GanttRow root : self.getRootRows()) {
+			drawRowLabel(root, out, frozenRowIds, drawFrozen);
+		}
+	}
+
+	private static void drawRowLabel(GanttRow row, SvgWriter out,
+			java.util.Set<String> frozenRowIds, boolean drawFrozen) {
+		boolean isFrozen = frozenRowIds.contains(row.getId());
+		if (isFrozen == drawFrozen) {
+			Box label = row.getLabel();
+			if (label != null) {
+				out.write(label);
+			}
+		}
+		for (GanttRow child : row.getChildren()) {
+			drawRowLabel(child, out, frozenRowIds, drawFrozen);
 		}
 	}
 

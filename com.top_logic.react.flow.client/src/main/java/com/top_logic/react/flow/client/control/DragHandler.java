@@ -582,9 +582,10 @@ class DragHandler {
 			_cloneGroup.removeChild(_cloneGroup.getFirstChild());
 		}
 
-		// Draw a simple rectangle at the clone position with a dashed border.
+		// Convert layout coordinates to SVG visual coordinates for the overlay.
+		double[] visual = _controller.layoutToSvg(_cloneX, _cloneY);
 		org.vectomatic.dom.svg.OMSVGRectElement rect = _control._svgDoc.createSVGRectElement(
-			(float) _cloneX, (float) _cloneY, (float) _cloneW, (float) _cloneH, 2f, 2f);
+			(float) visual[0], (float) visual[1], (float) _cloneW, (float) _cloneH, 2f, 2f);
 		rect.setAttribute("fill", "rgba(66,133,244,0.2)");
 		rect.setAttribute("stroke", "#4285F4");
 		rect.setAttribute("stroke-width", "1.5");

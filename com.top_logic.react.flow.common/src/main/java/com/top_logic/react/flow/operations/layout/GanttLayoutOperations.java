@@ -1333,6 +1333,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		return new double[] { svgX + scrollXPx, svgY + scrollY };
 	}
 
+	@Override
+	default double[] layoutToSvg(double layoutX, double layoutY) {
+		GanttLayout self = (GanttLayout) this;
+		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
+		double scrollY = self.getScrollY();
+		return new double[] { layoutX - scrollXPx, layoutY - scrollY };
+	}
+
 	// -----------------------------------------------------------------------
 	// DragController pan support (drag-to-pan on empty space)
 	// -----------------------------------------------------------------------

@@ -101,6 +101,14 @@ public interface DragController {
 		return new double[] { svgX, svgY };
 	}
 
+	/**
+	 * Inverse of {@link #svgToLayout}: converts layout coordinates back to SVG root
+	 * coordinates. Used for positioning visual overlays (e.g. drag clone) in SVG space.
+	 */
+	default double[] layoutToSvg(double layoutX, double layoutY) {
+		return new double[] { layoutX, layoutY };
+	}
+
 	// -----------------------------------------------------------------------
 	// Viewport pan support (drag-to-pan on empty space)
 	// -----------------------------------------------------------------------

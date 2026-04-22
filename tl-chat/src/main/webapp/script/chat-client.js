@@ -1355,7 +1355,9 @@
 			// Enable the input field so user can type a custom answer
 			if (Render._inputEl) {
 				Render._inputEl.disabled = false;
-				Render._inputEl.placeholder = 'Type your answer or pick below...';
+				Render._inputEl.placeholder = data.type === 'choice'
+					? 'Type your answer and press Enter or pick above...'
+					: 'Type your answer and press Enter...';
 				Render._inputEl.focus();
 			}
 
@@ -1382,11 +1384,7 @@
 			if (data.type === 'text') {
 				el.innerHTML =
 					'<div class="tl-chat-approval-header">' + Utils.escapeHtml(data.header || 'Input requested') + '</div>' +
-					'<div class="tl-chat-approval-reason">' + (data.questionHtml || Utils.escapeHtml(data.question)) + '</div>' +
-					'<div class="tl-chat-approval-actions">' +
-					'<button class="tl-chat-approval-btn deny">Cancel</button>' +
-					'</div>';
-				el.querySelector('.deny').addEventListener('click', () => respond('cancelled'));
+					'<div class="tl-chat-approval-reason">' + (data.questionHtml || Utils.escapeHtml(data.question)) + '</div>';
 			} else if (data.type === 'choice') {
 				const multiSelect = data.multiSelect === true;
 

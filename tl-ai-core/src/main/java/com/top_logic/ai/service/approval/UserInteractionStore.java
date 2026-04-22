@@ -7,6 +7,7 @@ package com.top_logic.ai.service.approval;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +25,7 @@ public class UserInteractionStore {
 	private final Map<String, UserInteractionRequest> _pending = new ConcurrentHashMap<>();
 	private final Map<String, CompletableFuture<String>> _approvalFutures = new ConcurrentHashMap<>();
 	private final AtomicInteger _nextId = new AtomicInteger(1);
+	private final String _storeId = UUID.randomUUID().toString().substring(0, 8);
 	private volatile ApprovalMode _mode;
 
 	/** Creates a new store with {@link ApprovalMode#MANUAL} mode. */
@@ -58,7 +60,7 @@ public class UserInteractionStore {
 	 */
 	public UserInteractionRequest createRequest(String question, String header, String type,
 			String options, boolean multiSelect) {
-		String id = "interaction-" + _nextId.getAndIncrement();
+		String id = "interaction-" + _storeId + "-" + _nextId.getAndIncrement();
 		CompletableFuture<String> future = new CompletableFuture<>();
 		UserInteractionRequest request = new UserInteractionRequest(
 			id, question, header, type, options, multiSelect, System.currentTimeMillis(), future);

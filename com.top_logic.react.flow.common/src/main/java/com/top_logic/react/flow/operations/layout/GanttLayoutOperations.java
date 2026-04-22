@@ -463,10 +463,19 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 * @param drawFrozen if true, draw lanes for rows IN frozenRowIds
 	 * @param drawData if true, draw lanes for rows NOT IN frozenRowIds
 	 */
+	/**
+	 * Computes the full virtual content width (column + time range at current zoom).
+	 * This may be larger than the viewport width ({@code self.getWidth()}) when zoomed in.
+	 */
+	private static double virtualTotalWidth(GanttLayout self) {
+		GanttAxis axis = self.getAxis();
+		return self.getColumnWidth() + (axis.getRangeMax() - axis.getRangeMin()) * axis.getCurrentZoom();
+	}
+
 	private static void drawRowLanes(GanttLayout self, SvgWriter out,
 			java.util.Set<String> frozenRowIds, boolean drawFrozen, boolean drawData) {
 		double x0 = self.getX();
-		double totalWidth = self.getWidth();
+		double totalWidth = Math.max(self.getWidth(), virtualTotalWidth(self));
 		double columnWidth = self.getColumnWidth();
 
 		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());

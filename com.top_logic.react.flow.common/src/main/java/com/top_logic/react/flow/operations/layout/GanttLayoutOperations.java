@@ -1302,8 +1302,9 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 
 		// Adjust scrollX to keep the mouse position stable.
+		// getOffsetX() returns SVG coordinates (converted from client coords via CTM).
 		double colW = self.getColumnWidth();
-		double mouseXInChart = Math.max(0, event.getOffsetX() - colW);
+		double mouseXInChart = Math.max(0, event.getOffsetX() - self.getX() - colW);
 
 		double scrollXPxBefore = self.getScrollX() * currentZoom;
 		double timeUnderMouse = (mouseXInChart + scrollXPxBefore) / currentZoom + axis.getRangeMin();

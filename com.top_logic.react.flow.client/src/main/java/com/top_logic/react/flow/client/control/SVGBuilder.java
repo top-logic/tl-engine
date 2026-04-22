@@ -623,6 +623,7 @@ public class SVGBuilder implements SvgWriter {
 		}
 		elemental2.dom.Element element = jsinterop.base.Js.uncheckedCast(_current.getElement());
 		Runnable relayout = _relayoutCallback;
+		OMSVGSVGElement svgRoot = _root;
 		elemental2.dom.EventListener listener = evt -> {
 			elemental2.dom.WheelEvent we = (elemental2.dom.WheelEvent) evt;
 			handler.onWheel(new SVGWheelEvent() {
@@ -653,12 +654,12 @@ public class SVGBuilder implements SvgWriter {
 
 				@Override
 				public double getOffsetX() {
-					return we.offsetX;
+					return clientToSvgX(svgRoot, we.clientX, we.clientY);
 				}
 
 				@Override
 				public double getOffsetY() {
-					return we.offsetY;
+					return clientToSvgY(svgRoot, we.clientX, we.clientY);
 				}
 
 				@Override
@@ -685,6 +686,30 @@ public class SVGBuilder implements SvgWriter {
 		};
 		element.addEventListener("wheel", listener);
 		return () -> element.removeEventListener("wheel", listener);
+	}
+
+	/**
+	 * Converts client (screen) X coordinate to SVG coordinate space using the CTM.
+	 */
+	private static double clientToSvgX(OMSVGSVGElement svg, double clientX, double clientY) {
+		OMSVGMatrix ctm = svg.getScreenCTM();
+		if (ctm != null) {
+			OMSVGMatrix inverse = ctm.inverse();
+			return clientX * inverse.getA() + clientY * inverse.getC() + inverse.getE();
+		}
+		return clientX;
+	}
+
+	/**
+	 * Converts client (screen) Y coordinate to SVG coordinate space using the CTM.
+	 */
+	private static double clientToSvgY(OMSVGSVGElement svg, double clientX, double clientY) {
+		OMSVGMatrix ctm = svg.getScreenCTM();
+		if (ctm != null) {
+			OMSVGMatrix inverse = ctm.inverse();
+			return clientX * inverse.getB() + clientY * inverse.getD() + inverse.getF();
+		}
+		return clientY;
 	}
 
 	private static native void nativeSetTranslate(String id, double tx, double ty) /*-{

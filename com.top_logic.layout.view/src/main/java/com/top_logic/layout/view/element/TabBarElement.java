@@ -100,14 +100,17 @@ public class TabBarElement implements UIElement {
 		ResKey getLabel();
 
 		/**
-		 * The route pattern for this tab, or empty if this tab is not route-forming.
+		 * The route segment for this tab.
 		 *
 		 * <p>
-		 * When set, selecting this tab will update the browser URL to include the given route
-		 * segment (e.g. "/featured").
+		 * By default (not set), the tab's {@link #getId() ID} is used as the route
+		 * segment. Set to an empty string ({@code route=""}) to explicitly opt out of
+		 * routing. Set to a custom value to use a route segment different from the ID.
+		 * Routes are always relative (no leading slash).
 		 * </p>
 		 */
 		@Name(ROUTE)
+		@com.top_logic.basic.config.annotation.Nullable
 		String getRoute();
 
 		/**
@@ -147,8 +150,9 @@ public class TabBarElement implements UIElement {
 			DirtyChannel dirtyChannel = new DirtyChannel();
 			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
 				() -> createContent(entry._children, context, dirtyChannel), dirtyChannel);
-			if (entry._route != null && !entry._route.isEmpty()) {
-				tabDef.withRoute(entry._route);
+			String effectiveRoute = SidebarElement.resolveRoute(entry._route, entry._id);
+			if (effectiveRoute != null) {
+				tabDef.withRoute(effectiveRoute);
 			}
 			tabDefs.add(tabDef);
 		}

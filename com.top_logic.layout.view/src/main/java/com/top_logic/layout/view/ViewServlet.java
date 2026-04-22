@@ -280,13 +280,15 @@ public class ViewServlet extends TopLogicServlet {
 	 * </p>
 	 */
 	private String resolveViewPath(String pathInfo) {
-		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml
+		// pathInfo is like /v1a2b3c/ or /v1a2b3c/app.view.xml or /v1a2b3c/config-editor
 		String path = pathInfo.substring(1);
 		int slashIdx = path.indexOf('/');
 		if (slashIdx >= 0 && slashIdx < path.length() - 1) {
-			String viewName = path.substring(slashIdx + 1);
-			if (!viewName.isEmpty()) {
-				return ViewLoader.VIEW_BASE_PATH + viewName;
+			String remainder = path.substring(slashIdx + 1);
+			// Only treat the remainder as a view file name if it ends with .view.xml.
+			// Everything else is a route path handled by the RouteManager.
+			if (!remainder.isEmpty() && remainder.endsWith(".view.xml")) {
+				return ViewLoader.VIEW_BASE_PATH + remainder;
 			}
 		}
 		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();

@@ -140,14 +140,20 @@ public class SidebarElement implements UIElement {
 		String getIcon();
 
 		/**
-		 * The route pattern for this item, or empty if this item is not route-forming.
+		 * The route segment for this item.
 		 *
 		 * <p>
-		 * When set, selecting this sidebar item will update the browser URL to include the given
-		 * route segment (e.g. "/dashboard").
+		 * By default (not set), the item's {@link #getId() ID} is used as the route
+		 * segment. Set to an empty string ({@code route=""}) to explicitly opt out of
+		 * routing. Set to a custom value to use a route segment different from the ID.
+		 * </p>
+		 *
+		 * <p>
+		 * Routes are always relative (no leading slash).
 		 * </p>
 		 */
 		@Name(ROUTE)
+		@com.top_logic.basic.config.annotation.Nullable
 		String getRoute();
 
 		/**
@@ -205,11 +211,40 @@ public class SidebarElement implements UIElement {
 			DirtyChannel dirtyChannel = new DirtyChannel();
 			NavigationItem item = new NavigationItem(_id, label, _icon,
 				() -> createContent(_children, context, dirtyChannel), dirtyChannel);
-			if (_route != null && !_route.isEmpty()) {
-				item.withRoute(_route);
+			String effectiveRoute = resolveRoute(_route, _id);
+			if (effectiveRoute != null) {
+				item.withRoute(effectiveRoute);
 			}
 			return item;
 		}
+	}
+
+	/**
+	 * Resolves the effective route segment for a navigation element.
+	 *
+	 * <p>
+	 * Convention: {@code null} (not set in XML) means use the element's ID as route.
+	 * Empty string ({@code route=""}) means explicitly not routed. Any other value is
+	 * used as-is (custom route different from ID). Leading slashes are stripped.
+	 * </p>
+	 *
+	 * @param configuredRoute
+	 *        The configured route value ({@code null} if not set).
+	 * @param id
+	 *        The element's ID (used as fallback).
+	 * @return The effective route segment, or {@code null} if not routed.
+	 */
+	public static String resolveRoute(String configuredRoute, String id) {
+		if (configuredRoute == null) {
+			// Not set -> use ID as route.
+			return id;
+		}
+		if (configuredRoute.isEmpty()) {
+			// Explicitly opted out of routing.
+			return null;
+		}
+		// Custom route, strip leading slash if present.
+		return configuredRoute.startsWith("/") ? configuredRoute.substring(1) : configuredRoute;
 	}
 
 	/**

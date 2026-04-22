@@ -7,7 +7,6 @@
 				<items>
 					<nav-item id="dashboard"
 						icon="bi bi-speedometer2"
-						route="/dashboard"
 					>
 						<view-ref view="demo/dashboard.view.xml"/>
 						<label>
@@ -15,9 +14,8 @@
 							<de>Dashboard</de>
 						</label>
 					</nav-item>
-					<nav-item id="dashboard-layout-demo"
+					<nav-item id="dashboard-layout"
 						icon="bi bi-grid-1x2"
-						route="/dashboard-layout"
 					>
 						<label>
 							<en>Dashboard Layout</en>
@@ -25,9 +23,8 @@
 						</label>
 						<view-ref view="demo/dashboard-layout-demo.view.xml"/>
 					</nav-item>
-					<nav-item id="tabs-demo"
+					<nav-item id="tabs"
 						icon="bi bi-layout-text-window-reverse"
-						route="/tabs"
 					>
 						<view-ref view="demo/tabs-demo.view.xml"/>
 						<label>
@@ -35,9 +32,8 @@
 							<de>Tabs-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="split-demo"
+					<nav-item id="split"
 						icon="bi bi-layout-split"
-						route="/split"
 					>
 						<view-ref view="demo/split-demo.view.xml"/>
 						<label>
@@ -45,9 +41,8 @@
 							<de>Split-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="channels-demo"
+					<nav-item id="channels"
 						icon="bi bi-table"
-						route="/channels"
 					>
 						<view-ref view="demo/channels-demo.view.xml"/>
 						<label>
@@ -55,9 +50,8 @@
 							<de>Channels-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="form-demo"
+					<nav-item id="forms"
 						icon="bi bi-pencil-square"
-						route="/forms"
 					>
 						<view-ref view="demo/form-demo.view.xml"/>
 						<label>
@@ -65,9 +59,8 @@
 							<de>Formular-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="input-controls-demo"
+					<nav-item id="input-controls"
 						icon="bi bi-input-cursor"
-						route="/input-controls"
 					>
 						<view-ref view="demo/input-controls-demo.view.xml"/>
 						<label>
@@ -75,9 +68,8 @@
 							<de>Eingabesteuerungen</de>
 						</label>
 					</nav-item>
-					<nav-item id="chart-demo"
+					<nav-item id="charts"
 						icon="bi bi-bar-chart-line"
-						route="/charts"
 					>
 						<view-ref view="demo/chart-demo.view.xml"/>
 						<label>
@@ -85,9 +77,8 @@
 							<de>Diagramm-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="tlscript-editor-demo"
+					<nav-item id="tlscript"
 						icon="bi bi-code-square"
-						route="/tlscript"
 					>
 						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 						<label>
@@ -95,9 +86,8 @@
 							<de>TL-Script-Editor</de>
 						</label>
 					</nav-item>
-					<nav-item id="config-editor-demo"
+					<nav-item id="config-editor"
 						icon="bi bi-sliders"
-						route="/config-editor"
 					>
 						<view-ref view="demo/config-editor-demo.view.xml"/>
 						<label>
@@ -105,9 +95,8 @@
 							<de>Konfigurationseditor</de>
 						</label>
 					</nav-item>
-					<nav-item id="dialog-demo"
+					<nav-item id="dialogs"
 						icon="bi bi-window-stack"
-						route="/dialogs"
 					>
 						<view-ref view="demo/dialog-demo.view.xml"/>
 						<label>
@@ -115,9 +104,8 @@
 							<de>Dialog-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="context-menu-demo"
+					<nav-item id="context-menu"
 						icon="bi bi-menu-button-wide"
-						route="/context-menu"
 					>
 						<view-ref view="demo/context-menu-demo.view.xml"/>
 						<label>
@@ -125,9 +113,8 @@
 							<de>Kontextmenue</de>
 						</label>
 					</nav-item>
-					<nav-item id="error-handling-demo"
+					<nav-item id="errors"
 						icon="bi bi-exclamation-triangle"
-						route="/errors"
 					>
 						<view-ref view="demo/error-handling-demo.view.xml"/>
 						<label>
@@ -135,9 +122,8 @@
 							<de>Fehlerbehandlung</de>
 						</label>
 					</nav-item>
-					<nav-item id="constraint-test"
+					<nav-item id="constraints"
 						icon="bi bi-check-circle"
-						route="/constraints"
 					>
 						<view-ref view="demo/constraint-test.view.xml"/>
 						<label>
@@ -145,9 +131,8 @@
 							<de>Constraint-Test</de>
 						</label>
 					</nav-item>
-					<nav-item id="flow-diagram-demo"
+					<nav-item id="flow-diagram"
 						icon="bi bi-diagram-3"
-						route="/flow-diagram"
 					>
 						<view-ref view="demo/flow-diagram-demo.view.xml"/>
 						<label>
@@ -155,9 +140,8 @@
 							<de>Flow-Diagramm</de>
 						</label>
 					</nav-item>
-					<nav-item id="graph-layout-demo"
+					<nav-item id="graph-layout"
 						icon="bi bi-diagram-2"
-						route="/graph-layout"
 					>
 						<view-ref view="demo/graph-layout-demo.view.xml"/>
 						<label>
@@ -165,9 +149,8 @@
 							<de>Graph-Layout</de>
 						</label>
 					</nav-item>
-					<nav-item id="module-graph-demo"
+					<nav-item id="module-graph"
 						icon="bi bi-bezier2"
-						route="/module-graph"
 					>
 						<view-ref view="demo/module-graph-demo.view.xml"/>
 						<label>
@@ -186,10 +169,11 @@
 					</nav-item>
 					<separator/>
 					<!-- Intentionally NOT routed: demonstrates that items
-					     without a route attribute do not produce URL segments
-					     and are not affected by browser back/forward. -->
+					     with route="" do not produce URL segments and are
+					     not affected by browser back/forward. -->
 					<nav-item id="settings"
 						icon="bi bi-gear"
+						route=""
 					>
 						<view-ref view="demo/settings.view.xml"/>
 						<label>

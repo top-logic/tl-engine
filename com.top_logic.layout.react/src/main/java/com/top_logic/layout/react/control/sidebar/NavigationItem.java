@@ -22,6 +22,9 @@ public class NavigationItem extends SidebarItem {
 	/** @see #setBadge(String) */
 	private static final String BADGE = "badge";
 
+	/** @see #withHidden(boolean) */
+	private static final String HIDDEN = "hidden";
+
 	private final String _label;
 
 	private final String _icon;
@@ -31,6 +34,10 @@ public class NavigationItem extends SidebarItem {
 	private final DirtyChannel _dirtyChannel;
 
 	private String _badge;
+
+	private String _route;
+
+	private boolean _hidden;
 
 	/**
 	 * Creates a new {@link NavigationItem} without a badge.
@@ -128,6 +135,49 @@ public class NavigationItem extends SidebarItem {
 		_badge = badge;
 	}
 
+	/**
+	 * The route pattern for this item, or {@code null} if this item is not route-forming.
+	 */
+	public String getRoute() {
+		return _route;
+	}
+
+	/**
+	 * Sets the route pattern for this item.
+	 *
+	 * @param route
+	 *        The route pattern (e.g. "/property/:id"), or {@code null} for no route.
+	 * @return This instance for fluent chaining.
+	 */
+	public NavigationItem withRoute(String route) {
+		_route = route;
+		return this;
+	}
+
+	/**
+	 * Whether this item is hidden from the sidebar UI.
+	 *
+	 * <p>
+	 * Hidden items are not displayed in the sidebar but can still be activated programmatically,
+	 * e.g. via URL routing.
+	 * </p>
+	 */
+	public boolean isHidden() {
+		return _hidden;
+	}
+
+	/**
+	 * Sets whether this item is hidden from the sidebar UI.
+	 *
+	 * @param hidden
+	 *        {@code true} to hide this item from the sidebar.
+	 * @return This instance for fluent chaining.
+	 */
+	public NavigationItem withHidden(boolean hidden) {
+		_hidden = hidden;
+		return this;
+	}
+
 	@Override
 	public String getType() {
 		return TYPE_NAV;
@@ -142,6 +192,9 @@ public class NavigationItem extends SidebarItem {
 		}
 		if (_badge != null) {
 			map.put(BADGE, _badge);
+		}
+		if (_hidden) {
+			map.put(HIDDEN, Boolean.TRUE);
 		}
 		return map;
 	}

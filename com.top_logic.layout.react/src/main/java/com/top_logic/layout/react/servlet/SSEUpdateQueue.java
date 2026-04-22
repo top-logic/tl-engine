@@ -197,6 +197,10 @@ public class SSEUpdateQueue {
 			}
 		}
 		sendFullState(newConn);
+		// Flush any events that were enqueued before the SSE connection was
+		// established (e.g. RouteChangeEvent from initial RoutingParticipant
+		// registration during control tree construction).
+		flush();
 		ensureHeartbeat();
 	}
 

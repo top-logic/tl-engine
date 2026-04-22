@@ -32,6 +32,8 @@ import com.top_logic.react.flow.control.FlowControlCommon;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
+import com.top_logic.react.flow.data.GanttAxis;
+import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.model.Drawable;
@@ -399,6 +401,32 @@ public class FlowDiagramClientControl implements DiagramContext {
 			@Override
 			public void handleEvent(Event evt) {
 				WheelEvent event = (WheelEvent) evt;
+
+				// Check if event is inside a GanttLayout -- route to Gantt scroll.
+				elemental2.dom.Element target = (elemental2.dom.Element) event.target;
+				GanttLayout ganttLayout = findGanttLayoutAt(target);
+				if (ganttLayout != null && ganttLayout.getFrozenRows() > 0) {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+
+					if (event.ctrlKey) {
+						ganttZoom(ganttLayout, event);
+					} else {
+						double scrollFactor = getWheelScrollFactor(evt);
+						double deltaX;
+						double deltaY;
+						if (event.shiftKey) {
+							deltaX = event.deltaY * scrollFactor;
+							deltaY = event.deltaX * scrollFactor;
+						} else {
+							deltaX = event.deltaX * scrollFactor;
+							deltaY = event.deltaY * scrollFactor;
+						}
+						ganttScroll(ganttLayout, deltaX, deltaY);
+					}
+					return;
+				}
+
 				if (event.ctrlKey) {
 					double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
 					double direction = JsMath.sign(delta);
@@ -1035,6 +1063,91 @@ public class FlowDiagramClientControl implements DiagramContext {
 	static native Object getAttachedWidget(elemental2.dom.Element element) /*-{
 		return element.__tlWidget || null;
 	}-*/;
+
+	/**
+	 * Walks DOM parent chain from event target to find a {@link GanttLayout}.
+	 * Returns null if the event target is not inside a GanttLayout.
+	 */
+	private GanttLayout findGanttLayoutAt(elemental2.dom.Element target) {
+		elemental2.dom.Element current = target;
+		for (int i = 0; i < 50 && current != null; i++) {
+			Object widget = getAttachedWidget(current);
+			if (widget instanceof GanttLayout) {
+				return (GanttLayout) widget;
+			}
+			current = current.parentElement;
+		}
+		return null;
+	}
+
+	/**
+	 * Handles scroll within a GanttLayout viewport.
+	 * Updates scrollX/scrollY and applies transforms to the viewport SVG groups.
+	 */
+	private void ganttScroll(GanttLayout gantt, double deltaX, double deltaY) {
+		GanttAxis axis = gantt.getAxis();
+		double zoom = axis.getCurrentZoom();
+		double rangeMin = axis.getRangeMin();
+		double rangeMax = axis.getRangeMax();
+		double colW = gantt.getColumnWidth();
+		double headerH = gantt.getHeaderHeight();
+		double dataH = gantt.getDataHeight();
+		double totalW = gantt.getWidth();
+		double totalH = gantt.getHeight();
+
+		// Viewport content dimensions.
+		double viewportContentW = totalW - colW;
+		double viewportContentH = totalH - headerH;
+
+		// Virtual content dimensions.
+		double virtualContentW = (rangeMax - rangeMin) * zoom;
+
+		// Max scroll bounds.
+		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
+		double maxScrollY = Math.max(0, dataH - viewportContentH);
+
+		// Convert deltas to scroll units.
+		double factor = getFactor();
+		double newScrollX = gantt.getScrollX() + deltaX * factor / zoom;
+		double newScrollY = gantt.getScrollY() + deltaY * factor;
+
+		// Clamp.
+		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
+		newScrollY = Math.max(0, Math.min(maxScrollY, newScrollY));
+
+		gantt.setScrollX(newScrollX);
+		gantt.setScrollY(newScrollY);
+
+		// Apply transforms to SVG groups.
+		applyGanttViewportTransforms(gantt);
+	}
+
+	/**
+	 * Updates the translate transforms on the GanttLayout's viewport scroll groups.
+	 */
+	private void applyGanttViewportTransforms(GanttLayout gantt) {
+		String ganttId = gantt.getClientId();
+		if (ganttId == null) {
+			return;
+		}
+
+		double scrollXPx = gantt.getScrollX() * gantt.getAxis().getCurrentZoom();
+		double scrollY = gantt.getScrollY();
+
+		setTranslateById(ganttId + "-scroll-deco", -scrollXPx, 0);
+		setTranslateById(ganttId + "-scroll-content", -scrollXPx, -scrollY);
+		setTranslateById(ganttId + "-scroll-sidebar", 0, -scrollY);
+		setTranslateById(ganttId + "-scroll-header", -scrollXPx, 0);
+	}
+
+	private native void setTranslateById(String id, double tx, double ty) /*-{
+		var el = $doc.getElementById(id);
+		if (el) el.setAttribute('transform', 'translate(' + tx + ',' + ty + ')');
+	}-*/;
+
+	private void ganttZoom(GanttLayout gantt, WheelEvent event) {
+		// Implemented in Task 7.
+	}
 
 	@SuppressWarnings("unusable-by-js")
 	@Override

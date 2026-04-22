@@ -62,6 +62,7 @@ mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
 - **To force recompilation without clean**: `touch` the changed `.java` files, then run `mvn compile`.
 - **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
 - **Always preserve full build output**: Use `tee` to save output to a log file while still seeing it live: `mvn -B install -pl com.top_logic.basic 2>&1 | tee com.top_logic.basic/target/mvn-build.log`. This way you can search the full output afterwards without having to re-run the build.
+- **GWT client → server WAR dependency**: `tl-react-flow-server` packages the GWT JavaScript from `tl-react-flow-client` as a WAR overlay. The Jetty server serves GWT files from the server's web-fragment.war, NOT from the client's. **Always rebuild `com.top_logic.react.flow.server` after changing `com.top_logic.react.flow.client`**, otherwise the app serves stale JavaScript. Full rebuild command: `mvn install -pl com.top_logic.react.flow.common,com.top_logic.react.flow.client,com.top_logic.react.flow.server,com.top_logic.demo`.
 
 ### Other Useful Commands
 

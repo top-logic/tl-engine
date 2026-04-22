@@ -148,10 +148,7 @@ public class AnthropicProvider implements LLMProvider {
 				json.beginObject();
 				json.name("type").value("text");
 				json.name("text").value(request.systemPrompt());
-				json.name("cache_control");
-				json.beginObject();
-				json.name("type").value("ephemeral");
-				json.endObject();
+				writeCacheControl(json);
 				json.endObject();
 				json.endArray();
 			}
@@ -187,20 +184,37 @@ public class AnthropicProvider implements LLMProvider {
 	}
 
 	private void writeMessages(JsonWriter json, List<Message> messages) throws IOException {
+		// Pre-scan: count user-role messages (UserMessage or start of ToolResultMessage group).
+		int userRoleCount = 0;
+		for (int i = 0; i < messages.size(); i++) {
+			Message msg = messages.get(i);
+			if (msg instanceof UserMessage) {
+				userRoleCount++;
+			} else if (msg instanceof ToolResultMessage) {
+				if (i == 0 || !(messages.get(i - 1) instanceof ToolResultMessage)) {
+					userRoleCount++;
+				}
+			}
+		}
+
+		int cacheFrom = userRoleCount - Math.min(2, userRoleCount);
+
 		json.beginArray();
 		int i = 0;
+		int userRoleOrdinal = 0;
 		while (i < messages.size()) {
 			Message msg = messages.get(i);
 
-			if (msg instanceof SystemMessage) {
-				i++;
-			} else if (msg instanceof CompactionMarker) {
+			if (msg instanceof SystemMessage || msg instanceof CompactionMarker) {
 				i++;
 			} else if (msg instanceof UserMessage user) {
+				boolean cache = userRoleOrdinal >= cacheFrom;
+				userRoleOrdinal++;
+
 				json.beginObject();
 				json.name("role").value("user");
 				json.name("content");
-				writeUserContent(json, user.content());
+				writeUserContent(json, user.content(), cache);
 				json.endObject();
 				i++;
 			} else if (msg instanceof AssistantMessage assistant) {
@@ -211,13 +225,18 @@ public class AnthropicProvider implements LLMProvider {
 				json.endObject();
 				i++;
 			} else if (msg instanceof ToolResultMessage) {
+				boolean cache = userRoleOrdinal >= cacheFrom;
+				userRoleOrdinal++;
+
 				json.beginObject();
 				json.name("role").value("user");
 				json.name("content");
 				json.beginArray();
 				while (i < messages.size()
 					&& messages.get(i) instanceof ToolResultMessage tr) {
-					writeToolResult(json, tr);
+					boolean lastInGroup = (i + 1 >= messages.size()
+						|| !(messages.get(i + 1) instanceof ToolResultMessage));
+					writeToolResult(json, tr, cache && lastInGroup);
 					i++;
 				}
 				json.endArray();
@@ -227,13 +246,20 @@ public class AnthropicProvider implements LLMProvider {
 		json.endArray();
 	}
 
-	private void writeUserContent(JsonWriter json, List<ContentPart> parts) throws IOException {
+	private void writeUserContent(JsonWriter json, List<ContentPart> parts, boolean cache)
+			throws IOException {
 		json.beginArray();
-		for (ContentPart part : parts) {
+		for (int i = 0; i < parts.size(); i++) {
+			ContentPart part = parts.get(i);
+			boolean lastPart = cache && (i == parts.size() - 1);
+
 			if (part instanceof TextContent text) {
 				json.beginObject();
 				json.name("type").value("text");
 				json.name("text").value(text.text());
+				if (lastPart) {
+					writeCacheControl(json);
+				}
 				json.endObject();
 			} else if (part instanceof ImageContent image) {
 				json.beginObject();
@@ -252,6 +278,9 @@ public class AnthropicProvider implements LLMProvider {
 					json.name("url").value(image.url());
 				}
 				json.endObject();
+				if (lastPart) {
+					writeCacheControl(json);
+				}
 				json.endObject();
 			} else if (part instanceof PdfContent pdf) {
 				json.beginObject();
@@ -262,6 +291,9 @@ public class AnthropicProvider implements LLMProvider {
 				json.name("media_type").value(pdf.mediaType());
 				json.name("data").value(pdf.data());
 				json.endObject();
+				if (lastPart) {
+					writeCacheControl(json);
+				}
 				json.endObject();
 			} /* ToolCall and ThinkingContent not valid in user messages. */
 		}
@@ -289,7 +321,8 @@ public class AnthropicProvider implements LLMProvider {
 		json.endArray();
 	}
 
-	private void writeToolResult(JsonWriter json, ToolResultMessage result) throws IOException {
+	private void writeToolResult(JsonWriter json, ToolResultMessage result, boolean cache)
+			throws IOException {
 		json.beginObject();
 		json.name("type").value("tool_result");
 		json.name("tool_use_id").value(result.toolCallId());
@@ -308,6 +341,9 @@ public class AnthropicProvider implements LLMProvider {
 		if (result.state() instanceof ToolState.Failed) {
 			json.name("is_error").value(true);
 		}
+		if (cache) {
+			writeCacheControl(json);
+		}
 		json.endObject();
 	}
 
@@ -321,6 +357,16 @@ public class AnthropicProvider implements LLMProvider {
 			json.endObject();
 		}
 		json.endArray();
+	}
+
+	/**
+	 * Writes a {@code cache_control: {type: "ephemeral"}} block into the current JSON object.
+	 */
+	static void writeCacheControl(JsonWriter json) throws IOException {
+		json.name("cache_control");
+		json.beginObject();
+		json.name("type").value("ephemeral");
+		json.endObject();
 	}
 
 	private void processStream(InputStream input, StreamHandler handler)

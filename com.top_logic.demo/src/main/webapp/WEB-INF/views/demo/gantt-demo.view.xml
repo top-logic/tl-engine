@@ -45,6 +45,11 @@ freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers
 r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
 r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
 r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
+r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
+r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
+r_review = reactFlowGanttRow(model: "phase:review", label: reactFlowPadding(reactFlowText("Review"),        all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
+r_launch = reactFlowGanttRow(model: "phase:launch", label: reactFlowPadding(reactFlowText("Launch"),        all: 4), backgroundColor: "#ffffff", borderColor: "#e0e0e0");
+r_maint  = reactFlowGanttRow(model: "phase:maint",  label: reactFlowPadding(reactFlowText("Maintenance"),   all: 4), backgroundColor: "#f5f5f5", borderColor: "#e0e0e0");
 
 /* === Items === */
 
@@ -64,6 +69,17 @@ fixed_row = reactFlowGanttSpan(model: "task:fixed-row", rowModel: "phase:design"
 no_resize = reactFlowGanttSpan(model: "task:no-resize", rowModel: "phase:impl",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("No Resize"), all: 3)), fill: "#fce4b8"),
 	start: 20490, end: 20500, canResize: false);
+
+deploy_item = reactFlowGanttSpan(model: "task:deploy", rowModel: "phase:deploy",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Deploy"), all: 3)), fill: "#d1c4e9"), start: 20574, end: 20590);
+docs_item = reactFlowGanttSpan(model: "task:docs", rowModel: "phase:docs",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Write Docs"), all: 3)), fill: "#b3e5fc"), start: 20544, end: 20580);
+review_item = reactFlowGanttSpan(model: "task:review", rowModel: "phase:review",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Code Review"), all: 3)), fill: "#c8e6c9"), start: 20560, end: 20574);
+launch_item = reactFlowGanttSpan(model: "task:launch", rowModel: "phase:launch",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Go Live"), all: 3)), fill: "#ffccbc"), start: 20590, end: 20600);
+maint_item = reactFlowGanttSpan(model: "task:maint", rowModel: "phase:maint",
+    box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Support"), all: 3)), fill: "#f0f4c3"), start: 20590, end: 20620);
 
 /* === Edges === */
 
@@ -89,11 +105,12 @@ freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color:
 axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20600, zoom: 8);
 
 reactFlowGantt(
-	rootRows:    list($r_year, $r_months, $r_markers, $r_design, $r_impl, $r_test),
-	items:       list($year2026, $mFeb, $mMar, $mApr, $mMay, $freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize),
+	rootRows:    list($r_year, $r_months, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
+	items:       list($year2026, $mFeb, $mMar, $mApr, $mMay, $freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item),
 	edges:       list($e1, $e2),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze),
-	axis: $axis
+	axis: $axis,
+	frozenRows: 3
 )
 }]]></createChart>
 		</flow-diagram>

@@ -343,12 +343,13 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double totalW = self.getWidth();
 		double totalH = self.getHeight();
 
-		// Background rect ensures wheel events are captured even over empty areas
+		// Background rect ensures pointer/wheel events are captured even over empty areas
 		// (SVG <g> elements only receive events where painted content exists).
-		// pointer-events:none so it doesn't interfere with item clicks/drag.
+		// Items are painted AFTER this rect (in the viewport groups), so they are on top
+		// in SVG hit-testing and receive clicks normally.
 		out.beginRect(x0, y0, totalW, totalH);
 		out.setFill("transparent");
-		out.writeAttribute("pointer-events", "none");
+		out.writeAttribute("pointer-events", "all");
 		out.endRect();
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();

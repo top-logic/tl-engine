@@ -264,8 +264,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		self.setX(offsetX);
 		self.setY(offsetY);
 		self.setColumnWidth(columnWidth);
-		self.setWidth(columnWidth + (axis.getRangeMax() - rangeMin) * zoom);
-		self.setHeight(totalHeight);
+
+		if (self.getFrozenRows() > 0 && self.getWidth() > 0) {
+			// Viewport mode: keep existing external dimensions. Zooming changes the
+			// virtual content width but not the viewport box size.
+		} else {
+			self.setWidth(columnWidth + (axis.getRangeMax() - rangeMin) * zoom);
+			self.setHeight(totalHeight);
+		}
 
 		// Compute frozen header vs. scrollable data region heights.
 		int frozenRows = self.getFrozenRows();
@@ -336,6 +342,13 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double y0 = self.getY();
 		double totalW = self.getWidth();
 		double totalH = self.getHeight();
+
+		// Background rect ensures wheel events are captured even over empty areas.
+		// SVG <g> elements only receive events where painted content exists.
+		out.beginRect(x0, y0, totalW, totalH);
+		out.setFill("transparent");
+		out.writeAttribute("pointer-events", "all");
+		out.endRect();
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();
 		double scrollX = self.getScrollX();

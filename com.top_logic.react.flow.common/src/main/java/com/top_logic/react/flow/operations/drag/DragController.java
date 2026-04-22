@@ -97,6 +97,17 @@ public interface DragController {
 	 *
 	 * @return two-element array {@code {layoutX, layoutY}}
 	 */
+	/**
+	 * Finds the item box at the given layout coordinates. Used as fallback when the DOM
+	 * walk does not find a box with {@code __tlWidget} (because not all box types create
+	 * a linked SVG group).
+	 *
+	 * @return the item box at the position, or {@code null} if no item is there.
+	 */
+	default Box findItemAt(double layoutX, double layoutY) {
+		return null;
+	}
+
 	default double[] svgToLayout(double svgX, double svgY) {
 		return new double[] { svgX, svgY };
 	}

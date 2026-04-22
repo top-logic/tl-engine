@@ -1326,6 +1326,20 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	@Override
+	default Box findItemAt(double layoutX, double layoutY) {
+		GanttLayout self = (GanttLayout) this;
+		for (GanttItem item : self.getItems()) {
+			Box box = item.getBox();
+			if (box != null
+				&& layoutX >= box.getX() && layoutX <= box.getX() + box.getWidth()
+				&& layoutY >= box.getY() && layoutY <= box.getY() + box.getHeight()) {
+				return box;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	default double[] svgToLayout(double svgX, double svgY) {
 		GanttLayout self = (GanttLayout) this;
 		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();

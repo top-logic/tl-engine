@@ -59,11 +59,10 @@ build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), fill: "#c8e6c9"), start: 20485, end: 20544,
 	validDropTargets: list("phase:impl", "phase:test"));
 beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
-	box: reactFlowFill(reactFlowPadding(
-		reactFlowStack(
-			reactFlowPolygon(points: list(reactFlowPoint(10, 0), reactFlowPoint(20, 10), reactFlowPoint(10, 20), reactFlowPoint(0, 10)), fillStyle: "#ff9800", stroke: "#e65100", thickness: 1.5),
-			reactFlowPadding(reactFlowText("Beta"), left: 24)
-		), all: 2), fill: "transparent"), at: 20544);
+	box: reactFlowStack(
+		reactFlowPolygon(points: list(reactFlowPoint(10, 0), reactFlowPoint(20, 10), reactFlowPoint(10, 20), reactFlowPoint(0, 10)), fillStyle: "#ff9800", stroke: "#e65100", thickness: 1.5),
+		reactFlowPadding(reactFlowText("Beta"), left: 24)
+	), at: 20544);
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), fill: "#f8d7da"), start: 20544, end: 20574);
 

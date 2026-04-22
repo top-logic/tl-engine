@@ -159,8 +159,21 @@ class DragHandler {
 		}
 
 		if (controller == null) {
-			// No item drag — try viewport pan on the nearest DragController.
-			return tryStartPan(hitBox, svgX, svgY);
+			// No item found via DOM walk — the hitBox might be the DragController itself
+			// (e.g. GanttLayout) because inner boxes don't have __tlWidget.
+			// Try finding an item by position.
+			if (hitBox instanceof DragController) {
+				DragController dc = (DragController) hitBox;
+				double[] lc = dc.svgToLayout(svgX, svgY);
+				Box itemBox = dc.findItemAt(lc[0], lc[1]);
+				if (itemBox != null) {
+					controller = dc;
+					controllerChild = itemBox;
+				}
+			}
+			if (controller == null) {
+				return tryStartPan(hitBox, svgX, svgY);
+			}
 		}
 
 		// Convert SVG root coordinates to layout coordinates (accounts for scroll offset).
@@ -393,7 +406,19 @@ class DragHandler {
 		}
 
 		if (controller == null) {
-			return "default";
+			// Fallback: find item by position if hitBox is the DragController.
+			if (hitBox instanceof DragController) {
+				DragController dc = (DragController) hitBox;
+				double[] lc = dc.svgToLayout(svgX, svgY);
+				Box itemBox = dc.findItemAt(lc[0], lc[1]);
+				if (itemBox != null) {
+					controller = dc;
+					controllerChild = itemBox;
+				}
+			}
+			if (controller == null) {
+				return "default";
+			}
 		}
 
 		double[] layoutCoords = controller.svgToLayout(svgX, svgY);

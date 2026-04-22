@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react;
 
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelScope;
@@ -21,6 +22,8 @@ public class DefaultReactContext implements ReactContext {
 	private final SSEUpdateQueue _sseQueue;
 
 	private final ReactWindowRegistry _windowRegistry;
+
+	private final RouteManager _routeManager;
 
 	/**
 	 * Creates a {@link DefaultReactContext}.
@@ -40,6 +43,7 @@ public class DefaultReactContext implements ReactContext {
 		_windowName = windowName;
 		_sseQueue = sseQueue;
 		_windowRegistry = windowRegistry;
+		_routeManager = new RouteManager();
 	}
 
 	/**
@@ -84,5 +88,10 @@ public class DefaultReactContext implements ReactContext {
 	@Override
 	public ModelScope getModelScope() {
 		return _windowRegistry.getOrCreateModelScope(_windowName);
+	}
+
+	@Override
+	public RouteManager getRouteManager() {
+		return _routeManager;
 	}
 }

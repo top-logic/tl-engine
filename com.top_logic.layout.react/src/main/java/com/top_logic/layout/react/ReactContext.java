@@ -7,6 +7,7 @@ package com.top_logic.layout.react;
 
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelScope;
@@ -76,6 +77,14 @@ public interface ReactContext {
 	 * app-shell level, or {@code null} if none.
 	 */
 	default com.top_logic.layout.react.control.overlay.ContextMenuOpener getContextMenuOpener() {
+		return null;
+	}
+
+	/**
+	 * The {@link RouteManager} for URL routing coordination in the view system, or {@code null} if
+	 * routing is not available.
+	 */
+	default RouteManager getRouteManager() {
 		return null;
 	}
 

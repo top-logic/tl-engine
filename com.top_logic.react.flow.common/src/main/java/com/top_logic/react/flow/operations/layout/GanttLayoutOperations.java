@@ -264,6 +264,21 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 		self.setColumnWidth(columnWidth);
 		self.setWidth(columnWidth + (axis.getRangeMax() - rangeMin) * zoom);
 		self.setHeight(totalHeight);
+
+		// Compute frozen header vs. scrollable data region heights.
+		int frozenRows = self.getFrozenRows();
+		if (frozenRows > 0 && frozenRows <= self.getRootRows().size()) {
+			int frozenFlatCount = countFrozenFlatRows(self.getRootRows(), frozenRows);
+			double headerH = 0;
+			for (int i = 0; i < frozenFlatCount && i < totalRows; i++) {
+				headerH += rowTotalHeight[i];
+			}
+			self.setHeaderHeight(headerH);
+			self.setDataHeight(totalHeight - headerH);
+		} else {
+			self.setHeaderHeight(0);
+			self.setDataHeight(totalHeight);
+		}
 	}
 
 	/**
@@ -987,5 +1002,25 @@ public interface GanttLayoutOperations extends BoxOperations, DragController {
 	@Override
 	default void cancelDrag(Box box) {
 		// No persistent state to clean up.
+	}
+
+	/**
+	 * Counts the total number of rows (including descendants) in the first
+	 * {@code frozenCount} root rows.
+	 */
+	private static int countFrozenFlatRows(List<GanttRow> rootRows, int frozenCount) {
+		int count = 0;
+		for (int i = 0; i < Math.min(frozenCount, rootRows.size()); i++) {
+			count += countRowAndDescendants(rootRows.get(i));
+		}
+		return count;
+	}
+
+	private static int countRowAndDescendants(GanttRow row) {
+		int count = 1;
+		for (GanttRow child : row.getChildren()) {
+			count += countRowAndDescendants(child);
+		}
+		return count;
 	}
 }

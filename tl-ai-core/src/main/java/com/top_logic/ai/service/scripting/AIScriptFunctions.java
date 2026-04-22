@@ -42,7 +42,8 @@ import com.top_logic.tl.ai.core.tool.Tool;
  *
  * <p>
  * This class provides functional-style access to chat completions from TL-Script. All functions
- * use the tl-ai-core provider abstraction via {@link AgentRegistry} and {@link AgentLoop}.
+ * use the tl-ai-core provider abstraction via {@link AgentRegistry}, {@link AgentFactory},
+ * and {@link AgentLoop}.
  * </p>
  *
  * <p>
@@ -288,10 +289,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String agentChatWithListener(String agentName, String userMessage,
 			AgentEventListener listener) {
-		AgentRegistry registry = AgentRegistry.getInstance();
-		if (registry == null) {
-			throw new RuntimeException("AgentRegistry is not available");
-		}
+		AgentFactory factory = AgentFactory.getInstance();
 
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage(
@@ -299,7 +297,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			Instant.now(),
 			List.of(new TextContent(userMessage))));
 
-		return registry.runAgent(agentName, conversation, null, listener);
+		return factory.runAgent(agentName, conversation, null, listener);
 	}
 
 	/**

@@ -20,8 +20,6 @@ import java.util.Map;
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
 
-import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
-import com.top_logic.ai.service.agents.background.trigger.TriggerConfig;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -37,55 +35,23 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentLoop;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.message.AssistantMessage;
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
 import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 
 /**
- * Registry of runtime-configurable agents and LLM provider connections.
+ * Registry of LLM provider connections and agent configurations.
  *
  * <p>
- * Each agent is declared in XML via {@link AgentConfig} and holds its LLM model name, optional
- * thinking parameters, system prompt, and tools. LLM provider connections are configured via
- * {@link ProviderConfig}.
+ * LLM provider connections are configured via {@link ProviderConfig}. Agent execution is handled
+ * by {@link AgentFactory}.
  * </p>
  *
- * <p>
- * This service validates all configurations at startup, builds provider connections, and provides
- * the {@link #runAgent(String, Conversation, ConversationMemory, AgentEventListener)} method
- * to run agents using the tl-ai-core {@link AgentLoop}.
- * </p>
- *
- * @see AgentConfig
  * @see ProviderConfig
- * @see AgentLoop
+ * @see AgentFactory
  */
 public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?>> {
-
-	/**
-	 * Placeholder marker for the tool catalog in system prompts. When present, the catalog of
-	 * available tools replaces this marker. Otherwise, the catalog is appended at the end.
-	 */
-	public static final String TOOLS_PLACEHOLDER = "<<AVAILABLE_TOOLS>>";
-
-	/**
-	 * Placeholder marker for the delegation catalog in system prompts. When present, the catalog
-	 * of delegation targets replaces this marker. Otherwise, the catalog is appended at the end.
-	 */
-	public static final String DELEGATES_PLACEHOLDER = "<<AVAILABLE_DELEGATES>>";
-
 
 	/**
 	 * Configuration interface for {@link AgentRegistry}.
@@ -273,66 +239,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 	}
 
 	/**
-	 * Returns the {@link AgentConfig} for the given agent name.
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @return The agent configuration.
-	 * @throws RuntimeException
-	 *         if no agent with the given name is configured.
-	 */
-	public AgentConfig getAgentConfig(String name) {
-		Map<String, AgentConfig> agents = getConfig().getAgents();
-		AgentConfig config = agents.get(name);
-		if (config == null) {
-			throw new RuntimeException(
-				"No agent configured with name '" + name + "'. Available: " +
-					agents.keySet());
-		}
-		return config;
-	}
-
-	/**
-	 * Returns the names of all background agents matching the given trigger type and scope.
-	 *
-	 * @param triggerType
-	 *        The trigger configuration class to match (e.g. {@code PostTurnTrigger.class}).
-	 * @param scope
-	 *        The scope to match (e.g.
-	 *        {@link com.top_logic.ai.service.agents.background.BackgroundAgentConfig.Scope#CHAT}).
-	 * @return A list of agent names with matching background configuration; never null.
-	 */
-	public List<String> getBackgroundAgents(
-			Class<? extends TriggerConfig> triggerType, BackgroundAgentConfig.Scope scope) {
-		List<String> result = new ArrayList<>();
-		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
-			if (!(entry.getValue() instanceof BackgroundAgentConfig bgConfig)) continue;
-			if (bgConfig.getScope() != scope) continue;
-			TriggerConfig triggerCfg = bgConfig.getTrigger();
-			if (triggerCfg != null && triggerType.isInstance(triggerCfg)) {
-				result.add(entry.getKey());
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns the name of the agent marked as the chat entry point.
-	 *
-	 * <p>
-	 * Resolves the entry point from agent instances in the knowledge base via
-	 * {@link AgentFactory#getEntryPointAgentName()}.
-	 * </p>
-	 *
-	 * @return The entry point agent name, never {@code null}.
-	 * @throws IllegalStateException
-	 *         if no entry point agent is defined in the knowledge base.
-	 */
-	public String getEntryPointAgentName() {
-		return AgentFactory.getInstance().getEntryPointAgentName();
-	}
-
-	/**
 	 * Returns the names of all models listed across all configured providers.
 	 *
 	 * @return An immutable list of all model names.
@@ -369,102 +275,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 		ProviderConfig providerConfig = getConfig().getProviders().get(providerName);
 		return createProvider(providerName, providerConfig);
 	}
-
-	/**
-	 * Runs an agent by name with an unrestricted {@link ToolContext}.
-	 *
-	 * <p>
-	 * Convenience overload for trusted internal use (scripts, background agents). Uses
-	 * {@link ToolContext#EMPTY} which auto-approves all tools. For interactive use with
-	 * human-in-the-loop approval, call
-	 * {@link #runAgent(String, Conversation, ConversationMemory, ToolContext, AgentEventListener)}.
-	 * </p>
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param conversation
-	 *        The conversation to operate on.
-	 * @param conversationMemory
-	 *        Optional conversation memory for context management, or {@code null}.
-	 * @param listener
-	 *        Receives progress events during the run.
-	 * @return The response text from the agent, or empty string if no response.
-	 */
-	public String runAgent(String name, Conversation conversation,
-			ConversationMemory conversationMemory, AgentEventListener listener) {
-		return runAgent(name, conversation, conversationMemory, ToolContext.EMPTY, listener);
-	}
-
-	/**
-	 * Runs an agent by name using the tl-ai-core {@link AgentLoop}.
-	 *
-	 * <p>
-	 * Resolves the agent configuration, builds the provider, tool registry, and core
-	 * {@link com.top_logic.tl.ai.core.agent.AgentConfig}, creates an {@link AgentLoop}, and runs
-	 * it. Returns the response text extracted from the last {@link AssistantMessage}.
-	 * </p>
-	 *
-	 * @param name
-	 *        The agent name as declared in the configuration.
-	 * @param conversation
-	 *        The conversation to operate on.
-	 * @param conversationMemory
-	 *        Optional conversation memory for context management, or {@code null}.
-	 * @param context
-	 *        Execution context with security policy, approval callback, and transaction scope.
-	 * @param listener
-	 *        Receives progress events during the run.
-	 * @return The response text from the agent, or empty string if no response.
-	 */
-	public String runAgent(String name, Conversation conversation,
-			ConversationMemory conversationMemory, ToolContext context,
-			AgentEventListener listener) {
-		AgentFactory factory = AgentFactory.getInstance();
-		TLObject agentObj = AgentDefinitionQuery.getInstance().findAgentByName(name);
-		if (agentObj == null) {
-			throw new RuntimeException(
-				"No agent found with name '" + name + "' in the knowledge base.");
-		}
-
-		com.top_logic.tl.ai.core.agent.AgentConfig coreConfig = factory.buildConfig(agentObj);
-		LLMProvider provider = factory.buildProvider(coreConfig.model());
-		com.top_logic.tl.ai.core.tool.ToolRegistry registry = factory.buildToolRegistry(agentObj);
-
-		AgentLoop loop;
-		if (conversationMemory != null) {
-			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory);
-			loop.run(context, listener);
-		} else {
-			loop = new AgentLoop(coreConfig, provider, registry);
-			loop.run(conversation, context, listener);
-		}
-
-		return extractResponseText(conversation, conversationMemory);
-	}
-
-	/**
-	 * Extracts the response text from the last {@link AssistantMessage} in the conversation.
-	 */
-	private static String extractResponseText(Conversation conversation, ConversationMemory memory) {
-		Conversation effectiveConversation = memory != null ? memory.conversation() : conversation;
-		List<Message> messages = effectiveConversation.messages();
-		for (int i = messages.size() - 1; i >= 0; i--) {
-			if (messages.get(i) instanceof AssistantMessage assistant) {
-				StringBuilder sb = new StringBuilder();
-				for (ContentPart part : assistant.content()) {
-					if (part instanceof TextContent text) {
-						if (sb.length() > 0) {
-							sb.append("\n");
-						}
-						sb.append(text.text());
-					}
-				}
-				return sb.toString();
-			}
-		}
-		return "";
-	}
-
 
 	/**
 	 * Builds the model-to-provider index from the provider configurations.
@@ -716,29 +526,6 @@ public class AgentRegistry extends ConfiguredManagedClass<AgentRegistry.Config<?
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Replaces the given placeholder in the prompt with the section content, or appends the section
-	 * at the end if the placeholder is not present. If the section is empty, the placeholder is
-	 * removed without inserting anything.
-	 *
-	 * @param prompt
-	 *        The base prompt text.
-	 * @param placeholder
-	 *        The placeholder marker to search for (e.g. {@code "<<AVAILABLE_TOOLS>>"}).
-	 * @param section
-	 *        The content to inject, or empty string if nothing to inject.
-	 * @return The prompt with the placeholder replaced or section appended.
-	 */
-	static String replacePlaceholderOrAppend(String prompt, String placeholder, String section) {
-		if (prompt.contains(placeholder)) {
-			return prompt.replace(placeholder, section);
-		}
-		if (!section.isEmpty()) {
-			return prompt + "\n\n---\n\n" + section;
-		}
-		return prompt;
 	}
 
 	/**

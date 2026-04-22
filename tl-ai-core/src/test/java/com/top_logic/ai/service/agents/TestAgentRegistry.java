@@ -31,31 +31,31 @@ public class TestAgentRegistry extends TestCase {
 
 	public void testReplacePlaceholderOrAppend_replaces() {
 		String prompt = "Before\n<<AVAILABLE_TOOLS>>\nAfter";
-		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
+		String result = AgentFactory.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
 		assertEquals("Before\nTOOLS HERE\nAfter", result);
 	}
 
 	public void testReplacePlaceholderOrAppend_appendsWhenMissing() {
 		String prompt = "No placeholder here";
-		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
+		String result = AgentFactory.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "TOOLS HERE");
 		assertEquals("No placeholder here\n\n---\n\nTOOLS HERE", result);
 	}
 
 	public void testReplacePlaceholderOrAppend_removesPlaceholderWhenEmpty() {
 		String prompt = "Before\n<<AVAILABLE_TOOLS>>\nAfter";
-		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
+		String result = AgentFactory.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
 		assertEquals("Before\n\nAfter", result);
 	}
 
 	public void testReplacePlaceholderOrAppend_noChangeWhenBothEmpty() {
 		String prompt = "No placeholder here";
-		String result = AgentRegistry.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
+		String result = AgentFactory.replacePlaceholderOrAppend(prompt, "<<AVAILABLE_TOOLS>>", "");
 		assertEquals("No placeholder here", result);
 	}
 
 	public void testPlaceholderConstants() {
-		assertEquals("<<AVAILABLE_TOOLS>>", AgentRegistry.TOOLS_PLACEHOLDER);
-		assertEquals("<<AVAILABLE_DELEGATES>>", AgentRegistry.DELEGATES_PLACEHOLDER);
+		assertEquals("<<AVAILABLE_TOOLS>>", AgentFactory.TOOLS_PLACEHOLDER);
+		assertEquals("<<AVAILABLE_DELEGATES>>", AgentFactory.DELEGATES_PLACEHOLDER);
 	}
 
 	/**

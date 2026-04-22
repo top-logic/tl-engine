@@ -20,6 +20,7 @@ import com.top_logic.ai.demo.test.agent.improver.TestResult;
 import com.top_logic.ai.demo.test.agent.judge.messages.JudgeResult;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorer;
 import com.top_logic.ai.demo.test.agent.scorer.NeutralScorerResult;
+import com.top_logic.ai.service.agents.AgentFactory;
 import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.scripting.AIScriptFunctions;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -368,15 +369,12 @@ public abstract class ModelExplorerScoringTestBase extends TestCase {
 	}
 
 	/**
-	 * Loads the ModelExplorer system prompt from {@link AgentRegistry} configuration.
+	 * Loads the ModelExplorer system prompt from {@link AgentFactory} configuration.
 	 */
 	protected String loadModelExplorerSystemPrompt() {
 		try {
-			AgentRegistry registry = AgentRegistry.getInstance();
-			if (registry == null) {
-				throw new RuntimeException("AgentRegistry is not available");
-			}
-			String systemPrompt = registry.getAgentConfig("ModelExplorer").getSystemPrompt();
+			AgentFactory factory = AgentFactory.getInstance();
+			String systemPrompt = factory.getAgentConfig("ModelExplorer").getSystemPrompt();
 			if (systemPrompt == null || systemPrompt.isEmpty()) {
 				throw new RuntimeException("ModelExplorer system prompt is empty");
 			}

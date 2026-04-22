@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.service.agents.background.scheduler;
 
-import com.top_logic.ai.service.agents.AgentRegistry;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.ExecutionResult;
 import com.top_logic.ai.service.agents.background.context.ApplicationContext;
@@ -61,14 +60,7 @@ public class BackgroundAgentTask extends StateHandlingTask<BackgroundAgentTask.C
 	protected void runHook() {
 		String agentName = getConfig().getAgentName();
 		try {
-			AgentRegistry registry = AgentRegistry.getInstance();
-			if (registry == null) {
-				getLog().taskEnded(ResultType.ERROR,
-					ResKey.text("AgentRegistry is not available, cannot execute agent '" + agentName + "'"));
-				return;
-			}
-
-			BackgroundAgentExecutor executor = new BackgroundAgentExecutor(registry);
+			BackgroundAgentExecutor executor = new BackgroundAgentExecutor();
 			ApplicationContext context = ApplicationContext.scheduled(agentName);
 			ExecutionResult result = executor.execute(agentName, context);
 			String response = result.response();

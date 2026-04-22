@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
-import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.AgentFactory;
 import com.top_logic.ai.service.agents.background.BackgroundAgentConfig;
 import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.service.agents.background.ExecutionResult;
@@ -89,7 +89,7 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Executes user message through the AgentRegistry entry point agent.
+	 * Executes user message through the AgentFactory entry point agent.
 	 * Uses state from tracker; {@code taskId} must already be set on state.
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
@@ -131,26 +131,21 @@ public class ChatProcessor {
 			}
 			String trimmed = hasText ? userMessage.trim() : "[See attached files]";
 
-			AgentRegistry agentRegistry = AgentRegistry.getInstance();
-			if (agentRegistry == null) {
-				state.addPendingMessage(
-					new ChatMessage("Agent", "AgentRegistry is not available. Please ensure the service is started."));
-				return;
-			}
+			AgentFactory agentFactory = AgentFactory.getInstance();
 
 			// Execute pre-turn background agents synchronously with model-level timeout.
-			List<String> preTurnAgents = agentRegistry.getBackgroundAgents(
+			List<String> preTurnAgents = agentFactory.getBackgroundAgents(
 				PreTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
 			for (String preTurnAgent : preTurnAgents) {
 				BackgroundAgentConfig bgConfig =
-					(BackgroundAgentConfig) agentRegistry.getAgentConfig(preTurnAgent);
+					(BackgroundAgentConfig) agentFactory.getAgentConfig(preTurnAgent);
 				PreTurnTrigger trigger = (PreTurnTrigger) bgConfig.getTrigger();
 				long timeoutMs = trigger.getTimeout();
 				PreTurnTrigger.FailPolicy failPolicy = trigger.getFailPolicy();
 
 				Duration timeoutOverride = timeoutMs > 0 ? Duration.ofMillis(timeoutMs) : null;
 				BackgroundAgentExecutor bgExecutor =
-					new BackgroundAgentExecutor(agentRegistry, timeoutOverride);
+					new BackgroundAgentExecutor(timeoutOverride);
 				try {
 					ChatContext bgContext = ChatContext.preTurn(preTurnAgent, trimmed, taskTracker.getChat());
 					ExecutionResult execResult = bgExecutor.execute(preTurnAgent, bgContext);
@@ -187,7 +182,7 @@ public class ChatProcessor {
 			ToolContext toolContext = buildToolContext(interactionStore, taskTracker);
 
 			// Run the entry point agent via AgentLoop
-			String entryPointAgent = agentRegistry.getEntryPointAgentName();
+			String entryPointAgent = agentFactory.getEntryPointAgentName();
 
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection
@@ -214,7 +209,7 @@ public class ChatProcessor {
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
 			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
-				() -> agentRegistry.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener));
+				() -> agentFactory.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener));
 			state.setLastAgentResponse(result);
 
 			state.addPendingMessage(new ChatMessage("Agent", result));
@@ -405,16 +400,13 @@ public class ChatProcessor {
 	 */
 	static void triggerPostTurnAgents(TaskProgressTracker taskTracker, String userMessage,
 			String agentResponse) {
-		AgentRegistry agentRegistry = AgentRegistry.getInstance();
-		if (agentRegistry == null) {
-			return;
-		}
+		AgentFactory agentFactory = AgentFactory.getInstance();
 
-		List<String> postTurnAgents = agentRegistry.getBackgroundAgents(
+		List<String> postTurnAgents = agentFactory.getBackgroundAgents(
 			PostTurnTrigger.class, BackgroundAgentConfig.Scope.CHAT);
 
 		Chat capturedChat = taskTracker.getChat();
-		BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor(agentRegistry);
+		BackgroundAgentExecutor bgExecutor = new BackgroundAgentExecutor();
 
 		for (String agentName : postTurnAgents) {
 			if (!taskTracker.tryStartBackgroundAgent(agentName)) {

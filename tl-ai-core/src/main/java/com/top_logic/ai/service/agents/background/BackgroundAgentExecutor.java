@@ -13,8 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-import com.top_logic.ai.service.agents.AgentConfig;
-import com.top_logic.ai.service.agents.AgentRegistry;
+import com.top_logic.ai.service.agents.AgentFactory;
 import com.top_logic.ai.service.agents.background.context.BackgroundContext;
 import com.top_logic.ai.service.agents.background.context.ChatContext;
 import com.top_logic.ai.service.agents.background.input.CustomInput;
@@ -59,8 +58,6 @@ import com.top_logic.util.model.ModelService;
  */
 public class BackgroundAgentExecutor {
 
-	private final AgentRegistry _registry;
-
 	private final Duration _timeoutOverride;
 
 	private static final Map<Class<?>, Function<Object, InputAdapter>> EXTERNAL_ADAPTERS =
@@ -68,12 +65,9 @@ public class BackgroundAgentExecutor {
 
 	/**
 	 * Creates a new {@link BackgroundAgentExecutor}.
-	 *
-	 * @param registry
-	 *        The agent registry for resolving agent configurations.
 	 */
-	public BackgroundAgentExecutor(AgentRegistry registry) {
-		this(registry, null);
+	public BackgroundAgentExecutor() {
+		this(null);
 	}
 
 	/**
@@ -85,14 +79,11 @@ public class BackgroundAgentExecutor {
 	 * for {@code Future.cancel()} and the thread-pool poisoning it can cause.
 	 * </p>
 	 *
-	 * @param registry
-	 *        The agent registry for resolving agent configurations.
 	 * @param timeoutOverride
 	 *        Timeout for the underlying HTTP client; may be {@code null} to use the agent's
 	 *        configured timeout.
 	 */
-	public BackgroundAgentExecutor(AgentRegistry registry, Duration timeoutOverride) {
-		_registry = registry;
+	public BackgroundAgentExecutor(Duration timeoutOverride) {
 		_timeoutOverride = timeoutOverride;
 	}
 
@@ -117,7 +108,8 @@ public class BackgroundAgentExecutor {
 	 *         if the agent has no background configuration.
 	 */
 	public ExecutionResult execute(String agentName, BackgroundContext context) {
-		AgentConfig agentConfig = _registry.getAgentConfig(agentName);
+		com.top_logic.ai.service.agents.AgentConfig agentConfig =
+			AgentFactory.getInstance().getAgentConfig(agentName);
 		if (!(agentConfig instanceof BackgroundAgentConfig bgConfig)) {
 			throw new IllegalArgumentException("Agent '" + agentName + "' is not a BackgroundAgentConfig");
 		}
@@ -279,7 +271,7 @@ public class BackgroundAgentExecutor {
 						UUID.randomUUID().toString(),
 						Instant.now(),
 						List.of(new TextContent(input))));
-					return _registry.runAgent(agentName, conversation, null, event -> { });
+					return AgentFactory.getInstance().runAgent(agentName, conversation, null, event -> { });
 				});
 		} catch (Exception ex) {
 			Logger.error("Agent invocation failed for '" + agentName + "'",

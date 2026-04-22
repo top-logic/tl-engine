@@ -83,6 +83,16 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 
 	private transient double _columnWidth = 0.0d;
 
+	private double _scrollX = 0.0d;
+
+	private double _scrollY = 0.0d;
+
+	private int _frozenRows = 0;
+
+	private transient double _headerHeight = 0.0d;
+
+	private transient double _dataHeight = 0.0d;
+
 	/**
 	 * Creates a {@link GanttLayout_Impl} instance.
 	 *
@@ -329,6 +339,96 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 	}
 
 	@Override
+	public final double getScrollX() {
+		return _scrollX;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setScrollX(double value) {
+		internalSetScrollX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getScrollX()} without chain call utility. */
+	protected final void internalSetScrollX(double value) {
+		_listener.beforeSet(this, SCROLL_X__PROP, value);
+		_scrollX = value;
+		_listener.afterChanged(this, SCROLL_X__PROP);
+	}
+
+	@Override
+	public final double getScrollY() {
+		return _scrollY;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setScrollY(double value) {
+		internalSetScrollY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getScrollY()} without chain call utility. */
+	protected final void internalSetScrollY(double value) {
+		_listener.beforeSet(this, SCROLL_Y__PROP, value);
+		_scrollY = value;
+		_listener.afterChanged(this, SCROLL_Y__PROP);
+	}
+
+	@Override
+	public final int getFrozenRows() {
+		return _frozenRows;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setFrozenRows(int value) {
+		internalSetFrozenRows(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFrozenRows()} without chain call utility. */
+	protected final void internalSetFrozenRows(int value) {
+		_listener.beforeSet(this, FROZEN_ROWS__PROP, value);
+		_frozenRows = value;
+		_listener.afterChanged(this, FROZEN_ROWS__PROP);
+	}
+
+	@Override
+	public final double getHeaderHeight() {
+		return _headerHeight;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setHeaderHeight(double value) {
+		internalSetHeaderHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getHeaderHeight()} without chain call utility. */
+	protected final void internalSetHeaderHeight(double value) {
+		_listener.beforeSet(this, HEADER_HEIGHT__PROP, value);
+		_headerHeight = value;
+		_listener.afterChanged(this, HEADER_HEIGHT__PROP);
+	}
+
+	@Override
+	public final double getDataHeight() {
+		return _dataHeight;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setDataHeight(double value) {
+		internalSetDataHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDataHeight()} without chain call utility. */
+	protected final void internalSetDataHeight(double value) {
+		_listener.beforeSet(this, DATA_HEIGHT__PROP, value);
+		_dataHeight = value;
+		_listener.afterChanged(this, DATA_HEIGHT__PROP);
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value) {
 		internalSetContents(value);
 		return this;
@@ -405,7 +505,12 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			INDENT_WIDTH__PROP, 
 			ROW_LABEL_MIN_WIDTH__PROP, 
 			ROW_LABEL_PADDING__PROP, 
-			COLUMN_WIDTH__PROP);
+			COLUMN_WIDTH__PROP, 
+			SCROLL_X__PROP, 
+			SCROLL_Y__PROP, 
+			FROZEN_ROWS__PROP, 
+			HEADER_HEIGHT__PROP, 
+			DATA_HEIGHT__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -418,7 +523,9 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.TRANSIENT_PROPERTIES);
 		tmp.addAll(java.util.Arrays.asList(
-				COLUMN_WIDTH__PROP));
+				COLUMN_WIDTH__PROP, 
+				HEADER_HEIGHT__PROP, 
+				DATA_HEIGHT__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -444,6 +551,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case ROW_LABEL_MIN_WIDTH__PROP: return getRowLabelMinWidth();
 			case ROW_LABEL_PADDING__PROP: return getRowLabelPadding();
 			case COLUMN_WIDTH__PROP: return getColumnWidth();
+			case SCROLL_X__PROP: return getScrollX();
+			case SCROLL_Y__PROP: return getScrollY();
+			case FROZEN_ROWS__PROP: return getFrozenRows();
+			case HEADER_HEIGHT__PROP: return getHeaderHeight();
+			case DATA_HEIGHT__PROP: return getDataHeight();
 			default: return super.get(field);
 		}
 	}
@@ -460,6 +572,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case ROW_LABEL_MIN_WIDTH__PROP: internalSetRowLabelMinWidth((double) value); break;
 			case ROW_LABEL_PADDING__PROP: internalSetRowLabelPadding((double) value); break;
 			case COLUMN_WIDTH__PROP: internalSetColumnWidth((double) value); break;
+			case SCROLL_X__PROP: internalSetScrollX((double) value); break;
+			case SCROLL_Y__PROP: internalSetScrollY((double) value); break;
+			case FROZEN_ROWS__PROP: internalSetFrozenRows((int) value); break;
+			case HEADER_HEIGHT__PROP: internalSetHeaderHeight((double) value); break;
+			case DATA_HEIGHT__PROP: internalSetDataHeight((double) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -501,6 +618,12 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 		out.value(getRowLabelMinWidth());
 		out.name(ROW_LABEL_PADDING__PROP);
 		out.value(getRowLabelPadding());
+		out.name(SCROLL_X__PROP);
+		out.value(getScrollX());
+		out.name(SCROLL_Y__PROP);
+		out.value(getScrollY());
+		out.name(FROZEN_ROWS__PROP);
+		out.value(getFrozenRows());
 	}
 
 	@Override
@@ -562,6 +685,26 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 				out.value(getColumnWidth());
 				break;
 			}
+			case SCROLL_X__PROP: {
+				out.value(getScrollX());
+				break;
+			}
+			case SCROLL_Y__PROP: {
+				out.value(getScrollY());
+				break;
+			}
+			case FROZEN_ROWS__PROP: {
+				out.value(getFrozenRows());
+				break;
+			}
+			case HEADER_HEIGHT__PROP: {
+				out.value(getHeaderHeight());
+				break;
+			}
+			case DATA_HEIGHT__PROP: {
+				out.value(getDataHeight());
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -613,6 +756,9 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case INDENT_WIDTH__PROP: setIndentWidth(in.nextDouble()); break;
 			case ROW_LABEL_MIN_WIDTH__PROP: setRowLabelMinWidth(in.nextDouble()); break;
 			case ROW_LABEL_PADDING__PROP: setRowLabelPadding(in.nextDouble()); break;
+			case SCROLL_X__PROP: setScrollX(in.nextDouble()); break;
+			case SCROLL_Y__PROP: setScrollY(in.nextDouble()); break;
+			case FROZEN_ROWS__PROP: setFrozenRows(in.nextInt()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

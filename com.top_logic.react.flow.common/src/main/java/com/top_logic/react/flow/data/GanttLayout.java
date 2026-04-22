@@ -55,6 +55,21 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	/** @see #getColumnWidth() */
 	String COLUMN_WIDTH__PROP = "columnWidth";
 
+	/** @see #getScrollX() */
+	String SCROLL_X__PROP = "scrollX";
+
+	/** @see #getScrollY() */
+	String SCROLL_Y__PROP = "scrollY";
+
+	/** @see #getFrozenRows() */
+	String FROZEN_ROWS__PROP = "frozenRows";
+
+	/** @see #getHeaderHeight() */
+	String HEADER_HEIGHT__PROP = "headerHeight";
+
+	/** @see #getDataHeight() */
+	String DATA_HEIGHT__PROP = "dataHeight";
+
 	/**
 	 * Root rows of the forest.
 	 */
@@ -206,6 +221,75 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	 * @see #getColumnWidth()
 	 */
 	com.top_logic.react.flow.data.GanttLayout setColumnWidth(double value);
+
+	/**
+	 * Horizontal scroll offset, in position units (not pixels).
+	 *
+	 * <p>
+	 * The pixel offset applied to the content and header groups is {@code scrollX * currentZoom}.
+	 * Using position units ensures that the viewport stays centered on the same time point
+	 * when zoom changes.
+	 * </p>
+	 */
+	double getScrollX();
+
+	/**
+	 * @see #getScrollX()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setScrollX(double value);
+
+	/**
+	 * Vertical scroll offset, in pixels.
+	 *
+	 * <p>
+	 * Applied to the content and sidebar groups. Not affected by zoom changes (row heights
+	 * do not change when zooming).
+	 * </p>
+	 */
+	double getScrollY();
+
+	/**
+	 * @see #getScrollY()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setScrollY(double value);
+
+	/**
+	 * Number of leading top-level rows in {@link #getRootRows()} that form the frozen header.
+	 *
+	 * <p>
+	 * If {@code frozenRows = 3}, the first three root rows (e.g. Year, Month, Markers) stay
+	 * visible at the top and do not scroll vertically. Their labels form the frozen corner.
+	 * {@code 0} means no frozen header.
+	 * </p>
+	 */
+	int getFrozenRows();
+
+	/**
+	 * @see #getFrozenRows()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setFrozenRows(int value);
+
+	/**
+	 * Height of the frozen header area, in pixels. Computed during layout from the
+	 * accumulated heights of the first {@link #getFrozenRows()} root rows and their descendants.
+	 */
+	double getHeaderHeight();
+
+	/**
+	 * @see #getHeaderHeight()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setHeaderHeight(double value);
+
+	/**
+	 * Total height of the scrollable data rows, in pixels. Computed during layout.
+	 * Used for scroll bounds: {@code maxScrollY = max(0, dataHeight - viewportContentHeight)}.
+	 */
+	double getDataHeight();
+
+	/**
+	 * @see #getDataHeight()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setDataHeight(double value);
 
 	@Override
 	com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value);

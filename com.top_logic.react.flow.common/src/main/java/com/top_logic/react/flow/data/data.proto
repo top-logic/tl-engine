@@ -1319,6 +1319,50 @@ message GanttLayout extends Layout {
 	 * </p>
 	 */
 	transient double columnWidth;
+
+	/**
+	 * Horizontal scroll offset, in position units (not pixels).
+	 *
+	 * <p>
+	 * The pixel offset applied to the content and header groups is {@code scrollX * currentZoom}.
+	 * Using position units ensures that the viewport stays centered on the same time point
+	 * when zoom changes.
+	 * </p>
+	 */
+	double scrollX;
+
+	/**
+	 * Vertical scroll offset, in pixels.
+	 *
+	 * <p>
+	 * Applied to the content and sidebar groups. Not affected by zoom changes (row heights
+	 * do not change when zooming).
+	 * </p>
+	 */
+	double scrollY;
+
+	/**
+	 * Number of leading top-level rows in {@link #rootRows} that form the frozen header.
+	 *
+	 * <p>
+	 * If {@code frozenRows = 3}, the first three root rows (e.g. Year, Month, Markers) stay
+	 * visible at the top and do not scroll vertically. Their labels form the frozen corner.
+	 * {@code 0} means no frozen header.
+	 * </p>
+	 */
+	int frozenRows;
+
+	/**
+	 * Height of the frozen header area, in pixels. Computed during layout from the
+	 * accumulated heights of the first {@link #frozenRows} root rows and their descendants.
+	 */
+	transient double headerHeight;
+
+	/**
+	 * Total height of the scrollable data rows, in pixels. Computed during layout.
+	 * Used for scroll bounds: {@code maxScrollY = max(0, dataHeight - viewportContentHeight)}.
+	 */
+	transient double dataHeight;
 }
 
 /** Edge of a box for resize operations. */

@@ -179,15 +179,9 @@ public class TaskProgressTracker {
 		return _approvalMode;
 	}
 
-	/** Sets the session-scoped approval mode. Also updates all active processing stores. */
+	/** Sets the session-scoped approval mode. */
 	public void setApprovalMode(ApprovalMode mode) {
 		_approvalMode = mode;
-		for (AIProcessingState state : _processingStates.values()) {
-			var store = state.getUserInteractionStore();
-			if (store != null) {
-				store.setMode(mode);
-			}
-		}
 	}
 
 	/**

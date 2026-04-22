@@ -8,7 +8,6 @@ package com.top_logic.ai.service.tools;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.top_logic.ai.service.approval.ApprovalMode;
 import com.top_logic.ai.service.approval.UserInteractionRequest;
 import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.ai.service.approval.UserInteractionStoreBinding;
@@ -21,19 +20,12 @@ import com.top_logic.tl.ai.core.tool.ToolMethod;
  * Tool for the Orchestrator to interact with the user.
  *
  * <p>
- * Supports three interaction types:
+ * Supports two interaction types:
  * </p>
  * <ul>
- * <li>{@code "approval"} — Approve/reject buttons. Returns {@code "approved"} or
- * {@code "rejected"}.</li>
  * <li>{@code "text"} — Free text input. Returns the user's text.</li>
- * <li>{@code "choice"} — Option selection. Returns the selected option label.</li>
+ * <li>{@code "choice"} — Option selection. Returns the selected option label(s).</li>
  * </ul>
- *
- * <p>
- * When auto-approve mode is active, {@code type="approval"} returns {@code "approved"} immediately
- * without blocking. Other types always block and show UI.
- * </p>
  */
 public class AskUserTool {
 
@@ -44,26 +36,22 @@ public class AskUserTool {
 	private static final int MAX_CHOICE_OPTIONS = 5;
 
 	/**
-	 * Ask the user a question and wait for their response. Use for approvals before model changes,
-	 * clarifying ambiguous requests, presenting choices, or getting feedback on plans.
+	 * Ask the user a question and wait for their response.
 	 *
 	 * @param question The question to present to the user.
-	 * @param header   Short label (e.g. "Approval", "Clarify").
-	 * @param type     Type: "approval" for approve/reject buttons, "text" for free text input,
-	 *                 "choice" for option selection.
+	 * @param header   Short label (e.g. "Clarify", "Choose").
+	 * @param type     Type: "text" for free text input, "choice" for option selection.
 	 * @param options  For "choice": JSON array of options, e.g.
 	 *                 [{"label":"Option A","description":"..."}]. Ignored for other types.
 	 * @return The user's response as a string.
 	 */
 	@ToolMethod(description = "Ask the user a question and wait for their response. "
-		+ "Use for approvals before model changes, clarifying ambiguous requests, "
-		+ "presenting choices, or getting feedback on plans.",
+		+ "Use for clarifying ambiguous requests, presenting choices, or getting feedback on plans.",
 		mode = com.top_logic.tl.ai.core.tool.ToolMode.READ)
 	public String askUser(
 			@P("The question to present") String question,
-			@P("Short label (e.g. 'Approval', 'Clarify')") String header,
-			@P("Type: 'approval' for approve/reject buttons, "
-				+ "'text' for free text input, "
+			@P("Short label (e.g. 'Clarify', 'Choose')") String header,
+			@P("Type: 'text' for free text input, "
 				+ "'choice' for option selection") String type,
 			@P("For 'choice': JSON array of options (max 5), "
 				+ "e.g. [{\"label\":\"Option A\",\"description\":\"...\"}]. "
@@ -72,14 +60,8 @@ public class AskUserTool {
 
 		UserInteractionStore store = UserInteractionStoreBinding.getStore();
 		if (store == null) {
-			Logger.warn("No UserInteractionStore bound — auto-approving", AskUserTool.class);
-			return "approved";
-		}
-
-		// Auto-approve mode: approval type returns immediately
-		if ("approval".equals(type) && store.getMode() == ApprovalMode.AUTO_APPROVE) {
-			Logger.info("Auto-approving askUser request: " + header, AskUserTool.class);
-			return "approved";
+			Logger.warn("No UserInteractionStore bound — returning empty response", AskUserTool.class);
+			return "";
 		}
 
 		// Validate choice options count

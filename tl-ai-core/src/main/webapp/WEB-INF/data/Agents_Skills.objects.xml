@@ -267,7 +267,7 @@ updateTask("1", status="completed")
 listTasks()
 
 updateTask("2", status="in_progress")
-  → reason, build detailed plan, askUser(approval)
+  → reason, build detailed plan, askUser(choice: Approve / Revise)
 updateTask("2", status="completed")
 listTasks()
 
@@ -945,11 +945,11 @@ Every modification follows this sequence:
 
 3. **PLAN**: Using your reasoning and discoveries, design the concrete model. Apply the modeling philosophy from the `toplogic-modeling` skill. If the work order is unclear, ask the user for clarification before planning.
 
-4. **CONFIRM**: Present your plan to the user via askUser(type="approval"). Use the confirmation format from the `toplogic-modeling` skill to show your modeling decisions — framework types used, shared interfaces, inheritance, relationships with delete policies.
+4. **CONFIRM**: Present your plan to the user via askUser(type="choice", options=["Approve", "Revise"]). Use the confirmation format from the `toplogic-modeling` skill to show your modeling decisions — framework types used, shared interfaces, inheritance, relationships with delete policies.
    - **Exception — Deletion**: Skip confirmation. The deleteModelElement tool has built-in safety checks. Call it directly and handle the response (see DELETION SAFETY).
    - **Exception — Already approved**: If the user already approved this exact plan in this conversation, do not ask again.
 
-5. **EXECUTE**: On approval (or directly for deletions), call your tools. On rejection, STOP and return the rejection. Do NOT retry or ask again.
+5. **EXECUTE**: On "Approve" (or directly for deletions), call your tools. On "Revise", STOP and return to the user. Do NOT retry or ask again.
 
 6. **REPORT**: Summarize what was done in the structured output format.
 
@@ -993,10 +993,10 @@ If any tool call returns an error, report it to the user and stop. Do NOT retry 
 
 You have access to the askUser tool for interacting with the user directly.
 
-## askUser(type="approval") — Confirm before executing
-Use BEFORE any modification. Present a concise summary:
+## askUser(type="choice") — Confirm before executing
+Use BEFORE any modification. Present a concise plan summary, then offer options=["Approve", "Revise"]:
 
-Example approval request:
+Example:
 "Create the following in module 'fleet':
 - Class: Vehicle
 - Properties: licensePlate (STRING, mandatory), mileage (INT)
@@ -1022,7 +1022,6 @@ Examples:
 
 ## When NOT to call askUser
 - You are in a follow-up execution where the user already approved the exact same plan in this conversation
-- Auto-approve mode is active for approval type (the tool handles this automatically)
 - You are about to perform a deletion — the deletion tool handles safety checks (see DELETION SAFETY)
 
 ---
@@ -1452,7 +1451,7 @@ When a structure (e.g., address, contact info) may be used by multiple types:
 
 ## Confirmation Format
 
-When presenting your plan to the user via askUser(type="approval"), SHOW your modeling decisions explicitly so the user sees WHY you chose this structure:
+When presenting your plan to the user via askUser(type="choice", options=["Approve", "Revise"]), SHOW your modeling decisions explicitly so the user sees WHY you chose this structure:
 
 ```
 I'll create the following model in module '[module]':
@@ -1654,7 +1653,7 @@ asks for a particular model — the system automatically selects the right one.
 ## 3. PLAN
 For non-trivial work, form a detailed plan that lists EVERY element to create
 or modify — every module, enumeration, class, property, and reference with its
-target, multiplicity, and flags. Present this plan to the user for approval.
+target, multiplicity, and flags. Present this plan to the user for confirmation via askUser(type="choice", options=["Approve", "Revise"]).
 
 The plan IS your checklist. If an element is not in the plan, it won't get created.
 If an element IS in the plan, it MUST get created. No silent drops.
@@ -1760,8 +1759,8 @@ SELF-CONTAINED — if an element is missing from the plan, it will not be create
 
 # User Interaction
 
-## askUser(type="approval") — Confirm before executing
-Use BEFORE any model modification. Present a concise summary:
+## askUser(type="choice") — Confirm before executing
+Use BEFORE any model modification. Present a concise plan summary, then offer options=["Approve", "Revise"]:
 
 Example:
 "Create the following in module 'fleet':
@@ -1780,7 +1779,6 @@ Use when there are 2-4 valid approaches and you need the user to pick.
 ## When NOT to call askUser
 - Deletions — the delete tool has built-in safety (blockers, confirmation)
 - Follow-up execution where the user already approved the plan
-- Auto-approve mode is active
 
 ---
 

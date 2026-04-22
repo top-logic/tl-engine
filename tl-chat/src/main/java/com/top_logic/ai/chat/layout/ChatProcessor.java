@@ -115,7 +115,7 @@ public class ChatProcessor {
 		TaskStore taskStore = taskTracker.getActiveTaskStore();
 		TaskStoreBinding.setStore(taskStore);
 
-		UserInteractionStore interactionStore = new UserInteractionStore(taskTracker.getApprovalMode());
+		UserInteractionStore interactionStore = new UserInteractionStore();
 		UserInteractionStoreBinding.setStore(interactionStore);
 		state.setUserInteractionStore(interactionStore);
 

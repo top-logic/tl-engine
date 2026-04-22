@@ -1432,11 +1432,7 @@
 					});
 				}
 			} else {
-				this.showPrompt({
-					approvalRequestId: data.requestId,
-					toolName: data.header || 'Action',
-					displayReason: data.question
-				});
+				console.warn('[tl-chat] Unknown interaction type:', data.type);
 				return;
 			}
 

@@ -26,34 +26,13 @@ public class UserInteractionStore {
 	private final Map<String, CompletableFuture<String>> _approvalFutures = new ConcurrentHashMap<>();
 	private final AtomicInteger _nextId = new AtomicInteger(1);
 	private final String _storeId = UUID.randomUUID().toString().substring(0, 8);
-	private volatile ApprovalMode _mode;
-
-	/** Creates a new store with {@link ApprovalMode#MANUAL} mode. */
-	public UserInteractionStore() {
-		this(ApprovalMode.MANUAL);
-	}
-
-	/** Creates a new store with the given approval mode. */
-	public UserInteractionStore(ApprovalMode mode) {
-		_mode = mode;
-	}
-
-	/** Returns the approval mode for this store. */
-	public ApprovalMode getMode() {
-		return _mode;
-	}
-
-	/** Updates the approval mode at runtime. */
-	public void setMode(ApprovalMode mode) {
-		_mode = mode;
-	}
 
 	/**
 	 * Creates a new pending interaction request.
 	 *
 	 * @param question    The question to present.
 	 * @param header      Short label.
-	 * @param type        Interaction type: "approval", "text", or "choice".
+	 * @param type        Interaction type: "text" or "choice".
 	 * @param options     For "choice": JSON array of options. Null for other types.
 	 * @param multiSelect For "choice": whether multiple selections are allowed.
 	 * @return The created request with a fresh {@link CompletableFuture}.

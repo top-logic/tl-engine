@@ -37,6 +37,9 @@ public interface DerivedChannelConfig extends ChannelConfig {
 	/** Configuration name for {@link #getExpr()}. */
 	String EXPR = "expr";
 
+	/** Configuration name for {@link #getReverse()}. */
+	String REVERSE = "reverse";
+
 	/**
 	 * Comma-separated references to channels whose current values become positional arguments to the
 	 * expression.
@@ -58,4 +61,22 @@ public interface DerivedChannelConfig extends ChannelConfig {
 	@Mandatory
 	@NonNullable
 	Expr getExpr();
+
+	/**
+	 * Optional TL-Script expression for reverse (write-back) propagation.
+	 *
+	 * <p>
+	 * When present, the derived channel becomes bidirectional: setting a value on it applies this
+	 * expression to compute the source value, which is then written to the first input channel.
+	 * </p>
+	 *
+	 * <p>
+	 * The expression receives the derived value as its single argument and must return the
+	 * corresponding value for the first input channel. For example, with
+	 * {@code expr="id -> 'id-' + $id"} and {@code reverse="s -> $s.substring(3)"}, writing
+	 * {@code "id-42"} to the derived channel sets {@code "42"} on the source.
+	 * </p>
+	 */
+	@Name(REVERSE)
+	Expr getReverse();
 }

@@ -49,7 +49,7 @@ public class TestDerivedViewChannel extends TestCase {
 	}
 
 	/**
-	 * Tests that set() throws IllegalStateException.
+	 * Tests that set() throws UnsupportedOperationException on a read-only derived channel.
 	 */
 	public void testSetThrows() {
 		DerivedViewChannel derived = new DerivedViewChannel("derived");
@@ -57,8 +57,8 @@ public class TestDerivedViewChannel extends TestCase {
 
 		try {
 			derived.set("value");
-			fail("Expected IllegalStateException");
-		} catch (IllegalStateException expected) {
+			fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException expected) {
 			assertTrue(expected.getMessage().contains("derived"));
 			assertTrue(expected.getMessage().contains("read-only"));
 		}

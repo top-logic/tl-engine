@@ -11,11 +11,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 /**
- * A read-only {@link ViewChannel} whose value is computed from other channels.
+ * A {@link ViewChannel} whose value is computed from other channels.
  *
  * <p>
  * The derived value is recomputed whenever any input channel changes. Listeners are only notified if
  * the recomputed value is different from the current value (using {@link Objects#equals}).
+ * </p>
+ *
+ * <p>
+ * By default, a derived channel is read-only: calling {@link #set(Object)} throws
+ * {@link UnsupportedOperationException}. When bound with a reverse function via
+ * {@link #bind(List, Function, Function)}, the channel becomes bidirectional: setting a value
+ * applies the reverse function and propagates the result to the first input channel.
  * </p>
  *
  * <p>
@@ -31,6 +38,10 @@ public class DerivedViewChannel implements ViewChannel {
 
 	private final CopyOnWriteArrayList<ChannelListener> _listeners = new CopyOnWriteArrayList<>();
 
+	private Function<Object, Object> _reverseFunction;
+
+	private List<ViewChannel> _inputs;
+
 	/**
 	 * Creates a {@link DerivedViewChannel}.
 	 *
@@ -45,12 +56,43 @@ public class DerivedViewChannel implements ViewChannel {
 	 * Wires this channel to its input channels, computes the initial value, and attaches change
 	 * listeners for automatic recomputation.
 	 *
+	 * <p>
+	 * The channel is read-only: calling {@link #set(Object)} throws
+	 * {@link UnsupportedOperationException}.
+	 * </p>
+	 *
 	 * @param inputs
 	 *        The resolved input channels whose values become positional arguments to the function.
 	 * @param evaluator
 	 *        A function that takes an array of input values and returns the derived value.
 	 */
 	public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator) {
+		bind(inputs, evaluator, null);
+	}
+
+	/**
+	 * Wires this channel to its input channels with an optional reverse function for bidirectional
+	 * propagation.
+	 *
+	 * <p>
+	 * When a non-{@code null} reverse function is given, calling {@link #set(Object)} applies the
+	 * reverse function to the written value and sets the result on the first input channel. The
+	 * forward function then recomputes this channel's value from the updated input.
+	 * </p>
+	 *
+	 * @param inputs
+	 *        The resolved input channels whose values become positional arguments to the forward
+	 *        function.
+	 * @param evaluator
+	 *        A function that takes an array of input values and returns the derived value.
+	 * @param reverse
+	 *        A function that maps a derived value back to the value for the first input channel, or
+	 *        {@code null} for a read-only derived channel.
+	 */
+	public void bind(List<ViewChannel> inputs, Function<Object[], Object> evaluator,
+			Function<Object, Object> reverse) {
+		_inputs = inputs;
+		_reverseFunction = reverse;
 		_value = evaluate(evaluator, inputs);
 
 		ChannelListener refreshListener = (sender, oldVal, newVal) -> recompute(evaluator, inputs);
@@ -66,7 +108,11 @@ public class DerivedViewChannel implements ViewChannel {
 
 	@Override
 	public boolean set(Object newValue) {
-		throw new IllegalStateException("Derived channel '" + _name + "' is read-only.");
+		if (_reverseFunction == null) {
+			throw new UnsupportedOperationException("Derived channel '" + _name + "' is read-only.");
+		}
+		Object sourceValue = _reverseFunction.apply(newValue);
+		return _inputs.get(0).set(sourceValue);
 	}
 
 	@Override

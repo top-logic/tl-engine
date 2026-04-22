@@ -6,10 +6,12 @@
 package com.top_logic.layout.view.channel;
 
 import java.util.List;
+import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -28,11 +30,13 @@ public class DerivedChannelFactory implements ChannelFactory {
 
 	private final QueryExecutor _executor;
 
+	private final QueryExecutor _reverseExecutor;
+
 	/**
 	 * Creates a {@link DerivedChannelFactory} from configuration.
 	 *
 	 * <p>
-	 * The TL-Script expression is compiled here (config time) and shared across all sessions.
+	 * The TL-Script expressions are compiled here (config time) and shared across all sessions.
 	 * </p>
 	 */
 	@CalledByReflection
@@ -40,6 +44,8 @@ public class DerivedChannelFactory implements ChannelFactory {
 		_name = config.getName();
 		_inputRefs = config.getInputs();
 		_executor = QueryExecutor.compile(config.getExpr());
+		Expr reverseExpr = config.getReverse();
+		_reverseExecutor = reverseExpr != null ? QueryExecutor.compile(reverseExpr) : null;
 	}
 
 	@Override
@@ -48,7 +54,9 @@ public class DerivedChannelFactory implements ChannelFactory {
 		List<ViewChannel> inputs = _inputRefs.stream()
 			.map(context::resolveChannel)
 			.toList();
-		channel.bind(inputs, _executor::execute);
+		Function<Object, Object> reverse =
+			_reverseExecutor != null ? value -> _reverseExecutor.execute(value) : null;
+		channel.bind(inputs, _executor::execute, reverse);
 		return channel;
 	}
 }

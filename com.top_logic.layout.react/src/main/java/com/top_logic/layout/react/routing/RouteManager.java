@@ -60,7 +60,18 @@ public final class RouteManager {
 		_participants.add(participant);
 		participant.addRouteChangeListener(_internalListener);
 
-		tryResolvePending(participant);
+		if (_pendingUrl != null && !_pendingUrl.isEmpty()) {
+			tryResolvePending(participant);
+		} else {
+			// No pending deep-link: check if the new participant already has an
+			// active route segment (e.g., default sidebar item). If so, send the
+			// initial URL as a replaceState (not pushState) so the address bar
+			// reflects the current state without creating a history entry.
+			RouteSegment segment = participant.activeRouteSegment();
+			if (segment != null && !segment.path().isEmpty()) {
+				notifyUrlChange(true);
+			}
+		}
 	}
 
 	/**

@@ -615,6 +615,42 @@ public class TestScriptPathElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that {@link PathByExpression#getPathBase} handles attribute overrides correctly.
+	 *
+	 * <p>
+	 * When an expression uses {@code Named:name} (the base definition) and the access manager
+	 * calls {@code getPathBase} with {@code Plants:name} (an override of {@code Named:name}), the
+	 * {@code usesPart} check must still match via
+	 * {@link TLStructuredTypePart#getDefinition()} comparison.
+	 * </p>
+	 *
+	 * <p>
+	 * In the test model, {@code Plants} overrides {@code Named:name} with {@code Plants:name}
+	 * ({@code override="true"}). Without the fix, {@code Named:name.equals(Plants:name)} is
+	 * {@code false}, so no step would match and {@code getPathBase} would fall back to
+	 * {@link BaseObjects#all()}. With the fix, both resolve to the same definition and the
+	 * correct pivot is returned.
+	 * </p>
+	 */
+	public void testPartOverride() {
+		// Expression reads Named:name from the input -- creates AccessStep(Named:name) in chain.
+		PathByExpression path = newPathByExpression(
+			"x -> $x.get(`TestScriptPathElement:Named#name`)");
+		try (Transaction tx = beginTX()) {
+			Plants plantsObj = factory().createPlants();
+
+			// Plants:name is an override of Named:name (override="true" in TestScriptPathElement.model.xml).
+			// getPathBase is called with Plants:name (the concrete override), but the expression
+			// chain stores Named:name (the base definition). matchesPart must return true so that
+			// plantsObj is identified as the base object rather than falling back to BaseObjects.all().
+			assertPathBase(set(plantsObj), path, plantsObj,
+				TestScriptPathElementFactory.getNamePlantsAttr());
+
+			tx.commit();
+		}
+	}
+
+	/**
 	 * Tests that a script-step expression navigating through a derived (computed) attribute is
 	 * rejected as a configuration error at construction time.
 	 */

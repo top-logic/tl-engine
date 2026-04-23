@@ -37,7 +37,6 @@ import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
-import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.form.model.FormContext;
@@ -82,9 +81,7 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	 * Creates a new {@link LoginViewDialog} with default values.
 	 */
 	public LoginViewDialog() {
-		this(I18NConstants.LOGIN,
-			DisplayDimension.dim(450, DisplayUnit.PIXEL),
-			DisplayDimension.dim(450, DisplayUnit.PIXEL));
+		this(I18NConstants.LOGIN, Icons.LOGIN_DIALOG_WIDTH.get(), Icons.LOGIN_DIALOG_HEIGHT.get());
 	}
 
 	/**

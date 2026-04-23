@@ -298,6 +298,12 @@
 	<icon name="com.top_logic.layout.compare.Icons.OPEN_COMPARE_VIEW"
 		expr="%ICONS_COMPARE%"
 	/>
+	<size name="com.top_logic.layout.component.configuration.Icons.LOGIN_DIALOG_WIDTH"
+		value="450px"
+	/>
+	<size name="com.top_logic.layout.component.configuration.Icons.LOGIN_DIALOG_HEIGHT"
+		value="450px"
+	/>
 	<icon name="MISC_COMPARE_COMPARE_MODE_ACTIVE"
 		expr="%ICONS_COMPARE% green"
 	/>

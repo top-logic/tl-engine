@@ -80,5 +80,19 @@ public class AttributedRole extends BoundedRole {
 		PersistentObjectImpl.setValue(this, aKey, aValue);
 	}
 
-}
+	@Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.setValue(this, part, value);
+	}
 
+	@Override
+	public void tAdd(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.addValue(this, part, value);
+	}
+
+	@Override
+	public void tRemove(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.removeValue(this, part, value);
+	}
+
+}

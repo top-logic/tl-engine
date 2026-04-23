@@ -11,7 +11,7 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.agent.AgentConfig;
+import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
@@ -133,7 +133,7 @@ public class VisualToolRegistryTest extends TestCase {
 				new TextContent("Here's what I found: Berlin is 20°C and sunny. "),
 				new TextContent("20 + 12 = 32, and 3 × 7 = 21.")));
 
-		AgentConfig config = new AgentConfig("mock-model",
+		AgentParams config = new AgentParams("mock-model",
 			"You are a helpful assistant with math and weather tools.",
 			10, 4096);
 
@@ -167,7 +167,7 @@ public class VisualToolRegistryTest extends TestCase {
 
 		AnthropicProvider provider = new AnthropicProvider(apiKey);
 
-		AgentConfig config = new AgentConfig("claude-haiku-4-5-20251001",
+		AgentParams config = new AgentParams("claude-haiku-4-5-20251001",
 			"You are a helpful assistant. Use the available tools to answer questions. Be concise.",
 			5, 1024);
 

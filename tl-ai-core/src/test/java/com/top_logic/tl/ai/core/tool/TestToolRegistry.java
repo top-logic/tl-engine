@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.agent.AgentConfig;
+import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -262,7 +262,7 @@ public class TestToolRegistry extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("The answer is 42.")));
 
-		AgentConfig config = new AgentConfig(MODEL, "You can do math.",
+		AgentParams config = new AgentParams(MODEL, "You can do math.",
 			10, 8192);
 
 		Conversation conv = new Conversation();
@@ -289,7 +289,7 @@ public class TestToolRegistry extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("I see the tool was denied.")));
 
-		AgentConfig config = new AgentConfig(MODEL, "Test",
+		AgentParams config = new AgentParams(MODEL, "Test",
 			10, 8192);
 
 		Conversation conv = new Conversation();
@@ -339,7 +339,7 @@ public class TestToolRegistry extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Got it.")));
 
-		AgentConfig config = new AgentConfig(MODEL, "Test",
+		AgentParams config = new AgentParams(MODEL, "Test",
 			10, 8192);
 
 		Conversation conv = new Conversation();

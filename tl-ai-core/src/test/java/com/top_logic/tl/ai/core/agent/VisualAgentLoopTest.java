@@ -114,7 +114,7 @@ public class VisualAgentLoopTest extends TestCase {
 		conv.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("What's the weather in Berlin and Munich? Convert Berlin's temp to Fahrenheit."))));
 
-		AgentConfig config = new AgentConfig("mock-model", "You are a helpful assistant.",
+		AgentParams config = new AgentParams("mock-model", "You are a helpful assistant.",
 			10, 4096);
 
 		AgentLoop loop = new AgentLoop(config, provider, registry);
@@ -159,7 +159,7 @@ public class VisualAgentLoopTest extends TestCase {
 		conv.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("What time is it right now? Use the tool to check."))));
 
-		AgentConfig config = new AgentConfig("claude-haiku-4-5-20251001",
+		AgentParams config = new AgentParams("claude-haiku-4-5-20251001",
 			"You are a helpful assistant. Use tools when appropriate. Be concise.",
 			5, 1024);
 

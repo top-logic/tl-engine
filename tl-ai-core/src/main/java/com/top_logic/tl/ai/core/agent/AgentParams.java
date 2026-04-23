@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Immutable configuration for an {@link AgentLoop} run.
+ * Immutable parameters for an {@link AgentLoop} run.
  *
  * @param model           the model identifier (e.g. "claude-sonnet-4-20250514")
  * @param systemPrompt    system prompt, or {@code null} for none
@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * @see AgentLoop
  */
-public record AgentConfig(
+public record AgentParams(
 		String model,
 		String systemPrompt,
 		int maxTurns,
@@ -33,7 +33,7 @@ public record AgentConfig(
 	public static final int DEFAULT_MAX_OUTPUT_TOKENS = 8192;
 
 	/** */
-	public AgentConfig {
+	public AgentParams {
 		Objects.requireNonNull(model, "Model must not be null.");
 		Objects.requireNonNull(modelOptions, "Model options must not be null.");
 		modelOptions = Map.copyOf(modelOptions);
@@ -48,7 +48,7 @@ public record AgentConfig(
 	/**
 	 * Convenience constructor without model options.
 	 */
-	public AgentConfig(String model, String systemPrompt, int maxTurns, int maxOutputTokens) {
+	public AgentParams(String model, String systemPrompt, int maxTurns, int maxOutputTokens) {
 		this(model, systemPrompt, maxTurns, maxOutputTokens, Map.of());
 	}
 }

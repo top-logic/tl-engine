@@ -22,7 +22,7 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
-import com.top_logic.tl.ai.core.agent.AgentConfig;
+import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -246,10 +246,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		LLMProvider provider = registry.buildProvider(modelName);
 
-		AgentConfig config = new AgentConfig(
+		AgentParams config = new AgentParams(
 			modelName, systemPrompt != null ? systemPrompt : "",
 			1, // single turn for chat()
-			AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS,
+			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
 			modelOptions.isEmpty() ? Map.of() : Map.copyOf(modelOptions));
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);

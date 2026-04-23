@@ -48,19 +48,19 @@ public class TestAgentLoop extends TestCase {
 	private static final String MODEL = "test-model";
 
 	/**
-	 * Creates an AgentConfig with defaults.
+	 * Creates an AgentParams with defaults.
 	 */
-	private static AgentConfig config() {
-		return new AgentConfig(MODEL, "You are a test assistant.",
-			AgentConfig.DEFAULT_MAX_TURNS, AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS);
+	private static AgentParams config() {
+		return new AgentParams(MODEL, "You are a test assistant.",
+			AgentParams.DEFAULT_MAX_TURNS, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS);
 	}
 
 	/**
-	 * Creates an AgentConfig with the given max turns.
+	 * Creates an AgentParams with the given max turns.
 	 */
-	private static AgentConfig config(int maxTurns) {
-		return new AgentConfig(MODEL, "You are a test assistant.",
-			maxTurns, AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS);
+	private static AgentParams config(int maxTurns) {
+		return new AgentParams(MODEL, "You are a test assistant.",
+			maxTurns, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS);
 	}
 
 	/**

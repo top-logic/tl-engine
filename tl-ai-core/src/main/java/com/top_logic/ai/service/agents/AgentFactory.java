@@ -18,7 +18,7 @@ import com.top_logic.ai.service.tools.registry.ToolRegistry;
 import com.top_logic.tl.ai.core.tool.AnnotatedTools;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.AgentConfig;
+import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -123,7 +123,7 @@ public class AgentFactory {
 	 *
 	 * <p>
 	 * Resolves the agent configuration, builds the provider, tool registry, and core
-	 * {@link AgentConfig}, creates an {@link AgentLoop}, and runs
+	 * {@link AgentParams}, creates an {@link AgentLoop}, and runs
 	 * it. Returns the response text extracted from the last {@link AssistantMessage}.
 	 * </p>
 	 *
@@ -148,7 +148,7 @@ public class AgentFactory {
 				"No agent found with name '" + name + "' in the knowledge base.");
 		}
 
-		AgentConfig coreConfig = buildConfig(agentObj);
+		AgentParams coreConfig = buildConfig(agentObj);
 		LLMProvider provider = buildProvider(coreConfig.model());
 		com.top_logic.tl.ai.core.tool.ToolRegistry registry = buildToolRegistry(agentObj);
 
@@ -227,7 +227,7 @@ public class AgentFactory {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
 
-		AgentConfig config = buildConfig(agent);
+		AgentParams config = buildConfig(agent);
 		LLMProvider provider = buildProvider(config.model());
 		com.top_logic.tl.ai.core.tool.ToolRegistry registry = buildToolRegistry(agent);
 
@@ -237,9 +237,9 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Builds the {@link AgentConfig} record from a KB agent object.
+	 * Builds the {@link AgentParams} record from a KB agent object.
 	 */
-	AgentConfig buildConfig(TLObject agent) {
+	AgentParams buildConfig(TLObject agent) {
 		String model = (String) agent.tValueByName("model");
 		if (model == null || model.isBlank()) {
 			LLMProviderRegistry providerRegistry = LLMProviderRegistry.getInstance();
@@ -255,11 +255,11 @@ public class AgentFactory {
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
 
 		Integer maxTokens = (Integer) agent.tValueByName("maxTokens");
-		int maxOutputTokens = maxTokens != null ? maxTokens : AgentConfig.DEFAULT_MAX_OUTPUT_TOKENS;
+		int maxOutputTokens = maxTokens != null ? maxTokens : AgentParams.DEFAULT_MAX_OUTPUT_TOKENS;
 
 		Map<String, Object> modelOptions = buildModelOptions(agent);
 
-		return new AgentConfig(model, systemPrompt, AgentConfig.DEFAULT_MAX_TURNS, maxOutputTokens, modelOptions);
+		return new AgentParams(model, systemPrompt, AgentParams.DEFAULT_MAX_TURNS, maxOutputTokens, modelOptions);
 	}
 
 	private static int resolveMaxToolResultChars(TLObject agent) {

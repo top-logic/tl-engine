@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.agent.AgentConfig;
+import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -315,7 +315,7 @@ public class VisualConversationMemoryTest extends TestCase {
 		});
 		registry.freeze();
 
-		AgentConfig config = new AgentConfig("mock-model",
+		AgentParams config = new AgentParams("mock-model",
 			"You are a helpful assistant.", 10, 4096);
 
 		AgentLoop loop = new AgentLoop(config, provider, registry, memory);

@@ -60,7 +60,7 @@ import com.top_logic.tl.ai.core.tool.ToolRegistry;
  *   <li>Loop</li>
  * </ol>
  *
- * @see AgentConfig
+ * @see AgentParams
  * @see AgentResult
  * @see AgentEventListener
  */
@@ -73,7 +73,7 @@ public class AgentLoop {
 	/** Default maximum characters per tool result before truncation. */
 	public static final int DEFAULT_MAX_RESULT_CHARS = 4000;
 
-	private final AgentConfig _config;
+	private final AgentParams _config;
 
 	private final LLMProvider _provider;
 
@@ -95,7 +95,7 @@ public class AgentLoop {
 	 * @param provider LLM provider for streaming responses
 	 * @param registry tool registry for tool lookup and execution
 	 */
-	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry) {
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry) {
 		this(config, provider, registry, DEFAULT_MAX_RESULT_CHARS);
 	}
 
@@ -107,7 +107,7 @@ public class AgentLoop {
 	 * @param registry       tool registry for tool lookup and execution
 	 * @param maxResultChars maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -127,7 +127,7 @@ public class AgentLoop {
 	 * @param registry tool registry for tool lookup and execution
 	 * @param memory   conversation memory with token tracking and compaction
 	 */
-	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
 			ConversationMemory memory) {
 		this(config, provider, registry, memory, DEFAULT_MAX_RESULT_CHARS);
 	}
@@ -142,7 +142,7 @@ public class AgentLoop {
 	 * @param memory           conversation memory with token tracking and compaction
 	 * @param maxResultChars   maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentConfig config, LLMProvider provider, ToolRegistry registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
 			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");

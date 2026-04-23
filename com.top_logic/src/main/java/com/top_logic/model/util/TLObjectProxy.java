@@ -11,6 +11,7 @@ import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.model.AbstractTLObject;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Proxy implementation for the {@link TLObject} interface.
@@ -57,4 +58,23 @@ public class TLObjectProxy extends AbstractTLObject {
 		return _impl.tType();
 	}
 
+	@Override
+	public Object tValue(TLStructuredTypePart part) {
+		return _impl.tValue(part);
+	}
+
+	@Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		_impl.tUpdate(part, value);
+	}
+
+	@Override
+	public void tAdd(TLStructuredTypePart part, Object value) {
+		_impl.tAdd(part, value);
+	}
+
+	@Override
+	public void tRemove(TLStructuredTypePart part, Object value) {
+		_impl.tRemove(part, value);
+	}
 }

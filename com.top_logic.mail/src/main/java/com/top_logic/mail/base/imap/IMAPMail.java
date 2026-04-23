@@ -18,6 +18,7 @@ import jakarta.mail.Message;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.knowledge.objects.DestinationIterator;
 import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
@@ -35,6 +36,7 @@ import com.top_logic.mail.proxy.MailReceiverService;
 import com.top_logic.mail.proxy.MailServerMessage;
 import com.top_logic.mail.proxy.exchange.ExchangeMail;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.util.error.TopLogicException;
 
@@ -64,6 +66,21 @@ public class IMAPMail extends AbstractContainerWrapper implements Mail {
     }
 
     @Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.setValue(this, part, value);
+	}
+
+	@Override
+	public void tAdd(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.addValue(this, part, value);
+	}
+
+	@Override
+	public void tRemove(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.removeValue(this, part, value);
+	}
+
+	@Override
 	public Collection<? extends Document> getContent() {
 		return CollectionUtil.dynamicCastView(Document.class, this.resolveWrappers(DOCUMENTS));
     }

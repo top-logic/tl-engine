@@ -27,6 +27,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dsa.DataAccessProxy;
+import com.top_logic.element.meta.kbbased.PersistentObjectImpl;
 import com.top_logic.knowledge.objects.KOAttributes;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -45,6 +46,7 @@ import com.top_logic.mail.proxy.MailMessage;
 import com.top_logic.mail.proxy.MailReceiver;
 import com.top_logic.mail.proxy.MailReceiverService;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.error.TopLogicException;
 
 
@@ -73,6 +75,21 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
     public IMAPMailFolder(KnowledgeObject ko) {
         super(ko);
     }
+
+	@Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.setValue(this, part, value);
+	}
+
+	@Override
+	public void tAdd(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.addValue(this, part, value);
+	}
+
+	@Override
+	public void tRemove(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.removeValue(this, part, value);
+	}
 
 	@Override
 	public Collection<? extends TLObject> getContent() {

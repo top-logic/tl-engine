@@ -89,6 +89,11 @@ public class AttributedPerson extends Person {
 	}
 
 	@Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.setValue(this, part, value);
+	}
+
+	@Override
 	public Locale getLocale() {
 		return Utils.parseLocale((String) tValueByName(Person.LOCALE));
 	}

@@ -680,22 +680,52 @@ public class OpenAIProvider implements LLMProvider {
 
 		Duration retryAfter = parseRetryAfter(response.headers());
 		String message = parseErrorMessage(body);
+		String code = parseErrorCode(body);
 
-		ProviderException.Kind kind = switch (status) {
-			case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
-			case 429 -> ProviderException.Kind.RATE_LIMITED;
-			default -> {
-				if (message.toLowerCase().contains("context") && message.contains("length")) {
-					yield ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
+		ProviderException.Kind kind = switch (code) {
+			case "context_length_exceeded" -> ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
+			case "rate_limit_exceeded" -> ProviderException.Kind.RATE_LIMITED;
+			case "authentication_error" -> ProviderException.Kind.AUTHENTICATION;
+			default -> switch (status) {
+				case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
+				case 429 -> ProviderException.Kind.RATE_LIMITED;
+				default -> {
+					if (status >= 500) {
+						yield ProviderException.Kind.OVERLOADED;
+					}
+					yield ProviderException.Kind.INVALID_REQUEST;
 				}
-				if (status >= 500) {
-					yield ProviderException.Kind.OVERLOADED;
-				}
-				yield ProviderException.Kind.INVALID_REQUEST;
-			}
+			};
 		};
 
 		throw new ProviderException(kind, status, message, retryAfter, null);
+	}
+
+	private String parseErrorCode(String jsonBody) {
+		try (JsonReader json = jsonReader(jsonBody)) {
+			json.beginObject();
+			while (json.hasNext()) {
+				if ("error".equals(json.nextName())) {
+					json.beginObject();
+					while (json.hasNext()) {
+						if ("code".equals(json.nextName())) {
+							switch (json.peek()) {
+								case NULL -> { json.skipValue(); return ""; }
+								default -> { return json.nextString(); }
+							}
+						}
+						json.skipValue();
+					}
+					json.endObject();
+				} else {
+					json.skipValue();
+				}
+			}
+			json.endObject();
+		} catch (Exception e) {
+			// Not valid JSON.
+		}
+		return "";
 	}
 
 	private ProviderException parseStreamError(String data) {

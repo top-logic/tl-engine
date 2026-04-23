@@ -599,9 +599,6 @@ public class MistralProvider implements LLMProvider {
 			case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
 			case 429 -> ProviderException.Kind.RATE_LIMITED;
 			default -> {
-				if (message.toLowerCase().contains("context") && message.contains("length")) {
-					yield ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
-				}
 				if (status >= 500) {
 					yield ProviderException.Kind.OVERLOADED;
 				}

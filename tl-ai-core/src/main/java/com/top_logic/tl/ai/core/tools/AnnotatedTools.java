@@ -156,6 +156,10 @@ public final class AnnotatedTools {
 			json.endArray();
 		} else if (List.class.isAssignableFrom(type)) {
 			json.name("type").value("array");
+			json.name("items");
+			json.beginObject();
+			json.name("type").value("string");
+			json.endObject();
 		} else {
 			json.name("type").value("string");
 		}

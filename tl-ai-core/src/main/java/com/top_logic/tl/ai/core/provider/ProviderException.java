@@ -25,6 +25,9 @@ public class ProviderException extends Exception {
 		/** 429 — rate limited. Check {@link ProviderException#retryAfter()}. */
 		RATE_LIMITED,
 
+		/** 402 — billing or payment issue. Terminal, not retryable. */
+		BILLING,
+
 		/** 529 or 5xx — provider overloaded or temporarily unavailable. */
 		OVERLOADED,
 
@@ -47,22 +50,31 @@ public class ProviderException extends Exception {
 
 	private final Duration _retryAfter;
 
+	private final String _requestId;
+
 	/** */
 	public ProviderException(Kind kind, int statusCode, String message) {
-		this(kind, statusCode, message, null, null);
+		this(kind, statusCode, message, null, null, null);
 	}
 
 	/** */
 	public ProviderException(Kind kind, int statusCode, String message, Throwable cause) {
-		this(kind, statusCode, message, null, cause);
+		this(kind, statusCode, message, null, null, cause);
 	}
 
 	/** */
 	public ProviderException(Kind kind, int statusCode, String message, Duration retryAfter, Throwable cause) {
+		this(kind, statusCode, message, retryAfter, null, cause);
+	}
+
+	/** */
+	public ProviderException(Kind kind, int statusCode, String message, Duration retryAfter,
+			String requestId, Throwable cause) {
 		super(message, cause);
 		_kind = kind;
 		_statusCode = statusCode;
 		_retryAfter = retryAfter;
+		_requestId = requestId;
 	}
 
 	/** */
@@ -80,5 +92,12 @@ public class ProviderException extends Exception {
 	 */
 	public Duration retryAfter() {
 		return _retryAfter;
+	}
+
+	/**
+	 * Anthropic request ID from the {@code request-id} response header, or {@code null}.
+	 */
+	public String requestId() {
+		return _requestId;
 	}
 }

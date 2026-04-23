@@ -734,9 +734,11 @@ public class AgentLoop {
 	/**
 	 * Call the LLM provider with automatic retry for transient errors.
 	 *
-	 * <p>Retries on {@link ProviderException.Kind#RATE_LIMITED} and
-	 * {@link ProviderException.Kind#OVERLOADED} with exponential backoff,
-	 * respecting the {@code retry-after} header when present.</p>
+	 * <p>
+	 * Retries on {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#RATE_LIMITED} and
+	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#OVERLOADED} with exponential
+	 * backoff, respecting the {@code retry-after} header when present.
+	 * </p>
 	 */
 	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {

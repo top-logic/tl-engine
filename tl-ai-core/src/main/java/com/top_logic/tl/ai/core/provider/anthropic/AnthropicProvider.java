@@ -141,6 +141,7 @@ public class AnthropicProvider implements LLMProvider {
 			json.name("model").value(request.model());
 			json.name("max_tokens").value((long) request.maxOutputTokens());
 			json.name("stream").value(true);
+			writeSamplingParams(json, request.modelOptions());
 
 			if (request.systemPrompt() != null && !request.systemPrompt().isEmpty()) {
 				json.name("system");
@@ -357,6 +358,26 @@ public class AnthropicProvider implements LLMProvider {
 			json.endObject();
 		}
 		json.endArray();
+	}
+
+	/**
+	 * Writes optional sampling parameters from model options.
+	 */
+	private void writeSamplingParams(JsonWriter json, Map<String, Object> modelOptions) throws IOException {
+		Object temperature = modelOptions.get("temperature");
+		if (temperature != null) {
+			json.name("temperature").value(Double.parseDouble(temperature.toString()));
+		}
+
+		Object topP = modelOptions.get("topP");
+		if (topP != null) {
+			json.name("top_p").value(Double.parseDouble(topP.toString()));
+		}
+
+		Object topK = modelOptions.get("top_k");
+		if (topK != null) {
+			json.name("top_k").value(Long.parseLong(topK.toString()));
+		}
 	}
 
 	/**

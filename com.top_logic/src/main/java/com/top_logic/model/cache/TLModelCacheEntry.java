@@ -69,6 +69,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	private final Map<TLClass, ImmutableSet<TLClassPart>> _attributesOfSubClasses = map();
 
+	private final Map<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _overridesOfPart = map();
+
 	private final Map<TLStructuredType, List<TLObjectInitializer>> _initializers = map();
 
 	/**
@@ -142,6 +144,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_potentialTables.putAll(otherEntry._potentialTables);
 		_allAttributes.putAll(otherEntry._allAttributes);
 		_attributesOfSubClasses.putAll(otherEntry._attributesOfSubClasses);
+		_overridesOfPart.putAll(otherEntry._overridesOfPart);
 		_iconProviderByType.putAll(otherEntry._iconProviderByType);
 		_concreteOverridesByPart.putAll(otherEntry._concreteOverridesByPart);
 
@@ -228,6 +231,15 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		}
 		return computeIfAbsent(_attributesOfSubClasses, tlClass,
 			key -> immutableCopy(computeAttributesOfSubClasses(key)));
+	}
+
+	@Override
+	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
+		if (!canBeCached(owner)) {
+			return super.computeOverrides(owner, part);
+		}
+		return computeIfAbsent(_overridesOfPart, part,
+			key -> immutableCopy(super.computeOverrides(owner, key)));
 	}
 
 	@Override
@@ -455,6 +467,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_potentialTables.clear();
 		_allAttributes.clear();
 		_attributesOfSubClasses.clear();
+		_overridesOfPart.clear();
 		_iconProviderByType.clear();
 		_initializers.clear();
 		_globalAppModelClasses = null;
@@ -469,6 +482,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			.add("potentialTables", _potentialTables.size())
 			.add("allAttributes", _allAttributes.size())
 			.add("attributesOfSubClasses", _attributesOfSubClasses.size())
+			.add("overridesOfPart", _overridesOfPart.size())
 			.add("iconProviderByType", _iconProviderByType.size())
 			.add("globalAppModelClasses", _globalAppModelClasses == null ? "null" : _globalAppModelClasses.size())
 			.add("globalClasses", _globalClasses == null ? null : _globalClasses.size())

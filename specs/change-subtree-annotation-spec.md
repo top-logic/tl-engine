@@ -4,94 +4,85 @@ Ticket: #29236 (Erweiterung)
 
 ## Ziel
 
-Erweiterung des Change-Subtree-Konzepts über Kompositionsreferenzen hinaus. Konsumenten: `SubtreeFilter` (ChangeLog), `ChangeSetReverter` (Rollback, Undo/Redo). Die Konfiguration erfolgt pro Referenz — einmal definiert, einheitlich in allen drei Pfaden wirksam.
+Erweiterung des Change-Subtree-Konzepts über Kompositionsreferenzen hinaus. Konsumenten: `SubtreeFilter` (ChangeLog), `ChangeSetReverter` (Rollback, Undo/Redo). Die Konfiguration erfolgt pro Referenz-Ende — einmal definiert, einheitlich in allen drei Pfaden wirksam.
 
 ## Semantik
 
-Ein Objekt `x` ist zur Revision `r` im Change-Subtree eines Wurzelobjekts `R` ⟺ es gibt einen gerichteten Pfad `R →* x` zur Revision `r` entlang qualifizierter Kanten.
+Die Annotation `@ChangeSubtree(true|false)` sitzt an einem **Referenz-Ende** `E`. Der Owner von `E` (die Klasse, auf der `E` deklariert ist) ist die **Root-Seite** der Qualifizierung; der Target-Typ von `E` ist die **Child-Seite**.
 
-Qualifizierung einer Kante erfolgt pro **Referenz-Paar** (Forward-Ref + zugehörige Back-Ref). Die Annotation `@ChangeSubtree` darf an **beliebiger Seite** des Paares sitzen:
+Gelesen: "Änderungen an Instanzen des Child-Typs, die über diese Referenz mit einer Root-Instanz verbunden sind, gehören in den Change-Subtree jener Root-Instanz."
 
-- **Kompositions-Paar**: per Default qualifiziert. `@ChangeSubtree(false)` an einer der beiden Seiten deaktiviert das Paar.
-- **Nicht-Kompositions-Paar**: per Default nicht qualifiziert. `@ChangeSubtree(true)` an einer der beiden Seiten aktiviert es.
+- **Komposition**: Das Composite-Ende trägt eine **implizite** `@ChangeSubtree(true)`. `@ChangeSubtree(false)` (an beliebiger Seite des Paares) deaktiviert die Qualifizierung.
+- **Nicht-Komposition**: Keine implizite Qualifizierung. `@ChangeSubtree(true)` an Ende `E` aktiviert die Qualifizierung mit `owner(E)` als Root-Typ.
 
-Richtung: Die "Eltern-Kind"-Richtung eines qualifizierten Paares folgt dem Kompositionsmuster — Parent → Child. Für Kompositionspaare ist das durch `composite` strukturell festgelegt. Für Nicht-Kompositionspaare gilt die Konvention **Collection-wertige Seite = Parent-Seite** (so wie in Composition, deren Forward-Ref typischerweise multi-valued ist). Gleich-kardinale Fälle (1:1, n:m) sind in v1 ausgeschlossen; das Modell hat dafür in der Praxis keine natürliche Interpretation.
+Beide Seiten eines Paares dürfen unabhängig annotiert werden — jede Annotation ist eine separate Qualifizierung mit eigener Root-Seite. Annotation an beiden Seiten mit `true` heißt "die Beziehung qualifiziert in beide Richtungen" (i. d. R. eine Randfall-Konfiguration, aber zulässig).
 
-Konsequenz für die Navigation: Annotation auf der **Forward-Ref** (`Parent.children`) erfordert Reverse-Lookup; Annotation auf der **Back-Ref** (`Child.parent`) ist billiger (direkte Navigation `child.tValue(parent)`). Semantisch sind beide äquivalent — der Benutzer wählt, wo die Annotation sitzt, abhängig davon, welche Seite modelliert/konfigurierbar ist und welcher Navigationsweg gewünscht ist.
+### Formal
 
-Ein `ChangeSet` trifft `R` ⟺ mindestens ein enthaltener `Change` operiert auf einem Objekt, das zur Revision des `ChangeSet` im Change-Subtree von `R` liegt. Referenz-Änderungen zählen als `Change` auf dem Quellobjekt — damit sind Moves in/aus dem Subtree automatisch die "letzte Änderung im R-Kontext" am Quellobjekt, konsistent mit dem Kompositions-Move-Verhalten.
+Ein Objekt `x` ist zur Revision `r` im Change-Subtree eines Wurzelobjekts `R` ⟺ es gibt einen gerichteten Pfad `R →* x` zur Revision `r`, wobei jede Kante durch eine qualifizierte Annotation gedeckt ist: zu einer Kante `y → z` existiert ein annotiertes Ende `E` mit `owner(E) = typeof(y)`, `target(E) = typeof(z)`, und zur Revision `r` ist `z ∈ y.tValue(otherEnd(E))` (bzw. äquivalent `y ∈ z.referers(E)`).
+
+Ein `ChangeSet` trifft `R` ⟺ mindestens ein enthaltener `Change` operiert auf einem Objekt, das zur Revision des `ChangeSet` im Change-Subtree von `R` liegt — inklusive Dual-State-Check für Ref-Änderungen (s. u.).
 
 ## Annotation
 
-`TLReferenceAnnotation` in `com.top_logic.model.annotate` (Package existiert, Siedlungsmuster siehe `TLCollectionSeparator`):
+Java-Interface:
 
 ```java
 @InApp
 @TagName("change-subtree")
 @TargetType(TLTypeKind.REFERENCE)
-public interface TLChangeSubtree extends TLReferenceAnnotation {
+public interface TLChangeSubtree extends TLAttributeAnnotation {
     /**
-     * Whether the reference contributes to the change-subtree of its source object.
+     * Whether the end this annotation sits on qualifies as root-side of a
+     * change-subtree relationship: changes to instances reachable through
+     * this reference end belong to the subtree of the instance owning the end.
      *
-     * <p>For composition references this defaults to {@code true} (opt-out with
-     * {@code false}); for non-composition references it defaults to {@code false}
-     * (opt-in with {@code true}).</p>
+     * <p>For composition references, the composite end defaults to
+     * {@code true} (opt-out with {@code false}). For non-composition
+     * references, the default is {@code false} (opt-in with {@code true}).</p>
      */
     @Name("include")
     boolean getInclude();
 }
 ```
 
-Modell-XML — Annotation kann an Forward-Ref **oder** Back-Ref sitzen:
+Modell-XML — Annotation kann an Forward-Ref **oder** Back-Ref sitzen; jede Seite definiert eine eigene Root-Richtung:
 
 ```xml
-<!-- Annotation auf Forward-Ref (Reverse-Lookup bei Navigation) -->
-<reference name="relatedDocuments" type="Document" composite="false" multiple="true">
+<!-- Forward-Ref annotiert: Project ist Root, Documents sind Children -->
+<class name="Project">
+  <reference name="documents" type="Document" composite="false" multiple="true">
     <annotations>
-        <change-subtree include="true"/>
+      <change-subtree include="true"/>
     </annotations>
-</reference>
+  </reference>
+</class>
 
-<!-- Alternativ: Annotation auf Back-Ref (direkte Forward-Navigation, billiger) -->
-<reference name="owner" type="Project" inverse-reference="relatedDocuments">
+<!-- Back-Ref annotiert: Document ist Root, Project ist Child -->
+<class name="Document">
+  <reference name="project" type="Project" inverse-reference="documents">
     <annotations>
-        <change-subtree include="true"/>
+      <change-subtree include="true"/>
     </annotations>
-</reference>
+  </reference>
+</class>
 ```
 
-Nur **eine** Seite des Paares muss annotiert sein — die Annotation qualifiziert das Paar, nicht die einzelne Referenz. Wird sie an beiden Seiten mit unterschiedlichem Wert gesetzt, gewinnt die spezifischere Paar-Seite (Validierungs-Logik: gleicher Wert verlangt oder Fehler).
-
-Override-Semantik folgt dem Standard-Annotation-Merge (Spezialisierung kippt das Flag ggf. wieder).
+Override-Semantik folgt dem Standard-Annotation-Merge (Spezialisierung überschreibt Generalisierung).
 
 ## Algorithmus
 
-Kernprädikat: `inSubtree(x, R, r)` — Rückwärts-Traversierung vom `Change`-Objekt zur Wurzel.
+Navigation ist einheitlich `x.referers(annotatedRef, rev)`, unabhängig davon, ob das annotierte Ende Forward- oder Back-Ref des zugrunde liegenden Paares ist. Die KB löst `referers` intern effizient auf — bei einer Back-Ref-Annotation reduziert sich das auf einen direkten `get`-Aufruf der Gegenseite. Keine Fallback-Logik, keine Fallunterscheidung im Filter.
 
-Kanten, die im Rückwärts-Walk folgen:
-1. **Komposition (Default-Include)**: `x.tContainer()`, sofern das Paar nicht `@ChangeSubtree(false)` trägt.
-2. **Opt-in-Nicht-Komposition, Annotation auf Back-Ref**: für jede solche Back-Ref `backRef` direkter Forward-Zugriff `x.tValue(backRef)` — liefert genau den Parent (oder Collection von Parents).
-3. **Opt-in-Nicht-Komposition, Annotation auf Forward-Ref**: für jede solche Forward-Ref `fwdRef` die Menge der Quellen via Reverse-Lookup `{s : s.tValue(fwdRef) enthält x zur Revision r}`.
-
-Die Engine bestimmt für jede qualifizierte Paar-Annotation einmalig beim Filter-Aufbau, welcher der drei Fälle greift (basierend auf `TLReference.getEnd()`-Metadaten — forward vs. backward). Für Paare, die nur auf einer Seite definiert sind, greift ausschließlich der verfügbare Modus.
-
-Damit wird aus dem reinen Baum-Walk ein BFS/DFS auf einem DAG. Details:
-
-- **Zyklusschutz**: `Set<ObjectReference>` der bereits besuchten `(unversionedId)` innerhalb einer Einzelabfrage.
-- **Existenzielle Zugehörigkeit**: Sobald ein Pfad `R` erreicht, Abbruch mit `true`. Nur wenn kein einziger Pfad `R` erreicht, `false`.
-- **Memoisierung** bleibt: `(revision, unversionedId) → boolean`. Pfad-Memoisierung (alle während eines Walks besuchten IDs bekommen das Endergebnis) gilt ungeschmälert — auch für DAG-Pfade, da `inSubtree(y)` nicht von der Herkunft abhängt.
-- **Historische Referenzwerte**: Der Reverse-Lookup operiert auf der Ziel-Revision `r`. Wir setzen voraus, dass KB-seitig eine historisch gestellte Abfrage "wer zeigt via `ref` auf `x` zur Revision `r`?" performant verfügbar ist.
-- **Deletions**: Für gelöschte Objekte verwendet der `Change` bereits den Wrapper zur Vorgängerrevision. Der Reverse-Lookup muss auf dieser Revision funktionieren — Verifikation während der Implementierung.
-
-Pseudocode:
+### Kernprädikat `inSubtree(x, R, r)` — Rückwärts-Traversierung
 
 ```java
 boolean inSubtree(TLObject x, long rev) {
     if (cached(rev, x)) return cachedValue;
     Deque<TLObject> stack = new ArrayDeque<>();
     Set<ObjectReference> visited = new HashSet<>();
-    stack.push(x);
     List<ObjectReference> path = new ArrayList<>();
+    stack.push(x);
     while (!stack.isEmpty()) {
         TLObject cur = stack.pop();
         ObjectReference id = unversioned(cur);
@@ -103,24 +94,14 @@ boolean inSubtree(TLObject x, long rev) {
         Boolean hit = cache.get(rev, id);
         if (hit != null) {
             if (hit) { memoize(path, true); return true; }
-            else { /* this branch is dead — continue other branches */ continue; }
+            else continue;
         }
         path.add(id);
-        // (1) composition parent unless the pair is opted out
-        TLObject container = cur.tContainer();
-        if (container != null && !isCompositionPairOptedOut(cur)) {
-            stack.push(container);
-        }
-        // (2a) opt-in, annotation on back-ref: direct forward navigation
-        for (TLReference backRef : optInBackRefsFor(cur.tType())) {
-            for (TLObject p : asCollection(cur.tValue(backRef))) {
-                stack.push(p);
-            }
-        }
-        // (2b) opt-in, annotation on forward-ref: reverse lookup
-        for (TLReference fwdRef : optInForwardRefsFor(cur.tType())) {
-            for (TLObject s : referersVia(cur, fwdRef, rev)) {
-                stack.push(s);
+        // For every annotated end whose target type matches cur.tType(),
+        // follow the edge upward to the root-side candidates.
+        for (TLReference annotatedRef : annotatedEndsFor(cur.tType())) {
+            for (TLObject root : cur.referers(annotatedRef, rev)) {
+                stack.push(root);
             }
         }
     }
@@ -129,71 +110,81 @@ boolean inSubtree(TLObject x, long rev) {
 }
 ```
 
-Feinheiten:
+Die Komposition ist kein Sonderfall — `tContainer()` entfällt als separater Pfad. Eine Komposition trägt ihre implizite `@ChangeSubtree(true)`-Qualifizierung auf dem Composite-Ende und wird damit durch dieselbe `annotatedEndsFor`/`referers`-Mechanik abgedeckt (Reverse-Lookup auf dem Composite-Ende ≡ `tContainer()` für direkte Kinder).
 
-- **Reachable-Typ-Closure** (aus `R.tType()` als Seed): Ein Objekt kann nur dann im Change-Subtree von `R` liegen, wenn sein Typ forward-reachable von `R.tType()` über Subtree-Kanten ist. Wir berechnen beim Filter-Aufbau einmalig per Fixpunkt:
+### Dual-State-Check bei Ref-Änderungen
 
-  ```
-  reachable = { R.tType() }                    // plus alle Subtypen
-  repeat:
-    for T in reachable:
-      // forward composition edges (parent→child)
-      for each composition T.ref → Target, pair not @ChangeSubtree(false):
-        reachable += Target (incl. Subtypen)
-      // forward non-composition edges opt-in on forward-ref
-      for each non-composition T.ref → Target with ref @ChangeSubtree(true):
-        reachable += Target (incl. Subtypen)
-      // pair edges opt-in on back-ref: a back-ref Child.parent→Parent
-      // with @ChangeSubtree(true) on the back-ref, where Parent ∈ reachable
-      // ⇒ follow the pair in forward direction: add Child.
-      for each back-ref C.backRef → P with @ChangeSubtree(true) on backRef,
-          where P ∈ reachable:
-        reachable += C (incl. Subtypen)
-  until fixed point
-  ```
+Für Boundary-Events (Moves in/aus einem Subtree) reicht die Prüfung zur Revision `r` allein nicht: bei einer Ref-Änderung auf der Forward-Seite eines Paares, dessen **Back-Ref** annotiert ist, ändert sich die Root-Zugehörigkeit selbst zur Revision `r`. Der Event soll sichtbar sein
 
-  Der Modell-Scan wird dabei auf die in `reachable` neu aufgenommenen Typen beschränkt; das ganze Modell wird nie traversiert.
+- im Subtree des *bisherigen* Roots (Move-Out-Boundary) und
+- im Subtree des *neuen* Roots (Move-In-Boundary).
 
-- **Typ-Dispatch für Opt-in-Referenzen** — getrennt nach Annotation-Site:
-  - **Back-Ref-annotiert** (`optInBackRefsFor(t)`): Back-Ref `Child.parent → Parent` ist Kandidat für Objekt `x`, wenn `x.tType()` Subtyp von `Child` (`backRef.getOwner()`) ist. Der Lookup `cur.tValue(backRef)` ist dann direkt.
-  - **Forward-Ref-annotiert** (`optInForwardRefsFor(t)`): Forward-Ref `Parent.children → Child` ist Kandidat für Objekt `x`, wenn `x.tType()` Subtyp von `Child` (`fwdRef.getType()`) ist. Reverse-Lookup gegen diese Referenz.
-  - Beide Maps (`Map<TLType, List<TLReference>>`) werden beim Filter-Aufbau aus der Reachable-Closure (Nebenprodukt) erzeugt und lazy per-Type gefüllt.
-  - Bei typischer Verteilung schrumpft jede Kandidatenmenge pro `cur` auf 0–1.
+Regel auf Filter-Ebene: Ist der `Change` eine Modifikation einer Referenz `A.bs`, so akzeptiert der Filter, wenn das geänderte Objekt im Subtree von `R` zur Revision `r-1` **oder** zur Revision `r` liegt.
 
-- **Frühe Ablehnung**: Ist `cur.tType() ∉ reachable`, kann `cur` nicht zu R gehören — Walk auf diesem Zweig abbrechen (Ergebnis `false` für diesen Pfad, per Memoisierung pro `unversionedId` festgehalten).
-- `isCompositionOptedOut(cur)` bestimmt sich aus der Referenz, die `cur` in seinen Container einbindet (via `cur.tType()` / Container-Navigation oder direkt über das KB-Event bei der Change-Erstellung — letzteres ist billiger).
-- Die heutige "Pfad-Präfixe zwischen Geschwistern geteilt"-Optimierung bleibt für den Kompositions-Teil intakt.
+Für Non-Ref-Changes ist `r-1`-Zustand = `r`-Zustand (die Mitgliedschaft ändert sich nicht durch den Change selbst), der Dual-Check liefert dasselbe Ergebnis wie der Single-Check. Implementierung wählt je nach Ereignistyp den günstigeren Pfad.
+
+### Reachable-Typ-Closure (aus `R.tType()`)
+
+Ein Objekt kann nur dann im Change-Subtree von `R` liegen, wenn sein Typ forward-reachable von `R.tType()` über qualifizierte Kanten ist.
+
+```
+reachable = { R.tType() }                      // plus alle Subtypen
+repeat:
+  for T in reachable:
+    for each annotated end E with owner(E) = T:
+      reachable += target(E) (incl. Subtypen)
+until fixed point
+```
+
+Das schließt die implizit-annotierten Komposition-Composite-Enden mit ein. Der Modell-Scan folgt nur neu aufgenommenen Typen; das ganze Modell wird nie traversiert.
+
+### Typ-Dispatch
+
+`annotatedEndsFor(t)`: lazy gefüllter `Map<TLType, List<TLReference>>`.
+- Kandidat: annotiertes Ende `E`, wenn `t` Subtyp von `target(E)` ist.
+- Aufbau aus der Reachable-Closure (Nebenprodukt).
+- Bei typischer Verteilung: 0–1 Kandidaten pro `cur`.
+
+### Feinheiten
+
+- **Frühe Ablehnung**: `cur.tType() ∉ reachable` ⇒ Zweig abbrechen (Ergebnis `false`, memoized).
+- **Zyklusschutz**: `visited`-Set der bereits besuchten `unversionedId` pro Einzelabfrage.
+- **Memoisierung**: `(revision, unversionedId) → boolean`. Pfad-Memoisierung bleibt (alle während eines Walks besuchten IDs erhalten das Endergebnis), unabhängig von DAG-Pfaden.
+- **Historische Referenzwerte**: `referers(ref, rev)` muss historisch performant nutzbar sein. Wir setzen das voraus; bei Bedarf Verifikation während Implementierung.
+- **Deletions**: Für gelöschte Objekte nutzt `Change` den Wrapper zur Vorgängerrevision — die Reverse-Lookup-Semantik überträgt sich.
+- **Dual-State-Lookup**: Nur bei Ref-Änderungs-Events aktiv; innerhalb der Pfad-Memoisierung wird pro Revision eigener Cache-Eintrag geführt.
 
 ## Betroffene Klassen
 
-- `com.top_logic.model.annotate.TLChangeSubtree` (**neu**)
-- `com.top_logic.element.changelog.SubtreeFilter` — `inSubtree` erweitern; `optInReferences` berechnen; Kompositions-Opt-out berücksichtigen.
-- `com.top_logic.element.changelog.ChangeSetReverter` — nutzt `SubtreeFilter` bereits, kein strukturschneidender Eingriff. Die Stream-Filterung in `revertSubtreeTo` verwendet dasselbe Prädikat. Sicherstellen, dass `findUndoCandidate` / `findRedoCandidate` konsistent bleiben (geht über `readLog` → `SubtreeFilter`, erledigt).
+- `com.top_logic.model.annotate.TLChangeSubtree` (**neu**).
+- `com.top_logic.element.changelog.SubtreeFilter` — `inSubtree` auf uniforme `referers`-Mechanik umstellen; Reachable-Closure und Typ-Dispatch einziehen; Dual-State-Check auf Ref-Änderungs-Events.
+- `com.top_logic.element.changelog.ChangeSetReverter` — nutzt `SubtreeFilter` bereits, kein struktureller Eingriff. `revertSubtreeTo`, `findUndoCandidate`, `findRedoCandidate` sind über `readLog` → `SubtreeFilter` automatisch konsistent.
 - `ChangeLogBuilder` — kein Eingriff (Filter ist injiziert).
-- Demo-Modell (`com.top_logic.demo`) — eine Beispiel-Referenz mit `<change-subtree include="true"/>` bzw. `include="false"` für Dokumentation und Tests.
+- Demo-Modell (`com.top_logic.demo`) — eine Beispiel-Referenz mit `<change-subtree include="true"/>` für Dokumentation und Tests.
 
 ## Tests
 
 Modul `com.top_logic.element`, Paket `test.com.top_logic.element.changelog`:
 
 1. `TestChangeSubtreeAnnotation` — neue Klasse.
-   - Opt-out: Kompositionsreferenz `noise` mit `@ChangeSubtree(false)`. Änderungen an Kindern über `noise` dürfen nicht im Filter erscheinen.
-   - Opt-in forward-ref: Forward-Nicht-Kompositionsreferenz `Parent.peers → Child` mit `@ChangeSubtree(true)`. Änderungen an Kindern erscheinen im Filter von `Parent` via Reverse-Lookup.
-   - Opt-in back-ref: Back-Ref `Child.owner → Parent` mit `@ChangeSubtree(true)` (Forward-Ref unannotiert). Äquivalent zum Forward-Fall, Navigation via direkter `tValue`-Aufruf.
-   - Opt-in multi-valued: Parent-Seite ist Collection-wertig, Navigation über beide Sites getestet.
-   - Opt-in + Komposition kombiniert: Ziel liegt teils in Komposition, teils via Opt-in; beide Pfade zählen existenziell.
-   - Zyklusschutz: A → B (opt-in), B → A (opt-in) führt nicht zur Endlosschleife.
-   - Historischer Wechsel: Ziel war zur Revision r₁ in Opt-in-Referenz, zur Revision r₂ entfernt — nur Änderungen im Gültigkeitszeitraum erscheinen.
-2. Ergänzungen an `TestChangeSetReverter` — `revertSubtreeTo(root, target)` rollt Opt-in-Kinder ebenso zurück wie Kompositions-Kinder.
+   - Opt-out Komposition: Kompositionsreferenz `noise` mit `@ChangeSubtree(false)`. Änderungen an Kindern darunter erscheinen nicht im Filter von R=Parent.
+   - Opt-in Forward-Ref: `Parent.peers → Child` mit `@ChangeSubtree(true)`. R=Parent sieht Änderungen an referenzierten Children.
+   - Opt-in Back-Ref: `Child.owner → Parent` mit `@ChangeSubtree(true)`. R=Child sieht Änderungen am referenzierten Parent. *Zwei unterschiedliche Root-Richtungen, nicht zwei Schreibweisen derselben.*
+   - Dual-State / Move-Out: Back-Ref-Annotation. `a1.bs` entfernt `bx`. Der Event erscheint im Log von R=bx (Move-Out-Boundary) und im Log von R=b_new, falls parallel hinzugefügt.
+   - Multi-valued Navigation: Collection-wertige Seite wird korrekt über `referers` verteilt.
+   - Komposition + Opt-in kombiniert: beide Qualifizierungen tragen; existenzielle Zugehörigkeit.
+   - Zyklusschutz: A-B wechselseitig annotiert führt nicht zur Endlosschleife.
+   - Historischer Wechsel: Ref-Wechsel zwischen r₁ und r₂ — Änderungen erscheinen nur im Log der zur Revision der jeweiligen Änderung zuständigen Root.
+2. Ergänzungen an `TestChangeSetReverter` — `revertSubtreeTo(root, target)` rollt qualifizierte Kinder (via Annotation auf beliebiger Paar-Seite) ebenso zurück wie Kompositions-Kinder.
 3. Bestehende `TestSubtreeChangeLog`-Cases bleiben grün (Regressionsschutz für das Default-Verhalten ohne Annotation).
 
 ## Nicht in diesem Scope
 
 - Persistenter Index `(revision, ancestorId)`. Memoisierung + KB-Reverse-Index reichen.
 - UI für die Annotation-Bearbeitung (Standard-Annotation-Editor reicht).
-- Performance-Benchmarks als Teil der Abnahme. Nur Korrektheit per Tests; Performance-Drift wird durch bestehende Change-Log-Benchmarks (falls vorhanden) überwacht.
+- Performance-Benchmarks als Teil der Abnahme. Nur Korrektheit per Tests.
 
 ## Offene Punkte zur Verifikation während Implementierung
 
-- Konkrete KB-API für "Referers zu `(x, ref, rev)` historisch". Erwartete Kandidaten: `KnowledgeBase.getReferers(...)`, `WrapperUtils.getReferer(...)` bzw. historische Varianten. Falls nur live-Abfrage performant ist: Fallback über Event-Stream-Analyse oder Fallback-Scan akzeptabel, solange das Testfenster (`windowSize = 50`) beherrschbar bleibt.
-- Feststellung der "einbindenden Referenz" eines Change-Objekts für Kompositions-Opt-out: entweder aus dem `Change`-Event (billig — die KB-Seite kennt den Referenztyp), oder aus der Typ-Struktur via `tContainer()` und Suche nach Komposition. Präferiert: direkt aus dem Event beim `ChangeSetAnalyzer`.
+- Konkrete KB-API für `x.referers(ref, rev)` historisch. Kandidaten: `KnowledgeBase.getReferers(...)`, `WrapperUtils.getReferer(...)`, historische Varianten. Optimierung durch die KB für Back-Ref-Case (reduziert auf direkten `get`) ist vorauszusetzen; Verifikation in der Implementierung.
+- Erkennung "Change ist Ref-Modifikation" für Dual-State-Trigger — kommt bei `ChangeSetAnalyzer` aus der Event-Metadata (ItemUpdate mit TLReference als `TLStructuredTypePart`). Integration erfolgt dort, wo der Filter die Change sieht.

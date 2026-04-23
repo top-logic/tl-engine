@@ -203,6 +203,16 @@ public sealed interface AgentEvent {
 	// ---------- Errors ----------
 
 	/**
+	 * Emitted when a transient provider error triggers an automatic retry.
+	 *
+	 * @param kind    short machine-readable error kind (e.g., {@code "RATE_LIMITED"})
+	 * @param attempt retry attempt number (1-based)
+	 * @param waitMs  milliseconds the loop will sleep before retrying
+	 */
+	record RetryScheduled(String runId, int turnNumber, Instant timestamp,
+			String kind, int attempt, long waitMs) implements AgentEvent {}
+
+	/**
 	 * Emitted on an unrecoverable provider error. The loop stops after this event.
 	 *
 	 * @param kind    short machine-readable error kind (e.g., {@code "RATE_LIMITED"})

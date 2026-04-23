@@ -68,7 +68,6 @@ import com.top_logic.tl.ai.core.tools.ToolMode;
  */
 public class AgentLoop {
 
-	// TODO: Retry with backoff for RATE_LIMITED / OVERLOADED (callProvider is the seam)
 	// TODO: Memory/attachment injection between turns
 	// TODO: Stop hooks (post-response validation)
 
@@ -281,6 +280,12 @@ public class AgentLoop {
 
 	/** Maximum reactive compaction retries on context_window_exceeded before giving up. */
 	private static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
+
+	/** Maximum automatic retries for transient provider errors (rate limit, overloaded). */
+	private static final int MAX_TRANSIENT_RETRIES = 3;
+
+	/** Base backoff delay in milliseconds for transient retries. Doubles each attempt. */
+	private static final long BASE_BACKOFF_MS = 1000;
 
 	private AgentResult runWithMemory(ConversationMemory memory, ToolContext context,
 			AgentEventListener listener, String runId) {
@@ -727,17 +732,51 @@ public class AgentLoop {
 	}
 
 	/**
+	 * Call the LLM provider with automatic retry for transient errors.
+	 *
+	 * <p>Retries on {@link ProviderException.Kind#RATE_LIMITED} and
+	 * {@link ProviderException.Kind#OVERLOADED} with exponential backoff,
+	 * respecting the {@code retry-after} header when present.</p>
+	 */
+	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
+			AgentEventListener listener, String runId, int turn) throws ProviderException {
+		for (int attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt++) {
+			try {
+				return callProviderOnce(conversation, context, listener, runId, turn);
+			} catch (ProviderException e) {
+				boolean retryable = e.kind() == ProviderException.Kind.RATE_LIMITED
+					|| e.kind() == ProviderException.Kind.OVERLOADED;
+				if (!retryable || attempt == MAX_TRANSIENT_RETRIES) {
+					throw e;
+				}
+				long waitMs = e.retryAfter() != null
+					? e.retryAfter().toMillis()
+					: BASE_BACKOFF_MS * (1L << attempt);
+				// Cap at 30 seconds.
+				waitMs = Math.min(waitMs, 30_000);
+
+				emit(listener, new AgentEvent.RetryScheduled(
+					runId, turn, now(), e.kind().name(), attempt + 1, waitMs));
+
+				try {
+					Thread.sleep(waitMs);
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted during retry", ie);
+				}
+			}
+		}
+		throw new IllegalStateException("Unreachable");
+	}
+
+	/**
 	 * Call the LLM provider and collect the response.
 	 *
 	 * <p>Filters tool schemas dynamically based on the security context: tools the
 	 * user lacks permission for, and GLOBAL tools in PRODUCTION mode, are excluded
 	 * from the request so the LLM never sees capabilities it cannot use.</p>
-	 *
-	 * <p>This is the seam for retry logic (rate limiting, context overflow, backoff).
-	 * Currently calls once and throws on error. Recovery strategies will wrap
-	 * this method's internals with retry/compact/fallback logic.</p>
 	 */
-	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
+	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		List<ToolSchema> filteredTools = _registry.toolSchemas(tool -> {
 			SecurityContext security = context.security();

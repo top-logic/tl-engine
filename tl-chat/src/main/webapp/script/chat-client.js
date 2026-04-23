@@ -235,6 +235,7 @@
 			for (const [type, handler] of Object.entries(handlers)) {
 				this._source.addEventListener(type, (e) => {
 					try {
+						StaleRecovery.touch();
 						handler(JSON.parse(e.data));
 					} catch (err) {
 						console.error('[tl-chat] SSE handler error for ' + type + ':', err);
@@ -281,9 +282,11 @@
 			State.set(State.STREAMING);
 			Render.appendAssistantBubble();
 			Render.updateInputState();
+			StaleRecovery.start();
 		},
 
 		onRunCompleted(data) {
+			StaleRecovery.stop();
 			if (Store.currentRun) {
 				Store.currentRun.totalUsage = data.totalUsage;
 			}
@@ -387,7 +390,16 @@
 			Timeline.addPill('Compacting (' + Utils.formatTokens(data.tokensBefore) + ' tokens, ' + data.trigger + ')', '');
 		},
 
-		onProviderError(data) { Errors.show(data); },
+		onProviderError(data) {
+			StaleRecovery.stop();
+			Errors.show(data);
+			// If no run_completed will follow (error outside AgentLoop), reset UI state
+			if (State.isActive()) {
+				State.set(State.ERROR);
+				Render.finalizeAssistantBubble();
+				Render.updateInputState();
+			}
+		},
 
 		onMessageComplete(data) {
 			Render.swapToRenderedHtml(data.contentHtml);
@@ -614,6 +626,142 @@
 	};
 
 	// ========================================================================
+	// Attachments — file selection, drag-and-drop, preview, and encoding
+	// ========================================================================
+	const Attachments = {
+		_MAX_FILES: 5,
+		_MAX_SIZE: 10 * 1024 * 1024,
+		_ALLOWED_TYPES: new Set([
+			'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf'
+		]),
+		_pending: [],
+
+		get() { return this._pending; },
+
+		clear() {
+			this._pending = [];
+			this._renderAll();
+		},
+
+		addFiles(files, previewEl) {
+			for (const file of files) {
+				if (this._pending.length >= this._MAX_FILES) break;
+				if (!this._ALLOWED_TYPES.has(file.type)) continue;
+				if (file.size > this._MAX_SIZE) continue;
+				this._pending.push(file);
+			}
+			this._renderAll(previewEl);
+		},
+
+		remove(index, previewEl) {
+			this._pending.splice(index, 1);
+			this._renderAll(previewEl);
+		},
+
+		/** Encode all pending files as base64 AttachmentDto objects. */
+		async encode() {
+			const result = [];
+			for (const file of this._pending) {
+				const data = await this._readBase64(file);
+				result.push({
+					fileName: file.name,
+					mimeType: file.type,
+					base64Data: data,
+					size: file.size
+				});
+			}
+			return result;
+		},
+
+		_readBase64(file) {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = () => {
+					// Strip the data-URL prefix (e.g. "data:image/png;base64,")
+					resolve(reader.result.split(',')[1]);
+				};
+				reader.onerror = reject;
+				reader.readAsDataURL(file);
+			});
+		},
+
+		_renderAll(previewEl) {
+			// Try to find the visible preview element
+			const el = previewEl || this._findVisiblePreview();
+			if (!el) return;
+			el.innerHTML = '';
+			if (this._pending.length === 0) {
+				el.classList.remove('has-items');
+				return;
+			}
+			el.classList.add('has-items');
+			this._pending.forEach((file, i) => {
+				const item = document.createElement('div');
+				item.className = 'chat-attachment-preview-item';
+
+				if (file.type.startsWith('image/')) {
+					const img = document.createElement('img');
+					img.src = URL.createObjectURL(file);
+					item.appendChild(img);
+				} else {
+					const icon = document.createElement('span');
+					icon.textContent = '\uD83D\uDCC4'; // page icon
+					icon.style.fontSize = '1.5em';
+					item.appendChild(icon);
+				}
+
+				const name = document.createElement('span');
+				name.className = 'chat-attachment-name';
+				name.textContent = file.name;
+				item.appendChild(name);
+
+				const removeBtn = document.createElement('button');
+				removeBtn.className = 'chat-attachment-remove';
+				removeBtn.textContent = '\u00D7';
+				removeBtn.addEventListener('click', () => this.remove(i, el));
+				item.appendChild(removeBtn);
+
+				el.appendChild(item);
+			});
+		},
+
+		_findVisiblePreview() {
+			// Welcome preview or main input preview — whichever is visible
+			const welcome = document.querySelector('.chat-welcome-attachment-preview');
+			if (welcome && welcome.offsetParent !== null) return welcome;
+			const main = Render._previewEl;
+			return main || null;
+		},
+
+		/** Wire up attach button, file input, and drag-and-drop on a container. */
+		setup(attachBtn, fileInput, dropTarget, previewEl) {
+			if (attachBtn && fileInput) {
+				attachBtn.addEventListener('click', () => fileInput.click());
+				fileInput.addEventListener('change', () => {
+					this.addFiles(fileInput.files, previewEl);
+					fileInput.value = '';
+				});
+			}
+			if (dropTarget) {
+				dropTarget.addEventListener('dragover', (e) => {
+					e.preventDefault();
+					dropTarget.classList.add('drag-over');
+				});
+				dropTarget.addEventListener('dragleave', () => {
+					dropTarget.classList.remove('drag-over');
+				});
+				dropTarget.addEventListener('drop', (e) => {
+					e.preventDefault();
+					dropTarget.classList.remove('drag-over');
+					if (e.dataTransfer.files.length > 0) {
+						this.addFiles(e.dataTransfer.files, previewEl);
+					}
+				});
+			}
+		}
+	};
+
+	// ========================================================================
 	// Render — DOM rendering
 	// ========================================================================
 	const Render = {
@@ -622,6 +770,7 @@
 		_inputEl: null,
 		_sendBtn: null,
 		_cancelBtn: null,
+		_previewEl: null,
 		_currentBubble: null,
 		_currentTextEl: null,
 		_currentToolsEl: null,
@@ -634,10 +783,12 @@
 			this._inputEl = root.querySelector('.chat-input');
 			this._sendBtn = root.querySelector('.chat-button');
 			this._inputSection = root.querySelector('.chat-input-section');
+			this._previewEl = document.getElementById(root.dataset.chatPreviewId);
 			this._ensureParentHeight(root);
 			this._setupCancelButton();
 			this._setupInput();
 			this._setupAutoScroll();
+			this._setupAttachments(root);
 			TaskPanel.init(root);
 		},
 
@@ -686,7 +837,7 @@
 
 		async _send() {
 			const text = this._inputEl.value.trim();
-			if (!text) return;
+			if (!text && Attachments.get().length === 0) return;
 
 			// During an active askUser interaction, route input as the tool response
 			if (Store.activeInteractionRequestId) {
@@ -707,22 +858,30 @@
 			this._inputEl.value = '';
 
 			try {
+				const attachments = await Attachments.encode();
+				Attachments.clear();
 				// Ensure session exists before appending message (createNew clears the DOM)
 				const sessionId = await Session._ensureSession();
-				this.appendUserMessage(text);
+				this.appendUserMessage(text, attachments);
 				await fetch(URLS.send, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
 						text: text,
 						sessionId: sessionId || '',
-						attachments: []
+						attachments: attachments
 					})
 				});
 			} catch (err) {
 				console.error('[tl-chat] Send failed:', err);
 				this._inputEl.value = text;
 			}
+		},
+
+		_setupAttachments(root) {
+			const fileInput = document.getElementById(root.dataset.chatFileInputId);
+			const attachBtn = document.getElementById(root.dataset.chatAttachBtnId);
+			Attachments.setup(attachBtn, fileInput, this._inputSection, this._previewEl);
 		},
 
 		_setupAutoScroll() {
@@ -742,11 +901,24 @@
 			}
 		},
 
-		appendUserMessage(text) {
+		appendUserMessage(text, attachments) {
 			const div = document.createElement('div');
 			div.className = 'chat-message chat-message-user';
-			div.innerHTML = '<div class="chat-bubble chat-bubble-user">' +
-				Utils.escapeHtml(text) + '</div>';
+			let html = '<div class="chat-bubble chat-bubble-user">' +
+				Utils.escapeHtml(text);
+			if (attachments && attachments.length > 0) {
+				html += '<div class="chat-message-attachments">';
+				for (const att of attachments) {
+					const icon = att.mimeType === 'application/pdf'
+						? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+						: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+					html += '<span class="chat-attachment-badge">' + icon +
+						Utils.escapeHtml(att.fileName) + '</span>';
+				}
+				html += '</div>';
+			}
+			html += '</div>';
+			div.innerHTML = html;
 			this._messagesEl.appendChild(div);
 			this._scrollToBottom();
 		},
@@ -1520,6 +1692,62 @@
 	};
 
 	// ========================================================================
+	// StaleRecovery — polls /chat/updates if SSE goes silent during a run
+	// ========================================================================
+	const StaleRecovery = {
+		_timer: null,
+		_lastEventTime: 0,
+		_TIMEOUT_MS: 8000,
+		_POLL_MS: 3000,
+
+		start() {
+			this.touch();
+			this.stop();
+			this._timer = setInterval(() => this._check(), this._POLL_MS);
+		},
+
+		stop() {
+			if (this._timer) {
+				clearInterval(this._timer);
+				this._timer = null;
+			}
+		},
+
+		touch() {
+			this._lastEventTime = Date.now();
+		},
+
+		async _check() {
+			if (!State.isActive()) {
+				this.stop();
+				return;
+			}
+			if (Date.now() - this._lastEventTime < this._TIMEOUT_MS) return;
+
+			try {
+				const resp = await fetch(URLS.updates);
+				if (!resp.ok) return;
+				const data = await resp.json();
+				if (!data.processing && State.isActive()) {
+					this.stop();
+					// Server finished but SSE didn't deliver the events — recover
+					if (data.messages && data.messages.length > 0) {
+						const last = data.messages[data.messages.length - 1];
+						if (last.role === 'system' && last.content && last.content.startsWith('Error:')) {
+							Errors.show({ kind: 'UNKNOWN', errorMessage: last.content.substring(7) });
+						}
+					}
+					State.set(State.ERROR);
+					Render.finalizeAssistantBubble();
+					Render.updateInputState();
+				}
+			} catch (e) {
+				// Poll failed — will retry
+			}
+		}
+	};
+
+	// ========================================================================
 	// Errors — Provider error display
 	// ========================================================================
 	const Errors = {
@@ -1535,8 +1763,6 @@
 		_transient: new Set(['RATE_LIMITED', 'OVERLOADED', 'CONTEXT_WINDOW_EXCEEDED']),
 
 		show(data) {
-			const container = Render._currentToolsEl || Render._messagesEl;
-			if (!container) return;
 			const isTransient = this._transient.has(data.kind);
 			const msg = this._messages[data.kind] || this._messages.UNKNOWN;
 
@@ -1548,6 +1774,12 @@
 				'</div>' +
 				(data.errorMessage ? '<div class="tl-chat-error-message">' +
 					Utils.escapeHtml(data.errorMessage) + '</div>' : '');
+
+			// Always show errors in a visible container — either the current
+			// bubble's text area or the main messages list. Never in the
+			// collapsed trace/tools section where they'd be invisible.
+			const container = Render._currentTextEl || Render._messagesEl;
+			if (!container) return;
 			container.appendChild(el);
 			Render._scrollToBottom();
 		}
@@ -2511,6 +2743,13 @@
 				});
 			}
 
+			// Wire up welcome-screen file upload
+			const fileInput = this._el.querySelector('.chat-welcome-file-input');
+			const attachBtn = this._el.querySelector('.chat-welcome-attach-btn');
+			const inputSection = this._el.querySelector('.chat-welcome-input-section');
+			const previewEl = this._el.querySelector('.chat-welcome-attachment-preview');
+			Attachments.setup(attachBtn, fileInput, inputSection, previewEl);
+
 			chips.forEach(chip => {
 				chip.addEventListener('click', () => {
 					const prompt = chip.dataset.prompt || chip.textContent;
@@ -2523,21 +2762,24 @@
 		async _sendFromWelcome(textarea) {
 			if (!textarea) return;
 			const text = textarea.value.trim();
-			if (!text || State.isActive()) return;
+			if (!text && Attachments.get().length === 0) return;
+			if (State.isActive()) return;
 			textarea.value = '';
 
 			try {
+				const attachments = await Attachments.encode();
+				Attachments.clear();
 				// Ensure session exists before touching DOM (createNew clears messages)
 				const sessionId = await Session._ensureSession();
 				this.hide();
-				Render.appendUserMessage(text);
+				Render.appendUserMessage(text, attachments);
 				await fetch(URLS.send, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
 						text: text,
 						sessionId: sessionId || '',
-						attachments: []
+						attachments: attachments
 					})
 				});
 			} catch (err) {

@@ -20,9 +20,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.agent.event.ApprovalOutcome;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -38,9 +40,9 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
-import com.top_logic.tl.ai.core.tool.Tool;
-import com.top_logic.tl.ai.core.tool.ToolMode;
-import com.top_logic.tl.ai.core.tool.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolMode;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -77,7 +79,7 @@ public class AgentLoop {
 
 	private final LLMProvider _provider;
 
-	private final ToolRegistry _registry;
+	private final ToolDispatcher _registry;
 
 	private final int _maxResultChars;
 
@@ -95,7 +97,7 @@ public class AgentLoop {
 	 * @param provider LLM provider for streaming responses
 	 * @param registry tool registry for tool lookup and execution
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry) {
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry) {
 		this(config, provider, registry, DEFAULT_MAX_RESULT_CHARS);
 	}
 
@@ -107,7 +109,7 @@ public class AgentLoop {
 	 * @param registry       tool registry for tool lookup and execution
 	 * @param maxResultChars maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -127,7 +129,7 @@ public class AgentLoop {
 	 * @param registry tool registry for tool lookup and execution
 	 * @param memory   conversation memory with token tracking and compaction
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
 			ConversationMemory memory) {
 		this(config, provider, registry, memory, DEFAULT_MAX_RESULT_CHARS);
 	}
@@ -142,7 +144,7 @@ public class AgentLoop {
 	 * @param memory           conversation memory with token tracking and compaction
 	 * @param maxResultChars   maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
 			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -611,7 +613,7 @@ public class AgentLoop {
 				} else if (decision instanceof PermissionDecision.NeedsApproval needsApproval) {
 					Map<String, Object> parsedArgs;
 					try {
-						parsedArgs = ToolRegistry.parseJson(toolCall.arguments());
+						parsedArgs = ToolDispatcher.parseJson(toolCall.arguments());
 					} catch (IOException e) {
 						parsedArgs = Map.of();
 					}

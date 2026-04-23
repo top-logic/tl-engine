@@ -1,0 +1,1419 @@
+package com.top_logic.tl.ai.core.tools.model.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Generic error response for tool operations.
+ */
+message ErrorResponse {
+	/**
+	 * Error message describing what went wrong.
+	 */
+	string error;
+}
+
+// ===== ModelBrowserTool Messages =====
+
+/**
+ * Information about a module in the application model.
+ */
+message ModuleInfo {
+	/**
+	 * Module name.
+	 */
+	string name;
+
+	/**
+	 * Number of types in this module (excluding associations).
+	 */
+	long typeCount;
+
+	/**
+	 * Localized label for the module.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the module.
+	 */
+	string description;
+
+	/**
+	 * Whether this is a framework/platform module (true) or an application domain module (false).
+	 * Framework modules include tl.*, tl5.*, and infrastructure modules (orgStructure, mandatorStructure, etc.).
+	 */
+	bool frameworkModule;
+}
+
+/**
+ * List of modules response.
+ */
+message ModuleListResponse {
+	/**
+	 * Array of module information.
+	 */
+	repeated ModuleInfo modules;
+}
+
+/**
+ * Information about a type (class, enumeration, datatype).
+ */
+message TypeInfo {
+	/**
+	 * Type name.
+	 */
+	string name;
+
+	/**
+	 * Qualified type name (module:TypeName).
+	 */
+	string qualifiedName;
+
+	/**
+	 * Meta-type: class, enumeration, or datatype.
+	 */
+	string metaType;
+
+	/**
+	 * Number of classifiers (for enumerations only).
+	 */
+	int classifierCount;
+
+	/**
+	 * Number of local parts (for structured types).
+	 */
+	int partCount;
+
+	/**
+	 * List of qualified names of supertypes (for classes).
+	 */
+	repeated string generalizations;
+
+	/**
+	 * List of qualified names of subtypes (for classes).
+	 */
+	repeated string specializations;
+
+	/**
+	 * Whether the class is abstract (cannot be instantiated directly). Only set for classes.
+	 */
+	bool `abstract`;
+
+	/**
+	 * Whether the class is final (cannot be specialized). Only set for classes.
+	 */
+	bool `final`;
+
+	/**
+	 * Localized label for the type.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the type.
+	 */
+	string description;
+}
+
+/**
+ * List of types response.
+ */
+message TypeListResponse {
+	/**
+	 * Array of type information.
+	 */
+	repeated TypeInfo types;
+}
+
+/**
+ * Information about a type part (property or reference).
+ */
+message TypePartInfo {
+	/**
+	 * Part name.
+	 */
+	string name;
+
+	/**
+	 * Part kind: property or reference.
+	 */
+	string kind;
+
+	/**
+	 * Qualified name of the type that defines this part.
+	 */
+	string definedIn;
+
+	/**
+	 * Whether this part is inherited from a supertype.
+	 */
+	bool inherited;
+
+	/**
+	 * Qualified name of the part's type.
+	 */
+	string type;
+
+	/**
+	 * Whether the part is mandatory.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether the part can have multiple values.
+	 */
+	bool multiple;
+
+	/**
+	 * Whether multiple values are ordered (only for multiple parts).
+	 */
+	bool ordered;
+
+	/**
+	 * Whether the part is a bag (unordered, allows duplicates).
+	 */
+	bool bag;
+
+	/**
+	 * Whether the part is abstract.
+	 */
+	bool `abstract`;
+
+	/**
+	 * Whether the part is derived (computed).
+	 */
+	bool derived;
+
+	/**
+	 * Whether the part overrides a part from a supertype.
+	 */
+	bool `override`;
+
+	/**
+	 * Localized label for the part.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the part.
+	 */
+	string description;
+}
+
+/**
+ * List of type parts response.
+ */
+message TypePartListResponse {
+	/**
+	 * Array of type part information.
+	 */
+	repeated TypePartInfo parts;
+}
+
+/**
+ * Information about an enumeration classifier.
+ */
+message ClassifierInfo {
+	/**
+	 * Classifier name.
+	 */
+	string name;
+
+	/**
+	 * Whether this is the default classifier.
+	 */
+	bool `default`;
+
+	/**
+	 * Index of the classifier in the enumeration.
+	 */
+	int index;
+
+	/**
+	 * Custom I18N key (if annotated with TLI18NKey).
+	 */
+	string customI18NKey;
+
+	/**
+	 * Localized label for the classifier.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the classifier.
+	 */
+	string description;
+}
+
+/**
+ * Enumeration details response.
+ */
+message EnumerationResponse {
+	/**
+	 * Qualified enumeration name.
+	 */
+	string enumeration;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Enumeration name.
+	 */
+	string name;
+
+	/**
+	 * Number of classifiers in the enumeration.
+	 */
+	int classifierCount;
+
+	/**
+	 * Whether the enumeration is unordered.
+	 */
+	bool unordered;
+
+	/**
+	 * Localized label for the enumeration.
+	 */
+	string label;
+
+	/**
+	 * Localized description of the enumeration.
+	 */
+	string description;
+
+	/**
+	 * List of classifiers in the enumeration.
+	 */
+	repeated ClassifierInfo classifiers;
+}
+
+// ===== InstanceBrowserTool Messages =====
+
+/**
+ * Paginated list of instance TIDs.
+ */
+message InstanceListResponse {
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Type name.
+	 */
+	string type;
+
+	/**
+	 * Total number of instances.
+	 */
+	int totalCount;
+
+	/**
+	 * Requested page size limit.
+	 */
+	int limit;
+
+	/**
+	 * Current offset in the result set.
+	 */
+	int offset;
+
+	/**
+	 * Array of instance TIDs for the current page.
+	 */
+	repeated string instances;
+
+	/**
+	 * Cursor for the next page (null if no more pages).
+	 */
+	string nextCursor;
+
+	/**
+	 * Whether there are more instances beyond this page.
+	 */
+	bool hasMore;
+}
+
+/**
+ * Type information for an instance.
+ */
+message InstanceTypeInfo {
+	/**
+	 * Type name.
+	 */
+	string name;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Module label.
+	 */
+	string moduleLabel;
+
+	/**
+	 * Type label.
+	 */
+	string label;
+
+	/**
+	 * Model kind (class, enumeration, etc.).
+	 */
+	string kind;
+}
+
+/**
+ * Reference to another TLObject.
+ */
+message TLObjectReference {
+	/**
+	 * Object TID.
+	 */
+	string tid;
+
+	/**
+	 * Type of the referenced object.
+	 */
+	string type;
+
+	/**
+	 * Label of the referenced object (if available).
+	 */
+	string label;
+}
+
+/**
+ * Instance metadata.
+ */
+message InstanceMetadata {
+	/**
+	 * Container TID (if the instance is contained).
+	 */
+	string container;
+
+	/**
+	 * Name of the container reference.
+	 */
+	string containerReference;
+
+	/**
+	 * Whether the instance is transient.
+	 */
+	bool `transient`;
+}
+
+/**
+ * Detailed instance information.
+ */
+message InstanceResponse {
+	/**
+	 * Instance TID.
+	 */
+	string tid;
+
+	/**
+	 * Type information.
+	 */
+	InstanceTypeInfo type;
+
+	/**
+	 * Map of attribute names to values.
+	 *
+	 * Note: Values are serialized as JSON and need to be parsed.
+	 * Primitive values are strings, references are TLObjectReference objects,
+	 * collections are arrays.
+	 */
+	map<string, string> attributes;
+
+	/**
+	 * Instance metadata.
+	 */
+	InstanceMetadata metadata;
+}
+
+// ===== ModelAnnotationBrowserTool Messages =====
+
+/**
+ * Information about an annotation instance.
+ */
+message AnnotationInfo {
+	/**
+	 * Annotation tag name.
+	 */
+	string tag;
+
+	/**
+	 * Configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Whether this annotation is inherited.
+	 */
+	bool inherited;
+
+	/**
+	 * Qualified name where the annotation is defined (for inherited annotations).
+	 */
+	string definedIn;
+
+	/**
+	 * Annotation configuration as JSON (serialized via {@code JsonConfigurationWriter} with schema references).
+	 */
+	string configJson;
+}
+
+/**
+ * Annotation list response.
+ */
+message AnnotationListResponse {
+	/**
+	 * Target reference (module, type, or part).
+	 */
+	string target;
+
+	/**
+	 * Kind of target: module, type, enumeration, part, or classifier.
+	 */
+	string kind;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Type name (null for module targets).
+	 */
+	string type;
+
+	/**
+	 * Part name (null for module/type targets).
+	 */
+	string part;
+
+	/**
+	 * Classifier name (null for non-classifier targets).
+	 */
+	string classifier;
+
+	/**
+	 * Whether inherited annotations are included.
+	 */
+	bool includeInherited;
+
+	/**
+	 * List of annotations.
+	 */
+	repeated AnnotationInfo annotations;
+}
+
+// ===== AnnotationDefinitionExplorerTool Messages =====
+
+/**
+ * Property definition in a configuration schema.
+ */
+message PropertyDefinition {
+	/**
+	 * Property name.
+	 */
+	string name;
+
+	/**
+	 * Property kind (plain, item, list, array, map, complex, derived, ref).
+	 */
+	string kind;
+
+	/**
+	 * Property type (fully-qualified class name).
+	 */
+	string type;
+
+	/**
+	 * Simple type name.
+	 */
+	string typeSimpleName;
+
+	/**
+	 * Element type for collections (fully-qualified class name).
+	 */
+	string elementType;
+
+	/**
+	 * Simple element type name.
+	 */
+	string elementTypeSimpleName;
+
+	/**
+	 * Whether the property is mandatory.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether the property is nullable.
+	 */
+	bool nullable;
+
+	/**
+	 * Whether the property can have multiple values.
+	 */
+	bool multiple;
+
+	/**
+	 * Whether multiple values are ordered.
+	 */
+	bool ordered;
+
+	/**
+	 * Whether the property has an explicit default value.
+	 */
+	bool hasExplicitDefault;
+
+	/**
+	 * Default value (serialized as string).
+	 */
+	string defaultValue;
+
+	/**
+	 * Enum values (for enum properties).
+	 */
+	repeated string enumValues;
+
+	/**
+	 * Nested property definitions (for ITEM/COMPLEX types).
+	 */
+	repeated PropertyDefinition nestedProperties;
+}
+
+/**
+ * Annotation definition schema response.
+ */
+message AnnotationDefinitionResponse {
+	/**
+	 * Configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Annotation tag name.
+	 */
+	string tagName;
+
+	/**
+	 * Whether the annotation is abstract.
+	 */
+	bool `abstract`;
+
+	/**
+	 * List of super interface class names.
+	 */
+	repeated string superInterfaces;
+
+	/**
+	 * List of property definitions.
+	 */
+	repeated PropertyDefinition properties;
+}
+
+// ===== ModelAnnotationEditorTool Messages =====
+
+/**
+ * Response for annotation set/remove operations.
+ */
+message AnnotationEditorResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Target reference (module, type, or part).
+	 */
+	string target;
+
+	/**
+	 * Kind of target: module, type, enumeration, part, or classifier.
+	 */
+	string kind;
+
+	/**
+	 * Configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string detail;
+}
+
+// ===== TypeAnalysisTool Messages =====
+
+/**
+ * Property usage information.
+ */
+message PropertyUsage {
+	/**
+	 * Qualified name of the owner type.
+	 */
+	string owner;
+
+	/**
+	 * Property name.
+	 */
+	string property;
+
+	/**
+	 * Usage description.
+	 */
+	string usage;
+}
+
+/**
+ * Reference usage information.
+ */
+message ReferenceUsage {
+	/**
+	 * Qualified name of the owner type.
+	 */
+	string owner;
+
+	/**
+	 * Reference name.
+	 */
+	string reference;
+
+	/**
+	 * Usage description.
+	 */
+	string usage;
+}
+
+/**
+ * Subclass usage information.
+ */
+message SubclassUsage {
+	/**
+	 * Qualified name of the subclass.
+	 */
+	string subclass;
+
+	/**
+	 * Usage description.
+	 */
+	string usage;
+}
+
+/**
+ * Type usage analysis response.
+ */
+message TypeUsageResponse {
+	/**
+	 * Properties that use this type as value type.
+	 */
+	repeated PropertyUsage properties;
+
+	/**
+	 * References that point to this type.
+	 */
+	repeated ReferenceUsage references;
+
+	/**
+	 * Classes that extend this type.
+	 */
+	repeated SubclassUsage subclasses;
+}
+
+/**
+ * Part usage analysis response.
+ */
+message PartUsageResponse {
+	/**
+	 * Qualified name of the owner type.
+	 */
+	string ownerType;
+
+	/**
+	 * Part name.
+	 */
+	string partName;
+
+	/**
+	 * Part kind (property or reference).
+	 */
+	string partKind;
+
+	/**
+	 * Qualified name where the part is defined.
+	 */
+	string definedIn;
+
+	/**
+	 * List of qualified names of subclasses that inherit this part.
+	 */
+	repeated string inheritedBy;
+}
+
+// ===== ModelSearchTool Messages =====
+
+/**
+ * Search result for a model element.
+ */
+message SearchResult {
+	/**
+	 * Kind of element (module, class, enumeration, datatype, property, reference).
+	 */
+	string kind;
+
+	/**
+	 * Element name.
+	 */
+	string name;
+
+	/**
+	 * Qualified name (for types).
+	 */
+	string qualifiedName;
+
+	/**
+	 * Relevance score.
+	 */
+	int score;
+
+	/**
+	 * Which field was matched (name, qualifiedName, label, description).
+	 */
+	string matchedField;
+
+	/**
+	 * Contextual information (module, type, counts, etc.).
+	 *
+	 * Note: Values are serialized as JSON and need to be parsed.
+	 */
+	map<string, string> context;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+/**
+ * Model search response.
+ */
+message SearchResponse {
+	/**
+	 * Whether the search succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Search query.
+	 */
+	string query;
+
+	/**
+	 * Number of results.
+	 */
+	int resultCount;
+
+	/**
+	 * List of search results.
+	 */
+	repeated SearchResult results;
+
+	/**
+	 * Error message (if success is false).
+	 */
+	string error;
+}
+
+// ===== ModelEditorTool Messages =====
+
+/**
+ * Response for module creation/update operations.
+ */
+message ModuleResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Module name.
+	 */
+	string name;
+
+	/**
+	 * Module TID.
+	 */
+	string tid;
+
+	/**
+	 * Number of types in the module.
+	 */
+	long typeCount;
+
+	/**
+	 * Whether the module was newly created.
+	 */
+	bool created;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+/**
+ * Response for class creation/update operations.
+ */
+message ClassResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Class name.
+	 */
+	string name;
+
+	/**
+	 * Class TID.
+	 */
+	string tid;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Number of local parts.
+	 */
+	int partCount;
+
+	/**
+	 * Whether the class was newly created.
+	 */
+	bool created;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+/**
+ * Response for property creation/update operations.
+ */
+message PropertyResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Property name.
+	 */
+	string name;
+
+	/**
+	 * Property TID.
+	 */
+	string tid;
+
+	/**
+	 * Owner class (module:ClassName).
+	 */
+	string owner;
+
+	/**
+	 * Property type name.
+	 */
+	string type;
+
+	/**
+	 * Whether mandatory.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether multiple-valued.
+	 */
+	bool multiple;
+
+	/**
+	 * Whether ordered.
+	 */
+	bool ordered;
+
+	/**
+	 * Whether bag.
+	 */
+	bool bag;
+
+	/**
+	 * Whether abstract.
+	 */
+	bool `abstract`;
+
+	/**
+	 * Whether the property was newly created.
+	 */
+	bool created;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+/**
+ * Response for reference creation operations.
+ */
+message ReferenceResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Reference name.
+	 */
+	string name;
+
+	/**
+	 * Reference TID.
+	 */
+	string tid;
+
+	/**
+	 * Owner class (module:ClassName).
+	 */
+	string owner;
+
+	/**
+	 * Target type (module:ClassName).
+	 */
+	string targetType;
+
+	/**
+	 * Whether mandatory.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether multiple-valued.
+	 */
+	bool multiple;
+
+	/**
+	 * Whether ordered.
+	 */
+	bool ordered;
+
+	/**
+	 * Whether bag.
+	 */
+	bool bag;
+
+	/**
+	 * Whether abstract.
+	 */
+	bool `abstract`;
+
+	/**
+	 * Whether composite.
+	 */
+	bool composite;
+
+	/**
+	 * Whether aggregate.
+	 */
+	bool aggregate;
+
+	/**
+	 * Whether navigable.
+	 */
+	bool navigate;
+
+	/**
+	 * History type.
+	 */
+	string historyType;
+
+	/**
+	 * Deletion policy.
+	 */
+	string deletionPolicy;
+
+	/**
+	 * Whether the reference was newly created.
+	 */
+	bool created;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+/**
+ * Response for backward reference creation operations.
+ */
+message BackwardReferenceResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Backward reference name.
+	 */
+	string name;
+
+	/**
+	 * Backward reference TID.
+	 */
+	string tid;
+
+	/**
+	 * Owner class (module:ClassName).
+	 */
+	string owner;
+
+	/**
+	 * Target type (module:ClassName).
+	 */
+	string targetType;
+
+	/**
+	 * Whether mandatory.
+	 */
+	bool mandatory;
+
+	/**
+	 * Whether multiple-valued.
+	 */
+	bool multiple;
+
+	/**
+	 * Whether navigable.
+	 */
+	bool navigate;
+
+	/**
+	 * Forward reference name.
+	 */
+	string forwardReferenceName;
+
+	/**
+	 * Forward reference owner (module:ClassName).
+	 */
+	string forwardReferenceOwner;
+
+	/**
+	 * Whether the backward reference was newly created.
+	 */
+	bool created;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+/**
+ * Classifier info used in enumeration responses.
+ */
+message EnumClassifierInfo {
+	/**
+	 * Classifier name.
+	 */
+	string name;
+
+	/**
+	 * Whether this is the default classifier.
+	 */
+	bool `default`;
+}
+
+/**
+ * Response for enumeration creation/update operations.
+ */
+message EnumResponse {
+	/**
+	 * Whether the operation succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Enumeration name.
+	 */
+	string name;
+
+	/**
+	 * Enumeration TID.
+	 */
+	string tid;
+
+	/**
+	 * Module name.
+	 */
+	string module;
+
+	/**
+	 * Number of classifiers.
+	 */
+	int classifierCount;
+
+	/**
+	 * Classifiers in the enumeration.
+	 */
+	repeated EnumClassifierInfo classifiers;
+
+	/**
+	 * Whether the enumeration was newly created.
+	 */
+	bool created;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * Localized label.
+	 */
+	string label;
+
+	/**
+	 * Localized description.
+	 */
+	string description;
+}
+
+// ===== ModelEditorTool Delete Messages =====
+
+/**
+ * Information about a blocker preventing deletion.
+ */
+message DeletionBlocker {
+	/**
+	 * Reason for blocking: HAS_INSTANCES, HAS_SPECIALIZATIONS, USED_BY_TYPEPART, DELETE_PROTECTED.
+	 */
+	string reason;
+
+	/**
+	 * Human-readable details about the blocker.
+	 */
+	string details;
+}
+
+/**
+ * Response for model element deletion operations.
+ */
+message DeleteResponse {
+	/**
+	 * Whether the deletion succeeded.
+	 */
+	bool success;
+
+	/**
+	 * Element name.
+	 */
+	string name;
+
+	/**
+	 * Qualified name of the element.
+	 */
+	string qualifiedName;
+
+	/**
+	 * Type of element: MODULE, CLASS, ENUMERATION, PROPERTY, REFERENCE, CLASSIFIER.
+	 */
+	string elementType;
+
+	/**
+	 * Human-readable result message.
+	 */
+	string resultMessage;
+
+	/**
+	 * List of parts that were cascade-deleted (on success).
+	 */
+	repeated string deletedParts;
+
+	/**
+	 * List of blockers preventing deletion (on failure).
+	 */
+	repeated DeletionBlocker blockers;
+}
+
+// ===== SearchAnnotationTool Messages =====
+
+/**
+ * A concrete implementation option for a polymorphic configuration property.
+ */
+message ImplementationOption {
+
+	/**
+	 * XML tag name from {@code @TagName} annotation.
+	 */
+	string tagName;
+
+	/**
+	 * Fully qualified configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable description from i18n tooltip resources.
+	 */
+	string description;
+}
+
+/**
+ * Information about a polymorphic configuration property that requires choosing an implementation.
+ */
+message AnnotationPropertyInfo {
+
+	/**
+	 * Property name as declared in the configuration interface.
+	 */
+	string name;
+
+	/**
+	 * Human-readable description of the property.
+	 */
+	string description;
+
+	/**
+	 * Whether this property is mandatory.
+	 */
+	bool required;
+
+	/**
+	 * Available concrete implementations the agent can choose from.
+	 */
+	repeated ImplementationOption implementations;
+}
+
+/**
+ * A single available annotation type for a model element.
+ */
+message AnnotationSearchResult {
+
+	/**
+	 * XML tag name from {@code @TagName} annotation.
+	 */
+	string tagName;
+
+	/**
+	 * Fully qualified configuration interface class name.
+	 */
+	string configInterface;
+
+	/**
+	 * Human-readable description from i18n resources.
+	 */
+	string description;
+
+	/**
+	 * Concrete implementation options for polymorphic configuration properties.
+	 * Empty if the annotation can be used directly without choosing an implementation.
+	 */
+	repeated AnnotationPropertyInfo implementationOptions;
+}
+
+/**
+ * Response listing available annotation types for a target element.
+ */
+message AnnotationSearchResponse {
+
+	/**
+	 * The resolved target reference.
+	 */
+	string targetRef;
+
+	/**
+	 * Kind of the resolved target (e.g. "property", "type", "module").
+	 */
+	string targetKind;
+
+	/**
+	 * Total number of available annotations.
+	 */
+	int totalMatches;
+
+	/**
+	 * List of available annotation types.
+	 */
+	repeated AnnotationSearchResult results;
+}

@@ -41,7 +41,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.ai.service.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
@@ -325,9 +325,9 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 
-		com.top_logic.ai.service.approval.ApprovalMode approvalMode;
+		com.top_logic.tl.ai.core.agent.approval.ApprovalMode approvalMode;
 		try {
-			approvalMode = com.top_logic.ai.service.approval.ApprovalMode.valueOf(mode);
+			approvalMode = com.top_logic.tl.ai.core.agent.approval.ApprovalMode.valueOf(mode);
 		} catch (IllegalArgumentException e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid mode: " + mode);
 			return;

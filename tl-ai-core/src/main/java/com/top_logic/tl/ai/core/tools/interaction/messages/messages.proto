@@ -1,0 +1,172 @@
+package com.top_logic.tl.ai.core.tools.interaction.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Response returned by createTask and updateTask operations.
+ */
+message TaskResponse {
+	/**
+	 * Unique identifier of the task.
+	 */
+	string taskId;
+
+	/**
+	 * Current status of the task (pending, in_progress, completed).
+	 */
+	string status;
+
+	/**
+	 * Brief title of the task.
+	 */
+	string subject;
+}
+
+/**
+ * Detailed task information returned by getTask.
+ */
+message TaskDetail {
+	/**
+	 * Unique identifier of the task.
+	 */
+	string taskId;
+
+	/**
+	 * Current status of the task (pending, in_progress, completed).
+	 */
+	string status;
+
+	/**
+	 * Brief title of the task.
+	 */
+	string subject;
+
+	/**
+	 * Detailed description of what needs to be done.
+	 */
+	string description;
+
+	/**
+	 * Present continuous form shown in spinner when task is in progress.
+	 */
+	string activeForm;
+
+	/**
+	 * Agent or user assigned to the task.
+	 */
+	string owner;
+
+	/**
+	 * Task IDs that this task blocks (cannot start until this one completes).
+	 */
+	repeated string blocks;
+
+	/**
+	 * Task IDs that must complete before this task can start.
+	 */
+	repeated string blockedBy;
+}
+
+/**
+ * Summary of a single task, used as an entry in the task list.
+ */
+message TaskSummary {
+	/**
+	 * Unique identifier of the task.
+	 */
+	string id;
+
+	/**
+	 * Brief title of the task.
+	 */
+	string subject;
+
+	/**
+	 * Current status of the task (pending, in_progress, completed).
+	 */
+	string status;
+
+	/**
+	 * Agent or user assigned to the task.
+	 */
+	string owner;
+
+	/**
+	 * Task IDs that must complete before this task can start.
+	 */
+	repeated string blockedBy;
+}
+
+/**
+ * Response containing the full list of tasks, returned by listTasks.
+ */
+message TaskListResponse {
+	/**
+	 * Array of task summaries.
+	 */
+	repeated TaskSummary tasks;
+}
+
+/**
+ * A single task serialized for persistence.
+ */
+message PersistedTask {
+	/**
+	 * Unique task identifier.
+	 */
+	string id;
+
+	/**
+	 * Brief title for the task.
+	 */
+	string subject;
+
+	/**
+	 * Detailed description of what needs to be done.
+	 */
+	string description;
+
+	/**
+	 * Present continuous form shown while in progress.
+	 */
+	string activeForm;
+
+	/**
+	 * Current status (pending, in_progress, completed).
+	 */
+	string status;
+
+	/**
+	 * Agent or user assigned to the task.
+	 */
+	string owner;
+
+	/**
+	 * Task IDs that this task blocks.
+	 */
+	repeated string blocks;
+
+	/**
+	 * Task IDs that must complete before this task can start.
+	 */
+	repeated string blockedBy;
+}
+
+/**
+ * Full task store state for persistence.
+ */
+message PersistedTaskStore {
+	/**
+	 * Highest task ID ever assigned (prevents ID reuse after deletion).
+	 */
+	int highWaterMark;
+
+	/**
+	 * All tasks in creation order.
+	 */
+	repeated PersistedTask tasks;
+}

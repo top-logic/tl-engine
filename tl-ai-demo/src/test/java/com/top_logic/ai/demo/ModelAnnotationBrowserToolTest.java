@@ -15,7 +15,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.ai.service.tools.model.ModelAnnotationBrowserTool;
+import com.top_logic.tl.ai.core.tools.model.ModelAnnotationBrowserTool;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.util.model.ModelService;

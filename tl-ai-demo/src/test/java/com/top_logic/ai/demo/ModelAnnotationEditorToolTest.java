@@ -7,7 +7,7 @@ package com.top_logic.ai.demo;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.service.tools.model.ModelAnnotationEditorTool;
+import com.top_logic.tl.ai.core.tools.model.ModelAnnotationEditorTool;
 import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**

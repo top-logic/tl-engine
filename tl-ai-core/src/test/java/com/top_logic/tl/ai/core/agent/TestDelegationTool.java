@@ -9,6 +9,8 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
+
 /**
  * Tests for {@link DelegationTool}.
  */

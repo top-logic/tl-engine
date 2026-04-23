@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
-import com.top_logic.tl.ai.core.tool.ToolMode;
+import com.top_logic.tl.ai.core.tools.ToolMode;
 
 /**
  * The system's current execution mode.

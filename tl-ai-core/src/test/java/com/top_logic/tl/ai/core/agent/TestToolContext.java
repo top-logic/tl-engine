@@ -7,6 +7,9 @@ package com.top_logic.tl.ai.core.agent;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
+
 /**
  * Tests for {@link ToolContext}.
  */

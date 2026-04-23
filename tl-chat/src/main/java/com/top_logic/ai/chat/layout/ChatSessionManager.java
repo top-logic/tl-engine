@@ -14,7 +14,7 @@ import java.util.UUID;
 import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.ai.service.agents.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -29,7 +29,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
-import com.top_logic.ai.service.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
 
 /**
  * Manages per-session in-memory state ({@link Chat} + {@link ConversationMemory}) with LRU caching.

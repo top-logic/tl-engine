@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.ai.service.tools.registry.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tools.Tool;
 
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
@@ -20,7 +20,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 
 /**
- * Adapter that converts {@link Tool}s from the {@link ToolRegistry} to MCP tool specifications.
+ * Adapter that converts {@link Tool}s from the {@link ToolRegistryService} to MCP tool specifications.
  *
  * <p>
  * This adapter bridges the tl-ai-core tool system (used by in-app AI agents) with the MCP
@@ -67,10 +67,10 @@ public class McpToolAdapter {
 	}
 
 	/**
-	 * Creates MCP tool specifications for all tools registered in the {@link ToolRegistry}.
+	 * Creates MCP tool specifications for all tools registered in the {@link ToolRegistryService}.
 	 *
 	 * <p>
-	 * This method should only be called when the {@link ToolRegistry} is active.
+	 * This method should only be called when the {@link ToolRegistryService} is active.
 	 * </p>
 	 *
 	 * @return List of MCP tool specifications for all registered tools.
@@ -78,13 +78,13 @@ public class McpToolAdapter {
 	public static List<McpServerFeatures.SyncToolSpecification> adaptAllTools() {
 		List<McpServerFeatures.SyncToolSpecification> result = new ArrayList<>();
 
-		if (!ToolRegistry.Module.INSTANCE.isActive()) {
-			Logger.info("ToolRegistry is not active, skipping tool adaptation",
+		if (!ToolRegistryService.Module.INSTANCE.isActive()) {
+			Logger.info("ToolRegistryService is not active, skipping tool adaptation",
 				McpToolAdapter.class);
 			return result;
 		}
 
-		ToolRegistry registry = ToolRegistry.getInstance();
+		ToolRegistryService registry = ToolRegistryService.getInstance();
 		for (String qualifiedName : registry.getToolNames()) {
 			try {
 				Tool tool = registry.getTool(qualifiedName);

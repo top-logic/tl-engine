@@ -13,8 +13,8 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.ApprovalOutcome;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**

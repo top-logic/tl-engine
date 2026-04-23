@@ -12,8 +12,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
-import com.top_logic.ai.service.approval.ApprovalMode;
-import com.top_logic.ai.service.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;

@@ -5,20 +5,23 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.message.ToolCall;
+import com.top_logic.tl.ai.core.tools.Tool;
 
 /**
  * Result of a permission/approval check on a tool call.
  *
- * <p>Three outcomes:</p>
+ * <p>
+ * Three outcomes:
+ * </p>
  * <ul>
- *   <li>{@link Allowed} — tool executes immediately</li>
- *   <li>{@link Denied} — tool is blocked; reason is fed to the LLM as a tool result</li>
- *   <li>{@link NeedsApproval} — agent loop pauses and asks the user via
- *       {@link ApprovalCallback}</li>
+ * <li>{@link Allowed} — tool executes immediately</li>
+ * <li>{@link Denied} — tool is blocked; reason is fed to the LLM as a tool result</li>
+ * <li>{@link NeedsApproval} — agent loop pauses and asks the user via {@link ApprovalCallback}</li>
  * </ul>
  *
- * @see SecurityContext#checkApproval(com.top_logic.tl.ai.core.tool.Tool, ToolCall)
+ * @see SecurityContext#checkApproval(Tool, ToolCall)
  */
 public sealed interface PermissionDecision {
 

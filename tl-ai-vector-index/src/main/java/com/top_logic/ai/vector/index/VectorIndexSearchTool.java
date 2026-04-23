@@ -30,7 +30,7 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
  * </p>
  *
  * <p>
- * The tool is registered in the {@code ToolRegistry} but is not assigned to any agent by default.
+ * The tool is registered in the {@code ToolRegistryService} but is not assigned to any agent by default.
  * </p>
  */
 public class VectorIndexSearchTool {

@@ -25,7 +25,7 @@ import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.resources.TypePartsResource;
 import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
-import com.top_logic.ai.service.tools.registry.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.registry.ToolRegistryService;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -71,7 +71,7 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
  */
 @ServiceDependencies({
 	ServletContextService.Module.class,
-	ToolRegistry.Module.class
+	ToolRegistryService.Module.class
 })
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
 
@@ -259,7 +259,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 *
 	 * <p>
 	 * All tools are provided by the {@link McpToolAdapter} which adapts tools from the
-	 * {@link ToolRegistry} to MCP tool specifications.
+	 * {@link ToolRegistryService} to MCP tool specifications.
 	 * </p>
 	 *
 	 * <p>
@@ -303,7 +303,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			builder.resourceTemplates(resource.createSpecification());
 		}
 
-		// Register tools from ToolRegistry (if available)
+		// Register tools from ToolRegistryService (if available)
 		for (io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification adaptedTool :
 				McpToolAdapter.adaptAllTools()) {
 			builder.tools(adaptedTool);

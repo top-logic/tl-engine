@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 

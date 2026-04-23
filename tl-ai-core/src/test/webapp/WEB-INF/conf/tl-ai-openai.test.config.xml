@@ -13,15 +13,15 @@
 
 		<config config:interface="test.com.top_logic.basic.TestComment$Config">
 			<ignore>
-				<entry value="com.top_logic.ai.service.jsonschema.model"/>
-				<entry value="com.top_logic.ai.service.tools.model.messages" />
-				<entry value="com.top_logic.ai.service.tools.help.messages" />
-				<entry value="com.top_logic.ai.service.tools.script.messages" />
-				<entry value="com.top_logic.ai.service.agents.handoff" />
-				<entry value="com.top_logic.ai.service.tools.layout.messages" />
-				<entry value="com.top_logic.ai.service.tools.task.messages" />
-				<entry value="com.top_logic.ai.service.tools.gitea.messages" />
-				<entry value="com.top_logic.ai.service.skills.Skill" />
+				<entry value="com.top_logic.tl.ai.core.jsonschema.model"/>
+				<entry value="com.top_logic.tl.ai.core.tools.model.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
+				<entry value="com.top_logic.tl.ai.core.agent.handoff" />
+				<entry value="com.top_logic.tl.ai.core.tools.config.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.interaction.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.integration.messages" />
+				<entry value="com.top_logic.tl.ai.core.agent.skills.Skill" />
 			</ignore>
 		</config>
 	</configs>

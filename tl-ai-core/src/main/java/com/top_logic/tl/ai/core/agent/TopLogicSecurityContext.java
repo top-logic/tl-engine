@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.agent;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.core.workspace.Environment;
-import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tools.Tool;
 
 /**
  * {@link SecurityContext} implementation backed by TopLogic's runtime.

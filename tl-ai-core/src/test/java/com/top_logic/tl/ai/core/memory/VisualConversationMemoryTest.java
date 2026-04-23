@@ -293,8 +293,8 @@ public class VisualConversationMemoryTest extends TestCase {
 		};
 
 		// Tool registry with a read_file tool that returns sizable file contents
-		com.top_logic.tl.ai.core.tool.ToolRegistry registry = new com.top_logic.tl.ai.core.tool.ToolRegistry();
-		registry.register(new com.top_logic.tl.ai.core.tool.Tool() {
+		com.top_logic.tl.ai.core.tools.ToolDispatcher registry = new com.top_logic.tl.ai.core.tools.ToolDispatcher();
+		registry.register(new com.top_logic.tl.ai.core.tools.Tool() {
 			@Override public String name() { return "read_file"; }
 			@Override public String description() { return "Read a file's contents"; }
 			@Override public com.top_logic.tl.ai.core.provider.ToolSchema schema() { return readTool; }
@@ -309,8 +309,8 @@ public class VisualConversationMemoryTest extends TestCase {
 					return "CREATE TABLE users (\n" + "  id SERIAL PRIMARY KEY,\n".repeat(10) + ");";
 				}
 			}
-			@Override public com.top_logic.tl.ai.core.tool.ToolMode mode() {
-				return com.top_logic.tl.ai.core.tool.ToolMode.READ;
+			@Override public com.top_logic.tl.ai.core.tools.ToolMode mode() {
+				return com.top_logic.tl.ai.core.tools.ToolMode.READ;
 			}
 		});
 		registry.freeze();

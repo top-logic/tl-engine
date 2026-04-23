@@ -11,8 +11,8 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
-import com.top_logic.tl.ai.core.tool.Tool;
-import com.top_logic.tl.ai.core.tool.ToolMode;
+import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.core.tools.ToolMode;
 
 /**
  * Tests for {@link SecurityContext}.

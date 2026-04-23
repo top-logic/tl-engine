@@ -213,6 +213,15 @@ public class ChatSSEHandler implements AgentEventListener {
 	@Override
 	public void onEvent(AgentEvent event) {
 		if (_closed.get()) {
+			// This handler's SSE connection is gone (browser reconnected).
+			// Forward to the current active handler for the same tracker.
+			ChatSSEHandler current = findHandler(_tracker);
+			if (current != null && current != this) {
+				current.onEvent(event);
+			} else {
+				Logger.warn("SSE handler closed, no replacement found — dropping event: "
+					+ event.getClass().getSimpleName(), ChatSSEHandler.class);
+			}
 			return;
 		}
 		_eventQueue.add(event);
@@ -224,6 +233,11 @@ public class ChatSSEHandler implements AgentEventListener {
 	 */
 	public void sendMessageComplete(MessageCompleteEvent event) {
 		sendEvent("message_complete", DtoMapper.toJson(event));
+	}
+
+	/** Sends a provider error event to the client. */
+	public void sendProviderError(ProviderErrorEvent event) {
+		sendEvent("provider_error", DtoMapper.toJson(event));
 	}
 
 	private void sendConnectedEvent() {

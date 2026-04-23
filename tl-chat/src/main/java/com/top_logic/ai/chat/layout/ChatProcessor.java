@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
+import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
@@ -501,15 +503,49 @@ public class ChatProcessor {
 					} catch (Exception ex) {
 						Logger.error("AI processing failed: " + ex.getMessage(), ex, ChatProcessor.class);
 						state.completeWithError(ex);
+						notifyError(state, ex);
 						return null;
 					}
 				});
 			} catch (Exception ex) {
 				Logger.error("Failed to run background task: " + ex.getMessage(), ex, ChatProcessor.class);
 				state.completeWithError(ex);
+				notifyError(state, ex);
 			} finally {
 				state.setAgentThread(null);
 			}
+		}
+
+		private void notifyError(AIProcessingState state, Throwable ex) {
+			// Determine error kind and message
+			String kind = "UNKNOWN";
+			String message = ex.getMessage();
+			if (ex instanceof ProviderException pe) {
+				kind = pe.kind().name();
+			} else if (ex.getCause() instanceof ProviderException pe) {
+				kind = pe.kind().name();
+				message = pe.getMessage();
+			}
+			// Send via SSE if handler is available
+			ChatSSEHandler handler = state.getSseHandler();
+			if (handler != null) {
+				try {
+					ProviderErrorEvent event = ProviderErrorEvent.create()
+						.setKind(kind)
+						.setErrorMessage(message != null ? message : ex.getClass().getSimpleName());
+					handler.sendProviderError(event);
+				} catch (Exception sseEx) {
+					Logger.warn("Failed to send error via SSE: " + sseEx.getMessage(), ChatProcessor.class);
+				}
+			}
+
+			// Always add a chat message as fallback so the error is visible on poll
+			Chat chat = state.getChat();
+			if (chat == null) {
+				chat = _taskTracker.getChat();
+			}
+			String displayMessage = message != null ? message : ex.getClass().getSimpleName();
+			chat.addMessage(new ChatMessage("System", "Error: " + displayMessage));
 		}
 	}
 

@@ -620,6 +620,10 @@ public class AnthropicProvider implements LLMProvider {
 				if (message.toLowerCase().contains("context") && message.contains("long")) {
 					yield ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
 				}
+				String lower = message.toLowerCase();
+				if (lower.contains("usage limit") || lower.contains("api usage")) {
+					yield ProviderException.Kind.RATE_LIMITED;
+				}
 				if (status >= 500) {
 					yield ProviderException.Kind.OVERLOADED;
 				}

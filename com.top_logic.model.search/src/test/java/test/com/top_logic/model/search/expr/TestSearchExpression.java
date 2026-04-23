@@ -1475,17 +1475,21 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCreateSwitch() throws ParseException {
-		Object result = execute(search(
+		SearchExpression search = search(
 			"x -> switch($x) {" +
-				"'A': new(`TestSearchExpression:A`);" +
+				"'A': new(`TestSearchExpression:A`)..set(`TestSearchExpression:A#name`, 'foo');" +
 				"'B': new(`TestSearchExpression:B`);" +
 			"}" + 
-			"..set(`TestSearchExpression:A#name`, 'foo')" +
 			"..map(y -> if ($y.instanceOf(`TestSearchExpression:B`), $y.set(`TestSearchExpression:B#name`, 'foo-b')))"
-		), "B");
-
-		assertNotNull(result);
-		assertEquals("foo-b", ((TLObject) result).tValueByName("name"));
+		);
+		Object newB = execute(search, "B");
+		assertNotNull(newB);
+		assertEquals("foo-b", ((TLObject) newB).tValueByName("name"));
+		Object newA = execute(search, "A");
+		assertNotNull(newA);
+		assertEquals("foo", ((TLObject) newA).tValueByName("name"));
+		Object newC = execute(search, "C");
+		assertNull(newC);
 	}
 
 	public void testInstanceOf() throws ParseException {

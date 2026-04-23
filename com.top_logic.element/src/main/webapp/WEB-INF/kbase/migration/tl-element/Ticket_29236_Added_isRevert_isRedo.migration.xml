@@ -7,6 +7,9 @@
 		module="tl-element"
 	/>
 	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
 		<dependency name="Ticket_29092_multi_factor_authentication"
 			module="tl-element"
 		/>

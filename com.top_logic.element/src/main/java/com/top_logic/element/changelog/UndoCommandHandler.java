@@ -131,7 +131,6 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 			tx.commit();
 		}
 
-		component.invalidate();
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

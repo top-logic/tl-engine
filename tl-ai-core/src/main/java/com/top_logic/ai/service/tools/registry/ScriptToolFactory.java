@@ -25,6 +25,7 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * A {@link ToolFactory} that creates tools from TL-Script implementations.
@@ -73,6 +74,8 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		ScriptToolConfig.NAME,
 		ScriptToolConfig.PARAMETERS,
 		ScriptToolConfig.DESCRIPTION,
+		ScriptToolConfig.MODE,
+		ScriptToolConfig.CONCURRENCY_SAFE,
 		ScriptToolConfig.IMPLEMENTATION,
 	})
 	public interface ScriptToolConfig extends PolymorphicConfiguration<ScriptToolConfig> {
@@ -106,6 +109,20 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		String IMPLEMENTATION = "implementation";
 
 		/**
+		 * Configuration property name for mode.
+		 *
+		 * @see #getMode()
+		 */
+		String MODE = "mode";
+
+		/**
+		 * Configuration property name for concurrency-safe.
+		 *
+		 * @see #getConcurrencySafe()
+		 */
+		String CONCURRENCY_SAFE = "concurrency-safe";
+
+		/**
 		 * The name of the tool.
 		 */
 		@Name(NAME)
@@ -130,6 +147,33 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		@Name(PARAMETERS)
 		@Key(ToolParameterConfig.NAME)
 		Map<String, ToolParameterConfig> getParameters();
+
+		/**
+		 * What kind of state change this tool makes.
+		 *
+		 * <p>
+		 * Defaults to {@link ToolMode#GLOBAL}. Set to {@link ToolMode#READ} for tools that only
+		 * read data, or {@link ToolMode#USER_SCOPED} for tools that only affect the current user.
+		 * </p>
+		 *
+		 * @see Tool#mode()
+		 */
+		@Name(MODE)
+		ToolMode getMode();
+
+		/**
+		 * Whether this tool can safely run in parallel with other concurrency-safe tools.
+		 *
+		 * <p>
+		 * When {@code null} (the default), the value is derived from {@link #getMode()}: {@code
+		 * true} for {@link ToolMode#READ} and {@link ToolMode#USER_SCOPED}, {@code false} for
+		 * {@link ToolMode#GLOBAL}.
+		 * </p>
+		 *
+		 * @see Tool#isConcurrencySafe()
+		 */
+		@Name(CONCURRENCY_SAFE)
+		Boolean getConcurrencySafe();
 
 		/**
 		 * The TL-Script implementation of the tool.
@@ -228,12 +272,21 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 
 			QueryExecutor executor = QueryExecutor.compile(toolConfig.getImplementation());
 
+			ToolMode mode = toolConfig.getMode();
+			if (mode == null) {
+				mode = ToolMode.GLOBAL;
+			}
+
+			Boolean concurrencySafe = toolConfig.getConcurrencySafe();
+
 			_tools.add(new ScriptToolExecutor(
 				toolConfig.getName(),
 				toolConfig.getDescription(),
 				inputSchemaJson,
 				executor,
-				parameterNames));
+				parameterNames,
+				mode,
+				concurrencySafe));
 		}
 	}
 

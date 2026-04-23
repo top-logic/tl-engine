@@ -13,6 +13,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tool.Tool;
+import com.top_logic.tl.ai.core.tool.ToolMode;
 
 /**
  * A {@link Tool} that executes tools implemented in TL-Script.
@@ -34,6 +35,10 @@ public class ScriptToolExecutor implements Tool {
 
 	private final List<String> _parameterNames;
 
+	private final ToolMode _mode;
+
+	private final Boolean _concurrencySafe;
+
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
 	 *
@@ -47,14 +52,20 @@ public class ScriptToolExecutor implements Tool {
 	 *        The TL-Script query executor that implements the tool logic.
 	 * @param parameterNames
 	 *        The ordered list of parameter names as defined in the tool configuration.
+	 * @param mode
+	 *        The {@link ToolMode} for this tool.
+	 * @param concurrencySafe
+	 *        Whether this tool is concurrency-safe, or {@code null} to derive from the mode.
 	 */
 	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
-			QueryExecutor executor, List<String> parameterNames) {
+			QueryExecutor executor, List<String> parameterNames, ToolMode mode, Boolean concurrencySafe) {
 		_name = name;
 		_description = description;
 		_schema = new ToolSchema(name, description, inputSchemaJson);
 		_executor = executor;
 		_parameterNames = parameterNames;
+		_mode = mode;
+		_concurrencySafe = concurrencySafe;
 	}
 
 	@Override
@@ -70,6 +81,19 @@ public class ScriptToolExecutor implements Tool {
 	@Override
 	public ToolSchema schema() {
 		return _schema;
+	}
+
+	@Override
+	public ToolMode mode() {
+		return _mode;
+	}
+
+	@Override
+	public boolean isConcurrencySafe() {
+		if (_concurrencySafe != null) {
+			return _concurrencySafe;
+		}
+		return _mode != ToolMode.GLOBAL;
 	}
 
 	@Override

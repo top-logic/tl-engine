@@ -147,4 +147,5 @@ public abstract class PersistentModelPart extends AbstractBoundWrapper implement
 		return TTypeVisitor.getTType(this);
 	}
 
+
 }

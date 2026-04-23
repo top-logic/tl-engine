@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.ChangeAware;
 import com.top_logic.element.meta.ValidityCheck;
@@ -254,25 +253,41 @@ public class PersistentObjectImpl {
 	 *        the value
 	 */
 	public static void addValue(TLObject object, String aKey, Object aValue) {
-		TLStructuredTypePart attribute = object.tType().getPart(aKey);
+		addValue(object, getAttribute(object, aKey), aValue);
+	}
+
+	private static TLStructuredTypePart getAttribute(TLObject object, String name) throws IllegalStateException {
+		TLStructuredTypePart attribute = object.tType().getPart(name);
 		if (attribute == null) {
 			throw new IllegalStateException(
-				aKey + " is not an attribute of " + TLModelUtil.qualifiedName(object.tType()));
+				name + " is not an attribute of " + TLModelUtil.qualifiedName(object.tType()));
 		}
+		return attribute;
+	}
+
+	/**
+	 * Add a value to a collection-valued attribute
+	 * 
+	 * @param attribute
+	 *        The collection valued attribute.
+	 * @param value
+	 *        The value to add.
+	 */
+	public static void addValue(TLObject object, TLStructuredTypePart attribute, Object value) {
 		try {
 			if (AttributeOperations.isCollectionValued(attribute)) {
-				AttributeOperations.addAttributeValue(object, attribute, aValue);
+				AttributeOperations.addAttributeValue(object, attribute, value);
 			} else {
 				throw new IllegalStateException("Attribute is not collection-valued but a collection is added: "
 					+ TLModelUtil.qualifiedName(attribute));
 			}
 		} catch (Exception ex) {
 			String message =
-				"Problem adding value '" + aValue + "' to attribute " + TLModelUtil.qualifiedName(attribute);
+				"Problem adding value '" + value + "' to attribute '" + TLModelUtil.qualifiedName(attribute) + "'.";
 			Logger.error(message, ex, PersistentObjectImpl.class);
             throw new IllegalStateException(message, ex);
 		}
-    }
+	}
 
 
     /**
@@ -306,25 +321,34 @@ public class PersistentObjectImpl {
 	 *        the value
 	 */
 	public static void removeValue(TLObject self, String aKey, Object aValue) {
-        try{
-			TLStructuredTypePart attribute = self.tType().getPart(aKey);
+		removeValue(self, getAttribute(self, aKey), aValue);
+    }
+
+	/**
+	 * Remove a value from a collection-valued attribute.
+	 * 
+	 * @param attribute
+	 *        The collection valued attribute.
+	 * @param value
+	 *        The value to remove.
+	 */
+	public static void removeValue(TLObject self, TLStructuredTypePart attribute, Object value) {
+		try{
             if (AttributeOperations.isCollectionValued(attribute)) {
-				AttributeOperations.removeAttributeValue(self, attribute, aValue);
+				AttributeOperations.removeAttributeValue(self, attribute, value);
             }
             else {
 				throw new IllegalStateException("Attribute is not a collection-valued: " + attribute);
             }
             
         }
-        catch (NoSuchAttributeException e) {
-			throw new IllegalStateException(aKey + " is not a attribute of " + self);
-        }
         catch (Exception ex) {
-            String message = "Problem removing attribute "+aValue+" from "+aKey;
+			String message =
+				"Problem removing value '" + value + "' from '" + TLModelUtil.qualifiedName(attribute) + "'.";
 			Logger.error(message, ex, PersistentObjectImpl.class);
             throw new IllegalStateException(message, ex);
-        }  
-    }
+        }
+	}
 
     /**
 	 * Integrates MetaAttributes. Falls back to FlexWrapper mechanism if there is no attribute of
@@ -345,7 +369,7 @@ public class PersistentObjectImpl {
             return;
         }
         
-		setValue(self, part, aValue);  
+		setValue(self, part, aValue);
     }
 
 	public static void setValue(TLObject self, TLStructuredTypePart attribute, Object value) {

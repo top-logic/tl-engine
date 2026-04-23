@@ -610,28 +610,11 @@ public class AnthropicProvider implements LLMProvider {
 		}
 
 		Duration retryAfter = parseRetryAfter(response.headers());
-		String message = parseErrorMessage(body);
+		String requestId = response.headers().firstValue("request-id").orElse(null);
+		String[] error = parseError(body);
+		ProviderException.Kind kind = classifyError(error[0], status);
 
-		ProviderException.Kind kind = switch (status) {
-			case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
-			case 429 -> ProviderException.Kind.RATE_LIMITED;
-			case 529 -> ProviderException.Kind.OVERLOADED;
-			default -> {
-				if (message.toLowerCase().contains("context") && message.contains("long")) {
-					yield ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
-				}
-				String lower = message.toLowerCase();
-				if (lower.contains("usage limit") || lower.contains("api usage")) {
-					yield ProviderException.Kind.RATE_LIMITED;
-				}
-				if (status >= 500) {
-					yield ProviderException.Kind.OVERLOADED;
-				}
-				yield ProviderException.Kind.INVALID_REQUEST;
-			}
-		};
-
-		throw new ProviderException(kind, status, message, retryAfter, null);
+		throw new ProviderException(kind, status, error[1], retryAfter, requestId, null);
 	}
 
 	private ProviderException parseStreamError(String data) {
@@ -656,30 +639,34 @@ public class AnthropicProvider implements LLMProvider {
 			}
 			json.endObject();
 		} catch (Exception e) {
-			message = data;
+			if (message.isEmpty()) {
+				message = data;
+			}
 		}
 
-		ProviderException.Kind kind = switch (type) {
-			case "overloaded_error" -> ProviderException.Kind.OVERLOADED;
-			case "rate_limit_error" -> ProviderException.Kind.RATE_LIMITED;
-			case "authentication_error" -> ProviderException.Kind.AUTHENTICATION;
-			case "invalid_request_error" -> ProviderException.Kind.INVALID_REQUEST;
-			default -> ProviderException.Kind.UNKNOWN;
-		};
+		ProviderException.Kind kind = classifyError(type, 0);
 		return new ProviderException(kind, 0, message);
 	}
 
-	private String parseErrorMessage(String jsonBody) {
+	/**
+	 * Parses both {@code error.type} and {@code error.message} from an Anthropic error JSON body.
+	 *
+	 * @return two-element array: {@code [type, message]}. Empty strings if parsing fails.
+	 */
+	private String[] parseError(String jsonBody) {
+		String type = "";
+		String message = "";
 		try (JsonReader json = jsonReader(jsonBody)) {
 			json.beginObject();
 			while (json.hasNext()) {
 				if ("error".equals(json.nextName())) {
 					json.beginObject();
 					while (json.hasNext()) {
-						if ("message".equals(json.nextName())) {
-							return json.nextString();
+						switch (json.nextName()) {
+							case "type" -> type = json.nextString();
+							case "message" -> message = json.nextString();
+							default -> json.skipValue();
 						}
-						json.skipValue();
 					}
 					json.endObject();
 				} else {
@@ -688,9 +675,47 @@ public class AnthropicProvider implements LLMProvider {
 			}
 			json.endObject();
 		} catch (Exception e) {
-			// Not valid JSON — return raw body.
+			if (message.isEmpty()) {
+				message = jsonBody;
+			}
 		}
-		return jsonBody;
+		return new String[] { type, message };
+	}
+
+	/**
+	 * Classifies an Anthropic API error using the {@code error.type} string and HTTP status code.
+	 * The type field is authoritative; the status code is the fallback.
+	 */
+	private static ProviderException.Kind classifyError(String errorType, int statusCode) {
+		ProviderException.Kind kind = switch (errorType) {
+			case "authentication_error", "permission_error" -> ProviderException.Kind.AUTHENTICATION;
+			case "billing_error" -> ProviderException.Kind.BILLING;
+			case "rate_limit_error" -> ProviderException.Kind.RATE_LIMITED;
+			case "overloaded_error" -> ProviderException.Kind.OVERLOADED;
+			case "api_error" -> ProviderException.Kind.OVERLOADED;
+			case "timeout_error" -> ProviderException.Kind.OVERLOADED;
+			case "request_too_large" -> ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
+			case "not_found_error" -> ProviderException.Kind.INVALID_REQUEST;
+			case "invalid_request_error" -> ProviderException.Kind.INVALID_REQUEST;
+			default -> null;
+		};
+		if (kind != null) {
+			return kind;
+		}
+		return switch (statusCode) {
+			case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
+			case 402 -> ProviderException.Kind.BILLING;
+			case 413 -> ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
+			case 429 -> ProviderException.Kind.RATE_LIMITED;
+			case 504 -> ProviderException.Kind.OVERLOADED;
+			case 529 -> ProviderException.Kind.OVERLOADED;
+			default -> {
+				if (statusCode >= 500) {
+					yield ProviderException.Kind.OVERLOADED;
+				}
+				yield ProviderException.Kind.INVALID_REQUEST;
+			}
+		};
 	}
 
 	private Duration parseRetryAfter(java.net.http.HttpHeaders headers) {

@@ -138,7 +138,6 @@ public class RedoCommandHandler extends AbstractCommandHandler {
 			tx.commit();
 		}
 
-		component.invalidate();
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

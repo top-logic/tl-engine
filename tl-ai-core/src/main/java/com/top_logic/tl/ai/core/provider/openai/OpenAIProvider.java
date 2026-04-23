@@ -223,11 +223,8 @@ public class OpenAIProvider implements LLMProvider {
 				json.endObject();
 			} else if (part instanceof PdfContent pdf) {
 				json.beginObject();
-				json.name("type").value("file");
-				json.name("file");
-				json.beginObject();
-				json.name("data").value("data:" + pdf.mediaType() + ";base64," + pdf.data());
-				json.endObject();
+				json.name("type").value("input_file");
+				json.name("file_data").value("data:" + pdf.mediaType() + ";base64," + pdf.data());
 				json.endObject();
 			}
 		}

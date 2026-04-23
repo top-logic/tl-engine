@@ -372,12 +372,12 @@ public class KBChangeAnalzyer {
 		if (oldValue) {
 			Set<ObjectKey> deletedKeys = createdDeletedKeys;
 			if (deletedKeys.contains(partId)) {
-				part = kb().withoutModifications(() -> resolvePart(partId));
+				part = kb().withoutModifications(() -> resolvePart(object, partId));
 			} else {
-				part = resolvePart(partId);
+				part = resolvePart(object, partId);
 			}
 		} else {
-			part = resolvePart(partId);
+			part = resolvePart(object, partId);
 		}
 
 		if (part == null) {
@@ -387,13 +387,17 @@ public class KBChangeAnalzyer {
 		enter(object).add(part);
 	}
 
-	private TLStructuredTypePart resolvePart(ObjectKey key) {
+	private TLStructuredTypePart resolvePart(TLObject object, ObjectKey key) {
 		KnowledgeItem partKI = kb().resolveObjectKey(key);
 		TLStructuredTypePart part = partKI.getWrapper();
 		if (isPersistentCacheAttribute(part)) {
 			return null;
 		}
-		return part;
+		/* The ID of the definition of the changed attribute is stored in the association storage.
+		 * The part may be overridden in the concrete type; the change contains the concrete
+		 * attributes -> the correct part instance must be fetched. */
+		TLStructuredTypePart concretePart = object.tType().getPart(part.getName());
+		return concretePart;
 	}
 
 	private void registerChange(TLObjectChange change) {

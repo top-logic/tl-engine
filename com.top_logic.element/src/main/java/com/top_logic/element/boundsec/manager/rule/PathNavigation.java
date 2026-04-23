@@ -8,7 +8,11 @@ package com.top_logic.element.boundsec.manager.rule;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
@@ -21,6 +25,8 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.model.cache.TLModelOperations;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -32,6 +38,8 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 
     /** the meta attribute defining the content */
 	private final TLReference _reference;
+
+	private Set<TLStructuredTypePart> _relevantParts;
     
 	/**
 	 * Create a {@link PathNavigation}.
@@ -45,10 +53,10 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 		super(context, config);
 
 		TLModelPart part = config.getAttribute().resolve();
-		if (!(part instanceof TLReference)) {
+		if (!(part instanceof TLReference reference)) {
 			throw new ConfigurationError(I18NConstants.NOT_A_REFERENCE__PART.fill(part));
 		}
-		if (((TLReference) part).isDerived()) {
+		if (reference.isDerived()) {
 			// Do not check definition, because this may be an abstract attribute. Abstract
 			// attributes are derived: See NoStorage#isReadOnly.
 			context.error("Path-navigation references derived (computed) attribute '"
@@ -56,12 +64,18 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 					+ "'. Derived attributes do not fire change notifications and cannot be tracked"
 					+ " for role-rule invalidation.");
 		}
-		_reference = (TLReference) ((TLReference) part).getDefinition();
+
+		TLModelOperations operations = TLModelCacheService.getOperations();
+		_relevantParts = Stream.concat(
+			operations.getOverrides(reference).stream().filter(Predicate.not(TLStructuredTypePart::isDerived)),
+			Stream.of(reference))
+			.collect(Collectors.toSet());
+		_reference = reference;
 	}
 
 	@Override
 	public Collection<TLStructuredTypePart> getRelevantParts() {
-		return Collections.singleton(_reference);
+		return _relevantParts;
 	}
     
 	private boolean isInverse() {

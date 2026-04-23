@@ -19,7 +19,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -37,6 +40,8 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.model.cache.TLModelOperations;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.BinaryOperation;
 import com.top_logic.model.search.expr.Call;
@@ -168,7 +173,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 		@Override
 		public boolean usesPart(TLStructuredTypePart p) {
-			return part.equals(p);
+			return matchesPart(part, p);
 		}
 
 		@Override
@@ -196,7 +201,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 		@Override
 		public boolean usesPart(TLStructuredTypePart p) {
-			return reference.equals(p);
+			return matchesPart(reference, p);
 		}
 
 		@Override
@@ -619,7 +624,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 		 * to create KBQuery expressions. */
 		SearchExpression search = SearchBuilder.toSearchExpression(model, config.getExpression());
 		search = QueryExecutor.resolve(model, search);
-		_relevantParts = extractParts(search);
+		_relevantParts = extractPartsAddOverrides(search);
 		for (TLStructuredTypePart part : _relevantParts) {
 			if (part.isDerived()) {
 				context.error("Script-step expression navigates through derived (computed) attribute '"
@@ -633,6 +638,17 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 	private static boolean hasParts(SearchExpression expression) {
 		return !extractParts(expression).isEmpty();
+	}
+
+	private static Collection<TLStructuredTypePart> extractPartsAddOverrides(SearchExpression expression) {
+		TLModelOperations modelCacheOperations = modelCacheOperations();
+		Predicate<TLStructuredTypePart> notDerived = notDerived();
+		return extractParts(expression)
+			.stream()
+			.flatMap(part -> Stream.concat(
+				modelCacheOperations.getOverrides(part).stream().filter(notDerived),
+				Stream.of(part)))
+			.collect(Collectors.toSet());
 	}
 
 	private static Collection<TLStructuredTypePart> extractParts(SearchExpression expression) {
@@ -805,11 +821,11 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 				List<Step> elseSteps = extractSubChain(ifElse.getElseClause(), paramName,
 					outerAccumulators, new HashMap<>(bindings));
 				Collection<TLStructuredTypePart> condExternalParts =
-					condSteps == null ? extractParts(ifElse.getCondition()) : Collections.emptySet();
+					condSteps == null ? extractPartsAddOverrides(ifElse.getCondition()) : Collections.emptySet();
 				Collection<TLStructuredTypePart> ifExternalParts =
-					ifSteps == null ? extractParts(ifElse.getIfClause()) : Collections.emptySet();
+					ifSteps == null ? extractPartsAddOverrides(ifElse.getIfClause()) : Collections.emptySet();
 				Collection<TLStructuredTypePart> elseExternalParts =
-					elseSteps == null ? extractParts(ifElse.getElseClause()) : Collections.emptySet();
+					elseSteps == null ? extractPartsAddOverrides(ifElse.getElseClause()) : Collections.emptySet();
 				if (condSteps == null && condExternalParts.isEmpty() && ifSteps == null
 					&& ifExternalParts.isEmpty() && elseSteps == null && elseExternalParts.isEmpty()) {
 					return null;
@@ -920,9 +936,9 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 		}
 		Step step;
 		Collection<TLStructuredTypePart> leftParts, rightParts;
-		if (leftSteps == null && !(leftParts = extractParts(left)).isEmpty()) {
+		if (leftSteps == null && !(leftParts = extractPartsAddOverrides(left)).isEmpty()) {
 			step = new ExternalPredicateStep(rightSteps, leftParts);
-		} else if (rightSteps == null && !(rightParts = extractParts(right)).isEmpty()) {
+		} else if (rightSteps == null && !(rightParts = extractPartsAddOverrides(right)).isEmpty()) {
 			step = new ExternalPredicateStep(leftSteps, rightParts);
 		} else {
 			step = new BranchStep(
@@ -943,6 +959,43 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Whether {@code partInExpr} (as stored in the step) matches {@code changedPart} (as reported
+	 * by the access manager).
+	 *
+	 * <p>
+	 * A match occurs when {@code changedPart} is {@code partInExpr} itself or is a non-derived
+	 * override of it. The check uses
+	 * {@link TLModelOperations#getOverrides(TLStructuredTypePart)}, which returns all parts with
+	 * the same name whose owner is a specialisation of {@code partInExpr}'s owner.
+	 * </p>
+	 *
+	 * <p>
+	 * Example: if the expression stores {@code A:c} and the access manager reports a change to
+	 * {@code B:c} (where {@code B} extends {@code A} and overrides {@code c}), this returns
+	 * {@code true}. But if {@code V:c} (where {@code V} is an unrelated subtype that does not
+	 * extend {@code A}) changes, this returns {@code false}, even though both {@code A:c} and
+	 * {@code V:c} may share the same root definition.
+	 * </p>
+	 */
+	private static boolean matchesPart(TLStructuredTypePart partInExpr, TLStructuredTypePart changedPart) {
+		if (changedPart == partInExpr) {
+			return true;
+		}
+		return modelCacheOperations().getOverrides(partInExpr)
+			.stream()
+			.filter(notDerived())
+			.anyMatch(Predicate.isEqual(changedPart));
+	}
+
+	private static TLModelOperations modelCacheOperations() {
+		return TLModelCacheService.getOperations();
+	}
+
+	private static Predicate<TLStructuredTypePart> notDerived() {
+		return Predicate.not(TLStructuredTypePart::isDerived);
 	}
 
 	/**

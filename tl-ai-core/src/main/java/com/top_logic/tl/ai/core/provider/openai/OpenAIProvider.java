@@ -452,7 +452,7 @@ public class OpenAIProvider implements LLMProvider {
 				case "response.function_call_arguments.delta" -> {
 					int outputIndex = 0;
 					String delta = null;
-					String itemId = null;
+					String callId = null;
 
 					try (JsonReader json = jsonReader(data)) {
 						json.beginObject();
@@ -460,7 +460,7 @@ public class OpenAIProvider implements LLMProvider {
 							switch (json.nextName()) {
 								case "output_index" -> outputIndex = json.nextInt();
 								case "delta" -> delta = json.nextString();
-								case "item_id" -> itemId = json.nextString();
+								case "call_id" -> callId = json.nextString();
 								default -> json.skipValue();
 							}
 						}
@@ -468,11 +468,10 @@ public class OpenAIProvider implements LLMProvider {
 					}
 
 					if (delta != null) {
-						// Accumulate by callId — find the matching function_call block.
+						// Accumulate by call_id — find the matching function_call block.
 						for (ContentBlock block : blocks.values()) {
 							if ("function_call".equals(block._type)
-								&& (itemId == null || itemId.equals(block._id)
-									|| matchByBlockId(blocks, itemId, block))) {
+								&& (callId == null || callId.equals(block._id))) {
 								block._arguments.append(delta);
 								break;
 							}
@@ -571,15 +570,6 @@ public class OpenAIProvider implements LLMProvider {
 			}
 		}
 		}
-	}
-
-	private boolean matchByBlockId(Map<String, ContentBlock> blocks, String itemId, ContentBlock target) {
-		for (Map.Entry<String, ContentBlock> entry : blocks.entrySet()) {
-			if (entry.getValue() == target) {
-				return entry.getKey().equals(itemId);
-			}
-		}
-		return false;
 	}
 
 	private String parseEventType(String data) {

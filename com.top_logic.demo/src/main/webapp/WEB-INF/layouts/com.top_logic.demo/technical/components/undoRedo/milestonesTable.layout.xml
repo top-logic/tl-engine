@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,dueDate"
+		model="selection(com.top_logic.demo/technical/components/undoRedo/projectsTable.layout.xml#Table)"
+		type="tl.demo.projectManagement:Milestone"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/newMilestoneDialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.undoRedo-milestones-name">
+			<en>Milestones</en>
+			<de>Meilensteine</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="project -> $project.get(`tl.demo.projectManagement:Project#milestones`)"
+		/>
+		<buttons>
+			<button id="undoRedo_milestones_invalidate"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+			<button id="undoRedo_milestones_delete"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

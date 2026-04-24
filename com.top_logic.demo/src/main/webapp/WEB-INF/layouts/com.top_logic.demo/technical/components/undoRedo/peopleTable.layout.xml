@@ -5,25 +5,25 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
-		defaultColumns="name,description"
-		type="tl.demo.projectManagement:Project"
+		defaultColumns="name,email"
+		type="tl.demo.projectManagement:Person"
 	>
 		<dialogs>
-			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/newProjectDialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/newPersonDialog.layout.xml"/>
 		</dialogs>
-		<name key="dynamic.undoRedo-projects-name">
-			<en>Projects</en>
-			<de>Projekte</de>
+		<name key="dynamic.undoRedo-people-name">
+			<en>People</en>
+			<de>Personen</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="model->all(`tl.demo.projectManagement:Project`)"
+			elements="model -> all(`tl.demo.projectManagement:Person`)"
 			supportsElement="true"
 		/>
 		<buttons>
-			<button id="undoRedo_projects_invalidate"
+			<button id="undoRedo_people_invalidate"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			/>
-			<button id="undoRedo_projects_delete"
+			<button id="undoRedo_people_delete"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				target="selection(self())"
 			/>

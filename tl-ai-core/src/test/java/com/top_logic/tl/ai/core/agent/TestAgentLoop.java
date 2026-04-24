@@ -21,6 +21,8 @@ import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventAssertions;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
+import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -1074,6 +1076,73 @@ public class TestAgentLoop extends TestCase {
 		List<ToolSchema> sentTools = capturedRequests.get(0).tools();
 		assertEquals("Only READ tool should be sent", 1, sentTools.size());
 		assertEquals("search", sentTools.get(0).name());
+	}
+
+	/**
+	 * Provider always throws CONTEXT_WINDOW_EXCEEDED. With a no-op compaction strategy
+	 * (returns messages unchanged), reactive retries exhaust and runWithMemory returns
+	 * CONTEXT_OVERFLOW instead of ERROR.
+	 */
+	public void testContextOverflowAfterCompactionRetries() {
+		// No-op compaction strategy: returns messages unchanged, so retries can never help
+		CompactionStrategy noOpStrategy = (messages, targetTokens, estimator) ->
+			new CompactionResult(messages, 0, estimator.estimateTokens(messages),
+				estimator.estimateTokens(messages), "reactive");
+
+		ConversationMemory memory = new ConversationMemory(
+			new Conversation(), new ByteBasedTokenEstimator(), noOpStrategy,
+			100_000, 1_000);
+
+		memory.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider overflowProvider = (request, handler) -> {
+			throw new ProviderException(
+				ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
+				"Request too large for context window");
+		};
+
+		List<AgentEvent> captured = new ArrayList<>();
+		AgentEventListener capture = captured::add;
+
+		AgentLoop loop = new AgentLoop(config(), overflowProvider, emptyRegistry(), memory);
+		AgentResult result = loop.run(ToolContext.EMPTY, capture);
+
+		assertEquals(StopReason.CONTEXT_OVERFLOW, result.stopReason());
+		assertEquals(0, result.turnsUsed());
+
+		// Verify reactive compaction was attempted
+		long compactionCount = captured.stream()
+			.filter(e -> e instanceof AgentEvent.CompactionStarted cs
+				&& "reactive".equals(cs.trigger()))
+			.count();
+		assertTrue("Reactive compaction should have been attempted", compactionCount > 0);
+
+		// RunCompleted must carry CONTEXT_OVERFLOW
+		AgentEvent.RunCompleted runCompleted =
+			AgentEventAssertions.firstOfType(captured, AgentEvent.RunCompleted.class);
+		assertNotNull("RunCompleted event must be emitted", runCompleted);
+		assertEquals(StopReason.CONTEXT_OVERFLOW, runCompleted.reason());
+	}
+
+	/**
+	 * Provider throws CONTEXT_WINDOW_EXCEEDED in the non-memory run path.
+	 * Without memory, there is no compaction, so this is a genuine ERROR.
+	 */
+	public void testContextWindowExceededWithoutMemoryIsError() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider overflowProvider = (request, handler) -> {
+			throw new ProviderException(
+				ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
+				"Request too large for context window");
+		};
+
+		AgentLoop loop = new AgentLoop(config(), overflowProvider, emptyRegistry());
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+
+		assertEquals(StopReason.ERROR, result.stopReason());
+		assertEquals(0, result.turnsUsed());
 	}
 
 	private static SecurityContext developmentSecurity() {

@@ -315,7 +315,9 @@ public class AgentLoop {
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY));
-				StopReason stopReason = StopReason.ERROR;
+				StopReason stopReason = e.kind() == ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
+					? StopReason.CONTEXT_OVERFLOW
+					: StopReason.ERROR;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn - 1, totalUsage);
 			}

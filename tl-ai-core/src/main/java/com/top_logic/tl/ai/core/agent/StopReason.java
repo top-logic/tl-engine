@@ -25,7 +25,8 @@ public enum StopReason {
 	ABORTED,
 
 	/** Response validator rejected the LLM's response. */
-	REJECTED
+	REJECTED,
 
-	// TODO: CONTEXT_OVERFLOW (compaction trigger)
+	/** Context window exceeded after compaction retries exhausted. */
+	CONTEXT_OVERFLOW
 }

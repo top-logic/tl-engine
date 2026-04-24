@@ -691,7 +691,13 @@ public class AgentLoop {
 			return lockError;
 		}
 
-		ToolResultMessage result = _registry.execute(toolCall, context);
+		ProgressReporter progressReporter = message ->
+			emit(listener, new AgentEvent.ToolProgress(runId, turn, now(),
+				toolCall.id(), toolCall.name(), message));
+		ToolContext execContext = context.withToolCallId(toolCall.id())
+			.withProgressReporter(progressReporter);
+
+		ToolResultMessage result = _registry.execute(toolCall, execContext);
 		return truncateIfNeeded(result, listener, runId, turn);
 	}
 

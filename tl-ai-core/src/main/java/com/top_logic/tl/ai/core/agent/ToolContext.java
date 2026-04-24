@@ -23,10 +23,6 @@ import com.top_logic.tl.ai.core.tools.ToolExecutor;
  */
 public class ToolContext {
 
-	// TODO: Add ProgressReporter — Pillar 7 (Human-in-the-Loop). Long-running tools
-	//   should report progress (e.g., "processing 50 of 200 records") so the UI can
-	//   display status. Interface: progress(String message) or progress(int current, int total).
-
 	/** Context with no security restrictions, auto-approval, and no transaction. For tests and trusted internal use. */
 	public static final ToolContext EMPTY =
 		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
@@ -46,6 +42,8 @@ public class ToolContext {
 
 	private final CancellationToken _cancellationToken;
 
+	private final ProgressReporter _progressReporter;
+
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
@@ -54,7 +52,7 @@ public class ToolContext {
 	 * @param transaction the transaction scope for the current agent run
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval, TransactionScope transaction) {
-		this(security, approval, transaction, Set.of(), 0, null, new CancellationToken());
+		this(security, approval, transaction, Set.of(), 0, null, new CancellationToken(), ProgressReporter.NOOP);
 	}
 
 	/**
@@ -68,7 +66,7 @@ public class ToolContext {
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools) {
-		this(security, approval, transaction, sessionApprovedTools, 0, null, new CancellationToken());
+		this(security, approval, transaction, sessionApprovedTools, 0, null, new CancellationToken(), ProgressReporter.NOOP);
 	}
 
 	/**
@@ -93,12 +91,13 @@ public class ToolContext {
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, CancellationToken cancellationToken) {
-		this(security, approval, transaction, Set.of(), 0, null, cancellationToken);
+		this(security, approval, transaction, Set.of(), 0, null, cancellationToken, ProgressReporter.NOOP);
 	}
 
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools,
-			int delegationDepth, String toolCallId, CancellationToken cancellationToken) {
+			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
+			ProgressReporter progressReporter) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -106,6 +105,7 @@ public class ToolContext {
 		_delegationDepth = delegationDepth;
 		_toolCallId = toolCallId;
 		_cancellationToken = Objects.requireNonNull(cancellationToken, "Cancellation token must not be null.");
+		_progressReporter = Objects.requireNonNull(progressReporter, "Progress reporter must not be null.");
 	}
 
 	/**
@@ -178,11 +178,29 @@ public class ToolContext {
 	}
 
 	/**
+	 * The progress reporter for signaling tool execution status to the UI.
+	 *
+	 * <p>Tools call {@link ProgressReporter#progress(String)} to report intermediate status
+	 * during long-running operations.</p>
+	 */
+	public ProgressReporter progressReporter() {
+		return _progressReporter;
+	}
+
+	/**
 	 * Returns a copy of this context with the given tool call ID.
 	 */
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
-			_delegationDepth, toolCallId, _cancellationToken);
+			_delegationDepth, toolCallId, _cancellationToken, _progressReporter);
+	}
+
+	/**
+	 * Returns a copy of this context with the given progress reporter.
+	 */
+	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
+		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
+			_delegationDepth, _toolCallId, _cancellationToken, progressReporter);
 	}
 
 	/**
@@ -195,6 +213,6 @@ public class ToolContext {
 	 */
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
-			_delegationDepth + 1, null, _cancellationToken);
+			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP);
 	}
 }

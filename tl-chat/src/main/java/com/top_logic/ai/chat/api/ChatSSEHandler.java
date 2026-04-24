@@ -71,7 +71,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  * <li>{@code run_started}, {@code run_completed} - Run lifecycle</li>
  * <li>{@code turn_started}, {@code turn_completed} - Turn lifecycle</li>
  * <li>{@code text_delta}, {@code thinking_delta} - LLM streaming</li>
- * <li>{@code tool_started}, {@code tool_completed}, {@code tool_failed}, {@code tool_denied} - Tool lifecycle</li>
+ * <li>{@code tool_started}, {@code tool_completed}, {@code tool_failed}, {@code tool_denied}, {@code tool_progress} - Tool lifecycle</li>
  * <li>{@code approval_required}, {@code approval_resolved} - Approval flow</li>
  * <li>{@code lock_acquired}, {@code lock_failed} - Edit lock</li>
  * <li>{@code tx_began}, {@code tx_committed}, {@code tx_rollback} - Transactions</li>
@@ -351,6 +351,10 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setReason(e.reason())));
 		} else if (event instanceof AgentEvent.ToolCallResultTruncated) {
 			// Not surfaced to UI
+		} else if (event instanceof AgentEvent.ToolProgress e) {
+			sendEvent("tool_progress", "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
+				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
+				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}");
 		} else if (event instanceof AgentEvent.ApprovalRequired e) {
 			Logger.info("SSE: Sending approval_required for tool '" + e.toolName()
 				+ "' (approvalRequestId=" + e.approvalRequestId() + ")", ChatSSEHandler.class);
@@ -418,6 +422,11 @@ public class ChatSSEHandler implements AgentEventListener {
 			innerData = DtoMapper.toJson(ToolFailedEvent.create()
 				.setToolCallId(e.toolCallId()).setToolName(e.toolName())
 				.setErrorMessage(e.errorMessage()).setDurationMs(e.duration().toMillis()));
+		} else if (child instanceof AgentEvent.ToolProgress e) {
+			innerType = "tool_progress";
+			innerData = "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
+				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
+				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}";
 		} else if (child instanceof AgentEvent.ApprovalRequired e) {
 			innerType = "approval_required";
 			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()

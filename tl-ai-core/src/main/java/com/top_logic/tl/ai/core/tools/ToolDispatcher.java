@@ -160,8 +160,7 @@ public class ToolDispatcher implements ToolExecutor {
 		}
 
 		try {
-			ToolContext execContext = context.withToolCallId(toolCall.id());
-			ToolResult toolResult = tool.execute(args, execContext);
+			ToolResult toolResult = tool.execute(args, context);
 			Instant end = Instant.now();
 			return new ToolResultMessage(
 				UUID.randomUUID().toString(), Instant.now(),

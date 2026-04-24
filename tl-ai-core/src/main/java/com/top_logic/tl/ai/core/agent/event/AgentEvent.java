@@ -46,6 +46,9 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  *   <li>If a tool result is truncated before being returned to the LLM,
  *       {@link ToolCallResultTruncated} is emitted immediately before the
  *       corresponding {@link ToolCallCompleted} for the same {@code toolCallId}.</li>
+ *   <li>Zero or more {@link ToolProgress} events may be emitted between
+ *       {@link ToolCallStarted} and the terminal event ({@link ToolCallCompleted}
+ *       or {@link ToolCallFailed}) for the same {@code toolCallId}.</li>
  *   <li>On a turn with writes: {@link LockAcquired} &rarr; {@link TransactionBegan}
  *       &rarr; write tool's {@link ToolCallCompleted} &rarr;
  *       {@link TransactionCommitted} / {@link TransactionRolledBack}. If
@@ -126,6 +129,12 @@ public sealed interface AgentEvent {
 	record ToolCallResultTruncated(String runId, int turnNumber, Instant timestamp,
 			String toolCallId, String toolName, int originalLength, int truncatedLength)
 			implements AgentEvent {}
+
+	/**
+	 * Emitted when a tool reports progress during execution.
+	 */
+	record ToolProgress(String runId, int turnNumber, Instant timestamp,
+			String toolCallId, String toolName, String message) implements AgentEvent {}
 
 	// ---------- Approval (notification; decisions flow via ApprovalCallback) ----------
 

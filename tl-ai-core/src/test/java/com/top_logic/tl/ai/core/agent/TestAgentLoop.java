@@ -1659,6 +1659,54 @@ public class TestAgentLoop extends TestCase {
 		assertEquals(1, result.turnsUsed());
 	}
 
+	/**
+	 * Tool that uses {@link ProgressReporter} emits {@link AgentEvent.ToolProgress} events.
+	 */
+	public void testToolProgressEventsEmitted() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Do work"))));
+
+		ToolSchema toolSpec = new ToolSchema("slow_tool", "Reports progress", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "slow_tool", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Done.")));
+
+		ToolDispatcher registry = new ToolDispatcher();
+		registry.register(new Tool() {
+			@Override public String name() { return "slow_tool"; }
+			@Override public String description() { return "Reports progress"; }
+			@Override public ToolSchema schema() { return toolSpec; }
+			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+				context.progressReporter().progress("step 1");
+				context.progressReporter().progress("step 2");
+				return ToolResult.of("completed");
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		});
+		registry.freeze();
+
+		List<AgentEvent.ToolProgress> progressEvents = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.ToolProgress tp) {
+				progressEvents.add(tp);
+			}
+		};
+
+		AgentLoop loop = new AgentLoop(config(10), provider, registry);
+		AgentResult result = loop.run(conv, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals(2, progressEvents.size());
+		assertEquals("step 1", progressEvents.get(0).message());
+		assertEquals("step 2", progressEvents.get(1).message());
+		assertEquals("slow_tool", progressEvents.get(0).toolName());
+		assertEquals("slow_tool", progressEvents.get(1).toolName());
+		assertEquals("tc1", progressEvents.get(0).toolCallId());
+		assertEquals("tc1", progressEvents.get(1).toolCallId());
+	}
+
 	/** */
 	public void testEventBookendsAndToolCallMatching() {
 		List<AgentEvent> captured = new ArrayList<>();

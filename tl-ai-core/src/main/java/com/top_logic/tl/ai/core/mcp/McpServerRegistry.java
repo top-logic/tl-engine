@@ -75,8 +75,8 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 		/**
 		 * Transport configuration (stdio or HTTP).
 		 *
-		 * @see StdioTransportConfig
-		 * @see HttpTransportConfig
+		 * @see StdioMcpTransport
+		 * @see HttpMcpTransport
 		 */
 		@Name(TRANSPORT)
 		PolymorphicConfiguration<? extends McpTransportConfig> getTransport();
@@ -89,11 +89,14 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 		int getToolTimeoutSeconds();
 	}
 
+	private final InstantiationContext _context;
+
 	private final Map<String, McpClientConnection> _connections = new HashMap<>();
 
 	/** */
 	public McpServerRegistry(InstantiationContext context, Config<?> config) {
 		super(context, config);
+		_context = context;
 	}
 
 	@Override
@@ -105,7 +108,9 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 			McpServerConfig serverConfig = entry.getValue();
 
 			try {
-				McpClientConnection connection = new McpClientConnection(serverName, serverConfig);
+				McpTransportConfig transportConfig = _context.getInstance(serverConfig.getTransport());
+				McpClientConnection connection =
+					new McpClientConnection(serverName, transportConfig, serverConfig.getToolTimeoutSeconds());
 				connection.connect();
 				_connections.put(serverName, connection);
 			} catch (Exception e) {
@@ -187,7 +192,7 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 	}
 
 	/**
-	 * Serializes an MCP {@link McpSchema.JsonSchema} to a JSON string.
+	 * Serializes an MCP {@link io.modelcontextprotocol.spec.McpSchema.JsonSchema} to a JSON string.
 	 */
 	@SuppressWarnings("unchecked")
 	static String serializeInputSchema(McpSchema.JsonSchema schema) {

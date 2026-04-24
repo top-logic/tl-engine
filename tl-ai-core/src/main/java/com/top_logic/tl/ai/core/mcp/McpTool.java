@@ -8,12 +8,12 @@ package com.top_logic.tl.ai.core.mcp;
 import java.util.List;
 import java.util.Map;
 
-import io.modelcontextprotocol.spec.McpSchema;
-
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.ToolMode;
+
+import io.modelcontextprotocol.spec.McpSchema;
 
 /**
  * Wraps a single MCP tool as a native {@link Tool}.
@@ -93,11 +93,12 @@ public class McpTool implements Tool {
 	}
 
 	/**
-	 * Formats a {@link McpSchema.CallToolResult} into a string for the agent.
+	 * Formats a {@link io.modelcontextprotocol.spec.McpSchema.CallToolResult} into a string for the
+	 * agent.
 	 *
 	 * <p>
-	 * Concatenates text content items, notes non-text items as placeholders.
-	 * Error results are prefixed with {@code "Error: "}.
+	 * Concatenates text content items, notes non-text items as placeholders. Error results are
+	 * prefixed with {@code "Error: "}.
 	 * </p>
 	 */
 	static String formatResult(McpSchema.CallToolResult result) {

@@ -5,14 +5,19 @@
  */
 package com.top_logic.tl.ai.core.mcp;
 
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
- * Base configuration interface for MCP server transports.
+ * Factory for creating MCP client transports.
  *
- * @see StdioTransportConfig
- * @see HttpTransportConfig
+ * @see StdioMcpTransport
+ * @see HttpMcpTransport
  */
-public interface McpTransportConfig extends PolymorphicConfiguration<McpTransportConfig> {
-	// Marker interface. Concrete transport configs define transport-specific properties.
+public interface McpTransportConfig {
+
+	/**
+	 * Creates the MCP client transport for connecting to a server.
+	 */
+	McpClientTransport createTransport();
+
 }

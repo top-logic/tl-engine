@@ -14,10 +14,6 @@ import com.top_logic.basic.Logger;
 
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
-import io.modelcontextprotocol.client.transport.ServerParameters;
-import io.modelcontextprotocol.client.transport.StdioClientTransport;
-import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -34,18 +30,28 @@ class McpClientConnection {
 
 	private final String _serverName;
 
-	private final McpServerRegistry.McpServerConfig _config;
+	private final McpTransportConfig _transportConfig;
+
+	private final int _toolTimeoutSeconds;
 
 	private McpSyncClient _client;
 
 	private volatile List<McpSchema.Tool> _tools = Collections.emptyList();
 
 	/**
-	 * Creates a new connection for the given server configuration.
+	 * Creates a new connection for the given transport configuration.
+	 *
+	 * @param serverName
+	 *        Display name of the MCP server (used in log messages).
+	 * @param transportConfig
+	 *        The instantiated transport factory.
+	 * @param toolTimeoutSeconds
+	 *        Timeout in seconds for individual tool calls.
 	 */
-	McpClientConnection(String serverName, McpServerRegistry.McpServerConfig config) {
+	McpClientConnection(String serverName, McpTransportConfig transportConfig, int toolTimeoutSeconds) {
 		_serverName = serverName;
-		_config = config;
+		_transportConfig = transportConfig;
+		_toolTimeoutSeconds = toolTimeoutSeconds;
 	}
 
 	/**
@@ -55,9 +61,8 @@ class McpClientConnection {
 	 *         if the connection or initialization fails
 	 */
 	void connect() {
-		McpClientTransport transport = createTransport();
-		int timeoutSeconds = _config.getToolTimeoutSeconds();
-		Duration timeout = Duration.ofSeconds(timeoutSeconds > 0 ? timeoutSeconds : 60);
+		McpClientTransport transport = _transportConfig.createTransport();
+		Duration timeout = Duration.ofSeconds(_toolTimeoutSeconds > 0 ? _toolTimeoutSeconds : 60);
 
 		_client = McpClient.sync(transport)
 			.requestTimeout(timeout)
@@ -71,65 +76,6 @@ class McpClientConnection {
 
 		Logger.info("Connected to MCP server '" + _serverName + "', discovered "
 			+ _tools.size() + " tools.", McpClientConnection.class);
-	}
-
-	/**
-	 * Creates the appropriate transport based on the server configuration.
-	 */
-	private McpClientTransport createTransport() {
-		var transportConfig = _config.getTransport();
-
-		if (transportConfig instanceof StdioTransportConfig stdio) {
-			ServerParameters.Builder builder = ServerParameters.builder(stdio.getCommand());
-
-			List<String> args = stdio.getArgs();
-			if (args != null && !args.isEmpty()) {
-				builder.args(args);
-			}
-
-			Map<String, NamedValueConfig> env = stdio.getEnv();
-			if (env != null && !env.isEmpty()) {
-				Map<String, String> envMap = new java.util.HashMap<>();
-				for (NamedValueConfig entry : env.values()) {
-					envMap.put(entry.getName(), entry.getValue());
-				}
-				builder.env(envMap);
-			}
-
-			return new StdioClientTransport(builder.build(), McpJsonMapper.getDefault());
-		}
-
-		if (transportConfig instanceof HttpTransportConfig http) {
-			HttpClientStreamableHttpTransport.Builder builder =
-				HttpClientStreamableHttpTransport.builder(http.getUrl());
-
-			String bearerVar = http.getBearerTokenEnvVar();
-			if (bearerVar != null && !bearerVar.isEmpty()) {
-				String token = System.getenv(bearerVar);
-				if (token != null && !token.isEmpty()) {
-					builder.customizeRequest(req ->
-						req.header("Authorization", "Bearer " + token));
-				} else {
-					Logger.warn("Bearer token env var '" + bearerVar
-						+ "' is not set for MCP server '" + _serverName + "'.",
-						McpClientConnection.class);
-				}
-			}
-
-			Map<String, NamedValueConfig> headers = http.getHeaders();
-			if (headers != null && !headers.isEmpty()) {
-				builder.customizeRequest(req -> {
-					for (NamedValueConfig entry : headers.values()) {
-						req.header(entry.getName(), entry.getValue());
-					}
-				});
-			}
-
-			return builder.build();
-		}
-
-		throw new IllegalArgumentException(
-			"Unsupported transport config type: " + transportConfig.getClass().getName());
 	}
 
 	/**

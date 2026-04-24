@@ -24,38 +24,8 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getTid() */
 	public static final String TID__PROP = "tid";
 
-	/** @see #getOwner() */
-	public static final String OWNER__PROP = "owner";
-
-	/** @see #getType() */
-	public static final String TYPE__PROP = "type";
-
-	/** @see #isMandatory() */
-	public static final String MANDATORY__PROP = "mandatory";
-
-	/** @see #isMultiple() */
-	public static final String MULTIPLE__PROP = "multiple";
-
-	/** @see #isOrdered() */
-	public static final String ORDERED__PROP = "ordered";
-
-	/** @see #isBag() */
-	public static final String BAG__PROP = "bag";
-
-	/** @see #isAbstract() */
-	public static final String ABSTRACT__PROP = "abstract";
-
 	/** @see #isCreated() */
 	public static final String CREATED__PROP = "created";
-
-	/** @see #getResultMessage() */
-	public static final String RESULT_MESSAGE__PROP = "resultMessage";
-
-	/** @see #getLabel() */
-	public static final String LABEL__PROP = "label";
-
-	/** @see #getDescription() */
-	public static final String DESCRIPTION__PROP = "description";
 
 	private boolean _success = false;
 
@@ -63,27 +33,7 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 
 	private String _tid = "";
 
-	private String _owner = "";
-
-	private String _type = "";
-
-	private boolean _mandatory = false;
-
-	private boolean _multiple = false;
-
-	private boolean _ordered = false;
-
-	private boolean _bag = false;
-
-	private boolean _abstract = false;
-
 	private boolean _created = false;
-
-	private String _resultMessage = "";
-
-	private String _label = "";
-
-	private String _description = "";
 
 	/**
 	 * Creates a {@link PropertyResponse} instance.
@@ -155,146 +105,6 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	}
 
 	/**
-	 * Owner class (module:ClassName).
-	 */
-	public final String getOwner() {
-		return _owner;
-	}
-
-	/**
-	 * @see #getOwner()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setOwner(String value) {
-		internalSetOwner(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getOwner()} without chain call utility. */
-	protected final void internalSetOwner(String value) {
-		_owner = value;
-	}
-
-	/**
-	 * Property type name.
-	 */
-	public final String getType() {
-		return _type;
-	}
-
-	/**
-	 * @see #getType()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setType(String value) {
-		internalSetType(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getType()} without chain call utility. */
-	protected final void internalSetType(String value) {
-		_type = value;
-	}
-
-	/**
-	 * Whether mandatory.
-	 */
-	public final boolean isMandatory() {
-		return _mandatory;
-	}
-
-	/**
-	 * @see #isMandatory()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setMandatory(boolean value) {
-		internalSetMandatory(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isMandatory()} without chain call utility. */
-	protected final void internalSetMandatory(boolean value) {
-		_mandatory = value;
-	}
-
-	/**
-	 * Whether multiple-valued.
-	 */
-	public final boolean isMultiple() {
-		return _multiple;
-	}
-
-	/**
-	 * @see #isMultiple()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setMultiple(boolean value) {
-		internalSetMultiple(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isMultiple()} without chain call utility. */
-	protected final void internalSetMultiple(boolean value) {
-		_multiple = value;
-	}
-
-	/**
-	 * Whether ordered.
-	 */
-	public final boolean isOrdered() {
-		return _ordered;
-	}
-
-	/**
-	 * @see #isOrdered()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setOrdered(boolean value) {
-		internalSetOrdered(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isOrdered()} without chain call utility. */
-	protected final void internalSetOrdered(boolean value) {
-		_ordered = value;
-	}
-
-	/**
-	 * Whether bag.
-	 */
-	public final boolean isBag() {
-		return _bag;
-	}
-
-	/**
-	 * @see #isBag()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setBag(boolean value) {
-		internalSetBag(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isBag()} without chain call utility. */
-	protected final void internalSetBag(boolean value) {
-		_bag = value;
-	}
-
-	/**
-	 * Whether abstract.
-	 */
-	public final boolean isAbstract() {
-		return _abstract;
-	}
-
-	/**
-	 * @see #isAbstract()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setAbstract(boolean value) {
-		internalSetAbstract(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isAbstract()} without chain call utility. */
-	protected final void internalSetAbstract(boolean value) {
-		_abstract = value;
-	}
-
-	/**
 	 * Whether the property was newly created.
 	 */
 	public final boolean isCreated() {
@@ -314,66 +124,6 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_created = value;
 	}
 
-	/**
-	 * Human-readable result message.
-	 */
-	public final String getResultMessage() {
-		return _resultMessage;
-	}
-
-	/**
-	 * @see #getResultMessage()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setResultMessage(String value) {
-		internalSetResultMessage(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getResultMessage()} without chain call utility. */
-	protected final void internalSetResultMessage(String value) {
-		_resultMessage = value;
-	}
-
-	/**
-	 * Localized label.
-	 */
-	public final String getLabel() {
-		return _label;
-	}
-
-	/**
-	 * @see #getLabel()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setLabel(String value) {
-		internalSetLabel(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getLabel()} without chain call utility. */
-	protected final void internalSetLabel(String value) {
-		_label = value;
-	}
-
-	/**
-	 * Localized description.
-	 */
-	public final String getDescription() {
-		return _description;
-	}
-
-	/**
-	 * @see #getDescription()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse setDescription(String value) {
-		internalSetDescription(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getDescription()} without chain call utility. */
-	protected final void internalSetDescription(String value) {
-		_description = value;
-	}
-
 	@Override
 	public String jsonType() {
 		return PROPERTY_RESPONSE__TYPE;
@@ -385,17 +135,7 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			SUCCESS__PROP, 
 			NAME__PROP, 
 			TID__PROP, 
-			OWNER__PROP, 
-			TYPE__PROP, 
-			MANDATORY__PROP, 
-			MULTIPLE__PROP, 
-			ORDERED__PROP, 
-			BAG__PROP, 
-			ABSTRACT__PROP, 
-			CREATED__PROP, 
-			RESULT_MESSAGE__PROP, 
-			LABEL__PROP, 
-			DESCRIPTION__PROP);
+			CREATED__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -423,17 +163,7 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case SUCCESS__PROP: return isSuccess();
 			case NAME__PROP: return getName();
 			case TID__PROP: return getTid();
-			case OWNER__PROP: return getOwner();
-			case TYPE__PROP: return getType();
-			case MANDATORY__PROP: return isMandatory();
-			case MULTIPLE__PROP: return isMultiple();
-			case ORDERED__PROP: return isOrdered();
-			case BAG__PROP: return isBag();
-			case ABSTRACT__PROP: return isAbstract();
 			case CREATED__PROP: return isCreated();
-			case RESULT_MESSAGE__PROP: return getResultMessage();
-			case LABEL__PROP: return getLabel();
-			case DESCRIPTION__PROP: return getDescription();
 			default: return null;
 		}
 	}
@@ -444,17 +174,7 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case SUCCESS__PROP: internalSetSuccess((boolean) value); break;
 			case NAME__PROP: internalSetName((String) value); break;
 			case TID__PROP: internalSetTid((String) value); break;
-			case OWNER__PROP: internalSetOwner((String) value); break;
-			case TYPE__PROP: internalSetType((String) value); break;
-			case MANDATORY__PROP: internalSetMandatory((boolean) value); break;
-			case MULTIPLE__PROP: internalSetMultiple((boolean) value); break;
-			case ORDERED__PROP: internalSetOrdered((boolean) value); break;
-			case BAG__PROP: internalSetBag((boolean) value); break;
-			case ABSTRACT__PROP: internalSetAbstract((boolean) value); break;
 			case CREATED__PROP: internalSetCreated((boolean) value); break;
-			case RESULT_MESSAGE__PROP: internalSetResultMessage((String) value); break;
-			case LABEL__PROP: internalSetLabel((String) value); break;
-			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 		}
 	}
 
@@ -479,28 +199,8 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		out.value(getName());
 		out.name(TID__PROP);
 		out.value(getTid());
-		out.name(OWNER__PROP);
-		out.value(getOwner());
-		out.name(TYPE__PROP);
-		out.value(getType());
-		out.name(MANDATORY__PROP);
-		out.value(isMandatory());
-		out.name(MULTIPLE__PROP);
-		out.value(isMultiple());
-		out.name(ORDERED__PROP);
-		out.value(isOrdered());
-		out.name(BAG__PROP);
-		out.value(isBag());
-		out.name(ABSTRACT__PROP);
-		out.value(isAbstract());
 		out.name(CREATED__PROP);
 		out.value(isCreated());
-		out.name(RESULT_MESSAGE__PROP);
-		out.value(getResultMessage());
-		out.name(LABEL__PROP);
-		out.value(getLabel());
-		out.name(DESCRIPTION__PROP);
-		out.value(getDescription());
 	}
 
 	@Override
@@ -509,17 +209,7 @@ public class PropertyResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case SUCCESS__PROP: setSuccess(in.nextBoolean()); break;
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TID__PROP: setTid(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case OWNER__PROP: setOwner(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case MANDATORY__PROP: setMandatory(in.nextBoolean()); break;
-			case MULTIPLE__PROP: setMultiple(in.nextBoolean()); break;
-			case ORDERED__PROP: setOrdered(in.nextBoolean()); break;
-			case BAG__PROP: setBag(in.nextBoolean()); break;
-			case ABSTRACT__PROP: setAbstract(in.nextBoolean()); break;
 			case CREATED__PROP: setCreated(in.nextBoolean()); break;
-			case RESULT_MESSAGE__PROP: setResultMessage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

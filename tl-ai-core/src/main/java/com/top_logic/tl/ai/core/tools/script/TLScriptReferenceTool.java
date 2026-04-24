@@ -168,8 +168,6 @@ public class TLScriptReferenceTool {
 
 					// Build response using msgbuf data class
 					FunctionDocResult result = FunctionDocResult.create()
-						.setFunctionName(functionName)
-						.setHasDocumentation(documentation.isPresent())
 						.setParameters(parameters);
 
 					if (documentation.isPresent()) {

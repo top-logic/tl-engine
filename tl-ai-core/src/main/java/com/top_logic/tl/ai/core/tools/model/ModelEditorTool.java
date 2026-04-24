@@ -20,7 +20,6 @@ import com.top_logic.tl.ai.core.tools.model.messages.BackwardReferenceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.ClassResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.DeleteResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.DeletionBlocker;
-import com.top_logic.tl.ai.core.tools.model.messages.EnumClassifierInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.EnumResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse;
@@ -178,11 +177,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(module.getName());
 		response.setTid(module.tId().asString());
-		response.setTypeCount(module.getTypes().size());
 		response.setCreated(created);
-		response.setResultMessage(created
-			? "Module '" + module.getName() + "' created successfully"
-			: "Module '" + module.getName() + "' already existed");
 		return response;
 	}
 
@@ -250,9 +245,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(module.getName());
 		response.setTid(module.tId().asString());
-		response.setTypeCount(module.getTypes().size());
 		response.setCreated(false);
-		response.setResultMessage("Module '" + module.getName() + "' updated successfully");
 		return response;
 	}
 
@@ -357,12 +350,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(tlClass.getName());
 		response.setTid(tlClass.tId().asString());
-		response.setModule(tlClass.getModule().getName());
-		response.setPartCount(tlClass.getLocalClassParts().size());
 		response.setCreated(created);
-		response.setResultMessage(created
-			? "Class '" + tlClass.getName() + "' created successfully in module '" + moduleName + "'"
-			: "Class '" + tlClass.getName() + "' already existed in module '" + moduleName + "'");
 		return response;
 	}
 
@@ -469,12 +457,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(tlClass.getName());
 		response.setTid(tlClass.tId().asString());
-		response.setModule(tlClass.getModule().getName());
-		response.setPartCount(tlClass.getLocalClassParts().size());
-		response.setLabel(ToolI18NUtil.getLabel(tlClass));
-		response.setDescription(ToolI18NUtil.getDescription(tlClass));
 		response.setCreated(false);
-		response.setResultMessage("Class '" + tlClass.getName() + "' updated successfully");
 		return response;
 	}
 
@@ -596,17 +579,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(property.getName());
 		response.setTid(property.tId().asString());
-		response.setOwner(TLModelUtil.qualifiedName(property.getOwner()));
-		response.setType(property.getType().getName());
-		response.setMandatory(property.isMandatory());
-		response.setMultiple(property.isMultiple());
-		response.setOrdered(property.isOrdered());
-		response.setBag(property.isBag());
-		response.setAbstract(property.isAbstract());
 		response.setCreated(created);
-		response.setResultMessage(created
-			? "Property '" + property.getName() + "' created successfully in class '" + className + "'"
-			: "Property '" + property.getName() + "' already existed in class '" + className + "'");
 		return response;
 	}
 
@@ -716,15 +689,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(existingPart.getName());
 		response.setTid(existingPart.tId().asString());
-		response.setOwner(TLModelUtil.qualifiedName(existingPart.getOwner()));
-		response.setType(existingPart.getType().getName());
-		response.setMandatory(existingPart.isMandatory());
-		response.setMultiple(existingPart.isMultiple());
-		response.setOrdered(existingPart.isOrdered());
-		response.setBag(existingPart.isBag());
-		response.setAbstract(existingPart.isAbstract());
 		response.setCreated(false);
-		response.setResultMessage("Property '" + propertyName + "' updated successfully");
 		return response;
 	}
 
@@ -1004,7 +969,7 @@ public class ModelEditorTool {
 					"Part '" + backwardReferenceName + "' already exists on class '" + targetClass.getName()
 						+ "' but is not a reference");
 			}
-			return buildBackwardReferenceResponse(backwardRef, forwardRef, false);
+			return buildBackwardReferenceResponse(backwardRef, false);
 		}
 
 		// Get backward end
@@ -1040,7 +1005,7 @@ public class ModelEditorTool {
 
 		ToolI18NUtil.applyIfPresent(backwardRef, ToolI18NUtil.create(labelEn, labelDe, descEn, descDe));
 
-		return buildBackwardReferenceResponse(backwardRef, forwardRef, true);
+		return buildBackwardReferenceResponse(backwardRef, true);
 	}
 
 	// ===== Enumeration Operations =====
@@ -1671,42 +1636,17 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(reference.getName());
 		response.setTid(reference.tId().asString());
-		response.setOwner(TLModelUtil.qualifiedName(reference.getOwner()));
-		response.setTargetType(TLModelUtil.qualifiedName(reference.getType()));
-		response.setMandatory(reference.isMandatory());
-		response.setMultiple(reference.isMultiple());
-		response.setOrdered(reference.isOrdered());
-		response.setBag(reference.isBag());
-		response.setAbstract(reference.isAbstract());
-		response.setComposite(reference.isComposite());
-		response.setAggregate(reference.isAggregate());
-		response.setNavigate(reference.getEnd().canNavigate());
-		response.setHistoryType(reference.getHistoryType().getExternalName());
-		response.setDeletionPolicy(reference.getDeletionPolicy().getExternalName());
 		response.setCreated(created);
-		response.setResultMessage(created
-			? "Reference '" + reference.getName() + "' created successfully in class '" + reference.getOwner().getName() + "'"
-			: "Reference '" + reference.getName() + "' already existed in class '" + reference.getOwner().getName() + "'");
 		return response;
 	}
 
 	private static BackwardReferenceResponse buildBackwardReferenceResponse(
-			TLReference backwardRef, TLReference forwardRef, boolean created) {
+			TLReference backwardRef, boolean created) {
 		BackwardReferenceResponse response = BackwardReferenceResponse.create();
 		response.setSuccess(true);
 		response.setName(backwardRef.getName());
 		response.setTid(backwardRef.tId().asString());
-		response.setOwner(TLModelUtil.qualifiedName(backwardRef.getOwner()));
-		response.setTargetType(TLModelUtil.qualifiedName(backwardRef.getType()));
-		response.setMandatory(backwardRef.isMandatory());
-		response.setMultiple(backwardRef.isMultiple());
-		response.setNavigate(backwardRef.getEnd().canNavigate());
-		response.setForwardReferenceName(forwardRef.getName());
-		response.setForwardReferenceOwner(TLModelUtil.qualifiedName(forwardRef.getOwner()));
 		response.setCreated(created);
-		response.setResultMessage(created
-			? "Backward reference '" + backwardRef.getName() + "' created successfully in class '" + backwardRef.getOwner().getName() + "'"
-			: "Backward reference '" + backwardRef.getName() + "' already existed in class '" + backwardRef.getOwner().getName() + "'");
 		return response;
 	}
 
@@ -1715,20 +1655,7 @@ public class ModelEditorTool {
 		response.setSuccess(true);
 		response.setName(enumeration.getName());
 		response.setTid(enumeration.tId().asString());
-		response.setModule(enumeration.getModule().getName());
-		response.setClassifierCount(enumeration.getClassifiers().size());
 		response.setCreated(created);
-
-		for (TLClassifier classifier : enumeration.getClassifiers()) {
-			EnumClassifierInfo info = EnumClassifierInfo.create();
-			info.setName(classifier.getName());
-			info.setDefault(classifier.isDefault());
-			response.addClassifier(info);
-		}
-
-		response.setResultMessage(created
-			? "Enumeration '" + enumeration.getName() + "' created successfully in module '" + enumeration.getModule().getName() + "'"
-			: "Enumeration '" + enumeration.getName() + "' already existed in module '" + enumeration.getModule().getName() + "'");
 		return response;
 	}
 

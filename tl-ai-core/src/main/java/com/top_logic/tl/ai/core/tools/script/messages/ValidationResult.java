@@ -18,9 +18,6 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #isValid() */
 	public static final String VALID__PROP = "valid";
 
-	/** @see #getMessage() */
-	public static final String MESSAGE__PROP = "message";
-
 	/** @see #getError() */
 	public static final String ERROR__PROP = "error";
 
@@ -28,8 +25,6 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public static final String EXPR__PROP = "expr";
 
 	private boolean _valid = false;
-
-	private String _message = "";
 
 	private com.top_logic.tl.ai.core.tools.script.messages.ValidationError _error = null;
 
@@ -62,26 +57,6 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** Internal setter for {@link #isValid()} without chain call utility. */
 	protected final void internalSetValid(boolean value) {
 		_valid = value;
-	}
-
-	/**
-	 * Message describing validation success.
-	 */
-	public final String getMessage() {
-		return _message;
-	}
-
-	/**
-	 * @see #getMessage()
-	 */
-	public com.top_logic.tl.ai.core.tools.script.messages.ValidationResult setMessage(String value) {
-		internalSetMessage(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getMessage()} without chain call utility. */
-	protected final void internalSetMessage(String value) {
-		_message = value;
 	}
 
 	/**
@@ -150,9 +125,8 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			VALID__PROP, 
-			MESSAGE__PROP, 
-			ERROR__PROP, 
+			VALID__PROP,
+			ERROR__PROP,
 			EXPR__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
@@ -179,7 +153,6 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public Object get(String field) {
 		switch (field) {
 			case VALID__PROP: return isValid();
-			case MESSAGE__PROP: return getMessage();
 			case ERROR__PROP: return getError();
 			case EXPR__PROP: return getExpr();
 			default: return null;
@@ -190,7 +163,6 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public void set(String field, Object value) {
 		switch (field) {
 			case VALID__PROP: internalSetValid((boolean) value); break;
-			case MESSAGE__PROP: internalSetMessage((String) value); break;
 			case ERROR__PROP: internalSetError((com.top_logic.tl.ai.core.tools.script.messages.ValidationError) value); break;
 			case EXPR__PROP: internalSetExpr((com.top_logic.model.search.expr.config.dom.Expr) value); break;
 		}
@@ -213,8 +185,6 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 		super.writeFields(out);
 		out.name(VALID__PROP);
 		out.value(isValid());
-		out.name(MESSAGE__PROP);
-		out.value(getMessage());
 		if (hasError()) {
 			out.name(ERROR__PROP);
 			getError().writeTo(out);
@@ -225,7 +195,6 @@ public class ValidationResult extends de.haumacher.msgbuf.data.AbstractDataObjec
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case VALID__PROP: setValid(in.nextBoolean()); break;
-			case MESSAGE__PROP: setMessage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ERROR__PROP: setError(com.top_logic.tl.ai.core.tools.script.messages.ValidationError.readValidationError(in)); break;
 			default: super.readField(in, field);
 		}

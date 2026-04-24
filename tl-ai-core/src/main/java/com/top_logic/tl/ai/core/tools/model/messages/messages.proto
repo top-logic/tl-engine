@@ -636,21 +636,6 @@ message AnnotationEditorResponse {
 	bool success;
 
 	/**
-	 * Target reference (module, type, or part).
-	 */
-	string target;
-
-	/**
-	 * Kind of target: module, type, enumeration, part, or classifier.
-	 */
-	string kind;
-
-	/**
-	 * Configuration interface class name.
-	 */
-	string configInterface;
-
-	/**
 	 * Human-readable result message.
 	 */
 	string detail;
@@ -822,11 +807,6 @@ message SearchResponse {
 	bool success;
 
 	/**
-	 * Search query.
-	 */
-	string query;
-
-	/**
 	 * Number of results.
 	 */
 	int resultCount;
@@ -864,29 +844,9 @@ message ModuleResponse {
 	string tid;
 
 	/**
-	 * Number of types in the module.
-	 */
-	long typeCount;
-
-	/**
 	 * Whether the module was newly created.
 	 */
 	bool created;
-
-	/**
-	 * Human-readable result message.
-	 */
-	string resultMessage;
-
-	/**
-	 * Localized label.
-	 */
-	string label;
-
-	/**
-	 * Localized description.
-	 */
-	string description;
 }
 
 /**
@@ -909,34 +869,9 @@ message ClassResponse {
 	string tid;
 
 	/**
-	 * Module name.
-	 */
-	string module;
-
-	/**
-	 * Number of local parts.
-	 */
-	int partCount;
-
-	/**
 	 * Whether the class was newly created.
 	 */
 	bool created;
-
-	/**
-	 * Human-readable result message.
-	 */
-	string resultMessage;
-
-	/**
-	 * Localized label.
-	 */
-	string label;
-
-	/**
-	 * Localized description.
-	 */
-	string description;
 }
 
 /**
@@ -959,59 +894,9 @@ message PropertyResponse {
 	string tid;
 
 	/**
-	 * Owner class (module:ClassName).
-	 */
-	string owner;
-
-	/**
-	 * Property type name.
-	 */
-	string type;
-
-	/**
-	 * Whether mandatory.
-	 */
-	bool mandatory;
-
-	/**
-	 * Whether multiple-valued.
-	 */
-	bool multiple;
-
-	/**
-	 * Whether ordered.
-	 */
-	bool ordered;
-
-	/**
-	 * Whether bag.
-	 */
-	bool bag;
-
-	/**
-	 * Whether abstract.
-	 */
-	bool `abstract`;
-
-	/**
 	 * Whether the property was newly created.
 	 */
 	bool created;
-
-	/**
-	 * Human-readable result message.
-	 */
-	string resultMessage;
-
-	/**
-	 * Localized label.
-	 */
-	string label;
-
-	/**
-	 * Localized description.
-	 */
-	string description;
 }
 
 /**
@@ -1034,84 +919,9 @@ message ReferenceResponse {
 	string tid;
 
 	/**
-	 * Owner class (module:ClassName).
-	 */
-	string owner;
-
-	/**
-	 * Target type (module:ClassName).
-	 */
-	string targetType;
-
-	/**
-	 * Whether mandatory.
-	 */
-	bool mandatory;
-
-	/**
-	 * Whether multiple-valued.
-	 */
-	bool multiple;
-
-	/**
-	 * Whether ordered.
-	 */
-	bool ordered;
-
-	/**
-	 * Whether bag.
-	 */
-	bool bag;
-
-	/**
-	 * Whether abstract.
-	 */
-	bool `abstract`;
-
-	/**
-	 * Whether composite.
-	 */
-	bool composite;
-
-	/**
-	 * Whether aggregate.
-	 */
-	bool aggregate;
-
-	/**
-	 * Whether navigable.
-	 */
-	bool navigate;
-
-	/**
-	 * History type.
-	 */
-	string historyType;
-
-	/**
-	 * Deletion policy.
-	 */
-	string deletionPolicy;
-
-	/**
 	 * Whether the reference was newly created.
 	 */
 	bool created;
-
-	/**
-	 * Human-readable result message.
-	 */
-	string resultMessage;
-
-	/**
-	 * Localized label.
-	 */
-	string label;
-
-	/**
-	 * Localized description.
-	 */
-	string description;
 }
 
 /**
@@ -1134,74 +944,9 @@ message BackwardReferenceResponse {
 	string tid;
 
 	/**
-	 * Owner class (module:ClassName).
-	 */
-	string owner;
-
-	/**
-	 * Target type (module:ClassName).
-	 */
-	string targetType;
-
-	/**
-	 * Whether mandatory.
-	 */
-	bool mandatory;
-
-	/**
-	 * Whether multiple-valued.
-	 */
-	bool multiple;
-
-	/**
-	 * Whether navigable.
-	 */
-	bool navigate;
-
-	/**
-	 * Forward reference name.
-	 */
-	string forwardReferenceName;
-
-	/**
-	 * Forward reference owner (module:ClassName).
-	 */
-	string forwardReferenceOwner;
-
-	/**
 	 * Whether the backward reference was newly created.
 	 */
 	bool created;
-
-	/**
-	 * Human-readable result message.
-	 */
-	string resultMessage;
-
-	/**
-	 * Localized label.
-	 */
-	string label;
-
-	/**
-	 * Localized description.
-	 */
-	string description;
-}
-
-/**
- * Classifier info used in enumeration responses.
- */
-message EnumClassifierInfo {
-	/**
-	 * Classifier name.
-	 */
-	string name;
-
-	/**
-	 * Whether this is the default classifier.
-	 */
-	bool `default`;
 }
 
 /**
@@ -1224,39 +969,9 @@ message EnumResponse {
 	string tid;
 
 	/**
-	 * Module name.
-	 */
-	string module;
-
-	/**
-	 * Number of classifiers.
-	 */
-	int classifierCount;
-
-	/**
-	 * Classifiers in the enumeration.
-	 */
-	repeated EnumClassifierInfo classifiers;
-
-	/**
 	 * Whether the enumeration was newly created.
 	 */
 	bool created;
-
-	/**
-	 * Human-readable result message.
-	 */
-	string resultMessage;
-
-	/**
-	 * Localized label.
-	 */
-	string label;
-
-	/**
-	 * Localized description.
-	 */
-	string description;
 }
 
 // ===== ModelEditorTool Delete Messages =====

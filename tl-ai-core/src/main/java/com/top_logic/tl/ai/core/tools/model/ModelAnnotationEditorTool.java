@@ -220,10 +220,6 @@ public class ModelAnnotationEditorTool {
 		// 5. Build response
 		AnnotationEditorResponse response = AnnotationEditorResponse.create();
 		response.setSuccess(true);
-		response.setTarget(targetRef);
-		response.setKind(kind);
-		response.setConfigInterface(configInterfaceName);
-		response.setDetail("Annotation removed successfully");
 		return response;
 	}
 

@@ -84,9 +84,4 @@ message LayoutCreateResponse {
 	 * The layout key of the created layout.
 	 */
 	string layoutKey;
-
-	/**
-	 * Detail text describing the result of the operation.
-	 */
-	string detail;
 }

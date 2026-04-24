@@ -335,7 +335,6 @@ public class LayoutTemplateTool {
 					LayoutCreateResponse result = LayoutCreateResponse.create();
 					result.setSuccess(true);
 					result.setLayoutKey(layoutKey);
-					result.setDetail("Layout created successfully from template: " + templateName);
 					return result;
 				});
 

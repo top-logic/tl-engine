@@ -24,20 +24,8 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getTid() */
 	public static final String TID__PROP = "tid";
 
-	/** @see #getTypeCount() */
-	public static final String TYPE_COUNT__PROP = "typeCount";
-
 	/** @see #isCreated() */
 	public static final String CREATED__PROP = "created";
-
-	/** @see #getResultMessage() */
-	public static final String RESULT_MESSAGE__PROP = "resultMessage";
-
-	/** @see #getLabel() */
-	public static final String LABEL__PROP = "label";
-
-	/** @see #getDescription() */
-	public static final String DESCRIPTION__PROP = "description";
 
 	private boolean _success = false;
 
@@ -45,15 +33,7 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 
 	private String _tid = "";
 
-	private long _typeCount = 0L;
-
 	private boolean _created = false;
-
-	private String _resultMessage = "";
-
-	private String _label = "";
-
-	private String _description = "";
 
 	/**
 	 * Creates a {@link ModuleResponse} instance.
@@ -125,26 +105,6 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	}
 
 	/**
-	 * Number of types in the module.
-	 */
-	public final long getTypeCount() {
-		return _typeCount;
-	}
-
-	/**
-	 * @see #getTypeCount()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse setTypeCount(long value) {
-		internalSetTypeCount(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getTypeCount()} without chain call utility. */
-	protected final void internalSetTypeCount(long value) {
-		_typeCount = value;
-	}
-
-	/**
 	 * Whether the module was newly created.
 	 */
 	public final boolean isCreated() {
@@ -164,66 +124,6 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_created = value;
 	}
 
-	/**
-	 * Human-readable result message.
-	 */
-	public final String getResultMessage() {
-		return _resultMessage;
-	}
-
-	/**
-	 * @see #getResultMessage()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse setResultMessage(String value) {
-		internalSetResultMessage(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getResultMessage()} without chain call utility. */
-	protected final void internalSetResultMessage(String value) {
-		_resultMessage = value;
-	}
-
-	/**
-	 * Localized label.
-	 */
-	public final String getLabel() {
-		return _label;
-	}
-
-	/**
-	 * @see #getLabel()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse setLabel(String value) {
-		internalSetLabel(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getLabel()} without chain call utility. */
-	protected final void internalSetLabel(String value) {
-		_label = value;
-	}
-
-	/**
-	 * Localized description.
-	 */
-	public final String getDescription() {
-		return _description;
-	}
-
-	/**
-	 * @see #getDescription()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse setDescription(String value) {
-		internalSetDescription(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getDescription()} without chain call utility. */
-	protected final void internalSetDescription(String value) {
-		_description = value;
-	}
-
 	@Override
 	public String jsonType() {
 		return MODULE_RESPONSE__TYPE;
@@ -235,11 +135,7 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 			SUCCESS__PROP, 
 			NAME__PROP, 
 			TID__PROP, 
-			TYPE_COUNT__PROP, 
-			CREATED__PROP, 
-			RESULT_MESSAGE__PROP, 
-			LABEL__PROP, 
-			DESCRIPTION__PROP);
+			CREATED__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -267,11 +163,7 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case SUCCESS__PROP: return isSuccess();
 			case NAME__PROP: return getName();
 			case TID__PROP: return getTid();
-			case TYPE_COUNT__PROP: return getTypeCount();
 			case CREATED__PROP: return isCreated();
-			case RESULT_MESSAGE__PROP: return getResultMessage();
-			case LABEL__PROP: return getLabel();
-			case DESCRIPTION__PROP: return getDescription();
 			default: return null;
 		}
 	}
@@ -282,11 +174,7 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case SUCCESS__PROP: internalSetSuccess((boolean) value); break;
 			case NAME__PROP: internalSetName((String) value); break;
 			case TID__PROP: internalSetTid((String) value); break;
-			case TYPE_COUNT__PROP: internalSetTypeCount((long) value); break;
 			case CREATED__PROP: internalSetCreated((boolean) value); break;
-			case RESULT_MESSAGE__PROP: internalSetResultMessage((String) value); break;
-			case LABEL__PROP: internalSetLabel((String) value); break;
-			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 		}
 	}
 
@@ -311,16 +199,8 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 		out.value(getName());
 		out.name(TID__PROP);
 		out.value(getTid());
-		out.name(TYPE_COUNT__PROP);
-		out.value(getTypeCount());
 		out.name(CREATED__PROP);
 		out.value(isCreated());
-		out.name(RESULT_MESSAGE__PROP);
-		out.value(getResultMessage());
-		out.name(LABEL__PROP);
-		out.value(getLabel());
-		out.name(DESCRIPTION__PROP);
-		out.value(getDescription());
 	}
 
 	@Override
@@ -329,11 +209,7 @@ public class ModuleResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case SUCCESS__PROP: setSuccess(in.nextBoolean()); break;
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TID__PROP: setTid(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case TYPE_COUNT__PROP: setTypeCount(in.nextLong()); break;
 			case CREATED__PROP: setCreated(in.nextBoolean()); break;
-			case RESULT_MESSAGE__PROP: setResultMessage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

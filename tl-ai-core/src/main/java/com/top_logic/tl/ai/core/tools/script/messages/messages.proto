@@ -21,16 +21,6 @@ message FunctionListResult {
  */
 message FunctionDocResult {
 	/**
-	 * Name of the function.
-	 */
-	string functionName;
-
-	/**
-	 * Whether documentation is available for this function.
-	 */
-	bool hasDocumentation;
-
-	/**
 	 * The function documentation in Markdown format (when available).
 	 */
 	string documentation;

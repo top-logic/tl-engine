@@ -325,7 +325,6 @@ public class TLScriptExecutor {
 			// Success - all validation passed
 			return ValidationResult.create()
 				.setValid(true)
-				.setMessage("TLScript is valid")
 				.setExpr(expr);
 
 		} catch (ParseException ex) {

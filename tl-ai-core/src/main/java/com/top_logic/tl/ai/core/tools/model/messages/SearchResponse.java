@@ -18,9 +18,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #isSuccess() */
 	public static final String SUCCESS__PROP = "success";
 
-	/** @see #getQuery() */
-	public static final String QUERY__PROP = "query";
-
 	/** @see #getResultCount() */
 	public static final String RESULT_COUNT__PROP = "resultCount";
 
@@ -31,8 +28,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public static final String ERROR__PROP = "error";
 
 	private boolean _success = false;
-
-	private String _query = "";
 
 	private int _resultCount = 0;
 
@@ -67,26 +62,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** Internal setter for {@link #isSuccess()} without chain call utility. */
 	protected final void internalSetSuccess(boolean value) {
 		_success = value;
-	}
-
-	/**
-	 * Search query.
-	 */
-	public final String getQuery() {
-		return _query;
-	}
-
-	/**
-	 * @see #getQuery()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.SearchResponse setQuery(String value) {
-		internalSetQuery(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getQuery()} without chain call utility. */
-	protected final void internalSetQuery(String value) {
-		_query = value;
 	}
 
 	/**
@@ -180,7 +155,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			SUCCESS__PROP, 
-			QUERY__PROP, 
 			RESULT_COUNT__PROP, 
 			RESULTS__PROP, 
 			ERROR__PROP);
@@ -209,7 +183,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public Object get(String field) {
 		switch (field) {
 			case SUCCESS__PROP: return isSuccess();
-			case QUERY__PROP: return getQuery();
 			case RESULT_COUNT__PROP: return getResultCount();
 			case RESULTS__PROP: return getResults();
 			case ERROR__PROP: return getError();
@@ -221,7 +194,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	public void set(String field, Object value) {
 		switch (field) {
 			case SUCCESS__PROP: internalSetSuccess((boolean) value); break;
-			case QUERY__PROP: internalSetQuery((String) value); break;
 			case RESULT_COUNT__PROP: internalSetResultCount((int) value); break;
 			case RESULTS__PROP: internalSetResults(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.tools.model.messages.SearchResult.class, value)); break;
 			case ERROR__PROP: internalSetError((String) value); break;
@@ -245,8 +217,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 		super.writeFields(out);
 		out.name(SUCCESS__PROP);
 		out.value(isSuccess());
-		out.name(QUERY__PROP);
-		out.value(getQuery());
 		out.name(RESULT_COUNT__PROP);
 		out.value(getResultCount());
 		out.name(RESULTS__PROP);
@@ -263,7 +233,6 @@ public class SearchResponse extends de.haumacher.msgbuf.data.AbstractDataObject 
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case SUCCESS__PROP: setSuccess(in.nextBoolean()); break;
-			case QUERY__PROP: setQuery(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case RESULT_COUNT__PROP: setResultCount(in.nextInt()); break;
 			case RESULTS__PROP: {
 				java.util.List<com.top_logic.tl.ai.core.tools.model.messages.SearchResult> newValue = new java.util.ArrayList<>();

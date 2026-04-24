@@ -15,12 +15,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** Identifier for the {@link com.top_logic.tl.ai.core.tools.script.messages.FunctionDocResult} type in JSON format. */
 	public static final String FUNCTION_DOC_RESULT__TYPE = "FunctionDocResult";
 
-	/** @see #getFunctionName() */
-	public static final String FUNCTION_NAME__PROP = "functionName";
-
-	/** @see #isHasDocumentation() */
-	public static final String HAS_DOCUMENTATION__PROP = "hasDocumentation";
-
 	/** @see #getDocumentation() */
 	public static final String DOCUMENTATION__PROP = "documentation";
 
@@ -29,10 +23,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 
 	/** @see #getErrorMessage() */
 	public static final String ERROR_MESSAGE__PROP = "errorMessage";
-
-	private String _functionName = "";
-
-	private boolean _hasDocumentation = false;
 
 	private String _documentation = "";
 
@@ -47,46 +37,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 	 */
 	protected FunctionDocResult() {
 		super();
-	}
-
-	/**
-	 * Name of the function.
-	 */
-	public final String getFunctionName() {
-		return _functionName;
-	}
-
-	/**
-	 * @see #getFunctionName()
-	 */
-	public com.top_logic.tl.ai.core.tools.script.messages.FunctionDocResult setFunctionName(String value) {
-		internalSetFunctionName(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getFunctionName()} without chain call utility. */
-	protected final void internalSetFunctionName(String value) {
-		_functionName = value;
-	}
-
-	/**
-	 * Whether documentation is available for this function.
-	 */
-	public final boolean isHasDocumentation() {
-		return _hasDocumentation;
-	}
-
-	/**
-	 * @see #isHasDocumentation()
-	 */
-	public com.top_logic.tl.ai.core.tools.script.messages.FunctionDocResult setHasDocumentation(boolean value) {
-		internalSetHasDocumentation(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isHasDocumentation()} without chain call utility. */
-	protected final void internalSetHasDocumentation(boolean value) {
-		_hasDocumentation = value;
 	}
 
 	/**
@@ -179,8 +129,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
-			FUNCTION_NAME__PROP, 
-			HAS_DOCUMENTATION__PROP, 
 			DOCUMENTATION__PROP, 
 			PARAMETERS__PROP, 
 			ERROR_MESSAGE__PROP);
@@ -208,8 +156,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 	@Override
 	public Object get(String field) {
 		switch (field) {
-			case FUNCTION_NAME__PROP: return getFunctionName();
-			case HAS_DOCUMENTATION__PROP: return isHasDocumentation();
 			case DOCUMENTATION__PROP: return getDocumentation();
 			case PARAMETERS__PROP: return getParameters();
 			case ERROR_MESSAGE__PROP: return getErrorMessage();
@@ -220,8 +166,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case FUNCTION_NAME__PROP: internalSetFunctionName((String) value); break;
-			case HAS_DOCUMENTATION__PROP: internalSetHasDocumentation((boolean) value); break;
 			case DOCUMENTATION__PROP: internalSetDocumentation((String) value); break;
 			case PARAMETERS__PROP: internalSetParameters(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case ERROR_MESSAGE__PROP: internalSetErrorMessage((String) value); break;
@@ -243,10 +187,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(FUNCTION_NAME__PROP);
-		out.value(getFunctionName());
-		out.name(HAS_DOCUMENTATION__PROP);
-		out.value(isHasDocumentation());
 		out.name(DOCUMENTATION__PROP);
 		out.value(getDocumentation());
 		out.name(PARAMETERS__PROP);
@@ -262,8 +202,6 @@ public class FunctionDocResult extends de.haumacher.msgbuf.data.AbstractDataObje
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case FUNCTION_NAME__PROP: setFunctionName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case HAS_DOCUMENTATION__PROP: setHasDocumentation(in.nextBoolean()); break;
 			case DOCUMENTATION__PROP: setDocumentation(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case PARAMETERS__PROP: {
 				java.util.List<String> newValue = new java.util.ArrayList<>();

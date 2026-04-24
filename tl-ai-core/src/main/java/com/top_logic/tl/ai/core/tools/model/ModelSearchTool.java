@@ -145,8 +145,6 @@ public class ModelSearchTool {
 			SearchResponse errorResponse = SearchResponse.create();
 			errorResponse.setSuccess(false);
 			errorResponse.setError("Search failed: " + ex.getMessage());
-			errorResponse.setQuery(query != null ? query : "");
-			errorResponse.setResultCount(0);
 
 			Map<String, Object> args = new HashMap<>();
 			args.put("query", query);
@@ -583,7 +581,6 @@ public class ModelSearchTool {
 		// Build response using data classes
 		SearchResponse response = SearchResponse.create();
 		response.setSuccess(true);
-		response.setQuery(query);
 		response.setResultCount(results.size());
 
 		// Add results directly (no conversion needed)

@@ -21,14 +21,9 @@ public class LayoutCreateResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	/** @see #getLayoutKey() */
 	public static final String LAYOUT_KEY__PROP = "layoutKey";
 
-	/** @see #getDetail() */
-	public static final String DETAIL__PROP = "detail";
-
 	private boolean _success = false;
 
 	private String _layoutKey = "";
-
-	private String _detail = "";
 
 	/**
 	 * Creates a {@link LayoutCreateResponse} instance.
@@ -79,26 +74,6 @@ public class LayoutCreateResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		_layoutKey = value;
 	}
 
-	/**
-	 * Detail text describing the result of the operation.
-	 */
-	public final String getDetail() {
-		return _detail;
-	}
-
-	/**
-	 * @see #getDetail()
-	 */
-	public com.top_logic.tl.ai.core.tools.config.messages.LayoutCreateResponse setDetail(String value) {
-		internalSetDetail(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getDetail()} without chain call utility. */
-	protected final void internalSetDetail(String value) {
-		_detail = value;
-	}
-
 	@Override
 	public String jsonType() {
 		return LAYOUT_CREATE_RESPONSE__TYPE;
@@ -108,8 +83,7 @@ public class LayoutCreateResponse extends de.haumacher.msgbuf.data.AbstractDataO
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			SUCCESS__PROP, 
-			LAYOUT_KEY__PROP, 
-			DETAIL__PROP);
+			LAYOUT_KEY__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -136,7 +110,6 @@ public class LayoutCreateResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		switch (field) {
 			case SUCCESS__PROP: return isSuccess();
 			case LAYOUT_KEY__PROP: return getLayoutKey();
-			case DETAIL__PROP: return getDetail();
 			default: return null;
 		}
 	}
@@ -146,7 +119,6 @@ public class LayoutCreateResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		switch (field) {
 			case SUCCESS__PROP: internalSetSuccess((boolean) value); break;
 			case LAYOUT_KEY__PROP: internalSetLayoutKey((String) value); break;
-			case DETAIL__PROP: internalSetDetail((String) value); break;
 		}
 	}
 
@@ -169,8 +141,6 @@ public class LayoutCreateResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		out.value(isSuccess());
 		out.name(LAYOUT_KEY__PROP);
 		out.value(getLayoutKey());
-		out.name(DETAIL__PROP);
-		out.value(getDetail());
 	}
 
 	@Override
@@ -178,7 +148,6 @@ public class LayoutCreateResponse extends de.haumacher.msgbuf.data.AbstractDataO
 		switch (field) {
 			case SUCCESS__PROP: setSuccess(in.nextBoolean()); break;
 			case LAYOUT_KEY__PROP: setLayoutKey(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case DETAIL__PROP: setDetail(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.tools.AnnotatedTools;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
@@ -323,6 +324,25 @@ public class AgentFactory {
 					continue;
 				}
 				registry.register(tool);
+			}
+		}
+
+		// Resolve MCP tools from McpServerRegistry
+		@SuppressWarnings("unchecked")
+		Collection<String> mcpServerNames = (Collection<String>) agent.tValueByName("mcpServers");
+		if (mcpServerNames != null && !mcpServerNames.isEmpty()
+				&& McpServerRegistry.Module.INSTANCE.isActive()) {
+			McpServerRegistry mcpRegistry = McpServerRegistry.getInstance();
+			for (String serverName : mcpServerNames) {
+				List<Tool> mcpTools = mcpRegistry.getTools(serverName);
+				if (mcpTools == null) {
+					Logger.warn("MCP server not found or not connected: " + serverName,
+						AgentFactory.class);
+					continue;
+				}
+				for (Tool mcpTool : mcpTools) {
+					registry.register(mcpTool);
+				}
 			}
 		}
 

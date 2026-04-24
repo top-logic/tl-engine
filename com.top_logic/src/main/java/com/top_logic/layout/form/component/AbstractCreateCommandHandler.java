@@ -140,8 +140,9 @@ public abstract class AbstractCreateCommandHandler extends AbstractFormCommandHa
 				Object newObject = createObject(component, model, formContext, arguments);
 
 				if (customMessage == null && tx.getState() == Transaction.STATE_OPEN) {
-					tx.setCommitMessage(
-						I18NConstants.CREATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(newObject)));
+					tx.setCommitMessage(CommitMessages.forObject(
+						I18NConstants.CREATED_TYPED__TYPE_MODEL,
+						I18NConstants.CREATED__MODEL, newObject));
 				}
 
 				commit(tx, model);

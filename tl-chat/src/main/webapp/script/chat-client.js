@@ -1090,14 +1090,24 @@
 				const cursor = this._currentTextEl.querySelector('.tl-chat-streaming-cursor');
 				if (cursor) cursor.remove();
 			}
-			// Final token count update on trace header (uses totalUsage for accuracy)
-			if (this._currentTraceWrapper && Store.currentRun && Store.currentRun.totalUsage) {
+			// Final token count update
+			if (Store.currentRun && Store.currentRun.totalUsage) {
 				const usage = Store.currentRun.totalUsage;
 				const total = (usage.inputTokens || 0) + (usage.outputTokens || 0) + (usage.thinkingTokens || 0);
-				const tokensEl = this._currentTraceWrapper.querySelector('.tl-chat-trace-tokens');
-				if (tokensEl && total > 0) {
-					tokensEl.textContent = Utils.formatTokens(total) + ' tokens';
-					tokensEl._usage = usage;
+				const traceVisible = this._currentTraceWrapper && this._currentTraceWrapper.style.display !== 'none';
+				if (traceVisible) {
+					// Trace is visible (tools/thinking used) — update token count in trace header
+					const tokensEl = this._currentTraceWrapper.querySelector('.tl-chat-trace-tokens');
+					if (tokensEl && total > 0) {
+						tokensEl.textContent = Utils.formatTokens(total) + ' tokens';
+						tokensEl._usage = usage;
+					}
+				} else if (this._currentBubble && total > 0) {
+					// No trace visible (text-only message) — add standalone token badge
+					const badge = Tokens.createBadge(usage);
+					if (badge.nodeType === Node.ELEMENT_NODE) {
+						this._currentBubble.insertBefore(badge, this._currentBubble.firstChild);
+					}
 				}
 			}
 			this._currentBubble = null;
@@ -2110,7 +2120,7 @@
 				if (hasTrace) {
 					this._renderTurnTrace(toolCalls, approvals, interactions, delegations, thinkingText, turn.usage, textContent, contentHtml);
 				} else if (textContent) {
-					this._renderPersistedAgentMessage({ content: textContent, contentHtml: contentHtml });
+					this._renderPersistedAgentMessage({ content: textContent, contentHtml: contentHtml, usage: turn.usage });
 				}
 
 				if (wasCancelled) {
@@ -2443,10 +2453,23 @@
 		_renderPersistedAgentMessage(msg) {
 			const div = document.createElement('div');
 			div.className = 'chat-message chat-message-agent';
-			div.innerHTML =
-				'<div class="chat-bubble chat-bubble-agent">' +
-				'<div class="chat-agent-text">' + (msg.contentHtml || Markdown.basicFormat(msg.content || '')) + '</div>' +
-				'</div>';
+
+			const bubble = document.createElement('div');
+			bubble.className = 'chat-bubble chat-bubble-agent';
+
+			if (msg.usage) {
+				const tokenBadge = Tokens.createBadge(msg.usage);
+				if (tokenBadge.nodeType === Node.ELEMENT_NODE) {
+					bubble.appendChild(tokenBadge);
+				}
+			}
+
+			const textEl = document.createElement('div');
+			textEl.className = 'chat-agent-text';
+			textEl.innerHTML = msg.contentHtml || Markdown.basicFormat(msg.content || '');
+			bubble.appendChild(textEl);
+
+			div.appendChild(bubble);
 			if (Render._messagesEl) {
 				Render._messagesEl.appendChild(div);
 			}

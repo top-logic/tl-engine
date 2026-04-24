@@ -2062,6 +2062,11 @@
 	filter: brightness(1.1);
 }
 
+.chat-bubble-agent > .tl-chat-token-badge {
+	float: right;
+	margin: 2px 0 4px 8px;
+}
+
 .tl-chat-token-popover {
 	position: fixed;
 	z-index: 10000;

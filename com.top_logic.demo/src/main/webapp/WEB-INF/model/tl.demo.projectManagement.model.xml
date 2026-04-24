@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Demo model for the @ChangeSubtree annotation (Ticket #29236).
+
+	Demonstrates all qualification variants of a change-subtree relationship:
+
+	- Project   composes  Milestone, Ticket, Note
+	              Note uses @ChangeSubtree(false)  (opt-out composition).
+
+	- Milestone references  Ticket  via 'tickets' (non-composition, annotated)
+	              @ChangeSubtree(true) on the forward end -> Milestone is root side,
+	              changes to an assigned Ticket appear in the Milestone change-log.
+
+	- Ticket    references Person    via 'assignee' (back-ref to Person.assignedTickets)
+	              @ChangeSubtree(true) on the back end -> Ticket is root side,
+	              changes to an assignee appear in the Ticket change-log.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.demo.projectManagement">
+		<annotations>
+			<display-group value="demo"/>
+		</annotations>
+
+		<class name="Project">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				/>
+				<reference name="milestones"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Milestone"
+				/>
+				<reference name="tickets"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Ticket"
+				/>
+				<reference name="notes"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Note"
+				>
+					<annotations>
+						<change-subtree include="false"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+
+		<class name="Milestone">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="dueDate"
+					type="tl.core:Date"
+				/>
+				<reference name="tickets"
+					multiple="true"
+					type="Ticket"
+					inverse-reference="milestone"
+				>
+					<annotations>
+						<change-subtree include="true"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+
+		<class name="Ticket">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="title"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				/>
+				<reference name="milestone"
+					type="Milestone"
+				/>
+				<reference name="assignee"
+					type="Person"
+					inverse-reference="assignedTickets"
+				>
+					<annotations>
+						<change-subtree include="true"/>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+
+		<class name="Note">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="text"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Person">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="email"
+					type="tl.core:String"
+				/>
+				<reference name="assignedTickets"
+					multiple="true"
+					type="Ticket"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -112,16 +112,25 @@ boolean inSubtree(TLObject x, long rev) {
 
 Die Komposition ist kein Sonderfall — `tContainer()` entfällt als separater Pfad. Eine Komposition trägt ihre implizite `@ChangeSubtree(true)`-Qualifizierung auf dem Composite-Ende und wird damit durch dieselbe `annotatedEndsFor`/`referers`-Mechanik abgedeckt (Reverse-Lookup auf dem Composite-Ende ≡ `tContainer()` für direkte Kinder).
 
+**Implementierung der impliziten Komposition-Qualifizierung (Variante A)**: Der Scanner, der `annotatedEndsFor` und die Reachable-Closure aufbaut, behandelt jedes Composite-Ende einer Komposition als wäre es `@ChangeSubtree(true)` annotiert — es sei denn, das Paar trägt explizit `@ChangeSubtree(false)` auf einer beliebigen Seite. Keine virtuelle Annotation-Materialisierung auf Modell-Ebene; die Logik lebt allein im Scanner.
+
 ### Dual-State-Check bei Ref-Änderungen
 
-Für Boundary-Events (Moves in/aus einem Subtree) reicht die Prüfung zur Revision `r` allein nicht: bei einer Ref-Änderung auf der Forward-Seite eines Paares, dessen **Back-Ref** annotiert ist, ändert sich die Root-Zugehörigkeit selbst zur Revision `r`. Der Event soll sichtbar sein
+Für Boundary-Events (Moves in/aus einem Subtree) reicht die Prüfung zur Revision `r` allein nicht: bei einer Ref-Modifikation ändert sich die Root-Zugehörigkeit eines Objekts selbst zur Revision `r`. Der Event soll sichtbar sein
 
 - im Subtree des *bisherigen* Roots (Move-Out-Boundary) und
 - im Subtree des *neuen* Roots (Move-In-Boundary).
 
-Regel auf Filter-Ebene: Ist der `Change` eine Modifikation einer Referenz `A.bs`, so akzeptiert der Filter, wenn das geänderte Objekt im Subtree von `R` zur Revision `r-1` **oder** zur Revision `r` liegt.
+Der Check hängt vom Event-Typ ab (nicht von einer generischen „r-1 ∨ r"-Regel):
 
-Für Non-Ref-Changes ist `r-1`-Zustand = `r`-Zustand (die Mitgliedschaft ändert sich nicht durch den Change selbst), der Dual-Check liefert dasselbe Ergebnis wie der Single-Check. Implementierung wählt je nach Ereignistyp den günstigeren Pfad.
+| Event | Membership-Check | Begründung |
+|---|---|---|
+| `ObjectCreation` | bei `r` | Objekt existiert bei `r-1` nicht → `r-1`-Check trivial `false`, überflüssig. |
+| `ItemDeletion` | bei `r-1` (Wrapper zur Vorgängerrevision) | Objekt existiert bei `r` nicht. Liefert Move-Out-Boundary zum letzten bekannten Zustand. |
+| `ItemUpdate` auf **TLReference-Attribut** | `r-1` ∨ `r` | Membership kann sich durch diesen Change ändern. Move-Out + Move-In sichtbar. |
+| `ItemUpdate` auf Non-Ref-Attribut | bei `r` | Membership ist invariant gegenüber dem Change. |
+
+**Optimierung**: Dual-Check nur, wenn das geänderte Ref-Attribut (oder sein Gegenstück) in der globalen Menge annotierter Enden liegt. Sonst Single-Check bei `r`. Das ist eine Verfeinerung innerhalb der Regel, keine semantische Änderung.
 
 ### Reachable-Typ-Closure (aus `R.tType()`)
 
@@ -149,8 +158,8 @@ Das schließt die implizit-annotierten Komposition-Composite-Enden mit ein. Der 
 
 - **Frühe Ablehnung**: `cur.tType() ∉ reachable` ⇒ Zweig abbrechen (Ergebnis `false`, memoized).
 - **Zyklusschutz**: `visited`-Set der bereits besuchten `unversionedId` pro Einzelabfrage.
-- **Memoisierung**: `(revision, unversionedId) → boolean`. Pfad-Memoisierung bleibt (alle während eines Walks besuchten IDs erhalten das Endergebnis), unabhängig von DAG-Pfaden.
-- **Historische Referenzwerte**: `referers(ref, rev)` muss historisch performant nutzbar sein. Wir setzen das voraus; bei Bedarf Verifikation während Implementierung.
+- **Memoisierung**: `(revision, unversionedId) → boolean`. Cache-Scope ist **pro `SubtreeFilter`-Instanz** (Lebensdauer eines ChangeLog-Requests). Pfad-Memoisierung bleibt (alle während eines Walks besuchten IDs erhalten das Endergebnis), unabhängig von DAG-Pfaden.
+- **Historische Referenzwerte**: `TLObject.tReferers(ref)` auf dem historischen Wrapper (Change trägt den Wrapper zur passenden Revision). KB-seitige Optimierung für Back-Ref-Fall wird vorausgesetzt (reduziert sich auf einen direkten Ref-Lookup).
 - **Deletions**: Für gelöschte Objekte nutzt `Change` den Wrapper zur Vorgängerrevision — die Reverse-Lookup-Semantik überträgt sich.
 - **Dual-State-Lookup**: Nur bei Ref-Änderungs-Events aktiv; innerhalb der Pfad-Memoisierung wird pro Revision eigener Cache-Eintrag geführt.
 
@@ -160,7 +169,7 @@ Das schließt die implizit-annotierten Komposition-Composite-Enden mit ein. Der 
 - `com.top_logic.element.changelog.SubtreeFilter` — `inSubtree` auf uniforme `referers`-Mechanik umstellen; Reachable-Closure und Typ-Dispatch einziehen; Dual-State-Check auf Ref-Änderungs-Events.
 - `com.top_logic.element.changelog.ChangeSetReverter` — nutzt `SubtreeFilter` bereits, kein struktureller Eingriff. `revertSubtreeTo`, `findUndoCandidate`, `findRedoCandidate` sind über `readLog` → `SubtreeFilter` automatisch konsistent.
 - `ChangeLogBuilder` — kein Eingriff (Filter ist injiziert).
-- Demo-Modell (`com.top_logic.demo`) — eine Beispiel-Referenz mit `<change-subtree include="true"/>` für Dokumentation und Tests.
+- Demo-Modell (`com.top_logic.demo`) — eigenes neues Modell „Project Management" (Project/Milestone/Ticket/Note/Person), um alle Annotations-Varianten (Opt-in Forward-Ref, Opt-in Back-Ref, Opt-out Komposition) mit fachlicher Lesbarkeit darzustellen.
 
 ## Tests
 

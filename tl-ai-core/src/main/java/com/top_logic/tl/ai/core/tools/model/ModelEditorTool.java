@@ -56,7 +56,6 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.builtin.TLCore;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
@@ -491,7 +490,7 @@ public class ModelEditorTool {
 	 * @param propertyName
 	 *        Name of the property.
 	 * @param propertyType
-	 *        Primitive type kind (STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM).
+	 *        The datatype name (e.g. String, Text, Integer, Long, Double, Boolean, Date).
 	 * @param labelEn
 	 *        English label (optional).
 	 * @param labelDe
@@ -512,12 +511,12 @@ public class ModelEditorTool {
 	 *        Whether abstract (default: false).
 	 * @return JSON with property details.
 	 */
-	@ToolMethod(description = "Create a new PRIMITIVE property on a TopLogic class (STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM), or return an existing one by name. NOT for enumerations or references to other types — use createReference for those.")
+	@ToolMethod(description = "Create a new PRIMITIVE property on a TopLogic class, or return an existing one by name. Supports all datatypes available in the model (e.g. String, Text, Integer, Double, Date, Color, URL). NOT for enumerations or references to other types — use createReference for those.")
 	public String createProperty(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class to add the property to") String className,
 			@P("Name of the property") String propertyName,
-			@P("Primitive type kind (STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM). NOT for enumerations or references — use createReference instead. Case-insensitive.") String propertyType,
+			@P("The datatype name (e.g. String, Text, Integer, Long, Double, Boolean, Date, Day, DateTime, Color, URL). Supports all datatypes from any module. Use qualified name (e.g. tl.util:Color) if ambiguous. Aliases: int=Integer, bool=Boolean. Case-insensitive. NOT for enumerations or references — use createReference instead.") String propertyType,
 			@P("English label for the property") String labelEn,
 			@P("German label for the property") String labelDe,
 			@P("English description for the property") String descEn,
@@ -1517,14 +1516,59 @@ public class ModelEditorTool {
 		return ensureTLObjectSuperType(tlClass, resolved);
 	}
 
-	private static TLType resolvePrimitiveType(TLModel model, String typeKind) {
-		try {
-			TLPrimitive.Kind kind = TLPrimitive.Kind.valueOf(typeKind.toUpperCase());
-			return TLCore.getPrimitiveType(model, kind);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(
-				"Invalid primitive type kind: '" + typeKind + "'. Valid kinds are: STRING, INT, BOOLEAN, FLOAT, DATE, TRISTATE, BINARY, CUSTOM");
+	private static final Map<String, String> TYPE_ALIASES = Map.of(
+		"int", "Integer",
+		"bool", "Boolean"
+	);
+
+	private static TLType resolvePrimitiveType(TLModel model, String typeName) {
+		String normalized = typeName.trim();
+
+		// Check aliases first (case-insensitive).
+		String alias = TYPE_ALIASES.get(normalized.toLowerCase());
+		if (alias != null) {
+			normalized = alias;
 		}
+
+		// Support qualified names like "tl.util:Color" via TLModelUtil.
+		if (normalized.contains(":")) {
+			try {
+				return TLModelUtil.findType(model, normalized);
+			} catch (RuntimeException ex) {
+				throw new IllegalArgumentException(
+					"Unknown datatype: '" + typeName + "'. " + ex.getMessage());
+			}
+		}
+
+		// Search all modules for a matching datatype (case-insensitive).
+		TLPrimitive match = null;
+		for (TLModule module : model.getModules()) {
+			for (TLPrimitive datatype : module.getDatatypes()) {
+				if (datatype.getName().equalsIgnoreCase(normalized)) {
+					if (match != null) {
+						throw new IllegalArgumentException(
+							"Ambiguous datatype name: '" + typeName + "'. Found in multiple modules: "
+								+ TLModelUtil.qualifiedName(match) + " and " + TLModelUtil.qualifiedName(datatype)
+								+ ". Use a qualified name (e.g. '" + TLModelUtil.qualifiedName(match) + "') to disambiguate.");
+					}
+					match = datatype;
+				}
+			}
+		}
+
+		if (match != null) {
+			return match;
+		}
+
+		// Build available types list for error message.
+		List<String> availableTypes = new ArrayList<>();
+		for (TLPrimitive datatype : TLModelUtil.getDataTypes(model)) {
+			availableTypes.add(TLModelUtil.qualifiedName(datatype));
+		}
+		Collections.sort(availableTypes);
+
+		throw new IllegalArgumentException(
+			"Unknown datatype: '" + typeName + "'. Available datatypes: " + String.join(", ", availableTypes));
 	}
 
 	private static HistoryType resolveHistoryType(String value) {

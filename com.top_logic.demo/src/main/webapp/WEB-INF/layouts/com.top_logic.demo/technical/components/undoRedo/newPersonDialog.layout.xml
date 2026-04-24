@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments height="300px">
+		<forms>
+			<form type="tl.demo.projectManagement:Person">
+				<formDefinition columns="ONE">
+					<field
+						attribute="name"
+						fullQualifiedName="tl.demo.projectManagement:Person#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="email"
+						fullQualifiedName="tl.demo.projectManagement:Person#email"
+						type="tl.core:String"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.undoRedo-newPerson-title">
+				<en>New person</en>
+				<de>Neue Person</de>
+			</title>
+		</title>
+		<open-handler id="undoRedo_newPerson_open"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+		>
+			<resourceKey key="dynamic.undoRedo-newPerson-open">
+				<en>New person</en>
+				<de>Neue Person</de>
+			</resourceKey>
+		</open-handler>
+		<typeOptions type="tl.demo.projectManagement:Person"/>
+		<create-handler id="undoRedo_newPerson_create">
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/peopleTable.layout.xml#Table)">
+					<input/>
+				</setModel>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

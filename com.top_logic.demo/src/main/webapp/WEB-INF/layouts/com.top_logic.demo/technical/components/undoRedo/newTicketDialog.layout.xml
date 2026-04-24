@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments height="400px">
+		<forms>
+			<form type="tl.demo.projectManagement:Ticket">
+				<formDefinition columns="ONE">
+					<field
+						attribute="title"
+						fullQualifiedName="tl.demo.projectManagement:Ticket#title"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="description"
+						fullQualifiedName="tl.demo.projectManagement:Ticket#description"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="milestone"
+						fullQualifiedName="tl.demo.projectManagement:Ticket#milestone"
+						type="tl.demo.projectManagement:Milestone"
+					/>
+					<field
+						attribute="assignee"
+						fullQualifiedName="tl.demo.projectManagement:Ticket#assignee"
+						type="tl.demo.projectManagement:Person"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.undoRedo-newTicket-title">
+				<en>New ticket</en>
+				<de>Neues Ticket</de>
+			</title>
+		</title>
+		<open-handler id="undoRedo_newTicket_open"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="com.top_logic.demo/technical/components/undoRedo/newTicketDialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.undoRedo-newTicket-open">
+				<en>New ticket</en>
+				<de>Neues Ticket</de>
+			</resourceKey>
+			<executability>
+				<rule-by-expression decision="model -> $model != null"/>
+			</executability>
+		</open-handler>
+		<typeOptions type="tl.demo.projectManagement:Ticket"/>
+		<create-handler id="undoRedo_newTicket_create"
+			linkOperation="project -> ticket -> $project.add(`tl.demo.projectManagement:Project#tickets`, $ticket)"
+		>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/ticketsTable.layout.xml#Table)">
+					<input/>
+				</setModel>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

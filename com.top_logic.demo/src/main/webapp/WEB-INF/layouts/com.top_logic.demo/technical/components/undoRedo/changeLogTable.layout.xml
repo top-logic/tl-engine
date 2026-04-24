@@ -32,10 +32,10 @@
 			/>
 		</configurationProviders>
 		<buttons>
-			<button id="undoRedo-invalidate"
+			<button id="undoRedo_invalidate"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			/>
-			<button id="undoRedo-undo"
+			<button id="undoRedo_undo"
 				class="com.top_logic.element.changelog.UndoCommandHandler"
 				group="Write"
 				image="css:fa-solid fa-rotate-left"
@@ -46,7 +46,7 @@
 					<de>Rückgängig</de>
 				</resourceKey>
 			</button>
-			<button id="undoRedo-redo"
+			<button id="undoRedo_redo"
 				class="com.top_logic.element.changelog.RedoCommandHandler"
 				group="Write"
 				image="css:fa-solid fa-rotate-right"
@@ -57,7 +57,7 @@
 					<de>Wiederherstellen</de>
 				</resourceKey>
 			</button>
-			<button id="undoRedo-revert"
+			<button id="undoRedo_revert"
 				class="com.top_logic.element.changelog.RevertCommandHandler"
 				group="Write"
 				image="css:fa-solid fa-delete-left"

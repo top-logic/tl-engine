@@ -10,7 +10,7 @@
 			<de>Notizen (Opt-out)</de>
 		</tabLabel>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/notesTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/notesLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

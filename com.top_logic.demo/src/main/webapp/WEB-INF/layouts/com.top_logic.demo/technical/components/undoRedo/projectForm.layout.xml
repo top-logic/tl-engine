@@ -9,5 +9,21 @@
 			<en>Project details</en>
 			<de>Projekt-Details</de>
 		</name>
+		<forms>
+			<form type="tl.demo.projectManagement:Project">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="tl.demo.projectManagement:Project#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="description"
+						fullQualifiedName="tl.demo.projectManagement:Project#description"
+						type="tl.core:String"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
 	</arguments>
 </config:template-call>

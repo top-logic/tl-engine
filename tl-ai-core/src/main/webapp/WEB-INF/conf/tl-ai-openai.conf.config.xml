@@ -17,6 +17,8 @@
 					<module key="com.top_logic.tl.ai.core.tools.registry.ToolRegistryService$Module" value="true"/>
 					<!-- LLM Provider Registry for AI provider connections -->
 					<module key="com.top_logic.tl.ai.core.provider.LLMProviderRegistry$Module" value="true"/>
+					<!-- MCP Server Registry for external MCP connections -->
+					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>

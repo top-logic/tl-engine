@@ -10,7 +10,7 @@
 			<de>Personen</de>
 		</tabLabel>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/peopleTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/peopleLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

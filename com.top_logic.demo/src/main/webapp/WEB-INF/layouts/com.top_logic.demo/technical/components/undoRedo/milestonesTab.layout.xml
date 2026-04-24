@@ -10,7 +10,7 @@
 			<de>Meilensteine</de>
 		</tabLabel>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/milestonesTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/milestonesLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

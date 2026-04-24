@@ -14,6 +14,58 @@
 					ordered="true"
 					type="Node"
 				/>
+				<!-- Opt-out composition: children of this reference are NOT part of the
+				     change-subtree of their container. -->
+				<reference name="noise"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Node"
+				>
+					<annotations>
+						<change-subtree include="false"/>
+					</annotations>
+				</reference>
+				<!-- Opt-in forward-reference: referenced Nodes belong to the change-subtree
+				     of the owner (forward-ref annotation = owner is root-side). -->
+				<reference name="peers"
+					multiple="true"
+					type="Node"
+				>
+					<annotations>
+						<change-subtree include="true"/>
+					</annotations>
+				</reference>
+				<!-- Opt-in back-reference: the referenced Node is the root; the owner of
+				     this end is a child of the referenced root. Pair sibling of 'homeMembers'. -->
+				<reference name="home"
+					type="Node"
+					inverse-reference="homeMembers"
+				>
+					<annotations>
+						<change-subtree include="true"/>
+					</annotations>
+				</reference>
+				<reference name="homeMembers"
+					multiple="true"
+					type="Node"
+				/>
+				<!-- Pair used by the mutual-annotation cycle-guard test. Both ends annotated. -->
+				<reference name="twinA"
+					type="Node"
+					inverse-reference="twinB"
+				>
+					<annotations>
+						<change-subtree include="true"/>
+					</annotations>
+				</reference>
+				<reference name="twinB"
+					type="Node"
+				>
+					<annotations>
+						<change-subtree include="true"/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

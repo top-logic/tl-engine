@@ -119,6 +119,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 CREATED__MODEL;
 
 	/**
+	 * @en Created {0}: {1}
+	 */
+	public static ResKey2 CREATED_TYPED__TYPE_MODEL;
+
+	/**
+	 * @en Updated {0}: {1}
+	 */
+	public static ResKey2 UPDATED_TYPED__TYPE_MODEL;
+
+	/**
 	 * @en Performed operation "{0}" on "{1}".
 	 */
 	public static ResKey2 PERFORMED__OPERATION_MODEL;

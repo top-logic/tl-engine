@@ -57,6 +57,11 @@
 							type="tl.core:String"
 						/>
 						<field
+							attribute="mcpServers"
+							fullQualifiedName="tl.ai.core:Agent#mcpServers"
+							type="tl.core:String"
+						/>
+						<field
 							attribute="skills"
 							fullQualifiedName="tl.ai.core:Agent#skills"
 							type="tl.ai.core:Skill"
@@ -163,6 +168,16 @@
 					<annotations>
 						<options>
 							<all-tool-names/>
+						</options>
+					</annotations>
+				</property>
+				<property name="mcpServers"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-mcp-server-names/>
 						</options>
 					</annotations>
 				</property>

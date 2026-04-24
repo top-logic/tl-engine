@@ -132,6 +132,16 @@ Der Check hängt vom Event-Typ ab (nicht von einer generischen „r-1 ∨ r"-Reg
 
 **Optimierung**: Dual-Check nur, wenn das geänderte Ref-Attribut (oder sein Gegenstück) in der globalen Menge annotierter Enden liegt. Sonst Single-Check bei `r`. Das ist eine Verfeinerung innerhalb der Regel, keine semantische Änderung.
 
+### Opt-out wirkt auch auf Ref-Modifikationen
+
+Ein `@ChangeSubtree(include=false)` auf einem Referenz-Ende deaktiviert die Zugehörigkeit der Kinder zum Change-Subtree *und* blendet Modifikationen am Ref-Attribut selbst aus:
+
+**Regel**: Ein `Update`-Change, dessen Modifikationen **ausschließlich** auf Referenz-Attributen stattfinden, die explizit mit `@ChangeSubtree(include=false)` auf einer Paar-Seite deaktiviert sind, wird aus dem Log gefiltert — unabhängig davon, ob das modifizierte Objekt im Subtree liegt.
+
+**Begründung**: Ohne diese Regel würde der reine Akt „Note an `Project.notes` anhängen" ein `Update(Project, notes=…)` erzeugen, das trivial im Subtree von `Project` liegt und damit akzeptiert würde — entgegen der Opt-out-Absicht. Ein Update mit gemischten Modifikationen (eine Opt-out-Ref *und* ein reguläres Attribut) bleibt sichtbar, weil das reguläre Attribut den Event trägt.
+
+**Delete** ist von der Regel nicht direkt betroffen: Objekt-Deletions werden durch die normale Subtree-Zugehörigkeit gefiltert (das gelöschte Objekt ist bei Opt-out mangels qualifizierter Kanten nicht erreichbar). Ref-Modifikationen, die Elemente aus der Opt-out-Ref entfernen (ohne Objekt-Delete), laufen als `Update` durch die Regel oben.
+
 ### Reachable-Typ-Closure (aus `R.tType()`)
 
 Ein Objekt kann nur dann im Change-Subtree von `R` liegen, wenn sein Typ forward-reachable von `R.tType()` über qualifizierte Kanten ist.

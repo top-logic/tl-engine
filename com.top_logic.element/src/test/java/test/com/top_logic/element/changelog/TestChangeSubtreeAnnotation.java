@@ -95,6 +95,75 @@ public class TestChangeSubtreeAnnotation extends TestWithModelExtension {
 	}
 
 	/**
+	 * Opt-out composition — mirror of {@link #testOptOutComposition()} but mirroring the UI
+	 * pattern: create child without container, then attach to the opt-out composite reference.
+	 * The object creation must not appear in the log.
+	 */
+	public void testOptOutCompositionCreateThenAttach() {
+		TLObject root = createNode("root");
+		TLObject noiseChild;
+		try (Transaction tx = beginTX()) {
+			noiseChild = _factory.createObject(_nodeType, null);
+			noiseChild.tUpdateByName("name", "noise-child");
+			List<Object> noise = new ArrayList<>((Collection<?>) root.tValueByName("noise"));
+			noise.add(noiseChild);
+			root.tUpdateByName("noise", noise);
+			tx.commit();
+		}
+
+		Collection<ChangeSet> log = log(root);
+		assertDoesNotContain(log, noiseChild);
+	}
+
+	/**
+	 * The isolated {@code Update} that modifies only an opt-out reference on the root is
+	 * filtered out — the user intention "this relationship is not part of my change log"
+	 * applies to edits of the relationship itself, not just to its elements.
+	 */
+	public void testOptOutUpdateOnRootIsFiltered() {
+		TLObject root = createNode("root");
+		TLObject noiseChild;
+		try (Transaction tx = beginTX()) {
+			noiseChild = _factory.createObject(_nodeType, null);
+			noiseChild.tUpdateByName("name", "noise-child");
+			tx.commit();
+		}
+
+		// Dedicated transaction: the only change on 'root' is the opt-out ref update.
+		try (Transaction tx = beginTX()) {
+			List<Object> noise = new ArrayList<>((Collection<?>) root.tValueByName("noise"));
+			noise.add(noiseChild);
+			root.tUpdateByName("noise", noise);
+			tx.commit();
+		}
+
+		Collection<ChangeSet> log = log(root);
+		assertFalse("Log must not contain an update that only touches an opt-out reference",
+			hasUpdateOnRef(log, root, "noise"));
+	}
+
+	private static boolean hasUpdateOnRef(Collection<ChangeSet> log, TLObject target, String refName) {
+		for (ChangeSet cs : log) {
+			for (Change change : cs.getChanges()) {
+				if (!(change instanceof com.top_logic.element.changelog.model.Update)) {
+					continue;
+				}
+				if (!sameIdentity(change, target)) {
+					continue;
+				}
+				for (com.top_logic.element.changelog.model.Modification m :
+						((com.top_logic.element.changelog.model.Update) change).getModifications()) {
+					com.top_logic.model.TLStructuredTypePart part = m.getPart();
+					if (part != null && refName.equals(part.getName())) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Opt-in forward-ref: the owner of an annotated forward-reference sees changes to the
 	 * referenced targets in its change-subtree.
 	 */

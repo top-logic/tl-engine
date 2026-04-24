@@ -99,6 +99,13 @@ public class SubtreeFilter implements ChangeFilter {
 	private Set<TLReference> _allAnnotatedEnds;
 
 	/**
+	 * Reference ends explicitly disabled by {@code @ChangeSubtree(include=false)} on either side
+	 * of the pair. Modifications on these are filtered out of the log even when the owning
+	 * object is in the subtree — opt-out is stronger than "is a change on root".
+	 */
+	private Set<TLReference> _optOutEnds;
+
+	/**
 	 * Creates a {@link SubtreeFilter} that accepts the root and the entire change-subtree.
 	 */
 	public SubtreeFilter(TLObject subtreeRoot) {
@@ -151,6 +158,13 @@ public class SubtreeFilter implements ChangeFilter {
 		}
 		ensureIndex();
 
+		// An Update that only modifies opt-out reference attributes is filtered, even if the
+		// owning object is in the subtree. Explicit @ChangeSubtree(include=false) is stronger
+		// than "change happens to sit on the root".
+		if (change instanceof Update && isOptOutOnlyUpdate((Update) change)) {
+			return false;
+		}
+
 		long revision = obj.tId().getHistoryContext();
 		if (inSubtree(obj, revision)) {
 			return true;
@@ -165,6 +179,24 @@ public class SubtreeFilter implements ChangeFilter {
 			}
 		}
 		return false;
+	}
+
+	private boolean isOptOutOnlyUpdate(Update update) {
+		Set<? extends Modification> mods = update.getModifications();
+		if (mods.isEmpty()) {
+			return false;
+		}
+		for (Modification m : mods) {
+			TLStructuredTypePart part = m.getPart();
+			if (!(part instanceof TLReference)) {
+				return false;
+			}
+			TLReference ref = (TLReference) part;
+			if (!_optOutEnds.contains(ref)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private boolean touchesAnnotatedReference(Update update) {
@@ -271,6 +303,7 @@ public class SubtreeFilter implements ChangeFilter {
 		_reachable = new HashSet<>();
 		_annotatedEndsByTarget = new HashMap<>();
 		_allAnnotatedEnds = new HashSet<>();
+		_optOutEnds = new HashSet<>();
 
 		TLType rootType = _root.tType();
 		if (rootType == null) {
@@ -290,6 +323,13 @@ public class SubtreeFilter implements ChangeFilter {
 			for (TLReference ref : TLModelUtil.getAllReferences(ownerClass)) {
 				if (!processedRefs.add(ref)) {
 					continue;
+				}
+				if (isExplicitOptOut(ref)) {
+					_optOutEnds.add(ref);
+					TLReference opposite = ref.getOpposite();
+					if (opposite != null) {
+						_optOutEnds.add(opposite);
+					}
 				}
 				if (!qualifies(ref)) {
 					continue;
@@ -348,6 +388,25 @@ public class SubtreeFilter implements ChangeFilter {
 			return true;
 		}
 		return ref.isComposite();
+	}
+
+	/**
+	 * Whether the reference pair is explicitly opted out by an {@code @ChangeSubtree(include=false)}
+	 * annotation on either end.
+	 */
+	private static boolean isExplicitOptOut(TLReference ref) {
+		TLChangeSubtree own = ref.getAnnotation(TLChangeSubtree.class);
+		if (own != null && !own.getInclude()) {
+			return true;
+		}
+		TLReference opposite = ref.getOpposite();
+		if (opposite != null) {
+			TLChangeSubtree opp = opposite.getAnnotation(TLChangeSubtree.class);
+			if (opp != null && !opp.getInclude()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

@@ -12,6 +12,7 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -27,6 +28,8 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.form.component.PostCreateAction;
+import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
@@ -47,12 +50,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  */
 @InApp
-public class UndoCommandHandler extends AbstractCommandHandler {
+public class UndoCommandHandler extends AbstractCommandHandler implements WithPostCreateActions {
 
 	/**
 	 * Configuration for {@link UndoCommandHandler}.
 	 */
-	public interface Config extends AbstractCommandHandler.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
 
 		/** @see #isCheckConflicts() */
 		String CHECK_CONFLICTS = "check-conflicts";
@@ -91,12 +94,15 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 
 	}
 
+	private final List<PostCreateAction> _postCreateActions;
+
 	/**
 	 * Creates an {@link UndoCommandHandler} from configuration.
 	 */
 	@CalledByReflection
 	public UndoCommandHandler(InstantiationContext context, Config config) {
 		super(context, config);
+		_postCreateActions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 	}
 
 	private Config config() {
@@ -131,6 +137,7 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 			tx.commit();
 		}
 
+		WithPostCreateActions.processCreateActions(_postCreateActions, component, target);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
@@ -142,6 +149,7 @@ public class UndoCommandHandler extends AbstractCommandHandler {
 				tx.commit();
 			}
 			component.invalidate();
+			WithPostCreateActions.processCreateActions(_postCreateActions, component, target);
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		HTMLFragment confirmMessage = InfoService.getMessageList(problems,

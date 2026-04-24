@@ -29,7 +29,8 @@ public class ToolContext {
 
 	/** Context with no security restrictions, auto-approval, and no transaction. For tests and trusted internal use. */
 	public static final ToolContext EMPTY =
-		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
+		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
 
 	private final SecurityContext _security;
 
@@ -43,6 +44,8 @@ public class ToolContext {
 
 	private final String _toolCallId;
 
+	private final CancellationToken _cancellationToken;
+
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
@@ -51,7 +54,7 @@ public class ToolContext {
 	 * @param transaction the transaction scope for the current agent run
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval, TransactionScope transaction) {
-		this(security, approval, transaction, Set.of(), 0, null);
+		this(security, approval, transaction, Set.of(), 0, null, new CancellationToken());
 	}
 
 	/**
@@ -65,7 +68,7 @@ public class ToolContext {
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools) {
-		this(security, approval, transaction, sessionApprovedTools, 0, null);
+		this(security, approval, transaction, sessionApprovedTools, 0, null, new CancellationToken());
 	}
 
 	/**
@@ -79,15 +82,30 @@ public class ToolContext {
 		this(security, approval, TransactionScope.NOOP);
 	}
 
+	/**
+	 * Creates a context with the given security, approval callback, transaction scope,
+	 * and cancellation token.
+	 *
+	 * @param security          the security context for the current user
+	 * @param approval          the callback for requesting user approval
+	 * @param transaction       the transaction scope for the current agent run
+	 * @param cancellationToken the cancellation token for cooperative cancellation
+	 */
+	public ToolContext(SecurityContext security, ApprovalCallback approval,
+			TransactionScope transaction, CancellationToken cancellationToken) {
+		this(security, approval, transaction, Set.of(), 0, null, cancellationToken);
+	}
+
 	private ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools,
-			int delegationDepth, String toolCallId) {
+			int delegationDepth, String toolCallId, CancellationToken cancellationToken) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
 		_sessionApprovedTools = sessionApprovedTools != null ? sessionApprovedTools : Set.of();
 		_delegationDepth = delegationDepth;
 		_toolCallId = toolCallId;
+		_cancellationToken = Objects.requireNonNull(cancellationToken, "Cancellation token must not be null.");
 	}
 
 	/**
@@ -150,11 +168,21 @@ public class ToolContext {
 	}
 
 	/**
+	 * The cancellation token for cooperative cancellation of long-running operations.
+	 *
+	 * <p>Tools can check {@link CancellationToken#isCancelled()} periodically or call
+	 * {@link CancellationToken#checkCancelled()} to throw if the run was cancelled.</p>
+	 */
+	public CancellationToken cancellationToken() {
+		return _cancellationToken;
+	}
+
+	/**
 	 * Returns a copy of this context with the given tool call ID.
 	 */
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
-			_delegationDepth, toolCallId);
+			_delegationDepth, toolCallId, _cancellationToken);
 	}
 
 	/**
@@ -167,6 +195,6 @@ public class ToolContext {
 	 */
 	public ToolContext forDelegation(TransactionScope childTransaction) {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
-			_delegationDepth + 1, null);
+			_delegationDepth + 1, null, _cancellationToken);
 	}
 }

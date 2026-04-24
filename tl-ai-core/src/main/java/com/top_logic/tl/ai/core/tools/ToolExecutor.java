@@ -30,11 +30,4 @@ public interface ToolExecutor {
 	 * @return the result (success or failure, never {@code null})
 	 */
 	ToolResultMessage execute(ToolCall toolCall, ToolContext context);
-
-	// TODO: Cancellation support — currently Thread.interrupted() is only checked between tool
-	//   calls, not during execution. A tool blocking for 30s (slow DB query, external API) cannot
-	//   be cancelled. Options: (a) run tools in a Future and cancel on interrupt, (b) add a
-	//   cooperative CancellationToken to ToolContext that tools check periodically, (c) add
-	//   interruptBehavior() to Tool (like claude-code) declaring 'cancel' vs 'block'.
-	//   See PRD and ARCHITECTURE-VISION Pillar 7 (Human-in-the-Loop).
 }

@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -169,6 +170,8 @@ public class ToolDispatcher implements ToolExecutor {
 					toolResult.summary(), toolResult.truncationHint()));
 		} catch (IllegalArgumentException e) {
 			return failedResult(toolCall, start, sanitizeError(e));
+		} catch (CancellationException e) {
+			return failedResult(toolCall, start, "Tool execution cancelled.");
 		} catch (Exception e) {
 			return failedResult(toolCall, start,
 				"Tool '" + toolCall.name() + "' failed: " + sanitizeError(e));

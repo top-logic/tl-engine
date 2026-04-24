@@ -189,7 +189,7 @@ public class AgentLoop {
 		int maxTurns = _config.maxTurns();
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
-			if (Thread.interrupted()) {
+			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn - 1, totalUsage);
@@ -294,7 +294,7 @@ public class AgentLoop {
 		int maxTurns = _config.maxTurns();
 
 		for (int turn = 1; turn <= maxTurns; turn++) {
-			if (Thread.interrupted()) {
+			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn - 1, totalUsage);
@@ -389,7 +389,7 @@ public class AgentLoop {
 		int messagesBefore = conversation.size();
 
 		for (List<ToolCall> batch : batches) {
-			if (Thread.interrupted()) {
+			if (Thread.interrupted() || context.cancellationToken().isCancelled()) {
 				Thread.currentThread().interrupt();
 				rollbackTransaction(context, listener, runId, turn, "Interrupted");
 				return false;

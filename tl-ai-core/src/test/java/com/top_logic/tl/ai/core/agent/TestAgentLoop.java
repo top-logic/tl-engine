@@ -16,7 +16,6 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
-import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventAssertions;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -25,6 +24,7 @@ import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
+import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -1660,7 +1660,8 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Tool that uses {@link ProgressReporter} emits {@link AgentEvent.ToolProgress} events.
+	 * Tool that uses {@link ProgressReporter} emits
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ToolProgress} events.
 	 */
 	public void testToolProgressEventsEmitted() {
 		Conversation conv = new Conversation();

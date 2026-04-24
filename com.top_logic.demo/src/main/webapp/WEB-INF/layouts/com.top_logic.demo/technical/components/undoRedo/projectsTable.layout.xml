@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name,description"
+		type="tl.demo.projectManagement:Project"
+	>
+		<name key="dynamic.undoRedo-projects-name">
+			<en>Projects</en>
+			<de>Projekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`tl.demo.projectManagement:Project`)"
+			supportsElement="true"
+		/>
+		<buttons>
+			<button id="invalidateProjects"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

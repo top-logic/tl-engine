@@ -8,6 +8,8 @@ package com.top_logic.tl.ai.core.mcp;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 
@@ -55,10 +57,12 @@ public interface StdioTransportConfig extends McpTransportConfig {
 	 *
 	 * <p>
 	 * Use this to pass API keys without putting them in config:
-	 * {@code <entry key="GITHUB_TOKEN">${env:GITHUB_TOKEN}</entry>}
+	 * {@code <entry name="GITHUB_TOKEN" value="${env:GITHUB_TOKEN}"/>}
 	 * </p>
 	 */
 	@Name(ENV)
-	Map<String, String> getEnv();
+	@Key(NamedValueConfig.NAME_ATTRIBUTE)
+	@EntryTag("entry")
+	Map<String, NamedValueConfig> getEnv();
 
 }

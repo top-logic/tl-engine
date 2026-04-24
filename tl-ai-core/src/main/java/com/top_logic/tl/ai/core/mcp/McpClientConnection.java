@@ -87,9 +87,13 @@ class McpClientConnection {
 				builder.args(args);
 			}
 
-			Map<String, String> env = stdio.getEnv();
-			if (env != null) {
-				builder.env(env);
+			Map<String, NamedValueConfig> env = stdio.getEnv();
+			if (env != null && !env.isEmpty()) {
+				Map<String, String> envMap = new java.util.HashMap<>();
+				for (NamedValueConfig entry : env.values()) {
+					envMap.put(entry.getName(), entry.getValue());
+				}
+				builder.env(envMap);
 			}
 
 			return new StdioClientTransport(builder.build(), McpJsonMapper.getDefault());
@@ -112,11 +116,11 @@ class McpClientConnection {
 				}
 			}
 
-			Map<String, String> headers = http.getHeaders();
+			Map<String, NamedValueConfig> headers = http.getHeaders();
 			if (headers != null && !headers.isEmpty()) {
 				builder.customizeRequest(req -> {
-					for (Map.Entry<String, String> entry : headers.entrySet()) {
-						req.header(entry.getKey(), entry.getValue());
+					for (NamedValueConfig entry : headers.values()) {
+						req.header(entry.getName(), entry.getValue());
 					}
 				});
 			}

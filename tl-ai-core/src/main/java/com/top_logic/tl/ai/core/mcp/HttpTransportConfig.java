@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.mcp;
 
 import java.util.Map;
 
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 
@@ -40,9 +42,15 @@ public interface HttpTransportConfig extends McpTransportConfig {
 
 	/**
 	 * Static HTTP headers sent with every request.
+	 *
+	 * <p>
+	 * In XML: {@code <entry name="X-Api-Key" value="secret"/>}
+	 * </p>
 	 */
 	@Name(HEADERS)
-	Map<String, String> getHeaders();
+	@Key(NamedValueConfig.NAME_ATTRIBUTE)
+	@EntryTag("entry")
+	Map<String, NamedValueConfig> getHeaders();
 
 	/**
 	 * Name of an environment variable holding a bearer token.

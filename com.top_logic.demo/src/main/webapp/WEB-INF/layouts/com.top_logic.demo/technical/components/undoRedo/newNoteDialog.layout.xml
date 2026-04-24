@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments height="300px">
+		<forms>
+			<form type="tl.demo.projectManagement:Note">
+				<formDefinition columns="ONE">
+					<field
+						attribute="text"
+						fullQualifiedName="tl.demo.projectManagement:Note#text"
+						type="tl.core:String"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.undoRedo-newNote-title">
+				<en>New note</en>
+				<de>Neue Notiz</de>
+			</title>
+		</title>
+		<open-handler id="undoRedo_newNote_open"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			targetComponent="com.top_logic.demo/technical/components/undoRedo/newNoteDialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.undoRedo-newNote-open">
+				<en>New note</en>
+				<de>Neue Notiz</de>
+			</resourceKey>
+			<executability>
+				<rule-by-expression decision="model -> $model != null"/>
+			</executability>
+		</open-handler>
+		<typeOptions type="tl.demo.projectManagement:Note"/>
+		<create-handler id="undoRedo_newNote_create"
+			linkOperation="project -> note -> $project.add(`tl.demo.projectManagement:Project#notes`, $note)"
+		>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/notesTable.layout.xml#Table)">
+					<input/>
+				</setModel>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

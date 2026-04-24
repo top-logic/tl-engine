@@ -59,6 +59,13 @@
 			<version>0.64.8</version>
 		</dependency>
 
+		<!-- MCP SDK (client for connecting to external MCP servers) -->
+		<dependency>
+			<groupId>io.modelcontextprotocol.sdk</groupId>
+			<artifactId>mcp</artifactId>
+			<version>0.15.0</version>
+		</dependency>
+
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>

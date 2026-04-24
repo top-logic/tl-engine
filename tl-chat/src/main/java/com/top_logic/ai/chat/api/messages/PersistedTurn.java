@@ -39,6 +39,9 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/** @see #getAssistantParts() */
 	public static final String ASSISTANT_PARTS__PROP = "assistantParts";
 
+	/** @see #getContentHtml() */
+	public static final String CONTENT_HTML__PROP = "contentHtml";
+
 	private String _id = "";
 
 	private int _turnNumber = 0;
@@ -54,6 +57,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> _userParts = new java.util.ArrayList<>();
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> _assistantParts = new java.util.ArrayList<>();
+
+	private String _contentHtml = "";
 
 	/**
 	 * Creates a {@link PersistedTurn} instance.
@@ -275,6 +280,26 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 		_assistantParts.remove(value);
 	}
 
+	/**
+	 * Server-rendered HTML of the assistant's text content. Computed at load time, not persisted.
+	 */
+	public final String getContentHtml() {
+		return _contentHtml;
+	}
+
+	/**
+	 * @see #getContentHtml()
+	 */
+	public com.top_logic.ai.chat.api.messages.PersistedTurn setContentHtml(String value) {
+		internalSetContentHtml(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getContentHtml()} without chain call utility. */
+	protected final void internalSetContentHtml(String value) {
+		_contentHtml = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return PERSISTED_TURN__TYPE;
@@ -290,7 +315,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			PROVIDER__PROP, 
 			USAGE__PROP, 
 			USER_PARTS__PROP, 
-			ASSISTANT_PARTS__PROP);
+			ASSISTANT_PARTS__PROP, 
+			CONTENT_HTML__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -323,6 +349,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case USAGE__PROP: return getUsage();
 			case USER_PARTS__PROP: return getUserParts();
 			case ASSISTANT_PARTS__PROP: return getAssistantParts();
+			case CONTENT_HTML__PROP: return getContentHtml();
 			default: return null;
 		}
 	}
@@ -338,6 +365,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case USAGE__PROP: internalSetUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
 			case USER_PARTS__PROP: internalSetUserParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedPart.class, value)); break;
 			case ASSISTANT_PARTS__PROP: internalSetAssistantParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedPart.class, value)); break;
+			case CONTENT_HTML__PROP: internalSetContentHtml((String) value); break;
 		}
 	}
 
@@ -382,6 +410,8 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(CONTENT_HTML__PROP);
+		out.value(getContentHtml());
 	}
 
 	@Override
@@ -413,6 +443,7 @@ public class PersistedTurn extends de.haumacher.msgbuf.data.AbstractDataObject i
 				setAssistantParts(newValue);
 			}
 			break;
+			case CONTENT_HTML__PROP: setContentHtml(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -31,10 +31,12 @@ import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.PersistedChat;
 import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.PersistedConversationV2;
+import com.top_logic.ai.chat.api.messages.PersistedPart;
 import com.top_logic.ai.chat.api.messages.PersistedTurn;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -471,6 +473,7 @@ public class ChatServlet extends HttpServlet {
 						new de.haumacher.msgbuf.json.JsonReader(
 							new de.haumacher.msgbuf.io.StringR(messagesJson)));
 					for (PersistedTurn turn : conv.getTurns()) {
+						computeContentHtml(turn);
 						response.addTurn(turn);
 					}
 				} else {
@@ -671,6 +674,19 @@ public class ChatServlet extends HttpServlet {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
+	}
+
+	/** Extracts text from assistant parts and sets server-rendered {@code contentHtml} on the turn. */
+	private static void computeContentHtml(PersistedTurn turn) {
+		StringBuilder text = new StringBuilder();
+		for (PersistedPart part : turn.getAssistantParts()) {
+			if ("text".equals(part.getType()) && part.getTextData() != null) {
+				text.append(part.getTextData().getText());
+			}
+		}
+		if (text.length() > 0) {
+			turn.setContentHtml(Converters.markdownToHtmlString(text.toString()));
+		}
 	}
 
 }

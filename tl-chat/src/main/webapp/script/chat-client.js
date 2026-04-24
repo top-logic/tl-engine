@@ -2069,10 +2069,12 @@
 				const hasTrace = toolCalls.length > 0 || approvals.length > 0 ||
 					interactions.length > 0 || delegations.length > 0 || thinkingText;
 
+				const contentHtml = turn.contentHtml || '';
+
 				if (hasTrace) {
-					this._renderTurnTrace(toolCalls, approvals, interactions, delegations, thinkingText, turn.usage, textContent);
+					this._renderTurnTrace(toolCalls, approvals, interactions, delegations, thinkingText, turn.usage, textContent, contentHtml);
 				} else if (textContent) {
-					this._renderPersistedAgentMessage({ content: textContent });
+					this._renderPersistedAgentMessage({ content: textContent, contentHtml: contentHtml });
 				}
 
 				if (wasCancelled) {
@@ -2087,7 +2089,7 @@
 			}
 		},
 
-		_renderTurnTrace(toolCalls, approvals, interactions, delegations, thinkingText, usage, textContent) {
+		_renderTurnTrace(toolCalls, approvals, interactions, delegations, thinkingText, usage, textContent, contentHtml) {
 			const div = document.createElement('div');
 			div.className = 'chat-message chat-message-agent';
 			const content = document.createElement('div');
@@ -2191,7 +2193,7 @@
 			if (textContent) {
 				const textEl = document.createElement('div');
 				textEl.className = 'chat-agent-text';
-				textEl.innerHTML = Markdown.basicFormat(textContent);
+				textEl.innerHTML = contentHtml || Markdown.basicFormat(textContent);
 				content.appendChild(textEl);
 			}
 
@@ -2407,7 +2409,7 @@
 			div.className = 'chat-message chat-message-agent';
 			div.innerHTML =
 				'<div class="chat-bubble chat-bubble-agent">' +
-				'<div class="chat-agent-text">' + (msg.contentHtml || Utils.escapeHtml(msg.content || '')) + '</div>' +
+				'<div class="chat-agent-text">' + (msg.contentHtml || Markdown.basicFormat(msg.content || '')) + '</div>' +
 				'</div>';
 			if (Render._messagesEl) {
 				Render._messagesEl.appendChild(div);
@@ -2527,7 +2529,7 @@
 			const textEl = document.createElement('div');
 			textEl.className = 'chat-agent-text';
 			if (agentMsg) {
-				textEl.innerHTML = agentMsg.contentHtml || Utils.escapeHtml(agentMsg.content || '');
+				textEl.innerHTML = agentMsg.contentHtml || Markdown.basicFormat(agentMsg.content || '');
 			}
 			content.appendChild(textEl);
 

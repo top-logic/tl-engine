@@ -709,6 +709,9 @@ message PersistedTurn {
 
 	/** Parts contributed by the assistant in this turn. */
 	repeated PersistedPart assistantParts;
+
+	/** Server-rendered HTML of the assistant's text content. Computed at load time, not persisted. */
+	string contentHtml;
 }
 
 /** A single part within a turn, representing one atomic piece of content. */

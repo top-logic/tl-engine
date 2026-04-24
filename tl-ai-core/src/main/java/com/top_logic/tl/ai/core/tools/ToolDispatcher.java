@@ -160,12 +160,13 @@ public class ToolDispatcher implements ToolExecutor {
 
 		try {
 			ToolContext execContext = context.withToolCallId(toolCall.id());
-			String result = tool.execute(args, execContext);
+			ToolResult toolResult = tool.execute(args, execContext);
 			Instant end = Instant.now();
 			return new ToolResultMessage(
 				UUID.randomUUID().toString(), Instant.now(),
 				toolCall.id(), toolCall.name(),
-				new ToolState.Completed(result, start, end, false));
+				new ToolState.Completed(toolResult.text(), start, end, false,
+					toolResult.summary(), toolResult.truncationHint()));
 		} catch (IllegalArgumentException e) {
 			return failedResult(toolCall, start, sanitizeError(e));
 		} catch (Exception e) {

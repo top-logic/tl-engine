@@ -13,6 +13,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.core.tools.ToolResult;
 
 /**
  * Tests for {@link SecurityContext}.
@@ -110,7 +111,7 @@ public class TestSecurityContext extends TestCase {
 			public ToolSchema schema() { return new ToolSchema(name, "", "{}"); }
 
 			@Override
-			public String execute(Map<String, Object> args, ToolContext context) { return ""; }
+			public ToolResult execute(Map<String, Object> args, ToolContext context) { return ToolResult.of(""); }
 
 			@Override
 			public ToolMode mode() { return mode; }

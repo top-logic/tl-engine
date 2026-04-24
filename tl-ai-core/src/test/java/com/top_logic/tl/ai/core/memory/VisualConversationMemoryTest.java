@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.core.tools.ToolResult;
 
 /**
  * Visual test for the conversation memory system — prints the full lifecycle to stdout.
@@ -298,15 +299,15 @@ public class VisualConversationMemoryTest extends TestCase {
 			@Override public String name() { return "read_file"; }
 			@Override public String description() { return "Read a file's contents"; }
 			@Override public com.top_logic.tl.ai.core.provider.ToolSchema schema() { return readTool; }
-			@Override public String execute(java.util.Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(java.util.Map<String, Object> args, ToolContext context) {
 				sleep(50);
 				String path = String.valueOf(args.getOrDefault("path", ""));
 				if (path.contains("App.java")) {
-					return "package com.example;\n\n" + "// Application entry point\n".repeat(20);
+					return ToolResult.of("package com.example;\n\n" + "// Application entry point\n".repeat(20));
 				} else if (path.contains("Config.xml")) {
-					return "<config>\n" + "  <db host='localhost' port='5432'/>\n".repeat(15) + "</config>";
+					return ToolResult.of("<config>\n" + "  <db host='localhost' port='5432'/>\n".repeat(15) + "</config>");
 				} else {
-					return "CREATE TABLE users (\n" + "  id SERIAL PRIMARY KEY,\n".repeat(10) + ");";
+					return ToolResult.of("CREATE TABLE users (\n" + "  id SERIAL PRIMARY KEY,\n".repeat(10) + ");");
 				}
 			}
 			@Override public com.top_logic.tl.ai.core.tools.ToolMode mode() {

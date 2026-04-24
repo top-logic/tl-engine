@@ -686,11 +686,12 @@ public class AgentLoop {
 			return result;
 		}
 		String text = completed.result();
-		if (text.length() <= _maxResultChars) {
+		int limit = completed.truncationHint() > 0 ? completed.truncationHint() : _maxResultChars;
+		if (text.length() <= limit) {
 			return result;
 		}
 
-		int halfBudget = _maxResultChars / 2;
+		int halfBudget = limit / 2;
 		String head = text.substring(0, halfBudget);
 		String tail = text.substring(text.length() - halfBudget);
 		int droppedChars = text.length() - head.length() - tail.length();
@@ -703,7 +704,8 @@ public class AgentLoop {
 
 		return new ToolResultMessage(
 			result.id(), result.timestamp(), result.toolCallId(), result.toolName(),
-			new ToolState.Completed(truncated, completed.startTime(), completed.endTime(), false));
+			new ToolState.Completed(truncated, completed.startTime(), completed.endTime(),
+				false, completed.summary(), -1));
 	}
 
 	private static ToolResultMessage errorResult(ToolCall toolCall, String error) {

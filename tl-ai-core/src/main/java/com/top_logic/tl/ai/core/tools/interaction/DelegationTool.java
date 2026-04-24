@@ -27,6 +27,7 @@ import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.core.tools.ToolResult;
 
 /**
  * A tool that delegates work to another agent by spawning an isolated {@link AgentLoop}.
@@ -110,15 +111,15 @@ public class DelegationTool implements Tool {
 	}
 
 	@Override
-	public String execute(Map<String, Object> args, ToolContext context) {
+	public ToolResult execute(Map<String, Object> args, ToolContext context) {
 		if (context.delegationDepth() >= MAX_DELEGATION_DEPTH) {
-			return "ERROR: Maximum delegation depth (" + MAX_DELEGATION_DEPTH
-				+ ") reached. Complete the task with your own tools.";
+			return ToolResult.of("ERROR: Maximum delegation depth (" + MAX_DELEGATION_DEPTH
+				+ ") reached. Complete the task with your own tools.");
 		}
 
 		String task = (String) args.get("task");
 		if (task == null || task.isBlank()) {
-			return "ERROR: 'task' parameter is required.";
+			return ToolResult.of("ERROR: 'task' parameter is required.");
 		}
 		String contextStr = (String) args.get("context");
 
@@ -162,14 +163,14 @@ public class DelegationTool implements Tool {
 				long durationMs = Duration.between(startTime, Instant.now()).toMillis();
 				logListener.resolveDelegation(delegationId, truncate(finalText, 200), durationMs);
 			}
-			return finalText;
+			return ToolResult.of(finalText);
 		} catch (Exception e) {
 			if (logListener != null && delegationId != null) {
 				long durationMs = Duration.between(startTime, Instant.now()).toMillis();
 				logListener.resolveDelegation(delegationId, "ERROR: " + e.getMessage(), durationMs);
 			}
 			Logger.error("Delegation to " + _targetAgentName + " failed.", e, DelegationTool.class);
-			return "ERROR: Delegation to " + _targetAgentName + " failed: " + e.getMessage();
+			return ToolResult.of("ERROR: Delegation to " + _targetAgentName + " failed: " + e.getMessage());
 		}
 	}
 

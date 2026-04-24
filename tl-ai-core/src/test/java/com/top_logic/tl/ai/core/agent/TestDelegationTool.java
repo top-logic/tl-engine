@@ -9,6 +9,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.tools.ToolResult;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 
 /**
@@ -59,9 +60,9 @@ public class TestDelegationTool extends TestCase {
 	 */
 	public void testExecuteWithoutTask() {
 		DelegationTool tool = new DelegationTool("delegate_to_x", "desc", "x", "parent", name -> null);
-		String result = tool.execute(Map.of(), ToolContext.EMPTY);
-		assertTrue(result.startsWith("ERROR:"));
-		assertTrue(result.contains("task"));
+		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
+		assertTrue(result.text().startsWith("ERROR:"));
+		assertTrue(result.text().contains("task"));
 	}
 
 	/**
@@ -73,9 +74,9 @@ public class TestDelegationTool extends TestCase {
 		for (int i = 0; i < DelegationTool.MAX_DELEGATION_DEPTH; i++) {
 			deepContext = deepContext.forDelegation(TransactionScope.NOOP);
 		}
-		String result = tool.execute(Map.of("task", "do something"), deepContext);
-		assertTrue(result.startsWith("ERROR:"));
-		assertTrue(result.contains("depth"));
+		ToolResult result = tool.execute(Map.of("task", "do something"), deepContext);
+		assertTrue(result.text().startsWith("ERROR:"));
+		assertTrue(result.text().contains("depth"));
 	}
 
 	/**

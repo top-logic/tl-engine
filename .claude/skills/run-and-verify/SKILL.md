@@ -1,6 +1,6 @@
 ---
 name: run-and-verify
-description: Use when changes were made to the chat UI (tl-chat), system prompts, or agentic architecture (tl-ai-service agents/). Starts the app and uses Playwright to verify the chat interface works.
+description: Use when changes were made to the chat UI (tl-chat), system prompts, or agentic architecture (tl-ai-core agents/). Starts the app and uses Playwright to verify the chat interface works.
 ---
 
 # Run and Verify
@@ -11,7 +11,7 @@ After changes to the chat interface, system prompts, or agentic architecture, bu
 
 **Use when you changed any of:**
 - `tl-chat/` — chat UI, CSS, JS, servlets, SSE handler
-- `tl-ai-service/src/main/java/**/agents/` — orchestrator, agent invoker, specialist agents
+- `tl-ai-core/src/main/java/**/agents/` — orchestrator, agent invoker, specialist agents
 - System prompt strings in agent classes (OrchestratorRouter, ModelExplorer, TLScriptAgent)
 
 **Do NOT use for:**

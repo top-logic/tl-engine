@@ -12,6 +12,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.core.tools.ToolResult;
 
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -84,9 +85,9 @@ public class McpTool implements Tool {
 	}
 
 	@Override
-	public String execute(Map<String, Object> args, ToolContext context) {
+	public ToolResult execute(Map<String, Object> args, ToolContext context) {
 		McpSchema.CallToolResult result = _registry.callTool(_serverName, _mcpToolName, args);
-		return formatResult(result);
+		return ToolResult.of(formatResult(result));
 	}
 
 	@Override

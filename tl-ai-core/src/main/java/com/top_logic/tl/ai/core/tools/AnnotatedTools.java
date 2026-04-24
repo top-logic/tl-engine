@@ -305,7 +305,7 @@ public final class AnnotatedTools {
 		}
 
 		@Override
-		public String execute(Map<String, Object> args, ToolContext context) {
+		public ToolResult execute(Map<String, Object> args, ToolContext context) {
 			Parameter[] params = _method.getParameters();
 			Object[] invokeArgs = new Object[params.length];
 
@@ -322,12 +322,12 @@ public final class AnnotatedTools {
 			try {
 				Object result = _method.invoke(_provider, invokeArgs);
 				if (_method.getReturnType() == void.class) {
-					return "Success";
+					return ToolResult.of("Success");
 				}
 				if (result == null) {
-					return "null";
+					return ToolResult.of("null");
 				}
-				return result.toString();
+				return ToolResult.of(result.toString());
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 				if (cause instanceof RuntimeException re) {

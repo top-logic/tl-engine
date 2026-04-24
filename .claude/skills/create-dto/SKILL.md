@@ -97,7 +97,7 @@ JsonReader reader = new JsonReader(new StringR(jsonString));
 MyResponse parsed = MyResponse.readMyResponse(reader);
 ```
 
-For tool responses in `tl-ai-service`, use `DataClassSerializer.toJson()` which adds error handling and optional tool call tracking.
+For tool responses in `tl-ai-core`, use `DataClassSerializer.toJson()` which adds error handling and optional tool call tracking.
 
 ## Important constraints
 
@@ -107,6 +107,6 @@ For tool responses in `tl-ai-service`, use `DataClassSerializer.toJson()` which 
 
 ## Existing examples
 
-- `tl-ai-service/src/main/java/com/top_logic/ai/service/tools/model/messages/messages.proto` — largest example with 26+ message types
-- `tl-ai-service/src/main/java/com/top_logic/ai/service/tools/help/messages/messages.proto` — simple example
+- `tl-ai-core/src/main/java/com/top_logic/ai/service/tools/model/messages/messages.proto` — largest example with 26+ message types
+- `tl-ai-core/src/main/java/com/top_logic/ai/service/tools/help/messages/messages.proto` — simple example
 - `tl-chat/src/main/java/com/top_logic/ai/chat/api/messages/messages.proto` — chat API DTOs and SSE event payloads

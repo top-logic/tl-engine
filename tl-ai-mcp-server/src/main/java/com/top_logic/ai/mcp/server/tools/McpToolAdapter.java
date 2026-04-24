@@ -117,7 +117,7 @@ public class McpToolAdapter {
 				arguments = Map.of();
 			}
 
-			String result = tool.execute(arguments, null);
+			String result = tool.execute(arguments, null).text();
 
 			return new McpSchema.CallToolResult(result, false);
 

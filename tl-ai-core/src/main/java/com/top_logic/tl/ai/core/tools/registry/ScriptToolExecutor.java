@@ -14,6 +14,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.core.tools.ToolResult;
 
 /**
  * A {@link Tool} that executes tools implemented in TL-Script.
@@ -97,7 +98,7 @@ public class ScriptToolExecutor implements Tool {
 	}
 
 	@Override
-	public String execute(Map<String, Object> args, ToolContext context) {
+	public ToolResult execute(Map<String, Object> args, ToolContext context) {
 		try {
 			Object[] positionalArgs = new Object[_parameterNames.size()];
 			if (args != null) {
@@ -106,9 +107,9 @@ public class ScriptToolExecutor implements Tool {
 				}
 			}
 
-			return ToString.toString(_executor.execute(positionalArgs));
+			return ToolResult.of(ToString.toString(_executor.execute(positionalArgs)));
 		} catch (Exception ex) {
-			return "Error executing tool: " + ex.getMessage();
+			return ToolResult.of("Error executing tool: " + ex.getMessage());
 		}
 	}
 

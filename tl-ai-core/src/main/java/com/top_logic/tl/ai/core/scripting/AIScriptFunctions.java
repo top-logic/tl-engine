@@ -150,7 +150,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		try {
 			Map<String, Object> args = parameters != null ? parameters : Map.of();
-			return tool.execute(args, ToolContext.EMPTY);
+			return tool.execute(args, ToolContext.EMPTY).text();
 		} catch (Exception ex) {
 			return "Error invoking tool '" + toolName + "': " + ex.getMessage();
 		}

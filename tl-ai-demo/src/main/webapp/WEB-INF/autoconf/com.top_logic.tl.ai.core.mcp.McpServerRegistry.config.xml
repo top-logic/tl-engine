@@ -10,9 +10,13 @@
         <servers>
             <server name="everything">
                 <transport class="com.top_logic.tl.ai.core.mcp.StdioMcpTransport"
-                    command="npx"
+                    command="/opt/homebrew/bin/npx"
                     args="-y,@modelcontextprotocol/server-everything"
-                />
+                >
+                    <env>
+                        <entry name="PATH" value="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"/>
+                    </env>
+                </transport>
             </server>
         </servers>
     </instance>

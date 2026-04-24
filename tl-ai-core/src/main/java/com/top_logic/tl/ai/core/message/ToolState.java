@@ -47,13 +47,24 @@ public sealed interface ToolState
 	/**
 	 * Tool execution completed successfully.
 	 *
-	 * @param result    the tool's output (string)
-	 * @param startTime when execution started
-	 * @param endTime   when execution completed
-	 * @param compacted true if the result was cleared during context compaction
+	 * @param result         the tool's output (string)
+	 * @param startTime      when execution started
+	 * @param endTime        when execution completed
+	 * @param compacted      true if the result was cleared during context compaction
+	 * @param summary        optional compact summary for compaction, or {@code null}
+	 * @param truncationHint per-tool max chars before truncation, or {@code -1} for global default
 	 */
 	record Completed(String result, Instant startTime, Instant endTime,
-			boolean compacted) implements ToolState {
+			boolean compacted, String summary, int truncationHint) implements ToolState {
+
+		/**
+		 * Convenience constructor for call sites that do not supply summary or truncation hint.
+		 */
+		public Completed(String result, Instant startTime, Instant endTime, boolean compacted) {
+			this(result, startTime, endTime, compacted, null, -1);
+		}
+
+		/** */
 		public Completed {
 			Objects.requireNonNull(result, "Result must not be null.");
 			Objects.requireNonNull(startTime, "Start time must not be null.");

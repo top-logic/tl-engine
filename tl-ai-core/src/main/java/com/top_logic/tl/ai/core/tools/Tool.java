@@ -35,20 +35,14 @@ public interface Tool {
 	/** */
 	ToolSchema schema();
 
-	// TODO: Change return type from String to a ToolResult record once a consumer exists
-	//   (compaction layer, structured metadata, or per-tool truncation hints).
-	//   See PRD FR-3.2 and ARCHITECTURE-VISION Pillar 4 (Context Management).
-	//   A ToolResult would carry: result text, optional summary for compaction,
-	//   metadata map (cacheable, accessed objects), and partial-success flag.
-
 	/**
 	 * Execute the tool with the given arguments.
 	 *
 	 * @param args    deserialized arguments from the LLM (JSON object → Map)
 	 * @param context execution context (security, transaction, progress)
-	 * @return the tool's result as a string
+	 * @return a {@link ToolResult} carrying the result text and optional metadata
 	 */
-	String execute(Map<String, Object> args, ToolContext context);
+	ToolResult execute(Map<String, Object> args, ToolContext context);
 
 	/**
 	 * What kind of state change this tool makes.

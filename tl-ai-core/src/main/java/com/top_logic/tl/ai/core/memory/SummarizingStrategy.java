@@ -219,6 +219,11 @@ public class SummarizingStrategy implements CompactionStrategy {
 		if (!(msg.state() instanceof ToolState.Completed completed)) {
 			return msg;
 		}
+		if (completed.summary() != null) {
+			return new ToolResultMessage(msg.id(), msg.timestamp(), msg.toolCallId(), msg.toolName(),
+				new ToolState.Completed(completed.summary(), completed.startTime(),
+					completed.endTime(), completed.compacted()));
+		}
 		String result = completed.result();
 		if (result.length() <= MAX_TOOL_RESULT_CHARS) {
 			return msg;

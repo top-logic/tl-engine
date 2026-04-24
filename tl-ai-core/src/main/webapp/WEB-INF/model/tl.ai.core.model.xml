@@ -98,8 +98,8 @@
 								type="tl.core:Double"
 							/>
 							<label key="dynamic.b808b966-6c56-4c10-b97c-8bd4d1799f33">
-								<en>Fine Tune Parameters</en>
-								<de>Fine Tuning Parameter</de>
+								<en>Model Parameters</en>
+								<de>Modell-Parameter</de>
 							</label>
 						</group>
 					</form>

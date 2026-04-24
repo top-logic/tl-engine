@@ -69,7 +69,6 @@ import com.top_logic.tl.ai.core.tools.ToolMode;
 public class AgentLoop {
 
 	// TODO: Memory/attachment injection between turns
-	// TODO: Stop hooks (post-response validation)
 
 	/** Default maximum characters per tool result before truncation. */
 	public static final int DEFAULT_MAX_RESULT_CHARS = 4000;
@@ -211,6 +210,13 @@ public class AgentLoop {
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
 
+			if (!_config.responseValidator().test(assistantMsg)) {
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				StopReason stopReason = StopReason.REJECTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
+			}
+
 			List<ToolCall> toolCalls = assistantMsg.content().stream()
 				.filter(ToolCall.class::isInstance)
 				.map(ToolCall.class::cast)
@@ -317,6 +323,13 @@ public class AgentLoop {
 			conversation.add(assistantMsg);
 			totalUsage = totalUsage.add(assistantMsg.usage());
 			memory.updateTokenBaseline(assistantMsg.usage());
+
+			if (!_config.responseValidator().test(assistantMsg)) {
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				StopReason stopReason = StopReason.REJECTED;
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
+			}
 
 			List<ToolCall> toolCalls = assistantMsg.content().stream()
 				.filter(ToolCall.class::isInstance)

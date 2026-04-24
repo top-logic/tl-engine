@@ -16,6 +16,7 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
+import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventAssertions;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -1473,6 +1474,120 @@ public class TestAgentLoop extends TestCase {
 		assertTrue(events.contains("complete:read1"));
 		assertTrue(events.contains("complete:read2"));
 		assertTrue(events.contains("complete:write1"));
+	}
+
+	/**
+	 * Response validator rejects the LLM's response. Loop stops with REJECTED, but the
+	 * message is still added to the conversation for audit trail.
+	 */
+	public void testResponseValidatorRejectsResponse() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider provider = mockProvider(List.of(new TextContent("Bad response")));
+
+		AgentParams params = new AgentParams(MODEL, "You are a test assistant.",
+			AgentParams.DEFAULT_MAX_TURNS, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
+			Map.of(), msg -> false);
+
+		List<AgentEvent> captured = new ArrayList<>();
+		AgentEventListener capture = captured::add;
+
+		AgentLoop loop = new AgentLoop(params, provider, emptyRegistry());
+		AgentResult result = loop.run(conv, capture);
+
+		assertEquals(StopReason.REJECTED, result.stopReason());
+		assertEquals(1, result.turnsUsed());
+
+		// Message was still added to conversation for audit trail
+		assertEquals(2, conv.size());
+		assertTrue(conv.messages().get(1) instanceof AssistantMessage);
+
+		// RunCompleted must carry REJECTED reason
+		AgentEvent.RunCompleted runCompleted =
+			AgentEventAssertions.firstOfType(captured, AgentEvent.RunCompleted.class);
+		assertNotNull("RunCompleted event must be emitted", runCompleted);
+		assertEquals(StopReason.REJECTED, runCompleted.reason());
+
+		// TurnCompleted must precede RunCompleted
+		int turnCompletedIdx = -1;
+		int runCompletedIdx = -1;
+		for (int i = 0; i < captured.size(); i++) {
+			if (captured.get(i) instanceof AgentEvent.TurnCompleted) {
+				turnCompletedIdx = i;
+			}
+			if (captured.get(i) instanceof AgentEvent.RunCompleted) {
+				runCompletedIdx = i;
+			}
+		}
+		assertTrue("TurnCompleted must be emitted", turnCompletedIdx >= 0);
+		assertTrue("TurnCompleted must precede RunCompleted",
+			turnCompletedIdx < runCompletedIdx);
+	}
+
+	/**
+	 * Response validator rejects via the memory-backed run path.
+	 */
+	public void testResponseValidatorRejectsResponseWithMemory() {
+		ConversationMemory memory = ConversationMemory.withDefaults(
+			new TruncatingStrategy(), 100_000);
+		memory.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider provider = mockProvider(List.of(new TextContent("Bad response")));
+
+		AgentParams params = new AgentParams(MODEL, "You are a test assistant.",
+			AgentParams.DEFAULT_MAX_TURNS, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
+			Map.of(), msg -> false);
+
+		List<AgentEvent> captured = new ArrayList<>();
+		AgentEventListener capture = captured::add;
+
+		AgentLoop loop = new AgentLoop(params, provider, emptyRegistry(), memory);
+		AgentResult result = loop.run(ToolContext.EMPTY, capture);
+
+		assertEquals(StopReason.REJECTED, result.stopReason());
+		assertEquals(1, result.turnsUsed());
+
+		// RunCompleted must carry REJECTED reason
+		AgentEvent.RunCompleted runCompleted =
+			AgentEventAssertions.firstOfType(captured, AgentEvent.RunCompleted.class);
+		assertNotNull("RunCompleted event must be emitted", runCompleted);
+		assertEquals(StopReason.REJECTED, runCompleted.reason());
+
+		// TurnCompleted must precede RunCompleted
+		int turnCompletedIdx = -1;
+		int runCompletedIdx = -1;
+		for (int i = 0; i < captured.size(); i++) {
+			if (captured.get(i) instanceof AgentEvent.TurnCompleted) {
+				turnCompletedIdx = i;
+			}
+			if (captured.get(i) instanceof AgentEvent.RunCompleted) {
+				runCompletedIdx = i;
+			}
+		}
+		assertTrue("TurnCompleted must be emitted", turnCompletedIdx >= 0);
+		assertTrue("TurnCompleted must precede RunCompleted",
+			turnCompletedIdx < runCompletedIdx);
+	}
+
+	/**
+	 * Response validator that accepts passes through normally.
+	 */
+	public void testResponseValidatorAcceptsResponse() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider provider = mockProvider(List.of(new TextContent("Good response")));
+
+		AgentParams params = new AgentParams(MODEL, "You are a test assistant.",
+			AgentParams.DEFAULT_MAX_TURNS, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS,
+			Map.of(), msg -> true);
+
+		AgentLoop loop = new AgentLoop(params, provider, emptyRegistry());
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals(1, result.turnsUsed());
 	}
 
 	/** */

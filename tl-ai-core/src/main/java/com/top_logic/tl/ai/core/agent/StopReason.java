@@ -22,7 +22,10 @@ public enum StopReason {
 	ERROR,
 
 	/** Loop was interrupted (cancellation). */
-	ABORTED
+	ABORTED,
+
+	/** Response validator rejected the LLM's response. */
+	REJECTED
 
 	// TODO: CONTEXT_OVERFLOW (compaction trigger)
 }

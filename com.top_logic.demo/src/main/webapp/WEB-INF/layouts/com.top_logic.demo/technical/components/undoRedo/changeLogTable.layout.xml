@@ -15,6 +15,7 @@
 		</name>
 		<modelBuilder class="com.top_logic.element.changelog.ChangeLogListModelBuilder"
 			all-users="true"
+			root-required="true"
 		/>
 		<configurationProviders>
 			<column-customizations>

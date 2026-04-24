@@ -22,10 +22,8 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
-import com.top_logic.tl.ai.core.agent.AgentParams;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
-import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -259,74 +257,36 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Call an AI Agent from the Registry.
+	 * Runs a named agent from the {@link AgentFactory} registry with a single user message.
+	 *
+	 * <p>
+	 * The agent is resolved by name from the {@code tl.ai.core:Agent} model instances. A fresh
+	 * {@link Conversation} is created for each call; no conversation history is retained between
+	 * invocations.
+	 * </p>
+	 *
+	 * <p>
+	 * Example usage in TL-Script:
+	 * </p>
+	 *
+	 * <pre>
+	 * aiAgentChat("my-agent", "Summarize the latest changes.")
+	 * </pre>
 	 *
 	 * @param agentName
-	 *        The agent name from the Agent Registry.
+	 *        The agent name as configured in the knowledge base.
 	 * @param userMessage
-	 *        The user message to prompt the Agent with.
-	 * @return The response from the AI Agent.
+	 *        The user message to send to the agent.
+	 * @return The agent's final text response.
 	 */
 	public static String agentChat(String agentName, String userMessage) {
-		return agentChatWithListener(agentName, userMessage, event -> { });
-	}
-
-	/**
-	 * Call an AI Agent from the Registry with an event listener.
-	 *
-	 * <p>
-	 * Not exposed as a TL-Script function — uses a distinct name to avoid ambiguity in the script
-	 * registry.
-	 * </p>
-	 *
-	 * @param agentName
-	 *        The agent name from the Agent Registry.
-	 * @param userMessage
-	 *        The user message to prompt the Agent with.
-	 * @param listener
-	 *        Receives progress events during the run.
-	 * @return The response from the AI Agent.
-	 */
-	public static String agentChatWithListener(String agentName, String userMessage,
-			AgentEventListener listener) {
 		AgentFactory factory = AgentFactory.getInstance();
-
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage(
 			UUID.randomUUID().toString(),
 			Instant.now(),
 			List.of(new TextContent(userMessage))));
-
-		return factory.runAgent(agentName, conversation, null, listener);
-	}
-
-	/**
-	 * Run an agent defined in the knowledge base via AgentFactory.
-	 *
-	 * <p>
-	 * Builds an {@link AgentLoop} from a KB-defined agent and runs it with the given user message.
-	 * The agent is resolved by name from the {@code tl.ai.core:Agent} model instances.
-	 * </p>
-	 *
-	 * @param agentName
-	 *        the agent name as stored in the KB
-	 * @param userMessage
-	 *        the user message to send to the agent
-	 * @return the agent's final text response
-	 */
-	public static String runAgent(String agentName, String userMessage) {
-		AgentFactory factory = AgentFactory.getInstance();
-		AgentLoop loop = factory.buildAgentLoop(agentName);
-
-		Conversation conversation = new Conversation();
-		conversation.add(new UserMessage(
-			UUID.randomUUID().toString(),
-			Instant.now(),
-			List.of(new TextContent(userMessage))));
-
-		AgentResult result = loop.run(conversation, ToolContext.EMPTY, event -> { });
-
-		return extractResponseText(conversation);
+		return factory.runAgent(agentName, conversation, null, event -> { });
 	}
 
 	/**

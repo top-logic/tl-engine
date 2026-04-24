@@ -12,15 +12,15 @@
 			>
 				<providers>
 					<provider name="openai"
-						api-key="mhGmAdsCEM5qFqsiGjjLKJIrFdp7DZSZ2qnGg9Tsg2dWFswM0HwM5h-OspZBYM2vRAwaNOf1hEU-XFUboHLYOBJiIrQi4GXYRtflsTV9avMWCKioZ0b5oMh_tZPgnEdzrML1kbcbXOgJ95QrO0C88twg0TbQXet1eCe8hZkZuc7syAevEFjLO0oI2iVAfeysIaWD6d4RWn0nr2n-J3pZlNQzw4IgzNC6WKm3KaEXsfoCSP-a"
+						api-key=""
 						base-url="https://api.openai.com/v1"
 					/>
 					<provider name="anthropic"
-						api-key="V7cyorDAd7EbTRXLkhEWxcs_-ooltb-gb5BUkUNo6vP2YbZo8JSeVFD1hCUumGY06zOjP5i32ZgdZTatm5X7AUqxDOz7Pj3Ac7hYjpQjFL-rJtVxntKbEl0XRk6H6EsJcJ1Zrm_RmYPsRjwmmARa2NkFx7eypWdPs95gYQ"
+						api-key="5DV9j1q7BlAvR4lURAFC6-mQSF4-4ZjFKsz-2-wlTlw7we8TUSmKzXgIxgJ9bgXAtoMAtBkzQdWWdsleFMY4BCbL0SwDyqmp-ZQOfkeZk56CrAOdo7sjiz-t_0uTfUXH_Z9KOH7SzJ4Xkks5f2Hjqok6O6Y7BaH7Li9dUw"
 						base-url="https://api.anthropic.com/v1"
 					/>
 					<provider name="mistral"
-						api-key="JK0LuIRTfilMFkoeqfAqoBnaT9tVncD0tfKwDHvFdb0_7pnWgcqfsxO7rUgNo9hg"
+						api-key="2YRbWKL-jxM506HdihlWhmtHc_6sdQPzSfv3Vgd_S61Ug25zEvvcEoh92ifKgPKv"
 						base-url="https://api.mistral.ai/v1"
 					/>
 				</providers>

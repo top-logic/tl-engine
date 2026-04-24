@@ -1,16 +1,16 @@
 ---
 name: add-ai-provider
-description: This skill should be used when adding a new AI provider, LLM integration, or ChatModelFactory implementation to tl-ai-core.
+description: This skill should be used when adding a new AI provider, LLM integration, or ChatModelFactory implementation to tl-ai-service.
 version: 1.0.0
 ---
 
 # Adding a New AI Provider
 
-To add support for a new AI provider to `tl-ai-core`:
+To add support for a new AI provider to `tl-ai-service`:
 
 ## Step 1: Create Factory Class
 
-Create a class implementing `ChatModelFactory` in `tl-ai-core/src/main/java/com/top_logic/ai/service/providers/`:
+Create a class implementing `ChatModelFactory` in `tl-ai-service/src/main/java/com/top_logic/ai/service/providers/`:
 
 ```java
 public class MyProviderChatModelFactory implements ChatModelFactory {
@@ -39,11 +39,11 @@ public interface Config<I extends MyProviderChatModelFactory>
 
 ## Step 3: Register in Configuration
 
-Add to `tl-ai-core/src/main/webapp/WEB-INF/conf/tl-ai-core.conf.config.xml`:
+Add to `tl-ai-service/src/main/webapp/WEB-INF/conf/tl-ai-openai.conf.config.xml`:
 
 ```xml
 <factory
-    class="com.top_logic.tl.ai.core.provider.MyProviderChatModelFactory"
+    class="com.top_logic.ai.service.providers.MyProviderChatModelFactory"
     models="model-name-1, model-name-2"
     api-key="%MY_PROVIDER_API_KEY%"
 />

@@ -63,7 +63,14 @@ public class McpTool implements Tool {
 
 	@Override
 	public String name() {
-		return "mcp." + _serverName + "." + _mcpToolName;
+		return "mcp__" + sanitize(_serverName) + "__" + sanitize(_mcpToolName);
+	}
+
+	/**
+	 * Sanitizes a name to match LLM provider tool name constraints ({@code [a-zA-Z0-9_-]}).
+	 */
+	private static String sanitize(String name) {
+		return name.replaceAll("[^a-zA-Z0-9_-]", "_");
 	}
 
 	@Override

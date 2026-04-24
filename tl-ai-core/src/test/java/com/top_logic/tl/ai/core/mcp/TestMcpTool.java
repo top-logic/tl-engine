@@ -19,7 +19,7 @@ public class TestMcpTool extends TestCase {
 	/** */
 	public void testNameFormat() {
 		McpTool tool = createTool("my-server", "searchDocs", "Search documents", schemaJson());
-		assertEquals("mcp.my-server.searchDocs", tool.name());
+		assertEquals("mcp__my-server__searchDocs", tool.name());
 	}
 
 	/** */
@@ -33,7 +33,7 @@ public class TestMcpTool extends TestCase {
 		String inputSchema = "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\"}}}";
 		McpTool tool = createTool("srv", "search", "Search", inputSchema);
 
-		assertEquals("mcp.srv.search", tool.schema().name());
+		assertEquals("mcp__srv__search", tool.schema().name());
 		assertEquals("Search", tool.schema().description());
 		assertEquals(inputSchema, tool.schema().inputSchemaJson());
 	}

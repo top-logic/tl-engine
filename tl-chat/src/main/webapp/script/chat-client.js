@@ -150,7 +150,7 @@
 			}
 			this.currentRun.toolCalls.set(id, {
 				name, argsJson, status: 'running', result: null, durationMs: null, error: null,
-				isDelegation
+				isDelegation, progressMessage: null
 			});
 		},
 
@@ -189,6 +189,13 @@
 				tc.error = reason;
 			}
 		},
+
+		updateToolProgress(id, message) {
+			const tc = this.currentRun?.toolCalls.get(id);
+			if (tc) {
+				tc.progressMessage = message;
+			}
+		},
 	};
 
 	// ========================================================================
@@ -217,6 +224,7 @@
 				tool_completed: Handlers.onToolCompleted,
 				tool_failed: Handlers.onToolFailed,
 				tool_denied: Handlers.onToolDenied,
+				tool_progress: Handlers.onToolProgress,
 				approval_required: Handlers.onApprovalRequired,
 				approval_resolved: Handlers.onApprovalResolved,
 				lock_acquired: Handlers.onLockAcquired,
@@ -363,6 +371,11 @@
 			Tools.updateToolCall(data.toolCallId);
 		},
 
+		onToolProgress(data) {
+			Store.updateToolProgress(data.toolCallId, data.message);
+			Tools.updateToolProgress(data.toolCallId);
+		},
+
 		onApprovalRequired(data) {
 			State.set(State.AWAITING_APPROVAL);
 			Approval.showPrompt(data);
@@ -441,6 +454,9 @@
 			} else if (innerType === 'tool_failed') {
 				Store.failToolCall(inner.toolCallId, inner.errorMessage, inner.durationMs);
 				Tools.updateToolCall(inner.toolCallId);
+			} else if (innerType === 'tool_progress') {
+				Store.updateToolProgress(inner.toolCallId, inner.message);
+				Tools.updateToolProgress(inner.toolCallId);
 			} else if (innerType === 'text_delta') {
 				if (!del.textBuffer) del.textBuffer = '';
 				del.textBuffer += inner.text;
@@ -1411,6 +1427,26 @@
 					body.appendChild(errorDiv);
 				}
 			}
+		},
+
+		updateToolProgress(toolCallId) {
+			const tc = Store.currentRun?.toolCalls.get(toolCallId);
+			if (!tc || !tc.progressMessage) return;
+			const root = Render._root || document;
+			const el = root.querySelector('[data-tool-call-id="' + toolCallId + '"]');
+			if (!el) return;
+			const header = el.querySelector('.tl-chat-tool-header');
+			if (!header) return;
+			let progress = header.querySelector('.tl-chat-tool-progress');
+			if (!progress) {
+				progress = document.createElement('span');
+				progress.className = 'tl-chat-tool-progress';
+				const name = header.querySelector('.tl-chat-tool-name');
+				if (name) {
+					name.after(progress);
+				}
+			}
+			progress.textContent = tc.progressMessage;
 		},
 
 		_prettyJson(jsonStr) {

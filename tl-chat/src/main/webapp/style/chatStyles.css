@@ -1821,6 +1821,13 @@
 	color: var(--chat-text-muted);
 }
 
+.tl-chat-tool-progress {
+	color: var(--chat-text-secondary, #888);
+	font-size: 0.85em;
+	margin-left: 0.5em;
+	font-style: italic;
+}
+
 .tl-chat-tool-tokens {
 	color: var(--chat-text-muted);
 	font-size: 10px;

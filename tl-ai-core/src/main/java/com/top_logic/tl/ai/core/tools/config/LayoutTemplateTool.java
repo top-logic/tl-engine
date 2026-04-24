@@ -28,10 +28,10 @@ import com.top_logic.mig.html.layout.TLLayout;
 import com.top_logic.tl.ai.core.tools.P;
 import com.top_logic.tl.ai.core.tools.ToolMethod;
 import com.top_logic.tl.ai.core.tools.ToolMode;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutCreateResponse;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateInfo;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateListResponse;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.util.Resources;
 
 import de.haumacher.msgbuf.io.StringW;

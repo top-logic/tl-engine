@@ -128,7 +128,7 @@
 				>
 					<annotations>
 						<options>
-							<all-model-names/>
+							<generator class="com.top_logic.tl.ai.core.agent.AllModelNamesGenerator"/>
 						</options>
 					</annotations>
 				</property>
@@ -167,7 +167,7 @@
 				>
 					<annotations>
 						<options>
-							<all-tool-names/>
+							<generator class="com.top_logic.tl.ai.core.agent.AllToolNamesGenerator"/>
 						</options>
 					</annotations>
 				</property>
@@ -177,7 +177,7 @@
 				>
 					<annotations>
 						<options>
-							<all-mcp-server-names/>
+							<generator class="com.top_logic.tl.ai.core.agent.AllMcpServerNamesGenerator"/>
 						</options>
 					</annotations>
 				</property>

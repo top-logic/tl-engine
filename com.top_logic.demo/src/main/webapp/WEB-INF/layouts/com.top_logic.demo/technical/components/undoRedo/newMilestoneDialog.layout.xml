@@ -42,7 +42,7 @@
 		</open-handler>
 		<typeOptions type="tl.demo.projectManagement:Milestone"/>
 		<create-handler id="undoRedo_newMilestone_create"
-			linkOperation="project -> milestone -> $project.add(`tl.demo.projectManagement:Project#milestones`, $milestone)"
+			linkOperation="project -> milestone -> $project.add(`tl.demo.projectManagement:ProjectScope#milestones`, $milestone)"
 		>
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/milestonesTable.layout.xml#Table)">

@@ -312,6 +312,7 @@ public class OpenAIProvider implements LLMProvider {
 		int reasoningTokens = 0;
 		int cachedTokens = 0;
 		Map<String, ContentBlock> blocks = new LinkedHashMap<>();
+		Map<Integer, String> outputIndexToBlockKey = new LinkedHashMap<>();
 		int nextOutputIndex = 0;
 
 		SSEReader.Event event;
@@ -385,8 +386,10 @@ public class OpenAIProvider implements LLMProvider {
 						String key = callId != null ? callId : (itemId != null ? itemId : "item-" + outputIndex);
 						ContentBlock block = new ContentBlock(itemType);
 						block._id = callId;
+						block._itemId = itemId;
 						block._name = name;
 						blocks.put(key, block);
+						outputIndexToBlockKey.put(outputIndex, key);
 
 						if ("function_call".equals(itemType) && callId != null && name != null) {
 							handler.onEvent(new StreamEvent.ToolCallStart(outputIndex, callId, name));
@@ -453,6 +456,7 @@ public class OpenAIProvider implements LLMProvider {
 					int outputIndex = 0;
 					String delta = null;
 					String callId = null;
+					String itemId = null;
 
 					try (JsonReader json = jsonReader(data)) {
 						json.beginObject();
@@ -461,6 +465,7 @@ public class OpenAIProvider implements LLMProvider {
 								case "output_index" -> outputIndex = json.nextInt();
 								case "delta" -> delta = json.nextString();
 								case "call_id" -> callId = json.nextString();
+								case "item_id" -> itemId = json.nextString();
 								default -> json.skipValue();
 							}
 						}
@@ -468,24 +473,98 @@ public class OpenAIProvider implements LLMProvider {
 					}
 
 					if (delta != null) {
-						// Accumulate by call_id — find the matching function_call block.
-						for (ContentBlock block : blocks.values()) {
-							if ("function_call".equals(block._type)
-								&& (callId == null || callId.equals(block._id))) {
-								block._arguments.append(delta);
-								break;
-							}
+						ContentBlock block =
+							findFunctionCallBlock(blocks, outputIndexToBlockKey, callId, itemId, outputIndex);
+						if (block != null) {
+							block._arguments.append(delta);
 						}
 						handler.onEvent(new StreamEvent.ToolCallDelta(outputIndex, delta));
 					}
 				}
 
 				case "response.function_call_arguments.done" -> {
-					// Already accumulated — nothing to do.
+					int outputIndex = 0;
+					String callId = null;
+					String itemId = null;
+					String arguments = null;
+
+					try (JsonReader json = jsonReader(data)) {
+						json.beginObject();
+						while (json.hasNext()) {
+							switch (json.nextName()) {
+								case "output_index" -> outputIndex = json.nextInt();
+								case "call_id" -> callId = json.nextString();
+								case "item_id" -> itemId = json.nextString();
+								case "arguments" -> arguments = json.nextString();
+								case "item" -> {
+									json.beginObject();
+									while (json.hasNext()) {
+										switch (json.nextName()) {
+											case "arguments" -> arguments = json.nextString();
+											case "call_id" -> callId = json.nextString();
+											case "id" -> itemId = json.nextString();
+											default -> json.skipValue();
+										}
+									}
+									json.endObject();
+								}
+								default -> json.skipValue();
+							}
+						}
+						json.endObject();
+					}
+
+					if (arguments != null) {
+						setFunctionArguments(
+							blocks,
+							outputIndexToBlockKey,
+							callId,
+							itemId,
+							outputIndex,
+							arguments);
+					}
 				}
 
 				case "response.output_item.done" -> {
-					// Already accumulated — nothing to do.
+					int outputIndex = 0;
+					String itemType = null;
+					String callId = null;
+					String itemId = null;
+					String arguments = null;
+
+					try (JsonReader json = jsonReader(data)) {
+						json.beginObject();
+						while (json.hasNext()) {
+							switch (json.nextName()) {
+								case "output_index" -> outputIndex = json.nextInt();
+								case "item" -> {
+									json.beginObject();
+									while (json.hasNext()) {
+										switch (json.nextName()) {
+											case "type" -> itemType = json.nextString();
+											case "call_id" -> callId = json.nextString();
+											case "id" -> itemId = json.nextString();
+											case "arguments" -> arguments = json.nextString();
+											default -> json.skipValue();
+										}
+									}
+									json.endObject();
+								}
+								default -> json.skipValue();
+							}
+						}
+						json.endObject();
+					}
+
+					if ("function_call".equals(itemType) && arguments != null) {
+						setFunctionArguments(
+							blocks,
+							outputIndexToBlockKey,
+							callId,
+							itemId,
+							outputIndex,
+							arguments);
+					}
 				}
 
 				case "response.completed" -> {
@@ -657,6 +736,54 @@ public class OpenAIProvider implements LLMProvider {
 		return parts;
 	}
 
+	private void setFunctionArguments(
+			Map<String, ContentBlock> blocks,
+			Map<Integer, String> outputIndexToBlockKey,
+			String callId,
+			String itemId,
+			int outputIndex,
+			String arguments) {
+		ContentBlock block = findFunctionCallBlock(blocks, outputIndexToBlockKey, callId, itemId, outputIndex);
+		if (block != null) {
+			block._arguments.setLength(0);
+			block._arguments.append(arguments);
+		}
+	}
+
+	private ContentBlock findFunctionCallBlock(
+			Map<String, ContentBlock> blocks,
+			Map<Integer, String> outputIndexToBlockKey,
+			String callId,
+			String itemId,
+			int outputIndex) {
+		if (callId != null) {
+			for (ContentBlock block : blocks.values()) {
+				if ("function_call".equals(block._type) && callId.equals(block._id)) {
+					return block;
+				}
+			}
+		}
+		if (itemId != null) {
+			ContentBlock direct = blocks.get(itemId);
+			if (direct != null && "function_call".equals(direct._type)) {
+				return direct;
+			}
+			for (ContentBlock block : blocks.values()) {
+				if ("function_call".equals(block._type) && itemId.equals(block._itemId)) {
+					return block;
+				}
+			}
+		}
+		String key = outputIndexToBlockKey.get(outputIndex);
+		if (key != null) {
+			ContentBlock byOutputIndex = blocks.get(key);
+			if (byOutputIndex != null && "function_call".equals(byOutputIndex._type)) {
+				return byOutputIndex;
+			}
+		}
+		return null;
+	}
+
 	private void handleErrorResponse(HttpResponse<InputStream> response) throws ProviderException {
 		int status = response.statusCode();
 		String body = "";
@@ -801,6 +928,8 @@ public class OpenAIProvider implements LLMProvider {
 		final StringBuilder _text = new StringBuilder();
 
 		String _id;
+
+		String _itemId;
 
 		String _name;
 

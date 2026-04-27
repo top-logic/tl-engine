@@ -5,10 +5,13 @@
  */
 package com.top_logic.tl.ai.core.provider.openai;
 
+import java.io.ByteArrayInputStream;
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 import junit.framework.TestCase;
 
@@ -18,6 +21,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 
@@ -149,6 +153,45 @@ public class TestOpenAIProvider extends TestCase {
 			}
 		}
 		assertTrue("Expected at least one ToolCall content part.", hasToolCall);
+	}
+
+	/** */
+	public void testToolArgumentsFromOutputItemDone() throws Exception {
+		OpenAIProvider provider = new OpenAIProvider("test-key");
+
+		String sse = ""
+			+ "event: message\n"
+			+ "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_1\",\"model\":\"gpt-5.5\"}}\n\n"
+			+ "event: message\n"
+			+ "data: {\"type\":\"response.output_item.added\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call_1\",\"name\":\"get_weather\"}}\n\n"
+			+ "event: message\n"
+			+ "data: {\"type\":\"response.output_item.done\",\"output_index\":0,\"item\":{\"type\":\"function_call\",\"id\":\"fc_1\",\"call_id\":\"call_1\",\"name\":\"get_weather\",\"arguments\":\"{\\\"city\\\":\\\"Berlin\\\"}\"}}\n\n"
+			+ "event: message\n"
+			+ "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"model\":\"gpt-5.5\",\"status\":\"completed\",\"usage\":{\"input_tokens\":5,\"output_tokens\":3}}}\n\n";
+
+		Method processStream = OpenAIProvider.class.getDeclaredMethod(
+			"processStream", java.io.InputStream.class, com.top_logic.tl.ai.core.provider.StreamHandler.class);
+		processStream.setAccessible(true);
+
+		List<StreamEvent> events = new ArrayList<>();
+		StreamHandler handler = events::add;
+		processStream.invoke(provider, new ByteArrayInputStream(sse.getBytes(StandardCharsets.UTF_8)), handler);
+
+		StreamEvent.MessageComplete complete = events.stream()
+			.filter(e -> e instanceof StreamEvent.MessageComplete)
+			.map(e -> (StreamEvent.MessageComplete) e)
+			.findFirst()
+			.orElse(null);
+		assertNotNull("Expected MessageComplete event.", complete);
+
+		ToolCall toolCall = complete.content().stream()
+			.filter(ToolCall.class::isInstance)
+			.map(ToolCall.class::cast)
+			.findFirst()
+			.orElse(null);
+		assertNotNull("Expected ToolCall content part.", toolCall);
+		assertEquals("get_weather", toolCall.name());
+		assertEquals("{\"city\":\"Berlin\"}", toolCall.arguments());
 	}
 
 	/** */

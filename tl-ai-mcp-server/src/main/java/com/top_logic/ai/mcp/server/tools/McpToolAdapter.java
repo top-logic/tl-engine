@@ -13,6 +13,7 @@ import com.top_logic.tl.ai.core.tools.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.tool.api.Tool;
 
+import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
@@ -51,7 +52,7 @@ public class McpToolAdapter {
 	public static McpServerFeatures.SyncToolSpecification adapt(Tool tool, String qualifiedName) {
 		String mcpToolName = TOOL_NAME_PREFIX + qualifiedName.replace('.', '-');
 
-		McpJsonMapper jsonMapper = McpJsonMapper.getDefault();
+		McpJsonMapper jsonMapper = McpJsonDefaults.getMapper();
 
 		McpSchema.Tool mcpTool = McpSchema.Tool.builder()
 			.name(mcpToolName)
@@ -119,13 +120,18 @@ public class McpToolAdapter {
 
 			String result = tool.execute(arguments, null).text();
 
-			return new McpSchema.CallToolResult(result, false);
+			return McpSchema.CallToolResult.builder()
+				.content(List.of(new McpSchema.TextContent(result)))
+				.build();
 
 		} catch (Exception ex) {
 			Logger.error("Error executing tool '" + request.name() + "': " + ex.getMessage(),
 				ex, McpToolAdapter.class);
 			String errorJson = "{\"error\":\"" + escapeJsonString(ex.getMessage()) + "\"}";
-			return new McpSchema.CallToolResult(errorJson, true);
+			return McpSchema.CallToolResult.builder()
+				.content(List.of(new McpSchema.TextContent(errorJson)))
+				.isError(true)
+				.build();
 		}
 	}
 

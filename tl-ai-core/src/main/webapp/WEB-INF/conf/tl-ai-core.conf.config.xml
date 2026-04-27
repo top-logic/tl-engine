@@ -116,6 +116,11 @@
 							tool-class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"
 						/>
 					</factory>
+					<factory name="vector-index-search">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.vector.index.VectorIndexSearchTool"
+						/>
+					</factory>
 				</tool-factories>
 			</instance>
 		</config>

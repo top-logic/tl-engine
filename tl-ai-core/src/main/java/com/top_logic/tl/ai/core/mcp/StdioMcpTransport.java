@@ -21,7 +21,7 @@ import com.top_logic.basic.config.annotation.Name;
 
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
-import io.modelcontextprotocol.json.McpJsonMapper;
+import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
@@ -120,7 +120,7 @@ public class StdioMcpTransport implements McpTransportConfig {
 			builder.env(_env);
 		}
 
-		return new StdioClientTransport(builder.build(), McpJsonMapper.getDefault());
+		return new StdioClientTransport(builder.build(), McpJsonDefaults.getMapper());
 	}
 
 }

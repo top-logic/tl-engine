@@ -40,8 +40,9 @@ public class TestMcpTool extends TestCase {
 
 	/** */
 	public void testFormatTextResult() {
-		McpSchema.CallToolResult result = new McpSchema.CallToolResult(
-			List.of(new McpSchema.TextContent("Hello world")), false);
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.TextContent("Hello world")))
+			.build();
 
 		String formatted = McpTool.formatResult(result);
 		assertEquals("Hello world", formatted);
@@ -49,11 +50,11 @@ public class TestMcpTool extends TestCase {
 
 	/** */
 	public void testFormatMultipleTextParts() {
-		McpSchema.CallToolResult result = new McpSchema.CallToolResult(
-			List.of(
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of(
 				new McpSchema.TextContent("Part 1"),
-				new McpSchema.TextContent("Part 2")),
-			false);
+				new McpSchema.TextContent("Part 2")))
+			.build();
 
 		String formatted = McpTool.formatResult(result);
 		assertEquals("Part 1\nPart 2", formatted);
@@ -61,8 +62,10 @@ public class TestMcpTool extends TestCase {
 
 	/** */
 	public void testFormatErrorResult() {
-		McpSchema.CallToolResult result = new McpSchema.CallToolResult(
-			List.of(new McpSchema.TextContent("Something went wrong")), true);
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.TextContent("Something went wrong")))
+			.isError(true)
+			.build();
 
 		String formatted = McpTool.formatResult(result);
 		assertEquals("Error: Something went wrong", formatted);
@@ -70,7 +73,9 @@ public class TestMcpTool extends TestCase {
 
 	/** */
 	public void testFormatEmptyResult() {
-		McpSchema.CallToolResult result = new McpSchema.CallToolResult(List.of(), false);
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of())
+			.build();
 
 		String formatted = McpTool.formatResult(result);
 		assertEquals("", formatted);
@@ -78,8 +83,9 @@ public class TestMcpTool extends TestCase {
 
 	/** */
 	public void testFormatImageContent() {
-		McpSchema.CallToolResult result = new McpSchema.CallToolResult(
-			List.of(new McpSchema.ImageContent(null, "base64data", "image/png")), false);
+		McpSchema.CallToolResult result = McpSchema.CallToolResult.builder()
+			.content(List.of(new McpSchema.ImageContent(null, "base64data", "image/png")))
+			.build();
 
 		String formatted = McpTool.formatResult(result);
 		assertEquals("[image: image/png]", formatted);

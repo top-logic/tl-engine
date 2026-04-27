@@ -12,7 +12,6 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
@@ -39,7 +38,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
 
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
@@ -207,7 +206,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			// Note: A statically registered servlet (MCPTransportServlet) delegates requests
 			// to this transport provider, so no dynamic servlet registration is needed.
 			_transportProvider = HttpServletStreamableServerTransportProvider.builder()
-				.jsonMapper(new JacksonMcpJsonMapper(new ObjectMapper()))
+				.jsonMapper(McpJsonDefaults.getMapper())
 				.mcpEndpoint(MCP_ENDPOINT)
 				.keepAliveInterval(Duration.ofSeconds(config.getKeepAliveInterval()))
 				.build();

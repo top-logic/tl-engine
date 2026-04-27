@@ -52,7 +52,8 @@ final class ProviderModelDiscovery {
 			return new DiscoveryResult(cached._models, true);
 		}
 
-		if (!LLMProviderRegistry.isValidApiKey(apiKey)) {
+		String name = providerName.toLowerCase(Locale.ROOT);
+		if (!isAuthOptionalProvider(name) && !LLMProviderRegistry.isValidApiKey(apiKey)) {
 			return new DiscoveryResult(List.of(), false);
 		}
 
@@ -62,11 +63,10 @@ final class ProviderModelDiscovery {
 			.GET()
 			.timeout(Duration.ofSeconds(30));
 
-		String name = providerName.toLowerCase(Locale.ROOT);
 		if (name.contains("anthropic")) {
 			requestBuilder.header("x-api-key", apiKey);
 			requestBuilder.header("anthropic-version", version != null ? version : "2023-06-01");
-		} else {
+		} else if (LLMProviderRegistry.isValidApiKey(apiKey)) {
 			requestBuilder.header("Authorization", "Bearer " + apiKey);
 		}
 
@@ -112,21 +112,18 @@ final class ProviderModelDiscovery {
 		}
 	}
 
-	private static String resolveBaseUrl(String providerName, String configuredBaseUrl) {
-		String baseUrl = configuredBaseUrl;
+	static String resolveBaseUrl(String providerName, String configuredBaseUrl) {
+		String baseUrl = LLMProviderRegistry.normalizeProviderBaseUrl(configuredBaseUrl);
 		if (baseUrl != null) {
-			if (baseUrl.endsWith("/v1")) {
-				baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-			}
-			if (baseUrl.endsWith("/")) {
-				baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-			}
 			return baseUrl;
 		}
 
 		String name = providerName.toLowerCase(Locale.ROOT);
 		if (name.contains("anthropic")) {
 			return "https://api.anthropic.com";
+		}
+		if (LLMProviderRegistry.isCustomOpenAICompatibleProviderName(name)) {
+			return "http://localhost:11434";
 		}
 		if (name.contains("openai")) {
 			return "https://api.openai.com";
@@ -138,6 +135,10 @@ final class ProviderModelDiscovery {
 			return "https://api.x.ai";
 		}
 		return "https://api." + name + ".com";
+	}
+
+	static boolean isAuthOptionalProvider(String providerName) {
+		return LLMProviderRegistry.isCustomOpenAICompatibleProviderName(providerName);
 	}
 
 	private static List<String> parseModelIds(String json) {

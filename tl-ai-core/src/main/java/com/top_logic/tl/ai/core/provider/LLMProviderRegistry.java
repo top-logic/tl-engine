@@ -404,13 +404,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		String apiKey = config.getApiKey();
 
 		if (name.contains("anthropic")) {
-			String baseUrl = config.getBaseUrl();
-			if (baseUrl != null) {
-				// Strip trailing /v1 if present — the provider appends it internally
-				if (baseUrl.endsWith("/v1")) {
-					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-				}
-			}
+			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
 			String version = config.getVersion();
 			if (version == null) {
 				version = "2023-06-01";
@@ -420,42 +414,53 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 				version);
 		}
 
-		if (name.contains("openai")) {
-			String baseUrl = config.getBaseUrl();
-			if (baseUrl != null) {
-				if (baseUrl.endsWith("/v1")) {
-					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-				}
-			}
+		if (isOpenAICompatibleProviderName(name)) {
+			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
 			return new OpenAIProvider(apiKey,
 				baseUrl != null ? baseUrl : "https://api.openai.com");
 		}
 
 		if (name.contains("mistral")) {
-			String baseUrl = config.getBaseUrl();
-			if (baseUrl != null) {
-				if (baseUrl.endsWith("/v1")) {
-					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-				}
-			}
+			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
 			return new MistralProvider(apiKey,
 				baseUrl != null ? baseUrl : "https://api.mistral.ai");
 		}
 
 		if (name.contains("xai")) {
-			String baseUrl = config.getBaseUrl();
-			if (baseUrl != null) {
-				if (baseUrl.endsWith("/v1")) {
-					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
-				}
-			}
+			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
 			return new XAIProvider(apiKey,
 				baseUrl != null ? baseUrl : "https://api.x.ai");
 		}
 
 		throw new IllegalStateException(
 			"Unknown provider type: '" + providerName
-				+ "'. Provider name must contain 'anthropic', 'openai', 'mistral', or 'xai'.");
+				+ "'. Provider name must contain 'anthropic', 'openai', 'openai-compatible', "
+				+ "'local', 'custom', 'mistral', or 'xai'.");
+	}
+
+	static String normalizeProviderBaseUrl(String baseUrl) {
+		if (baseUrl == null) {
+			return null;
+		}
+		String trimmed = baseUrl.trim();
+		while (trimmed.endsWith("/")) {
+			trimmed = trimmed.substring(0, trimmed.length() - 1);
+		}
+		if (trimmed.endsWith("/v1")) {
+			trimmed = trimmed.substring(0, trimmed.length() - 3);
+		}
+		return trimmed;
+	}
+
+	static boolean isOpenAICompatibleProviderName(String providerName) {
+		return providerName.contains("openai")
+			|| isCustomOpenAICompatibleProviderName(providerName);
+	}
+
+	static boolean isCustomOpenAICompatibleProviderName(String providerName) {
+		return providerName.contains("openai-compatible")
+			|| providerName.contains("local")
+			|| providerName.contains("custom");
 	}
 
 	/**

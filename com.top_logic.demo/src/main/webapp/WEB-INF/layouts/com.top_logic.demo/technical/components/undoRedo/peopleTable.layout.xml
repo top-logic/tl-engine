@@ -6,7 +6,7 @@
 >
 	<arguments
 		defaultColumns="name"
-		type="tl.demo.projectManagement:Person"
+		type="tl.demo.projectManagement:Contributor"
 	>
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/newPersonDialog.layout.xml">
@@ -19,11 +19,11 @@
 			</layout-reference>
 		</dialogs>
 		<name key="dynamic.undoRedo-people-name">
-			<en>People</en>
-			<de>Personen</de>
+			<en>Contributors</en>
+			<de>Mitarbeiter</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="model -> all(`tl.demo.projectManagement:Person`)"
+			elements="model -> all(`tl.demo.projectManagement:Contributor`)"
 			supportsElement="true"
 		/>
 		<buttons>

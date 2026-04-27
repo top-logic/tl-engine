@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<object id="1"
+		type="tl.demo.projectManagement:Project"
+	>
+		<attribute name="name"
+			value="P2"
+		/>
+		<attribute name="description"
+			value="Projekt 2"
+		/>
+		<attribute name="milestones"/>
+		<attribute name="tickets"/>
+		<attribute name="notes"/>
+	</object>
+	<object id="2"
+		type="tl.demo.projectManagement:Project"
+	>
+		<attribute name="name"
+			value="P1"
+		/>
+		<attribute name="description"
+			value="Projekt 1"
+		/>
+		<attribute name="milestones">
+			<object id="3"
+				type="tl.demo.projectManagement:Milestone"
+			>
+				<attribute name="name"
+					value="M1"
+				/>
+				<attribute name="dueDate"
+					value=""
+				/>
+			</object>
+		</attribute>
+		<attribute name="tickets">
+			<object id="4"
+				type="tl.demo.projectManagement:Ticket"
+			>
+				<attribute name="title"
+					value="T1"
+				/>
+				<attribute name="description"
+					value="Problem in Projekt 1"
+				/>
+				<attribute name="milestone">
+					<ref id="3"/>
+				</attribute>
+			</object>
+		</attribute>
+		<attribute name="notes">
+			<object id="5"
+				type="tl.demo.projectManagement:Note"
+			>
+				<attribute name="text"
+					value="N1"
+				/>
+			</object>
+		</attribute>
+	</object>
+	<object id="10"
+		type="tl.demo.projectManagement:Contributor"
+	>
+		<attribute name="name"
+			value="C2"
+		/>
+		<attribute name="email"
+			value=""
+		/>
+		<attribute name="assignedTickets"/>
+	</object>
+	<object id="20"
+		type="tl.demo.projectManagement:Contributor"
+	>
+		<attribute name="name"
+			value="C1"
+		/>
+		<attribute name="email"
+			value=""
+		/>
+		<attribute name="assignedTickets"/>
+	</object>
+</objects>

@@ -6,8 +6,8 @@
 >
 	<arguments>
 		<tabLabel key="dynamic.undoRedo-peopleTab-label">
-			<en>People</en>
-			<de>Personen</de>
+			<en>Contributors</en>
+			<de>Mitarbeiter</de>
 		</tabLabel>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/peopleLayout.layout.xml"/>

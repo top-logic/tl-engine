@@ -6,7 +6,7 @@
 >
 	<arguments
 		defaultColumns="name"
-		type="tl.demo.projectManagement:Project"
+		type="tl.demo.projectManagement:ProjectScope"
 	>
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/newProjectDialog.layout.xml">
@@ -23,7 +23,7 @@
 			<de>Projekte</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="model->all(`tl.demo.projectManagement:Project`)"
+			elements="model->all(`tl.demo.projectManagement:ProjectScope`)"
 			supportsElement="true"
 		/>
 		<buttons>

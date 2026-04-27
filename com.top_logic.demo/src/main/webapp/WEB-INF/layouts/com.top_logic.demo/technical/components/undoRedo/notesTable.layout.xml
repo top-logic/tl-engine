@@ -17,7 +17,7 @@
 			<de>Notizen (Opt-out)</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="project -> $project.get(`tl.demo.projectManagement:Project#notes`)"
+			elements="project -> $project.get(`tl.demo.projectManagement:ProjectScope#notes`)"
 		/>
 		<buttons>
 			<button id="undoRedo_notes_invalidate"

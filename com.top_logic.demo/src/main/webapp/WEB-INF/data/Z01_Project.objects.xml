@@ -2,7 +2,7 @@
 
 <objects>
 	<object id="1"
-		type="tl.demo.projectManagement:Project"
+		type="tl.demo.projectManagement:ProjectScope"
 	>
 		<attribute name="name"
 			value="P2"
@@ -15,7 +15,7 @@
 		<attribute name="notes"/>
 	</object>
 	<object id="2"
-		type="tl.demo.projectManagement:Project"
+		type="tl.demo.projectManagement:ProjectScope"
 	>
 		<attribute name="name"
 			value="P1"

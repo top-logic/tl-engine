@@ -52,7 +52,7 @@
 		</open-handler>
 		<typeOptions type="tl.demo.projectManagement:Ticket"/>
 		<create-handler id="undoRedo_newTicket_create"
-			linkOperation="project -> ticket -> $project.add(`tl.demo.projectManagement:Project#tickets`, $ticket)"
+			linkOperation="project -> ticket -> $project.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket)"
 		>
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/ticketsTable.layout.xml#Table)">

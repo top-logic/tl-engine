@@ -37,7 +37,7 @@
 		</open-handler>
 		<typeOptions type="tl.demo.projectManagement:Note"/>
 		<create-handler id="undoRedo_newNote_create"
-			linkOperation="project -> note -> $project.add(`tl.demo.projectManagement:Project#notes`, $note)"
+			linkOperation="project -> note -> $project.add(`tl.demo.projectManagement:ProjectScope#notes`, $note)"
 		>
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/notesTable.layout.xml#Table)">

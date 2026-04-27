@@ -24,7 +24,7 @@
 			<de>Meilensteine</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
-			elements="project -> $project.get(`tl.demo.projectManagement:Project#milestones`)"
+			elements="project -> $project.get(`tl.demo.projectManagement:ProjectScope#milestones`)"
 		/>
 		<buttons>
 			<button id="undoRedo_milestones_invalidate"

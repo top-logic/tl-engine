@@ -20,9 +20,11 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.mig.html.SimpleTooltipProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
@@ -37,6 +39,7 @@ import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
+import com.top_logic.model.annotate.ui.TLTooltip;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
@@ -283,6 +286,31 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 		return null;
+	}
+
+	/**
+	 * Retrieves the {@link TooltipProvider} for a given {@link TLType}.
+	 */
+	public TooltipProvider getTooltipProvider(TLType type) {
+		return computeTooltipProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLTooltip} annotation in the primary generalization hierarchy and
+	 * builds an {@link TooltipProvider} for the given type.
+	 */
+	protected TooltipProvider computeTooltipProvider(TLType type) {
+		while (type != null) {
+			TLTooltip annotation = type.getAnnotation(TLTooltip.class);
+			if (annotation != null) {
+				TooltipProvider provider = TypedConfigUtil.createInstance(annotation.getTooltipProvider());
+				return provider;
+			}
+
+			type = TLModelUtil.getPrimaryGeneralization(type);
+		}
+
+		return SimpleTooltipProvider.INSTANCE;
 	}
 
 	/**

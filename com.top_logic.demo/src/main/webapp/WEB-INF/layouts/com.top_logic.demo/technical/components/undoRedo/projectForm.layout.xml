@@ -10,16 +10,16 @@
 			<de>Projekt-Details</de>
 		</name>
 		<forms>
-			<form type="tl.demo.projectManagement:Project">
+			<form type="tl.demo.projectManagement:ProjectScope">
 				<formDefinition>
 					<field
 						attribute="name"
-						fullQualifiedName="tl.demo.projectManagement:Project#name"
+						fullQualifiedName="tl.demo.projectManagement:ProjectScope#name"
 						type="tl.core:String"
 					/>
 					<field
 						attribute="description"
-						fullQualifiedName="tl.demo.projectManagement:Project#description"
+						fullQualifiedName="tl.demo.projectManagement:ProjectScope#description"
 						type="tl.core:String"
 					/>
 				</formDefinition>

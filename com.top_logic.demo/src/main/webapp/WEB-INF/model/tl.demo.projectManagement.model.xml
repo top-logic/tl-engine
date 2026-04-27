@@ -117,7 +117,7 @@
 				/>
 			</attributes>
 		</class>
-		<class name="Project">
+		<class name="ProjectScope">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
@@ -202,7 +202,7 @@
 				>
 					<annotations>
 						<options>
-							<options-by-expression function="ticket -> $ticket.container().get(`tl.demo.projectManagement:Project#milestones`)"/>
+							<options-by-expression function="ticket -> $ticket.container().get(`tl.demo.projectManagement:ProjectScope#milestones`)"/>
 						</options>
 					</annotations>
 				</reference>

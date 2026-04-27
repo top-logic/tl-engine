@@ -6,16 +6,16 @@
 >
 	<arguments height="300px">
 		<forms>
-			<form type="tl.demo.projectManagement:Project">
+			<form type="tl.demo.projectManagement:ProjectScope">
 				<formDefinition columns="ONE">
 					<field
 						attribute="name"
-						fullQualifiedName="tl.demo.projectManagement:Project#name"
+						fullQualifiedName="tl.demo.projectManagement:ProjectScope#name"
 						type="tl.core:String"
 					/>
 					<field
 						attribute="description"
-						fullQualifiedName="tl.demo.projectManagement:Project#description"
+						fullQualifiedName="tl.demo.projectManagement:ProjectScope#description"
 						type="tl.core:String"
 					/>
 				</formDefinition>
@@ -36,7 +36,7 @@
 				<de>Neues Projekt</de>
 			</resourceKey>
 		</open-handler>
-		<typeOptions type="tl.demo.projectManagement:Project"/>
+		<typeOptions type="tl.demo.projectManagement:ProjectScope"/>
 		<create-handler id="undoRedo_newProject_create">
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/projectsTable.layout.xml#Table)">

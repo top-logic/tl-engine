@@ -23,7 +23,6 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;

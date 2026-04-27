@@ -26,7 +26,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.CommitMessages;
 import com.top_logic.layout.form.component.edit.EditMode;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;

@@ -15,8 +15,8 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
  *
  * <p>
  * Placed on a reference end {@code E}, the owner of {@code E} is the <em>root side</em>, and the
- * target type of {@code E} is the <em>child side</em>. Changes to instances of the child type
- * that are reachable through this reference end from a root instance are considered part of the
+ * target type of {@code E} is the <em>child side</em>. Changes to instances of the child type that
+ * are reachable through this reference end from a root instance are considered part of the
  * change-subtree of that root.
  * </p>
  *
@@ -25,11 +25,11 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
  * </p>
  * <ul>
  * <li>On the <em>composite end</em> of a composition reference, the annotation defaults to
- * {@code include=true} (implicit). Setting {@code include=false} on any end of the pair opts
- * out of change-subtree membership for that composition.</li>
+ * {@code include=true} (implicit). Setting {@code include=false} on any end of the pair opts out of
+ * change-subtree membership for that composition.</li>
  * <li>On a non-composition reference end, the annotation is required to opt in and defaults to
- * {@code include=true} when present. Without the annotation, a non-composition reference does
- * not qualify.</li>
+ * {@code include=true} when present. Without the annotation, a non-composition reference does not
+ * qualify.</li>
  * </ul>
  *
  * <p>
@@ -38,7 +38,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
  * both directions.
  * </p>
  *
- * @see com.top_logic.element.changelog.SubtreeFilter
+ * @see "com.top_logic.element.changelog.SubtreeFilter"
  */
 @InApp
 @TagName("change-subtree")

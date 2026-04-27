@@ -39,10 +39,10 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
-import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.core.tools.ToolDispatcher;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.

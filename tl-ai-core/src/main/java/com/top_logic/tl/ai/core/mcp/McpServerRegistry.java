@@ -22,7 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.tool.api.Tool;
 
 import io.modelcontextprotocol.spec.McpSchema;
 

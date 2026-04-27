@@ -31,9 +31,9 @@ import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
-import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
-import com.top_logic.tl.ai.core.tools.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Visual test for the conversation memory system — prints the full lifecycle to stdout.
@@ -296,10 +296,10 @@ public class VisualConversationMemoryTest extends TestCase {
 
 		// Tool registry with a read_file tool that returns sizable file contents
 		com.top_logic.tl.ai.core.tools.ToolDispatcher registry = new com.top_logic.tl.ai.core.tools.ToolDispatcher();
-		registry.register(new com.top_logic.tl.ai.core.tools.Tool() {
+		registry.register(new com.top_logic.tl.ai.tool.api.Tool() {
 			@Override public String name() { return "read_file"; }
 			@Override public String description() { return "Read a file's contents"; }
-			@Override public com.top_logic.tl.ai.core.provider.ToolSchema schema() { return readTool; }
+			@Override public com.top_logic.tl.ai.tool.api.ToolSchema schema() { return readTool; }
 			@Override public ToolResult execute(java.util.Map<String, Object> args, ToolExecutionContext context) {
 				sleep(50);
 				String path = String.valueOf(args.getOrDefault("path", ""));
@@ -311,8 +311,8 @@ public class VisualConversationMemoryTest extends TestCase {
 					return ToolResult.of("CREATE TABLE users (\n" + "  id SERIAL PRIMARY KEY,\n".repeat(10) + ");");
 				}
 			}
-			@Override public com.top_logic.tl.ai.core.tools.ToolMode mode() {
-				return com.top_logic.tl.ai.core.tools.ToolMode.READ;
+			@Override public com.top_logic.tl.ai.tool.api.ToolMode mode() {
+				return com.top_logic.tl.ai.tool.api.ToolMode.READ;
 			}
 		});
 		registry.freeze();

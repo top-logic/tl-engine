@@ -17,8 +17,8 @@ import com.top_logic.tl.ai.core.tools.integration.messages.CreateIssueRequest;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.basic.Logger;
 
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 /**
  * Tool for creating issues in a Gitea repository via REST API.

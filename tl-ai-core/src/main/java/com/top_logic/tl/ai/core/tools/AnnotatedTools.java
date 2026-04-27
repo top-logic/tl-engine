@@ -16,7 +16,13 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;

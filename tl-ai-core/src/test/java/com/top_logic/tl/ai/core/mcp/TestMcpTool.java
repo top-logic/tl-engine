@@ -88,7 +88,7 @@ public class TestMcpTool extends TestCase {
 	/** */
 	public void testModeIsRead() {
 		McpTool tool = createTool("srv", "tool1", "desc", schemaJson());
-		assertEquals(com.top_logic.tl.ai.core.tools.ToolMode.READ, tool.mode());
+		assertEquals(com.top_logic.tl.ai.tool.api.ToolMode.READ, tool.mode());
 	}
 
 	/** */

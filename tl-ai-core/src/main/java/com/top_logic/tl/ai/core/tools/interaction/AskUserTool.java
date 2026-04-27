@@ -13,8 +13,9 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.basic.Logger;
 
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for the Orchestrator to interact with the user.
@@ -47,7 +48,7 @@ public class AskUserTool {
 	 */
 	@ToolMethod(description = "Ask the user a question and wait for their response. "
 		+ "Use for clarifying ambiguous requests, presenting choices, or getting feedback on plans.",
-		mode = com.top_logic.tl.ai.core.tools.ToolMode.READ)
+		mode = ToolMode.READ)
 	public String askUser(
 			@P("The question to present") String question,
 			@P("Short label (e.g. 'Clarify', 'Choose')") String header,

@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.tools;
 
+import com.top_logic.tl.ai.tool.api.ToolResult;
+
 import junit.framework.TestCase;
 
 /**

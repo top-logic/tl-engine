@@ -10,11 +10,11 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
-import com.top_logic.tl.ai.core.tools.Tool;
-import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
-import com.top_logic.tl.ai.core.tools.ToolMode;
-import com.top_logic.tl.ai.core.tools.ToolResult;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Tests for {@link SecurityContext}.

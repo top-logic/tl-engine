@@ -19,7 +19,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Integration tests for {@link MistralProvider}.

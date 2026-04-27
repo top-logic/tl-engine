@@ -18,9 +18,9 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
 
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for retrieving JSON Schema definitions for TopLogic configuration types.

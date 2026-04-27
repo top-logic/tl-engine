@@ -58,8 +58,8 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 /**
  * Tool for creating and updating TopLogic model elements.

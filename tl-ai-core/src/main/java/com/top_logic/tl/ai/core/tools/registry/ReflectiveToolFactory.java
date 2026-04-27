@@ -11,11 +11,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.tl.ai.core.tools.AnnotatedTools;
-import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 /**
- * A {@link ToolFactory} that reflectively discovers tools from a Java class with
- * {@link com.top_logic.tl.ai.core.tools.ToolMethod @ToolMethod} annotated methods.
+ * A {@link ToolFactory} that reflectively discovers tools from a Java class with {@link ToolMethod}
+ * annotated methods.
  *
  * <p>
  * This factory extracts tool specifications from the configured class and creates corresponding
@@ -32,8 +33,7 @@ public class ReflectiveToolFactory implements ToolFactory {
 	public interface Config extends PolymorphicConfiguration<ReflectiveToolFactory> {
 
 		/**
-		 * The Java class containing {@link com.top_logic.tl.ai.core.tools.ToolMethod @ToolMethod}
-		 * annotated methods.
+		 * The Java class containing {@link ToolMethod} annotated methods.
 		 *
 		 * <p>
 		 * This class will be scanned for tool definitions. All methods annotated with

@@ -24,8 +24,8 @@ import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.tools.Tool;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * A {@link ToolFactory} that creates tools from TL-Script implementations.

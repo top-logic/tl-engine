@@ -22,9 +22,9 @@ import com.top_logic.tl.ai.core.tools.interaction.messages.TaskResponse;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskSummary;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for managing agent tasks within a processing session.

@@ -6,8 +6,8 @@
 package com.top_logic.tl.ai.core.agent;
 
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.tools.Tool;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Security context for tool execution.

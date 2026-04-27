@@ -8,9 +8,9 @@ package com.top_logic.tl.ai.core.tools.interaction;
 import java.util.Map;
 
 import com.top_logic.tl.ai.core.agent.skills.Skill;
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool that allows agents to load skills at runtime.

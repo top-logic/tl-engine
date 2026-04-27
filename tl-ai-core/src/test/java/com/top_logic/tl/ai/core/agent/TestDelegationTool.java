@@ -9,7 +9,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.tools.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 
 /**

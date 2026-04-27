@@ -74,12 +74,6 @@
 		<!-- Tests -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-ai-vector-index</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
 			<artifactId>tl-basic</artifactId>
 			<type>test-jar</type>
 			<scope>test</scope>

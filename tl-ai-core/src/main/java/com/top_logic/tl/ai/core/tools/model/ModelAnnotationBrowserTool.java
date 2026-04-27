@@ -37,9 +37,9 @@ import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.io.StringW;
 
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for browsing annotations on TopLogic model elements (modules, types, parts, enumerations,

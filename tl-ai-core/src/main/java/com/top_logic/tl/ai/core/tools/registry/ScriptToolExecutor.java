@@ -10,11 +10,11 @@ import java.util.Map;
 
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
-import com.top_logic.tl.ai.core.tools.Tool;
-import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
-import com.top_logic.tl.ai.core.tools.ToolMode;
-import com.top_logic.tl.ai.core.tools.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * A {@link Tool} that executes tools implemented in TL-Script.

@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolExecutor;
 
 /**

@@ -48,9 +48,9 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.util.Resources;
 
-import com.top_logic.tl.ai.core.tools.P;
-import com.top_logic.tl.ai.core.tools.ToolMethod;
-import com.top_logic.tl.ai.core.tools.ToolMode;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for accessing TopLogic instance data from the knowledge base.

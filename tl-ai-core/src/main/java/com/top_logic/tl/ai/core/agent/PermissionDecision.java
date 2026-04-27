@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.agent;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * Result of a permission/approval check on a tool call.

@@ -5,9 +5,9 @@
  */
 
 /**
- * Tool system: registration, schema generation, and execution.
+ * Tool system: dispatch, annotation-based discovery, and execution.
  *
- * @see com.top_logic.tl.ai.core.tools.Tool
+ * @see com.top_logic.tl.ai.tool.api.Tool
  * @see com.top_logic.tl.ai.core.tools.ToolDispatcher
  * @see com.top_logic.tl.ai.core.tools.AnnotatedTools
  */

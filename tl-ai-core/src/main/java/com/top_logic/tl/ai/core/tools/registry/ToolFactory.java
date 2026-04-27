@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.tools.registry;
 
 import java.util.List;
 
-import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * Factory for creating {@link Tool} instances.

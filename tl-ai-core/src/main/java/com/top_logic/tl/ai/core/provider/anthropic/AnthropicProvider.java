@@ -46,7 +46,7 @@ import com.top_logic.tl.ai.core.provider.SSEReader;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * {@link LLMProvider} for the Anthropic Messages API.

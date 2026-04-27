@@ -23,12 +23,12 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.tools.Tool;
-import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
-import com.top_logic.tl.ai.core.tools.ToolMode;
-import com.top_logic.tl.ai.core.tools.ToolResult;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * A tool that delegates work to another agent by spawning an isolated {@link AgentLoop}.

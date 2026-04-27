@@ -30,6 +30,7 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.model.StorageDetail;
@@ -93,6 +94,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private final ConcurrentMap<TLType, IconProvider> _iconProviderByType = new ConcurrentHashMap<>();
 
 	private final ConcurrentMap<TLType, TooltipProvider> _tooltipProviderByType = new ConcurrentHashMap<>();
+
+	private final ConcurrentMap<TLType, LabelProvider> _labelProviderByType = new ConcurrentHashMap<>();
 
 	private final ConcurrentMap<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _concreteOverridesByPart =
 		new ConcurrentHashMap<>();
@@ -329,6 +332,19 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			return computedResult;
 		}
 		return MapUtil.putIfAbsent(_tooltipProviderByType, type, computedResult);
+	}
+
+	@Override
+	public LabelProvider getLabelProvider(TLType type) {
+		LabelProvider cachedResult = _labelProviderByType.get(type);
+		if (cachedResult != null) {
+			return cachedResult;
+		}
+		LabelProvider computedResult = super.getLabelProvider(type);
+		if (!canModelPartBeCached(type)) {
+			return computedResult;
+		}
+		return MapUtil.putIfAbsent(_labelProviderByType, type, computedResult);
 	}
 
 	@Override

@@ -20,10 +20,12 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.mig.html.SimpleLabelProvider;
 import com.top_logic.mig.html.SimpleTooltipProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -39,6 +41,7 @@ import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
+import com.top_logic.model.annotate.ui.TLLabel;
 import com.top_logic.model.annotate.ui.TLTooltip;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
@@ -311,6 +314,31 @@ public class TLModelOperations {
 		}
 
 		return SimpleTooltipProvider.INSTANCE;
+	}
+
+	/**
+	 * Retrieves the {@link LabelProvider} for a given {@link TLType}.
+	 */
+	public LabelProvider getLabelProvider(TLType type) {
+		return computeLabelProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLLabel} annotation in the primary generalization hierarchy and
+	 * builds an {@link LabelProvider} for the given type.
+	 */
+	protected LabelProvider computeLabelProvider(TLType type) {
+		while (type != null) {
+			TLLabel annotation = type.getAnnotation(TLLabel.class);
+			if (annotation != null) {
+				LabelProvider provider = TypedConfigUtil.createInstance(annotation.getLabelProvider());
+				return provider;
+			}
+
+			type = TLModelUtil.getPrimaryGeneralization(type);
+		}
+
+		return SimpleLabelProvider.INSTANCE;
 	}
 
 	/**

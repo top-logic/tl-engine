@@ -6,16 +6,16 @@
 >
 	<arguments height="300px">
 		<forms>
-			<form type="tl.demo.projectManagement:Person">
+			<form type="tl.demo.projectManagement:Contributor">
 				<formDefinition columns="ONE">
 					<field
 						attribute="name"
-						fullQualifiedName="tl.demo.projectManagement:Person#name"
+						fullQualifiedName="tl.demo.projectManagement:Contributor#name"
 						type="tl.core:String"
 					/>
 					<field
 						attribute="email"
-						fullQualifiedName="tl.demo.projectManagement:Person#email"
+						fullQualifiedName="tl.demo.projectManagement:Contributor#email"
 						type="tl.core:String"
 					/>
 				</formDefinition>
@@ -23,8 +23,8 @@
 		</forms>
 		<title>
 			<title key="dynamic.undoRedo-newPerson-title">
-				<en>New person</en>
-				<de>Neue Person</de>
+				<en>New contributor</en>
+				<de>Neue Mitarbeiter</de>
 			</title>
 		</title>
 		<open-handler id="undoRedo_newPerson_open"
@@ -32,11 +32,11 @@
 			image="theme:ICONS_ADD_BUTTON"
 		>
 			<resourceKey key="dynamic.undoRedo-newPerson-open">
-				<en>New person</en>
-				<de>Neue Person</de>
+				<en>New contributor</en>
+				<de>Neuer Mitarbeiter</de>
 			</resourceKey>
 		</open-handler>
-		<typeOptions type="tl.demo.projectManagement:Person"/>
+		<typeOptions type="tl.demo.projectManagement:Contributor"/>
 		<create-handler id="undoRedo_newPerson_create">
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/undoRedo/peopleTable.layout.xml#Table)">

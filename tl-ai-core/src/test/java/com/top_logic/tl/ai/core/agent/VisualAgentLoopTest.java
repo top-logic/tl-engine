@@ -28,6 +28,7 @@ import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.ToolMode;
 import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolResult;
 
 /**
@@ -91,7 +92,7 @@ public class VisualAgentLoopTest extends TestCase {
 			@Override public String name() { return "get_weather"; }
 			@Override public String description() { return "Gets the current weather for a city"; }
 			@Override public ToolSchema schema() { return weatherSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				sleep(100);
 				String city = args.containsKey("city") ? String.valueOf(args.get("city")) : "Unknown";
 				String temp = "Berlin".equals(city) ? "20°C, sunny" : "15°C, cloudy";
@@ -103,7 +104,7 @@ public class VisualAgentLoopTest extends TestCase {
 			@Override public String name() { return "calculate"; }
 			@Override public String description() { return "Evaluates a math expression"; }
 			@Override public ToolSchema schema() { return calcSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				sleep(100);
 				throw new RuntimeException("Calculator service unavailable");
 			}
@@ -149,7 +150,7 @@ public class VisualAgentLoopTest extends TestCase {
 			@Override public String name() { return "get_current_time"; }
 			@Override public String description() { return "Returns the current server time in ISO-8601 format."; }
 			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				return ToolResult.of(Instant.now().toString());
 			}
 			@Override public ToolMode mode() { return ToolMode.READ; }

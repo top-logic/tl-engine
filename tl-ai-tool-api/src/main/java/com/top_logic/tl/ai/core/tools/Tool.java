@@ -7,22 +7,10 @@ package com.top_logic.tl.ai.core.tools;
 
 import java.util.Map;
 
-import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 
 /**
  * A tool that the agent can invoke.
- *
- * <p>Every tool in the system implements this interface — whether created from
- * {@link ToolMethod} annotations, script configuration, or programmatically.</p>
- *
- * <p><b>Thread safety:</b> Tool instances are shared across users via the
- * {@link ToolDispatcher}. Implementations must be stateless or thread-safe.
- * Per-user state is passed via the {@link com.top_logic.tl.ai.core.agent.ToolContext}
- * parameter of {@link #execute}.</p>
- *
- * @see ToolDispatcher
- * @see ToolMode
  */
 public interface Tool {
 
@@ -38,11 +26,11 @@ public interface Tool {
 	/**
 	 * Execute the tool with the given arguments.
 	 *
-	 * @param args    deserialized arguments from the LLM (JSON object → Map)
-	 * @param context execution context (security, transaction, progress)
+	 * @param args    deserialized arguments from the LLM (JSON object -> Map)
+	 * @param context execution context
 	 * @return a {@link ToolResult} carrying the result text and optional metadata
 	 */
-	ToolResult execute(Map<String, Object> args, ToolContext context);
+	ToolResult execute(Map<String, Object> args, ToolExecutionContext context);
 
 	/**
 	 * What kind of state change this tool makes.
@@ -56,9 +44,6 @@ public interface Tool {
 
 	/**
 	 * Whether this tool can safely run in parallel with other concurrency-safe tools.
-	 *
-	 * <p>Defaults to {@code true} for {@link ToolMode#READ} and {@link ToolMode#USER_SCOPED},
-	 * {@code false} for {@link ToolMode#GLOBAL}.</p>
 	 */
 	default boolean isConcurrencySafe() {
 		return mode() != ToolMode.GLOBAL;

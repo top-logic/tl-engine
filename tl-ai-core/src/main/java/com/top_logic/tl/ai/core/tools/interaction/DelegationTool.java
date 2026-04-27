@@ -26,6 +26,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolMode;
 import com.top_logic.tl.ai.core.tools.ToolResult;
 
@@ -111,8 +112,11 @@ public class DelegationTool implements Tool {
 	}
 
 	@Override
-	public ToolResult execute(Map<String, Object> args, ToolContext context) {
-		if (context.delegationDepth() >= MAX_DELEGATION_DEPTH) {
+	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+		if (!(context instanceof ToolContext toolContext)) {
+			return ToolResult.of("ERROR: Unsupported tool execution context for delegation.");
+		}
+		if (toolContext.delegationDepth() >= MAX_DELEGATION_DEPTH) {
 			return ToolResult.of("ERROR: Maximum delegation depth (" + MAX_DELEGATION_DEPTH
 				+ ") reached. Complete the task with your own tools.");
 		}
@@ -137,7 +141,7 @@ public class DelegationTool implements Tool {
 		if (logListener != null) {
 			delegationId = logListener.recordDelegationStarted(_parentAgentName, _targetAgentName, task);
 			if (delegationId != null) {
-				String parentToolCallId = context.toolCallId();
+				String parentToolCallId = toolContext.toolCallId();
 				childListener = logListener.delegationListener(delegationId, parentToolCallId);
 			} else {
 				Logger.warn("Delegation to " + _targetAgentName
@@ -155,7 +159,7 @@ public class DelegationTool implements Tool {
 				List.of(new TextContent(userPrompt.toString())));
 			conversation.add(userMessage);
 
-			ToolContext childContext = context.forDelegation(TransactionScope.NOOP);
+			ToolContext childContext = toolContext.forDelegation(TransactionScope.NOOP);
 			AgentResult result = targetLoop.run(conversation, childContext, childListener);
 
 			String finalText = extractFinalText(conversation, result);

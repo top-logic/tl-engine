@@ -7,11 +7,6 @@ package com.top_logic.tl.ai.core.tools;
 
 /**
  * Categorizes what kind of state change a tool makes.
- *
- * <p>Used by the framework for spec filtering (hiding GLOBAL tools from non-privileged
- * users), approval gating, and concurrency decisions.</p>
- *
- * @see Tool#mode()
  */
 public enum ToolMode {
 

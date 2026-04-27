@@ -13,19 +13,7 @@ import java.lang.annotation.Target;
 /**
  * Marks a method as a tool that the agent can invoke.
  *
- * <p>The annotated method is discovered by {@link AnnotatedTools#from(Object)} and
- * wrapped as a {@link Tool} instance. The method's parameters must be annotated
- * with {@link P} to provide descriptions for the LLM.</p>
- *
- * <p><b>Thread safety:</b> The provider object (the instance passed to
- * {@link AnnotatedTools#from(Object)}) is shared across all users when the
- * {@link ToolDispatcher} is shared. Annotated methods <em>must not</em> rely on
- * mutable instance fields. Per-user state should be received via a
- * {@link com.top_logic.tl.ai.core.agent.ToolContext} parameter, not stored on
- * the provider object.</p>
- *
  * @see P
- * @see AnnotatedTools
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

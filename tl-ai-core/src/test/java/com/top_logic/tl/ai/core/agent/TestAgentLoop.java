@@ -40,6 +40,7 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tools.Tool;
 import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolMode;
 import com.top_logic.tl.ai.core.tools.ToolResult;
 
@@ -267,7 +268,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return "risky_tool"; }
 			@Override public String description() { return "Might fail"; }
 			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				throw new RuntimeException("Something went wrong");
 			}
 			@Override public ToolMode mode() { return ToolMode.READ; }
@@ -378,7 +379,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return "bad_tool"; }
 			@Override public String description() { return "Fails"; }
 			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				throw new RuntimeException("Boom");
 			}
 			@Override public ToolMode mode() { return ToolMode.READ; }
@@ -466,7 +467,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return "tool"; }
 			@Override public String description() { return "T"; }
 			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				Thread.currentThread().interrupt();
 				return ToolResult.of("ok");
 			}
@@ -587,7 +588,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return "create_class"; }
 			@Override public String description() { return "Creates a class"; }
 			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				fail("Tool should not execute in production mode");
 				return ToolResult.of("");
 			}
@@ -852,7 +853,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return name; }
 			@Override public String description() { return ""; }
 			@Override public ToolSchema schema() { return schema; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				return ToolResult.of("Result of " + name);
 			}
 			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
@@ -864,7 +865,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return name; }
 			@Override public String description() { return ""; }
 			@Override public ToolSchema schema() { return schema; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				return ToolResult.of("Result of " + name);
 			}
 			@Override public ToolMode mode() { return ToolMode.READ; }
@@ -1248,7 +1249,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return "edit_model"; }
 			@Override public String description() { return "Edits"; }
 			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				throw new RuntimeException("Something went wrong");
 			}
 			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
@@ -1679,9 +1680,10 @@ public class TestAgentLoop extends TestCase {
 			@Override public String name() { return "slow_tool"; }
 			@Override public String description() { return "Reports progress"; }
 			@Override public ToolSchema schema() { return toolSpec; }
-			@Override public ToolResult execute(Map<String, Object> args, ToolContext context) {
-				context.progressReporter().progress("step 1");
-				context.progressReporter().progress("step 2");
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+				ToolContext toolContext = (ToolContext) context;
+				toolContext.progressReporter().progress("step 1");
+				toolContext.progressReporter().progress("step 2");
 				return ToolResult.of("completed");
 			}
 			@Override public ToolMode mode() { return ToolMode.READ; }

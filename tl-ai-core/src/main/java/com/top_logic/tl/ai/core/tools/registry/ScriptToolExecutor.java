@@ -10,9 +10,9 @@ import java.util.Map;
 
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolMode;
 import com.top_logic.tl.ai.core.tools.ToolResult;
 
@@ -98,7 +98,7 @@ public class ScriptToolExecutor implements Tool {
 	}
 
 	@Override
-	public ToolResult execute(Map<String, Object> args, ToolContext context) {
+	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 		try {
 			Object[] positionalArgs = new Object[_parameterNames.size()];
 			if (args != null) {

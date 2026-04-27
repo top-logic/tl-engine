@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolExecutor;
 
 /**
@@ -21,7 +22,7 @@ import com.top_logic.tl.ai.core.tools.ToolExecutor;
  * @see SecurityContext
  * @see ApprovalCallback
  */
-public class ToolContext {
+public class ToolContext implements ToolExecutionContext {
 
 	/** Context with no security restrictions, auto-approval, and no transaction. For tests and trusted internal use. */
 	public static final ToolContext EMPTY =

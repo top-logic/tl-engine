@@ -8,9 +8,9 @@ package com.top_logic.tl.ai.core.mcp;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
 import com.top_logic.tl.ai.core.tools.Tool;
+import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolMode;
 import com.top_logic.tl.ai.core.tools.ToolResult;
 
@@ -85,7 +85,7 @@ public class McpTool implements Tool {
 	}
 
 	@Override
-	public ToolResult execute(Map<String, Object> args, ToolContext context) {
+	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 		McpSchema.CallToolResult result = _registry.callTool(_serverName, _mcpToolName, args);
 		return ToolResult.of(formatResult(result));
 	}

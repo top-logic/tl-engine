@@ -51,6 +51,11 @@
       <artifactId>tl-search-base</artifactId>
     </dependency>
 	<dependency>
+	  <groupId>com.top-logic</groupId>
+	  <artifactId>tl-ai-tool-api</artifactId>
+	  <version>${project.version}</version>
+	</dependency>
+	<dependency>
 	  <groupId>io.qdrant</groupId>
 	  <artifactId>client</artifactId>
 	  <version>1.16.0</version>

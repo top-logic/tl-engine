@@ -32,6 +32,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.ToolSchema;
+import com.top_logic.tl.ai.core.tools.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolResult;
 
 /**
@@ -299,7 +300,7 @@ public class VisualConversationMemoryTest extends TestCase {
 			@Override public String name() { return "read_file"; }
 			@Override public String description() { return "Read a file's contents"; }
 			@Override public com.top_logic.tl.ai.core.provider.ToolSchema schema() { return readTool; }
-			@Override public ToolResult execute(java.util.Map<String, Object> args, ToolContext context) {
+			@Override public ToolResult execute(java.util.Map<String, Object> args, ToolExecutionContext context) {
 				sleep(50);
 				String path = String.valueOf(args.getOrDefault("path", ""));
 				if (path.contains("App.java")) {

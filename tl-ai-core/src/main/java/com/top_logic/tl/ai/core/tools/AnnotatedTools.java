@@ -305,13 +305,17 @@ public final class AnnotatedTools {
 		}
 
 		@Override
-		public ToolResult execute(Map<String, Object> args, ToolContext context) {
+		public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+			if (!(context instanceof ToolContext toolContext)) {
+				throw new IllegalArgumentException("Unsupported tool execution context type: "
+					+ context.getClass().getName());
+			}
 			Parameter[] params = _method.getParameters();
 			Object[] invokeArgs = new Object[params.length];
 
 			for (int i = 0; i < params.length; i++) {
 				if (isInjectedParam(params[i])) {
-					invokeArgs[i] = context;
+					invokeArgs[i] = toolContext;
 				} else {
 					String paramName = params[i].getName();
 					Object rawValue = args.get(paramName);

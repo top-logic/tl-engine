@@ -11,7 +11,8 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.AnnotationInheritance;
 import com.top_logic.model.annotate.AnnotationInheritance.Policy;
@@ -34,7 +35,8 @@ public interface TLLabel extends TLTypeAnnotation {
 	 */
 	@Mandatory
 	@DefaultContainer
-	@Options(fun = AllInAppImplementations.class)
+	@Options(fun = InAppImplementations.class)
+	@AcceptableClassifiers("label-provider")
 	PolymorphicConfiguration<? extends LabelProvider> getLabelProvider();
 
 	/**

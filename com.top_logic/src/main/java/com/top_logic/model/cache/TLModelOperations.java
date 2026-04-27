@@ -22,10 +22,10 @@ import com.google.common.collect.ImmutableSet;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.TooltipProvider;
+import com.top_logic.layout.provider.DefaultLabelProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
-import com.top_logic.mig.html.SimpleLabelProvider;
 import com.top_logic.mig.html.SimpleTooltipProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -338,7 +338,7 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 
-		return SimpleLabelProvider.INSTANCE;
+		return DefaultLabelProvider.INSTANCE;
 	}
 
 	/**

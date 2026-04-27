@@ -55,11 +55,9 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 	public String getLabel(Object object) {
 		if (object instanceof TLObject) {
 			TLStructuredType type = getModelType((TLObject) object);
-			if (type == null) {
-				return "";
+			if (type != null) {
+				return getLabelProvider(type).getLabel(object);
 			}
-
-			return getLabelProvider(type).getLabel(object);
 		}
 		return (object == null) ? "" : object.toString();
 	}

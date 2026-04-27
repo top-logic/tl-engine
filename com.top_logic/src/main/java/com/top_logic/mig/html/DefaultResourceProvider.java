@@ -53,12 +53,18 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 	 */
 	@Override
 	public String getLabel(Object object) {
-		if (object instanceof TLObject) {
-			TLStructuredType type = getModelType((TLObject) object);
+		if (object instanceof TLObject tlObj) {
+			TLStructuredType type = getModelType(tlObj);
+
+			// The Java implementation class is not required to implement the TLNamed interface, but
+			// may provide a name attribute anyway. However, since most implementation classes
+			// extend AbstractWrapper, they implement TLNamed, whether they have a name attribute or
+			// not.
 			if (type != null) {
-				return getLabelProvider(type).getLabel(object);
+				return getLabelProvider(type).getLabel(tlObj);
 			}
 		}
+
 		return (object == null) ? "" : object.toString();
 	}
 

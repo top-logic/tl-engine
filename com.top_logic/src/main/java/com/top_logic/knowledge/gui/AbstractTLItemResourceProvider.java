@@ -32,16 +32,6 @@ public abstract class AbstractTLItemResourceProvider extends DefaultResourceProv
 	}
 
 	@Override
-	public abstract String getLabel(Object object);
-
-	/**
-	 * Access to {@link DefaultResourceProvider#getLabel(Object)}
-	 */
-	public final String getDefaultLabel(Object object) {
-		return super.getLabel(object);
-	}
-
-	@Override
 	public String getLink(DisplayContext context, Object anObject) {
 		return GotoHandler.getJSCallStatement(context, _gotoComponent, anObject);
 	}

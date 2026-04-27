@@ -5,11 +5,8 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
@@ -22,11 +19,6 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.message.AssistantMessage;
-import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -207,7 +199,7 @@ public class ChatSessionManager {
 			// Load from database
 			Chat chat = new Chat();
 			ConversationMemory memory = createDefaultMemory();
-			ConversationLog convLog = null;
+			ConversationLog convLog = new ConversationLog();
 			TaskStore loadedTaskStore = new TaskStore();
 
 			try {
@@ -215,14 +207,12 @@ public class ChatSessionManager {
 				if (session != null) {
 					String json = ChatHistoryService.getMessagesJson(session);
 					if (json != null && !json.isEmpty()) {
-						// V2 format is a JSON object (starts with '{'), V1 is a JSON array ('[')
 						if (json.trim().startsWith("{")) {
 							convLog = ConversationLogSerializer.fromJson(json);
 							ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
 						} else {
-							List<ChatMessage> messages = DtoMapper.deserializeMessages(json);
-							chat.loadMessages(messages);
-							rebuildConversationMemory(memory, messages);
+							Logger.warn("Session " + sessionId + " has legacy chat format. V2-only load ignores legacy data.",
+								ChatSessionManager.class);
 						}
 					}
 
@@ -266,39 +256,18 @@ public class ChatSessionManager {
 		try {
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
 			if (session != null) {
-				String json;
-				if (state._conversationLog != null) {
-					json = ConversationLogSerializer.toJson(state._conversationLog);
-				} else {
-					json = DtoMapper.serializeMessages(state._chat.getMessages());
+				ConversationLog conversationLog = state._conversationLog;
+				if (conversationLog == null) {
+					conversationLog = new ConversationLog();
+					state._conversationLog = conversationLog;
 				}
+				String json = ConversationLogSerializer.toJson(conversationLog);
 				String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
 				ChatHistoryService.saveMessagesAndMetadata(session, json, metadataJson);
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to persist session " + sessionId + ": " + ex.getMessage(), ex,
 				ChatSessionManager.class);
-		}
-	}
-
-	/**
-	 * Rebuilds a {@link ConversationMemory} from persisted chat messages by replaying user and
-	 * assistant messages into the underlying {@link Conversation}.
-	 */
-	private static void rebuildConversationMemory(ConversationMemory memory, List<ChatMessage> messages) {
-		Conversation conversation = memory.conversation();
-		for (ChatMessage msg : messages) {
-			String role = msg.getUser();
-			if ("Agent".equals(role) || "AI".equals(role)) {
-				conversation.add(new AssistantMessage(
-					UUID.randomUUID().toString(), Instant.now(),
-					List.of(new TextContent(msg.getText())),
-					TokenUsage.EMPTY, "stop"));
-			} else if (!"System".equals(role)) {
-				conversation.add(new UserMessage(
-					UUID.randomUUID().toString(), Instant.now(),
-					List.of(new TextContent(msg.getText()))));
-			}
 		}
 	}
 

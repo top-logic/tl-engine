@@ -134,6 +134,9 @@ final class ProviderModelDiscovery {
 		if (name.contains("mistral")) {
 			return "https://api.mistral.ai";
 		}
+		if (name.contains("xai")) {
+			return "https://api.x.ai";
+		}
 		return "https://api." + name + ".com";
 	}
 

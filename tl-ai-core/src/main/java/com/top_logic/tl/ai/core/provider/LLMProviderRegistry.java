@@ -36,6 +36,7 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
 import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.provider.xai.XAIProvider;
 
 /**
  * Registry of LLM provider connections.
@@ -394,7 +395,8 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	 * <p>
 	 * The provider name determines which implementation to use: names containing "anthropic"
 	 * produce an {@link AnthropicProvider}, "openai" produce an {@link OpenAIProvider}, and
-	 * "mistral" produce a {@link MistralProvider}.
+	 * "mistral" produce a {@link MistralProvider}, and "xai" produce an
+	 * {@link XAIProvider}.
 	 * </p>
 	 */
 	private LLMProvider createProvider(String providerName, ProviderConfig config) {
@@ -440,9 +442,20 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 				baseUrl != null ? baseUrl : "https://api.mistral.ai");
 		}
 
+		if (name.contains("xai")) {
+			String baseUrl = config.getBaseUrl();
+			if (baseUrl != null) {
+				if (baseUrl.endsWith("/v1")) {
+					baseUrl = baseUrl.substring(0, baseUrl.length() - 3);
+				}
+			}
+			return new XAIProvider(apiKey,
+				baseUrl != null ? baseUrl : "https://api.x.ai");
+		}
+
 		throw new IllegalStateException(
 			"Unknown provider type: '" + providerName
-				+ "'. Provider name must contain 'anthropic', 'openai', or 'mistral'.");
+				+ "'. Provider name must contain 'anthropic', 'openai', 'mistral', or 'xai'.");
 	}
 
 	/**

@@ -76,7 +76,7 @@
 				/>
 			</attributes>
 		</class>
-		<class name="Person">
+		<class name="Contributor">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
@@ -85,17 +85,17 @@
 					<form>
 						<field
 							attribute="name"
-							fullQualifiedName="tl.demo.projectManagement:Person#name"
+							fullQualifiedName="tl.demo.projectManagement:Contributor#name"
 							type="tl.core:String"
 						/>
 						<field
 							attribute="email"
-							fullQualifiedName="tl.demo.projectManagement:Person#email"
+							fullQualifiedName="tl.demo.projectManagement:Contributor#email"
 							type="tl.core:String"
 						/>
 						<field
 							attribute="assignedTickets"
-							fullQualifiedName="tl.demo.projectManagement:Person#assignedTickets"
+							fullQualifiedName="tl.demo.projectManagement:Contributor#assignedTickets"
 							type="tl.demo.projectManagement:Ticket"
 						/>
 					</form>
@@ -182,7 +182,7 @@
 						<field
 							attribute="assignee"
 							fullQualifiedName="tl.demo.projectManagement:Ticket#assignee"
-							type="tl.demo.projectManagement:Person"
+							type="tl.demo.projectManagement:Contributor"
 						/>
 					</form>
 				</form-definition>
@@ -209,7 +209,7 @@
 				<reference name="assignee"
 					inverse-reference="assignedTickets"
 					kind="backwards"
-					type="Person"
+					type="Contributor"
 				>
 					<annotations>
 						<change-subtree/>

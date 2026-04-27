@@ -6,8 +6,8 @@
 >
 	<arguments model="selection(com.top_logic.demo/technical/components/undoRedo/peopleTable.layout.xml#Table)">
 		<name key="dynamic.undoRedo-personForm-name">
-			<en>Person details</en>
-			<de>Personen-Details</de>
+			<en>Contributor details</en>
+			<de>Mitarbeiter-Details</de>
 		</name>
 	</arguments>
 </config:template-call>

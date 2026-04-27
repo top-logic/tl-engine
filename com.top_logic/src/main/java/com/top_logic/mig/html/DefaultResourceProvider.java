@@ -11,6 +11,7 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.knowledge.gui.I18NConstants;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.Flavor;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.basic.ThemeImage;
@@ -42,6 +43,29 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 	 */
 	protected DefaultResourceProvider() {
 		// Singleton constructor that allows sub-classes.
+	}
+
+	/**
+	 * The default implementation is to use {@link String#valueOf(Object)} as textual representation
+	 * for the given object.
+	 *
+	 * @see ResourceProvider#getLabel(Object)
+	 */
+	@Override
+	public String getLabel(Object object) {
+		if (object instanceof TLObject) {
+			TLStructuredType type = getModelType((TLObject) object);
+			if (type == null) {
+				return "";
+			}
+
+			return getLabelProvider(type).getLabel(object);
+		}
+		return (object == null) ? "" : object.toString();
+	}
+
+	private static LabelProvider getLabelProvider(TLType type) {
+		return TLModelCacheService.getOperations().getLabelProvider(type);
 	}
 	
 	@Override
@@ -196,17 +220,6 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 			result = mimeTypes.getMimeTypeImage(mimeType, defaultIcon);
 		}
 		return result;
-	}
-
-	/**
-	 * The default implementation is to use {@link String#valueOf(Object)} as textual representation
-	 * for the given object.
-	 * 
-	 * @see ResourceProvider#getLabel(Object)
-	 */
-	@Override
-	public String getLabel(Object object) {
-		return (object == null) ? "" : object.toString();
 	}
 
 	/**

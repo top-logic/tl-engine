@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.knowledge.gui.I18NConstants;
+import com.top_logic.knowledge.service.db2.DeletedObjectAccess;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
@@ -55,22 +56,29 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 	@Override
 	public String getLabel(Object object) {
 		if (object instanceof TLObject tlObj) {
-			TLStructuredType type = getModelType(tlObj);
+			try {
+				TLStructuredType type = getModelType(tlObj);
 
-			// The Java implementation class is not required to implement the TLNamed interface, but
-			// may provide a name attribute anyway. However, since most implementation classes
-			// extend AbstractWrapper, they implement TLNamed, whether they have a name attribute or
-			// not.
-			if (type != null) {
-				return getLabelProvider(type).getLabel(tlObj);
-			} else {
-				// Legacy case of untyped persistent object.
-				if (object instanceof TLNamed) {
-					String name = ((TLNamed) object).getName();
-					if (name != null) {
-						return name;
+				// The Java implementation class is not required to implement the TLNamed interface,
+				// but
+				// may provide a name attribute anyway. However, since most implementation classes
+				// extend AbstractWrapper, they implement TLNamed, whether they have a name
+				// attribute or
+				// not.
+				if (type != null) {
+					return getLabelProvider(type).getLabel(tlObj);
+				} else {
+					// Legacy case of untyped persistent object.
+					if (object instanceof TLNamed named) {
+						String name = named.getName();
+						if (name != null) {
+							return name;
+						}
 					}
 				}
+			} catch (DeletedObjectAccess ex) {
+				// Safety for legacy cases.
+				return "Invalid object";
 			}
 		}
 

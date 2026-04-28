@@ -18,6 +18,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
@@ -62,6 +63,14 @@ public class DefaultResourceProvider extends AbstractResourceProvider {
 			// not.
 			if (type != null) {
 				return getLabelProvider(type).getLabel(tlObj);
+			} else {
+				// Legacy case of untyped persistent object.
+				if (object instanceof TLNamed) {
+					String name = ((TLNamed) object).getName();
+					if (name != null) {
+						return name;
+					}
+				}
 			}
 		}
 

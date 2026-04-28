@@ -12,13 +12,19 @@ import java.util.Map;
  */
 public interface Tool {
 
-	/** */
+	/**
+	 * The unique name identifying this tool to the LLM.
+	 */
 	String name();
 
-	/** */
+	/**
+	 * Human-readable description of what this tool does, shown to the LLM.
+	 */
 	String description();
 
-	/** */
+	/**
+	 * The JSON schema describing the arguments this tool accepts.
+	 */
 	ToolSchema schema();
 
 	/**

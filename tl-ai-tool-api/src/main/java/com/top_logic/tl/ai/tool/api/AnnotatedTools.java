@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.tools;
+package com.top_logic.tl.ai.tool.api;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -14,15 +14,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -136,7 +127,7 @@ public final class AnnotatedTools {
 	}
 
 	private static boolean isInjectedParam(Parameter param) {
-		return ToolContext.class.isAssignableFrom(param.getType());
+		return ToolExecutionContext.class.isAssignableFrom(param.getType());
 	}
 
 	private static void writeParamSchema(JsonWriter json, Class<?> type, P p) throws IOException {
@@ -312,16 +303,12 @@ public final class AnnotatedTools {
 
 		@Override
 		public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-			if (!(context instanceof ToolContext toolContext)) {
-				throw new IllegalArgumentException("Unsupported tool execution context type: "
-					+ context.getClass().getName());
-			}
 			Parameter[] params = _method.getParameters();
 			Object[] invokeArgs = new Object[params.length];
 
 			for (int i = 0; i < params.length; i++) {
 				if (isInjectedParam(params[i])) {
-					invokeArgs[i] = toolContext;
+					invokeArgs[i] = context;
 				} else {
 					String paramName = params[i].getName();
 					Object rawValue = args.get(paramName);

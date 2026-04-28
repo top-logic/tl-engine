@@ -26,6 +26,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 
 /**
  * A {@link ToolFactory} that creates tools from TL-Script implementations.

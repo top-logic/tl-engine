@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.agent;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.tools.registry.ToolRegistryService;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Tests for {@link AgentFactory} utility methods and constants.

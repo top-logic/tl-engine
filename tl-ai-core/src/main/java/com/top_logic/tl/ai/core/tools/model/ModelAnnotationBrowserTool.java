@@ -76,7 +76,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <h3>Integration:</h3>
  *
  * <p>
- * Register this tool via {@link com.top_logic.tl.ai.core.tools.AnnotatedTools} and assign it to an
+ * Register this tool via {@link com.top_logic.tl.ai.tool.api.AnnotatedTools} and assign it to an
  * agent through the {@link com.top_logic.tl.ai.core.provider.LLMProviderRegistry} configuration.
  * </p>
  */

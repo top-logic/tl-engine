@@ -9,6 +9,6 @@
  *
  * @see com.top_logic.tl.ai.tool.api.Tool
  * @see com.top_logic.tl.ai.core.tools.ToolDispatcher
- * @see com.top_logic.tl.ai.core.tools.AnnotatedTools
+ * @see com.top_logic.tl.ai.tool.api.AnnotatedTools
  */
 package com.top_logic.tl.ai.core.tools;

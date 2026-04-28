@@ -24,7 +24,7 @@ import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.resources.TypePartsResource;
 import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
-import com.top_logic.tl.ai.core.tools.registry.ToolRegistryService;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;

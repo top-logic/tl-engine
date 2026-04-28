@@ -25,11 +25,11 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
-import com.top_logic.tl.ai.core.tools.AnnotatedTools;
+import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
-import com.top_logic.tl.ai.core.tools.registry.ToolRegistryService;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Builds {@link AgentLoop} instances from agent definitions stored in the knowledge base.

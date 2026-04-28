@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.tools.registry;
+package com.top_logic.tl.ai.tool.api.registry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -170,36 +170,6 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 		}
 
 		return schemas;
-	}
-
-	/**
-	 * Builds a {@link com.top_logic.tl.ai.core.tools.ToolDispatcher} populated with the specified
-	 * tools.
-	 *
-	 * <p>
-	 * The returned core registry is frozen and ready for use with the agent loop.
-	 * </p>
-	 *
-	 * @param qualifiedToolNames
-	 *        Collection of qualified tool names in the format {@code factory-name.tool-name}.
-	 * @return A frozen core {@link com.top_logic.tl.ai.core.tools.ToolDispatcher}.
-	 * @throws IllegalArgumentException
-	 *         If any of the specified tool names is not found in the registry.
-	 */
-	public com.top_logic.tl.ai.core.tools.ToolDispatcher buildCoreRegistry(Collection<String> qualifiedToolNames) {
-		com.top_logic.tl.ai.core.tools.ToolDispatcher coreRegistry = new com.top_logic.tl.ai.core.tools.ToolDispatcher();
-
-		for (String qualifiedName : qualifiedToolNames) {
-			Tool tool = _tools.get(qualifiedName);
-			if (tool != null) {
-				coreRegistry.register(tool);
-			} else {
-				throw new IllegalArgumentException("Tool '" + qualifiedName + "' not found in registry."
-					+ " Available tools: " + _tools.keySet());
-			}
-		}
-
-		return coreRegistry.freeze();
 	}
 
 	/**

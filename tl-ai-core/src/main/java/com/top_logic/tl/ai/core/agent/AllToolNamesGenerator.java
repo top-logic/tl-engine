@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.tl.ai.core.tools.registry.ToolRegistryService;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;

@@ -23,7 +23,6 @@ import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
@@ -122,9 +121,15 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 
 		/**
 		 * The API key for authentication with the provider.
+		 *
+		 * <p>
+		 * Optional. May be omitted for providers that do not require authentication (e.g. local
+		 * OpenAI-compatible servers such as Ollama or LM Studio). When unset, no authentication
+		 * header is sent.
+		 * </p>
 		 */
 		@Name(API_KEY)
-		@Mandatory
+		@Nullable
 		@Encrypted
 		String getApiKey();
 

@@ -73,7 +73,7 @@ public class OpenAIProvider implements LLMProvider {
 
 	/** */
 	public OpenAIProvider(String apiKey, String baseUrl, HttpClient httpClient) {
-		_apiKey = Objects.requireNonNull(apiKey, "API key must not be null.");
+		_apiKey = apiKey;
 		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
 		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
 	}
@@ -91,14 +91,16 @@ public class OpenAIProvider implements LLMProvider {
 
 		String body = buildRequestJson(request);
 
-		HttpRequest httpRequest = HttpRequest.newBuilder()
+		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
 			.uri(URI.create(_baseUrl + "/v1/responses"))
 			.header("Content-Type", "application/json")
 			.header("Accept", "text/event-stream")
-			.header("Authorization", "Bearer " + _apiKey)
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-			.timeout(Duration.ofMinutes(10))
-			.build();
+			.timeout(Duration.ofMinutes(10));
+		if (_apiKey != null && !_apiKey.isBlank()) {
+			requestBuilder.header("Authorization", "Bearer " + _apiKey);
+		}
+		HttpRequest httpRequest = requestBuilder.build();
 
 		HttpResponse<InputStream> response;
 		try {

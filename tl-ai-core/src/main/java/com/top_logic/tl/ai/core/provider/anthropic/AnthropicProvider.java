@@ -80,7 +80,7 @@ public class AnthropicProvider implements LLMProvider {
 
 	/** */
 	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion, HttpClient httpClient) {
-		_apiKey = Objects.requireNonNull(apiKey, "API key must not be null.");
+		_apiKey = apiKey;
 		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
 		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
@@ -99,15 +99,17 @@ public class AnthropicProvider implements LLMProvider {
 
 		String body = buildRequestJson(request);
 
-		HttpRequest httpRequest = HttpRequest.newBuilder()
+		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
 			.uri(URI.create(_baseUrl + "/v1/messages"))
 			.header("Content-Type", "application/json")
 			.header("Accept", "text/event-stream")
-			.header("x-api-key", _apiKey)
 			.header("anthropic-version", _apiVersion)
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-			.timeout(Duration.ofMinutes(10))
-			.build();
+			.timeout(Duration.ofMinutes(10));
+		if (_apiKey != null && !_apiKey.isBlank()) {
+			requestBuilder.header("x-api-key", _apiKey);
+		}
+		HttpRequest httpRequest = requestBuilder.build();
 
 		HttpResponse<InputStream> response;
 		try {

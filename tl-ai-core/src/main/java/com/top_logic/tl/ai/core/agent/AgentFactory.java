@@ -5,7 +5,6 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,11 +12,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -82,10 +81,9 @@ public class AgentFactory {
 	 * @throws IllegalStateException if no entry point agent is defined
 	 */
 	public String getEntryPointAgentName() {
-		for (TLObject agent : AgentDefinitionQuery.getInstance().getAllAgents()) {
-			Boolean entryPoint = (Boolean) agent.tValueByName("entryPoint");
-			if (Boolean.TRUE.equals(entryPoint)) {
-				return (String) agent.tValueByName("name");
+		for (Agent agent : AgentDefinitionQuery.getInstance().getAllAgents()) {
+			if (agent.getEntryPoint()) {
+				return agent.getName();
 			}
 		}
 		throw new IllegalStateException("No entry point agent defined in the knowledge base.");
@@ -140,7 +138,7 @@ public class AgentFactory {
 	public String runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener) {
-		TLObject agentObj = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		Agent agentObj = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentObj == null) {
 			throw new RuntimeException(
 				"No agent found with name '" + name + "' in the knowledge base.");
@@ -220,7 +218,7 @@ public class AgentFactory {
 	 *         if no agent with the given name exists
 	 */
 	public AgentLoop buildAgentLoop(String name) {
-		TLObject agent = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		Agent agent = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agent == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
@@ -237,22 +235,22 @@ public class AgentFactory {
 	/**
 	 * Builds the {@link AgentParams} record from a KB agent object.
 	 */
-	AgentParams buildConfig(TLObject agent) {
-		String model = (String) agent.tValueByName("model");
+	AgentParams buildConfig(Agent agent) {
+		String model = agent.getModel();
 		if (model == null || model.isBlank()) {
 			LLMProviderRegistry providerRegistry = LLMProviderRegistry.getInstance();
 			model = providerRegistry != null ? providerRegistry.getConfig().getDefaultModel() : null;
 		}
 		if (model == null) {
 			throw new IllegalStateException(
-				"Agent '" + agent.tValueByName("name") + "' has no model and no default model is configured.");
+				"Agent '" + agent.getName() + "' has no model and no default model is configured.");
 		}
 
-		String systemPrompt = (String) agent.tValueByName("systemPrompt");
+		String systemPrompt = agent.getSystemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
 
-		Integer maxTokens = (Integer) agent.tValueByName("maxTokens");
+		Integer maxTokens = agent.getMaxTokens();
 		int maxOutputTokens = maxTokens != null ? maxTokens : AgentParams.DEFAULT_MAX_OUTPUT_TOKENS;
 
 		Map<String, Object> modelOptions = buildModelOptions(agent);
@@ -260,23 +258,23 @@ public class AgentFactory {
 		return new AgentParams(model, systemPrompt, AgentParams.DEFAULT_MAX_TURNS, maxOutputTokens, modelOptions);
 	}
 
-	private static int resolveMaxToolResultChars(TLObject agent) {
-		Integer value = (Integer) agent.tValueByName("maxToolResultChars");
+	private static int resolveMaxToolResultChars(Agent agent) {
+		Integer value = agent.getMaxToolResultChars();
 		return value != null && value > 0 ? value : AgentLoop.DEFAULT_MAX_RESULT_CHARS;
 	}
 
 	/**
 	 * Builds provider-specific model options from agent attributes.
 	 */
-	private Map<String, Object> buildModelOptions(TLObject agent) {
+	private Map<String, Object> buildModelOptions(Agent agent) {
 		Map<String, Object> options = new HashMap<>();
 
-		Double temperature = (Double) agent.tValueByName("temperature");
+		Double temperature = agent.getTemperature();
 		if (temperature != null) {
 			options.put("temperature", temperature);
 		}
 
-		Double topP = (Double) agent.tValueByName("topP");
+		Double topP = agent.getTopP();
 		if (topP != null) {
 			options.put("topP", topP);
 		}
@@ -308,12 +306,11 @@ public class AgentFactory {
 	 * {@link ToolRegistryService} and registers them in a core registry.
 	 * </p>
 	 */
-	com.top_logic.tl.ai.core.tools.ToolDispatcher buildToolDispatcher(TLObject agent) {
+	com.top_logic.tl.ai.core.tools.ToolDispatcher buildToolDispatcher(Agent agent) {
 		com.top_logic.tl.ai.core.tools.ToolDispatcher registry =
 			new com.top_logic.tl.ai.core.tools.ToolDispatcher();
 
-		@SuppressWarnings("unchecked")
-		Collection<String> toolNames = (Collection<String>) agent.tValueByName("tools");
+		Set<String> toolNames = agent.getTools();
 		if (toolNames != null && !toolNames.isEmpty()) {
 			ToolRegistryService serviceRegistry = ToolRegistryService.getInstance();
 
@@ -328,8 +325,7 @@ public class AgentFactory {
 		}
 
 		// Resolve MCP tools from McpServerRegistry
-		@SuppressWarnings("unchecked")
-		Collection<String> mcpServerNames = (Collection<String>) agent.tValueByName("mcpServers");
+		Set<String> mcpServerNames = agent.getMcpServers();
 		if (mcpServerNames != null && !mcpServerNames.isEmpty()
 				&& McpServerRegistry.Module.INSTANCE.isActive()) {
 			McpServerRegistry mcpRegistry = McpServerRegistry.getInstance();
@@ -355,13 +351,12 @@ public class AgentFactory {
 		}
 
 		// Inject delegation tools from the agent's delegations reference
-		@SuppressWarnings("unchecked")
-		Collection<TLObject> delegations = (Collection<TLObject>) agent.tValueByName("delegations");
+		Set<? extends Agent> delegations = agent.getDelegations();
 		if (delegations != null && !delegations.isEmpty()) {
-			String parentName = (String) agent.tValueByName("name");
-			for (TLObject target : delegations) {
-				String targetName = (String) target.tValueByName("name");
-				String targetDesc = (String) target.tValueByName("description");
+			String parentName = agent.getName();
+			for (Agent target : delegations) {
+				String targetName = target.getName();
+				String targetDesc = target.getDescription();
 				if (targetName == null || targetName.isBlank()) {
 					continue;
 				}
@@ -377,18 +372,17 @@ public class AgentFactory {
 	 * Builds a {@link SkillTool} for the agent's KB skills, or {@code null} if the agent has no
 	 * skills.
 	 */
-	private SkillTool buildSkillTool(TLObject agent) {
-		@SuppressWarnings("unchecked")
-		Set<? extends TLObject> skills = (Set<? extends TLObject>) agent.tValueByName("skills");
+	private SkillTool buildSkillTool(Agent agent) {
+		Set<? extends com.top_logic.tl.ai.core.model.Skill> skills = agent.getSkills();
 		if (skills == null || skills.isEmpty()) {
 			return null;
 		}
 
 		Map<String, Skill> skillMap = new LinkedHashMap<>();
-		for (TLObject skill : skills) {
-			String name = (String) skill.tValueByName("name");
-			String description = (String) skill.tValueByName("description");
-			String content = (String) skill.tValueByName("content");
+		for (com.top_logic.tl.ai.core.model.Skill skill : skills) {
+			String name = skill.getName();
+			String description = skill.getDescription();
+			String content = skill.getContent();
 			if (name != null && content != null) {
 				skillMap.put(name, new Skill(name, description, content));
 			}
@@ -401,9 +395,8 @@ public class AgentFactory {
 	 * descriptions into the system prompt. Full skill content is loaded on demand via
 	 * {@link SkillTool}.
 	 */
-	private String injectSkills(TLObject agent, String systemPrompt) {
-		@SuppressWarnings("unchecked")
-		Set<? extends TLObject> skills = (Set<? extends TLObject>) agent.tValueByName("skills");
+	private String injectSkills(Agent agent, String systemPrompt) {
+		Set<? extends com.top_logic.tl.ai.core.model.Skill> skills = agent.getSkills();
 		String base = systemPrompt != null ? systemPrompt : "";
 
 		if (skills == null || skills.isEmpty()) {
@@ -416,9 +409,9 @@ public class AgentFactory {
 		catalog.append("You have specialized skills. ");
 		catalog.append("Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
 
-		for (TLObject skill : skills) {
-			String skillName = (String) skill.tValueByName("name");
-			String skillDescription = (String) skill.tValueByName("description");
+		for (com.top_logic.tl.ai.core.model.Skill skill : skills) {
+			String skillName = skill.getName();
+			String skillDescription = skill.getDescription();
 			if (skillName != null) {
 				catalog.append("- `").append(skillName).append("`: ");
 				catalog.append(skillDescription != null ? skillDescription : "No description");
@@ -432,9 +425,8 @@ public class AgentFactory {
 	/**
 	 * Injects descriptions of available delegate agents into the system prompt.
 	 */
-	private String injectDelegateDescriptions(TLObject agent, String systemPrompt) {
-		@SuppressWarnings("unchecked")
-		Collection<TLObject> delegations = (Collection<TLObject>) agent.tValueByName("delegations");
+	private String injectDelegateDescriptions(Agent agent, String systemPrompt) {
+		Set<? extends Agent> delegations = agent.getDelegations();
 		if (delegations == null || delegations.isEmpty()) {
 			return systemPrompt != null ? systemPrompt : "";
 		}
@@ -443,9 +435,9 @@ public class AgentFactory {
 		section.append("\n\n### Available Delegates\n\n");
 		section.append("You can delegate tasks to these specialized agents:\n\n");
 
-		for (TLObject target : delegations) {
-			String targetName = (String) target.tValueByName("name");
-			String targetDesc = (String) target.tValueByName("description");
+		for (Agent target : delegations) {
+			String targetName = target.getName();
+			String targetDesc = target.getDescription();
 			if (targetName == null) continue;
 
 			String toolName = "delegate_to_" + targetName.replace('-', '_');

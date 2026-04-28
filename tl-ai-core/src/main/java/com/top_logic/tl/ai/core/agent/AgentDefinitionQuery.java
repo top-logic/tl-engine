@@ -12,7 +12,8 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.model.Agent;
+import com.top_logic.tl.ai.core.model.Skill;
 
 /**
  * Queries for retrieving agent and skill definitions from the knowledge base.
@@ -39,19 +40,19 @@ public class AgentDefinitionQuery {
 	/**
 	 * All {@code tl.ai.core:Agent} instances in the knowledge base.
 	 */
-	public Collection<TLObject> getAllAgents() {
+	public Collection<Agent> getAllAgents() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Collection<KnowledgeObject> kos = kb.getAllKnowledgeObjects(AGENT_TABLE);
-		return WrapperFactory.getWrappersForKOs(TLObject.class, kos);
+		return WrapperFactory.getWrappersForKOs(Agent.class, kos);
 	}
 
 	/**
 	 * All {@code tl.ai.core:Skill} instances in the knowledge base.
 	 */
-	public Collection<TLObject> getAllSkills() {
+	public Collection<Skill> getAllSkills() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Collection<KnowledgeObject> kos = kb.getAllKnowledgeObjects(SKILL_TABLE);
-		return WrapperFactory.getWrappersForKOs(TLObject.class, kos);
+		return WrapperFactory.getWrappersForKOs(Skill.class, kos);
 	}
 
 	/**
@@ -59,9 +60,9 @@ public class AgentDefinitionQuery {
 	 *
 	 * @return the agent, or {@code null} if not found
 	 */
-	public TLObject findAgentByName(String name) {
-		for (TLObject agent : getAllAgents()) {
-			if (name.equals(agent.tValueByName("name"))) {
+	public Agent findAgentByName(String name) {
+		for (Agent agent : getAllAgents()) {
+			if (name.equals(agent.getName())) {
 				return agent;
 			}
 		}

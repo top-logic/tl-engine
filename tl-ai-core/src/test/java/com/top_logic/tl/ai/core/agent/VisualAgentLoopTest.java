@@ -128,7 +128,7 @@ public class VisualAgentLoopTest extends TestCase {
 	/**
 	 * Live agent loop against Anthropic API with a tool.
 	 */
-	public void testLiveAgentLoop() throws Exception {
+	public void testLiveAgentLoop() {
 		String apiKey = System.getenv("ANTHROPIC_API_KEY");
 		if (apiKey == null || apiKey.isEmpty()) {
 			System.out.println("\nSKIP: testLiveAgentLoop — no ANTHROPIC_API_KEY (source env.sh)");

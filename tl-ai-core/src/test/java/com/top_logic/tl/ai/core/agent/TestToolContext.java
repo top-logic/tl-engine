@@ -38,23 +38,29 @@ public class TestToolContext extends TestCase {
 	 * Null security throws.
 	 */
 	public void testNullSecurityThrows() {
-		try {
-			new ToolContext(null, ApprovalCallback.AUTO_APPROVE);
-			fail("Expected NullPointerException");
-		} catch (NullPointerException e) {
-			// expected
-		}
+		expectThrows(NullPointerException.class,
+			() -> new ToolContext(null, ApprovalCallback.AUTO_APPROVE));
 	}
 
 	/**
 	 * Null approval throws.
 	 */
 	public void testNullApprovalThrows() {
+		expectThrows(NullPointerException.class,
+			() -> new ToolContext(SecurityContext.UNRESTRICTED, null));
+	}
+
+	private static <T extends Throwable> T expectThrows(Class<T> expectedType, Runnable action) {
 		try {
-			new ToolContext(SecurityContext.UNRESTRICTED, null);
-			fail("Expected NullPointerException");
-		} catch (NullPointerException e) {
-			// expected
+			action.run();
+			fail("Expected " + expectedType.getSimpleName());
+			return null;
+		} catch (Throwable throwable) {
+			if (!expectedType.isInstance(throwable)) {
+				fail("Expected " + expectedType.getSimpleName() + " but got "
+					+ throwable.getClass().getSimpleName());
+			}
+			return expectedType.cast(throwable);
 		}
 	}
 

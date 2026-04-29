@@ -64,7 +64,8 @@ public class TestTransactionScope extends TestCase {
 	 * Live scope: isNoOp returns false.
 	 */
 	public void testLiveIsNotNoOp() {
-		TransactionScope scope = new TransactionScope();
-		assertFalse(scope.isNoOp());
+		try (TransactionScope scope = new TransactionScope()) {
+			assertFalse(scope.isNoOp());
+		}
 	}
 }

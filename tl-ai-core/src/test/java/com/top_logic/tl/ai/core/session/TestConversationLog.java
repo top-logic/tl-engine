@@ -32,11 +32,17 @@ public class TestConversationLog extends TestCase {
 			@Override
 			public void onTurnStarted(Turn turn) { observed.add(turn); }
 			@Override
-			public void onTurnCompleted(Turn turn) {}
+			public void onTurnCompleted(Turn turn) {
+				/** */
+			}
 			@Override
-			public void onPartAdded(Turn turn, Part part) {}
+			public void onPartAdded(Turn turn, Part part) {
+				/** */
+			}
 			@Override
-			public void onPartUpdated(Turn turn, Part part) {}
+			public void onPartUpdated(Turn turn, Part part) {
+				/** */
+			}
 		});
 
 		Turn turn = log.startTurn();
@@ -53,13 +59,19 @@ public class TestConversationLog extends TestCase {
 		boolean[] completed = {false};
 		log.addObserver(new ConversationLog.Observer() {
 			@Override
-			public void onTurnStarted(Turn turn) {}
+			public void onTurnStarted(Turn turn) {
+				/** */
+			}
 			@Override
 			public void onTurnCompleted(Turn turn) { completed[0] = true; }
 			@Override
-			public void onPartAdded(Turn turn, Part part) {}
+			public void onPartAdded(Turn turn, Part part) {
+				/** */
+			}
 			@Override
-			public void onPartUpdated(Turn turn, Part part) {}
+			public void onPartUpdated(Turn turn, Part part) {
+				/** */
+			}
 		});
 
 		log.startTurn();
@@ -88,13 +100,19 @@ public class TestConversationLog extends TestCase {
 		List<Part> observedParts = new ArrayList<>();
 		log.addObserver(new ConversationLog.Observer() {
 			@Override
-			public void onTurnStarted(Turn turn) {}
+			public void onTurnStarted(Turn turn) {
+				/** */
+			}
 			@Override
-			public void onTurnCompleted(Turn turn) {}
+			public void onTurnCompleted(Turn turn) {
+				/** */
+			}
 			@Override
 			public void onPartAdded(Turn turn, Part part) { observedParts.add(part); }
 			@Override
-			public void onPartUpdated(Turn turn, Part part) {}
+			public void onPartUpdated(Turn turn, Part part) {
+				/** */
+			}
 		});
 
 		Turn turn = log.startTurn();

@@ -11,9 +11,6 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
-import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.json.JsonReader;
-
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -22,6 +19,9 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 /**
  * Tests that {@link AnthropicProvider} serializes cache control hints correctly.
@@ -285,7 +285,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 			2, countOccurrences(messagesJson, "\"cache_control\""));
 	}
 
-	private static String extractMessagesJson(String fullJson) throws Exception {
+	private static String extractMessagesJson(String fullJson) {
 		// Find the "messages" array in the full JSON and return it as a substring.
 		// We use a simple approach: find "messages":[ and extract the balanced array.
 		int idx = fullJson.indexOf("\"messages\":");

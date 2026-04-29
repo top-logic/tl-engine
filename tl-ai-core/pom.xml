@@ -34,8 +34,7 @@
 		<dependency>
 			<groupId>de.haumacher.msgbuf</groupId>
 			<artifactId>msgbuf-api</artifactId>
-			<version>${msgbuf.version}</version>
-		</dependency>
+			</dependency>
 
 		<!-- TopLogic kernel (KB transactions, locking, security) -->
 		<dependency>

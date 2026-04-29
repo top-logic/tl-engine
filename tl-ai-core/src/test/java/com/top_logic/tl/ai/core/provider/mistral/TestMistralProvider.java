@@ -95,6 +95,7 @@ public class TestMistralProvider extends TestCase {
 	}
 
 	/** */
+	@SuppressWarnings("null")
 	public void testToolCallRoundTrip() throws Exception {
 		String apiKey = getApiKey();
 		if (apiKey == null) {

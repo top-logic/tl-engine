@@ -18,15 +18,14 @@ public class TestSSEReader extends TestCase {
 	/** */
 	public void testSingleEvent() throws Exception {
 		String input = "event: message_start\ndata: {\"type\":\"message_start\"}\n\n";
-		SSEReader reader = new SSEReader(toStream(input));
+		try (SSEReader reader = new SSEReader(toStream(input))) {
+			SSEReader.Event event = reader.next();
+			assertNotNull(event);
+			assertEquals("message_start", event.event());
+			assertEquals("{\"type\":\"message_start\"}", event.data());
 
-		SSEReader.Event event = reader.next();
-		assertNotNull(event);
-		assertEquals("message_start", event.event());
-		assertEquals("{\"type\":\"message_start\"}", event.data());
-
-		assertNull(reader.next());
-		reader.close();
+			assertNull(reader.next());
+		}
 	}
 
 	/** */
@@ -35,76 +34,68 @@ public class TestSSEReader extends TestCase {
 			"event: content_block_start\ndata: {\"index\":0}\n\n" +
 			"event: content_block_delta\ndata: {\"text\":\"Hi\"}\n\n" +
 			"event: message_stop\ndata: {}\n\n";
-		SSEReader reader = new SSEReader(toStream(input));
+		try (SSEReader reader = new SSEReader(toStream(input))) {
+			SSEReader.Event e1 = reader.next();
+			assertEquals("content_block_start", e1.event());
 
-		SSEReader.Event e1 = reader.next();
-		assertEquals("content_block_start", e1.event());
+			SSEReader.Event e2 = reader.next();
+			assertEquals("content_block_delta", e2.event());
+			assertEquals("{\"text\":\"Hi\"}", e2.data());
 
-		SSEReader.Event e2 = reader.next();
-		assertEquals("content_block_delta", e2.event());
-		assertEquals("{\"text\":\"Hi\"}", e2.data());
+			SSEReader.Event e3 = reader.next();
+			assertEquals("message_stop", e3.event());
 
-		SSEReader.Event e3 = reader.next();
-		assertEquals("message_stop", e3.event());
-
-		assertNull(reader.next());
-		reader.close();
+			assertNull(reader.next());
+		}
 	}
 
 	/** */
 	public void testMultipleDataLines() throws Exception {
 		String input = "event: test\ndata: line1\ndata: line2\n\n";
-		SSEReader reader = new SSEReader(toStream(input));
-
-		SSEReader.Event event = reader.next();
-		assertEquals("test", event.event());
-		assertEquals("line1\nline2", event.data());
-
-		reader.close();
+		try (SSEReader reader = new SSEReader(toStream(input))) {
+			SSEReader.Event event = reader.next();
+			assertEquals("test", event.event());
+			assertEquals("line1\nline2", event.data());
+		}
 	}
 
 	/** */
 	public void testSkipsComments() throws Exception {
 		String input = ": this is a comment\nevent: ping\ndata: {}\n\n";
-		SSEReader reader = new SSEReader(toStream(input));
-
-		SSEReader.Event event = reader.next();
-		assertEquals("ping", event.event());
-
-		reader.close();
+		try (SSEReader reader = new SSEReader(toStream(input))) {
+			SSEReader.Event event = reader.next();
+			assertEquals("ping", event.event());
+		}
 	}
 
 	/** */
 	public void testSkipsLeadingBlankLines() throws Exception {
 		String input = "\n\n\nevent: first\ndata: ok\n\n";
-		SSEReader reader = new SSEReader(toStream(input));
-
-		SSEReader.Event event = reader.next();
-		assertEquals("first", event.event());
-		assertEquals("ok", event.data());
-
-		reader.close();
+		try (SSEReader reader = new SSEReader(toStream(input))) {
+			SSEReader.Event event = reader.next();
+			assertEquals("first", event.event());
+			assertEquals("ok", event.data());
+		}
 	}
 
 	/** */
 	public void testEmptyStream() throws Exception {
-		SSEReader reader = new SSEReader(toStream(""));
-		assertNull(reader.next());
-		reader.close();
+		try (SSEReader reader = new SSEReader(toStream(""))) {
+			assertNull(reader.next());
+		}
 	}
 
 	/** */
 	public void testEventWithoutTrailingNewline() throws Exception {
 		String input = "event: last\ndata: final";
-		SSEReader reader = new SSEReader(toStream(input));
+		try (SSEReader reader = new SSEReader(toStream(input))) {
+			SSEReader.Event event = reader.next();
+			assertNotNull(event);
+			assertEquals("last", event.event());
+			assertEquals("final", event.data());
 
-		SSEReader.Event event = reader.next();
-		assertNotNull(event);
-		assertEquals("last", event.event());
-		assertEquals("final", event.data());
-
-		assertNull(reader.next());
-		reader.close();
+			assertNull(reader.next());
+		}
 	}
 
 	private static ByteArrayInputStream toStream(String text) {

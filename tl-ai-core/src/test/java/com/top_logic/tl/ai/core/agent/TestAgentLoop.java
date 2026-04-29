@@ -140,7 +140,9 @@ public class TestAgentLoop extends TestCase {
 		LLMProvider provider = mockProvider(List.of(new TextContent("Hi there!")));
 
 		AgentLoop loop = new AgentLoop(config(), provider, emptyRegistry());
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertEquals(1, result.turnsUsed());
@@ -168,7 +170,9 @@ public class TestAgentLoop extends TestCase {
 		ToolDispatcher registry = echoRegistry("calculate", calcSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertEquals(2, result.turnsUsed());
@@ -196,7 +200,9 @@ public class TestAgentLoop extends TestCase {
 		ToolDispatcher registry = echoRegistry("read_file", readSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertEquals(2, result.turnsUsed());
@@ -224,7 +230,9 @@ public class TestAgentLoop extends TestCase {
 		ToolDispatcher registry = echoRegistry("do_thing", toolSpec);
 
 		AgentLoop loop = new AgentLoop(config(maxTurns), provider, registry);
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.MAX_TURNS, result.stopReason());
 		assertEquals(maxTurns, result.turnsUsed());
@@ -243,7 +251,9 @@ public class TestAgentLoop extends TestCase {
 		};
 
 		AgentLoop loop = new AgentLoop(config(), failingProvider, emptyRegistry());
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.ERROR, result.stopReason());
 		assertEquals(0, result.turnsUsed());
@@ -418,7 +428,9 @@ public class TestAgentLoop extends TestCase {
 		ToolDispatcher registry = echoRegistry("tool", toolSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		// 2 turns, each with USAGE (100 input, 50 output)
 		assertEquals(200, result.totalUsage().inputTokens());
@@ -436,7 +448,9 @@ public class TestAgentLoop extends TestCase {
 
 		Thread.currentThread().interrupt();
 		AgentLoop loop = new AgentLoop(config(), provider, emptyRegistry());
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.ABORTED, result.stopReason());
 		assertEquals(0, result.turnsUsed());
@@ -476,7 +490,9 @@ public class TestAgentLoop extends TestCase {
 		registry.freeze();
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.ABORTED, result.stopReason());
 		// Clear interrupt flag
@@ -547,7 +563,9 @@ public class TestAgentLoop extends TestCase {
 		LLMProvider provider = mockProvider(List.of(new TextContent("Hi")));
 
 		AgentLoop loop = new AgentLoop(config(), provider, emptyRegistry());
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 	}
@@ -558,7 +576,9 @@ public class TestAgentLoop extends TestCase {
 	public void testRunWithoutMemoryThrows() {
 		AgentLoop loop = new AgentLoop(config(), mockProvider(List.of(new TextContent("Hi"))), emptyRegistry());
 		try {
-			loop.run(ToolContext.EMPTY, (AgentEventListener) e -> {});
+			loop.run(ToolContext.EMPTY, (AgentEventListener) e -> {
+				/** empty listener */
+			});
 			fail("Expected IllegalStateException");
 		} catch (IllegalStateException e) {
 			// expected
@@ -566,7 +586,9 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	private static AgentEventListener listener() {
-		return (AgentEventListener) e -> {};
+		return (AgentEventListener) e -> {
+			/** empty listener */
+		};
 	}
 
 	/**
@@ -1073,6 +1095,7 @@ public class TestAgentLoop extends TestCase {
 		AgentLoop loop = new AgentLoop(config(), capturingProvider, registry);
 		AgentResult result = loop.run(conv, ctx, listener());
 
+		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertEquals(1, capturedRequests.size());
 		List<ToolSchema> sentTools = capturedRequests.get(0).tools();
 		assertEquals("Only READ tool should be sent", 1, sentTools.size());
@@ -1140,7 +1163,9 @@ public class TestAgentLoop extends TestCase {
 		};
 
 		AgentLoop loop = new AgentLoop(config(), overflowProvider, emptyRegistry());
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.ERROR, result.stopReason());
 		assertEquals(0, result.turnsUsed());
@@ -1173,11 +1198,11 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.TransactionBegan t) {
+			if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
-			} else if (e instanceof AgentEvent.TransactionCommitted c) {
+			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
-			} else if (e instanceof AgentEvent.LockAcquired l) {
+			} else if (e instanceof AgentEvent.LockAcquired) {
 				events.add("lock_acquired");
 			}
 		};
@@ -1215,7 +1240,7 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.TransactionBegan t) {
+			if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
 			}
 		};
@@ -1258,9 +1283,9 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.TransactionBegan t) {
+			if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
-			} else if (e instanceof AgentEvent.TransactionCommitted c) {
+			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
 			} else if (e instanceof AgentEvent.TransactionRolledBack r) {
 				events.add("tx_rollback:" + r.reason());
@@ -1303,7 +1328,7 @@ public class TestAgentLoop extends TestCase {
 		AgentEventListener listener = e -> {
 			if (e instanceof AgentEvent.LockFailed l) {
 				events.add("lock_failed:" + l.reason());
-			} else if (e instanceof AgentEvent.TransactionBegan t) {
+			} else if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
 			}
 		};
@@ -1347,9 +1372,9 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.TransactionBegan t) {
+			if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
-			} else if (e instanceof AgentEvent.TransactionCommitted c) {
+			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
 			} else if (e instanceof AgentEvent.TransactionRolledBack r) {
 				events.add("tx_rollback:" + r.reason());
@@ -1398,13 +1423,13 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.LockAcquired l) {
+			if (e instanceof AgentEvent.LockAcquired) {
 				events.add("lock_acquired");
-			} else if (e instanceof AgentEvent.TransactionBegan t) {
+			} else if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
-			} else if (e instanceof AgentEvent.TransactionCommitted c) {
+			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
-			} else if (e instanceof AgentEvent.TransactionRolledBack r) {
+			} else if (e instanceof AgentEvent.TransactionRolledBack) {
 				events.add("tx_rollback");
 			} else if (e instanceof AgentEvent.ToolCallDenied d) {
 				events.add("denied:" + d.toolName());
@@ -1459,9 +1484,9 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.LockFailed l) {
+			if (e instanceof AgentEvent.LockFailed) {
 				events.add("lock_failed");
-			} else if (e instanceof AgentEvent.TransactionBegan t) {
+			} else if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
 			}
 		};
@@ -1654,7 +1679,9 @@ public class TestAgentLoop extends TestCase {
 			Map.of(), msg -> true);
 
 		AgentLoop loop = new AgentLoop(params, provider, emptyRegistry());
-		AgentResult result = loop.run(conv, (AgentEventListener) e -> {});
+		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
+			/** empty listener */
+		});
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertEquals(1, result.turnsUsed());

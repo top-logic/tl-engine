@@ -7,8 +7,10 @@ package com.top_logic.tl.ai.core.agent.skills;
 
 import junit.framework.TestCase;
 
+/** */
 public class TestSkill extends TestCase {
 
+	/** */
 	public void testSkillCreation() {
 		Skill skill = new Skill("test-skill", "A test skill", "You are a test agent.");
 		assertEquals("test-skill", skill.id());
@@ -16,6 +18,7 @@ public class TestSkill extends TestCase {
 		assertEquals("You are a test agent.", skill.content());
 	}
 
+	/**	 */
 	public void testSkillContentNonEmpty() {
 		Skill skill = new Skill("s", "d", "content");
 		assertFalse(skill.content().isEmpty());

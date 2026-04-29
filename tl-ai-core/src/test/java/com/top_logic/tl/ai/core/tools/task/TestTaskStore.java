@@ -104,6 +104,7 @@ public class TestTaskStore extends TestCase {
 
 		try {
 			tasks.add(new AgentTask("fake") {
+				/** */
 			});
 			fail("List should be unmodifiable");
 		} catch (UnsupportedOperationException expected) {

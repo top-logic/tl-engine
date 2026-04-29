@@ -22,6 +22,22 @@
 				<entry value="com.top_logic.tl.ai.core.tools.interaction.messages" />
 				<entry value="com.top_logic.tl.ai.core.tools.integration.messages" />
 				<entry value="com.top_logic.tl.ai.core.agent.skills.Skill" />
+				<entry value="com.top_logic.tl.ai.core.memory.CompactionResult" />
+				<entry value="com.top_logic.tl.ai.core.message.SystemMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.TextContent" />
+				<entry value="com.top_logic.tl.ai.core.message.ToolResultMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.ToolCall" />
+				<entry value="com.top_logic.tl.ai.core.message.CompactionMarker" />
+				<entry value="com.top_logic.tl.ai.core.message.TokenUsage" />
+				<entry value="com.top_logic.tl.ai.core.message.AssistantMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.ThinkingContent" />
+				<entry value="com.top_logic.tl.ai.core.message.ImageContent" />
+				<entry value="com.top_logic.tl.ai.core.message.UserMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.PdfContent" />
+				<entry value="com.top_logic.tl.ai.core.provider.ProviderRequest" />
+				<entry value="com.top_logic.tl.ai.core.agent.AgentParams" />
+				<entry value="com.top_logic.tl.ai.core.agent.AgentResult" />
+				<entry value="com.top_logic.tl.ai.core.agent.approval.ApprovalRequest" />
 			</ignore>
 		</config>
 	</configs>

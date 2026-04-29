@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
+<arguments>
 	<components>
 		<layout-reference resource="tl-ai-core/admin/agentEditor/tabLayout.layout.xml"/>
 	</components>

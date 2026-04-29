@@ -7,5 +7,12 @@
 			test-layouts-normalized="true"
 			test-jsp-content="true"
 		/>
+
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<ignore>
+				<entry value="com.top_logic.tl.ai.tool.api.ToolSchema" />
+				<entry value="com.top_logic.tl.ai.tool.api.ToolResult" />
+			</ignore>
+		</config>
 	</configs>
 </application>

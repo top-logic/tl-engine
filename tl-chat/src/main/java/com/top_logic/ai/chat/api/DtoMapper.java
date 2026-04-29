@@ -134,7 +134,7 @@ public final class DtoMapper {
 	 */
 	private static void parseInteractionOptions(String optionsJson, UserInteractionEvent event) {
 		try {
-			JsonReader reader = new JsonReader(new StringR(optionsJson));
+			try (JsonReader reader = new JsonReader(new StringR(optionsJson))) {
 			reader.beginArray();
 			while (reader.hasNext()) {
 				InteractionOptionDto option = InteractionOptionDto.create();
@@ -157,6 +157,7 @@ public final class DtoMapper {
 				event.addOption(option);
 			}
 			reader.endArray();
+			}
 		} catch (Exception ex) {
 			// Silently ignore malformed options JSON from LLM output.
 		}
@@ -281,7 +282,7 @@ public final class DtoMapper {
 	private static List<ChatMessage> deserializeLegacyMessages(String json) {
 		List<ChatMessage> result = new ArrayList<>();
 		try {
-			JsonReader reader = new JsonReader(new StringR(json));
+			try (JsonReader reader = new JsonReader(new StringR(json))) {
 			reader.beginArray();
 			while (reader.hasNext()) {
 				reader.beginObject();
@@ -306,6 +307,7 @@ public final class DtoMapper {
 				}
 			}
 			reader.endArray();
+			}
 		} catch (Exception ignored) {
 			// Return partial result on parse failure.
 		}

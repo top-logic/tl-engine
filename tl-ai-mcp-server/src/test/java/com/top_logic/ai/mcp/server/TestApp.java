@@ -12,6 +12,7 @@ import junit.framework.TestCase;
  */
 public class TestApp extends TestCase {
 	
+	/** */
 	public void testIt() {
 		// Add some test.
 	}

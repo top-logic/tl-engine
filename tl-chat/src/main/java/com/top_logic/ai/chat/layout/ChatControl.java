@@ -10,7 +10,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -18,6 +17,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -37,9 +37,6 @@ public class ChatControl extends AbstractControlBase {
 	private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
 	private final Chat _chat;
-
-	/** Shared state for background processing (null when not processing) */
-	private ChatProcessor.AIProcessingState _processingState = null;
 
 	/** Session-scoped task progress tracker */
 	private final TaskProgressTracker _taskTracker;
@@ -75,9 +72,6 @@ public class ChatControl extends AbstractControlBase {
 
 	@Override
 	protected void internalDetach() {
-		// Do NOT cancel processing on detach: state lives in tracker so navigation away and back
-		// still shows in-progress task and agent answer when it arrives.
-		_processingState = null;
 		super.internalDetach();
 	}
 
@@ -125,7 +119,7 @@ public class ChatControl extends AbstractControlBase {
 		out.endScript();
 	}
 
-	private void writeHistoryPanel(TagWriter out) throws IOException {
+	private void writeHistoryPanel(TagWriter out) {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-history-panel");
 		out.endBeginTag();
@@ -177,14 +171,14 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private void writeToggleBar(TagWriter out) throws IOException {
+	private void writeToggleBar(TagWriter out) {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, "chat-toggle-bar");
 		out.endBeginTag();
 		out.endTag(SPAN);
 	}
 
-	private void writeWelcomeScreen(TagWriter out) throws IOException {
+	private void writeWelcomeScreen(TagWriter out) {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-welcome");
 		out.endBeginTag();
@@ -269,7 +263,7 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private void writePromptChip(TagWriter out, String text) throws IOException {
+	private void writePromptChip(TagWriter out, String text) {
 		out.beginBeginTag(BUTTON);
 		out.writeAttribute(TYPE_ATTR, "button");
 		out.writeAttribute(CLASS_ATTR, "chat-prompt-chip");
@@ -360,14 +354,14 @@ public class ChatControl extends AbstractControlBase {
 		return "user";
 	}
 
-	private void writeTaskPanel(TagWriter out) throws IOException {
+	private void writeTaskPanel(TagWriter out) {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-task-panel");
 		out.endBeginTag();
 		out.endTag(DIV);
 	}
 
-	private void writeInputSection(TagWriter out) throws IOException {
+	private void writeInputSection(TagWriter out) {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-input-section");
 		out.endBeginTag();
@@ -436,7 +430,7 @@ public class ChatControl extends AbstractControlBase {
 		out.endTag(DIV);
 	}
 
-	private void writePaperclipSvg(TagWriter out) throws IOException {
+	private void writePaperclipSvg(TagWriter out) {
 		out.beginBeginTag("svg");
 		out.writeAttribute("xmlns", "http://www.w3.org/2000/svg");
 		out.writeAttribute("width", "20");
@@ -496,7 +490,7 @@ public class ChatControl extends AbstractControlBase {
 					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
 						chatControl._taskTracker, userName, trimmedText, null);
 					if (result.getTaskId() != null) {
-						chatControl._processingState = chatControl._taskTracker.getAnyActiveProcessingState();
+						chatControl._taskTracker.getAnyActiveProcessingState();
 						chatControl.requestRepaint();
 					} else if (!result.isBusy()) {
 						chatControl._chat.addMessage(new ChatMessage("System", "Failed to start AI processing"));

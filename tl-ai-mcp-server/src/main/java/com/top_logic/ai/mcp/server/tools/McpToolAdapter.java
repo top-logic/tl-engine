@@ -9,14 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
-import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 
@@ -63,7 +62,7 @@ public class McpToolAdapter {
 
 		return McpServerFeatures.SyncToolSpecification.builder()
 			.tool(mcpTool)
-			.callHandler((exchange, request) -> handleToolCall(exchange, request, tool))
+			.callHandler((exchange, request) -> handleToolCall(request, tool))
 			.build();
 	}
 
@@ -106,9 +105,7 @@ public class McpToolAdapter {
 	/**
 	 * Handles an MCP tool call by delegating to the tool.
 	 */
-	@SuppressWarnings("unchecked")
 	private static McpSchema.CallToolResult handleToolCall(
-			McpSyncServerExchange exchange,
 			CallToolRequest request,
 			Tool tool) {
 

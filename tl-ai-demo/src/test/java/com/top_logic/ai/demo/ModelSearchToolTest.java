@@ -16,9 +16,9 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.tl.ai.core.tools.model.ModelSearchTool;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.tl.ai.core.tools.model.ModelSearchTool;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -29,8 +29,6 @@ public class ModelSearchToolTest extends BasicTestCase {
 	private static final String PIZZASHOP_MODULE = "luigis.pizzashop";
 	private static final String UNIT_OF_MEASURE_ENUM = "UnitOfMeasure";
 	private static final String PRODUCT_CLASS = "Product";
-	private static final String NAMED_ENTITIES_INTERFACE = "NamedEntities";
-
 	/**
 	 * Tests searching for a class by exact name.
 	 */
@@ -320,6 +318,7 @@ public class ModelSearchToolTest extends BasicTestCase {
 		return suite(ModelSearchToolTest.class);
 	}
 
+	/** */
 	protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {
 		BasicRuntimeModule<?>[] modules = getModules(additionalModules);
 

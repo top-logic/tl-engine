@@ -34,21 +34,20 @@ import com.top_logic.ai.chat.api.messages.PersistedTurn;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.Part;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -655,7 +654,7 @@ public class ChatServlet extends HttpServlet {
 	}
 
 	private static String getObjectId(TLObject obj) {
-		return ((KnowledgeObject) obj.tHandle()).getObjectName().toExternalForm();
+		return obj.tHandle().getObjectName().toExternalForm();
 	}
 
 	private static String formatIso(Date date) {

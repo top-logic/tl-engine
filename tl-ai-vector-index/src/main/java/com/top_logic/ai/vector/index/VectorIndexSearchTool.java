@@ -53,6 +53,7 @@ public class VectorIndexSearchTool {
 	/**
 	 * Creates a new {@link VectorIndexSearchTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public VectorIndexSearchTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

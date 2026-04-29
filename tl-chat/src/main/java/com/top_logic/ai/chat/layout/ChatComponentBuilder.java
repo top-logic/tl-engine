@@ -7,6 +7,8 @@ package com.top_logic.ai.chat.layout;
 
 import java.io.IOException;
 
+import jakarta.servlet.http.HttpSession;
+
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagWriter;
@@ -20,8 +22,6 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
-
-import jakarta.servlet.http.HttpSession;
 
 /**
  * {@link ModelBuilder} that creates a {@link FormContext} with an embedded {@link ChatControl}.
@@ -60,8 +60,8 @@ public class ChatComponentBuilder implements ModelBuilder {
 			public Control createControl(Object model, String style) {
 				return new FragmentControl(new HTMLFragment() {
 					@Override
-					public void write(DisplayContext context, TagWriter out) throws IOException {
-						new ChatControl(taskTracker.getChat(), taskTracker).write(context, out);
+					public void write(DisplayContext displayContext, TagWriter out) throws IOException {
+						new ChatControl(taskTracker.getChat(), taskTracker).write(displayContext, out);
 					}
 				});
 			}

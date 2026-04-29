@@ -145,7 +145,7 @@ public class TestConcurrentAgents extends BasicTestCase {
 	 */
 	public void testRunConcurrent() throws Exception {
 		int parallelCount = Integer.getInteger(CONCURRENCY_PROPERTY, DEFAULT_PARALLEL_COUNT);
-		long timeoutSeconds = Long.getLong(TIMEOUT_SECONDS_PROPERTY, (long) DEFAULT_TIMEOUT_SECONDS);
+		long timeoutSeconds = Long.getLong(TIMEOUT_SECONDS_PROPERTY, DEFAULT_TIMEOUT_SECONDS);
 
 		System.out.println("[TestConcurrentAgents] starting " + parallelCount
 			+ " parallel runs of agent '" + AGENT_NAME + "' (per-run timeout "

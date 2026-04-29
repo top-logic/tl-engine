@@ -19,8 +19,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -34,6 +34,7 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -392,7 +393,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 		List<TLObject> createdObjects = new ArrayList<>();
 
 		// First transaction: Create ingredients and commit
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(ResKey.NONE)) {
 			TLObject ingredient1 = createObject(
 				"new(`luigis.pizzashop:Ingredient`)" +
 				"..set(`luigis.pizzashop:Component#name`, 'Tomato Sauce')" +
@@ -411,7 +412,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 		}
 
 		// Second transaction: Create products that reference the ingredients
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(ResKey.NONE)) {
 			// Product 1 with 2 components
 			TLObject product1 = createObject(
 				"{ " +
@@ -470,12 +471,14 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 
 		try {
 			TestObjects objects = new TestObjects(createdObjects);
-			test.accept(objects);
-			// Roll back any implicitly started transactions
-			kb().rollback();
+			try (Transaction tx = kb().beginTransaction(ResKey.NONE)) {
+				test.accept(objects);
+				// Roll back any modifications done by the test callback.
+				tx.rollback(ResKey.NONE, null);
+			}
 		} finally {
 			// Clean up created objects
-			try (Transaction tx = kb().beginTransaction()) {
+			try (Transaction tx = kb().beginTransaction(ResKey.NONE)) {
 				for (TLObject obj : createdObjects) {
 					if (obj.tValid()) {
 						obj.tDelete();
@@ -548,11 +551,6 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			// Products are at indices 2, 3, 4 (after 2 ingredients)
 			return objects.get(index + 2);
 		}
-
-		TLObject getIngredient(int index) {
-			// Ingredients are at indices 0, 1
-			return objects.get(index);
-		}
 	}
 
 	/**
@@ -562,6 +560,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 		return suite(InstanceBrowserToolTest.class);
 	}
 
+	/**	*/
 	protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {
 		BasicRuntimeModule<?>[] modules = getModules(additionalModules);
 

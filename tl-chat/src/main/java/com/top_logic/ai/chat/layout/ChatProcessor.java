@@ -24,21 +24,17 @@ import com.top_logic.ai.chat.api.ChatSSEHandler;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
-import com.top_logic.tl.ai.core.scripting.Converters;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
+import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
@@ -48,11 +44,15 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.ProviderException;
+import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 
 /**
  * Background processing logic for the chat component.
@@ -346,7 +346,8 @@ public class ChatProcessor {
 		try {
 			tracker.getSessionManager().persistActiveSession();
 		} catch (Exception ex) {
-			Logger.error("Failed to persist chat messages: " + ex.getMessage(), ex, ChatProcessor.class);
+			Logger.error("SessionID: " + sessionId + "; Failed to persist chat messages: " + ex.getMessage(), ex,
+				ChatProcessor.class);
 		}
 	}
 

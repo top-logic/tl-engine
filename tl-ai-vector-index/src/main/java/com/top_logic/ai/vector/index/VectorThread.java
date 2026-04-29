@@ -277,14 +277,6 @@ public class VectorThread extends Thread {
 		}
 	}
 
-	private ObjectKey getKey(ContentObject object) {
-		try {
-			return object.getKnowledgeObject().tId();
-		} catch (Throwable exception) {
-			throw new ContentRetrievalFailedException("Trying to get the object key failed!", exception);
-		}
-	}
-
 	/**
 	 * Add an object to the delete queue to be deleted
 	 * 

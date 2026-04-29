@@ -13,6 +13,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
+
 import com.top_logic.ai.vector.index.VectorIndex;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.knowledge.indexing.ContentObject;
@@ -35,18 +42,11 @@ import com.top_logic.util.model.ModelService;
 
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import test.com.top_logic.basic.BasicTestCase;
-import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.knowledge.KBSetup;
 
 /**
  * Integration test for semantic search utilizing the real Mistral model and JVector.
  */
 public class VectorIndexIntegrationTest extends BasicTestCase {
-
-    private VectorIndex index; // Declared as a class member
 
     @Override
     public void setUp() throws Exception {
@@ -61,6 +61,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
         }
     }
 
+	/** */
     public void testSemanticSearchPizza() throws Exception {
         withTestObjects(objects -> {
              VectorIndex index = VectorIndex.getInstance();

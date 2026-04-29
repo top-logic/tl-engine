@@ -211,7 +211,6 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {

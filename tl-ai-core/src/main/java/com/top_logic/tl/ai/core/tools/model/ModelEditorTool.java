@@ -16,17 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.top_logic.tl.ai.core.tools.model.messages.BackwardReferenceResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ClassResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.DeleteResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.DeletionBlocker;
-import com.top_logic.tl.ai.core.tools.model.messages.EnumResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil;
-import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil.LocalizedTexts;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -39,13 +28,13 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
-import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -56,10 +45,20 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.model.ModelService;
-
+import com.top_logic.tl.ai.core.tools.model.messages.BackwardReferenceResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.ClassResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.DeleteResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.DeletionBlocker;
+import com.top_logic.tl.ai.core.tools.model.messages.EnumResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.ModuleResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.PropertyResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.ReferenceResponse;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil;
+import com.top_logic.tl.ai.core.tools.util.ToolI18NUtil.LocalizedTexts;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tool for creating and updating TopLogic model elements.
@@ -92,6 +91,7 @@ public class ModelEditorTool {
 	/**
 	 * Creates a new {@link ModelEditorTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public ModelEditorTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools
@@ -1208,7 +1208,6 @@ public class ModelEditorTool {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private EnumResponse doUpdateEnumeration(String moduleName, String enumName,
 			String labelEn, String labelDe, String descEn, String descDe,
 			String addClassifiersJson, String updateClassifiersJson, String defaultClassifier) {
@@ -1819,7 +1818,7 @@ public class ModelEditorTool {
 					checkTypeUsageExcludingModule(model, tlClass, module, blockers);
 				}
 				if (type instanceof TLEnumeration) {
-					checkTypeUsageExcludingModule(model, (TLEnumeration) type, module, blockers);
+					checkTypeUsageExcludingModule(model, type, module, blockers);
 				}
 			}
 		}

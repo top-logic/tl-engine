@@ -10,8 +10,6 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.top_logic.tl.ai.core.tools.model.messages.AnnotationEditorResponse;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -30,12 +28,13 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.tl.ai.core.tools.model.messages.AnnotationEditorResponse;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.io.StringW;
-
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 /**
  * Tool for setting and removing annotations on TopLogic model elements.
@@ -65,6 +64,7 @@ public class ModelAnnotationEditorTool {
 	/**
 	 * Creates a new {@link ModelAnnotationEditorTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public ModelAnnotationEditorTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools
@@ -205,7 +205,6 @@ public class ModelAnnotationEditorTool {
 		// 2. Parse and resolve
 		TargetRefParser parser = TargetRefParser.parse(targetRef);
 		TLModelPart target = parser.resolve(ModelService.getApplicationModel());
-		String kind = TargetRefParser.determineKind(target, parser);
 
 		// 3. Load annotation class
 		Class<? extends TLAnnotation> annotationClass = resolveAnnotationClass(configInterfaceName);

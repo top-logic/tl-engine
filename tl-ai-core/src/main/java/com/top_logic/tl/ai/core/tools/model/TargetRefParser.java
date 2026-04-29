@@ -21,8 +21,6 @@ import com.top_logic.model.util.TLModelUtil;
  */
 class TargetRefParser {
 
-	private final String targetRef;
-
 	private final String moduleName;
 
 	private final String typeName; // null for module references
@@ -31,8 +29,7 @@ class TargetRefParser {
 
 	private final boolean isModule;
 
-	private TargetRefParser(String targetRef, String moduleName, String typeName, String partName, boolean isModule) {
-		this.targetRef = targetRef;
+	private TargetRefParser(String moduleName, String typeName, String partName, boolean isModule) {
 		this.moduleName = moduleName;
 		this.typeName = typeName;
 		this.partName = partName;
@@ -71,7 +68,7 @@ class TargetRefParser {
 				throw new IllegalArgumentException(
 					"Invalid target reference format: cannot have '#' without module:type separator: " + targetRef);
 			}
-			return new TargetRefParser(targetRef, moduleName, null, null, true);
+			return new TargetRefParser(moduleName, null, null, true);
 		}
 
 		// Has ':' separator - it's a type or type#part reference
@@ -97,7 +94,7 @@ class TargetRefParser {
 
 		// At this point we don't know if it's a classifier or part reference
 		// We'll determine that during resolution
-		return new TargetRefParser(targetRef, moduleName, typeName, partOrClassifierName, false);
+		return new TargetRefParser(moduleName, typeName, partOrClassifierName, false);
 	}
 
 	/**

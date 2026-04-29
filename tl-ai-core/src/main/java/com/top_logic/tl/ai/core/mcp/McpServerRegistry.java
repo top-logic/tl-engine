@@ -194,7 +194,6 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 	/**
 	 * Serializes an MCP {@link io.modelcontextprotocol.spec.McpSchema.JsonSchema} to a JSON string.
 	 */
-	@SuppressWarnings("unchecked")
 	static String serializeInputSchema(McpSchema.JsonSchema schema) {
 		if (schema == null) {
 			return "{\"type\":\"object\",\"properties\":{}}";
@@ -229,7 +228,6 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 		return sb.toString();
 	}
 
-	@SuppressWarnings("unchecked")
 	private static void appendJsonValue(StringBuilder sb, Object value) {
 		if (value == null) {
 			sb.append("null");

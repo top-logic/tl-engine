@@ -14,14 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -32,8 +30,10 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * TL-Script functions for interacting with large language models.
@@ -251,7 +251,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			modelOptions.isEmpty() ? Map.of() : Map.copyOf(modelOptions));
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
-		loop.run(conversation, ToolContext.EMPTY, event -> { });
+		loop.run(conversation, ToolContext.EMPTY, event -> {
+			/** no event listener setup for a tlscript function */
+		});
 
 		return extractResponseText(conversation);
 	}
@@ -286,7 +288,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			UUID.randomUUID().toString(),
 			Instant.now(),
 			List.of(new TextContent(userMessage))));
-		return factory.runAgent(agentName, conversation, null, event -> { });
+		return factory.runAgent(agentName, conversation, null, event -> {
+			/** no event listener setup for a tlscript function */
+		});
 	}
 
 	/**

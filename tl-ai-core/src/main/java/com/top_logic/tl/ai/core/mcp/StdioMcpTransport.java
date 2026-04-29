@@ -11,8 +11,8 @@ import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
@@ -91,6 +91,7 @@ public class StdioMcpTransport implements McpTransportConfig {
 	/**
 	 * Creates a new {@link StdioMcpTransport} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public StdioMcpTransport(InstantiationContext context, Config config) {
 		_command = config.getCommand();

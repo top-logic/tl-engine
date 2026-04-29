@@ -13,9 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.tl.ai.core.tools.config.ConfigSchemaTool;
-import com.top_logic.tl.ai.core.tools.model.messages.AnnotationListResponse;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -33,13 +30,15 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.model.ModelService;
-
-import de.haumacher.msgbuf.io.StringW;
-
+import com.top_logic.tl.ai.core.tools.config.ConfigSchemaTool;
+import com.top_logic.tl.ai.core.tools.model.messages.AnnotationListResponse;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.io.StringW;
 
 /**
  * Tool for browsing annotations on TopLogic model elements (modules, types, parts, enumerations,
@@ -99,6 +98,7 @@ public class ModelAnnotationBrowserTool {
 	/**
 	 * Creates a new {@link ModelAnnotationBrowserTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public ModelAnnotationBrowserTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

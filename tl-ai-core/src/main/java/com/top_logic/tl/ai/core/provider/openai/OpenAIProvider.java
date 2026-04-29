@@ -132,7 +132,7 @@ public class OpenAIProvider implements LLMProvider {
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginObject();
 			json.name("model").value(request.model());
-			json.name("max_output_tokens").value((long) request.maxOutputTokens());
+			json.name("max_output_tokens").value(request.maxOutputTokens());
 			json.name("stream").value(true);
 			json.name("store").value(true);
 

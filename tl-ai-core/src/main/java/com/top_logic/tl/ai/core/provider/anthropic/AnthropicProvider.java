@@ -19,11 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonReader;
-import de.haumacher.msgbuf.json.JsonWriter;
-
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -47,6 +42,11 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * {@link LLMProvider} for the Anthropic Messages API.
@@ -141,7 +141,7 @@ public class AnthropicProvider implements LLMProvider {
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginObject();
 			json.name("model").value(request.model());
-			json.name("max_tokens").value((long) request.maxOutputTokens());
+			json.name("max_tokens").value(request.maxOutputTokens());
 			json.name("stream").value(true);
 			writeSamplingParams(json, request.modelOptions());
 			String cacheTtl = (String) request.modelOptions().get("cacheTtl");

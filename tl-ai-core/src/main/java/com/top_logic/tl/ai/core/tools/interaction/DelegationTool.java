@@ -23,12 +23,12 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * A tool that delegates work to another agent by spawning an isolated {@link AgentLoop}.
@@ -135,7 +135,9 @@ public class DelegationTool implements Tool {
 
 		ConversationLogListener logListener = ConversationLogListener.current();
 		String delegationId = null;
-		AgentEventListener childListener = event -> {};
+		AgentEventListener childListener = event -> {
+			/** Empty Child Listener */
+		};
 		Instant startTime = Instant.now();
 
 		if (logListener != null) {

@@ -84,6 +84,7 @@ public class HttpMcpTransport implements McpTransportConfig {
 	/**
 	 * Creates a new {@link HttpMcpTransport} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public HttpMcpTransport(InstantiationContext context, Config config) {
 		_url = config.getUrl();
@@ -96,22 +97,27 @@ public class HttpMcpTransport implements McpTransportConfig {
 		HttpClientStreamableHttpTransport.Builder builder =
 			HttpClientStreamableHttpTransport.builder(_url);
 
+		String bearerToken = null;
 		if (_bearerTokenEnvVar != null && !_bearerTokenEnvVar.isEmpty()) {
-			String token = System.getenv(_bearerTokenEnvVar);
-			if (token != null && !token.isEmpty()) {
-				builder.customizeRequest(req ->
-					req.header("Authorization", "Bearer " + token));
-			} else {
+			bearerToken = System.getenv(_bearerTokenEnvVar);
+			if (bearerToken == null || bearerToken.isEmpty()) {
 				Logger.warn("Bearer token env var '" + _bearerTokenEnvVar
 					+ "' is not set for HTTP MCP transport.",
 					HttpMcpTransport.class);
+				bearerToken = null;
 			}
 		}
 
-		if (_headers != null && !_headers.isEmpty()) {
-			builder.customizeRequest(req -> {
-				for (NamedValueConfig entry : _headers.values()) {
-					req.header(entry.getName(), entry.getValue());
+		if (bearerToken != null || (_headers != null && !_headers.isEmpty())) {
+			String token = bearerToken;
+			builder.httpRequestCustomizer((req, method, uri, body, ctx) -> {
+				if (token != null) {
+					req.header("Authorization", "Bearer " + token);
+				}
+				if (_headers != null) {
+					for (NamedValueConfig entry : _headers.values()) {
+						req.header(entry.getName(), entry.getValue());
+					}
 				}
 			});
 		}

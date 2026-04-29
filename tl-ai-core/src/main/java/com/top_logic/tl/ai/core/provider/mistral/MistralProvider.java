@@ -146,7 +146,7 @@ public class MistralProvider implements LLMProvider {
 		try (JsonWriter json = new JsonWriter(buffer)) {
 			json.beginObject();
 			json.name("model").value(request.model());
-			json.name("max_tokens").value((long) request.maxOutputTokens());
+			json.name("max_tokens").value(request.maxOutputTokens());
 			json.name("stream").value(true);
 
 			json.name("messages");
@@ -343,68 +343,73 @@ public class MistralProvider implements LLMProvider {
 
 		SSEReader.Event event;
 		try (SSEReader sse = new SSEReader(input)) {
-		while ((event = sse.next()) != null) {
-			String data = event.data();
-			if (data == null || data.isEmpty()) {
-				continue;
-			}
+			while ((event = sse.next()) != null) {
+				String data = event.data();
+				if (data == null || data.isEmpty()) {
+					continue;
+				}
 
-			if ("[DONE]".equals(data)) {
-				List<ContentPart> content = buildContentParts(blocks);
-				TokenUsage usage = new TokenUsage(inputTokens, outputTokens, 0, 0, 0);
-				handler.onEvent(new StreamEvent.MessageComplete(
-					messageId, model,
-					finishReason != null ? finishReason : "end_turn",
-					usage, content));
-				break;
-			}
+				if ("[DONE]".equals(data)) {
+					List<ContentPart> content = buildContentParts(blocks);
+					TokenUsage usage = new TokenUsage(inputTokens, outputTokens, 0, 0, 0);
+					handler.onEvent(new StreamEvent.MessageComplete(
+						messageId, model,
+						finishReason != null ? finishReason : "end_turn",
+						usage, content));
+					break;
+				}
 
-			try (JsonReader json = jsonReader(data)) {
-				json.beginObject();
-				while (json.hasNext()) {
-					switch (json.nextName()) {
-						case "id" -> messageId = json.nextString();
-						case "model" -> model = json.nextString();
-						case "choices" -> {
-							json.beginArray();
-							while (json.hasNext()) {
+				try (JsonReader json = jsonReader(data)) {
+					json.beginObject();
+					while (json.hasNext()) {
+						switch (json.nextName()) {
+							case "id" -> messageId = json.nextString();
+							case "model" -> model = json.nextString();
+							case "choices" -> {
+								json.beginArray();
+								while (json.hasNext()) {
+									json.beginObject();
+									while (json.hasNext()) {
+										switch (json.nextName()) {
+											case "delta" -> {
+												contentIndex = processDelta(json, blocks, contentIndex, handler);
+											}
+											case "finish_reason" -> {
+												if (json.peek() == JsonToken.NULL) {
+													json.skipValue();
+												} else {
+													finishReason = mapFinishReason(json.nextString());
+												}
+											}
+											default -> json.skipValue();
+										}
+									}
+									json.endObject();
+								}
+								json.endArray();
+							}
+							case "usage" -> {
 								json.beginObject();
 								while (json.hasNext()) {
 									switch (json.nextName()) {
-										case "delta" -> {
-											contentIndex = processDelta(json, blocks, contentIndex, handler);
-										}
-										case "finish_reason" -> {
-											if (json.peek() == JsonToken.NULL) {
-												json.skipValue();
-											} else {
-												finishReason = mapFinishReason(json.nextString());
-											}
-										}
+										case "prompt_tokens" -> inputTokens = json.nextInt();
+										case "completion_tokens" -> outputTokens = json.nextInt();
 										default -> json.skipValue();
 									}
 								}
 								json.endObject();
 							}
-							json.endArray();
+							default -> json.skipValue();
 						}
-						case "usage" -> {
-							json.beginObject();
-							while (json.hasNext()) {
-								switch (json.nextName()) {
-									case "prompt_tokens" -> inputTokens = json.nextInt();
-									case "completion_tokens" -> outputTokens = json.nextInt();
-									default -> json.skipValue();
-								}
-							}
-							json.endObject();
-						}
-						default -> json.skipValue();
 					}
+					json.endObject();
 				}
-				json.endObject();
 			}
-		}
+		} catch (IOException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
+				"Failed to process Mistral stream response: " + e.getMessage(), e);
 		}
 	}
 

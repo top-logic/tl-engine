@@ -10,22 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-
-import com.top_logic.tl.ai.core.tools.model.messages.ClassifierInfo;
-import com.top_logic.tl.ai.core.tools.model.messages.EnumerationResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.ModuleInfo;
-import com.top_logic.tl.ai.core.tools.model.messages.ModuleListResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.TypeInfo;
-import com.top_logic.tl.ai.core.tools.model.messages.TypeListResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.TypePartInfo;
-import com.top_logic.tl.ai.core.tools.model.messages.TypePartListResponse;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.ModelKind;
@@ -44,12 +32,21 @@ import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
-import com.top_logic.util.Resources;
-import com.top_logic.util.model.ModelService;
-
+import com.top_logic.tl.ai.core.tools.model.messages.ClassifierInfo;
+import com.top_logic.tl.ai.core.tools.model.messages.EnumerationResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.ModuleInfo;
+import com.top_logic.tl.ai.core.tools.model.messages.ModuleListResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.TypeInfo;
+import com.top_logic.tl.ai.core.tools.model.messages.TypeListResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.TypePartInfo;
+import com.top_logic.tl.ai.core.tools.model.messages.TypePartListResponse;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.util.Resources;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tool for browsing TopLogic model structure (modules, types, parts).
@@ -83,6 +80,7 @@ public class ModelBrowserTool {
 	/**
 	 * Creates a new {@link ModelBrowserTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public ModelBrowserTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

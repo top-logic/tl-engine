@@ -13,25 +13,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-
-import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
-import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
-import com.top_logic.tl.ai.core.tools.model.messages.TLObjectReference;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
-
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonWriter;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -46,11 +35,19 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
-import com.top_logic.util.Resources;
-
+import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
+import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
+import com.top_logic.tl.ai.core.tools.model.messages.TLObjectReference;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.util.Resources;
+
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * Tool for accessing TopLogic instance data from the knowledge base.
@@ -83,6 +80,7 @@ public class InstanceBrowserTool {
 	/**
 	 * Creates a new {@link InstanceBrowserTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public InstanceBrowserTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

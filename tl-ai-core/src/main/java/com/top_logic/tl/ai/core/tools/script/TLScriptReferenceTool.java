@@ -13,20 +13,18 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-
-import com.top_logic.tl.ai.core.scripting.Converters;
-import com.top_logic.tl.ai.core.tools.script.messages.FunctionDocResult;
-import com.top_logic.tl.ai.core.tools.script.messages.FunctionListResult;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
-
+import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.tools.script.messages.FunctionDocResult;
+import com.top_logic.tl.ai.core.tools.script.messages.FunctionListResult;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -58,6 +56,7 @@ public class TLScriptReferenceTool {
 	/**
 	 * Creates a new {@link TLScriptReferenceTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public TLScriptReferenceTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

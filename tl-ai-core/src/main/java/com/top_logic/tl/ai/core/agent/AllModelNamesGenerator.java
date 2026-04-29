@@ -40,6 +40,7 @@ public class AllModelNamesGenerator extends ListGeneratorAdaptor {
 	}
 
 	/** */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public AllModelNamesGenerator(InstantiationContext context, Config config) {
 		// No-op.

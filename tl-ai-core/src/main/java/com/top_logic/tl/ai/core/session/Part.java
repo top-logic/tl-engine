@@ -96,15 +96,15 @@ public sealed interface Part {
 		}
 
 		/** Transitions this call to {@link ToolCallStatus#COMPLETED}. */
-		public ToolCallPart completed(String result, Duration duration) {
+		public ToolCallPart completed(String output, Duration duration) {
 			return new ToolCallPart(id, timestamp, toolName, argsJson,
-				ToolCallStatus.COMPLETED, result, null, null, duration.toMillis());
+				ToolCallStatus.COMPLETED, output, null, null, duration.toMillis());
 		}
 
 		/** Transitions this call to {@link ToolCallStatus#FAILED}. */
-		public ToolCallPart failed(String errorMessage, Duration duration) {
+		public ToolCallPart failed(String error, Duration duration) {
 			return new ToolCallPart(id, timestamp, toolName, argsJson,
-				ToolCallStatus.FAILED, null, errorMessage, null, duration.toMillis());
+				ToolCallStatus.FAILED, null, error, null, duration.toMillis());
 		}
 	}
 
@@ -150,10 +150,10 @@ public sealed interface Part {
 		}
 
 		/** Records the user's approval decision. */
-		public ApprovalPart resolve(ApprovalDecision decision,
-				String userComment, Instant resolvedAt) {
+		public ApprovalPart resolve(ApprovalDecision choice,
+				String comment, Instant resolvedTime) {
 			return new ApprovalPart(id, timestamp, toolCallId, toolName,
-				argsJson, displayReason, decision, userComment, resolvedAt);
+				argsJson, displayReason, choice, comment, resolvedTime);
 		}
 	}
 
@@ -185,9 +185,9 @@ public sealed interface Part {
 		}
 
 		/** Records the user's response to this interaction. */
-		public InteractionPart resolve(String userResponse, Instant resolvedAt) {
+		public InteractionPart resolve(String answer, Instant resolvedTime) {
 			return new InteractionPart(id, timestamp, interactionType,
-				question, header, options, multiSelect, userResponse, resolvedAt);
+				question, header, options, multiSelect, answer, resolvedTime);
 		}
 	}
 
@@ -242,10 +242,10 @@ public sealed interface Part {
 		}
 
 		/** Records the delegation result after the child agent finishes. */
-		public DelegationPart completed(String resultSummary,
-				String childSessionId, long durationMs) {
+		public DelegationPart completed(String summary,
+				String sessionId, long elapsedMs) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
-				inputSummary, resultSummary, childParts, childSessionId, durationMs);
+				inputSummary, summary, childParts, sessionId, elapsedMs);
 		}
 	}
 

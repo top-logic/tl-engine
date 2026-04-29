@@ -14,16 +14,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import com.top_logic.tl.ai.core.tools.model.messages.AnnotationPropertyInfo;
-import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResult;
-import com.top_logic.tl.ai.core.tools.model.messages.ImplementationOption;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
@@ -35,7 +30,6 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.utility.InAppFilter;
 import com.top_logic.layout.form.model.utility.TargetTypeFilter;
-import com.top_logic.util.Resources;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
@@ -47,11 +41,16 @@ import com.top_logic.model.annotate.TLClassifierAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.config.TLModuleAnnotation;
 import com.top_logic.model.config.TLTypeAnnotation;
-import com.top_logic.util.model.ModelService;
-
+import com.top_logic.tl.ai.core.tools.model.messages.AnnotationPropertyInfo;
+import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResult;
+import com.top_logic.tl.ai.core.tools.model.messages.ImplementationOption;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.util.Resources;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tool for listing available annotation types for TopLogic model elements.
@@ -84,6 +83,7 @@ public class SearchAnnotationTool {
 	/**
 	 * Creates a new {@link SearchAnnotationTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public SearchAnnotationTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

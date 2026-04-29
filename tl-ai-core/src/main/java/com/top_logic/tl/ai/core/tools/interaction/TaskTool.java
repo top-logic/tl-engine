@@ -13,15 +13,13 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStore.AgentTask;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskListResponse;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskResponse;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskSummary;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.tools.task.TaskStore.AgentTask;
+import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -53,6 +51,7 @@ public class TaskTool {
 	/**
 	 * Creates a new {@link TaskTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public TaskTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

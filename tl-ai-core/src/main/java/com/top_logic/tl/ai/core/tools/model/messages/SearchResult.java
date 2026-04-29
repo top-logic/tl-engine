@@ -303,6 +303,7 @@ public class SearchResult extends de.haumacher.msgbuf.data.AbstractDataObject im
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {

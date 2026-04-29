@@ -24,5 +24,7 @@ public interface ProgressReporter {
 	void progress(String message);
 
 	/** No-op reporter that discards all messages. */
-	ProgressReporter NOOP = message -> {};
+	ProgressReporter NOOP = message -> {
+		/** empty noop */
+	};
 }

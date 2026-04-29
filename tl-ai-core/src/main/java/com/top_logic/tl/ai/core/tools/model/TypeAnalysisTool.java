@@ -12,16 +12,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-
-import com.top_logic.tl.ai.core.tools.model.messages.PartUsageResponse;
-import com.top_logic.tl.ai.core.tools.model.messages.PropertyUsage;
-import com.top_logic.tl.ai.core.tools.model.messages.ReferenceUsage;
-import com.top_logic.tl.ai.core.tools.model.messages.SubclassUsage;
-import com.top_logic.tl.ai.core.tools.model.messages.TypeUsageResponse;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -31,11 +24,16 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.model.ModelService;
-
+import com.top_logic.tl.ai.core.tools.model.messages.PartUsageResponse;
+import com.top_logic.tl.ai.core.tools.model.messages.PropertyUsage;
+import com.top_logic.tl.ai.core.tools.model.messages.ReferenceUsage;
+import com.top_logic.tl.ai.core.tools.model.messages.SubclassUsage;
+import com.top_logic.tl.ai.core.tools.model.messages.TypeUsageResponse;
+import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tool for analyzing TopLogic type dependencies and relationships.
@@ -68,6 +66,7 @@ public class TypeAnalysisTool {
 	/**
 	 * Creates a new {@link TypeAnalysisTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public TypeAnalysisTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools

@@ -31,6 +31,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.tools.ToolDispatcher;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -223,8 +224,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 
 		// Build tool registry if tools specified
-		com.top_logic.tl.ai.core.tools.ToolDispatcher toolRegistry =
-			new com.top_logic.tl.ai.core.tools.ToolDispatcher();
+		ToolDispatcher toolRegistry =
+			new ToolDispatcher();
 		if (tools != null && !tools.isEmpty()) {
 			ToolRegistryService serviceRegistry = ToolRegistryService.getInstance();
 			for (String toolName : tools) {

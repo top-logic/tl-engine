@@ -2,10 +2,3 @@ tmp/
 .DS_Store
 /.project
 /env.sh
-
-# Local docs (not part of the deliverable)
-/CLAUDE.md
-/COMPARISON_REPORT.md
-/doc/ARCHITECTURE-VISION.md
-/doc/PRD-agentic-framework.md
-/doc/REPORT-framework-comparison.md

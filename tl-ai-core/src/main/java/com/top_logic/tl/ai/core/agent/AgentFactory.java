@@ -16,18 +16,19 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.core.tools.ToolDispatcher;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
+import com.top_logic.tl.ai.tool.api.AnnotatedTools;
+import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -146,7 +147,7 @@ public class AgentFactory {
 
 		AgentParams coreConfig = buildConfig(agentObj);
 		LLMProvider provider = buildProvider(coreConfig.model());
-		com.top_logic.tl.ai.core.tools.ToolDispatcher registry = buildToolDispatcher(agentObj);
+		ToolDispatcher registry = buildToolDispatcher(agentObj);
 
 		int maxToolResultChars = resolveMaxToolResultChars(agentObj);
 
@@ -225,7 +226,7 @@ public class AgentFactory {
 
 		AgentParams config = buildConfig(agent);
 		LLMProvider provider = buildProvider(config.model());
-		com.top_logic.tl.ai.core.tools.ToolDispatcher registry = buildToolDispatcher(agent);
+		ToolDispatcher registry = buildToolDispatcher(agent);
 
 		int maxToolResultChars = resolveMaxToolResultChars(agent);
 
@@ -298,7 +299,7 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Builds a {@link com.top_logic.tl.ai.core.tools.ToolDispatcher} containing the tools assigned
+	 * Builds a {@link ToolDispatcher} containing the tools assigned
 	 * to the agent.
 	 *
 	 * <p>
@@ -306,9 +307,9 @@ public class AgentFactory {
 	 * {@link ToolRegistryService} and registers them in a core registry.
 	 * </p>
 	 */
-	com.top_logic.tl.ai.core.tools.ToolDispatcher buildToolDispatcher(Agent agent) {
-		com.top_logic.tl.ai.core.tools.ToolDispatcher registry =
-			new com.top_logic.tl.ai.core.tools.ToolDispatcher();
+	ToolDispatcher buildToolDispatcher(Agent agent) {
+		ToolDispatcher registry =
+			new ToolDispatcher();
 
 		Set<String> toolNames = agent.getTools();
 		if (toolNames != null && !toolNames.isEmpty()) {

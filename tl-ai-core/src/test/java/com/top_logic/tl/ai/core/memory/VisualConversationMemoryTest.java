@@ -11,12 +11,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -31,6 +31,7 @@ import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.tools.ToolDispatcher;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -295,7 +296,7 @@ public class VisualConversationMemoryTest extends TestCase {
 		};
 
 		// Tool registry with a read_file tool that returns sizable file contents
-		com.top_logic.tl.ai.core.tools.ToolDispatcher registry = new com.top_logic.tl.ai.core.tools.ToolDispatcher();
+		ToolDispatcher registry = new ToolDispatcher();
 		registry.register(new com.top_logic.tl.ai.tool.api.Tool() {
 			@Override public String name() { return "read_file"; }
 			@Override public String description() { return "Read a file's contents"; }

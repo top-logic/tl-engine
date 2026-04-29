@@ -30,7 +30,7 @@ public class SSEReader implements Closeable {
 
 	private final BufferedReader _reader;
 
-	/** */
+	/** Creates an {@link SSEReader}. */
 	public SSEReader(InputStream input) {
 		_reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
 	}

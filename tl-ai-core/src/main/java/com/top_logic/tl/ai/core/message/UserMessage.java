@@ -20,7 +20,7 @@ public record UserMessage(String id, Instant timestamp,
 		List<ContentPart> content) implements Message {
 
 	/**
-	 *
+	 * Creates a {@link UserMessage}.
 	 */
 	public UserMessage {
 		Objects.requireNonNull(id, "Id must not be null.");

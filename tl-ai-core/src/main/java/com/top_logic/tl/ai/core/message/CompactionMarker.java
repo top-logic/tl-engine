@@ -26,7 +26,7 @@ public record CompactionMarker(String id, Instant timestamp,
 		String trigger) implements Message {
 
 	/**
-	 * 
+	 * Creates a {@link CompactionMarker}.
 	 */
 	public CompactionMarker {
 		Objects.requireNonNull(id, "Id must not be null.");

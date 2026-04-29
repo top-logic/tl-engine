@@ -29,7 +29,7 @@ public record ToolResultMessage(String id, Instant timestamp,
 		ToolState state) implements Message {
 
 	/**
-	 *
+	 * Creates a {@link ToolResultMessage}.
 	 */
 	public ToolResultMessage {
 		Objects.requireNonNull(id, "Id must not be null.");

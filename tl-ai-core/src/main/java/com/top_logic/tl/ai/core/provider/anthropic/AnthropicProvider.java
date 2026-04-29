@@ -68,17 +68,17 @@ public class AnthropicProvider implements LLMProvider {
 
 	private final String _apiVersion;
 
-	/** */
+	/** Creates an {@link AnthropicProvider}. */
 	public AnthropicProvider(String apiKey) {
 		this(apiKey, DEFAULT_BASE_URL, DEFAULT_API_VERSION);
 	}
 
-	/** */
+	/** Creates an {@link AnthropicProvider}. */
 	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion) {
 		this(apiKey, baseUrl, apiVersion, defaultHttpClient());
 	}
 
-	/** */
+	/** Creates an {@link AnthropicProvider}. */
 	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion, HttpClient httpClient) {
 		_apiKey = apiKey;
 		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;

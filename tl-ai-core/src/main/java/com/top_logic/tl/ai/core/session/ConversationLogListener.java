@@ -67,7 +67,7 @@ public class ConversationLogListener implements AgentEventListener {
 	 */
 	private volatile AgentEventListener _parentListener;
 
-	/** */
+	/** Creates a {@link ConversationLogListener}. */
 	public ConversationLogListener(ConversationLog log) {
 		_log = log;
 	}

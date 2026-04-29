@@ -93,7 +93,7 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 
 	private final Map<String, McpClientConnection> _connections = new HashMap<>();
 
-	/** */
+	/** Creates a {@link McpServerRegistry}. */
 	public McpServerRegistry(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		_context = context;

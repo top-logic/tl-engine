@@ -19,7 +19,7 @@ public record SystemMessage(String id, Instant timestamp,
 		String content) implements Message {
 
 	/**
-	 *
+	 * Creates a {@link SystemMessage}.
 	 */
 	public SystemMessage {
 		Objects.requireNonNull(id, "Id must not be null.");

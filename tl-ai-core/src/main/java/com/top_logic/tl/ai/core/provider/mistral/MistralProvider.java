@@ -62,17 +62,17 @@ public class MistralProvider implements LLMProvider {
 
 	private final String _baseUrl;
 
-	/** */
+	/** Creates a {@link MistralProvider}. */
 	public MistralProvider(String apiKey) {
 		this(apiKey, DEFAULT_BASE_URL);
 	}
 
-	/** */
+	/** Creates a {@link MistralProvider}. */
 	public MistralProvider(String apiKey, String baseUrl) {
 		this(apiKey, baseUrl, defaultHttpClient());
 	}
 
-	/** */
+	/** Creates a {@link MistralProvider}. */
 	public MistralProvider(String apiKey, String baseUrl, HttpClient httpClient) {
 		_apiKey = apiKey;
 		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;

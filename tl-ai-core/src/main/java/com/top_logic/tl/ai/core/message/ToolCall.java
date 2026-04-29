@@ -23,7 +23,7 @@ import java.util.Objects;
 public record ToolCall(String id, String name, String arguments) implements ContentPart {
 
 	/**
-	 *
+	 * Creates a {@link ToolCall}.
 	 */
 	public ToolCall {
 		Objects.requireNonNull(id, "Tool call id must not be null.");

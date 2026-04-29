@@ -52,22 +52,22 @@ public class ProviderException extends Exception {
 
 	private final String _requestId;
 
-	/** */
+	/** Creates a {@link ProviderException}. */
 	public ProviderException(Kind kind, int statusCode, String message) {
 		this(kind, statusCode, message, null, null, null);
 	}
 
-	/** */
+	/** Creates a {@link ProviderException}. */
 	public ProviderException(Kind kind, int statusCode, String message, Throwable cause) {
 		this(kind, statusCode, message, null, null, cause);
 	}
 
-	/** */
+	/** Creates a {@link ProviderException}. */
 	public ProviderException(Kind kind, int statusCode, String message, Duration retryAfter, Throwable cause) {
 		this(kind, statusCode, message, retryAfter, null, cause);
 	}
 
-	/** */
+	/** Creates a {@link ProviderException}. */
 	public ProviderException(Kind kind, int statusCode, String message, Duration retryAfter,
 			String requestId, Throwable cause) {
 		super(message, cause);

@@ -40,7 +40,7 @@ public class TruncatingStrategy implements CompactionStrategy {
 
 	private final int _minPreserve;
 
-	/** */
+	/** Creates a {@link TruncatingStrategy}. */
 	public TruncatingStrategy() {
 		this(DEFAULT_MIN_PRESERVE);
 	}

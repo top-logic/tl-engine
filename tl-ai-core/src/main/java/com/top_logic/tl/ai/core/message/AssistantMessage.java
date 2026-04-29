@@ -26,7 +26,7 @@ public record AssistantMessage(String id, Instant timestamp,
 		String finishReason) implements Message {
 
 	/**
-	 * 
+	 * Creates an {@link AssistantMessage}.
 	 */
 	public AssistantMessage {
 		Objects.requireNonNull(id, "Id must not be null.");

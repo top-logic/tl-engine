@@ -29,12 +29,12 @@ public final class CompositeAgentEventListener implements AgentEventListener {
 
 	private final List<AgentEventListener> _delegates;
 
-	/** */
+	/** Creates a {@link CompositeAgentEventListener}. */
 	public CompositeAgentEventListener(List<AgentEventListener> delegates) {
 		_delegates = List.copyOf(delegates);
 	}
 
-	/** */
+	/** Creates a {@link CompositeAgentEventListener}. */
 	public CompositeAgentEventListener(AgentEventListener... delegates) {
 		_delegates = List.of(delegates);
 	}

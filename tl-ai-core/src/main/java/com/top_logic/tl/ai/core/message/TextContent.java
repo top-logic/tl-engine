@@ -17,7 +17,7 @@ import java.util.Objects;
 public record TextContent(String text) implements ContentPart {
 
 	/**
-	 *
+	 * Creates a {@link TextContent}.
 	 */
 	public TextContent {
 		Objects.requireNonNull(text, "Text must not be null.");

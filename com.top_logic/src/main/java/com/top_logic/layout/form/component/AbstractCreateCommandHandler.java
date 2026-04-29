@@ -22,7 +22,6 @@ import com.top_logic.layout.component.WithCloseDialog;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -140,8 +139,9 @@ public abstract class AbstractCreateCommandHandler extends AbstractFormCommandHa
 				Object newObject = createObject(component, model, formContext, arguments);
 
 				if (customMessage == null && tx.getState() == Transaction.STATE_OPEN) {
-					tx.setCommitMessage(
-						I18NConstants.CREATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(newObject)));
+					tx.setCommitMessage(CommitMessages.forObject(
+						I18NConstants.CREATED_TYPED__TYPE_MODEL,
+						I18NConstants.CREATED__MODEL, newObject));
 				}
 
 				commit(tx, model);

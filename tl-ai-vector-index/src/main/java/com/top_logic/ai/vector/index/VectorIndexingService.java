@@ -102,16 +102,14 @@ public class VectorIndexingService extends DefaultIndexingService {
 				continue;
 			}
 
-			ConcatenatedClosableIterator<TLObject> iterator =
+			try (ConcatenatedClosableIterator<TLObject> iterator =
 				AttributeOperations.allInstancesIterator(MetaElementUtil.getGlobalType(parts[0], parts[1]),
-					TLObject.class);
-
-			while (iterator.hasNext()) {
-				AttributedWrapper instance = (AttributedWrapper) iterator.next();
-				this.indexContent(new VectorIndexContentObject(instance.tHandle()));
+					TLObject.class)) {
+				while (iterator.hasNext()) {
+					AttributedWrapper instance = (AttributedWrapper) iterator.next();
+					this.indexContent(new VectorIndexContentObject(instance.tHandle()));
+				}
 			}
-
-			iterator.close();
 		}
 
 		Logger.info("Finished rebuilding search index", DefaultIndexingService.class);

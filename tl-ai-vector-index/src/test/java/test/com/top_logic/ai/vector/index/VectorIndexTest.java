@@ -12,7 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,8 +22,6 @@ import java.util.stream.Stream;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-
-import org.json.simple.JSONObject;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -61,8 +61,8 @@ public class VectorIndexTest extends BasicTestCase {
 	 * id; 2.4 Verify the index by search string; verify score; 2.5 Delete the instances; 2.6 Verify
 	 * points deletion in the vector store; 2.7 Clean - delete any remaining instances and models; */
 
-	private List<Pair<String, JSONObject>> loadTestFiles() {
-		List<Pair<String, JSONObject>> contents = new ArrayList<>();
+	private List<Pair<String, Map<String, Object>>> loadTestFiles() {
+		List<Pair<String, Map<String, Object>>> contents = new ArrayList<>();
 
 		Set<String> filenames =
 			Stream.of(new File(this.filesDir).listFiles())
@@ -72,13 +72,13 @@ public class VectorIndexTest extends BasicTestCase {
 
 		for (String filename : filenames) {
 			try {
-				JSONObject jo = new JSONObject();
+				Map<String, Object> payload = new HashMap<>();
 
 				String content = Files.readString(Paths.get(this.filesDir + "/" + filename), StandardCharsets.UTF_8);
 
-				jo.put("content", content);
+				payload.put("content", content);
 
-				contents.add(new Pair(filename, jo));
+				contents.add(new Pair<>(filename, payload));
 			} catch (IOException ex) {
 				// TODO Auto-generated catch block
 				ex.printStackTrace();
@@ -91,17 +91,18 @@ public class VectorIndexTest extends BasicTestCase {
 	 * Test indexing a text document
 	 */
 	public void testIndexText() {
-		List<Pair<String, JSONObject>> contentsToIndex = this.loadTestFiles();
+		List<Pair<String, Map<String, Object>>> contentsToIndex = this.loadTestFiles();
 
 		this.vectorIndex = VectorIndex.getInstance();
 
-		for (Pair<String, JSONObject> content : contentsToIndex) {
+		for (Pair<String, Map<String, Object>> content : contentsToIndex) {
 			this.vectorIndex.storeToVectorStore(
 				this.vectorIndex.getDocumentUUID(content.getFirst().toString()).toString(),
 				content.getSecond());
 		}
 	}
 
+	/** */
 	public void testSearchVectorStore() {
 		this.vectorIndex = VectorIndex.getInstance();
 

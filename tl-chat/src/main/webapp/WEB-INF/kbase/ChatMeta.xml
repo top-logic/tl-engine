@@ -19,5 +19,10 @@
 			db_type="clob"
 			mandatory="false"
 		/>
+		<mo_attribute att_name="metadata"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+		/>
 	</metaobject>
 </objectlist>

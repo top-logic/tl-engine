@@ -28,25 +28,26 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
-import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
+import com.top_logic.ai.chat.api.messages.PersistedConversationV2;
+import com.top_logic.ai.chat.api.messages.PersistedPart;
+import com.top_logic.ai.chat.api.messages.PersistedTurn;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
-import com.top_logic.ai.chat.background.ChatContextAdapter;
-import com.top_logic.ai.service.agents.background.BackgroundAgentExecutor;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.ai.chat.layout.ChatEntry;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
-import com.top_logic.ai.service.agents.background.input.ChatContextInput;
-import com.top_logic.ai.service.approval.UserInteractionStore;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.Part;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -70,6 +71,7 @@ public class ChatServlet extends HttpServlet {
 
 	private static final String PATH_SEND = "/send";
 	private static final String PATH_RESPOND = "/respond";
+	private static final String PATH_CANCEL = "/cancel";
 	private static final String PATH_APPROVAL_MODE = "/approval-mode";
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
@@ -83,16 +85,6 @@ public class ChatServlet extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
-
-		// Register chat-specific adapters with BackgroundAgentExecutor
-		BackgroundAgentExecutor.registerInputAdapterFactory(
-			ChatContextInput.class, cfg -> new ChatContextAdapter((ChatContextInput) cfg));
-	}
-
-	@Override
-	public void destroy() {
-		BackgroundAgentExecutor.unregisterInputAdapterFactory(ChatContextInput.class);
-		super.destroy();
 	}
 
 	@Override
@@ -108,6 +100,10 @@ public class ChatServlet extends HttpServlet {
 		}
 		if (pathInfo.equals(PATH_RESPOND) || pathInfo.equals(PATH_RESPOND + "/")) {
 			handleRespond(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_CANCEL) || pathInfo.equals(PATH_CANCEL + "/")) {
+			handleCancel(req, resp);
 			return;
 		}
 		if (pathInfo.equals(PATH_APPROVAL_MODE) || pathInfo.equals(PATH_APPROVAL_MODE + "/")) {
@@ -246,11 +242,15 @@ public class ChatServlet extends HttpServlet {
 
 		String requestId = null;
 		String response = null;
+		String toolName = null;
+		String comment = null;
 		try {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> parsed = (Map<String, Object>) com.top_logic.basic.json.JSON.fromString(jsonBody);
 			requestId = (String) parsed.get("requestId");
 			response = (String) parsed.get("response");
+			toolName = (String) parsed.get("toolName");
+			comment = (String) parsed.get("comment");
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
 			return;
@@ -274,7 +274,31 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 
-		store.resolve(requestId, response);
+		// Include rejection comment in the response string so the ApprovalCallback receives it
+		String resolvedResponse = response;
+		if ("REJECTED".equals(response) && comment != null && !comment.isEmpty()) {
+			resolvedResponse = "REJECTED:" + comment;
+		}
+		store.resolve(requestId, resolvedResponse);
+
+		// Record the approval decision in the conversation log
+		ConversationLogListener logListener = state.getLogListener();
+		if (logListener != null) {
+			if ("APPROVED_FOR_SESSION".equals(response)) {
+				logListener.resolveApproval(requestId,
+					Part.ApprovalDecision.APPROVED_FOR_SESSION, null);
+			} else if (resolvedResponse.startsWith("REJECTED")) {
+				logListener.resolveApproval(requestId,
+					Part.ApprovalDecision.DENIED, comment);
+			} else {
+				logListener.resolveApproval(requestId,
+					Part.ApprovalDecision.APPROVED, null);
+			}
+		}
+
+		if ("APPROVED_FOR_SESSION".equals(response) && toolName != null && !toolName.isEmpty()) {
+			tracker.addSessionApprovedTool(toolName);
+		}
 
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -300,9 +324,9 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 
-		com.top_logic.ai.service.approval.ApprovalMode approvalMode;
+		com.top_logic.tl.ai.core.agent.approval.ApprovalMode approvalMode;
 		try {
-			approvalMode = com.top_logic.ai.service.approval.ApprovalMode.valueOf(mode);
+			approvalMode = com.top_logic.tl.ai.core.agent.approval.ApprovalMode.valueOf(mode);
 		} catch (IllegalArgumentException e) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid mode: " + mode);
 			return;
@@ -316,10 +340,34 @@ public class ChatServlet extends HttpServlet {
 		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
 	}
 
+	private void handleCancel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
+		if (state == null) {
+			resp.setContentType(CONTENT_TYPE_JSON);
+			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+			resp.getWriter().write("{\"cancelled\":false}");
+			return;
+		}
+
+		// Record cancellation in the conversation log before interrupting
+		ConversationLogListener logListener = state.getLogListener();
+		if (logListener != null) {
+			logListener.recordCancellation();
+		}
+
+		Thread agentThread = state.getAgentThread();
+		if (agentThread != null) {
+			agentThread.interrupt();
+		}
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"cancelled\":true}");
+	}
+
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(true));
 
-		// Sync timeline events from ToolCallTracker to TaskProgressTracker before returning updates
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state != null) {
 			ChatProcessor.applyPollUpdates(state, tracker.getChat(), tracker);
@@ -399,30 +447,30 @@ public class ChatServlet extends HttpServlet {
 				.setId(sessionId)
 				.setTitle(ChatHistoryService.getTitle(session));
 
-			// Return serialized entries from the now-active Chat
+			// Return serialized messages from the now-active Chat
 			if (tracker != null) {
-				String entriesJson = DtoMapper.serializeEntries(tracker.getChat().getEntries());
-				response.setMessagesJson(entriesJson);
+				ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
+				response.setMessagesJson(ConversationLogSerializer.toJson(convLog));
 			} else {
 				response.setMessagesJson(ChatHistoryService.getMessagesJson(session));
 			}
 
-			// Also populate structured entries field
+			// Populate structured entries directly from persisted JSON (no domain round-trip).
+			// Going through deserialize→domain→re-serialize would lose fields like durationMs
+			// and totalUsage that only exist on the DTO, not on the domain objects.
 			String messagesJson = ChatHistoryService.getMessagesJson(session);
-			if (messagesJson != null) {
-				List<ChatEntry> entries = DtoMapper.deserializeEntries(messagesJson);
-				int msgIndex = 0;
-				for (ChatEntry entry : entries) {
-					PersistedChatEntry dto = PersistedChatEntry.create();
-					if (entry instanceof ChatEntry.MessageEntry me) {
-						dto.setType("message");
-						dto.setMessageData(DtoMapper.toMessageDto(me.message(), "m" + msgIndex));
-						msgIndex++;
-					} else if (entry instanceof ChatEntry.TaskSnapshotEntry tse) {
-						dto.setType("task_snapshot");
-						dto.setTaskData(DtoMapper.toCurrentTaskDto(tse.task()));
+			if (messagesJson != null && !messagesJson.isEmpty()) {
+				if (messagesJson.trim().startsWith("{")) {
+					PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
+						new de.haumacher.msgbuf.json.JsonReader(
+							new de.haumacher.msgbuf.io.StringR(messagesJson)));
+					for (PersistedTurn turn : conv.getTurns()) {
+						computeContentHtml(turn);
+						response.addTurn(turn);
 					}
-					response.addEntry(dto);
+				} else {
+					Logger.warn("Session " + sessionId + " has legacy chat format. V2-only response omits legacy entries.",
+						ChatServlet.class);
 				}
 			}
 
@@ -514,8 +562,7 @@ public class ChatServlet extends HttpServlet {
 			final String messagesJson = body.getMessagesJson();
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
 			if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
-				ChatHistoryService.saveMessages(session, messagesJson);
-				ChatHistoryService.touchLastUpdated(session);
+				ChatHistoryService.saveMessagesAndTouch(session, messagesJson);
 				resp.setStatus(HttpServletResponse.SC_OK);
 			} else {
 				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -607,13 +654,26 @@ public class ChatServlet extends HttpServlet {
 	}
 
 	private static String getObjectId(TLObject obj) {
-		return ((KnowledgeObject) obj.tHandle()).getObjectName().toExternalForm();
+		return obj.tHandle().getObjectName().toExternalForm();
 	}
 
 	private static String formatIso(Date date) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
+	}
+
+	/** Extracts text from assistant parts and sets server-rendered {@code contentHtml} on the turn. */
+	private static void computeContentHtml(PersistedTurn turn) {
+		StringBuilder text = new StringBuilder();
+		for (PersistedPart part : turn.getAssistantParts()) {
+			if ("text".equals(part.getType()) && part.getTextData() != null) {
+				text.append(part.getTextData().getText());
+			}
+		}
+		if (text.length() > 0) {
+			turn.setContentHtml(Converters.markdownToHtmlString(text.toString()));
+		}
 	}
 
 }

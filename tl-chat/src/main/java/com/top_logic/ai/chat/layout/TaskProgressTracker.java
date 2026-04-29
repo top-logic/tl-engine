@@ -5,46 +5,38 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-
-import dev.langchain4j.memory.ChatMemory;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
-import com.top_logic.ai.service.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.layout.WindowScope;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
- * Session-scoped storage for task progress tracking.
+ * Session-scoped storage for chat state and processing management.
  *
  * <p>
- * This tracker stores task progress information associated with a {@link WindowScope}, making it
- * persist across UI navigation within the same session. It implements an LRU eviction strategy to
- * prevent unbounded growth.
+ * This tracker stores session state associated with a {@link WindowScope}, making it
+ * persist across UI navigation within the same session.
  * </p>
  */
 public class TaskProgressTracker {
 
-	/** Maximum number of tasks to keep in memory. */
-	private static final int MAX_TASKS = 50;
-
 	/** Static storage keyed by WindowScope (weak references for automatic cleanup). */
 	private static final Map<WindowScope, TaskProgressTracker> TRACKERS = new WeakHashMap<>();
 
-	private final Object _lock = new Object();
+	private final ChatSessionManager _sessionManager;
 
-	private final LinkedList<ChatTask> _tasks = new LinkedList<>();
-
-	private final ChatSessionManager _sessionManager = new ChatSessionManager();
-
-	private final ConcurrentHashMap<String, AtomicBoolean> _backgroundAgentInProgress = new ConcurrentHashMap<>();
+	{
+		_sessionManager = new ChatSessionManager();
+		_sessionManager.setTracker(this);
+	}
 
 	/**
 	 * Active AI processing states keyed by task ID. Supports concurrent processing (e.g. when two
@@ -62,8 +54,14 @@ public class TaskProgressTracker {
 	/** Session-scoped approval mode. Persists across messages/processing states. */
 	private volatile ApprovalMode _approvalMode = ApprovalMode.MANUAL;
 
+	/** Tools approved for the current session. */
+	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
+
+	/** Cumulative token usage across all runs in this session. */
+	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
+
 	/**
-	 * Returns the chat for this window. Same instance for add and render so task traces persist.
+	 * Returns the chat for this window. Same instance for add and render so messages persist.
 	 */
 	public Chat getChat() {
 		return _sessionManager.getActiveChat();
@@ -178,35 +176,9 @@ public class TaskProgressTracker {
 		return _approvalMode;
 	}
 
-	/** Sets the session-scoped approval mode. Also updates all active processing stores. */
+	/** Sets the session-scoped approval mode. */
 	public void setApprovalMode(ApprovalMode mode) {
 		_approvalMode = mode;
-		for (AIProcessingState state : _processingStates.values()) {
-			var store = state.getUserInteractionStore();
-			if (store != null) {
-				store.setMode(mode);
-			}
-		}
-	}
-
-	/**
-	 * Attempts to start a background agent. Returns true if the agent was not already running.
-	 * Uses compare-and-set for thread-safe debouncing per agent.
-	 */
-	public boolean tryStartBackgroundAgent(String agentName) {
-		return _backgroundAgentInProgress
-			.computeIfAbsent(agentName, k -> new AtomicBoolean(false))
-			.compareAndSet(false, true);
-	}
-
-	/**
-	 * Marks a background agent as finished, allowing it to be triggered again.
-	 */
-	public void finishBackgroundAgent(String agentName) {
-		AtomicBoolean flag = _backgroundAgentInProgress.get(agentName);
-		if (flag != null) {
-			flag.set(false);
-		}
 	}
 
 	/**
@@ -228,6 +200,13 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * Returns the active session's {@link TaskStore}.
+	 */
+	public TaskStore getActiveTaskStore() {
+		return _sessionManager.getActiveTaskStore();
+	}
+
+	/**
 	 * Returns the session manager for this tracker.
 	 */
 	public ChatSessionManager getSessionManager() {
@@ -236,19 +215,11 @@ public class TaskProgressTracker {
 
 	/**
 	 * Returns the conversation memory for this session, creating it on first access. The memory
-	 * keeps the last 20 messages (user + assistant turns) so the orchestrator can follow multi-turn
-	 * conversations.
+	 * uses a {@link com.top_logic.tl.ai.core.memory.TruncatingStrategy} to keep conversation
+	 * context within the configured token budget.
 	 */
-	public ChatMemory getChatMemory() {
-		return _sessionManager.getActiveChatMemory();
-	}
-
-	/**
-	 * Returns the session-scoped sub-agent memory map. Sub-agents retain conversation context
-	 * across multiple delegations within the same session via this map.
-	 */
-	public Map<String, ChatMemory> getSubAgentMemories() {
-		return _sessionManager.getActiveSubAgentMemories();
+	public ConversationMemory getConversationMemory() {
+		return _sessionManager.getActiveConversationMemory();
 	}
 
 	/**
@@ -269,137 +240,44 @@ public class TaskProgressTracker {
 		}
 	}
 
-	/**
-	 * Starts a new task with the given description.
-	 *
-	 * @param description
-	 *        The task description.
-	 * @return The unique task ID.
-	 */
-	public String startTask(String description) {
-		ChatTask task = new ChatTask(description);
-		ChatTask startedTask = task.toBuilder()
-			.withStatus(ChatTask.TaskStatus.IN_PROGRESS)
-			.build();
+	/** Adds a tool to the session-approved set. */
+	public void addSessionApprovedTool(String toolName) {
+		_sessionApprovedTools.add(toolName);
+	}
 
-		synchronized (_lock) {
-			_tasks.addFirst(startedTask);
-			enforceMaxSize();
-		}
+	/** Returns the set of session-approved tool names. */
+	public Set<String> getSessionApprovedTools() {
+		return Set.copyOf(_sessionApprovedTools);
+	}
 
-		return startedTask.getId();
+	/** Loads session-approved tools (e.g., from persisted metadata). */
+	public void loadSessionApprovedTools(Set<String> tools) {
+		_sessionApprovedTools.clear();
+		_sessionApprovedTools.addAll(tools);
+	}
+
+	/** Adds token usage from a completed run. */
+	public void addTokenUsage(TokenUsage usage) {
+		_cumulativeUsage = _cumulativeUsage.add(usage);
+	}
+
+	/** Returns cumulative token usage. */
+	public TokenUsage getCumulativeUsage() {
+		return _cumulativeUsage;
+	}
+
+	/** Resets session-specific state (approvals and tokens). */
+	public void resetSessionState() {
+		_sessionApprovedTools.clear();
+		_cumulativeUsage = TokenUsage.EMPTY;
 	}
 
 	/**
-	 * Updates an existing task using the provided updater function.
+	 * Generates a unique task ID for tracking a processing request.
 	 *
-	 * @param taskId
-	 *        The task ID to update.
-	 * @param updater
-	 *        Consumer that modifies the task builder.
+	 * @return A unique task ID.
 	 */
-	public void updateTask(String taskId, Consumer<ChatTask.Builder> updater) {
-		synchronized (_lock) {
-			for (int i = 0; i < _tasks.size(); i++) {
-				ChatTask task = _tasks.get(i);
-				if (task.getId().equals(taskId)) {
-					ChatTask.Builder builder = task.toBuilder();
-					updater.accept(builder);
-					_tasks.set(i, builder.build());
-					break;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Adds a tool call to the specified task.
-	 *
-	 * @param taskId
-	 *        The task ID to add the tool call to.
-	 * @param toolCall
-	 *        The tool call to add.
-	 */
-	public void addToolCall(String taskId, ChatToolCall toolCall) {
-		updateTask(taskId, builder -> builder.addToolCall(toolCall));
-	}
-
-	/**
-	 * Adds a timeline event (tool call or agent call) to the specified task.
-	 *
-	 * @param taskId
-	 *        The task ID to add the event to.
-	 * @param event
-	 *        The timeline event to add.
-	 */
-	public void addTimelineEvent(String taskId, ChatTimelineEvent event) {
-		updateTask(taskId, builder -> builder.addTimelineEvent(event));
-	}
-
-	/**
-	 * Marks a task as completed successfully.
-	 *
-	 * @param taskId
-	 *        The task ID to complete.
-	 */
-	public void completeTask(String taskId) {
-		updateTask(taskId, builder -> {
-			builder.withStatus(ChatTask.TaskStatus.COMPLETED);
-			builder.withEndTime(Instant.now());
-		});
-	}
-
-	/**
-	 * Marks a task as failed with an error message.
-	 *
-	 * @param taskId
-	 *        The task ID to fail.
-	 * @param error
-	 *        The error message.
-	 */
-	public void failTask(String taskId, String error) {
-		updateTask(taskId, builder -> {
-			builder.withStatus(ChatTask.TaskStatus.ERROR);
-			builder.withError(error);
-			builder.withEndTime(Instant.now());
-		});
-	}
-
-	/**
-	 * Returns a task by ID, or null if not found.
-	 *
-	 * @param taskId
-	 *        The task ID.
-	 * @return The task, or null.
-	 */
-	public ChatTask getTask(String taskId) {
-		synchronized (_lock) {
-			for (ChatTask task : _tasks) {
-				if (task.getId().equals(taskId)) {
-					return task;
-				}
-			}
-			return null;
-		}
-	}
-
-	/**
-	 * Returns a copy of all tasks for rendering.
-	 *
-	 * @return Unmodifiable list of all tasks (most recent first).
-	 */
-	public List<ChatTask> getAllTasks() {
-		synchronized (_lock) {
-			return new ArrayList<>(_tasks);
-		}
-	}
-
-	/**
-	 * Enforces the maximum task limit by removing oldest tasks.
-	 */
-	private void enforceMaxSize() {
-		while (_tasks.size() > MAX_TASKS) {
-			_tasks.removeLast();
-		}
+	public String generateTaskId() {
+		return UUID.randomUUID().toString();
 	}
 }

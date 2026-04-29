@@ -14,9 +14,10 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
-import dev.langchain4j.agent.tool.P;
-import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 
@@ -30,7 +31,7 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
  * </p>
  *
  * <p>
- * The tool is registered in the {@code ToolRegistry} but is not assigned to any agent by default.
+ * The tool is registered in the {@code ToolRegistryService} but is not assigned to any agent by default.
  * </p>
  */
 public class VectorIndexSearchTool {
@@ -52,6 +53,7 @@ public class VectorIndexSearchTool {
 	/**
 	 * Creates a new {@link VectorIndexSearchTool} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public VectorIndexSearchTool(InstantiationContext context, Config config) {
 		// no-op for stateless tools
@@ -74,10 +76,14 @@ public class VectorIndexSearchTool {
 	 * @return JSON string containing an array of matching documents with their similarity scores and
 	 *         text content.
 	 */
-	@Tool("Search the vector index for documents semantically similar to the given query. Returns ranked results; optionally limit the number of results via maxResults (default: 10).")
+	@ToolMethod(
+		description = "Search the vector index for documents semantically similar to the given query. "
+			+ "Returns ranked results; optionally limit the number of results via maxResults (default: 10).",
+		mode = ToolMode.READ)
 	public String searchVectorIndex(
 			@P("Natural language search query") String query,
-			@P("Optional: maximum number of results to return (default: 10, must be > 0)") Integer maxResults) {
+			@P(value = "Optional: maximum number of results to return (default: 10, must be > 0)",
+				required = false) Integer maxResults) {
 
 		if (query == null || query.trim().isEmpty()) {
 			return errorJson("Search query must not be empty.");

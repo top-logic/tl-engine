@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
+				default-model=""
+			>
+				<providers>
+					<provider name="openai"
+						api-key="%OPENAI_API_KEY%"
+						base-url="https://api.openai.com/v1"
+						models=""
+					/>
+					<provider name="anthropic"
+						api-key="%ANTHROPIC_API_KEY%"
+						base-url="https://api.anthropic.com/v1"
+						models=""
+					/>
+					<provider name="mistral"
+						api-key="%MISTRAL_API_KEY%"
+						base-url="https://api.mistral.ai/v1"
+						models=""
+					/>
+					<provider name="xai"
+						api-key="%XAI_API_KEY%"
+						base-url="https://api.x.ai/v1"
+						models=""
+					/>
+				</providers>
+			</instance>
+		</config>
+	</services>
+</application>

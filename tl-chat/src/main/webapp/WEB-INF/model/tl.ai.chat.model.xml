@@ -25,6 +25,9 @@
 					<property name="lastUpdated"
 						type="tl.core:DateTime"
 					/>
+					<property name="metadata"
+						type="tl.core:Text"
+					/>
 				</attributes>
 			</class>
 		</types>

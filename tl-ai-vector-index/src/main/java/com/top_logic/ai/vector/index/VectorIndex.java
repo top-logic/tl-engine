@@ -23,7 +23,6 @@ import org.json.simple.JSONObject;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Maybe;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -172,8 +171,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 	private static final String META_TL_TYPE_KEY = "TopLogic-type";
 
-	private static final boolean DEBUG = Logger.isDebugEnabled(VectorIndex.class);
-
 	/** The name of the KO field in a Lucene document */
 	public static final String FIELD_KO_ID = "id";
 
@@ -195,8 +192,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	/** Maximum time to delete a Document before it will be logged */
 	static final int DELETE_MILLIS = 1000; // one Second
 
-	private static final int DEFAULT_MAX_FILED_LENGTH_VALUE = 10000;
-
 	/** The index adding thread responsible for indexing/deleting documents */
 	private VectorThread myThread;
 
@@ -214,8 +209,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	private final Integer vectorStorePort;
 
 	private final String qdrantDbCollectionName;
-
-	private final String localStorePath;
 
 	private final String mistralApiKey;
 
@@ -243,7 +236,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * Protected constructor for singleton pattern. Initialization with a given index location. Creates
 	 * the Vector index in case it does not exist yet.
 	 */
-	public VectorIndex(InstantiationContext context, VectorIndexingConfig config) throws ConfigurationException {
+	public VectorIndex(InstantiationContext context, VectorIndexingConfig config) {
 		super(context, config);
 		this.config = config;
 
@@ -252,7 +245,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		this.vectorStorePort = config.getVectorStorePort();
 		// Only accessed in buildQdrantStore
 		this.qdrantDbCollectionName = config.getQdrantDbCollectionName();
-		this.localStorePath = config.getLocalStorePath();
 		this.mistralApiKey = config.getMistralApiKey();
 		this.mistralEmbedModel = config.getMistralEmbedModel();
 		this.vectorIndexModels = Stream.of(config.getVectorIndexModels().split(",")).map(String::trim)
@@ -285,16 +277,14 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * 
 	 * @param storeType
 	 *                  Type of vector store ("qdrant" or "jvector")
-	 * @param config
-	 *                  Configuration containing connection parameters
 	 * @return Configured EmbeddingStore instance
 	 */
-	private EmbeddingStore<TextSegment> buildVectorStore(String storeType, VectorIndexingConfig config) {
+	private EmbeddingStore<TextSegment> buildVectorStore(String storeType, VectorIndexingConfig indexingConfig) {
 		switch (storeType.toLowerCase()) {
 			case "qdrant":
-				return buildQdrantStore(config);
+				return buildQdrantStore(indexingConfig);
 			case "jvector":
-				return buildJVectorStore(config);
+				return buildJVectorStore(indexingConfig);
 			default:
 				throw new IllegalArgumentException("Unsupported vector store type: " + storeType
 					+ ". Supported types: qdrant, jvector");
@@ -304,20 +294,19 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	/**
 	 * Creates a Qdrant embedding store with configured connection parameters.
 	 */
-	private QdrantEmbeddingStore buildQdrantStore(VectorIndexingConfig config) {
-		Logger.info("Creating Qdrant embedding store at " + config.getVectorStoreHost() + ":"
-			+ config.getVectorStorePort(), VectorIndex.class);
+	private QdrantEmbeddingStore buildQdrantStore(VectorIndexingConfig indexingConfig) {
+		Logger.info("Creating Qdrant embedding store at " + indexingConfig.getVectorStoreHost() + ":"
+			+ indexingConfig.getVectorStorePort(), VectorIndex.class);
 
-		String collectionName = config.getQdrantDbCollectionName();
+		String collectionName = indexingConfig.getQdrantDbCollectionName();
 
-		try {
+		try (QdrantClient client = new QdrantClient(
+			QdrantGrpcClient.newBuilder(
+				indexingConfig.getVectorStoreHost(),
+				indexingConfig.getVectorStorePort(),
+				false).build() // No secure connection for local dev
+		)) {
 			// Check if collection exists and create if needed utilizing the Qdrant Client
-			QdrantClient client = new QdrantClient(
-				QdrantGrpcClient.newBuilder(
-					config.getVectorStoreHost(),
-					config.getVectorStorePort(),
-					false).build() // No secure connection for local dev
-			);
 
 			boolean exists = false;
 			try {
@@ -343,15 +332,14 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 					.get();
 			}
 
-			client.close();
 		} catch (Exception e) {
 			Logger.error("Failed to ensure Qdrant collection exists: " + e.getMessage(), e, VectorIndex.class);
 			// We proceed, maybe the Store builder handles it or it exists and check failed
 		}
 
 		return QdrantEmbeddingStore.builder()
-			.host(config.getVectorStoreHost())
-			.port(config.getVectorStorePort())
+			.host(indexingConfig.getVectorStoreHost())
+			.port(indexingConfig.getVectorStorePort())
 			.collectionName(collectionName)
 			.build();
 	}
@@ -359,15 +347,15 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	/**
 	 * Creates a JVector embedding store with local file persistence.
 	 */
-	private JVectorEmbeddingStore buildJVectorStore(VectorIndexingConfig config) {
-		Logger.info("Creating JVector embedding store at path: " + config.getLocalStorePath(),
+	private JVectorEmbeddingStore buildJVectorStore(VectorIndexingConfig indexingConfig) {
+		Logger.info("Creating JVector embedding store at path: " + indexingConfig.getLocalStorePath(),
 			VectorIndex.class);
 
 		// Ensure directory exists
 		try {
-			java.nio.file.Files.createDirectories(java.nio.file.Paths.get(config.getLocalStorePath()));
+			java.nio.file.Files.createDirectories(java.nio.file.Paths.get(indexingConfig.getLocalStorePath()));
 		} catch (Exception e) {
-			throw new RuntimeException("Could not create local store directory: " + config.getLocalStorePath(), e);
+			throw new RuntimeException("Could not create local store directory: " + indexingConfig.getLocalStorePath(), e);
 		}
 
 		// Use dynamic dimension
@@ -382,7 +370,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		return JVectorEmbeddingStore.builder()
 			.dimension(dimension)
-			.persistencePath(config.getLocalStorePath())
+			.persistencePath(indexingConfig.getLocalStorePath())
 			.build();
 	}
 
@@ -450,6 +438,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		return this.vectorIndexModels;
 	}
 
+	@SuppressWarnings("unused")
 	void init(InstantiationContext context) {
 		Logger.info("Initiating VectorIndex", VectorIndex.class);
 
@@ -536,6 +525,9 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	}
 
 	private boolean containsDocument(ObjectKey key) {
+		if (key == null) {
+			return false;
+		}
 		boolean result = false;
 		return result;
 	}
@@ -613,8 +605,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			description = "";
 		}
 
-		JSONObject jo = new JSONObject();
-		JSONObject joContent = new JSONObject();
+		Map<String, Object> payload = new HashMap<>();
+		Map<String, Object> contentPayload = new HashMap<>();
 
 		FlexData fd = aDoc.getFlexDataManager().load(aDoc.getKnowledgeBase(), aDoc.tId(), true);
 
@@ -624,11 +616,11 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 				indexKey = "internalId";
 			}
 			Object val = fd.getAttributeValue(key);
-			joContent.put(indexKey, val == null ? null : val.toString());
+			contentPayload.put(indexKey, val == null ? null : val.toString());
 		}
-//		joContent.put("objectKey", aDoc.tId().asString());
-		joContent.put("_text", content);
-		content = joContent.toJSONString();
+//		contentPayload.put("objectKey", aDoc.tId().asString());
+		contentPayload.put("_text", content);
+		content = JSONObject.toJSONString(contentPayload);
 
 
 		HashMap<String, ArrayList<String>> associations = new HashMap<>();
@@ -686,7 +678,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 
 		}
 
-		Map plMap = Map.of(
+		Map<String, Object> plMap = Map.of(
 			"objectId", documentId,
 			"id", this.getDocumentUUID(documentId).toString(),
 			// "internalId", value(payload.get(associationKeyName)),
@@ -694,20 +686,20 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			META_TL_TYPE_KEY, aDoc.getWrapper().tType().toString(),
 			"TLObject-creation-date", aDoc.getWrapper().tCreationDate().toString(),
 			"TLObject-modification-date", aDoc.getWrapper().tLastModificationDate().toString(),
-			"content", joContent);
+			"content", contentPayload);
 
-		jo.putAll(plMap);
+		payload.putAll(plMap);
 
-		Object internalId = joContent.get("internalId");
+		Object internalId = contentPayload.get("internalId");
 		if (internalId != null) {
 			// payload.put("internalId", internalId);
-			jo.put("internalId", internalId.toString());
+			payload.put("internalId", internalId.toString());
 		}
 
 		// payload.putAll(associationsHashMap);
-		jo.putAll(associationsHashMap);
+		payload.putAll(associationsHashMap);
 
-		this.storeToVectorStore(documentId, jo);
+		this.storeToVectorStore(documentId, payload);
 	}
 
 	/**
@@ -745,9 +737,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 	 * @param payload
 	 *                   Document payload as JSON
 	 */
-	public void storeToVectorStore(String documentId, JSONObject payload) {
-		String pl = payload.toJSONString();
-		String uuid = this.getDocumentUUID(documentId).toString();
+	public void storeToVectorStore(String documentId, Map<String, Object> payload) {
+		String pl = JSONObject.toJSONString(payload);
 
 		TextSegment content;
 

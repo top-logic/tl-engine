@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl-ai-core.app-messages" />
+					<bundle name="model.tl.ai.core.messages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-ai-core" />
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<!-- LLM Provider Registry for AI provider connections -->
+					<module key="com.top_logic.tl.ai.core.provider.LLMProviderRegistry$Module" value="true"/>
+					<!-- MCP Server Registry for external MCP connections -->
+					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+				<tool-factories>
+					<!-- TLScript Reference Tool - provides function listing and documentation -->
+					<factory name="script-doc">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.script.TLScriptReferenceTool"
+						/>
+					</factory>
+					<factory name="script-exec">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.script.TLScriptTool"
+						/>
+					</factory>
+					<factory name="model-annotation-definitions">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.AnnotationDefinitionExplorerTool"
+						/>
+					</factory>
+					<factory name="model-instances">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool"
+						/>
+					</factory>
+					<factory name="model-annotation-browser">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelAnnotationBrowserTool"
+						/>
+					</factory>
+					<factory name="model-annotation-editor">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelAnnotationEditorTool"
+						/>
+					</factory>
+					<factory name="annotation-search">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.SearchAnnotationTool"
+						/>
+					</factory>
+					<factory name="model-browser">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelBrowserTool"
+						/>
+					</factory>
+					<factory name="model-search">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelSearchTool"
+						/>
+					</factory>
+					<factory name="model-analysis">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.TypeAnalysisTool"
+						/>
+					</factory>
+					<factory name="config-schema">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.config.ConfigSchemaTool"
+						/>
+					</factory>
+					<factory name="layout-templates">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.config.LayoutTemplateTool"
+						/>
+					</factory>
+					<factory name="model-modification">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelEditorTool"
+						/>
+					</factory>
+					<factory name="task">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.interaction.TaskTool"
+						/>
+					</factory>
+					<factory name="user-interaction">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"
+						/>
+					</factory>
+					<factory name="gitea">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"
+						/>
+					</factory>
+				</tool-factories>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl-ai-coreMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

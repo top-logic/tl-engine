@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core</artifactId>
-    <version>0.0.3-AI</version>
+    <version>8.0.0-alpha3</version>
     <relativePath/>
   </parent>
 
@@ -51,6 +51,11 @@
       <artifactId>tl-search-base</artifactId>
     </dependency>
 	<dependency>
+	  <groupId>com.top-logic</groupId>
+	  <artifactId>tl-ai-tool-api</artifactId>
+	  <version>${project.version}</version>
+	</dependency>
+	<dependency>
 	  <groupId>io.qdrant</groupId>
 	  <artifactId>client</artifactId>
 	  <version>1.16.0</version>
@@ -72,7 +77,7 @@
 	<dependency>
 	    <groupId>com.fasterxml.jackson.core</groupId>
 	    <artifactId>jackson-databind</artifactId>
-	    <version>${jackson.version}</version>
+	    
 	</dependency>
 	
 	<!-- LangChain4j Mistral integration -->

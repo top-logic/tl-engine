@@ -5,7 +5,8 @@
 	<parent>
 		<groupId>com.top-logic</groupId>	
 		<artifactId>tl-parent-core</artifactId>
-		<version>0.0.3-AI</version>
+		<version>8.0.0-alpha3</version>
+		<relativePath/>
 	</parent>
 	
 	<artifactId>tl-chat</artifactId>
@@ -26,7 +27,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-ai-service</artifactId>
+			<artifactId>tl-ai-core</artifactId>
 			<version>${tl.version}</version>
 		</dependency>
 		<!-- Tests -->

@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.vector.index;
 
-import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -62,21 +61,12 @@ public class VectorIndexUtils {
 	 * @return true if the given document is known in the Vector index.
 	 */
 	static boolean containsDocument(ObjectKey key) {
-		String theKOId = getObjectName(key);
-
+		// TODO tl-ai-vector-index: Implement proper existence check in the active vector store.
+		// TODO tl-ai-vector-index: Check which key normalization is required (e.g. object name vs. full key).
+		// Intentionally returns false for now to keep behavior explicit until implemented.
 		return false;
 	}
 
-
-	private static String getObjectName(ObjectKey key) {
-		try {
-			return IdentifierUtil.toExternalForm(key.getObjectName());
-		}
-		catch (Throwable exception) {
-			throw new ContentRetrievalFailedException("Trying to get the object name from the key failed.", exception);
-		}
-	}
-	
 	/**
 	 * Forces the current {@link Thread} to sleep the given milliseconds.
 	 */

@@ -13,10 +13,12 @@ package com.top_logic.ai.vector.index;
  */
 public class ContentRetrievalFailedException extends RuntimeException {
 	
+	/** Creates a {@link ContentRetrievalFailedException}. */
 	public ContentRetrievalFailedException(String message) {
 		super(message);
 	}
-	
+
+	/** Creates a {@link ContentRetrievalFailedException}. */
 	public ContentRetrievalFailedException(String message, Throwable cause) {
 		super(message, cause);
 	}

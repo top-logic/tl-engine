@@ -12,7 +12,6 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
@@ -24,8 +23,8 @@ import com.top_logic.ai.mcp.server.resources.ModuleTypesResource;
 import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.resources.TypePartsResource;
 import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
-import com.top_logic.ai.mcp.server.tools.LangChain4jToolAdapter;
-import com.top_logic.ai.service.tools.registry.ToolRegistry;
+import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -39,7 +38,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
 
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
@@ -71,7 +70,7 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
  */
 @ServiceDependencies({
 	ServletContextService.Module.class,
-	ToolRegistry.Module.class
+	ToolRegistryService.Module.class
 })
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
 
@@ -207,7 +206,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			// Note: A statically registered servlet (MCPTransportServlet) delegates requests
 			// to this transport provider, so no dynamic servlet registration is needed.
 			_transportProvider = HttpServletStreamableServerTransportProvider.builder()
-				.jsonMapper(new JacksonMcpJsonMapper(new ObjectMapper()))
+				.jsonMapper(McpJsonDefaults.getMapper())
 				.mcpEndpoint(MCP_ENDPOINT)
 				.keepAliveInterval(Duration.ofSeconds(config.getKeepAliveInterval()))
 				.build();
@@ -258,8 +257,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * </ul>
 	 *
 	 * <p>
-	 * All tools are provided by the {@link LangChain4jToolAdapter} which adapts tools from the
-	 * {@link ToolRegistry} to MCP tool specifications.
+	 * All tools are provided by the {@link McpToolAdapter} which adapts tools from the
+	 * {@link ToolRegistryService} to MCP tool specifications.
 	 * </p>
 	 *
 	 * <p>
@@ -303,9 +302,9 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			builder.resourceTemplates(resource.createSpecification());
 		}
 
-		// Register langchain4j tools from ToolRegistry (if available)
+		// Register tools from ToolRegistryService (if available)
 		for (io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification adaptedTool :
-				LangChain4jToolAdapter.adaptAllTools()) {
+				McpToolAdapter.adaptAllTools()) {
 			builder.tools(adaptedTool);
 		}
 	}

@@ -45,6 +45,12 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getResultSummary() */
 	public static final String RESULT_SUMMARY__PROP = "resultSummary";
 
+	/** @see #getDurationMs() */
+	public static final String DURATION_MS__PROP = "durationMs";
+
+	/** @see #getStatus() */
+	public static final String STATUS__PROP = "status";
+
 	private String _id = "";
 
 	private String _type = "";
@@ -64,6 +70,10 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 	private String _inputSummary = "";
 
 	private String _resultSummary = "";
+
+	private long _durationMs = 0L;
+
+	private String _status = "";
 
 	/**
 	 * Creates a {@link TimelineEventDto} instance.
@@ -274,6 +284,46 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_resultSummary = value;
 	}
 
+	/**
+	 * Duration in milliseconds (for tool_call events).
+	 */
+	public final long getDurationMs() {
+		return _durationMs;
+	}
+
+	/**
+	 * @see #getDurationMs()
+	 */
+	public com.top_logic.ai.chat.api.messages.TimelineEventDto setDurationMs(long value) {
+		internalSetDurationMs(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDurationMs()} without chain call utility. */
+	protected final void internalSetDurationMs(long value) {
+		_durationMs = value;
+	}
+
+	/**
+	 * Tool call status: "success" or "error" (for tool_call events).
+	 */
+	public final String getStatus() {
+		return _status;
+	}
+
+	/**
+	 * @see #getStatus()
+	 */
+	public com.top_logic.ai.chat.api.messages.TimelineEventDto setStatus(String value) {
+		internalSetStatus(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStatus()} without chain call utility. */
+	protected final void internalSetStatus(String value) {
+		_status = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return TIMELINE_EVENT_DTO__TYPE;
@@ -291,7 +341,9 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 			FROM_AGENT__PROP, 
 			TO_AGENT__PROP, 
 			INPUT_SUMMARY__PROP, 
-			RESULT_SUMMARY__PROP);
+			RESULT_SUMMARY__PROP, 
+			DURATION_MS__PROP, 
+			STATUS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -326,6 +378,8 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TO_AGENT__PROP: return getToAgent();
 			case INPUT_SUMMARY__PROP: return getInputSummary();
 			case RESULT_SUMMARY__PROP: return getResultSummary();
+			case DURATION_MS__PROP: return getDurationMs();
+			case STATUS__PROP: return getStatus();
 			default: return null;
 		}
 	}
@@ -343,6 +397,8 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TO_AGENT__PROP: internalSetToAgent((String) value); break;
 			case INPUT_SUMMARY__PROP: internalSetInputSummary((String) value); break;
 			case RESULT_SUMMARY__PROP: internalSetResultSummary((String) value); break;
+			case DURATION_MS__PROP: internalSetDurationMs((long) value); break;
+			case STATUS__PROP: internalSetStatus((String) value); break;
 		}
 	}
 
@@ -381,6 +437,10 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 		out.value(getInputSummary());
 		out.name(RESULT_SUMMARY__PROP);
 		out.value(getResultSummary());
+		out.name(DURATION_MS__PROP);
+		out.value(getDurationMs());
+		out.name(STATUS__PROP);
+		out.value(getStatus());
 	}
 
 	@Override
@@ -396,6 +456,8 @@ public class TimelineEventDto extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TO_AGENT__PROP: setToAgent(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case INPUT_SUMMARY__PROP: setInputSummary(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case RESULT_SUMMARY__PROP: setResultSummary(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case DURATION_MS__PROP: setDurationMs(in.nextLong()); break;
+			case STATUS__PROP: setStatus(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

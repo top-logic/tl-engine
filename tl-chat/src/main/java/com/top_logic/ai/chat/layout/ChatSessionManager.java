@@ -6,27 +6,30 @@
 package com.top_logic.ai.chat.layout;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
-
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import com.top_logic.tl.ai.core.memory.CompactionStrategy;
+import com.top_logic.tl.ai.core.memory.ConversationMemory;
+import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
+import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
+import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
 
 /**
- * Manages per-session in-memory state ({@link Chat} + {@link ChatMemory}) with LRU caching.
+ * Manages per-session in-memory state ({@link Chat} + {@link ConversationMemory}) with LRU caching.
  *
  * <p>
- * Each chat session gets its own {@link Chat} (message container) and {@link ChatMemory}
- * (<code>LangChain4j</code> conversation context). When the user switches sessions, this manager persists the
- * current session, loads the target session from the database (or LRU cache), and rebuilds the AI's
+ * Each chat session gets its own {@link Chat} (message container) and {@link ConversationMemory}
+ * (conversation context). When the user switches sessions, this manager persists the current
+ * session, loads the target session from the database (or LRU cache), and rebuilds the AI's
  * conversation memory from the persisted messages.
  * </p>
  */
@@ -35,10 +38,21 @@ public class ChatSessionManager {
 	/** Maximum number of sessions to keep in the in-memory LRU cache. */
 	private static final int MAX_CACHED_SESSIONS = 5;
 
-	/** Maximum messages in LangChain4j ChatMemory (sliding window). */
-	private static final int CHAT_MEMORY_MAX_MESSAGES = 20;
+	/**
+	 * Default context window budget for chat session memory. This is a generous default that allows
+	 * the compaction strategy to keep enough context for multi-turn conversations. The
+	 * actual model context window is enforced by the agent loop; this budget only controls how many
+	 * messages the session memory retains.
+	 */
+	private static final int DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000;
+
+	/** Maximum output tokens for conversation summarization. */
+	private static final int SUMMARIZATION_MAX_OUTPUT_TOKENS = 2048;
 
 	private final Object _lock = new Object();
+
+	/** Back-reference to the owning tracker for metadata serialization. */
+	private volatile TaskProgressTracker _tracker;
 
 	/** LRU cache of per-session state, bounded to {@link #MAX_CACHED_SESSIONS}. */
 	private final Map<String, SessionState> _sessions = new LinkedHashMap<>(16, 0.75f, true) {
@@ -52,24 +66,30 @@ public class ChatSessionManager {
 	private volatile String _activeSessionId;
 
 	/**
-	 * Per-session in-memory state: the chat entries and the AI's conversation memory.
+	 * Per-session in-memory state: the chat messages and the AI's conversation memory.
 	 */
 	static class SessionState {
 		final Chat _chat;
 
-		ChatMemory _chatMemory;
+		ConversationMemory _conversationMemory;
 
-		/**
-		 * Session-scoped conversation memories for sub-agents, keyed by agent name. When the
-		 * orchestrator delegates to a sub-agent multiple times (within or across user messages), the
-		 * sub-agent retains its conversation history via this map.
-		 */
-		final Map<String, ChatMemory> _subAgentMemories = new ConcurrentHashMap<>();
+		ConversationLog _conversationLog;
 
-		SessionState(Chat chat, ChatMemory chatMemory) {
+		TaskStore _taskStore;
+
+		/** */
+		SessionState(Chat chat, ConversationMemory conversationMemory) {
 			_chat = chat;
-			_chatMemory = chatMemory;
+			_conversationMemory = conversationMemory;
+			_taskStore = new TaskStore();
 		}
+	}
+
+	/**
+	 * Sets the owning {@link TaskProgressTracker} for metadata persistence during session switches.
+	 */
+	void setTracker(TaskProgressTracker tracker) {
+		_tracker = tracker;
 	}
 
 	/**
@@ -87,38 +107,53 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Returns the active session's {@link ChatMemory}, or creates a transient one if no session is
-	 * active.
+	 * Returns the active session's {@link ConversationMemory}, or creates a transient one if no
+	 * session is active.
 	 */
-	public ChatMemory getActiveChatMemory() {
+	public ConversationMemory getActiveConversationMemory() {
 		synchronized (_lock) {
 			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
 			if (state != null) {
-				if (state._chatMemory == null) {
-					state._chatMemory = MessageWindowChatMemory.withMaxMessages(CHAT_MEMORY_MAX_MESSAGES);
+				if (state._conversationMemory == null) {
+					state._conversationMemory = createDefaultMemory();
 				}
-				return state._chatMemory;
+				return state._conversationMemory;
 			}
-			return MessageWindowChatMemory.withMaxMessages(CHAT_MEMORY_MAX_MESSAGES);
+			return createDefaultMemory();
 		}
 	}
 
 	/**
-	 * Returns the active session's sub-agent memory map. Sub-agents use this map to retain
-	 * conversation context across multiple delegations within the same session.
-	 *
-	 * <p>
-	 * If no session is active, returns a fresh map (transient, same as
-	 * {@link #getActiveChatMemory()}).
-	 * </p>
+	 * Returns the active session's {@link ConversationLog}, creating one if it does not exist.
+	 * Returns a transient log if no session is active.
 	 */
-	public Map<String, ChatMemory> getActiveSubAgentMemories() {
+	public ConversationLog getOrCreateConversationLog() {
 		synchronized (_lock) {
 			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
 			if (state != null) {
-				return state._subAgentMemories;
+				if (state._conversationLog == null) {
+					state._conversationLog = new ConversationLog();
+				}
+				return state._conversationLog;
 			}
-			return new ConcurrentHashMap<>();
+			return new ConversationLog();
+		}
+	}
+
+	/**
+	 * Returns the active session's {@link TaskStore}. Returns a transient empty store if no
+	 * session is active.
+	 */
+	public TaskStore getActiveTaskStore() {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state != null) {
+				if (state._taskStore == null) {
+					state._taskStore = new TaskStore();
+				}
+				return state._taskStore;
+			}
+			return new TaskStore();
 		}
 	}
 
@@ -148,6 +183,12 @@ public class ChatSessionManager {
 			// Persist current session before switching
 			persistActiveSessionInternal();
 
+			// Reset tracker state immediately so it is never retained from the previous session,
+			// regardless of whether the new session is found in the LRU cache or loaded from DB.
+			if (_tracker != null) {
+				_tracker.resetSessionState();
+			}
+
 			// Check LRU cache first
 			SessionState cached = _sessions.get(sessionId);
 			if (cached != null) {
@@ -157,16 +198,28 @@ public class ChatSessionManager {
 
 			// Load from database
 			Chat chat = new Chat();
-			ChatMemory memory = MessageWindowChatMemory.withMaxMessages(CHAT_MEMORY_MAX_MESSAGES);
+			ConversationMemory memory = createDefaultMemory();
+			ConversationLog convLog = new ConversationLog();
+			TaskStore loadedTaskStore = new TaskStore();
 
 			try {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session != null) {
 					String json = ChatHistoryService.getMessagesJson(session);
 					if (json != null && !json.isEmpty()) {
-						List<ChatEntry> entries = DtoMapper.deserializeEntries(json);
-						chat.loadEntries(entries);
-						rebuildChatMemory(memory, entries);
+						if (json.trim().startsWith("{")) {
+							convLog = ConversationLogSerializer.fromJson(json);
+							ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
+						} else {
+							Logger.warn("Session " + sessionId + " has legacy chat format. V2-only load ignores legacy data.",
+								ChatSessionManager.class);
+						}
+					}
+
+					if (_tracker != null) {
+						String metadataJson = ChatHistoryService.getMetadataJson(session);
+						DtoMapper.loadMetadata(metadataJson, _tracker);
+						loadedTaskStore = DtoMapper.loadTaskStore(metadataJson);
 					}
 				}
 			} catch (Exception ex) {
@@ -174,13 +227,16 @@ public class ChatSessionManager {
 					ChatSessionManager.class);
 			}
 
-			_sessions.put(sessionId, new SessionState(chat, memory));
+			SessionState newState = new SessionState(chat, memory);
+			newState._conversationLog = convLog;
+			newState._taskStore = loadedTaskStore;
+			_sessions.put(sessionId, newState);
 			_activeSessionId = sessionId;
 		}
 	}
 
 	/**
-	 * Persists the active session's full state (messages + task snapshots) to the database.
+	 * Persists the active session's full state (messages) to the database.
 	 */
 	public void persistActiveSession() {
 		synchronized (_lock) {
@@ -200,8 +256,14 @@ public class ChatSessionManager {
 		try {
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
 			if (session != null) {
-				String json = DtoMapper.serializeEntries(state._chat.getEntries());
-				ChatHistoryService.saveMessages(session, json);
+				ConversationLog conversationLog = state._conversationLog;
+				if (conversationLog == null) {
+					conversationLog = new ConversationLog();
+					state._conversationLog = conversationLog;
+				}
+				String json = ConversationLogSerializer.toJson(conversationLog);
+				String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
+				ChatHistoryService.saveMessagesAndMetadata(session, json, metadataJson);
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to persist session " + sessionId + ": " + ex.getMessage(), ex,
@@ -210,20 +272,38 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Rebuilds a {@link ChatMemory} from persisted chat entries by replaying user and agent
-	 * messages.
+	 * Creates a default {@link ConversationMemory} with summarization strategy.
+	 *
+	 * <p>
+	 * Uses the system's default model from {@link LLMProviderRegistry} for summarization.
+	 * Falls back to truncation if no default model is configured or if the registry is not
+	 * available.
+	 * </p>
 	 */
-	private static void rebuildChatMemory(ChatMemory memory, List<ChatEntry> entries) {
-		for (ChatEntry entry : entries) {
-			if (entry instanceof ChatEntry.MessageEntry me) {
-				ChatMessage msg = me.message();
-				String role = msg.getUser();
-				if ("Agent".equals(role) || "AI".equals(role)) {
-					memory.add(new AiMessage(msg.getText()));
-				} else if (!"System".equals(role)) {
-					memory.add(new UserMessage(msg.getText()));
-				}
-			}
+	private static ConversationMemory createDefaultMemory() {
+		CompactionStrategy strategy = createCompactionStrategy();
+		return ConversationMemory.withDefaults(strategy, DEFAULT_CONTEXT_WINDOW_TOKENS);
+	}
+
+	private static CompactionStrategy createCompactionStrategy() {
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		if (registry == null) {
+			Logger.warn("LLMProviderRegistry not available, falling back to truncation.", ChatSessionManager.class);
+			return new TruncatingStrategy();
 		}
+		String defaultModel = registry.getConfig().getDefaultModel();
+		if (defaultModel == null || defaultModel.isBlank()) {
+			Logger.warn("No default model configured, falling back to truncation.", ChatSessionManager.class);
+			return new TruncatingStrategy();
+		}
+		LLMProvider provider;
+		try {
+			provider = registry.buildProvider(defaultModel);
+		} catch (IllegalStateException ex) {
+			Logger.warn("Default model '" + defaultModel + "' not found in any provider, falling back to truncation.",
+				ChatSessionManager.class);
+			return new TruncatingStrategy();
+		}
+		return new SummarizingStrategy(provider, defaultModel, SUMMARIZATION_MAX_OUTPUT_TOKENS);
 	}
 }

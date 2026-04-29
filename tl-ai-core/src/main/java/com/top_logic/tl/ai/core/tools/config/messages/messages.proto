@@ -1,0 +1,87 @@
+package com.top_logic.tl.ai.core.tools.config.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Information about a layout template definition.
+ */
+message LayoutTemplateInfo {
+	/**
+	 * Template name (definition file identifier).
+	 */
+	string name;
+
+	/**
+	 * Localized label for the template.
+	 */
+	string label;
+
+	/**
+	 * Groups this template belongs to.
+	 */
+	repeated string groups;
+}
+
+/**
+ * Response containing a list of available layout templates.
+ */
+message LayoutTemplateListResponse {
+	/**
+	 * Array of layout template information.
+	 */
+	repeated LayoutTemplateInfo templates;
+}
+
+/**
+ * Information about a specific layout configuration.
+ */
+message LayoutInfo {
+	/**
+	 * The layout key.
+	 */
+	string layoutKey;
+
+	/**
+	 * Whether the layout is based on a template.
+	 */
+	bool hasTemplate;
+
+	/**
+	 * The template name, if the layout is template-based.
+	 */
+	string templateName;
+
+	/**
+	 * Template arguments as JSON string, if the layout is template-based.
+	 */
+	string arguments;
+
+	/**
+	 * The component configuration as JSON, if the layout is not template-based.
+	 */
+	string componentConfig;
+
+	/**
+	 * URI for retrieving the JSON Schema of the template parameters.
+	 */
+	string templateSchemaUri;
+}
+
+/**
+ * Response for a layout creation operation.
+ */
+message LayoutCreateResponse {
+	/**
+	 * Whether the creation was successful.
+	 */
+	bool success;
+
+	/**
+	 * The layout key of the created layout.
+	 */
+	string layoutKey;
+}

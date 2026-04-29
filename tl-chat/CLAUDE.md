@@ -1,8 +1,8 @@
 # tl-chat
 
-Real-time agentic chat interface for TopLogic applications. Connects users to the multi-agent orchestrator (from `tl-ai-service`) and displays tool calls, agent handoffs, and AI responses as they happen.
+Real-time agentic chat interface for TopLogic applications. Connects users to the multi-agent orchestrator (from `tl-ai-core`) and displays tool calls, agent handoffs, and AI responses as they happen.
 
-**Parent:** `tl-parent-app` | **Dependencies:** `tl-core`, `tl-ai-service`, `jackson-databind`
+**Parent:** `tl-parent-core` | **Dependencies:** `tl-core`, `tl-ai-core`
 
 ## Architecture
 
@@ -12,7 +12,7 @@ Both served by `ChatServlet` at `/chat/*`:
 
 1. **REST API** (JSON):
    - `POST /chat/send` – Send user message, starts background AI processing. Returns `{ taskId, status }`.
-   - `GET /chat/updates` – Poll for full chat state (messages, current task, timeline events).
+   - `GET /chat/updates` – Poll for full chat state (messages).
    - `POST /chat/sessions` – Create new chat session.
    - `GET /chat/sessions` – List all sessions for current user.
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
@@ -21,48 +21,41 @@ Both served by `ChatServlet` at `/chat/*`:
    - `DELETE /chat/sessions/{id}` – Delete session.
 
 2. **SSE API** (real-time push):
-   - `GET /chat/events` – SSE connection. `ChatSSEHandler` polls every 200ms and emits delta events: `connected`, `message`, `tool_call`, `agent_call`, `task_status`, `heartbeat`.
+   - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
 
 Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 
 ### Processing Flow
 
 1. User sends message via `POST /chat/send` or TopLogic AJAX command
-2. `ChatProcessor.sendMessage()` adds message to `Chat`, creates `ChatTask`, submits `AIBackgroundTask`
-3. Background task resolves entry point agent from `AgentRegistry.getEntryPointAgentName()`, builds it with `buildUntypedAgent()`, and invokes it with `ToolCallTracker` bound via `ToolCallTracking.setTracker()`
-4. Tool calls and agent handoffs appear in tracker's timeline as they happen
-5. `ChatProcessor.applyPollUpdates()` syncs `TraceEntry` objects into `ChatTimelineEvent` objects
-6. SSE handler (or polling endpoint) delivers updates to client in real-time
-7. On completion, agent response added as `ChatMessage`
+2. `ChatProcessor.sendMessage()` adds message to `Chat`, creates a `ConversationLog` turn, submits `AIBackgroundTask`
+3. Background task resolves entry point agent from `AgentRegistry.getEntryPointAgentName()` and invokes it with `ConversationLogListener` bound for structured event recording
+4. Agent events (tool calls, thinking, text deltas) are delivered to the SSE handler in real-time and recorded in the `ConversationLog`
+5. `ChatProcessor.applyPollUpdates()` flushes pending messages into Chat
+6. On completion, agent response added as `ChatMessage` and `ConversationLog` persisted
 
 ### Key Classes
 
 - **`ChatProcessor`** – Static utility: background thread pool, orchestrator execution, state sync
-- **`TaskProgressTracker`** – Session-scoped chat state, manages `ChatTask` objects (LRU, max 50)
-- **`ChatSSEHandler`** – SSE handler polling for deltas via `ScheduledExecutorService`
-- **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatEntry>` (max 500)
-- **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ChatMemory) with LRU caching (max 5 sessions, 20-message memory window). Handles session switching with persist/load/rebuild cycle.
+- **`TaskProgressTracker`** – Session-scoped chat state, manages processing states and session metadata
+- **`ChatSSEHandler`** – Push-based SSE handler implementing `AgentEventListener`
+- **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
+- **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
 - **`ChatHistoryService`** – Static CRUD service for persistent `ChatSession` objects in KnowledgeBase. Messages stored as JSON blob in CLOB attribute. All methods use `ThreadContextManager.inSystemInteraction()`.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (ChatControl) and `HttpSession` (ChatServlet)
 
 ## Thread Safety
 
-- `Chat` uses `CopyOnWriteArrayList` for thread-safe entry access
+- `Chat` uses `CopyOnWriteArrayList` for thread-safe message access
 - `AIProcessingState` uses `synchronized` blocks and `volatile` fields
 - `ChatSSEHandler` uses `AtomicBoolean` for close detection and synchronized writer access
-- `TaskProgressTracker` methods that modify task state are synchronized
-
-## Domain Model Immutability
-
-- `ChatMessage`, `ChatTask`, `ChatToolCall`, and `ChatTimelineEvent` are immutable
-- `ChatTask` uses builder pattern (`withStatus()`, `withTimelineEvent()`) returning new instances
-- `ChatEntry` is a sealed interface with record implementations
 
 ## Persistence Model
 
 - **Module**: `tl.ai.chat`, **Type**: `ChatSession`
 - **Attributes**: `title`, `messages` (JSON CLOB), `createdAt`, `lastUpdated`, `owner` (via `WithOwner`)
-- Chat messages serialized/deserialized between in-memory `ChatEntry` objects and JSON via msgbuf DTOs
+- V2 format: `ConversationLog` serialized via `ConversationLogSerializer` (structured turns with parts)
+- V1 format (legacy): `ChatMessage` list serialized via `DtoMapper` (flat message array)
 
 ## Notes
 

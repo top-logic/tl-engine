@@ -18,17 +18,42 @@
 	--chat-accent: #6366f1;
 	--chat-radius: 16px;
 	--chat-radius-sm: 8px;
+
+	/* Thinking blocks */
+	--chat-thinking-bg: rgba(88, 28, 135, 0.15);
+	--chat-thinking-border: rgba(107, 33, 168, 0.4);
+	--chat-thinking-text: var(--chat-text-secondary);
+
+	/* Status colors */
+	--chat-status-running: var(--support-info, #3b82f6);
+	--chat-status-success: var(--support-success, #22c55e);
+	--chat-status-error: var(--support-danger, #ef4444);
+	--chat-status-denied: var(--chat-text-muted);
+
+	/* Delegation nesting */
+	--chat-delegation-border: var(--support-info, #3b82f6);
+
+	/* Approval */
+	--chat-approval-bg: rgba(59, 130, 246, 0.08);
+	--chat-approval-border: rgba(59, 130, 246, 0.3);
+
+	/* Tokens */
+	--chat-token-bg: var(--chat-surface);
+	--chat-token-text: var(--chat-text-muted);
 }
 
 /* ========================================
  * Container
  * ======================================== */
 
+/* Ensure the ChatControl fills its TL framework container.
+   The JS init sets position:relative on the nearest positioned ancestor. */
 .chat-control {
     display: flex;
     flex-direction: row;
+    width: 100%;
     height: 100%;
-    position: relative;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -42,7 +67,8 @@
 
 /* Messages container with scrolling */
 .chat-messages {
-	height: 75vh;
+	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
 	padding: 16px;
 	margin-bottom: 10px;
@@ -169,7 +195,10 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	padding: 0 4px;
+	padding: 8px 16px;
+	flex-shrink: 0;
+	border-top: 1px solid var(--chat-border);
+	background: var(--chat-bg);
 }
 
 .chat-input {
@@ -692,6 +721,119 @@
 }
 
 /* ========================================
+ * Persistent Task Panel
+ * Collapsible panel above the input area
+ * showing the conversation's task list.
+ * ======================================== */
+
+.chat-task-panel {
+	display: none;
+	flex-direction: column;
+	border-top: 1px solid var(--chat-border);
+	background: var(--chat-bg-secondary, #f9fafb);
+	padding: 0;
+	flex-shrink: 0;
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.chat-task-panel.visible {
+	display: flex;
+}
+
+.chat-task-panel-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	cursor: pointer;
+	user-select: none;
+	font-size: 0.85em;
+	color: var(--chat-text-muted);
+	border-bottom: 1px solid var(--chat-border);
+}
+
+.chat-task-panel-header:hover {
+	color: var(--chat-text-primary);
+}
+
+.chat-task-panel-toggle {
+	font-size: 0.75em;
+	transition: transform 0.15s;
+}
+
+.chat-task-panel.collapsed .chat-task-panel-toggle {
+	transform: rotate(-90deg);
+}
+
+.chat-task-panel-count {
+	margin-left: auto;
+	font-size: 0.8em;
+}
+
+.chat-task-panel-body {
+	padding: 4px 12px 6px;
+}
+
+.chat-task-panel.collapsed .chat-task-panel-body {
+	display: none;
+}
+
+.chat-task-panel-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 0;
+	font-size: 0.85em;
+}
+
+.chat-task-panel-item .task-icon {
+	width: 14px;
+	text-align: center;
+	flex-shrink: 0;
+}
+
+.chat-task-panel-item .task-label {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Pending */
+.chat-task-panel-item[data-status="pending"] .task-icon {
+	color: var(--chat-text-muted);
+}
+
+/* In-progress: bold text + pulse */
+.chat-task-panel-item[data-status="in_progress"] .task-label {
+	font-weight: 600;
+}
+
+.chat-task-panel-item[data-status="in_progress"] .task-icon {
+	color: var(--chat-accent, #2563eb);
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Completed: strikethrough + muted */
+.chat-task-panel-item[data-status="completed"] .task-label {
+	text-decoration: line-through;
+	color: var(--chat-text-muted);
+}
+
+.chat-task-panel-item[data-status="completed"] .task-icon {
+	color: #16a34a;
+}
+
+/* Collapsed middle row */
+.chat-task-panel-collapsed-row {
+	padding: 2px 0 2px 20px;
+	font-size: 0.8em;
+	color: var(--chat-text-muted);
+	font-style: italic;
+}
+
+/* ========================================
  * Agent Calls - compact activity lines
  * ======================================== */
 
@@ -1048,7 +1190,6 @@
 .chat-history-list {
     flex: 1;
     min-height: 0;
-    max-height: 75vh;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0;
@@ -1183,12 +1324,23 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 75vh;
+    flex: 1;
+    min-height: 0;
     padding: 48px 24px;
     text-align: center;
 }
 
 .chat-welcome.hidden {
+    display: none;
+}
+
+/* When welcome is visible, hide the bottom input bar (welcome has its own) */
+.chat-welcome:not(.hidden) ~ .chat-input-section {
+    display: none;
+}
+
+/* When welcome is visible, hide the messages container */
+.chat-welcome:not(.hidden) ~ .chat-messages {
     display: none;
 }
 
@@ -1462,4 +1614,582 @@
 	background: #fff;
 	border-color: #fff;
 	color: var(--chat-accent);
+}
+
+/* ========================================
+ * Animations
+ * ======================================== */
+
+@keyframes tl-chat-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.4; }
+}
+
+@keyframes tl-chat-fade-in {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.tl-chat-streaming-cursor {
+	display: inline-block;
+	width: 6px;
+	height: 1em;
+	background: var(--chat-accent);
+	margin-left: 2px;
+	vertical-align: text-bottom;
+	animation: tl-chat-pulse 1s ease-in-out infinite;
+}
+
+.tl-chat-content-swap {
+	transition: opacity 0.15s ease;
+}
+
+/* ========================================
+ * Trace Wrapper (collapsible tool/thinking trace)
+ * ======================================== */
+
+.tl-chat-trace-wrapper {
+	margin-bottom: 8px;
+	border-left: 2px solid var(--chat-border);
+	padding-left: 10px;
+}
+
+.tl-chat-trace-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	padding: 4px 0;
+	font-size: 0.85em;
+	color: var(--chat-text-secondary);
+	user-select: none;
+	transition: color 0.15s;
+}
+
+.tl-chat-trace-header:hover {
+	color: var(--chat-text-primary);
+}
+
+.tl-chat-trace-chevron {
+	font-size: 0.7em;
+	transition: transform 0.2s;
+	display: inline-block;
+}
+
+.tl-chat-trace-chevron.expanded {
+	transform: rotate(90deg);
+}
+
+.tl-chat-trace-summary {
+	font-weight: 500;
+}
+
+.tl-chat-trace-tokens {
+	margin-left: auto;
+	font-size: 0.8em;
+	color: var(--chat-text-muted);
+	background: var(--chat-token-bg);
+	padding: 1px 8px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: color 0.15s;
+}
+
+.tl-chat-trace-tokens:hover {
+	color: var(--chat-text-primary);
+}
+
+.tl-chat-trace-tokens:empty {
+	display: none;
+}
+
+.tl-chat-trace-body {
+	padding: 4px 0;
+}
+
+/* ========================================
+ * Thinking Blocks
+ * ======================================== */
+
+.tl-chat-thinking {
+	background: var(--chat-thinking-bg);
+	border-left: 3px solid var(--chat-thinking-border);
+	border-radius: var(--chat-radius-sm);
+	padding: 8px 12px;
+	margin-bottom: 8px;
+	animation: tl-chat-fade-in 0.15s ease-out;
+}
+
+.tl-chat-thinking-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	font-size: 12px;
+	color: var(--chat-thinking-text);
+	user-select: none;
+}
+
+.tl-chat-thinking-header svg {
+	width: 14px;
+	height: 14px;
+	opacity: 0.7;
+}
+
+.tl-chat-thinking-chevron {
+	transition: transform 0.15s ease;
+	font-size: 10px;
+}
+
+.tl-chat-thinking-chevron.expanded {
+	transform: rotate(90deg);
+}
+
+.tl-chat-thinking-preview {
+	color: var(--chat-text-muted);
+	font-size: 12px;
+	font-style: italic;
+	margin-left: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 400px;
+}
+
+.tl-chat-thinking-body {
+	margin-top: 8px;
+	max-height: 300px;
+	overflow-y: auto;
+	font-size: 13px;
+	color: var(--chat-thinking-text);
+	line-height: 1.5;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* ========================================
+ * Tool Calls
+ * ======================================== */
+
+.tl-chat-tool {
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius-sm);
+	margin: 4px 0;
+	animation: tl-chat-fade-in 0.15s ease-out;
+	overflow: hidden;
+}
+
+.tl-chat-tool-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 10px;
+	cursor: pointer;
+	font-size: 12px;
+	user-select: none;
+	background: var(--chat-surface);
+}
+
+.tl-chat-tool-header:hover {
+	filter: brightness(1.1);
+}
+
+.tl-chat-status-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.tl-chat-status-dot.running {
+	background: var(--chat-status-running);
+	animation: tl-chat-pulse 1.5s ease-in-out infinite;
+}
+
+.tl-chat-status-dot.success { background: var(--chat-status-success); }
+.tl-chat-status-dot.error { background: var(--chat-status-error); }
+.tl-chat-status-dot.denied { background: var(--chat-status-denied); }
+
+.tl-chat-tool-name {
+	font-weight: 500;
+	color: var(--chat-text-primary);
+	flex: 1;
+}
+
+.tl-chat-tool-name.denied {
+	text-decoration: line-through;
+	color: var(--chat-text-muted);
+}
+
+.tl-chat-tool-progress {
+	color: var(--chat-text-secondary, #888);
+	font-size: 0.85em;
+	margin-left: 0.5em;
+	font-style: italic;
+}
+
+.tl-chat-tool-tokens {
+	color: var(--chat-text-muted);
+	font-size: 10px;
+	background: var(--chat-token-bg);
+	padding: 1px 6px;
+	border-radius: 8px;
+}
+
+.tl-chat-tool-duration {
+	color: var(--chat-text-muted);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+}
+
+.tl-chat-tool-chevron {
+	color: var(--chat-text-muted);
+	transition: transform 0.15s ease;
+	font-size: 10px;
+}
+
+.tl-chat-tool-chevron.expanded {
+	transform: rotate(90deg);
+}
+
+.tl-chat-tool-body {
+	border-top: 1px solid var(--chat-border);
+	padding: 8px 10px;
+	font-size: 12px;
+}
+
+.tl-chat-tool-body pre {
+	max-height: 200px;
+	overflow: auto;
+	background: var(--chat-bg);
+	padding: 6px 8px;
+	border-radius: var(--chat-radius-sm);
+	font-size: 11px;
+	margin: 4px 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.tl-chat-tool-label {
+	color: var(--chat-text-muted);
+	font-size: 11px;
+	margin-top: 6px;
+	margin-bottom: 2px;
+}
+
+.tl-chat-tools-container {
+	margin-top: 8px;
+}
+
+/* ========================================
+ * Delegation (Nested Agent) Blocks
+ * ======================================== */
+
+.tl-chat-delegation {
+	border-left: 2px solid var(--chat-delegation-border);
+	margin: 4px 0;
+	padding-left: 12px;
+}
+
+.tl-chat-delegation-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 0;
+	font-size: 12px;
+	color: var(--chat-text-primary);
+	font-weight: 500;
+}
+
+.tl-chat-delegation-header svg {
+	width: 14px;
+	height: 14px;
+	color: var(--chat-delegation-border);
+}
+
+/* ========================================
+ * Output (Intermediate LLM Text) in Tool Trace
+ * ======================================== */
+
+.tl-chat-tool-name-fixed {
+	font-weight: 500;
+	color: var(--chat-text-primary);
+	flex-shrink: 0;
+}
+
+.tl-chat-output-summary {
+	color: var(--chat-text-secondary);
+	overflow: hidden;
+	white-space: nowrap;
+	flex: 1;
+	min-width: 0;
+}
+
+.tl-chat-output-content {
+	padding: 6px 10px;
+	font-size: 13px;
+	line-height: 1.5;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+/* ========================================
+ * Approval Banner
+ * ======================================== */
+
+.tl-chat-approval {
+	background: var(--chat-approval-bg);
+	border: 1px solid var(--chat-approval-border);
+	border-radius: var(--chat-radius);
+	padding: 12px 16px;
+	margin: 8px 0;
+	animation: tl-chat-fade-in 0.15s ease-out;
+}
+
+.tl-chat-approval-resolved {
+	margin: 4px 0;
+}
+
+.tl-chat-approval-header {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--chat-text-primary);
+	margin-bottom: 4px;
+}
+
+.tl-chat-approval-reason {
+	font-size: 12px;
+	color: var(--chat-text-secondary);
+	margin-bottom: 10px;
+}
+
+.tl-chat-approval-actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.tl-chat-approval-btn {
+	padding: 4px 12px;
+	border-radius: var(--chat-radius-sm);
+	font-size: 12px;
+	cursor: pointer;
+	border: 1px solid var(--chat-border);
+	background: var(--chat-surface);
+	color: var(--chat-text-primary);
+	transition: background 0.1s;
+}
+
+.tl-chat-approval-btn:hover {
+	filter: brightness(1.1);
+}
+
+.tl-chat-approval-btn.allow {
+	background: var(--chat-status-success);
+	color: white;
+	border-color: var(--chat-status-success);
+}
+
+.tl-chat-approval-btn.deny {
+	background: var(--chat-status-error);
+	color: white;
+	border-color: var(--chat-status-error);
+}
+
+.tl-chat-choice-options {
+	flex-direction: column;
+	gap: 6px;
+}
+
+.tl-chat-choice-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	border-radius: var(--chat-radius-sm);
+	border: 1px solid var(--chat-border);
+	background: var(--chat-surface);
+	font-size: 12px;
+	cursor: pointer;
+	transition: background 0.1s;
+}
+
+.tl-chat-choice-label:hover {
+	filter: brightness(1.05);
+}
+
+.tl-chat-choice-desc {
+	color: var(--chat-text-secondary);
+	font-size: 11px;
+}
+
+.tl-chat-approval-comment {
+	margin-top: 8px;
+	display: flex;
+	gap: 6px;
+}
+
+.tl-chat-approval-comment input {
+	flex: 1;
+	padding: 4px 8px;
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius-sm);
+	font-size: 12px;
+	background: var(--chat-bg);
+	color: var(--chat-text-primary);
+}
+
+/* ========================================
+ * Token Badge and Popover
+ * ======================================== */
+
+.tl-chat-token-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	padding: 1px 6px;
+	border-radius: 9999px;
+	background: var(--chat-token-bg);
+	color: var(--chat-token-text);
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+	border: 1px solid var(--chat-border);
+	transition: background 0.1s;
+}
+
+.tl-chat-token-badge:hover {
+	filter: brightness(1.1);
+}
+
+.chat-bubble-agent > .tl-chat-token-badge {
+	float: right;
+	margin: 2px 0 4px 8px;
+}
+
+.tl-chat-token-popover {
+	position: fixed;
+	z-index: 10000;
+	background: var(--chat-surface);
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius);
+	padding: 10px 14px;
+	font-size: 12px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	min-width: 200px;
+}
+
+.tl-chat-token-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 2px 0;
+	color: var(--chat-text-secondary);
+}
+
+.tl-chat-token-row.total {
+	font-weight: 600;
+	color: var(--chat-text-primary);
+	border-top: 1px solid var(--chat-border);
+	margin-top: 4px;
+	padding-top: 6px;
+}
+
+.tl-chat-token-value {
+	font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+ * Status Pills and Error Blocks
+ * ======================================== */
+
+.tl-chat-status-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	border-radius: 9999px;
+	font-size: 10px;
+	color: var(--chat-text-muted);
+	background: var(--chat-surface);
+	border: 1px solid var(--chat-border);
+	margin: 2px 0;
+}
+
+.tl-chat-status-pill.committed {
+	color: var(--chat-status-success);
+	border-color: color-mix(in srgb, var(--chat-status-success) 30%, transparent);
+}
+
+.tl-chat-status-pill.rollback {
+	color: var(--support-warning, #f59e0b);
+	border-color: color-mix(in srgb, var(--support-warning, #f59e0b) 30%, transparent);
+}
+
+.tl-chat-error-block {
+	background: color-mix(in srgb, var(--chat-status-error) 8%, var(--chat-bg));
+	border: 1px solid color-mix(in srgb, var(--chat-status-error) 30%, transparent);
+	border-radius: var(--chat-radius);
+	padding: 10px 14px;
+	margin: 8px 0;
+	animation: tl-chat-fade-in 0.15s ease-out;
+}
+
+.tl-chat-error-block.transient {
+	opacity: 0.7;
+}
+
+.tl-chat-error-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--chat-status-error);
+	margin-bottom: 4px;
+}
+
+.tl-chat-error-message {
+	font-size: 12px;
+	color: var(--chat-text-secondary);
+}
+
+.tl-chat-cancel-btn {
+	background: var(--chat-status-error);
+	color: white;
+	border: none;
+	border-radius: var(--chat-radius-sm);
+	padding: 6px 14px;
+	font-size: 13px;
+	cursor: pointer;
+	transition: opacity 0.1s;
+}
+
+.tl-chat-cancel-btn:hover {
+	opacity: 0.85;
+}
+
+.tl-chat-new-messages {
+	position: absolute;
+	bottom: 80px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--chat-accent);
+	color: white;
+	padding: 4px 12px;
+	border-radius: 9999px;
+	font-size: 12px;
+	cursor: pointer;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	z-index: 10;
+	animation: tl-chat-fade-in 0.15s ease-out;
+}
+
+.tl-chat-icon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.tl-chat-icon svg {
+	width: 14px;
+	height: 14px;
 }

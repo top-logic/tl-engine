@@ -5,29 +5,24 @@
  -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
-		<config service-class="com.top_logic.ai.service.AIService">
-			<instance class="com.top_logic.ai.service.AIService"
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
 				default-model="mistral-large-latest"
 			>
-				<factories>
-					<!-- Mistral AI models factory for ModelExplorer agent -->
-					<factory
-						class="com.top_logic.ai.service.providers.MistralChatModelFactory"
+				<providers>
+					<provider name="mistral"
 						api-key="unencrypted:xxx"
 						base-url="https://api.mistral.ai/v1"
-						max-pool-size="10"
-						max-idle-models="5"
+						models="mistral-large-latest"
 					/>
-					<!-- Anthropic models factory for output scoring -->
-					<factory
-						class="com.top_logic.ai.service.providers.AnthropicChatModelFactory"
-						models="claude-sonnet-4-5-20250929"
+					<provider name="anthropic"
 						api-key="unencrypted:xxx"
 						base-url="https://api.anthropic.com/v1"
-						max-pool-size="10"
-						max-idle-models="5"
+						models="claude-sonnet-4-5-20250929"
 					/>
-				</factories>
+				</providers>
 			</instance>
 		</config>
 	</services>

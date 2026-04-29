@@ -5,7 +5,8 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core</artifactId>
-		<version>0.0.3-AI</version>
+		<version>8.0.0-alpha3</version>
+		<relativePath/>
 	</parent>
 	
 	<artifactId>tl-ai-mcp-server</artifactId>
@@ -29,15 +30,20 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-ai-service</artifactId>
+			<artifactId>tl-ai-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 
 		<!-- MCP SDK -->
 		<dependency>
 			<groupId>io.modelcontextprotocol.sdk</groupId>
-			<artifactId>mcp</artifactId>
-			<version>0.15.0</version>
+			<artifactId>mcp-core</artifactId>
+			<version>1.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.modelcontextprotocol.sdk</groupId>
+			<artifactId>mcp-json-jackson3</artifactId>
+			<version>1.1.2</version>
 		</dependency>
 
 		<!-- Tests -->

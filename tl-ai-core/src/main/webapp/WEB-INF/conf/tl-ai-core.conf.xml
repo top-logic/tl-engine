@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+<root>
+	<alias>
+		<entry name="%OPENAI_API_KEY%" value="${env:tl_openai_api_key:}"/>
+		<entry name="%ANTHROPIC_API_KEY%" value="${env:tl_anthropic_api_key:}"/>
+		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:}"/>
+		<entry name="%XAI_API_KEY%" value="${env:tl_xai_api_key:}"/>
+	</alias>
+</root>

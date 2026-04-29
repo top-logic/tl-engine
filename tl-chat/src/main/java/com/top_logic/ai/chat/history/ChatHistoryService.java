@@ -53,6 +53,8 @@ public class ChatHistoryService {
 
 	private static final String ATTR_LAST_UPDATED = "lastUpdated";
 
+	private static final String ATTR_METADATA = "metadata";
+
 	private static final String ATTR_OWNER = "owner";
 
 	private ChatHistoryService() {
@@ -170,10 +172,35 @@ public class ChatHistoryService {
 	 *        the JSON string of messages.
 	 */
 	public static void saveMessages(TLObject session, String messagesJson) {
+		saveMessagesAndTouch(session, messagesJson, false);
+	}
+
+	/**
+	 * Saves messages and updates the <code>lastUpdated</code> timestamp in a single transaction.
+	 *
+	 * <p>
+	 * Use this after AI responses or explicit user saves where the timestamp should advance. Using a
+	 * single transaction avoids merge conflicts when multiple threads persist to the same session
+	 * concurrently.
+	 * </p>
+	 *
+	 * @param session
+	 *        the session object.
+	 * @param messagesJson
+	 *        the JSON string of messages.
+	 */
+	public static void saveMessagesAndTouch(TLObject session, String messagesJson) {
+		saveMessagesAndTouch(session, messagesJson, true);
+	}
+
+	private static void saveMessagesAndTouch(TLObject session, String messagesJson, boolean touch) {
 		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat messages"))) {
 				session.tUpdateByName(ATTR_MESSAGES, messagesJson);
+				if (touch) {
+					session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
+				}
 				tx.commit();
 			} catch (Exception ex) {
 				Logger.error("Failed to save chat messages: " + ex.getMessage(), ex, ChatHistoryService.class);
@@ -182,24 +209,32 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * Updates the <code>lastUpdated</code> timestamp of a chat session to the current time.
+	 * Saves messages and metadata in a single transaction.
 	 *
 	 * <p>
-	 * Call this after new messages have been added to the session (e.g. after AI response or
-	 * explicit user save), but not when merely persisting on session switch.
+	 * Used during session persistence (e.g. session switch) where both the message blob and metadata
+	 * need to be updated atomically. Combining them into one transaction avoids merge conflicts.
 	 * </p>
 	 *
 	 * @param session
 	 *        the session object.
+	 * @param messagesJson
+	 *        the JSON string of messages.
+	 * @param metadataJson
+	 *        the JSON string of metadata, may be null.
 	 */
-	public static void touchLastUpdated(TLObject session) {
+	public static void saveMessagesAndMetadata(TLObject session, String messagesJson, String metadataJson) {
 		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction(ResKey.text("Touch chat session timestamp"))) {
-				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
+			try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat session state"))) {
+				session.tUpdateByName(ATTR_MESSAGES, messagesJson);
+				if (metadataJson != null) {
+					session.tUpdateByName(ATTR_METADATA, metadataJson);
+				}
 				tx.commit();
 			} catch (Exception ex) {
-				Logger.error("Failed to update lastUpdated: " + ex.getMessage(), ex, ChatHistoryService.class);
+				Logger.error("Failed to save chat session state: " + ex.getMessage(), ex,
+					ChatHistoryService.class);
 			}
 		});
 	}
@@ -253,6 +288,19 @@ public class ChatHistoryService {
 	}
 
 	/**
+	 * Returns the metadata JSON for the given session, or null if not set.
+	 */
+	public static String getMetadataJson(TLObject session) {
+		try {
+			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
+				() -> (String) session.tValueByName(ATTR_METADATA));
+		} catch (Exception ex) {
+			Logger.error("Failed to get session metadata: " + ex.getMessage(), ex, ChatHistoryService.class);
+			return null;
+		}
+	}
+
+/**
 	 * Returns the last updated date of a session.
 	 */
 	public static Date getLastUpdated(TLObject session) {

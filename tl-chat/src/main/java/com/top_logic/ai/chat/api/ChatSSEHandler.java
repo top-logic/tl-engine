@@ -6,11 +6,10 @@
 package com.top_logic.ai.chat.api;
 
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -22,46 +21,70 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.AsyncEvent;
 import jakarta.servlet.AsyncListener;
 
+import com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent;
+import com.top_logic.ai.chat.api.messages.ApprovalResolvedEvent;
+import com.top_logic.ai.chat.api.messages.CompactionStartedEvent;
 import com.top_logic.ai.chat.api.messages.ConnectedEvent;
+import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
-import com.top_logic.ai.chat.api.messages.MessageDto;
-import com.top_logic.ai.chat.api.messages.TaskStatusEvent;
-import com.top_logic.ai.chat.api.messages.TimelineEventDto;
+import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
+import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.ai.chat.api.messages.RunCompletedEvent;
+import com.top_logic.ai.chat.api.messages.RunStartedEvent;
+import com.top_logic.ai.chat.api.messages.TextDeltaEvent;
+import com.top_logic.ai.chat.api.messages.ThinkingDeltaEvent;
+import com.top_logic.ai.chat.api.messages.TokenUsageDto;
+import com.top_logic.ai.chat.api.messages.ToolCompletedEvent;
+import com.top_logic.ai.chat.api.messages.ToolDeniedEvent;
+import com.top_logic.ai.chat.api.messages.ToolFailedEvent;
+import com.top_logic.ai.chat.api.messages.ToolStartedEvent;
+import com.top_logic.ai.chat.api.messages.TransactionCommittedEvent;
+import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
+import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
+import com.top_logic.ai.chat.api.messages.TurnCompletedEvent;
+import com.top_logic.ai.chat.api.messages.TurnStartedEvent;
 import com.top_logic.ai.chat.layout.Chat;
-import com.top_logic.ai.chat.layout.ChatEntry;
-import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.ChatProcessor;
-import com.top_logic.ai.chat.layout.ChatTask;
-import com.top_logic.ai.chat.layout.ChatTimelineEvent;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
-import com.top_logic.ai.service.approval.UserInteractionRequest;
-import com.top_logic.ai.service.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
- * SSE (Server-Sent Events) handler for real-time chat updates.
+ * Push-based SSE handler that implements {@link AgentEventListener}.
  *
  * <p>
- * Replaces polling with push-based updates. Connects to session-scoped {@link TaskProgressTracker},
- * polls internally for changes, and emits delta events to the client.
+ * Receives agent events directly via {@link #onEvent(AgentEvent)}, buffers them in a
+ * {@link ConcurrentLinkedQueue}, and flushes to the SSE stream every 50ms. User interaction
+ * events from {@link UserInteractionStore} are still polled during the flush cycle because
+ * they originate outside the agent event system.
  * </p>
  *
  * <p>
- * SSE Event types:
+ * SSE event types emitted:
  * </p>
  * <ul>
- * <li>{@code connected} - Initial connection with current sequence numbers</li>
- * <li>{@code message} - New chat message</li>
- * <li>{@code tool_call} - Tool call start or completion</li>
- * <li>{@code agent_call} - Agent handoff event</li>
- * <li>{@code task_status} - Task status change (completed/error)</li>
+ * <li>{@code connected} - Initial connection state</li>
+ * <li>{@code run_started}, {@code run_completed} - Run lifecycle</li>
+ * <li>{@code turn_started}, {@code turn_completed} - Turn lifecycle</li>
+ * <li>{@code text_delta}, {@code thinking_delta} - LLM streaming</li>
+ * <li>{@code tool_started}, {@code tool_completed}, {@code tool_failed}, {@code tool_denied}, {@code tool_progress} - Tool lifecycle</li>
+ * <li>{@code approval_required}, {@code approval_resolved} - Approval flow</li>
+ * <li>{@code lock_acquired}, {@code lock_failed} - Edit lock</li>
+ * <li>{@code tx_began}, {@code tx_committed}, {@code tx_rollback} - Transactions</li>
+ * <li>{@code compaction_started} - Context compaction</li>
+ * <li>{@code provider_error} - Unrecoverable provider errors</li>
+ * <li>{@code message_complete} - Final assistant message with HTML</li>
+ * <li>{@code user_interaction} - Polled from UserInteractionStore</li>
  * <li>{@code heartbeat} - Keep-alive ping</li>
  * </ul>
  */
-public class ChatSSEHandler {
+public class ChatSSEHandler implements AgentEventListener {
 
-	private static final long POLL_INTERVAL_MS = 200;
+	private static final long FLUSH_INTERVAL_MS = 50;
 	private static final long HEARTBEAT_INTERVAL_MS = 15000;
 
 	private static final AtomicInteger SSE_THREAD_COUNTER = new AtomicInteger();
@@ -76,32 +99,22 @@ public class ChatSSEHandler {
 				return t;
 			});
 
+	/** Active handlers, keyed for lookup by tracker. */
+	private static final CopyOnWriteArraySet<ChatSSEHandler> ACTIVE_HANDLERS = new CopyOnWriteArraySet<>();
+
 	private final TaskProgressTracker _tracker;
 	private final AsyncContext _asyncContext;
 	private final PrintWriter _writer;
 	private final AtomicBoolean _closed = new AtomicBoolean(false);
 
-	private int _lastMessageSeq = 0;
-	private int _lastTimelineSeq = 0;
-	private String _lastTaskId = null;
-	private ChatTask.TaskStatus _lastTaskStatus = null;
-	private String _lastTaskDescription = null;
-	private long _lastHeartbeatTime = 0;
-
-	/** Tracks agent call result summaries to detect updates (key = event index "e0", "e1", etc.). */
-	private final Map<String, String> _agentCallResults = new HashMap<>();
-
-	/** Last seen TaskStore version to detect changes. */
-	private int _lastTaskStoreVersion = 0;
-	/** Last emitted state per agent task (key = task ID, value = state fingerprint). */
-	private final Map<String, String> _emittedTaskStates = new HashMap<>();
-	/** Reference to the last seen TaskStore instance to detect new processing rounds. */
-	private com.top_logic.ai.service.tools.task.TaskStore _lastTaskStore = null;
+	/** Thread-safe event buffer between agent thread and SSE flush thread. */
+	private final ConcurrentLinkedQueue<AgentEvent> _eventQueue = new ConcurrentLinkedQueue<>();
 
 	/** Tracks already-emitted user interaction request IDs to avoid duplicates. */
 	private final Set<String> _emittedInteractionIds = new HashSet<>();
 
-	private ScheduledFuture<?> _pollTask;
+	private long _lastActivityTime = System.currentTimeMillis();
+	private ScheduledFuture<?> _flushTask;
 
 	/**
 	 * Creates a new SSE handler.
@@ -120,9 +133,35 @@ public class ChatSSEHandler {
 	}
 
 	/**
+	 * Returns the tracker associated with this handler.
+	 */
+	public TaskProgressTracker getTracker() {
+		return _tracker;
+	}
+
+	/**
+	 * Finds the active (non-closed) handler for the given tracker, or {@code null} if none.
+	 * When multiple handlers exist for the same tracker (during SSE reconnection),
+	 * the non-closed one is preferred.
+	 */
+	public static ChatSSEHandler findHandler(TaskProgressTracker tracker) {
+		ChatSSEHandler candidate = null;
+		for (ChatSSEHandler handler : ACTIVE_HANDLERS) {
+			if (handler._tracker == tracker && !handler._closed.get()) {
+				candidate = handler;
+			}
+		}
+		return candidate;
+	}
+
+	/**
 	 * Starts the SSE event stream.
 	 */
 	public void start() {
+		// Remove stale handlers for the same tracker (e.g. during SSE reconnection)
+		ACTIVE_HANDLERS.removeIf(h -> h._tracker == _tracker && h._closed.get());
+		ACTIVE_HANDLERS.add(this);
+
 		_asyncContext.addListener(new AsyncListener() {
 			@Override
 			public void onComplete(AsyncEvent event) {
@@ -145,14 +184,12 @@ public class ChatSSEHandler {
 			}
 		});
 
-		// Send initial connected event with current sequence numbers
 		sendConnectedEvent();
 
-		// Start polling for updates
-		_pollTask = SSE_EXECUTOR.scheduleWithFixedDelay(
-			this::pollAndEmit,
-			POLL_INTERVAL_MS,
-			POLL_INTERVAL_MS,
+		_flushTask = SSE_EXECUTOR.scheduleWithFixedDelay(
+			this::flushAndPoll,
+			FLUSH_INTERVAL_MS,
+			FLUSH_INTERVAL_MS,
 			TimeUnit.MILLISECONDS);
 	}
 
@@ -161,8 +198,9 @@ public class ChatSSEHandler {
 	 */
 	public void stop() {
 		if (_closed.compareAndSet(false, true)) {
-			if (_pollTask != null) {
-				_pollTask.cancel(false);
+			ACTIVE_HANDLERS.remove(this);
+			if (_flushTask != null) {
+				_flushTask.cancel(false);
 			}
 			try {
 				_asyncContext.complete();
@@ -172,36 +210,44 @@ public class ChatSSEHandler {
 		}
 	}
 
+	@Override
+	public void onEvent(AgentEvent event) {
+		if (_closed.get()) {
+			// This handler's SSE connection is gone (browser reconnected).
+			// Forward to the current active handler for the same tracker.
+			ChatSSEHandler current = findHandler(_tracker);
+			if (current != null && current != this) {
+				current.onEvent(event);
+			} else {
+				Logger.warn("SSE handler closed, no replacement found — dropping event: "
+					+ event.getClass().getSimpleName(), ChatSSEHandler.class);
+			}
+			return;
+		}
+		_eventQueue.add(event);
+	}
+
+	/**
+	 * Sends a {@link MessageCompleteEvent} directly to the SSE stream. Called from
+	 * {@link ChatProcessor} after the run completes, not via {@link #onEvent(AgentEvent)}.
+	 */
+	public void sendMessageComplete(MessageCompleteEvent event) {
+		sendEvent("message_complete", DtoMapper.toJson(event));
+	}
+
+	/** Sends a provider error event to the client. */
+	public void sendProviderError(ProviderErrorEvent event) {
+		sendEvent("provider_error", DtoMapper.toJson(event));
+	}
+
 	private void sendConnectedEvent() {
-		// Count current messages
 		Chat chat = _tracker.getChat();
-		int messageCount = 0;
-		for (ChatEntry entry : chat.getEntries()) {
-			if (entry instanceof ChatEntry.MessageEntry) {
-				messageCount++;
-			}
-		}
-		_lastMessageSeq = messageCount;
+		int messageCount = chat.getMessages().size();
 
-		// Get current task timeline count and status
 		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
-		int timelineCount = 0;
-		ChatTask.TaskStatus currentTaskStatus = null;
-		if (currentTaskId != null) {
-			ChatTask task = _tracker.getTask(currentTaskId);
-			if (task != null) {
-				timelineCount = task.getTimelineEvents().size();
-				currentTaskStatus = task.getStatus();
-			}
-		}
-		_lastTimelineSeq = timelineCount;
-		_lastTaskId = currentTaskId;
-		_lastTaskStatus = currentTaskStatus;
-
 		boolean processing = false;
 		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
 		if (procState != null && procState.isProcessing()) {
-			// Only report processing if it belongs to the currently active session
 			String procSessionId = procState.getSessionId();
 			String activeSessionId = _tracker.getActiveSessionId();
 			if (procSessionId == null || procSessionId.equals(activeSessionId)) {
@@ -212,7 +258,7 @@ public class ChatSSEHandler {
 		try {
 			ConnectedEvent event = ConnectedEvent.create()
 				.setMessageSeq(messageCount)
-				.setTimelineSeq(timelineCount)
+				.setTimelineSeq(0)
 				.setProcessing(processing)
 				.setTaskId(currentTaskId != null ? currentTaskId : "");
 			sendEvent("connected", DtoMapper.toJson(event));
@@ -220,267 +266,237 @@ public class ChatSSEHandler {
 			Logger.error("Failed to send connected event", e, ChatSSEHandler.class);
 		}
 
-		// Emit current approval mode so UI can show indicator on reconnect
 		String mode = _tracker.getApprovalMode().name();
 		sendEvent("approval_mode", "{\"mode\":\"" + mode + "\"}");
 	}
 
-	private void pollAndEmit() {
+	/**
+	 * Drains the event queue, emits SSE frames, polls for user interactions, and sends
+	 * heartbeats when idle.
+	 */
+	private void flushAndPoll() {
 		if (_closed.get()) {
 			return;
 		}
 
 		try {
-			ThreadContextManager.inSystemInteraction(ChatSSEHandler.class, () -> {
-				// Sync timeline events from ToolCallTracker to TaskProgressTracker
-				ChatProcessor.AIProcessingState state = _tracker.getAnyActiveProcessingState();
-				if (state != null) {
-					Chat stateChat = state.getChat();
-					if (stateChat == null) {
-						stateChat = _tracker.getChat();
-					}
-					ChatProcessor.applyPollUpdates(state, stateChat, _tracker);
-				}
+			// Drain agent events
+			AgentEvent event;
+			while ((event = _eventQueue.poll()) != null) {
+				emitAgentEvent(event);
+			}
 
-				emitDeltas();
-				return null;
-			});
+			// Poll for user interactions (from AskUserTool, not part of AgentEvent)
+			pollUserInteractions();
 		} catch (Exception e) {
-			Logger.error("Error in SSE poll", e, ChatSSEHandler.class);
+			Logger.error("Error in SSE flush", e, ChatSSEHandler.class);
 		}
 
-		// Send heartbeat if needed
+		// Heartbeat if no activity for 15s
 		long now = System.currentTimeMillis();
-		if (now - _lastHeartbeatTime > HEARTBEAT_INTERVAL_MS) {
+		if (now - _lastActivityTime > HEARTBEAT_INTERVAL_MS) {
 			sendHeartbeat();
-			_lastHeartbeatTime = now;
 		}
 	}
 
-	private void emitDeltas() {
-		Chat chat = _tracker.getChat();
-		List<ChatEntry> entries = chat.getEntries();
-
-		// Emit new messages
-		int messageIndex = 0;
-		for (ChatEntry entry : entries) {
-			if (entry instanceof ChatEntry.MessageEntry me) {
-				if (messageIndex >= _lastMessageSeq) {
-					emitMessage(me.message(), "m" + messageIndex);
-				}
-				messageIndex++;
-			}
+	private void emitAgentEvent(AgentEvent event) {
+		if (event instanceof AgentEvent.DelegatedEvent delegated) {
+			emitDelegatedEvent(delegated);
+			return;
 		}
-		_lastMessageSeq = messageIndex;
-
-		// Emit timeline events and task status
-		String currentTaskId = ChatProcessor.getCurrentTaskId(_tracker);
-
-		// Only emit task/timeline events if processing belongs to the active session
-		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
-		if (procState != null) {
-			String procSessionId = procState.getSessionId();
-			String activeSessionId = _tracker.getActiveSessionId();
-			if (procSessionId != null && !procSessionId.equals(activeSessionId)) {
-				currentTaskId = null; // Suppress task events for a different session
-			}
+		if (event instanceof AgentEvent.RunStarted e) {
+			sendEvent("run_started", DtoMapper.toJson(RunStartedEvent.create()
+				.setRunId(e.runId())
+				.setModel(e.model())));
+		} else if (event instanceof AgentEvent.RunCompleted e) {
+			_tracker.addTokenUsage(e.totalUsage());
+			sendEvent("run_completed", DtoMapper.toJson(RunCompletedEvent.create()
+				.setRunId(e.runId())
+				.setReason(e.reason().name())
+				.setTotalUsage(mapTokenUsage(e.totalUsage()))));
+		} else if (event instanceof AgentEvent.TurnStarted e) {
+			sendEvent("turn_started", DtoMapper.toJson(TurnStartedEvent.create()
+				.setTurnNumber(e.turnNumber())));
+		} else if (event instanceof AgentEvent.TurnCompleted e) {
+			sendEvent("turn_completed", DtoMapper.toJson(TurnCompletedEvent.create()
+				.setTurnNumber(e.turnNumber())
+				.setTurnUsage(mapTokenUsage(e.turnUsage()))));
+		} else if (event instanceof AgentEvent.TextDelta e) {
+			sendEvent("text_delta", DtoMapper.toJson(TextDeltaEvent.create()
+				.setText(e.text())));
+		} else if (event instanceof AgentEvent.ThinkingDelta e) {
+			sendEvent("thinking_delta", DtoMapper.toJson(ThinkingDeltaEvent.create()
+				.setText(e.text())));
+		} else if (event instanceof AgentEvent.ToolCallStarted e) {
+			sendEvent("tool_started", DtoMapper.toJson(ToolStartedEvent.create()
+				.setToolCallId(e.toolCallId())
+				.setToolName(e.toolName())
+				.setArgsJson(e.argsJson())));
+		} else if (event instanceof AgentEvent.ToolCallCompleted e) {
+			sendEvent("tool_completed", DtoMapper.toJson(ToolCompletedEvent.create()
+				.setToolCallId(e.toolCallId())
+				.setToolName(e.toolName())
+				.setResult(e.result())
+				.setDurationMs(e.duration().toMillis())));
+		} else if (event instanceof AgentEvent.ToolCallFailed e) {
+			sendEvent("tool_failed", DtoMapper.toJson(ToolFailedEvent.create()
+				.setToolCallId(e.toolCallId())
+				.setToolName(e.toolName())
+				.setErrorMessage(e.errorMessage())
+				.setDurationMs(e.duration().toMillis())));
+		} else if (event instanceof AgentEvent.ToolCallDenied e) {
+			sendEvent("tool_denied", DtoMapper.toJson(ToolDeniedEvent.create()
+				.setToolCallId(e.toolCallId())
+				.setToolName(e.toolName())
+				.setReason(e.reason())));
+		} else if (event instanceof AgentEvent.ToolCallResultTruncated) {
+			// Not surfaced to UI
+		} else if (event instanceof AgentEvent.ToolProgress e) {
+			sendEvent("tool_progress", "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
+				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
+				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}");
+		} else if (event instanceof AgentEvent.ApprovalRequired e) {
+			Logger.info("SSE: Sending approval_required for tool '" + e.toolName()
+				+ "' (approvalRequestId=" + e.approvalRequestId() + ")", ChatSSEHandler.class);
+			sendEvent("approval_required", DtoMapper.toJson(ApprovalRequiredEvent.create()
+				.setToolCallId(e.toolCallId())
+				.setApprovalRequestId(e.approvalRequestId())
+				.setToolName(e.toolName())
+				.setArgsJson(DtoMapper.mapToJsonString(e.args()))
+				.setDisplayReason(e.displayReason())));
+		} else if (event instanceof AgentEvent.ApprovalResolved e) {
+			sendEvent("approval_resolved", DtoMapper.toJson(ApprovalResolvedEvent.create()
+				.setToolCallId(e.toolCallId())
+				.setApprovalRequestId(e.approvalRequestId())
+				.setOutcome(e.outcome().name())));
+		} else if (event instanceof AgentEvent.LockAcquired) {
+			sendEvent("lock_acquired", "{}");
+		} else if (event instanceof AgentEvent.LockFailed e) {
+			sendEvent("lock_failed", "{\"reason\":\"" + escapeJson(e.reason()) + "\"}");
+		} else if (event instanceof AgentEvent.TransactionBegan) {
+			sendEvent("tx_began", "{}");
+		} else if (event instanceof AgentEvent.TransactionCommitted e) {
+			sendEvent("tx_committed", DtoMapper.toJson(TransactionCommittedEvent.create()
+				.setRevisionNumber(e.revisionNumber())));
+		} else if (event instanceof AgentEvent.TransactionRolledBack e) {
+			sendEvent("tx_rollback", DtoMapper.toJson(TransactionRolledBackEvent.create()
+				.setReason(e.reason())));
+		} else if (event instanceof AgentEvent.CompactionStarted e) {
+			sendEvent("compaction_started", DtoMapper.toJson(CompactionStartedEvent.create()
+				.setTokensBefore(e.tokensBefore())
+				.setTrigger(e.trigger())));
+		} else if (event instanceof AgentEvent.CompactionCompleted) {
+			// Not surfaced to UI
+		} else if (event instanceof AgentEvent.TaskUpdated e) {
+			sendEvent("task_update", DtoMapper.toJson(TaskUpdateEvent.create()
+				.setTasksJson(e.tasksJson())));
+		} else if (event instanceof AgentEvent.ProviderError e) {
+			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
+				.setKind(e.kind())
+				.setErrorMessage(e.message())));
 		}
+	}
 
-		if (currentTaskId != null) {
-			ChatTask task = _tracker.getTask(currentTaskId);
-			if (task != null) {
-				// Emit new timeline events
-				List<ChatTimelineEvent> timeline = task.getTimelineEvents();
-				for (int i = _lastTimelineSeq; i < timeline.size(); i++) {
-					ChatTimelineEvent ev = timeline.get(i);
-					String eventId = "e" + i;
-					emitTimelineEvent(ev, eventId);
-					// Track agent call results for update detection
-					if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
-						_agentCallResults.put(eventId, ev.getResultSummary());
-					}
-				}
-				_lastTimelineSeq = timeline.size();
+	private void emitDelegatedEvent(AgentEvent.DelegatedEvent delegated) {
+		AgentEvent child = delegated.childEvent();
+		String innerType;
+		String innerData;
 
-				// Check for updated agent call results (re-emit if changed)
-				for (int i = 0; i < timeline.size(); i++) {
-					ChatTimelineEvent ev = timeline.get(i);
-					if (ev.getKind() == ChatTimelineEvent.Kind.AGENT_CALL) {
-						String eventId = "e" + i;
-						String currentResult = ev.getResultSummary();
-						String lastResult = _agentCallResults.get(eventId);
-						if (lastResult != null && !lastResult.equals(currentResult)) {
-							// Result has changed - re-emit with updated data
-							emitTimelineEvent(ev, eventId);
-							_agentCallResults.put(eventId, currentResult);
-						}
-					}
-				}
-
-				// Emit task status change, or re-emit when description changes (placeholder rotation)
-				String currentDescription = descriptionFor(task);
-				if (_lastTaskId == null || !_lastTaskId.equals(currentTaskId) ||
-					_lastTaskStatus != task.getStatus() ||
-					!currentDescription.equals(_lastTaskDescription)) {
-					emitTaskStatus(task, currentDescription);
-					_lastTaskId = currentTaskId;
-					_lastTaskStatus = task.getStatus();
-					_lastTaskDescription = currentDescription;
-				}
-			}
-
-			// Emit pending user interaction requests
-			ChatProcessor.AIProcessingState currentState = _tracker.getAnyActiveProcessingState();
-			if (currentState != null) {
-				UserInteractionStore interactionStore = currentState.getUserInteractionStore();
-				if (interactionStore != null && interactionStore.hasPending()) {
-					for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
-						if (!_emittedInteractionIds.contains(req.getId())) {
-							emitUserInteraction(req);
-							_emittedInteractionIds.add(req.getId());
-						}
-					}
-				}
-			}
+		if (child instanceof AgentEvent.TextDelta e) {
+			innerType = "text_delta";
+			innerData = DtoMapper.toJson(TextDeltaEvent.create().setText(e.text()));
+		} else if (child instanceof AgentEvent.ThinkingDelta e) {
+			innerType = "thinking_delta";
+			innerData = DtoMapper.toJson(ThinkingDeltaEvent.create().setText(e.text()));
+		} else if (child instanceof AgentEvent.ToolCallStarted e) {
+			innerType = "tool_started";
+			innerData = DtoMapper.toJson(ToolStartedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName()).setArgsJson(e.argsJson()));
+		} else if (child instanceof AgentEvent.ToolCallCompleted e) {
+			innerType = "tool_completed";
+			innerData = DtoMapper.toJson(ToolCompletedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName())
+				.setResult(e.result()).setDurationMs(e.duration().toMillis()));
+		} else if (child instanceof AgentEvent.ToolCallFailed e) {
+			innerType = "tool_failed";
+			innerData = DtoMapper.toJson(ToolFailedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName())
+				.setErrorMessage(e.errorMessage()).setDurationMs(e.duration().toMillis()));
+		} else if (child instanceof AgentEvent.ToolProgress e) {
+			innerType = "tool_progress";
+			innerData = "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
+				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
+				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}";
+		} else if (child instanceof AgentEvent.ApprovalRequired e) {
+			innerType = "approval_required";
+			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()
+				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
+				.setToolName(e.toolName()).setArgsJson(DtoMapper.mapToJsonString(e.args()))
+				.setDisplayReason(e.displayReason()));
+		} else if (child instanceof AgentEvent.ApprovalResolved e) {
+			innerType = "approval_resolved";
+			innerData = DtoMapper.toJson(ApprovalResolvedEvent.create()
+				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
+				.setOutcome(e.outcome().name()));
+		} else if (child instanceof AgentEvent.RunStarted e) {
+			innerType = "run_started";
+			innerData = DtoMapper.toJson(RunStartedEvent.create()
+				.setRunId(e.runId()).setModel(e.model()));
+		} else if (child instanceof AgentEvent.RunCompleted e) {
+			innerType = "run_completed";
+			innerData = DtoMapper.toJson(RunCompletedEvent.create()
+				.setRunId(e.runId()).setReason(e.reason().name())
+				.setTotalUsage(mapTokenUsage(e.totalUsage())));
+		} else if (child instanceof AgentEvent.TurnStarted e) {
+			innerType = "turn_started";
+			innerData = DtoMapper.toJson(TurnStartedEvent.create()
+				.setTurnNumber(e.turnNumber()));
+		} else if (child instanceof AgentEvent.TurnCompleted e) {
+			innerType = "turn_completed";
+			innerData = DtoMapper.toJson(TurnCompletedEvent.create()
+				.setTurnNumber(e.turnNumber()).setTurnUsage(mapTokenUsage(e.turnUsage())));
+		} else if (child instanceof AgentEvent.ToolCallDenied e) {
+			innerType = "tool_denied";
+			innerData = DtoMapper.toJson(ToolDeniedEvent.create()
+				.setToolCallId(e.toolCallId()).setToolName(e.toolName())
+				.setReason(e.reason()));
+		} else if (child instanceof AgentEvent.ProviderError e) {
+			innerType = "provider_error";
+			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
+				.setKind(e.kind()).setErrorMessage(e.message()));
 		} else {
-			// Processing state cleared - but we may still need to emit final status
-			// The task still exists in tracker with COMPLETED/ERROR status
-			if (_lastTaskId != null) {
-				ChatTask task = _tracker.getTask(_lastTaskId);
-				if (task != null && _lastTaskStatus != task.getStatus()) {
-					// Emit the final status change (e.g. IN_PROGRESS -> COMPLETED)
-					emitTaskStatus(task, descriptionFor(task));
-					_lastTaskStatus = task.getStatus();
+			return;
+		}
+
+		sendEvent("delegation_event", DtoMapper.toJson(DelegationEventWrapper.create()
+			.setDelegationToolCallId(delegated.delegationToolCallId())
+			.setEventType(innerType)
+			.setEventData(innerData)));
+	}
+
+	private void pollUserInteractions() {
+		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
+		if (procState == null) {
+			return;
+		}
+		UserInteractionStore interactionStore = procState.getUserInteractionStore();
+		if (interactionStore == null || !interactionStore.hasPending()) {
+			return;
+		}
+		for (UserInteractionRequest req : interactionStore.getPendingRequests()) {
+			if (!_emittedInteractionIds.contains(req.getId())) {
+				Logger.info("Emitting user interaction event (id: " + req.getId()
+					+ ", type: " + req.getType() + ", header: " + req.getHeader() + ")",
+					ChatSSEHandler.class);
+				try {
+					sendEvent("user_interaction", DtoMapper.toJson(
+						DtoMapper.toUserInteractionEvent(req)));
+					_emittedInteractionIds.add(req.getId());
+				} catch (Exception e) {
+					Logger.error("Failed to emit user interaction event (id: " + req.getId()
+						+ ", type: " + req.getType() + ")", e, ChatSSEHandler.class);
 				}
-				// Reset for next task
-				_lastTimelineSeq = 0;
-				_lastTaskId = null;
-				_lastTaskStatus = null;
-				_lastTaskDescription = null;
-				_agentCallResults.clear();
-				_emittedInteractionIds.clear();
 			}
-		}
-
-		// Emit agent task events (from TaskStore)
-		emitAgentTaskDeltas();
-	}
-
-	private void emitMessage(ChatMessage msg, String id) {
-		try {
-			MessageDto dto = DtoMapper.toMessageDto(msg, id);
-			sendEvent("message", DtoMapper.toJson(dto));
-		} catch (Exception e) {
-			Logger.error("Failed to emit message event", e, ChatSSEHandler.class);
-		}
-	}
-
-	private void emitTimelineEvent(ChatTimelineEvent ev, String id) {
-		try {
-			TimelineEventDto dto = DtoMapper.toTimelineEventDto(ev, id);
-			String eventType = ev.getKind() == ChatTimelineEvent.Kind.TOOL_CALL ? "tool_call" : "agent_call";
-			sendEvent(eventType, DtoMapper.toJson(dto));
-		} catch (Exception e) {
-			Logger.error("Failed to emit timeline event", e, ChatSSEHandler.class);
-		}
-	}
-
-	private void emitTaskStatus(ChatTask task, String description) {
-		try {
-			TaskStatusEvent status = TaskStatusEvent.create()
-				.setTaskId(task.getId())
-				.setStatus(task.getStatus().name().toLowerCase())
-				.setDescription(description)
-				.setErrorMessage(task.getErrorMessage() != null ? task.getErrorMessage() : "");
-			sendEvent("task_status", DtoMapper.toJson(status));
-		} catch (Exception e) {
-			Logger.error("Failed to emit task status event", e, ChatSSEHandler.class);
-		}
-	}
-
-	private void emitAgentTaskDeltas() {
-		ChatProcessor.AIProcessingState activeState = _tracker.getAnyActiveProcessingState();
-		if (activeState == null) {
-			return;
-		}
-		com.top_logic.ai.service.tools.task.TaskStore taskStore = activeState.getTaskStore();
-		if (taskStore == null) {
-			return;
-		}
-
-		// Detect new processing round (new TaskStore instance = new message).
-		// Reset tracking state so tasks from the new round are emitted fresh.
-		if (taskStore != _lastTaskStore) {
-			_lastTaskStore = taskStore;
-			_lastTaskStoreVersion = 0;
-			_emittedTaskStates.clear();
-		}
-
-		int currentVersion = taskStore.getVersion();
-		if (currentVersion == _lastTaskStoreVersion) {
-			return;
-		}
-		_lastTaskStoreVersion = currentVersion;
-
-		for (com.top_logic.ai.service.tools.task.TaskStore.AgentTask task : taskStore.getAllTasks()) {
-			String stateKey = task.getId() + ":" + task.getStatus() + ":"
-				+ task.getSubject() + ":" + task.getActiveForm() + ":" + task.getOwner();
-			String lastState = _emittedTaskStates.get(task.getId());
-			if (!stateKey.equals(lastState)) {
-				String eventType = lastState == null ? "agent_task_created" : "agent_task_updated";
-				emitAgentTaskEvent(task, eventType);
-				_emittedTaskStates.put(task.getId(), stateKey);
-			}
-		}
-	}
-
-	private void emitAgentTaskEvent(
-			com.top_logic.ai.service.tools.task.TaskStore.AgentTask task, String eventType) {
-		try {
-			com.top_logic.ai.chat.api.messages.AgentTaskEvent event =
-				com.top_logic.ai.chat.api.messages.AgentTaskEvent.create()
-					.setTaskId(task.getId())
-					.setSubject(task.getSubject() != null ? task.getSubject() : "")
-					.setActiveForm(task.getActiveForm() != null ? task.getActiveForm() : "")
-					.setStatus(task.getStatus())
-					.setOwner(task.getOwner() != null ? task.getOwner() : "");
-			sendEvent(eventType, DtoMapper.toJson(event));
-		} catch (Exception e) {
-			Logger.error("Failed to emit agent task event", e, ChatSSEHandler.class);
-		}
-	}
-
-	private void emitUserInteraction(UserInteractionRequest req) {
-		try {
-			sendEvent("user_interaction", DtoMapper.toJson(
-				DtoMapper.toUserInteractionEvent(req)));
-		} catch (Exception e) {
-			Logger.error("Failed to emit user interaction event", e, ChatSSEHandler.class);
-		}
-	}
-
-	/** Interval in seconds after which the in-progress placeholder message rotates. */
-	private static final int PLACEHOLDER_ROTATE_SECONDS = 25;
-
-	/**
-	 * Returns the display description for a task: "Completed"/"Failed" when done, or a rotating
-	 * placeholder while in progress. Single source of truth for placeholder text.
-	 */
-	private static String descriptionFor(ChatTask task) {
-		switch (task.getStatus()) {
-			case COMPLETED:
-				return "Completed";
-			case ERROR:
-				return "Failed";
-			case IN_PROGRESS: {
-				long elapsedSeconds = java.time.Duration.between(
-					task.getStartTime(), java.time.Instant.now()).getSeconds();
-				int index = (int) (elapsedSeconds / PLACEHOLDER_ROTATE_SECONDS)
-					% ChatProcessor.CHAT_TASK_PLACEHOLDERS.length;
-				return ChatProcessor.CHAT_TASK_PLACEHOLDERS[index];
-			}
-			default:
-				return task.getDescription();
 		}
 	}
 
@@ -493,7 +509,6 @@ public class ChatSSEHandler {
 			Logger.error("Failed to send heartbeat", e, ChatSSEHandler.class);
 		}
 	}
-
 
 	private void sendEvent(String eventType, String data) {
 		if (_closed.get()) {
@@ -509,10 +524,40 @@ public class ChatSSEHandler {
 
 			if (_writer.checkError()) {
 				stop();
+				return;
 			}
+
+			_lastActivityTime = System.currentTimeMillis();
 		} catch (Exception e) {
 			Logger.error("Failed to write SSE event", e, ChatSSEHandler.class);
 			stop();
 		}
+	}
+
+	private static TokenUsageDto mapTokenUsage(TokenUsage usage) {
+		if (usage == null) {
+			return null;
+		}
+		return TokenUsageDto.create()
+			.setInputTokens(usage.inputTokens())
+			.setOutputTokens(usage.outputTokens())
+			.setThinkingTokens(usage.thinkingTokens())
+			.setCacheReadTokens(usage.cacheReadTokens())
+			.setCacheWriteTokens(usage.cacheWriteTokens());
+	}
+
+	/**
+	 * Minimal JSON string escaping for inline JSON values.
+	 */
+	private static String escapeJson(String value) {
+		if (value == null) {
+			return "";
+		}
+		return value
+			.replace("\\", "\\\\")
+			.replace("\"", "\\\"")
+			.replace("\n", "\\n")
+			.replace("\r", "\\r")
+			.replace("\t", "\\t");
 	}
 }

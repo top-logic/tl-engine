@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.core">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.core.model.impl"
+				interface-package="com.top_logic.tl.ai.core.model"
+			/>
+		</annotations>
+		<class name="Agent">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="AIAgent"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.ai.core:Agent#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="entryPoint"
+							fullQualifiedName="tl.ai.core:Agent#entryPoint"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="tl.ai.core:Agent#description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="model"
+							fullQualifiedName="tl.ai.core:Agent#model"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="systemPrompt"
+							fullQualifiedName="tl.ai.core:Agent#systemPrompt"
+							type="tl.core:Text"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="tools"
+							fullQualifiedName="tl.ai.core:Agent#tools"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="mcpServers"
+							fullQualifiedName="tl.ai.core:Agent#mcpServers"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="skills"
+							fullQualifiedName="tl.ai.core:Agent#skills"
+							type="tl.ai.core:Skill"
+						/>
+						<field
+							attribute="delegations"
+							fullQualifiedName="tl.ai.core:Agent#delegations"
+							type="tl.ai.core:Agent"
+						/>
+						<group>
+							<field
+								attribute="maxRetries"
+								fullQualifiedName="tl.ai.core:Agent#maxRetries"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="maxTokens"
+								fullQualifiedName="tl.ai.core:Agent#maxTokens"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="timeoutSeconds"
+								fullQualifiedName="tl.ai.core:Agent#timeoutSeconds"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="maxToolResultChars"
+								fullQualifiedName="tl.ai.core:Agent#maxToolResultChars"
+								type="tl.core:Integer"
+							/>
+							<field
+								attribute="temperature"
+								fullQualifiedName="tl.ai.core:Agent#temperature"
+								type="tl.core:Double"
+							/>
+							<field
+								attribute="topP"
+								fullQualifiedName="tl.ai.core:Agent#topP"
+								type="tl.core:Double"
+							/>
+							<label key="dynamic.b808b966-6c56-4c10-b97c-8bd4d1799f33">
+								<en>Advanced Settings</en>
+								<de>Erweiterte Einstellungen</de>
+							</label>
+						</group>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="model"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<generator class="com.top_logic.tl.ai.core.agent.AllModelNamesGenerator"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="systemPrompt"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="maxTokens"
+					type="tl.core:Integer"
+				/>
+				<property name="temperature"
+					type="tl.core:Double"
+				/>
+				<property name="topP"
+					type="tl.core:Double"
+				/>
+				<property name="timeoutSeconds"
+					type="tl.core:Integer"
+				/>
+				<property name="maxRetries"
+					type="tl.core:Integer"
+				/>
+				<property name="maxToolResultChars"
+					type="tl.core:Integer"
+				/>
+				<property name="entryPoint"
+					type="tl.core:Boolean"
+				/>
+				<property name="tools"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<generator class="com.top_logic.tl.ai.core.agent.AllToolNamesGenerator"/>
+						</options>
+					</annotations>
+				</property>
+				<property name="mcpServers"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<generator class="com.top_logic.tl.ai.core.agent.AllMcpServerNamesGenerator"/>
+						</options>
+					</annotations>
+				</property>
+				<reference name="skills"
+					inverse-reference="agents"
+					kind="forwards"
+					multiple="true"
+					type="Skill"
+				/>
+				<reference name="delegations"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Agent"
+				/>
+			</attributes>
+		</class>
+		<class name="Skill">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="AISkill"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.ai.core:Skill#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="tl.ai.core:Skill#description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="above-value"/>
+							</annotations>
+						</field>
+						<field
+							attribute="content"
+							fullQualifiedName="tl.ai.core:Skill#content"
+							type="tl.core:Text"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="above-value"/>
+							</annotations>
+						</field>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="content"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<reference name="agents"
+					inverse-reference="skills"
+					kind="backwards"
+					multiple="true"
+					type="Agent"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

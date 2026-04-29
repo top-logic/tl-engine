@@ -28,6 +28,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
@@ -68,8 +69,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
 
             for (TLObject obj : objects.getObjects()) {
                 if (obj.tType().getName().equals("Product")) {
-                    // Use casting to internal wrapper to get the underlying KnowledgeObject
-                    KnowledgeObject ko = ((com.top_logic.knowledge.wrap.Wrapper) obj).getWrappedObject();
+					KnowledgeObject ko = (KnowledgeObject) obj.tHandle();
 
                     if (ko != null) {
                         index.addContent(new ContentObject() {
@@ -128,6 +128,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
         });
     }
 
+	/** */
     public void testSemanticSearchDelete() throws Exception {
         withTestObjects(objects -> {
             VectorIndex index = VectorIndex.getInstance();
@@ -136,7 +137,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             TLObject margheritaObj = null;
             for (TLObject obj : objects.getObjects()) {
                 if (obj.tType().getName().equals("Product")) {
-                    KnowledgeObject ko = ((com.top_logic.knowledge.wrap.Wrapper) obj).getWrappedObject();
+						KnowledgeObject ko = (KnowledgeObject) obj.tHandle();
                     if (ko != null) {
                         if ("Margherita Pizza".equals(LabelProviderService.getLabel(obj))) {
                             margheritaObj = obj;
@@ -162,7 +163,10 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
                 }
             }
 
-            assertNotNull("Margherita Pizza object should have been created", margheritaObj);
+            if (margheritaObj == null) {
+				fail("Margherita Pizza object should have been created");
+				return;
+			}
 
             // Wait for background indexing thread to process
             for (int i = 0; i < 20; i++) {
@@ -191,10 +195,10 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
                 foundMargheritaBefore);
 
             // 3. Delete Action
-            KnowledgeObject koToDelete = ((com.top_logic.knowledge.wrap.Wrapper) margheritaObj).getWrappedObject();
+			KnowledgeObject koToDelete = (KnowledgeObject) margheritaObj.tHandle();
             index.deleteContent(koToDelete.tId());
 
-            try (Transaction tx = kb().beginTransaction()) {
+            try (Transaction tx = kb().beginTransaction(ResKey.text("Delete test object"))) {
                 margheritaObj.tDelete();
                 tx.commit();
             }
@@ -223,6 +227,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
         });
     }
 
+	/** */
     public void testSemanticSearchUpdate() throws Exception {
         withTestObjects(objects -> {
             VectorIndex index = VectorIndex.getInstance();
@@ -235,9 +240,12 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
                     break;
                 }
             }
-            assertNotNull("Margherita Pizza should exist", margheritaObj);
+            if (margheritaObj == null) {
+				fail("Margherita Pizza should exist");
+				return;
+			}
 
-            KnowledgeObject ko = ((com.top_logic.knowledge.wrap.Wrapper) margheritaObj).getWrappedObject();
+			KnowledgeObject ko = (KnowledgeObject) margheritaObj.tHandle();
             index.addContent(new ContentObject() {
                 @Override
                 public KnowledgeObject getKnowledgeObject() {
@@ -332,7 +340,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
         List<TLObject> createdObjects = new ArrayList<>();
 
         // 1. Transaction: Create ingredients and commit
-        try (Transaction tx = kb().beginTransaction()) {
+        try (Transaction tx = kb().beginTransaction(ResKey.text("Create test ingredients"))) {
             TLObject ingredient1 = createObject(
                 "new(`luigis.pizzashop:Ingredient`)" +
                     "..set(`luigis.pizzashop:Component#name`, 'Tomato Sauce')" +
@@ -351,7 +359,7 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
         }
 
         // Second transaction: Create products that reference the ingredients
-        try (Transaction tx = kb().beginTransaction()) {
+        try (Transaction tx = kb().beginTransaction(ResKey.text("Create test products"))) {
             // Product 1
             TLObject product1 = createObject(
                 "{ " +
@@ -420,14 +428,16 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
             TestObjects objects = new TestObjects(createdObjects);
             test.accept(objects);
             // Roll back any implicitly started transactions
-            kb().rollback();
+			try (Transaction tx = kb().beginTransaction(ResKey.text("Roll back implicit changes"))) {
+				tx.rollback(ResKey.text("Roll back implicit changes"));
+			}
         } finally {
             // Clean up created objects
-            try (Transaction tx = kb().beginTransaction()) {
+            try (Transaction tx = kb().beginTransaction(ResKey.text("Clean up test objects"))) {
                 for (TLObject obj : createdObjects) {
                     if (obj.tValid()) {
                         try {
-                            KnowledgeObject ko = ((com.top_logic.knowledge.wrap.Wrapper) obj).getWrappedObject();
+							KnowledgeObject ko = (KnowledgeObject) obj.tHandle();
                             if (ko != null) {
                                 VectorIndex.getInstance().deleteContent(ko.tId());
                             }
@@ -495,10 +505,12 @@ public class VectorIndexIntegrationTest extends BasicTestCase {
         }
     }
 
+	/** */
     public static Test suite() {
         return suite(VectorIndexIntegrationTest.class);
     }
 
+	/** */
     protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {
 
         BasicRuntimeModule<?>[] modules = getModules(additionalModules);

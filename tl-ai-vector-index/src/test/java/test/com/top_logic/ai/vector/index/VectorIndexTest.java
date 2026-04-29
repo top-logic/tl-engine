@@ -78,7 +78,7 @@ public class VectorIndexTest extends BasicTestCase {
 
 				payload.put("content", content);
 
-				contents.add(new Pair(filename, payload));
+				contents.add(new Pair<>(filename, payload));
 			} catch (IOException ex) {
 				// TODO Auto-generated catch block
 				ex.printStackTrace();
@@ -102,6 +102,7 @@ public class VectorIndexTest extends BasicTestCase {
 		}
 	}
 
+	/** */
 	public void testSearchVectorStore() {
 		this.vectorIndex = VectorIndex.getInstance();
 

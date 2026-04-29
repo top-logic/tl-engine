@@ -6,6 +6,7 @@
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app</artifactId>
 		<version>8.0.0-alpha3</version>
+		<relativePath/>
 	</parent>
 	
 	<artifactId>tl-ai-demo</artifactId>

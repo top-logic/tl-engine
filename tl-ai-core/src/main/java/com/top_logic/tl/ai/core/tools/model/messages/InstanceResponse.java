@@ -95,7 +95,7 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	 * Map of attribute names to values.
 	 *
 	 * Note: Values are serialized as JSON and need to be parsed.
-	 * Primitive values are strings, references are TLObjectReference objects,
+	 * Primitive values are strings, references are <code>TLObjectReference</code> objects,
 	 * collections are arrays.
 	 */
 	public final java.util.Map<String, String> getAttributes() {

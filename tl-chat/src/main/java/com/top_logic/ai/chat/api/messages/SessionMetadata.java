@@ -158,7 +158,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
-	 * Serialized TaskStore JSON (PersistedTaskStore format).
+	 * Serialized <code>TaskStore</code> JSON (<code>PersistedTaskStore</code> format).
 	 */
 	public final String getTasksJson() {
 		return _tasksJson;

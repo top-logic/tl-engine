@@ -18,7 +18,8 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
  * @param systemPrompt      system prompt, or {@code null} for none
  * @param maxTurns          maximum LLM call iterations before stopping (safety cap)
  * @param maxOutputTokens   maximum tokens per LLM response
- * @param modelOptions      provider-specific options (temperature, topP, thinkingBudgetTokens, etc.)
+ * @param modelOptions      provider-specific options (temperature, {@code topP},
+ *                          {@code thinkingBudgetTokens}, etc.)
  * @param responseValidator predicate tested after each LLM response; returning {@code false}
  *                          stops the loop with {@link StopReason#REJECTED}
  *

@@ -26,7 +26,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
  * Token estimator using UTF-8 byte length divided by a configurable ratio.
  *
  * <p>This heuristic (~0.25 tokens per byte for prose, ~0.5 for JSON) matches the
- * approach used by Claude Code, OpenCode, and Codex. It is fast and good enough
+ * approach used by Claude Code, {@code OpenCode}, and Codex. It is fast and good enough
  * for compaction decisions. Images are estimated at a fixed 2000 tokens.</p>
  *
  * <p>Adds per-message overhead (4 tokens for role + envelope) and per-request

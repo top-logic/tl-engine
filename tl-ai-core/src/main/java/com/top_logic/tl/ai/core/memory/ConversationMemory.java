@@ -78,12 +78,12 @@ public class ConversationMemory {
 			contextWindowTokens, DEFAULT_RESERVED_TOKENS);
 	}
 
-	/** */
+	/** Appends a message to the conversation. */
 	public void add(Message message) {
 		_conversation.add(message);
 	}
 
-	/** */
+	/** All messages in the conversation. */
 	public List<Message> messages() {
 		return _conversation.messages();
 	}
@@ -165,7 +165,7 @@ public class ConversationMemory {
 		_apiBaselineMessageCount = _conversation.messages().size();
 	}
 
-	/** */
+	/** Context window capacity minus reserved tokens. */
 	public int usableTokens() {
 		return _contextWindowTokens - _reservedTokens;
 	}
@@ -231,7 +231,7 @@ public class ConversationMemory {
 		return result;
 	}
 
-	/** */
+	/** The underlying conversation. */
 	public Conversation conversation() {
 		return _conversation;
 	}

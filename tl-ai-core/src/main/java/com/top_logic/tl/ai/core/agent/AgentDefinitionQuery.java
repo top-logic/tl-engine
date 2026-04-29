@@ -28,7 +28,7 @@ public class AgentDefinitionQuery {
 
 	private static final AgentDefinitionQuery INSTANCE = new AgentDefinitionQuery();
 
-	/** */
+	/** Singleton accessor. */
 	public static AgentDefinitionQuery getInstance() {
 		return INSTANCE;
 	}

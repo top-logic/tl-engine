@@ -7,7 +7,7 @@ option NoInterfaces;
 option NoXml;
 
 /**
- * Response returned by createTask and updateTask operations.
+ * Response returned by <code>createTask</code> and <code>updateTask</code> operations.
  */
 message TaskResponse {
 	/**
@@ -22,7 +22,7 @@ message TaskResponse {
 }
 
 /**
- * Detailed task information returned by getTask.
+ * Detailed task information returned by <code>getTask</code>.
  */
 message TaskDetail {
 	/**
@@ -97,7 +97,7 @@ message TaskSummary {
 }
 
 /**
- * Response containing the full list of tasks, returned by listTasks.
+ * Response containing the full list of tasks, returned by <code>listTasks</code>.
  */
 message TaskListResponse {
 	/**

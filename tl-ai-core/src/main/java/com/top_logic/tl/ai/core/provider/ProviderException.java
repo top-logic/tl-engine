@@ -22,7 +22,7 @@ public class ProviderException extends Exception {
 	 */
 	public enum Kind {
 
-		/** 429 — rate limited. Check {@link ProviderException#retryAfter()}. */
+		/** 429 — rate limited. Check {@link ProviderException#retryAfter() retryAfter()}. */
 		RATE_LIMITED,
 
 		/** 402 — billing or payment issue. Terminal, not retryable. */
@@ -77,12 +77,12 @@ public class ProviderException extends Exception {
 		_requestId = requestId;
 	}
 
-	/** */
+	/** The error category. */
 	public Kind kind() {
 		return _kind;
 	}
 
-	/** */
+	/** The HTTP status code from the provider, or -1 if unavailable. */
 	public int statusCode() {
 		return _statusCode;
 	}

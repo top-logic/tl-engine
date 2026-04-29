@@ -64,7 +64,7 @@ public final class ConversationLogSerializer {
 		// Static utility
 	}
 
-	/** */
+	/** Serializes a conversation log to JSON. */
 	public static String toJson(ConversationLog log) {
 		PersistedConversationV2 dto = PersistedConversationV2.create();
 		for (Turn turn : log.turns()) {
@@ -79,7 +79,7 @@ public final class ConversationLogSerializer {
 		return buffer.toString();
 	}
 
-	/** */
+	/** Deserializes a conversation log from JSON. */
 	public static ConversationLog fromJson(String json) {
 		if (json == null || json.isEmpty()) {
 			return new ConversationLog();

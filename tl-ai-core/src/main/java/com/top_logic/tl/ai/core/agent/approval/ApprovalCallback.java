@@ -15,7 +15,7 @@ import com.top_logic.tl.ai.core.agent.SecurityContext;
  * responds — the agent loop thread is already blocking by design.</p>
  *
  * <p>Core defines this interface; integrators implement it against their UI
- * (SSE, WebSocket, CLI prompt, etc.).</p>
+ * (SSE, {@code WebSocket}, CLI prompt, etc.).</p>
  *
  * @see ApprovalRequest
  * @see ApprovalResult

@@ -100,7 +100,7 @@ public class TypeInfo extends de.haumacher.msgbuf.data.AbstractDataObject implem
 	}
 
 	/**
-	 * Qualified type name (module:TypeName).
+	 * Qualified type name (module:<code>TypeName</code>).
 	 */
 	public final String getQualifiedName() {
 		return _qualifiedName;

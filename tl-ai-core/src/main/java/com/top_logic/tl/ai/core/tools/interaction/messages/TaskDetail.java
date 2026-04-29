@@ -1,7 +1,7 @@
 package com.top_logic.tl.ai.core.tools.interaction.messages;
 
 /**
- * Detailed task information returned by getTask.
+ * Detailed task information returned by <code>getTask</code>.
  */
 public class TaskDetail extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 

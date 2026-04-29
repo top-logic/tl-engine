@@ -145,7 +145,7 @@ public class SearchResult extends de.haumacher.msgbuf.data.AbstractDataObject im
 	}
 
 	/**
-	 * Which field was matched (name, qualifiedName, label, description).
+	 * Which field was matched (name, <code>qualifiedName</code>, label, description).
 	 */
 	public final String getMatchedField() {
 		return _matchedField;

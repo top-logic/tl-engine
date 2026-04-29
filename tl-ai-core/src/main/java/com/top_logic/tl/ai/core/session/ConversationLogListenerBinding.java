@@ -16,23 +16,17 @@ public class ConversationLogListenerBinding {
 
 	private static final ThreadLocal<ConversationLogListener> LISTENER = new ThreadLocal<>();
 
-	/**
-	 *
-	 */
+	/** Binds a listener to the current thread. */
 	public static void setListener(ConversationLogListener listener) {
 		LISTENER.set(listener);
 	}
 
-	/**
-	 *
-	 */
+	/** Returns the listener bound to the current thread, or {@code null}. */
 	public static ConversationLogListener getListener() {
 		return LISTENER.get();
 	}
 
-	/**
-	 *
-	 */
+	/** Removes the listener binding from the current thread. */
 	public static void clear() {
 		LISTENER.remove();
 	}

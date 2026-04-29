@@ -215,7 +215,7 @@ public class DelegationTool implements Tool {
 	@FunctionalInterface
 	public interface AgentLoopFactory {
 
-		/** */
+		/** Builds an agent loop for the named agent. */
 		AgentLoop buildAgentLoop(String agentName);
 	}
 }

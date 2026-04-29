@@ -1,7 +1,7 @@
 package com.top_logic.tl.ai.core.tools.interaction.messages;
 
 /**
- * Response containing the full list of tasks, returned by listTasks.
+ * Response containing the full list of tasks, returned by <code>listTasks</code>.
  */
 public class TaskListResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 

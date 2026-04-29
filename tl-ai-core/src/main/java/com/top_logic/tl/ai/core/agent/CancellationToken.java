@@ -30,12 +30,12 @@ public class CancellationToken {
 
 	private volatile boolean _cancelled;
 
-	/** */
+	/** Whether cancellation has been requested. */
 	public boolean isCancelled() {
 		return _cancelled;
 	}
 
-	/** */
+	/** Requests cancellation of the associated agent run. */
 	public void cancel() {
 		_cancelled = true;
 	}

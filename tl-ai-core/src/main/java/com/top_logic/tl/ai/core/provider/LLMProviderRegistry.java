@@ -124,7 +124,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		 *
 		 * <p>
 		 * Optional. May be omitted for providers that do not require authentication (e.g. local
-		 * OpenAI-compatible servers such as Ollama or LM Studio). When unset, no authentication
+		 * {@code OpenAI}-compatible servers such as Ollama or LM Studio). When unset, no authentication
 		 * header is sent.
 		 * </p>
 		 */

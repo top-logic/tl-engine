@@ -46,7 +46,7 @@ import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * {@link LLMProvider} for the OpenAI Responses API.
+ * {@link LLMProvider} for the {@code OpenAI} Responses API.
  *
  * <p>Uses {@link HttpClient} for HTTP and msgbuf {@link JsonWriter}/{@link JsonReader} for JSON.
  * Thread-safe: a single instance handles concurrent streams.</p>

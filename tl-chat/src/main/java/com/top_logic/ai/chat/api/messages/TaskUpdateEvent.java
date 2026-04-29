@@ -30,7 +30,7 @@ public class TaskUpdateEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
-	 * Full task list as JSON (PersistedTaskStore format from TaskStore.toJson()).
+	 * Full task list as JSON (<code>PersistedTaskStore</code> format from <code>TaskStore.toJson()</code>).
 	 */
 	public final String getTasksJson() {
 		return _tasksJson;

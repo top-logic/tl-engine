@@ -120,27 +120,27 @@ public class ToolDispatcher implements ToolExecutor {
 		}
 	}
 
-	/** */
+	/** Looks up a tool by name, or {@code null} if not registered. */
 	public Tool getTool(String name) {
 		return _tools.get(name);
 	}
 
-	/** */
+	/** All registered tools. */
 	public List<Tool> tools() {
 		return List.copyOf(_tools.values());
 	}
 
-	/** */
+	/** Registered tools matching the given predicate. */
 	public List<Tool> tools(Predicate<Tool> filter) {
 		return _tools.values().stream().filter(filter).toList();
 	}
 
-	/** */
+	/** Schemas of all registered tools. */
 	public List<ToolSchema> toolSchemas() {
 		return _tools.values().stream().map(Tool::schema).toList();
 	}
 
-	/** */
+	/** Schemas of registered tools matching the given predicate. */
 	public List<ToolSchema> toolSchemas(Predicate<Tool> filter) {
 		return _tools.values().stream().filter(filter).map(Tool::schema).toList();
 	}

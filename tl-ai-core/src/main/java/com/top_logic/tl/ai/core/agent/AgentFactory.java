@@ -65,7 +65,7 @@ public class AgentFactory {
 	 */
 	static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";
 
-	/** */
+	/** Singleton accessor. */
 	public static AgentFactory getInstance() {
 		return INSTANCE;
 	}

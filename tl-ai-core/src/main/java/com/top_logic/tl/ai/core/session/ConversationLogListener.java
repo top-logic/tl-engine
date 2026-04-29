@@ -23,9 +23,9 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
  * <p>Replaces {@code TimelineAgentListener} and {@code ToolCallTracking}.</p>
  *
  * <h2>Turn mapping</h2>
- * <p>One ConversationLog {@link Turn} = one user request = one agent Run.
- * The AgentLoop's internal turns (multiple LLM iterations) all accumulate
- * parts within the same Turn. The Turn is created by {@code ChatProcessor}
+ * <p>One {@link ConversationLog} {@link Turn} = one user request = one agent Run.
+ * The {@code AgentLoop}'s internal turns (multiple LLM iterations) all accumulate
+ * parts within the same {@link Turn}. The {@link Turn} is created by {@code ChatProcessor}
  * before the agent starts; this listener reuses it.</p>
  *
  * <h2>Text streaming</h2>
@@ -33,8 +33,8 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
  * before the first tool call or at run end. Real-time SSE streaming of deltas
  * is handled separately by {@code ChatSSEHandler}.</p>
  *
- * <h2>AskUser interactions</h2>
- * <p>Not modeled as AgentEvents. {@code AskUserTool} calls
+ * <h2>{@code AskUser} interactions</h2>
+ * <p>Not modeled as {@link AgentEvent}s. {@code AskUserTool} calls
  * {@link #recordInteractionStarted} and {@link #resolveInteraction} directly
  * via a thread-local reference to this listener.</p>
  */
@@ -83,6 +83,7 @@ public class ConversationLogListener implements AgentEventListener {
 		_parentListener = parentListener;
 	}
 
+	/** */
 	@Override
 	public void onEvent(AgentEvent event) {
 		if (event instanceof AgentEvent.RunStarted e) {
@@ -294,7 +295,7 @@ public class ConversationLogListener implements AgentEventListener {
 	// ---- AskUser interaction support ----
 
 	/**
-	 * Record the start of an askUser interaction. Returns the part ID.
+	 * Record the start of an {@code askUser} interaction. Returns the part ID.
 	 */
 	public String recordInteractionStarted(String interactionType, String question,
 			String header, List<String> options, boolean multiSelect) {
@@ -337,7 +338,7 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 	}
 
-	/** */
+	/** Records a user cancellation as a system event on the current turn. */
 	public void recordCancellation() {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
@@ -372,7 +373,7 @@ public class ConversationLogListener implements AgentEventListener {
 	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.DelegatedEvent}.
 	 *
 	 * @param delegationId
-	 *        the ConversationLog part ID for this delegation
+	 *        the {@link ConversationLog} part ID for this delegation
 	 * @param delegationToolCallId
 	 *        the parent agent's tool call ID for the {@code delegate_to_*} tool, used by the SSE
 	 *        handler to route events to the correct delegation in the browser

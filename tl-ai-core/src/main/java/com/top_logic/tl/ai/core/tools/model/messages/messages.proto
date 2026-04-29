@@ -44,7 +44,7 @@ message ModuleInfo {
 
 	/**
 	 * Whether this is a framework/platform module (true) or an application domain module (false).
-	 * Framework modules include tl.*, tl5.*, and infrastructure modules (orgStructure, mandatorStructure, etc.).
+	 * Framework modules include tl.*, tl5.*, and infrastructure modules (<code>orgStructure</code>, <code>mandatorStructure</code>, etc.).
 	 */
 	bool frameworkModule;
 }
@@ -69,7 +69,7 @@ message TypeInfo {
 	string name;
 
 	/**
-	 * Qualified type name (module:TypeName).
+	 * Qualified type name (module:<code>TypeName</code>).
 	 */
 	string qualifiedName;
 
@@ -429,7 +429,7 @@ message InstanceResponse {
 	 * Map of attribute names to values.
 	 *
 	 * Note: Values are serialized as JSON and need to be parsed.
-	 * Primitive values are strings, references are TLObjectReference objects,
+	 * Primitive values are strings, references are <code>TLObjectReference</code> objects,
 	 * collections are arrays.
 	 */
 	map<string, string> attributes;
@@ -775,7 +775,7 @@ message SearchResult {
 	int score;
 
 	/**
-	 * Which field was matched (name, qualifiedName, label, description).
+	 * Which field was matched (name, <code>qualifiedName</code>, label, description).
 	 */
 	string matchedField;
 

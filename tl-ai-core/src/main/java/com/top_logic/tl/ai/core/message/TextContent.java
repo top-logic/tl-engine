@@ -10,6 +10,8 @@ import java.util.Objects;
 /**
  * A text content block within a message.
  *
+ * @param text the text content
+ *
  * @see ContentPart
  */
 public record TextContent(String text) implements ContentPart {

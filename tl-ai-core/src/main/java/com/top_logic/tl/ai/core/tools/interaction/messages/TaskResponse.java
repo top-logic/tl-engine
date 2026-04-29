@@ -1,7 +1,7 @@
 package com.top_logic.tl.ai.core.tools.interaction.messages;
 
 /**
- * Response returned by createTask and updateTask operations.
+ * Response returned by <code>createTask</code> and <code>updateTask</code> operations.
  */
 public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 

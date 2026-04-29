@@ -624,7 +624,7 @@ message CompactionStartedEvent {
 
 /** SSE event for task list update. Carries the full task list snapshot. */
 message TaskUpdateEvent {
-	/** Full task list as JSON (PersistedTaskStore format from TaskStore.toJson()). */
+	/** Full task list as JSON (<code>PersistedTaskStore</code> format from <code>TaskStore.toJson()</code>). */
 	string tasksJson;
 }
 
@@ -669,7 +669,7 @@ message SessionMetadata {
 	/** Current approval mode (e.g. AUTO_APPROVE, ALWAYS_ASK). */
 	string approvalMode;
 
-	/** Serialized TaskStore JSON (PersistedTaskStore format). */
+	/** Serialized <code>TaskStore</code> JSON (<code>PersistedTaskStore</code> format). */
 	string tasksJson;
 }
 

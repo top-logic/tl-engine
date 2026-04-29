@@ -10,11 +10,11 @@ import java.net.http.HttpClient;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 
 /**
- * xAI provider implementation.
+ * {@code xAI} provider implementation.
  *
  * <p>
- * xAI's inference API is OpenAI-compatible. Therefore this provider reuses the robust
- * {@link OpenAIProvider} request/stream/error handling and only changes the default base URL.
+ * The {@code xAI} inference API is {@code OpenAI}-compatible. Therefore this provider reuses the
+ * robust {@link OpenAIProvider} request/stream/error handling and only changes the default base URL.
  * </p>
  */
 public class XAIProvider extends OpenAIProvider {
@@ -22,7 +22,7 @@ public class XAIProvider extends OpenAIProvider {
 	private static final String DEFAULT_BASE_URL = "https://api.x.ai";
 
 	/**
-	 * Creates an {@link XAIProvider} using xAI default endpoint.
+	 * Creates an {@link XAIProvider} using the {@code xAI} default endpoint.
 	 */
 	public XAIProvider(String apiKey) {
 		super(apiKey, DEFAULT_BASE_URL);

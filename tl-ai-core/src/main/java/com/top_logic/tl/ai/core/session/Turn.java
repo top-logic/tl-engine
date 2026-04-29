@@ -18,8 +18,9 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  * (text, tool calls, approvals, interactions, etc.).</p>
  *
  * <p><b>Important:</b> One Turn corresponds to one user request, NOT one
- * AgentLoop iteration. A single user message may trigger multiple AgentLoop
- * turns (LLM call - tool execution - LLM call - ...). All of those iterations
+ * {@link com.top_logic.tl.ai.core.agent.AgentLoop AgentLoop} iteration. A single user message
+ * may trigger multiple {@link com.top_logic.tl.ai.core.agent.AgentLoop AgentLoop} turns
+ * (LLM call - tool execution - LLM call - ...). All of those iterations
  * accumulate parts and token usage into this single Turn.</p>
  */
 public class Turn {
@@ -64,32 +65,32 @@ public class Turn {
 		_timestamp = Instant.now();
 	}
 
-	/** */
+	/** Unique turn identifier. */
 	public String id() {
 		return _id;
 	}
 
-	/** */
+	/** 1-based loop iteration number. */
 	public int turnNumber() {
 		return _turnNumber;
 	}
 
-	/** */
+	/** When this turn was created. */
 	public Instant timestamp() {
 		return _timestamp;
 	}
 
-	/** */
+	/** The user-submitted parts for this turn. */
 	public List<Part> userParts() {
 		return _userParts;
 	}
 
-	/** */
+	/** Sets the user-submitted parts for this turn. */
 	public void setUserParts(List<Part> parts) {
 		_userParts = List.copyOf(parts);
 	}
 
-	/** */
+	/** Immutable snapshot of the assistant's response parts. */
 	public List<Part> assistantParts() {
 		return List.copyOf(_assistantParts);
 	}
@@ -135,45 +136,46 @@ public class Turn {
 		}
 	}
 
-	/** */
+	/** Registers an observer for part changes in this turn. */
 	public void addObserver(Observer observer) {
 		_observers.add(observer);
 	}
 
-	/** */
+	/** Removes a previously registered observer. */
 	public void removeObserver(Observer observer) {
 		_observers.remove(observer);
 	}
 
-	/** */
+	/** The LLM model used for this turn. */
 	public String model() {
 		return _model;
 	}
 
-	/** */
+	/** Sets the LLM model used for this turn. */
 	public void setModel(String model) {
 		_model = model;
 	}
 
-	/** */
+	/** The LLM provider that handled this turn. */
 	public String provider() {
 		return _provider;
 	}
 
-	/** */
+	/** Sets the LLM provider that handled this turn. */
 	public void setProvider(String provider) {
 		_provider = provider;
 	}
 
 	/**
-	 * Cumulative token usage across all AgentLoop iterations in this turn.
+	 * Cumulative token usage across all {@link com.top_logic.tl.ai.core.agent.AgentLoop} iterations
+	 * in this turn.
 	 */
 	public TokenUsage cumulativeUsage() {
 		return _cumulativeUsage;
 	}
 
 	/**
-	 * Add token usage from one AgentLoop iteration.
+	 * Add token usage from one {@link com.top_logic.tl.ai.core.agent.AgentLoop} iteration.
 	 */
 	public void addUsage(TokenUsage turnUsage) {
 		_cumulativeUsage = _cumulativeUsage.add(turnUsage);

@@ -392,7 +392,7 @@ public final class DtoMapper {
 	 *
 	 * @param json
 	 *        The metadata JSON; may be null or empty.
-	 * @return A TaskStore populated from the metadata, or an empty store.
+	 * @return A {@code TaskStore} populated from the metadata, or an empty store.
 	 */
 	public static TaskStore loadTaskStore(String json) {
 		if (json == null || json.isEmpty()) {

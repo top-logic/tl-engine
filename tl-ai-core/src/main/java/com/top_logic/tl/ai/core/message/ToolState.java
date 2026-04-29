@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * Lifecycle state of a tool execution.
  *
- * <p>Tools transition through: {@link Pending} &rarr; {@link Running} &rarr;
+ * <p>Tools transition through: {@link Pending} &#x2192; {@link Running} &#x2192;
  * {@link Completed} or {@link Failed}. The agent loop uses these states for
  * error recovery (detecting interrupted tools) and compaction (clearing old results).</p>
  *

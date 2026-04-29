@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>Observers are notified on every structural change (turn start/complete,
  * part add/update), enabling push-based SSE streaming and persistence.</p>
  *
- * <p><b>Threading:</b> A Turn is started by the servlet thread (in
+ * <p><b>Threading:</b> A {@link Turn} is started by the servlet thread (in
  * {@code sendMessage}), then parts are added by the agent background thread.
  * {@link CopyOnWriteArrayList} and {@code volatile} provide thread safety.</p>
  */
@@ -91,27 +91,27 @@ public class ConversationLog {
 		}
 	}
 
-	/** */
+	/** The turn currently being processed, or {@code null} if idle. */
 	public Turn currentTurn() {
 		return _currentTurn;
 	}
 
-	/** */
+	/** Immutable snapshot of all turns in this conversation. */
 	public List<Turn> turns() {
 		return List.copyOf(_turns);
 	}
 
-	/** */
+	/** Number of turns recorded so far. */
 	public int turnCount() {
 		return _turns.size();
 	}
 
-	/** */
+	/** Registers an observer for turn lifecycle events. */
 	public void addObserver(Observer observer) {
 		_observers.add(observer);
 	}
 
-	/** */
+	/** Removes a previously registered observer. */
 	public void removeObserver(Observer observer) {
 		_observers.remove(observer);
 	}

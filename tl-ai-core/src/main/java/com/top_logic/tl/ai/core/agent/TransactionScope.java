@@ -20,6 +20,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -244,7 +245,11 @@ public class TransactionScope implements AutoCloseable {
 				for (Token token : info.getTokens()) {
 					for (TLObject target : targets) {
 						if (target.equals(token.getObject())) {
-							return info.getOwner() != null ? info.getOwner().toString() : "unknown";
+							TLObject owner = info.getOwner();
+							if (owner instanceof TLNamed named) {
+								return named.getName();
+							}
+							return owner != null ? owner.toString() : "unknown";
 						}
 					}
 				}

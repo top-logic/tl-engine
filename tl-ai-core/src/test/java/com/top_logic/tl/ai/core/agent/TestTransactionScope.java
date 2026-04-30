@@ -40,7 +40,7 @@ public class TestTransactionScope extends TestCase {
 	 */
 	public void testNoOpLocking() {
 		TransactionScope scope = TransactionScope.NOOP;
-		scope.acquireLock();
+		scope.acquireLock("test");
 		assertFalse(scope.holdsLock());
 		scope.releaseLock();
 	}

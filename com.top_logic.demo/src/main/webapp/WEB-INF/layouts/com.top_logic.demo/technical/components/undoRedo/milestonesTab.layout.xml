@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments>
+		<tabLabel key="dynamic.undoRedo-milestonesTab-label">
+			<en>Milestones</en>
+			<de>Meilensteine</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/milestonesLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

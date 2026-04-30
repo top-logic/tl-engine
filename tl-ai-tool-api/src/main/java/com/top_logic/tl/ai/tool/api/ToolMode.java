@@ -16,7 +16,10 @@ public enum ToolMode {
 	/** Tool makes changes scoped to the current user only (temp views, personal dashboards). */
 	USER_SCOPED,
 
-	/** Tool makes changes to shared application state (model, layouts, workflows). */
-	GLOBAL;
+	/** Tool writes shared application data (instances, records). */
+	DATA_WRITE,
+
+	/** Tool modifies application structure (model, schema, annotations). */
+	STRUCTURAL;
 
 }

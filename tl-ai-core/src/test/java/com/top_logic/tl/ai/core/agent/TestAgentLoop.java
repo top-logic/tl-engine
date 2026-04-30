@@ -592,7 +592,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * GLOBAL tool in PRODUCTION mode is denied by system mode gate.
+	 * STRUCTURAL tool in PRODUCTION mode is denied by system mode gate.
 	 */
 	public void testSystemModeGateDeniesGlobalInProduction() {
 		Conversation conv = new Conversation();
@@ -614,7 +614,7 @@ public class TestAgentLoop extends TestCase {
 				fail("Tool should not execute in production mode");
 				return ToolResult.of("");
 			}
-			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
 		});
 		registry.freeze();
 
@@ -634,7 +634,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * GLOBAL tool in DEVELOPMENT mode passes system gate. With auto-approve, tool executes.
+	 * STRUCTURAL tool in DEVELOPMENT mode passes system gate. With auto-approve, tool executes.
 	 */
 	public void testSystemModeGateAllowsGlobalInDevelopment() {
 		Conversation conv = new Conversation();
@@ -878,7 +878,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				return ToolResult.of("Result of " + name);
 			}
-			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
 		};
 	}
 
@@ -974,7 +974,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Listener receives onPermissionDenied when system mode gate blocks a GLOBAL tool.
+	 * Listener receives onPermissionDenied when system mode gate blocks a STRUCTURAL tool.
 	 */
 	public void testListenerOnPermissionDenied() {
 		Conversation conv = new Conversation();
@@ -1072,7 +1072,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * In PRODUCTION mode, GLOBAL tool specs are not sent to the LLM at all.
+	 * In PRODUCTION mode, STRUCTURAL tool specs are not sent to the LLM at all.
 	 */
 	public void testToolSpecsFilteredBySecurityContext() {
 		Conversation conv = new Conversation();
@@ -1275,7 +1275,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				throw new RuntimeException("Something went wrong");
 			}
-			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
 		});
 		registry.freeze();
 
@@ -1411,7 +1411,66 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * GLOBAL tools are always executed sequentially, even if marked concurrencySafe.
+	 * Lock failure on one tool must not poison subsequent turns — each call to
+	 * {@code ensureTransaction} is independent. Regression test for the architecture
+	 * where lock acquisition moved from a batch-level pre-loop into the per-tool
+	 * security-check path.
+	 */
+	public void testLockFailureIsolatedToFailingTool() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
+
+		LLMProvider provider = mockProvider(
+			List.of(toolCall),
+			List.of(new TextContent("Gave up.")));
+
+		ToolDispatcher registry = new ToolDispatcher();
+		registry.register(globalTool("edit_model", toolSpec));
+		registry.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.LockFailed) {
+				events.add("lock_failed");
+			} else if (e instanceof AgentEvent.TransactionBegan) {
+				events.add("tx_begin");
+			}
+		};
+
+		TransactionScope failingScope = new TestableTransactionScope() {
+			@Override
+			public void acquireLock() {
+				throw new TransactionException("Locked by Developer A");
+			}
+		};
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
+			failingScope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		// The loop should reach COMPLETE: lock failure produced a tool error that was
+		// fed back to the LLM, which then responded with a plain text answer.
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Lock failure should be reported", events.contains("lock_failed"));
+		assertFalse("Transaction must not begin when lock acquisition fails",
+			events.contains("tx_begin"));
+
+		// The conversation must contain the failed tool result so the LLM can adapt.
+		boolean hasFailedResult = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.anyMatch(tr -> tr.state() instanceof ToolState.Failed failed
+				&& failed.error().contains("Cannot edit"));
+		assertTrue("Failed tool result with lock error should be in conversation",
+			hasFailedResult);
+	}
+
+	/**
+	 * STRUCTURAL tools are always executed sequentially, even if marked concurrencySafe.
 	 * Listener events fire correctly for concurrent READ tools.
 	 */
 	public void testGlobalToolsForcedSequential() {
@@ -1450,8 +1509,8 @@ public class TestAgentLoop extends TestCase {
 		AgentLoop loop = new AgentLoop(config(), provider, registry);
 		loop.run(conv, ctx, listener);
 
-		// write1 should have approval event (it's GLOBAL, needs approval in dev mode)
-		assertTrue("GLOBAL tool should trigger approval",
+		// write1 should have approval event (it's STRUCTURAL, needs approval in dev mode)
+		assertTrue("STRUCTURAL tool should trigger approval",
 			events.contains("approval:write1"));
 		// All tools should have start and complete events (listener passed everywhere)
 		assertTrue(events.contains("start:read1"));

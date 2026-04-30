@@ -10,8 +10,8 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
 /**
  * The system's current execution mode.
  *
- * <p>Affects which tools the system allows. {@link ToolMode#GLOBAL GLOBAL} tools (those that modify
- * shared application state) are only permitted in {@link #DEVELOPMENT} and
+ * <p>Affects which tools the system allows. {@link ToolMode#STRUCTURAL STRUCTURAL} tools (those that
+ * modify application structure) are only permitted in {@link #DEVELOPMENT} and
  * {@link #MAINTENANCE} modes, never in {@link #PRODUCTION}.</p>
  *
  * <p>The bridge module maps this to TopLogic's {@code MaintenanceWindowManager} states.</p>
@@ -23,7 +23,7 @@ public enum ExecutionMode {
 	/** Development environment. All tool modes permitted. */
 	DEVELOPMENT,
 
-	/** Production environment. GLOBAL tools are denied by the system. */
+	/** Production environment. STRUCTURAL tools are denied by the system. */
 	PRODUCTION,
 
 	/** Maintenance window active. All tool modes permitted. */

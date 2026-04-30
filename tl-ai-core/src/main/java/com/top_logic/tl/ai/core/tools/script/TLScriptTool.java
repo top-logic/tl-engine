@@ -113,7 +113,7 @@ public class TLScriptTool {
 	 *        Optional arguments to pass to the script ($arg1, $arg2, ...).
 	 * @return JSON object containing execution result or error details.
 	 */
-	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.")
+	@ToolMethod(description = "Execute TLScript code and return results. Validates script before execution. Read-only by default; set withCommit=true to persist modifications.", mode = ToolMode.DATA_WRITE)
 	public String executeTLScript(
 			@P("TLScript code to execute") String script,
 			@P("If true, execute within transaction and commit changes (default: false)") Boolean withCommit,

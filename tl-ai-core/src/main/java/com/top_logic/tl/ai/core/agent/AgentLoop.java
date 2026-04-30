@@ -597,7 +597,7 @@ public class AgentLoop {
 		// Step 2+3: Mode gate + approval (only for registered tools with metadata)
 		if (tool != null) {
 			// System mode gate
-			if (tool.mode() == ToolMode.GLOBAL
+			if (tool.mode() == ToolMode.STRUCTURAL
 					&& security.executionMode() == ExecutionMode.PRODUCTION) {
 				String reason = "Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
 					+ "application state, which requires maintenance or development mode. "
@@ -791,7 +791,7 @@ public class AgentLoop {
 	 * Call the LLM provider and collect the response.
 	 *
 	 * <p>Filters tool schemas dynamically based on the security context: tools the
-	 * user lacks permission for, and GLOBAL tools in PRODUCTION mode, are excluded
+	 * user lacks permission for, and STRUCTURAL tools in PRODUCTION mode, are excluded
 	 * from the request so the LLM never sees capabilities it cannot use.</p>
 	 */
 	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
@@ -801,7 +801,7 @@ public class AgentLoop {
 			if (!security.hasToolPermission(tool)) {
 				return false;
 			}
-			if (tool.mode() == ToolMode.GLOBAL
+			if (tool.mode() == ToolMode.STRUCTURAL
 					&& security.executionMode() == ExecutionMode.PRODUCTION) {
 				return false;
 			}

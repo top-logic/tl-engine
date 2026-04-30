@@ -94,7 +94,7 @@ public class ScriptToolExecutor implements Tool {
 		if (_concurrencySafe != null) {
 			return _concurrencySafe;
 		}
-		return _mode != ToolMode.GLOBAL;
+		return _mode != ToolMode.STRUCTURAL;
 	}
 
 	@Override

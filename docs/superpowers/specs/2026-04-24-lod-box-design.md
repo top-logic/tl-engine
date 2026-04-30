@@ -253,14 +253,64 @@ Damit das Konzept nicht nur Gantt-intern ist, sollten wir ≥ 2 nicht-Gantt-Fäl
 3. **Graph-Nodes bei Diagram-Zoom** — wenn der ganze Diagram-Viewport gezoomt wird (nicht Gantt-Fall, aber `FlowDiagramClientControl` hat ein Diagram-Pan/Zoom), dann reicht `DiagramOperations.draw` den Zoom als `zoomX=zoomY=currentScale` durch. Knotenboxen mit LOD können daraufhin Labels ausblenden.
 4. **Tabellen-Zellen in `GridLayout`** — wenn eine Spalte schmal ist, fallback auf abgekürzten Inhalt.
 
-## Zusammenspiel mit Axis-Providern **[offen]**
+## Zusammenspiel mit Axis-Providern **[entschieden — konvergent]**
 
-Axis-Ticks werden heute vom `AxisProvider` clientseitig erzeugt. Die haben schon eine *implizite* LOD-Logik ("bei zoom < X zeig nur Jahre, sonst Monate"). Zwei Möglichkeiten:
+Axis-Ticks werden heute vom serverseitigen `AxisProvider` (Java-Interface, registriert in `AxisProviderService`, ausgewählt über `GanttAxis.providerId`) erzeugt: pro Aufruf `(rangeMin, rangeMax, pixelsPerUnit) → AxisContent(rows, items)`. Die Methode hat schon eine *implizite* LOD-Logik ("bei zoom < X zeig nur Jahre, sonst Monate"), eingebrannt in Java.
 
-- **Konvergent**: AxisProvider liefern schon LOD-Boxen als Tick-Labels. Die Wahl erfolgt dann zentral im LOD-Mechanismus, AxisProvider müssen nicht mehr selbst entscheiden.
-- **Parallel**: AxisProvider bleiben eigenständig (sie wissen ohnehin besser, was pro Zeitauflösung sinnvoll ist). LOD gilt nur für Item-Inhalt.
+**Beobachtung:** `AxisProvider` ist konzeptionell schon ein Box-Generator — er liefert `Text.create()...`-Items. Was er an Eigenleistung erbringt, ist (a) Tick-Enumeration in einem Range, (b) Granularitätswahl über Zoom. Beides lässt sich in Flow-Mechanik ausdrücken, sobald LOD steht — die visuelle Tick-Erzeugung wird damit komplett zu regulärem Diagrammaufbau.
 
-Empfehlung: **parallel**. AxisProvider treffen Entscheidungen basierend auf Tick-Dichte und Semantik (Monatsgrenzen), das ist reichhaltiger als was generisches LOD leisten kann. LOD adressiert den primären Anwendungsfall "Item-Inhalt".
+### Phase-1-Vorgehen: pure Flow-Mechanik
+
+Achseninhalt wird durch reguläre `GanttSpan`/`GanttPoint`-Items mit LOD-Boxen als Inhalt ausgedrückt. Beispiel für die Demo (Tage-seit-Epoch-Achse):
+
+```
+// Year row: ein GanttSpan pro Jahr, Inhalt zoom-adaptiv
+GanttSpan jan-dec 2024
+   .box = LOD(
+              Text("2024"),     // reichste Variante
+              Text("'24"),      // mittel
+              empty             // Fallback
+           )
+
+// Month row: ein GanttPoint pro Monatsanfang
+GanttPoint 2024-03-01
+   .box = LOD(
+              Text("March 2024"),
+              Text("Mar"),
+              Text("M"),
+              empty
+           )
+
+// Day row: ein GanttPoint pro Tag
+GanttPoint 2024-03-15
+   .box = LOD(
+              Text("Fri 15"),
+              Text("15"),
+              tickMark(),
+              empty
+           )
+```
+
+**Inter-Layer-Suppression emergiert** aus der LOD-Wahl pro Tick: bei `zoom = 0.5 px/day` ist ein Monat 15 px breit, keine Variante außer Empty passt — die Monatszeile zeigt nur leere Inhalte. Bei `zoom = 50 px/day` ist ein Tag 50 px breit, "Fri 15" passt, die Tageszeile materialisiert. Keine `activeWhen`-Schwellen, keine zentrale Dispatch-Logik nötig.
+
+### Was bleibt vom AxisProvider
+
+Die Java-Schnittstelle `AxisProvider` schrumpft auf **Achsen-Semantik**, nicht mehr Achsen-*Inhalt*:
+
+- **Snap-Granularität** (`snapGranularity(pixelsPerUnit) → double`) — Metadaten zur Achse, vom Client für Drag-Rounding gebraucht. Kein Box-Inhalt, also keine Auflösung in Flow-Mechanik. Bleibt auf der Schnittstelle (oder wandert auf `GanttAxis` als Skalar/Recipe).
+- **Position ↔ Domain-Wert-Konvertierung** — `toPosition(date) → double`, `fromPosition(double) → date`. Wird für Drag&Drop-Snap, Tooltips, Server-Verifikation gebraucht. Bleibt anwendungsseitig, getrennt vom visuellen Achsenaufbau.
+
+Die *Tick-Erzeugung* verschwindet aus `AxisProvider`. Eine Anwendung produziert Achsen-Items zusammen mit den fachlichen Items beim Modellaufbau — durch denselben Mechanismus, mit dem sie heute Items erzeugt (Java/TL-Script/Modell-Konfiguration), mit LOD-Boxen als Inhalt.
+
+### Lazy-Materialisierung als Folge-Optimierung
+
+Statisches Materialisieren aller Ticks aller Granularitäten ist für kleine bis mittlere Diagramme unproblematisch. Für große Ranges (10 Jahre Tagesticks ≈ 3650 Items, davon 99 % nie sichtbar) brauchen wir später eine **Tick-Grammatik** als Datenstruktur: geschlossenes Vokabular `unit ∈ {YEAR, QUARTER, MONTH, WEEK, DAY, HOUR, MINUTE}` plus Anker und Label-Format. Der zugehörige Iterator wird als gewöhnlicher Java-Code in `flow.common` implementiert — läuft client- *und* serverseitig (PDF-Generierung) — und materialisiert Ticks im sichtbaren Range on-demand.
+
+Dies ist **nicht Phase 1**. Erst wenn die pure-Flow-Mechanik-Lösung steht und gemessene Range-Größen die Optimierung verlangen.
+
+### Eject-Hatch für domänenspezifische Achsen
+
+Für Achsen, die das Tick-Grammatik-Vokabular nicht abdeckt (Sprints, Fiskal-Quartale mit anwendungsspezifischer Semantik), bleibt der Weg "Anwendung emittiert Items in TL-Script oder Java beim Modellaufbau" offen — das ist der Phase-1-Default ohne Sonderfall. Eine eigene serverseitige TL-Script-Funktion, die nur für Achsen aufgerufen wird, ist nicht nötig.
 
 ## TL-Script-API (Entwurf)
 
@@ -294,12 +344,24 @@ reactFlowLODGated(
 | 3  | Ein Zoom-Skalar vs zwei vs volle Matrix                            | zwei Skalare (`zoomX`, `zoomY`) im `RenderContext` |
 | 4  | Auto-Fit vs deklarierte `minWidth`-Schwellen                       | **entschieden**: Auto-Fit primär, `minWidth`/`minZoom` als optionale Zusatz-Gates |
 | 5  | Variante-abhängige vs fixe intrinsische Höhe                       | variabel, opt-in `fixedHeight` bei `LOD`           |
-| 6  | Axis-Ticks via LOD integrieren?                                    | nein, parallel belassen                            |
+| 6  | Axis-Ticks via LOD integrieren?                                    | **entschieden**: ja, konvergent. Achseninhalt = reguläre Items mit LOD-Boxen; `AxisProvider` schrumpft auf Snap + Position-Konversion |
 | 7  | LOD als `Box`-Subtyp vs als Markierungs-Decorator (wie `Fill`)     | `Box`-Subtyp, analog zu `Stack`                    |
 | 8  | Unterstützt eine Variante ihrerseits LOD (Rekursion)?              | ja — emergiert natürlich aus der Semantik          |
 | 9  | Hysterese beim Varianten-Wechsel?                                  | **[offen]** erst nach Nutzer-Feedback entscheiden  |
 | 10 | Animation zwischen Varianten?                                      | erst einmal nein; harter Snap                      |
 | 11 | Verhalten in Flex-Containern, wo `availableWidth` erst in distribute bekannt ist | **[offen]**: vorerst Richest-Wahl mit `POSITIVE_INFINITY`; iteratives Reflow-Protokoll als Folgeticket |
+
+## Validierung in Phase 1
+
+Drei Punkte, die der erste Prototyp verproben muss, bevor die Konvergenz "Achse = LOD-Items" als tragfähig gilt:
+
+1. **Leerzeilen-Kollaps.** Eine Tageszeile, deren Ticks bei niedrigem Zoom alle die Empty-Variante wählen, soll keine Row-Höhe belegen. Frage: kollabiert `GanttLayout.computeIntrinsicSize` automatisch korrekt, sobald die Row-Höhe aus den maximalen Item-Intrinsic-Höhen entsteht (Empty-Box hat Höhe 0 → Row-Höhe 0)? Oder brauchen wir eine explizite "Row sichtbar wenn mindestens ein Item nicht-leer"-Regel? Verprobungsschritt: Demo mit drei Tick-Zeilen (Year/Month/Day) bauen, durch Zoom-Range fahren, Row-Heights inspizieren.
+
+2. **Snap-Granularität in Phase 1.** `snapGranularity(pixelsPerUnit)` ist Metadaten, kein Box-Inhalt — geht nicht in Flow-Mechanik auf. Phase-1-Vorschlag: bleibt vorerst ein einfacher Skalar auf `GanttAxis` (z. B. immer 1.0 für die Demo). Folgeüberlegung: später ein deklaratives Recipe "snap = die Periode der feinsten visuell aktiven Zeile" — allerdings erst, *nachdem* wir verstanden haben, wie sich "visuell aktive Zeile" sauber aus LOD ableitet (siehe Punkt 1).
+
+3. **Position ↔ Domain-Wert-Konvertierung.** Drag&Drop-Snap, Tooltips, Server-seitige Verifikation brauchen die Konvertierung "Position 19432 ↔ 2023-03-15". Das ist nicht visuell — es ist semantisch. Phase-1-Vorschlag: bleibt eine schmale anwendungsseitige API (im Rumpf des heutigen `AxisProvider` oder als separates `AxisSemantics`-Interface), getrennt vom visuellen Achsenaufbau. Konsequenz: aus `AxisProvider` wird nicht "weg", sondern "schrumpft auf Position-Konversion + Snap"; die `buildAxis(...)`-Methode entfällt.
+
+Wenn alle drei Punkte sauber durchlaufen, ist die Konvergenz validiert und die Lazy-Materialisierung (Tick-Grammatik-Iterator) eine reine Performance-Folgearbeit.
 
 ## Was eine spätere Implementation-Plan-Iteration klären muss
 
@@ -307,6 +369,7 @@ reactFlowLODGated(
 - Soll die Varianten-Wahl in `distributeSize` revidiert werden dürfen (wenn `distributeSize` eine andere Breite zuteilt als der Intrinsic-Pass-Hint)? Relevant für Flex-Container (Frage #11).
 - Wie reagiert der Client (`FlowDiagramClientControl`) auf Zoom-Änderungen? Aktuell löst Zoom ein vollständiges Re-Layout aus (GanttLayoutOperations.computeIntrinsicSize wird wieder gerufen) — das würde LOD automatisch neu entscheiden. Das ist der Happy Path.
 - Test: scripted test, der bei verschiedenen `zoom`-Werten prüft, welche Variante aktiv ist (per `__tlWidget`-Attribut auslesbar).
+- Migration der heutigen `AxisProvider`-Implementationen: `buildAxis(...)` entfällt; die Demo-Achse `DaysSinceEpochAxisProvider` wird in eine Modell-Aufbau-Funktion überführt, die Tick-Items mit LOD-Boxen emittiert. Position-Konvertierung und `snapGranularity` bleiben oder wandern in ein eigenes (kleineres) Interface.
 
 ## Nicht-Ziele
 

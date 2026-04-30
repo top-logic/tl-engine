@@ -9,7 +9,8 @@ package com.top_logic.tl.ai.core.agent;
  * Wraps failures from the transaction or locking layer.
  *
  * <p>Thrown by {@link TransactionScope#commit()} when the underlying KB transaction
- * fails, or by {@link TransactionScope#acquireLock()} when a lock cannot be acquired.</p>
+ * fails, or by {@link TransactionScope#acquireLock(String, com.top_logic.model.TLObject...)}
+ * when a lock cannot be acquired.</p>
  *
  * @see TransactionScope
  */

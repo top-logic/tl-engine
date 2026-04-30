@@ -435,15 +435,16 @@ public class AgentLoop {
 
 	/**
 	 * Ensure a transaction is active before executing a write tool.
-	 * Acquires the lock and begins a transaction on first write.
+	 * Begins a transaction on first write. Locking is handled by individual
+	 * tools via {@link TransactionScope#acquireLock(String, com.top_logic.model.TLObject...)}.
 	 *
 	 * @param toolCall the tool call about to execute
 	 * @param tool     the resolved tool (may be {@code null} for unknown tools)
 	 * @param context  the current execution context
-	 * @param listener receives lock/transaction events
+	 * @param listener receives transaction events
 	 * @param runId    the current run ID
 	 * @param turn     the current turn number
-	 * @return an error result if the lock could not be acquired, {@code null} if the tool can proceed
+	 * @return always {@code null} — the tool can proceed
 	 */
 	private ToolResultMessage ensureTransaction(ToolCall toolCall, Tool tool, ToolContext context,
 			AgentEventListener listener, String runId, int turn) {
@@ -454,15 +455,6 @@ public class AgentLoop {
 
 		if (tool == null || tool.mode() == ToolMode.READ) {
 			return null;
-		}
-
-		// First write tool in this turn — acquire lock and begin transaction
-		try {
-			scope.acquireLock();
-			emit(listener, new AgentEvent.LockAcquired(runId, turn, now()));
-		} catch (TransactionException e) {
-			emit(listener, new AgentEvent.LockFailed(runId, turn, now(), e.getMessage()));
-			return errorResult(toolCall, "Cannot edit: " + e.getMessage());
 		}
 
 		scope.begin();

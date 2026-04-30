@@ -76,7 +76,7 @@ public class TaskTool {
 		+ " IMPORTANT: Call listTasks first to avoid creating duplicate tasks."
 		+ " Create your task list once per conversation — on subsequent turns,"
 		+ " update existing tasks rather than recreating."
-		+ " Mark each task completed immediately when done, do not batch completions.", mode = ToolMode.READ)
+		+ " Mark each task completed immediately when done, do not batch completions.", mode = ToolMode.USER_SCOPED)
 	public String createTask(
 			@P("Brief title for the task") String subject,
 			@P("Detailed description of what needs to be done") String description,
@@ -138,7 +138,7 @@ public class TaskTool {
 		+ " If blocked or encountering errors, keep status as 'in_progress'."
 		+ " Use 'deleted' to remove a task that is no longer needed."
 		+ " After completing a task, call listTasks to find the next one."
-		+ " Mark tasks completed immediately, do not batch completions.", mode = ToolMode.READ)
+		+ " Mark tasks completed immediately, do not batch completions.", mode = ToolMode.USER_SCOPED)
 	public String updateTask(
 			@P("The ID of the task to update") String taskId,
 			@P("New status (pending, in_progress, completed, deleted)") String status,

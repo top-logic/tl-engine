@@ -19,6 +19,7 @@ import com.top_logic.basic.Logger;
 
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for creating issues in a Gitea repository via REST API.
@@ -74,7 +75,8 @@ public class GiteaIssueTool {
 	@ToolMethod(name = "create_gitea_issue",
 		description = "Create a Gitea issue to report a quality problem found during AI conversation review. "
 			+ "Use this to file issues for incorrect answers, bad delegation, tool misuse, "
-			+ "unhelpful responses, or inefficiencies.")
+			+ "unhelpful responses, or inefficiencies.",
+		mode = ToolMode.USER_SCOPED)
 	public String createGiteaIssue(
 			@P("The issue title") String title,
 			@P("Category of the issue: incorrect-answer, bad-delegation, tool-misuse, "

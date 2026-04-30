@@ -5,14 +5,14 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
-import com.top_logic.base.locking.token.LockInfo;
-import com.top_logic.base.locking.token.Token;
-import com.top_logic.base.locking.token.TokenService;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
@@ -20,9 +20,9 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModelPart;
-import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.tools.model.LockHolderLookup;
 
 /**
  * Manages one KB transaction and object-level locks per agent turn.
@@ -99,7 +99,8 @@ public class TransactionScope implements AutoCloseable {
 				if (attempt == MAX_RETRIES) {
 					String resource = describeTargets(targets);
 					String holder = describeLockHolder(targets);
-					throw new LockConflictException(resource, holder, MAX_RETRIES, e);
+					long totalWaitSecs = (MAX_RETRIES - 1) * RETRY_DELAY_MS / 1000;
+					throw new LockConflictException(resource, holder, MAX_RETRIES, totalWaitSecs, e);
 				}
 				try {
 					Thread.sleep(RETRY_DELAY_MS);
@@ -224,38 +225,23 @@ public class TransactionScope implements AutoCloseable {
 		if (targets.length == 0) {
 			return "unknown";
 		}
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < targets.length; i++) {
-			if (i > 0) {
-				sb.append(", ");
-			}
-			if (targets[i] instanceof TLModelPart part) {
-				sb.append(TLModelUtil.qualifiedName(part));
+		List<String> labels = new ArrayList<>(targets.length);
+		for (TLObject target : targets) {
+			if (target instanceof TLModelPart part) {
+				labels.add(TLModelUtil.qualifiedName(part));
 			} else {
-				sb.append(targets[i].toString());
+				labels.add(target.toString());
 			}
 		}
-		return sb.toString();
+		return StringServices.join(labels, ", ");
 	}
 
 	private static String describeLockHolder(TLObject[] targets) {
-		try {
-			TokenService tokenService = TokenService.getInstance();
-			for (LockInfo info : tokenService.getAllLocks()) {
-				for (Token token : info.getTokens()) {
-					for (TLObject target : targets) {
-						if (target.equals(token.getObject())) {
-							TLObject owner = info.getOwner();
-							if (owner instanceof TLNamed named) {
-								return named.getName();
-							}
-							return owner != null ? owner.toString() : "unknown";
-						}
-					}
-				}
+		for (TLObject target : targets) {
+			String holder = LockHolderLookup.findLockHolder(target);
+			if (holder != null) {
+				return holder;
 			}
-		} catch (Exception e) {
-			// Best effort — don't fail lock acquisition because of holder lookup
 		}
 		return "unknown";
 	}

@@ -444,7 +444,8 @@ public class AgentLoop {
 	 * @param listener receives transaction events
 	 * @param runId    the current run ID
 	 * @param turn     the current turn number
-	 * @return always {@code null} — the tool can proceed
+	 * @return always {@code null}; retained for interface consistency with callers
+	 *         that check the return value
 	 */
 	private ToolResultMessage ensureTransaction(ToolCall toolCall, Tool tool, ToolContext context,
 			AgentEventListener listener, String runId, int turn) {

@@ -1202,8 +1202,6 @@ public class TestAgentLoop extends TestCase {
 				events.add("tx_begin");
 			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
-			} else if (e instanceof AgentEvent.LockAcquired) {
-				events.add("lock_acquired");
 			}
 		};
 
@@ -1214,8 +1212,8 @@ public class TestAgentLoop extends TestCase {
 		AgentResult result = loop.run(conv, ctx, listener);
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertTrue("Lock should be acquired before transaction",
-			events.indexOf("lock_acquired") < events.indexOf("tx_begin"));
+		assertTrue("Transaction should begin on write tool",
+			events.contains("tx_begin"));
 		assertTrue("Transaction should be committed",
 			events.contains("tx_commit"));
 	}
@@ -1378,9 +1376,7 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.LockAcquired) {
-				events.add("lock_acquired");
-			} else if (e instanceof AgentEvent.TransactionBegan) {
+			if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
 			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
@@ -1405,8 +1401,6 @@ public class TestAgentLoop extends TestCase {
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertTrue("Tool should be denied", events.contains("denied:edit_model"));
-		assertFalse("Lock must not be acquired for a denied tool",
-			events.contains("lock_acquired"));
 		assertFalse("Transaction must not begin for a denied tool",
 			events.contains("tx_begin"));
 		assertFalse("No commit for a denied tool", events.contains("tx_commit"));

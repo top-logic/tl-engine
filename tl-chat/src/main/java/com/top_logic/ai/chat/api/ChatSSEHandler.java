@@ -369,10 +369,6 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setToolCallId(e.toolCallId())
 				.setApprovalRequestId(e.approvalRequestId())
 				.setOutcome(e.outcome().name())));
-		} else if (event instanceof AgentEvent.LockAcquired) {
-			sendEvent("lock_acquired", "{}");
-		} else if (event instanceof AgentEvent.LockFailed e) {
-			sendEvent("lock_failed", "{\"reason\":\"" + escapeJson(e.reason()) + "\"}");
 		} else if (event instanceof AgentEvent.TransactionBegan) {
 			sendEvent("tx_began", "{}");
 		} else if (event instanceof AgentEvent.TransactionCommitted e) {

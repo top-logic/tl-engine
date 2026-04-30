@@ -33,7 +33,7 @@ public class TestObjectLevelLocking extends TestCase {
 	 */
 	public void testLockConflictMessage() {
 		LockConflictException exception =
-			new LockConflictException("test.locking:Customer", "root", 3, new RuntimeException("locked"));
+			new LockConflictException("test.locking:Customer", "root", 3, 20, new RuntimeException("locked"));
 
 		assertEquals("test.locking:Customer", exception.resource());
 		assertEquals("root", exception.holder());
@@ -41,7 +41,7 @@ public class TestObjectLevelLocking extends TestCase {
 		assertTrue(exception.getMessage().contains("test.locking:Customer"));
 		assertTrue(exception.getMessage().contains("root"));
 		assertTrue(exception.getMessage().contains("Do NOT retry"));
-		assertTrue(exception.getMessage().contains("3 times over 30 seconds"));
+		assertTrue(exception.getMessage().contains("3 times over 20 seconds"));
 	}
 
 	/**
@@ -138,7 +138,7 @@ public class TestObjectLevelLocking extends TestCase {
 	 */
 	public void testLockConflictExceptionInheritance() {
 		LockConflictException exception =
-			new LockConflictException("res", "holder", 1, new RuntimeException("cause"));
+			new LockConflictException("res", "holder", 1, 10, new RuntimeException("cause"));
 
 		assertTrue("LockConflictException should be a TransactionException",
 			exception instanceof TransactionException);

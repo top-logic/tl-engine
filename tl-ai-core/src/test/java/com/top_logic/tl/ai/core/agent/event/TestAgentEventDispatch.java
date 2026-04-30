@@ -130,7 +130,7 @@ public class TestAgentEventDispatch extends TestCase {
 	}
 
 	private static AgentEvent event() {
-		return new AgentEvent.LockAcquired("run-1", 1, Instant.EPOCH);
+		return new AgentEvent.TransactionBegan("run-1", 1, Instant.EPOCH);
 	}
 
 }

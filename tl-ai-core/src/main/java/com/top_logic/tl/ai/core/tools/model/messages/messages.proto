@@ -1031,6 +1031,33 @@ message DeleteResponse {
 	repeated DeletionBlocker blockers;
 }
 
+// ===== LockTool Messages =====
+
+/**
+ * Response for lock status check operations.
+ */
+message LockStatusResponse {
+	/**
+	 * Whether the resource is currently locked.
+	 */
+	bool locked;
+
+	/**
+	 * Qualified name of the checked resource.
+	 */
+	string resource;
+
+	/**
+	 * Name of the lock holder (only set when locked).
+	 */
+	string holder;
+
+	/**
+	 * Informational status text (only set when not locked).
+	 */
+	string statusText;
+}
+
 // ===== SearchAnnotationTool Messages =====
 
 /**

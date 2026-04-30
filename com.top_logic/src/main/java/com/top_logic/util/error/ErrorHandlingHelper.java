@@ -227,9 +227,7 @@ public class ErrorHandlingHelper extends ManagedClass {
 		}
 
 		if (problem instanceof I18NRuntimeException ex) {
-			if (ex.getSeverity().ordinal() >= ErrorSeverity.ERROR.ordinal()) {
-				return true;
-			}
+			return ex.getSeverity().ordinal() >= ErrorSeverity.SYSTEM_FAILURE.ordinal();
 		}
 
 		Throwable cause = problem.getCause();

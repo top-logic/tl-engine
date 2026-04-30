@@ -80,6 +80,12 @@
 						<generalization type="B"/>
 					</generalizations>
 					<attributes>
+						<!-- Overridden attribute for checking copy to base class. -->
+						<property name="name" type="tl.core:String" mandatory="true" override="true"/>
+						
+						<!-- Overridden reference for checking copy to base class. -->
+						<reference name="other" type="B" mandatory="true" override="true"/>
+						
 						<reference name="special" type="BSpecial" />
 					</attributes>
 				</class>

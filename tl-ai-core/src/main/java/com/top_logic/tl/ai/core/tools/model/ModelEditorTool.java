@@ -45,6 +45,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.model.messages.BackwardReferenceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.ClassResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.DeleteResponse;
@@ -202,12 +203,13 @@ public class ModelEditorTool {
 			@P("English label for the module") String labelEn,
 			@P("German label for the module") String labelDe,
 			@P("English description for the module") String descEn,
-			@P("German description for the module") String descDe) {
+			@P("German description for the module") String descDe,
+			ToolContext context) {
 
 		try {
 			ModuleResponse response = ThreadContextManager.inSystemInteraction(
 				ModelEditorTool.class,
-				() -> doUpdateModule(moduleName, labelEn, labelDe, descEn, descDe));
+				() -> doUpdateModule(moduleName, labelEn, labelDe, descEn, descDe, context));
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateModule()",
 				buildArgs("moduleName", moduleName));
@@ -221,7 +223,7 @@ public class ModelEditorTool {
 	}
 
 	private ModuleResponse doUpdateModule(String moduleName, String labelEn, String labelDe,
-			String descEn, String descDe) {
+			String descEn, String descDe, ToolContext context) {
 
 		if (moduleName == null || moduleName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Module name is required");
@@ -238,6 +240,8 @@ public class ModelEditorTool {
 		if (module == null) {
 			throw new IllegalArgumentException("Module '" + moduleName + "' does not exist");
 		}
+
+		context.transaction().acquireLock("editValues", module);
 
 		ToolI18NUtil.applyIfPresent(module, i18n);
 
@@ -387,13 +391,14 @@ public class ModelEditorTool {
 			@P("German description for the class") String descDe,
 			@P("Whether the class is abstract") Boolean isAbstract,
 			@P("Whether the class is final") Boolean isFinal,
-			@P("Names of the classes this class directly extends, as a JSON array string") String generalizations) {
+			@P("Names of the classes this class directly extends, as a JSON array string") String generalizations,
+			ToolContext context) {
 
 		try {
 			ClassResponse response = ThreadContextManager.inSystemInteraction(
 				ModelEditorTool.class,
 				() -> doUpdateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
-					isAbstract, isFinal, generalizations));
+					isAbstract, isFinal, generalizations, context));
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateClass()",
 				buildArgs("moduleName", moduleName, "className", className));
@@ -408,7 +413,7 @@ public class ModelEditorTool {
 
 	private ClassResponse doUpdateClass(String moduleName, String className,
 			String labelEn, String labelDe, String descEn, String descDe,
-			Boolean isAbstract, Boolean isFinal, String generalizations) {
+			Boolean isAbstract, Boolean isFinal, String generalizations, ToolContext context) {
 
 		requireNonEmpty(moduleName, "Module name");
 		requireNonEmpty(className, "Class name");
@@ -428,6 +433,8 @@ public class ModelEditorTool {
 			throw new IllegalArgumentException(
 				"Type '" + className + "' exists in module '" + moduleName + "' but is not a class");
 		}
+
+		context.transaction().acquireLock("editValues", tlClass);
 
 		List<TLClass> resolved = null;
 		if (generalizations != null && !generalizations.trim().isEmpty()) {
@@ -625,13 +632,14 @@ public class ModelEditorTool {
 			@P("Whether the property can hold multiple values") Boolean multiple,
 			@P("Whether order matters for multiple-valued properties") Boolean ordered,
 			@P("Whether duplicates are allowed for multiple-valued properties") Boolean bag,
-			@P("Whether this attribute must be overridden in specific classes") Boolean isAbstract) {
+			@P("Whether this attribute must be overridden in specific classes") Boolean isAbstract,
+			ToolContext context) {
 
 		try {
 			PropertyResponse response = ThreadContextManager.inSystemInteraction(
 				ModelEditorTool.class,
 				() -> doUpdateProperty(moduleName, className, propertyName,
-					labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract));
+					labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract, context));
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateProperty()",
 				buildArgs("moduleName", moduleName, "className", className, "propertyName", propertyName));
@@ -646,7 +654,8 @@ public class ModelEditorTool {
 
 	private PropertyResponse doUpdateProperty(String moduleName, String className, String propertyName,
 			String labelEn, String labelDe, String descEn, String descDe,
-			Boolean mandatory, Boolean multiple, Boolean ordered, Boolean bag, Boolean isAbstract) {
+			Boolean mandatory, Boolean multiple, Boolean ordered, Boolean bag, Boolean isAbstract,
+			ToolContext context) {
 
 		requireNonEmpty(moduleName, "Module name");
 		requireNonEmpty(className, "Class name");
@@ -654,6 +663,8 @@ public class ModelEditorTool {
 
 		TLModel model = ModelService.getApplicationModel();
 		TLClass tlClass = resolveClass(model, moduleName, className);
+
+		context.transaction().acquireLock("editValues", tlClass);
 
 		TLStructuredTypePart existingPart = tlClass.getPart(propertyName);
 		if (existingPart == null) {
@@ -1189,13 +1200,14 @@ public class ModelEditorTool {
 			@P("German description for the enumeration") String descDe,
 			@P("JSON array of new classifiers to add, each with: classifierName (required), default (boolean), label.en, label.de, description.en, description.de") String addClassifiersJson,
 			@P("JSON array of existing classifiers to update, each with: classifierName (required), default (boolean), label.en, label.de, description.en, description.de") String updateClassifiersJson,
-			@P("Name of the classifier that should be set as the default") String defaultClassifier) {
+			@P("Name of the classifier that should be set as the default") String defaultClassifier,
+			ToolContext context) {
 
 		try {
 			EnumResponse response = ThreadContextManager.inSystemInteraction(
 				ModelEditorTool.class,
 				() -> doUpdateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe,
-					addClassifiersJson, updateClassifiersJson, defaultClassifier));
+					addClassifiersJson, updateClassifiersJson, defaultClassifier, context));
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
@@ -1210,7 +1222,8 @@ public class ModelEditorTool {
 
 	private EnumResponse doUpdateEnumeration(String moduleName, String enumName,
 			String labelEn, String labelDe, String descEn, String descDe,
-			String addClassifiersJson, String updateClassifiersJson, String defaultClassifier) {
+			String addClassifiersJson, String updateClassifiersJson, String defaultClassifier,
+			ToolContext context) {
 
 		requireNonEmpty(moduleName, "Module name");
 		requireNonEmpty(enumName, "Enumeration name");
@@ -1229,6 +1242,8 @@ public class ModelEditorTool {
 			}
 			throw new IllegalArgumentException("Type '" + enumName + "' exists but is not an enumeration");
 		}
+
+		context.transaction().acquireLock("editValues", enumeration);
 
 		// Parse classifiers
 		List<Map<String, Object>> addList = parseJsonArray(addClassifiersJson);
@@ -1680,12 +1695,13 @@ public class ModelEditorTool {
 		+ "'moduleName:TypeName#partName' for properties/references/classifiers.")
 	public String deleteModelElement(
 			@P("Qualified name of the element to delete")
-			String qualifiedName) {
+			String qualifiedName,
+			ToolContext context) {
 
 		try {
 			DeleteResponse response = ThreadContextManager.inSystemInteraction(
 				ModelEditorTool.class,
-				() -> doDeleteModelElement(qualifiedName));
+				() -> doDeleteModelElement(qualifiedName, context));
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "deleteModelElement()",
 				buildArgs("qualifiedName", qualifiedName));
@@ -1698,11 +1714,14 @@ public class ModelEditorTool {
 		}
 	}
 
-	private DeleteResponse doDeleteModelElement(String qualifiedName)
+	private DeleteResponse doDeleteModelElement(String qualifiedName, ToolContext context)
 			throws KnowledgeBaseException {
 		requireNonEmpty(qualifiedName, "qualifiedName");
 
 		TLModelPart resolved = TLModelUtil.resolveModelPart(qualifiedName);
+
+		context.transaction().acquireLock("editValues", resolved);
+
 		ModelKind kind = resolved.getModelKind();
 		String kindName = kind.name().toLowerCase();
 

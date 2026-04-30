@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationEditorResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
@@ -93,12 +94,13 @@ public class ModelAnnotationEditorTool {
 	public String addAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Fully-qualified annotation config interface class name") String configInterfaceName,
-			@P("Annotation configuration as JSON matching the schema from getConfigSchema") String configJson) {
+			@P("Annotation configuration as JSON matching the schema from getConfigSchema") String configJson,
+			ToolContext context) {
 
 		try {
 			String result = ThreadContextManager.inSystemInteraction(
 				ModelAnnotationEditorTool.class,
-				() -> doSetAnnotation(targetRef, configInterfaceName, configJson));
+				() -> doSetAnnotation(targetRef, configInterfaceName, configJson, context));
 
 			Logger.info("addAnnotation(targetRef=\"" + targetRef + "\", configInterfaceName=\""
 				+ configInterfaceName + "\") -> " + (result != null ? result.length() : 0) + " chars",
@@ -114,8 +116,8 @@ public class ModelAnnotationEditorTool {
 		}
 	}
 
-	private String doSetAnnotation(String targetRef, String configInterfaceName, String configJson)
-			throws IOException, ConfigurationException {
+	private String doSetAnnotation(String targetRef, String configInterfaceName, String configJson,
+			ToolContext context) throws IOException, ConfigurationException {
 
 		// 1. Validate parameters
 		if (targetRef == null || targetRef.isEmpty()) {
@@ -132,6 +134,8 @@ public class ModelAnnotationEditorTool {
 		TargetRefParser parser = TargetRefParser.parse(targetRef);
 		TLModelPart target = parser.resolve(ModelService.getApplicationModel());
 		String kind = TargetRefParser.determineKind(target, parser);
+
+		context.transaction().acquireLock("editValues", target);
 
 		// 3. Load annotation config interface
 		Class<? extends TLAnnotation> annotationClass = resolveAnnotationClass(configInterfaceName);
@@ -173,12 +177,13 @@ public class ModelAnnotationEditorTool {
 	@ToolMethod(description = "Remove an annotation from a model element. Use getCurrentAnnotations to see which annotations exist on a target.")
 	public String removeAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
-			@P("Fully-qualified annotation config interface class name to remove") String configInterfaceName) {
+			@P("Fully-qualified annotation config interface class name to remove") String configInterfaceName,
+			ToolContext context) {
 
 		try {
 			AnnotationEditorResponse response = ThreadContextManager.inSystemInteraction(
 				ModelAnnotationEditorTool.class,
-				() -> doRemoveAnnotation(targetRef, configInterfaceName));
+				() -> doRemoveAnnotation(targetRef, configInterfaceName, context));
 
 			return DataClassSerializer.toJson(response, ModelAnnotationEditorTool.class,
 				"removeAnnotation()", buildArgs(targetRef, configInterfaceName));
@@ -193,7 +198,8 @@ public class ModelAnnotationEditorTool {
 		}
 	}
 
-	private AnnotationEditorResponse doRemoveAnnotation(String targetRef, String configInterfaceName) {
+	private AnnotationEditorResponse doRemoveAnnotation(String targetRef, String configInterfaceName,
+			ToolContext context) {
 		// 1. Validate
 		if (targetRef == null || targetRef.isEmpty()) {
 			throw new IllegalArgumentException("Target reference is required");
@@ -205,6 +211,8 @@ public class ModelAnnotationEditorTool {
 		// 2. Parse and resolve
 		TargetRefParser parser = TargetRefParser.parse(targetRef);
 		TLModelPart target = parser.resolve(ModelService.getApplicationModel());
+
+		context.transaction().acquireLock("editValues", target);
 
 		// 3. Load annotation class
 		Class<? extends TLAnnotation> annotationClass = resolveAnnotationClass(configInterfaceName);

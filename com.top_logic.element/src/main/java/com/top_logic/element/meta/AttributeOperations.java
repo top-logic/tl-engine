@@ -306,15 +306,27 @@ public class AttributeOperations {
 			// Attribute does not exist at the time of the accessed type.
 			return null;
 		}
+		if (actualType == attributeInObjectRev.getOwner()) {
+			// Short-cut for the case where the matching/correct attribute override was given.
+			return attributeInObjectRev;
+		}
 
-		TLStructuredType declaringType = attributeInObjectRev.getOwner();
-		if (declaringType == null || !TLModelUtil.isGeneralization(declaringType, actualType)) {
+		// Check whether the given attribute has a definition in the actual type.
+		TLStructuredTypePart definition = attributeInObjectRev.getDefinition();
+		TLStructuredType definingType = definition.getOwner();
+		if (definingType == null || !TLModelUtil.isGeneralization(definingType, actualType)) {
 			// Attribute of an unrelated type.
+
+			// Note: This still allows to use the overridden attribute of a subtype to access a
+			// value of an object of the super type. This is allowed only for convenience. Being
+			// pedantic makes object access in some scenarios more complicated (e.g. copying values
+			// common attributes of on object to an instance of a supertype).
 			return null;
 		}
-		if (actualType == declaringType) {
-			// Short-cut for the most common case of a non-overridden attribute.
-			return attributeInObjectRev;
+		if (actualType == definingType) {
+			// Short-cut for the case where a overridden attribute was used to access the defining
+			// type.
+			return definition;
 		}
 
 		// Lookup by name in the concrete type.

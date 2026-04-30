@@ -24,10 +24,21 @@ import com.top_logic.tl.ai.core.tools.ToolExecutor;
  */
 public class ToolContext implements ToolExecutionContext {
 
-	/** Context with no security restrictions, auto-approval, and no transaction. For tests and trusted internal use. */
+	/** Context with no security restrictions, auto-approval, and no-op scope. For tests only. */
 	public static final ToolContext EMPTY =
 		new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
 			TransactionScope.NOOP, CancellationToken.UNCANCELLABLE);
+
+	/**
+	 * Creates a new unrestricted context with a live transaction scope.
+	 *
+	 * <p>Use this for programmatic agent invocations (TL-Script, background jobs) where
+	 * tools need locking and transaction support. Each call creates a fresh scope.</p>
+	 */
+	public static ToolContext createUnrestricted() {
+		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
+			new TransactionScope());
+	}
 
 	private final SecurityContext _security;
 

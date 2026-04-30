@@ -149,11 +149,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				+ String.join(", ", ToolRegistryService.getInstance().getToolNames());
 		}
 
+		ToolContext context = ToolContext.createUnrestricted();
 		try {
 			Map<String, Object> args = parameters != null ? parameters : Map.of();
-			return tool.execute(args, ToolContext.EMPTY).text();
+			return tool.execute(args, context).text();
 		} catch (Exception ex) {
 			return "Error invoking tool '" + toolName + "': " + ex.getMessage();
+		} finally {
+			context.transaction().close();
 		}
 	}
 
@@ -252,11 +255,15 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			modelOptions.isEmpty() ? Map.of() : Map.copyOf(modelOptions));
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
-		loop.run(conversation, ToolContext.EMPTY, event -> {
-			/** no event listener setup for a tlscript function */
-		});
-
-		return extractResponseText(conversation);
+		ToolContext context = ToolContext.createUnrestricted();
+		try {
+			loop.run(conversation, context, event -> {
+				/** no event listener setup for a tlscript function */
+			});
+			return extractResponseText(conversation);
+		} finally {
+			context.transaction().close();
+		}
 	}
 
 	/**
@@ -289,9 +296,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			UUID.randomUUID().toString(),
 			Instant.now(),
 			List.of(new TextContent(userMessage))));
-		return factory.runAgent(agentName, conversation, null, event -> {
-			/** no event listener setup for a tlscript function */
-		});
+		ToolContext context = ToolContext.createUnrestricted();
+		try {
+			return factory.runAgent(agentName, conversation, null, context, event -> {
+				/** no event listener setup for a tlscript function */
+			});
+		} finally {
+			context.transaction().close();
+		}
 	}
 
 	/**

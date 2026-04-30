@@ -1422,14 +1422,14 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				TLObject orig = scenario.getObject("a1");
 
 				TLObject copy = (TLObject) execute(search("x -> $x.copy()"), orig);
-				checkCopy(orig, copy);
+				checkCopyA(orig, copy);
 
 				TLObject stable = stabilize(orig);
 
 				// The result must be the same, when using the stable version of the current
 				// original as input to the copy operation.
 				TLObject stableCopy = (TLObject) execute(search("x -> $x.copy()"), stable);
-				checkCopy(orig, stableCopy);
+				checkCopyA(orig, stableCopy);
 			});
 	}
 
@@ -1440,7 +1440,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		return stable;
 	}
 
-	private void checkCopy(TLObject orig, TLObject copy) {
+	private void checkCopyA(TLObject orig, TLObject copy) {
 		assertNotNull(copy);
 		assertNotEquals(orig, copy);
 		assertDifferent(orig, copy, "b");
@@ -1453,6 +1453,35 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 		assertEquals(value(copy, "b", "contents", 1), value(copy, "b", "contents", 0, "other"));
 		assertEquals(value(orig, "b", "name"), value(copy, "b", "name"));
+	}
+
+	public void testCopyToSupertype() {
+		with("TestSearchExpression-testCopy.scenario.xml",
+			scenario -> {
+				// Object of type BSpecial
+				TLObject orig = scenario.getObject("b11");
+				assertTrue((Boolean) execute(search("x -> $x.type() == `TestSearchExpression:BSpecial`"), orig));
+
+				TLObject copy = (TLObject) execute(search(
+					"x -> $x.copy(constructor: orig -> $orig.instanceOf(`TestSearchExpression:BSpecial`) ? new(`TestSearchExpression:B`) : null)"),
+					orig);
+				assertTrue((Boolean) execute(search("x -> $x.type() == `TestSearchExpression:B`"), copy));
+
+				checkCopyFlat(orig, copy);
+			});
+	}
+
+	private void checkCopyFlat(TLObject orig, TLObject copy) {
+		for (TLStructuredTypePart part : orig.tType().getAllParts()) {
+			if (part.isDerived()) {
+				continue;
+			}
+
+			TLStructuredTypePart copyPart = copy.tType().getPart(part.getName());
+			if (copyPart != null && part.getDefinition() == copyPart.getDefinition()) {
+				assertEquals(orig.tValue(part), copy.tValue(copyPart));
+			}
+		}
 	}
 
 	public void testCopyFilter() {

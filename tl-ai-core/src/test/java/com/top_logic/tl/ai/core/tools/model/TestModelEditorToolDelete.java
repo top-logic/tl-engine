@@ -7,9 +7,11 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.agent.ToolContext;
+
 /**
- * Tests for {@link ModelEditorTool#deleteModelElement(String)} verifying error handling, input
- * validation, and JSON response format when called outside a TopLogic application context.
+ * Tests for {@link ModelEditorTool#deleteModelElement(String, ToolContext)} verifying error handling,
+ * input validation, and JSON response format when called outside a TopLogic application context.
  *
  * <p>
  * Since {@link ModelEditorTool} requires a running TopLogic application context for actual model
@@ -32,7 +34,7 @@ public class TestModelEditorToolDelete extends TestCase {
 	 * Verifies that a null qualifiedName returns error JSON.
 	 */
 	public void testDeleteNullQualifiedNameReturnsError() {
-		String json = _tool.deleteModelElement(null);
+		String json = _tool.deleteModelElement(null, ToolContext.EMPTY);
 
 		assertContains(json, "\"error\":");
 	}
@@ -41,7 +43,7 @@ public class TestModelEditorToolDelete extends TestCase {
 	 * Verifies that an empty qualifiedName returns error JSON.
 	 */
 	public void testDeleteEmptyQualifiedNameReturnsError() {
-		String json = _tool.deleteModelElement("");
+		String json = _tool.deleteModelElement("", ToolContext.EMPTY);
 
 		assertContains(json, "\"error\":");
 	}
@@ -52,11 +54,11 @@ public class TestModelEditorToolDelete extends TestCase {
 	 * Verifies that deleteModelElement never returns null, even with invalid input.
 	 */
 	public void testDeleteNeverReturnsNull() {
-		assertNotNull(_tool.deleteModelElement(null));
-		assertNotNull(_tool.deleteModelElement(""));
-		assertNotNull(_tool.deleteModelElement("nonExistent"));
-		assertNotNull(_tool.deleteModelElement("module:Type"));
-		assertNotNull(_tool.deleteModelElement("module:Type#part"));
+		assertNotNull(_tool.deleteModelElement(null, ToolContext.EMPTY));
+		assertNotNull(_tool.deleteModelElement("", ToolContext.EMPTY));
+		assertNotNull(_tool.deleteModelElement("nonExistent", ToolContext.EMPTY));
+		assertNotNull(_tool.deleteModelElement("module:Type", ToolContext.EMPTY));
+		assertNotNull(_tool.deleteModelElement("module:Type#part", ToolContext.EMPTY));
 	}
 
 	// -- All qualified name formats produce a response --
@@ -75,7 +77,7 @@ public class TestModelEditorToolDelete extends TestCase {
 		};
 
 		for (String name : names) {
-			String json = _tool.deleteModelElement(name);
+			String json = _tool.deleteModelElement(name, ToolContext.EMPTY);
 			assertNotNull("Response for '" + name + "' should not be null", json);
 			// All should fail because no TopLogic context, but should return structured error
 			assertContains(json, "\"error\":");
@@ -86,7 +88,7 @@ public class TestModelEditorToolDelete extends TestCase {
 	 * Verifies that the error response includes the failure reason for traceability.
 	 */
 	public void testDeleteErrorResponseIncludesFailureReason() {
-		String json = _tool.deleteModelElement("nonExistent");
+		String json = _tool.deleteModelElement("nonExistent", ToolContext.EMPTY);
 
 		assertContains(json, "\"error\":");
 		assertContains(json, "Failed to delete element");

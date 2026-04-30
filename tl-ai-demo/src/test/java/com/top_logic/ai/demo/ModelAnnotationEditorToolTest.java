@@ -7,6 +7,7 @@ package com.top_logic.ai.demo;
 
 import junit.framework.Test;
 
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.model.ModelAnnotationEditorTool;
 import com.top_logic.knowledge.service.PersistencyLayer;
 
@@ -20,7 +21,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationNullTarget() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.addAnnotation(null, "com.example.Annotation", "{}");
+		String result = tool.addAnnotation(null, "com.example.Annotation", "{}", ToolContext.EMPTY);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -31,7 +32,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationEmptyConfigInterface() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.addAnnotation("tl.core", "", "{}");
+		String result = tool.addAnnotation("tl.core", "", "{}", ToolContext.EMPTY);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -42,7 +43,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationInvalidClass() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.addAnnotation("tl.core", "com.nonexistent.Class", "{}");
+		String result = tool.addAnnotation("tl.core", "com.nonexistent.Class", "{}", ToolContext.EMPTY);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -55,7 +56,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testSetAnnotationNullJson() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.addAnnotation("tl.core", "com.top_logic.model.annotate.TLAnnotation", null);
+		String result = tool.addAnnotation("tl.core", "com.top_logic.model.annotate.TLAnnotation", null, ToolContext.EMPTY);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -66,7 +67,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testRemoveAnnotationNullTarget() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.removeAnnotation(null, "com.example.Annotation");
+		String result = tool.removeAnnotation(null, "com.example.Annotation", ToolContext.EMPTY);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -77,7 +78,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	 */
 	public void testRemoveAnnotationEmptyConfigInterface() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
-		String result = tool.removeAnnotation("tl.core", "");
+		String result = tool.removeAnnotation("tl.core", "", ToolContext.EMPTY);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));
@@ -89,7 +90,7 @@ public class ModelAnnotationEditorToolTest extends ModelAnnotationBrowserToolTes
 	public void testRemoveAnnotationInvalidModule() {
 		ModelAnnotationEditorTool tool = new ModelAnnotationEditorTool();
 		String result = tool.removeAnnotation("nonexistent.module",
-			"com.top_logic.model.annotate.TLAnnotation");
+			"com.top_logic.model.annotate.TLAnnotation", ToolContext.EMPTY);
 
 		assertNotNull("Result should not be null", result);
 		assertTrue("Result should contain error", result.contains("\"error\""));

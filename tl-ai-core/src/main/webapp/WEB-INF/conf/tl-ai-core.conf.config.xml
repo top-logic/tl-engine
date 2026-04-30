@@ -94,6 +94,11 @@
 							tool-class="com.top_logic.tl.ai.core.tools.config.LayoutTemplateTool"
 						/>
 					</factory>
+					<factory name="lock">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.LockTool"
+						/>
+					</factory>
 					<factory name="model-modification">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelEditorTool"

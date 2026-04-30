@@ -25,10 +25,11 @@ Statische Box kann das nicht — eine LOD-Box schon.
 
 ## Grundsätze
 
-1. **Die LOD-Box weiß nicht, dass es Gantt gibt.** Sie empfängt ihren Kontext (Breite, Höhe, Zoom) über `RenderContext` — ein etabliertes Tür-zum-Layout-Konzept in der Flow-Lib.
-2. **Die Gantt-Zeile ist verantwortlich, den passenden Kontext zu setzen.** `GanttLayout` kennt für jeden Span die exakte Pixelbreite (`(end-start) * pixelsPerUnit`). Es reicht sie über `RenderContext` herab, bevor es `computeIntrinsicSize` auf den Span-Inhalt aufruft.
-3. **Die Wahl der Variante fällt in der Intrinsic-Pass-Phase.** Ergebnis: Die reportete intrinsische Höhe passt zur tatsächlich gewählten Variante — Zeilenhöhe stimmt, kein Zweipass-Konflikt.
-4. **Außerhalb Gantt:** Wer Kinderbreite kennt (z. B. `Sized`, feste `GridLayout`-Spalten), setzt den Kontext genauso. Wer sie nicht kennt (z. B. flexibles `HorizontalLayout`), setzt nichts → LOD wählt die reichste Variante.
+1. **Die LOD-Box weiß nicht, dass es Gantt gibt.** Sie empfängt ihre Constraints (verfügbare Breite/Höhe) als Parameter und ihren Render-Kontext (Zoom, Text-Measurement) über `RenderContext`.
+2. **Constraints sind per-call, Kontext ist ambient.** Verfügbare Breite/Höhe variieren von Box zu Box und gehören als Methodenparameter an `computeIntrinsicSize` — symmetrisch zu `distributeSize`. Zoom und Text-Measurement gelten für den ganzen Render-Pass und bleiben in `RenderContext`.
+3. **Die Gantt-Zeile ist verantwortlich, die Constraints zu setzen.** `GanttLayout` kennt für jeden Span die exakte Pixelbreite (`(end-start) * pixelsPerUnit`) und reicht sie als `availableWidth` an `computeIntrinsicSize` weiter.
+4. **Die Wahl der Variante fällt in der Intrinsic-Pass-Phase.** Die LOD-Box misst die Varianten in Reihenfolge richest→compact und nimmt die erste, deren eigener Intrinsic-Bedarf in `availableWidth` passt. Die reportete intrinsische Höhe gehört zur gewählten Variante — Zeilenhöhe stimmt, kein Zweipass-Konflikt.
+5. **Außerhalb Gantt:** Wer Kinderbreite kennt (`Sized`, feste `GridLayout`-Spalten, Drag&Drop-resizable Container), setzt sie genauso als Parameter. Wer sie nicht kennt (z. B. flexibles `HorizontalLayout`), übergibt `POSITIVE_INFINITY` → LOD wählt die reichste Variante.
 
 ## Datenmodell (Entwurf)
 
@@ -37,9 +38,11 @@ Statische Box kann das nicht — eine LOD-Box schon.
  * Container that carries multiple rendering variants and renders the one
  * that best fits the available rendering space.
  *
- * Variants are declared from richest to most compact; the first satisfying
- * variant wins. The last variant must match any space (minWidth = 0,
- * minHeight = 0, minZoom = 0) and acts as universal fallback.
+ * Variants are declared from richest to most compact. During intrinsic
+ * sizing, each variant is measured; the first whose intrinsic width and
+ * height fit into the available space (and which satisfies its optional
+ * extra gates) is selected. The last variant should be a universal
+ * fallback (e.g. a colored bar) that always fits.
  */
 message LOD extends Box {
     repeated LODVariant variants;
@@ -49,33 +52,42 @@ message LODVariant {
     /** The rendered content when this variant is selected. */
     Box content;
 
-    /** Minimum effective pixel width. 0 = any. */
-    double minWidth;
-
-    /** Minimum effective pixel height. 0 = any. */
-    double minHeight;
-
     /**
-     * Minimum horizontal zoom factor (pixelsPerUnit in Gantt context,
-     * SVG scaleX otherwise). 0 = any.
+     * Optional extra gate: minimum horizontal zoom factor (pixelsPerUnit
+     * in Gantt context, SVG scaleX otherwise). 0 = no gate.
      *
      * Useful for variants whose decision is orthogonal to own box size,
      * e.g. "show week labels only when pixelsPerUnit >= 10".
      */
     double minZoom;
+
+    /**
+     * Optional extra lower bound on available width, independent of
+     * intrinsic width. 0 = no gate. Use for variants that visually fit
+     * into less pixels than they functionally need (e.g. a small but
+     * interactive click target that requires breathing room).
+     */
+    double minWidth;
+
+    /** Optional analogue to minWidth for the vertical axis. */
+    double minHeight;
 }
 ```
 
-### Varianten-Reihenfolge: **[offen]**
+The **primary** fit criterion is the variant's own intrinsic size — the author does **not** declare per-variant pixel thresholds for typical text/icon variants. `minZoom`, `minWidth`, `minHeight` are optional additional gates for cases where intrinsic measurement alone doesn't capture the constraint.
 
-- **A (gewählt in diesem Entwurf):** richest → most compact; erste **erfüllte** gewinnt.
-- **B:** most compact → richest; letzte erfüllte gewinnt. Entspricht Cascaded-CSS-Denken.
+### Varianten-Reihenfolge: **[entschieden]**
 
-Empfehlung: **A**, weil die Bedingungen dann Untergrenzen sind ("mind. X Pixel nötig") und damit intuitiver sind als "max. X Pixel erlaubt".
+Reihenfolge ist **richest → most compact**, erste passende gewinnt. Begründung:
 
-## RenderContext-Erweiterung
+- "Passt rein" ist eine Untergrenze-an-Platz-Bedingung; richest-first liest sich als "nimm die reichste Variante, die noch reinpasst" und entspricht der Intuition.
+- Frühes Abbrechen: sobald eine Variante passt, müssen die kompakteren Varianten nicht mehr gemessen werden.
 
-Heute trägt `RenderContext` nur Text-Measurement. Neue Felder:
+## API-Erweiterung
+
+### `RenderContext`: nur ambient
+
+`RenderContext` bleibt ein Träger für Pass-globale Information. Es bekommt nur den Zoom dazu, alles andere (Größen-Constraints) wandert in die Methoden-Signatur:
 
 ```java
 public interface RenderContext {
@@ -86,29 +98,44 @@ public interface RenderContext {
 
     /** Vertikaler Zoom-Faktor; 1.0 wenn unbekannt. */
     default double getZoomY() { return 1.0; }
-
-    /** Vom Parent reservierte Pixelbreite; POSITIVE_INFINITY wenn unbekannt. */
-    default double getAvailableWidth() { return Double.POSITIVE_INFINITY; }
-
-    /** Vom Parent reservierte Pixelhöhe; POSITIVE_INFINITY wenn unbekannt. */
-    default double getAvailableHeight() { return Double.POSITIVE_INFINITY; }
-
-    /** Immutable copy with new values. */
-    RenderContext withHints(double availableWidth, double availableHeight,
-                            double zoomX, double zoomY);
 }
 ```
 
-**Default-Verhalten** (POSITIVE_INFINITY, Zoom 1.0): LOD wählt stets die reichste Variante. Das ist das gewünschte Fallback, wenn niemand die LOD-Box über ihren Kontext informiert hat.
+### `computeIntrinsicSize`: symmetrisch zu `distributeSize`
 
-### Propagation: **[offen]**
+Heute (vereinfacht):
 
-Zwei Optionen, wie der Kontext durchgereicht wird:
+```java
+void computeIntrinsicSize(RenderContext ctx, double offsetX, double offsetY);
+void distributeSize(RenderContext ctx, double x, double y, double w, double h);
+```
 
-- **(P1) Explizit pro Aufruf:** `box.computeIntrinsicSize(contextWithHints, x, y)` — aufrufendes Layout erzeugt einen modifizierten Context, ruft Kind, ursprünglicher Context bleibt unverändert.
-- **(P2) Kontext-Stack:** `RenderContext.pushHints(...)` / `pop()`. Spart Allokation bei vielen Kindern.
+Erweiterung: `computeIntrinsicSize` bekommt ebenfalls Größen-Constraints — als *verfügbares* Maximum (`availableWidth`/`availableHeight`), nicht als Zuteilung:
 
-Empfehlung: **(P1)**, weil sie threadsafer ist und zum bestehenden Muster passt (Boxes bekommen `offsetX/offsetY` auch als Parameter).
+```java
+void computeIntrinsicSize(RenderContext ctx,
+                          double offsetX, double offsetY,
+                          double availableWidth, double availableHeight);
+
+void distributeSize(RenderContext ctx,
+                    double x, double y, double w, double h);
+```
+
+**Semantik:**
+
+- `availableWidth/Height` = Obergrenze, die das Kind zur Kenntnis nehmen *darf*. `POSITIVE_INFINITY` bedeutet "Parent kennt seine Breite/Höhe noch nicht — wünsch dir, was du brauchst".
+- Im Gegensatz zu `distributeSize` sind die Werte **nicht bindend**: Eine reguläre Box ignoriert sie und reportet weiterhin ihre natürliche Größe. Nur Boxen, die ihr Verhalten platzabhängig variieren wollen (LOD, später ggf. Wrap-Layouts), nutzen sie.
+- Bestehende Box-Implementationen ignorieren die neuen Parameter — die Migration ist mechanisch.
+
+**Anwendungsfälle, in denen der Parent die Constraints kennt:**
+
+- Gantt-Span: Breite = `(end - start) * pixelsPerUnit`.
+- `Sized`: Breite/Höhe explizit per Konfiguration gesetzt.
+- `GridLayout` mit fester Spaltenbreite.
+- Drag&Drop-resizable Container: Größe ergibt sich aus User-Interaktion.
+- Viewport-bound root: Diagram-Canvas-Größe.
+
+**Default-Verhalten** (POSITIVE_INFINITY, Zoom 1.0): LOD wählt stets die reichste Variante. Das ist das gewünschte Fallback, wenn der Parent nichts Genaueres weiß.
 
 ## LOD-Operation
 
@@ -117,13 +144,38 @@ public interface LODOperations extends BoxOperations {
     @Override LOD self();
 
     @Override
-    default void computeIntrinsicSize(RenderContext ctx, double offsetX, double offsetY) {
-        LODVariant chosen = pickVariant(ctx);
+    default void computeIntrinsicSize(RenderContext ctx,
+                                      double offsetX, double offsetY,
+                                      double availableWidth, double availableHeight) {
+        double zoom = ctx.getZoomX();
+        LODVariant chosen = null;
+        for (LODVariant v : self().getVariants()) {
+            // Optionale Zusatz-Gates zuerst — billiger als Probe-Intrinsic.
+            if (zoom < v.getMinZoom()) continue;
+            if (availableWidth < v.getMinWidth()) continue;
+            if (availableHeight < v.getMinHeight()) continue;
+
+            // Probe-Intrinsic der Variante: misst, wieviel Platz sie braucht.
+            // availableWidth/Height werden propagiert, falls die Variante
+            // selbst LOD-fähige Kinder enthält.
+            Box content = v.getContent();
+            content.computeIntrinsicSize(ctx, offsetX, offsetY,
+                                         availableWidth, availableHeight);
+            if (content.getWidth() <= availableWidth
+                    && content.getHeight() <= availableHeight) {
+                chosen = v;
+                break;
+            }
+        }
+        if (chosen == null) {
+            // Letzte Variante als Fallback: gilt als universal passend.
+            chosen = self().getVariants().get(self().getVariants().size() - 1);
+            chosen.getContent().computeIntrinsicSize(ctx, offsetX, offsetY,
+                                                    availableWidth, availableHeight);
+        }
         self().setChosenVariant(chosen); // transient field
-        Box content = chosen.getContent();
-        content.computeIntrinsicSize(ctx, offsetX, offsetY);
-        self().setWidth(content.getWidth());
-        self().setHeight(content.getHeight());
+        self().setWidth(chosen.getContent().getWidth());
+        self().setHeight(chosen.getContent().getHeight());
     }
 
     @Override
@@ -133,22 +185,12 @@ public interface LODOperations extends BoxOperations {
         self().setWidth(w); self().setHeight(h);
         content.distributeSize(ctx, x, y, w, h);
     }
-
-    default LODVariant pickVariant(RenderContext ctx) {
-        double w = ctx.getAvailableWidth();
-        double h = ctx.getAvailableHeight();
-        double z = ctx.getZoomX();
-        for (LODVariant v : self().getVariants()) {
-            if (w >= v.getMinWidth() && h >= v.getMinHeight() && z >= v.getMinZoom()) {
-                return v;
-            }
-        }
-        return self().getVariants().get(self().getVariants().size() - 1);
-    }
 }
 ```
 
 Und der Draw wird über die bestehende Visitor/Dispatch-Mechanik an `chosenVariant.getContent()` delegiert.
+
+**Kosten:** Bis zu N Probe-Intrinsics pro LOD-Box. In der Praxis bricht die Schleife bei der ersten passenden Variante ab — bei richest-first und großem `availableWidth` typischerweise nach einem Aufruf.
 
 ## Gantt-Integration
 
@@ -157,32 +199,31 @@ Und der Draw wird über die bestehende Visitor/Dispatch-Mechanik an `chosenVaria
 ```java
 double zoom = axis.getCurrentZoom(); // pixelsPerUnit
 
+// Zoom einmal pro Pass auf den Context legen.
+RenderContext spanCtx = context.withZoom(zoom, /*zoomY*/ 1.0);
+
 for (GanttItem item : self.getItems()) {
     Box box = item.getBox();
     if (box == null) continue;
 
-    RenderContext itemCtx;
+    double availW;
+    double availH = Double.POSITIVE_INFINITY;
     if (item instanceof GanttSpan span) {
-        double w = (span.getEnd() - span.getStart()) * zoom;
-        itemCtx = context.withHints(w, /*availableH*/ Double.POSITIVE_INFINITY,
-                                    /*zoomX*/ zoom, /*zoomY*/ 1.0);
-    } else if (item instanceof GanttPoint pt) {
-        // Punkte haben keine definierte Breite; nur Zoom reicht.
-        itemCtx = context.withHints(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
-                                    zoom, 1.0);
+        availW = (span.getEnd() - span.getStart()) * zoom;
     } else {
-        itemCtx = context;
+        // Punkte/sonstige Items haben keine definierte Breite.
+        availW = Double.POSITIVE_INFINITY;
     }
-    box.computeIntrinsicSize(itemCtx, tmpX, tmpY);
+    box.computeIntrinsicSize(spanCtx, tmpX, tmpY, availW, availH);
     // ... wie bisher.
 }
 ```
 
 **Wichtig:** `zoomY = 1.0` — die Gantt-Zeile zoomt vertikal **nicht**. Eine LOD-Box innerhalb eines Spans entscheidet horizontale Varianten (Textlänge), nicht vertikale.
 
-Für **Zeilen-Labels** im Gantt-Sidebar: deren Breite = `columnWidth`, passt ebenfalls via Kontext. Zoom bleibt 1, weil der Sidebar nicht gezoomt wird.
+Für **Zeilen-Labels** im Gantt-Sidebar: `availableWidth` = `columnWidth`. Zoom bleibt 1, weil der Sidebar nicht gezoomt wird.
 
-Für **Dekorations-Labels**: wenn sie nicht an ein Item gebunden sind, haben sie typischerweise keine feste Breite — Kontext bleibt default.
+Für **Dekorations-Labels**: wenn sie nicht an ein Item gebunden sind, haben sie typischerweise keine feste Breite — `availableWidth = POSITIVE_INFINITY`.
 
 ## Dimension von "Zoom" **[offen]**
 
@@ -223,45 +264,47 @@ Empfehlung: **parallel**. AxisProvider treffen Entscheidungen basierend auf Tick
 
 ## TL-Script-API (Entwurf)
 
+Da die Variantenwahl primär aus dem Intrinsic-Bedarf resultiert, wird der Aufruf deutlich schlanker — Varianten sind reine Box-Listen, keine Schwellen-Tupel:
+
 ```
 reactFlowLOD(
-    variants: list(
-        reactFlowLODVariant(minWidth: 200, content: fullBox),
-        reactFlowLODVariant(minWidth: 60,  content: mediumBox),
-        reactFlowLODVariant(minWidth: 15,  content: iconBox),
-        reactFlowLODVariant(              content: barBox)   // fallback
-    )
+    fullBox,    // wird gewählt, wenn intrinsic.w(fullBox)   <= avail
+    mediumBox,  // sonst, wenn intrinsic.w(mediumBox) <= avail
+    iconBox,    // sonst, wenn intrinsic.w(iconBox)   <= avail
+    barBox      // Fallback (sollte immer passen)
 )
 ```
 
-Hilfskonstruktor für den häufigsten Fall "nur breitenbasiert":
+Für die selteneren Fälle mit zusätzlichen Gates (`minZoom`, `minWidth`-Override) gibt es einen ausführlicheren Konstruktor:
 
 ```
-reactFlowLODByWidth(
-    list(200, fullBox),
-    list( 60, mediumBox),
-    list( 15, iconBox),
-    barBox  // fallback
+reactFlowLODGated(
+    reactFlowLODVariant(minZoom: 10, content: detailedBox),
+    reactFlowLODVariant(             content: simpleBox),
+    reactFlowLODVariant(             content: barBox)
 )
 ```
 
 ## Offene Fragen / Entscheidungen
 
-| # | Frage                                                            | Empfehlung                                       |
-|---|------------------------------------------------------------------|--------------------------------------------------|
-| 1 | Varianten-Reihenfolge richest→compact vs umgekehrt               | richest→compact, erste erfüllte gewinnt          |
-| 2 | Context-Propagation per Parameter vs Stack                       | per Parameter (`withHints`)                      |
-| 3 | Ein Zoom-Skalar vs zwei vs volle Matrix                          | zwei Skalare (`zoomX`, `zoomY`)                  |
-| 4 | Variante-abhängige vs fixe intrinsische Höhe                     | variabel, opt-in `fixedHeight` bei `LOD`         |
-| 5 | Axis-Ticks via LOD integrieren?                                  | nein, parallel belassen                          |
-| 6 | LOD als `Box`-Subtyp vs als Markierungs-Decorator (wie `Fill`)   | `Box`-Subtyp, analog zu `Stack`                  |
-| 7 | Unterstützt eine Variante ihrerseits LOD (Rekursion)?            | ja — emergiert natürlich aus der Semantik        |
-| 8 | Hysterese beim Varianten-Wechsel?                                | **[offen]** erst nach Nutzer-Feedback entscheiden|
-| 9 | Animation zwischen Varianten?                                    | erst einmal nein; harter Snap                    |
+| #  | Frage                                                              | Status / Empfehlung                                |
+|----|--------------------------------------------------------------------|----------------------------------------------------|
+| 1  | Varianten-Reihenfolge richest→compact vs umgekehrt                 | **entschieden**: richest→compact                   |
+| 2  | Constraints via `RenderContext` vs als Methodenparameter           | **entschieden**: Methodenparameter, symmetrisch zu `distributeSize` |
+| 3  | Ein Zoom-Skalar vs zwei vs volle Matrix                            | zwei Skalare (`zoomX`, `zoomY`) im `RenderContext` |
+| 4  | Auto-Fit vs deklarierte `minWidth`-Schwellen                       | **entschieden**: Auto-Fit primär, `minWidth`/`minZoom` als optionale Zusatz-Gates |
+| 5  | Variante-abhängige vs fixe intrinsische Höhe                       | variabel, opt-in `fixedHeight` bei `LOD`           |
+| 6  | Axis-Ticks via LOD integrieren?                                    | nein, parallel belassen                            |
+| 7  | LOD als `Box`-Subtyp vs als Markierungs-Decorator (wie `Fill`)     | `Box`-Subtyp, analog zu `Stack`                    |
+| 8  | Unterstützt eine Variante ihrerseits LOD (Rekursion)?              | ja — emergiert natürlich aus der Semantik          |
+| 9  | Hysterese beim Varianten-Wechsel?                                  | **[offen]** erst nach Nutzer-Feedback entscheiden  |
+| 10 | Animation zwischen Varianten?                                      | erst einmal nein; harter Snap                      |
+| 11 | Verhalten in Flex-Containern, wo `availableWidth` erst in distribute bekannt ist | **[offen]**: vorerst Richest-Wahl mit `POSITIVE_INFINITY`; iteratives Reflow-Protokoll als Folgeticket |
 
 ## Was eine spätere Implementation-Plan-Iteration klären muss
 
-- Soll die Varianten-Wahl in `distributeSize` revidiert werden dürfen (wenn `distributeSize` eine andere Breite zuteilt als die Intrinsic-Hint versprochen hat)?
+- Migration der bestehenden `Box`-Implementationen auf die neue `computeIntrinsicSize`-Signatur (`availableWidth/Height` als Pflichtparameter). Default-Implementation kann die Werte ignorieren — die Migration ist mechanisch, aber breit.
+- Soll die Varianten-Wahl in `distributeSize` revidiert werden dürfen (wenn `distributeSize` eine andere Breite zuteilt als der Intrinsic-Pass-Hint)? Relevant für Flex-Container (Frage #11).
 - Wie reagiert der Client (`FlowDiagramClientControl`) auf Zoom-Änderungen? Aktuell löst Zoom ein vollständiges Re-Layout aus (GanttLayoutOperations.computeIntrinsicSize wird wieder gerufen) — das würde LOD automatisch neu entscheiden. Das ist der Happy Path.
 - Test: scripted test, der bei verschiedenen `zoom`-Werten prüft, welche Variante aktiv ist (per `__tlWidget`-Attribut auslesbar).
 

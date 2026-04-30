@@ -48,9 +48,13 @@ public interface Tool {
 
 	/**
 	 * Whether this tool can safely run in parallel with other concurrency-safe tools.
+	 *
+	 * <p>Defaults to {@code true}. With locking in place, most tools are safe to
+	 * run concurrently. Override to {@code false} only for tools with external
+	 * concurrency constraints (e.g. single-connection external systems).</p>
 	 */
 	default boolean isConcurrencySafe() {
-		return mode() != ToolMode.STRUCTURAL;
+		return true;
 	}
 
 }

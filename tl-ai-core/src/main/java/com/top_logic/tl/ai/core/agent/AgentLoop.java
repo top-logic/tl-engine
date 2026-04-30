@@ -400,7 +400,7 @@ public class AgentLoop {
 
 		_turnDeniedCallIds.clear();
 
-		List<List<ToolCall>> batches = partitionBatches(toolCalls);
+		List<List<ToolCall>> batches = partitionBatches(toolCalls, context);
 		int messagesBefore = conversation.size();
 
 		for (List<ToolCall> batch : batches) {
@@ -494,14 +494,18 @@ public class AgentLoop {
 	/**
 	 * Partition tool calls into batches: consecutive concurrency-safe tools are grouped
 	 * together, non-safe tools get their own batch.
+	 *
+	 * <p>A tool is considered safe for concurrent execution when it reports itself as
+	 * concurrency-safe AND will not require interactive approval (which would block
+	 * the thread waiting for user input).</p>
 	 */
-	private List<List<ToolCall>> partitionBatches(List<ToolCall> toolCalls) {
+	private List<List<ToolCall>> partitionBatches(List<ToolCall> toolCalls, ToolContext context) {
 		List<List<ToolCall>> batches = new ArrayList<>();
 		List<ToolCall> currentBatch = null;
 		boolean currentBatchConcurrent = false;
 
 		for (ToolCall tc : toolCalls) {
-			boolean safe = isConcurrencySafe(tc);
+			boolean safe = isConcurrencySafe(tc, context);
 
 			if (currentBatch == null) {
 				currentBatch = new ArrayList<>();
@@ -522,12 +526,21 @@ public class AgentLoop {
 		return batches;
 	}
 
-	private boolean isConcurrencySafe(ToolCall tc) {
+	private boolean isConcurrencySafe(ToolCall tc, ToolContext context) {
 		Tool tool = _registry.getTool(tc.name());
 		if (tool == null) {
 			return false;
 		}
-		return tool.isConcurrencySafe() && tool.mode() == ToolMode.READ;
+		if (!tool.isConcurrencySafe()) {
+			return false;
+		}
+		// Session-approved tools don't need interactive approval.
+		if (_sessionApprovedTools.contains(tool.name())) {
+			return true;
+		}
+		// Check if the security context auto-approves this tool.
+		PermissionDecision decision = context.security().checkApproval(tool, tc);
+		return decision instanceof PermissionDecision.Allowed;
 	}
 
 	private void executeSingle(ToolCall toolCall, ToolContext context,

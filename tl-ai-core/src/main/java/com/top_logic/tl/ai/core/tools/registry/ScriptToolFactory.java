@@ -166,9 +166,8 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * Whether this tool can safely run in parallel with other concurrency-safe tools.
 		 *
 		 * <p>
-		 * When {@code null} (the default), the value is derived from {@link #getMode()}: {@code
-		 * true} for {@link ToolMode#READ} and {@link ToolMode#USER_SCOPED}, {@code false} for
-		 * {@link ToolMode#DATA_WRITE}.
+		 * When {@code null} (the default), defaults to {@code true}. Override to {@code false}
+		 * only for tools with external concurrency constraints.
 		 * </p>
 		 *
 		 * @see Tool#isConcurrencySafe()

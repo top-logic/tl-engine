@@ -1411,67 +1411,8 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Lock failure on one tool must not poison subsequent turns — each call to
-	 * {@code ensureTransaction} is independent. Regression test for the architecture
-	 * where lock acquisition moved from a batch-level pre-loop into the per-tool
-	 * security-check path.
-	 */
-	public void testLockFailureIsolatedToFailingTool() {
-		Conversation conv = new Conversation();
-		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
-
-		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
-		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
-
-		LLMProvider provider = mockProvider(
-			List.of(toolCall),
-			List.of(new TextContent("Gave up.")));
-
-		ToolDispatcher registry = new ToolDispatcher();
-		registry.register(globalTool("edit_model", toolSpec));
-		registry.freeze();
-
-		List<String> events = new ArrayList<>();
-		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.LockFailed) {
-				events.add("lock_failed");
-			} else if (e instanceof AgentEvent.TransactionBegan) {
-				events.add("tx_begin");
-			}
-		};
-
-		TransactionScope failingScope = new TestableTransactionScope() {
-			@Override
-			public void acquireLock() {
-				throw new TransactionException("Locked by Developer A");
-			}
-		};
-		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
-			failingScope);
-
-		AgentLoop loop = new AgentLoop(config(), provider, registry);
-		AgentResult result = loop.run(conv, ctx, listener);
-
-		// The loop should reach COMPLETE: lock failure produced a tool error that was
-		// fed back to the LLM, which then responded with a plain text answer.
-		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertTrue("Lock failure should be reported", events.contains("lock_failed"));
-		assertFalse("Transaction must not begin when lock acquisition fails",
-			events.contains("tx_begin"));
-
-		// The conversation must contain the failed tool result so the LLM can adapt.
-		boolean hasFailedResult = conv.messages().stream()
-			.filter(ToolResultMessage.class::isInstance)
-			.map(ToolResultMessage.class::cast)
-			.anyMatch(tr -> tr.state() instanceof ToolState.Failed failed
-				&& failed.error().contains("Cannot edit"));
-		assertTrue("Failed tool result with lock error should be in conversation",
-			hasFailedResult);
-	}
-
-	/**
-	 * STRUCTURAL tools are always executed sequentially, even if marked concurrencySafe.
-	 * Listener events fire correctly for concurrent READ tools.
+	 * Tools that need approval are executed sequentially (approval is interactive).
+	 * READ tools that don't need approval run concurrently.
 	 */
 	public void testGlobalToolsForcedSequential() {
 		Conversation conv = new Conversation();

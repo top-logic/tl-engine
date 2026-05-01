@@ -20,7 +20,9 @@ import java.util.Objects;
  */
 public record ThinkingContent(String text) implements ContentPart {
 
-	/** */
+	/**
+	 * Creates a {@link ThinkingContent}.
+	 */
 	public ThinkingContent {
 		Objects.requireNonNull(text, "Text must not be null.");
 	}

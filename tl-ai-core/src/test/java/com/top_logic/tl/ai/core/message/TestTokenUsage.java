@@ -54,10 +54,9 @@ public class TestTokenUsage extends TestCase {
 		assertEquals(15, sum.cacheWriteTokens());
 	}
 
-	/** Equality. */
-	public void testEquality() {
-		TokenUsage a = new TokenUsage(100, 50, 0, 0, 0);
-		TokenUsage b = new TokenUsage(100, 50, 0, 0, 0);
-		assertEquals(a, b);
+	/** Adding EMPTY is identity. */
+	public void testAddIdentity() {
+		TokenUsage a = new TokenUsage(100, 50, 200, 30, 10);
+		assertEquals(a, a.add(TokenUsage.EMPTY));
 	}
 }

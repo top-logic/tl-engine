@@ -82,6 +82,18 @@ public class TestMessage extends TestCase {
 		assertEquals("auto", msg.trigger());
 	}
 
+	/** AssistantMessage content list is unmodifiable. */
+	public void testAssistantMessageContentUnmodifiable() {
+		AssistantMessage msg = new AssistantMessage("a1", NOW,
+			List.of(new TextContent("hi")), TokenUsage.EMPTY, "stop");
+		try {
+			msg.content().add(new TextContent("nope"));
+			fail("Expected UnsupportedOperationException");
+		} catch (UnsupportedOperationException e) {
+			// expected
+		}
+	}
+
 	/** All 5 types are Message instances. */
 	public void testSealedInterface() {
 		Message[] messages = {

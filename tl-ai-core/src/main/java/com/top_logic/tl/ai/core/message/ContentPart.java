@@ -8,12 +8,14 @@ package com.top_logic.tl.ai.core.message;
 /**
  * A piece of content within a {@link Message}.
  *
- * <p>Content parts represent the building blocks of messages: text, tool calls, and images.
+ * <p>Content parts represent the building blocks of messages: text, tool calls, images,
+ * extended thinking, and PDF documents.
  * They appear in {@link UserMessage} and {@link AssistantMessage} content lists.</p>
  *
  * @see TextContent
  * @see ToolCall
  * @see ImageContent
+ * @see ThinkingContent
  * @see PdfContent
  */
 public sealed interface ContentPart permits TextContent, ToolCall, ImageContent, ThinkingContent, PdfContent {

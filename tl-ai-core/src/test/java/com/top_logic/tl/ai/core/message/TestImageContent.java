@@ -19,12 +19,6 @@ public class TestImageContent extends TestCase {
 		assertEquals("image/png", img.mediaType());
 	}
 
-	/** ImageContent is a ContentPart. */
-	public void testIsContentPart() {
-		ContentPart part = new ImageContent("https://example.com/img.png", "image/png");
-		assertTrue(part instanceof ImageContent);
-	}
-
 	/** Null url is rejected. */
 	@SuppressWarnings("unused")
 	public void testNullUrlRejected() {

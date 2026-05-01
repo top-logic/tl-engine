@@ -9,6 +9,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.message.TokenUsage;
+
 import junit.framework.TestCase;
 
 /**
@@ -87,15 +90,23 @@ public class TestPart extends TestCase {
 		assertEquals(Part.SystemEventType.CANCELLED, p.eventType());
 	}
 
-	/** Verify DelegationPart references child session. */
+	/** Verify DelegationPart references child session and sub-agent metadata. */
 	public void testDelegationPart() {
 		Part.DelegationPart p = Part.DelegationPart.started("d1", Instant.now(),
 			"orchestrator", "researcher", "Find info about X");
 		assertNull(p.resultSummary());
+		assertEquals(-1, p.turnsUsed());
+		assertNull(p.totalUsage());
+		assertNull(p.stopReason());
 
-		Part.DelegationPart done = p.completed("Found 3 results", "child-session-123", 5000L);
+		TokenUsage usage = new TokenUsage(1000, 500, 0, 200, 100);
+		Part.DelegationPart done = p.completed("Found 3 results", "child-session-123", 5000L,
+			3, usage, StopReason.COMPLETE);
 		assertEquals("Found 3 results", done.resultSummary());
 		assertEquals("child-session-123", done.childSessionId());
 		assertEquals(5000L, done.durationMs());
+		assertEquals(3, done.turnsUsed());
+		assertEquals(usage, done.totalUsage());
+		assertEquals(StopReason.COMPLETE, done.stopReason());
 	}
 }

@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -380,15 +381,17 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
-	 * Resolve a completed delegation with result summary and duration.
+	 * Resolve a completed delegation with result summary, duration, and sub-agent metadata.
 	 */
-	public void resolveDelegation(String delegationId, String resultSummary, long durationMs) {
+	public void resolveDelegation(String delegationId, String resultSummary,
+			long durationMs, AgentResult agentResult) {
 		_activeDelegations.remove(delegationId);
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			Part existing = turn.findPart(delegationId);
 			if (existing instanceof Part.DelegationPart dp) {
-				turn.updatePart(delegationId, dp.completed(resultSummary, null, durationMs));
+				turn.updatePart(delegationId, dp.completed(resultSummary, null, durationMs,
+					agentResult.turnsUsed(), agentResult.totalUsage(), agentResult.stopReason()));
 			}
 		}
 	}

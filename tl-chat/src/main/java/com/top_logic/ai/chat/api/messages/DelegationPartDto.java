@@ -36,6 +36,15 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/** @see #getChildParts() */
 	public static final String CHILD_PARTS__PROP = "childParts";
 
+	/** @see #getTurnsUsed() */
+	public static final String TURNS_USED__PROP = "turnsUsed";
+
+	/** @see #getTotalUsage() */
+	public static final String TOTAL_USAGE__PROP = "totalUsage";
+
+	/** @see #getStopReason() */
+	public static final String STOP_REASON__PROP = "stopReason";
+
 	private String _fromAgent = "";
 
 	private String _toAgent = "";
@@ -49,6 +58,12 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	private long _durationMs = 0L;
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> _childParts = new java.util.ArrayList<>();
+
+	private int _turnsUsed = 0;
+
+	private com.top_logic.ai.chat.api.messages.TokenUsageDto _totalUsage = null;
+
+	private String _stopReason = "";
 
 	/**
 	 * Creates a {@link DelegationPartDto} instance.
@@ -221,6 +236,73 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		_childParts.remove(value);
 	}
 
+	/**
+	 * Number of LLM iterations the sub-agent executed, or -1 if unknown.
+	 */
+	public final int getTurnsUsed() {
+		return _turnsUsed;
+	}
+
+	/**
+	 * @see #getTurnsUsed()
+	 */
+	public com.top_logic.ai.chat.api.messages.DelegationPartDto setTurnsUsed(int value) {
+		internalSetTurnsUsed(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTurnsUsed()} without chain call utility. */
+	protected final void internalSetTurnsUsed(int value) {
+		_turnsUsed = value;
+	}
+
+	/**
+	 * Cumulative token usage of the sub-agent.
+	 */
+	public final com.top_logic.ai.chat.api.messages.TokenUsageDto getTotalUsage() {
+		return _totalUsage;
+	}
+
+	/**
+	 * @see #getTotalUsage()
+	 */
+	public com.top_logic.ai.chat.api.messages.DelegationPartDto setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+		internalSetTotalUsage(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTotalUsage()} without chain call utility. */
+	protected final void internalSetTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+		_totalUsage = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getTotalUsage()} has a value.
+	 */
+	public final boolean hasTotalUsage() {
+		return _totalUsage != null;
+	}
+
+	/**
+	 * Why the sub-agent stopped (e.g. COMPLETE, MAX_TURNS, ERROR).
+	 */
+	public final String getStopReason() {
+		return _stopReason;
+	}
+
+	/**
+	 * @see #getStopReason()
+	 */
+	public com.top_logic.ai.chat.api.messages.DelegationPartDto setStopReason(String value) {
+		internalSetStopReason(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStopReason()} without chain call utility. */
+	protected final void internalSetStopReason(String value) {
+		_stopReason = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return DELEGATION_PART_DTO__TYPE;
@@ -235,7 +317,10 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			RESULT_SUMMARY__PROP, 
 			CHILD_SESSION_ID__PROP, 
 			DURATION_MS__PROP, 
-			CHILD_PARTS__PROP);
+			CHILD_PARTS__PROP, 
+			TURNS_USED__PROP, 
+			TOTAL_USAGE__PROP, 
+			STOP_REASON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -267,6 +352,9 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case CHILD_SESSION_ID__PROP: return getChildSessionId();
 			case DURATION_MS__PROP: return getDurationMs();
 			case CHILD_PARTS__PROP: return getChildParts();
+			case TURNS_USED__PROP: return getTurnsUsed();
+			case TOTAL_USAGE__PROP: return getTotalUsage();
+			case STOP_REASON__PROP: return getStopReason();
 			default: return null;
 		}
 	}
@@ -281,6 +369,9 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case CHILD_SESSION_ID__PROP: internalSetChildSessionId((String) value); break;
 			case DURATION_MS__PROP: internalSetDurationMs((long) value); break;
 			case CHILD_PARTS__PROP: internalSetChildParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedPart.class, value)); break;
+			case TURNS_USED__PROP: internalSetTurnsUsed((int) value); break;
+			case TOTAL_USAGE__PROP: internalSetTotalUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
+			case STOP_REASON__PROP: internalSetStopReason((String) value); break;
 		}
 	}
 
@@ -317,6 +408,14 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(TURNS_USED__PROP);
+		out.value(getTurnsUsed());
+		if (hasTotalUsage()) {
+			out.name(TOTAL_USAGE__PROP);
+			getTotalUsage().writeTo(out);
+		}
+		out.name(STOP_REASON__PROP);
+		out.value(getStopReason());
 	}
 
 	@Override
@@ -338,6 +437,9 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 				setChildParts(newValue);
 			}
 			break;
+			case TURNS_USED__PROP: setTurnsUsed(in.nextInt()); break;
+			case TOTAL_USAGE__PROP: setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case STOP_REASON__PROP: setStopReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

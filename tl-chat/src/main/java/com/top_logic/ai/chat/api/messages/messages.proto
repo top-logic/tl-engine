@@ -898,6 +898,15 @@ message DelegationPartDto {
 
 	/** Nested child parts from the sub-agent's execution. */
 	repeated PersistedPart childParts;
+
+	/** Number of LLM iterations the sub-agent executed, or -1 if unknown. */
+	int turnsUsed;
+
+	/** Cumulative token usage of the sub-agent. */
+	TokenUsageDto totalUsage;
+
+	/** Why the sub-agent stopped (e.g. COMPLETE, MAX_TURNS, ERROR). */
+	string stopReason;
 }
 
 /** System event part. */

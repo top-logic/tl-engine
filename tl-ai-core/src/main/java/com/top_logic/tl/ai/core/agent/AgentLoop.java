@@ -46,10 +46,10 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
-import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -877,6 +877,12 @@ public class AgentLoop {
 
 		private List<ContentPart> _content;
 
+		/**
+		 * Stream-level error received via
+		 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.Error}, if any.
+		 */
+		private ProviderException _streamError;
+
 		ResponseCollector(AgentEventListener listener, String runId, int turnNumber) {
 			_listener = listener;
 			_runId = runId;
@@ -894,18 +900,28 @@ public class AgentLoop {
 				_finishReason = complete.finishReason();
 				_usage = complete.usage();
 				_content = complete.content();
+			} else if (event instanceof StreamEvent.Error error) {
+				// Store for re-throw in toAssistantMessage(); onEvent cannot throw checked exceptions.
+				_streamError = new ProviderException(error.kind(), 0, error.message());
 			}
-			// ToolCallStart and ToolCallDelta: accumulated in MessageComplete
+			// ToolCallStart, ToolCallDelta, and lifecycle *Start/*End events:
+			// accumulated in MessageComplete or not needed here.
 		}
 
 		/**
 		 * Build the {@link AssistantMessage} from the accumulated stream events.
 		 *
+		 * @throws ProviderException
+		 *         if the stream delivered a
+		 *         {@link com.top_logic.tl.ai.core.provider.StreamEvent.Error} event
 		 * @throws IllegalStateException
 		 *         if no {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete} was
 		 *         received
 		 */
-		AssistantMessage toAssistantMessage() {
+		AssistantMessage toAssistantMessage() throws ProviderException {
+			if (_streamError != null) {
+				throw _streamError;
+			}
 			if (_content == null) {
 				throw new IllegalStateException("No MessageComplete event received.");
 			}

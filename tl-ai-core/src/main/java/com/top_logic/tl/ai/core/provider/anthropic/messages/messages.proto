@@ -1,0 +1,91 @@
+package com.top_logic.tl.ai.core.provider.anthropic.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/** Payload of the {@code message_start} SSE event. */
+message MessageStartEvent {
+	MessageInfo `message` [Name = "message"];
+}
+
+message MessageInfo {
+	string id [Name = "id"];
+	string model [Name = "model"];
+	UsageInfo usage [Name = "usage"];
+}
+
+message UsageInfo {
+	int input_tokens [Name = "input_tokens"];
+	int output_tokens [Name = "output_tokens"];
+	int cache_read_input_tokens [Name = "cache_read_input_tokens"];
+	int cache_creation_input_tokens [Name = "cache_creation_input_tokens"];
+}
+
+/** Payload of the {@code content_block_start} SSE event. */
+message ContentBlockStartEvent {
+	int index [Name = "index"];
+	ContentBlockInfo content_block [Name = "content_block"];
+}
+
+message ContentBlockInfo {
+	string type [Name = "type"];
+	string id [Name = "id"];
+	string name [Name = "name"];
+}
+
+/** Payload of the {@code content_block_delta} SSE event. */
+message ContentBlockDeltaEvent {
+	int index [Name = "index"];
+	DeltaInfo delta [Name = "delta"];
+}
+
+message DeltaInfo {
+	string type [Name = "type"];
+	string text [Name = "text"];
+	string partial_json [Name = "partial_json"];
+}
+
+/** Payload of the {@code content_block_stop} SSE event. */
+message ContentBlockStopEvent {
+	int index [Name = "index"];
+}
+
+/** Payload of the {@code message_delta} SSE event. */
+message MessageDeltaEvent {
+	MessageDeltaInfo delta [Name = "delta"];
+	UsageInfo usage [Name = "usage"];
+}
+
+message MessageDeltaInfo {
+	string stop_reason [Name = "stop_reason"];
+}
+
+/** Error payload within an {@code error} SSE event. */
+message StreamErrorEvent {
+	StreamErrorInfo error [Name = "error"];
+}
+
+message StreamErrorInfo {
+	string type [Name = "type"];
+	string `message` [Name = "message"];
+}
+
+// --- Request types ---
+
+/** Anthropic Messages API request body. */
+message AnthropicRequest {
+	string model [Name = "model"];
+	int max_tokens [Name = "max_tokens"];
+	bool stream [Name = "stream"];
+	json temperature [Name = "temperature"];
+	json top_p [Name = "top_p"];
+	json top_k [Name = "top_k"];
+	json system [Name = "system"];
+	json messages [Name = "messages"];
+	json tools [Name = "tools"];
+	json response_format [Name = "response_format"];
+	json tool_choice [Name = "tool_choice"];
+}

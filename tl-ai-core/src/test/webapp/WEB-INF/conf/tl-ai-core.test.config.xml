@@ -38,6 +38,8 @@
 				<entry value="com.top_logic.tl.ai.core.agent.AgentParams" />
 				<entry value="com.top_logic.tl.ai.core.agent.AgentResult" />
 				<entry value="com.top_logic.tl.ai.core.agent.approval.ApprovalRequest" />
+				<entry value="com.top_logic.tl.ai.core.provider.anthropic.messages" />
+				<entry value="com.top_logic.tl.ai.core.provider.openai.messages" />
 			</ignore>
 		</config>
 	</configs>

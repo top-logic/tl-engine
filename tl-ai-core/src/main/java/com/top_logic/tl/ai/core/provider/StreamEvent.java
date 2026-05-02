@@ -15,53 +15,46 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  * An event from an LLM streaming response.
  *
  * <p>Events are delivered sequentially to a {@link StreamHandler} as the response
- * streams in. The stream always ends with a {@link MessageComplete} event on success.</p>
+ * streams in. Lifecycle events come in triples: {@code *Start}, {@code *Delta},
+ * {@code *End}. The stream always ends with a {@link MessageComplete} or
+ * {@link Error} event.</p>
  */
 public sealed interface StreamEvent {
 
-	/**
-	 * A text delta from the LLM.
-	 *
-	 * @param contentIndex index of the content block in the response
-	 * @param text         the text fragment
-	 */
+	/** Emitted once when the stream connection is established. */
+	record StreamStart() implements StreamEvent { /**/ }
+
+	/** A text content block has started. */
+	record TextStart(int contentIndex) implements StreamEvent { /**/ }
+
+	/** A text delta from the LLM. */
 	record TextDelta(int contentIndex, String text) implements StreamEvent { /**/ }
 
-	/**
-	 * A thinking text delta from the LLM (extended thinking).
-	 *
-	 * @param contentIndex index of the content block in the response
-	 * @param text         the thinking text fragment
-	 */
+	/** A text content block has ended. */
+	record TextEnd(int contentIndex) implements StreamEvent { /**/ }
+
+	/** A thinking content block has started. */
+	record ThinkingStart(int contentIndex) implements StreamEvent { /**/ }
+
+	/** A thinking text delta from the LLM (extended thinking). */
 	record ThinkingDelta(int contentIndex, String text) implements StreamEvent { /**/ }
 
-	/**
-	 * Start of a tool call in the response.
-	 *
-	 * @param contentIndex index of the content block
-	 * @param id           tool call identifier (from the LLM)
-	 * @param name         tool name
-	 */
+	/** A thinking content block has ended. */
+	record ThinkingEnd(int contentIndex) implements StreamEvent { /**/ }
+
+	/** Start of a tool call in the response. */
 	record ToolCallStart(int contentIndex, String id, String name) implements StreamEvent { /**/ }
 
-	/**
-	 * Partial JSON arguments for a tool call being streamed.
-	 *
-	 * @param contentIndex index of the content block
-	 * @param partialJson  a fragment of the JSON arguments string
-	 */
+	/** Partial JSON arguments for a tool call being streamed. */
 	record ToolCallDelta(int contentIndex, String partialJson) implements StreamEvent { /**/ }
 
+	/** A tool call has ended (arguments are fully accumulated). */
+	record ToolCallEnd(int contentIndex) implements StreamEvent { /**/ }
+
 	/**
-	 * The complete response message, emitted once when the stream finishes.
+	 * The complete response message, emitted once when the stream finishes successfully.
 	 *
 	 * <p>Contains the fully accumulated content parts and token usage.</p>
-	 *
-	 * @param id           message identifier from the provider
-	 * @param model        model that generated the response
-	 * @param finishReason why the LLM stopped ("end_turn", "tool_use", "max_tokens")
-	 * @param usage        token usage
-	 * @param content      the complete content parts (text and/or tool calls)
 	 */
 	record MessageComplete(
 			String id,
@@ -77,4 +70,13 @@ public sealed interface StreamEvent {
 			content = List.copyOf(content);
 		}
 	}
+
+	/**
+	 * A stream-level error from the provider.
+	 *
+	 * <p>Emitted for errors reported within the SSE stream (e.g. Anthropic's
+	 * {@code error} event, OpenAI's {@code response.failed}). HTTP-level errors
+	 * (non-200 status) are still thrown as {@link ProviderException}.</p>
+	 */
+	record Error(String message, ProviderException.Kind kind) implements StreamEvent { /**/ }
 }

@@ -1,0 +1,202 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.provider;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Objects;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
+
+/**
+ * Base class for streaming LLM providers that share a common HTTP lifecycle.
+ *
+ * <p>Implements the template method pattern: {@link #stream} is final and owns the full
+ * HTTP request/response/streaming lifecycle. Subclasses provide endpoint-specific details
+ * via abstract methods and hooks.</p>
+ */
+public abstract class AbstractStreamingProvider implements LLMProvider {
+
+	/** The API key for authentication. May be {@code null} for unauthenticated providers. */
+	protected final String _apiKey;
+
+	/** The base URL of the provider API (without trailing slash). */
+	protected final String _baseUrl;
+
+	/** */
+	protected final HttpClient _httpClient;
+
+	/**
+	 * Creates a new {@link AbstractStreamingProvider}.
+	 *
+	 * @param apiKey
+	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param baseUrl
+	 *        The base URL. A trailing slash is stripped.
+	 * @param httpClient
+	 *        The HTTP client to use.
+	 */
+	protected AbstractStreamingProvider(String apiKey, String baseUrl, HttpClient httpClient) {
+		_apiKey = apiKey;
+		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
+	}
+
+	@Override
+	public final void stream(ProviderRequest request, StreamHandler handler) throws ProviderException {
+		Objects.requireNonNull(request, "Request must not be null.");
+		Objects.requireNonNull(handler, "Handler must not be null.");
+
+		String body = buildRequestJson(request);
+		validateRequest(body);
+
+		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+			.uri(URI.create(_baseUrl + endpointPath()))
+			.header("Content-Type", "application/json")
+			.header("Accept", "text/event-stream")
+			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+			.timeout(Duration.ofMinutes(10));
+
+		addAuthHeaders(requestBuilder);
+		addExtraHeaders(requestBuilder);
+
+		HttpRequest httpRequest = requestBuilder.build();
+
+		HttpResponse<InputStream> response;
+		try {
+			response = _httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+		} catch (IOException e) {
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
+				"Connection failed: " + e.getMessage(), e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
+		}
+
+		if (response.statusCode() != 200) {
+			handleErrorResponse(response);
+		}
+
+		try (InputStream responseBody = response.body()) {
+			processStream(responseBody, handler);
+		} catch (ProviderException e) {
+			throw e;
+		} catch (IOException e) {
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
+				"Stream read error: " + e.getMessage(), e);
+		}
+	}
+
+	// --- Abstract methods (subclass must implement) ---
+
+	/**
+	 * The API endpoint path, e.g. {@code "/v1/messages"}.
+	 */
+	protected abstract String endpointPath();
+
+	/**
+	 * Builds the provider-specific JSON request body.
+	 */
+	protected abstract String buildRequestJson(ProviderRequest request) throws ProviderException;
+
+	/**
+	 * Parses the SSE stream and emits events to the handler.
+	 */
+	protected abstract void processStream(InputStream input, StreamHandler handler)
+		throws IOException, ProviderException;
+
+	/**
+	 * Handles a non-200 HTTP response by throwing an appropriate {@link ProviderException}.
+	 *
+	 * <p>Implementations can use {@link #drainResponseBody} and {@link #parseRetryAfter} as
+	 * helpers.</p>
+	 */
+	protected abstract void handleErrorResponse(HttpResponse<InputStream> response)
+		throws ProviderException;
+
+	// --- Hooks with defaults ---
+
+	/**
+	 * Validates the request body before sending. Default is a no-op.
+	 *
+	 * <p>Override to add provider-specific validation (e.g. body size limits).</p>
+	 */
+	protected void validateRequest(String body) throws ProviderException {
+		// No-op by default.
+	}
+
+	/**
+	 * Adds authentication headers. Default adds {@code Authorization: Bearer} if the API key
+	 * is set. Override for providers that use a different auth scheme.
+	 */
+	protected void addAuthHeaders(HttpRequest.Builder builder) {
+		if (_apiKey != null && !_apiKey.isBlank()) {
+			builder.header("Authorization", "Bearer " + _apiKey);
+		}
+	}
+
+	/**
+	 * Adds extra headers beyond authentication. Default is a no-op.
+	 *
+	 * <p>Override to add provider-specific headers (e.g. API version).</p>
+	 */
+	protected void addExtraHeaders(HttpRequest.Builder builder) {
+		// No-op by default.
+	}
+
+	// --- Shared utilities ---
+
+	/**
+	 * Creates a new default {@link HttpClient} with a 30-second connect timeout.
+	 */
+	protected static HttpClient defaultHttpClient() {
+		return HttpClient.newBuilder()
+			.connectTimeout(Duration.ofSeconds(30))
+			.build();
+	}
+
+	/**
+	 * Parses the {@code retry-after} header as a duration in seconds.
+	 *
+	 * @return the duration, or {@code null} if the header is absent or unparseable.
+	 */
+	protected Duration parseRetryAfter(java.net.http.HttpHeaders headers) {
+		return headers.firstValue("retry-after")
+			.map(value -> {
+				try {
+					return Duration.ofSeconds(Long.parseLong(value));
+				} catch (NumberFormatException e) {
+					return null;
+				}
+			})
+			.orElse(null);
+	}
+
+	/**
+	 * Creates a {@link JsonReader} from a JSON string.
+	 */
+	protected static JsonReader jsonReader(String json) {
+		return new JsonReader(new StringR(json));
+	}
+
+	/**
+	 * Reads the full response body as a UTF-8 string. Returns an empty string on I/O failure.
+	 */
+	protected static String drainResponseBody(HttpResponse<InputStream> response) {
+		try (InputStream is = response.body()) {
+			return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			return "";
+		}
+	}
+}

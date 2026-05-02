@@ -1,0 +1,72 @@
+package com.top_logic.tl.ai.core.provider.openai.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/** Shared envelope for event type dispatch. */
+message OpenAIEventEnvelope {
+	string type [Name = "type"];
+}
+
+/** {@code response.created}, {@code response.completed}, {@code response.incomplete}, {@code response.failed}. */
+message ResponseLifecycleEvent {
+	string type [Name = "type"];
+	ResponseInfo response [Name = "response"];
+}
+
+/** Basic response fields. */
+message ResponseInfo {
+	string id [Name = "id"];
+	string model [Name = "model"];
+	string status [Name = "status"];
+	json usage [Name = "usage"];
+	json error [Name = "error"];
+}
+
+/** {@code response.output_item.added} and {@code response.output_item.done}. */
+message OutputItemEvent {
+	string type [Name = "type"];
+	int output_index [Name = "output_index"];
+	OutputItemInfo item [Name = "item"];
+}
+
+message OutputItemInfo {
+	string type [Name = "type"];
+	string call_id [Name = "call_id"];
+	string name [Name = "name"];
+	string id [Name = "id"];
+	string arguments [Name = "arguments"];
+}
+
+/** {@code response.output_text.delta} and {@code response.reasoning_text.delta}. */
+message TextDeltaEvent {
+	string type [Name = "type"];
+	int output_index [Name = "output_index"];
+	string delta [Name = "delta"];
+}
+
+/** {@code response.function_call_arguments.delta}. */
+message FunctionCallArgsDeltaEvent {
+	string type [Name = "type"];
+	int output_index [Name = "output_index"];
+	string delta [Name = "delta"];
+}
+
+// --- Request types ---
+
+/** OpenAI Responses API request body. */
+message OpenAIResponsesRequest {
+	string model [Name = "model"];
+	int max_output_tokens [Name = "max_output_tokens"];
+	bool stream [Name = "stream"];
+	bool store [Name = "store"];
+	json instructions [Name = "instructions"];
+	json reasoning [Name = "reasoning"];
+	json input [Name = "input"];
+	json tools [Name = "tools"];
+	json text [Name = "text"];
+	json tool_choice [Name = "tool_choice"];
+}

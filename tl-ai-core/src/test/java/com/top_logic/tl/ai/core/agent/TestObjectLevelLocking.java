@@ -72,7 +72,7 @@ public class TestObjectLevelLocking extends TestCase {
 
 	/**
 	 * {@link TaskTool} methods are classified as {@link ToolMode#USER_SCOPED} or
-	 * {@link ToolMode#READ}, never {@link ToolMode#GLOBAL}.
+	 * {@link ToolMode#READ}, never {@link ToolMode#DATA_WRITE} or {@link ToolMode#STRUCTURAL}.
 	 */
 	public void testReclassifiedModes() {
 		TaskTool taskTool = new TaskTool();
@@ -85,9 +85,6 @@ public class TestObjectLevelLocking extends TestCase {
 			assertTrue(
 				"TaskTool." + tool.name() + " should be USER_SCOPED or READ but was " + tool.mode(),
 				tool.mode() == ToolMode.USER_SCOPED || tool.mode() == ToolMode.READ);
-			assertFalse(
-				"TaskTool." + tool.name() + " must not be GLOBAL",
-				tool.mode() == ToolMode.GLOBAL);
 		}
 	}
 

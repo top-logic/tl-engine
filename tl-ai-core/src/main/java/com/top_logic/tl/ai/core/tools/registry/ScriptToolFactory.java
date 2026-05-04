@@ -153,7 +153,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * What kind of state change this tool makes.
 		 *
 		 * <p>
-		 * Defaults to {@link ToolMode#GLOBAL}. Set to {@link ToolMode#READ} for tools that only
+		 * Defaults to {@link ToolMode#DATA_WRITE}. Set to {@link ToolMode#READ} for tools that only
 		 * read data, or {@link ToolMode#USER_SCOPED} for tools that only affect the current user.
 		 * </p>
 		 *
@@ -166,9 +166,8 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * Whether this tool can safely run in parallel with other concurrency-safe tools.
 		 *
 		 * <p>
-		 * When {@code null} (the default), the value is derived from {@link #getMode()}: {@code
-		 * true} for {@link ToolMode#READ} and {@link ToolMode#USER_SCOPED}, {@code false} for
-		 * {@link ToolMode#GLOBAL}.
+		 * When {@code null} (the default), defaults to {@code true}. Override to {@code false}
+		 * only for tools with external concurrency constraints.
 		 * </p>
 		 *
 		 * @see Tool#isConcurrencySafe()
@@ -275,7 +274,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 
 			ToolMode mode = toolConfig.getMode();
 			if (mode == null) {
-				mode = ToolMode.GLOBAL;
+				mode = ToolMode.DATA_WRITE;
 			}
 
 			Boolean concurrencySafe = toolConfig.getConcurrencySafe();

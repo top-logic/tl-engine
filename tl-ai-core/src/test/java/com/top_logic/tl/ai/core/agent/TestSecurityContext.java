@@ -27,7 +27,7 @@ public class TestSecurityContext extends TestCase {
 	public void testUnrestrictedAllowsAll() {
 		SecurityContext ctx = SecurityContext.UNRESTRICTED;
 		Tool readTool = stubTool("read", ToolMode.READ);
-		Tool globalTool = stubTool("edit", ToolMode.GLOBAL);
+		Tool globalTool = stubTool("edit", ToolMode.STRUCTURAL);
 
 		assertTrue(ctx.hasToolPermission(readTool));
 		assertTrue(ctx.hasToolPermission(globalTool));
@@ -39,7 +39,7 @@ public class TestSecurityContext extends TestCase {
 	 */
 	public void testUnrestrictedAutoApproves() {
 		SecurityContext ctx = SecurityContext.UNRESTRICTED;
-		Tool globalTool = stubTool("edit", ToolMode.GLOBAL);
+		Tool globalTool = stubTool("edit", ToolMode.STRUCTURAL);
 		ToolCall tc = new ToolCall("tc1", "edit", "{}");
 
 		PermissionDecision decision = ctx.checkApproval(globalTool, tc);
@@ -74,14 +74,27 @@ public class TestSecurityContext extends TestCase {
 	}
 
 	/**
-	 * Default checkApproval: GLOBAL tools need approval.
+	 * Default checkApproval: DATA_WRITE tools need approval.
 	 */
-	public void testDefaultApprovalGlobalNeedsApproval() {
+	public void testDefaultApprovalDataWriteNeedsApproval() {
 		SecurityContext ctx = contextWithMode(ExecutionMode.DEVELOPMENT);
-		Tool globalTool = stubTool("create_class", ToolMode.GLOBAL);
+		Tool dataWriteTool = stubTool("execute_script", ToolMode.DATA_WRITE);
+		ToolCall tc = new ToolCall("tc1", "execute_script", "{}");
+
+		PermissionDecision decision = ctx.checkApproval(dataWriteTool, tc);
+		assertTrue("Expected NeedsApproval but got " + decision.getClass().getSimpleName(),
+			decision instanceof PermissionDecision.NeedsApproval);
+	}
+
+	/**
+	 * Default checkApproval: STRUCTURAL tools need approval.
+	 */
+	public void testDefaultApprovalStructuralNeedsApproval() {
+		SecurityContext ctx = contextWithMode(ExecutionMode.DEVELOPMENT);
+		Tool structuralTool = stubTool("create_class", ToolMode.STRUCTURAL);
 		ToolCall tc = new ToolCall("tc1", "create_class", "{}");
 
-		PermissionDecision decision = ctx.checkApproval(globalTool, tc);
+		PermissionDecision decision = ctx.checkApproval(structuralTool, tc);
 		assertTrue("Expected NeedsApproval but got " + decision.getClass().getSimpleName(),
 			decision instanceof PermissionDecision.NeedsApproval);
 	}

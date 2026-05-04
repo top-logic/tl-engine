@@ -592,7 +592,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * GLOBAL tool in PRODUCTION mode is denied by system mode gate.
+	 * STRUCTURAL tool in PRODUCTION mode is denied by system mode gate.
 	 */
 	public void testSystemModeGateDeniesGlobalInProduction() {
 		Conversation conv = new Conversation();
@@ -614,7 +614,7 @@ public class TestAgentLoop extends TestCase {
 				fail("Tool should not execute in production mode");
 				return ToolResult.of("");
 			}
-			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
 		});
 		registry.freeze();
 
@@ -634,7 +634,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * GLOBAL tool in DEVELOPMENT mode passes system gate. With auto-approve, tool executes.
+	 * STRUCTURAL tool in DEVELOPMENT mode passes system gate. With auto-approve, tool executes.
 	 */
 	public void testSystemModeGateAllowsGlobalInDevelopment() {
 		Conversation conv = new Conversation();
@@ -878,7 +878,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				return ToolResult.of("Result of " + name);
 			}
-			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
 		};
 	}
 
@@ -974,7 +974,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Listener receives onPermissionDenied when system mode gate blocks a GLOBAL tool.
+	 * Listener receives onPermissionDenied when system mode gate blocks a STRUCTURAL tool.
 	 */
 	public void testListenerOnPermissionDenied() {
 		Conversation conv = new Conversation();
@@ -1072,7 +1072,7 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * In PRODUCTION mode, GLOBAL tool specs are not sent to the LLM at all.
+	 * In PRODUCTION mode, STRUCTURAL tool specs are not sent to the LLM at all.
 	 */
 	public void testToolSpecsFilteredBySecurityContext() {
 		Conversation conv = new Conversation();
@@ -1275,7 +1275,7 @@ public class TestAgentLoop extends TestCase {
 			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 				throw new RuntimeException("Something went wrong");
 			}
-			@Override public ToolMode mode() { return ToolMode.GLOBAL; }
+			@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
 		});
 		registry.freeze();
 
@@ -1411,8 +1411,8 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * GLOBAL tools are always executed sequentially, even if marked concurrencySafe.
-	 * Listener events fire correctly for concurrent READ tools.
+	 * Tools that need approval are executed sequentially (approval is interactive).
+	 * READ tools that don't need approval run concurrently.
 	 */
 	public void testGlobalToolsForcedSequential() {
 		Conversation conv = new Conversation();
@@ -1450,8 +1450,8 @@ public class TestAgentLoop extends TestCase {
 		AgentLoop loop = new AgentLoop(config(), provider, registry);
 		loop.run(conv, ctx, listener);
 
-		// write1 should have approval event (it's GLOBAL, needs approval in dev mode)
-		assertTrue("GLOBAL tool should trigger approval",
+		// write1 should have approval event (it's STRUCTURAL, needs approval in dev mode)
+		assertTrue("STRUCTURAL tool should trigger approval",
 			events.contains("approval:write1"));
 		// All tools should have start and complete events (listener passed everywhere)
 		assertTrue(events.contains("start:read1"));

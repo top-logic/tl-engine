@@ -32,14 +32,15 @@ public @interface ToolMethod {
 
 	/**
 	 * What kind of state change this tool makes.
-	 * Defaults to {@link ToolMode#GLOBAL} (fail-closed).
+	 * Defaults to {@link ToolMode#STRUCTURAL} (fail-closed).
 	 */
-	ToolMode mode() default ToolMode.GLOBAL;
+	ToolMode mode() default ToolMode.STRUCTURAL;
 
 	/**
 	 * Whether this tool can safely run in parallel with other concurrency-safe tools.
-	 * Defaults to {@code false} (fail-closed).
+	 * Defaults to {@code true}. Override to {@code false} only for tools with
+	 * external concurrency constraints.
 	 */
-	boolean concurrencySafe() default false;
+	boolean concurrencySafe() default true;
 
 }

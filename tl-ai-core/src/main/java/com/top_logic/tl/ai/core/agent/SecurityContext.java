@@ -18,7 +18,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  *       Currently always returns {@code true}; will integrate with TopLogic's per-user security
  *       when ready.</li>
  *   <li><b>System execution mode</b> ({@link #executionMode}) — is the system in development,
- *       production, or maintenance mode? The agent loop uses this to gate GLOBAL tools.</li>
+ *       production, or maintenance mode? The agent loop uses this to gate STRUCTURAL tools.</li>
  *   <li><b>Approval policy</b> ({@link #checkApproval}) — does this tool call need user
  *       confirmation before executing?</li>
  * </ul>
@@ -84,7 +84,7 @@ public interface SecurityContext {
 	/**
 	 * The system's current execution mode.
 	 *
-	 * <p>The agent loop uses this to enforce the system mode gate: GLOBAL tools
+	 * <p>The agent loop uses this to enforce the system mode gate: STRUCTURAL tools
 	 * are denied in {@link ExecutionMode#PRODUCTION}.</p>
 	 */
 	ExecutionMode executionMode();
@@ -94,7 +94,7 @@ public interface SecurityContext {
 	 *
 	 * <p>Only called after {@link #hasToolPermission} passes and the system mode gate allows
 	 * the tool. The default implementation requires approval for all state-changing
-	 * tools ({@link ToolMode#USER_SCOPED} and {@link ToolMode#GLOBAL}).</p>
+	 * tools ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}).</p>
 	 *
 	 * @param tool     the tool to check
 	 * @param toolCall the specific invocation
@@ -105,8 +105,10 @@ public interface SecurityContext {
 			case READ -> new PermissionDecision.Allowed();
 			case USER_SCOPED -> new PermissionDecision.NeedsApproval(
 				"Modifies your personal settings.", toolCall);
-			case GLOBAL -> new PermissionDecision.NeedsApproval(
-				"Modifies shared application state.", toolCall);
+			case DATA_WRITE -> new PermissionDecision.NeedsApproval(
+				"Modifies shared application data.", toolCall);
+			case STRUCTURAL -> new PermissionDecision.NeedsApproval(
+				"Modifies application structure.", toolCall);
 		};
 	}
 

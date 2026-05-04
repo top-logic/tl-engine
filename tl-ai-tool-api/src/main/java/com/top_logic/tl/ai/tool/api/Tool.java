@@ -39,18 +39,22 @@ public interface Tool {
 	/**
 	 * What kind of state change this tool makes.
 	 *
-	 * <p>Defaults to {@link ToolMode#GLOBAL} (fail-closed). Tool authors
+	 * <p>Defaults to {@link ToolMode#STRUCTURAL} (fail-closed). Tool authors
 	 * opt in to less restrictive modes explicitly.</p>
 	 */
 	default ToolMode mode() {
-		return ToolMode.GLOBAL;
+		return ToolMode.STRUCTURAL;
 	}
 
 	/**
 	 * Whether this tool can safely run in parallel with other concurrency-safe tools.
+	 *
+	 * <p>Defaults to {@code true}. With locking in place, most tools are safe to
+	 * run concurrently. Override to {@code false} only for tools with external
+	 * concurrency constraints (e.g. single-connection external systems).</p>
 	 */
 	default boolean isConcurrencySafe() {
-		return mode() != ToolMode.GLOBAL;
+		return true;
 	}
 
 }

@@ -6,47 +6,37 @@
 package com.top_logic.tl.ai.core.provider;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
-import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.EntryTag;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.func.Function1;
-import com.top_logic.basic.func.Function4;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
-import com.top_logic.tl.ai.core.provider.mistral.MistralProvider;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
-import com.top_logic.tl.ai.core.provider.xai.XAIProvider;
 
 /**
  * Registry of LLM provider connections.
  *
  * <p>
- * Manages provider configurations (API keys, base URLs, model lists) and creates
- * {@link LLMProvider} instances for given model names. Agent execution is handled by
- * {@link AgentFactory}.
+ * Manages provider configurations and creates {@link LLMProvider} instances for given model names.
+ * Each provider is a polymorphic {@link LLMProviderConfig} that knows how to create its own
+ * provider instance and discover available models.
  * </p>
  *
- * @see ProviderConfig
+ * @see LLMProviderConfig
  * @see AgentFactory
  */
 public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegistry.Config<?>> {
@@ -74,15 +64,15 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		 * The configured LLM providers, keyed by provider name.
 		 *
 		 * <p>
-		 * Each provider entry specifies connection details (API key, base URL) and a
-		 * comma-separated list of model names it serves. When building an agent, the registry
-		 * matches the agent's model name against these lists to select the correct provider.
+		 * Each provider entry is a polymorphic {@link LLMProviderConfig.Config} that carries
+		 * provider-specific properties (API key, base URL, etc.) and knows how to create the
+		 * appropriate {@link LLMProvider} implementation.
 		 * </p>
 		 */
 		@Name(PROVIDERS)
 		@EntryTag("provider")
-		@Key(ProviderConfig.NAME_ATTRIBUTE)
-		Map<String, ProviderConfig> getProviders();
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		Map<String, LLMProviderConfig.Config> getProviders();
 
 		/**
 		 * The default model name to use when no model is explicitly specified on an agent.
@@ -97,90 +87,19 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		String getDefaultModel();
 	}
 
-	/**
-	 * Configuration for a single LLM provider.
-	 *
-	 * <p>
-	 * Each provider has a name (e.g. {@code "anthropic"}, {@code "openai"}, {@code "mistral"}),
-	 * API credentials, and a comma-separated list of model names it serves.
-	 * </p>
-	 */
-	public interface ProviderConfig extends NamedConfigMandatory {
-
-		/** @see #getApiKey() */
-		String API_KEY = "api-key";
-
-		/** @see #getBaseUrl() */
-		String BASE_URL = "base-url";
-
-		/** @see #getModels() */
-		String MODELS = "models";
-
-		/** @see #getVersion() */
-		String VERSION = "version";
-
-		/**
-		 * The API key for authentication with the provider.
-		 *
-		 * <p>
-		 * Optional. May be omitted for providers that do not require authentication (e.g. local
-		 * {@code OpenAI}-compatible servers such as Ollama or LM Studio). When unset, no authentication
-		 * header is sent.
-		 * </p>
-		 */
-		@Name(API_KEY)
-		@Nullable
-		@Encrypted
-		String getApiKey();
-
-		/**
-		 * The base URL for the provider's API.
-		 *
-		 * <p>
-		 * Optional. When not set, the default URL for the provider type is used.
-		 * </p>
-		 */
-		@Name(BASE_URL)
-		@Nullable
-		String getBaseUrl();
-
-		/**
-		 * Allowed model names for this provider.
-		 *
-		 * <p>
-		 * If non-empty, only these models are exposed by this provider to the application.
-		 * If empty, all models discovered from the provider's {@code /v1/models} endpoint are
-		 * exposed.
-		 * </p>
-		 */
-		@Name(MODELS)
-		@Format(CommaSeparatedStrings.class)
-		@Options(fun = ProviderModelOptions.class, args = {
-			@Ref(NAME_ATTRIBUTE), @Ref(API_KEY), @Ref(BASE_URL), @Ref(VERSION)
-		})
-		List<String> getModels();
-
-		/**
-		 * Provider-specific API version string.
-		 *
-		 * <p>
-		 * Used by Anthropic to set the {@code anthropic-version} header. Ignored by other
-		 * providers.
-		 * </p>
-		 */
-		@Name(VERSION)
-		@Nullable
-		String getVersion();
-	}
-
 	private static volatile LLMProviderRegistry _instance;
 
+	private final InstantiationContext _context;
+
 	/**
-	 * Index mapping model names to their provider config name. Built at startup from the
-	 * {@link ProviderConfig#getModels()} lists.
+	 * Index mapping model names to their resolved {@link LLMProviderConfig} instance.
 	 */
-	private Map<String, String> _modelProviderIndex;
-	private Map<String, List<String>> _providerModelOptions;
+	private Map<String, LLMProviderConfig> _modelProviderIndex;
+
+	/**
+	 * Named provider configs, keyed by the provider config name.
+	 */
+	private Map<String, LLMProviderConfig> _providerConfigs;
 
 	/**
 	 * Creates a new {@link LLMProviderRegistry} from configuration.
@@ -193,6 +112,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	@CalledByReflection
 	public LLMProviderRegistry(InstantiationContext context, Config<?> config) {
 		super(context, config);
+		_context = context;
 	}
 
 	/**
@@ -208,12 +128,36 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	protected void startUp() {
 		super.startUp();
 		_instance = this;
-		ProviderModelDiscovery.clearCache();
+		ModelDiscoveryHelper.clearCache();
 
-		// Build model name index from provider configs
-		ModelCatalog modelCatalog = buildModelCatalog(getConfig().getProviders());
-		_modelProviderIndex = modelCatalog._modelProviderIndex;
-		_providerModelOptions = modelCatalog._providerModelOptions;
+		Map<String, LLMProviderConfig> providerConfigs = new LinkedHashMap<>();
+		Map<String, LLMProviderConfig> modelIndex = new LinkedHashMap<>();
+
+		for (Map.Entry<String, LLMProviderConfig.Config> entry : getConfig().getProviders().entrySet()) {
+			String providerName = entry.getKey();
+			LLMProviderConfig providerConfig = _context.getInstance(entry.getValue());
+			providerConfigs.put(providerName, providerConfig);
+
+			List<String> configured = providerConfig.getConfiguredModels();
+			List<String> discovered = providerConfig.discoverModels();
+
+			List<String> effectiveModels = configured.isEmpty() ? discovered : configured;
+			for (String model : effectiveModels) {
+				LLMProviderConfig existing = modelIndex.putIfAbsent(model, providerConfig);
+				if (existing != null && existing != providerConfig) {
+					Logger.warn("Model '" + model + "' is exposed by multiple providers. Keeping the first mapping.",
+						LLMProviderRegistry.class);
+				}
+			}
+
+			if (!discovered.isEmpty()) {
+				Logger.info("Discovered " + discovered.size() + " model(s) from provider '"
+					+ providerName + "'.", LLMProviderRegistry.class);
+			}
+		}
+
+		_providerConfigs = Map.copyOf(providerConfigs);
+		_modelProviderIndex = Map.copyOf(modelIndex);
 
 		validateDefaultModel(getConfig().getDefaultModel());
 
@@ -228,7 +172,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		try {
 			_instance = null;
 			_modelProviderIndex = null;
-			_providerModelOptions = null;
+			_providerConfigs = null;
 		} finally {
 			super.shutDown();
 		}
@@ -247,26 +191,11 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	}
 
 	/**
-	 * Returns all discoverable model names for the given provider.
-	 *
-	 * <p>
-	 * This list can be used by configuration UIs to present a provider-specific model selection.
-	 * </p>
-	 */
-	public List<String> getProviderModelOptions(String providerName) {
-		if (_providerModelOptions == null) {
-			return List.of();
-		}
-		List<String> options = _providerModelOptions.get(providerName);
-		return options != null ? options : List.of();
-	}
-
-	/**
 	 * Builds an {@link LLMProvider} for the given model name.
 	 *
 	 * <p>
-	 * Looks up the provider configuration whose {@link ProviderConfig#getModels() models} list
-	 * contains the given model name, then creates the appropriate provider implementation.
+	 * Looks up the {@link LLMProviderConfig} whose model list contains the given model name,
+	 * then delegates to {@link LLMProviderConfig#createProvider()}.
 	 * </p>
 	 *
 	 * @param modelName
@@ -276,99 +205,13 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	 *         if no provider is configured for the given model.
 	 */
 	public LLMProvider buildProvider(String modelName) {
-		String providerName = _modelProviderIndex.get(modelName);
-		if (providerName == null) {
+		LLMProviderConfig providerConfig = _modelProviderIndex.get(modelName);
+		if (providerConfig == null) {
 			throw new IllegalStateException(
 				"No provider configured for model: " + modelName
 					+ ". Available models: " + _modelProviderIndex.keySet());
 		}
-
-		ProviderConfig providerConfig = getConfig().getProviders().get(providerName);
-		return createProvider(providerName, providerConfig);
-	}
-
-	/**
-	 * Builds effective model mappings and provider model option lists from configuration.
-	 *
-	 * <p>
-	 * If {@link ProviderConfig#getModels()} is non-empty, it acts as an explicit allowlist.
-	 * If empty, all discovered provider models are allowed.
-	 * </p>
-	 */
-	private static ModelCatalog buildModelCatalog(Map<String, ProviderConfig> providers) {
-		Map<String, String> index = new LinkedHashMap<>();
-		Map<String, List<String>> providerModelOptions = new LinkedHashMap<>();
-
-		for (Map.Entry<String, ProviderConfig> entry : providers.entrySet()) {
-			String providerName = entry.getKey();
-			ProviderModelDiscovery.DiscoveryResult discovery =
-				ProviderModelDiscovery.discoverModels(providerName, entry.getValue());
-			List<String> discovered = discovery.models();
-			List<String> configured = normalizeModels(entry.getValue().getModels());
-
-			Set<String> options = new LinkedHashSet<>(discovered);
-			options.addAll(configured);
-			providerModelOptions.put(providerName, List.copyOf(options));
-
-			List<String> effectiveModels = configured.isEmpty() ? discovered : configured;
-			for (String model : effectiveModels) {
-				registerModel(index, model, providerName);
-			}
-			if (!discovered.isEmpty() && !discovery.fromCache()) {
-				Logger.info("Discovered " + discovered.size() + " model(s) from provider '"
-					+ providerName + "'.", LLMProviderRegistry.class);
-			}
-		}
-
-		return new ModelCatalog(index, providerModelOptions);
-	}
-
-	private static List<String> normalizeModels(List<String> rawModels) {
-		if (rawModels == null || rawModels.isEmpty()) {
-			return List.of();
-		}
-		Set<String> normalized = new LinkedHashSet<>();
-		for (String model : rawModels) {
-			if (model != null && !model.isBlank()) {
-				normalized.add(model.trim());
-			}
-		}
-		return List.copyOf(normalized);
-	}
-
-	/**
-	 * Options provider for {@link Config#getDefaultModel()}.
-	 */
-	public static class AllowedModelOptions extends Function1<List<String>, Map<String, ProviderConfig>> {
-		@Override
-		public List<String> apply(Map<String, ProviderConfig> providers) {
-			if (providers == null || providers.isEmpty()) {
-				return List.of();
-			}
-			return new ArrayList<>(buildModelCatalog(providers)._modelProviderIndex.keySet());
-		}
-	}
-
-	/**
-	 * Options provider for {@link ProviderConfig#getModels()}.
-	 */
-	public static class ProviderModelOptions extends Function4<List<String>, String, String, String, String> {
-		@Override
-		public List<String> apply(String providerName, String apiKey, String baseUrl, String version) {
-			if (providerName == null || providerName.isBlank()) {
-				return List.of();
-			}
-			return ProviderModelDiscovery.discoverModels(providerName, apiKey, baseUrl, version).models();
-		}
-	}
-
-	private static void registerModel(Map<String, String> index, String modelName, String providerName) {
-		String existingProvider = index.putIfAbsent(modelName, providerName);
-		if (existingProvider != null && !existingProvider.equals(providerName)) {
-			Logger.warn("Model '" + modelName + "' is exposed by multiple providers: '"
-				+ existingProvider + "' and '" + providerName + "'. Keeping the first mapping.",
-				LLMProviderRegistry.class);
-		}
+		return providerConfig.createProvider();
 	}
 
 	private void validateDefaultModel(String defaultModel) {
@@ -383,102 +226,28 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 			+ _modelProviderIndex.keySet());
 	}
 
-	private static final class ModelCatalog {
-		final Map<String, String> _modelProviderIndex;
-		final Map<String, List<String>> _providerModelOptions;
-
-		ModelCatalog(Map<String, String> modelProviderIndex, Map<String, List<String>> providerModelOptions) {
-			_modelProviderIndex = Collections.unmodifiableMap(new LinkedHashMap<>(modelProviderIndex));
-			_providerModelOptions = Collections.unmodifiableMap(new LinkedHashMap<>(providerModelOptions));
-		}
-	}
-
-
 	/**
-	 * Creates an {@link LLMProvider} from the provider configuration.
+	 * Options provider for {@link Config#getDefaultModel()}.
 	 *
 	 * <p>
-	 * The provider name determines which implementation to use: names containing "anthropic"
-	 * produce an {@link AnthropicProvider}, "openai" produce an {@link OpenAIProvider}, and
-	 * "mistral" produce a {@link MistralProvider}, and "xai" produce an
-	 * {@link XAIProvider}.
+	 * Collects all model names configured across all provider entries.
 	 * </p>
 	 */
-	private LLMProvider createProvider(String providerName, ProviderConfig config) {
-		String name = providerName.toLowerCase(Locale.ROOT);
-		String apiKey = config.getApiKey();
-
-		if (name.contains("anthropic")) {
-			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
-			String version = config.getVersion();
-			if (version == null) {
-				version = "2023-06-01";
+	public static class AllowedModelOptions extends Function1<List<String>, Map<String, LLMProviderConfig.Config>> {
+		@Override
+		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
+			if (providers == null || providers.isEmpty()) {
+				return List.of();
 			}
-			return new AnthropicProvider(apiKey,
-				baseUrl != null ? baseUrl : "https://api.anthropic.com",
-				version);
+			Set<String> allModels = new LinkedHashSet<>();
+			for (LLMProviderConfig.Config config : providers.values()) {
+				List<String> models = config.getModels();
+				if (models != null) {
+					allModels.addAll(models);
+				}
+			}
+			return new ArrayList<>(allModels);
 		}
-
-		if (isOpenAICompatibleProviderName(name)) {
-			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
-			return new OpenAIProvider(apiKey,
-				baseUrl != null ? baseUrl : "https://api.openai.com");
-		}
-
-		if (name.contains("mistral")) {
-			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
-			return new MistralProvider(apiKey,
-				baseUrl != null ? baseUrl : "https://api.mistral.ai");
-		}
-
-		if (name.contains("xai")) {
-			String baseUrl = normalizeProviderBaseUrl(config.getBaseUrl());
-			return new XAIProvider(apiKey,
-				baseUrl != null ? baseUrl : "https://api.x.ai");
-		}
-
-		throw new IllegalStateException(
-			"Unknown provider type: '" + providerName
-				+ "'. Provider name must contain 'anthropic', 'openai', 'openai-compatible', "
-				+ "'local', 'custom', 'mistral', or 'xai'.");
-	}
-
-	static String normalizeProviderBaseUrl(String baseUrl) {
-		if (baseUrl == null) {
-			return null;
-		}
-		String trimmed = baseUrl.trim();
-		while (trimmed.endsWith("/")) {
-			trimmed = trimmed.substring(0, trimmed.length() - 1);
-		}
-		if (trimmed.endsWith("/v1")) {
-			trimmed = trimmed.substring(0, trimmed.length() - 3);
-		}
-		return trimmed;
-	}
-
-	static boolean isOpenAICompatibleProviderName(String providerName) {
-		return providerName.contains("openai")
-			|| isCustomOpenAICompatibleProviderName(providerName);
-	}
-
-	static boolean isCustomOpenAICompatibleProviderName(String providerName) {
-		return providerName.contains("openai-compatible")
-			|| providerName.contains("local")
-			|| providerName.contains("custom");
-	}
-
-	/**
-	 * Checks if an API key is valid (not null, not empty, not a placeholder).
-	 */
-	static boolean isValidApiKey(String apiKey) {
-		if (apiKey == null || apiKey.trim().isEmpty()) {
-			return false;
-		}
-		if (apiKey.startsWith("%") && apiKey.endsWith("%")) {
-			return false;
-		}
-		return true;
 	}
 
 	/**

@@ -8,28 +8,27 @@
 			config:override="true"
 		>
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
-				default-model=""
+				default-model="claude-haiku-4-5-20251001"
 			>
 				<providers>
-					<provider name="openai"
-						api-key="%OPENAI_API_KEY%"
-						base-url="https://api.openai.com/v1"
-						models=""
+					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+						api-key="pbKA5G8xsxkaDrwe5h6XY0qFSdzXVkZa5AdfFict_sDpFQIhfGP5Rp3uyBN1ZJw0tNJUDJSOVR5lvKDGsm7fHju2dY9EPy5ecC9qBAPFxcZNvszkeGSShrCNRo_HgooFfuhwkeaFZYno4qFMBNSDJrOMUCQ0BwmUCoIriXFnAhVrqw30sojQY6qvkx5DBSyQtwkgyj6v13AK2ATF0PomlTrph8vRXbny677IgmZC0_6vgL7O"
+						models="gpt-5-chat-latest"
+						name="openai"
 					/>
-					<provider name="anthropic"
-						api-key="%ANTHROPIC_API_KEY%"
-						base-url="https://api.anthropic.com/v1"
-						models=""
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						api-key="IzPTHld36XlTpHQYr9CRatpdIzeyA9OczW5Qu2fTzQq7j2wLjOekAgYYmE96sCDk5JZEN9sflk6vDt7u0nfGrNM-D14w8_IYAA1XvIdoey6bkXC8fDBS5T6zvC7T6I1-Sx9nI8DuBR_lKbRUWscpfus-R4_MSqp_SqDhnw"
+						models="claude-haiku-4-5-20251001,claude-opus-4-6,claude-opus-4-7,claude-sonnet-4-6"
+						name="anthropic"
 					/>
-					<provider name="mistral"
-						api-key="%MISTRAL_API_KEY%"
-						base-url="https://api.mistral.ai/v1"
-						models=""
+					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
+						api-key="mRSktm5OukIN5dd1VrJi-XTAyC64-s4Dh9hTww58DjcK_63Kn9MREl66imatRPhz"
+						models="mistral-large-latest"
+						name="mistral"
 					/>
-					<provider name="xai"
-						api-key="%XAI_API_KEY%"
-						base-url="https://api.x.ai/v1"
-						models=""
+					<provider class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
+						api-key=""
+						name="xai"
 					/>
 				</providers>
 			</instance>

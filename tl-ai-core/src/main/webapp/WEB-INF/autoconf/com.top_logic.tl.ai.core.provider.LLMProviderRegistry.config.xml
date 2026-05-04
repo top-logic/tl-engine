@@ -10,24 +10,20 @@
 			>
 				<providers>
 					<provider name="openai"
+						class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
 						api-key=""
-						base-url="https://api.openai.com/v1"
-						models=""
 					/>
 					<provider name="anthropic"
+						class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
 						api-key=""
-						base-url="https://api.anthropic.com/v1"
-						models=""
 					/>
 					<provider name="mistral"
+						class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
 						api-key=""
-						base-url="https://api.mistral.ai/v1"
-						models=""
 					/>
 					<provider name="xai"
+						class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
 						api-key=""
-						base-url="https://api.x.ai/v1"
-						models=""
 					/>
 				</providers>
 			</instance>

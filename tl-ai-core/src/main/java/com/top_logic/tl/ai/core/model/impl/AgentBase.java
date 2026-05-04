@@ -54,8 +54,17 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	String MAX_RETRIES_ATTR = "maxRetries";
 
 	/**
+	 * Part <code>contextWindow</code> of <code>Agent</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String CONTEXT_WINDOW_ATTR = "contextWindow";
+
+	/**
 	 * Part <code>maxTokens</code> of <code>Agent</code>
-	 * 
+	 *
 	 * <p>
 	 * Declared as <code>tl.core:Integer</code> in configuration.
 	 * </p>
@@ -235,6 +244,20 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	 */
 	default void setMaxRetries(Integer newValue) {
 		tUpdateByName(MAX_RETRIES_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CONTEXT_WINDOW_ATTR}.
+	 */
+	default Integer getContextWindow() {
+		return (Integer) tValueByName(CONTEXT_WINDOW_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CONTEXT_WINDOW_ATTR}.
+	 */
+	default void setContextWindow(Integer newValue) {
+		tUpdateByName(CONTEXT_WINDOW_ATTR, newValue);
 	}
 
 	/**

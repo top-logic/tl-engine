@@ -72,6 +72,10 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		@Override
 		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(BASE_URL), @Ref(VERSION) })
 		List<String> getModels();
+
+		@Override
+		@StringDefault("anthropic")
+		String getCatalogProviderId();
 	}
 
 	/**
@@ -115,5 +119,10 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 	public List<String> getConfiguredModels() {
 		List<String> models = _config.getModels();
 		return models != null ? models : List.of();
+	}
+
+	@Override
+	public String getCatalogProviderId() {
+		return _config.getCatalogProviderId();
 	}
 }

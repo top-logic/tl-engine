@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -282,7 +283,24 @@ public class ChatSessionManager {
 	 */
 	private static ConversationMemory createDefaultMemory() {
 		CompactionStrategy strategy = createCompactionStrategy();
-		return ConversationMemory.withDefaults(strategy, DEFAULT_CONTEXT_WINDOW_TOKENS);
+		int contextWindow = resolveContextWindow();
+		return ConversationMemory.withDefaults(strategy, contextWindow);
+	}
+
+	private static int resolveContextWindow() {
+		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		if (registry == null) {
+			return DEFAULT_CONTEXT_WINDOW_TOKENS;
+		}
+		String defaultModel = registry.getDefaultModel();
+		if (defaultModel == null || defaultModel.isBlank()) {
+			return DEFAULT_CONTEXT_WINDOW_TOKENS;
+		}
+		ModelInfo info = registry.getModel(defaultModel);
+		if (info == null) {
+			return DEFAULT_CONTEXT_WINDOW_TOKENS;
+		}
+		return info.limits().contextWindow();
 	}
 
 	private static CompactionStrategy createCompactionStrategy() {
@@ -291,7 +309,7 @@ public class ChatSessionManager {
 			Logger.warn("LLMProviderRegistry not available, falling back to truncation.", ChatSessionManager.class);
 			return new TruncatingStrategy();
 		}
-		String defaultModel = registry.getConfig().getDefaultModel();
+		String defaultModel = registry.getDefaultModel();
 		if (defaultModel == null || defaultModel.isBlank()) {
 			Logger.warn("No default model configured, falling back to truncation.", ChatSessionManager.class);
 			return new TruncatingStrategy();

@@ -197,7 +197,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
 		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
-		String modelName = model != null ? model : registry.getConfig().getDefaultModel();
+		String modelName = model != null ? model : registry.getDefaultModel();
 
 		// Build system prompt and user messages from the input
 		String systemPrompt = null;

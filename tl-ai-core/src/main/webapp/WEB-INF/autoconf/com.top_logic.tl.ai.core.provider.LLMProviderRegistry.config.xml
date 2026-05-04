@@ -5,9 +5,7 @@
 >
 	<services>
 		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry">
-			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
-				default-model=""
-			>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry">
 				<providers>
 					<provider name="openai"
 						class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
@@ -26,6 +24,7 @@
 						api-key=""
 					/>
 				</providers>
+				<model-catalog />
 			</instance>
 		</config>
 	</services>

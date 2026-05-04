@@ -92,6 +92,11 @@ public class LocalProviderConfig implements LLMProviderConfig {
 		return models != null ? models : List.of();
 	}
 
+	@Override
+	public String getCatalogProviderId() {
+		return _config.getCatalogProviderId();
+	}
+
 	private String resolveBaseUrl() {
 		return ModelDiscoveryHelper.normalizeBaseUrl(_config.getBaseUrl());
 	}

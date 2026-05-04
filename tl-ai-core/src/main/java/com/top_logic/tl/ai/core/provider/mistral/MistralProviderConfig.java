@@ -55,6 +55,10 @@ public class MistralProviderConfig implements LLMProviderConfig {
 		@Override
 		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(BASE_URL) })
 		List<String> getModels();
+
+		@Override
+		@StringDefault("mistral")
+		String getCatalogProviderId();
 	}
 
 	/**
@@ -90,5 +94,10 @@ public class MistralProviderConfig implements LLMProviderConfig {
 	public List<String> getConfiguredModels() {
 		List<String> models = _config.getModels();
 		return models != null ? models : List.of();
+	}
+
+	@Override
+	public String getCatalogProviderId() {
+		return _config.getCatalogProviderId();
 	}
 }

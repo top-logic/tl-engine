@@ -83,6 +83,11 @@
 								type="tl.core:Integer"
 							/>
 							<field
+								attribute="contextWindow"
+								fullQualifiedName="tl.ai.core:Agent#contextWindow"
+								type="tl.core:Integer"
+							/>
+							<field
 								attribute="timeoutSeconds"
 								fullQualifiedName="tl.ai.core:Agent#timeoutSeconds"
 								type="tl.core:Integer"
@@ -141,6 +146,9 @@
 					</annotations>
 				</property>
 				<property name="maxTokens"
+					type="tl.core:Integer"
+				/>
+				<property name="contextWindow"
 					type="tl.core:Integer"
 				/>
 				<property name="temperature"

@@ -12,6 +12,7 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 
 /**
  * Factory contract for LLM provider instances.
@@ -39,17 +40,33 @@ public interface LLMProviderConfig {
 		/** Configuration property name for {@link #getModels()}. */
 		String MODELS = "models";
 
+		/** Configuration property name for {@link #getCatalogProviderId()}. */
+		String CATALOG_PROVIDER_ID = "catalog-provider-id";
+
 		/**
 		 * Allowed model names for this provider.
 		 *
 		 * <p>
-		 * If non-empty, only these models are exposed by this provider. If empty, all models
-		 * discovered via {@link LLMProviderConfig#discoverModels()} are exposed.
+		 * If non-empty, only these models are exposed. If empty, all models available from the
+		 * provider are exposed.
 		 * </p>
 		 */
 		@Name(MODELS)
 		@Format(CommaSeparatedStrings.class)
 		List<String> getModels();
+
+		/**
+		 * The provider ID used to look up model metadata from the remote catalog (models.dev).
+		 *
+		 * <p>
+		 * Each provider supplies a sensible default matching its models.dev entry. Leave empty
+		 * for providers that have no remote catalog (e.g. local servers) — their models must be
+		 * defined in the model catalog manually.
+		 * </p>
+		 */
+		@Name(CATALOG_PROVIDER_ID)
+		@Nullable
+		String getCatalogProviderId();
 	}
 
 	/**
@@ -70,4 +87,9 @@ public interface LLMProviderConfig {
 	 * Returns the explicitly configured model allowlist from the configuration.
 	 */
 	List<String> getConfiguredModels();
+
+	/**
+	 * Returns the catalog provider ID from configuration.
+	 */
+	String getCatalogProviderId();
 }

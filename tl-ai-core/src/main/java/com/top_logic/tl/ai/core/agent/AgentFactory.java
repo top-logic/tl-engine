@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.tools.ToolDispatcher;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
@@ -149,6 +150,8 @@ public class AgentFactory {
 		LLMProvider provider = buildProvider(coreConfig.model());
 		ToolDispatcher registry = buildToolDispatcher(agentObj);
 
+		validateToolCapability(name, coreConfig.model(), registry);
+
 		int maxToolResultChars = resolveMaxToolResultChars(agentObj);
 
 		AgentLoop loop;
@@ -239,24 +242,39 @@ public class AgentFactory {
 	AgentParams buildConfig(Agent agent) {
 		String model = agent.getModel();
 		if (model == null || model.isBlank()) {
-			LLMProviderRegistry providerRegistry = LLMProviderRegistry.getInstance();
-			model = providerRegistry != null ? providerRegistry.getConfig().getDefaultModel() : null;
+			LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+			model = registry != null ? registry.getDefaultModel() : null;
 		}
-		if (model == null) {
+		if (model == null || model.isBlank()) {
 			throw new IllegalStateException(
 				"Agent '" + agent.getName() + "' has no model and no default model is configured.");
+		}
+
+		LLMProviderRegistry reg = LLMProviderRegistry.getInstance();
+		ModelInfo modelInfo = reg != null ? reg.getModel(model) : null;
+		if (modelInfo == null) {
+			throw new IllegalStateException(
+				"No model metadata configured for '" + model + "'. "
+					+ "Either ensure models.dev is reachable or define the model in model-overrides.");
 		}
 
 		String systemPrompt = agent.getSystemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
 
-		Integer maxTokens = agent.getMaxTokens();
-		int maxOutputTokens = maxTokens != null ? maxTokens : AgentParams.DEFAULT_MAX_OUTPUT_TOKENS;
+		// maxOutputTokens: agent override > catalog
+		Integer agentMaxTokens = agent.getMaxTokens();
+		int maxOutputTokens = agentMaxTokens != null ? agentMaxTokens : modelInfo.limits().maxOutput();
 
-		Map<String, Object> modelOptions = buildModelOptions(agent);
+		// contextWindowTokens: agent override > catalog
+		Integer agentContextWindow = agent.getContextWindow();
+		int contextWindowTokens = agentContextWindow != null
+			? agentContextWindow : modelInfo.limits().contextWindow();
 
-		return new AgentParams(model, systemPrompt, AgentParams.DEFAULT_MAX_TURNS, maxOutputTokens, modelOptions);
+		Map<String, Object> modelOptions = buildModelOptions(agent, modelInfo);
+
+		return new AgentParams(model, systemPrompt, AgentParams.DEFAULT_MAX_TURNS,
+			maxOutputTokens, modelOptions, contextWindowTokens, msg -> true);
 	}
 
 	private static int resolveMaxToolResultChars(Agent agent) {
@@ -265,19 +283,40 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Builds provider-specific model options from agent attributes.
+	 * Validates that the model supports tool calls if the agent has tools assigned.
 	 */
-	private Map<String, Object> buildModelOptions(Agent agent) {
+	private void validateToolCapability(String agentName, String model, ToolDispatcher registry) {
+		if (registry.tools().isEmpty()) {
+			return;
+		}
+		LLMProviderRegistry llmRegistry = LLMProviderRegistry.getInstance();
+		if (llmRegistry == null) {
+			return;
+		}
+		ModelInfo info = llmRegistry.getModel(model);
+		if (info != null && !info.capabilities().toolCall()) {
+			throw new IllegalStateException(
+				"Agent '" + agentName + "' has tools assigned but model '" + model
+					+ "' does not support tool calls.");
+		}
+	}
+
+	/**
+	 * Builds provider-specific model options from agent attributes, gated on model capabilities.
+	 */
+	private Map<String, Object> buildModelOptions(Agent agent, ModelInfo modelInfo) {
 		Map<String, Object> options = new HashMap<>();
 
-		Double temperature = agent.getTemperature();
-		if (temperature != null) {
-			options.put("temperature", temperature);
-		}
+		if (modelInfo.capabilities().temperature()) {
+			Double temperature = agent.getTemperature();
+			if (temperature != null) {
+				options.put("temperature", temperature);
+			}
 
-		Double topP = agent.getTopP();
-		if (topP != null) {
-			options.put("topP", topP);
+			Double topP = agent.getTopP();
+			if (topP != null) {
+				options.put("topP", topP);
+			}
 		}
 
 		return options.isEmpty() ? Map.of() : Map.copyOf(options);

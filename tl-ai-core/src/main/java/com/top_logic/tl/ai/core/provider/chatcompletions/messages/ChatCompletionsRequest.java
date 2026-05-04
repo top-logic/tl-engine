@@ -24,6 +24,12 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #isStream() */
 	public static final String STREAM__PROP = "stream";
 
+	/** @see #getTemperature() */
+	public static final String TEMPERATURE__PROP = "temperature";
+
+	/** @see #getTopP() */
+	public static final String TOP_P__PROP = "top_p";
+
 	/** @see #getMessages() */
 	public static final String MESSAGES__PROP = "messages";
 
@@ -41,6 +47,10 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	private int _maxTokens = 0;
 
 	private boolean _stream = false;
+
+	private Object _temperature = null;
+
+	private Object _topP = null;
 
 	private Object _messages = null;
 
@@ -108,6 +118,54 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	/** Internal setter for {@link #isStream()} without chain call utility. */
 	protected final void internalSetStream(boolean value) {
 		_stream = value;
+	}
+
+	public final Object getTemperature() {
+		return _temperature;
+	}
+
+	/**
+	 * @see #getTemperature()
+	 */
+	public com.top_logic.tl.ai.core.provider.chatcompletions.messages.ChatCompletionsRequest setTemperature(Object value) {
+		internalSetTemperature(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTemperature()} without chain call utility. */
+	protected final void internalSetTemperature(Object value) {
+		_temperature = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getTemperature()} has a value.
+	 */
+	public final boolean hasTemperature() {
+		return _temperature != null;
+	}
+
+	public final Object getTopP() {
+		return _topP;
+	}
+
+	/**
+	 * @see #getTopP()
+	 */
+	public com.top_logic.tl.ai.core.provider.chatcompletions.messages.ChatCompletionsRequest setTopP(Object value) {
+		internalSetTopP(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTopP()} without chain call utility. */
+	protected final void internalSetTopP(Object value) {
+		_topP = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getTopP()} has a value.
+	 */
+	public final boolean hasTopP() {
+		return _topP != null;
 	}
 
 	public final Object getMessages() {
@@ -217,6 +275,8 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			MODEL__PROP, 
 			MAX_TOKENS__PROP, 
 			STREAM__PROP, 
+			TEMPERATURE__PROP, 
+			TOP_P__PROP, 
 			MESSAGES__PROP, 
 			TOOLS__PROP, 
 			RESPONSE_FORMAT__PROP, 
@@ -248,6 +308,8 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			case MODEL__PROP: return getModel();
 			case MAX_TOKENS__PROP: return getMaxTokens();
 			case STREAM__PROP: return isStream();
+			case TEMPERATURE__PROP: return getTemperature();
+			case TOP_P__PROP: return getTopP();
 			case MESSAGES__PROP: return getMessages();
 			case TOOLS__PROP: return getTools();
 			case RESPONSE_FORMAT__PROP: return getResponseFormat();
@@ -262,6 +324,8 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			case MODEL__PROP: internalSetModel((String) value); break;
 			case MAX_TOKENS__PROP: internalSetMaxTokens((int) value); break;
 			case STREAM__PROP: internalSetStream((boolean) value); break;
+			case TEMPERATURE__PROP: internalSetTemperature((Object) value); break;
+			case TOP_P__PROP: internalSetTopP((Object) value); break;
 			case MESSAGES__PROP: internalSetMessages((Object) value); break;
 			case TOOLS__PROP: internalSetTools((Object) value); break;
 			case RESPONSE_FORMAT__PROP: internalSetResponseFormat((Object) value); break;
@@ -290,6 +354,14 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		out.value(getMaxTokens());
 		out.name(STREAM__PROP);
 		out.value(isStream());
+		if (hasTemperature()) {
+			out.name(TEMPERATURE__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getTemperature());
+		}
+		if (hasTopP()) {
+			out.name(TOP_P__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getTopP());
+		}
 		if (hasMessages()) {
 			out.name(MESSAGES__PROP);
 			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getMessages());
@@ -314,6 +386,8 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			case MODEL__PROP: setModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MAX_TOKENS__PROP: setMaxTokens(in.nextInt()); break;
 			case STREAM__PROP: setStream(in.nextBoolean()); break;
+			case TEMPERATURE__PROP: setTemperature(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
+			case TOP_P__PROP: setTopP(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case MESSAGES__PROP: setMessages(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TOOLS__PROP: setTools(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case RESPONSE_FORMAT__PROP: setResponseFormat(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;

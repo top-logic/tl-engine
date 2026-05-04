@@ -11,6 +11,8 @@ message ChatCompletionsRequest {
 	string model [Name = "model"];
 	int max_tokens [Name = "max_tokens"];
 	bool stream [Name = "stream"];
+	json temperature [Name = "temperature"];
+	json top_p [Name = "top_p"];
 	json messages [Name = "messages"];
 	json tools [Name = "tools"];
 	json response_format [Name = "response_format"];

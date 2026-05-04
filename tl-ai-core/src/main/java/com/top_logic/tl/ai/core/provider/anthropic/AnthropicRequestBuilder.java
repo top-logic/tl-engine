@@ -60,6 +60,7 @@ public final class AnthropicRequestBuilder {
 			.setStream(true);
 
 		writeSamplingParams(req, request.modelOptions());
+		writeThinkingParams(req, request.modelOptions());
 
 		if (request.systemPrompt() != null && !request.systemPrompt().isEmpty()) {
 			req.setSystem(List.of(buildSystemBlock(request.systemPrompt(), cacheTtl)));
@@ -267,6 +268,14 @@ public final class AnthropicRequestBuilder {
 			cc.put("ttl", cacheTtl);
 		}
 		return cc;
+	}
+
+	private static void writeThinkingParams(AnthropicRequest req, Map<String, Object> modelOptions) {
+		Object thinkingEffort = modelOptions.get("thinking_effort");
+		if (thinkingEffort != null) {
+			req.setThinking(Map.of("type", "adaptive"));
+			req.setOutputConfig(Map.of("effort", thinkingEffort.toString()));
+		}
 	}
 
 	private static void writeSamplingParams(AnthropicRequest req, Map<String, Object> modelOptions) {

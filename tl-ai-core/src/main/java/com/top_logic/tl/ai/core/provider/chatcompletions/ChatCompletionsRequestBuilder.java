@@ -58,6 +58,8 @@ public class ChatCompletionsRequestBuilder {
 			.setStream(true)
 			.setMessages(buildMessages(request));
 
+		writeSamplingParams(req, request.modelOptions());
+
 		if (!request.tools().isEmpty()) {
 			List<Object> tools = new ArrayList<>();
 			for (ToolSchema tool : request.tools()) {
@@ -213,6 +215,18 @@ public class ChatCompletionsRequestBuilder {
 			return JsonUtil.nextJsonValue(reader);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
+		}
+	}
+
+	private static void writeSamplingParams(ChatCompletionsRequest req,
+			Map<String, Object> modelOptions) {
+		Object temperature = modelOptions.get("temperature");
+		if (temperature != null) {
+			req.setTemperature(Double.parseDouble(temperature.toString()));
+		}
+		Object topP = modelOptions.get("topP");
+		if (topP != null) {
+			req.setTopP(Double.parseDouble(topP.toString()));
 		}
 	}
 

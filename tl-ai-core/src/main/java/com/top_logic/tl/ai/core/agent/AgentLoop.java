@@ -850,7 +850,9 @@ public class AgentLoop {
 			conversation.messages(),
 			filteredTools,
 			_config.maxOutputTokens(),
-			_config.modelOptions());
+			_config.modelOptions(),
+			null,
+			_config.toolChoice());
 
 		ResponseCollector collector = new ResponseCollector(listener, runId, turn);
 		_provider.stream(request, collector);

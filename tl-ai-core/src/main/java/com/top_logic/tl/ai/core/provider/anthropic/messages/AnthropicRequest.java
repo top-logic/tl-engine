@@ -48,6 +48,12 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getToolChoice() */
 	public static final String TOOL_CHOICE__PROP = "tool_choice";
 
+	/** @see #getThinking() */
+	public static final String THINKING__PROP = "thinking";
+
+	/** @see #getOutputConfig() */
+	public static final String OUTPUT_CONFIG__PROP = "output_config";
+
 	private String _model = "";
 
 	private int _maxTokens = 0;
@@ -69,6 +75,10 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	private Object _responseFormat = null;
 
 	private Object _toolChoice = null;
+
+	private Object _thinking = null;
+
+	private Object _outputConfig = null;
 
 	/**
 	 * Creates a {@link AnthropicRequest} instance.
@@ -322,6 +332,54 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _toolChoice != null;
 	}
 
+	public final Object getThinking() {
+		return _thinking;
+	}
+
+	/**
+	 * @see #getThinking()
+	 */
+	public com.top_logic.tl.ai.core.provider.anthropic.messages.AnthropicRequest setThinking(Object value) {
+		internalSetThinking(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getThinking()} without chain call utility. */
+	protected final void internalSetThinking(Object value) {
+		_thinking = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getThinking()} has a value.
+	 */
+	public final boolean hasThinking() {
+		return _thinking != null;
+	}
+
+	public final Object getOutputConfig() {
+		return _outputConfig;
+	}
+
+	/**
+	 * @see #getOutputConfig()
+	 */
+	public com.top_logic.tl.ai.core.provider.anthropic.messages.AnthropicRequest setOutputConfig(Object value) {
+		internalSetOutputConfig(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getOutputConfig()} without chain call utility. */
+	protected final void internalSetOutputConfig(Object value) {
+		_outputConfig = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getOutputConfig()} has a value.
+	 */
+	public final boolean hasOutputConfig() {
+		return _outputConfig != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return ANTHROPIC_REQUEST__TYPE;
@@ -340,7 +398,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			MESSAGES__PROP, 
 			TOOLS__PROP, 
 			RESPONSE_FORMAT__PROP, 
-			TOOL_CHOICE__PROP);
+			TOOL_CHOICE__PROP, 
+			THINKING__PROP, 
+			OUTPUT_CONFIG__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -376,6 +436,8 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TOOLS__PROP: return getTools();
 			case RESPONSE_FORMAT__PROP: return getResponseFormat();
 			case TOOL_CHOICE__PROP: return getToolChoice();
+			case THINKING__PROP: return getThinking();
+			case OUTPUT_CONFIG__PROP: return getOutputConfig();
 			default: return null;
 		}
 	}
@@ -394,6 +456,8 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TOOLS__PROP: internalSetTools((Object) value); break;
 			case RESPONSE_FORMAT__PROP: internalSetResponseFormat((Object) value); break;
 			case TOOL_CHOICE__PROP: internalSetToolChoice((Object) value); break;
+			case THINKING__PROP: internalSetThinking((Object) value); break;
+			case OUTPUT_CONFIG__PROP: internalSetOutputConfig((Object) value); break;
 		}
 	}
 
@@ -450,6 +514,14 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			out.name(TOOL_CHOICE__PROP);
 			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getToolChoice());
 		}
+		if (hasThinking()) {
+			out.name(THINKING__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getThinking());
+		}
+		if (hasOutputConfig()) {
+			out.name(OUTPUT_CONFIG__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getOutputConfig());
+		}
 	}
 
 	@Override
@@ -466,6 +538,8 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TOOLS__PROP: setTools(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case RESPONSE_FORMAT__PROP: setResponseFormat(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TOOL_CHOICE__PROP: setToolChoice(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
+			case THINKING__PROP: setThinking(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
+			case OUTPUT_CONFIG__PROP: setOutputConfig(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			default: super.readField(in, field);
 		}
 	}

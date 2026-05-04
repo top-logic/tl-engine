@@ -88,4 +88,6 @@ message AnthropicRequest {
 	json tools [Name = "tools"];
 	json response_format [Name = "response_format"];
 	json tool_choice [Name = "tool_choice"];
+	json thinking [Name = "thinking"];
+	json output_config [Name = "output_config"];
 }

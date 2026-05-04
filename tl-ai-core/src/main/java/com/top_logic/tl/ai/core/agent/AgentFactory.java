@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.tools.ToolDispatcher;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
@@ -258,6 +259,8 @@ public class AgentFactory {
 					+ "Either ensure models.dev is reachable or define the model in model-overrides.");
 		}
 
+		String providerId = reg.getProviderId(model);
+
 		String systemPrompt = agent.getSystemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
@@ -271,10 +274,27 @@ public class AgentFactory {
 		int contextWindowTokens = agentContextWindow != null
 			? agentContextWindow : modelInfo.limits().contextWindow();
 
-		Map<String, Object> modelOptions = buildModelOptions(agent, modelInfo);
+		// maxTurns: agent override > default
+		Integer agentMaxTurns = agent.getMaxTurns();
+		int maxTurns = agentMaxTurns != null ? agentMaxTurns : AgentParams.DEFAULT_MAX_TURNS;
 
-		return new AgentParams(model, systemPrompt, AgentParams.DEFAULT_MAX_TURNS,
-			maxOutputTokens, modelOptions, contextWindowTokens, msg -> true);
+		// maxRetries: agent override > default
+		Integer agentMaxRetries = agent.getMaxRetries();
+		int maxRetries = agentMaxRetries != null ? agentMaxRetries : AgentParams.DEFAULT_MAX_RETRIES;
+
+		// timeoutSeconds: agent override > default
+		Integer agentTimeoutSeconds = agent.getTimeoutSeconds();
+		int timeoutSeconds = agentTimeoutSeconds != null
+			? agentTimeoutSeconds : AgentParams.DEFAULT_TIMEOUT_SECONDS;
+
+		// toolChoice: agent override > null (provider default)
+		ToolChoice toolChoice = resolveToolChoice(agent);
+
+		Map<String, Object> modelOptions = buildModelOptions(agent, modelInfo, providerId);
+
+		return new AgentParams(model, systemPrompt, maxTurns,
+			maxOutputTokens, modelOptions, contextWindowTokens,
+			maxRetries, timeoutSeconds, toolChoice, msg -> true);
 	}
 
 	private static int resolveMaxToolResultChars(Agent agent) {
@@ -304,7 +324,7 @@ public class AgentFactory {
 	/**
 	 * Builds provider-specific model options from agent attributes, gated on model capabilities.
 	 */
-	private Map<String, Object> buildModelOptions(Agent agent, ModelInfo modelInfo) {
+	private Map<String, Object> buildModelOptions(Agent agent, ModelInfo modelInfo, String providerId) {
 		Map<String, Object> options = new HashMap<>();
 
 		if (modelInfo.capabilities().temperature()) {
@@ -319,7 +339,51 @@ public class AgentFactory {
 			}
 		}
 
+		// Anthropic-specific options
+		if ("anthropic".equals(providerId)) {
+			if (modelInfo.capabilities().reasoning()) {
+				com.top_logic.model.TLClassifier thinkingEffort = agent.getThinkingEffort();
+				if (thinkingEffort != null) {
+					options.put("thinking_effort", thinkingEffort.getName().toLowerCase());
+				}
+			}
+			Integer topK = agent.getTopK();
+			if (topK != null) {
+				options.put("top_k", topK);
+			}
+		}
+
+		// OpenAI/xAI-specific options
+		if ("openai".equals(providerId) || "xai".equals(providerId)) {
+			if (modelInfo.capabilities().reasoning()) {
+				com.top_logic.model.TLClassifier reasoningEffort = agent.getReasoningEffort();
+				if (reasoningEffort != null) {
+					options.put("reasoning_effort", reasoningEffort.getName().toLowerCase());
+				}
+				com.top_logic.model.TLClassifier reasoningSummary = agent.getReasoningSummary();
+				if (reasoningSummary != null) {
+					options.put("reasoning_summary", reasoningSummary.getName().toLowerCase());
+				}
+			}
+		}
+
 		return options.isEmpty() ? Map.of() : Map.copyOf(options);
+	}
+
+	/**
+	 * Maps the model enum classifier to the Java {@link ToolChoice} enum.
+	 */
+	private static ToolChoice resolveToolChoice(Agent agent) {
+		com.top_logic.model.TLClassifier classifier = agent.getToolChoice();
+		if (classifier == null) {
+			return null;
+		}
+		return switch (classifier.getName()) {
+			case "AUTO" -> ToolChoice.AUTO;
+			case "REQUIRED" -> ToolChoice.REQUIRED;
+			case "NONE" -> ToolChoice.NONE;
+			default -> null;
+		};
 	}
 
 	/**

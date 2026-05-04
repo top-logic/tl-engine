@@ -307,6 +307,29 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	}
 
 	/**
+	 * Returns the catalog provider ID for the given model name, or {@code null} if unknown.
+	 *
+	 * <p>
+	 * Looks up which configured provider owns the given model and returns that provider's
+	 * {@link LLMProviderConfig#getCatalogProviderId() catalog provider ID}.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
+	 */
+	public String getProviderId(String modelName) {
+		if (_modelProviderIndex == null) {
+			return null;
+		}
+		LLMProviderConfig providerConfig = _modelProviderIndex.get(modelName);
+		if (providerConfig == null) {
+			return null;
+		}
+		return providerConfig.getCatalogProviderId();
+	}
+
+	/**
 	 * Returns the configured default model name, or {@code null} if not set.
 	 */
 	public String getDefaultModel() {

@@ -46,12 +46,21 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 
 	/**
 	 * Part <code>maxRetries</code> of <code>Agent</code>
-	 * 
+	 *
 	 * <p>
 	 * Declared as <code>tl.core:Integer</code> in configuration.
 	 * </p>
 	 */
 	String MAX_RETRIES_ATTR = "maxRetries";
+
+	/**
+	 * Part <code>maxTurns</code> of <code>Agent</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String MAX_TURNS_ATTR = "maxTurns";
 
 	/**
 	 * Part <code>contextWindow</code> of <code>Agent</code>
@@ -108,6 +117,24 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	String NAME_ATTR = "name";
 
 	/**
+	 * Part <code>reasoningEffort</code> of <code>Agent</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.ai.core:ReasoningEffort</code> in configuration.
+	 * </p>
+	 */
+	String REASONING_EFFORT_ATTR = "reasoningEffort";
+
+	/**
+	 * Part <code>reasoningSummary</code> of <code>Agent</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.ai.core:ReasoningSummary</code> in configuration.
+	 * </p>
+	 */
+	String REASONING_SUMMARY_ATTR = "reasoningSummary";
+
+	/**
 	 * Part <code>skills</code> of <code>Agent</code>
 	 * 
 	 * <p>
@@ -127,12 +154,21 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 
 	/**
 	 * Part <code>temperature</code> of <code>Agent</code>
-	 * 
+	 *
 	 * <p>
 	 * Declared as <code>tl.core:Double</code> in configuration.
 	 * </p>
 	 */
 	String TEMPERATURE_ATTR = "temperature";
+
+	/**
+	 * Part <code>thinkingEffort</code> of <code>Agent</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.ai.core:ThinkingEffort</code> in configuration.
+	 * </p>
+	 */
+	String THINKING_EFFORT_ATTR = "thinkingEffort";
 
 	/**
 	 * Part <code>timeoutSeconds</code> of <code>Agent</code>
@@ -144,13 +180,31 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	String TIMEOUT_SECONDS_ATTR = "timeoutSeconds";
 
 	/**
+	 * Part <code>toolChoice</code> of <code>Agent</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.ai.core:ToolChoice</code> in configuration.
+	 * </p>
+	 */
+	String TOOL_CHOICE_ATTR = "toolChoice";
+
+	/**
 	 * Part <code>tools</code> of <code>Agent</code>
-	 * 
+	 *
 	 * <p>
 	 * Declared as <code>tl.core:String</code> in configuration.
 	 * </p>
 	 */
 	String TOOLS_ATTR = "tools";
+
+	/**
+	 * Part <code>topK</code> of <code>Agent</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.core:Integer</code> in configuration.
+	 * </p>
+	 */
+	String TOP_K_ATTR = "topK";
 
 	/**
 	 * Part <code>topP</code> of <code>Agent</code>
@@ -457,6 +511,90 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	 */
 	default void setTopP(Double newValue) {
 		tUpdateByName(TOP_P_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #THINKING_EFFORT_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getThinkingEffort() {
+		return (com.top_logic.model.TLClassifier) tValueByName(THINKING_EFFORT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #THINKING_EFFORT_ATTR}.
+	 */
+	default void setThinkingEffort(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(THINKING_EFFORT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TOP_K_ATTR}.
+	 */
+	default Integer getTopK() {
+		return (Integer) tValueByName(TOP_K_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOP_K_ATTR}.
+	 */
+	default void setTopK(Integer newValue) {
+		tUpdateByName(TOP_K_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #REASONING_EFFORT_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getReasoningEffort() {
+		return (com.top_logic.model.TLClassifier) tValueByName(REASONING_EFFORT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #REASONING_EFFORT_ATTR}.
+	 */
+	default void setReasoningEffort(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(REASONING_EFFORT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #REASONING_SUMMARY_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getReasoningSummary() {
+		return (com.top_logic.model.TLClassifier) tValueByName(REASONING_SUMMARY_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #REASONING_SUMMARY_ATTR}.
+	 */
+	default void setReasoningSummary(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(REASONING_SUMMARY_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #MAX_TURNS_ATTR}.
+	 */
+	default Integer getMaxTurns() {
+		return (Integer) tValueByName(MAX_TURNS_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #MAX_TURNS_ATTR}.
+	 */
+	default void setMaxTurns(Integer newValue) {
+		tUpdateByName(MAX_TURNS_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TOOL_CHOICE_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getToolChoice() {
+		return (com.top_logic.model.TLClassifier) tValueByName(TOOL_CHOICE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOOL_CHOICE_ATTR}.
+	 */
+	default void setToolChoice(com.top_logic.model.TLClassifier newValue) {
+		tUpdateByName(TOOL_CHOICE_ATTR, newValue);
 	}
 
 }

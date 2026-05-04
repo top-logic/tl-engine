@@ -912,8 +912,8 @@ public class TestAgentLoop extends TestCase {
 
 		/** */
 		@Override
-		public void acquireLock() {
-			_locked = true;
+		public void acquireLock(String operation, com.top_logic.model.TLObject... targets) {
+			// no-op for tests — no LockService available
 		}
 
 		/** */
@@ -1202,8 +1202,6 @@ public class TestAgentLoop extends TestCase {
 				events.add("tx_begin");
 			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
-			} else if (e instanceof AgentEvent.LockAcquired) {
-				events.add("lock_acquired");
 			}
 		};
 
@@ -1214,8 +1212,8 @@ public class TestAgentLoop extends TestCase {
 		AgentResult result = loop.run(conv, ctx, listener);
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertTrue("Lock should be acquired before transaction",
-			events.indexOf("lock_acquired") < events.indexOf("tx_begin"));
+		assertTrue("Transaction should begin on write tool",
+			events.contains("tx_begin"));
 		assertTrue("Transaction should be committed",
 			events.contains("tx_commit"));
 	}
@@ -1307,51 +1305,6 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Lock failure returns error to LLM, no transaction opened.
-	 */
-	public void testLockFailureReportedToLLM() {
-		Conversation conv = new Conversation();
-		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
-
-		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
-		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
-
-		LLMProvider provider = mockProvider(
-			List.of(toolCall),
-			List.of(new TextContent("Cannot edit — locked.")));
-
-		ToolDispatcher registry = new ToolDispatcher();
-		registry.register(globalTool("edit_model", toolSpec));
-		registry.freeze();
-
-		List<String> events = new ArrayList<>();
-		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.LockFailed l) {
-				events.add("lock_failed:" + l.reason());
-			} else if (e instanceof AgentEvent.TransactionBegan) {
-				events.add("tx_begin");
-			}
-		};
-
-		TransactionScope failingScope = new TestableTransactionScope() {
-			@Override
-			public void acquireLock() {
-				throw new TransactionException("Locked by Developer A");
-			}
-		};
-		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, failingScope);
-
-		AgentLoop loop = new AgentLoop(config(), provider, registry);
-		AgentResult result = loop.run(conv, ctx, listener);
-
-		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertTrue("Lock failure should be reported",
-			events.stream().anyMatch(e -> e.startsWith("lock_failed:")));
-		assertFalse("No transaction should begin on lock failure",
-			events.contains("tx_begin"));
-	}
-
-	/**
 	 * When {@link TransactionScope#commit()} throws, the listener receives a
 	 * rollback event with the failure reason and no commit event.
 	 */
@@ -1423,9 +1376,7 @@ public class TestAgentLoop extends TestCase {
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.LockAcquired) {
-				events.add("lock_acquired");
-			} else if (e instanceof AgentEvent.TransactionBegan) {
+			if (e instanceof AgentEvent.TransactionBegan) {
 				events.add("tx_begin");
 			} else if (e instanceof AgentEvent.TransactionCommitted) {
 				events.add("tx_commit");
@@ -1450,8 +1401,6 @@ public class TestAgentLoop extends TestCase {
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertTrue("Tool should be denied", events.contains("denied:edit_model"));
-		assertFalse("Lock must not be acquired for a denied tool",
-			events.contains("lock_acquired"));
 		assertFalse("Transaction must not begin for a denied tool",
 			events.contains("tx_begin"));
 		assertFalse("No commit for a denied tool", events.contains("tx_commit"));
@@ -1459,65 +1408,6 @@ public class TestAgentLoop extends TestCase {
 			events.contains("tx_rollback"));
 		assertFalse("Scope should never have become active", scope.isActive());
 		assertFalse("Scope should never have held the lock", scope.holdsLock());
-	}
-
-	/**
-	 * Lock failure on one tool must not poison subsequent turns — each call to
-	 * {@code ensureTransaction} is independent. Regression test for the architecture
-	 * where lock acquisition moved from a batch-level pre-loop into the per-tool
-	 * security-check path.
-	 */
-	public void testLockFailureIsolatedToFailingTool() {
-		Conversation conv = new Conversation();
-		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
-
-		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
-		ToolCall toolCall = new ToolCall("tc1", "edit_model", "{}");
-
-		LLMProvider provider = mockProvider(
-			List.of(toolCall),
-			List.of(new TextContent("Gave up.")));
-
-		ToolDispatcher registry = new ToolDispatcher();
-		registry.register(globalTool("edit_model", toolSpec));
-		registry.freeze();
-
-		List<String> events = new ArrayList<>();
-		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.LockFailed) {
-				events.add("lock_failed");
-			} else if (e instanceof AgentEvent.TransactionBegan) {
-				events.add("tx_begin");
-			}
-		};
-
-		TransactionScope failingScope = new TestableTransactionScope() {
-			@Override
-			public void acquireLock() {
-				throw new TransactionException("Locked by Developer A");
-			}
-		};
-		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
-			failingScope);
-
-		AgentLoop loop = new AgentLoop(config(), provider, registry);
-		AgentResult result = loop.run(conv, ctx, listener);
-
-		// The loop should reach COMPLETE: lock failure produced a tool error that was
-		// fed back to the LLM, which then responded with a plain text answer.
-		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertTrue("Lock failure should be reported", events.contains("lock_failed"));
-		assertFalse("Transaction must not begin when lock acquisition fails",
-			events.contains("tx_begin"));
-
-		// The conversation must contain the failed tool result so the LLM can adapt.
-		boolean hasFailedResult = conv.messages().stream()
-			.filter(ToolResultMessage.class::isInstance)
-			.map(ToolResultMessage.class::cast)
-			.anyMatch(tr -> tr.state() instanceof ToolState.Failed failed
-				&& failed.error().contains("Cannot edit"));
-		assertTrue("Failed tool result with lock error should be in conversation",
-			hasFailedResult);
 	}
 
 	/**

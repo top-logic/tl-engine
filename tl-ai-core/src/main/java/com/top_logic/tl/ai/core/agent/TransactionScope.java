@@ -5,20 +5,36 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.top_logic.base.locking.Lock;
+import com.top_logic.base.locking.LockService;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.tools.model.LockHolderLookup;
 
 /**
- * Manages one KB transaction and global edit lock per agent turn.
+ * Manages one KB transaction and object-level locks per agent turn.
  *
- * <p>Lifecycle: {@link #acquireLock()} → {@link #begin()} → tool executions →
- * {@link #commit()} or {@link #rollback()}. Lock is released in {@code commit}/{@code rollback}.
- * Implements {@link AutoCloseable} — {@link #close()} rolls back if still active.</p>
+ * <p>Tools acquire locks on their targets via
+ * {@link #acquireLock(String, TLObject...)} after resolving the objects they
+ * need to modify. The framework manages the transaction lifecycle
+ * ({@link #begin()} / {@link #commit()} / {@link #rollback()}) and releases
+ * all accumulated locks on commit or rollback.</p>
+ *
+ * <p>Implements {@link AutoCloseable} — {@link #close()} rolls back if still
+ * active.</p>
  *
  * <p>The {@link #NOOP} instance is for read-only agents and unit tests — all
  * methods are safe no-ops.</p>
@@ -28,22 +44,26 @@ import com.top_logic.knowledge.service.Transaction;
  */
 public class TransactionScope implements AutoCloseable {
 
-	/** Lock token name used for the global agent edit lock. */
-	public static final String LOCK_NAME = "agentEdit";
-
 	/** No-op scope for read-only agents and tests. All methods are safe no-ops. */
 	public static final TransactionScope NOOP = new NoOp();
 
+	private static final int MAX_RETRIES = 3;
+
+	private static final long RETRY_DELAY_MS = 10_000L;
+
+	private static final long LOCK_DURATION_MS = 10 * 60 * 1000L;
+
 	private Transaction _transaction;
 
-	private Lock _lock;
+	private final Set<Lock> _locks = new LinkedHashSet<>();
 
 	private Revision _commitRevision;
 
 	/**
 	 * Creates a new live transaction scope.
 	 *
-	 * <p>Call {@link #acquireLock()} and {@link #begin()} to start the transaction.</p>
+	 * <p>Call {@link #begin()} to start a transaction. Tools acquire locks on
+	 * their targets via {@link #acquireLock(String, TLObject...)}.</p>
 	 */
 	public TransactionScope() {
 		// Live scope — uses PersistencyLayer and LockService at runtime
@@ -57,39 +77,63 @@ public class TransactionScope implements AutoCloseable {
 	}
 
 	/**
-	 * Acquire a global exclusive lock for editing.
+	 * Acquire an object-level lock for the given operation and targets.
 	 *
-	 * @throws TransactionException if the lock cannot be acquired (held by another editor)
-	 * @throws IllegalStateException if a lock is already held
+	 * <p>Uses the {@link LockService} to create a lock bound to the target objects,
+	 * bridging agent locks with UI locks. Retries up to {@value #MAX_RETRIES} times
+	 * with a {@value #RETRY_DELAY_MS}ms delay between attempts.</p>
+	 *
+	 * @param operation the abstract operation name (e.g. "editValues")
+	 * @param targets   the objects to lock
+	 * @throws LockConflictException if the lock cannot be acquired after all retries
+	 * @throws TransactionException  if lock acquisition is interrupted
 	 */
-	public void acquireLock() {
-		if (_lock != null) {
-			throw new IllegalStateException("Lock already held.");
+	public void acquireLock(String operation, TLObject... targets) {
+		Lock lock = LockService.getInstance().createLock(operation, (Object[]) targets);
+		for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+			try {
+				lock.lock(LOCK_DURATION_MS);
+				_locks.add(lock);
+				return;
+			} catch (Exception e) {
+				if (attempt == MAX_RETRIES) {
+					String resource = describeTargets(targets);
+					String holder = describeLockHolder(targets);
+					long totalWaitSecs = (MAX_RETRIES - 1) * RETRY_DELAY_MS / 1000;
+					throw new LockConflictException(resource, holder, MAX_RETRIES, totalWaitSecs, e);
+				}
+				try {
+					Thread.sleep(RETRY_DELAY_MS);
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					throw new TransactionException("Lock acquisition interrupted", ie);
+				}
+			}
 		}
-		Lock lock = Lock.createLock(0, LOCK_NAME);
-		try {
-			lock.lock();
-		} catch (Exception e) {
-			throw new TransactionException("Cannot acquire edit lock: " + e.getMessage(), e);
-		}
-		_lock = lock;
 	}
 
 	/**
-	 * Release the edit lock if held. Idempotent.
+	 * Release all held locks. Idempotent.
 	 */
 	public void releaseLock() {
-		if (_lock != null && _lock.isStateAcquired()) {
-			_lock.unlock();
+		for (Lock lock : _locks) {
+			if (lock.isStateAcquired()) {
+				lock.unlock();
+			}
 		}
-		_lock = null;
+		_locks.clear();
 	}
 
 	/**
-	 * Whether this scope currently holds the edit lock.
+	 * Whether this scope currently holds any locks.
 	 */
 	public boolean holdsLock() {
-		return _lock != null && _lock.isStateAcquired();
+		for (Lock lock : _locks) {
+			if (lock.isStateAcquired()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -120,7 +164,7 @@ public class TransactionScope implements AutoCloseable {
 	}
 
 	/**
-	 * Commit the active transaction and release the lock.
+	 * Commit the active transaction and release all locks.
 	 *
 	 * @throws TransactionException if the commit fails (changes are rolled back)
 	 * @throws IllegalStateException if no transaction is active
@@ -135,13 +179,13 @@ public class TransactionScope implements AutoCloseable {
 			_transaction = null;
 			releaseLock();
 		} catch (KnowledgeBaseException e) {
-			// Leave _transaction and _lock intact so callers can rollback()
+			// Leave _transaction and _locks intact so callers can rollback()
 			throw new TransactionException("Commit failed: " + e.getMessage(), e);
 		}
 	}
 
 	/**
-	 * Roll back the active transaction and release the lock. Idempotent —
+	 * Roll back the active transaction and release all locks. Idempotent —
 	 * safe to call when no transaction is active.
 	 */
 	public void rollback() {
@@ -177,6 +221,31 @@ public class TransactionScope implements AutoCloseable {
 		rollback();
 	}
 
+	private static String describeTargets(TLObject[] targets) {
+		if (targets.length == 0) {
+			return "unknown";
+		}
+		List<String> labels = new ArrayList<>(targets.length);
+		for (TLObject target : targets) {
+			if (target instanceof TLModelPart part) {
+				labels.add(TLModelUtil.qualifiedName(part));
+			} else {
+				labels.add(target.toString());
+			}
+		}
+		return StringServices.join(labels, ", ");
+	}
+
+	private static String describeLockHolder(TLObject[] targets) {
+		for (TLObject target : targets) {
+			String holder = LockHolderLookup.findLockHolder(target);
+			if (holder != null) {
+				return holder;
+			}
+		}
+		return "unknown";
+	}
+
 	/**
 	 * No-op implementation for read-only agents and unit tests.
 	 */
@@ -190,7 +259,7 @@ public class TransactionScope implements AutoCloseable {
 
 		/** */
 		@Override
-		public void acquireLock() {
+		public void acquireLock(String operation, TLObject... targets) {
 			// no-op
 		}
 

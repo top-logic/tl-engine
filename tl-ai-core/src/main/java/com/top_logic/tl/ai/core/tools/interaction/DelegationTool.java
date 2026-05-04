@@ -15,7 +15,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -161,7 +160,7 @@ public class DelegationTool implements Tool {
 				List.of(new TextContent(userPrompt.toString())));
 			conversation.add(userMessage);
 
-			ToolContext childContext = toolContext.forDelegation(TransactionScope.NOOP);
+			ToolContext childContext = toolContext.forDelegation(toolContext.transaction());
 			AgentResult result = targetLoop.run(conversation, childContext, childListener);
 
 			String finalText = extractFinalText(conversation, result);

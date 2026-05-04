@@ -227,7 +227,6 @@
 				tool_progress: Handlers.onToolProgress,
 				approval_required: Handlers.onApprovalRequired,
 				approval_resolved: Handlers.onApprovalResolved,
-				lock_acquired: Handlers.onLockAcquired,
 				tx_began: Handlers.onTxBegan,
 				tx_committed: Handlers.onTxCommitted,
 				tx_rollback: Handlers.onTxRollback,
@@ -390,7 +389,6 @@
 			}
 		},
 
-		onLockAcquired(data) { /* No UI */ },
 		onTxBegan(data) { /* No UI */ },
 		onTxCommitted(data) {
 			if (data.revisionNumber >= 0) {

@@ -118,9 +118,6 @@ public class ConversationLogListener implements AgentEventListener {
 			handleCompactionCompleted(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			handleProviderError(e);
-		} else if (event instanceof AgentEvent.LockAcquired
-				|| event instanceof AgentEvent.LockFailed) {
-			// Not stored as parts
 		} else if (event instanceof AgentEvent.TransactionBegan e) {
 			handleTransactionBegan(e);
 		} else if (event instanceof AgentEvent.TransactionCommitted e) {

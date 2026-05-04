@@ -49,10 +49,10 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  *   <li>Zero or more {@link ToolProgress} events may be emitted between
  *       {@link ToolCallStarted} and the terminal event ({@link ToolCallCompleted}
  *       or {@link ToolCallFailed}) for the same {@code toolCallId}.</li>
- *   <li>On a turn with writes: {@link LockAcquired} &#x2192; {@link TransactionBegan}
+ *   <li>On a turn with writes: {@link TransactionBegan}
  *       &#x2192; write tool's {@link ToolCallCompleted} &#x2192;
- *       {@link TransactionCommitted} / {@link TransactionRolledBack}. If
- *       {@link LockFailed} is emitted instead, no transaction events follow.</li>
+ *       {@link TransactionCommitted} / {@link TransactionRolledBack}.
+ *       Locking is handled per-object inside individual tools.</li>
  *   <li>Across parallel tool calls in one batch, only per-{@code toolCallId} ordering
  *       is guaranteed; inter-call order is unspecified.</li>
  * </ul>
@@ -263,28 +263,7 @@ public sealed interface AgentEvent {
 			String toolCallId, String approvalRequestId, ApprovalOutcome outcome)
 			implements AgentEvent {}
 
-	// ---------- Transactions and lock ----------
-
-	/**
-	 * Emitted once the global edit lock has been acquired.
-	 *
-	 * @param runId agent run identifier
-	 * @param turnNumber 1-based loop iteration
-	 * @param timestamp when the event occurred
-	 */
-	record LockAcquired(String runId, int turnNumber, Instant timestamp)
-			implements AgentEvent {}
-
-	/**
-	 * Emitted when the global edit lock could not be acquired.
-	 *
-	 * @param runId agent run identifier
-	 * @param turnNumber 1-based loop iteration
-	 * @param timestamp when the event occurred
-	 * @param reason why this occurred
-	 */
-	record LockFailed(String runId, int turnNumber, Instant timestamp, String reason)
-			implements AgentEvent {}
+	// ---------- Transactions ----------
 
 	/**
 	 * Emitted when a KB transaction begins (first write tool of a turn).

@@ -1111,6 +1111,20 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		}
 	}
 
+	/**
+	 * Pushes the current default page title (the value of the {@link PageTitleChannel}, or
+	 * the configured {@link #getTitleKey() title key} if the channel is unset) to the
+	 * browser.
+	 *
+	 * <p>
+	 * Used by per-component page title plug-ins to release their claim when the carrying
+	 * component becomes invisible.
+	 * </p>
+	 */
+	public void applyDefaultPageTitle() {
+		updatePageTitle(getChannel(PageTitleChannel.NAME).get());
+	}
+
 	private void updatePageTitle(Object value) {
 		String title;
 		if (value == null) {

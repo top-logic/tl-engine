@@ -98,10 +98,12 @@ import com.top_logic.layout.basic.component.AJAXSupport;
 import com.top_logic.layout.basic.component.BasicAJAXSupport;
 import com.top_logic.layout.basic.component.ControlComponent.DispatchAction;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.DefaultChannel;
 import com.top_logic.layout.channel.PageTitleChannel;
+import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.layout.form.tag.js.JSObject;
 import com.top_logic.layout.internal.SubsessionHandler;
@@ -288,6 +290,29 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		@Name(CLOSE_DIALOG_ON_BACKGROUND_CLICK)
 		boolean closeDialogOnBackgroundClick();
 
+		/**
+		 * The browser tab title shown for this application.
+		 *
+		 * <p>
+		 * The {@link ModelSpec} value drives the {@link PageTitleChannel} of this
+		 * {@link MainLayout}; the resolved value is converted to a label and pushed to the
+		 * browser as new <code>document.title</code>. When unset or resolving to
+		 * <code>null</code>, the title configured via the resource key applies.
+		 * </p>
+		 *
+		 * <p>
+		 * Example: bind to the selection of a navigation component:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;page-title class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+		 *             input="selection(mainNavigation)"
+		 *             function="x -&gt; $x == null ? null : $x.get(`my.app:Project#name`)"/&gt;
+		 * </pre>
+		 */
+		@Name("page-title")
+		ModelSpec getPageTitleSpec();
+
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
 			Layout.Config.super.modifyIntrinsicCommands(registry);
@@ -453,6 +478,18 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	@Override
 	protected Map<String, ChannelSPI> programmaticChannels() {
 		return MAIN_LAYOUT_CHANNELS;
+	}
+
+	@Override
+	public void linkChannels(Log log) {
+		super.linkChannels(log);
+
+		ModelSpec pageTitleSpec = ((Config) getConfig()).getPageTitleSpec();
+		if (pageTitleSpec != null) {
+			ComponentChannel pageTitleChannel = getChannel(PageTitleChannel.NAME);
+			ChannelLinking linking = getChannelLinking(pageTitleSpec);
+			pageTitleChannel.linkChannel(log, this, linking);
+		}
 	}
 
 	final BidiMap<String, LayoutComponent> getAvailableComponents() {

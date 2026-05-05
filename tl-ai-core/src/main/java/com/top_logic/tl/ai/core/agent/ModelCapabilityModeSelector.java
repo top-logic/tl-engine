@@ -85,14 +85,17 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 
 	@Override
 	public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute) {
-		String model = (String) object.tValueByName("model");
-		if (model == null || model.isBlank()) {
-			return FormVisibility.HIDDEN;
-		}
-
 		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
 		if (registry == null) {
 			return FormVisibility.HIDDEN;
+		}
+
+		String model = (String) object.tValueByName("model");
+		if (model == null || model.isBlank()) {
+			model = registry.getDefaultModel();
+			if (model == null || model.isBlank()) {
+				return FormVisibility.HIDDEN;
+			}
 		}
 
 		// Provider check

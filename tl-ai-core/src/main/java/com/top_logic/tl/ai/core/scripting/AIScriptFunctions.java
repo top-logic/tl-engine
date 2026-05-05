@@ -26,6 +26,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
@@ -289,17 +290,17 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The user message to send to the agent.
 	 * @return The agent's final text response.
 	 */
-	public static String agentChat(String agentName, String userMessage) {
+	public static String agentChat(String agentName, Object userMessage) {
 		AgentFactory factory = AgentFactory.getInstance();
 		Conversation conversation = new Conversation();
-		conversation.add(new UserMessage(
-			UUID.randomUUID().toString(),
-			Instant.now(),
-			List.of(new TextContent(userMessage))));
+		conversation.add(createUserMessage(userMessage));
+
 		ToolContext context = ToolContext.createUnrestricted();
+
 		try {
 			return factory.runAgent(agentName, conversation, null, context, event -> {
 				/** no event listener setup for a tlscript function */
+				// event.toString();
 			});
 		} finally {
 			context.transaction().close();
@@ -379,6 +380,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			}
 
 			String base64 = java.util.Base64.getEncoder().encodeToString(bytes);
+
+			if (contentType != null && contentType.startsWith("image/")) {
+				String url = "data:" + contentType + ";base64," + base64;
+				return new ImageContent(url, contentType);
+			}
+
 			return new TextContent("[Binary content: " + contentType + ", base64: " + base64 + "]");
 		} catch (IOException ex) {
 			throw new RuntimeException("Failed to read binary data: " + ex.getMessage(), ex);

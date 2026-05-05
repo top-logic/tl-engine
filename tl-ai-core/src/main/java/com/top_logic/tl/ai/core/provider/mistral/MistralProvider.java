@@ -84,7 +84,7 @@ public class MistralProvider implements LLMProvider {
 	 * indefinitely with no response. Confirmed via curl — this is a server-side infrastructure
 	 * issue (likely a reverse proxy), not a client bug. Guard with a conservative threshold.
 	 */
-	private static final int MAX_REQUEST_BODY_BYTES = 30_000;
+	private static final int MAX_REQUEST_BODY_BYTES = 5_000_000;
 
 	private static HttpClient defaultHttpClient() {
 		return HttpClient.newBuilder()

@@ -19,13 +19,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -554,13 +561,29 @@ public class AgentLoop {
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
+		// Capture thread-local bindings from the calling thread for propagation.
+		ConversationLogListener logListener = ConversationLogListenerBinding.getListener();
+		TaskStore taskStore = TaskStoreBinding.getStore();
+		UserInteractionStore interactionStore = UserInteractionStoreBinding.getStore();
+
 		ExecutorService executor = Executors.newCachedThreadPool();
 		try {
 			List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
 
 			for (ToolCall tc : batch) {
 				futures.add(CompletableFuture.supplyAsync(
-					() -> executeWithSecurityCheck(tc, context, listener, runId, turn), executor));
+					() -> ThreadContextManager.inSystemInteraction(AgentLoop.class, () -> {
+						ConversationLogListenerBinding.setListener(logListener);
+						TaskStoreBinding.setStore(taskStore);
+						UserInteractionStoreBinding.setStore(interactionStore);
+						try {
+							return executeWithSecurityCheck(tc, context, listener, runId, turn);
+						} finally {
+							ConversationLogListenerBinding.clear();
+							TaskStoreBinding.setStore(null);
+							UserInteractionStoreBinding.setStore(null);
+						}
+					}), executor));
 			}
 
 			List<ToolResultMessage> results = new ArrayList<>();

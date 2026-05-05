@@ -60,7 +60,7 @@ public final class AnthropicRequestBuilder {
 			.setStream(true);
 
 		writeSamplingParams(req, request.modelOptions());
-		writeThinkingParams(req, request.modelOptions());
+		writeThinkingParams(req, request.model(), request.maxOutputTokens(), request.modelOptions());
 
 		if (request.systemPrompt() != null && !request.systemPrompt().isEmpty()) {
 			req.setSystem(List.of(buildSystemBlock(request.systemPrompt(), cacheTtl)));
@@ -270,12 +270,34 @@ public final class AnthropicRequestBuilder {
 		return cc;
 	}
 
-	private static void writeThinkingParams(AnthropicRequest req, Map<String, Object> modelOptions) {
+	private static void writeThinkingParams(AnthropicRequest req, String model, int maxOutputTokens,
+			Map<String, Object> modelOptions) {
 		Object thinkingEffort = modelOptions.get("thinking_effort");
-		if (thinkingEffort != null) {
+		if (thinkingEffort == null) {
+			return;
+		}
+		if (requiresBudgetTokens(model)) {
+			int budgetTokens = effortToBudgetTokens(thinkingEffort.toString(), maxOutputTokens);
+			req.setThinking(Map.of("type", "enabled", "budget_tokens", budgetTokens));
+		} else {
 			req.setThinking(Map.of("type", "adaptive"));
 			req.setOutputConfig(Map.of("effort", thinkingEffort.toString()));
 		}
+	}
+
+	private static boolean requiresBudgetTokens(String model) {
+		return model.contains("haiku");
+	}
+
+	private static int effortToBudgetTokens(String effort, int maxOutputTokens) {
+		double fraction = switch (effort) {
+			case "low" -> 0.25;
+			case "medium" -> 0.5;
+			case "high" -> 0.75;
+			case "max" -> 1.0;
+			default -> 0.5;
+		};
+		return Math.max(1024, (int) (maxOutputTokens * fraction));
 	}
 
 	private static void writeSamplingParams(AnthropicRequest req, Map<String, Object> modelOptions) {

@@ -44,6 +44,13 @@
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
 			<layout-templates value="com.top_logic/layoutPlaceholder.template.xml,com.top_logic/layoutPlaceholder.template.xml"/>
 		</property>
+
+		<property name="pageTitle"
+			instance-type="com.top_logic.layout.basic.PageTitleSetter"
+			type="PolymorphicConfiguration"
+		>
+			<item-display value="monomorphic"/>
+		</property>
 	</properties>
 
 	<layout name="InnerLayout"
@@ -57,5 +64,7 @@
 		showPopOut="${showPopOut}"
 		titleKey="${name}"
 		toolbar="${toolbar}"
-	/>
+	>
+		<component-resolvers>${pageTitle}</component-resolvers>
+	</layout>
 </config:template>

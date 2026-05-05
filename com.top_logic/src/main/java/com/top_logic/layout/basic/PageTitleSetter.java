@@ -9,6 +9,10 @@ import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.constraint.algorithm.GenericPropertyConstraint;
+import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.func.IFunction1;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.layout.ModelSpec;
@@ -48,6 +52,12 @@ public class PageTitleSetter extends ComponentResolver
 	 */
 	public interface Config extends PolymorphicConfiguration<ComponentResolver> {
 
+		/** @see #getValue() */
+		String VALUE = "value";
+
+		/** @see #getFunction() */
+		String FUNCTION = "function";
+
 		/**
 		 * Source of the page title value.
 		 *
@@ -59,7 +69,8 @@ public class PageTitleSetter extends ComponentResolver
 		 * label conversion).
 		 * </p>
 		 */
-		@Name("value")
+		@Name(VALUE)
+		@Constraint(value = AtLeastOneRequired.class, args = @Ref(FUNCTION))
 		ModelSpec getValue();
 
 		/**
@@ -72,8 +83,43 @@ public class PageTitleSetter extends ComponentResolver
 		 * If unset, the source value is converted directly via {@link MetaLabelProvider}.
 		 * </p>
 		 */
-		@Name("function")
+		@Name(FUNCTION)
 		ScriptFunction1<?, ?> getFunction();
+
+	}
+
+	/**
+	 * Constraint ensuring that a {@link PageTitleSetter} is configured with at least one of
+	 * {@link Config#getValue()} or {@link Config#getFunction()}.
+	 */
+	public static class AtLeastOneRequired extends GenericPropertyConstraint {
+
+		/** Singleton {@link AtLeastOneRequired} instance. */
+		public static final AtLeastOneRequired INSTANCE = new AtLeastOneRequired();
+
+		private AtLeastOneRequired() {
+			// Singleton constructor.
+		}
+
+		@Override
+		public void check(PropertyModel<?>... models) {
+			for (PropertyModel<?> model : models) {
+				if (model.isValueSet() && model.getValue() != null) {
+					return;
+				}
+			}
+			models[0].setProblemDescription(I18NConstants.PAGE_TITLE_REQUIRES_VALUE_OR_FUNCTION);
+		}
+
+		@Override
+		public boolean isChecked(int index) {
+			return index == 0;
+		}
+
+		@Override
+		public Class<?>[] signature() {
+			return null;
+		}
 
 	}
 
@@ -95,6 +141,12 @@ public class PageTitleSetter extends ComponentResolver
 	public void resolveComponent(InstantiationContext context, LayoutComponent component) {
 		ChannelLinking linking = _config.getValue() == null ? null : ChannelLinking.linking(_config.getValue());
 		IFunction1<?, ?> function = _config.getFunction() == null ? null : _config.getFunction().impl();
+
+		if (linking == null && function == null) {
+			// Resolver unconfigured (e.g. emitted by a template with an unset page title
+			// parameter); do not touch the title.
+			return;
+		}
 
 		Claim claim = new Claim(component, linking, function);
 		component.addListener(LayoutComponent.VISIBILITY_EVENT, claim);

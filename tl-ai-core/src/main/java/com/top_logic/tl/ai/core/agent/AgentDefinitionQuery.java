@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -14,6 +15,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.model.Skill;
+import com.top_logic.tl.ai.core.model.impl.AgentBase;
 
 /**
  * Queries for retrieving agent and skill definitions from the knowledge base.
@@ -56,17 +58,18 @@ public class AgentDefinitionQuery {
 	}
 
 	/**
-	 * Finds an agent by name.
+	 * Finds an agent by name using an indexed KB attribute lookup.
 	 *
 	 * @return the agent, or {@code null} if not found
 	 */
 	public Agent findAgentByName(String name) {
-		for (Agent agent : getAllAgents()) {
-			if (name.equals(agent.getName())) {
-				return agent;
-			}
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		List<Agent> agents =
+			WrapperFactory.getWrappersByAttribute(AGENT_TABLE, kb, AgentBase.NAME_ATTR, name);
+		if (agents.isEmpty()) {
+			Logger.warn("Agent not found: " + name, AgentDefinitionQuery.class);
+			return null;
 		}
-		Logger.warn("Agent not found: " + name, AgentDefinitionQuery.class);
-		return null;
+		return agents.get(0);
 	}
 }

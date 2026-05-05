@@ -12,6 +12,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -53,6 +54,13 @@ public class MistralProvider extends AbstractStreamingProvider {
 	/** Creates a {@link MistralProvider}. */
 	public MistralProvider(String apiKey, String baseUrl, HttpClient httpClient) {
 		super(apiKey, baseUrl, httpClient);
+	}
+
+	/** Creates a {@link MistralProvider} with configurable timeouts and headers. */
+	public MistralProvider(String apiKey, String baseUrl,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 	}
 
 	/**

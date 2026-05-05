@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.provider.xai;
 
 import java.net.http.HttpClient;
+import java.util.Map;
 
 import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 
@@ -40,5 +41,11 @@ public class XAIProvider extends OpenAIProvider {
 	 */
 	public XAIProvider(String apiKey, String baseUrl, HttpClient httpClient) {
 		super(apiKey, baseUrl, httpClient);
+	}
+
+	/** Creates an {@link XAIProvider} with configurable timeouts and headers. */
+	public XAIProvider(String apiKey, String baseUrl,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+		super(apiKey, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders);
 	}
 }

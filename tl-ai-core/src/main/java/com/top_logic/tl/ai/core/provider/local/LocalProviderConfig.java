@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
@@ -34,6 +35,14 @@ public class LocalProviderConfig implements LLMProviderConfig {
 	/**
 	 * Configuration for {@link LocalProviderConfig}.
 	 */
+	@DisplayOrder({
+		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
+		Config.BASE_URL,
+		LLMProviderConfig.Config.MODELS,
+		LLMProviderConfig.Config.CONNECT_TIMEOUT,
+		LLMProviderConfig.Config.REQUEST_TIMEOUT,
+		LLMProviderConfig.Config.CUSTOM_HEADERS,
+	})
 	public interface Config extends LLMProviderConfig.Config {
 
 		/** Configuration property name for {@link #getBaseUrl()}. */
@@ -78,7 +87,9 @@ public class LocalProviderConfig implements LLMProviderConfig {
 
 	@Override
 	public LLMProvider createProvider() {
-		return new OpenAIProvider(null, resolveBaseUrl());
+		return new OpenAIProvider(
+			null, resolveBaseUrl(),
+			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders());
 	}
 
 	@Override

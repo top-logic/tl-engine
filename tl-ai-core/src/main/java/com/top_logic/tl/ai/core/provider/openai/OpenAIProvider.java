@@ -58,6 +58,13 @@ public class OpenAIProvider extends AbstractStreamingProvider {
 		super(apiKey, baseUrl, httpClient);
 	}
 
+	/** Creates an {@link OpenAIProvider} with configurable timeouts and headers. */
+	public OpenAIProvider(String apiKey, String baseUrl,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
+	}
+
 	@Override
 	protected String endpointPath() {
 		return "/v1/responses";

@@ -13,6 +13,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 
 import de.haumacher.msgbuf.io.StringR;
@@ -36,8 +37,15 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	/** */
 	protected final HttpClient _httpClient;
 
+	/** The timeout for individual HTTP requests. */
+	private final Duration _requestTimeout;
+
+	/** Custom headers applied after all other headers, allowing overrides. */
+	private final Map<String, String> _customHeaders;
+
 	/**
-	 * Creates a new {@link AbstractStreamingProvider}.
+	 * Creates a new {@link AbstractStreamingProvider} with default timeout (10 minutes) and no
+	 * custom headers.
 	 *
 	 * @param apiKey
 	 *        The API key, may be {@code null} for unauthenticated providers.
@@ -47,9 +55,30 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	 *        The HTTP client to use.
 	 */
 	protected AbstractStreamingProvider(String apiKey, String baseUrl, HttpClient httpClient) {
+		this(apiKey, baseUrl, httpClient, Duration.ofMinutes(10), Map.of());
+	}
+
+	/**
+	 * Creates a new {@link AbstractStreamingProvider}.
+	 *
+	 * @param apiKey
+	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param baseUrl
+	 *        The base URL. A trailing slash is stripped.
+	 * @param httpClient
+	 *        The HTTP client to use.
+	 * @param requestTimeout
+	 *        The timeout for individual HTTP requests.
+	 * @param customHeaders
+	 *        Additional headers applied after provider-specific headers, allowing overrides.
+	 */
+	protected AbstractStreamingProvider(String apiKey, String baseUrl, HttpClient httpClient,
+			Duration requestTimeout, Map<String, String> customHeaders) {
 		_apiKey = apiKey;
 		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
 		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
+		_requestTimeout = Objects.requireNonNull(requestTimeout, "Request timeout must not be null.");
+		_customHeaders = Map.copyOf(Objects.requireNonNull(customHeaders, "Custom headers must not be null."));
 	}
 
 	@Override
@@ -65,10 +94,11 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 			.header("Content-Type", "application/json")
 			.header("Accept", "text/event-stream")
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-			.timeout(Duration.ofMinutes(10));
+			.timeout(_requestTimeout);
 
 		addAuthHeaders(requestBuilder);
 		addExtraHeaders(requestBuilder);
+		addCustomHeaders(requestBuilder);
 
 		HttpRequest httpRequest = requestBuilder.build();
 
@@ -154,14 +184,34 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		// No-op by default.
 	}
 
+	/**
+	 * Adds custom headers configured at construction time. Applied after all other headers so they
+	 * can override provider-specific values.
+	 */
+	private void addCustomHeaders(HttpRequest.Builder builder) {
+		for (Map.Entry<String, String> entry : _customHeaders.entrySet()) {
+			builder.setHeader(entry.getKey(), entry.getValue());
+		}
+	}
+
 	// --- Shared utilities ---
 
 	/**
 	 * Creates a new default {@link HttpClient} with a 30-second connect timeout.
 	 */
 	protected static HttpClient defaultHttpClient() {
+		return defaultHttpClient(30);
+	}
+
+	/**
+	 * Creates a new default {@link HttpClient} with the given connect timeout.
+	 *
+	 * @param connectTimeoutSeconds
+	 *        The connect timeout in seconds.
+	 */
+	protected static HttpClient defaultHttpClient(int connectTimeoutSeconds) {
 		return HttpClient.newBuilder()
-			.connectTimeout(Duration.ofSeconds(30))
+			.connectTimeout(Duration.ofSeconds(connectTimeoutSeconds))
 			.build();
 	}
 

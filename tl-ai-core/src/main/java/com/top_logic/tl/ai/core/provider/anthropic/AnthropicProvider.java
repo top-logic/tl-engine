@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -64,6 +65,14 @@ public class AnthropicProvider extends AbstractStreamingProvider {
 	/** Creates an {@link AnthropicProvider}. */
 	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion, HttpClient httpClient) {
 		super(apiKey, baseUrl, httpClient);
+		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
+	}
+
+	/** Creates an {@link AnthropicProvider} with configurable timeouts and headers. */
+	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
 	}
 

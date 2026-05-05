@@ -98,11 +98,14 @@ import com.top_logic.layout.basic.component.AJAXSupport;
 import com.top_logic.layout.basic.component.BasicAJAXSupport;
 import com.top_logic.layout.basic.component.ControlComponent.DispatchAction;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.DefaultChannel;
+import com.top_logic.layout.channel.PageTitleChannel;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.layout.form.tag.js.JSObject;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.BrowserWindowControl;
 import com.top_logic.layout.structure.LayoutControl;
@@ -347,6 +350,13 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 	private static final String DEFAULT_DOCTYPE_PATH = "http://www.w3.org/TR/xhtml1/DTD/";
 
+	/**
+	 * Channels of the {@link MainLayout}: the {@link #MODEL_CHANNEL model channel} extended
+	 * by the {@link PageTitleChannel}, which controls the browser tab title at runtime.
+	 */
+	public static final Map<String, ChannelSPI> MAIN_LAYOUT_CHANNELS =
+		channels(MODEL_CHANNEL, PageTitleChannel.INSTANCE);
+
     /** Name of class that will be called after resolving the complete Layout */
     protected String postProcessorClassName; // com.top_logic.mig.html.layout.LayoutResolvedListener
 
@@ -438,6 +448,11 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		registerComponent(this);
 
 		super.createSubComponents(context);
+	}
+
+	@Override
+	protected Map<String, ChannelSPI> programmaticChannels() {
+		return MAIN_LAYOUT_CHANNELS;
 	}
 
 	final BidiMap<String, LayoutComponent> getAvailableComponents() {
@@ -1044,8 +1059,30 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 		createLayoutControl();
 
+		registerPageTitleListener();
+
 		// Start processing events.
 		layoutContext.processActions();
+	}
+
+	private void registerPageTitleListener() {
+		ComponentChannel channel = getChannel(PageTitleChannel.NAME);
+		channel.addListener((sender, oldValue, newValue) -> updatePageTitle(newValue));
+		Object initial = channel.get();
+		if (initial != null) {
+			updatePageTitle(initial);
+		}
+	}
+
+	private void updatePageTitle(Object value) {
+		String title;
+		if (value == null) {
+			ResKey titleKey = getTitleKey();
+			title = titleKey == null ? "" : Resources.getInstance().getString(titleKey);
+		} else {
+			title = MetaLabelProvider.INSTANCE.getLabel(value);
+		}
+		getWindowScope().setPageTitle(title);
 	}
 
 	private void createLayoutControl() {

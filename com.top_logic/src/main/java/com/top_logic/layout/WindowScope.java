@@ -186,11 +186,22 @@ public interface WindowScope extends BrowserHistory {
 
 	/**
 	 * Delivers the given {@link BinaryData} displayed inline.
-	 * 
+	 *
 	 * @see #deliverContent(BinaryDataSource, boolean)
 	 */
 	default void deliverContentInline(BinaryDataSource data) {
 		deliverContent(data, true);
 	}
+
+	/**
+	 * Sets the page title shown in the browser tab and title bar of this window.
+	 *
+	 * <p>
+	 * The title is sent literally to the browser. Pass <code>null</code> or the empty
+	 * string to clear the title. To restore the title configured on the top-level
+	 * {@link LayoutComponent}, the caller must pass the resolved default string.
+	 * </p>
+	 */
+	void setPageTitle(String title);
 
 }

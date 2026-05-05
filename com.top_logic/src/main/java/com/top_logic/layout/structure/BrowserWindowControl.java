@@ -46,6 +46,7 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataProxy;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.layout.AbstractDisplayValue;
@@ -244,6 +245,19 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	private final DialogSupport _dialogSupport;
 
 	/**
+	 * The current page title, or <code>null</code> if no custom title was set.
+	 *
+	 * @see #setPageTitle(String)
+	 */
+	private String _pageTitle;
+
+	/**
+	 * Whether {@link #_pageTitle} has changed since the last client revalidation and must be
+	 * pushed to the browser.
+	 */
+	private boolean _pageTitleDirty;
+
+	/**
 	 * @param opener
 	 *        the opener of this window. my be <code>null</code> if this window is the main window
 	 * @param windowManager
@@ -270,6 +284,16 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	@Override
 	public ComponentName getName() {
 		return _name;
+	}
+
+	@Override
+	public void setPageTitle(String title) {
+		String normalized = title == null ? "" : title;
+		if (normalized.equals(_pageTitle == null ? "" : _pageTitle)) {
+			return;
+		}
+		_pageTitle = title;
+		_pageTitleDirty = true;
 	}
 
 	@Override
@@ -663,7 +687,11 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		if (!dialogsToClose.isEmpty() || !dialogsToOpen.isEmpty() || !popupDialogsToClose.isEmpty() || !popupDialogsToOpen.isEmpty()) {
 			return true;
 		}
-		
+
+		if (_pageTitleDirty) {
+			return true;
+		}
+
 		if (hasDownloads()) {
 			return true;
 		} else {
@@ -683,6 +711,18 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 		updateDialogs(context, actions);
 		updatePopupDialogs(actions);
+		if (_pageTitleDirty) {
+			final String title = _pageTitle == null ? "" : _pageTitle;
+			actions.add(new JSSnipplet(new AbstractDisplayValue() {
+				@Override
+				public void append(DisplayContext renderContext, Appendable out) throws IOException {
+					out.append("document.title = ");
+					TagUtil.writeJsString(out, title);
+					out.append(';');
+				}
+			}));
+			_pageTitleDirty = false;
+		}
 		if (hasDownloads()) {
 			for (int index = 0, size = downloadActions.size(); index < size; index++) {
 				actions.add(downloadActions.get(index));

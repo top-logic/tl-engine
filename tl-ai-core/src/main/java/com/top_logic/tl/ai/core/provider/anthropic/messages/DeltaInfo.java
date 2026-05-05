@@ -21,11 +21,21 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 	/** @see #getPartialJson() */
 	public static final String PARTIAL_JSON__PROP = "partial_json";
 
+	/** @see #getThinking() */
+	public static final String THINKING__PROP = "thinking";
+
+	/** @see #getSignature() */
+	public static final String SIGNATURE__PROP = "signature";
+
 	private String _type = "";
 
 	private String _text = "";
 
 	private String _partialJson = "";
+
+	private String _thinking = "";
+
+	private String _signature = "";
 
 	/**
 	 * Creates a {@link DeltaInfo} instance.
@@ -87,6 +97,40 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_partialJson = value;
 	}
 
+	public final String getThinking() {
+		return _thinking;
+	}
+
+	/**
+	 * @see #getThinking()
+	 */
+	public com.top_logic.tl.ai.core.provider.anthropic.messages.DeltaInfo setThinking(String value) {
+		internalSetThinking(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getThinking()} without chain call utility. */
+	protected final void internalSetThinking(String value) {
+		_thinking = value;
+	}
+
+	public final String getSignature() {
+		return _signature;
+	}
+
+	/**
+	 * @see #getSignature()
+	 */
+	public com.top_logic.tl.ai.core.provider.anthropic.messages.DeltaInfo setSignature(String value) {
+		internalSetSignature(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSignature()} without chain call utility. */
+	protected final void internalSetSignature(String value) {
+		_signature = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return DELTA_INFO__TYPE;
@@ -97,7 +141,9 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		java.util.List<String> local = java.util.Arrays.asList(
 			TYPE__PROP, 
 			TEXT__PROP, 
-			PARTIAL_JSON__PROP);
+			PARTIAL_JSON__PROP, 
+			THINKING__PROP, 
+			SIGNATURE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -125,6 +171,8 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 			case TYPE__PROP: return getType();
 			case TEXT__PROP: return getText();
 			case PARTIAL_JSON__PROP: return getPartialJson();
+			case THINKING__PROP: return getThinking();
+			case SIGNATURE__PROP: return getSignature();
 			default: return null;
 		}
 	}
@@ -135,6 +183,8 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 			case TYPE__PROP: internalSetType((String) value); break;
 			case TEXT__PROP: internalSetText((String) value); break;
 			case PARTIAL_JSON__PROP: internalSetPartialJson((String) value); break;
+			case THINKING__PROP: internalSetThinking((String) value); break;
+			case SIGNATURE__PROP: internalSetSignature((String) value); break;
 		}
 	}
 
@@ -159,6 +209,10 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		out.value(getText());
 		out.name(PARTIAL_JSON__PROP);
 		out.value(getPartialJson());
+		out.name(THINKING__PROP);
+		out.value(getThinking());
+		out.name(SIGNATURE__PROP);
+		out.value(getSignature());
 	}
 
 	@Override
@@ -167,6 +221,8 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case PARTIAL_JSON__PROP: setPartialJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case THINKING__PROP: setThinking(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case SIGNATURE__PROP: setSignature(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

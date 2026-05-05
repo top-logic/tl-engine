@@ -79,7 +79,7 @@ public class TestByteBasedTokenEstimator extends TestCase {
 	/** ThinkingContent is estimated like text + overhead. */
 	public void testThinkingContent() {
 		AssistantMessage msg = new AssistantMessage("a1", T0,
-			List.of(new ThinkingContent("01234567890123456789"), new TextContent("Hi")),
+			List.of(new ThinkingContent("01234567890123456789", null), new TextContent("Hi")),
 			TokenUsage.EMPTY, "stop");
 		// thinking = 20/4=5, Hi = 0, overhead = 4
 		assertEquals(5 + 0 + 4, _estimator.estimateTokens(msg));

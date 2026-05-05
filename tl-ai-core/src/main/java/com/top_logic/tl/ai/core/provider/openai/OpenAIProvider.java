@@ -138,7 +138,8 @@ public class OpenAIProvider extends AbstractStreamingProvider {
 					}
 				}
 
-				case "response.reasoning_text.delta" -> {
+				case "response.reasoning_text.delta",
+						"response.reasoning_summary_text.delta" -> {
 					TextDeltaEvent e = TextDeltaEvent.readTextDeltaEvent(jsonReader(data));
 					int outputIndex = e.getOutputIndex();
 					String delta = e.getDelta();
@@ -175,6 +176,10 @@ public class OpenAIProvider extends AbstractStreamingProvider {
 						} else if ("message".equals(itemType)) {
 							handler.onEvent(new StreamEvent.TextEnd(outputIndex));
 						} else if ("reasoning".equals(itemType)) {
+							String encryptedContent = item.getEncryptedContent();
+							if (encryptedContent != null && !encryptedContent.isEmpty()) {
+								accumulator.setContinuityToken(outputIndex, encryptedContent);
+							}
 							handler.onEvent(new StreamEvent.ThinkingEnd(outputIndex));
 						}
 					}

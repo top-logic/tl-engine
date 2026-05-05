@@ -27,6 +27,9 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getArguments() */
 	public static final String ARGUMENTS__PROP = "arguments";
 
+	/** @see #getEncryptedContent() */
+	public static final String ENCRYPTED_CONTENT__PROP = "encrypted_content";
+
 	private String _type = "";
 
 	private String _callId = "";
@@ -36,6 +39,8 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 	private String _id = "";
 
 	private String _arguments = "";
+
+	private String _encryptedContent = "";
 
 	/**
 	 * Creates a {@link OutputItemInfo} instance.
@@ -131,6 +136,23 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_arguments = value;
 	}
 
+	public final String getEncryptedContent() {
+		return _encryptedContent;
+	}
+
+	/**
+	 * @see #getEncryptedContent()
+	 */
+	public com.top_logic.tl.ai.core.provider.openai.messages.OutputItemInfo setEncryptedContent(String value) {
+		internalSetEncryptedContent(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getEncryptedContent()} without chain call utility. */
+	protected final void internalSetEncryptedContent(String value) {
+		_encryptedContent = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return OUTPUT_ITEM_INFO__TYPE;
@@ -143,7 +165,8 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			CALL_ID__PROP, 
 			NAME__PROP, 
 			ID__PROP, 
-			ARGUMENTS__PROP);
+			ARGUMENTS__PROP, 
+			ENCRYPTED_CONTENT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -173,6 +196,7 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case NAME__PROP: return getName();
 			case ID__PROP: return getId();
 			case ARGUMENTS__PROP: return getArguments();
+			case ENCRYPTED_CONTENT__PROP: return getEncryptedContent();
 			default: return null;
 		}
 	}
@@ -185,6 +209,7 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case NAME__PROP: internalSetName((String) value); break;
 			case ID__PROP: internalSetId((String) value); break;
 			case ARGUMENTS__PROP: internalSetArguments((String) value); break;
+			case ENCRYPTED_CONTENT__PROP: internalSetEncryptedContent((String) value); break;
 		}
 	}
 
@@ -213,6 +238,8 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		out.value(getId());
 		out.name(ARGUMENTS__PROP);
 		out.value(getArguments());
+		out.name(ENCRYPTED_CONTENT__PROP);
+		out.value(getEncryptedContent());
 	}
 
 	@Override
@@ -223,6 +250,7 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ARGUMENTS__PROP: setArguments(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ENCRYPTED_CONTENT__PROP: setEncryptedContent(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

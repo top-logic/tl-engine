@@ -208,7 +208,7 @@ public class AgentLoop {
 				assistantMsg = callProvider(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = StopReason.ERROR;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn - 1, totalUsage);
@@ -218,7 +218,7 @@ public class AgentLoop {
 			totalUsage = totalUsage.add(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.REJECTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
@@ -230,20 +230,20 @@ public class AgentLoop {
 				.toList();
 
 			if (toolCalls.isEmpty()) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.COMPLETE;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
-			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
@@ -321,7 +321,7 @@ public class AgentLoop {
 					conversation, context, memory, listener, runId, turn);
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = e.kind() == ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
 					? StopReason.CONTEXT_OVERFLOW
 					: StopReason.ERROR;
@@ -334,7 +334,7 @@ public class AgentLoop {
 			memory.updateTokenBaseline(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.REJECTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
@@ -346,14 +346,14 @@ public class AgentLoop {
 				.toList();
 
 			if (toolCalls.isEmpty()) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.COMPLETE;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
@@ -366,7 +366,7 @@ public class AgentLoop {
 				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), compactionResult));
 			}
 
-			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;

@@ -21,6 +21,7 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
@@ -181,6 +182,14 @@ public final class AnthropicRequestBuilder {
 				block.put("id", toolCall.id());
 				block.put("name", toolCall.name());
 				block.put("input", parseJson(args.isEmpty() ? "{}" : args));
+				content.add(block);
+			} else if (part instanceof ThinkingContent thinking) {
+				Map<String, Object> block = new LinkedHashMap<>();
+				block.put("type", "thinking");
+				block.put("thinking", thinking.text());
+				if (thinking.continuityToken() != null) {
+					block.put("signature", thinking.continuityToken());
+				}
 				content.add(block);
 			}
 		}

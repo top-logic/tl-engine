@@ -40,13 +40,14 @@ public sealed interface Part {
 	record TextPart(String id, Instant timestamp, String text) implements Part {}
 
 	/**
-	 * Extended thinking / reasoning block.
+	 * A thinking / reasoning block produced by the LLM.
 	 *
 	 * @param id part identifier
 	 * @param timestamp when the thinking block was produced
 	 * @param text the reasoning content
+	 * @param continuityToken opaque provider token for multi-turn continuity; may be {@code null}
 	 */
-	record ThinkingPart(String id, Instant timestamp, String text) implements Part {}
+	record ThinkingPart(String id, Instant timestamp, String text, String continuityToken) implements Part {}
 
 	// ---- Tool call with state machine ----
 

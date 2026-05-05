@@ -7,11 +7,13 @@ package com.top_logic.tl.ai.core.agent.event;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
+import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
@@ -114,9 +116,10 @@ public sealed interface AgentEvent {
 	 * @param turnNumber 1-based loop iteration
 	 * @param timestamp when the event occurred
 	 * @param turnUsage token usage for this turn
+	 * @param contentParts assistant message content parts; empty list if no message produced
 	 */
 	record TurnCompleted(String runId, int turnNumber, Instant timestamp,
-			TokenUsage turnUsage) implements AgentEvent {}
+			TokenUsage turnUsage, List<ContentPart> contentParts) implements AgentEvent {}
 
 	// ---------- LLM streaming ----------
 

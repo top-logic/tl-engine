@@ -141,6 +141,9 @@ public final class ConversationLogSerializer {
 			dto.setType(TYPE_THINKING);
 			ThinkingPartDto data = ThinkingPartDto.create();
 			data.setText(tp.text());
+			if (tp.continuityToken() != null) {
+				data.setContinuityToken(tp.continuityToken());
+			}
 			dto.setThinkingData(data);
 		} else if (part instanceof Part.ToolCallPart tc) {
 			dto.setType(TYPE_TOOL_CALL);
@@ -239,7 +242,8 @@ public final class ConversationLogSerializer {
 			}
 			case TYPE_THINKING: {
 				ThinkingPartDto data = dto.getThinkingData();
-				return new Part.ThinkingPart(id, timestamp, data.getText());
+				return new Part.ThinkingPart(id, timestamp, data.getText(),
+					emptyToNull(data.getContinuityToken()));
 			}
 			case TYPE_TOOL_CALL: {
 				ToolCallPartDto data = dto.getToolCallData();

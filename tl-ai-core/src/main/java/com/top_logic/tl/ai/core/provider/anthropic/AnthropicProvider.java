@@ -161,15 +161,22 @@ public class AnthropicProvider extends AbstractStreamingProvider {
 							}
 						}
 						case "thinking_delta" -> {
-							if (delta.getText() != null) {
-								accumulator.appendText(idx, delta.getText());
-								handler.onEvent(new StreamEvent.ThinkingDelta(idx, delta.getText()));
+							String text = delta.getThinking();
+							if (text != null && !text.isEmpty()) {
+								accumulator.appendText(idx, text);
+								handler.onEvent(new StreamEvent.ThinkingDelta(idx, text));
 							}
 						}
 						case "input_json_delta" -> {
 							if (delta.getPartialJson() != null) {
 								accumulator.appendArguments(idx, delta.getPartialJson());
 								handler.onEvent(new StreamEvent.ToolCallDelta(idx, delta.getPartialJson()));
+							}
+						}
+						case "signature_delta" -> {
+							String sig = delta.getSignature();
+							if (sig != null && !sig.isEmpty()) {
+								accumulator.setContinuityToken(idx, sig);
 							}
 						}
 					}

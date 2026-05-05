@@ -46,6 +46,8 @@ message DeltaInfo {
 	string type [Name = "type"];
 	string text [Name = "text"];
 	string partial_json [Name = "partial_json"];
+	string thinking [Name = "thinking"];
+	string signature [Name = "signature"];
 }
 
 /** Payload of the {@code content_block_stop} SSE event. */

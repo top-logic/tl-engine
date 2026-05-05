@@ -47,11 +47,11 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		assertEquals(1, _log.turns().size());
 
-		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, new TokenUsage(100, 50, 0, 0, 0)));
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, new TokenUsage(100, 50, 0, 0, 0), List.of()));
 		assertNotNull(_log.currentTurn());
 
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 2, now));
-		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 2, now, new TokenUsage(80, 30, 0, 0, 0)));
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 2, now, new TokenUsage(80, 30, 0, 0, 0), List.of()));
 		assertEquals(1, _log.turns().size());
 
 		assertEquals(180, _log.currentTurn().cumulativeUsage().inputTokens());
@@ -97,7 +97,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "Hello world"));
-		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY));
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY, List.of()));
 		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY));
 
 		Turn turn = _log.turns().get(0);
@@ -185,7 +185,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Let me "));
 		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "think..."));
-		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY));
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, TokenUsage.EMPTY, List.of()));
 		_listener.onEvent(new AgentEvent.RunCompleted("r1", 1, now, StopReason.COMPLETE, TokenUsage.EMPTY));
 
 		Turn turn = _log.turns().get(0);
@@ -206,7 +206,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}"));
 		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 1, now, "tc1", "readFile",
 			"contents", Duration.ofMillis(10)));
-		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, new TokenUsage(50, 20, 0, 0, 0)));
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 1, now, new TokenUsage(50, 20, 0, 0, 0), List.of()));
 
 		// AgentLoop turn 2: text + tool call
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 2, now));
@@ -214,12 +214,12 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 2, now, "tc2", "writeFile", "{}"));
 		_listener.onEvent(new AgentEvent.ToolCallCompleted("r1", 2, now, "tc2", "writeFile",
 			"ok", Duration.ofMillis(20)));
-		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 2, now, new TokenUsage(40, 15, 0, 0, 0)));
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 2, now, new TokenUsage(40, 15, 0, 0, 0), List.of()));
 
 		// AgentLoop turn 3: final text response
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 3, now));
 		_listener.onEvent(new AgentEvent.TextDelta("r1", 3, now, "Done!"));
-		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 3, now, new TokenUsage(30, 10, 0, 0, 0)));
+		_listener.onEvent(new AgentEvent.TurnCompleted("r1", 3, now, new TokenUsage(30, 10, 0, 0, 0), List.of()));
 		_listener.onEvent(new AgentEvent.RunCompleted("r1", 3, now, StopReason.COMPLETE,
 			new TokenUsage(120, 45, 0, 0, 0)));
 

@@ -766,6 +766,9 @@ message TextPartDto {
 message ThinkingPartDto {
 	/** The thinking text. */
 	string text;
+
+	/** Opaque provider token for multi-turn continuity (signature / encrypted_content). */
+	string continuityToken;
 }
 
 /** Tool call part with invocation details and result. */

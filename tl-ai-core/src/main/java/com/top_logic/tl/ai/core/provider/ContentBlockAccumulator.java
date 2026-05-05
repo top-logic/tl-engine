@@ -123,6 +123,24 @@ public class ContentBlockAccumulator {
 	}
 
 	/**
+	 * Sets the continuity token on the block at the given index.
+	 *
+	 * <p>Used for Anthropic's {@code signature} and OpenAI's {@code encrypted_content},
+	 * which must be passed back in subsequent turns for multi-turn thinking continuity.</p>
+	 *
+	 * @param index
+	 *        The block index.
+	 * @param token
+	 *        The opaque continuity token; ignored if null.
+	 */
+	public void setContinuityToken(int index, String token) {
+		Block block = _blocks.get(index);
+		if (block != null && token != null) {
+			block._continuityToken = token;
+		}
+	}
+
+	/**
 	 * Assembles all accumulated blocks into a list of {@link ContentPart} instances.
 	 *
 	 * <p>Insertion order is preserved. Empty text and thinking blocks are omitted.</p>
@@ -141,8 +159,10 @@ public class ContentBlockAccumulator {
 				}
 				case "thinking", "reasoning" -> {
 					String text = block._text.toString();
-					if (!text.isEmpty()) {
-						parts.add(new ThinkingContent(text));
+					if (!text.isEmpty() || block._continuityToken != null) {
+						parts.add(new ThinkingContent(
+							text.isEmpty() ? "" : text,
+							block._continuityToken));
 					}
 				}
 				case "tool_use", "function_call" -> {
@@ -168,6 +188,8 @@ public class ContentBlockAccumulator {
 		String _name;
 
 		final StringBuilder _arguments = new StringBuilder();
+
+		String _continuityToken;
 
 		Block(String type) {
 			_type = type;

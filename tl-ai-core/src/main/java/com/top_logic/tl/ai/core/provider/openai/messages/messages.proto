@@ -39,6 +39,7 @@ message OutputItemInfo {
 	string name [Name = "name"];
 	string id [Name = "id"];
 	string arguments [Name = "arguments"];
+	string encrypted_content [Name = "encrypted_content"];
 }
 
 /** {@code response.output_text.delta} and {@code response.reasoning_text.delta}. */

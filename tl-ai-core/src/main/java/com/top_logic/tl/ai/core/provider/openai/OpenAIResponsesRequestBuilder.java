@@ -152,6 +152,9 @@ public final class OpenAIResponsesRequestBuilder {
 			} else if (part instanceof ThinkingContent thinking) {
 				Map<String, Object> item = new LinkedHashMap<>();
 				item.put("type", "reasoning");
+				if (thinking.continuityToken() != null) {
+					item.put("encrypted_content", thinking.continuityToken());
+				}
 				item.put("summary", List.of(Map.of("type", "summary_text", "text", thinking.text())));
 				items.add(item);
 			}

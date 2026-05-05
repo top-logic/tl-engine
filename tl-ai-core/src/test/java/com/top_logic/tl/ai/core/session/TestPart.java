@@ -28,7 +28,7 @@ public class TestPart extends TestCase {
 
 	/** Verify ThinkingPart stores reasoning text. */
 	public void testThinkingPart() {
-		Part.ThinkingPart p = new Part.ThinkingPart("p2", Instant.now(), "Let me think...");
+		Part.ThinkingPart p = new Part.ThinkingPart("p2", Instant.now(), "Let me think...", null);
 		assertEquals("Let me think...", p.text());
 	}
 

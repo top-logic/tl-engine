@@ -59,7 +59,7 @@ public class ConversationLogReplay {
 			if (part instanceof Part.TextPart tp) {
 				currentContent.add(new TextContent(tp.text()));
 			} else if (part instanceof Part.ThinkingPart tp) {
-				currentContent.add(new ThinkingContent(tp.text()));
+				currentContent.add(new ThinkingContent(tp.text(), tp.continuityToken()));
 			} else if (part instanceof Part.ToolCallPart tc) {
 				if (tc.status() == Part.ToolCallStatus.RUNNING) {
 					// Incomplete tool call — skip gracefully.

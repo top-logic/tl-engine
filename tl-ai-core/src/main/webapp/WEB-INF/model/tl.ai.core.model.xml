@@ -225,6 +225,10 @@
 					type="tl.core:Double"
 				>
 					<annotations>
+						<value-range
+							max="2.0"
+							min="0.0"
+						/>
 						<dynamic-visibility>
 							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector">
 								<capability>temperature</capability>
@@ -236,6 +240,10 @@
 					type="tl.core:Double"
 				>
 					<annotations>
+						<value-range
+							max="1.0"
+							min="0.0"
+						/>
 						<dynamic-visibility>
 							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector">
 								<capability>temperature</capability>

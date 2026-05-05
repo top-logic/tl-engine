@@ -254,9 +254,10 @@ public class AgentFactory {
 		LLMProviderRegistry reg = LLMProviderRegistry.getInstance();
 		ModelInfo modelInfo = reg != null ? reg.getModel(model) : null;
 		if (modelInfo == null) {
-			throw new IllegalStateException(
-				"No model metadata configured for '" + model + "'. "
-					+ "Either ensure models.dev is reachable or define the model in model-overrides.");
+			Logger.warn("No catalog metadata for model '" + model + "'. "
+				+ "Using defaults — define the model in model-overrides for accurate limits.",
+				AgentFactory.class);
+			modelInfo = defaultModelInfo(model);
 		}
 
 		String providerId = reg.getProviderId(model);
@@ -368,6 +369,23 @@ public class AgentFactory {
 		}
 
 		return options.isEmpty() ? Map.of() : Map.copyOf(options);
+	}
+
+	/**
+	 * Creates a fallback {@link ModelInfo} for models without a catalog entry.
+	 *
+	 * <p>
+	 * Assumes conservative defaults: 128k context, 16k output, tool calls and temperature
+	 * enabled, reasoning disabled.
+	 * </p>
+	 */
+	private static ModelInfo defaultModelInfo(String model) {
+		return new ModelInfo(
+			model,
+			null,
+			new ModelInfo.ModelLimits(128_000, 16_384, 0),
+			new ModelInfo.ModelCapabilities(false, true, true, false, false, null, null),
+			null, null, false, null);
 	}
 
 	/**

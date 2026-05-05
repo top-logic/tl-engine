@@ -119,6 +119,9 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		/** @see #getModelConfiguration() */
 		String MODEL_CONFIGURATION = "llm-configuration";
 
+		/** @see #getModelOverrides() */
+		String MODEL_OVERRIDES = "model-overrides";
+
 		/**
 		 * The URL of the remote model catalog.
 		 *
@@ -142,6 +145,22 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		@EntryTag("model")
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		Map<String, ModelCatalogEntry.Config> getModelConfiguration();
+
+		/**
+		 * Manually defined model metadata for models not in the remote catalog.
+		 *
+		 * <p>
+		 * Use this for local models or OpenAI-compatible endpoints whose models are not listed
+		 * on models.dev. Entries here take precedence over catalog entries with the same name.
+		 * </p>
+		 *
+		 * @see #MODEL_OVERRIDES
+		 */
+		@Name(MODEL_OVERRIDES)
+		@Label("Model overrides")
+		@EntryTag("model")
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		Map<String, ModelCatalogEntry.OverrideConfig> getModelOverrides();
 	}
 
 	private static volatile LLMProviderRegistry _instance;
@@ -240,11 +259,20 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 			catalogEntries.put(entry.getKey(), ModelCatalogEntry.toConfig(entry.getKey(), entry.getValue()));
 		}
 
-		_models = Map.copyOf(fetched);
+		// Merge manual overrides (take precedence over catalog)
+		Map<String, ModelInfo> merged = new LinkedHashMap<>(fetched);
+		Map<String, ModelCatalogEntry.OverrideConfig> overrides = catalogConfig.getModelOverrides();
+		for (Map.Entry<String, ModelCatalogEntry.OverrideConfig> entry : overrides.entrySet()) {
+			merged.put(entry.getKey(), ModelCatalogEntry.overrideToModelInfo(entry.getValue()));
+		}
 
+		_models = Map.copyOf(merged);
+
+		int overrideCount = overrides.size();
 		Logger.info("LLMProviderRegistry started with " +
 			getConfig().getProviders().size() + " provider(s), " +
-			_models.size() + " model(s) fetched from catalog.",
+			fetched.size() + " model(s) from catalog" +
+			(overrideCount > 0 ? ", " + overrideCount + " model override(s)" : "") + ".",
 			LLMProviderRegistry.class);
 	}
 

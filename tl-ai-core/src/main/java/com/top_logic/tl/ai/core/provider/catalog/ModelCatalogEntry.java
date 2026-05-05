@@ -10,6 +10,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ReadOnly;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
 
@@ -237,6 +239,100 @@ public class ModelCatalogEntry {
 		/** @see #getLastUpdated() */
 		void setLastUpdated(String value);
 
+	}
+
+	/**
+	 * Editable model metadata for manually configured models (e.g. local or OpenAI-compatible
+	 * endpoints) that are not in the remote catalog.
+	 *
+	 * <p>
+	 * Unlike {@link Config}, these properties are writable in the admin UI and are not cleared
+	 * on startup.
+	 * </p>
+	 */
+	@DisplayOrder({
+		OverrideConfig.CONTEXT_WINDOW,
+		OverrideConfig.MAX_OUTPUT,
+		OverrideConfig.REASONING,
+		OverrideConfig.TOOL_CALL,
+		OverrideConfig.TEMPERATURE,
+	})
+	public interface OverrideConfig extends NamedConfigMandatory {
+
+		/** @see #getContextWindow() */
+		String CONTEXT_WINDOW = "context-window";
+
+		/** @see #getMaxOutput() */
+		String MAX_OUTPUT = "max-output";
+
+		/** @see #getReasoning() */
+		String REASONING = "reasoning";
+
+		/** @see #getToolCall() */
+		String TOOL_CALL = "tool-call";
+
+		/** @see #getTemperature() */
+		String TEMPERATURE = "temperature";
+
+		/**
+		 * Maximum input context window size in tokens.
+		 *
+		 * @see #CONTEXT_WINDOW
+		 */
+		@Name(CONTEXT_WINDOW)
+		@IntDefault(128_000)
+		int getContextWindow();
+
+		/**
+		 * Maximum output tokens per response.
+		 *
+		 * @see #MAX_OUTPUT
+		 */
+		@Name(MAX_OUTPUT)
+		@IntDefault(16_384)
+		int getMaxOutput();
+
+		/**
+		 * Whether the model supports extended thinking / chain-of-thought reasoning.
+		 *
+		 * @see #REASONING
+		 */
+		@Name(REASONING)
+		@BooleanDefault(false)
+		boolean getReasoning();
+
+		/**
+		 * Whether the model supports tool/function calling.
+		 *
+		 * @see #TOOL_CALL
+		 */
+		@Name(TOOL_CALL)
+		@BooleanDefault(true)
+		boolean getToolCall();
+
+		/**
+		 * Whether the model supports the temperature sampling parameter.
+		 *
+		 * @see #TEMPERATURE
+		 */
+		@Name(TEMPERATURE)
+		@BooleanDefault(true)
+		boolean getTemperature();
+
+	}
+
+	/**
+	 * Converts an {@link OverrideConfig} into a {@link ModelInfo} record.
+	 */
+	public static ModelInfo overrideToModelInfo(OverrideConfig config) {
+		return new ModelInfo(
+			config.getName(),
+			null,
+			new ModelInfo.ModelLimits(config.getContextWindow(), config.getMaxOutput(), 0),
+			new ModelInfo.ModelCapabilities(
+				config.getReasoning(), config.getToolCall(), config.getTemperature(),
+				false, false, null, null),
+			null, null, false, null);
 	}
 
 	/**

@@ -36,6 +36,12 @@
 				<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
 				<security-filter delegationDestination="${namePrefix}Edit"/>
 
+				<component-resolvers>
+					<component-resolver class="com.top_logic.layout.basic.PageTitleSetter"
+						value="selection(self())"
+					/>
+				</component-resolvers>
+
 				<contextMenuFactory>
 					<customCommands>
 						<switch

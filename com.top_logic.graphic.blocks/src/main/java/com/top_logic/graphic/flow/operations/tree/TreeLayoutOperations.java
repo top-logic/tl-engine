@@ -76,8 +76,10 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		TreeRenderInfo info = treeInfo();
 
 		// Note: The tree nodes have already their size assigned during the layout computation.
-		// Per-connection bar position. For grid-mode parents the bar is the sub-column bus of the
-		// child; for linear parents it is the midpoint between parent right edge and child left.
+		// Bar position. For grid-mode parents the bar is the sub-column bus of the child; for
+		// linear parents the bar sits gapX/2 to the right of the parent's right edge — the entry
+		// stub may be longer than gapX/2 to make room for edge decorations, but the parent-side
+		// gap stays constant.
 		for (TreeConnection connection : self().getConnections()) {
 			TreeNode parentNode = info.getNodeForAnchor(connection.getParent().getAnchor());
 			TreeNode childNode = info.getNodeForAnchor(connection.getChild().getAnchor());
@@ -88,9 +90,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 				int c = gi.getColIdx(childNode);
 				barX = gi.getBusX()[c];
 			} else {
-				double parentRight = parentNode.getX() + parentNode.getBox().getWidth();
-				double childLeft = childNode.getX();
-				barX = (parentRight + childLeft) / 2;
+				barX = parentNode.getX() + parentNode.getBox().getWidth() + self().getGapX() / 2;
 			}
 
 			connection.setBarPosition(barX);

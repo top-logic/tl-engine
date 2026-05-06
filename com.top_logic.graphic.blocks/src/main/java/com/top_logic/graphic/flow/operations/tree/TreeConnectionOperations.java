@@ -95,18 +95,23 @@ public interface TreeConnectionOperations extends Drawable {
 			drawSymbol(out, fromX, fromY, -1, parent.getSymbol(), scale);
 		}
 
+		// Edge decorations are drawn above the horizontal entry stub (bar → child). The stub Y is
+		// the child connector Y; the decoration is centered horizontally on the stub midpoint and
+		// sits with its bottom edge at the stub line. Multiple decorations stack upward.
+		double stubMidX = (barX + childX) / 2;
+		double stackBottom = childY;
 		for (EdgeDecoration decoration : self().getDecorations()) {
-			// Note: The line position is not used/supported for tree layouts.
-			OffsetPosition offsetPosition = decoration.getOffsetPosition();
-			double x = childX + offsetX(offsetPosition, decoration.getContent().getWidth());
-			double y = childY + offsetY(offsetPosition, decoration.getContent().getHeight());
-
+			double dw = decoration.getContent().getWidth();
+			double dh = decoration.getContent().getHeight();
+			double dx = stubMidX - dw / 2;
+			double dy = stackBottom - dh;
 			out.beginGroup();
-			out.translate(x, y);
+			out.translate(dx, dy);
 			{
 				decoration.draw(out);
 			}
 			out.endGroup();
+			stackBottom = dy;
 		}
 	}
 

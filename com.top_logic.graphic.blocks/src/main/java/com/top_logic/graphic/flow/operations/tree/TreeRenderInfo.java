@@ -15,6 +15,7 @@ import java.util.Map;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.EdgeDecoration;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.Widget;
@@ -159,6 +160,13 @@ public class TreeRenderInfo {
 	private final double _bridgeGapY;
 
 	private final Map<TreeNode, GridInfo> _gridInfos = new HashMap<>();
+
+	/**
+	 * Maximum width of any decoration on a connection that targets the given child node. Used to
+	 * reserve enough horizontal space along the entry stub (bus → child) to draw the decoration
+	 * above it.
+	 */
+	private final Map<TreeNode, Double> _maxDecoWidth = new HashMap<>();
 
 	private double _width;
 
@@ -306,6 +314,24 @@ public class TreeRenderInfo {
 			node.getBox().distributeSize(context, 0, 0, node.getBox().getWidth(), node.getBox().getHeight());
 		}
 
+		// Precompute per-child max decoration width across all incoming connections. The packing
+		// step uses this to widen the entry-stub side of the column gap so a decoration drawn
+		// above the stub does not overflow into the parent or a sibling subtree.
+		_maxDecoWidth.clear();
+		for (TreeConnection conn : _connections) {
+			TreeNode child = _nodeForAnchor.get(conn.getChild().getAnchor());
+			if (child == null) {
+				continue;
+			}
+			double w = 0;
+			for (EdgeDecoration deco : conn.getDecorations()) {
+				w = Math.max(w, deco.getContent().getWidth());
+			}
+			if (w > 0) {
+				_maxDecoWidth.merge(child, w, Math::max);
+			}
+		}
+
 		// Bottom-up layout per root subtree (positions are relative to subtree origin).
 		for (TreeNode root : _roots) {
 			layoutSubtree(root);
@@ -363,11 +389,19 @@ public class TreeRenderInfo {
 
 	/**
 	 * Linear packing: stack children vertically in a single column right of the parent.
+	 *
+	 * <p>
+	 * Layout rule for the column gap: the bus sits at <code>parent.right + gapX/2</code>, the
+	 * stub from bus to child has length <code>max(gapX/2, maxDecoWidth)</code> so a decoration
+	 * drawn above the stub fits without overflowing.
+	 * </p>
 	 */
 	private void packLinear(TreeNode node) {
-		double childOriginX = node.getBox().getWidth() + _gapX;
-		double curY = 0;
 		List<TreeNode> children = node.getChildren();
+		double maxDeco = maxDecoWidth(children);
+		double stub = Math.max(_gapX / 2, maxDeco);
+		double childOriginX = node.getBox().getWidth() + _gapX / 2 + stub;
+		double curY = 0;
 		for (TreeNode child : children) {
 			double dx = childOriginX - subtreeMinX(child);
 			double dy = curY - subtreeMinY(child);
@@ -377,6 +411,20 @@ public class TreeRenderInfo {
 
 		// Center parent based on parentAlign (between first and last child anchors).
 		placeParent(node, children.get(0), children.get(children.size() - 1));
+	}
+
+	/**
+	 * Maximum decoration width across the given children's incoming connections.
+	 */
+	private double maxDecoWidth(List<TreeNode> children) {
+		double m = 0;
+		for (TreeNode ch : children) {
+			Double w = _maxDecoWidth.get(ch);
+			if (w != null && w > m) {
+				m = w;
+			}
+		}
+		return m;
 	}
 
 	/**
@@ -409,15 +457,19 @@ public class TreeRenderInfo {
 			colW[c] = w;
 		}
 
-		// X positions per sub-column.
-		double childOriginX = node.getBox().getWidth() + _gapX;
+		// X positions per sub-column. Each bus sits gapX/2 to the right of the previous column's
+		// right edge (or the parent's right edge for column 0); the stub from the bus into the
+		// child column has length max(gapX/2, maxDecoWidth_of_column) so decorations drawn above
+		// the stub fit.
 		double[] colX = new double[C];
 		double[] busX = new double[C];
-		double cx = childOriginX;
+		double prevRight = node.getBox().getWidth();
 		for (int c = 0; c < C; c++) {
-			colX[c] = cx;
-			busX[c] = cx - _gapX / 2;
-			cx += colW[c] + _gapX;
+			double maxDeco = maxDecoWidth(cols.get(c));
+			double stub = Math.max(_gapX / 2, maxDeco);
+			busX[c] = prevRight + _gapX / 2;
+			colX[c] = busX[c] + stub;
+			prevRight = colX[c] + colW[c];
 		}
 
 		// Pack each sub-column independently.

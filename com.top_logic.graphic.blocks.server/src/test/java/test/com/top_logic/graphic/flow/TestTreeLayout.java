@@ -20,6 +20,7 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.EdgeDecoration;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.TreeConnection;
@@ -149,6 +150,28 @@ public class TestTreeLayout extends TestCase {
 					/>
 				</g>
 			</svg>""", svg);
+	}
+
+	public void testDecorations() throws IOException {
+		// One root with three children; each connection carries a label decoration. The labels
+		// vary in width so the column gap must accommodate the widest one.
+		TreeLayout tree = TreeLayout.create();
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		String[] labels = { "short", "medium label", "very wide label here" };
+		for (int i = 0; i < labels.length; i++) {
+			Box child = node("N" + (i + 1));
+			tree.addNode(child);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(root))
+				.setChild(connector(child))
+				.addDecoration(EdgeDecoration.create().setContent(node(labels[i]))));
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-decorations.svg");
 	}
 
 	public void testGridFanout() throws IOException {

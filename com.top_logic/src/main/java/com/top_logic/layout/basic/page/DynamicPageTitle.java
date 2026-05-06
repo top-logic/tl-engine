@@ -3,47 +3,30 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.basic;
+package com.top_logic.layout.basic.page;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
+import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.ComponentResolver;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.mig.html.layout.VisibilityListener;
 
 /**
- * {@link ComponentResolver} that updates the browser page title whenever its carrying component
- * becomes visible.
- *
- * <p>
- * The resolver claims the page title while its component is visible: on
- * {@link LayoutComponent#isVisible() visible} it pushes the value derived from the configured
- * {@link Config#getValue() source}; on invisible it asks the {@link MainLayout} to
- * {@link MainLayout#applyDefaultPageTitle() restore the default}.
- * </p>
- *
- * <p>
- * The page title only follows the source while the component is visible, so navigating away from a
- * section frees the title; the next visible section's resolver (or the {@link MainLayout} default)
- * takes over.
- * </p>
+ * {@link PageTitleResolver} that computes the browser page title from a component channle value.
  */
-public class PageTitleSetter extends ComponentResolver
-		implements ConfiguredInstance<PageTitleSetter.Config> {
+public class DynamicPageTitle extends PageTitleResolver<DynamicPageTitle.Config> {
 
 	/**
-	 * Configuration of a {@link PageTitleSetter}.
+	 * Configuration of a {@link DynamicPageTitle}.
 	 */
 	public interface Config extends PolymorphicConfiguration<ComponentResolver> {
 
@@ -61,28 +44,23 @@ public class PageTitleSetter extends ComponentResolver
 		 */
 		@Name(VALUE)
 		@Mandatory
+		@ImplementationClassDefault(value = DirectLinking.class)
 		ModelSpec getValue();
 
 	}
 
-	private final Config _config;
-
 	/**
-	 * Creates a {@link PageTitleSetter} from configuration.
+	 * Creates a {@link DynamicPageTitle} from configuration.
 	 */
 	@CalledByReflection
-	public PageTitleSetter(InstantiationContext context, Config config) {
-		_config = config;
-	}
-
-	@Override
-	public Config getConfig() {
-		return _config;
+	public DynamicPageTitle(InstantiationContext context, Config config) {
+		super(context, config);
 	}
 
 	@Override
 	public void resolveComponent(InstantiationContext context, LayoutComponent component) {
-		ChannelLinking linking = _config.getValue() == null ? null : ChannelLinking.linking(_config.getValue());
+		ModelSpec valueRef = getConfig().getValue();
+		ChannelLinking linking = valueRef == null ? null : ChannelLinking.linking(getConfig().getValue());
 
 		if (linking == null) {
 			// Resolver unconfigured (e.g. emitted by a template with an unset page title
@@ -101,31 +79,13 @@ public class PageTitleSetter extends ComponentResolver
 		}
 	}
 
-	private static class Claim implements VisibilityListener, ChannelListener {
-
-		private final LayoutComponent _component;
+	private static class Claim extends PageTitleResolver.Claim implements ChannelListener {
 
 		private final ChannelLinking _linking;
 
 		Claim(LayoutComponent component, ChannelLinking linking) {
-			_component = component;
+			super(component);
 			_linking = linking;
-		}
-
-		@Override
-		public Bubble handleVisibilityChange(Object sender, Boolean oldValue, Boolean newValue) {
-			if (_component != sender) {
-				return Bubble.BUBBLE;
-			}
-			if (Boolean.TRUE.equals(newValue)) {
-				applyTitle();
-			} else {
-				MainLayout mainLayout = _component.getMainLayout();
-				if (mainLayout != null) {
-					mainLayout.applyDefaultPageTitle();
-				}
-			}
-			return Bubble.BUBBLE;
 		}
 
 		@Override
@@ -135,14 +95,10 @@ public class PageTitleSetter extends ComponentResolver
 			}
 		}
 
-		void applyTitle() {
-			MainLayout mainLayout = _component.getMainLayout();
-			if (mainLayout == null) {
-				return;
-			}
+		@Override
+		protected String computeTitle() {
 			Object titleValue = _linking == null ? null : ChannelLinking.eval(_component, _linking);
-			String title = titleValue == null ? "" : MetaLabelProvider.INSTANCE.getLabel(titleValue);
-			mainLayout.getWindowScope().setPageTitle(title);
+			return titleValue == null ? "" : MetaLabelProvider.INSTANCE.getLabel(titleValue);
 		}
 
 	}

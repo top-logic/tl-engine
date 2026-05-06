@@ -10,7 +10,7 @@
 		</annotations>
 
 		<property name="pageTitle"
-			instance-type="com.top_logic.layout.basic.PageTitleSetter"
+			instance-type="com.top_logic.layout.basic.page.PageTitleResolver"
 			type="PolymorphicConfiguration"
 		/>
 

@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.provider.catalog;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -40,12 +42,15 @@ import de.haumacher.msgbuf.json.JsonToken;
  */
 public final class ModelsDevFetcher {
 
+	private static final String SNAPSHOT_RESOURCE = "models-dev-snapshot.json";
+
 	private ModelsDevFetcher() {
 		// Utility class.
 	}
 
 	/**
-	 * Fetches model metadata from the given catalog URL.
+	 * Fetches model metadata from the given catalog URL, falling back to a bundled snapshot on
+	 * failure.
 	 *
 	 * @param catalogUrl
 	 *        The URL to fetch (e.g. "https://models.dev/api.json").
@@ -56,12 +61,12 @@ public final class ModelsDevFetcher {
 	public static Map<String, ModelInfo> fetch(String catalogUrl, Map<String, Set<String>> requestedModels) {
 		try {
 			HttpClient client = HttpClient.newBuilder()
-				.connectTimeout(Duration.ofSeconds(10))
+				.connectTimeout(Duration.ofSeconds(3))
 				.build();
 			HttpRequest request = HttpRequest.newBuilder()
 				.uri(URI.create(catalogUrl))
 				.GET()
-				.timeout(Duration.ofSeconds(30))
+				.timeout(Duration.ofSeconds(5))
 				.build();
 
 			HttpResponse<String> response = client.send(
@@ -69,14 +74,34 @@ public final class ModelsDevFetcher {
 				HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
 			if (response.statusCode() != 200) {
-				Logger.warn("Models.dev fetch failed: HTTP " + response.statusCode(),
-					ModelsDevFetcher.class);
-				return Map.of();
+				Logger.warn("Models.dev fetch failed: HTTP " + response.statusCode()
+					+ ", falling back to bundled snapshot.", ModelsDevFetcher.class);
+				return loadSnapshot(requestedModels);
 			}
 
 			return parseJson(response.body(), requestedModels);
 		} catch (Exception ex) {
-			Logger.warn("Models.dev fetch failed: " + ex.getMessage(), ModelsDevFetcher.class);
+			Logger.warn("Models.dev fetch failed: " + ex.getMessage()
+				+ ", falling back to bundled snapshot.", ModelsDevFetcher.class);
+			return loadSnapshot(requestedModels);
+		}
+	}
+
+	/**
+	 * Loads model metadata from the bundled snapshot resource.
+	 */
+	private static Map<String, ModelInfo> loadSnapshot(Map<String, Set<String>> requestedModels) {
+		try (InputStream in = ModelsDevFetcher.class.getResourceAsStream(SNAPSHOT_RESOURCE)) {
+			if (in == null) {
+				Logger.error("Bundled models.dev snapshot not found on classpath.", ModelsDevFetcher.class);
+				return Map.of();
+			}
+			String json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+			Map<String, ModelInfo> result = parseJson(json, requestedModels);
+			Logger.info("Loaded " + result.size() + " model(s) from bundled snapshot.", ModelsDevFetcher.class);
+			return result;
+		} catch (IOException ex) {
+			Logger.error("Failed to load bundled models.dev snapshot: " + ex.getMessage(), ModelsDevFetcher.class);
 			return Map.of();
 		}
 	}

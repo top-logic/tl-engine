@@ -151,6 +151,46 @@ public class TestTreeLayout extends TestCase {
 			</svg>""", svg);
 	}
 
+	public void testGridFanout() throws IOException {
+		// 12 children directly under one root; with maxPerCol=4 this triggers a 4x3 grid.
+		// Some children carry their own small subtrees so the column widths are non-uniform.
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(
+			buildGridFanoutTree()));
+		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout.svg");
+	}
+
+	private TreeLayout buildGridFanoutTree() {
+		TreeLayout tree = TreeLayout.create()
+			.setMaxPerCol(4)
+			.setBridgeGapY(20);
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		for (int i = 1; i <= 12; i++) {
+			Box child = node("C" + i);
+			tree.addNode(child);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(root))
+				.setChild(connector(child)));
+
+			// Some children get two grand-children so we exercise the bbox-based column widths.
+			if (i == 1 || i == 5 || i == 9) {
+				Box ga = node("C" + i + "a");
+				Box gb = node("C" + i + "b");
+				tree.addNode(ga);
+				tree.addNode(gb);
+				tree.addConnection(TreeConnection.create()
+					.setParent(connector(child))
+					.setChild(connector(ga)));
+				tree.addConnection(TreeConnection.create()
+					.setParent(connector(child))
+					.setChild(connector(gb)));
+			}
+		}
+		return tree;
+	}
+
 	public void testRandomTree() throws IOException {
 		Diagram diagramCompfort =
 			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));

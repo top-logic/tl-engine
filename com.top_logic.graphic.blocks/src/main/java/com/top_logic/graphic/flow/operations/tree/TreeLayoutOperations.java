@@ -5,14 +5,16 @@
  */
 package com.top_logic.graphic.flow.operations.tree;
 
+import java.util.List;
+
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.DiagramDirection;
 import com.top_logic.graphic.flow.data.TreeConnection;
-import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations;
+import com.top_logic.graphic.flow.operations.tree.TreeRenderInfo.GridInfo;
 
 /**
  * Operations for a {@link TreeLayout}.
@@ -54,7 +56,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		TreeRenderInfo renderInfo =
 			new TreeRenderInfo(
 				self().isCompact(), self().getGapX(), self().getSibblingGapY(), self().getSubtreeGapY(),
-				self().getParentAlign(), self().getParentOffset(), self().getNodes(), self().getConnections());
+				self().getParentAlign(), self().getParentOffset(), self().getMaxPerCol(), self().getBridgeGapY(),
+				self().getNodes(), self().getConnections());
 		self().setRenderInfo(renderInfo);
 
 		renderInfo.computeLayout(context);
@@ -73,14 +76,22 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		TreeRenderInfo info = treeInfo();
 
 		// Note: The tree nodes have already their size assigned during the layout computation.
+		// Per-connection bar position. For grid-mode parents the bar is the sub-column bus of the
+		// child; for linear parents it is the midpoint between parent right edge and child left.
 		for (TreeConnection connection : self().getConnections()) {
-			TreeConnector parent = connection.getParent();
-			Box parentAnchor = parent.getAnchor();
-			
-			TreeNode parentNode = info.getNodeForAnchor(parentAnchor);
+			TreeNode parentNode = info.getNodeForAnchor(connection.getParent().getAnchor());
+			TreeNode childNode = info.getNodeForAnchor(connection.getChild().getAnchor());
 
-			double fromX = parentNode.getX() + parentNode.getColumn().getWidth();
-			double barX = fromX + self().getGapX() / 2;
+			GridInfo gi = info.getGridInfo(parentNode);
+			double barX;
+			if (gi != null) {
+				int c = gi.getColIdx(childNode);
+				barX = gi.getBusX()[c];
+			} else {
+				double parentRight = parentNode.getX() + parentNode.getBox().getWidth();
+				double childLeft = childNode.getX();
+				barX = (parentRight + childLeft) / 2;
+			}
 
 			connection.setBarPosition(barX);
 		}
@@ -99,9 +110,75 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			out.endGroup();
 		}
 
+		// Draw central bus structure for grid-mode parents (primary bus, bottom bridge, follow-up
+		// column buses). Per-connection drawing then only adds the horizontal stub from the
+		// relevant sub-column bus into the child's left edge.
+		for (TreeNode parent : info.getNodes()) {
+			GridInfo gi = info.getGridInfo(parent);
+			if (gi != null) {
+				drawGridBuses(out, parent, gi);
+			}
+		}
+
 		for (TreeConnection connection : self().getConnections()) {
 			out.write(connection);
 		}
+	}
+
+	/**
+	 * Draws the central bus structure for a grid-mode parent: the parent → primary bus segment,
+	 * the primary bus down to the bottom bridge, the bottom bridge across all sub-column buses,
+	 * and each follow-up sub-column's vertical bus.
+	 */
+	default void drawGridBuses(SvgWriter out, TreeNode parent, GridInfo gi) {
+		Box parentAnchor = parent.getAnchor();
+		double parentRight = parent.getX() + parent.getBox().getWidth();
+		double parentMidY = parent.getY() + parentAnchor.getY() + 0.5 * parentAnchor.getHeight();
+
+		double[] busX = gi.getBusX();
+		double bridgeY = gi.getBridgeY();
+		int colCount = gi.getColCount();
+		List<List<TreeNode>> cols = gi.getCols();
+
+		// Primary column: parent → primary bus, primary bus from top connection (or parentMidY)
+		// down to the bottom bridge.
+		List<TreeNode> primary = cols.get(0);
+		double primaryFirstMidY = anchorMidY(primary.get(0));
+		double primaryTopY = Math.min(parentMidY, primaryFirstMidY);
+
+		out.beginPath();
+		out.setStrokeWidth(self().getThickness());
+		out.setStroke(self().getStrokeStyle());
+		out.setFill("none");
+		out.beginData();
+		// Parent → primary bus.
+		out.moveToAbs(parentRight, parentMidY);
+		out.lineToHorizontalAbs(busX[0]);
+		// Primary bus vertical down to bridge.
+		out.moveToAbs(busX[0], primaryTopY);
+		out.lineToVerticalAbs(bridgeY);
+		// Bottom bridge.
+		if (colCount > 1) {
+			out.moveToAbs(busX[0], bridgeY);
+			out.lineToHorizontalAbs(busX[colCount - 1]);
+		}
+		// Follow-up column buses (from each column's first child connection up... drawn from
+		// bridge upwards via a single vertical segment).
+		for (int c = 1; c < colCount; c++) {
+			double firstMidY = anchorMidY(cols.get(c).get(0));
+			out.moveToAbs(busX[c], firstMidY);
+			out.lineToVerticalAbs(bridgeY);
+		}
+		out.endData();
+		out.endPath();
+	}
+
+	/**
+	 * Y coordinate of the anchor's vertical mid-point in the global frame.
+	 */
+	default double anchorMidY(TreeNode node) {
+		Box anchor = node.getAnchor();
+		return node.getY() + anchor.getY() + 0.5 * anchor.getHeight();
 	}
 
 	/**

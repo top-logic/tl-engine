@@ -169,7 +169,27 @@ message TreeLayout extends FloatingLayout {
 	/** Vertical gap between nodes in a tree column if they belong to different subtrees. */
 	double subtreeGapY = 20;
 
-	/** Stroke style of tree connections. */	
+	/**
+	 * Maximum number of children per column when a parent has high fan-out.
+	 *
+	 * <p>If the number of children of some parent node exceeds this value, the children are
+	 * arranged in a 2D grid (multiple sub-columns) instead of a single vertical column. The grid
+	 * has at most {@code maxPerCol} children per sub-column. Each sub-column has its own vertical
+	 * bus; sub-columns starting at index 1 are connected to the primary bus via a horizontal
+	 * bottom-bridge.
+	 *
+	 * <p>A value of {@code 0} disables grid mode (legacy behavior).
+	 */
+	int maxPerCol;
+
+	/**
+	 * Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge that
+	 * connects all sub-grid columns. Only relevant if {@link #maxPerCol} is set and triggers
+	 * grid mode.
+	 */
+	double bridgeGapY = 20;
+
+	/** Stroke style of tree connections. */
 	string strokeStyle = "black";
 	
 	/** Stroke width of tree connections. */	

@@ -19,6 +19,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 
 	private double _subtreeGapY = 20;
 
+	private int _maxPerCol = 0;
+
+	private double _bridgeGapY = 20;
+
 	private String _strokeStyle = "black";
 
 	private double _thickness = 1.0;
@@ -190,6 +194,42 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	}
 
 	@Override
+	public final int getMaxPerCol() {
+		return _maxPerCol;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setMaxPerCol(int value) {
+		internalSetMaxPerCol(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMaxPerCol()} without chain call utility. */
+	protected final void internalSetMaxPerCol(int value) {
+		_listener.beforeSet(this, MAX_PER_COL__PROP, value);
+		_maxPerCol = value;
+		_listener.afterChanged(this, MAX_PER_COL__PROP);
+	}
+
+	@Override
+	public final double getBridgeGapY() {
+		return _bridgeGapY;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setBridgeGapY(double value) {
+		internalSetBridgeGapY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getBridgeGapY()} without chain call utility. */
+	protected final void internalSetBridgeGapY(double value) {
+		_listener.beforeSet(this, BRIDGE_GAP_Y__PROP, value);
+		_bridgeGapY = value;
+		_listener.afterChanged(this, BRIDGE_GAP_Y__PROP);
+	}
+
+	@Override
 	public final String getStrokeStyle() {
 		return _strokeStyle;
 	}
@@ -335,6 +375,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			GAP_X__PROP, 
 			SIBBLING_GAP_Y__PROP, 
 			SUBTREE_GAP_Y__PROP, 
+			MAX_PER_COL__PROP, 
+			BRIDGE_GAP_Y__PROP, 
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
 			CONNECTIONS__PROP);
@@ -374,6 +416,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case GAP_X__PROP: return getGapX();
 			case SIBBLING_GAP_Y__PROP: return getSibblingGapY();
 			case SUBTREE_GAP_Y__PROP: return getSubtreeGapY();
+			case MAX_PER_COL__PROP: return getMaxPerCol();
+			case BRIDGE_GAP_Y__PROP: return getBridgeGapY();
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case THICKNESS__PROP: return getThickness();
 			case CONNECTIONS__PROP: return getConnections();
@@ -391,6 +435,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case GAP_X__PROP: internalSetGapX((double) value); break;
 			case SIBBLING_GAP_Y__PROP: internalSetSibblingGapY((double) value); break;
 			case SUBTREE_GAP_Y__PROP: internalSetSubtreeGapY((double) value); break;
+			case MAX_PER_COL__PROP: internalSetMaxPerCol((int) value); break;
+			case BRIDGE_GAP_Y__PROP: internalSetBridgeGapY((double) value); break;
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
 			case CONNECTIONS__PROP: internalSetConnections(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.graphic.flow.data.TreeConnection.class, value)); break;
@@ -415,6 +461,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 		out.value(getSibblingGapY());
 		out.name(SUBTREE_GAP_Y__PROP);
 		out.value(getSubtreeGapY());
+		out.name(MAX_PER_COL__PROP);
+		out.value(getMaxPerCol());
+		out.name(BRIDGE_GAP_Y__PROP);
+		out.value(getBridgeGapY());
 		out.name(STROKE_STYLE__PROP);
 		out.value(getStrokeStyle());
 		out.name(THICKNESS__PROP);
@@ -458,6 +508,14 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 				out.value(getSubtreeGapY());
 				break;
 			}
+			case MAX_PER_COL__PROP: {
+				out.value(getMaxPerCol());
+				break;
+			}
+			case BRIDGE_GAP_Y__PROP: {
+				out.value(getBridgeGapY());
+				break;
+			}
 			case STROKE_STYLE__PROP: {
 				out.value(getStrokeStyle());
 				break;
@@ -488,6 +546,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case GAP_X__PROP: setGapX(in.nextDouble()); break;
 			case SIBBLING_GAP_Y__PROP: setSibblingGapY(in.nextDouble()); break;
 			case SUBTREE_GAP_Y__PROP: setSubtreeGapY(in.nextDouble()); break;
+			case MAX_PER_COL__PROP: setMaxPerCol(in.nextInt()); break;
+			case BRIDGE_GAP_Y__PROP: setBridgeGapY(in.nextDouble()); break;
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case THICKNESS__PROP: setThickness(in.nextDouble()); break;
 			case CONNECTIONS__PROP: {

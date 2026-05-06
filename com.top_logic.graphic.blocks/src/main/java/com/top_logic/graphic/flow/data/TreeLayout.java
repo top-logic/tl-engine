@@ -36,6 +36,12 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	/** @see #getSubtreeGapY() */
 	String SUBTREE_GAP_Y__PROP = "subtreeGapY";
 
+	/** @see #getMaxPerCol() */
+	String MAX_PER_COL__PROP = "maxPerCol";
+
+	/** @see #getBridgeGapY() */
+	String BRIDGE_GAP_Y__PROP = "bridgeGapY";
+
 	/** @see #getStrokeStyle() */
 	String STROKE_STYLE__PROP = "strokeStyle";
 
@@ -118,6 +124,36 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	 * @see #getSubtreeGapY()
 	 */
 	com.top_logic.graphic.flow.data.TreeLayout setSubtreeGapY(double value);
+
+	/**
+	 * Maximum number of children per column when a parent has high fan-out.
+	 *
+	 * <p>If the number of children of some parent node exceeds this value, the children are
+	 * arranged in a 2D grid (multiple sub-columns) instead of a single vertical column. The grid
+	 * has at most {@code maxPerCol} children per sub-column. Each sub-column has its own vertical
+	 * bus; sub-columns starting at index 1 are connected to the primary bus via a horizontal
+	 * bottom-bridge.
+	 *
+	 * <p>A value of {@code 0} disables grid mode (legacy behavior).
+	 */
+	int getMaxPerCol();
+
+	/**
+	 * @see #getMaxPerCol()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setMaxPerCol(int value);
+
+	/**
+	 * Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge that
+	 * connects all sub-grid columns. Only relevant if {@link #getMaxPerCol()} is set and triggers
+	 * grid mode.
+	 */
+	double getBridgeGapY();
+
+	/**
+	 * @see #getBridgeGapY()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setBridgeGapY(double value);
 
 	/**
 	 * Stroke style of tree connections.

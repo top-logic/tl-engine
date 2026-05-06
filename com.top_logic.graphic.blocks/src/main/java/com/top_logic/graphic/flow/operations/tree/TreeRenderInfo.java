@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.graphic.flow.operations.tree;
@@ -15,124 +15,122 @@ import java.util.Map;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
-import com.top_logic.graphic.flow.data.EdgeDecoration;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.Widget;
 
 /**
  * Temporary information for tree layouts.
+ *
+ * <p>
+ * The layout algorithm runs bottom-up per subtree: each {@link TreeNode} computes its subtree
+ * bounding box, then its parent positions the child subtrees in its own local frame. After the
+ * recursive pass the per-root subtrees are stacked vertically into the global tree-layout frame.
+ * </p>
+ *
+ * <p>
+ * If a parent node has more than {@link #_maxPerCol} children, its children are arranged in a 2D
+ * grid: column-major distribution into <code>R = maxPerCol</code> rows × <code>C = ⌈N/R⌉</code>
+ * columns. Each grid sub-column packs independently. The resulting metadata is stored as a
+ * {@link GridInfo} for use by the renderer.
+ * </p>
  */
 public class TreeRenderInfo {
 
-	class Column {
-		private List<TreeNode> _boxes = new ArrayList<>();
+	/**
+	 * Layout metadata for a parent node whose children were laid out in a 2D sub-grid (because the
+	 * fan-out exceeds {@link TreeRenderInfo#_maxPerCol}).
+	 *
+	 * <p>
+	 * All coordinates are in the global tree-layout frame (after all subtree shifts have been
+	 * applied) and are kept consistent by {@link TreeRenderInfo#shiftSubtree}.
+	 * </p>
+	 */
+	public static class GridInfo {
 
-		private double _columnWidth;
+		private final List<List<TreeNode>> _cols;
 
-		private double _offsetX;
+		private final double[] _colX;
 
-		private int _level;
+		private final double[] _colW;
 
-		private double _decorationWidth;
+		private final double[] _busX;
 
-		/**
-		 * Creates a {@link Column}.
-		 *
-		 * @param level
-		 *        See {@link #getLevel()}.
-		 */
-		public Column(int level) {
-			_level = level;
+		private double _bridgeY;
+
+		GridInfo(List<List<TreeNode>> cols, double[] colX, double[] colW, double[] busX, double bridgeY) {
+			_cols = cols;
+			_colX = colX;
+			_colW = colW;
+			_busX = busX;
+			_bridgeY = bridgeY;
 		}
 
 		/**
-		 * The level of the nodes that are placed to this column. A root node has level 0, a child
-		 * node has the level of its parent incremented by 1.
+		 * Children grouped per sub-column, in original child order. Outer list is indexed by
+		 * sub-column (0..C-1).
 		 */
-		public int getLevel() {
-			return _level;
+		public List<List<TreeNode>> getCols() {
+			return _cols;
 		}
 
 		/**
-		 * The width of this column (maximum width of nodes placed in this column).
+		 * The number of sub-columns.
 		 */
-		public double getWidth() {
-			return _columnWidth;
+		public int getColCount() {
+			return _colX.length;
 		}
 
 		/**
-		 * All layouted boxes that are placed in this column.
+		 * X coordinate of the left edge of each sub-column.
 		 */
-		public List<TreeNode> getBoxes() {
-			return _boxes;
+		public double[] getColX() {
+			return _colX;
 		}
 
 		/**
-		 * Adds a new node to this {@link Column}.
+		 * Width of each sub-column (max subtree width of children placed in that sub-column).
 		 */
-		public void addNode(TreeNode node) {
-			int index = _boxes.size();
-			_boxes.add(node);
-			node.setColumn(this, index);
+		public double[] getColW() {
+			return _colW;
 		}
 
 		/**
-		 * The number of nodes in this column.
+		 * X coordinate of the vertical bus per sub-column. The primary parent bus is at
+		 * <code>busX[0]</code>; additional buses for follow-up sub-columns are at
+		 * <code>busX[c]</code> for <code>c &gt;= 1</code>.
 		 */
-		public int size() {
-			return _boxes.size();
+		public double[] getBusX() {
+			return _busX;
 		}
 
 		/**
-		 * The node with the given index.
-		 * 
-		 * @see TreeNode#getIndex()
+		 * Y coordinate of the horizontal bottom-bridge that connects the primary bus to the buses
+		 * of all follow-up sub-columns.
 		 */
-		public TreeNode getNode(int index) {
-			return _boxes.get(index);
+		public double getBridgeY() {
+			return _bridgeY;
 		}
 
 		/**
-		 * Computes the width of this column from the maximum width of its nodes.
+		 * Sub-column index of the given child within this grid, or <code>-1</code> if the node is
+		 * not a child placed in this grid.
 		 */
-		public void computeWidth() {
-			double maxWidth = 0;
-			for (TreeNode node : getBoxes()) {
-				maxWidth = Math.max(maxWidth, node.getBox().getWidth());
+		public int getColIdx(TreeNode child) {
+			for (int c = 0; c < _cols.size(); c++) {
+				if (_cols.get(c).contains(child)) {
+					return c;
+				}
 			}
-
-			_columnWidth = maxWidth;
+			return -1;
 		}
 
-		/**
-		 * The X coordinate of the left border of this column.
-		 */
-		public double getOffsetX() {
-			return _offsetX;
-		}
-
-		/**
-		 * @see #getOffsetX()
-		 */
-		public void setOffsetX(double offsetX) {
-			_offsetX = offsetX;
-		}
-
-		/**
-		 * The maximum width of decorations placed on the left of this column.
-		 */
-		public double getDecorationWidth() {
-			return _decorationWidth;
-		}
-
-		/**
-		 * @see #getDecorationWidth()
-		 */
-		public void requestDecorationWidth(double decorationWidth) {
-			if (decorationWidth > _decorationWidth) {
-				_decorationWidth = decorationWidth;
+		void shift(double dx, double dy) {
+			for (int c = 0; c < _colX.length; c++) {
+				_colX[c] += dx;
+				_busX[c] += dx;
 			}
+			_bridgeY += dy;
 		}
 	}
 
@@ -141,8 +139,6 @@ public class TreeRenderInfo {
 	private final Map<Box, TreeNode> _nodeForAnchor;
 
 	private final List<TreeNode> _roots;
-
-	private final List<Column> _columns = new ArrayList<>();
 
 	private final List<TreeConnection> _connections;
 
@@ -158,6 +154,12 @@ public class TreeRenderInfo {
 
 	private final double _parentOffset;
 
+	private final int _maxPerCol;
+
+	private final double _bridgeGapY;
+
+	private final Map<TreeNode, GridInfo> _gridInfos = new HashMap<>();
+
 	private double _width;
 
 	private double _height;
@@ -166,13 +168,16 @@ public class TreeRenderInfo {
 	 * Creates a {@link TreeRenderInfo}.
 	 */
 	public TreeRenderInfo(boolean compact, double gapX, double siblingGapY, double subtreeGapY, double parentAlign,
-			double parentOffset, List<Box> nodes, List<TreeConnection> connections) {
+			double parentOffset, int maxPerCol, double bridgeGapY, List<Box> nodes,
+			List<TreeConnection> connections) {
 		_compact = compact;
 		_gapX = gapX;
 		_siblingGapY = siblingGapY;
 		_subtreeGapY = subtreeGapY;
 		_parentAlign = parentAlign;
 		_parentOffset = parentOffset;
+		_maxPerCol = maxPerCol;
+		_bridgeGapY = bridgeGapY;
 		_connections = connections;
 
 		// Create tree nodes from node boxes.
@@ -212,7 +217,7 @@ public class TreeRenderInfo {
 	/**
 	 * Helper method to build the mapping from nodes (that are layouted) for anchor boxes (that are
 	 * visually connected).
-	 * 
+	 *
 	 * @param connector
 	 *        The tree connector to analyze.
 	 */
@@ -269,13 +274,6 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * The organization of content boxes into columns.
-	 */
-	public List<Column> getColumns() {
-		return _columns;
-	}
-
-	/**
 	 * Resolves the tree node with the given anchor box.
 	 */
 	public TreeNode getNodeForAnchor(Box anchor) {
@@ -283,169 +281,240 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * Arranges nodes in columns so that a parent node is placed in a column left to the column of
-	 * its children.
+	 * Returns grid metadata for the given parent node, or <code>null</code> if it is not a
+	 * grid-mode parent (i.e. its children fit into a single sub-column).
+	 */
+	public GridInfo getGridInfo(TreeNode parent) {
+		return _gridInfos.get(parent);
+	}
+
+	/**
+	 * Lays out the tree.
+	 *
+	 * <p>
+	 * Each subtree is first laid out independently in its own local frame; the per-root subtrees
+	 * are then stacked vertically into the global frame. Per-parent independent packing means that
+	 * unrelated subtrees no longer share global column constraints in Y. Parents with high fan-out
+	 * use a 2D sub-grid; the relevant metadata is stored as {@link GridInfo} per parent.
+	 * </p>
 	 */
 	public void computeLayout(RenderContext context) {
-		// Insert tree nodes into columns.
-		for (TreeNode root : getRoots()) {
-			enterColumns(0, root);
+		// Distribute the box's intrinsic size in its own coordinate system (origin at 0,0). The
+		// tree node's outer position is tracked separately in {@link TreeNode#getX()} /
+		// {@link TreeNode#getY()}.
+		for (TreeNode node : getNodes()) {
+			node.getBox().distributeSize(context, 0, 0, node.getBox().getWidth(), node.getBox().getHeight());
 		}
 
-		// Compute column widths.
-		for (Column column : getColumns()) {
-			column.computeWidth();
+		// Bottom-up layout per root subtree (positions are relative to subtree origin).
+		for (TreeNode root : _roots) {
+			layoutSubtree(root);
 		}
 
-		// Reserve space for decorations.
-		for (TreeConnection connection : _connections) {
-			Column column = getNodeForAnchor(connection.getChild().getAnchor()).getColumn();
-
-			double additionalWidth = 0;
-			for (EdgeDecoration decoration : connection.getDecorations()) {
-				double decorationWidth = decoration.getContent().getWidth();
-				additionalWidth = Math.max(additionalWidth,
-					decorationWidth
-					// Free space due to the column gap.
-					- _gapX / 2
-					// Free space due to the anchor width.
-					- (column.getWidth() - connection.getChild().getAnchor().getWidth()) / 2);
-			}
-
-			column.requestDecorationWidth(additionalWidth);
-		}
-
-		// Place columns and compute overall width.
-		double width = 0;
-		if (!getColumns().isEmpty()) {
-			for (Column column : getColumns()) {
-				// Additional width reserved for decorations.
-				width += column.getDecorationWidth();
-
-				column.setOffsetX(width);
-
-				width += column.getWidth();
-
-				// Gap to the next column.
-				width += _gapX;
-			}
-
-			// Subtract last gap.
-			width -= _gapX;
-		}
-
-		// Compute internal layout of nodes. This is required before computing the tree layout,
-		// since the internal position of the node's anchor must be known.
-		for (TreeNode node : _nodeForBox.values()) {
-			// Offer the whole column width to the node, but restrict its height to its intrinsic
-			// height. Place the node at (0,0) to make internal node coordinates relative. The node
-			// is placed externally by a transformed group when rendering.
-			node.getBox().distributeSize(context, 0, 0, node.getColumn().getWidth(), node.getBox().getHeight());
-		}
-
-		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
-		for (TreeNode root : getRoots()) {
-			layoutTree(root);
-		}
-
-		_width = width;
-	}
-
-	private void enterColumns(int level, TreeNode root) {
-		Column column = mkColumn(level);
-		column.addNode(root);
-
-		for (TreeNode child : root.getChildren()) {
-			enterColumns(level + 1, child);
-		}
-	}
-
-	/**
-	 * Get or create a column for the given tree depth.
-	 */
-	private Column mkColumn(int level) {
-		while (_columns.size() <= level) {
-			_columns.add(new Column(level));
-		}
-		return _columns.get(level);
-	}
-
-	/**
-	 * Helper method to layout a single tree within a forest.
-	 */
-	private void layoutTree(TreeNode node) {
-		// The minimum Y coordinate, where the current node can be placed in its column.
-		double minY;
-		if (node.getLevel() == 0 && node.getIndex() > 0 && !_compact) {
-			// A whole new tree is layouted, below an existing one. Do not mix contents in a line.
-			minY = _height + _subtreeGapY;
-		} else if (node.getIndex() == 0) {
-			minY = 0;
-		} else {
-			TreeNode predecessor = node.getColumnPredecessor();
-			boolean sameParent = predecessor.getParent() == node.getParent();
-			minY = predecessor.getBottom() + (sameParent ? _siblingGapY : _subtreeGapY);
-		}
-
-		List<TreeNode> nextLevel = node.getChildren();
-		double nodeY;
-		if (nextLevel.isEmpty()) {
-			// This is a leaf node, place it at the minimum Y coordinate possible.
-			nodeY = minY;
-		} else {
-			// Recursively place all children.
-			for (TreeNode child : nextLevel) {
-				layoutTree(child);
-			}
-
-			// Place parent node relative to its direct children.
-			TreeNode firstChild = nextLevel.get(0);
-			TreeNode lastChild = nextLevel.get(nextLevel.size() - 1);
-
-			Box firstAnchor = firstChild.getAnchor();
-			Box lastAnchor = lastChild.getAnchor();
-
-			// Note: Anchor boxes are relative to the node's coordinate (which is 0,0 for each
-			// node).
-			double firstY = firstChild.getY() + firstAnchor.getY() + 0.5 * firstAnchor.getHeight();
-			double lastY = lastChild.getY() + lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
-
-			// The Y coordinate of the center of the node's anchor box.
-			double anchorY = firstY + (lastY - firstY) * _parentAlign + _parentOffset;
-
-			Box nodeAnchor = node.getAnchor();
-			nodeY = anchorY - 0.5 * nodeAnchor.getHeight() - nodeAnchor.getY();
-
-			if (nodeY >= minY) {
-				// Node position is OK.
+		// Stack root subtrees vertically into the global frame.
+		double curY = 0;
+		double maxRight = 0;
+		boolean firstRoot = true;
+		for (TreeNode root : _roots) {
+			double minX = subtreeMinX(root);
+			double minY = subtreeMinY(root);
+			double dx = -minX;
+			double dy;
+			if (firstRoot) {
+				dy = -minY;
+				firstRoot = false;
 			} else {
-				// nodeY < minY, amount to shift the subtree to the bottom.
-				double shiftY = minY - nodeY;
-
-				// Place node at its minimum Y position and shift children to the bottom.
-				nodeY = minY;
-
-				// Children must be moved to the bottom to align with the current node.
-				for (TreeNode child : nextLevel) {
-					shiftY(child, shiftY);
-				}
+				dy = curY - minY + (_compact ? _siblingGapY : _subtreeGapY);
 			}
+			shiftSubtree(root, dx, dy);
+			curY = subtreeMaxY(root);
+			maxRight = Math.max(maxRight, subtreeMaxX(root));
 		}
 
-		node.setY(nodeY);
-		_height = Math.max(_height, node.getBottom());
+		_width = maxRight;
+		_height = curY;
 	}
 
 	/**
-	 * Shifts the subtree rooted at the given node to the bottom by the given amount.
+	 * Recursive bottom-up layout of one subtree. After this call, the subtree's nodes have
+	 * positions in a local frame; the bounding box of the subtree is anchored at (0, 0) by
+	 * {@link #normalizeSubtree(TreeNode)}.
 	 */
-	private void shiftY(TreeNode node, double shiftY) {
-		node.setY(node.getY() + shiftY);
-		_height = Math.max(_height, node.getBottom());
-	
-		for (TreeNode child : node.getChildren()) {
-			shiftY(child, shiftY);
+	private void layoutSubtree(TreeNode node) {
+		List<TreeNode> children = node.getChildren();
+		if (children.isEmpty()) {
+			node.setX(0);
+			node.setY(0);
+			return;
 		}
+
+		for (TreeNode child : children) {
+			layoutSubtree(child);
+		}
+
+		if (_maxPerCol > 0 && children.size() > _maxPerCol) {
+			packGrid(node);
+		} else {
+			packLinear(node);
+		}
+
+		normalizeSubtree(node);
+	}
+
+	/**
+	 * Linear packing: stack children vertically in a single column right of the parent.
+	 */
+	private void packLinear(TreeNode node) {
+		double childOriginX = node.getBox().getWidth() + _gapX;
+		double curY = 0;
+		List<TreeNode> children = node.getChildren();
+		for (TreeNode child : children) {
+			double dx = childOriginX - subtreeMinX(child);
+			double dy = curY - subtreeMinY(child);
+			shiftSubtree(child, dx, dy);
+			curY = subtreeMaxY(child) + _siblingGapY;
+		}
+
+		// Center parent based on parentAlign (between first and last child anchors).
+		placeParent(node, children.get(0), children.get(children.size() - 1));
+	}
+
+	/**
+	 * Grid packing: distribute children into <code>R = maxPerCol</code> rows × <code>C = ⌈N/R⌉</code>
+	 * sub-columns, column-major. Each sub-column packs independently in Y; a bottom-bridge is
+	 * placed below the deepest sub-column.
+	 */
+	private void packGrid(TreeNode node) {
+		List<TreeNode> children = node.getChildren();
+		int M = children.size();
+		int R = Math.min(M, _maxPerCol);
+		int C = (M + R - 1) / R;
+
+		// Column-major distribution: children 0..R-1 go into sub-column 0, etc.
+		List<List<TreeNode>> cols = new ArrayList<>(C);
+		for (int c = 0; c < C; c++) {
+			cols.add(new ArrayList<>());
+		}
+		for (int i = 0; i < M; i++) {
+			cols.get(i / R).add(children.get(i));
+		}
+
+		// Sub-column widths from subtree bboxes.
+		double[] colW = new double[C];
+		for (int c = 0; c < C; c++) {
+			double w = 0;
+			for (TreeNode ch : cols.get(c)) {
+				w = Math.max(w, subtreeMaxX(ch) - subtreeMinX(ch));
+			}
+			colW[c] = w;
+		}
+
+		// X positions per sub-column.
+		double childOriginX = node.getBox().getWidth() + _gapX;
+		double[] colX = new double[C];
+		double[] busX = new double[C];
+		double cx = childOriginX;
+		for (int c = 0; c < C; c++) {
+			colX[c] = cx;
+			busX[c] = cx - _gapX / 2;
+			cx += colW[c] + _gapX;
+		}
+
+		// Pack each sub-column independently.
+		double maxBottom = 0;
+		for (int c = 0; c < C; c++) {
+			double curY = 0;
+			for (TreeNode ch : cols.get(c)) {
+				double dx = colX[c] - subtreeMinX(ch);
+				double dy = curY - subtreeMinY(ch);
+				shiftSubtree(ch, dx, dy);
+				curY = subtreeMaxY(ch) + _siblingGapY;
+			}
+			maxBottom = Math.max(maxBottom, curY - _siblingGapY);
+		}
+
+		double bridgeY = maxBottom + _bridgeGapY;
+		_gridInfos.put(node, new GridInfo(cols, colX, colW, busX, bridgeY));
+
+		// Center parent against first/last child of the primary sub-column.
+		List<TreeNode> primary = cols.get(0);
+		placeParent(node, primary.get(0), primary.get(primary.size() - 1));
+	}
+
+	/**
+	 * Place the parent node based on first / last child anchor positions and parentAlign.
+	 */
+	private void placeParent(TreeNode node, TreeNode first, TreeNode last) {
+		Box firstAnchor = first.getAnchor();
+		Box lastAnchor = last.getAnchor();
+		double firstY = first.getY() + firstAnchor.getY() + 0.5 * firstAnchor.getHeight();
+		double lastY = last.getY() + lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
+		double anchorY = firstY + (lastY - firstY) * _parentAlign + _parentOffset;
+		Box nodeAnchor = node.getAnchor();
+		node.setX(0);
+		node.setY(anchorY - 0.5 * nodeAnchor.getHeight() - nodeAnchor.getY());
+	}
+
+	/**
+	 * Shifts the subtree so its bounding box is anchored at (0, 0).
+	 */
+	private void normalizeSubtree(TreeNode node) {
+		double minX = subtreeMinX(node);
+		double minY = subtreeMinY(node);
+		if (minX != 0 || minY != 0) {
+			shiftSubtree(node, -minX, -minY);
+		}
+	}
+
+	/**
+	 * Shifts the entire subtree (positions and any grid metadata) by the given amount.
+	 */
+	private void shiftSubtree(TreeNode node, double dx, double dy) {
+		node.setX(node.getX() + dx);
+		node.setY(node.getY() + dy);
+		GridInfo gi = _gridInfos.get(node);
+		if (gi != null) {
+			gi.shift(dx, dy);
+		}
+		for (TreeNode child : node.getChildren()) {
+			shiftSubtree(child, dx, dy);
+		}
+	}
+
+	private double subtreeMinX(TreeNode node) {
+		double m = node.getX();
+		for (TreeNode c : node.getChildren()) {
+			m = Math.min(m, subtreeMinX(c));
+		}
+		return m;
+	}
+
+	private double subtreeMinY(TreeNode node) {
+		double m = node.getY();
+		for (TreeNode c : node.getChildren()) {
+			m = Math.min(m, subtreeMinY(c));
+		}
+		return m;
+	}
+
+	private double subtreeMaxX(TreeNode node) {
+		double m = node.getX() + node.getBox().getWidth();
+		for (TreeNode c : node.getChildren()) {
+			m = Math.max(m, subtreeMaxX(c));
+		}
+		return m;
+	}
+
+	private double subtreeMaxY(TreeNode node) {
+		double m = node.getY() + node.getBox().getHeight();
+		GridInfo gi = _gridInfos.get(node);
+		if (gi != null) {
+			m = Math.max(m, gi.getBridgeY());
+		}
+		for (TreeNode c : node.getChildren()) {
+			m = Math.max(m, subtreeMaxY(c));
+		}
+		return m;
 	}
 
 }

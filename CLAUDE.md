@@ -6,7 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TopLogic is an open-source, model-based, no-code web application development platform. It combines declarative configuration (UML/BPMN modeling, WYSIWYG UI configuration) with extensible Java components. The platform enables both no-code application development and traditional Java/Maven development workflows.
 
-**Version**: 7.10.0-SNAPSHOT
 **Java Version**: 17
 **Build System**: Maven 3.6.0+
 **License**: Dual-licensed (AGPL-3.0 / BOS-TopLogic-1.0)
@@ -339,7 +338,7 @@ Source files use **UTF-8** encoding (`project.build.sourceEncoding=UTF-8` in par
 
 ### Version Management
 
-- Central version: `7.10.0-SNAPSHOT` defined in `tl-parent-all`
+- Central version is defined in `tl-parent-all` — read it from there when needed.
 - Use `${tl.version}` property for internal dependencies
 - External dependencies versioned via properties (e.g., `${jetty.version}`)
 

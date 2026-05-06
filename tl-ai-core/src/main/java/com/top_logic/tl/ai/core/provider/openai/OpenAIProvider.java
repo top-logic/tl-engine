@@ -83,6 +83,8 @@ public class OpenAIProvider extends AbstractStreamingProvider {
 		String model = null;
 		ContentBlockAccumulator accumulator = new ContentBlockAccumulator();
 
+		handler.onEvent(new StreamEvent.StreamStart());
+
 		SSEReader.Event event;
 		try (SSEReader sse = new SSEReader(input)) {
 		while ((event = sse.next()) != null) {

@@ -487,7 +487,7 @@ public class TestChatCompletionsRequestBuilder extends TestCase {
 	}
 
 	/** */
-	public void testEmptyToolsOmitted() throws Exception {
+	public void testEmptyToolsOmitted() {
 		UserMessage user = new UserMessage(
 			UUID.randomUUID().toString(),
 			Instant.now(),

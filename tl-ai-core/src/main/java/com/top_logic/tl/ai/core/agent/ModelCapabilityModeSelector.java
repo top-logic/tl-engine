@@ -9,9 +9,9 @@ import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -77,6 +77,7 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 	/**
 	 * Creates a new {@link ModelCapabilityModeSelector} from configuration.
 	 */
+	@SuppressWarnings("unused")
 	@CalledByReflection
 	public ModelCapabilityModeSelector(InstantiationContext context, Config config) {
 		_providers = config.getProviders();

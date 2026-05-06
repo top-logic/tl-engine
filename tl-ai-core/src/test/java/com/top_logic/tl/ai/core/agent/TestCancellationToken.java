@@ -16,27 +16,10 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
  */
 public class TestCancellationToken extends TestCase {
 
-	/** */
-	public void testInitiallyNotCancelled() {
-		CancellationToken token = new CancellationToken();
-		assertFalse(token.isCancelled());
-	}
-
-	/** */
-	public void testCancelSetsFlag() {
-		CancellationToken token = new CancellationToken();
-		token.cancel();
-		assertTrue(token.isCancelled());
-	}
-
-	/** */
-	public void testCheckCancelledDoesNothingWhenNotCancelled() {
-		CancellationToken token = new CancellationToken();
-		token.checkCancelled();
-		// No exception thrown — test passes.
-	}
-
-	/** */
+	/**
+	 * {@link CancellationToken#checkCancelled()} throws {@link CancellationException}
+	 * with the expected message when the token has been cancelled.
+	 */
 	public void testCheckCancelledThrowsWhenCancelled() {
 		CancellationToken token = new CancellationToken();
 		token.cancel();

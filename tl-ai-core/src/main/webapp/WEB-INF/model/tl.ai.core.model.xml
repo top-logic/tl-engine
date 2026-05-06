@@ -18,7 +18,6 @@
 			<classifier name="LOW"/>
 			<classifier name="MEDIUM"/>
 			<classifier name="HIGH"/>
-			<classifier name="XHIGH"/>
 		</enum>
 		<enum name="ReasoningSummary">
 			<classifier name="AUTO"/>

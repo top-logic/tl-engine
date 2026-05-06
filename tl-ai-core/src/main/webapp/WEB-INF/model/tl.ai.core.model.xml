@@ -8,12 +8,6 @@
 				interface-package="com.top_logic.tl.ai.core.model"
 			/>
 		</annotations>
-		<enum name="ThinkingEffort">
-			<classifier name="LOW"/>
-			<classifier name="MEDIUM"/>
-			<classifier name="HIGH"/>
-			<classifier name="MAX"/>
-		</enum>
 		<enum name="ReasoningEffort">
 			<classifier name="LOW"/>
 			<classifier name="MEDIUM"/>
@@ -22,6 +16,12 @@
 		<enum name="ReasoningSummary">
 			<classifier name="AUTO"/>
 			<classifier name="DETAILED"/>
+		</enum>
+		<enum name="ThinkingEffort">
+			<classifier name="LOW"/>
+			<classifier name="MEDIUM"/>
+			<classifier name="HIGH"/>
+			<classifier name="MAX"/>
 		</enum>
 		<enum name="ToolChoice">
 			<classifier name="AUTO"/>
@@ -172,8 +172,8 @@
 									<de>Reasoning-Einstellungen</de>
 								</label>
 								<dynamicVisibility class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector"
-									providers="openai,xai"
 									capability="reasoning"
+									providers="openai,xai"
 								/>
 							</group>
 							<label key="dynamic.b808b966-6c56-4c10-b97c-8bd4d1799f33">
@@ -202,7 +202,7 @@
 				>
 					<annotations>
 						<options>
-							<generator class="com.top_logic.tl.ai.core.agent.AllModelNamesGenerator"/>
+							<all-model-names/>
 						</options>
 					</annotations>
 				</property>
@@ -224,46 +224,46 @@
 					type="tl.core:Double"
 				>
 					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector"
+								capability="temperature"
+							/>
+						</dynamic-visibility>
 						<value-range
 							max="2.0"
 							min="0.0"
 						/>
-						<dynamic-visibility>
-							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector">
-								<capability>temperature</capability>
-							</mode-selector>
-						</dynamic-visibility>
 					</annotations>
 				</property>
 				<property name="topP"
 					type="tl.core:Double"
 				>
 					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector"
+								capability="temperature"
+							/>
+						</dynamic-visibility>
 						<value-range
 							max="1.0"
 							min="0.0"
 						/>
-						<dynamic-visibility>
-							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector">
-								<capability>temperature</capability>
-							</mode-selector>
-						</dynamic-visibility>
 					</annotations>
 				</property>
 				<reference name="thinkingEffort"
 					kind="forwards"
-					type="tl.ai.core:ThinkingEffort"
+					type="ThinkingEffort"
 				/>
 				<property name="topK"
 					type="tl.core:Integer"
 				/>
 				<reference name="reasoningEffort"
 					kind="forwards"
-					type="tl.ai.core:ReasoningEffort"
+					type="ReasoningEffort"
 				/>
 				<reference name="reasoningSummary"
 					kind="forwards"
-					type="tl.ai.core:ReasoningSummary"
+					type="ReasoningSummary"
 				/>
 				<property name="maxTurns"
 					type="tl.core:Integer"
@@ -290,7 +290,7 @@
 				>
 					<annotations>
 						<options>
-							<generator class="com.top_logic.tl.ai.core.agent.AllToolNamesGenerator"/>
+							<all-tool-names/>
 						</options>
 					</annotations>
 				</property>
@@ -300,7 +300,7 @@
 				>
 					<annotations>
 						<options>
-							<generator class="com.top_logic.tl.ai.core.agent.AllMcpServerNamesGenerator"/>
+							<all-mcp-server-names/>
 						</options>
 					</annotations>
 				</property>

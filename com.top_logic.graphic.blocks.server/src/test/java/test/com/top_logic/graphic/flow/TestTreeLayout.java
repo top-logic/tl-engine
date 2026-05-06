@@ -78,7 +78,7 @@ public class TestTreeLayout extends TestCase {
 				xmlns="http://www.w3.org/2000/svg"
 				height="100%"
 				version="1.1"
-				viewBox="0.0 0.0 0.0 0.0"
+				viewBox="0.0 0.0 176.0 152.0"
 				width="100%"
 			>
 				<g transform="translate(20.0,20.0)">
@@ -262,6 +262,15 @@ public class TestTreeLayout extends TestCase {
 
 	private String writeToFile(Diagram diagram, String fileName) throws IOException {
 		diagram.layout(new TestingRenderContext());
+
+		// Auto-size the SVG viewBox to the laid-out root so the file opens with sensible
+		// dimensions in viewers like Inkscape (without this, viewBox stays at the default
+		// 0 0 0 0).
+		Box root = diagram.getRoot();
+		diagram.setViewBoxX(0);
+		diagram.setViewBoxY(0);
+		diagram.setViewBoxWidth(root.getWidth());
+		diagram.setViewBoxHeight(root.getHeight());
 
 		TagWriter out = new TagWriter();
 		SvgWriter svgOut = new SvgTagWriter(out);

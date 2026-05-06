@@ -1381,30 +1381,16 @@ public class FlowFactory extends TLScriptFunctions {
 		// Create render context for text measurement
 		AWTContext context = new AWTContext((float) textSize);
 
-		// Perform layout calculation
+		// Apply explicit viewBox dimensions before layout so they win over the auto-fit defaults
+		// applied by Diagram.layout() based on the laid-out root size.
+		if (width != null) {
+			diagram.setViewBoxWidth(width);
+		}
+		if (height != null) {
+			diagram.setViewBoxHeight(height);
+		}
+
 		diagram.layout(context);
-
-		// Set viewBox dimensions
-		Box root = diagram.getRoot();
-		if (width != null && height != null) {
-			diagram.setViewBoxWidth(width);
-			diagram.setViewBoxHeight(height);
-		} else if (width != null) {
-			diagram.setViewBoxWidth(width);
-			diagram.setViewBoxHeight(root.getHeight());
-		} else if (height != null) {
-			diagram.setViewBoxWidth(root.getWidth());
-			diagram.setViewBoxHeight(height);
-		} else {
-			diagram.setViewBoxWidth(root.getWidth());
-			diagram.setViewBoxHeight(root.getHeight());
-		}
-
-		// Ensure viewBox origin is set
-		if (diagram.getViewBoxX() == 0 && diagram.getViewBoxY() == 0) {
-			diagram.setViewBoxX(0);
-			diagram.setViewBoxY(0);
-		}
 
 		// Render to SVG
 		StringWriter buffer = new StringWriter();

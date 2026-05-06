@@ -19,14 +19,15 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
 
 /**
- * {@link ListGeneratorAdaptor} providing all available AI model names as options.
+ * {@link ListGeneratorAdaptor} providing explicitly configured AI model names as options.
  *
  * <p>
- * Used as {@code <options>} generator on the {@code model} attribute of
- * {@code tl.ai.core:Agent}.
+ * Returns only models that an admin has added to a provider's {@code models} allowlist,
+ * excluding models that were merely discovered via provider API. Used as {@code <options>}
+ * generator on the {@code model} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
- * @see LLMProviderRegistry#getModelNames()
+ * @see LLMProviderRegistry#getConfiguredModelNames()
  */
 @InApp
 public class AllModelNamesGenerator extends ListGeneratorAdaptor {
@@ -52,6 +53,6 @@ public class AllModelNamesGenerator extends ListGeneratorAdaptor {
 		if (registry == null) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<>(registry.getModelNames());
+		return new ArrayList<>(registry.getConfiguredModelNames());
 	}
 }

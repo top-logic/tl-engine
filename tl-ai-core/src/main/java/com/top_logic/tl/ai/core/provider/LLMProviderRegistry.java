@@ -220,20 +220,12 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 			providerConfigs.put(providerName, providerConfig);
 
 			List<String> configured = providerConfig.getConfiguredModels();
-			List<String> discovered = providerConfig.discoverModels();
-
-			List<String> effectiveModels = configured.isEmpty() ? discovered : configured;
-			for (String model : effectiveModels) {
+			for (String model : configured) {
 				LLMProviderConfig existing = modelIndex.putIfAbsent(model, providerConfig);
 				if (existing != null && existing != providerConfig) {
 					Logger.warn("Model '" + model + "' is exposed by multiple providers. Keeping the first mapping.",
 						LLMProviderRegistry.class);
 				}
-			}
-
-			if (!discovered.isEmpty()) {
-				Logger.info("Discovered " + discovered.size() + " model(s) from provider '"
-					+ providerName + "'.", LLMProviderRegistry.class);
 			}
 		}
 
@@ -289,15 +281,24 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	}
 
 	/**
-	 * Returns the names of all models listed across all configured providers.
+	 * Returns only the explicitly configured model names from all providers.
 	 *
-	 * @return An immutable list of all model names.
+	 * <p>
+	 * Returns only models that an admin has explicitly added to a provider's {@code models}
+	 * allowlist. Models that were merely discovered via provider API are excluded.
+	 * </p>
+	 *
+	 * @return An immutable list of explicitly configured model names.
 	 */
-	public List<String> getModelNames() {
-		if (_modelProviderIndex == null) {
-			return List.of();
+	public List<String> getConfiguredModelNames() {
+		Set<String> result = new LinkedHashSet<>();
+		for (LLMProviderConfig.Config config : getConfig().getProviders().values()) {
+			List<String> models = config.getModels();
+			if (models != null) {
+				result.addAll(models);
+			}
 		}
-		return List.copyOf(_modelProviderIndex.keySet());
+		return List.copyOf(result);
 	}
 
 	/**

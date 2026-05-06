@@ -56,11 +56,11 @@ public interface LLMProviderConfig {
 		String CUSTOM_HEADERS = "custom-headers";
 
 		/**
-		 * Allowed model names for this provider.
+		 * Model names enabled for this provider.
 		 *
 		 * <p>
-		 * If non-empty, only these models are exposed. If empty, all models available from the
-		 * provider are exposed.
+		 * Only models listed here are available for use. If empty, no models are exposed from
+		 * this provider.
 		 * </p>
 		 */
 		@Name(MODELS)

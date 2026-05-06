@@ -68,7 +68,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return An immutable list of all configured model names.
 	 */
 	public static List<String> models() {
-		return LLMProviderRegistry.getInstance().getModelNames();
+		return LLMProviderRegistry.getInstance().getConfiguredModelNames();
 	}
 
 	/**

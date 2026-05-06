@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -971,6 +972,16 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param parentOffset
 	 *        Offset to add to the parent Y coordinate after the alignment operation based on parent
 	 *        ratio.
+	 * @param maxPerCol
+	 *        Maximum number of children per column when a parent has high fan-out. If the number
+	 *        of children of some parent exceeds this value, the children are arranged in a 2D grid
+	 *        (multiple sub-columns) instead of a single vertical column. Each sub-column has its
+	 *        own vertical bus; sub-columns starting at index 1 are connected to the primary bus
+	 *        via a horizontal bottom-bridge. A value of 0 disables grid mode (legacy behavior).
+	 * @param bridgeGapY
+	 *        Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge
+	 *        that connects all sub-grid columns. Only relevant if {@code maxPerCol} triggers grid
+	 *        mode.
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
@@ -980,22 +991,24 @@ public class FlowFactory extends TLScriptFunctions {
 	@SideEffectFree
 	@Label("Create tree")
 	public static Box tree(
-		@Mandatory List<? extends Box> nodes, 
+		@Mandatory List<? extends Box> nodes,
 		@Mandatory List<? extends TreeConnection> connections,
-		@DoubleDefault(40) double gapX, 
+		@DoubleDefault(40) double gapX,
 		Double gapY,
 		Double sibblingGapY,
 		Double subtreeGapY,
 		DiagramDirection direction,
-		@StringDefault("black") String stroke, 
-		@DoubleDefault(1) double strokeWidth, 
+		@StringDefault("black") String stroke,
+		@DoubleDefault(1) double strokeWidth,
 		boolean compact,
 		@DoubleDefault(0.5)
 			double parentAlign,
 		@DoubleDefault(0)
 		double parentOffset,
+		@IntDefault(0) int maxPerCol,
+		Double bridgeGapY,
 		String cssClass,
-		Object userObject 
+		Object userObject
 	) {
 		TreeLayout result = TreeLayout.create()
 			.setNodes(nodes.stream().filter(Objects::nonNull).toList())
@@ -1007,6 +1020,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setCompact(compact)
 			.setParentAlign(parentAlign)
 			.setParentOffset(parentOffset)
+			.setMaxPerCol(maxPerCol)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 
@@ -1019,6 +1033,9 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		if (subtreeGapY != null) {
 			result.setSubtreeGapY(subtreeGapY);
+		}
+		if (bridgeGapY != null) {
+			result.setBridgeGapY(bridgeGapY);
 		}
 
 		return result;

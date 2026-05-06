@@ -9,6 +9,8 @@ import java.util.concurrent.CancellationException;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.tool.api.CancellationToken;
+
 /**
  * Tests for {@link CancellationToken}.
  */

@@ -30,7 +30,7 @@ import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonToken;
 
 /**
- * Central dispatcher of {@link Tool}s.
+ * Central catalog of {@link Tool}s.
  *
  * <p>Holds tools by name, produces {@link ToolSchema} lists for the LLM, and
  * implements {@link ToolExecutor} for direct integration with the agent loop.</p>
@@ -42,7 +42,7 @@ import de.haumacher.msgbuf.json.JsonToken;
  * @see Tool
  * @see AnnotatedTools
  */
-public class ToolDispatcher implements ToolExecutor {
+public class ToolCatalog implements ToolExecutor {
 
 	private final Map<String, Tool> _tools = new LinkedHashMap<>();
 
@@ -62,8 +62,12 @@ public class ToolDispatcher implements ToolExecutor {
 		checkNotFrozen();
 		String name = tool.name();
 		if (_tools.containsKey(name)) {
+			Tool existing = _tools.get(name);
 			throw new IllegalArgumentException(
-				"Tool already registered: '" + name + "'.");
+				"Tool name collision: '" + name + "' is already registered"
+				+ " (existing: " + existing.getClass().getSimpleName()
+				+ ", new: " + tool.getClass().getSimpleName() + ")."
+				+ " Use distinct tool names or check agent tool assignments.");
 		}
 		validateSchema(tool);
 		_tools.put(name, tool);
@@ -94,21 +98,21 @@ public class ToolDispatcher implements ToolExecutor {
 	}
 
 	/**
-	 * Freeze this dispatcher, preventing further registrations.
+	 * Freeze this catalog, preventing further registrations.
 	 *
 	 * <p>After freezing, all read operations are safe for concurrent access from
 	 * multiple threads. Any attempt to {@link #register} after freezing throws
 	 * {@link IllegalStateException}.</p>
 	 *
-	 * @return this dispatcher (for chaining)
+	 * @return this catalog (for chaining)
 	 */
-	public ToolDispatcher freeze() {
+	public ToolCatalog freeze() {
 		_frozen = true;
 		return this;
 	}
 
 	/**
-	 * Whether this dispatcher has been {@linkplain #freeze() frozen}.
+	 * Whether this catalog has been {@linkplain #freeze() frozen}.
 	 */
 	public boolean isFrozen() {
 		return _frozen;
@@ -116,7 +120,7 @@ public class ToolDispatcher implements ToolExecutor {
 
 	private void checkNotFrozen() {
 		if (_frozen) {
-			throw new IllegalStateException("Dispatcher is frozen — no further registrations allowed.");
+			throw new IllegalStateException("Catalog is frozen — no further registrations allowed.");
 		}
 	}
 

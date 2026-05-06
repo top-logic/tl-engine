@@ -34,7 +34,7 @@ import io.modelcontextprotocol.spec.McpSchema;
  * its tools are discovered via the MCP {@code tools/list} call. Agents reference servers by name
  * via their {@code mcpServers} attribute; {@link com.top_logic.tl.ai.core.agent.AgentFactory}
  * pulls the server's tools into the agent's
- * {@link com.top_logic.tl.ai.core.tools.ToolDispatcher}.
+ * {@link com.top_logic.tl.ai.core.tools.ToolCatalog}.
  * </p>
  *
  * @see McpTool

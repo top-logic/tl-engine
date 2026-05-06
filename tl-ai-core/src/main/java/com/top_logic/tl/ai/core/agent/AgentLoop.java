@@ -46,7 +46,8 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -84,7 +85,7 @@ public class AgentLoop {
 
 	private final LLMProvider _provider;
 
-	private final ToolDispatcher _registry;
+	private final ToolCatalog _registry;
 
 	private final int _maxResultChars;
 
@@ -102,7 +103,7 @@ public class AgentLoop {
 	 * @param provider LLM provider for streaming responses
 	 * @param registry tool registry for tool lookup and execution
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry) {
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry) {
 		this(config, provider, registry, DEFAULT_MAX_RESULT_CHARS);
 	}
 
@@ -114,7 +115,7 @@ public class AgentLoop {
 	 * @param registry       tool registry for tool lookup and execution
 	 * @param maxResultChars maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -134,7 +135,7 @@ public class AgentLoop {
 	 * @param registry tool registry for tool lookup and execution
 	 * @param memory   conversation memory with token tracking and compaction
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
 			ConversationMemory memory) {
 		this(config, provider, registry, memory, DEFAULT_MAX_RESULT_CHARS);
 	}
@@ -149,7 +150,7 @@ public class AgentLoop {
 	 * @param memory           conversation memory with token tracking and compaction
 	 * @param maxResultChars   maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
 			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -609,13 +610,13 @@ public class AgentLoop {
 
 		SecurityContext security = context.security();
 
-		// Step 1: Unconditional user permission check (runs for ALL tools)
+		// Step 1: Permission + mode gate
 		Tool tool = _registry.getTool(toolCall.name());
 
 		if (tool != null) {
-			if (!security.hasToolPermission(tool)) {
-				String reason = "Permission denied: you do not have access to tool '"
-					+ toolCall.name() + "'.";
+			ToolPermissionFilter filter = new ToolPermissionFilter(security);
+			if (!filter.test(tool)) {
+				String reason = filter.denialReason(tool);
 				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
 				_turnDeniedCallIds.add(toolCall.id());
 				return errorResult(toolCall, reason);
@@ -630,19 +631,8 @@ public class AgentLoop {
 			}
 		}
 
-		// Step 2+3: Mode gate + approval (only for registered tools with metadata)
+		// Step 2: Approval (only for registered tools with metadata)
 		if (tool != null) {
-			// System mode gate
-			if (tool.mode() == ToolMode.STRUCTURAL
-					&& security.executionMode() == ExecutionMode.PRODUCTION) {
-				String reason = "Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
-					+ "application state, which requires maintenance or development mode. "
-					+ "The system is currently in production mode.";
-				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
-				_turnDeniedCallIds.add(toolCall.id());
-				return errorResult(toolCall, reason);
-			}
-
 			// Approval check
 			// Check session memory first — skip approval if already approved for session
 			if (_sessionApprovedTools.contains(tool.name())) {
@@ -662,7 +652,7 @@ public class AgentLoop {
 				} else if (decision instanceof PermissionDecision.NeedsApproval needsApproval) {
 					Map<String, Object> parsedArgs;
 					try {
-						parsedArgs = ToolDispatcher.parseJson(toolCall.arguments());
+						parsedArgs = ToolCatalog.parseJson(toolCall.arguments());
 					} catch (IOException e) {
 						parsedArgs = Map.of();
 					}
@@ -832,17 +822,7 @@ public class AgentLoop {
 	 */
 	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
-		List<ToolSchema> filteredTools = _registry.toolSchemas(tool -> {
-			SecurityContext security = context.security();
-			if (!security.hasToolPermission(tool)) {
-				return false;
-			}
-			if (tool.mode() == ToolMode.STRUCTURAL
-					&& security.executionMode() == ExecutionMode.PRODUCTION) {
-				return false;
-			}
-			return true;
-		});
+		List<ToolSchema> filteredTools = _registry.toolSchemas(new ToolPermissionFilter(context.security()));
 
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),

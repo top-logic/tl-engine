@@ -26,7 +26,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
@@ -149,7 +149,7 @@ public class AgentFactory {
 
 		AgentParams coreConfig = buildConfig(agentObj);
 		LLMProvider provider = buildProvider(coreConfig.model());
-		ToolDispatcher registry = buildToolDispatcher(agentObj);
+		ToolCatalog registry = buildToolCatalog(agentObj);
 
 		validateToolCapability(name, coreConfig.model(), registry);
 
@@ -230,7 +230,7 @@ public class AgentFactory {
 
 		AgentParams config = buildConfig(agent);
 		LLMProvider provider = buildProvider(config.model());
-		ToolDispatcher registry = buildToolDispatcher(agent);
+		ToolCatalog registry = buildToolCatalog(agent);
 
 		int maxToolResultChars = resolveMaxToolResultChars(agent);
 
@@ -306,7 +306,7 @@ public class AgentFactory {
 	/**
 	 * Validates that the model supports tool calls if the agent has tools assigned.
 	 */
-	private void validateToolCapability(String agentName, String model, ToolDispatcher registry) {
+	private void validateToolCapability(String agentName, String model, ToolCatalog registry) {
 		if (registry.tools().isEmpty()) {
 			return;
 		}
@@ -420,7 +420,7 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Builds a {@link ToolDispatcher} containing the tools assigned
+	 * Builds a {@link ToolCatalog} containing the tools assigned
 	 * to the agent.
 	 *
 	 * <p>
@@ -428,9 +428,9 @@ public class AgentFactory {
 	 * {@link ToolRegistryService} and registers them in a core registry.
 	 * </p>
 	 */
-	ToolDispatcher buildToolDispatcher(Agent agent) {
-		ToolDispatcher registry =
-			new ToolDispatcher();
+	ToolCatalog buildToolCatalog(Agent agent) {
+		ToolCatalog registry =
+			new ToolCatalog();
 
 		Set<String> toolNames = agent.getTools();
 		if (toolNames != null && !toolNames.isEmpty()) {
@@ -442,7 +442,13 @@ public class AgentFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
-				registry.register(tool);
+				try {
+					registry.register(tool);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(
+						"Agent '" + agent.getName() + "': " + e.getMessage()
+						+ " (qualified source: '" + toolName + "')", e);
+				}
 			}
 		}
 

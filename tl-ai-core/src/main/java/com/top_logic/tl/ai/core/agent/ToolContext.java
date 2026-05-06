@@ -9,6 +9,8 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.core.tools.ToolExecutor;
 
@@ -185,6 +187,7 @@ public class ToolContext implements ToolExecutionContext {
 	 * <p>Tools can check {@link CancellationToken#isCancelled()} periodically or call
 	 * {@link CancellationToken#checkCancelled()} to throw if the run was cancelled.</p>
 	 */
+	@Override
 	public CancellationToken cancellationToken() {
 		return _cancellationToken;
 	}
@@ -195,6 +198,7 @@ public class ToolContext implements ToolExecutionContext {
 	 * <p>Tools call {@link ProgressReporter#progress(String)} to report intermediate status
 	 * during long-running operations.</p>
 	 */
+	@Override
 	public ProgressReporter progressReporter() {
 		return _progressReporter;
 	}

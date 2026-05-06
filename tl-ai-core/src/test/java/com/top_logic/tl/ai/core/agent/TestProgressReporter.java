@@ -10,6 +10,8 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.tool.api.ProgressReporter;
+
 /**
  * Tests for {@link ProgressReporter}.
  */

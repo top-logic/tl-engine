@@ -24,7 +24,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -87,7 +87,7 @@ public class VisualAgentLoopTest extends TestCase {
 				new TextContent("I couldn't convert the temperature because the calculator "),
 				new TextContent("was unavailable, but 20°C is about 68°F.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "get_weather"; }
 			@Override public String description() { return "Gets the current weather for a city"; }
@@ -145,7 +145,7 @@ public class VisualAgentLoopTest extends TestCase {
 			"Returns the current server time in ISO-8601 format.",
 			"{\"type\":\"object\",\"properties\":{}}");
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "get_current_time"; }
 			@Override public String description() { return "Returns the current server time in ISO-8601 format."; }

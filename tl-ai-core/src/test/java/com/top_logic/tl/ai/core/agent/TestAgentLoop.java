@@ -37,7 +37,8 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -74,8 +75,8 @@ public class TestAgentLoop extends TestCase {
 	/**
 	 * Creates a frozen empty tool registry.
 	 */
-	private static ToolDispatcher emptyRegistry() {
-		ToolDispatcher r = new ToolDispatcher();
+	private static ToolCatalog emptyRegistry() {
+		ToolCatalog r = new ToolCatalog();
 		r.freeze();
 		return r;
 	}
@@ -83,8 +84,8 @@ public class TestAgentLoop extends TestCase {
 	/**
 	 * Creates a frozen registry with a single echo tool.
 	 */
-	private static ToolDispatcher echoRegistry(String name, ToolSchema schema) {
-		ToolDispatcher r = new ToolDispatcher();
+	private static ToolCatalog echoRegistry(String name, ToolSchema schema) {
+		ToolCatalog r = new ToolCatalog();
 		r.register(readTool(name, schema));
 		r.freeze();
 		return r;
@@ -167,7 +168,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("The answer is 4.")));
 
-		ToolDispatcher registry = echoRegistry("calculate", calcSpec);
+		ToolCatalog registry = echoRegistry("calculate", calcSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
@@ -197,7 +198,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(tc1, tc2),
 			List.of(new TextContent("Both files read.")));
 
-		ToolDispatcher registry = echoRegistry("read_file", readSpec);
+		ToolCatalog registry = echoRegistry("read_file", readSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
@@ -227,7 +228,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(new ToolCall("tc2", "do_thing", "{}")),
 			List.of(new ToolCall("tc3", "do_thing", "{}")));
 
-		ToolDispatcher registry = echoRegistry("do_thing", toolSpec);
+		ToolCatalog registry = echoRegistry("do_thing", toolSpec);
 
 		AgentLoop loop = new AgentLoop(config(maxTurns), provider, registry);
 		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
@@ -273,7 +274,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("The tool failed, but I recovered.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "risky_tool"; }
 			@Override public String description() { return "Might fail"; }
@@ -309,7 +310,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Done.")));
 
-		ToolDispatcher registry = echoRegistry("my_tool", toolSpec);
+		ToolCatalog registry = echoRegistry("my_tool", toolSpec);
 
 		List<String> events = new ArrayList<>();
 
@@ -384,7 +385,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "bad_tool"; }
 			@Override public String description() { return "Fails"; }
@@ -425,7 +426,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = echoRegistry("tool", toolSpec);
+		ToolCatalog registry = echoRegistry("tool", toolSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
@@ -476,7 +477,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(tc1),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "tool"; }
 			@Override public String description() { return "T"; }
@@ -542,7 +543,7 @@ public class TestAgentLoop extends TestCase {
 			}
 		};
 
-		ToolDispatcher registry = echoRegistry("tool", toolSpec);
+		ToolCatalog registry = echoRegistry("tool", toolSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), highUsageProvider,
 			registry, memory);
@@ -605,7 +606,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("I cannot create classes in production mode.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "create_class"; }
 			@Override public String description() { return "Creates a class"; }
@@ -647,7 +648,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Class created.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("create_class", toolSpec));
 		registry.freeze();
 
@@ -682,7 +683,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Found results.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(readTool("search", toolSpec));
 		registry.freeze();
 
@@ -709,7 +710,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK, I won't edit.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit_model", toolSpec));
 		registry.freeze();
 
@@ -746,7 +747,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit_model", toolSpec));
 		registry.freeze();
 
@@ -783,7 +784,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(tc2),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit", toolSpec));
 		registry.freeze();
 
@@ -816,7 +817,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit", toolSpec));
 		registry.freeze();
 
@@ -850,7 +851,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit", toolSpec));
 		registry.freeze();
 
@@ -987,7 +988,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("OK")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit", toolSpec));
 		registry.freeze();
 
@@ -1019,7 +1020,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit", toolSpec));
 		registry.freeze();
 
@@ -1078,7 +1079,7 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(readTool("search", new ToolSchema("search", "Searches", "{}")));
 		registry.register(globalTool("edit", new ToolSchema("edit", "Edits", "{}")));
 		registry.freeze();
@@ -1192,7 +1193,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit_model", toolSpec));
 		registry.freeze();
 
@@ -1232,7 +1233,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Found.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(readTool("search", toolSpec));
 		registry.freeze();
 
@@ -1267,7 +1268,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(tc1),
 			List.of(new TextContent("OK")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "edit_model"; }
 			@Override public String description() { return "Edits"; }
@@ -1319,7 +1320,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit_model", toolSpec));
 		registry.freeze();
 
@@ -1370,7 +1371,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Cannot edit.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(globalTool("edit_model", toolSpec));
 		registry.freeze();
 
@@ -1429,7 +1430,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(tcRead1, tcRead2, tcGlobal),
 			List.of(new TextContent("Done")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(readTool("read1", readSpec));
 		registry.register(readTool("read2", readSpec2));
 		registry.register(globalTool("write1", globalSpec));
@@ -1592,7 +1593,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("Done.")));
 
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new Tool() {
 			@Override public String name() { return "slow_tool"; }
 			@Override public String description() { return "Reports progress"; }
@@ -1643,7 +1644,7 @@ public class TestAgentLoop extends TestCase {
 			List.of(toolCall),
 			List.of(new TextContent("The answer is 4.")));
 
-		ToolDispatcher registry = echoRegistry("calculate", calcSpec);
+		ToolCatalog registry = echoRegistry("calculate", calcSpec);
 
 		AgentLoop loop = new AgentLoop(config(10), provider, registry);
 		loop.run(conv, capture);

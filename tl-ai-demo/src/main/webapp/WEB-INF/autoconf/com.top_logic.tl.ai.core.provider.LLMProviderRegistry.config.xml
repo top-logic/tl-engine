@@ -12,18 +12,18 @@
 			>
 				<providers>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-						api-key="Ql3IvVZMxQvCO4FDkR8HjcM5iNiK4sJfek8OsvEFQEch-p7bTrJGwCY3k8MuqG9rnwAngul6zznk10A1QcD9_LGZPxU00zNqW6ZiJF42_qznpx2k69LuaXPFBhEwNmc-I30r_fnvfK0jRbaT_JbhuEGBlAS0UIWsdOF2iTkDCxh0Fc2s2RqmdCRU4g-ulOtrB1vCC6lTeX_CA8cTFyhC7YH5H7bw3YTiqIygKymUiM3nIyCb"
+						api-key="CL_e8sHh4dMO1xvGiWfRaT7fi1afDh5tizvBB3AyAjyjibqWiNOCwxteTur6JvHoTErYYhn0eK8O9aoGUvM4c8BVw_ae1JKd8fmGTCCQtUrXnmGzCfv9WEzgm8is5BMeBctrDgPLSb_YiVnMbxzfJFnhEuektfEg6PZRXVzqniJ_jYN8JyJjEUHYZUgBUcAu7FebtwHPcTfvvY2gQBjpU4d9wWwD5_pmen1xDO01qlpp4KRn"
 						models=""
 						name="openai"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key="ZTbeC1Fse8yrdJYycKJ3pQz4kSZPIgXS4EujsEegbKeh05yZeff7c2ekCGFW7bC_NuSZhuFYO6PTyzzle55cQlrVKYTAcGrBZhPfxroJB_u6C0NCNf1BWn3Fh1tloztNP2Uy_xi-0FvZSoqKx-DBu2KeeY2oErD-fRiADg"
+						api-key="csc3WhdVjqoT_99g1_7WfdEy8oWaloPEaOPojcGW_15y8LRyvvk0Cz37iFj84d57Od1bwKE4-_6UAt-qmZxnPYgP_rX6D16EegnqqAOY47WlLzicQ4GuLl9Nnr7DM0CNSZJLPfH8f__ivVVcvGzeW0v1x3YyE7z5pbfJ2Q"
 						base-url="https://api.anthropic.com"
-						models=""
+						models="claude-sonnet-4-6,claude-opus-4-6,claude-opus-4-7,claude-haiku-4-5-20251001"
 						name="anthropic"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
-						api-key="9vkd0s7tGykpz3Te7It6-bo83bpbvORAUKPwEDVMi96aTJKpKz-PPdemWE85ugO4"
+						api-key="2it9ePLZ2RZQ6S6HmHUdegMCLEvienZlt5kckxWwk1oZmxzt9m577UwzuUX_oqZX"
 						models=""
 						name="mistral"
 					/>
@@ -34,22 +34,7 @@
 					/>
 				</providers>
 				<model-catalog>
-					<llm-configuration>
-						<model name="o4-mini"
-							attachment="true"
-							context-window="200000"
-							knowledge-cutoff="2024-05"
-							last-updated="2025-04-16"
-							max-output="100000"
-							open-weights="false"
-							reasoning="true"
-							release-date="2025-04-16"
-							status=""
-							structured-output="true"
-							temperature="false"
-							tool-call="true"
-						/>
-					</llm-configuration>
+					<llm-configuration/>
 					<model-overrides/>
 				</model-catalog>
 			</instance>

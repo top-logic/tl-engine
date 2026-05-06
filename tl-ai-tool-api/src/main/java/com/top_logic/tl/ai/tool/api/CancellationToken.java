@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.agent;
+package com.top_logic.tl.ai.tool.api;
 
 import java.util.concurrent.CancellationException;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.CancellationException;
  *
  * <p>Thread-safe: the cancelled flag is volatile.</p>
  *
- * @see ToolContext#cancellationToken()
+ * @see ToolExecutionContext#cancellationToken()
  */
 public class CancellationToken {
 

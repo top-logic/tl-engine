@@ -36,6 +36,6 @@
 		resizable="${resizable}"
 		resizeMode="instant"
 	>
-		<component-resolvers><component-resolver>${pageTitle}<component-resolver></component-resolvers>
+		<component-resolvers><component-resolver>${pageTitle}</component-resolver></component-resolvers>
 	</layout>
 </config:template>

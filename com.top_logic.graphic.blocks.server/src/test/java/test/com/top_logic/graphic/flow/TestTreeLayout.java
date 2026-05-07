@@ -175,16 +175,27 @@ public class TestTreeLayout extends TestCase {
 	}
 
 	public void testGridFanout() throws IOException {
-		// 12 children directly under one root; with maxPerCol=4 this triggers a 4x3 grid.
-		// Some children carry their own small subtrees so the column widths are non-uniform.
+		// 12 children directly under one root; with childSplitThreshold=4 this triggers a 4x3
+		// column-wise grid. Some children carry their own small subtrees so the column widths are
+		// non-uniform.
 		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(
-			buildGridFanoutTree()));
+			buildGridFanoutTree(false)));
 		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout.svg");
 	}
 
-	private TreeLayout buildGridFanoutTree() {
+	public void testGridFanoutRowWise() throws IOException {
+		// 12 children directly under one root; childSplitThreshold=3 with rowWise=true splits the
+		// children row-major over 3 sub-columns and routes all subtrees into a single post-grid
+		// column behind one shared bus.
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(
+			buildGridFanoutTree(true)));
+		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise.svg");
+	}
+
+	private TreeLayout buildGridFanoutTree(boolean rowWise) {
 		TreeLayout tree = TreeLayout.create()
-			.setMaxPerCol(4)
+			.setChildSplitThreshold(rowWise ? 3 : 4)
+			.setRowWise(rowWise)
 			.setBridgeGapY(20);
 
 		Box root = node("Root");

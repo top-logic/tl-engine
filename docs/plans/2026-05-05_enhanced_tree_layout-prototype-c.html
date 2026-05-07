@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>TreeLayout — Row-wise Variante (vertikal gestaucht)</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 16px; color: #222; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  h2 { font-size: 15px; margin: 0; }
+  .controls { display: flex; gap: 16px; align-items: center; padding: 8px 0 16px; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+  .controls label { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .panel { border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: #fafafa; overflow: auto; }
+  .panel header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .panel header .meta { font-size: 12px; color: #666; }
+  .panel .desc { font-size: 12px; color: #555; margin: 4px 0 8px; line-height: 1.4; }
+  svg { display: block; background: #fff; border: 1px dashed #ddd; }
+  .node rect { fill: #cfe2ff; stroke: #2c5282; stroke-width: 1; }
+  .node.root rect { fill: #ffe7b8; stroke: #a05a00; }
+  .node text { font: 12px monospace; fill: #1a1a1a; }
+  .edge { stroke: #444; stroke-width: 1; fill: none; }
+  .footnote { font-size: 12px; color: #555; margin-top: 16px; line-height: 1.5; }
+  code { background: #eee; padding: 1px 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>TreeLayout — Reihen-Sub-Grid (vertikal gestaucht) vs. aktuelle Spalten-Sub-Grid-Variante</h1>
+<div class="controls">
+  <label>Beispielbaum:
+    <select id="treeSel">
+      <option value="wide">A · 12 Kinder, Subtrees nur in Sub-Spalte 1 und 2 (C=3)</option>
+      <option value="wideDeep">B · Subtrees in Sub-Spalte 1 (C=3), tiefer</option>
+      <option value="mixed">C · Gemischt (Fan-out + Asymmetrie)</option>
+      <option value="leaves">D · Nur Blatt-Kinder (16 Stück)</option>
+    </select>
+  </label>
+  <label>maxPerCol (Variante 1): <input id="maxPerCol" type="number" min="2" max="12" value="4" style="width:60px"></label>
+  <label>cols (Variante 2): <input id="cols" type="number" min="2" max="6" value="3" style="width:60px"></label>
+  <label>parentAlign: <input id="parentAlign" type="number" min="0" max="1" step="0.1" value="0.5" style="width:60px"></label>
+</div>
+
+<div class="panels">
+  <div class="panel" id="p1">
+    <header><h2>1 · Spalten-Sub-Grid (aktueller Algorithmus)</h2><span class="meta"></span></header>
+    <div class="desc">
+      Bei N&nbsp;&gt;&nbsp;<code>maxPerCol</code>: <code>R = maxPerCol</code> Kinder pro Sub-Spalte, <code>C = ⌈N/R⌉</code> Sub-Spalten, <em>spalten-major</em> verteilt. Jede Sub-Spalte hat einen eigenen Bus; eine waagerechte Bottom-Brücke verbindet die Folge-Spalten-Busse mit dem Primär-Bus.
+      <br><strong>Problem:</strong> Hat ein Kind in Sub-Spalte&nbsp;0 einen eigenen Subtree, liegt dieser <em>links</em> von Sub-Spalte&nbsp;1. Damit ist die X-Koordinate der Folge-Spalten nicht mehr <em>Eltern-Tiefe&nbsp;+&nbsp;1</em>, sondern verschoben — die Korrespondenz „Knoten-Tiefe = X-Position" geht für hohen Fan-out verloren.
+    </div>
+    <div class="canvas"></div>
+  </div>
+  <div class="panel" id="p2">
+    <header><h2>2 · Reihen-Sub-Grid mit Subtrees in der Folgespalte (Vorschlag)</h2><span class="meta"></span></header>
+    <div class="desc">
+      Bei N&nbsp;&gt;&nbsp;Schwelle: Kind&nbsp;<em>i</em> landet in Sub-Spalte <code>i&nbsp;mod&nbsp;C</code> und Sub-Zeile <code>⌊i/C⌋</code> (zeilen-major). Das Sub-Grid trägt <strong>nur direkte Kinder</strong>; alle Sub-Spalten sind uniform NODE_W breit. Hat ein Sub-Grid-Kind selbst Nachfahren, werden diese ab der Folgespalte <code>postGridX</code> gezeichnet — Tiefe-2-Knoten liegen also für <em>alle</em> Sub-Grid-Kinder bei derselben X-Position, Tiefe-3-Knoten weiter rechts usw. Der Bus zu den Subtree-Knoten sitzt direkt vor <code>postGridX</code>; die Anbindung von einem Sub-Grid-Kind an seine Nachfahren ist eine lange waagerechte Linie, die das Sub-Grid durchquert und kurz vor <code>postGridX</code> abbiegt. Es gibt genau <strong>einen</strong> Eltern-Bus links der Sub-Spalten; die Stub-Längen wiederholen sich pro Reihe (kurz→mittel→lang→kurz→…).
+      <br><strong>Vorteil:</strong> Tiefe&nbsp;↔&nbsp;X bleibt ab Tiefe&nbsp;2 erhalten, unabhängig davon, in welcher Sub-Spalte ein Subtree-tragendes Kind liegt.
+    </div>
+    <div class="canvas"></div>
+  </div>
+</div>
+
+<div class="footnote">
+  Box: 70 × 28&nbsp;px · gapX = 50 · sibblingGapY = 8 · subtreeGapY = 22.<br>
+  <strong>Verteilung (Variante 2):</strong> Kind&nbsp;<em>i</em> → Sub-Spalte = <code>i&nbsp;mod&nbsp;C</code>, Sub-Zeile = <code>⌊i/C⌋</code>. Sub-Spalten sind uniform NODE_W breit; <code>postGridX&nbsp;=&nbsp;col[C-1].x&nbsp;+&nbsp;NODE_W&nbsp;+&nbsp;gapX</code>. Y-Stacking ist bbox-basiert (gestaucht für Blatt-Kinder, expandiert nur dort wo der Subtree mehr Platz braucht), so dass die Subtree-Knoten zweier benachbarter Sub-Grid-Kinder y-disjunkt bleiben und die Anbindung horizontal sein kann.<br>
+  <strong>Namensvorschlag</strong> für den Schwellwert in Variante 2: statt <code>maxPerCol</code> z.&nbsp;B. <code>fanoutCols</code>, <code>subGridCols</code> oder <code>rowSpan</code> (Anzahl Sub-Spalten, in die der Fan-out aufgeteilt wird).
+</div>
+
+<script>
+//// ============= Konfig =============
+const NODE_W = 70, NODE_H = 28;
+const GAP_X = 50;
+const SIB_GAP_Y = 8;
+const SUB_GAP_Y = 22;
+const FEEDER_GAP = 14;
+const PADDING = 16;
+
+//// ============= Beispielbäume =============
+const N = (id, ...children) => ({ id, children });
+
+function tree_wide() {
+  // Subtrees in Sub-Spalten 1, 2(C=3) bzw. 1, 0(C=2). A3 hat 2 Kinder, damit zwei
+  // aufeinanderfolgende Subtree-Träger (A2, A3) in benachbarten Reihen Bus-Bereiche erzeugen,
+  // die ohne adaptiven Step mit dem A5-Bus überlappen würden.
+  return N('P',
+    N('A1'),                                          // i=0 → col 0(C=2/3)
+    N('A2', N('A2a'), N('A2b')),                      // i=1 → col 1, 2-Kind-Subtree
+    N('A3', N('A3a'), N('A3b')),                      // i=2 → col 0(C=2)/2(C=3), 2-Kind-Subtree
+    N('A4'),                                          // i=3
+    N('A5', N('A5a'), N('A5b'), N('A5c')),            // i=4 → 3-Kind-Subtree
+    N('A6'),                                          // i=5
+    N('A7'),                                          // i=6
+    N('A8'),                                          // i=7
+    N('A9'),                                          // i=8
+    N('A10'),
+    N('A11'),
+    N('A12')
+  );
+}
+function tree_wideDeep() {
+  // C=3: Subtree-Träger sind A2 (col 1), A5 (col 1), A8 (col 1) — alle nicht in col 0.
+  return N('P',
+    N('A1'),
+    N('A2', N('A2a', N('A2a1'), N('A2a2')), N('A2b')),
+    N('A3'),
+    N('A4'),
+    N('A5', N('A5a', N('A5a1'))),
+    N('A6'),
+    N('A7'),
+    N('A8', N('A8a'), N('A8b'), N('A8c')),
+    N('A9'),
+    N('A10'),
+    N('A11'),
+    N('A12')
+  );
+}
+function tree_mixed() {
+  return N('R',
+    N('X',
+      N('X1', N('X1a'), N('X1b')),
+      N('X2'),
+      N('X3', N('X3a')),
+      N('X4'),
+      N('X5'),
+      N('X6'),
+      N('X7'),
+      N('X8')
+    ),
+    N('Y',
+      N('Y1', N('Y1a'), N('Y1b')),
+      N('Y2'),
+      N('Y3', N('Y3a'))
+    ),
+    N('Z')
+  );
+}
+function tree_leaves() {
+  const root = N('P');
+  for (let i = 1; i <= 16; i++) root.children.push(N('L' + i));
+  return root;
+}
+
+const TREES = { wide: tree_wide, wideDeep: tree_wideDeep, mixed: tree_mixed, leaves: tree_leaves };
+
+//// ============= Hilfsfunktionen =============
+function clone(node) {
+  return { id: node.id, children: node.children.map(clone) };
+}
+function forEach(node, fn) { fn(node); node.children.forEach(c => forEach(c, fn)); }
+function shiftSubtree(n, dx, dy) {
+  n._x += dx; n._y += dy;
+  if (n._busXOverride !== undefined) n._busXOverride += dx;
+  const gi = n._gridInfo;
+  if (gi) {
+    if (gi.colX) gi.colX = gi.colX.map(x => x + dx);
+    if (gi.busX) {
+      if (Array.isArray(gi.busX)) gi.busX = gi.busX.map(x => x + dx);
+      else gi.busX += dx;
+    }
+    if (gi.postGridX !== undefined) gi.postGridX += dx;
+    if (gi.childBusX !== undefined) gi.childBusX += dx;
+    if (gi.bridgeY !== undefined) gi.bridgeY += dy;
+  }
+  n.children.forEach(c => shiftSubtree(c, dx, dy));
+}
+
+//// ============= Layout-Engine (bbox-basiert) =============
+function layoutFlex(root, opts) {
+  const { mode, maxPerCol, cols, parentAlign } = opts;
+
+  function layout(node) {
+    if (node.children.length === 0) {
+      node._x = 0; node._y = 0;
+      node._bboxW = NODE_W; node._bboxH = NODE_H;
+      return;
+    }
+    node.children.forEach(layout);
+
+    const M = node.children.length;
+    if (mode === 'colGrid' && M > maxPerCol) {
+      packGridColumnWise(node, maxPerCol);
+    } else if (mode === 'rowWise' && M > cols) {
+      packGridRowWise(node, cols);
+    } else {
+      packLinear(node);
+    }
+    normalize(node);
+  }
+
+  function packLinear(node) {
+    const childX = NODE_W + GAP_X;
+    let curY = 0;
+    for (const ch of node.children) {
+      shiftSubtree(ch, childX - 0, curY - 0);
+      curY += ch._bboxH + SIB_GAP_Y;
+    }
+    centerParent(node, node.children[0], node.children[node.children.length - 1]);
+  }
+
+  // ---- Variante 1: Spalten-major Sub-Grid (current) ----
+  function packGridColumnWise(node, R) {
+    const M = node.children.length;
+    R = Math.min(M, R);
+    const C = Math.ceil(M / R);
+
+    const cols = Array.from({ length: C }, () => []);
+    for (let i = 0; i < M; i++) cols[Math.floor(i / R)].push(node.children[i]);
+
+    const colW = cols.map(col => Math.max(...col.map(ch => ch._bboxW)));
+    const childOriginX = NODE_W + GAP_X;
+    const colX = [];
+    let cx = childOriginX;
+    for (let c = 0; c < C; c++) { colX.push(cx); cx += colW[c] + GAP_X; }
+    const busX = colX.map(x => x - GAP_X / 2);
+
+    const colBottomY = [];
+    for (let c = 0; c < C; c++) {
+      let curY = 0;
+      for (const ch of cols[c]) {
+        shiftSubtree(ch, colX[c] - 0, curY - 0);
+        curY += ch._bboxH + SIB_GAP_Y;
+      }
+      colBottomY.push(curY - SIB_GAP_Y);
+    }
+    const bridgeY = Math.max(...colBottomY) + FEEDER_GAP;
+
+    centerParent(node, cols[0][0], cols[0][cols[0].length - 1]);
+
+    node._gridInfo = { kind: 'colGrid', C, cols, colX, colW, busX, bridgeY };
+  }
+
+  // ---- Variante 2: Reihen-Sub-Grid mit Subtrees in Folgespalte ----
+  function packGridRowWise(node, C) {
+    const M = node.children.length;
+    C = Math.min(M, C);
+
+    // Direktes Row-Major: Kind i → Sub-Spalte = i mod C, Sub-Zeile = ⌊i/C⌋.
+    const childCol = new Array(M);
+    for (let i = 0; i < M; i++) childCol[i] = i % C;
+
+    // Uniformes Sub-Grid: jede Sub-Spalte ist nur NODE_W breit, weil dort ausschließlich der
+    // direkte Kindknoten sitzt — der ganze Subtree wird gleich nach postGridX umgeleitet.
+    const colW = new Array(C).fill(NODE_W);
+
+    // X-Positionen: Eltern-Bus links, dann C uniforme Sub-Spalten, dann postGridX für die
+    // Subtrees aller Sub-Grid-Kinder. Damit liegen Tiefe-2-Knoten alle bei derselben X (unabhängig
+    // davon, in welcher Sub-Spalte ihr Eltern-Sub-Grid-Kind sitzt), und Tiefe-3-Knoten weiter
+    // rechts → die Korrespondenz Tiefe ↔ X bleibt ab Tiefe 2 erhalten.
+    const busX = NODE_W + GAP_X / 2;
+    const colX = new Array(C);
+    colX[0] = busX + GAP_X / 2;
+    for (let c = 1; c < C; c++) {
+      colX[c] = colX[c - 1] + colW[c - 1] + GAP_X;
+    }
+    const postGridX = colX[C - 1] + colW[C - 1] + GAP_X;
+    // Bus für die Kinder eines Sub-Grid-Knotens sitzt direkt vor postGridX (außerhalb des
+    // Sub-Grids), so dass die Anbindung das Sub-Grid waagerecht durchquert und erst kurz vor
+    // postGridX vertikal abbiegt.
+    const childBusX = postGridX - GAP_X / 2;
+
+    // Adaptiver Y-Stack im Sub-Grid: Standardschritt = stepMin = NODE_H/2 + sibGapY (engstmögliche
+    // Stub-Distanz zu Boxen in vorherigen Sub-Spalten). Drei Constraints heben yi ggf. an:
+    //   (a) lastChildY + stepMin       — Stub-Clearance zum vorigen Kind
+    //   (b) prevColY[c] + colStep      — Box-Clearance zum letzten Kind in derselben Sub-Spalte
+    //   (c) prevBusBottom + sibGap − NODE_H/2 (nur für Subtree-Träger) — verhindert, dass das
+    //       Bus-Top des aktuellen Kindes (childBusX, midY) in den Bus-Bereich eines vorherigen
+    //       Subtree-Trägers reinragt → keine Bus-Überschneidung am gemeinsamen childBusX.
+    const stepMin = NODE_H / 2 + SIB_GAP_Y;
+    const colStep = NODE_H + SIB_GAP_Y;
+    let curYPost = 0;
+    let lastChildY = -stepMin; // so dass i=0 bei y=0 landet
+    let prevBusBottom = -Infinity;
+    const prevColY = new Array(C).fill(-Infinity);
+    for (let i = 0; i < M; i++) {
+      const ch = node.children[i];
+      const c = childCol[i];
+
+      let yi = lastChildY + stepMin;
+      yi = Math.max(yi, prevColY[c] + colStep);
+      if (ch.children.length > 0) {
+        yi = Math.max(yi, prevBusBottom + SIB_GAP_Y - NODE_H / 2);
+      }
+
+      // 1. Sub-Grid-Position: ch-Box an (colX[c], yi). Subtree wandert zunächst mit.
+      const dxAll = colX[c] - ch._x;
+      const dyAll = yi - ch._y;
+      shiftSubtree(ch, dxAll, dyAll);
+
+      // 2. Falls ch Nachfahren hat: diese unabhängig auf den Post-Grid-Anker (postGridX, curYPost)
+      // umsetzen. Der erste Enkel landet bei (postGridX, curYPost), die übrigen behalten ihre
+      // relative Lage zum ersten Enkel (vom rekursiven Layout). Anbindung wird damit ein L:
+      // waagerechter Stem auf ch.midY → vertikaler Bus auf den Subtree-Bereich.
+      if (ch.children.length > 0) {
+        const grandFirst = ch.children[0];
+        const dxDesc = postGridX - grandFirst._x;
+        const dyDesc = curYPost - grandFirst._y;
+        // Wir verschieben das gesamte ch-Subtree per shiftSubtree — das nimmt auch ch's eigenes
+        // _gridInfo (busX/colX/postGridX/childBusX) mit, falls ch selbst high-fan-out ist und
+        // intern ein verschachteltes Sub-Grid aufgebaut hat. Anschließend ch alleine wieder
+        // zurückrücken, damit ch im äußeren Sub-Grid-Slot bleibt; sein _gridInfo zeigt nun aber
+        // korrekt auf die neue Post-Grid-Position seiner Kinder (Bus rechts neben dem äußeren
+        // Sub-Grid statt mitten im Spalt zwischen zwei äußeren Sub-Spalten).
+        shiftSubtree(ch, dxDesc, dyDesc);
+        ch._x -= dxDesc;
+        ch._y -= dyDesc;
+        // Bus für ch direkt vor postGridX, damit der Stem horizontal das Sub-Grid durchquert.
+        ch._busXOverride = childBusX;
+
+        // Bus-Bottom dieses Eltern-Kind-Bündels am gemeinsamen childBusX bestimmen. Bus reicht
+        // von min(ch.midY, erster Enkel.midY) bis max(ch.midY, letzter Enkel.midY). Erster Enkel
+        // sitzt nach dem dyDesc-Shift bei curYPost (Top-Y), letzter Enkel bei curYPost + bbox − h.
+        const iMidY = yi + NODE_H / 2;
+        const subtreeLastMid = curYPost + ch._bboxH - NODE_H / 2;
+        const busBot = Math.max(iMidY, subtreeLastMid);
+        prevBusBottom = Math.max(prevBusBottom, busBot);
+
+        // Post-Grid-Kontur um die Subtree-Bbox-Höhe weiterführen (Bbox eines packLinear-Subtrees
+        // entspricht der Y-Spanne der Nachfahren — ch selbst sitzt y-anker-bedingt darin).
+        curYPost += ch._bboxH + SIB_GAP_Y;
+      }
+
+      prevColY[c] = yi;
+      lastChildY = yi;
+    }
+
+    centerParent(node, node.children[0], node.children[M - 1]);
+
+    node._gridInfo = { kind: 'rowWise', C, busX, colX, colW, postGridX, childBusX, childCol };
+  }
+
+  function centerParent(node, first, last) {
+    const fy = first._y + NODE_H / 2;
+    const ly = last._y + NODE_H / 2;
+    const anchorY = fy + (ly - fy) * parentAlign;
+    node._x = 0;
+    node._y = anchorY - NODE_H / 2;
+  }
+
+  function normalize(node) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    forEach(node, n => {
+      minX = Math.min(minX, n._x);
+      minY = Math.min(minY, n._y);
+      maxX = Math.max(maxX, n._x + NODE_W);
+      maxY = Math.max(maxY, n._y + NODE_H);
+      if (n._gridInfo && n._gridInfo.bridgeY !== undefined) {
+        maxY = Math.max(maxY, n._gridInfo.bridgeY);
+      }
+    });
+    if (minX !== 0 || minY !== 0) shiftSubtree(node, -minX, -minY);
+    node._bboxW = maxX - minX;
+    node._bboxH = maxY - minY;
+  }
+
+  layout(root);
+  return { width: root._bboxW, height: root._bboxH };
+}
+
+//// ============= Renderer =============
+function svgEl(name, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+  if (attrs) for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function line(svg, x1, y1, x2, y2) {
+  svg.appendChild(svgEl('path', {
+    class: 'edge',
+    d: `M ${x1 + PADDING} ${y1 + PADDING} L ${x2 + PADDING} ${y2 + PADDING}`
+  }));
+}
+
+function render(canvas, root, info) {
+  canvas.innerHTML = '';
+  const W = info.width + 2 * PADDING;
+  const H = info.height + 2 * PADDING;
+  const svg = svgEl('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}` });
+
+  function drawConn(n) {
+    if (n.children.length === 0) return;
+    const gi = n._gridInfo;
+    if (gi && gi.kind === 'colGrid')      drawColGridConn(n, gi);
+    else if (gi && gi.kind === 'rowWise') drawRowWiseConn(n, gi);
+    else                                  drawLinearConn(n);
+    n.children.forEach(drawConn);
+  }
+
+  function drawLinearConn(n) {
+    const parentRight = n._x + NODE_W;
+    const parentMidY = n._y + NODE_H / 2;
+    let busX;
+    if (n._busXOverride !== undefined) {
+      busX = n._busXOverride;
+    } else {
+      let leftMostChildX = Infinity;
+      n.children.forEach(c => leftMostChildX = Math.min(leftMostChildX, c._x));
+      busX = (parentRight + leftMostChildX) / 2;
+    }
+    const ys = n.children.map(c => c._y + NODE_H / 2);
+    const minY = Math.min(parentMidY, ...ys);
+    const maxY = Math.max(parentMidY, ...ys);
+    line(svg, parentRight, parentMidY, busX, parentMidY);
+    line(svg, busX, minY, busX, maxY);
+    n.children.forEach(c => line(svg, busX, c._y + NODE_H / 2, c._x, c._y + NODE_H / 2));
+  }
+
+  function drawColGridConn(n, gi) {
+    const { C, cols, busX, bridgeY } = gi;
+    const parentRight = n._x + NODE_W;
+    const parentMidY = n._y + NODE_H / 2;
+
+    line(svg, parentRight, parentMidY, busX[0], parentMidY);
+
+    const col0 = cols[0];
+    const col0FirstMidY = col0[0]._y + NODE_H / 2;
+    const busTop0 = Math.min(parentMidY, col0FirstMidY);
+    line(svg, busX[0], busTop0, busX[0], bridgeY);
+    for (const ch of col0) {
+      const my = ch._y + NODE_H / 2;
+      line(svg, busX[0], my, ch._x, my);
+    }
+    if (C > 1) line(svg, busX[0], bridgeY, busX[C - 1], bridgeY);
+    for (let c = 1; c < C; c++) {
+      const col = cols[c];
+      const firstMidY = col[0]._y + NODE_H / 2;
+      line(svg, busX[c], firstMidY, busX[c], bridgeY);
+      for (const ch of col) {
+        const my = ch._y + NODE_H / 2;
+        line(svg, busX[c], my, ch._x, my);
+      }
+    }
+  }
+
+  function drawRowWiseConn(n, gi) {
+    const { busX } = gi;
+    const parentRight = n._x + NODE_W;
+    const parentMidY = n._y + NODE_H / 2;
+    const childMidYs = n.children.map(c => c._y + NODE_H / 2);
+    const busTop = Math.min(parentMidY, ...childMidYs);
+    const busBot = Math.max(parentMidY, ...childMidYs);
+
+    // Eltern → Bus.
+    line(svg, parentRight, parentMidY, busX, parentMidY);
+    // Einziger vertikaler Bus.
+    line(svg, busX, busTop, busX, busBot);
+    // Stubs zu allen Kindern (Längen variieren je Sub-Spalte → Zickzackmuster).
+    for (const ch of n.children) {
+      const my = ch._y + NODE_H / 2;
+      line(svg, busX, my, ch._x, my);
+    }
+  }
+
+  drawConn(root);
+
+  function drawNode(n, isRoot) {
+    const g = svgEl('g', { class: 'node' + (isRoot ? ' root' : '') });
+    g.appendChild(svgEl('rect', {
+      x: n._x + PADDING, y: n._y + PADDING,
+      width: NODE_W, height: NODE_H, rx: 3
+    }));
+    const t = svgEl('text', {
+      x: n._x + NODE_W / 2 + PADDING,
+      y: n._y + NODE_H / 2 + 4 + PADDING,
+      'text-anchor': 'middle'
+    });
+    t.textContent = n.id;
+    g.appendChild(t);
+    svg.appendChild(g);
+    n.children.forEach(c => drawNode(c, false));
+  }
+  drawNode(root, true);
+
+  canvas.appendChild(svg);
+}
+
+//// ============= Steuerung =============
+function refresh() {
+  const treeKey = document.getElementById('treeSel').value;
+  const opts = {
+    maxPerCol: +document.getElementById('maxPerCol').value || 4,
+    cols:      +document.getElementById('cols').value      || 3,
+    parentAlign: +document.getElementById('parentAlign').value || 0.5,
+  };
+  const algos = [
+    { id: 'p1', fn: (r) => layoutFlex(r, { ...opts, mode: 'colGrid'  }) },
+    { id: 'p2', fn: (r) => layoutFlex(r, { ...opts, mode: 'rowWise'   }) },
+  ];
+  for (const a of algos) {
+    const root = clone(TREES[treeKey]());
+    const info = a.fn(root);
+    const panel = document.getElementById(a.id);
+    panel.querySelector('.meta').textContent =
+      `B × H = ${Math.round(info.width)} × ${Math.round(info.height)} px`;
+    render(panel.querySelector('.canvas'), root, info);
+  }
+}
+
+document.getElementById('treeSel').addEventListener('change', refresh);
+document.getElementById('maxPerCol').addEventListener('input', refresh);
+document.getElementById('cols').addEventListener('input', refresh);
+document.getElementById('parentAlign').addEventListener('input', refresh);
+refresh();
+</script>
+</body>
+</html>

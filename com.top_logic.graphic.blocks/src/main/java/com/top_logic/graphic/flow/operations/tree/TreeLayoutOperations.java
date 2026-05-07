@@ -56,7 +56,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		TreeRenderInfo renderInfo =
 			new TreeRenderInfo(
 				self().isCompact(), self().getGapX(), self().getSibblingGapY(), self().getSubtreeGapY(),
-				self().getParentAlign(), self().getParentOffset(), self().getMaxPerCol(), self().getBridgeGapY(),
+				self().getParentAlign(), self().getParentOffset(), self().getChildSplitThreshold(),
+				self().isRowWise(), self().getBridgeGapY(),
 				self().getNodes(), self().getConnections());
 		self().setRenderInfo(renderInfo);
 
@@ -76,10 +77,15 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		TreeRenderInfo info = treeInfo();
 
 		// Note: The tree nodes have already their size assigned during the layout computation.
-		// Bar position. For grid-mode parents the bar is the sub-column bus of the child; for
-		// linear parents the bar sits gapX/2 to the right of the parent's right edge — the entry
-		// stub may be longer than gapX/2 to make room for edge decorations, but the parent-side
-		// gap stays constant.
+		// Bar position resolution (priority order):
+		// 1. If the parent has a sub-grid GridInfo, use the bar X for the specific child (per
+		// sub-column for column-wise, single shared main bus for row-wise).
+		// 2. Else if the parent has a bus-X override (set when it is a sub-grid child of a row-wise
+		// parent and has its own subtree → its bus must be routed at the surrounding parent's
+		// childBusX, not in the middle of its own sub-grid slot).
+		// 3. Else the natural linear bar sits gapX/2 to the right of the parent's right edge —
+		// the entry stub may be longer than gapX/2 to make room for edge decorations, but the
+		// parent-side gap stays constant.
 		for (TreeConnection connection : self().getConnections()) {
 			TreeNode parentNode = info.getNodeForAnchor(connection.getParent().getAnchor());
 			TreeNode childNode = info.getNodeForAnchor(connection.getChild().getAnchor());
@@ -87,8 +93,9 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			GridInfo gi = info.getGridInfo(parentNode);
 			double barX;
 			if (gi != null) {
-				int c = gi.getColIdx(childNode);
-				barX = gi.getBusX()[c];
+				barX = gi.getBarPositionFor(childNode);
+			} else if (parentNode.hasBusXOverride()) {
+				barX = parentNode.getBusXOverride();
 			} else {
 				barX = parentNode.getX() + parentNode.getBox().getWidth() + self().getGapX() / 2;
 			}
@@ -126,11 +133,25 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	}
 
 	/**
-	 * Draws the central bus structure for a grid-mode parent: the parent → primary bus segment,
-	 * the primary bus down to the bottom bridge, the bottom bridge across all sub-column buses,
-	 * and each follow-up sub-column's vertical bus.
+	 * Dispatches to the kind-specific bus rendering for a sub-grid parent.
 	 */
 	default void drawGridBuses(SvgWriter out, TreeNode parent, GridInfo gi) {
+		switch (gi.getKind()) {
+			case COLUMN_WISE:
+				drawGridBusesColumnWise(out, parent, gi);
+				break;
+			case ROW_WISE:
+				drawGridBusesRowWise(out, parent, gi);
+				break;
+		}
+	}
+
+	/**
+	 * Draws the central bus structure for a column-wise sub-grid parent: the parent → primary
+	 * bus segment, the primary bus down to the bottom bridge, the bottom bridge across all
+	 * sub-column buses, and each follow-up sub-column's vertical bus.
+	 */
+	default void drawGridBusesColumnWise(SvgWriter out, TreeNode parent, GridInfo gi) {
 		Box parentAnchor = parent.getAnchor();
 		double parentRight = parent.getX() + parent.getBox().getWidth();
 		double parentMidY = parent.getY() + parentAnchor.getY() + 0.5 * parentAnchor.getHeight();
@@ -169,6 +190,47 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			out.moveToAbs(busX[c], firstMidY);
 			out.lineToVerticalAbs(bridgeY);
 		}
+		out.endData();
+		out.endPath();
+	}
+
+	/**
+	 * Draws the central bus structure for a row-wise sub-grid parent: parent → main bus segment,
+	 * a single vertical main bus that spans all direct children's anchor mid-Ys (plus the parent
+	 * mid-Y to ensure the parent stem touches the bus). The per-connection drawing
+	 * ({@code TreeConnection}) adds the entry stubs from the bus into each child.
+	 */
+	default void drawGridBusesRowWise(SvgWriter out, TreeNode parent, GridInfo gi) {
+		Box parentAnchor = parent.getAnchor();
+		double parentRight = parent.getX() + parent.getBox().getWidth();
+		double parentMidY = parent.getY() + parentAnchor.getY() + 0.5 * parentAnchor.getHeight();
+
+		double mainBusX = gi.getBusX()[0];
+
+		// Y range of the main bus: covers parent mid-Y and all direct children's anchor mid-Ys.
+		double busTop = parentMidY;
+		double busBot = parentMidY;
+		for (TreeNode child : parent.getChildren()) {
+			double midY = anchorMidY(child);
+			if (midY < busTop) {
+				busTop = midY;
+			}
+			if (midY > busBot) {
+				busBot = midY;
+			}
+		}
+
+		out.beginPath();
+		out.setStrokeWidth(self().getThickness());
+		out.setStroke(self().getStrokeStyle());
+		out.setFill("none");
+		out.beginData();
+		// Parent → main bus.
+		out.moveToAbs(parentRight, parentMidY);
+		out.lineToHorizontalAbs(mainBusX);
+		// Main bus vertical.
+		out.moveToAbs(mainBusX, busTop);
+		out.lineToVerticalAbs(busBot);
 		out.endData();
 		out.endPath();
 	}

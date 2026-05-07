@@ -36,8 +36,11 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	/** @see #getSubtreeGapY() */
 	String SUBTREE_GAP_Y__PROP = "subtreeGapY";
 
-	/** @see #getMaxPerCol() */
-	String MAX_PER_COL__PROP = "maxPerCol";
+	/** @see #getChildSplitThreshold() */
+	String CHILD_SPLIT_THRESHOLD__PROP = "childSplitThreshold";
+
+	/** @see #isRowWise() */
+	String ROW_WISE__PROP = "rowWise";
 
 	/** @see #getBridgeGapY() */
 	String BRIDGE_GAP_Y__PROP = "bridgeGapY";
@@ -126,27 +129,58 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	com.top_logic.graphic.flow.data.TreeLayout setSubtreeGapY(double value);
 
 	/**
-	 * Maximum number of children per column when a parent has high fan-out.
+	 * Threshold above which a parent's children are split into a 2D sub-grid instead of a single
+	 * vertical column.
 	 *
 	 * <p>If the number of children of some parent node exceeds this value, the children are
-	 * arranged in a 2D grid (multiple sub-columns) instead of a single vertical column. The grid
-	 * has at most {@code maxPerCol} children per sub-column. Each sub-column has its own vertical
-	 * bus; sub-columns starting at index 1 are connected to the primary bus via a horizontal
-	 * bottom-bridge.
+	 * arranged in a sub-grid. The exact layout depends on {@link #isRowWise()}:
+	 * <ul>
+	 * <li>Column-wise (default): At most {@code childSplitThreshold} children per sub-column,
+	 * fanning out into <code>C = ⌈M / childSplitThreshold⌉</code> sub-columns. Each sub-column
+	 * has its own vertical bus; follow-up buses are connected to the primary bus via a horizontal
+	 * bottom-bridge.</li>
+	 * <li>Row-wise (when {@link #isRowWise()}): Children are placed row-major into exactly
+	 * <code>childSplitThreshold</code> sub-columns, the sub-grid contains only the direct children,
+	 * subtrees of those direct children are rendered to the right of the sub-grid, and a single
+	 * bus connects all sub-grid children.</li>
+	 * </ul>
 	 *
-	 * <p>A value of {@code 0} disables grid mode (legacy behavior).
+	 * <p>A value of {@code 0} disables sub-grid mode (legacy behavior, single column per parent).
 	 */
-	int getMaxPerCol();
+	int getChildSplitThreshold();
 
 	/**
-	 * @see #getMaxPerCol()
+	 * @see #getChildSplitThreshold()
 	 */
-	com.top_logic.graphic.flow.data.TreeLayout setMaxPerCol(int value);
+	com.top_logic.graphic.flow.data.TreeLayout setChildSplitThreshold(int value);
+
+	/**
+	 * Whether to use the row-wise sub-grid algorithm instead of the column-wise one.
+	 *
+	 * <p>The row-wise algorithm places only the direct children inside the sub-grid (in
+	 * <code>childSplitThreshold</code> sub-columns, row-major) and renders all sub-grid children's
+	 * subtrees in a single column to the right of the sub-grid (so depth↔X correspondence is kept
+	 * for descendants, regardless of which sub-column the direct child sits in). A single
+	 * vertical bus is routed just outside the sub-grid for both the parent→direct-children and
+	 * any sub-grid-child→subtree connections.
+	 *
+	 * <p>Sub-grid Y-positions are adaptively packed: a child's row is the tightest position
+	 * subject to (a) box clearance to the previous child in the same sub-column, (b) bus-stub
+	 * clearance to siblings in earlier sub-columns, (c) — for sub-grid children with subtrees —
+	 * non-overlap with the bus extent of any earlier subtree-bearing sibling.
+	 */
+	boolean isRowWise();
+
+	/**
+	 * @see #isRowWise()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setRowWise(boolean value);
 
 	/**
 	 * Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge that
-	 * connects all sub-grid columns. Only relevant if {@link #getMaxPerCol()} is set and triggers
-	 * grid mode.
+	 * connects all sub-grid columns. Only relevant in column-wise sub-grid mode (i.e. when
+		 * {@link #getChildSplitThreshold()} triggers sub-grid mode and {@link #isRowWise()} is
+		 * {@code false}).
 	 */
 	double getBridgeGapY();
 

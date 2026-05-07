@@ -28,6 +28,18 @@ class TreeNode {
 	private double _offsetY;
 
 	/**
+	 * X coordinate of an explicit bus override for this node's outgoing connections, or
+	 * {@link Double#NaN} if no override is set.
+	 *
+	 * <p>Used by the row-wise sub-grid: a sub-grid child whose own children are rendered to the
+	 * right of the surrounding sub-grid (at the parent's {@code postGridX}) has its bus routed at
+	 * the parent's {@code childBusX} rather than the natural mid-x between this node and its
+	 * children. Without the override the bus would land in the middle of the surrounding sub-grid
+	 * and clash with sibling sub-grid nodes.
+	 */
+	private double _busXOverride = Double.NaN;
+
+	/**
 	 * Creates a {@link TreeNode}.
 	 *
 	 * @param node
@@ -124,6 +136,30 @@ class TreeNode {
 	 */
 	public double getBottom() {
 		return getY() + getBox().getHeight();
+	}
+
+	/**
+	 * @see #getBusXOverride()
+	 */
+	public boolean hasBusXOverride() {
+		return !Double.isNaN(_busXOverride);
+	}
+
+	/**
+	 * X coordinate of an explicit bus override for this node's outgoing connections, or
+	 * {@link Double#NaN} if no override is set.
+	 *
+	 * @see #hasBusXOverride()
+	 */
+	public double getBusXOverride() {
+		return _busXOverride;
+	}
+
+	/**
+	 * @see #getBusXOverride()
+	 */
+	public void setBusXOverride(double busXOverride) {
+		_busXOverride = busXOverride;
 	}
 
 }

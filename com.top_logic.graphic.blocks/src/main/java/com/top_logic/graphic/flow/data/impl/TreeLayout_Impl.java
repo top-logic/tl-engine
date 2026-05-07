@@ -19,7 +19,9 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 
 	private double _subtreeGapY = 20;
 
-	private int _maxPerCol = 0;
+	private int _childSplitThreshold = 0;
+
+	private boolean _rowWise = false;
 
 	private double _bridgeGapY = 20;
 
@@ -194,21 +196,39 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	}
 
 	@Override
-	public final int getMaxPerCol() {
-		return _maxPerCol;
+	public final int getChildSplitThreshold() {
+		return _childSplitThreshold;
 	}
 
 	@Override
-	public com.top_logic.graphic.flow.data.TreeLayout setMaxPerCol(int value) {
-		internalSetMaxPerCol(value);
+	public com.top_logic.graphic.flow.data.TreeLayout setChildSplitThreshold(int value) {
+		internalSetChildSplitThreshold(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getMaxPerCol()} without chain call utility. */
-	protected final void internalSetMaxPerCol(int value) {
-		_listener.beforeSet(this, MAX_PER_COL__PROP, value);
-		_maxPerCol = value;
-		_listener.afterChanged(this, MAX_PER_COL__PROP);
+	/** Internal setter for {@link #getChildSplitThreshold()} without chain call utility. */
+	protected final void internalSetChildSplitThreshold(int value) {
+		_listener.beforeSet(this, CHILD_SPLIT_THRESHOLD__PROP, value);
+		_childSplitThreshold = value;
+		_listener.afterChanged(this, CHILD_SPLIT_THRESHOLD__PROP);
+	}
+
+	@Override
+	public final boolean isRowWise() {
+		return _rowWise;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setRowWise(boolean value) {
+		internalSetRowWise(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isRowWise()} without chain call utility. */
+	protected final void internalSetRowWise(boolean value) {
+		_listener.beforeSet(this, ROW_WISE__PROP, value);
+		_rowWise = value;
+		_listener.afterChanged(this, ROW_WISE__PROP);
 	}
 
 	@Override
@@ -375,7 +395,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			GAP_X__PROP, 
 			SIBBLING_GAP_Y__PROP, 
 			SUBTREE_GAP_Y__PROP, 
-			MAX_PER_COL__PROP, 
+			CHILD_SPLIT_THRESHOLD__PROP, 
+			ROW_WISE__PROP, 
 			BRIDGE_GAP_Y__PROP, 
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
@@ -416,7 +437,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case GAP_X__PROP: return getGapX();
 			case SIBBLING_GAP_Y__PROP: return getSibblingGapY();
 			case SUBTREE_GAP_Y__PROP: return getSubtreeGapY();
-			case MAX_PER_COL__PROP: return getMaxPerCol();
+			case CHILD_SPLIT_THRESHOLD__PROP: return getChildSplitThreshold();
+			case ROW_WISE__PROP: return isRowWise();
 			case BRIDGE_GAP_Y__PROP: return getBridgeGapY();
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case THICKNESS__PROP: return getThickness();
@@ -435,7 +457,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case GAP_X__PROP: internalSetGapX((double) value); break;
 			case SIBBLING_GAP_Y__PROP: internalSetSibblingGapY((double) value); break;
 			case SUBTREE_GAP_Y__PROP: internalSetSubtreeGapY((double) value); break;
-			case MAX_PER_COL__PROP: internalSetMaxPerCol((int) value); break;
+			case CHILD_SPLIT_THRESHOLD__PROP: internalSetChildSplitThreshold((int) value); break;
+			case ROW_WISE__PROP: internalSetRowWise((boolean) value); break;
 			case BRIDGE_GAP_Y__PROP: internalSetBridgeGapY((double) value); break;
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
@@ -461,8 +484,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 		out.value(getSibblingGapY());
 		out.name(SUBTREE_GAP_Y__PROP);
 		out.value(getSubtreeGapY());
-		out.name(MAX_PER_COL__PROP);
-		out.value(getMaxPerCol());
+		out.name(CHILD_SPLIT_THRESHOLD__PROP);
+		out.value(getChildSplitThreshold());
+		out.name(ROW_WISE__PROP);
+		out.value(isRowWise());
 		out.name(BRIDGE_GAP_Y__PROP);
 		out.value(getBridgeGapY());
 		out.name(STROKE_STYLE__PROP);
@@ -508,8 +533,12 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 				out.value(getSubtreeGapY());
 				break;
 			}
-			case MAX_PER_COL__PROP: {
-				out.value(getMaxPerCol());
+			case CHILD_SPLIT_THRESHOLD__PROP: {
+				out.value(getChildSplitThreshold());
+				break;
+			}
+			case ROW_WISE__PROP: {
+				out.value(isRowWise());
 				break;
 			}
 			case BRIDGE_GAP_Y__PROP: {
@@ -546,7 +575,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case GAP_X__PROP: setGapX(in.nextDouble()); break;
 			case SIBBLING_GAP_Y__PROP: setSibblingGapY(in.nextDouble()); break;
 			case SUBTREE_GAP_Y__PROP: setSubtreeGapY(in.nextDouble()); break;
-			case MAX_PER_COL__PROP: setMaxPerCol(in.nextInt()); break;
+			case CHILD_SPLIT_THRESHOLD__PROP: setChildSplitThreshold(in.nextInt()); break;
+			case ROW_WISE__PROP: setRowWise(in.nextBoolean()); break;
 			case BRIDGE_GAP_Y__PROP: setBridgeGapY(in.nextDouble()); break;
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case THICKNESS__PROP: setThickness(in.nextDouble()); break;

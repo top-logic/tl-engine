@@ -11,7 +11,7 @@ import java.util.Map;
 import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -276,7 +276,7 @@ public class ChatSessionManager {
 	 * Creates a default {@link ConversationMemory} with summarization strategy.
 	 *
 	 * <p>
-	 * Uses the system's default model from {@link LLMProviderRegistry} for summarization.
+	 * Uses the system's default model from {@link LLMService} for summarization.
 	 * Falls back to truncation if no default model is configured or if the registry is not
 	 * available.
 	 * </p>
@@ -288,7 +288,7 @@ public class ChatSessionManager {
 	}
 
 	private static int resolveContextWindow() {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
 			return DEFAULT_CONTEXT_WINDOW_TOKENS;
 		}
@@ -304,9 +304,9 @@ public class ChatSessionManager {
 	}
 
 	private static CompactionStrategy createCompactionStrategy() {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
-			Logger.warn("LLMProviderRegistry not available, falling back to truncation.", ChatSessionManager.class);
+			Logger.warn("LLMService not available, falling back to truncation.", ChatSessionManager.class);
 			return new TruncatingStrategy();
 		}
 		String defaultModel = registry.getDefaultModel();

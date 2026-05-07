@@ -16,7 +16,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
 
 /**
  * {@link ListGeneratorAdaptor} providing explicitly configured AI model names as options.
@@ -27,7 +27,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
  * generator on the {@code model} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
- * @see LLMProviderRegistry#getConfiguredModelNames()
+ * @see LLMService#getConfiguredModelNames()
  */
 @InApp
 public class AllModelNamesGenerator extends ListGeneratorAdaptor {
@@ -49,7 +49,7 @@ public class AllModelNamesGenerator extends ListGeneratorAdaptor {
 
 	@Override
 	public List<?> generateList(EditContext editContext) {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
 			return Collections.emptyList();
 		}

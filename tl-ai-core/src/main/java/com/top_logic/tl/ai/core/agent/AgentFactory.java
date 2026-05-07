@@ -22,7 +22,7 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -38,7 +38,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * <p>
  * This is the primary entry point for constructing agents from model-based definitions
  * ({@code tl.ai.core:Agent} instances). It delegates provider creation to
- * {@link LLMProviderRegistry#buildProvider(String)} and tool resolution to the service-level
+ * {@link LLMService#buildProvider(String)} and tool resolution to the service-level
  * {@link ToolRegistryService}.
  * </p>
  *
@@ -77,18 +77,13 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Returns the name of the entry point agent (the agent with {@code entryPoint=true}).
+	 * Returns the name of the entry-point agent as configured in
+	 * {@link LLMService.ModelTuningConfig#getEntryPointAgent()}.
 	 *
 	 * @return the agent name
-	 * @throws IllegalStateException if no entry point agent is defined
 	 */
 	public String getEntryPointAgentName() {
-		for (AgentDefinition agent : AgentDefinitionQuery.getInstance().getAllAgents()) {
-			if (agent.entryPoint()) {
-				return agent.name();
-			}
-		}
-		throw new IllegalStateException("No entry point agent defined.");
+		return LLMService.getInstance().getEntryPointAgentName();
 	}
 
 	/**
@@ -147,7 +142,7 @@ public class AgentFactory {
 		}
 
 		AgentModelAssignment assignment =
-			LLMProviderRegistry.getInstance().resolveModelAssignment(agentDef.name());
+			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 
 		AgentParams coreConfig = buildConfig(agentDef, assignment);
 		LLMProvider provider = buildProvider(coreConfig.model());
@@ -231,7 +226,7 @@ public class AgentFactory {
 		}
 
 		AgentModelAssignment assignment =
-			LLMProviderRegistry.getInstance().resolveModelAssignment(agentDef.name());
+			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 
 		AgentParams config = buildConfig(agentDef, assignment);
 		LLMProvider provider = buildProvider(config.model());
@@ -247,7 +242,7 @@ public class AgentFactory {
 	 * {@link AgentModelAssignment}.
 	 */
 	AgentParams buildConfig(AgentDefinition agent, AgentModelAssignment assignment) {
-		LLMProviderRegistry llmRegistry = LLMProviderRegistry.getInstance();
+		LLMService llmRegistry = LLMService.getInstance();
 		String model = assignment.model();
 
 		ModelInfo modelInfo = llmRegistry.getModel(model);
@@ -308,7 +303,7 @@ public class AgentFactory {
 		if (registry.tools().isEmpty()) {
 			return;
 		}
-		LLMProviderRegistry llmRegistry = LLMProviderRegistry.getInstance();
+		LLMService llmRegistry = LLMService.getInstance();
 		if (llmRegistry == null) {
 			return;
 		}
@@ -406,13 +401,13 @@ public class AgentFactory {
 	 * Creates an {@link LLMProvider} for the given model name.
 	 *
 	 * <p>
-	 * Delegates to {@link LLMProviderRegistry#buildProvider(String)}.
+	 * Delegates to {@link LLMService#buildProvider(String)}.
 	 * </p>
 	 */
 	LLMProvider buildProvider(String modelName) {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
-			throw new IllegalStateException("LLMProviderRegistry is not available.");
+			throw new IllegalStateException("LLMService is not available.");
 		}
 		return registry.buildProvider(modelName);
 	}

@@ -39,7 +39,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
 import com.top_logic.tl.ai.core.model.impl.AgentBase;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.model.ModelService;
 
@@ -67,7 +67,7 @@ import com.top_logic.util.model.ModelService;
  * <p>{@link #setUp()} creates a fresh {@link Agent} named {@value #AGENT_NAME} in
  * the test KB with a minimal system prompt — no tools, no skills, no MCP servers — so
  * the test exercises only the agent loop + provider streaming. The model is resolved
- * via {@code LLMProviderRegistry} (default model). {@link #tearDown()} removes the
+ * via {@code LLMService} (default model). {@link #tearDown()} removes the
  * agent again. Real LLM calls are made — running this test consumes API credits.</p>
  *
  * @see AgentFactory
@@ -240,7 +240,7 @@ public class TestConcurrentAgents extends BasicTestCase {
 		BasicRuntimeModule<?>[] modules = {
 			ModelService.Module.INSTANCE,
 			LabelProviderService.Module.INSTANCE,
-			LLMProviderRegistry.Module.INSTANCE,
+			LLMService.Module.INSTANCE,
 			ToolRegistryService.Module.INSTANCE,
 		};
 		return KBSetup.getSingleKBTest(

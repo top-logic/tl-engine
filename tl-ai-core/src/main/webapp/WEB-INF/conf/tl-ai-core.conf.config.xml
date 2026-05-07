@@ -23,7 +23,7 @@
 			<instance>
 				<modules>
 					<!-- LLM Provider Registry for AI provider connections -->
-					<module key="com.top_logic.tl.ai.core.provider.LLMProviderRegistry$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.provider.LLMService$Module" value="true"/>
 					<!-- MCP Server Registry for external MCP connections -->
 					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
 					<!-- Agent Definition Service for config-defined agents and skills -->
@@ -887,7 +887,6 @@ If you cannot fill the Evidence section, you have not called enough tools.
 				</skills>
 				<agents>
 					<agent name="Orchestrator"
-						entry-point="true"
 						description=""
 						skills="taskManagement, promptModelEditor, promptModelExplorer"
 						delegations="TLScriptAgent, ModelEditor, ModelExplorer"

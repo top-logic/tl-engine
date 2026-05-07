@@ -13,10 +13,10 @@ import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
 
 /**
- * Configuration view for a single model's catalog metadata in the {@link LLMProviderRegistry}.
+ * Configuration view for a single model's catalog metadata in the {@link LLMService}.
  *
  * <p>
  * Populated automatically from the remote url's catalog on startup. All properties are

@@ -32,7 +32,7 @@ public class ModelToolCallConstraint extends ValueDependency<String> {
 			return;
 		}
 
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
 			return;
 		}

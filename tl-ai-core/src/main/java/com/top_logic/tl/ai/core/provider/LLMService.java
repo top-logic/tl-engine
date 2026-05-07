@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -43,38 +44,52 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
 
 /**
- * Registry of LLM provider connections.
+ * Central LLM service managing provider connections, model resolution, and model metadata.
  *
  * <p>
- * Manages provider configurations and creates {@link LLMProvider} instances for given model names.
+ * The service configuration is organized into three sections:
  * </p>
+ * <ol>
+ * <li><b>Providers</b> — connection details for each LLM provider (API keys, base URLs, model
+ * allowlists).</li>
+ * <li><b>Agent Model Tuning</b> — default model selection and per-agent model assignments with
+ * optional tuning parameters (temperature, max tokens, reasoning effort, etc.).</li>
+ * <li><b>Model Catalog</b> — read-only metadata about each model's capabilities and limits,
+ * fetched from the remote catalog on startup with optional manual overrides.</li>
+ * </ol>
  *
  * @see LLMProviderConfig
  * @see AgentFactory
  */
-public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegistry.Config<?>> {
+public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 	/**
-	 * Maps an agent name to a specific model with optional tuning parameters.
+	 * Per-agent model selection with optional tuning parameters.
+	 *
+	 * <p>
+	 * Maps an agent name to a specific model and allows overriding default parameters such as
+	 * temperature, max tokens, reasoning effort, and timeouts. Parameters left {@code null} inherit
+	 * catalog defaults.
+	 * </p>
 	 */
 	@DisplayOrder({
 		NamedConfigMandatory.NAME_ATTRIBUTE,
-		AgentModelConfig.MODEL,
-		AgentModelConfig.CONTEXT_WINDOW,
-		AgentModelConfig.MAX_TOKENS,
-		AgentModelConfig.MAX_TURNS,
-		AgentModelConfig.MAX_TOOL_RESULT_CHARS,
-		AgentModelConfig.TOOL_CHOICE,
-		AgentModelConfig.TIMEOUT_SECONDS,
-		AgentModelConfig.MAX_RETRIES,
-		AgentModelConfig.TEMPERATURE,
-		AgentModelConfig.TOP_P,
-		AgentModelConfig.THINKING_EFFORT,
-		AgentModelConfig.TOP_K,
-		AgentModelConfig.REASONING_EFFORT,
-		AgentModelConfig.REASONING_SUMMARY,
+		AgentModelTuning.MODEL,
+		AgentModelTuning.CONTEXT_WINDOW,
+		AgentModelTuning.MAX_TOKENS,
+		AgentModelTuning.MAX_TURNS,
+		AgentModelTuning.MAX_TOOL_RESULT_CHARS,
+		AgentModelTuning.TOOL_CHOICE,
+		AgentModelTuning.TIMEOUT_SECONDS,
+		AgentModelTuning.MAX_RETRIES,
+		AgentModelTuning.TEMPERATURE,
+		AgentModelTuning.TOP_P,
+		AgentModelTuning.THINKING_EFFORT,
+		AgentModelTuning.TOP_K,
+		AgentModelTuning.REASONING_EFFORT,
+		AgentModelTuning.REASONING_SUMMARY,
 	})
-	public interface AgentModelConfig extends NamedConfigMandatory {
+	public interface AgentModelTuning extends NamedConfigMandatory {
 		/** @see #getModel() */
 		String MODEL = "model";
 
@@ -282,24 +297,84 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	public static class AllConfiguredModelOptions extends Function0<List<String>> {
 		@Override
 		public List<String> apply() {
-			LLMProviderRegistry registry = getInstance();
-			if (registry == null) {
+			LLMService service = getInstance();
+			if (service == null) {
 				return List.of();
 			}
-			return registry.getConfiguredModelNames();
+			return service.getConfiguredModelNames();
 		}
 	}
 
 	/**
-	 * Configuration interface for {@link LLMProviderRegistry}.
+	 * Default model selection and per-agent model assignments with tuning parameters.
+	 *
+	 * <p>
+	 * Groups the global default model and the per-agent overrides into one configuration section
+	 * so the admin UI presents them together under "Agent Model Tuning".
+	 * </p>
+	 */
+	@DisplayOrder({
+		ModelTuningConfig.ENTRY_POINT_AGENT,
+		ModelTuningConfig.DEFAULT_MODEL,
+		ModelTuningConfig.AGENT_MODELS,
+	})
+	public interface ModelTuningConfig extends ConfigurationItem {
+
+		/** Configuration property name for {@link #getEntryPointAgent()}. */
+		String ENTRY_POINT_AGENT = "entry-point";
+
+		/** Configuration property name for {@link #getDefaultModel()}. */
+		String DEFAULT_MODEL = "default-model";
+
+		/** Configuration property name for {@link #getAgentModels()}. */
+		String AGENT_MODELS = "agent-models";
+
+		/**
+		 * The agent that serves as the main entry point for chat sessions.
+		 *
+		 * @see #ENTRY_POINT_AGENT
+		 */
+		@Name(ENTRY_POINT_AGENT)
+		@StringDefault("Orchestrator")
+		@Options(fun = AllAgentNameOptions.class)
+		String getEntryPointAgent();
+
+		/**
+		 * The default model name used when no model is explicitly specified on an agent.
+		 *
+		 * @see #DEFAULT_MODEL
+		 */
+		@Name(DEFAULT_MODEL)
+		@Nullable
+		@Options(fun = AllConfiguredModelOptions.class)
+		String getDefaultModel();
+
+		/**
+		 * Per-agent model assignments. Agents not listed here use the {@link #getDefaultModel()
+		 * default model}. Applies to all agents regardless of source (config-defined or KB).
+		 *
+		 * @see #AGENT_MODELS
+		 */
+		@Name(AGENT_MODELS)
+		@EntryTag("agent")
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		Map<String, AgentModelTuning> getAgentModels();
+	}
+
+	/**
+	 * Configuration interface for {@link LLMService}.
+	 *
+	 * <p>
+	 * Organized into three sections: provider connections, model tuning (default model and
+	 * per-agent assignments), and model catalog (read-only metadata).
+	 * </p>
 	 */
 	@DisplayOrder({
 		Config.PROVIDERS,
-		Config.DEFAULT_MODEL,
-		Config.AGENT_MODELS,
+		Config.MODEL_TUNING,
 		Config.MODEL_CATALOG,
 	})
-	public interface Config<I extends LLMProviderRegistry> extends ConfiguredManagedClass.Config<I> {
+	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
 
 		// --- Provider configuration ---
 
@@ -309,6 +384,20 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		 * @see #getProviders()
 		 */
 		String PROVIDERS = "providers";
+
+		/**
+		 * Configuration property name for model tuning.
+		 *
+		 * @see #getModelTuning()
+		 */
+		String MODEL_TUNING = "model-tuning";
+
+		/**
+		 * Configuration property name for the model catalog.
+		 *
+		 * @see #getModelCatalog()
+		 */
+		String MODEL_CATALOG = "model-catalog";
 
 		/**
 		 * The configured LLM providers, keyed by provider name.
@@ -322,37 +411,13 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		Map<String, LLMProviderConfig.Config> getProviders();
 
-		// --- Model catalog configuration ---
-
-		/** Configuration property name for {@link #getDefaultModel()}. */
-		String DEFAULT_MODEL = "default-model";
-
-		/** Configuration property name for per-agent model assignments. */
-		String AGENT_MODELS = "agent-models";
-
-		/** Configuration property name for {@link #getModelCatalog()}. */
-		String MODEL_CATALOG = "model-catalog";
-
 		/**
-		 * The default model name used when no model is explicitly specified on an agent.
+		 * Default model and per-agent model assignments with tuning parameters.
 		 *
-		 * @see #DEFAULT_MODEL
+		 * @see #MODEL_TUNING
 		 */
-		@Name(DEFAULT_MODEL)
-		@Nullable
-		@Options(fun = AllowedModelOptions.class, args = @Ref(PROVIDERS))
-		String getDefaultModel();
-
-		/**
-		 * Per-agent model assignments. Agents not listed here use the {@link #getDefaultModel()
-		 * default model}. Applies to all agents regardless of source (config-defined or KB).
-		 *
-		 * @see #AGENT_MODELS
-		 */
-		@Name(AGENT_MODELS)
-		@EntryTag("agent")
-		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
-		Map<String, AgentModelConfig> getAgentModels();
+		@Name(MODEL_TUNING)
+		ModelTuningConfig getModelTuning();
 
 		/**
 		 * Model catalog configuration: remote catalog URL and per-model metadata overrides.
@@ -388,19 +453,22 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		 */
 		@Name(CATALOG_URL)
 		@StringDefault(DEFAULT_CATALOG_URL)
+		@ReadOnly
 		String getCatalogUrl();
 
 		/**
 		 * Per-model metadata (limits, capabilities).
 		 *
 		 * <p>
-		 * Populated automatically from the remote catalog on startup.
+		 * Populated automatically from the remote catalog on startup. Read-only — do not
+		 * modify manually.
 		 * </p>
 		 *
 		 * @see #MODEL_CONFIGURATION
 		 */
 		@Name(MODEL_CONFIGURATION)
 		@Label("Model metadata")
+		@ReadOnly
 		@EntryTag("model")
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		Map<String, ModelCatalogEntry.Config> getModelConfiguration();
@@ -422,7 +490,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		Map<String, ModelCatalogEntry.OverrideConfig> getModelOverrides();
 	}
 
-	private static volatile LLMProviderRegistry _instance;
+	private static volatile LLMService _instance;
 
 	private final InstantiationContext _context;
 
@@ -444,7 +512,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	private Map<String, String> _agentModels;
 
 	/**
-	 * Creates a new {@link LLMProviderRegistry} from configuration.
+	 * Creates a new {@link LLMService} from configuration.
 	 *
 	 * @param context
 	 *        The instantiation context for error reporting.
@@ -452,17 +520,17 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	 *        The service configuration.
 	 */
 	@CalledByReflection
-	public LLMProviderRegistry(InstantiationContext context, Config<?> config) {
+	public LLMService(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		_context = context;
 	}
 
 	/**
-	 * Returns the singleton instance of the {@link LLMProviderRegistry}.
+	 * Returns the singleton instance of the {@link LLMService}.
 	 *
 	 * @return The service instance, or {@code null} if not yet started.
 	 */
-	public static LLMProviderRegistry getInstance() {
+	public static LLMService getInstance() {
 		return _instance;
 	}
 
@@ -485,7 +553,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 				LLMProviderConfig existing = modelIndex.putIfAbsent(model, providerConfig);
 				if (existing != null && existing != providerConfig) {
 					Logger.warn("Model '" + model + "' is exposed by multiple providers. Keeping the first mapping.",
-						LLMProviderRegistry.class);
+						LLMService.class);
 				}
 			}
 		}
@@ -521,18 +589,19 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 
 		_models = Map.copyOf(merged);
 
+		ModelTuningConfig tuningConfig = getConfig().getModelTuning();
 		Map<String, String> agentModelMap = new LinkedHashMap<>();
-		for (Map.Entry<String, AgentModelConfig> entry : getConfig().getAgentModels().entrySet()) {
+		for (Map.Entry<String, AgentModelTuning> entry : tuningConfig.getAgentModels().entrySet()) {
 			agentModelMap.put(entry.getKey(), entry.getValue().getModel());
 		}
 		_agentModels = Map.copyOf(agentModelMap);
 
 		int overrideCount = overrides.size();
-		Logger.info("LLMProviderRegistry started with " +
+		Logger.info("LLMService started with " +
 			getConfig().getProviders().size() + " provider(s), " +
 			fetched.size() + " model(s) from catalog" +
 			(overrideCount > 0 ? ", " + overrideCount + " model override(s)" : "") + ".",
-			LLMProviderRegistry.class);
+			LLMService.class);
 	}
 
 	@Override
@@ -627,18 +696,25 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	}
 
 	/**
+	 * Returns the name of the entry-point agent for chat sessions.
+	 */
+	public String getEntryPointAgentName() {
+		return getConfig().getModelTuning().getEntryPointAgent();
+	}
+
+	/**
 	 * Returns the configured default model name, or {@code null} if not set.
 	 */
 	public String getDefaultModel() {
-		return getConfig().getDefaultModel();
+		return getConfig().getModelTuning().getDefaultModel();
 	}
 
 	/**
 	 * Resolves the model for the given agent.
 	 *
 	 * <p>
-	 * Resolution order: per-agent assignment from {@link Config#getAgentModels()}, then
-	 * {@link #getDefaultModel() default model}.
+	 * Resolution order: per-agent assignment from the {@link ModelTuningConfig#getAgentModels()
+	 * model tuning config}, then {@link #getDefaultModel() default model}.
 	 * </p>
 	 *
 	 * @param agentName
@@ -666,10 +742,10 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	 * Resolves the full model assignment for the given agent, including all tuning parameters.
 	 *
 	 * <p>
-	 * Resolution order for the model name: per-agent assignment from
-	 * {@link Config#getAgentModels()}, then {@link #getDefaultModel() default model}. Tuning
-	 * parameters are taken from the per-agent assignment if present; otherwise all are {@code null}
-	 * (meaning "use defaults").
+	 * Resolution order for the model name: per-agent assignment from the
+	 * {@link ModelTuningConfig#getAgentModels() model tuning config}, then
+	 * {@link #getDefaultModel() default model}. Tuning parameters are taken from the per-agent
+	 * assignment if present; otherwise all are {@code null} (meaning "use defaults").
 	 * </p>
 	 *
 	 * @param agentName
@@ -681,7 +757,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	 * @see AgentModelAssignment
 	 */
 	public AgentModelAssignment resolveModelAssignment(String agentName) {
-		AgentModelConfig perAgent = getConfig().getAgentModels().get(agentName);
+		AgentModelTuning perAgent = getConfig().getModelTuning().getAgentModels().get(agentName);
 		String model = (perAgent != null && perAgent.getModel() != null && !perAgent.getModel().isBlank())
 			? perAgent.getModel() : getDefaultModel();
 		if (model == null || model.isBlank()) {
@@ -748,22 +824,22 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	}
 
 	/**
-	 * Module for {@link LLMProviderRegistry}.
+	 * Module for {@link LLMService}.
 	 */
-	public static final class Module extends TypedRuntimeModule<LLMProviderRegistry> {
+	public static final class Module extends TypedRuntimeModule<LLMService> {
 
 		/**
-		 * Singleton {@link LLMProviderRegistry.Module} instance.
+		 * Singleton {@link LLMService.Module} instance.
 		 */
-		public static final LLMProviderRegistry.Module INSTANCE = new LLMProviderRegistry.Module();
+		public static final LLMService.Module INSTANCE = new LLMService.Module();
 
 		private Module() {
 			// Singleton constructor
 		}
 
 		@Override
-		public Class<LLMProviderRegistry> getImplementation() {
-			return LLMProviderRegistry.class;
+		public Class<LLMService> getImplementation() {
+			return LLMService.class;
 		}
 	}
 }

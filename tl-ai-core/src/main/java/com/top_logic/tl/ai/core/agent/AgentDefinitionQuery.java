@@ -191,7 +191,6 @@ public class AgentDefinitionQuery {
 			agent.getName(),
 			agent.getDescription(),
 			agent.getSystemPrompt(),
-			agent.getEntryPoint(),
 			new ArrayList<>(agent.getTools()),
 			new ArrayList<>(agent.getMcpServers()),
 			skillNames,

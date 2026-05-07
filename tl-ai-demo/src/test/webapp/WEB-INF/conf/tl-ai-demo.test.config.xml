@@ -5,12 +5,10 @@
  -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
-		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMService"
 			config:override="true"
 		>
-			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderRegistry"
-				default-model="mistral-large-latest"
-			>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
 				<providers>
 					<provider name="mistral"
 						api-key="unencrypted:xxx"
@@ -23,6 +21,9 @@
 						models="claude-sonnet-4-5-20250929"
 					/>
 				</providers>
+				<model-tuning
+					default-model="mistral-large-latest"
+				/>
 				<model-catalog>
 					<llm-configuration>
 						<model name="mistral-large-latest"

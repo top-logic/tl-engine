@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.provider;
 
 /**
  * All tuning parameters for an agent's model assignment, resolved from
- * {@link LLMProviderRegistry}.
+ * {@link LLMService}.
  *
  * <p>
  * Every field except {@link #model()} is nullable — {@code null} means "use default". The agent
@@ -29,7 +29,7 @@ package com.top_logic.tl.ai.core.provider;
  * @param maxRetries         max retries on transient errors, or {@code null} for default
  * @param maxToolResultChars max chars per tool result, or {@code null} for default
  *
- * @see LLMProviderRegistry#resolveModelAssignment(String)
+ * @see LLMService#resolveModelAssignment(String)
  */
 public record AgentModelAssignment(
 		String model,

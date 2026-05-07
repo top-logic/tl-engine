@@ -20,7 +20,6 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -45,8 +44,8 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 	 *
 	 * <p>
 	 * Contains only identity and capabilities. Tuning parameters belong in
-	 * {@link com.top_logic.tl.ai.core.provider.LLMProviderRegistry.AgentModelConfig
-	 * AgentModelConfig}.
+	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentModelTuning
+	 * AgentModelTuning}.
 	 * </p>
 	 */
 	public interface AgentConfig extends NamedConfigMandatory {
@@ -56,9 +55,6 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 
 		/** Configuration property name for {@link #getSystemPrompt()}. */
 		String SYSTEM_PROMPT = "system-prompt";
-
-		/** Configuration property name for {@link #getEntryPoint()}. */
-		String ENTRY_POINT = "entry-point";
 
 		/** Configuration property name for {@link #getTools()}. */
 		String TOOLS = "tools";
@@ -85,13 +81,6 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 		@Name(SYSTEM_PROMPT)
 		@Nullable
 		String getSystemPrompt();
-
-		/**
-		 * Whether this agent is the main entry-point agent.
-		 */
-		@Name(ENTRY_POINT)
-		@BooleanDefault(false)
-		boolean getEntryPoint();
 
 		/**
 		 * Qualified tool names available to this agent.
@@ -203,7 +192,6 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 				name,
 				cfg.getDescription(),
 				cfg.getSystemPrompt(),
-				cfg.getEntryPoint(),
 				cfg.getTools(),
 				cfg.getMcpServers(),
 				cfg.getSkills(),

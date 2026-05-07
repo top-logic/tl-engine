@@ -43,13 +43,6 @@ public class TlAiCoreFactory extends com.top_logic.element.meta.kbbased.Abstract
 	}
 
 	/**
-	 * Lookup {@link Agent#ENTRY_POINT_ATTR} of {@link Agent}.
-	 */
-	public static com.top_logic.model.TLProperty getEntryPointAgentAttr() {
-		return (com.top_logic.model.TLProperty) getAgentType().getPart(Agent.ENTRY_POINT_ATTR);
-	}
-
-	/**
 	 * Lookup {@link Agent#MCP_SERVERS_ATTR} of {@link Agent}.
 	 */
 	public static com.top_logic.model.TLProperty getMcpServersAgentAttr() {

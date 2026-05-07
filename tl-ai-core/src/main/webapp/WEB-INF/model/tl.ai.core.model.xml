@@ -22,11 +22,6 @@
 							type="tl.core:String"
 						/>
 						<field
-							attribute="entryPoint"
-							fullQualifiedName="tl.ai.core:Agent#entryPoint"
-							type="tl.core:Boolean"
-						/>
-						<field
 							attribute="description"
 							fullQualifiedName="tl.ai.core:Agent#description"
 							type="tl.core:String"
@@ -90,9 +85,6 @@
 						<size-constraint/>
 					</annotations>
 				</property>
-				<property name="entryPoint"
-					type="tl.core:Boolean"
-				/>
 				<property name="tools"
 					multiple="true"
 					type="tl.core:String"

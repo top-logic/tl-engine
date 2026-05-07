@@ -36,15 +36,6 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	String DESCRIPTION_ATTR = "description";
 
 	/**
-	 * Part <code>entryPoint</code> of <code>Agent</code>
-	 *
-	 * <p>
-	 * Declared as <code>tl.core:Boolean</code> in configuration.
-	 * </p>
-	 */
-	String ENTRY_POINT_ATTR = "entryPoint";
-
-	/**
 	 * Part <code>mcpServers</code> of <code>Agent</code>
 	 *
 	 * <p>
@@ -130,20 +121,6 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 	 */
 	default void setDescription(String newValue) {
 		tUpdateByName(DESCRIPTION_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #ENTRY_POINT_ATTR}.
-	 */
-	default boolean getEntryPoint() {
-		return (Boolean) tValueByName(ENTRY_POINT_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #ENTRY_POINT_ATTR}.
-	 */
-	default void setEntryPoint(boolean newValue) {
-		tUpdateByName(ENTRY_POINT_ATTR, newValue);
 	}
 
 	/**

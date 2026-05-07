@@ -16,7 +16,7 @@ import com.top_logic.layout.form.model.FieldMode;
  *
  * <p>
  * Receives the model name as its single argument (via {@code @Ref(MODEL)}), resolves the
- * provider ID via {@link LLMProviderRegistry}, and returns {@link FieldMode#ACTIVE} if the
+ * provider ID via {@link LLMService}, and returns {@link FieldMode#ACTIVE} if the
  * provider matches, {@link FieldMode#INVISIBLE} otherwise.
  * </p>
  */
@@ -33,7 +33,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 		if (model == null || model.isBlank()) {
 			return FieldMode.INVISIBLE;
 		}
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
 			return FieldMode.INVISIBLE;
 		}
@@ -84,7 +84,7 @@ abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 			if (model == null || model.isBlank()) {
 				return FieldMode.INVISIBLE;
 			}
-			LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+			LLMService registry = LLMService.getInstance();
 			if (registry == null) {
 				return FieldMode.INVISIBLE;
 			}

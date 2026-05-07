@@ -22,7 +22,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 
 /**
@@ -86,7 +86,7 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 
 	@Override
 	public FormVisibility getMode(TLObject object, TLStructuredTypePart attribute) {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
 			return FormVisibility.HIDDEN;
 		}
@@ -122,7 +122,7 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute,
 			Sink<Pointer> trace, FormContext formContext) {
-		// Model is resolved from LLMProviderRegistry, not from the agent object.
+		// Model is resolved from LLMService, not from the agent object.
 		// No form field dependency to trace.
 	}
 

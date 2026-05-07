@@ -26,7 +26,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
  * {@link LLMProvider} and discover available models.
  * </p>
  *
- * @see LLMProviderRegistry
+ * @see LLMService
  */
 public interface LLMProviderConfig {
 

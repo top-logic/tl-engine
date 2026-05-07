@@ -19,13 +19,12 @@ import java.util.List;
  * <p>
  * Contains only identity and capabilities. All tuning parameters (temperature, max tokens, etc.)
  * are resolved from the per-agent model assignment in
- * {@link com.top_logic.tl.ai.core.provider.LLMProviderRegistry LLMProviderRegistry}.
+ * {@link com.top_logic.tl.ai.core.provider.LLMService LLMService}.
  * </p>
  *
  * @param name              unique agent name
  * @param description       human-readable description (shown in delegation catalogs)
  * @param systemPrompt      the agent's system prompt text
- * @param entryPoint        whether this is the main entry-point agent
  * @param tools             qualified tool names (e.g. "model-browser.listModules")
  * @param mcpServers        MCP server names
  * @param skills            skill names (resolved via layered lookup)
@@ -36,7 +35,6 @@ public record AgentDefinition(
 		String name,
 		String description,
 		String systemPrompt,
-		boolean entryPoint,
 		List<String> tools,
 		List<String> mcpServers,
 		List<String> skills,

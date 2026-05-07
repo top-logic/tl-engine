@@ -57,7 +57,7 @@ public class TestModelResolution extends TestCase {
 	}
 
 	/**
-	 * Extracted resolution logic mirroring LLMProviderRegistry.resolveModel().
+	 * Extracted resolution logic mirroring LLMService.resolveModel().
 	 */
 	static String resolveModel(String agentName, Map<String, String> agentModels, String defaultModel) {
 		String perAgent = agentModels.get(agentName);

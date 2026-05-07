@@ -677,23 +677,36 @@ public class TreeRenderInfo {
 		double postGridX = colX[C - 1] + colW[C - 1] + _gapX;
 		double childBusX = postGridX - _gapX / 2;
 
-		// Adaptive Y stack with per-column bottom and bus-bottom tracking.
+		// Adaptive Y stack with per-column bottom, per-column "max past stub Y crossing this col"
+		// (from past children whose own col is > this col), and bus-bottom tracking.
 		double[] prevColBottom = new double[C];
 		Arrays.fill(prevColBottom, Double.NEGATIVE_INFINITY);
+		double[] prevStubsCrossingCol = new double[C];
+		Arrays.fill(prevStubsCrossingCol, Double.NEGATIVE_INFINITY);
 		double prevBusBottom = Double.NEGATIVE_INFINITY;
 		double curYPost = 0;
 
 		for (int i = 0; i < M; i++) {
 			TreeNode ch = children.get(i);
 			int c = i % C;
-			double h = ch.getBox().getHeight();
+			Box chBox = ch.getBox();
+			Box chAnchor = ch.getAnchor();
+			double h = chBox.getHeight();
+			// Offset of the anchor mid-Y within the box (where the bus stub actually meets the
+			// child). For nodes with anchor == box this equals h/2; for nodes with the anchor
+			// only covering part of the box (e.g. a label rendered above a smaller "anchor"
+			// content area) this is the y of the anchor's vertical centre relative to the box's
+			// top edge.
+			double anchorMid = chAnchor.getY() + 0.5 * chAnchor.getHeight();
 			boolean hasSubtree = !ch.getChildren().isEmpty();
 
 			double yi = 0;
-			// (1) Bus-stub clearance: stub.midY = yi + h/2 must clear (by sibblingGapY) the
-			// boxes of all previously placed children in earlier sub-columns of the same row.
+			// (1) Bus-stub clearance: stub.midY = yi + anchorMid must clear (by sibblingGapY) the
+			// boxes of all previously placed children in earlier sub-columns of the same row —
+			// my stub passes through their column at this Y, so it must sit below their box
+			// bottom plus sibblingGapY.
 			for (int cprev = 0; cprev < c; cprev++) {
-				double bound = prevColBottom[cprev] + _siblingGapY - h / 2;
+				double bound = prevColBottom[cprev] + _siblingGapY - anchorMid;
 				if (bound > yi) {
 					yi = bound;
 				}
@@ -707,7 +720,17 @@ public class TreeRenderInfo {
 			}
 			// (3) Bus non-overlap for subtree-bearing children.
 			if (hasSubtree && prevBusBottom > Double.NEGATIVE_INFINITY) {
-				double bound = prevBusBottom + _siblingGapY - h / 2;
+				double bound = prevBusBottom + _siblingGapY - anchorMid;
+				if (bound > yi) {
+					yi = bound;
+				}
+			}
+			// (4) Past-stub clearance for my BOX: any stub from a previously placed child in a
+			// later sub-column (c_past > c) crosses my column at that stub's Y; my box must not
+			// contain such a stub Y (with sibblingGapY clearance). prevStubsCrossingCol[c] tracks
+			// the maximum past stub Y that crosses my column.
+			if (prevStubsCrossingCol[c] > Double.NEGATIVE_INFINITY) {
+				double bound = prevStubsCrossingCol[c] + _siblingGapY;
 				if (bound > yi) {
 					yi = bound;
 				}
@@ -734,10 +757,13 @@ public class TreeRenderInfo {
 				// shiftSubtree above already moved its primary bus to the same childBusX.
 				ch.setBusXOverride(childBusX);
 
-				// Track this parent's bus bottom for constraint (3) on subsequent children.
-				double busBot = yi + h / 2;
+				// Track this parent's bus bottom for constraint (3) on subsequent children. The
+				// bus extends from min(ch.anchor.midY, all grandchild anchor midYs) to max(...);
+				// only max matters here.
+				double busBot = yi + anchorMid;
 				for (TreeNode grand : ch.getChildren()) {
-					double mid = grand.getY() + grand.getBox().getHeight() / 2;
+					Box grandAnchor = grand.getAnchor();
+					double mid = grand.getY() + grandAnchor.getY() + 0.5 * grandAnchor.getHeight();
 					if (mid > busBot) {
 						busBot = mid;
 					}
@@ -758,6 +784,15 @@ public class TreeRenderInfo {
 			}
 
 			prevColBottom[c] = yi + h;
+
+			// Update the per-column "max past stub Y crossing this col" with my own stub: my
+			// stub passes through cols 0..c-1 at y = yi + anchorMid.
+			double myStubY = yi + anchorMid;
+			for (int cprev = 0; cprev < c; cprev++) {
+				if (myStubY > prevStubsCrossingCol[cprev]) {
+					prevStubsCrossingCol[cprev] = myStubY;
+				}
+			}
 		}
 
 		_gridInfos.put(node, GridInfo.rowWise(colX, colW, busX, childBusX, postGridX));

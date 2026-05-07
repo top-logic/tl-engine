@@ -17,6 +17,8 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.data.Align;
+import com.top_logic.graphic.flow.data.Alignment;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Diagram;
@@ -26,6 +28,7 @@ import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
+import com.top_logic.graphic.flow.data.VerticalLayout;
 import com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations;
 
 /**
@@ -192,6 +195,37 @@ public class TestTreeLayout extends TestCase {
 		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise.svg");
 	}
 
+	public void testGridFanoutRowWiseLabelAboveAnchor() throws IOException {
+		// Each "node" consists of a text label stacked above a border-wrapped content box (the
+		// gear icon stand-in). The TreeLayout's node is the whole VerticalLayout; the connector's
+		// anchor is the inner Border (the lower part). This means anchor != box: the bus stub
+		// hits the lower part, but the box (label + border) extends higher than the anchor.
+		// Verifies that:
+		// (1) the adaptive Y-step in row-wise mode uses the anchor mid-Y (not the box mid-Y) for
+		//     stub clearance, so the label of a future child does not collide with a past
+		//     child's stub coming from a higher sub-column.
+		// (2) the parent → main-bus segment starts at the parent's ANCHOR right edge, not the
+		//     full box right edge.
+		TreeLayout tree = TreeLayout.create()
+			.setChildSplitThreshold(2)
+			.setRowWise(true)
+			.setSubGridCols(2);
+
+		LabelAnchorNode rootNode = labelAnchorNode("Root");
+		tree.addNode(rootNode.box);
+
+		for (int i = 1; i <= 10; i++) {
+			LabelAnchorNode child = labelAnchorNode("C" + i);
+			tree.addNode(child.box);
+			tree.addConnection(TreeConnection.create()
+				.setParent(TreeConnector.create().setAnchor(rootNode.anchor).setConnectPosition(0.5))
+				.setChild(TreeConnector.create().setAnchor(child.anchor).setConnectPosition(0.5)));
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise-label-above-anchor.svg");
+	}
+
 	public void testGridFanoutRowWiseVaryingHeight() throws IOException {
 		// Same row-wise grid as testGridFanoutRowWise, but sub-grid children have different
 		// box heights. Used to verify per-child heights are honored in the adaptive Y-step
@@ -327,5 +361,40 @@ public class TestTreeLayout extends TestCase {
 		return Border.create().setContent(
 			Padding.create().setLeft(5).setRight(5).setTop(25).setBottom(25).setContent(
 				Text.create().setValue(name)));
+	}
+
+	/**
+	 * A node whose visible box stacks a text label on top of a smaller "anchor" box (the gear
+	 * stand-in). {@link #box} is what gets added to the {@link TreeLayout} as a node; {@link #anchor}
+	 * is the sub-box used as the {@link TreeConnector#getAnchor() connector anchor}.
+	 */
+	private static final class LabelAnchorNode {
+		final Box box;
+		final Box anchor;
+
+		LabelAnchorNode(Box box, Box anchor) {
+			this.box = box;
+			this.anchor = anchor;
+		}
+	}
+
+	private LabelAnchorNode labelAnchorNode(String name) {
+		// Anchor: a small bordered box (the gear stand-in). Wrapped in an Align with horizontal
+		// MIDDLE alignment so it stays at its intrinsic width (and centered) when placed inside
+		// the surrounding VerticalLayout next to a wider label.
+		Box anchor = Border.create().setContent(
+			Padding.create().setAll(8).setContent(
+				Text.create().setValue(name)));
+		Box anchorAligned = Align.create()
+			.setXAlign(Alignment.MIDDLE)
+			.setContent(anchor);
+		// Box: a vertical layout with a wider label above the anchor. Without Align the
+		// VerticalLayout stretches the anchor to the box width; with Align the anchor keeps its
+		// intrinsic width so anchor.right < box.right and the parent → bus segment must
+		// terminate at anchor.right (not box.right) to land on the visible anchor edge.
+		Box box = VerticalLayout.create()
+			.addContent(Text.create().setValue("Long label for " + name + " (above the anchor)"))
+			.addContent(anchorAligned);
+		return new LabelAnchorNode(box, anchor);
 	}
 }

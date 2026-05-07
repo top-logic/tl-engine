@@ -153,7 +153,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	 */
 	default void drawGridBusesColumnWise(SvgWriter out, TreeNode parent, GridInfo gi) {
 		Box parentAnchor = parent.getAnchor();
-		double parentRight = parent.getX() + parent.getBox().getWidth();
+		double parentRight = parent.getX() + parentAnchor.getX() + parentAnchor.getWidth();
 		double parentMidY = parent.getY() + parentAnchor.getY() + 0.5 * parentAnchor.getHeight();
 
 		double[] busX = gi.getBusX();
@@ -202,7 +202,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	 */
 	default void drawGridBusesRowWise(SvgWriter out, TreeNode parent, GridInfo gi) {
 		Box parentAnchor = parent.getAnchor();
-		double parentRight = parent.getX() + parent.getBox().getWidth();
+		double parentRight = parent.getX() + parentAnchor.getX() + parentAnchor.getWidth();
 		double parentMidY = parent.getY() + parentAnchor.getY() + 0.5 * parentAnchor.getHeight();
 
 		double mainBusX = gi.getBusX()[0];

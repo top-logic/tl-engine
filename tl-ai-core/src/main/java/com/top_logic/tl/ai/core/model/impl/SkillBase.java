@@ -18,15 +18,6 @@ public interface SkillBase extends com.top_logic.model.TLNamed {
 	String SKILL_TYPE = "Skill";
 
 	/**
-	 * Part <code>agents</code> of <code>Skill</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.ai.core:Agent</code> in configuration.
-	 * </p>
-	 */
-	String AGENTS_ATTR = "agents";
-
-	/**
 	 * Part <code>content</code> of <code>Skill</code>
 	 * 
 	 * <p>
@@ -52,14 +43,6 @@ public interface SkillBase extends com.top_logic.model.TLNamed {
 	 * </p>
 	 */
 	String NAME_ATTR = "name";
-
-	/**
-	 * Getter for part {@link #AGENTS_ATTR}.
-	 */
-	@SuppressWarnings("unchecked")
-	default java.util.Set<? extends com.top_logic.tl.ai.core.model.Agent> getAgents() {
-		return (java.util.Set<? extends com.top_logic.tl.ai.core.model.Agent>) tValueByName(AGENTS_ATTR);
-	}
 
 	/**
 	 * Getter for part {@link #CONTENT_ATTR}.

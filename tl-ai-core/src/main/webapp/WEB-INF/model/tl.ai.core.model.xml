@@ -8,26 +8,6 @@
 				interface-package="com.top_logic.tl.ai.core.model"
 			/>
 		</annotations>
-		<enum name="ReasoningEffort">
-			<classifier name="LOW"/>
-			<classifier name="MEDIUM"/>
-			<classifier name="HIGH"/>
-		</enum>
-		<enum name="ReasoningSummary">
-			<classifier name="AUTO"/>
-			<classifier name="DETAILED"/>
-		</enum>
-		<enum name="ThinkingEffort">
-			<classifier name="LOW"/>
-			<classifier name="MEDIUM"/>
-			<classifier name="HIGH"/>
-			<classifier name="MAX"/>
-		</enum>
-		<enum name="ToolChoice">
-			<classifier name="AUTO"/>
-			<classifier name="REQUIRED"/>
-			<classifier name="NONE"/>
-		</enum>
 		<class name="Agent">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -57,11 +37,6 @@
 							</annotations>
 						</field>
 						<field
-							attribute="model"
-							fullQualifiedName="tl.ai.core:Agent#model"
-							type="tl.core:String"
-						/>
-						<field
 							attribute="systemPrompt"
 							fullQualifiedName="tl.ai.core:Agent#systemPrompt"
 							type="tl.core:Text"
@@ -84,103 +59,13 @@
 						<field
 							attribute="skills"
 							fullQualifiedName="tl.ai.core:Agent#skills"
-							type="tl.ai.core:Skill"
+							type="tl.core:String"
 						/>
 						<field
 							attribute="delegations"
 							fullQualifiedName="tl.ai.core:Agent#delegations"
-							type="tl.ai.core:Agent"
+							type="tl.core:String"
 						/>
-						<group>
-							<field
-								attribute="maxTokens"
-								fullQualifiedName="tl.ai.core:Agent#maxTokens"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="contextWindow"
-								fullQualifiedName="tl.ai.core:Agent#contextWindow"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="maxTurns"
-								fullQualifiedName="tl.ai.core:Agent#maxTurns"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="temperature"
-								fullQualifiedName="tl.ai.core:Agent#temperature"
-								type="tl.core:Double"
-							/>
-							<field
-								attribute="topP"
-								fullQualifiedName="tl.ai.core:Agent#topP"
-								type="tl.core:Double"
-							/>
-							<field
-								attribute="toolChoice"
-								fullQualifiedName="tl.ai.core:Agent#toolChoice"
-								type="tl.ai.core:ToolChoice"
-							/>
-							<field
-								attribute="maxRetries"
-								fullQualifiedName="tl.ai.core:Agent#maxRetries"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="timeoutSeconds"
-								fullQualifiedName="tl.ai.core:Agent#timeoutSeconds"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="maxToolResultChars"
-								fullQualifiedName="tl.ai.core:Agent#maxToolResultChars"
-								type="tl.core:Integer"
-							/>
-							<group>
-								<field
-									attribute="thinkingEffort"
-									fullQualifiedName="tl.ai.core:Agent#thinkingEffort"
-									type="tl.ai.core:ThinkingEffort"
-								/>
-								<field
-									attribute="topK"
-									fullQualifiedName="tl.ai.core:Agent#topK"
-									type="tl.core:Integer"
-								/>
-								<label key="dynamic.thinking-settings-group">
-									<en>Thinking Settings</en>
-									<de>Thinking-Einstellungen</de>
-								</label>
-								<dynamicVisibility class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector"
-									providers="anthropic"
-								/>
-							</group>
-							<group>
-								<field
-									attribute="reasoningEffort"
-									fullQualifiedName="tl.ai.core:Agent#reasoningEffort"
-									type="tl.ai.core:ReasoningEffort"
-								/>
-								<field
-									attribute="reasoningSummary"
-									fullQualifiedName="tl.ai.core:Agent#reasoningSummary"
-									type="tl.ai.core:ReasoningSummary"
-								/>
-								<label key="dynamic.reasoning-settings-group">
-									<en>Reasoning Settings</en>
-									<de>Reasoning-Einstellungen</de>
-								</label>
-								<dynamicVisibility class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector"
-									capability="reasoning"
-									providers="openai,xai"
-								/>
-							</group>
-							<label key="dynamic.b808b966-6c56-4c10-b97c-8bd4d1799f33">
-								<en>Advanced Settings</en>
-								<de>Erweiterte Einstellungen</de>
-							</label>
-						</group>
 					</form>
 				</form-definition>
 			</annotations>
@@ -197,15 +82,6 @@
 						<size-constraint/>
 					</annotations>
 				</property>
-				<property name="model"
-					type="tl.core:String"
-				>
-					<annotations>
-						<options>
-							<all-model-names/>
-						</options>
-					</annotations>
-				</property>
 				<property name="systemPrompt"
 					type="tl.core:Text"
 				>
@@ -214,73 +90,6 @@
 						<size-constraint/>
 					</annotations>
 				</property>
-				<property name="maxTokens"
-					type="tl.core:Integer"
-				/>
-				<property name="contextWindow"
-					type="tl.core:Integer"
-				/>
-				<property name="temperature"
-					type="tl.core:Double"
-				>
-					<annotations>
-						<dynamic-visibility>
-							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector"
-								capability="temperature"
-							/>
-						</dynamic-visibility>
-						<value-range
-							max="2.0"
-							min="0.0"
-						/>
-					</annotations>
-				</property>
-				<property name="topP"
-					type="tl.core:Double"
-				>
-					<annotations>
-						<dynamic-visibility>
-							<mode-selector class="com.top_logic.tl.ai.core.agent.ModelCapabilityModeSelector"
-								capability="temperature"
-							/>
-						</dynamic-visibility>
-						<value-range
-							max="1.0"
-							min="0.0"
-						/>
-					</annotations>
-				</property>
-				<reference name="thinkingEffort"
-					kind="forwards"
-					type="ThinkingEffort"
-				/>
-				<property name="topK"
-					type="tl.core:Integer"
-				/>
-				<reference name="reasoningEffort"
-					kind="forwards"
-					type="ReasoningEffort"
-				/>
-				<reference name="reasoningSummary"
-					kind="forwards"
-					type="ReasoningSummary"
-				/>
-				<property name="maxTurns"
-					type="tl.core:Integer"
-				/>
-				<reference name="toolChoice"
-					kind="forwards"
-					type="ToolChoice"
-				/>
-				<property name="timeoutSeconds"
-					type="tl.core:Integer"
-				/>
-				<property name="maxRetries"
-					type="tl.core:Integer"
-				/>
-				<property name="maxToolResultChars"
-					type="tl.core:Integer"
-				/>
 				<property name="entryPoint"
 					type="tl.core:Boolean"
 				/>
@@ -304,18 +113,26 @@
 						</options>
 					</annotations>
 				</property>
-				<reference name="skills"
-					inverse-reference="agents"
-					kind="forwards"
+				<property name="skills"
 					multiple="true"
-					type="Skill"
-				/>
-				<reference name="delegations"
-					kind="forwards"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-skill-names/>
+						</options>
+					</annotations>
+				</property>
+				<property name="delegations"
 					multiple="true"
-					navigate="true"
-					type="Agent"
-				/>
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-agent-names/>
+						</options>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Skill">
@@ -375,12 +192,6 @@
 						<size-constraint/>
 					</annotations>
 				</property>
-				<reference name="agents"
-					inverse-reference="skills"
-					kind="backwards"
-					multiple="true"
-					type="Agent"
-				/>
 			</attributes>
 		</class>
 	</module>

@@ -18,6 +18,9 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.constraint.annotation.Bound;
+import com.top_logic.basic.config.constraint.annotation.Comparision;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -25,10 +28,15 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.tl.ai.core.agent.AgentDefinition;
+import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.tl.ai.core.agent.AgentDefinitionService;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
@@ -47,11 +55,248 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
 public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegistry.Config<?>> {
 
 	/**
+	 * Maps an agent name to a specific model with optional tuning parameters.
+	 */
+	@DisplayOrder({
+		NamedConfigMandatory.NAME_ATTRIBUTE,
+		AgentModelConfig.MODEL,
+		AgentModelConfig.CONTEXT_WINDOW,
+		AgentModelConfig.MAX_TOKENS,
+		AgentModelConfig.MAX_TURNS,
+		AgentModelConfig.MAX_TOOL_RESULT_CHARS,
+		AgentModelConfig.TOOL_CHOICE,
+		AgentModelConfig.TIMEOUT_SECONDS,
+		AgentModelConfig.MAX_RETRIES,
+		AgentModelConfig.TEMPERATURE,
+		AgentModelConfig.TOP_P,
+		AgentModelConfig.THINKING_EFFORT,
+		AgentModelConfig.TOP_K,
+		AgentModelConfig.REASONING_EFFORT,
+		AgentModelConfig.REASONING_SUMMARY,
+	})
+	public interface AgentModelConfig extends NamedConfigMandatory {
+		/** @see #getModel() */
+		String MODEL = "model";
+
+		/** @see #getMaxTokens() */
+		String MAX_TOKENS = "max-tokens";
+
+		/** @see #getContextWindow() */
+		String CONTEXT_WINDOW = "context-window";
+
+		/** @see #getMaxTurns() */
+		String MAX_TURNS = "max-turns";
+
+		/** @see #getTemperature() */
+		String TEMPERATURE = "temperature";
+
+		/** @see #getTopP() */
+		String TOP_P = "top-p";
+
+		/** @see #getThinkingEffort() */
+		String THINKING_EFFORT = "thinking-effort";
+
+		/** @see #getTopK() */
+		String TOP_K = "top-k";
+
+		/** @see #getReasoningEffort() */
+		String REASONING_EFFORT = "reasoning-effort";
+
+		/** @see #getReasoningSummary() */
+		String REASONING_SUMMARY = "reasoning-summary";
+
+		/** @see #getToolChoice() */
+		String TOOL_CHOICE = "tool-choice";
+
+		/** @see #getTimeoutSeconds() */
+		String TIMEOUT_SECONDS = "timeout-seconds";
+
+		/** @see #getMaxRetries() */
+		String MAX_RETRIES = "max-retries";
+
+		/** @see #getMaxToolResultChars() */
+		String MAX_TOOL_RESULT_CHARS = "max-tool-result-chars";
+
+		@Override
+		@Options(fun = AllAgentNameOptions.class)
+		String getName();
+
+		/**
+		 * The model to use for this agent.
+		 *
+		 * @see #MODEL
+		 */
+		@Name(MODEL)
+		@Options(fun = AllConfiguredModelOptions.class)
+		@Constraint(value = ModelToolCallConstraint.class, args = @Ref(NAME_ATTRIBUTE))
+		String getModel();
+
+		/**
+		 * Maximum output tokens per LLM call, or {@code null} for catalog default.
+		 *
+		 * @see #MAX_TOKENS
+		 */
+		@Name(MAX_TOKENS)
+		@Nullable
+		Integer getMaxTokens();
+
+		/**
+		 * Context window size override, or {@code null} for catalog default.
+		 *
+		 * @see #CONTEXT_WINDOW
+		 */
+		@Name(CONTEXT_WINDOW)
+		@Nullable
+		Integer getContextWindow();
+
+		/**
+		 * Maximum agent loop turns, or {@code null} for default.
+		 *
+		 * @see #MAX_TURNS
+		 */
+		@Name(MAX_TURNS)
+		@Nullable
+		Integer getMaxTurns();
+
+		/**
+		 * Sampling temperature, or {@code null} for default.
+		 *
+		 * @see #TEMPERATURE
+		 */
+		@Name(TEMPERATURE)
+		@Nullable
+		@DynamicMode(fun = ProviderFieldMode.TemperatureFieldMode.class, args = @Ref(MODEL))
+		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = 0.0)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = 1.0)
+		Double getTemperature();
+
+		/**
+		 * Top-p sampling parameter, or {@code null} for default.
+		 *
+		 * @see #TOP_P
+		 */
+		@Name(TOP_P)
+		@Nullable
+		@DynamicMode(fun = ProviderFieldMode.TemperatureFieldMode.class, args = @Ref(MODEL))
+		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = 0.0)
+		@Bound(comparison = Comparision.SMALLER_OR_EQUAL, value = 1.0)
+		Double getTopP();
+
+		/**
+		 * Anthropic thinking effort (low/medium/high/max), or {@code null}.
+		 *
+		 * @see #THINKING_EFFORT
+		 */
+		@Name(THINKING_EFFORT)
+		@Nullable
+		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = @Ref(MODEL))
+		String getThinkingEffort();
+
+		/**
+		 * Anthropic top-k parameter, or {@code null}.
+		 *
+		 * @see #TOP_K
+		 */
+		@Name(TOP_K)
+		@Nullable
+		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = @Ref(MODEL))
+		Integer getTopK();
+
+		/**
+		 * OpenAI/xAI reasoning effort (low/medium/high), or {@code null}.
+		 *
+		 * @see #REASONING_EFFORT
+		 */
+		@Name(REASONING_EFFORT)
+		@Nullable
+		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = @Ref(MODEL))
+		String getReasoningEffort();
+
+		/**
+		 * OpenAI/xAI reasoning summary (auto/detailed), or {@code null}.
+		 *
+		 * @see #REASONING_SUMMARY
+		 */
+		@Name(REASONING_SUMMARY)
+		@Nullable
+		@DynamicMode(fun = ProviderFieldMode.OpenAIFieldMode.class, args = @Ref(MODEL))
+		String getReasoningSummary();
+
+		/**
+		 * Tool choice (AUTO/REQUIRED/NONE), or {@code null} for provider default.
+		 *
+		 * @see #TOOL_CHOICE
+		 */
+		@Name(TOOL_CHOICE)
+		@Nullable
+		String getToolChoice();
+
+		/**
+		 * Request timeout in seconds, or {@code null} for default.
+		 *
+		 * @see #TIMEOUT_SECONDS
+		 */
+		@Name(TIMEOUT_SECONDS)
+		@Nullable
+		Integer getTimeoutSeconds();
+
+		/**
+		 * Maximum retries on transient errors, or {@code null} for default.
+		 *
+		 * @see #MAX_RETRIES
+		 */
+		@Name(MAX_RETRIES)
+		@Nullable
+		Integer getMaxRetries();
+
+		/**
+		 * Maximum characters per tool result, or {@code null} for default.
+		 *
+		 * @see #MAX_TOOL_RESULT_CHARS
+		 */
+		@Name(MAX_TOOL_RESULT_CHARS)
+		@Nullable
+		Integer getMaxToolResultChars();
+	}
+
+	/**
+	 * Provides all available agent names for selection in the admin UI.
+	 */
+	public static class AllAgentNameOptions extends Function0<List<String>> {
+		@Override
+		public List<String> apply() {
+			if (!AgentDefinitionService.Module.INSTANCE.isActive()) {
+				return List.of();
+			}
+			List<String> names = new ArrayList<>();
+			for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents()) {
+				names.add(ad.name());
+			}
+			return names;
+		}
+	}
+
+	/**
+	 * Provides all configured model names for selection in the admin UI.
+	 */
+	public static class AllConfiguredModelOptions extends Function0<List<String>> {
+		@Override
+		public List<String> apply() {
+			LLMProviderRegistry registry = getInstance();
+			if (registry == null) {
+				return List.of();
+			}
+			return registry.getConfiguredModelNames();
+		}
+	}
+
+	/**
 	 * Configuration interface for {@link LLMProviderRegistry}.
 	 */
 	@DisplayOrder({
 		Config.PROVIDERS,
 		Config.DEFAULT_MODEL,
+		Config.AGENT_MODELS,
 		Config.MODEL_CATALOG,
 	})
 	public interface Config<I extends LLMProviderRegistry> extends ConfiguredManagedClass.Config<I> {
@@ -82,6 +327,9 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		/** Configuration property name for {@link #getDefaultModel()}. */
 		String DEFAULT_MODEL = "default-model";
 
+		/** Configuration property name for per-agent model assignments. */
+		String AGENT_MODELS = "agent-models";
+
 		/** Configuration property name for {@link #getModelCatalog()}. */
 		String MODEL_CATALOG = "model-catalog";
 
@@ -94,6 +342,17 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 		@Nullable
 		@Options(fun = AllowedModelOptions.class, args = @Ref(PROVIDERS))
 		String getDefaultModel();
+
+		/**
+		 * Per-agent model assignments. Agents not listed here use the {@link #getDefaultModel()
+		 * default model}. Applies to all agents regardless of source (config-defined or KB).
+		 *
+		 * @see #AGENT_MODELS
+		 */
+		@Name(AGENT_MODELS)
+		@EntryTag("agent")
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		Map<String, AgentModelConfig> getAgentModels();
 
 		/**
 		 * Model catalog configuration: remote catalog URL and per-model metadata overrides.
@@ -182,6 +441,8 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	 */
 	private Map<String, ModelInfo> _models;
 
+	private Map<String, String> _agentModels;
+
 	/**
 	 * Creates a new {@link LLMProviderRegistry} from configuration.
 	 *
@@ -260,6 +521,12 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 
 		_models = Map.copyOf(merged);
 
+		Map<String, String> agentModelMap = new LinkedHashMap<>();
+		for (Map.Entry<String, AgentModelConfig> entry : getConfig().getAgentModels().entrySet()) {
+			agentModelMap.put(entry.getKey(), entry.getValue().getModel());
+		}
+		_agentModels = Map.copyOf(agentModelMap);
+
 		int overrideCount = overrides.size();
 		Logger.info("LLMProviderRegistry started with " +
 			getConfig().getProviders().size() + " provider(s), " +
@@ -275,6 +542,7 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 			_modelProviderIndex = null;
 			_providerConfigs = null;
 			_models = null;
+			_agentModels = null;
 		} finally {
 			super.shutDown();
 		}
@@ -363,6 +631,75 @@ public class LLMProviderRegistry extends ConfiguredManagedClass<LLMProviderRegis
 	 */
 	public String getDefaultModel() {
 		return getConfig().getDefaultModel();
+	}
+
+	/**
+	 * Resolves the model for the given agent.
+	 *
+	 * <p>
+	 * Resolution order: per-agent assignment from {@link Config#getAgentModels()}, then
+	 * {@link #getDefaultModel() default model}.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        the agent name
+	 * @return the resolved model identifier
+	 * @throws IllegalStateException
+	 *         if no model can be resolved
+	 */
+	public String resolveModel(String agentName) {
+		if (_agentModels != null) {
+			String perAgent = _agentModels.get(agentName);
+			if (perAgent != null && !perAgent.isBlank()) {
+				return perAgent;
+			}
+		}
+		String defaultModel = getDefaultModel();
+		if (defaultModel != null && !defaultModel.isBlank()) {
+			return defaultModel;
+		}
+		throw new IllegalStateException(
+			"No model assigned to agent '" + agentName + "' and no default model configured.");
+	}
+
+	/**
+	 * Resolves the full model assignment for the given agent, including all tuning parameters.
+	 *
+	 * <p>
+	 * Resolution order for the model name: per-agent assignment from
+	 * {@link Config#getAgentModels()}, then {@link #getDefaultModel() default model}. Tuning
+	 * parameters are taken from the per-agent assignment if present; otherwise all are {@code null}
+	 * (meaning "use defaults").
+	 * </p>
+	 *
+	 * @param agentName
+	 *        the agent name
+	 * @return the full assignment including model name and all optional tuning parameters
+	 * @throws IllegalStateException
+	 *         if no model can be resolved
+	 *
+	 * @see AgentModelAssignment
+	 */
+	public AgentModelAssignment resolveModelAssignment(String agentName) {
+		AgentModelConfig perAgent = getConfig().getAgentModels().get(agentName);
+		String model = (perAgent != null && perAgent.getModel() != null && !perAgent.getModel().isBlank())
+			? perAgent.getModel() : getDefaultModel();
+		if (model == null || model.isBlank()) {
+			throw new IllegalStateException(
+				"No model assigned to agent '" + agentName + "' and no default model configured.");
+		}
+		if (perAgent != null) {
+			return new AgentModelAssignment(model,
+				perAgent.getMaxTokens(), perAgent.getContextWindow(), perAgent.getMaxTurns(),
+				perAgent.getTemperature(), perAgent.getTopP(),
+				perAgent.getThinkingEffort(), perAgent.getTopK(),
+				perAgent.getReasoningEffort(), perAgent.getReasoningSummary(),
+				perAgent.getToolChoice(),
+				perAgent.getTimeoutSeconds(), perAgent.getMaxRetries(),
+				perAgent.getMaxToolResultChars());
+		}
+		return new AgentModelAssignment(model,
+			null, null, null, null, null, null, null, null, null, null, null, null, null);
 	}
 
 	/**

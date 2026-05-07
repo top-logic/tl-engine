@@ -29,6 +29,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -37,6 +38,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
+import com.top_logic.tl.ai.core.model.impl.AgentBase;
 import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.model.ModelService;
@@ -63,12 +65,10 @@ import com.top_logic.util.model.ModelService;
  *
  * <h3>Setup</h3>
  * <p>{@link #setUp()} creates a fresh {@link Agent} named {@value #AGENT_NAME} in
- * the test KB with model {@value #AGENT_MODEL} and a minimal system prompt — no
- * tools, no skills, no MCP servers — so the test exercises only the agent loop +
- * provider streaming. {@link #tearDown()} removes it again. The model
- * {@value #AGENT_MODEL} must be configured in
- * {@code tl-ai-demo.test.config.xml}'s {@code LLMProviderRegistry} (it currently
- * is). Real LLM calls are made — running this test consumes API credits.</p>
+ * the test KB with a minimal system prompt — no tools, no skills, no MCP servers — so
+ * the test exercises only the agent loop + provider streaming. The model is resolved
+ * via {@code LLMProviderRegistry} (default model). {@link #tearDown()} removes the
+ * agent again. Real LLM calls are made — running this test consumes API credits.</p>
  *
  * @see AgentFactory
  * @see com.top_logic.tl.ai.core.agent.TransactionScope
@@ -90,10 +90,7 @@ public class TestConcurrentAgents extends BasicTestCase {
 	/** KB name of the agent under test. */
 	public static final String AGENT_NAME = "testAgent";
 
-	/** Model the agent uses. Must be configured in the test {@code LLMProviderRegistry}. */
-	public static final String AGENT_MODEL = "claude-haiku-4-5-20251001";
-
-	/** Minimal system prompt — keeps responses short and deterministic. */
+/** Minimal system prompt — keeps responses short and deterministic. */
 	public static final String AGENT_SYSTEM_PROMPT =
 		"ALWAYS REPLY: Hello. ";
 
@@ -115,11 +112,9 @@ public class TestConcurrentAgents extends BasicTestCase {
 		super.setUp();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(ResKey.text("Seed " + AGENT_NAME))) {
-			Agent existing = AgentDefinitionQuery.getInstance().findAgentByName(AGENT_NAME);
-			if (existing == null) {
+			if (AgentDefinitionQuery.getInstance().findAgentByName(AGENT_NAME) == null) {
 				Agent agent = TlAiCoreFactory.getInstance().createAgent();
 				agent.setName(AGENT_NAME);
-				agent.setModel(AGENT_MODEL);
 				agent.setSystemPrompt(AGENT_SYSTEM_PROMPT);
 			}
 			tx.commit();
@@ -130,9 +125,10 @@ public class TestConcurrentAgents extends BasicTestCase {
 	protected void tearDown() throws Exception {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(ResKey.text("Remove " + AGENT_NAME))) {
-			Agent existing = AgentDefinitionQuery.getInstance().findAgentByName(AGENT_NAME);
-			if (existing != null) {
-				existing.tDelete();
+			List<Agent> existing = WrapperFactory.getWrappersByAttribute(
+				AgentDefinitionQuery.AGENT_TABLE, kb, AgentBase.NAME_ATTR, AGENT_NAME);
+			if (!existing.isEmpty()) {
+				existing.get(0).tDelete();
 			}
 			tx.commit();
 		} finally {

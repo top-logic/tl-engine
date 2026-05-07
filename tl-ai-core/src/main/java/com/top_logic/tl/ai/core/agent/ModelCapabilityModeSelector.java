@@ -91,12 +91,13 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 			return FormVisibility.HIDDEN;
 		}
 
-		String model = (String) object.tValueByName("model");
-		if (model == null || model.isBlank()) {
-			model = registry.getDefaultModel();
-			if (model == null || model.isBlank()) {
-				return FormVisibility.HIDDEN;
-			}
+		String agentName = (String) object.tValueByName("name");
+		String model;
+		try {
+			model = registry.resolveModel(agentName != null ? agentName : "");
+		} catch (IllegalStateException e) {
+			// No model configured for this agent and no default — hide provider-specific fields.
+			return FormVisibility.HIDDEN;
 		}
 
 		// Provider check
@@ -121,10 +122,8 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute,
 			Sink<Pointer> trace, FormContext formContext) {
-		TLStructuredTypePart modelAttr = object.tType().getPart("model");
-		if (modelAttr != null) {
-			trace.add(Pointer.create(object, modelAttr));
-		}
+		// Model is resolved from LLMProviderRegistry, not from the agent object.
+		// No form field dependency to trace.
 	}
 
 	private static boolean hasCapability(ModelInfo info, String capability) {

@@ -39,6 +39,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	/** @see #getChildSplitThreshold() */
 	String CHILD_SPLIT_THRESHOLD__PROP = "childSplitThreshold";
 
+	/** @see #getSubGridCols() */
+	String SUB_GRID_COLS__PROP = "subGridCols";
+
 	/** @see #isRowWise() */
 	String ROW_WISE__PROP = "rowWise";
 
@@ -139,8 +142,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	 * fanning out into <code>C = ⌈M / childSplitThreshold⌉</code> sub-columns. Each sub-column
 	 * has its own vertical bus; follow-up buses are connected to the primary bus via a horizontal
 	 * bottom-bridge.</li>
-	 * <li>Row-wise (when {@link #isRowWise()}): Children are placed row-major into exactly
-	 * <code>childSplitThreshold</code> sub-columns, the sub-grid contains only the direct children,
+	 * <li>Row-wise (when {@link #isRowWise()}): Children are placed row-major across
+	 * <code>subGridCols</code> sub-columns (or <code>childSplitThreshold</code> if
+	 * <code>subGridCols</code> is not set). The sub-grid contains only the direct children,
 	 * subtrees of those direct children are rendered to the right of the sub-grid, and a single
 	 * bus connects all sub-grid children.</li>
 	 * </ul>
@@ -153,6 +157,24 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	 * @see #getChildSplitThreshold()
 	 */
 	com.top_logic.graphic.flow.data.TreeLayout setChildSplitThreshold(int value);
+
+	/**
+	 * Number of sub-columns of the row-wise sub-grid (only relevant if {@link #isRowWise()}).
+	 *
+	 * <p>If set to a positive value, the row-wise algorithm distributes children across exactly
+	 * this many sub-columns; the threshold for triggering sub-grid mode is still
+	 * {@link #getChildSplitThreshold()}. If set to {@code 0}, the row-wise algorithm uses
+	 * {@link #getChildSplitThreshold()} as the sub-column count (default behavior).
+	 *
+	 * <p>Ignored in column-wise mode (the column count there is derived from
+	 * <code>⌈M / childSplitThreshold⌉</code>).
+	 */
+	int getSubGridCols();
+
+	/**
+	 * @see #getSubGridCols()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setSubGridCols(int value);
 
 	/**
 	 * Whether to use the row-wise sub-grid algorithm instead of the column-wise one.

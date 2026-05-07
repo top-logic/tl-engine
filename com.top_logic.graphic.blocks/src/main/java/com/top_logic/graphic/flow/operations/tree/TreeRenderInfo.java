@@ -270,6 +270,8 @@ public class TreeRenderInfo {
 
 	private final boolean _rowWise;
 
+	private final int _subGridCols;
+
 	private final double _bridgeGapY;
 
 	private final Map<TreeNode, GridInfo> _gridInfos = new HashMap<>();
@@ -289,7 +291,8 @@ public class TreeRenderInfo {
 	 * Creates a {@link TreeRenderInfo}.
 	 */
 	public TreeRenderInfo(boolean compact, double gapX, double siblingGapY, double subtreeGapY, double parentAlign,
-			double parentOffset, int childSplitThreshold, boolean rowWise, double bridgeGapY, List<Box> nodes,
+			double parentOffset, int childSplitThreshold, boolean rowWise, int subGridCols, double bridgeGapY,
+			List<Box> nodes,
 			List<TreeConnection> connections) {
 		_compact = compact;
 		_gapX = gapX;
@@ -299,6 +302,7 @@ public class TreeRenderInfo {
 		_parentOffset = parentOffset;
 		_childSplitThreshold = childSplitThreshold;
 		_rowWise = rowWise;
+		_subGridCols = subGridCols;
 		_bridgeGapY = bridgeGapY;
 		_connections = connections;
 
@@ -633,7 +637,10 @@ public class TreeRenderInfo {
 	private void packGridRowWise(TreeNode node) {
 		List<TreeNode> children = node.getChildren();
 		int M = children.size();
-		int C = Math.min(M, _childSplitThreshold);
+		// Number of sub-columns: explicit subGridCols if set, otherwise the threshold doubles as
+		// the column count.
+		int colCount = _subGridCols > 0 ? _subGridCols : _childSplitThreshold;
+		int C = Math.min(M, colCount);
 
 		// Sub-column widths: max direct-child box width per sub-column. Direct children sit in
 		// the sub-grid; their subtrees are shifted out to postGridX, so colW only depends on the

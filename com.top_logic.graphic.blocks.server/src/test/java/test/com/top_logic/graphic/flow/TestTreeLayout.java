@@ -192,6 +192,31 @@ public class TestTreeLayout extends TestCase {
 		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise.svg");
 	}
 
+	public void testGridFanoutRowWiseVaryingHeight() throws IOException {
+		// Same row-wise grid as testGridFanoutRowWise, but sub-grid children have different
+		// box heights. Used to verify per-child heights are honored in the adaptive Y-step
+		// constraints (no box overlap, stub clearance maintained).
+		TreeLayout tree = TreeLayout.create()
+			.setChildSplitThreshold(3)
+			.setRowWise(true);
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		for (int i = 1; i <= 12; i++) {
+			// Some children are tall (more vertical padding), others are normal.
+			boolean tall = (i == 2 || i == 5 || i == 8);
+			Box child = tall ? tallNode("C" + i) : node("C" + i);
+			tree.addNode(child);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(root))
+				.setChild(connector(child)));
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise-varying-height.svg");
+	}
+
 	private TreeLayout buildGridFanoutTree(boolean rowWise) {
 		TreeLayout tree = TreeLayout.create()
 			.setChildSplitThreshold(rowWise ? 3 : 4)
@@ -295,6 +320,12 @@ public class TestTreeLayout extends TestCase {
 	private Box node(String name) {
 		return Border.create().setContent(
 			Padding.create().setAll(5).setContent(
+				Text.create().setValue(name)));
+	}
+
+	private Box tallNode(String name) {
+		return Border.create().setContent(
+			Padding.create().setLeft(5).setRight(5).setTop(25).setBottom(25).setContent(
 				Text.create().setValue(name)));
 	}
 }

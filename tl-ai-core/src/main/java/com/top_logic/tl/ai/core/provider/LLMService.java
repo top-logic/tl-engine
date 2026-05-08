@@ -23,6 +23,7 @@ import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ReadOnly;
@@ -348,6 +349,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * @see #CHAT_ENTRY_POINT
 		 */
 		@Name(CHAT_ENTRY_POINT)
+		@Mandatory
 		@StringDefault("Orchestrator")
 		@Options(fun = AllAgentNameOptions.class)
 		String getChatEntryPoint();
@@ -364,7 +366,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * @see #DEFAULT_MODEL
 		 */
 		@Name(DEFAULT_MODEL)
-		@Nullable
+		@Mandatory
 		@Options(fun = AllConfiguredModelOptions.class)
 		String getDefaultModel();
 

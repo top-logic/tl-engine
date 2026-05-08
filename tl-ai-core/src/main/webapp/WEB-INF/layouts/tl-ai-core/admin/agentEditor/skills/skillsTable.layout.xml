@@ -26,11 +26,6 @@
 			elements="model->all(`tl.ai.core:Skill`)"
 		/>
 		<buttons>
-			<button id="exportExcel"
-				class="com.top_logic.layout.table.export.ExcelExportHandler"
-			>
-				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
-			</button>
 			<button id="deleteSelection"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				target="selection(self())"
@@ -39,7 +34,11 @@
 			</button>
 			<button id="exportToDevEnv"
 				class="com.top_logic.tl.ai.core.agent.ExportToDataFolderCommand"
+				clique="exportButtons"
+				disabledImage="css:fa-solid fa-terminal"
 				file-name="skills.objects.xml"
+				group="Export"
+				image="css:fa-solid fa-terminal"
 				type-name="tl.ai.core:Skill"
 			>
 				<resourceKey key="dynamic.exportToDevEnv">

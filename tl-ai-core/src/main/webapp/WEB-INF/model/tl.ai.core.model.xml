@@ -72,6 +72,7 @@
 					<annotations>
 						<constraints>
 							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+							<constraint class="com.top_logic.tl.ai.core.agent.UniqueNameConstraint"/>
 						</constraints>
 					</annotations>
 				</property>
@@ -177,6 +178,7 @@
 					<annotations>
 						<constraints>
 							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+							<constraint class="com.top_logic.tl.ai.core.agent.UniqueNameConstraint"/>
 						</constraints>
 					</annotations>
 				</property>

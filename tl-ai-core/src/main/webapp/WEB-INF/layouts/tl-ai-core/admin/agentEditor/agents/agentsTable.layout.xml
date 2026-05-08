@@ -37,6 +37,16 @@
 			>
 				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
 			</button>
+			<button id="exportToDevEnv"
+				class="com.top_logic.tl.ai.core.agent.ExportToDataFolderCommand"
+				type-name="tl.ai.core:Agent"
+				file-name="agents.objects.xml"
+			>
+				<resourceKey key="dynamic.exportToDevEnv">
+					<en>Apply to development environment</en>
+					<de>In Entwicklungsumgebung übernehmen</de>
+				</resourceKey>
+			</button>
 		</buttons>
 		<contextMenu class="com.top_logic.layout.basic.contextmenu.component.factory.adapter.SelectableContextMenuProvider">
 			<contextMenuFactory>

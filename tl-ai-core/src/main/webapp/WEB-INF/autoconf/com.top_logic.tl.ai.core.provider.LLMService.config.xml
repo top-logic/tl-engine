@@ -9,19 +9,19 @@
 				<providers>
 					<provider name="openai"
 						class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-						api-key=""
+						api-key="unencrypted:%OPENAI_API_KEY%"
 					/>
 					<provider name="anthropic"
 						class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key=""
+						api-key="unencrypted:%ANTHROPIC_API_KEY%"
 					/>
 					<provider name="mistral"
 						class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
-						api-key=""
+						api-key="unencrypted:%MISTRAL_API_KEY%"
 					/>
 					<provider name="xai"
 						class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
-						api-key=""
+						api-key="unencrypted:%XAI_API_KEY%"
 					/>
 				</providers>
 				<agent-execution

@@ -49,6 +49,9 @@ public class ResponseInfo extends de.haumacher.msgbuf.data.AbstractDataObject im
 		super();
 	}
 
+	/**
+	 * The response identifier.
+	 */
 	public final String getId() {
 		return _id;
 	}
@@ -66,6 +69,9 @@ public class ResponseInfo extends de.haumacher.msgbuf.data.AbstractDataObject im
 		_id = value;
 	}
 
+	/**
+	 * The model that produced the response.
+	 */
 	public final String getModel() {
 		return _model;
 	}
@@ -83,6 +89,9 @@ public class ResponseInfo extends de.haumacher.msgbuf.data.AbstractDataObject im
 		_model = value;
 	}
 
+	/**
+	 * The response status (completed, incomplete, failed).
+	 */
 	public final String getStatus() {
 		return _status;
 	}
@@ -100,6 +109,9 @@ public class ResponseInfo extends de.haumacher.msgbuf.data.AbstractDataObject im
 		_status = value;
 	}
 
+	/**
+	 * Token usage statistics.
+	 */
 	public final Object getUsage() {
 		return _usage;
 	}
@@ -124,6 +136,9 @@ public class ResponseInfo extends de.haumacher.msgbuf.data.AbstractDataObject im
 		return _usage != null;
 	}
 
+	/**
+	 * Error details if the response failed.
+	 */
 	public final Object getError() {
 		return _error;
 	}

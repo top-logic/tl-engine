@@ -34,7 +34,7 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	/** The base URL of the provider API (without trailing slash). */
 	protected final String _baseUrl;
 
-	/** */
+	/** The HTTP client used for provider requests. */
 	protected final HttpClient _httpClient;
 
 	/** The timeout for individual HTTP requests. */

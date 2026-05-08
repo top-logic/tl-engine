@@ -29,6 +29,9 @@ public class OpenAIEventEnvelope extends de.haumacher.msgbuf.data.AbstractDataOb
 		super();
 	}
 
+	/**
+	 * The event type identifier.
+	 */
 	public final String getType() {
 		return _type;
 	}

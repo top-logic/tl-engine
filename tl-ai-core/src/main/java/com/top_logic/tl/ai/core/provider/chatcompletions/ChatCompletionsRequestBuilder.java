@@ -36,7 +36,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
 /**
  * Maps a {@link ProviderRequest} to a {@link ChatCompletionsRequest} proto DTO and serializes it.
  *
- * <p>Used by all Chat Completions API-compatible providers (OpenAI-compatible, Mistral, xAI,
+ * <p>Used by all Chat Completions API-compatible providers (<code>OpenAI</code>-compatible, Mistral, <code>xAI</code>,
  * etc.).</p>
  */
 public class ChatCompletionsRequestBuilder {

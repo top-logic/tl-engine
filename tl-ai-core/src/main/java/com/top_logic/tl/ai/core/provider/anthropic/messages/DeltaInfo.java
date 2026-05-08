@@ -1,5 +1,8 @@
 package com.top_logic.tl.ai.core.provider.anthropic.messages;
 
+/**
+ * Delta information within a content block update.
+ */
 public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
@@ -46,6 +49,9 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		super();
 	}
 
+	/**
+	 * The delta type (text_delta, input_json_delta, thinking_delta, signature_delta).
+	 */
 	public final String getType() {
 		return _type;
 	}
@@ -63,6 +69,9 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_type = value;
 	}
 
+	/**
+	 * The text fragment (for text_delta).
+	 */
 	public final String getText() {
 		return _text;
 	}
@@ -80,6 +89,9 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_text = value;
 	}
 
+	/**
+	 * The partial JSON fragment (for input_json_delta).
+	 */
 	public final String getPartialJson() {
 		return _partialJson;
 	}
@@ -97,6 +109,9 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_partialJson = value;
 	}
 
+	/**
+	 * The thinking text fragment (for thinking_delta).
+	 */
 	public final String getThinking() {
 		return _thinking;
 	}
@@ -114,6 +129,9 @@ public class DeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_thinking = value;
 	}
 
+	/**
+	 * The signature fragment (for signature_delta).
+	 */
 	public final String getSignature() {
 		return _signature;
 	}

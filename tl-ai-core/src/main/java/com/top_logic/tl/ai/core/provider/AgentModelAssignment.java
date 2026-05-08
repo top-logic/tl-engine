@@ -22,8 +22,8 @@ package com.top_logic.tl.ai.core.provider;
  * @param topP               top-p sampling, or {@code null} for default
  * @param thinkingEffort     Anthropic thinking effort (low/medium/high/max), or {@code null}
  * @param topK               Anthropic top-k, or {@code null}
- * @param reasoningEffort    OpenAI/xAI reasoning effort (low/medium/high), or {@code null}
- * @param reasoningSummary   OpenAI/xAI reasoning summary (auto/detailed), or {@code null}
+ * @param reasoningEffort    <code>OpenAI</code>/<code>xAI</code> reasoning effort (low/medium/high), or {@code null}
+ * @param reasoningSummary   <code>OpenAI</code>/<code>xAI</code> reasoning summary (auto/detailed), or {@code null}
  * @param toolChoice         tool choice (AUTO/REQUIRED/NONE), or {@code null} for provider default
  * @param timeoutSeconds     request timeout, or {@code null} for default
  * @param maxRetries         max retries on transient errors, or {@code null} for default

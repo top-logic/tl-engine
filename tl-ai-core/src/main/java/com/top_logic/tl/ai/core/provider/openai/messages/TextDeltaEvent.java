@@ -39,6 +39,9 @@ public class TextDeltaEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		super();
 	}
 
+	/**
+	 * The event type identifier.
+	 */
 	public final String getType() {
 		return _type;
 	}
@@ -56,6 +59,9 @@ public class TextDeltaEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_type = value;
 	}
 
+	/**
+	 * The index of the output item.
+	 */
 	public final int getOutputIndex() {
 		return _outputIndex;
 	}
@@ -73,6 +79,9 @@ public class TextDeltaEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_outputIndex = value;
 	}
 
+	/**
+	 * The text fragment.
+	 */
 	public final String getDelta() {
 		return _delta;
 	}

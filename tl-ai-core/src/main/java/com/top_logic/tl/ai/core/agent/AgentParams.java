@@ -105,7 +105,7 @@ public record AgentParams(
 	}
 
 	/**
-	 * Convenience constructor with context window but defaults for retries/timeout/toolChoice.
+	 * Convenience constructor with context window but defaults for retries/timeout/{@code toolChoice}.
 	 */
 	public AgentParams(String model, String systemPrompt, int maxTurns,
 			int maxOutputTokens, Map<String, Object> modelOptions,

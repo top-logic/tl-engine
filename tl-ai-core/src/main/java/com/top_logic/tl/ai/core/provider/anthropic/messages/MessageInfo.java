@@ -1,5 +1,8 @@
 package com.top_logic.tl.ai.core.provider.anthropic.messages;
 
+/**
+ * Metadata about an Anthropic message response.
+ */
 public class MessageInfo extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
@@ -36,6 +39,9 @@ public class MessageInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		super();
 	}
 
+	/**
+	 * The unique message identifier.
+	 */
 	public final String getId() {
 		return _id;
 	}
@@ -53,6 +59,9 @@ public class MessageInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		_id = value;
 	}
 
+	/**
+	 * The model that produced the response.
+	 */
 	public final String getModel() {
 		return _model;
 	}
@@ -70,6 +79,9 @@ public class MessageInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		_model = value;
 	}
 
+	/**
+	 * Token usage statistics.
+	 */
 	public final com.top_logic.tl.ai.core.provider.anthropic.messages.UsageInfo getUsage() {
 		return _usage;
 	}

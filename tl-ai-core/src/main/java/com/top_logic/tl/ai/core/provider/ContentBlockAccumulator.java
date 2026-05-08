@@ -125,7 +125,7 @@ public class ContentBlockAccumulator {
 	/**
 	 * Sets the continuity token on the block at the given index.
 	 *
-	 * <p>Used for Anthropic's {@code signature} and OpenAI's {@code encrypted_content},
+	 * <p>Used for Anthropic's {@code signature} and <code>OpenAI</code>'s {@code encrypted_content},
 	 * which must be passed back in subsequent turns for multi-turn thinking continuity.</p>
 	 *
 	 * @param index

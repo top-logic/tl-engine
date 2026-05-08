@@ -8,70 +8,103 @@ option NoXml;
 
 /** Payload of the {@code message_start} SSE event. */
 message MessageStartEvent {
+	/** The message metadata. */
 	MessageInfo `message` [Name = "message"];
 }
 
+/** Metadata about an Anthropic message response. */
 message MessageInfo {
+	/** The unique message identifier. */
 	string id [Name = "id"];
+	/** The model that produced the response. */
 	string model [Name = "model"];
+	/** Token usage statistics. */
 	UsageInfo usage [Name = "usage"];
 }
 
+/** Token usage statistics from the Anthropic API. */
 message UsageInfo {
+	/** Number of input tokens consumed. */
 	int input_tokens [Name = "input_tokens"];
+	/** Number of output tokens generated. */
 	int output_tokens [Name = "output_tokens"];
+	/** Number of input tokens read from cache. */
 	int cache_read_input_tokens [Name = "cache_read_input_tokens"];
+	/** Number of input tokens written to cache. */
 	int cache_creation_input_tokens [Name = "cache_creation_input_tokens"];
 }
 
 /** Payload of the {@code content_block_start} SSE event. */
 message ContentBlockStartEvent {
+	/** The index of the content block within the response. */
 	int index [Name = "index"];
+	/** The content block metadata. */
 	ContentBlockInfo content_block [Name = "content_block"];
 }
 
+/** Metadata about a content block in an Anthropic response. */
 message ContentBlockInfo {
+	/** The block type (text, tool_use, thinking). */
 	string type [Name = "type"];
+	/** The block identifier. */
 	string id [Name = "id"];
+	/** The tool name (for tool_use blocks). */
 	string name [Name = "name"];
 }
 
 /** Payload of the {@code content_block_delta} SSE event. */
 message ContentBlockDeltaEvent {
+	/** The index of the content block being updated. */
 	int index [Name = "index"];
+	/** The delta payload. */
 	DeltaInfo delta [Name = "delta"];
 }
 
+/** Delta information within a content block update. */
 message DeltaInfo {
+	/** The delta type (text_delta, input_json_delta, thinking_delta, signature_delta). */
 	string type [Name = "type"];
+	/** The text fragment (for text_delta). */
 	string text [Name = "text"];
+	/** The partial JSON fragment (for input_json_delta). */
 	string partial_json [Name = "partial_json"];
+	/** The thinking text fragment (for thinking_delta). */
 	string thinking [Name = "thinking"];
+	/** The signature fragment (for signature_delta). */
 	string signature [Name = "signature"];
 }
 
 /** Payload of the {@code content_block_stop} SSE event. */
 message ContentBlockStopEvent {
+	/** The index of the completed content block. */
 	int index [Name = "index"];
 }
 
 /** Payload of the {@code message_delta} SSE event. */
 message MessageDeltaEvent {
+	/** The message delta information. */
 	MessageDeltaInfo delta [Name = "delta"];
+	/** Updated usage statistics. */
 	UsageInfo usage [Name = "usage"];
 }
 
+/** Delta information for message-level updates. */
 message MessageDeltaInfo {
+	/** The reason the message ended (end_turn, max_tokens, tool_use). */
 	string stop_reason [Name = "stop_reason"];
 }
 
 /** Error payload within an {@code error} SSE event. */
 message StreamErrorEvent {
+	/** The error details. */
 	StreamErrorInfo error [Name = "error"];
 }
 
+/** Details of a stream error. */
 message StreamErrorInfo {
+	/** The error type. */
 	string type [Name = "type"];
+	/** The error message. */
 	string `message` [Name = "message"];
 }
 
@@ -79,17 +112,30 @@ message StreamErrorInfo {
 
 /** Anthropic Messages API request body. */
 message AnthropicRequest {
+	/** The model identifier. */
 	string model [Name = "model"];
+	/** Maximum number of output tokens. */
 	int max_tokens [Name = "max_tokens"];
+	/** Whether to stream the response. */
 	bool stream [Name = "stream"];
+	/** Sampling temperature. */
 	json temperature [Name = "temperature"];
+	/** Top-p sampling parameter. */
 	json top_p [Name = "top_p"];
+	/** Top-k sampling parameter. */
 	json top_k [Name = "top_k"];
+	/** System prompt content. */
 	json system [Name = "system"];
+	/** The conversation messages. */
 	json messages [Name = "messages"];
+	/** Tool definitions. */
 	json tools [Name = "tools"];
+	/** Response format specification. */
 	json response_format [Name = "response_format"];
+	/** Tool choice configuration. */
 	json tool_choice [Name = "tool_choice"];
+	/** Extended thinking configuration. */
 	json thinking [Name = "thinking"];
+	/** Output configuration (e.g. thinking continuity). */
 	json output_config [Name = "output_config"];
 }

@@ -1,5 +1,8 @@
 package com.top_logic.tl.ai.core.provider.openai.messages;
 
+/**
+ * Details of an output item in the response.
+ */
 public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
@@ -51,6 +54,9 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		super();
 	}
 
+	/**
+	 * The item type (message, function_call).
+	 */
 	public final String getType() {
 		return _type;
 	}
@@ -68,6 +74,9 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_type = value;
 	}
 
+	/**
+	 * The tool call identifier.
+	 */
 	public final String getCallId() {
 		return _callId;
 	}
@@ -85,6 +94,9 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_callId = value;
 	}
 
+	/**
+	 * The tool name.
+	 */
 	public final String getName() {
 		return _name;
 	}
@@ -102,6 +114,9 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_name = value;
 	}
 
+	/**
+	 * The item identifier.
+	 */
 	public final String getId() {
 		return _id;
 	}
@@ -119,6 +134,9 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_id = value;
 	}
 
+	/**
+	 * The accumulated function call arguments.
+	 */
 	public final String getArguments() {
 		return _arguments;
 	}
@@ -136,6 +154,9 @@ public class OutputItemInfo extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_arguments = value;
 	}
 
+	/**
+	 * Encrypted content for thinking continuity.
+	 */
 	public final String getEncryptedContent() {
 		return _encryptedContent;
 	}

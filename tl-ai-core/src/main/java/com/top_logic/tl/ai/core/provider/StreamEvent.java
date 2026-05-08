@@ -24,37 +24,84 @@ public sealed interface StreamEvent {
 	/** Emitted once when the stream connection is established. */
 	record StreamStart() implements StreamEvent { /**/ }
 
-	/** A text content block has started. */
+	/**
+	 * A text content block has started.
+	 *
+	 * @param contentIndex the block index within the response
+	 */
 	record TextStart(int contentIndex) implements StreamEvent { /**/ }
 
-	/** A text delta from the LLM. */
+	/**
+	 * A text delta from the LLM.
+	 *
+	 * @param contentIndex the block index within the response
+	 * @param text the text fragment
+	 */
 	record TextDelta(int contentIndex, String text) implements StreamEvent { /**/ }
 
-	/** A text content block has ended. */
+	/**
+	 * A text content block has ended.
+	 *
+	 * @param contentIndex the block index within the response
+	 */
 	record TextEnd(int contentIndex) implements StreamEvent { /**/ }
 
-	/** A thinking content block has started. */
+	/**
+	 * A thinking content block has started.
+	 *
+	 * @param contentIndex the block index within the response
+	 */
 	record ThinkingStart(int contentIndex) implements StreamEvent { /**/ }
 
-	/** A thinking text delta from the LLM (extended thinking). */
+	/**
+	 * A thinking text delta from the LLM (extended thinking).
+	 *
+	 * @param contentIndex the block index within the response
+	 * @param text the thinking text fragment
+	 */
 	record ThinkingDelta(int contentIndex, String text) implements StreamEvent { /**/ }
 
-	/** A thinking content block has ended. */
+	/**
+	 * A thinking content block has ended.
+	 *
+	 * @param contentIndex the block index within the response
+	 */
 	record ThinkingEnd(int contentIndex) implements StreamEvent { /**/ }
 
-	/** Start of a tool call in the response. */
+	/**
+	 * Start of a tool call in the response.
+	 *
+	 * @param contentIndex the block index within the response
+	 * @param id the tool call identifier
+	 * @param name the tool name
+	 */
 	record ToolCallStart(int contentIndex, String id, String name) implements StreamEvent { /**/ }
 
-	/** Partial JSON arguments for a tool call being streamed. */
+	/**
+	 * Partial JSON arguments for a tool call being streamed.
+	 *
+	 * @param contentIndex the block index within the response
+	 * @param partialJson the partial JSON fragment
+	 */
 	record ToolCallDelta(int contentIndex, String partialJson) implements StreamEvent { /**/ }
 
-	/** A tool call has ended (arguments are fully accumulated). */
+	/**
+	 * A tool call has ended (arguments are fully accumulated).
+	 *
+	 * @param contentIndex the block index within the response
+	 */
 	record ToolCallEnd(int contentIndex) implements StreamEvent { /**/ }
 
 	/**
 	 * The complete response message, emitted once when the stream finishes successfully.
 	 *
 	 * <p>Contains the fully accumulated content parts and token usage.</p>
+	 *
+	 * @param id the response identifier
+	 * @param model the model that produced the response
+	 * @param finishReason the reason the response ended
+	 * @param usage token usage statistics
+	 * @param content the accumulated content parts
 	 */
 	record MessageComplete(
 			String id,
@@ -75,8 +122,11 @@ public sealed interface StreamEvent {
 	 * A stream-level error from the provider.
 	 *
 	 * <p>Emitted for errors reported within the SSE stream (e.g. Anthropic's
-	 * {@code error} event, OpenAI's {@code response.failed}). HTTP-level errors
+	 * {@code error} event, <code>OpenAI</code>'s {@code response.failed}). HTTP-level errors
 	 * (non-200 status) are still thrown as {@link ProviderException}.</p>
+	 *
+	 * @param message the error message
+	 * @param kind the error classification
 	 */
 	record Error(String message, ProviderException.Kind kind) implements StreamEvent { /**/ }
 }

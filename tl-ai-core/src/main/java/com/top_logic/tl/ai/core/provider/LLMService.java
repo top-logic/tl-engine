@@ -227,7 +227,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		Integer getTopK();
 
 		/**
-		 * OpenAI/xAI reasoning effort (low/medium/high), or {@code null}.
+		 * <code>OpenAI</code>/<code>xAI</code> reasoning effort (low/medium/high), or {@code null}.
 		 *
 		 * @see #REASONING_EFFORT
 		 */
@@ -237,7 +237,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String getReasoningEffort();
 
 		/**
-		 * OpenAI/xAI reasoning summary (auto/detailed), or {@code null}.
+		 * <code>OpenAI</code>/<code>xAI</code> reasoning summary (auto/detailed), or {@code null}.
 		 *
 		 * @see #REASONING_SUMMARY
 		 */
@@ -514,7 +514,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * Manually defined model metadata for models not in the remote catalog.
 		 *
 		 * <p>
-		 * Use this for local models or OpenAI-compatible endpoints whose models are not listed
+		 * Use this for local models or <code>OpenAI</code>-compatible endpoints whose models are not listed
 		 * on models.dev. Entries here take precedence over catalog entries with the same name.
 		 * </p>
 		 *

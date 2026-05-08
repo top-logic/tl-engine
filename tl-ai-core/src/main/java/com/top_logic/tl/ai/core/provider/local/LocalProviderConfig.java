@@ -21,11 +21,11 @@ import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
 
 /**
- * {@link LLMProviderConfig} for local OpenAI-compatible servers (Ollama, LM Studio, vLLM).
+ * {@link LLMProviderConfig} for local <code>OpenAI</code>-compatible servers (Ollama, LM Studio, <code>vLLM</code>).
  *
  * <p>
  * The base URL is mandatory and no API key is required. Produces an {@link OpenAIProvider}
- * since local servers speak the OpenAI protocol.
+ * since local servers speak the <code>OpenAI</code> protocol.
  * </p>
  */
 @InApp

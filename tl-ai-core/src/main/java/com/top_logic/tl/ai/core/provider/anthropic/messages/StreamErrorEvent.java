@@ -29,6 +29,9 @@ public class StreamErrorEvent extends de.haumacher.msgbuf.data.AbstractDataObjec
 		super();
 	}
 
+	/**
+	 * The error details.
+	 */
 	public final com.top_logic.tl.ai.core.provider.anthropic.messages.StreamErrorInfo getError() {
 		return _error;
 	}

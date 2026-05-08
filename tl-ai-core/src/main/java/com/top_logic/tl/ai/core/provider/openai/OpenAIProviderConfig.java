@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 
 /**
- * {@link LLMProviderConfig} for the OpenAI cloud API.
+ * {@link LLMProviderConfig} for the <code>OpenAI</code> cloud API.
  */
 @Label("OpenAI provider configuration")
 @InApp
@@ -48,7 +48,7 @@ public class OpenAIProviderConfig implements LLMProviderConfig {
 		String API_KEY = "api-key";
 
 		/**
-		 * The API key for OpenAI authentication.
+		 * The API key for <code>OpenAI</code> authentication.
 		 */
 		@Name(API_KEY)
 		@Encrypted
@@ -68,7 +68,7 @@ public class OpenAIProviderConfig implements LLMProviderConfig {
 	}
 
 	/**
-	 * Options provider discovering available models from the OpenAI API.
+	 * Options provider discovering available models from the <code>OpenAI</code> API.
 	 */
 	public static class ModelOptions extends Function2<List<String>, String, String> {
 		@Override

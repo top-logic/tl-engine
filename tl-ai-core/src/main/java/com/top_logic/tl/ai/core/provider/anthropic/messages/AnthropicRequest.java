@@ -89,6 +89,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		super();
 	}
 
+	/**
+	 * The model identifier.
+	 */
 	public final String getModel() {
 		return _model;
 	}
@@ -106,6 +109,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_model = value;
 	}
 
+	/**
+	 * Maximum number of output tokens.
+	 */
 	public final int getMaxTokens() {
 		return _maxTokens;
 	}
@@ -123,6 +129,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_maxTokens = value;
 	}
 
+	/**
+	 * Whether to stream the response.
+	 */
 	public final boolean isStream() {
 		return _stream;
 	}
@@ -140,6 +149,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_stream = value;
 	}
 
+	/**
+	 * Sampling temperature.
+	 */
 	public final Object getTemperature() {
 		return _temperature;
 	}
@@ -164,6 +176,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _temperature != null;
 	}
 
+	/**
+	 * Top-p sampling parameter.
+	 */
 	public final Object getTopP() {
 		return _topP;
 	}
@@ -188,6 +203,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _topP != null;
 	}
 
+	/**
+	 * Top-k sampling parameter.
+	 */
 	public final Object getTopK() {
 		return _topK;
 	}
@@ -212,6 +230,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _topK != null;
 	}
 
+	/**
+	 * System prompt content.
+	 */
 	public final Object getSystem() {
 		return _system;
 	}
@@ -236,6 +257,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _system != null;
 	}
 
+	/**
+	 * The conversation messages.
+	 */
 	public final Object getMessages() {
 		return _messages;
 	}
@@ -260,6 +284,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _messages != null;
 	}
 
+	/**
+	 * Tool definitions.
+	 */
 	public final Object getTools() {
 		return _tools;
 	}
@@ -284,6 +311,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _tools != null;
 	}
 
+	/**
+	 * Response format specification.
+	 */
 	public final Object getResponseFormat() {
 		return _responseFormat;
 	}
@@ -308,6 +338,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _responseFormat != null;
 	}
 
+	/**
+	 * Tool choice configuration.
+	 */
 	public final Object getToolChoice() {
 		return _toolChoice;
 	}
@@ -332,6 +365,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _toolChoice != null;
 	}
 
+	/**
+	 * Extended thinking configuration.
+	 */
 	public final Object getThinking() {
 		return _thinking;
 	}
@@ -356,6 +392,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 		return _thinking != null;
 	}
 
+	/**
+	 * Output configuration (e.g. thinking continuity).
+	 */
 	public final Object getOutputConfig() {
 		return _outputConfig;
 	}

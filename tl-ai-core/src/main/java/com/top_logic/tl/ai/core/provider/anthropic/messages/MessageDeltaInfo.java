@@ -1,5 +1,8 @@
 package com.top_logic.tl.ai.core.provider.anthropic.messages;
 
+/**
+ * Delta information for message-level updates.
+ */
 public class MessageDeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
@@ -26,6 +29,9 @@ public class MessageDeltaInfo extends de.haumacher.msgbuf.data.AbstractDataObjec
 		super();
 	}
 
+	/**
+	 * The reason the message ended (end_turn, max_tokens, tool_use).
+	 */
 	public final String getStopReason() {
 		return _stopReason;
 	}

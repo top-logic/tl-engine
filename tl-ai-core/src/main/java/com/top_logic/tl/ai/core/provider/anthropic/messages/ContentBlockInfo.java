@@ -1,5 +1,8 @@
 package com.top_logic.tl.ai.core.provider.anthropic.messages;
 
+/**
+ * Metadata about a content block in an Anthropic response.
+ */
 public class ContentBlockInfo extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
@@ -36,6 +39,9 @@ public class ContentBlockInfo extends de.haumacher.msgbuf.data.AbstractDataObjec
 		super();
 	}
 
+	/**
+	 * The block type (text, tool_use, thinking).
+	 */
 	public final String getType() {
 		return _type;
 	}
@@ -53,6 +59,9 @@ public class ContentBlockInfo extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_type = value;
 	}
 
+	/**
+	 * The block identifier.
+	 */
 	public final String getId() {
 		return _id;
 	}
@@ -70,6 +79,9 @@ public class ContentBlockInfo extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_id = value;
 	}
 
+	/**
+	 * The tool name (for tool_use blocks).
+	 */
 	public final String getName() {
 		return _name;
 	}

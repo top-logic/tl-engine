@@ -22,10 +22,10 @@ import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 
 /**
- * {@link LLMProviderConfig} for the xAI (Grok) API.
+ * {@link LLMProviderConfig} for the <code>xAI</code> (Grok) API.
  *
  * <p>
- * The xAI inference API is OpenAI-compatible. This config produces an {@link XAIProvider}
+ * The <code>xAI</code> inference API is <code>OpenAI</code>-compatible. This config produces an {@link XAIProvider}
  * (which extends {@link com.top_logic.tl.ai.core.provider.openai.OpenAIProvider}).
  * </p>
  */
@@ -51,7 +51,7 @@ public class XAIProviderConfig implements LLMProviderConfig {
 		String API_KEY = "api-key";
 
 		/**
-		 * The API key for xAI authentication.
+		 * The API key for <code>xAI</code> authentication.
 		 */
 		@Name(API_KEY)
 		@Encrypted
@@ -71,7 +71,7 @@ public class XAIProviderConfig implements LLMProviderConfig {
 	}
 
 	/**
-	 * Options provider discovering available models from the xAI API.
+	 * Options provider discovering available models from the <code>xAI</code> API.
 	 */
 	public static class ModelOptions extends Function2<List<String>, String, String> {
 		@Override

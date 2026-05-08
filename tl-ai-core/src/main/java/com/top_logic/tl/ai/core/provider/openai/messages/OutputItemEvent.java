@@ -39,6 +39,9 @@ public class OutputItemEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		super();
 	}
 
+	/**
+	 * The event type identifier.
+	 */
 	public final String getType() {
 		return _type;
 	}
@@ -56,6 +59,9 @@ public class OutputItemEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		_type = value;
 	}
 
+	/**
+	 * The index of the output item.
+	 */
 	public final int getOutputIndex() {
 		return _outputIndex;
 	}
@@ -73,6 +79,9 @@ public class OutputItemEvent extends de.haumacher.msgbuf.data.AbstractDataObject
 		_outputIndex = value;
 	}
 
+	/**
+	 * The output item details.
+	 */
 	public final com.top_logic.tl.ai.core.provider.openai.messages.OutputItemInfo getItem() {
 		return _item;
 	}

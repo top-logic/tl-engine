@@ -34,6 +34,9 @@ public class ContentBlockDeltaEvent extends de.haumacher.msgbuf.data.AbstractDat
 		super();
 	}
 
+	/**
+	 * The index of the content block being updated.
+	 */
 	public final int getIndex() {
 		return _index;
 	}
@@ -51,6 +54,9 @@ public class ContentBlockDeltaEvent extends de.haumacher.msgbuf.data.AbstractDat
 		_index = value;
 	}
 
+	/**
+	 * The delta payload.
+	 */
 	public final com.top_logic.tl.ai.core.provider.anthropic.messages.DeltaInfo getDelta() {
 		return _delta;
 	}

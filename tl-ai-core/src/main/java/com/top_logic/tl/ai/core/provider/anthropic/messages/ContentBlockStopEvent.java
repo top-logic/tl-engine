@@ -29,6 +29,9 @@ public class ContentBlockStopEvent extends de.haumacher.msgbuf.data.AbstractData
 		super();
 	}
 
+	/**
+	 * The index of the completed content block.
+	 */
 	public final int getIndex() {
 		return _index;
 	}

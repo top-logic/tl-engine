@@ -23,7 +23,7 @@ import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
 
 /**
- * Helper for discovering model IDs from OpenAI-compatible {@code /v1/models} endpoints.
+ * Helper for discovering model IDs from <code>OpenAI</code>-compatible {@code /v1/models} endpoints.
  *
  * <p>
  * Used by provider configs that support model discovery. Results are cached for 5 minutes.

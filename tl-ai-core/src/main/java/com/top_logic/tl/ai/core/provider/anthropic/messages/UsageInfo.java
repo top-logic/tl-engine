@@ -1,5 +1,8 @@
 package com.top_logic.tl.ai.core.provider.anthropic.messages;
 
+/**
+ * Token usage statistics from the Anthropic API.
+ */
 public class UsageInfo extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
@@ -41,6 +44,9 @@ public class UsageInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		super();
 	}
 
+	/**
+	 * Number of input tokens consumed.
+	 */
 	public final int getInputTokens() {
 		return _inputTokens;
 	}
@@ -58,6 +64,9 @@ public class UsageInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_inputTokens = value;
 	}
 
+	/**
+	 * Number of output tokens generated.
+	 */
 	public final int getOutputTokens() {
 		return _outputTokens;
 	}
@@ -75,6 +84,9 @@ public class UsageInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_outputTokens = value;
 	}
 
+	/**
+	 * Number of input tokens read from cache.
+	 */
 	public final int getCacheReadInputTokens() {
 		return _cacheReadInputTokens;
 	}
@@ -92,6 +104,9 @@ public class UsageInfo extends de.haumacher.msgbuf.data.AbstractDataObject imple
 		_cacheReadInputTokens = value;
 	}
 
+	/**
+	 * Number of input tokens written to cache.
+	 */
 	public final int getCacheCreationInputTokens() {
 		return _cacheCreationInputTokens;
 	}

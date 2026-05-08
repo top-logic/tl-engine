@@ -242,7 +242,7 @@ public class ModelCatalogEntry {
 	}
 
 	/**
-	 * Editable model metadata for manually configured models (e.g. local or OpenAI-compatible
+	 * Editable model metadata for manually configured models (e.g. local or <code>OpenAI</code>-compatible
 	 * endpoints) that are not in the remote catalog.
 	 *
 	 * <p>

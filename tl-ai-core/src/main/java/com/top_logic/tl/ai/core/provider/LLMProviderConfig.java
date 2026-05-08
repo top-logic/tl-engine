@@ -21,7 +21,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
  * Factory contract for LLM provider instances.
  *
  * <p>
- * Each concrete implementation (Anthropic, OpenAI, Mistral, xAI, etc.) defines its own nested
+ * Each concrete implementation (Anthropic, <code>OpenAI</code>, Mistral, <code>xAI</code>, etc.) defines its own nested
  * {@link Config} with provider-specific properties and knows how to create its
  * {@link LLMProvider} and discover available models.
  * </p>

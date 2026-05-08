@@ -10,14 +10,16 @@
 		>
 			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
 				<providers>
-					<provider name="mistral"
+					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
+						name="mistral"
 						api-key="unencrypted:xxx"
 						base-url="https://api.mistral.ai/v1"
 						models="mistral-large-latest"
 					/>
-					<provider name="anthropic"
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						name="anthropic"
 						api-key="unencrypted:xxx"
-						base-url="https://api.anthropic.com/v1"
+						base-url="https://api.anthropic.com"
 						models="claude-sonnet-4-5-20250929"
 					/>
 				</providers>

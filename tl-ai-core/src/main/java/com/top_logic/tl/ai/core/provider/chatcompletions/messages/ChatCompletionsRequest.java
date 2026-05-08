@@ -1,7 +1,7 @@
 package com.top_logic.tl.ai.core.provider.chatcompletions.messages;
 
 /**
- * Chat Completions API request body (OpenAI-compatible).
+ * Chat Completions API request body (<code>OpenAI</code>-compatible).
  */
 public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
@@ -69,6 +69,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		super();
 	}
 
+	/**
+	 * The model identifier.
+	 */
 	public final String getModel() {
 		return _model;
 	}
@@ -86,6 +89,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		_model = value;
 	}
 
+	/**
+	 * Maximum number of output tokens.
+	 */
 	public final int getMaxTokens() {
 		return _maxTokens;
 	}
@@ -103,6 +109,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		_maxTokens = value;
 	}
 
+	/**
+	 * Whether to stream the response.
+	 */
 	public final boolean isStream() {
 		return _stream;
 	}
@@ -120,6 +129,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		_stream = value;
 	}
 
+	/**
+	 * Sampling temperature.
+	 */
 	public final Object getTemperature() {
 		return _temperature;
 	}
@@ -144,6 +156,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		return _temperature != null;
 	}
 
+	/**
+	 * Top-p sampling parameter.
+	 */
 	public final Object getTopP() {
 		return _topP;
 	}
@@ -168,6 +183,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		return _topP != null;
 	}
 
+	/**
+	 * The conversation messages.
+	 */
 	public final Object getMessages() {
 		return _messages;
 	}
@@ -192,6 +210,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		return _messages != null;
 	}
 
+	/**
+	 * Tool definitions.
+	 */
 	public final Object getTools() {
 		return _tools;
 	}
@@ -216,6 +237,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		return _tools != null;
 	}
 
+	/**
+	 * Response format specification.
+	 */
 	public final Object getResponseFormat() {
 		return _responseFormat;
 	}
@@ -240,6 +264,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		return _responseFormat != null;
 	}
 
+	/**
+	 * Tool choice configuration.
+	 */
 	public final Object getToolChoice() {
 		return _toolChoice;
 	}

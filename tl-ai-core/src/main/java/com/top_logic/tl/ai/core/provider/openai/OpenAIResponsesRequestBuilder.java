@@ -43,7 +43,7 @@ public final class OpenAIResponsesRequestBuilder {
 	}
 
 	/**
-	 * Serializes the given {@link ProviderRequest} to an OpenAI Responses API JSON request body.
+	 * Serializes the given {@link ProviderRequest} to an <code>OpenAI</code> Responses API JSON request body.
 	 */
 	public static String buildRequestJson(ProviderRequest request) throws ProviderException {
 		OpenAIResponsesRequest req = OpenAIResponsesRequest.create()

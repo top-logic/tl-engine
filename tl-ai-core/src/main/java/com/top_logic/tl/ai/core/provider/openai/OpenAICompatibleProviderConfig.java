@@ -24,7 +24,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 
 /**
- * {@link LLMProviderConfig} for third-party services that implement the OpenAI protocol.
+ * {@link LLMProviderConfig} for third-party services that implement the <code>OpenAI</code> protocol.
  *
  * <p>
  * Unlike {@link OpenAIProviderConfig}, the base URL is mandatory (there is no sensible default).
@@ -74,7 +74,7 @@ public class OpenAICompatibleProviderConfig implements LLMProviderConfig {
 	}
 
 	/**
-	 * Options provider discovering available models from the OpenAI-compatible endpoint.
+	 * Options provider discovering available models from the <code>OpenAI</code>-compatible endpoint.
 	 */
 	public static class ModelOptions extends Function2<List<String>, String, String> {
 		@Override

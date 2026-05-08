@@ -34,6 +34,9 @@ public class ContentBlockStartEvent extends de.haumacher.msgbuf.data.AbstractDat
 		super();
 	}
 
+	/**
+	 * The index of the content block within the response.
+	 */
 	public final int getIndex() {
 		return _index;
 	}
@@ -51,6 +54,9 @@ public class ContentBlockStartEvent extends de.haumacher.msgbuf.data.AbstractDat
 		_index = value;
 	}
 
+	/**
+	 * The content block metadata.
+	 */
 	public final com.top_logic.tl.ai.core.provider.anthropic.messages.ContentBlockInfo getContentBlock() {
 		return _contentBlock;
 	}

@@ -29,6 +29,9 @@ public class MessageStartEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 		super();
 	}
 
+	/**
+	 * The message metadata.
+	 */
 	public final com.top_logic.tl.ai.core.provider.anthropic.messages.MessageInfo getMessage() {
 		return _message;
 	}

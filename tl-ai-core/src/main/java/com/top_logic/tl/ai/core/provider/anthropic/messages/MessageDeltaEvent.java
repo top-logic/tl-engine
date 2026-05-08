@@ -34,6 +34,9 @@ public class MessageDeltaEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 		super();
 	}
 
+	/**
+	 * The message delta information.
+	 */
 	public final com.top_logic.tl.ai.core.provider.anthropic.messages.MessageDeltaInfo getDelta() {
 		return _delta;
 	}
@@ -58,6 +61,9 @@ public class MessageDeltaEvent extends de.haumacher.msgbuf.data.AbstractDataObje
 		return _delta != null;
 	}
 
+	/**
+	 * Updated usage statistics.
+	 */
 	public final com.top_logic.tl.ai.core.provider.anthropic.messages.UsageInfo getUsage() {
 		return _usage;
 	}

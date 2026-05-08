@@ -34,6 +34,9 @@ public class ResponseLifecycleEvent extends de.haumacher.msgbuf.data.AbstractDat
 		super();
 	}
 
+	/**
+	 * The event type identifier.
+	 */
 	public final String getType() {
 		return _type;
 	}
@@ -51,6 +54,9 @@ public class ResponseLifecycleEvent extends de.haumacher.msgbuf.data.AbstractDat
 		_type = value;
 	}
 
+	/**
+	 * The response metadata.
+	 */
 	public final com.top_logic.tl.ai.core.provider.openai.messages.ResponseInfo getResponse() {
 		return _response;
 	}

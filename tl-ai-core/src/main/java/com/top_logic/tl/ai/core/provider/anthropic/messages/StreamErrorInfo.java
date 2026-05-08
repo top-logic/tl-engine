@@ -1,5 +1,8 @@
 package com.top_logic.tl.ai.core.provider.anthropic.messages;
 
+/**
+ * Details of a stream error.
+ */
 public class StreamErrorInfo extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
@@ -31,6 +34,9 @@ public class StreamErrorInfo extends de.haumacher.msgbuf.data.AbstractDataObject
 		super();
 	}
 
+	/**
+	 * The error type.
+	 */
 	public final String getType() {
 		return _type;
 	}
@@ -48,6 +54,9 @@ public class StreamErrorInfo extends de.haumacher.msgbuf.data.AbstractDataObject
 		_type = value;
 	}
 
+	/**
+	 * The error message.
+	 */
 	public final String getMessage() {
 		return _message;
 	}

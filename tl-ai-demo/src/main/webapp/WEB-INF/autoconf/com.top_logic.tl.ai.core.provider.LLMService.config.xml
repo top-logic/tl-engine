@@ -26,7 +26,7 @@
 					chat-entry-point="test"
 				>
 					<agent-overrides>
-						<agent name="Orchestrator"
+						<agent name="TL_Orchestrator"
 							model="claude-sonnet-4-6"
 						/>
 					</agent-overrides>

@@ -68,7 +68,13 @@
 				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
-				/>
+				>
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
 				<property name="description"
 					type="tl.core:String"
 				>
@@ -167,7 +173,13 @@
 				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
-				/>
+				>
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
 				<property name="description"
 					type="tl.core:String"
 				>

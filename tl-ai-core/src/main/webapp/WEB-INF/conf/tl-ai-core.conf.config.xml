@@ -35,7 +35,7 @@
 		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
-					<skill name="taskManagement"
+					<skill name="TL_taskManagement"
 						description="Load ONLY when you are about to call createTask. Do NOT load for single delegations or simple requests."
 					>
 						<content><![CDATA[# Task Management
@@ -149,25 +149,25 @@ listTasks()                             → all done → respond
 | Two tasks show `in_progress` | Started next before completing current | Complete current task first, then set next to `in_progress` |
 ]]></content>
 					</skill>
-					<skill name="promptModelEditor"
-						description="How to delegate to ModelEditor — send domain intent and business requirements, never modeling instructions. Load when delegating model creation or modification tasks."
+					<skill name="TL_promptModelEditor"
+						description="How to delegate to TL_ModelEditor — send domain intent and business requirements, never modeling instructions. Load when delegating model creation or modification tasks."
 					>
-						<content><![CDATA[# How to Delegate to ModelEditor
+						<content><![CDATA[# How to Delegate to TL_ModelEditor
 
-Every delegation to ModelEditor takes three fields:
+Every delegation to TL_ModelEditor takes three fields:
 - **goal** — One-line domain intent (what the user wants to achieve)
 - **task** — Domain requirements in user/business language
 - **context** — Pre-gathered model context (module names, existing types, related entities)
 
 ## Golden Rules
 
-1. **Describe the domain, not the model.** Use business language to describe entities and relationships — not "create class X with reference to Y". The ModelEditor is the modeling expert; it decides classes, interfaces, references, inheritance.
-2. **Use business language.** Say "entity", "attribute", "relationship" — never tool-specific terms (property, reference, backward reference, enumeration, generalization). The ModelEditor translates to TopLogic modeling constructs.
-3. **Include business rules and constraints.** "A vehicle must have a license plate", "status goes available → assigned → in-maintenance", "a driver can operate multiple vehicles". These inform the ModelEditor's design decisions.
-4. **Gather context before delegating.** Delegate to ModelExplorer first to discover the target module, existing types, and related entities. Pass this as context so the ModelEditor doesn't start blind.
-5. **One domain scope per delegation.** "Create the domain model" is one delegation and ONE task. Do NOT split a cohesive domain into per-type tasks or per-type delegations. The ModelEditor needs to see the full picture to design proper inheritance, shared interfaces, and relationships. One domain = one task = one delegation.
-6. **Never specify modeling mechanisms.** No inheritance, no generalizations, no "make it abstract", no "use an enum", no specific class names, no property types, no reference directions. Describe the domain need — the ModelEditor applies TopLogic modeling expertise.
-7. **Never suggest reusing specific types.** Do NOT tell the ModelEditor which base types to inherit from (e.g., "reuse NamedEntities as a base class"). The ModelEditor discovers framework types itself during its DISCOVER phase.
+1. **Describe the domain, not the model.** Use business language to describe entities and relationships — not "create class X with reference to Y". The TL_ModelEditor is the modeling expert; it decides classes, interfaces, references, inheritance.
+2. **Use business language.** Say "entity", "attribute", "relationship" — never tool-specific terms (property, reference, backward reference, enumeration, generalization). The TL_ModelEditor translates to TopLogic modeling constructs.
+3. **Include business rules and constraints.** "A vehicle must have a license plate", "status goes available → assigned → in-maintenance", "a driver can operate multiple vehicles". These inform the TL_ModelEditor's design decisions.
+4. **Gather context before delegating.** Delegate to TL_ModelExplorer first to discover the target module, existing types, and related entities. Pass this as context so the TL_ModelEditor doesn't start blind.
+5. **One domain scope per delegation.** "Create the domain model" is one delegation and ONE task. Do NOT split a cohesive domain into per-type tasks or per-type delegations. The TL_ModelEditor needs to see the full picture to design proper inheritance, shared interfaces, and relationships. One domain = one task = one delegation.
+6. **Never specify modeling mechanisms.** No inheritance, no generalizations, no "make it abstract", no "use an enum", no specific class names, no property types, no reference directions. Describe the domain need — the TL_ModelEditor applies TopLogic modeling expertise.
+7. **Never suggest reusing specific types.** Do NOT tell the TL_ModelEditor which base types to inherit from (e.g., "reuse NamedEntities as a base class"). The TL_ModelEditor discovers framework types itself during its DISCOVER phase.
 
 ## Good vs. Bad Work Orders
 
@@ -208,11 +208,11 @@ Every delegation to ModelEditor takes three fields:
 ## Context Gathering
 
 Before delegating a model creation/modification task, consider:
-- **Do I know the target module?** If not → delegate to ModelExplorer first.
-- **Do I know what types already exist?** If not → delegate to ModelExplorer to list types in the module.
-- **Did the user mention entities that might already exist?** If so → delegate to ModelExplorer to check.
+- **Do I know the target module?** If not → delegate to TL_ModelExplorer first.
+- **Do I know what types already exist?** If not → delegate to TL_ModelExplorer to list types in the module.
+- **Did the user mention entities that might already exist?** If so → delegate to TL_ModelExplorer to check.
 
-Pass ALL gathered context to the ModelEditor. It uses this to avoid duplicates and to design relationships with existing types.
+Pass ALL gathered context to the TL_ModelEditor. It uses this to avoid duplicates and to design relationships with existing types.
 
 ## Anti-Patterns (FORBIDDEN)
 
@@ -221,12 +221,12 @@ Pass ALL gathered context to the ModelEditor. It uses this to avoid duplicates a
 - Dictating inheritance ("extend TLObject", "make it abstract") → FORBIDDEN
 - Suggesting specific types to reuse ("repurpose Labor as Person", "reuse NamedEntities") → FORBIDDEN
 - Splitting a cohesive domain into per-type delegations → FORBIDDEN
-- Asking the user technical modeling questions that the ModelEditor should decide → FORBIDDEN
+- Asking the user technical modeling questions that the TL_ModelEditor should decide → FORBIDDEN
 - Delegating without gathering context first (when context is available) → WASTEFUL
 ]]></content>
 					</skill>
-					<skill name="promptModelExplorer"
-						description="How to delegate to ModelExplorer for raw model context only—especially extracting TLScript from annotations verbatim—then chain analysis to the appropriate agent."
+					<skill name="TL_promptModelExplorer"
+						description="How to delegate to TL_ModelExplorer for raw model context only—especially extracting TLScript from annotations verbatim—then chain analysis to the appropriate agent."
 					>
 						<content><![CDATA[# How to Write Effective Delegation Work Orders (ModelExplorer Caller)
 
@@ -338,7 +338,7 @@ Use this whenever annotations might contain TLScript.
 
 When ModelExplorer returns code (TLScript), chain a second delegation.
 
-* First: delegate to ModelExplorer to extract TLScript verbatim
+* First: delegate to TL_ModelExplorer to extract TLScript verbatim
 * Second: delegate to the appropriate specialist to analyze it
 
 **Important:** the specialist receives the TLScript **unchanged**.
@@ -371,7 +371,7 @@ Then immediately re-delegate with a stricter extraction order:
 * **Single-call annotation + meaning:** Don't combine "retrieve annotation text" with "what does it mean?" in one call.
 ]]></content>
 					</skill>
-					<skill name="annotationDiscovery"
+					<skill name="TL_annotationDiscovery"
 						description="How to discover available annotations and their implementation options. Load this skill when you need to find the right annotation for a goal or understand what can be configured on a model element."
 					>
 						<content><![CDATA[# Annotation Discovery
@@ -440,7 +440,7 @@ like `query` (AttributeByExpression) and `fallback-storage`.
   nested JSON — never guess property names or values.
 ]]></content>
 					</skill>
-					<skill name="annotationEditing"
+					<skill name="TL_annotationEditing"
 						description="How to set and remove annotations on model elements using JSON configuration. Load this skill when you need to modify annotation metadata on modules, types, parts, or classifiers."
 					>
 						<content><![CDATA[# Annotation Editing
@@ -531,7 +531,7 @@ addAnnotation("module:Type#attr",
 - If unsure about an annotation's effect, ask the user before writing.
 ]]></content>
 					</skill>
-					<skill name="topLogicModeling"
+					<skill name="TL_topLogicModeling"
 						description="TopLogic modeling expertise — modeling philosophy, reasoning process, framework discovery protocol, and modeling patterns. Load before planning any model creation involving new types."
 					>
 						<content><![CDATA[# TopLogic Modeling Expertise
@@ -649,7 +649,7 @@ Before planning ANY model creation involving new types, you MUST discover what t
 
 For each domain concept you identified in the Reasoning phase, ask the ModelExplorer whether the framework already provides something suitable.
 
-Delegate to ModelExplorer with:
+Delegate to TL_ModelExplorer with:
 - goal: "Find framework types that semantically represent [domain concepts]"
 - task: "I need to model [list domain entities and what they represent]. Search framework/system modules for types that SEMANTICALLY represent these same concepts — meaning the framework type IS the same kind of thing, not just shares an attribute name. For example, a framework Person type is suitable for modeling people, but a workflow Token type is NOT suitable just because it has a date field. Only return types where inheriting from them creates a true 'is-a' relationship. List their parts (including inherited) for promising matches."
 - context: "Domain concepts: [list with descriptions]"
@@ -660,7 +660,7 @@ Combine multiple domain concepts into a single ModelExplorer delegation. Only ma
 
 ### Step 2: Discover existing application types
 
-Delegate to ModelExplorer:
+Delegate to TL_ModelExplorer:
 - goal: "Check existing types related to [domain]"
 - task: "List all types in module [X] with their parts and inheritance. Also search for types related to [domain keywords] across all application modules."
 - context: "Target module: [name]. Related concepts: [keywords]"
@@ -768,7 +768,7 @@ This format makes inheritance, shared structure, and design decisions visible to
 To create a composition (lifecycle-bound ownership), set `composite=true`.
 ]]></content>
 					</skill>
-					<skill name="tlScriptWriting"
+					<skill name="TL_tlScriptWriting"
 						description="TLScript syntax, idioms, validation workflow, and function discovery. Load before writing, explaining, or validating TLScript."
 					>
 						<content><![CDATA[# TLScript Expertise
@@ -822,7 +822,7 @@ Choosing `.` vs `..`:
 ```
 ]]></content>
 					</skill>
-					<skill name="modelExploration"
+					<skill name="TL_modelExploration"
 						description="How to effectively explore the TopLogic application model: exploration strategy, annotation discovery, framework type assessment, output formatting."
 					>
 						<content><![CDATA[# Model Exploration Expertise
@@ -886,14 +886,14 @@ If you cannot fill the Evidence section, you have not called enough tools.
 					</skill>
 				</skills>
 				<agents>
-					<agent name="Orchestrator"
+					<agent name="TL_Orchestrator"
 						description=""
-						skills="taskManagement, promptModelEditor, promptModelExplorer"
-						delegations="TLScriptAgent, ModelEditor, ModelExplorer"
+						skills="TL_taskManagement, TL_promptModelEditor, TL_promptModelExplorer"
+						delegations="TL_TLScriptAgent, TL_ModelEditor, TL_ModelExplorer"
 					>
 						<system-prompt><![CDATA[# Preamble
 
-You are the **Orchestrator** for a TopLogic AI assistant — a strategic coordinator that routes user requests to specialist sub-agents and synthesizes their results.
+You are the **TL_Orchestrator** for a TopLogic AI assistant — a strategic coordinator that routes user requests to specialist sub-agents and synthesizes their results.
 
 You do not answer from your own knowledge. You do not plan domain-specific changes. You have NO domain tools yourself — you gather all context by delegating to the appropriate specialist. Your job is to: understand what the user wants, gather enough context to route correctly, delegate execution to the right specialist, and report results.
 
@@ -1027,9 +1027,9 @@ Route by the nature of the request:
 - Gathering context when you already have enough information to delegate → WASTEFUL (delegate directly when the request is self-contained)]]></system-prompt>
 						<tools>task.updateTask, task.listTasks, task.createTask, user-interaction.askUser</tools>
 					</agent>
-					<agent name="ModelExplorer"
+					<agent name="TL_ModelExplorer"
 						description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
-						skills="annotationDiscovery"
+						skills="TL_annotationDiscovery"
 					>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1132,7 +1132,7 @@ If you cannot fill the Evidence section → you have not called enough tools →
 - Summarize by grouping; do not dump raw JSON unless the user explicitly asks for raw output.]]></system-prompt>
 						<tools>model-analysis.findTypeUsages, model-annotation-browser.getCurrentAnnotations, model-instances.getInstance, model-instances.listInstances, model-search.searchModel, model-browser.listModules, model-browser.listTypeParts, model-annotation-definitions.describeAnnotation, model-browser.listClassifiers, model-analysis.findPartUsages, model-browser.listTypes</tools>
 					</agent>
-					<agent name="TLScriptAgent"
+					<agent name="TL_TLScriptAgent"
 						description="Delegate to the TLScript specialist for TLScript syntax, function documentation, script validation, or code generation. Provide goal (short intent), task (concrete question or code snippet), context (type/part names, code snippets, model literals if relevant). Do NOT paste the full user message; distill the TLScript question."
 					>
 						<system-prompt><![CDATA[# Preamble
@@ -1147,7 +1147,7 @@ Your job: analyze, explain, validate, correct, and author TLScript expressions. 
 ## TOOL-FIRST RULE (HARD GATE)
 Before writing ANY TLScript code or explaining ANY function:
 1. If you are about to use a function you haven't verified → STOP → use the appropriate tool from your catalog to look up its documentation first.
-2. If you need a model literal verified but lack the context → state clearly what you need in your response. The Orchestrator will provide it and call you again.
+2. If you need a model literal verified but lack the context → state clearly what you need in your response. The TL_Orchestrator will provide it and call you again.
 
 An answer that uses unverified functions is INVALID.
 
@@ -1172,7 +1172,7 @@ Treat yourself as having ZERO knowledge about available TLScript functions or th
 # Primary Workflows
 
 ## CONTEXT CONTRACT
-You are a **leaf agent** — you do not gather model context yourself. The Orchestrator provides model context (type names, qualified identifiers, TLScript code snippets) in the `context` field of your work order. If the provided context is insufficient for your task, state clearly what is missing in your response — the Orchestrator will gather it and call you again.
+You are a **leaf agent** — you do not gather model context yourself. The TL_Orchestrator provides model context (type names, qualified identifiers, TLScript code snippets) in the `context` field of your work order. If the provided context is insufficient for your task, state clearly what is missing in your response — the TL_Orchestrator will gather it and call you again.
 
 ## SCRIPT AND CONTEXT RULES
 - **Base explanations on actual TLScript code.** Do not infer or invent logic if no code is available.
@@ -1242,10 +1242,10 @@ B) Choosing '.' vs '..':
 }]]></system-prompt>
 						<tools>task.updateTask, script-exec.validateTLScript, script-doc.getTLScriptFunctionDocumentation, task.listTasks, script-doc.listTLScriptFunctions, script-exec.executeTLScript</tools>
 					</agent>
-					<agent name="ModelEditor"
+					<agent name="TL_ModelEditor"
 						description="Delegate to the Model Editor for model modification. Call when the user wants to create, modify, or delete elements in the TopLogic model: add/remove types, properties, references, enumerations, or set/remove annotations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the request."
-						skills="annotationEditing, topLogicModeling, annotationDiscovery"
-						delegations="TLScriptAgent"
+						skills="TL_annotationEditing, TL_topLogicModeling, TL_annotationDiscovery"
+						delegations="TL_TLScriptAgent"
 					>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1261,7 +1261,7 @@ Every modification follows this sequence:
 
 1. **REASON**: Before anything else, load the `toplogic-modeling` skill and apply its "Reasoning Before Modeling" process. Think through the domain concepts, hierarchies, ownership, shared structure, and extensibility. Skip this step only for trivial single-attribute additions.
 
-2. **DISCOVER**: Follow the MANDATORY DISCOVERY PHASE from the `toplogic-modeling` skill. Delegate to ModelExplorer to find suitable framework base types and existing application types for your domain concepts. Skip this step only for trivial additions where no new types or generalizations are involved.
+2. **DISCOVER**: Follow the MANDATORY DISCOVERY PHASE from the `toplogic-modeling` skill. Delegate to TL_ModelExplorer to find suitable framework base types and existing application types for your domain concepts. Skip this step only for trivial additions where no new types or generalizations are involved.
 
 3. **PLAN**: Using your reasoning and discoveries, design the concrete model. Apply the modeling philosophy from the `toplogic-modeling` skill. If the work order is unclear, ask the user for clarification before planning.
 
@@ -1419,7 +1419,7 @@ After all steps, respond with a structured summary:
 Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 						<tools>model-annotation-editor.addAnnotation, model-modification.deleteModelElement, task.listTasks, model-modification.createEnumeration, model-modification.createProperty, model-annotation-definitions.describeAnnotation, model-modification.createClass, model-modification.createBackwardReference, task.updateTask, annotation-search.listAvailableAnnotations, config-schema.getConfigSchema, model-annotation-browser.getCurrentAnnotations, model-annotation-editor.removeAnnotation, model-modification.createReference, model-modification.updateModule, model-modification.updateEnumeration, model-modification.updateProperty, model-modification.createModule, model-modification.updateClass, user-interaction.askUser</tools>
 					</agent>
-					<agent name="ReviewAgent"
+					<agent name="TL_ReviewAgent"
 						description="Background quality reviewer. Analyzes conversation transcripts for quality issues (incorrect answers, bad delegations, tool misuse, unhelpful responses, inefficiency) and creates Gitea tickets for problems found."
 						tools="gitea.create_gitea_issue"
 					>
@@ -1467,7 +1467,7 @@ You receive a serialized conversation turn as input. Analyze it for problems in 
 <<AVAILABLE_TOOLS>>]]></system-prompt>
 
 					</agent>
-					<agent name="SingleAgent"
+					<agent name="TL_SingleAgent"
 						description=""
 					>
 						<system-prompt><![CDATA[# Identity
@@ -1711,7 +1711,7 @@ After creating model elements, summarize:
 ### Warnings (if any)
 - [issues, skipped items, assumptions]]]></system-prompt>
 						<tools>model-annotation-editor.addAnnotation, model-instances.getInstance, task.listTasks, model-browser.listModules, model-browser.listTypeParts, model-modification.createEnumeration, script-exec.executeTLScript, model-annotation-definitions.describeAnnotation, model-browser.listTypes, model-modification.createBackwardReference, model-analysis.findTypeUsages, script-exec.validateTLScript, annotation-search.listAvailableAnnotations, model-modification.createReference, user-interaction.askUser, model-modification.deleteModelElement, script-doc.getTLScriptFunctionDocumentation, model-instances.listInstances, model-modification.createProperty, model-modification.createClass, task.createTask, task.updateTask, config-schema.getConfigSchema, model-annotation-browser.getCurrentAnnotations, model-annotation-editor.removeAnnotation, model-modification.updateModule, model-search.searchModel, model-modification.updateEnumeration, script-doc.listTLScriptFunctions, model-modification.updateProperty, model-browser.listClassifiers, model-modification.createModule, model-analysis.findPartUsages, model-modification.updateClass</tools>
-						<skills>annotationEditing, tlScriptWriting, annotationDiscovery, topLogicModeling, taskManagement, modelExploration</skills>
+						<skills>TL_annotationEditing, TL_tlScriptWriting, TL_annotationDiscovery, TL_topLogicModeling, TL_taskManagement, TL_modelExploration</skills>
 					</agent>
 				</agents>
 			</instance>

@@ -16,19 +16,19 @@ public class TestModelResolution extends TestCase {
 
 	/** */
 	public void testPerAgentOverridesDefault() {
-		Map<String, String> agentModels = Map.of("Orchestrator", "claude-opus-4-20250514");
+		Map<String, String> agentModels = Map.of("TL_Orchestrator", "claude-opus-4-20250514");
 		String defaultModel = "claude-sonnet-4-20250514";
 
-		String resolved = resolveModel("Orchestrator", agentModels, defaultModel);
+		String resolved = resolveModel("TL_Orchestrator", agentModels, defaultModel);
 		assertEquals("claude-opus-4-20250514", resolved);
 	}
 
 	/** */
 	public void testFallsBackToDefault() {
-		Map<String, String> agentModels = Map.of("Orchestrator", "claude-opus-4-20250514");
+		Map<String, String> agentModels = Map.of("TL_Orchestrator", "claude-opus-4-20250514");
 		String defaultModel = "claude-sonnet-4-20250514";
 
-		String resolved = resolveModel("ModelExplorer", agentModels, defaultModel);
+		String resolved = resolveModel("TL_ModelExplorer", agentModels, defaultModel);
 		assertEquals("claude-sonnet-4-20250514", resolved);
 	}
 
@@ -37,10 +37,10 @@ public class TestModelResolution extends TestCase {
 		Map<String, String> agentModels = Map.of();
 
 		try {
-			resolveModel("Orchestrator", agentModels, null);
+			resolveModel("TL_Orchestrator", agentModels, null);
 			fail("Expected IllegalStateException");
 		} catch (IllegalStateException e) {
-			assertTrue(e.getMessage().contains("Orchestrator"));
+			assertTrue(e.getMessage().contains("TL_Orchestrator"));
 		}
 	}
 
@@ -49,10 +49,10 @@ public class TestModelResolution extends TestCase {
 		Map<String, String> agentModels = Map.of();
 
 		try {
-			resolveModel("Orchestrator", agentModels, "");
+			resolveModel("TL_Orchestrator", agentModels, "");
 			fail("Expected IllegalStateException");
 		} catch (IllegalStateException e) {
-			assertTrue(e.getMessage().contains("Orchestrator"));
+			assertTrue(e.getMessage().contains("TL_Orchestrator"));
 		}
 	}
 

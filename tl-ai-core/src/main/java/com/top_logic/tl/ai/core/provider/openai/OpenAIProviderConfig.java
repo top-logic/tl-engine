@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -24,6 +25,7 @@ import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 /**
  * {@link LLMProviderConfig} for the OpenAI cloud API.
  */
+@Label("OpenAI provider configuration")
 @InApp
 public class OpenAIProviderConfig implements LLMProviderConfig {
 

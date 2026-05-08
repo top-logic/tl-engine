@@ -18,6 +18,7 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -41,6 +42,7 @@ import com.top_logic.model.annotate.LabelPosition;
  * @see SkillDefinition
  * @see AgentSource#CONFIG
  */
+@Label("TopLogic-Agents and Skills")
 @ServiceDependencies({})
 public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAgentDefinitions.Config<?>> {
 

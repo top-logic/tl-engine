@@ -197,6 +197,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 *
 		 * @see #TOP_P
 		 */
+		@Label("Top-P")
 		@Name(TOP_P)
 		@Nullable
 		@DynamicMode(fun = ProviderFieldMode.TemperatureFieldMode.class, args = @Ref(MODEL))
@@ -219,6 +220,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 *
 		 * @see #TOP_K
 		 */
+		@Label("Top-K")
 		@Name(TOP_K)
 		@Nullable
 		@DynamicMode(fun = ProviderFieldMode.AnthropicFieldMode.class, args = @Ref(MODEL))
@@ -350,7 +352,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(CHAT_ENTRY_POINT)
 		@Mandatory
-		@StringDefault("Orchestrator")
+		@StringDefault("TL_Orchestrator")
 		@Options(fun = AllAgentNameOptions.class)
 		String getChatEntryPoint();
 

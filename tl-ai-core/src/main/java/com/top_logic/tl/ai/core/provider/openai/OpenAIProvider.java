@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
@@ -39,6 +40,7 @@ import de.haumacher.msgbuf.json.JsonReader;
  * Request serialization is delegated to {@link OpenAIResponsesRequestBuilder}.
  * Thread-safe: a single instance handles concurrent streams.</p>
  */
+@Label("OpenAI provider")
 public class OpenAIProvider extends AbstractStreamingProvider {
 
 	private static final String DEFAULT_BASE_URL = "https://api.openai.com";

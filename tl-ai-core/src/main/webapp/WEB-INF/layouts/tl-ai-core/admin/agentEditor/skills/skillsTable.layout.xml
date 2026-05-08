@@ -39,8 +39,8 @@
 			</button>
 			<button id="exportToDevEnv"
 				class="com.top_logic.tl.ai.core.agent.ExportToDataFolderCommand"
-				type-name="tl.ai.core:Skill"
 				file-name="skills.objects.xml"
+				type-name="tl.ai.core:Skill"
 			>
 				<resourceKey key="dynamic.exportToDevEnv">
 					<en>Apply to development environment</en>

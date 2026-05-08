@@ -24,7 +24,9 @@
 						api-key=""
 					/>
 				</providers>
-				<agent-execution />
+				<agent-execution
+					default-model="%DEFAULT_MODEL%"
+				/>
 				<model-catalog />
 			</instance>
 		</config>

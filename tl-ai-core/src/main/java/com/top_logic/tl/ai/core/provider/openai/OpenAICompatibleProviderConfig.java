@@ -38,7 +38,7 @@ public class OpenAICompatibleProviderConfig implements LLMProviderConfig {
 	 */
 	@DisplayOrder({
 		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
-		Config.BASE_URL,
+		LLMProviderConfig.Config.BASE_URL,
 		Config.API_KEY,
 		LLMProviderConfig.Config.MODELS,
 		LLMProviderConfig.Config.CONNECT_TIMEOUT,
@@ -49,9 +49,6 @@ public class OpenAICompatibleProviderConfig implements LLMProviderConfig {
 
 		/** Configuration property name for {@link #getApiKey()}. */
 		String API_KEY = "api-key";
-
-		/** Configuration property name for {@link #getBaseUrl()}. */
-		String BASE_URL = "base-url";
 
 		/**
 		 * The API key for authentication.
@@ -65,19 +62,12 @@ public class OpenAICompatibleProviderConfig implements LLMProviderConfig {
 		@Encrypted
 		String getApiKey();
 
-		/**
-		 * The base URL of the OpenAI-compatible service.
-		 *
-		 * <p>
-		 * Mandatory — there is no sensible default for third-party services.
-		 * </p>
-		 */
-		@Name(BASE_URL)
+		@Override
 		@Mandatory
 		String getBaseUrl();
 
 		@Override
-		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(BASE_URL) })
+		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(LLMProviderConfig.Config.BASE_URL) })
 		List<String> getModels();
 	}
 

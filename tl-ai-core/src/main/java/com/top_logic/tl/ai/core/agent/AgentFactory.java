@@ -78,7 +78,7 @@ public class AgentFactory {
 
 	/**
 	 * Returns the name of the entry-point agent as configured in
-	 * {@link LLMService.ModelTuningConfig#getEntryPointAgent()}.
+	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentExecutionConfig#getChatEntryPoint()}.
 	 *
 	 * @return the agent name
 	 */

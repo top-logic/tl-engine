@@ -11,7 +11,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
@@ -37,7 +36,7 @@ public class LocalProviderConfig implements LLMProviderConfig {
 	 */
 	@DisplayOrder({
 		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
-		Config.BASE_URL,
+		LLMProviderConfig.Config.BASE_URL,
 		LLMProviderConfig.Config.MODELS,
 		LLMProviderConfig.Config.CONNECT_TIMEOUT,
 		LLMProviderConfig.Config.REQUEST_TIMEOUT,
@@ -45,22 +44,12 @@ public class LocalProviderConfig implements LLMProviderConfig {
 	})
 	public interface Config extends LLMProviderConfig.Config {
 
-		/** Configuration property name for {@link #getBaseUrl()}. */
-		String BASE_URL = "base-url";
-
-		/**
-		 * The base URL of the local server (e.g. {@code http://localhost:11434}).
-		 *
-		 * <p>
-		 * Mandatory — the server address must be explicitly specified.
-		 * </p>
-		 */
-		@Name(BASE_URL)
+		@Override
 		@Mandatory
 		String getBaseUrl();
 
 		@Override
-		@Options(fun = ModelOptions.class, args = @Ref(BASE_URL))
+		@Options(fun = ModelOptions.class, args = @Ref(LLMProviderConfig.Config.BASE_URL))
 		List<String> getModels();
 	}
 

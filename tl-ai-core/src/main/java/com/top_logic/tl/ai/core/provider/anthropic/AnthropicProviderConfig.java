@@ -40,7 +40,7 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 	 */
 	@DisplayOrder({
 		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
-		Config.BASE_URL,
+		LLMProviderConfig.Config.BASE_URL,
 		Config.API_KEY,
 		LLMProviderConfig.Config.MODELS,
 		Config.VERSION,
@@ -53,9 +53,6 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		/** Configuration property name for {@link #getApiKey()}. */
 		String API_KEY = "api-key";
 
-		/** Configuration property name for {@link #getBaseUrl()}. */
-		String BASE_URL = "base-url";
-
 		/** Configuration property name for {@link #getVersion()}. */
 		String VERSION = "version";
 
@@ -66,10 +63,7 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		@Encrypted
 		String getApiKey();
 
-		/**
-		 * The base URL for the Anthropic API.
-		 */
-		@Name(BASE_URL)
+		@Override
 		@StringDefault("https://api.anthropic.com")
 		String getBaseUrl();
 
@@ -81,7 +75,7 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		String getVersion();
 
 		@Override
-		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(BASE_URL), @Ref(VERSION) })
+		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(LLMProviderConfig.Config.BASE_URL), @Ref(VERSION) })
 		List<String> getModels();
 
 		@Override

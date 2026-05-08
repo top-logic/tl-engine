@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.model.impl.AgentBase;
  * Unified resolution layer for agent and skill definitions.
  *
  * <p>
- * Queries both service configuration (via {@link AgentDefinitionService}) and the knowledge base,
+ * Queries both service configuration (via {@link TopLogicAgentDefinitions}) and the knowledge base,
  * merging results with the "KB wins by name" rule. All public methods return source-agnostic
  * {@link AgentDefinition} and {@link SkillDefinition} records.
  * </p>
@@ -215,10 +215,10 @@ public class AgentDefinitionQuery {
 	}
 
 	private boolean isConfigServiceActive() {
-		return AgentDefinitionService.Module.INSTANCE.isActive();
+		return TopLogicAgentDefinitions.Module.INSTANCE.isActive();
 	}
 
-	private AgentDefinitionService getConfigService() {
-		return AgentDefinitionService.getInstance();
+	private TopLogicAgentDefinitions getConfigService() {
+		return TopLogicAgentDefinitions.getInstance();
 	}
 }

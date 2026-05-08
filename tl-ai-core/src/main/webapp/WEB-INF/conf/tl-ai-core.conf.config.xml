@@ -27,13 +27,13 @@
 					<!-- MCP Server Registry for external MCP connections -->
 					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
 					<!-- Agent Definition Service for config-defined agents and skills -->
-					<module key="com.top_logic.tl.ai.core.agent.AgentDefinitionService$Module" value="true"/>
+					<module key="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tl.ai.core.agent.AgentDefinitionService">
-			<instance class="com.top_logic.tl.ai.core.agent.AgentDefinitionService">
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
 					<skill name="taskManagement"
 						description="Load ONLY when you are about to call createTask. Do NOT load for single delegations or simple requests."

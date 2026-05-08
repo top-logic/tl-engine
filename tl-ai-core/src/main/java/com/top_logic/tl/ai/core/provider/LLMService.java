@@ -37,25 +37,30 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionService;
+import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
 
 /**
- * Central LLM service managing provider connections, model resolution, and model metadata.
+ * Central service for LLM provider management, model resolution, and agent execution
+ * configuration.
  *
  * <p>
  * The service configuration is organized into three sections:
  * </p>
  * <ol>
  * <li><b>Providers</b> — connection details for each LLM provider (API keys, base URLs, model
- * allowlists).</li>
- * <li><b>Agent Model Tuning</b> — default model selection and per-agent model assignments with
- * optional tuning parameters (temperature, max tokens, reasoning effort, etc.).</li>
- * <li><b>Model Catalog</b> — read-only metadata about each model's capabilities and limits,
- * fetched from the remote catalog on startup with optional manual overrides.</li>
+ * allowlists). Each provider entry defines how to reach a specific LLM API endpoint and which
+ * models are enabled.</li>
+ * <li><b>Agent Execution</b> — configures the chat entry-point agent, the default model used by
+ * all agents, and optional per-agent overrides for model selection and execution parameters
+ * (temperature, max tokens, timeouts, reasoning effort, etc.).</li>
+ * <li><b>Model Catalog</b> — read-only metadata describing each model's capabilities (tool
+ * calling, reasoning, temperature support) and limits (context window, max output tokens).
+ * Populated automatically from the <a href="https://models.dev">models.dev</a> remote catalog on
+ * startup, with optional manual overrides for local or unlisted models.</li>
  * </ol>
  *
  * @see LLMProviderConfig
@@ -64,32 +69,33 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
 public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 	/**
-	 * Per-agent model selection with optional tuning parameters.
+	 * Per-agent override for model selection and execution parameters.
 	 *
 	 * <p>
-	 * Maps an agent name to a specific model and allows overriding default parameters such as
-	 * temperature, max tokens, reasoning effort, and timeouts. Parameters left {@code null} inherit
-	 * catalog defaults.
+	 * Each entry overrides the {@link AgentExecutionConfig#getDefaultModel() default model} for a
+	 * specific agent and optionally configures execution parameters (max turns, timeouts, tool
+	 * choice) and model-specific settings (temperature, reasoning effort). Parameters left
+	 * {@code null} inherit defaults from the model catalog or system defaults.
 	 * </p>
 	 */
 	@DisplayOrder({
 		NamedConfigMandatory.NAME_ATTRIBUTE,
-		AgentModelTuning.MODEL,
-		AgentModelTuning.CONTEXT_WINDOW,
-		AgentModelTuning.MAX_TOKENS,
-		AgentModelTuning.MAX_TURNS,
-		AgentModelTuning.MAX_TOOL_RESULT_CHARS,
-		AgentModelTuning.TOOL_CHOICE,
-		AgentModelTuning.TIMEOUT_SECONDS,
-		AgentModelTuning.MAX_RETRIES,
-		AgentModelTuning.TEMPERATURE,
-		AgentModelTuning.TOP_P,
-		AgentModelTuning.THINKING_EFFORT,
-		AgentModelTuning.TOP_K,
-		AgentModelTuning.REASONING_EFFORT,
-		AgentModelTuning.REASONING_SUMMARY,
+		AgentOverride.MODEL,
+		AgentOverride.CONTEXT_WINDOW,
+		AgentOverride.MAX_TOKENS,
+		AgentOverride.MAX_TURNS,
+		AgentOverride.MAX_TOOL_RESULT_CHARS,
+		AgentOverride.TOOL_CHOICE,
+		AgentOverride.TIMEOUT_SECONDS,
+		AgentOverride.MAX_RETRIES,
+		AgentOverride.TEMPERATURE,
+		AgentOverride.TOP_P,
+		AgentOverride.THINKING_EFFORT,
+		AgentOverride.TOP_K,
+		AgentOverride.REASONING_EFFORT,
+		AgentOverride.REASONING_SUMMARY,
 	})
-	public interface AgentModelTuning extends NamedConfigMandatory {
+	public interface AgentOverride extends NamedConfigMandatory {
 		/** @see #getModel() */
 		String MODEL = "model";
 
@@ -280,7 +286,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	public static class AllAgentNameOptions extends Function0<List<String>> {
 		@Override
 		public List<String> apply() {
-			if (!AgentDefinitionService.Module.INSTANCE.isActive()) {
+			if (!TopLogicAgentDefinitions.Module.INSTANCE.isActive()) {
 				return List.of();
 			}
 			List<String> names = new ArrayList<>();
@@ -306,41 +312,54 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	}
 
 	/**
-	 * Default model selection and per-agent model assignments with tuning parameters.
+	 * Agent execution configuration: chat entry point, default model, and per-agent overrides.
 	 *
 	 * <p>
-	 * Groups the global default model and the per-agent overrides into one configuration section
-	 * so the admin UI presents them together under "Agent Model Tuning".
+	 * Agent definitions (identity, system prompt, tools, delegations) are managed by
+	 * {@link TopLogicAgentDefinitions} and the knowledge base. This section controls the operational
+	 * side: which agent serves as the chat entry point, which model to use by default, and
+	 * per-agent overrides for model selection and execution parameters.
 	 * </p>
 	 */
 	@DisplayOrder({
-		ModelTuningConfig.ENTRY_POINT_AGENT,
-		ModelTuningConfig.DEFAULT_MODEL,
-		ModelTuningConfig.AGENT_MODELS,
+		AgentExecutionConfig.CHAT_ENTRY_POINT,
+		AgentExecutionConfig.DEFAULT_MODEL,
+		AgentExecutionConfig.AGENT_OVERRIDES,
 	})
-	public interface ModelTuningConfig extends ConfigurationItem {
+	public interface AgentExecutionConfig extends ConfigurationItem {
 
-		/** Configuration property name for {@link #getEntryPointAgent()}. */
-		String ENTRY_POINT_AGENT = "entry-point";
+		/** Configuration property name for {@link #getChatEntryPoint()}. */
+		String CHAT_ENTRY_POINT = "chat-entry-point";
 
 		/** Configuration property name for {@link #getDefaultModel()}. */
 		String DEFAULT_MODEL = "default-model";
 
-		/** Configuration property name for {@link #getAgentModels()}. */
-		String AGENT_MODELS = "agent-models";
+		/** Configuration property name for {@link #getAgentOverrides()}. */
+		String AGENT_OVERRIDES = "agent-overrides";
 
 		/**
-		 * The agent that serves as the main entry point for chat sessions.
+		 * The agent that serves as the main entry point when a user opens a new chat session.
 		 *
-		 * @see #ENTRY_POINT_AGENT
+		 * <p>
+		 * This agent receives the initial user message and orchestrates the conversation. It may
+		 * delegate to other agents via its delegations list.
+		 * </p>
+		 *
+		 * @see #CHAT_ENTRY_POINT
 		 */
-		@Name(ENTRY_POINT_AGENT)
+		@Name(CHAT_ENTRY_POINT)
 		@StringDefault("Orchestrator")
 		@Options(fun = AllAgentNameOptions.class)
-		String getEntryPointAgent();
+		String getChatEntryPoint();
 
 		/**
-		 * The default model name used when no model is explicitly specified on an agent.
+		 * The fallback model used by agents that have no explicit override in
+		 * {@link #getAgentOverrides()}.
+		 *
+		 * <p>
+		 * To assign a specific model (and optional tuning parameters) to an individual agent, add
+		 * an entry to the {@link #getAgentOverrides() agent overrides} map instead.
+		 * </p>
 		 *
 		 * @see #DEFAULT_MODEL
 		 */
@@ -350,28 +369,28 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String getDefaultModel();
 
 		/**
-		 * Per-agent model assignments. Agents not listed here use the {@link #getDefaultModel()
+		 * Per-agent overrides. Agents not listed here use the {@link #getDefaultModel()
 		 * default model}. Applies to all agents regardless of source (config-defined or KB).
 		 *
-		 * @see #AGENT_MODELS
+		 * @see #AGENT_OVERRIDES
 		 */
-		@Name(AGENT_MODELS)
+		@Name(AGENT_OVERRIDES)
 		@EntryTag("agent")
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
-		Map<String, AgentModelTuning> getAgentModels();
+		Map<String, AgentOverride> getAgentOverrides();
 	}
 
 	/**
 	 * Configuration interface for {@link LLMService}.
 	 *
 	 * <p>
-	 * Organized into three sections: provider connections, model tuning (default model and
-	 * per-agent assignments), and model catalog (read-only metadata).
+	 * Organized into three sections: provider connections, agent execution (chat entry point,
+	 * default model, per-agent overrides), and model catalog (read-only model metadata).
 	 * </p>
 	 */
 	@DisplayOrder({
 		Config.PROVIDERS,
-		Config.MODEL_TUNING,
+		Config.AGENT_EXECUTION,
 		Config.MODEL_CATALOG,
 	})
 	public interface Config<I extends LLMService> extends ConfiguredManagedClass.Config<I> {
@@ -386,11 +405,11 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String PROVIDERS = "providers";
 
 		/**
-		 * Configuration property name for model tuning.
+		 * Configuration property name for agent execution.
 		 *
-		 * @see #getModelTuning()
+		 * @see #getAgentExecution()
 		 */
-		String MODEL_TUNING = "model-tuning";
+		String AGENT_EXECUTION = "agent-execution";
 
 		/**
 		 * Configuration property name for the model catalog.
@@ -412,15 +431,22 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		Map<String, LLMProviderConfig.Config> getProviders();
 
 		/**
-		 * Default model and per-agent model assignments with tuning parameters.
+		 * Agent execution configuration: chat entry point, default model, and per-agent overrides
+		 * for model selection and execution parameters.
 		 *
-		 * @see #MODEL_TUNING
+		 * @see #AGENT_EXECUTION
 		 */
-		@Name(MODEL_TUNING)
-		ModelTuningConfig getModelTuning();
+		@Name(AGENT_EXECUTION)
+		AgentExecutionConfig getAgentExecution();
 
 		/**
-		 * Model catalog configuration: remote catalog URL and per-model metadata overrides.
+		 * Model metadata catalog describing each model's capabilities and limits.
+		 *
+		 * <p>
+		 * Populated automatically from the remote <a href="https://models.dev">models.dev</a>
+		 * catalog on startup. Manual overrides can be added for models not listed in the remote
+		 * catalog (e.g. local or custom-hosted models).
+		 * </p>
 		 *
 		 * @see #MODEL_CATALOG
 		 */
@@ -431,6 +457,14 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 	/**
 	 * Configuration for the model metadata catalog.
+	 *
+	 * <p>
+	 * Provides read-only metadata about each model's capabilities (tool calling, reasoning,
+	 * temperature support) and limits (context window, max output tokens). The catalog is fetched
+	 * from <a href="https://models.dev">models.dev</a> on startup for all models configured in
+	 * the provider section. Models not found in the remote catalog (e.g. locally hosted models)
+	 * can be defined manually in the {@link #getModelOverrides() model overrides}.
+	 * </p>
 	 */
 	public interface ModelCatalogConfig extends ConfigurationItem {
 
@@ -589,9 +623,9 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 		_models = Map.copyOf(merged);
 
-		ModelTuningConfig tuningConfig = getConfig().getModelTuning();
+		AgentExecutionConfig tuningConfig = getConfig().getAgentExecution();
 		Map<String, String> agentModelMap = new LinkedHashMap<>();
-		for (Map.Entry<String, AgentModelTuning> entry : tuningConfig.getAgentModels().entrySet()) {
+		for (Map.Entry<String, AgentOverride> entry : tuningConfig.getAgentOverrides().entrySet()) {
 			agentModelMap.put(entry.getKey(), entry.getValue().getModel());
 		}
 		_agentModels = Map.copyOf(agentModelMap);
@@ -696,25 +730,25 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	}
 
 	/**
-	 * Returns the name of the entry-point agent for chat sessions.
+	 * Returns the name of the chat entry-point agent.
 	 */
 	public String getEntryPointAgentName() {
-		return getConfig().getModelTuning().getEntryPointAgent();
+		return getConfig().getAgentExecution().getChatEntryPoint();
 	}
 
 	/**
 	 * Returns the configured default model name, or {@code null} if not set.
 	 */
 	public String getDefaultModel() {
-		return getConfig().getModelTuning().getDefaultModel();
+		return getConfig().getAgentExecution().getDefaultModel();
 	}
 
 	/**
 	 * Resolves the model for the given agent.
 	 *
 	 * <p>
-	 * Resolution order: per-agent assignment from the {@link ModelTuningConfig#getAgentModels()
-	 * model tuning config}, then {@link #getDefaultModel() default model}.
+	 * Resolution order: per-agent assignment from the {@link AgentExecutionConfig#getAgentOverrides()
+	 * agent execution config}, then {@link #getDefaultModel() default model}.
 	 * </p>
 	 *
 	 * @param agentName
@@ -743,7 +777,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 *
 	 * <p>
 	 * Resolution order for the model name: per-agent assignment from the
-	 * {@link ModelTuningConfig#getAgentModels() model tuning config}, then
+	 * {@link AgentExecutionConfig#getAgentOverrides() agent execution config}, then
 	 * {@link #getDefaultModel() default model}. Tuning parameters are taken from the per-agent
 	 * assignment if present; otherwise all are {@code null} (meaning "use defaults").
 	 * </p>
@@ -757,7 +791,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * @see AgentModelAssignment
 	 */
 	public AgentModelAssignment resolveModelAssignment(String agentName) {
-		AgentModelTuning perAgent = getConfig().getModelTuning().getAgentModels().get(agentName);
+		AgentOverride perAgent = getConfig().getAgentExecution().getAgentOverrides().get(agentName);
 		String model = (perAgent != null && perAgent.getModel() != null && !perAgent.getModel().isBlank())
 			? perAgent.getModel() : getDefaultModel();
 		if (model == null || model.isBlank()) {

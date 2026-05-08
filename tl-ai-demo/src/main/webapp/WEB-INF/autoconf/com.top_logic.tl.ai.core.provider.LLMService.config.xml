@@ -10,32 +10,27 @@
 			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
 				<providers>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-						api-key="eTQn3iIKKywkG9DDTuX5OVczCJWkQmrWBXKmh1yuljodHlHfmoi7ZEOPc68opUV_8z3Aoety5PpF9g47wcmZIpCp_5dsye_VPdJ1lW2Vk_ykONiqwXWYGvArMEbuigiTRRflWvxrdcNacqFuR5Ja_OTEiKKE1IhSeajBdJdz2z2Nan-rHCb7lyTaBJfU3j5HsaJIBkrm3Mmj76UoKjezzklh7jdPJSZ96dvsUuaM8FsqShKV"
+						api-key="nOvD6N1Gebtjkm_nkloUMZPyLJPU9Qwqsxh7t15KeOAdAbStVL_s52QPF7UAidErC5NJfDxrFVPJmvSeu9EElXajhHgE1q1O6I7TVyBfqh-FjnAhv3JGQZSawBCLkEY18VRBYaw_jd1d8KOjmwxzuTwB0tYPtUlOuMG9mehkzten_jdy8B8jw-jFZbfEAOdd-rI6-h8kwC6q3esH8WhIHskld3JsVIcTkHOTm6kATaxrkQ5g"
 						models="gpt-5-chat-latest,gpt-5-codex"
 						name="openai"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key="T7vtlJ3ThhysZJZdurxnrRyDiMysxVTdCpBAz2cKm18uKxyGXXF6yuv8zRqBUVTHoYPq_YR4xr_3jIzHojbL5TIntjfF8Eu0wm2mucLHVbAaM6hi9Qo0p_9yxJ-JYaI1wv-Oh-k866tQAFcSzn4l5ntEAHpVW7W4PEgJow"
+						api-key="U8xj6js1F5oCxBWqmHaxp-Sw-Gs4q2IlElsWbIE9B0G7gSbWyZBD0WemHzmzugiNwbkjxcr-dhjvj2oT2rujNU3Lwquxz4ud_z0hL9jInZKtlvTpLtbxOo5ZoaVH9MN7_bD8F3__jRTKJ613Q7JBxY0m5JiXpVZQDbK0sg"
 						base-url="https://api.anthropic.com"
 						models="claude-sonnet-4-6,claude-opus-4-6,claude-opus-4-7,claude-haiku-4-5-20251001"
 						name="anthropic"
 					/>
-					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
-						api-key="Bku6ZM913SL4Aaki9hB32blWAcl3vWkkJkrcjNeyYbsLZw9HX3C5za74LiEXUaIT"
-						models=""
-						name="mistral"
-					/>
 				</providers>
-				<model-tuning
+				<agent-execution
 					default-model="claude-haiku-4-5-20251001"
-					entry-point="test"
+					chat-entry-point="test"
 				>
-					<agent-models>
+					<agent-overrides>
 						<agent name="Orchestrator"
 							model="claude-sonnet-4-6"
 						/>
-					</agent-models>
-				</model-tuning>
+					</agent-overrides>
+				</agent-execution>
 				<model-catalog>
 					<llm-configuration>
 						<model name="claude-sonnet-4-6"

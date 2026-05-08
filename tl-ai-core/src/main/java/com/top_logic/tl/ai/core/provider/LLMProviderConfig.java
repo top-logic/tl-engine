@@ -55,6 +55,9 @@ public interface LLMProviderConfig {
 		/** Configuration property name for {@link #getCustomHeaders()}. */
 		String CUSTOM_HEADERS = "custom-headers";
 
+		/** Configuration property name for {@link #getBaseUrl()}. */
+		String BASE_URL = "base-url";
+
 		/**
 		 * Model names enabled for this provider.
 		 *
@@ -116,6 +119,14 @@ public interface LLMProviderConfig {
 		@Name(CUSTOM_HEADERS)
 		@MapBinding(tag = "entry", key = "name", attribute = "value")
 		Map<String, String> getCustomHeaders();
+
+		/**
+		 * The base URL of the provider API endpoint.
+		 *
+		 * @see #BASE_URL
+		 */
+		@Name(BASE_URL)
+		String getBaseUrl();
 	}
 
 	/**

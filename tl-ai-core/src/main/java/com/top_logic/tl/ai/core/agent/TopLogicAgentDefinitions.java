@@ -20,16 +20,21 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.order.DisplayOrder;
+
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
- * Service holding config-defined (TopLogic-provided) agent and skill definitions.
+ * TopLogic-provided agent and skill definitions.
  *
  * <p>
- * Agent and skill definitions declared in service configuration XML are read-only and
- * upgradeable. Application-specific definitions live in the knowledge base instead.
+ * These are platform-level definitions shipped with TopLogic. Modifying them is not recommended
+ * as local changes override TopLogic's definitions and prevent future updates from taking
+ * effect. Application-specific agents and skills should be created via the Agent Editor instead.
  * </p>
  *
  * @see AgentDefinition
@@ -37,17 +42,24 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @see AgentSource#CONFIG
  */
 @ServiceDependencies({})
-public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefinitionService.Config<?>> {
+public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAgentDefinitions.Config<?>> {
 
 	/**
 	 * Configuration for a single agent definition.
 	 *
 	 * <p>
 	 * Contains only identity and capabilities. Tuning parameters belong in
-	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentModelTuning
-	 * AgentModelTuning}.
+	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentOverride AgentOverride}.
 	 * </p>
 	 */
+	@DisplayOrder({
+		AgentConfig.DESCRIPTION,
+		AgentConfig.TOOLS,
+		AgentConfig.SKILLS,
+		AgentConfig.DELEGATIONS,
+		AgentConfig.MCP_SERVERS,
+		AgentConfig.SYSTEM_PROMPT,
+	})
 	public interface AgentConfig extends NamedConfigMandatory {
 
 		/** Configuration property name for {@link #getDescription()}. */
@@ -73,6 +85,7 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 		 */
 		@Name(DESCRIPTION)
 		@Nullable
+		@LabelPositioning(LabelPosition.ABOVE)
 		String getDescription();
 
 		/**
@@ -80,6 +93,7 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 		 */
 		@Name(SYSTEM_PROMPT)
 		@Nullable
+		@LabelPositioning(LabelPosition.ABOVE)
 		String getSystemPrompt();
 
 		/**
@@ -114,6 +128,10 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 	/**
 	 * Configuration for a single skill definition.
 	 */
+	@DisplayOrder({
+		SkillConfig.DESCRIPTION,
+		SkillConfig.CONTENT,
+	})
 	public interface SkillConfig extends NamedConfigMandatory {
 
 		/** Configuration property name for {@link #getDescription()}. */
@@ -127,6 +145,7 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 		 */
 		@Name(DESCRIPTION)
 		@Nullable
+		@LabelPositioning(LabelPosition.ABOVE)
 		String getDescription();
 
 		/**
@@ -134,13 +153,14 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 		 */
 		@Name(CONTENT)
 		@Nullable
+		@LabelPositioning(LabelPosition.ABOVE)
 		String getContent();
 	}
 
 	/**
-	 * Configuration interface for {@link AgentDefinitionService}.
+	 * Configuration interface for {@link TopLogicAgentDefinitions}.
 	 */
-	public interface Config<I extends AgentDefinitionService> extends ConfiguredManagedClass.Config<I> {
+	public interface Config<I extends TopLogicAgentDefinitions> extends ConfiguredManagedClass.Config<I> {
 
 		/** Configuration property name for {@link #getAgents()}. */
 		String AGENTS = "agents";
@@ -165,24 +185,21 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 		Map<String, SkillConfig> getSkills();
 	}
 
-	private static volatile AgentDefinitionService _instance;
-
 	private Map<String, AgentDefinition> _agents;
 
 	private Map<String, SkillDefinition> _skills;
 
 	/**
-	 * Creates a new {@link AgentDefinitionService} from configuration.
+	 * Creates a new {@link TopLogicAgentDefinitions} from configuration.
 	 */
 	@CalledByReflection
-	public AgentDefinitionService(InstantiationContext context, Config<?> config) {
+	public TopLogicAgentDefinitions(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
 	@Override
 	protected void startUp() {
 		super.startUp();
-		_instance = this;
 
 		Map<String, AgentDefinition> agents = new LinkedHashMap<>();
 		for (Map.Entry<String, AgentConfig> entry : getConfig().getAgents().entrySet()) {
@@ -212,15 +229,14 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 		}
 		_skills = Collections.unmodifiableMap(skills);
 
-		Logger.info("AgentDefinitionService started with " + _agents.size()
+		Logger.info("TopLogicAgentDefinitions started with " + _agents.size()
 			+ " agent(s) and " + _skills.size() + " skill(s).",
-			AgentDefinitionService.class);
+			TopLogicAgentDefinitions.class);
 	}
 
 	@Override
 	protected void shutDown() {
 		try {
-			_instance = null;
 			_agents = null;
 			_skills = null;
 		} finally {
@@ -271,29 +287,29 @@ public class AgentDefinitionService extends ConfiguredManagedClass<AgentDefiniti
 	}
 
 	/**
-	 * Returns the singleton {@link AgentDefinitionService} instance.
+	 * Returns the singleton {@link TopLogicAgentDefinitions} instance.
 	 */
-	public static AgentDefinitionService getInstance() {
+	public static TopLogicAgentDefinitions getInstance() {
 		return Module.INSTANCE.getImplementationInstance();
 	}
 
 	/**
-	 * Module for {@link AgentDefinitionService}.
+	 * Module for {@link TopLogicAgentDefinitions}.
 	 */
-	public static final class Module extends TypedRuntimeModule<AgentDefinitionService> {
+	public static final class Module extends TypedRuntimeModule<TopLogicAgentDefinitions> {
 
 		/**
-		 * Singleton {@link AgentDefinitionService.Module} instance.
+		 * Singleton {@link TopLogicAgentDefinitions.Module} instance.
 		 */
-		public static final AgentDefinitionService.Module INSTANCE = new AgentDefinitionService.Module();
+		public static final TopLogicAgentDefinitions.Module INSTANCE = new TopLogicAgentDefinitions.Module();
 
 		private Module() {
 			// Singleton constructor
 		}
 
 		@Override
-		public Class<AgentDefinitionService> getImplementation() {
-			return AgentDefinitionService.class;
+		public Class<TopLogicAgentDefinitions> getImplementation() {
+			return TopLogicAgentDefinitions.class;
 		}
 	}
 }

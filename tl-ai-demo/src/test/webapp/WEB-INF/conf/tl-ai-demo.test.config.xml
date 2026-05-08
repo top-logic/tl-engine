@@ -21,7 +21,7 @@
 						models="claude-sonnet-4-5-20250929"
 					/>
 				</providers>
-				<model-tuning
+				<agent-execution
 					default-model="mistral-large-latest"
 				/>
 				<model-catalog>

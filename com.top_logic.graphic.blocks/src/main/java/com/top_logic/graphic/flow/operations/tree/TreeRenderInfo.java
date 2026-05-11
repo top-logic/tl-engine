@@ -746,6 +746,24 @@ public class TreeRenderInfo {
 				// (so ch's _gridInfo, if any, follows) and unshift ch alone, leaving ch in the
 				// sub-grid slot but its children at (postGridX, curYPost + ...).
 				TreeNode grandFirst = ch.getChildren().get(0);
+
+				// (3b) Bus non-overlap at childBusX, second half: my bus.top is
+				// min(ch.anchorMidY, grandFirst.anchorMidY). Constraint (3) above only handles
+				// the ch.anchorMidY half (by pushing yi up). For the grandFirst.anchorMidY half
+				// we push curYPost up so that the first grandchild's anchor midY lands
+				// sibblingGapY below the deepest past bus bottom. Without this, a parent with a
+				// shallow subtree (few/short post-grid descendants) following a parent with a
+				// deep anchor (long label above the anchor → big anchorMidY) would have its
+				// bus.top at the grandchild side overlap with the past bus at childBusX.
+				if (prevBusBottom > Double.NEGATIVE_INFINITY) {
+					Box grandFirstAnchor = grandFirst.getAnchor();
+					double grandFirstAnchorMidOff = grandFirstAnchor.getY() + 0.5 * grandFirstAnchor.getHeight();
+					double curYPostMin = prevBusBottom + _siblingGapY - grandFirstAnchorMidOff;
+					if (curYPost < curYPostMin) {
+						curYPost = curYPostMin;
+					}
+				}
+
 				double dxDesc = postGridX - grandFirst.getX();
 				double dyDesc = curYPost - grandFirst.getY();
 				shiftSubtree(ch, dxDesc, dyDesc);
@@ -785,12 +803,24 @@ public class TreeRenderInfo {
 
 			prevColBottom[c] = yi + h;
 
-			// Update the per-column "max past stub Y crossing this col" with my own stub: my
-			// stub passes through cols 0..c-1 at y = yi + anchorMid.
+			// Update the per-column "max past stub Y crossing this col" with my own stub:
+			// (a) The main-bus → me stub crosses cols 0..c-1 at y = yi + anchorMid.
+			// (b) If me has a subtree, the long horizontal stem from me's anchor right edge to
+			//     childBusX crosses cols c+1..C-1 at the same Y (= my anchor mid). Without (b)
+			//     the box of a later sub-grid child in a higher col could contain this stem at
+			//     its label-Y range — particularly when that later child has a tall box (label
+			//     above a smaller anchor), so its box.top is well above its anchor.
 			double myStubY = yi + anchorMid;
 			for (int cprev = 0; cprev < c; cprev++) {
 				if (myStubY > prevStubsCrossingCol[cprev]) {
 					prevStubsCrossingCol[cprev] = myStubY;
+				}
+			}
+			if (hasSubtree) {
+				for (int cnext = c + 1; cnext < C; cnext++) {
+					if (myStubY > prevStubsCrossingCol[cnext]) {
+						prevStubsCrossingCol[cnext] = myStubY;
+					}
 				}
 			}
 		}

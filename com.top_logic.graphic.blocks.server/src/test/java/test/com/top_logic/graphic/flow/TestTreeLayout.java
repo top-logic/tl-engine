@@ -195,6 +195,44 @@ public class TestTreeLayout extends TestCase {
 		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise.svg");
 	}
 
+	public void testGridFanoutRowWiseMixedTallNodeWithSubtree() throws IOException {
+		// 6 sub-grid children in 2 cols × 3 rows. Every sub-grid child has its own subtree (so
+		// stems go from each to childBusX). One sub-grid child (C4 in col 1, row 1) has a tall
+		// box (long label above the anchor). The tall child is placed AFTER C3 (col 0, row 1)
+		// which has a subtree: C3's stem to its post-grid descendants crosses col 1 at
+		// C3.anchorMidY, and that Y must not land inside C4's label region. Verifies that the
+		// row-wise adaptive Y constraint propagates not only the parent → child stub Y to
+		// earlier columns but also the child → subtree stem Y to later columns when the child
+		// is subtree-bearing.
+		TreeLayout tree = TreeLayout.create()
+			.setChildSplitThreshold(2)
+			.setRowWise(true)
+			.setSubGridCols(2);
+
+		LabelAnchorNode root = labelAnchorNode("root");
+		tree.addNode(root.box);
+
+		for (int i = 1; i <= 6; i++) {
+			// C4 is the tall one (multi-line label above its anchor); the others are gear-only.
+			LabelAnchorNode child = (i == 4) ? tallLabelAnchorNode("C" + i) : gearOnlyNode("C" + i);
+			tree.addNode(child.box);
+			tree.addConnection(TreeConnection.create()
+				.setParent(TreeConnector.create().setAnchor(root.anchor).setConnectPosition(0.5))
+				.setChild(TreeConnector.create().setAnchor(child.anchor).setConnectPosition(0.5)));
+
+			// Each sub-grid child gets one post-grid descendant so a stem from this child to
+			// childBusX is rendered. The descendant nodes are simple gear-only boxes.
+			Box grand = node("D" + i);
+			tree.addNode(grand);
+			tree.addConnection(TreeConnection.create()
+				.setParent(TreeConnector.create().setAnchor(child.anchor).setConnectPosition(0.5))
+				.setChild(TreeConnector.create().setAnchor(grand).setConnectPosition(0.5)));
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise-tall-with-subtree.svg");
+	}
+
 	public void testGridFanoutRowWiseLabelAboveAnchor() throws IOException {
 		// Each "node" consists of a text label stacked above a border-wrapped content box (the
 		// gear icon stand-in). The TreeLayout's node is the whole VerticalLayout; the connector's
@@ -394,6 +432,35 @@ public class TestTreeLayout extends TestCase {
 		// terminate at anchor.right (not box.right) to land on the visible anchor edge.
 		Box box = VerticalLayout.create()
 			.addContent(Text.create().setValue("Long label for " + name + " (above the anchor)"))
+			.addContent(anchorAligned);
+		return new LabelAnchorNode(box, anchor);
+	}
+
+	private LabelAnchorNode gearOnlyNode(String name) {
+		Box anchor = Border.create().setContent(
+			Padding.create().setAll(8).setContent(
+				Text.create().setValue(name)));
+		return new LabelAnchorNode(anchor, anchor);
+	}
+
+	/**
+	 * Like {@link #labelAnchorNode(String)} but with a much taller label region (simulating a
+	 * multi-line text block above the small anchor). Used to exercise the row-wise layout
+	 * constraints with extreme anchor offsets.
+	 */
+	private LabelAnchorNode tallLabelAnchorNode(String name) {
+		Box anchor = Border.create().setContent(
+			Padding.create().setAll(8).setContent(
+				Text.create().setValue(name)));
+		Box anchorAligned = Align.create()
+			.setXAlign(Alignment.MIDDLE)
+			.setContent(anchor);
+		// Inflate the label area with explicit top padding so the box gets significantly taller
+		// than the anchor (anchor mid Y sits deep inside the box).
+		Box tallLabelArea = Padding.create().setTop(80).setBottom(0).setLeft(0).setRight(0).setContent(
+			Text.create().setValue("Tall label for " + name));
+		Box box = VerticalLayout.create()
+			.addContent(tallLabelArea)
 			.addContent(anchorAligned);
 		return new LabelAnchorNode(box, anchor);
 	}

@@ -195,6 +195,29 @@ public class TestTreeLayout extends TestCase {
 		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise.svg");
 	}
 
+	public void testGridFanoutRowWiseStartCol() throws IOException {
+		// Same tree as testGridFanoutRowWise but with subGridStartCol=1 so child 0 lands in
+		// sub-column 1 (not 0). Verifies that the offset propagates through colW computation,
+		// child placement, and all Y-stack constraints.
+		TreeLayout tree = TreeLayout.create()
+			.setChildSplitThreshold(3)
+			.setRowWise(true)
+			.setSubGridStartCol(1);
+
+		Box root = node("Root");
+		tree.addNode(root);
+		for (int i = 1; i <= 12; i++) {
+			Box child = node("C" + i);
+			tree.addNode(child);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(root))
+				.setChild(connector(child)));
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-grid-fanout-rowwise-startcol.svg");
+	}
+
 	public void testGridFanoutRowWiseMixedTallNodeWithSubtree() throws IOException {
 		// 6 sub-grid children in 2 cols × 3 rows. Every sub-grid child has its own subtree (so
 		// stems go from each to childBusX). One sub-grid child (C4 in col 1, row 1) has a tall

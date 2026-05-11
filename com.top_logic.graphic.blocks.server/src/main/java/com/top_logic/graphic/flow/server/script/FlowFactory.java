@@ -986,6 +986,10 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param subGridCols
 	 *        Number of sub-columns of the row-wise sub-grid. Only relevant when {@code rowWise}
 	 *        is true. If {@code 0}, falls back to {@code childSplitThreshold}.
+	 * @param subGridStartCol
+	 *        Sub-column in which the first sub-grid child (child index 0) is placed; child
+	 *        {@code n} lands in column {@code (n + subGridStartCol) mod C}. Only relevant when
+	 *        {@code rowWise} is true. Defaults to {@code 0}.
 	 * @param bridgeGapY
 	 *        Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge
 	 *        that connects all sub-grid columns. Only relevant in column-wise sub-grid mode (i.e.
@@ -1017,6 +1021,7 @@ public class FlowFactory extends TLScriptFunctions {
 		@IntDefault(0) int childSplitThreshold,
 		boolean rowWise,
 		@IntDefault(0) int subGridCols,
+		@IntDefault(0) int subGridStartCol,
 		Double bridgeGapY,
 		String cssClass,
 		Object userObject
@@ -1034,6 +1039,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setChildSplitThreshold(childSplitThreshold)
 			.setRowWise(rowWise)
 			.setSubGridCols(subGridCols)
+			.setSubGridStartCol(subGridStartCol)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 

@@ -272,6 +272,8 @@ public class TreeRenderInfo {
 
 	private final int _subGridCols;
 
+	private final int _subGridStartCol;
+
 	private final double _bridgeGapY;
 
 	private final Map<TreeNode, GridInfo> _gridInfos = new HashMap<>();
@@ -291,8 +293,8 @@ public class TreeRenderInfo {
 	 * Creates a {@link TreeRenderInfo}.
 	 */
 	public TreeRenderInfo(boolean compact, double gapX, double siblingGapY, double subtreeGapY, double parentAlign,
-			double parentOffset, int childSplitThreshold, boolean rowWise, int subGridCols, double bridgeGapY,
-			List<Box> nodes,
+			double parentOffset, int childSplitThreshold, boolean rowWise, int subGridCols, int subGridStartCol,
+			double bridgeGapY, List<Box> nodes,
 			List<TreeConnection> connections) {
 		_compact = compact;
 		_gapX = gapX;
@@ -303,6 +305,7 @@ public class TreeRenderInfo {
 		_childSplitThreshold = childSplitThreshold;
 		_rowWise = rowWise;
 		_subGridCols = subGridCols;
+		_subGridStartCol = subGridStartCol;
 		_bridgeGapY = bridgeGapY;
 		_connections = connections;
 
@@ -641,13 +644,17 @@ public class TreeRenderInfo {
 		// the column count.
 		int colCount = _subGridCols > 0 ? _subGridCols : _childSplitThreshold;
 		int C = Math.min(M, colCount);
+		// Sub-column where child 0 lands. Child n lands in column (n + startCol) mod C, so a
+		// positive startCol leaves the first startCol cells of row 0 empty (the top-left of the
+		// sub-grid). Normalized to the range [0, C-1].
+		int startCol = C > 0 ? ((_subGridStartCol % C) + C) % C : 0;
 
 		// Sub-column widths: max direct-child box width per sub-column. Direct children sit in
 		// the sub-grid; their subtrees are shifted out to postGridX, so colW only depends on the
 		// box width of the children placed in that column (not their subtree bbox).
 		double[] colW = new double[C];
 		for (int i = 0; i < M; i++) {
-			int c = i % C;
+			int c = (i + startCol) % C;
 			double w = children.get(i).getBox().getWidth();
 			if (w > colW[c]) {
 				colW[c] = w;
@@ -659,7 +666,7 @@ public class TreeRenderInfo {
 		// room for decorations.
 		double maxDecoCol0 = 0;
 		for (int i = 0; i < M; i++) {
-			if (i % C == 0) {
+			if (((i + startCol) % C) == 0) {
 				Double d = _maxDecoWidth.get(children.get(i));
 				if (d != null && d > maxDecoCol0) {
 					maxDecoCol0 = d;
@@ -688,7 +695,7 @@ public class TreeRenderInfo {
 
 		for (int i = 0; i < M; i++) {
 			TreeNode ch = children.get(i);
-			int c = i % C;
+			int c = (i + startCol) % C;
 			Box chBox = ch.getBox();
 			Box chAnchor = ch.getAnchor();
 			double h = chBox.getHeight();

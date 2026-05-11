@@ -42,6 +42,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	/** @see #getSubGridCols() */
 	String SUB_GRID_COLS__PROP = "subGridCols";
 
+	/** @see #getSubGridStartCol() */
+	String SUB_GRID_START_COL__PROP = "subGridStartCol";
+
 	/** @see #isRowWise() */
 	String ROW_WISE__PROP = "rowWise";
 
@@ -175,6 +178,26 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	 * @see #getSubGridCols()
 	 */
 	com.top_logic.graphic.flow.data.TreeLayout setSubGridCols(int value);
+
+	/**
+	 * Sub-column the first sub-grid child (child index 0) lands in (only relevant if
+		 * {@link #isRowWise()}).
+	 *
+	 * <p>The row-wise algorithm normally places child <code>n</code> in sub-column
+	 * <code>n mod C</code>. With {@code subGridStartCol = k} the placement becomes
+	 * <code>(n + k) mod C</code>, so child 0 starts in sub-column <code>k</code>, child
+	 * <code>C − k</code> wraps back to sub-column 0, and so on. Useful e.g. to leave the
+	 * top-left sub-grid cells empty for visual balance with the parent node.
+	 *
+	 * <p>Must be in the range <code>0 .. C − 1</code>; values outside that range are taken
+	 * modulo <code>C</code>. Defaults to {@code 0}. Ignored in column-wise mode.
+	 */
+	int getSubGridStartCol();
+
+	/**
+	 * @see #getSubGridStartCol()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setSubGridStartCol(int value);
 
 	/**
 	 * Whether to use the row-wise sub-grid algorithm instead of the column-wise one.

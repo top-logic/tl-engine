@@ -37,7 +37,7 @@
 				<security-filter delegationDestination="${namePrefix}Edit"/>
 
 				<component-resolvers>
-					<component-resolver class="com.top_logic.layout.basic.page.PageTitleSetter"
+					<component-resolver class="com.top_logic.layout.basic.page.DynamicPageTitle"
 						value="selection(self())"
 					/>
 				</component-resolvers>

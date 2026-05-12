@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.CloseableIterator;
@@ -41,6 +42,7 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.CompiledQuery;
+import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.knowledge.search.HistoryQuery;
 import com.top_logic.knowledge.search.HistoryQueryArguments;
 import com.top_logic.knowledge.search.RevisionQuery;
@@ -1179,7 +1181,9 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	/**
 	 * Short cut for {@link #search(HistoryQuery, HistoryQueryArguments)} with default arguments.
 	 */
-	Map<?, List<LongRange>> search(HistoryQuery query);
+	default Map<?, List<LongRange>> search(HistoryQuery query) {
+		return search(query, ExpressionFactory.historyArgs());
+	}
 
 	/**
 	 * Executes the given {@link HistoryQuery}.
@@ -1195,7 +1199,32 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	/**
 	 * Short cut for {@link #search(RevisionQuery, RevisionQueryArguments)} with default arguments.
 	 */
-	<E> List<E> search(RevisionQuery<E> query);
+	default <E> List<E> search(RevisionQuery<E> query) {
+		return search(query, ExpressionFactory.revisionArgs());
+	}
+
+	/**
+	 * Executes the given {@link RevisionQuery} and returns the results as list.
+	 * 
+	 * @param query
+	 *        The query to execute.
+	 * @param queryArguments
+	 *        The arguments for the given query.
+	 * @return The items that match the given query.
+	 */
+	default <E> List<E> search(RevisionQuery<E> query, RevisionQueryArguments queryArguments) {
+		try (CloseableIterator<E> stream = searchStream(query, queryArguments)) {
+			return CollectionUtil.toList(stream);
+		}
+	}
+
+	/**
+	 * Short cut for {@link #searchStream(RevisionQuery, RevisionQueryArguments)} with default
+	 * arguments.
+	 */
+	default <E> CloseableIterator<E> searchStream(RevisionQuery<E> query) {
+		return searchStream(query, ExpressionFactory.revisionArgs());
+	}
 
 	/**
 	 * Executes the given {@link RevisionQuery}.
@@ -1206,10 +1235,6 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 *        The arguments for the given query.
 	 * @return The items that match the given query.
 	 */
-	<E> List<E> search(RevisionQuery<E> query, RevisionQueryArguments queryArguments);
-
-	<E> CloseableIterator<E> searchStream(RevisionQuery<E> query);
-
 	<E> CloseableIterator<E> searchStream(RevisionQuery<E> query, RevisionQueryArguments queryArguments);
 
 	/**

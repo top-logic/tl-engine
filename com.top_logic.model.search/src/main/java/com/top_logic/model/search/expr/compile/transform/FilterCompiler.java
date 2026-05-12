@@ -124,24 +124,8 @@ public class FilterCompiler extends Rewriter<Void> {
 		}
 	}
 
-	private static class VarBinding {
-
-		private final Object _varName;
-
-		private final MetaObject _tableType;
-
-		public VarBinding(Object varName, MetaObject tableType) {
-			_varName = varName;
-			_tableType = tableType;
-		}
-
-		public Object getVarName() {
-			return _varName;
-		}
-
-		public MetaObject getTableType() {
-			return _tableType;
-		}
+	private static record VarBinding(Object varName, MetaObject tableType) {
+		// nothing special here
 	}
 
 	private static class ExpressionCompiler extends DefaultDescendingVisitor<Value, VarBinding> {
@@ -182,7 +166,7 @@ public class FilterCompiler extends Rewriter<Void> {
 
 		@Override
 		public Value visitLambda(Lambda expr, VarBinding arg) {
-			if (arg.getVarName().equals(expr.getName())) {
+			if (arg.varName().equals(expr.getName())) {
 				// Reduce the filter function to its body. The function is re-assembled afterwards.
 				return expr.getBody().visit(this, arg);
 			}
@@ -196,8 +180,8 @@ public class FilterCompiler extends Rewriter<Void> {
 
 		@Override
 		public Value visitVar(Var expr, VarBinding arg) {
-			if (expr.getName().equals(arg.getVarName())) {
-				return new CompiledExpression(arg.getTableType(), ExpressionFactory.context());
+			if (expr.getName().equals(arg.varName())) {
+				return new CompiledExpression(arg.tableType(), ExpressionFactory.context());
 			}
 			return super.visitVar(expr, arg);
 		}

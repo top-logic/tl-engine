@@ -227,6 +227,18 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	 */
 	abstract class TransientRevision extends TransientObject implements Revision {
 
+		/**
+		 * Redeclared to resolve conflict of {@link Revision#tType()} and
+		 * {@link TransientObject#tType()}.
+		 * 
+		 * @see com.top_logic.model.TransientObject#tType()
+		 * @see com.top_logic.knowledge.service.Revision#tType()
+		 */
+		@Override
+		public TLStructuredType tType() {
+			return Revision.super.tType();
+		}
+
 		@Override
 		public String getAuthor() {
 			throw new UnsupportedOperationException();

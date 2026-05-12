@@ -67,31 +67,6 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 		private long INITIAL_REV = 0;
 
 		@Override
-		public String getAuthor() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Author resolveAuthor() {
-			return null;
-		}
-
-		@Override
-		public long getDate() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Date resolveDate() {
-			return null;
-		}
-
-		@Override
-		public ResKey getLog() {
-			return I18NConstants.NO_COMMIT_MESSAGE;
-		}
-
-		@Override
 		public long getCommitNumber() {
 			return INITIAL_REV;
 		}
@@ -114,31 +89,6 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	 */
 	@Label("The current revision")
 	Revision CURRENT = new TransientRevision() {
-
-		@Override
-		public String getAuthor() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Author resolveAuthor() {
-			return null;
-		}
-
-		@Override
-		public long getDate() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Date resolveDate() {
-			return null;
-		}
-
-		@Override
-		public ResKey getLog() {
-			return I18NConstants.NO_COMMIT_MESSAGE;
-		}
 
 		@Override
 		public long getCommitNumber() {
@@ -277,7 +227,30 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	 */
 	abstract class TransientRevision extends TransientObject implements Revision {
 
-		// No implementation here
+		@Override
+		public String getAuthor() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Author resolveAuthor() {
+			return null;
+		}
+
+		@Override
+		public long getDate() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Date resolveDate() {
+			return null;
+		}
+
+		@Override
+		public ResKey getLog() {
+			return I18NConstants.NO_COMMIT_MESSAGE;
+		}
 
 	}
 

@@ -10,9 +10,10 @@ import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
-import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 
@@ -51,17 +52,22 @@ public class CompiledExpression extends Value {
 	public Value processAccess(SearchExpression orig, TLStructuredTypePart part) {
 		if (_type instanceof MOStructure) {
 			MOStructure tableType = (MOStructure) _type;
-			String partName = part.getName();
-			MOAttribute attr = tableType.getAttributeOrNull(partName);
-			if (attr != null) {
-				if (!AttributeOperations.getStorageImplementation(part).isReadOnly()) {
-					if (part.getModelKind() == ModelKind.PROPERTY) {
-						return new CompiledExpression(attr.getMetaObject(),
-							ExpressionFactory.attribute(_compiled, attr.getOwner().getName(), attr.getName()));
-					}
-					else if (part.getModelKind() == ModelKind.REFERENCE) {
-						return new CompiledExpression(attr.getMetaObject(),
-							ExpressionFactory.reference(_compiled, attr.getOwner().getName(), attr.getName()));
+
+			StorageImplementation storageImplementation = AttributeOperations.getStorageImplementation(part);
+			if (!storageImplementation.isReadOnly()) {
+				if (storageImplementation instanceof ColumnStorage columnStorage) {
+					MOAttribute attr = tableType.getAttributeOrNull(columnStorage.getStorageAttribute());
+					if (attr != null) {
+						switch (part.getModelKind()) {
+							case PROPERTY:
+								return new CompiledExpression(attr.getMetaObject(),
+									ExpressionFactory.attribute(_compiled, attr.getOwner().getName(), attr.getName()));
+							case REFERENCE:
+								return new CompiledExpression(attr.getMetaObject(),
+									ExpressionFactory.reference(_compiled, attr.getOwner().getName(), attr.getName()));
+							default:
+								break;
+						}
 					}
 				}
 			}

@@ -1811,11 +1811,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	@Override
-	public Map<?, List<LongRange>> search(HistoryQuery query) {
-		return search(query, ExpressionFactory.historyArgs());
-	}
-	
-	@Override
 	public Map<?, List<LongRange>> search(HistoryQuery query, HistoryQueryArguments queryArguments) {
 		Object[] arguments = queryArguments.getArguments();
 		BranchParam branchParam = query.getBranchParam();
@@ -1939,37 +1934,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			}
 
 		}
-	}
-
-	@Override
-	public <E> List<E> search(RevisionQuery<E> query) {
-		return search(query, ExpressionFactory.revisionArgs());
-	}
-	
-	@Override
-	public <E> List<E> search(RevisionQuery<E> query, RevisionQueryArguments queryArguments) {
-		try (CloseableIterator<E> stream = searchStream(query, queryArguments)) {
-			return toList(stream);
-		}
-	}
-
-	/**
-	 * Adds all elements of the iterator to a list and closes it.
-	 * <p>
-	 * Should be called directly after creating stream
-	 * </p>
-	 */
-	private static <E> List<E> toList(CloseableIterator<E> stream) {
-		ArrayList<E> result = new ArrayList<>();
-		while (stream.hasNext()) {
-			result.add(stream.next());
-		}
-		return result;
-	}
-
-	@Override
-	public <E> CloseableIterator<E> searchStream(RevisionQuery<E> query) {
-		return searchStream(query, ExpressionFactory.revisionArgs());
 	}
 
 	@Override

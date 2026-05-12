@@ -6,8 +6,10 @@
 package com.top_logic.model.search.expr.compile.eval;
 
 import com.top_logic.knowledge.search.Expression;
+import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.SearchExpressionFactory;
 
 /**
  * Special {@link Value} that represents an {@link And} operation where one part can be
@@ -54,4 +56,21 @@ public class CombinedAndValue extends AbstractValue {
 		return _interpreted;
 	}
 
+	@Override
+	public Value processAnd(SearchExpression orig, Value other) {
+		SearchExpression interpretedAnd;
+		if (other.hasInterpretedPart()) {
+			interpretedAnd = SearchExpressionFactory.and(interpreted(), other.interpreted());
+		} else {
+			interpretedAnd = interpreted();
+		}
+
+		Expression compiledAnd;
+		if (other.hasCompiledPart()) {
+			compiledAnd = ExpressionFactory.and(compiled(), other.compiled());
+		} else {
+			compiledAnd = compiled();
+		}
+		return new CombinedAndValue(compiledAnd, interpretedAnd);
+	}
 }

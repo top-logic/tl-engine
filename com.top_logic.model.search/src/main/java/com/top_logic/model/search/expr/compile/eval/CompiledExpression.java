@@ -77,10 +77,17 @@ public class CompiledExpression extends Value {
 
 	@Override
 	public Value processAnd(SearchExpression orig, Value other) {
-		if (other.hasInterpretedPart()) {
-			return new CombinedAndValue(_compiled, other.interpreted());
+		Expression compiledAnd;
+		if (other.hasCompiledPart()) {
+			compiledAnd = ExpressionFactory.and(compiled(), other.compiled());
 		} else {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.and(_compiled, other.compiled()));
+			compiledAnd = compiled();
+		}
+
+		if (other.hasInterpretedPart()) {
+			return new CombinedAndValue(compiledAnd, other.interpreted());
+		} else {
+			return new CompiledExpression(MOPrimitive.BOOLEAN, compiledAnd);
 		}
 	}
 

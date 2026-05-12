@@ -50,16 +50,18 @@ public class InterpretedExpression extends AbstractValue {
 
 	@Override
 	public Value processAnd(SearchExpression orig, Value other) {
-		if (other.hasCompiledPart()) {
-			SearchExpression interpreted;
-			if (other.hasInterpretedPart()) {
-				interpreted = SearchExpressionFactory.and(_orig, other.interpreted());
-			} else {
-				interpreted = _orig;
-			}
-			return new CombinedAndValue(other.compiled(), interpreted);
+		SearchExpression interpretedAnd;
+		if (other.hasInterpretedPart()) {
+			interpretedAnd = SearchExpressionFactory.and(interpreted(), other.interpreted());
+		} else {
+			interpretedAnd = interpreted();
 		}
-		return super.processAnd(orig, other);
+
+		if (other.hasCompiledPart()) {
+			return new CombinedAndValue(other.compiled(), interpretedAnd);
+		} else {
+			return new InterpretedExpression(interpretedAnd);
+		}
 	}
 
 }

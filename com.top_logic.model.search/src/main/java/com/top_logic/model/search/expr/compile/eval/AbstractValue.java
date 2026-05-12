@@ -36,9 +36,4 @@ public abstract class AbstractValue extends Value {
 		return new InterpretedExpression(orig);
 	}
 
-	@Override
-	public Value processAnd(SearchExpression orig, Value other) {
-		return new InterpretedExpression(orig);
-	}
-
 }

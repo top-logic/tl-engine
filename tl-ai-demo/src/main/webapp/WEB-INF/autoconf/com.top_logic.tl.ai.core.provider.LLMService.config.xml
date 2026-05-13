@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMService"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
+				<providers>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						api-key="unencrypted:%ANTHROPIC_API_KEY%"
+						models="claude-haiku-4-5-20251001,claude-opus-4-7,claude-sonnet-4-6"
+						name="anthropic"
+					/>
+					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
+						api-key="unencrypted:%MISTRAL_API_KEY%"
+						name="mistral"
+					/>
+					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+						api-key="unencrypted:%OPENAI_API_KEY%"
+						name="openai"
+					/>
+					<provider class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
+						api-key="unencrypted:%XAI_API_KEY%"
+						name="xai"
+					/>
+				</providers>
+				<agent-execution default-model="claude-haiku-4-5-20251001"/>
+				<model-catalog>
+					<llm-configuration>
+						<model name="claude-sonnet-4-6"
+							attachment="true"
+							context-window="1000000"
+							knowledge-cutoff="2025-08-31"
+							last-updated="2026-03-13"
+							max-output="64000"
+							open-weights="false"
+							reasoning="true"
+							release-date="2026-02-17"
+							status=""
+							structured-output="false"
+							temperature="true"
+							tool-call="true"
+						/>
+						<model name="claude-opus-4-7"
+							attachment="true"
+							context-window="1000000"
+							knowledge-cutoff="2026-01-31"
+							last-updated="2026-04-16"
+							max-output="128000"
+							open-weights="false"
+							reasoning="true"
+							release-date="2026-04-16"
+							status=""
+							structured-output="false"
+							temperature="false"
+							tool-call="true"
+						/>
+						<model name="claude-haiku-4-5-20251001"
+							attachment="true"
+							context-window="200000"
+							knowledge-cutoff="2025-02-28"
+							last-updated="2025-10-15"
+							max-output="64000"
+							open-weights="false"
+							reasoning="true"
+							release-date="2025-10-15"
+							status=""
+							structured-output="false"
+							temperature="true"
+							tool-call="true"
+						/>
+					</llm-configuration>
+				</model-catalog>
+			</instance>
+		</config>
+	</services>
+</application>

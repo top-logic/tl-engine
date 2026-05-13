@@ -501,17 +501,17 @@ public class ChatProcessor {
 						Thread.currentThread().interrupt();
 						state.completeWithError(ex);
 						return null;
-					} catch (Exception ex) {
+					} catch (Throwable ex) {
 						Logger.error("AI processing failed: " + ex.getMessage(), ex, ChatProcessor.class);
-						state.completeWithError(ex);
-						notifyError(state, ex);
+						state.completeWithError(ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
+						notifyError(state, ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
 						return null;
 					}
 				});
-			} catch (Exception ex) {
+			} catch (Throwable ex) {
 				Logger.error("Failed to run background task: " + ex.getMessage(), ex, ChatProcessor.class);
-				state.completeWithError(ex);
-				notifyError(state, ex);
+				state.completeWithError(ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
+				notifyError(state, ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
 			} finally {
 				state.setAgentThread(null);
 			}

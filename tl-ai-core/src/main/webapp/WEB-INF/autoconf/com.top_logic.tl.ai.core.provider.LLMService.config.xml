@@ -6,24 +6,6 @@
 	<services>
 		<config service-class="com.top_logic.tl.ai.core.provider.LLMService">
 			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
-				<providers>
-					<provider name="openai"
-						class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-						api-key="unencrypted:%OPENAI_API_KEY%"
-					/>
-					<provider name="anthropic"
-						class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key="unencrypted:%ANTHROPIC_API_KEY%"
-					/>
-					<provider name="mistral"
-						class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
-						api-key="unencrypted:%MISTRAL_API_KEY%"
-					/>
-					<provider name="xai"
-						class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
-						api-key="unencrypted:%XAI_API_KEY%"
-					/>
-				</providers>
 				<agent-execution
 					default-model="%DEFAULT_MODEL%"
 				/>

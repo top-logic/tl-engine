@@ -888,8 +888,6 @@ If you cannot fill the Evidence section, you have not called enough tools.
 				<agents>
 					<agent name="TL_Orchestrator"
 						description=""
-						skills="TL_taskManagement, TL_promptModelEditor, TL_promptModelExplorer"
-						delegations="TL_TLScriptAgent, TL_ModelEditor, TL_ModelExplorer"
 					>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1025,11 +1023,25 @@ Route by the nature of the request:
 - Interpreting domain-specific code from one specialist's results → FORBIDDEN
 - Asking the user questions that could be answered by gathering context first → FORBIDDEN (gather context, then ask informed questions)
 - Gathering context when you already have enough information to delegate → WASTEFUL (delegate directly when the request is self-contained)]]></system-prompt>
-						<tools>task.updateTask, task.listTasks, task.createTask, user-interaction.askUser</tools>
+						<tools>
+							<tool name="task.updateTask"/>
+							<tool name="task.listTasks"/>
+							<tool name="task.createTask"/>
+							<tool name="user-interaction.askUser"/>
+						</tools>
+						<skills>
+							<skill name="TL_taskManagement"/>
+							<skill name="TL_promptModelEditor"/>
+							<skill name="TL_promptModelExplorer"/>
+						</skills>
+						<delegations>
+							<delegation name="TL_TLScriptAgent"/>
+							<delegation name="TL_ModelEditor"/>
+							<delegation name="TL_ModelExplorer"/>
+						</delegations>
 					</agent>
 					<agent name="TL_ModelExplorer"
 						description="Delegate to the Model Explorer for read-only model inspection. Call to explore, inspect, or verify the TopLogic application model: modules, types, parts, annotations, search. Provide goal (short intent), task (concrete question), context (module/type/part names if known). Do NOT paste the full user message; distill a clear exploration request."
-						skills="TL_annotationDiscovery"
 					>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1130,7 +1142,22 @@ If you cannot fill the Evidence section → you have not called enough tools →
 - Enumerate rather than assume (use listing/search tools to confirm before claiming).
 - Avoid large instance loads; page with small limits.
 - Summarize by grouping; do not dump raw JSON unless the user explicitly asks for raw output.]]></system-prompt>
-						<tools>model-analysis.findTypeUsages, model-annotation-browser.getCurrentAnnotations, model-instances.getInstance, model-instances.listInstances, model-search.searchModel, model-browser.listModules, model-browser.listTypeParts, model-annotation-definitions.describeAnnotation, model-browser.listClassifiers, model-analysis.findPartUsages, model-browser.listTypes</tools>
+						<tools>
+							<tool name="model-analysis.findTypeUsages"/>
+							<tool name="model-annotation-browser.getCurrentAnnotations"/>
+							<tool name="model-instances.getInstance"/>
+							<tool name="model-instances.listInstances"/>
+							<tool name="model-search.searchModel"/>
+							<tool name="model-browser.listModules"/>
+							<tool name="model-browser.listTypeParts"/>
+							<tool name="model-annotation-definitions.describeAnnotation"/>
+							<tool name="model-browser.listClassifiers"/>
+							<tool name="model-analysis.findPartUsages"/>
+							<tool name="model-browser.listTypes"/>
+						</tools>
+						<skills>
+							<skill name="TL_annotationDiscovery"/>
+						</skills>
 					</agent>
 					<agent name="TL_TLScriptAgent"
 						description="Delegate to the TLScript specialist for TLScript syntax, function documentation, script validation, or code generation. Provide goal (short intent), task (concrete question or code snippet), context (type/part names, code snippets, model literals if relevant). Do NOT paste the full user message; distill the TLScript question."
@@ -1240,12 +1267,17 @@ B) Choosing '.' vs '..':
   x = $obj.get(`m:t#name`);
   $x
 }]]></system-prompt>
-						<tools>task.updateTask, script-exec.validateTLScript, script-doc.getTLScriptFunctionDocumentation, task.listTasks, script-doc.listTLScriptFunctions, script-exec.executeTLScript</tools>
+						<tools>
+							<tool name="task.updateTask"/>
+							<tool name="script-exec.validateTLScript"/>
+							<tool name="script-doc.getTLScriptFunctionDocumentation"/>
+							<tool name="task.listTasks"/>
+							<tool name="script-doc.listTLScriptFunctions"/>
+							<tool name="script-exec.executeTLScript"/>
+						</tools>
 					</agent>
 					<agent name="TL_ModelEditor"
 						description="Delegate to the Model Editor for model modification. Call when the user wants to create, modify, or delete elements in the TopLogic model: add/remove types, properties, references, enumerations, or set/remove annotations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the request."
-						skills="TL_annotationEditing, TL_topLogicModeling, TL_annotationDiscovery"
-						delegations="TL_TLScriptAgent"
 					>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1417,11 +1449,39 @@ After all steps, respond with a structured summary:
 ```
 
 Do NOT include long explanations. Be concise and factual.]]></system-prompt>
-						<tools>model-annotation-editor.addAnnotation, model-modification.deleteModelElement, task.listTasks, model-modification.createEnumeration, model-modification.createProperty, model-annotation-definitions.describeAnnotation, model-modification.createClass, model-modification.createBackwardReference, task.updateTask, annotation-search.listAvailableAnnotations, config-schema.getConfigSchema, model-annotation-browser.getCurrentAnnotations, model-annotation-editor.removeAnnotation, model-modification.createReference, model-modification.updateModule, model-modification.updateEnumeration, model-modification.updateProperty, model-modification.createModule, model-modification.updateClass, user-interaction.askUser</tools>
+						<tools>
+							<tool name="model-annotation-editor.addAnnotation"/>
+							<tool name="model-modification.deleteModelElement"/>
+							<tool name="task.listTasks"/>
+							<tool name="model-modification.createEnumeration"/>
+							<tool name="model-modification.createProperty"/>
+							<tool name="model-annotation-definitions.describeAnnotation"/>
+							<tool name="model-modification.createClass"/>
+							<tool name="model-modification.createBackwardReference"/>
+							<tool name="task.updateTask"/>
+							<tool name="annotation-search.listAvailableAnnotations"/>
+							<tool name="config-schema.getConfigSchema"/>
+							<tool name="model-annotation-browser.getCurrentAnnotations"/>
+							<tool name="model-annotation-editor.removeAnnotation"/>
+							<tool name="model-modification.createReference"/>
+							<tool name="model-modification.updateModule"/>
+							<tool name="model-modification.updateEnumeration"/>
+							<tool name="model-modification.updateProperty"/>
+							<tool name="model-modification.createModule"/>
+							<tool name="model-modification.updateClass"/>
+							<tool name="user-interaction.askUser"/>
+						</tools>
+						<skills>
+							<skill name="TL_annotationEditing"/>
+							<skill name="TL_topLogicModeling"/>
+							<skill name="TL_annotationDiscovery"/>
+						</skills>
+						<delegations>
+							<delegation name="TL_TLScriptAgent"/>
+						</delegations>
 					</agent>
 					<agent name="TL_ReviewAgent"
 						description="Background quality reviewer. Analyzes conversation transcripts for quality issues (incorrect answers, bad delegations, tool misuse, unhelpful responses, inefficiency) and creates Gitea tickets for problems found."
-						tools="gitea.create_gitea_issue"
 					>
 						<system-prompt><![CDATA[# Preamble
 
@@ -1465,7 +1525,9 @@ You receive a serialized conversation turn as input. Analyze it for problems in 
 ---
 
 <<AVAILABLE_TOOLS>>]]></system-prompt>
-
+						<tools>
+							<tool name="gitea.create_gitea_issue"/>
+						</tools>
 					</agent>
 					<agent name="TL_SingleAgent"
 						description=""
@@ -1710,8 +1772,50 @@ After creating model elements, summarize:
 
 ### Warnings (if any)
 - [issues, skipped items, assumptions]]]></system-prompt>
-						<tools>model-annotation-editor.addAnnotation, model-instances.getInstance, task.listTasks, model-browser.listModules, model-browser.listTypeParts, model-modification.createEnumeration, script-exec.executeTLScript, model-annotation-definitions.describeAnnotation, model-browser.listTypes, model-modification.createBackwardReference, model-analysis.findTypeUsages, script-exec.validateTLScript, annotation-search.listAvailableAnnotations, model-modification.createReference, user-interaction.askUser, model-modification.deleteModelElement, script-doc.getTLScriptFunctionDocumentation, model-instances.listInstances, model-modification.createProperty, model-modification.createClass, task.createTask, task.updateTask, config-schema.getConfigSchema, model-annotation-browser.getCurrentAnnotations, model-annotation-editor.removeAnnotation, model-modification.updateModule, model-search.searchModel, model-modification.updateEnumeration, script-doc.listTLScriptFunctions, model-modification.updateProperty, model-browser.listClassifiers, model-modification.createModule, model-analysis.findPartUsages, model-modification.updateClass</tools>
-						<skills>TL_annotationEditing, TL_tlScriptWriting, TL_annotationDiscovery, TL_topLogicModeling, TL_taskManagement, TL_modelExploration</skills>
+						<tools>
+							<tool name="model-annotation-editor.addAnnotation"/>
+							<tool name="model-instances.getInstance"/>
+							<tool name="task.listTasks"/>
+							<tool name="model-browser.listModules"/>
+							<tool name="model-browser.listTypeParts"/>
+							<tool name="model-modification.createEnumeration"/>
+							<tool name="script-exec.executeTLScript"/>
+							<tool name="model-annotation-definitions.describeAnnotation"/>
+							<tool name="model-browser.listTypes"/>
+							<tool name="model-modification.createBackwardReference"/>
+							<tool name="model-analysis.findTypeUsages"/>
+							<tool name="script-exec.validateTLScript"/>
+							<tool name="annotation-search.listAvailableAnnotations"/>
+							<tool name="model-modification.createReference"/>
+							<tool name="user-interaction.askUser"/>
+							<tool name="model-modification.deleteModelElement"/>
+							<tool name="script-doc.getTLScriptFunctionDocumentation"/>
+							<tool name="model-instances.listInstances"/>
+							<tool name="model-modification.createProperty"/>
+							<tool name="model-modification.createClass"/>
+							<tool name="task.createTask"/>
+							<tool name="task.updateTask"/>
+							<tool name="config-schema.getConfigSchema"/>
+							<tool name="model-annotation-browser.getCurrentAnnotations"/>
+							<tool name="model-annotation-editor.removeAnnotation"/>
+							<tool name="model-modification.updateModule"/>
+							<tool name="model-search.searchModel"/>
+							<tool name="model-modification.updateEnumeration"/>
+							<tool name="script-doc.listTLScriptFunctions"/>
+							<tool name="model-modification.updateProperty"/>
+							<tool name="model-browser.listClassifiers"/>
+							<tool name="model-modification.createModule"/>
+							<tool name="model-analysis.findPartUsages"/>
+							<tool name="model-modification.updateClass"/>
+						</tools>
+						<skills>
+							<skill name="TL_annotationEditing"/>
+							<skill name="TL_tlScriptWriting"/>
+							<skill name="TL_annotationDiscovery"/>
+							<skill name="TL_topLogicModeling"/>
+							<skill name="TL_taskManagement"/>
+							<skill name="TL_modelExploration"/>
+						</skills>
 					</agent>
 				</agents>
 			</instance>

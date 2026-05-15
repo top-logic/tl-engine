@@ -12,11 +12,9 @@ import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.EntryTag;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -33,14 +31,24 @@ import com.top_logic.model.annotate.LabelPosition;
  * TopLogic-provided agent and skill definitions.
  *
  * <p>
- * These are platform-level definitions shipped with TopLogic. Modifying them is not recommended
- * as local changes override TopLogic's definitions and prevent future updates from taking
- * effect. Application-specific agents and skills should be created via the Agent Editor instead.
+ * These are platform-level definitions shipped with TopLogic. Application-specific agents and
+ * skills should be created via the Agent Editor.
+ * </p>
+ *
+ * <p>
+ * Application modules may extend a platform agent's keyed lists ({@link AgentConfig#getTools
+ * tools}, {@link AgentConfig#getSkills skills}, {@link AgentConfig#getDelegations delegations},
+ * {@link AgentConfig#getMcpServers mcp-servers}) via the standard configuration overlay
+ * mechanism: an overlay only declares the entries it adds or removes, and the platform's
+ * remaining entries flow through unchanged. Scalar properties such as {@code description} and
+ * {@code system-prompt} are still atomically replaced when overridden, so overlays should leave
+ * them unset unless a true replacement is intended.
  * </p>
  *
  * @see AgentDefinition
  * @see SkillDefinition
  * @see AgentSource#CONFIG
+ * @see NameRef
  */
 @Label("TopLogic-Agents and Skills")
 @ServiceDependencies({})
@@ -100,31 +108,55 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 
 		/**
 		 * Qualified tool names available to this agent.
+		 *
+		 * <p>
+		 * Per-entry keyed list: application overlays may add or remove individual tools without
+		 * restating the full platform list. See {@link NameRef}.
+		 * </p>
 		 */
 		@Name(TOOLS)
-		@Format(CommaSeparatedStrings.class)
-		List<String> getTools();
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("tool")
+		List<NameRef> getTools();
 
 		/**
 		 * MCP server names available to this agent.
+		 *
+		 * <p>
+		 * Per-entry keyed list: application overlays may add or remove individual servers without
+		 * restating the full platform list. See {@link NameRef}.
+		 * </p>
 		 */
 		@Name(MCP_SERVERS)
-		@Format(CommaSeparatedStrings.class)
-		List<String> getMcpServers();
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("mcp-server")
+		List<NameRef> getMcpServers();
 
 		/**
 		 * Skill names available to this agent.
+		 *
+		 * <p>
+		 * Per-entry keyed list: application overlays may add or remove individual skills without
+		 * restating the full platform list. See {@link NameRef}.
+		 * </p>
 		 */
 		@Name(SKILLS)
-		@Format(CommaSeparatedStrings.class)
-		List<String> getSkills();
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("skill")
+		List<NameRef> getSkills();
 
 		/**
 		 * Agent names this agent may delegate to.
+		 *
+		 * <p>
+		 * Per-entry keyed list: application overlays may add or remove individual delegates
+		 * without restating the full platform list. See {@link NameRef}.
+		 * </p>
 		 */
 		@Name(DELEGATIONS)
-		@Format(CommaSeparatedStrings.class)
-		List<String> getDelegations();
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("delegation")
+		List<NameRef> getDelegations();
 	}
 
 	/**
@@ -211,10 +243,10 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 				name,
 				cfg.getDescription(),
 				cfg.getSystemPrompt(),
-				cfg.getTools(),
-				cfg.getMcpServers(),
-				cfg.getSkills(),
-				cfg.getDelegations(),
+				toNames(cfg.getTools()),
+				toNames(cfg.getMcpServers()),
+				toNames(cfg.getSkills()),
+				toNames(cfg.getDelegations()),
 				AgentSource.CONFIG));
 		}
 		_agents = Collections.unmodifiableMap(agents);
@@ -244,6 +276,13 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		} finally {
 			super.shutDown();
 		}
+	}
+
+	private static List<String> toNames(List<NameRef> refs) {
+		if (refs == null || refs.isEmpty()) {
+			return List.of();
+		}
+		return refs.stream().map(NamedConfigMandatory::getName).toList();
 	}
 
 	/**

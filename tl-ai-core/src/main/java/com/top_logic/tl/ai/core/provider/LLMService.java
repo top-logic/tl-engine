@@ -599,27 +599,31 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		_modelProviderIndex = Map.copyOf(modelIndex);
 
 		// --- Catalog phase ---
+		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
 		Map<String, Set<String>> catalogRequested = buildCatalogProviderModels();
 
 		Map<String, ModelInfo> fetched;
-		if (catalogRequested.isEmpty()) {
+		if (catalogConfig == null || catalogRequested.isEmpty()) {
 			fetched = Map.of();
 		} else {
-			ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
 			fetched = ModelsDevFetcher.fetch(catalogConfig.getCatalogUrl(), catalogRequested);
 		}
 
-		// Populate read-only config entries for admin UI visibility
-		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
-		Map<String, ModelCatalogEntry.Config> catalogEntries = catalogConfig.getModelConfiguration();
-		catalogEntries.clear();
-		for (Map.Entry<String, ModelInfo> entry : fetched.entrySet()) {
-			catalogEntries.put(entry.getKey(), ModelCatalogEntry.toConfig(entry.getKey(), entry.getValue()));
+		Map<String, ModelCatalogEntry.OverrideConfig> overrides;
+		if (catalogConfig == null) {
+			overrides = Map.of();
+		} else {
+			// Populate read-only config entries for admin UI visibility
+			Map<String, ModelCatalogEntry.Config> catalogEntries = catalogConfig.getModelConfiguration();
+			catalogEntries.clear();
+			for (Map.Entry<String, ModelInfo> entry : fetched.entrySet()) {
+				catalogEntries.put(entry.getKey(), ModelCatalogEntry.toConfig(entry.getKey(), entry.getValue()));
+			}
+			overrides = catalogConfig.getModelOverrides();
 		}
 
 		// Merge manual overrides (take precedence over catalog)
 		Map<String, ModelInfo> merged = new LinkedHashMap<>(fetched);
-		Map<String, ModelCatalogEntry.OverrideConfig> overrides = catalogConfig.getModelOverrides();
 		for (Map.Entry<String, ModelCatalogEntry.OverrideConfig> entry : overrides.entrySet()) {
 			merged.put(entry.getKey(), ModelCatalogEntry.overrideToModelInfo(entry.getValue()));
 		}

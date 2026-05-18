@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Set;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
@@ -161,11 +160,9 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 
 	protected static Test suite(Class<? extends Test> test, BasicRuntimeModule<?>... additionalModules) {
 		BasicRuntimeModule<?>[] modules = getModules(additionalModules);
-
-		return KBSetup.getSingleKBTest(
-			ServiceTestSetup.createSetup(
-				new TestSuite(test),
-				modules));
+		/* SearchExpression may be converted to contain KBQuery. These queries may depend on the
+		 * concrete database. */
+		return KBSetup.getKBTest(test, ServiceTestSetup.createStarterFactoryForModules(modules));
 	}
 
 	private static BasicRuntimeModule<?>[] getModules(BasicRuntimeModule<?>... additionalModules) {

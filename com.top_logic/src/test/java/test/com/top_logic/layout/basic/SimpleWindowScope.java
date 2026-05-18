@@ -133,4 +133,14 @@ public final class SimpleWindowScope implements WindowScope {
 	public void push() {
 	}
 
+	@Override
+	public String getPageTitle() {
+		return null;
+	}
+
+	@Override
+	public void setPageTitle(String title) {
+		// No-op for tests.
+	}
+
 }

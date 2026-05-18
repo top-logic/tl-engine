@@ -2700,7 +2700,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<PolymorphicConfiguration<ComponentResolver>> resolvers = _config.getComponentResolvers();
 		for (int index = 0, size = resolvers.size(); index < size; index++) {
 			PolymorphicConfiguration<ComponentResolver> config = resolvers.get(index);
-			context.getInstance(config).resolveComponent(context, this);
+			ComponentResolver resolver = context.getInstance(config);
+			if (resolver != null) {
+				resolver.resolveComponent(context, this);
+			}
 		}
 
 		_gotoTargets = LayoutUtils.resolveGotoTargets(context, getMainLayout(), getConfig().getGotoTargets().values());

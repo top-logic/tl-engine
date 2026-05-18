@@ -10,20 +10,20 @@
 			<instance class="com.top_logic.tl.ai.core.provider.LLMService">
 				<providers>
 					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key="unencrypted:%ANTHROPIC_API_KEY%"
+						api-key="%ANTHROPIC_API_KEY%"
 						models="claude-haiku-4-5-20251001,claude-opus-4-7,claude-sonnet-4-6"
 						name="anthropic"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
-						api-key="unencrypted:%MISTRAL_API_KEY%"
+						api-key="%MISTRAL_API_KEY%"
 						name="mistral"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-						api-key="unencrypted:%OPENAI_API_KEY%"
+						api-key="%OPENAI_API_KEY%"
 						name="openai"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
-						api-key="unencrypted:%XAI_API_KEY%"
+						api-key="%XAI_API_KEY%"
 						name="xai"
 					/>
 				</providers>

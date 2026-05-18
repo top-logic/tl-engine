@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert Java source files from ISO-8859-1 to UTF-8.
+Convert source files from ISO-8859-1 to UTF-8.
 
 Strategy per file:
   1. Read raw bytes.
@@ -15,11 +15,11 @@ Strategy per file:
 By default this is a dry run. Pass --apply to actually rewrite files.
 
 Usage:
-    convert-java-to-utf8.py [--apply] [--root DIR] [PATH ...]
+    convert-to-utf8.py --ext .java [--ext .properties] [--apply] [PATH ...]
 
-If no PATHs are given, the script walks --root (default: CWD) and
-processes every *.java file under it. Otherwise each PATH is treated
-as either a single file or a directory to walk.
+If no PATHs are given, the script walks --root (default: CWD). One or more
+--ext options narrow which file extensions are processed (required). Each
+PATH may be a single file or a directory to walk recursively.
 """
 
 from __future__ import annotations
@@ -41,11 +41,11 @@ def classify(data: bytes) -> str:
     return "already-utf8"
 
 
-def iter_java_files(paths: list[Path]) -> list[Path]:
+def iter_files(paths: list[Path], extensions: tuple[str, ...]) -> list[Path]:
     out: list[Path] = []
     for p in paths:
         if p.is_file():
-            if p.suffix == ".java":
+            if p.suffix in extensions:
                 out.append(p)
         elif p.is_dir():
             for root, dirs, files in os.walk(p):
@@ -54,7 +54,7 @@ def iter_java_files(paths: list[Path]) -> list[Path]:
                     "target", "build", "node_modules", ".git", "bin",
                 }]
                 for name in files:
-                    if name.endswith(".java"):
+                    if any(name.endswith(ext) for ext in extensions):
                         out.append(Path(root) / name)
     return out
 
@@ -74,6 +74,8 @@ def convert(file: Path, apply: bool) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--ext", action="append", required=True,
+                    help="file extension to process (e.g. .java, .properties); repeatable")
     ap.add_argument("--apply", action="store_true",
                     help="actually rewrite files (default: dry run)")
     ap.add_argument("--root", type=Path, default=Path.cwd(),
@@ -84,8 +86,10 @@ def main() -> int:
                     help="files or directories to process")
     args = ap.parse_args()
 
+    extensions = tuple(e if e.startswith(".") else "." + e for e in args.ext)
+
     targets = args.paths if args.paths else [args.root]
-    files = iter_java_files(targets)
+    files = iter_files(targets, extensions)
 
     counts = {"ascii": 0, "already-utf8": 0, "converted": 0}
     already_utf8: list[Path] = []
@@ -101,8 +105,9 @@ def main() -> int:
         if args.verbose:
             print(f"{kind:14s} {f}")
 
+    label = "/".join(extensions)
     print()
-    print(f"Scanned:        {len(files)} .java files")
+    print(f"Scanned:        {len(files)} {label} files")
     print(f"Pure ASCII:     {counts['ascii']}")
     print(f"Already UTF-8:  {counts['already-utf8']}  (skipped)")
     print(f"Converted:      {counts['converted']}  ({'written' if args.apply else 'dry run'})")

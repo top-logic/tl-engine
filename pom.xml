@@ -42,7 +42,7 @@
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
-		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>

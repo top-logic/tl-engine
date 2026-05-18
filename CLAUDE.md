@@ -335,7 +335,7 @@ Database-specific drivers are included in test scope for internal modules.
 
 ### Encoding
 
-Source files use **ISO-8859-1** encoding (`project.build.sourceEncoding=ISO-8859-1` in parent POM).
+Source files use **UTF-8** encoding (`project.build.sourceEncoding=UTF-8` in parent POM).
 
 ### Version Management
 

@@ -104,17 +104,18 @@ public class ChatProcessor {
 			state.setConversationLog(convLog);
 		}
 		ConversationLogListener logListener = new ConversationLogListener(convLog);
-		ConversationLogListenerBinding.setListener(logListener);
 		state.setLogListener(logListener);
 
 		TaskStore taskStore = taskTracker.getActiveTaskStore();
-		TaskStoreBinding.setStore(taskStore);
 
 		UserInteractionStore interactionStore = new UserInteractionStore();
-		UserInteractionStoreBinding.setStore(interactionStore);
 		state.setUserInteractionStore(interactionStore);
 
-		try {
+		try (
+			ConversationLogListenerBinding.Binding b1 = ConversationLogListenerBinding.bind(logListener);
+			TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(taskStore);
+			UserInteractionStoreBinding.Binding b3 = UserInteractionStoreBinding.bind(interactionStore)) {
+
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
 
@@ -194,14 +195,9 @@ public class ChatProcessor {
 				persistMessages(taskTracker, sessionId);
 			}
 
-		} catch (Exception ex) {
-			throw ex;
 		} finally {
-			ConversationLogListenerBinding.clear();
 			state.setLogListener(null);
 			taskStore.setListener(null);
-			TaskStoreBinding.setStore(null);
-			UserInteractionStoreBinding.setStore(null);
 			state.setUserInteractionStore(null);
 		}
 	}

@@ -22,16 +22,18 @@ public class TestTaskTool extends TestCase {
 
 	private TaskStore _store;
 
+	private TaskStoreBinding.Binding _binding;
+
 	@Override
 	protected void setUp() {
 		_tool = new TaskTool();
 		_store = new TaskStore();
-		TaskStoreBinding.setStore(_store);
+		_binding = TaskStoreBinding.bind(_store);
 	}
 
 	@Override
 	protected void tearDown() {
-		TaskStoreBinding.setStore(null);
+		_binding.close();
 	}
 
 	// -- createTask --
@@ -63,7 +65,7 @@ public class TestTaskTool extends TestCase {
 	 * Verifies that createTask returns an error JSON when no store is bound.
 	 */
 	public void testCreateTaskNoStoreReturnsError() {
-		TaskStoreBinding.setStore(null);
+		_binding.close();
 
 		String json = _tool.createTask("Task", "d", "f");
 		assertContains(json, "\"error\":");
@@ -109,7 +111,7 @@ public class TestTaskTool extends TestCase {
 	 * Verifies that updateTask returns error JSON when no store is bound.
 	 */
 	public void testUpdateTaskNoStoreReturnsError() {
-		TaskStoreBinding.setStore(null);
+		_binding.close();
 
 		String json = _tool.updateTask("1", "completed", null, null, null, null, null, null);
 		assertContains(json, "\"error\":");
@@ -173,7 +175,7 @@ public class TestTaskTool extends TestCase {
 	 * Verifies that listTasks returns error JSON when no store is bound.
 	 */
 	public void testListTasksNoStoreReturnsError() {
-		TaskStoreBinding.setStore(null);
+		_binding.close();
 
 		String json = _tool.listTasks();
 		assertContains(json, "\"error\":");

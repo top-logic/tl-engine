@@ -8,41 +8,58 @@ package com.top_logic.tl.ai.core.tools.task;
 /**
  * Thread-local binding for {@link TaskStore} access from tool methods.
  *
- * <p>
- * Provides a mechanism for tool implementations to access the current {@link TaskStore} without
- * requiring it to be passed as a parameter. The store is bound to the current thread before agent
- * execution and cleared afterwards.
- * </p>
- *
+ * <p>Prefer {@link #bind(TaskStore)} with try-with-resources. The previous value is
+ * captured at bind time and restored on close, making the binding safe across
+ * cached thread pools.</p>
  */
 public class TaskStoreBinding {
 
-	/**
-	 * Thread-local storage for the current {@link TaskStore}.
-	 */
 	private static final ThreadLocal<TaskStore> STORE = new ThreadLocal<>();
 
 	/**
-	 * Sets the {@link TaskStore} for the current thread.
-	 *
-	 * @param store
-	 *        The store to use, or null to remove the binding
+	 * Binds the given store on the current thread and returns a handle whose
+	 * {@link AutoCloseable#close() close()} restores the previously bound value
+	 * (or absence).
 	 */
-	public static void setStore(TaskStore store) {
+	public static Binding bind(TaskStore store) {
+		TaskStore previous = STORE.get();
 		if (store == null) {
 			STORE.remove();
 		} else {
 			STORE.set(store);
 		}
+		return new Binding(previous);
 	}
 
 	/**
-	 * Gets the {@link TaskStore} for the current thread.
-	 *
-	 * @return The store, or null if not set
+	 * Returns the {@link TaskStore} bound to the current thread, or {@code null}.
 	 */
 	public static TaskStore getStore() {
 		return STORE.get();
 	}
 
+	/**
+	 * Handle returned by {@link TaskStoreBinding#bind(TaskStore)}.
+	 */
+	public static final class Binding implements AutoCloseable {
+		private final TaskStore _previous;
+		private boolean _closed;
+
+		Binding(TaskStore previous) {
+			_previous = previous;
+		}
+
+		@Override
+		public void close() {
+			if (_closed) {
+				return;
+			}
+			_closed = true;
+			if (_previous == null) {
+				STORE.remove();
+			} else {
+				STORE.set(_previous);
+			}
+		}
+	}
 }

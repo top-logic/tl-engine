@@ -223,12 +223,9 @@ public class ToolContext implements ToolExecutionContext {
 	 * Creates a copy of this context for a delegated sub-agent run.
 	 *
 	 * <p>The returned context has the delegation depth incremented by one and uses the given
-	 * child transaction scope. All other fields are inherited from this context.</p>
-	 *
-	 * <p>When the parent's scope is passed as {@code childTransaction}, locks acquired by
-	 * child tools accumulate on the parent scope and are only released on parent
-	 * commit/rollback. This is intentional — it ensures the parent holds all locks
-	 * until the entire turn is committed.</p>
+	 * {@code childTransaction}, which must be a fresh {@link TransactionScope}. The parent's
+	 * transaction is intentionally not visible to the child: the child's begin/commit/rollback
+	 * lifecycle is independent so it cannot interfere with the parent's turn.</p>
 	 *
 	 * @param childTransaction the transaction scope for the sub-agent run
 	 */

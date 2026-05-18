@@ -5,6 +5,9 @@
  */
 package com.top_logic.util;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -233,8 +236,8 @@ public class Country implements Comparable {
 		Map<String, String[]> aMap = new HashMap<>(50);
 	    Properties props = new Properties();
 	    
-	    try {
-            props.load(Country.class.getResourceAsStream("missingCodes_en_de.properties"));
+	    try (InputStream in = Country.class.getResourceAsStream("missingCodes_en_de.properties")) {
+            props.load(new InputStreamReader(in, StandardCharsets.UTF_8));
             Enumeration iter = props.keys();
             while (iter.hasMoreElements()) {
                 String key = (String) iter.nextElement();

@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -37,7 +39,7 @@ public class PropertiesHelper {
             try {
                 theStream = new FileInputStream(aSource);
 
-                theProps.load(theStream);
+                theProps.load(new InputStreamReader(theStream, StandardCharsets.UTF_8));
             }
             catch (Exception ex) {
                 Logger.warn("Given source file '" + aSource + "' cannot be read!", ex, PropertiesHelper.class);

@@ -341,7 +341,7 @@ public class JSDiagramControl extends AbstractJSControl
 					int zL = (direction < 0 ? zoomLevel : zoomLevel - 10);
 					int level = JsMath.trunc(zL / 100);
 
-					// Anteil f�r 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
+					// Anteil für 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
 					// ist
 					double factor = direction / (JsMath.pow(2, level) * (-10));
 					if (zL < 100) {

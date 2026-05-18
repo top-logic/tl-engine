@@ -34,7 +34,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Code editor to create TL-Script based {@link SearchExpression}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class ExpertSearchExpressionEditor extends FormComponent implements SearchExpressionEditor {
 

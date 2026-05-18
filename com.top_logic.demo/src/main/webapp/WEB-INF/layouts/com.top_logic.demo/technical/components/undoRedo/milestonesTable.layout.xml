@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		model="selection(com.top_logic.demo/technical/components/undoRedo/projectsTable.layout.xml#Table)"
+		type="tl.demo.projectManagement:Milestone"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/undoRedo/newMilestoneDialog.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</dialogs>
+		<name key="dynamic.undoRedo-milestones-name">
+			<en>Milestones</en>
+			<de>Meilensteine</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="project -> $project.get(`tl.demo.projectManagement:ProjectScope#milestones`)"
+		/>
+		<buttons>
+			<button id="undoRedo_milestones_invalidate"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+			<button id="undoRedo_milestones_delete"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+			</button>
+		</buttons>
+		<contextMenu class="com.top_logic.layout.basic.contextmenu.component.factory.adapter.SelectableContextMenuProvider">
+			<contextMenuFactory>
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+				<customCommands class="com.top_logic.layout.basic.contextmenu.config.MetaContextMenuCommandsProvider"/>
+			</contextMenuFactory>
+		</contextMenu>
+	</arguments>
+</config:template-call>

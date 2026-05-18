@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="date,author,message"
+		model="selection(com.top_logic.demo/technical/components/undoRedo/projectsTable.layout.xml#Table)"
+		type="tl.changelog:ChangeSet"
+	>
+		<name key="dynamic.undoRedo-changelog-name">
+			<en>Scoped change log</en>
+			<de>Gescopter Change-Log</de>
+		</name>
+		<modelBuilder class="com.top_logic.element.changelog.ChangeLogListModelBuilder"
+			all-users="true"
+			root-required="true"
+		/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="date">
+					<column-width value="160px"/>
+				</column>
+				<column name="message">
+					<column-width value="500px"/>
+				</column>
+			</column-customizations>
+			<sort-columns order="date:descending"/>
+			<configurationProvider class="com.top_logic.layout.table.model.AllVisibleColumnsProvider"
+				columns="changes,name"
+				excluded="true"
+			/>
+		</configurationProviders>
+		<buttons>
+			<button id="undoRedo_invalidate"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+			<button id="undoRedo_undo"
+				class="com.top_logic.element.changelog.UndoCommandHandler"
+				group="Write"
+				image="css:fa-solid fa-rotate-left"
+				include-subtree="true"
+			>
+				<resourceKey key="dynamic.undoRedo-undo-button">
+					<en>Undo</en>
+					<de>Rückgängig</de>
+				</resourceKey>
+			</button>
+			<button id="undoRedo_redo"
+				class="com.top_logic.element.changelog.RedoCommandHandler"
+				group="Write"
+				image="css:fa-solid fa-rotate-right"
+				include-subtree="true"
+			>
+				<resourceKey key="dynamic.undoRedo-redo-button">
+					<en>Redo</en>
+					<de>Wiederherstellen</de>
+				</resourceKey>
+			</button>
+			<button id="undoRedo_revert"
+				class="com.top_logic.element.changelog.RevertCommandHandler"
+				group="Write"
+				image="css:fa-solid fa-delete-left"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.undoRedo-revert-button">
+					<en>Revert selected change</en>
+					<de>Ausgewählte Änderung zurücknehmen</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="x -> $x != null"/>
+				</executability>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

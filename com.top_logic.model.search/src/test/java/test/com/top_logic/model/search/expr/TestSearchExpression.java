@@ -1477,14 +1477,12 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	private void checkCopyFlat(TLObject orig, TLObject copy) {
 		for (TLStructuredTypePart part : orig.tType().getAllParts()) {
-			if (part.isDerived()) {
+			TLStructuredTypePart copyPart = copy.tType().getPart(part.getName());
+			if (copyPart == null || copyPart.isDerived()) {
 				continue;
 			}
 
-			TLStructuredTypePart copyPart = copy.tType().getPart(part.getName());
-			if (copyPart != null && part.getDefinition() == copyPart.getDefinition()) {
-				assertEquals(orig.tValue(part), copy.tValue(copyPart));
-			}
+			assertEquals(orig.tValue(part), copy.tValue(copyPart));
 		}
 	}
 

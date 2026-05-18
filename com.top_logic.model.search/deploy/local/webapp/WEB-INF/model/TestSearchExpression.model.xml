@@ -185,6 +185,17 @@
 					</attributes>
 				</class>
 				
+				<class name="WithDatabaseColumns">
+					<annotations>
+						<table name="WithDatabaseColumns" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String"></property>
+						<property name="int" type="tl.core:Integer"></property>
+						<property name="double" type="tl.core:Double"></property>
+					</attributes>
+				</class>
+				
 				<enum name="MyEnum">
 					<classifiers>
 						<classifier name="A"/>

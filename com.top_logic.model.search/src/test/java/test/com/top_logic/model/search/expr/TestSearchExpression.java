@@ -64,6 +64,7 @@ import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
 import com.top_logic.model.search.expr.FormatExpr;
 import com.top_logic.model.search.expr.I18NConstants;
+import com.top_logic.model.search.expr.KBQuery;
 import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.ToDate;
@@ -118,6 +119,60 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				assertEquals("Fuzzy match expected.", list(a3), execute(search(
 					"all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == true)")));
 				assertEquals("Fuzzy match expected.", list(a3), search1.execute(true));
+			});
+	}
+
+	/**
+	 * TLScript only uses {@link Double} values, the {@link KnowledgeBase} also uses
+	 * {@link Integer}. This test tests usage of integer values together with {@link KBQuery}.
+	 */
+	public void testKBNumberTypes() {
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4");
+				assertNotNull(a4);
+				TLObject a5 = scenario.getObject("a5");
+				assertNotNull(a5);
+
+				SearchExpression filterKB = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == 15)");
+				assertEquals(list(a4), execute(filterKB));
+
+				SearchExpression filterKBWithParam = search(
+					"intVal -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == $intVal)");
+				assertEquals(list(a4), execute(filterKBWithParam, 15));
+
+				SearchExpression filterInMemory = search(
+					"all -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == 15)");
+				assertEquals(list(a4), execute(filterInMemory, list(a4, a5)));
+
+				SearchExpression filterInMemoryWithParam = search(
+					"all -> intVal -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == $intVal)");
+				assertEquals(list(a4), execute(filterInMemoryWithParam, list(a4, a5), 15));
+
+			});
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4");
+				assertNotNull(a4);
+				TLObject a5 = scenario.getObject("a5");
+				assertNotNull(a5);
+
+				SearchExpression filterKB = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == 16)");
+				assertEquals(list(a4), execute(filterKB));
+
+				SearchExpression filterKBWithParam = search(
+					"intVal -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == $intVal)");
+				assertEquals(list(a4), execute(filterKBWithParam, 16));
+
+				SearchExpression filterInMemory = search(
+					"all -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == 16)");
+				assertEquals(list(a4), execute(filterInMemory, list(a4, a5)));
+
+				SearchExpression filterInMemoryWithParam = search(
+					"all -> intVal -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == $intVal)");
+				assertEquals(list(a4), execute(filterInMemoryWithParam, list(a4, a5), 16));
 			});
 	}
 

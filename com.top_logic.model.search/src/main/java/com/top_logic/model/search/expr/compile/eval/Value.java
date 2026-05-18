@@ -132,6 +132,10 @@ public abstract class Value {
 	 * @return A {@link Value} representing the literal.
 	 */
 	public static Value literal(SearchExpression orig, Object literal) {
+		if (literal == null) {
+			// Null literal is not allowed in the KB.
+			return new InterpretedExpression(orig);
+		}
 		MetaObject literalType = PolymorphicTypeComputation.getLiteralType(literal);
 		if (literalType == MetaObject.INVALID_TYPE) {
 			return new InterpretedExpression(orig);

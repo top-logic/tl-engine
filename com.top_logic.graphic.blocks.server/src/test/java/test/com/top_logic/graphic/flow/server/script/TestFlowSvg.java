@@ -187,12 +187,13 @@ public class TestFlowSvg extends TestCase {
 	 * {@code fontWeight} from the {@link Text} is ignored during measurement.
 	 */
 	public void testBoldTextIsWider() throws IOException {
+		String text = "|Hello World this is a longer text for test|";
 		Diagram normal = Diagram.create()
 			.setRoot(Border.create()
-				.setContent(Text.create().setValue("Hello World")));
+				.setContent(Text.create().setValue(text)));
 		Diagram bold = Diagram.create()
 			.setRoot(Border.create()
-				.setContent(Text.create().setValue("Hello World").setFontWeight("bold")));
+				.setContent(Text.create().setValue(text).setFontWeight("bold")));
 
 		toSvg(normal, "TestFlowSvg-weight-normal.svg", 12.0, null, null);
 		toSvg(bold, "TestFlowSvg-weight-bold.svg", 12.0, null, null);

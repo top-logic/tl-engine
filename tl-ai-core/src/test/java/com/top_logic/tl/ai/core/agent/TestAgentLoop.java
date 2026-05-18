@@ -1655,4 +1655,102 @@ public class TestAgentLoop extends TestCase {
 		assertNotNull(AgentEventAssertions.firstOfType(captured, AgentEvent.RunStarted.class));
 		assertEquals(1, AgentEventAssertions.allOfType(captured, AgentEvent.RunCompleted.class).size());
 	}
+
+	/**
+	 * A DATA_WRITE tool must not share a concurrent batch with a preceding
+	 * concurrency-safe READ tool.
+	 */
+	public void testPartitionBatchesBreaksOnWriteTool() {
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(stubTool("read1", ToolMode.READ, true));
+		registry.register(stubTool("write1", ToolMode.DATA_WRITE, true));
+		registry.freeze();
+
+		AgentLoop loop = new AgentLoop(config(), mockProvider(List.of()), registry);
+		ToolContext ctx = new ToolContext(
+			com.top_logic.tl.ai.core.agent.SecurityContext.UNRESTRICTED,
+			com.top_logic.tl.ai.core.agent.approval.ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP);
+
+		ToolCall c1 = new ToolCall("id1", "read1", "{}");
+		ToolCall c2 = new ToolCall("id2", "write1", "{}");
+
+		List<List<ToolCall>> batches = loop.partitionBatches(List.of(c1, c2), ctx);
+
+		assertEquals("Expect two batches: reads then write", 2, batches.size());
+		assertEquals(1, batches.get(0).size());
+		assertEquals("read1", batches.get(0).get(0).name());
+		assertEquals(1, batches.get(1).size());
+		assertEquals("write1", batches.get(1).get(0).name());
+	}
+
+	/**
+	 * Two consecutive READ tools may share a concurrent batch.
+	 */
+	public void testPartitionBatchesGroupsConsecutiveReads() {
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(stubTool("read1", ToolMode.READ, true));
+		registry.register(stubTool("read2", ToolMode.READ, true));
+		registry.freeze();
+
+		AgentLoop loop = new AgentLoop(config(), mockProvider(List.of()), registry);
+		ToolContext ctx = new ToolContext(
+			com.top_logic.tl.ai.core.agent.SecurityContext.UNRESTRICTED,
+			com.top_logic.tl.ai.core.agent.approval.ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP);
+
+		ToolCall c1 = new ToolCall("id1", "read1", "{}");
+		ToolCall c2 = new ToolCall("id2", "read2", "{}");
+
+		List<List<ToolCall>> batches = loop.partitionBatches(List.of(c1, c2), ctx);
+
+		assertEquals("Two reads collapse into one batch", 1, batches.size());
+		assertEquals(2, batches.get(0).size());
+	}
+
+	/**
+	 * A USER_SCOPED tool must not share a concurrent batch with a preceding
+	 * concurrency-safe READ tool. USER_SCOPED tools trigger
+	 * {@code ensureTransaction}, which opens a KB transaction in the worker's
+	 * interaction-scoped DBContext; that transaction is auto-rolled-back when the
+	 * worker's interaction unbinds, leaving the shared {@code TransactionScope}
+	 * holding a zombie TX that the agent's end-of-turn commit then fails on.
+	 */
+	public void testPartitionBatchesBreaksOnUserScopedTool() {
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(stubTool("read1", ToolMode.READ, true));
+		registry.register(stubTool("userScoped1", ToolMode.USER_SCOPED, true));
+		registry.freeze();
+
+		AgentLoop loop = new AgentLoop(config(), mockProvider(List.of()), registry);
+		ToolContext ctx = new ToolContext(
+			com.top_logic.tl.ai.core.agent.SecurityContext.UNRESTRICTED,
+			com.top_logic.tl.ai.core.agent.approval.ApprovalCallback.AUTO_APPROVE,
+			TransactionScope.NOOP);
+
+		ToolCall c1 = new ToolCall("id1", "read1", "{}");
+		ToolCall c2 = new ToolCall("id2", "userScoped1", "{}");
+
+		List<List<ToolCall>> batches = loop.partitionBatches(List.of(c1, c2), ctx);
+
+		assertEquals("Expect two batches: read then user-scoped", 2, batches.size());
+		assertEquals(1, batches.get(0).size());
+		assertEquals("read1", batches.get(0).get(0).name());
+		assertEquals(1, batches.get(1).size());
+		assertEquals("userScoped1", batches.get(1).get(0).name());
+	}
+
+	/** Minimal {@link Tool} stub used by partitionBatches tests. */
+	private static Tool stubTool(String toolName, ToolMode mode, boolean concurrencySafe) {
+		return new Tool() {
+			@Override public String name() { return toolName; }
+			@Override public String description() { return toolName; }
+			@Override public ToolSchema schema() { return new ToolSchema(toolName, toolName, "{}"); }
+			@Override public ToolMode mode() { return mode; }
+			@Override public boolean isConcurrencySafe() { return concurrencySafe; }
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext ctx) {
+				return ToolResult.of("ok");
+			}
+		};
+	}
 }

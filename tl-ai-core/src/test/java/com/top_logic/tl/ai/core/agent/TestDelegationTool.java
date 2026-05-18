@@ -6,11 +6,18 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
+import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * Tests for {@link DelegationTool}.
@@ -85,5 +92,50 @@ public class TestDelegationTool extends TestCase {
 	public void testNullDescriptionFallback() {
 		DelegationTool tool = new DelegationTool("delegate_to_x", null, "explorer", "parent", name -> null);
 		assertTrue(tool.description().contains("explorer"));
+	}
+
+	/**
+	 * The child agent loop must receive its own {@link TransactionScope}, not the
+	 * parent's. This isolates the child's begin/commit/rollback lifecycle from the
+	 * parent and prevents "Invalid nesting of transactions" errors when the child
+	 * commits before the parent's turn ends.
+	 */
+	public void testDelegationGivesChildOwnTransactionScope() {
+		TransactionScope parentScope = new TransactionScope();
+		ToolContext parentContext = new ToolContext(
+			SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE, parentScope);
+
+		AtomicReference<TransactionScope> childScopeCapture = new AtomicReference<>();
+
+		// Minimal provider stub — the child's run() is overridden so the provider is never invoked.
+		LLMProvider neverCalled = (request, handler) -> {
+			throw new AssertionError("Provider should not be reached when run() is overridden.");
+		};
+		ToolCatalog emptyCatalog = new ToolCatalog();
+		emptyCatalog.freeze();
+
+		AgentLoop child = new AgentLoop(testAgentParams(), neverCalled, emptyCatalog) {
+			@Override
+			public AgentResult run(Conversation conv, ToolContext ctx, AgentEventListener listener) {
+				childScopeCapture.set(ctx.transaction());
+				return new AgentResult(StopReason.COMPLETE, 0, TokenUsage.EMPTY);
+			}
+		};
+
+		DelegationTool tool = new DelegationTool(
+			"delegate_to_x", "child", "x", "parent",
+			name -> child);
+
+		tool.execute(Map.of("task", "do the thing"), parentContext);
+
+		assertNotNull("Child received a TransactionScope", childScopeCapture.get());
+		assertNotSame(
+			"Child must NOT receive parent's TransactionScope",
+			parentScope, childScopeCapture.get());
+	}
+
+	private static AgentParams testAgentParams() {
+		return new AgentParams("test-model", "You are a test assistant.",
+			AgentParams.DEFAULT_MAX_TURNS, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS);
 	}
 }

@@ -507,7 +507,7 @@ public class AgentLoop {
 	 * concurrency-safe AND will not require interactive approval (which would block
 	 * the thread waiting for user input).</p>
 	 */
-	private List<List<ToolCall>> partitionBatches(List<ToolCall> toolCalls, ToolContext context) {
+	List<List<ToolCall>> partitionBatches(List<ToolCall> toolCalls, ToolContext context) {
 		List<List<ToolCall>> batches = new ArrayList<>();
 		List<ToolCall> currentBatch = null;
 		boolean currentBatchConcurrent = false;
@@ -534,9 +534,18 @@ public class AgentLoop {
 		return batches;
 	}
 
-	private boolean isConcurrencySafe(ToolCall tc, ToolContext context) {
+	boolean isConcurrencySafe(ToolCall tc, ToolContext context) {
 		Tool tool = _registry.getTool(tc.name());
 		if (tool == null) {
+			return false;
+		}
+		if (tool.mode() != ToolMode.READ) {
+			// Only READ tools share concurrent batches. USER_SCOPED / DATA_WRITE / GLOBAL
+			// tools trigger ensureTransaction, which opens a KB transaction in the worker's
+			// own (interaction-scoped) DBContext; that transaction is auto-rolled-back when
+			// the worker's interaction unbinds, leaving the shared TransactionScope holding
+			// a zombie TX that the agent's end-of-turn commit then fails on with
+			// "Invalid nesting of transactions".
 			return false;
 		}
 		if (!tool.isConcurrencySafe()) {
@@ -574,15 +583,14 @@ public class AgentLoop {
 			for (ToolCall tc : batch) {
 				futures.add(CompletableFuture.supplyAsync(
 					() -> ThreadContextManager.inSystemInteraction(AgentLoop.class, () -> {
-						ConversationLogListenerBinding.setListener(logListener);
-						TaskStoreBinding.setStore(taskStore);
-						UserInteractionStoreBinding.setStore(interactionStore);
-						try {
+						try (
+							ConversationLogListenerBinding.Binding b1 =
+								ConversationLogListenerBinding.bind(logListener);
+							TaskStoreBinding.Binding b2 =
+								TaskStoreBinding.bind(taskStore);
+							UserInteractionStoreBinding.Binding b3 =
+								UserInteractionStoreBinding.bind(interactionStore)) {
 							return executeWithSecurityCheck(tc, context, listener, runId, turn);
-						} finally {
-							ConversationLogListenerBinding.clear();
-							TaskStoreBinding.setStore(null);
-							UserInteractionStoreBinding.setStore(null);
 						}
 					}), executor));
 			}

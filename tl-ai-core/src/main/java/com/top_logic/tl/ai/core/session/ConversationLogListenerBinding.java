@@ -8,26 +8,53 @@ package com.top_logic.tl.ai.core.session;
 /**
  * Thread-local binding for {@link ConversationLogListener}.
  *
- * <p>Set before an agent run starts, cleared in the finally block.
- * Used by {@code AskUserTool} to record interaction parts in the
- * conversation log.</p>
+ * <p>Prefer {@link #bind(ConversationLogListener)} with try-with-resources. The
+ * previous value is captured at bind time and restored on close, making the
+ * binding safe across cached thread pools.</p>
  */
 public class ConversationLogListenerBinding {
 
 	private static final ThreadLocal<ConversationLogListener> LISTENER = new ThreadLocal<>();
 
-	/** Binds a listener to the current thread. */
-	public static void setListener(ConversationLogListener listener) {
-		LISTENER.set(listener);
+	/**
+	 * Binds the given listener on the current thread and returns a handle whose
+	 * {@link AutoCloseable#close() close()} restores the previously bound value.
+	 */
+	public static Binding bind(ConversationLogListener listener) {
+		ConversationLogListener previous = LISTENER.get();
+		if (listener == null) {
+			LISTENER.remove();
+		} else {
+			LISTENER.set(listener);
+		}
+		return new Binding(previous);
 	}
 
-	/** Returns the listener bound to the current thread, or {@code null}. */
+	/** Returns the bound listener, or {@code null}. */
 	public static ConversationLogListener getListener() {
 		return LISTENER.get();
 	}
 
-	/** Removes the listener binding from the current thread. */
-	public static void clear() {
-		LISTENER.remove();
+	/** Handle returned by {@link ConversationLogListenerBinding#bind(ConversationLogListener)}. */
+	public static final class Binding implements AutoCloseable {
+		private final ConversationLogListener _previous;
+		private boolean _closed;
+
+		Binding(ConversationLogListener previous) {
+			_previous = previous;
+		}
+
+		@Override
+		public void close() {
+			if (_closed) {
+				return;
+			}
+			_closed = true;
+			if (_previous == null) {
+				LISTENER.remove();
+			} else {
+				LISTENER.set(_previous);
+			}
+		}
 	}
 }

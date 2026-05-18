@@ -16,77 +16,64 @@ public class TestTaskStoreBinding extends TestCase {
 
 	@Override
 	protected void tearDown() {
-		// Always clean up thread-local state after each test.
-		TaskStoreBinding.setStore(null);
+		// Defensive: in case a test leaks state.
+		try (TaskStoreBinding.Binding b = TaskStoreBinding.bind(null)) {
+			// nothing
+		}
 	}
 
-	/**
-	 * Verifies basic set and get of a {@link TaskStore}.
-	 */
-	public void testSetAndGetStore() {
+	public void testBindAndGetStore() {
 		TaskStore store = new TaskStore();
-		TaskStoreBinding.setStore(store);
-
-		assertSame("Should return the same store that was set", store, TaskStoreBinding.getStore());
+		try (TaskStoreBinding.Binding b = TaskStoreBinding.bind(store)) {
+			assertSame(store, TaskStoreBinding.getStore());
+		}
 	}
 
-	/**
-	 * Verifies that setting {@code null} removes the binding, returning {@code null} on subsequent
-	 * get.
-	 */
-	public void testSetNullRemovesBinding() {
-		TaskStoreBinding.setStore(new TaskStore());
-		TaskStoreBinding.setStore(null);
-
-		assertNull("Store should be null after setting null", TaskStoreBinding.getStore());
-	}
-
-	/**
-	 * Verifies that {@link TaskStoreBinding#getStore()} returns {@code null} when no store has been
-	 * set on the current thread.
-	 */
 	public void testNoStoreReturnsNull() {
-		assertNull("Should return null when no store is set", TaskStoreBinding.getStore());
+		assertNull(TaskStoreBinding.getStore());
 	}
 
-	/**
-	 * Verifies that each thread has its own independent store binding. A store set on one thread
-	 * must not be visible on another thread.
-	 */
 	public void testThreadIsolation() throws Exception {
 		TaskStore mainStore = new TaskStore();
-		TaskStoreBinding.setStore(mainStore);
-
-		AtomicReference<TaskStore> otherThreadStore = new AtomicReference<>();
-		Thread other = new Thread(() -> {
-			otherThreadStore.set(TaskStoreBinding.getStore());
-		});
-		other.start();
-		other.join(5000);
-
-		assertNull("Other thread should not see main thread's store", otherThreadStore.get());
-		assertSame("Main thread's store should be unaffected", mainStore, TaskStoreBinding.getStore());
+		try (TaskStoreBinding.Binding b = TaskStoreBinding.bind(mainStore)) {
+			AtomicReference<TaskStore> otherThreadStore = new AtomicReference<>();
+			Thread other = new Thread(() -> otherThreadStore.set(TaskStoreBinding.getStore()));
+			other.start();
+			other.join(5000);
+			assertNull(otherThreadStore.get());
+			assertSame(mainStore, TaskStoreBinding.getStore());
+		}
 	}
 
-	/**
-	 * Verifies that a store set on a child thread is independent from the main thread's store.
-	 */
-	public void testChildThreadSetsOwnStore() throws Exception {
-		TaskStore mainStore = new TaskStore();
-		TaskStoreBinding.setStore(mainStore);
+	public void testBindRestoresAbsence() {
+		assertNull(TaskStoreBinding.getStore());
+		TaskStore store = new TaskStore();
+		try (TaskStoreBinding.Binding b = TaskStoreBinding.bind(store)) {
+			assertSame(store, TaskStoreBinding.getStore());
+		}
+		assertNull(TaskStoreBinding.getStore());
+	}
 
-		TaskStore childStore = new TaskStore();
-		AtomicReference<TaskStore> retrievedOnChild = new AtomicReference<>();
+	public void testBindRestoresPriorValue() {
+		TaskStore outer = new TaskStore();
+		try (TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(outer)) {
+			TaskStore inner = new TaskStore();
+			try (TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(inner)) {
+				assertSame(inner, TaskStoreBinding.getStore());
+			}
+			assertSame(outer, TaskStoreBinding.getStore());
+		}
+	}
 
-		Thread child = new Thread(() -> {
-			TaskStoreBinding.setStore(childStore);
-			retrievedOnChild.set(TaskStoreBinding.getStore());
-			TaskStoreBinding.setStore(null);
-		});
-		child.start();
-		child.join(5000);
-
-		assertSame("Child thread should see its own store", childStore, retrievedOnChild.get());
-		assertSame("Main thread should still see its own store", mainStore, TaskStoreBinding.getStore());
+	public void testBindRestoresOnException() {
+		TaskStore outer = new TaskStore();
+		try (TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(outer)) {
+			try (TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(new TaskStore())) {
+				throw new RuntimeException("boom");
+			} catch (RuntimeException expected) {
+				// expected
+			}
+			assertSame(outer, TaskStoreBinding.getStore());
+		}
 	}
 }

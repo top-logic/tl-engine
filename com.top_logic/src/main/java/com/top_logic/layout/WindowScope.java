@@ -194,13 +194,22 @@ public interface WindowScope extends BrowserHistory {
 	}
 
 	/**
+	 * The page title shown in the browser tab and title bar of this window.
+	 * 
+	 * @see #setPageTitle(String)
+	 */
+	String getPageTitle();
+
+	/**
 	 * Sets the page title shown in the browser tab and title bar of this window.
 	 *
 	 * <p>
-	 * The title is sent literally to the browser. Pass <code>null</code> or the empty
-	 * string to clear the title. To restore the title configured on the top-level
-	 * {@link LayoutComponent}, the caller must pass the resolved default string.
+	 * The title is sent literally to the browser. Pass <code>null</code> or the empty string to
+	 * clear the title. To restore the title configured on the top-level {@link LayoutComponent},
+	 * the caller must pass the resolved default string.
 	 * </p>
+	 * 
+	 * @see #getPageTitle()
 	 */
 	void setPageTitle(String title);
 

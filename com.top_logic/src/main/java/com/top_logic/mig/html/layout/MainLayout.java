@@ -87,6 +87,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.LayoutContext;
 import com.top_logic.layout.LayoutLinker;
+import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.WindowScopeProvider;
@@ -98,7 +99,6 @@ import com.top_logic.layout.basic.component.AJAXSupport;
 import com.top_logic.layout.basic.component.BasicAJAXSupport;
 import com.top_logic.layout.basic.component.ControlComponent.DispatchAction;
 import com.top_logic.layout.basic.component.ControlSupport;
-import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.DefaultChannel;
@@ -1286,10 +1286,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 			out.endEmptyTag();
 		}
 
-		ResKey theTitle;
-        if (writeTitle && null != (theTitle = getTitleKey())) {
+		if (writeTitle) {
 			out.beginTag(HTMLConstants.TITLE);
-			out.writeText(Resources.getInstance().getString(theTitle));
+			out.writeText(DefaultDisplayContext.getDisplayContext(req).getWindowScope().getPageTitle());
 			out.endTag(HTMLConstants.TITLE);
         }
         

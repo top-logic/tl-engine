@@ -245,11 +245,11 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	private final DialogSupport _dialogSupport;
 
 	/**
-	 * The current page title, or <code>null</code> if no custom title was set.
+	 * The current page title.
 	 *
 	 * @see #setPageTitle(String)
 	 */
-	private String _pageTitle;
+	private String _pageTitle = "";
 
 	/**
 	 * Whether {@link #_pageTitle} has changed since the last client revalidation and must be
@@ -287,12 +287,17 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	}
 
 	@Override
+	public String getPageTitle() {
+		return _pageTitle;
+	}
+
+	@Override
 	public void setPageTitle(String title) {
 		String normalized = title == null ? "" : title;
-		if (normalized.equals(_pageTitle == null ? "" : _pageTitle)) {
+		if (normalized.equals(_pageTitle)) {
 			return;
 		}
-		_pageTitle = title;
+		_pageTitle = normalized;
 		_pageTitleDirty = true;
 	}
 
@@ -712,7 +717,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		updateDialogs(context, actions);
 		updatePopupDialogs(actions);
 		if (_pageTitleDirty) {
-			final String title = _pageTitle == null ? "" : _pageTitle;
+			final String title = _pageTitle;
 			actions.add(new JSSnipplet(new AbstractDisplayValue() {
 				@Override
 				public void append(DisplayContext renderContext, Appendable out) throws IOException {

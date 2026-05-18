@@ -6,11 +6,9 @@
 package com.top_logic.graphic.flow.server.ui;
 
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -69,8 +67,11 @@ public class AWTContext implements RenderContext {
 	 */
 	public AWTContext(float textSize) {
 		_defaultSizePt = textSize;
-		Graphics2D graphics = (Graphics2D) new BufferedImage(8, 8, BufferedImage.TYPE_4BYTE_ABGR).getGraphics();
-		_fontRenderContext = graphics.getFontRenderContext();
+		// Use anti-aliased + fractional-metrics rendering — matches how browsers actually paint
+		// SVG text. The default FontRenderContext (no AA, no fractional metrics) produces
+		// noticeably shorter advance widths than the browser, especially for bold weights, which
+		// would cause text to overflow its measured box.
+		_fontRenderContext = new FontRenderContext(null, true, true);
 	}
 
 	/**

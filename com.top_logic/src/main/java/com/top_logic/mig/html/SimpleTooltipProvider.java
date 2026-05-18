@@ -27,7 +27,7 @@ public class SimpleTooltipProvider implements TooltipProvider {
 
 	@Override
 	public String getTooltip(Object object) {
-		return Resources.getInstance().getString(getTooltipNonNull(object));
+		return object == null ? null : Resources.getInstance().getString(getTooltipNonNull(object));
 	}
 
 	private ResKey getTooltipNonNull(Object object) {

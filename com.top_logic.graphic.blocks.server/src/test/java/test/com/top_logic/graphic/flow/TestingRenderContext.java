@@ -14,7 +14,7 @@ import com.top_logic.graphic.blocks.svg.TextMetricsImpl;
  */
 final class TestingRenderContext implements RenderContext {
 	@Override
-	public TextMetrics measure(String text) {
+	public TextMetrics measure(String text, String fontFamily, String fontSize, String fontWeight) {
 		return new TextMetricsImpl(text.length() * 12, 12, 10);
 	}
 }

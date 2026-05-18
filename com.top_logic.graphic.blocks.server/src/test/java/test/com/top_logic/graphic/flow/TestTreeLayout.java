@@ -351,7 +351,9 @@ public class TestTreeLayout extends TestCase {
 		writeToFile(diagramCompfort, "./target/TestTreeLayout-random-compfort.svg");
 
 		Diagram diagramCompact =
-			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(true)));
+			Diagram.create().setRoot(
+				Padding.create().setAll(20)
+					.setContent(createRandomTree().setCompact(true).setSibblingGapY(15).setSubtreeGapY(30)));
 		writeToFile(diagramCompact, "./target/TestTreeLayout-random-compact.svg");
 	}
 

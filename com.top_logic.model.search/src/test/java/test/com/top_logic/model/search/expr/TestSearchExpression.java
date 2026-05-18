@@ -11,6 +11,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +37,8 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.changelog.ChangeLogBuilder;
+import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.meta.MetaAttributeFactory;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -1422,14 +1426,14 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				TLObject orig = scenario.getObject("a1");
 
 				TLObject copy = (TLObject) execute(search("x -> $x.copy()"), orig);
-				checkCopy(orig, copy);
+				checkCopyA(orig, copy);
 
 				TLObject stable = stabilize(orig);
 
 				// The result must be the same, when using the stable version of the current
 				// original as input to the copy operation.
 				TLObject stableCopy = (TLObject) execute(search("x -> $x.copy()"), stable);
-				checkCopy(orig, stableCopy);
+				checkCopyA(orig, stableCopy);
 			});
 	}
 
@@ -1440,7 +1444,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		return stable;
 	}
 
-	private void checkCopy(TLObject orig, TLObject copy) {
+	private void checkCopyA(TLObject orig, TLObject copy) {
 		assertNotNull(copy);
 		assertNotEquals(orig, copy);
 		assertDifferent(orig, copy, "b");
@@ -1453,6 +1457,33 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 		assertEquals(value(copy, "b", "contents", 1), value(copy, "b", "contents", 0, "other"));
 		assertEquals(value(orig, "b", "name"), value(copy, "b", "name"));
+	}
+
+	public void testCopyToSupertype() {
+		with("TestSearchExpression-testCopy.scenario.xml",
+			scenario -> {
+				// Object of type BSpecial
+				TLObject orig = scenario.getObject("b11");
+				assertTrue((Boolean) execute(search("x -> $x.type() == `TestSearchExpression:BSpecial`"), orig));
+
+				TLObject copy = (TLObject) execute(search(
+					"x -> $x.copy(constructor: orig -> $orig.instanceOf(`TestSearchExpression:BSpecial`) ? new(`TestSearchExpression:B`) : null)"),
+					orig);
+				assertTrue((Boolean) execute(search("x -> $x.type() == `TestSearchExpression:B`"), copy));
+
+				checkCopyFlat(orig, copy);
+			});
+	}
+
+	private void checkCopyFlat(TLObject orig, TLObject copy) {
+		for (TLStructuredTypePart part : orig.tType().getAllParts()) {
+			TLStructuredTypePart copyPart = copy.tType().getPart(part.getName());
+			if (copyPart == null || copyPart.isDerived()) {
+				continue;
+			}
+
+			assertEquals(orig.tValue(part), copy.tValue(copyPart));
+		}
 	}
 
 	public void testCopyFilter() {
@@ -2490,20 +2521,35 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	private void with(String scenarioName, TestFun test) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		long startRev = kb.getHistoryManager().getLastRevision();
 		try {
 			XMLInstanceImporter scenario = scenario(scenarioName);
 			Throwable outer = null;
 			try {
 				test.accept(scenario);
-
-				// Roll back any implicitly started (and potentially failed) transactions.
-				PersistencyLayer.getKnowledgeBase().rollback();
 			} catch (Throwable e1) {
 				outer = e1;
 				throw e1;
 			} finally {
 				try {
-					drop(scenario);
+					// Roll back any implicitly started (and potentially failed) transactions.
+					kb.rollback();
+				} catch (Throwable e2) {
+					if (outer != null) {
+						outer.addSuppressed(e2);
+					}
+				}
+
+				try {
+					long stopRev = kb.getHistoryManager().getLastRevision();
+					if (stopRev > startRev) {
+						Collection<ChangeSet> changes = new ChangeLogBuilder(kb, ModelService.getApplicationModel())
+							.setStartRev(kb.getHistoryManager().getRevision(startRev + 1))
+							.setStopRev(kb.getHistoryManager().getRevision(stopRev)).build();
+
+						drop(changes);
+					}
 				} catch (Throwable e2) {
 					if (outer != null) {
 						outer.addSuppressed(e2);
@@ -2524,10 +2570,13 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		}
 	}
 
-	private void drop(XMLInstanceImporter scenario) {
+	private void drop(Collection<ChangeSet> changes) {
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			for (TLObject x : scenario.getAllImportedObjects()) {
-				x.tDelete();
+			ArrayList<ChangeSet> ordered = new ArrayList<>(changes);
+			Collections.sort(ordered,
+				Comparator.<ChangeSet> comparingLong(cs -> cs.getRevision().getCommitNumber()).reversed());
+			for (ChangeSet cs : ordered) {
+				cs.revert().apply();
 			}
 			tx.commit();
 		}

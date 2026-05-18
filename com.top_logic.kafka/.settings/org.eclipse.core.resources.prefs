@@ -1,3 +1,9 @@
 eclipse.preferences.version=1
 encoding//src/main/java=UTF-8
 encoding/<project>=UTF-8
+encoding//src/main/java/META-INF/messages_de.properties=UTF-8
+encoding//src/main/java/META-INF/messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/kafkaMessages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/kafkaMessages_en.properties=UTF-8
+encoding//src/main/webapp/doc/de/DeveloperGuide/TLScript/Miscellaneous/kafkaSend/page.properties=UTF-8
+encoding//src/main/webapp/doc/en/DeveloperGuide/TLScript/Miscellaneous/kafkaSend/page.properties=UTF-8

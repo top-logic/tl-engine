@@ -1,3 +1,11 @@
 eclipse.preferences.version=1
 encoding//src/main/java=UTF-8
 encoding/<project>=UTF-8
+encoding//src/main/java/META-INF/messages_de.properties=UTF-8
+encoding//src/main/java/META-INF/messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.model.i18n.messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.model.i18n.messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.model.wysiwyg.messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.model.wysiwyg.messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/modelWysiwygMessages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/modelWysiwygMessages_en.properties=UTF-8

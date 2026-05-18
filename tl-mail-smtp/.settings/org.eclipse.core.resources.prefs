@@ -11,3 +11,7 @@ encoding//src/test/webapp/WEB-INF/kbase/migration/TestSQLMigrationProcessor/test
 encoding//src/test/webapp/WEB-INF/kbase/migration/TestSQLMigrationProcessor/testUpdateTable_LF.mysql.sql=UTF-8
 encoding//src/test/webapp/WEB-INF/kbase/migration/TestSQLMigrationProcessor/testUpdateTable_LF.oracle.sql=UTF-8
 encoding/<project>=UTF-8
+encoding//src/main/java/META-INF/messages_de.properties=UTF-8
+encoding//src/main/java/META-INF/messages_en.properties=UTF-8
+encoding//src/main/webapp/doc/de/DeveloperGuide/TLScript/SystemFunctions/sendMail/page.properties=UTF-8
+encoding//src/main/webapp/doc/en/DeveloperGuide/TLScript/SystemFunctions/sendMail/page.properties=UTF-8

@@ -1,2 +1,4 @@
 eclipse.preferences.version=1
 encoding/<project>=UTF-8
+encoding//src/main/webapp/script/ckeditor/plugins/codesnippet/codesnippet-origin.properties=UTF-8
+encoding//src/main/webapp/script/ckeditor/plugins/inlinecode/plugin-origin.properties=UTF-8

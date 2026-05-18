@@ -17,11 +17,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -30,31 +32,33 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /**
- * Maven goal that migrates project source and properties files from ISO-8859-1
- * to UTF-8.
+ * Maven goal that migrates a TopLogic-based project from ISO-8859-1 to UTF-8.
  *
  * <p>
- * Intended as a one-shot migration helper for TopLogic-based projects when
- * upgrading to a TopLogic version that uses UTF-8 as the default source
- * encoding. Invoke via
+ * Intended as a one-shot migration helper when upgrading to a TopLogic version
+ * that uses UTF-8 as the default source encoding. Invoke via
  * {@code mvn com.top-logic:tl-maven-plugin:migrate-to-utf8}.
  * </p>
  *
  * <p>
- * Per file:
+ * The goal handles three concerns:
  * </p>
  * <ol>
- *   <li>If the bytes are pure ASCII, nothing changes.</li>
- *   <li>If the bytes are valid UTF-8 with at least one non-ASCII sequence, the
- *       file is treated as already UTF-8 and left untouched.</li>
- *   <li>Otherwise the bytes are decoded as ISO-8859-1 and rewritten as
- *       UTF-8.</li>
+ *   <li><b>Source files</b> (default: {@code .java} and {@code .properties}):
+ *       genuine ISO-8859-1 byte streams are rewritten as UTF-8. Pure ASCII
+ *       files are skipped silently; files that are already valid UTF-8 are
+ *       skipped and listed so callers can spot accidental mojibake.</li>
+ *   <li><b>Eclipse encoding preferences</b>
+ *       ({@code .settings/org.eclipse.core.resources.prefs}): the project
+ *       default and the Java source folders are flipped to UTF-8, and
+ *       obsolete per-path {@code =ISO-8859-1} overrides are removed.</li>
+ *   <li><b>Maven POMs</b>: {@code <project.build.sourceEncoding>ISO-8859-1}
+ *       declarations are rewritten to {@code UTF-8}.</li>
  * </ol>
  *
  * <p>
- * Files that fall into category 2 are reported separately so callers can
- * decide whether they are genuinely UTF-8 (intentional) or mojibake from a
- * prior incorrect round-trip.
+ * Each part can be skipped via the {@code skipSources}, {@code skipEclipse}
+ * and {@code skipPoms} parameters.
  * </p>
  */
 @Mojo(name = "migrate-to-utf8", requiresProject = false)
@@ -62,6 +66,21 @@ public class MigrateToUtf8Mojo extends AbstractMojo {
 
 	private static final Set<String> PRUNE_DIRS =
 		new HashSet<>(Arrays.asList("target", "build", "node_modules", ".git", "bin"));
+
+	private static final String ECLIPSE_PREFS_NAME = "org.eclipse.core.resources.prefs";
+
+	private static final Set<String> ECLIPSE_JAVA_KEYS =
+		new HashSet<>(Arrays.asList("<project>", "src", "/src/main/java", "/src/test/java"));
+
+	private static final Pattern ECLIPSE_ENCODING_LINE =
+		Pattern.compile("^(encoding/)(.+?)=(.+)$");
+
+	private static final Pattern POM_SOURCE_ENCODING =
+		Pattern.compile(
+			"<project\\.build\\.sourceEncoding>\\s*ISO-8859-1\\s*</project\\.build\\.sourceEncoding>");
+
+	private static final String POM_SOURCE_ENCODING_REPLACEMENT =
+		"<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>";
 
 	/**
 	 * Root directory whose source tree is migrated.
@@ -75,7 +94,7 @@ public class MigrateToUtf8Mojo extends AbstractMojo {
 	private File baseDir;
 
 	/**
-	 * File extensions to process (without leading dot).
+	 * File extensions to process during the source-file step (without leading dot).
 	 *
 	 * <p>
 	 * Defaults to {@code java,properties}. Pass via
@@ -91,59 +110,92 @@ public class MigrateToUtf8Mojo extends AbstractMojo {
 	@Parameter(defaultValue = "false", property = "dryRun")
 	private boolean dryRun;
 
+	/**
+	 * Skip the source-file conversion step.
+	 */
+	@Parameter(defaultValue = "false", property = "skipSources")
+	private boolean skipSources;
+
+	/**
+	 * Skip the Eclipse {@code .settings/org.eclipse.core.resources.prefs} update.
+	 */
+	@Parameter(defaultValue = "false", property = "skipEclipse")
+	private boolean skipEclipse;
+
+	/**
+	 * Skip the {@code <project.build.sourceEncoding>} update in {@code pom.xml} files.
+	 */
+	@Parameter(defaultValue = "false", property = "skipPoms")
+	private boolean skipPoms;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		Path root = baseDir != null ? baseDir.toPath() : Paths.get(".").toAbsolutePath().normalize();
+
+		try {
+			if (!skipSources) {
+				migrateSources(root);
+			}
+			if (!skipEclipse) {
+				migrateEclipsePrefs(root);
+			}
+			if (!skipPoms) {
+				migratePoms(root);
+			}
+		} catch (IOException ex) {
+			throw new MojoExecutionException("Failed to walk " + root + ".", ex);
+		}
+
+		if (dryRun) {
+			getLog().info("Re-run without -DdryRun to apply the changes above.");
+		}
+	}
+
+	// --- Source files ---
+
+	private void migrateSources(Path root) throws IOException, MojoFailureException {
 		List<String> exts = parseExtensions();
 		if (exts.isEmpty()) {
 			throw new MojoFailureException("No file extensions configured.");
 		}
 
-		Path root = baseDir != null ? baseDir.toPath() : Paths.get(".").toAbsolutePath().normalize();
-
-		Stats stats = new Stats();
+		SourceStats stats = new SourceStats();
 		Set<Path> alreadyUtf8 = new TreeSet<>();
 
-		try {
-			Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-					if (!dir.equals(root) && PRUNE_DIRS.contains(dir.getFileName().toString())) {
-						return FileVisitResult.SKIP_SUBTREE;
-					}
-					return FileVisitResult.CONTINUE;
+		Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+				if (!dir.equals(root) && PRUNE_DIRS.contains(dir.getFileName().toString())) {
+					return FileVisitResult.SKIP_SUBTREE;
 				}
+				return FileVisitResult.CONTINUE;
+			}
 
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					if (matchesExtension(file, exts)) {
-						process(file, stats, alreadyUtf8);
-					}
-					return FileVisitResult.CONTINUE;
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				if (matchesExtension(file, exts)) {
+					processSource(file, stats, alreadyUtf8);
 				}
-			});
-		} catch (IOException ex) {
-			throw new MojoExecutionException("Failed to walk " + root + ".", ex);
-		}
+				return FileVisitResult.CONTINUE;
+			}
+		});
 
-		getLog().info("Scanned:        " + stats.total() + " files");
-		getLog().info("Pure ASCII:     " + stats.ascii);
-		getLog().info("Already UTF-8:  " + stats.alreadyUtf8 + " (skipped)");
-		getLog().info("Converted:      " + stats.converted + " (" + (dryRun ? "dry run" : "written") + ")");
+		getLog().info("Source files (" + String.join(", ", exts) + "):");
+		getLog().info("  Scanned:        " + stats.total() + " files");
+		getLog().info("  Pure ASCII:     " + stats.ascii);
+		getLog().info("  Already UTF-8:  " + stats.alreadyUtf8 + " (skipped)");
+		getLog().info("  Converted:      " + stats.converted + " (" + (dryRun ? "dry run" : "written") + ")");
 
 		if (!alreadyUtf8.isEmpty()) {
-			getLog().info("Files already containing UTF-8 byte sequences (skipped):");
+			getLog().info("  Files already containing UTF-8 byte sequences (skipped):");
 			for (Path file : alreadyUtf8) {
-				getLog().info("  " + root.relativize(file));
+				getLog().info("    " + root.relativize(file));
 			}
-		}
-
-		if (stats.converted > 0 && dryRun) {
-			getLog().info("Re-run without -DdryRun to rewrite the converted files.");
 		}
 	}
 
 	private List<String> parseExtensions() {
-		List<String> result = new java.util.ArrayList<>();
+		List<String> result = new ArrayList<>();
 		for (String ext : extensions.split(",")) {
 			String trimmed = ext.trim();
 			if (!trimmed.isEmpty()) {
@@ -163,7 +215,7 @@ public class MigrateToUtf8Mojo extends AbstractMojo {
 		return exts.contains(ext);
 	}
 
-	private void process(Path file, Stats stats, Set<Path> alreadyUtf8) throws IOException {
+	private void processSource(Path file, SourceStats stats, Set<Path> alreadyUtf8) throws IOException {
 		byte[] data = Files.readAllBytes(file);
 		Kind kind = classify(data);
 		switch (kind) {
@@ -214,11 +266,139 @@ public class MigrateToUtf8Mojo extends AbstractMojo {
 		}
 	}
 
+	// --- Eclipse prefs ---
+
+	private void migrateEclipsePrefs(Path root) throws IOException {
+		List<Path> prefs = new ArrayList<>();
+		Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+				if (!dir.equals(root) && PRUNE_DIRS.contains(dir.getFileName().toString())) {
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+				if (file.getFileName().toString().equals(ECLIPSE_PREFS_NAME)) {
+					prefs.add(file);
+				}
+				return FileVisitResult.CONTINUE;
+			}
+		});
+
+		int flipped = 0;
+		int dropped = 0;
+		int filesChanged = 0;
+		for (Path file : prefs) {
+			int[] outcome = updatePrefsFile(file);
+			if (outcome[0] + outcome[1] > 0) {
+				filesChanged++;
+				flipped += outcome[0];
+				dropped += outcome[1];
+			}
+		}
+
+		getLog().info("Eclipse preferences:");
+		getLog().info("  Files scanned:        " + prefs.size());
+		getLog().info("  Files touched:        " + filesChanged + " ("
+			+ (dryRun ? "dry run" : "written") + ")");
+		getLog().info("  Entries flipped to UTF-8: " + flipped);
+		getLog().info("  Stale ISO-8859-1 overrides removed: " + dropped);
+	}
+
+	/** Returns int[2] = { flipped, dropped }. */
+	private int[] updatePrefsFile(Path file) throws IOException {
+		List<String> input = Files.readAllLines(file, StandardCharsets.UTF_8);
+		List<String> output = new ArrayList<>(input.size());
+		int flipped = 0;
+		int dropped = 0;
+		for (String line : input) {
+			java.util.regex.Matcher m = ECLIPSE_ENCODING_LINE.matcher(line);
+			if (m.matches()) {
+				String key = m.group(2);
+				String value = m.group(3).trim();
+				if (ECLIPSE_JAVA_KEYS.contains(key)) {
+					String flippedLine = "encoding/" + key + "=UTF-8";
+					if (!flippedLine.equals(line)) {
+						flipped++;
+					}
+					output.add(flippedLine);
+					continue;
+				}
+				if ("ISO-8859-1".equalsIgnoreCase(value)) {
+					dropped++;
+					continue;
+				}
+			}
+			output.add(line);
+		}
+
+		if (flipped == 0 && dropped == 0) {
+			return new int[] { 0, 0 };
+		}
+
+		if (!dryRun) {
+			byte[] originalBytes = Files.readAllBytes(file);
+			boolean trailingNewline = originalBytes.length > 0 && originalBytes[originalBytes.length - 1] == '\n';
+			StringBuilder buf = new StringBuilder();
+			for (int i = 0; i < output.size(); i++) {
+				buf.append(output.get(i));
+				if (i < output.size() - 1 || trailingNewline) {
+					buf.append('\n');
+				}
+			}
+			Files.write(file, buf.toString().getBytes(StandardCharsets.UTF_8));
+		}
+		return new int[] { flipped, dropped };
+	}
+
+	// --- POMs ---
+
+	private void migratePoms(Path root) throws IOException {
+		List<Path> poms = new ArrayList<>();
+		Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+				if (!dir.equals(root) && PRUNE_DIRS.contains(dir.getFileName().toString())) {
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+				if (file.getFileName().toString().equals("pom.xml")) {
+					poms.add(file);
+				}
+				return FileVisitResult.CONTINUE;
+			}
+		});
+
+		int changed = 0;
+		for (Path pom : poms) {
+			String text = new String(Files.readAllBytes(pom), StandardCharsets.UTF_8);
+			String updated = POM_SOURCE_ENCODING.matcher(text).replaceAll(POM_SOURCE_ENCODING_REPLACEMENT);
+			if (!updated.equals(text)) {
+				changed++;
+				if (!dryRun) {
+					Files.write(pom, updated.getBytes(StandardCharsets.UTF_8));
+				}
+			}
+		}
+
+		getLog().info("Maven POMs:");
+		getLog().info("  Files scanned:                            " + poms.size());
+		getLog().info("  project.build.sourceEncoding flipped:     " + changed
+			+ " (" + (dryRun ? "dry run" : "written") + ")");
+	}
+
 	enum Kind {
 		ASCII, ALREADY_UTF8, ISO_8859_1
 	}
 
-	private static final class Stats {
+	private static final class SourceStats {
 		int ascii;
 		int alreadyUtf8;
 		int converted;

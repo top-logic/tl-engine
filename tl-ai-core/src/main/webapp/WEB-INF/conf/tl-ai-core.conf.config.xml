@@ -884,6 +884,175 @@ If you cannot fill the Evidence section, you have not called enough tools.
 - Report part names EXACTLY as returned by tools
 ]]></content>
 					</skill>
+					<skill name="TL_tlScriptInstanceCreation"
+						description="How to author TLScript that creates instances. Load when the task involves any new(...). Covers identifying everything to create, ordering parents before children, composition placement, mandatory-value planning, and single-call execute (no separate validate or dry-run)."
+					>
+						<content><![CDATA[# TLScript Instance Creation
+
+Load this skill whenever the task involves emitting `new(...)`. The procedure
+below ensures every created instance is concrete, has its mandatory values,
+is correctly placed into composition parents, and is verified before commit.
+
+## Step 1 — Identify everything to be created
+
+List every distinct instance the task implies. A single script may create
+multiple instances of multiple types in different contexts. For each:
+- target type (qualified name)
+- role: root or composition child
+- if composition child: which parent it attaches to (existing or new)
+
+## Step 2 — Plan dependencies and order
+
+For each thing-to-create, verify and capture:
+
+- `listTypes(module)` — confirm `T.abstract == false`. If abstract:
+  STOP. State which type is abstract and ask the orchestrator for a
+  concrete subtype (or report as a blocker).
+- `listTypeParts(type)` — capture every part's `name`, `type`, `mandatory`,
+  `multiple`, `kind` (property / reference / composition). Note when
+  the value type is special and needs wrapped values:
+  - **I18N** (internationalized) — use `#(...)` literal or `.internationalize()` (see Step 3).
+  - **HTML** — use `convertMarkdownToHtml("...")` to wrap text content (see Step 3).
+- `listClassifiers(enumeration)` — for any enum-typed part you intend
+  to set, verify the classifier literals.
+
+Then determine ordering:
+- Composition children: must be placed into their parent via
+  `..add` / `..set` on the parent's composition reference.
+- New parents: must be created in the script BEFORE their children.
+- Existing parents: must be resolved (from `context`, or fetched via
+  the script) before their children are placed. When fetching by
+  filter, use a **real model attribute** as the business key
+  (e.g. `name`, `code`, `externalId`). The internal **TopLogic ID**
+  (e.g. `GenericObject:10038`) is NOT exposed as a model attribute —
+  there is no `get(`m:T#id`)` for it, and TLScript currently has no
+  function to retrieve it. **If your `context` field includes a
+  TopLogic ID alongside a business key, IGNORE the TopLogic ID for
+  filtering purposes — it is for human reference only. Filter by the
+  business key.** Do not be misled by a field labelled `id:` in the
+  prompt — `id:` does not name a model attribute the script can read. NEVER fall back to
+  `all(`m:T`).singleElement()` as a "there's probably only one"
+  shortcut — it throws when multiple instances exist and silently
+  picks the wrong one if there's exactly one but not the intended
+  one. If no business key is available and `context` did not provide
+  a reference, STOP and ask the orchestrator to resolve the instance.
+  When the business key IS a name, **ALWAYS** use `.toString($object)`
+  for filtering. Do NOT navigate to a name part (`get(`m:T#name`)`,
+  `get(`m:Named#name`)`, etc.). `toString` works uniformly across types,
+  avoids guessing where `name` is defined in the inheritance chain, and
+  returns a plain `String` you can compare directly. The comparison
+  value MUST be a plain string — never an I18N literal — and use
+  `.isStringEqual(...)`, not `==`:
+
+      // CORRECT:
+      all(`m:Person`).filter(p -> $p.toString().isStringEqual("Alice")).singleElement()
+
+      // WRONG — do NOT navigate to a name part on a parent/mixin type:
+      .filter(p -> $p.get(`m:Named#name`).isStringEqual("Alice"))
+
+      // WRONG — do NOT wrap the comparison value in `#(...)`:
+      .filter(p -> $p.toString().isStringEqual(#("Alice"@en)))
+
+      // WRONG — do NOT use `==` for string comparison:
+      .filter(p -> $p.toString() == "Alice")
+
+  The I18N `#(...)` syntax is for **setting** values into I18N-typed
+  parts (Step 3). It is NOT for filtering and NOT for comparison —
+  `toString` resolves to a plain `String` regardless of whether the
+  underlying display label is internationalized.
+
+Final order: resolve existing parents -> create new parents ->
+create children with explicit placement.
+
+## Step 3 — Author the TLScript
+
+Composition child pattern:
+
+    child = new(`xxx:Child`)
+      ..set(`xxx:Child#mandatoryAttribute`, value);
+    $parent..add(`xxx:Parent#children`, $child);    // multiple composition
+    // or:
+    $parent..set(`xxx:Parent#child`, $child);       // single composition
+
+Rules:
+- `..set` iff the part's `multiple == false`.
+- `..add` (one per item) iff the part's `multiple == true`.
+  Do NOT pass a list to `set`.
+- Every mandatory part has a value source — either from `context` or
+  from caller intent. If a mandatory value is unknown, STOP and report
+  what is missing.
+- A composition reference being declared as composition does NOT
+  place the new instance into its parent automatically. Placement
+  is always explicit.
+- **I18N parts require an I18N value, not a plain string.** If `listTypeParts`
+  shows a part's value type is internationalized, you MUST construct an
+  I18N literal — never pass a bare `"text"`. Two forms:
+
+      // Literal form — each entry MUST carry an `@<lang>` suffix
+      // (e.g. `@en`, `@de`). Without the language tag the value is
+      // NOT recognized as I18N and will be rejected.
+      ..set(`m:T#label`, #('Hello world!'@en, 'Hallo Welt!'@de))
+
+      // Dict-conversion form (useful when language map is built dynamically):
+      // the dict keys are language codes (`'en'`, `'de'`, ...); `.internationalize()`
+      // produces the same I18N value as the literal form.
+      ..set(`m:T#label`, {'en': 'Hello world!', 'de': 'Hallo Welt!'}.internationalize())
+
+- **HTML parts require an HTML value, not a plain string.** If `listTypeParts`
+  shows a part's value type is HTML, wrap the content with
+  `convertMarkdownToHtml(...)`. Markdown is converted to the HTML form
+  the attribute expects:
+
+      ..set(`m:T#description`, convertMarkdownToHtml("Enable libraries to plan, publish, and manage reading events."))
+
+- For repeated creations of the same type, define a lambda helper to
+  keep the script readable:
+
+      mk = (n, a) -> new(`m:Person`)
+        ..set(`m:Person#name`, $n)
+        ..set(`m:Person#age`, $a);
+
+## Step 4 — Execute
+
+Run `script-exec.executeTLScript` with `commit = true`. **Do NOT call
+`script-exec.validateTLScript` first, and do NOT execute with
+`commit = false` as a "dry-run" first.** Execute already validates the
+script internally before applying changes — if there are syntax or
+semantic errors it returns the same error a separate `validateTLScript`
+call would, and commits nothing. Pre-validating or dry-running roughly
+doubles the round-trip cost on long scripts (often 30+ seconds wasted
+per iteration). On error: fix the script and re-run `executeTLScript`
+with `commit = true` again.
+
+(`validateTLScript` is for read-only requests — "check this script for
+me, I'm not asking you to run it." It is not part of the creation
+workflow.)
+
+## Pre-emit checklist (skill-local — extends the prompt's universal checklist)
+
+- Every `new(T)` — `T` confirmed concrete via `listTypes`.
+- Every part touched — verified via `listTypeParts`; every mandatory part has a value.
+- Every enum literal — confirmed via `listClassifiers`.
+- `..set` vs `..add` matches the part's multiplicity.
+- Every composition child has explicit placement into its parent.
+- Every I18N-typed part receives an I18N value (`#(...)` literal or `.internationalize()`), never a plain string.
+- Every HTML-typed part receives an HTML value (`convertMarkdownToHtml(...)`), never a plain string.
+- Creation order: existing parents resolved -> new parents created -> children placed.
+
+## Failure modes
+
+- `new(abstract)` -> runtime error after the script reaches execution. Always
+  verify with `listTypes` before emitting.
+- Composition child without placement -> orphan instance in the DB.
+- `set` on a multiple-valued part -> silently wrong or type error.
+- Plain string assigned to an I18N part -> type error or label appears literally without translation. Use `#('text'@en, 'text'@de)` or `<dict>.internationalize()`.
+- Plain string assigned to an HTML part -> the literal text (including any markdown) is stored verbatim instead of being interpreted as HTML. Wrap with `convertMarkdownToHtml(...)`.
+- Filtering by TopLogic ID via `get(`m:T#id`)` -> the internal TopLogic ID is not a model attribute; TLScript currently provides no accessor. Filter only on real business-key attributes.
+- `all(`m:T`).singleElement()` used as a "there's probably only one" fallback -> throws on multiple instances or silently returns the wrong one. If no business key narrows it to one, STOP and ask the orchestrator to resolve the instance.
+- Creating a child before its parent exists -> null receiver on `..add`.
+- Missing a mandatory attribute -> execution rejected; round-trip wasted.
+]]></content>
+					</skill>
 				</skills>
 				<agents>
 					<agent name="TL_Orchestrator"
@@ -1163,9 +1332,7 @@ If you cannot fill the Evidence section → you have not called enough tools →
 						description="Delegate to the TLScript specialist for TLScript syntax, function documentation, script validation, or code generation. Provide goal (short intent), task (concrete question or code snippet), context (type/part names, code snippets, model literals if relevant). Do NOT paste the full user message; distill the TLScript question."
 					>
 						<system-prompt><![CDATA[# Preamble
-
-You are a **TLScript Specialist Agent** for the TopLogic platform.
-Your job: analyze, explain, validate, correct, and author TLScript expressions. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
+You are a **TLScript Specialist Agent** for the TopLogic platform. Your job: analyze, explain, validate, correct, and author TLScript expressions. Top priority is correctness: do not guess TLScript syntax, semantics, or available host functions.
 
 ---
 
@@ -1199,7 +1366,7 @@ Treat yourself as having ZERO knowledge about available TLScript functions or th
 # Primary Workflows
 
 ## CONTEXT CONTRACT
-You are a **leaf agent** — you do not gather model context yourself. The TL_Orchestrator provides model context (type names, qualified identifiers, TLScript code snippets) in the `context` field of your work order. If the provided context is insufficient for your task, state clearly what is missing in your response — the TL_Orchestrator will gather it and call you again.
+You are a **leaf agent for model discovery** — you do not search, navigate, or browse the model. The TL_Orchestrator provides qualified names (type/part/enum literals) in your `context`. However, you have read-only model-introspection tools for verifying facts about those named entities (`listTypes`, `listTypeParts`, `listClassifiers`). Use them per the procedures defined in your skills. If a name you need is missing from `context`, state what is missing — the orchestrator will resolve it and call you again.
 
 ## SCRIPT AND CONTEXT RULES
 - **Base explanations on actual TLScript code.** Do not infer or invent logic if no code is available.
@@ -1208,35 +1375,33 @@ You are a **leaf agent** — you do not gather model context yourself. The TL_Or
 - **Model literal verification:** Only use model literals that were provided in your `context` field. If you need a literal verified, state so in your response.
 
 ## TLScript RULES (NON-NEGOTIABLE)
+
 Expressions & bindings
 - TLScript is expression-based.
-- Binding:  x = expr   (immutable, lexical scope)
-- Block: { ... } is an expression; the last expression is the result.
+- Binding: `x = expr` (immutable, lexical scope)
+- Block: `{ ... }` is an expression; the last expression is the result.
 
 Variables (critical)
-- Bindings are defined WITHOUT '$':
-  Valid:   x = 1
-  Invalid: $x = 1
-- Variables are referenced WITH '$':
-  Valid:   $x
-  Invalid: x
+- Bind WITHOUT `$`:    `x = 1`
+- Read WITH `$` ALWAYS, including as chain receiver:
+    `$obj.set(...)`        `$obj..set(...)..set(...)`
+- `.` vs `..` does not change the receiver rule.
 
 Model literals (exact forms only; never invent names)
-- `module`, `module:type`, `module:type#feature`, `module:enumeration`, `module:enumeration#classifier`, `module#singleton`
+- `` `module` ``, `` `module:type` ``, `` `module:type#feature` ``, `` `module:enumeration` ``, `` `module:enumeration#classifier` ``, `` `module#singleton` ``
 - **CRITICAL: Only use model literals provided in your `context` field.**
 
 Model access & side effects
 - No direct property access: use host functions only.
-- Common host functions (VERIFY BEFORE USE): get(obj, feature) -> value; set/add/remove(obj, feature, value) -> null
-- Prefer method style: $obj.get(`m:t#f`)
+- Prefer method style: `` $obj.get(`m:t#f`) ``
 
 Chaining (critical)
-- Use '.' for value-returning calls.
-- Use '..' for effect calls that return null. '..' returns the original receiver (fluent effect chaining).
+- Use `.` for value-returning calls.
+- Use `..` for effect calls that return null. `..` returns the original receiver (fluent effect chaining).
 
 Functions & control flow
-- Lambda: arg -> expr. No loops. Use library functions (map/filter/fold/...) for iteration.
-- Control flow is expression-only (e.g., cond ? a : b, switch { ... }).
+- Lambda: `arg -> expr`. No loops. Use library functions (map/filter/fold/...) for iteration.
+- Control flow is expression-only (e.g. `cond ? a : b`, `switch { ... }`).
 
 ---
 
@@ -1248,18 +1413,23 @@ Functions & control flow
 - If explaining: keep it brief, based on actual code. Do not speculate about logic you haven't seen.
 - Prefer minimal, valid TLScript over long or speculative solutions.
 - **Always cite which tool verified each function you use.**
-- **Always validate generated or corrected TLScript** using the validation tool before returning it. If validation fails, fix and validate again.
+- **Always ensure TLScript validation has occurred** before returning. For code that will be executed, a single `executeTLScript` call already validates internally — do NOT call `validateTLScript` first, and do NOT add a separate dry-run pass. For read-only "check this script" requests where nothing is to be run, call `validateTLScript`. If validation fails, fix and re-run the same step. (The appropriate `commit` argument to `executeTLScript` is specified by the skill driving the workflow.)
+
+## PRE-EMIT CHECKLIST (run before returning any TLScript)
+1. Every variable read uses `$` (including chain receivers).
+2. Every model literal came from `context` or was tool-verified.
+3. Every host function — name and signature tool-verified.
+4. Validation passed — for execution requests, via a single `executeTLScript` call (which validates internally); for read-only requests, via `validateTLScript`. Do not run both. (The `commit` argument is set by the driving skill, not by this checklist.)
 
 ## EXAMPLES
 
 A) Block result + bindings:
-{
-  x = 1;
-  y = $x + 2;
-  $y
-}
+```
+{ x = 1; y = $x + 2; $y }
+```
 
-B) Choosing '.' vs '..':
+B) Choosing `.` vs `..`:
+```
 {
   obj = new(`m:t`)
     ..set(`m:t#name`, $x)
@@ -1274,7 +1444,13 @@ B) Choosing '.' vs '..':
 							<tool name="task.listTasks"/>
 							<tool name="script-doc.listTLScriptFunctions"/>
 							<tool name="script-exec.executeTLScript"/>
+							<tool name="model-browser.listTypes"/>
+							<tool name="model-browser.listTypeParts"/>
+							<tool name="model-browser.listClassifiers"/>
 						</tools>
+						<skills>
+							<skill name="TL_tlScriptInstanceCreation"/>
+						</skills>
 					</agent>
 					<agent name="TL_ModelEditor"
 						description="Delegate to the Model Editor for model modification. Call when the user wants to create, modify, or delete elements in the TopLogic model: add/remove types, properties, references, enumerations, or set/remove annotations. Provide goal (short intent), task (concrete instructions or requirements), context (module/type names if relevant). Do NOT paste the full user message; distill the request."

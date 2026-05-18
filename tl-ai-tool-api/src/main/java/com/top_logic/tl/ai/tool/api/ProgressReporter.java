@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.agent;
+package com.top_logic.tl.ai.tool.api;
 
 /**
  * Callback for reporting progress from long-running tool executions.
@@ -11,7 +11,7 @@ package com.top_logic.tl.ai.core.agent;
  * <p>Tools call {@link #progress(String)} to signal status (e.g., "processing 50 of 200
  * records") so the UI can display a live progress indicator.</p>
  *
- * @see ToolContext#progressReporter()
+ * @see ToolExecutionContext#progressReporter()
  */
 @FunctionalInterface
 public interface ProgressReporter {

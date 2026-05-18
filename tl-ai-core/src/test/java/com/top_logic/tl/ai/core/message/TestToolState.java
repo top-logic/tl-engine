@@ -60,6 +60,60 @@ public class TestToolState extends TestCase {
 		assertEquals(end, failed.endTime());
 	}
 
+	/** Completed with summary and truncation hint (6-arg constructor). */
+	public void testCompletedWithSummary() {
+		Instant start = Instant.parse("2026-04-04T10:00:00Z");
+		Instant end = Instant.parse("2026-04-04T10:00:01Z");
+		ToolState.Completed completed = new ToolState.Completed("full result", start, end, true, "short summary", 500);
+		assertEquals("short summary", completed.summary());
+		assertEquals(500, completed.truncationHint());
+		assertTrue(completed.compacted());
+	}
+
+	/** Null arguments rejected in Pending. */
+	@SuppressWarnings("unused")
+	public void testPendingNullArguments() {
+		try {
+			new ToolState.Pending(null);
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
+	/** Null startTime rejected in Running. */
+	@SuppressWarnings("unused")
+	public void testRunningNullStartTime() {
+		try {
+			new ToolState.Running("{}", null);
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
+	/** Null result rejected in Completed. */
+	@SuppressWarnings("unused")
+	public void testCompletedNullResult() {
+		try {
+			new ToolState.Completed(null, Instant.now(), Instant.now(), false);
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
+	/** Null error rejected in Failed. */
+	@SuppressWarnings("unused")
+	public void testFailedNullError() {
+		try {
+			new ToolState.Failed(null, Instant.now(), Instant.now());
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
 	/** Switch exhaustiveness — all 4 variants handled. */
 	public void testSwitchExhaustive() {
 		ToolState[] states = {

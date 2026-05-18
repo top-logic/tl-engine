@@ -31,8 +31,8 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -42,7 +42,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  *
  * <p>
  * This class provides functional-style access to chat completions from TL-Script. All functions
- * use the tl-ai-core provider abstraction via {@link LLMProviderRegistry}, {@link AgentFactory},
+ * use the tl-ai-core provider abstraction via {@link LLMService}, {@link AgentFactory},
  * and {@link AgentLoop}.
  * </p>
  *
@@ -58,7 +58,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
-	 * Returns a list of all available model names from the {@link LLMProviderRegistry}.
+	 * Returns a list of all available model names from the {@link LLMService}.
 	 *
 	 * <p>
 	 * Model names can be passed to the {@link #chat(List, String, Object, Collection)} function to
@@ -68,7 +68,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return An immutable list of all configured model names.
 	 */
 	public static List<String> models() {
-		return LLMProviderRegistry.getInstance().getModelNames();
+		return LLMService.getInstance().getConfiguredModelNames();
 	}
 
 	/**
@@ -179,7 +179,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        </ul>
 	 * @param model
 	 *        The model name to use, or {@code null} to use the default model configured in
-	 *        {@link LLMProviderRegistry}.
+	 *        {@link LLMService}.
 	 * @param responseFormat
 	 *        The response format specification. Can be:
 	 *        <ul>
@@ -196,8 +196,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String chat(List<Object> messages, String model, Object responseFormat,
 			Collection<String> tools) {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
-		String modelName = model != null ? model : registry.getConfig().getDefaultModel();
+		LLMService registry = LLMService.getInstance();
+		String modelName = model != null ? model : registry.getDefaultModel();
 
 		// Build system prompt and user messages from the input
 		String systemPrompt = null;
@@ -228,8 +228,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 
 		// Build tool registry if tools specified
-		ToolDispatcher toolRegistry =
-			new ToolDispatcher();
+		ToolCatalog toolRegistry =
+			new ToolCatalog();
 		if (tools != null && !tools.isEmpty()) {
 			ToolRegistryService serviceRegistry = ToolRegistryService.getInstance();
 			for (String toolName : tools) {

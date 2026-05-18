@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -21,10 +20,12 @@ import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.model.Agent;
+import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.provider.ToolChoice;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
@@ -37,7 +38,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * <p>
  * This is the primary entry point for constructing agents from model-based definitions
  * ({@code tl.ai.core:Agent} instances). It delegates provider creation to
- * {@link LLMProviderRegistry#buildProvider(String)} and tool resolution to the service-level
+ * {@link LLMService#buildProvider(String)} and tool resolution to the service-level
  * {@link ToolRegistryService}.
  * </p>
  *
@@ -76,18 +77,13 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Returns the name of the entry point agent (the agent with {@code entryPoint=true}).
+	 * Returns the name of the entry-point agent as configured in
+	 * {@link com.top_logic.tl.ai.core.provider.LLMService.AgentExecutionConfig#getChatEntryPoint()}.
 	 *
 	 * @return the agent name
-	 * @throws IllegalStateException if no entry point agent is defined
 	 */
 	public String getEntryPointAgentName() {
-		for (Agent agent : AgentDefinitionQuery.getInstance().getAllAgents()) {
-			if (agent.getEntryPoint()) {
-				return agent.getName();
-			}
-		}
-		throw new IllegalStateException("No entry point agent defined in the knowledge base.");
+		return LLMService.getInstance().getEntryPointAgentName();
 	}
 
 	/**
@@ -139,17 +135,22 @@ public class AgentFactory {
 	public String runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener) {
-		Agent agentObj = AgentDefinitionQuery.getInstance().findAgentByName(name);
-		if (agentObj == null) {
+		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		if (agentDef == null) {
 			throw new RuntimeException(
-				"No agent found with name '" + name + "' in the knowledge base.");
+				"No agent found with name '" + name + "'.");
 		}
 
-		AgentParams coreConfig = buildConfig(agentObj);
-		LLMProvider provider = buildProvider(coreConfig.model());
-		ToolDispatcher registry = buildToolDispatcher(agentObj);
+		AgentModelAssignment assignment =
+			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 
-		int maxToolResultChars = resolveMaxToolResultChars(agentObj);
+		AgentParams coreConfig = buildConfig(agentDef, assignment);
+		LLMProvider provider = buildProvider(coreConfig.model());
+		ToolCatalog registry = buildToolCatalog(agentDef);
+
+		validateToolCapability(name, coreConfig.model(), registry);
+
+		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 
 		AgentLoop loop;
 		if (conversationMemory != null) {
@@ -219,87 +220,200 @@ public class AgentFactory {
 	 *         if no agent with the given name exists
 	 */
 	public AgentLoop buildAgentLoop(String name) {
-		Agent agent = AgentDefinitionQuery.getInstance().findAgentByName(name);
-		if (agent == null) {
+		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
 
-		AgentParams config = buildConfig(agent);
-		LLMProvider provider = buildProvider(config.model());
-		ToolDispatcher registry = buildToolDispatcher(agent);
+		AgentModelAssignment assignment =
+			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 
-		int maxToolResultChars = resolveMaxToolResultChars(agent);
+		AgentParams config = buildConfig(agentDef, assignment);
+		LLMProvider provider = buildProvider(config.model());
+		ToolCatalog registry = buildToolCatalog(agentDef);
+
+		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 
 		return new AgentLoop(config, provider, registry, maxToolResultChars);
 	}
 
 	/**
-	 * Builds the {@link AgentParams} record from a KB agent object.
+	 * Builds the {@link AgentParams} record from an {@link AgentDefinition} and its
+	 * {@link AgentModelAssignment}.
 	 */
-	AgentParams buildConfig(Agent agent) {
-		String model = agent.getModel();
-		if (model == null || model.isBlank()) {
-			LLMProviderRegistry providerRegistry = LLMProviderRegistry.getInstance();
-			model = providerRegistry != null ? providerRegistry.getConfig().getDefaultModel() : null;
-		}
-		if (model == null) {
-			throw new IllegalStateException(
-				"Agent '" + agent.getName() + "' has no model and no default model is configured.");
+	AgentParams buildConfig(AgentDefinition agent, AgentModelAssignment assignment) {
+		LLMService llmRegistry = LLMService.getInstance();
+		String model = assignment.model();
+
+		ModelInfo modelInfo = llmRegistry.getModel(model);
+		if (modelInfo == null) {
+			Logger.warn("No catalog metadata for model '" + model + "'. "
+				+ "Using defaults — define the model in model-overrides for accurate limits.",
+				AgentFactory.class);
+			modelInfo = defaultModelInfo(model);
 		}
 
-		String systemPrompt = agent.getSystemPrompt();
+		String providerId = llmRegistry.getProviderId(model);
+
+		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
 
-		Integer maxTokens = agent.getMaxTokens();
-		int maxOutputTokens = maxTokens != null ? maxTokens : AgentParams.DEFAULT_MAX_OUTPUT_TOKENS;
+		// maxOutputTokens: assignment override > catalog
+		Integer assignedMaxTokens = assignment.maxTokens();
+		int maxOutputTokens = assignedMaxTokens != null ? assignedMaxTokens : modelInfo.limits().maxOutput();
 
-		Map<String, Object> modelOptions = buildModelOptions(agent);
+		// contextWindowTokens: assignment override > catalog
+		Integer assignedContextWindow = assignment.contextWindow();
+		int contextWindowTokens = assignedContextWindow != null
+			? assignedContextWindow : modelInfo.limits().contextWindow();
 
-		return new AgentParams(model, systemPrompt, AgentParams.DEFAULT_MAX_TURNS, maxOutputTokens, modelOptions);
+		// maxTurns: assignment override > default
+		Integer assignedMaxTurns = assignment.maxTurns();
+		int maxTurns = assignedMaxTurns != null ? assignedMaxTurns : AgentParams.DEFAULT_MAX_TURNS;
+
+		// maxRetries: assignment override > default
+		Integer assignedMaxRetries = assignment.maxRetries();
+		int maxRetries = assignedMaxRetries != null ? assignedMaxRetries : AgentParams.DEFAULT_MAX_RETRIES;
+
+		// timeoutSeconds: assignment override > default
+		Integer assignedTimeoutSeconds = assignment.timeoutSeconds();
+		int timeoutSeconds = assignedTimeoutSeconds != null
+			? assignedTimeoutSeconds : AgentParams.DEFAULT_TIMEOUT_SECONDS;
+
+		// toolChoice: assignment override > null (provider default)
+		ToolChoice toolChoice = resolveToolChoice(assignment.toolChoice());
+
+		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo, providerId);
+
+		return new AgentParams(model, systemPrompt, maxTurns,
+			maxOutputTokens, modelOptions, contextWindowTokens,
+			maxRetries, timeoutSeconds, toolChoice, msg -> true);
 	}
 
-	private static int resolveMaxToolResultChars(Agent agent) {
-		Integer value = agent.getMaxToolResultChars();
+	private static int resolveMaxToolResultChars(AgentModelAssignment assignment) {
+		Integer value = assignment.maxToolResultChars();
 		return value != null && value > 0 ? value : AgentLoop.DEFAULT_MAX_RESULT_CHARS;
 	}
 
 	/**
-	 * Builds provider-specific model options from agent attributes.
+	 * Validates that the model supports tool calls if the agent has tools assigned.
 	 */
-	private Map<String, Object> buildModelOptions(Agent agent) {
+	private void validateToolCapability(String agentName, String model, ToolCatalog registry) {
+		if (registry.tools().isEmpty()) {
+			return;
+		}
+		LLMService llmRegistry = LLMService.getInstance();
+		if (llmRegistry == null) {
+			return;
+		}
+		ModelInfo info = llmRegistry.getModel(model);
+		if (info != null && !info.capabilities().toolCall()) {
+			throw new IllegalStateException(
+				"Agent '" + agentName + "' has tools assigned but model '" + model
+					+ "' does not support tool calls.");
+		}
+	}
+
+	/**
+	 * Builds provider-specific model options from the model assignment, gated on model capabilities.
+	 */
+	private Map<String, Object> buildModelOptions(AgentModelAssignment assignment,
+			ModelInfo modelInfo, String providerId) {
 		Map<String, Object> options = new HashMap<>();
 
-		Double temperature = agent.getTemperature();
-		if (temperature != null) {
-			options.put("temperature", temperature);
+		if (modelInfo.capabilities().temperature()) {
+			Double temperature = assignment.temperature();
+			if (temperature != null) {
+				options.put("temperature", temperature);
+			}
+
+			Double topP = assignment.topP();
+			if (topP != null) {
+				options.put("topP", topP);
+			}
 		}
 
-		Double topP = agent.getTopP();
-		if (topP != null) {
-			options.put("topP", topP);
+		// Anthropic-specific options
+		if ("anthropic".equals(providerId)) {
+			if (modelInfo.capabilities().reasoning()) {
+				String thinkingEffort = assignment.thinkingEffort();
+				if (thinkingEffort != null) {
+					options.put("thinking_effort", thinkingEffort.toLowerCase());
+				}
+			}
+			Integer topK = assignment.topK();
+			if (topK != null) {
+				options.put("top_k", topK);
+			}
+		}
+
+		// OpenAI/xAI-specific options
+		if ("openai".equals(providerId) || "xai".equals(providerId)) {
+			if (modelInfo.capabilities().reasoning()) {
+				String reasoningEffort = assignment.reasoningEffort();
+				if (reasoningEffort != null) {
+					options.put("reasoning_effort", reasoningEffort.toLowerCase());
+				}
+				String reasoningSummary = assignment.reasoningSummary();
+				if (reasoningSummary != null) {
+					options.put("reasoning_summary", reasoningSummary.toLowerCase());
+				}
+			}
 		}
 
 		return options.isEmpty() ? Map.of() : Map.copyOf(options);
 	}
 
 	/**
+	 * Creates a fallback {@link ModelInfo} for models without a catalog entry.
+	 *
+	 * <p>
+	 * Assumes conservative defaults: 128k context, 16k output, tool calls and temperature
+	 * enabled, reasoning disabled.
+	 * </p>
+	 */
+	private static ModelInfo defaultModelInfo(String model) {
+		return new ModelInfo(
+			model,
+			null,
+			new ModelInfo.ModelLimits(128_000, 16_384, 0),
+			new ModelInfo.ModelCapabilities(false, true, true, false, false, null, null),
+			null, null, false, null);
+	}
+
+	/**
+	 * Maps the tool choice string to the Java {@link ToolChoice} enum.
+	 */
+	private static ToolChoice resolveToolChoice(String choice) {
+		if (choice == null) {
+			return null;
+		}
+		return switch (choice) {
+			case "AUTO" -> ToolChoice.AUTO;
+			case "REQUIRED" -> ToolChoice.REQUIRED;
+			case "NONE" -> ToolChoice.NONE;
+			default -> null;
+		};
+	}
+
+	/**
 	 * Creates an {@link LLMProvider} for the given model name.
 	 *
 	 * <p>
-	 * Delegates to {@link LLMProviderRegistry#buildProvider(String)}.
+	 * Delegates to {@link LLMService#buildProvider(String)}.
 	 * </p>
 	 */
 	LLMProvider buildProvider(String modelName) {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
-			throw new IllegalStateException("LLMProviderRegistry is not available.");
+			throw new IllegalStateException("LLMService is not available.");
 		}
 		return registry.buildProvider(modelName);
 	}
 
 	/**
-	 * Builds a {@link ToolDispatcher} containing the tools assigned
+	 * Builds a {@link ToolCatalog} containing the tools assigned
 	 * to the agent.
 	 *
 	 * <p>
@@ -307,12 +421,12 @@ public class AgentFactory {
 	 * {@link ToolRegistryService} and registers them in a core registry.
 	 * </p>
 	 */
-	ToolDispatcher buildToolDispatcher(Agent agent) {
-		ToolDispatcher registry =
-			new ToolDispatcher();
+	ToolCatalog buildToolCatalog(AgentDefinition agent) {
+		ToolCatalog registry =
+			new ToolCatalog();
 
-		Set<String> toolNames = agent.getTools();
-		if (toolNames != null && !toolNames.isEmpty()) {
+		List<String> toolNames = agent.tools();
+		if (!toolNames.isEmpty()) {
 			ToolRegistryService serviceRegistry = ToolRegistryService.getInstance();
 
 			for (String toolName : toolNames) {
@@ -321,13 +435,19 @@ public class AgentFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
-				registry.register(tool);
+				try {
+					registry.register(tool);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(
+						"Agent '" + agent.name() + "': " + e.getMessage()
+						+ " (qualified source: '" + toolName + "')", e);
+				}
 			}
 		}
 
 		// Resolve MCP tools from McpServerRegistry
-		Set<String> mcpServerNames = agent.getMcpServers();
-		if (mcpServerNames != null && !mcpServerNames.isEmpty()
+		List<String> mcpServerNames = agent.mcpServers();
+		if (!mcpServerNames.isEmpty()
 				&& McpServerRegistry.Module.INSTANCE.isActive()) {
 			McpServerRegistry mcpRegistry = McpServerRegistry.getInstance();
 			for (String serverName : mcpServerNames) {
@@ -351,16 +471,14 @@ public class AgentFactory {
 			}
 		}
 
-		// Inject delegation tools from the agent's delegations reference
-		Set<? extends Agent> delegations = agent.getDelegations();
-		if (delegations != null && !delegations.isEmpty()) {
-			String parentName = agent.getName();
-			for (Agent target : delegations) {
-				String targetName = target.getName();
-				String targetDesc = target.getDescription();
-				if (targetName == null || targetName.isBlank()) {
-					continue;
-				}
+		// Inject delegation tools from the agent's delegations list
+		List<String> delegationNames = agent.delegations();
+		if (!delegationNames.isEmpty()) {
+			String parentName = agent.name();
+			AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+			for (String targetName : delegationNames) {
+				AgentDefinition target = query.findAgentByName(targetName);
+				String targetDesc = target != null ? target.description() : "No description";
 				String toolName = "delegate_to_" + targetName.replace('-', '_');
 				registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this::buildAgentLoop));
 			}
@@ -370,22 +488,23 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Builds a {@link SkillTool} for the agent's KB skills, or {@code null} if the agent has no
+	 * Builds a {@link SkillTool} for the agent's skills, or {@code null} if the agent has no
 	 * skills.
 	 */
-	private SkillTool buildSkillTool(Agent agent) {
-		Set<? extends com.top_logic.tl.ai.core.model.Skill> skills = agent.getSkills();
-		if (skills == null || skills.isEmpty()) {
+	private SkillTool buildSkillTool(AgentDefinition agent) {
+		List<String> skillNames = agent.skills();
+		if (skillNames.isEmpty()) {
 			return null;
 		}
 
 		Map<String, Skill> skillMap = new LinkedHashMap<>();
-		for (com.top_logic.tl.ai.core.model.Skill skill : skills) {
-			String name = skill.getName();
-			String description = skill.getDescription();
-			String content = skill.getContent();
-			if (name != null && content != null) {
-				skillMap.put(name, new Skill(name, description, content));
+		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+		for (String skillName : skillNames) {
+			SkillDefinition sd = query.findSkillByName(skillName);
+			if (sd != null && sd.content() != null) {
+				skillMap.put(sd.name(), new Skill(sd.name(), sd.description(), sd.content()));
+			} else {
+				Logger.warn("Skill not found: " + skillName, AgentFactory.class);
 			}
 		}
 		return skillMap.isEmpty() ? null : new SkillTool(skillMap);
@@ -396,11 +515,11 @@ public class AgentFactory {
 	 * descriptions into the system prompt. Full skill content is loaded on demand via
 	 * {@link SkillTool}.
 	 */
-	private String injectSkills(Agent agent, String systemPrompt) {
-		Set<? extends com.top_logic.tl.ai.core.model.Skill> skills = agent.getSkills();
+	private String injectSkills(AgentDefinition agent, String systemPrompt) {
+		List<String> skillNames = agent.skills();
 		String base = systemPrompt != null ? systemPrompt : "";
 
-		if (skills == null || skills.isEmpty()) {
+		if (skillNames.isEmpty()) {
 			// Remove placeholder if present, even when there are no skills.
 			return base.replace(SKILLS_PLACEHOLDER, "");
 		}
@@ -410,12 +529,12 @@ public class AgentFactory {
 		catalog.append("You have specialized skills. ");
 		catalog.append("Load a skill BEFORE performing the related action by calling `loadSkill(\"skill-id\")`.\n\n");
 
-		for (com.top_logic.tl.ai.core.model.Skill skill : skills) {
-			String skillName = skill.getName();
-			String skillDescription = skill.getDescription();
-			if (skillName != null) {
-				catalog.append("- `").append(skillName).append("`: ");
-				catalog.append(skillDescription != null ? skillDescription : "No description");
+		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+		for (String skillName : skillNames) {
+			SkillDefinition sd = query.findSkillByName(skillName);
+			if (sd != null) {
+				catalog.append("- `").append(sd.name()).append("`: ");
+				catalog.append(sd.description() != null ? sd.description() : "No description");
 				catalog.append("\n");
 			}
 		}
@@ -426,31 +545,27 @@ public class AgentFactory {
 	/**
 	 * Injects descriptions of available delegate agents into the system prompt.
 	 */
-	private String injectDelegateDescriptions(Agent agent, String systemPrompt) {
-		Set<? extends Agent> delegations = agent.getDelegations();
-		if (delegations == null || delegations.isEmpty()) {
-			return systemPrompt != null ? systemPrompt : "";
+	private String injectDelegateDescriptions(AgentDefinition agent, String systemPrompt) {
+		List<String> delegationNames = agent.delegations();
+		String base = systemPrompt != null ? systemPrompt : "";
+
+		if (delegationNames.isEmpty()) {
+			return base.replace(DELEGATES_PLACEHOLDER, "");
 		}
 
 		StringBuilder section = new StringBuilder();
 		section.append("\n\n### Available Delegates\n\n");
 		section.append("You can delegate tasks to these specialized agents:\n\n");
 
-		for (Agent target : delegations) {
-			String targetName = target.getName();
-			String targetDesc = target.getDescription();
-			if (targetName == null) continue;
-
+		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+		for (String targetName : delegationNames) {
+			AgentDefinition target = query.findAgentByName(targetName);
+			String targetDesc = target != null ? target.description() : "No description";
 			String toolName = "delegate_to_" + targetName.replace('-', '_');
 			section.append("- **").append(targetName).append("** (`").append(toolName).append("`): ");
 			section.append(targetDesc != null ? targetDesc : "No description").append("\n");
 		}
 
-		String base = systemPrompt != null ? systemPrompt : "";
-
-		if (base.contains(DELEGATES_PLACEHOLDER)) {
-			return base.replace(DELEGATES_PLACEHOLDER, section.toString());
-		}
-		return base + section;
+		return replacePlaceholderOrAppend(base, DELEGATES_PLACEHOLDER, section.toString());
 	}
 }

@@ -22,11 +22,6 @@
 							type="tl.core:String"
 						/>
 						<field
-							attribute="entryPoint"
-							fullQualifiedName="tl.ai.core:Agent#entryPoint"
-							type="tl.core:Boolean"
-						/>
-						<field
 							attribute="description"
 							fullQualifiedName="tl.ai.core:Agent#description"
 							type="tl.core:String"
@@ -36,11 +31,6 @@
 								<render-whole-line/>
 							</annotations>
 						</field>
-						<field
-							attribute="model"
-							fullQualifiedName="tl.ai.core:Agent#model"
-							type="tl.core:String"
-						/>
 						<field
 							attribute="systemPrompt"
 							fullQualifiedName="tl.ai.core:Agent#systemPrompt"
@@ -64,49 +54,13 @@
 						<field
 							attribute="skills"
 							fullQualifiedName="tl.ai.core:Agent#skills"
-							type="tl.ai.core:Skill"
+							type="tl.core:String"
 						/>
 						<field
 							attribute="delegations"
 							fullQualifiedName="tl.ai.core:Agent#delegations"
-							type="tl.ai.core:Agent"
+							type="tl.core:String"
 						/>
-						<group>
-							<field
-								attribute="maxRetries"
-								fullQualifiedName="tl.ai.core:Agent#maxRetries"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="maxTokens"
-								fullQualifiedName="tl.ai.core:Agent#maxTokens"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="timeoutSeconds"
-								fullQualifiedName="tl.ai.core:Agent#timeoutSeconds"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="maxToolResultChars"
-								fullQualifiedName="tl.ai.core:Agent#maxToolResultChars"
-								type="tl.core:Integer"
-							/>
-							<field
-								attribute="temperature"
-								fullQualifiedName="tl.ai.core:Agent#temperature"
-								type="tl.core:Double"
-							/>
-							<field
-								attribute="topP"
-								fullQualifiedName="tl.ai.core:Agent#topP"
-								type="tl.core:Double"
-							/>
-							<label key="dynamic.b808b966-6c56-4c10-b97c-8bd4d1799f33">
-								<en>Advanced Settings</en>
-								<de>Erweiterte Einstellungen</de>
-							</label>
-						</group>
 					</form>
 				</form-definition>
 			</annotations>
@@ -114,22 +68,20 @@
 				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
-				/>
+				>
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+							<constraint class="com.top_logic.tl.ai.core.agent.UniqueNameConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
 				<property name="description"
 					type="tl.core:String"
 				>
 					<annotations>
 						<multi-line/>
 						<size-constraint/>
-					</annotations>
-				</property>
-				<property name="model"
-					type="tl.core:String"
-				>
-					<annotations>
-						<options>
-							<generator class="com.top_logic.tl.ai.core.agent.AllModelNamesGenerator"/>
-						</options>
 					</annotations>
 				</property>
 				<property name="systemPrompt"
@@ -140,34 +92,13 @@
 						<size-constraint/>
 					</annotations>
 				</property>
-				<property name="maxTokens"
-					type="tl.core:Integer"
-				/>
-				<property name="temperature"
-					type="tl.core:Double"
-				/>
-				<property name="topP"
-					type="tl.core:Double"
-				/>
-				<property name="timeoutSeconds"
-					type="tl.core:Integer"
-				/>
-				<property name="maxRetries"
-					type="tl.core:Integer"
-				/>
-				<property name="maxToolResultChars"
-					type="tl.core:Integer"
-				/>
-				<property name="entryPoint"
-					type="tl.core:Boolean"
-				/>
 				<property name="tools"
 					multiple="true"
 					type="tl.core:String"
 				>
 					<annotations>
 						<options>
-							<generator class="com.top_logic.tl.ai.core.agent.AllToolNamesGenerator"/>
+							<all-tool-names/>
 						</options>
 					</annotations>
 				</property>
@@ -177,22 +108,30 @@
 				>
 					<annotations>
 						<options>
-							<generator class="com.top_logic.tl.ai.core.agent.AllMcpServerNamesGenerator"/>
+							<all-mcp-server-names/>
 						</options>
 					</annotations>
 				</property>
-				<reference name="skills"
-					inverse-reference="agents"
-					kind="forwards"
+				<property name="skills"
 					multiple="true"
-					type="Skill"
-				/>
-				<reference name="delegations"
-					kind="forwards"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-skill-names/>
+						</options>
+					</annotations>
+				</property>
+				<property name="delegations"
 					multiple="true"
-					navigate="true"
-					type="Agent"
-				/>
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-agent-names/>
+						</options>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Skill">
@@ -235,7 +174,14 @@
 				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
-				/>
+				>
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+							<constraint class="com.top_logic.tl.ai.core.agent.UniqueNameConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
 				<property name="description"
 					type="tl.core:String"
 				>
@@ -252,12 +198,6 @@
 						<size-constraint/>
 					</annotations>
 				</property>
-				<reference name="agents"
-					inverse-reference="skills"
-					kind="backwards"
-					multiple="true"
-					type="Agent"
-				/>
 			</attributes>
 		</class>
 	</module>

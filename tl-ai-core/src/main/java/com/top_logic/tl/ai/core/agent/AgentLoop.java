@@ -46,10 +46,11 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -84,7 +85,7 @@ public class AgentLoop {
 
 	private final LLMProvider _provider;
 
-	private final ToolDispatcher _registry;
+	private final ToolCatalog _registry;
 
 	private final int _maxResultChars;
 
@@ -102,7 +103,7 @@ public class AgentLoop {
 	 * @param provider LLM provider for streaming responses
 	 * @param registry tool registry for tool lookup and execution
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry) {
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry) {
 		this(config, provider, registry, DEFAULT_MAX_RESULT_CHARS);
 	}
 
@@ -114,7 +115,7 @@ public class AgentLoop {
 	 * @param registry       tool registry for tool lookup and execution
 	 * @param maxResultChars maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -134,7 +135,7 @@ public class AgentLoop {
 	 * @param registry tool registry for tool lookup and execution
 	 * @param memory   conversation memory with token tracking and compaction
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
 			ConversationMemory memory) {
 		this(config, provider, registry, memory, DEFAULT_MAX_RESULT_CHARS);
 	}
@@ -149,7 +150,7 @@ public class AgentLoop {
 	 * @param memory           conversation memory with token tracking and compaction
 	 * @param maxResultChars   maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolDispatcher registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
 			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -208,7 +209,7 @@ public class AgentLoop {
 				assistantMsg = callProvider(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = StopReason.ERROR;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn - 1, totalUsage);
@@ -218,7 +219,7 @@ public class AgentLoop {
 			totalUsage = totalUsage.add(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.REJECTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
@@ -230,20 +231,20 @@ public class AgentLoop {
 				.toList();
 
 			if (toolCalls.isEmpty()) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.COMPLETE;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
-			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
@@ -321,7 +322,7 @@ public class AgentLoop {
 					conversation, context, memory, listener, runId, turn);
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 				StopReason stopReason = e.kind() == ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
 					? StopReason.CONTEXT_OVERFLOW
 					: StopReason.ERROR;
@@ -334,7 +335,7 @@ public class AgentLoop {
 			memory.updateTokenBaseline(assistantMsg.usage());
 
 			if (!_config.responseValidator().test(assistantMsg)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.REJECTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
@@ -346,14 +347,14 @@ public class AgentLoop {
 				.toList();
 
 			if (toolCalls.isEmpty()) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.COMPLETE;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
 			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
-				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
 				return new AgentResult(stopReason, turn, totalUsage);
@@ -366,7 +367,7 @@ public class AgentLoop {
 				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), compactionResult));
 			}
 
-			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage()));
+			emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 		}
 
 		StopReason stopReason = StopReason.MAX_TURNS;
@@ -609,13 +610,13 @@ public class AgentLoop {
 
 		SecurityContext security = context.security();
 
-		// Step 1: Unconditional user permission check (runs for ALL tools)
+		// Step 1: Permission + mode gate
 		Tool tool = _registry.getTool(toolCall.name());
 
 		if (tool != null) {
-			if (!security.hasToolPermission(tool)) {
-				String reason = "Permission denied: you do not have access to tool '"
-					+ toolCall.name() + "'.";
+			ToolPermissionFilter filter = new ToolPermissionFilter(security);
+			if (!filter.test(tool)) {
+				String reason = filter.denialReason(tool);
 				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
 				_turnDeniedCallIds.add(toolCall.id());
 				return errorResult(toolCall, reason);
@@ -630,19 +631,8 @@ public class AgentLoop {
 			}
 		}
 
-		// Step 2+3: Mode gate + approval (only for registered tools with metadata)
+		// Step 2: Approval (only for registered tools with metadata)
 		if (tool != null) {
-			// System mode gate
-			if (tool.mode() == ToolMode.STRUCTURAL
-					&& security.executionMode() == ExecutionMode.PRODUCTION) {
-				String reason = "Tool '" + toolCall.name() + "' cannot execute: it modifies shared "
-					+ "application state, which requires maintenance or development mode. "
-					+ "The system is currently in production mode.";
-				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
-				_turnDeniedCallIds.add(toolCall.id());
-				return errorResult(toolCall, reason);
-			}
-
 			// Approval check
 			// Check session memory first — skip approval if already approved for session
 			if (_sessionApprovedTools.contains(tool.name())) {
@@ -662,7 +652,7 @@ public class AgentLoop {
 				} else if (decision instanceof PermissionDecision.NeedsApproval needsApproval) {
 					Map<String, Object> parsedArgs;
 					try {
-						parsedArgs = ToolDispatcher.parseJson(toolCall.arguments());
+						parsedArgs = ToolCatalog.parseJson(toolCall.arguments());
 					} catch (IOException e) {
 						parsedArgs = Map.of();
 					}
@@ -832,17 +822,7 @@ public class AgentLoop {
 	 */
 	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
-		List<ToolSchema> filteredTools = _registry.toolSchemas(tool -> {
-			SecurityContext security = context.security();
-			if (!security.hasToolPermission(tool)) {
-				return false;
-			}
-			if (tool.mode() == ToolMode.STRUCTURAL
-					&& security.executionMode() == ExecutionMode.PRODUCTION) {
-				return false;
-			}
-			return true;
-		});
+		List<ToolSchema> filteredTools = _registry.toolSchemas(new ToolPermissionFilter(context.security()));
 
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),
@@ -850,7 +830,9 @@ public class AgentLoop {
 			conversation.messages(),
 			filteredTools,
 			_config.maxOutputTokens(),
-			_config.modelOptions());
+			_config.modelOptions(),
+			null,
+			_config.toolChoice());
 
 		ResponseCollector collector = new ResponseCollector(listener, runId, turn);
 		_provider.stream(request, collector);
@@ -877,6 +859,12 @@ public class AgentLoop {
 
 		private List<ContentPart> _content;
 
+		/**
+		 * Stream-level error received via
+		 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.Error}, if any.
+		 */
+		private ProviderException _streamError;
+
 		ResponseCollector(AgentEventListener listener, String runId, int turnNumber) {
 			_listener = listener;
 			_runId = runId;
@@ -894,18 +882,28 @@ public class AgentLoop {
 				_finishReason = complete.finishReason();
 				_usage = complete.usage();
 				_content = complete.content();
+			} else if (event instanceof StreamEvent.Error error) {
+				// Store for re-throw in toAssistantMessage(); onEvent cannot throw checked exceptions.
+				_streamError = new ProviderException(error.kind(), 0, error.message());
 			}
-			// ToolCallStart and ToolCallDelta: accumulated in MessageComplete
+			// ToolCallStart, ToolCallDelta, and lifecycle *Start/*End events:
+			// accumulated in MessageComplete or not needed here.
 		}
 
 		/**
 		 * Build the {@link AssistantMessage} from the accumulated stream events.
 		 *
+		 * @throws ProviderException
+		 *         if the stream delivered a
+		 *         {@link com.top_logic.tl.ai.core.provider.StreamEvent.Error} event
 		 * @throws IllegalStateException
 		 *         if no {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete} was
 		 *         received
 		 */
-		AssistantMessage toAssistantMessage() {
+		AssistantMessage toAssistantMessage() throws ProviderException {
+			if (_streamError != null) {
+				throw _streamError;
+			}
 			if (_content == null) {
 				throw new IllegalStateException("No MessageComplete event received.");
 			}

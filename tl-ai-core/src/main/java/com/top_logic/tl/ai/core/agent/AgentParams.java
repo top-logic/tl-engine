@@ -10,18 +10,23 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.provider.ToolChoice;
 
 /**
  * Immutable parameters for an {@link AgentLoop} run.
  *
- * @param model             the model identifier (e.g. "claude-sonnet-4-20250514")
- * @param systemPrompt      system prompt, or {@code null} for none
- * @param maxTurns          maximum LLM call iterations before stopping (safety cap)
- * @param maxOutputTokens   maximum tokens per LLM response
- * @param modelOptions      provider-specific options (temperature, {@code topP},
- *                          {@code thinkingBudgetTokens}, etc.)
- * @param responseValidator predicate tested after each LLM response; returning {@code false}
- *                          stops the loop with {@link StopReason#REJECTED}
+ * @param model               the model identifier (e.g. "claude-sonnet-4-20250514")
+ * @param systemPrompt        system prompt, or {@code null} for none
+ * @param maxTurns            maximum LLM call iterations before stopping (safety cap)
+ * @param maxOutputTokens     maximum tokens per LLM response
+ * @param modelOptions        provider-specific options (temperature, {@code topP},
+ *                            {@code thinking_effort}, etc.)
+ * @param contextWindowTokens total context window size in tokens (used for memory/compaction)
+ * @param maxRetries          maximum retry attempts on transient errors
+ * @param timeoutSeconds      request timeout in seconds
+ * @param toolChoice          tool selection behaviour, or {@code null} for provider default
+ * @param responseValidator   predicate tested after each LLM response; returning {@code false}
+ *                            stops the loop with {@link StopReason#REJECTED}
  *
  * @see AgentLoop
  */
@@ -31,6 +36,10 @@ public record AgentParams(
 		int maxTurns,
 		int maxOutputTokens,
 		Map<String, Object> modelOptions,
+		int contextWindowTokens,
+		int maxRetries,
+		int timeoutSeconds,
+		ToolChoice toolChoice,
 		Predicate<AssistantMessage> responseValidator) {
 
 	/** Default maximum turns. */
@@ -38,6 +47,15 @@ public record AgentParams(
 
 	/** Default maximum output tokens per LLM call. */
 	public static final int DEFAULT_MAX_OUTPUT_TOKENS = 8192;
+
+	/** Default context window size (used when catalog is not available). */
+	public static final int DEFAULT_CONTEXT_WINDOW_TOKENS = 200_000;
+
+	/** Default maximum retries on transient errors. */
+	public static final int DEFAULT_MAX_RETRIES = 3;
+
+	/** Default request timeout in seconds. */
+	public static final int DEFAULT_TIMEOUT_SECONDS = 120;
 
 	/** */
 	public AgentParams {
@@ -51,13 +69,18 @@ public record AgentParams(
 		if (maxOutputTokens <= 0) {
 			throw new IllegalArgumentException("maxOutputTokens must be positive.");
 		}
+		if (contextWindowTokens <= 0) {
+			throw new IllegalArgumentException("contextWindowTokens must be positive.");
+		}
 	}
 
 	/**
 	 * Convenience constructor without model options or response validator.
 	 */
 	public AgentParams(String model, String systemPrompt, int maxTurns, int maxOutputTokens) {
-		this(model, systemPrompt, maxTurns, maxOutputTokens, Map.of(), msg -> true);
+		this(model, systemPrompt, maxTurns, maxOutputTokens, Map.of(),
+			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
+			null, msg -> true);
 	}
 
 	/**
@@ -65,6 +88,30 @@ public record AgentParams(
 	 */
 	public AgentParams(String model, String systemPrompt, int maxTurns,
 			int maxOutputTokens, Map<String, Object> modelOptions) {
-		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions, msg -> true);
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
+			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
+			null, msg -> true);
+	}
+
+	/**
+	 * Convenience constructor with model options and response validator but defaults for the rest.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions,
+			Predicate<AssistantMessage> responseValidator) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
+			DEFAULT_CONTEXT_WINDOW_TOKENS, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
+			null, responseValidator);
+	}
+
+	/**
+	 * Convenience constructor with context window but defaults for retries/timeout/{@code toolChoice}.
+	 */
+	public AgentParams(String model, String systemPrompt, int maxTurns,
+			int maxOutputTokens, Map<String, Object> modelOptions,
+			int contextWindowTokens, Predicate<AssistantMessage> responseValidator) {
+		this(model, systemPrompt, maxTurns, maxOutputTokens, modelOptions,
+			contextWindowTokens, DEFAULT_MAX_RETRIES, DEFAULT_TIMEOUT_SECONDS,
+			null, responseValidator);
 	}
 }

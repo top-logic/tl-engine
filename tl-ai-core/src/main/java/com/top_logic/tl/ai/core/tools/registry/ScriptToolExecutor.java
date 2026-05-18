@@ -38,7 +38,7 @@ public class ScriptToolExecutor implements Tool {
 
 	private final ToolMode _mode;
 
-	private final Boolean _concurrencySafe;
+	private final boolean _concurrencySafe;
 
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
@@ -56,10 +56,10 @@ public class ScriptToolExecutor implements Tool {
 	 * @param mode
 	 *        The {@link ToolMode} for this tool.
 	 * @param concurrencySafe
-	 *        Whether this tool is concurrency-safe, or {@code null} to derive from the mode.
+	 *        Whether this tool is concurrency-safe.
 	 */
 	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
-			QueryExecutor executor, List<String> parameterNames, ToolMode mode, Boolean concurrencySafe) {
+			QueryExecutor executor, List<String> parameterNames, ToolMode mode, boolean concurrencySafe) {
 		_name = name;
 		_description = description;
 		_schema = new ToolSchema(name, description, inputSchemaJson);
@@ -91,10 +91,7 @@ public class ScriptToolExecutor implements Tool {
 
 	@Override
 	public boolean isConcurrencySafe() {
-		if (_concurrencySafe != null) {
-			return _concurrencySafe;
-		}
-		return true;
+		return _concurrencySafe;
 	}
 
 	@Override

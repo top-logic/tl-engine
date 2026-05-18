@@ -31,7 +31,7 @@ import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.tools.ToolDispatcher;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -296,7 +296,7 @@ public class VisualConversationMemoryTest extends TestCase {
 		};
 
 		// Tool registry with a read_file tool that returns sizable file contents
-		ToolDispatcher registry = new ToolDispatcher();
+		ToolCatalog registry = new ToolCatalog();
 		registry.register(new com.top_logic.tl.ai.tool.api.Tool() {
 			@Override public String name() { return "read_file"; }
 			@Override public String description() { return "Read a file's contents"; }

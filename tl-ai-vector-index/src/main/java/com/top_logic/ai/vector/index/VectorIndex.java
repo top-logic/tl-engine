@@ -254,7 +254,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		Logger.info("Initializing Vector Index with store type: " + this.vectorStoreType, VectorIndex.class);
 
 		Logger.info("Instances of models to track: " + this.vectorIndexModels.toString(), VectorIndex.class);
-        Logger.info("Embedding model " + this.mistralEmbedModel + " with API key " + this.mistralApiKey,VectorIndex.class);
+        Logger.info("Embedding model " + this.mistralEmbedModel,VectorIndex.class);
 
 		if ("local".equalsIgnoreCase(config.getEmbeddingModelType())) {
 			this.embeddingModel = new DummyEmbeddingModel(1024); // Default, will be used later

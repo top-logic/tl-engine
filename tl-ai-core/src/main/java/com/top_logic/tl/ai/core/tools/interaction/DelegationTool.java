@@ -14,8 +14,10 @@ import java.util.UUID;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -166,13 +168,14 @@ public class DelegationTool implements Tool {
 			String finalText = extractFinalText(conversation, result);
 			if (logListener != null && delegationId != null) {
 				long durationMs = Duration.between(startTime, Instant.now()).toMillis();
-				logListener.resolveDelegation(delegationId, truncate(finalText, 200), durationMs);
+				logListener.resolveDelegation(delegationId, truncate(finalText, 200), durationMs, result);
 			}
-			return ToolResult.of(finalText);
+			return ToolResult.of(finalText + formatDelegationMeta(result));
 		} catch (Exception e) {
 			if (logListener != null && delegationId != null) {
 				long durationMs = Duration.between(startTime, Instant.now()).toMillis();
-				logListener.resolveDelegation(delegationId, "ERROR: " + e.getMessage(), durationMs);
+				logListener.resolveDelegation(delegationId, "ERROR: " + e.getMessage(), durationMs,
+					new AgentResult(StopReason.ERROR, 0, TokenUsage.EMPTY));
 			}
 			Logger.error("Delegation to " + _targetAgentName + " failed.", e, DelegationTool.class);
 			return ToolResult.of("ERROR: Delegation to " + _targetAgentName + " failed: " + e.getMessage());
@@ -208,6 +211,14 @@ public class DelegationTool implements Tool {
 			return text;
 		}
 		return text.substring(0, maxLen) + "...";
+	}
+
+	private static String formatDelegationMeta(AgentResult result) {
+		TokenUsage usage = result.totalUsage();
+		return "\n\n<delegation_meta>turns=" + result.turnsUsed()
+			+ ", tokens=" + usage.totalTokens()
+			+ ", status=" + result.stopReason()
+			+ "</delegation_meta>";
 	}
 
 	/**

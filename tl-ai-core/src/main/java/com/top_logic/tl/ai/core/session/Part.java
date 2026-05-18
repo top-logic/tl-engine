@@ -10,6 +10,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.message.TokenUsage;
+
 /**
  * A content unit within a {@link Turn}. Each variant represents a different type
  * of event or content produced during an agent run.
@@ -37,13 +40,14 @@ public sealed interface Part {
 	record TextPart(String id, Instant timestamp, String text) implements Part {}
 
 	/**
-	 * Extended thinking / reasoning block.
+	 * A thinking / reasoning block produced by the LLM.
 	 *
 	 * @param id part identifier
 	 * @param timestamp when the thinking block was produced
 	 * @param text the reasoning content
+	 * @param continuityToken opaque provider token for multi-turn continuity; may be {@code null}
 	 */
-	record ThinkingPart(String id, Instant timestamp, String text) implements Part {}
+	record ThinkingPart(String id, Instant timestamp, String text, String continuityToken) implements Part {}
 
 	// ---- Tool call with state machine ----
 
@@ -226,26 +230,33 @@ public sealed interface Part {
 	 * @param childParts nested parts from the child agent
 	 * @param childSessionId child session identifier, or {@code null}
 	 * @param durationMs delegation time in milliseconds
+	 * @param turnsUsed number of LLM iterations the sub-agent executed, or -1 if unknown
+	 * @param totalUsage cumulative token usage of the sub-agent, or {@code null}
+	 * @param stopReason why the sub-agent stopped, or {@code null}
 	 */
 	record DelegationPart(
 			String id, Instant timestamp, String fromAgent, String toAgent,
 			String inputSummary, String resultSummary,
 			List<Part> childParts,
-			String childSessionId, long durationMs
+			String childSessionId, long durationMs,
+			int turnsUsed, TokenUsage totalUsage, StopReason stopReason
 	) implements Part {
 
 		/** Creates a delegation that is in progress. */
 		public static DelegationPart started(String id, Instant timestamp,
 				String fromAgent, String toAgent, String inputSummary) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
-				inputSummary, null, new CopyOnWriteArrayList<>(), null, 0L);
+				inputSummary, null, new CopyOnWriteArrayList<>(), null, 0L,
+				-1, null, null);
 		}
 
 		/** Records the delegation result after the child agent finishes. */
-		public DelegationPart completed(String summary,
-				String sessionId, long elapsedMs) {
+		public DelegationPart completed(String summary, String sessionId,
+				long elapsedMs, int childTurnsUsed, TokenUsage childUsage,
+				StopReason childStopReason) {
 			return new DelegationPart(id, timestamp, fromAgent, toAgent,
-				inputSummary, summary, childParts, sessionId, elapsedMs);
+				inputSummary, summary, childParts, sessionId, elapsedMs,
+				childTurnsUsed, childUsage, childStopReason);
 		}
 	}
 

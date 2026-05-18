@@ -24,6 +24,7 @@ import com.top_logic.ai.chat.api.messages.ThinkingPartDto;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.ToolCallPartDto;
 import com.top_logic.ai.chat.api.messages.TransactionPartDto;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
@@ -140,6 +141,9 @@ public final class ConversationLogSerializer {
 			dto.setType(TYPE_THINKING);
 			ThinkingPartDto data = ThinkingPartDto.create();
 			data.setText(tp.text());
+			if (tp.continuityToken() != null) {
+				data.setContinuityToken(tp.continuityToken());
+			}
 			dto.setThinkingData(data);
 		} else if (part instanceof Part.ToolCallPart tc) {
 			dto.setType(TYPE_TOOL_CALL);
@@ -210,6 +214,11 @@ public final class ConversationLogSerializer {
 					data.addChildPart(toPartDto(childPart));
 				}
 			}
+			data.setTurnsUsed(dp.turnsUsed());
+			if (dp.totalUsage() != null) {
+				data.setTotalUsage(toUsageDto(dp.totalUsage()));
+			}
+			data.setStopReason(dp.stopReason() != null ? dp.stopReason().name() : "");
 			dto.setDelegationData(data);
 		} else if (part instanceof Part.SystemPart sp) {
 			dto.setType(TYPE_SYSTEM);
@@ -233,7 +242,8 @@ public final class ConversationLogSerializer {
 			}
 			case TYPE_THINKING: {
 				ThinkingPartDto data = dto.getThinkingData();
-				return new Part.ThinkingPart(id, timestamp, data.getText());
+				return new Part.ThinkingPart(id, timestamp, data.getText(),
+					emptyToNull(data.getContinuityToken()));
 			}
 			case TYPE_TOOL_CALL: {
 				ToolCallPartDto data = dto.getToolCallData();
@@ -304,6 +314,10 @@ public final class ConversationLogSerializer {
 				for (PersistedPart childDto : data.getChildParts()) {
 					childParts.add(fromPartDto(childDto));
 				}
+				TokenUsage delegationUsage = data.hasTotalUsage()
+					? fromUsageDto(data.getTotalUsage()) : null;
+				StopReason delegationStopReason = data.getStopReason().isEmpty()
+					? null : StopReason.valueOf(data.getStopReason());
 				return new Part.DelegationPart(
 					id, timestamp,
 					emptyToNull(data.getFromAgent()),
@@ -312,7 +326,10 @@ public final class ConversationLogSerializer {
 					emptyToNull(data.getResultSummary()),
 					childParts,
 					emptyToNull(data.getChildSessionId()),
-					data.getDurationMs());
+					data.getDurationMs(),
+					data.getTurnsUsed(),
+					delegationUsage,
+					delegationStopReason);
 			}
 			case TYPE_SYSTEM: {
 				SystemPartDto data = dto.getSystemData();

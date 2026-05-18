@@ -34,6 +34,17 @@ public class TestConversation extends TestCase {
 		assertEquals(2, conv.size());
 	}
 
+	/** Null message is rejected by add. */
+	public void testAddNullRejected() {
+		Conversation conv = new Conversation();
+		try {
+			conv.add(null);
+			fail("Expected NullPointerException");
+		} catch (NullPointerException e) {
+			// expected
+		}
+	}
+
 	/** Messages returns unmodifiable snapshot. */
 	public void testMessagesUnmodifiable() {
 		Conversation conv = new Conversation();

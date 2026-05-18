@@ -1042,8 +1042,7 @@
 			if (!this._currentTraceWrapper) return;
 			const summary = this._currentTraceWrapper.querySelector('.tl-chat-trace-summary');
 			if (!summary) return;
-			const n = this._toolCount || 0;
-			summary.textContent = n > 0 ? n + ' tool' + (n > 1 ? 's' : '') + ' used' : 'Thinking';
+			summary.textContent = 'Trace';
 			const tokensEl = this._currentTraceWrapper.querySelector('.tl-chat-trace-tokens');
 			if (tokensEl && Store.currentRun && Store.currentRun.cumulativeTokens > 0) {
 				tokensEl.textContent = Utils.formatTokens(Store.currentRun.cumulativeTokens) + ' tokens';
@@ -1173,6 +1172,7 @@
 
 		updateStreaming() {
 			if (!Render._currentBubble || !Store.currentRun) return;
+			if (!Store.currentRun.thinkingBuffer) return;
 			const thinkingEl = Render._currentBubble.querySelector('.tl-chat-thinking');
 			if (!thinkingEl) return;
 

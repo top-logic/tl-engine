@@ -19,6 +19,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -166,14 +167,15 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * Whether this tool can safely run in parallel with other concurrency-safe tools.
 		 *
 		 * <p>
-		 * When {@code null} (the default), defaults to {@code true}. Override to {@code false}
-		 * only for tools with external concurrency constraints.
+		 * Defaults to {@code true}. Set to {@code false} for tools with external concurrency
+		 * constraints that prevent parallel execution.
 		 * </p>
 		 *
 		 * @see Tool#isConcurrencySafe()
 		 */
 		@Name(CONCURRENCY_SAFE)
-		Boolean getConcurrencySafe();
+		@BooleanDefault(true)
+		boolean getConcurrencySafe();
 
 		/**
 		 * The TL-Script implementation of the tool.
@@ -277,8 +279,6 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 				mode = ToolMode.DATA_WRITE;
 			}
 
-			Boolean concurrencySafe = toolConfig.getConcurrencySafe();
-
 			_tools.add(new ScriptToolExecutor(
 				toolConfig.getName(),
 				toolConfig.getDescription(),
@@ -286,7 +286,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 				executor,
 				parameterNames,
 				mode,
-				concurrencySafe));
+				toolConfig.getConcurrencySafe()));
 		}
 	}
 

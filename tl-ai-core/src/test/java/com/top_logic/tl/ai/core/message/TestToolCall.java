@@ -20,12 +20,6 @@ public class TestToolCall extends TestCase {
 		assertEquals("{\"path\":\"foo.txt\"}", call.arguments());
 	}
 
-	/** ToolCall is a ContentPart. */
-	public void testIsContentPart() {
-		ContentPart part = new ToolCall("tc_1", "read_file", "{}");
-		assertTrue(part instanceof ToolCall);
-	}
-
 	/** Null id is rejected. */
 	@SuppressWarnings("unused")
 	public void testNullIdRejected() {
@@ -59,10 +53,4 @@ public class TestToolCall extends TestCase {
 		}
 	}
 
-	/** Two ToolCalls with same fields are equal. */
-	public void testEquality() {
-		ToolCall a = new ToolCall("tc_1", "read_file", "{}");
-		ToolCall b = new ToolCall("tc_1", "read_file", "{}");
-		assertEquals(a, b);
-	}
 }

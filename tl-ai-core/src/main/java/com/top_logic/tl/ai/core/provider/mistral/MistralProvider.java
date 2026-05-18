@@ -7,60 +7,39 @@ package com.top_logic.tl.ai.core.provider.mistral;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
-import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.PdfContent;
-import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.message.ToolResultMessage;
-import com.top_logic.tl.ai.core.message.ToolState;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
+import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.SSEReader;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsRequestBuilder;
 
-import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonToken;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * {@link LLMProvider} for the Mistral Chat Completions API.
+ * {@link AbstractStreamingProvider} for the Mistral Chat Completions API.
  *
  * <p>Uses {@link HttpClient} for HTTP and msgbuf {@link JsonWriter}/{@link JsonReader} for JSON.
  * Thread-safe: a single instance handles concurrent streams.</p>
  */
-public class MistralProvider implements LLMProvider {
+public class MistralProvider extends AbstractStreamingProvider {
 
 	private static final String DEFAULT_BASE_URL = "https://api.mistral.ai";
-
-	private final HttpClient _httpClient;
-
-	private final String _apiKey;
-
-	private final String _baseUrl;
 
 	/** Creates a {@link MistralProvider}. */
 	public MistralProvider(String apiKey) {
@@ -74,9 +53,14 @@ public class MistralProvider implements LLMProvider {
 
 	/** Creates a {@link MistralProvider}. */
 	public MistralProvider(String apiKey, String baseUrl, HttpClient httpClient) {
-		_apiKey = apiKey;
-		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
+		super(apiKey, baseUrl, httpClient);
+	}
+
+	/** Creates a {@link MistralProvider} with configurable timeouts and headers. */
+	public MistralProvider(String apiKey, String baseUrl,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 	}
 
 	/**
@@ -86,251 +70,39 @@ public class MistralProvider implements LLMProvider {
 	 */
 	private static final int MAX_REQUEST_BODY_BYTES = 5_000_000;
 
-	private static HttpClient defaultHttpClient() {
-		return HttpClient.newBuilder()
-			.connectTimeout(Duration.ofSeconds(30))
-			.build();
+	@Override
+	protected String endpointPath() {
+		return "/v1/chat/completions";
 	}
 
 	@Override
-	public void stream(ProviderRequest request, StreamHandler handler) throws ProviderException {
-		Objects.requireNonNull(request, "Request must not be null.");
-		Objects.requireNonNull(handler, "Handler must not be null.");
-
-		String body = buildRequestJson(request);
-
+	protected void validateRequest(String body) throws ProviderException {
 		int bodyBytes = body.getBytes(StandardCharsets.UTF_8).length;
 		if (bodyBytes > MAX_REQUEST_BODY_BYTES) {
 			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 0,
 				"Request body (" + bodyBytes + " bytes) exceeds Mistral's ~32 KB limit. "
 					+ "Reduce the system prompt or number of tools, or use a different provider.");
 		}
-
-		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-			.uri(URI.create(_baseUrl + "/v1/chat/completions"))
-			.header("Content-Type", "application/json")
-			.header("Accept", "text/event-stream")
-			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-			.timeout(Duration.ofMinutes(10));
-		if (_apiKey != null && !_apiKey.isBlank()) {
-			requestBuilder.header("Authorization", "Bearer " + _apiKey);
-		}
-		HttpRequest httpRequest = requestBuilder.build();
-
-		HttpResponse<InputStream> response;
-		try {
-			response = _httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
-		} catch (IOException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-				"Connection failed: " + e.getMessage(), e);
-		} catch (InterruptedException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
-		}
-
-		if (response.statusCode() != 200) {
-			handleErrorResponse(response);
-		}
-
-		try (InputStream responseBody = response.body()) {
-			processStream(responseBody, handler);
-		} catch (ProviderException e) {
-			throw e;
-		} catch (IOException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-				"Stream read error: " + e.getMessage(), e);
-		}
 	}
 
-	private String buildRequestJson(ProviderRequest request) throws ProviderException {
-		StringW buffer = new StringW();
-		try (JsonWriter json = new JsonWriter(buffer)) {
-			json.beginObject();
-			json.name("model").value(request.model());
-			json.name("max_tokens").value(request.maxOutputTokens());
-			json.name("stream").value(true);
-
-			json.name("messages");
-			writeMessages(json, request.systemPrompt(), request.messages());
-
-			if (!request.tools().isEmpty()) {
-				json.name("tools");
-				writeTools(json, request.tools());
-			}
-
-			if (request.responseFormat() == ResponseFormat.JSON) {
-				json.name("response_format");
-				json.beginObject();
-				json.name("type").value("json_object");
-				json.endObject();
-			}
-
-			if (request.toolChoice() != null || !request.tools().isEmpty()) {
-				// Default to "auto" when tools are present; honour explicit choice otherwise.
-				ToolChoice choice = request.toolChoice() != null ? request.toolChoice() : ToolChoice.AUTO;
-				String choiceStr = switch (choice) {
-					case REQUIRED -> "any";
-					case NONE -> "none";
-					case AUTO -> "auto";
-				};
-				json.name("tool_choice").value(choiceStr);
-			}
-
-			json.endObject();
-		} catch (IOException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-				"Failed to build request JSON", e);
+	@Override
+	protected String buildRequestJson(ProviderRequest request) throws ProviderException {
+		// Mistral-specific: default tool_choice to "auto" when tools present,
+		// and map REQUIRED to "any" (Mistral's non-standard name for "required").
+		String toolChoiceOverride = null;
+		if (request.toolChoice() != null || !request.tools().isEmpty()) {
+			ToolChoice choice = request.toolChoice() != null ? request.toolChoice() : ToolChoice.AUTO;
+			toolChoiceOverride = switch (choice) {
+				case REQUIRED -> "any";
+				case NONE -> "none";
+				case AUTO -> "auto";
+			};
 		}
-		return buffer.toString();
+		return ChatCompletionsRequestBuilder.buildRequestJson(request, toolChoiceOverride);
 	}
 
-	private void writeMessages(JsonWriter json, String systemPrompt, List<Message> messages)
-			throws IOException {
-		json.beginArray();
-
-		if (systemPrompt != null && !systemPrompt.isEmpty()) {
-			json.beginObject();
-			json.name("role").value("system");
-			json.name("content").value(systemPrompt);
-			json.endObject();
-		}
-
-		for (Message msg : messages) {
-			if (msg instanceof UserMessage user) {
-				writeUserMessage(json, user);
-			} else if (msg instanceof AssistantMessage assistant) {
-				writeAssistantMessage(json, assistant);
-			} else if (msg instanceof ToolResultMessage result) {
-				writeToolResult(json, result);
-			}
-		}
-		json.endArray();
-	}
-
-	private void writeUserMessage(JsonWriter json, UserMessage user) throws IOException {
-		json.beginObject();
-		json.name("role").value("user");
-
-		boolean hasImages = user.content().stream()
-			.anyMatch(p -> p instanceof ImageContent || p instanceof PdfContent);
-
-		if (hasImages) {
-			json.name("content");
-			json.beginArray();
-			for (ContentPart part : user.content()) {
-				if (part instanceof TextContent text) {
-					json.beginObject();
-					json.name("type").value("text");
-					json.name("text").value(text.text());
-					json.endObject();
-				} else if (part instanceof ImageContent image) {
-					json.beginObject();
-					json.name("type").value("image_url");
-					json.name("image_url");
-					json.beginObject();
-					json.name("url").value(image.url());
-					json.endObject();
-					json.endObject();
-				}
-			}
-			json.endArray();
-		} else {
-			// Text-only: emit as plain string.
-			StringBuilder text = new StringBuilder();
-			for (ContentPart part : user.content()) {
-				if (part instanceof TextContent tc) {
-					text.append(tc.text());
-				}
-			}
-			json.name("content").value(text.toString());
-		}
-
-		json.endObject();
-	}
-
-	private void writeAssistantMessage(JsonWriter json, AssistantMessage assistant) throws IOException {
-		json.beginObject();
-		json.name("role").value("assistant");
-
-		boolean hasToolCalls = assistant.content().stream()
-			.anyMatch(p -> p instanceof ToolCall);
-
-		if (hasToolCalls) {
-			// Emit text content (may be empty).
-			StringBuilder text = new StringBuilder();
-			for (ContentPart part : assistant.content()) {
-				if (part instanceof TextContent tc) {
-					text.append(tc.text());
-				}
-			}
-			json.name("content").value(text.toString());
-
-			json.name("tool_calls");
-			json.beginArray();
-			for (ContentPart part : assistant.content()) {
-				if (part instanceof ToolCall toolCall) {
-					json.beginObject();
-					json.name("id").value(toolCall.id());
-					json.name("type").value("function");
-					json.name("function");
-					json.beginObject();
-					json.name("name").value(toolCall.name());
-					String args = toolCall.arguments();
-					json.name("arguments").value(args.isEmpty() ? "{}" : args);
-					json.endObject();
-					json.endObject();
-				}
-			}
-			json.endArray();
-		} else {
-			// Text-only assistant message.
-			StringBuilder text = new StringBuilder();
-			for (ContentPart part : assistant.content()) {
-				if (part instanceof TextContent tc) {
-					text.append(tc.text());
-				}
-			}
-			json.name("content").value(text.toString());
-		}
-
-		json.endObject();
-	}
-
-	private void writeToolResult(JsonWriter json, ToolResultMessage result) throws IOException {
-		json.beginObject();
-		json.name("role").value("tool");
-		json.name("tool_call_id").value(result.toolCallId());
-		json.name("name").value(result.toolName());
-
-		ToolState state = result.state();
-		String content;
-		if (state instanceof ToolState.Completed c) {
-			content = c.result();
-		} else if (state instanceof ToolState.Failed f) {
-			content = f.error();
-		} else {
-			content = "";
-		}
-		json.name("content").value(content);
-		json.endObject();
-	}
-
-	private void writeTools(JsonWriter json, List<ToolSchema> tools) throws IOException {
-		json.beginArray();
-		for (ToolSchema tool : tools) {
-			json.beginObject();
-			json.name("type").value("function");
-			json.name("function");
-			json.beginObject();
-			json.name("name").value(tool.name());
-			json.name("description").value(tool.description());
-			json.name("parameters").jsonValue(tool.inputSchemaJson());
-			json.endObject();
-			json.endObject();
-		}
-		json.endArray();
-	}
-
-	private void processStream(InputStream input, StreamHandler handler)
+	@Override
+	protected void processStream(InputStream input, StreamHandler handler)
 			throws IOException, ProviderException {
 
 		String messageId = null;
@@ -338,8 +110,11 @@ public class MistralProvider implements LLMProvider {
 		String finishReason = null;
 		int inputTokens = 0;
 		int outputTokens = 0;
-		Map<Integer, ContentBlock> blocks = new LinkedHashMap<>();
+		ContentBlockAccumulator accumulator = new ContentBlockAccumulator();
 		int contentIndex = 0;
+		boolean textBlockOpen = false;
+
+		handler.onEvent(new StreamEvent.StreamStart());
 
 		SSEReader.Event event;
 		try (SSEReader sse = new SSEReader(input)) {
@@ -350,7 +125,10 @@ public class MistralProvider implements LLMProvider {
 				}
 
 				if ("[DONE]".equals(data)) {
-					List<ContentPart> content = buildContentParts(blocks);
+					if (textBlockOpen) {
+						handler.onEvent(new StreamEvent.TextEnd(0));
+					}
+					List<ContentPart> content = accumulator.buildContentParts();
 					TokenUsage usage = new TokenUsage(inputTokens, outputTokens, 0, 0, 0);
 					handler.onEvent(new StreamEvent.MessageComplete(
 						messageId, model,
@@ -372,7 +150,10 @@ public class MistralProvider implements LLMProvider {
 									while (json.hasNext()) {
 										switch (json.nextName()) {
 											case "delta" -> {
-												contentIndex = processDelta(json, blocks, contentIndex, handler);
+												int[] result = processDelta(json, accumulator, contentIndex,
+													textBlockOpen, handler);
+												contentIndex = result[0];
+												textBlockOpen = result[1] != 0;
 											}
 											case "finish_reason" -> {
 												if (json.peek() == JsonToken.NULL) {
@@ -413,8 +194,14 @@ public class MistralProvider implements LLMProvider {
 		}
 	}
 
-	private int processDelta(JsonReader json, Map<Integer, ContentBlock> blocks,
-			int contentIndex, StreamHandler handler) throws IOException {
+	/**
+	 * Processes a single delta object from the Mistral stream.
+	 *
+	 * @return a two-element array: {@code [contentIndex, textBlockOpen]} where
+	 *         {@code textBlockOpen} is 1 if a text block is currently open, 0 otherwise.
+	 */
+	private int[] processDelta(JsonReader json, ContentBlockAccumulator accumulator,
+			int contentIndex, boolean textBlockOpen, StreamHandler handler) throws IOException {
 
 		json.beginObject();
 		while (json.hasNext()) {
@@ -422,9 +209,12 @@ public class MistralProvider implements LLMProvider {
 				case "content" -> {
 					String text = normalizeContent(json);
 					if (text != null && !text.isEmpty()) {
-						ContentBlock block = blocks.computeIfAbsent(contentIndex,
-							idx -> new ContentBlock("text"));
-						block._text.append(text);
+						if (!textBlockOpen) {
+							accumulator.addBlock(contentIndex, "text", null, null);
+							handler.onEvent(new StreamEvent.TextStart(contentIndex));
+							textBlockOpen = true;
+						}
+						accumulator.appendText(contentIndex, text);
 						handler.onEvent(new StreamEvent.TextDelta(contentIndex, text));
 					}
 				}
@@ -456,16 +246,16 @@ public class MistralProvider implements LLMProvider {
 						json.endObject();
 
 						if (id != null && name != null) {
-							ContentBlock block = new ContentBlock("tool_use");
-							block._id = id;
-							block._name = name;
-							block._arguments.append(arguments != null ? arguments : "");
-							blocks.put(contentIndex, block);
+							accumulator.addBlock(contentIndex, "tool_use", id, name);
+							if (arguments != null && !arguments.isEmpty()) {
+								accumulator.appendArguments(contentIndex, arguments);
+							}
 
 							handler.onEvent(new StreamEvent.ToolCallStart(contentIndex, id, name));
 							if (arguments != null && !arguments.isEmpty()) {
 								handler.onEvent(new StreamEvent.ToolCallDelta(contentIndex, arguments));
 							}
+							handler.onEvent(new StreamEvent.ToolCallEnd(contentIndex));
 							contentIndex++;
 						}
 					}
@@ -476,7 +266,7 @@ public class MistralProvider implements LLMProvider {
 		}
 		json.endObject();
 
-		return contentIndex;
+		return new int[] { contentIndex, textBlockOpen ? 1 : 0 };
 	}
 
 	/**
@@ -575,29 +365,10 @@ public class MistralProvider implements LLMProvider {
 		};
 	}
 
-	private List<ContentPart> buildContentParts(Map<Integer, ContentBlock> blocks) {
-		List<ContentPart> parts = new ArrayList<>(blocks.size());
-		for (ContentBlock block : blocks.values()) {
-			if ("text".equals(block._type)) {
-				String text = block._text.toString();
-				if (!text.isEmpty()) {
-					parts.add(new TextContent(text));
-				}
-			} else if ("tool_use".equals(block._type)) {
-				parts.add(new ToolCall(block._id, block._name, block._arguments.toString()));
-			}
-		}
-		return parts;
-	}
-
-	private void handleErrorResponse(HttpResponse<InputStream> response) throws ProviderException {
+	@Override
+	protected void handleErrorResponse(HttpResponse<InputStream> response) throws ProviderException {
 		int status = response.statusCode();
-		String body = "";
-		try (InputStream is = response.body()) {
-			body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			// Best effort.
-		}
+		String body = drainResponseBody(response);
 
 		Duration retryAfter = parseRetryAfter(response.headers());
 		String message = parseErrorMessage(body);
@@ -643,35 +414,5 @@ public class MistralProvider implements LLMProvider {
 		return jsonBody;
 	}
 
-	private Duration parseRetryAfter(java.net.http.HttpHeaders headers) {
-		return headers.firstValue("retry-after")
-			.map(value -> {
-				try {
-					return Duration.ofSeconds(Long.parseLong(value));
-				} catch (NumberFormatException e) {
-					return null;
-				}
-			})
-			.orElse(null);
-	}
 
-	private static JsonReader jsonReader(String json) {
-		return new JsonReader(new StringR(json));
-	}
-
-	private static final class ContentBlock {
-		final String _type;
-
-		final StringBuilder _text = new StringBuilder();
-
-		String _id;
-
-		String _name;
-
-		final StringBuilder _arguments = new StringBuilder();
-
-		ContentBlock(String type) {
-			_type = type;
-		}
-	}
 }

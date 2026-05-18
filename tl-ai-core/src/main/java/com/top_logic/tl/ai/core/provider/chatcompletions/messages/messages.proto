@@ -1,0 +1,29 @@
+package com.top_logic.tl.ai.core.provider.chatcompletions.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/** Chat Completions API request body (<code>OpenAI</code>-compatible). */
+message ChatCompletionsRequest {
+	/** The model identifier. */
+	string model [Name = "model"];
+	/** Maximum number of output tokens. */
+	int max_tokens [Name = "max_tokens"];
+	/** Whether to stream the response. */
+	bool stream [Name = "stream"];
+	/** Sampling temperature. */
+	json temperature [Name = "temperature"];
+	/** Top-p sampling parameter. */
+	json top_p [Name = "top_p"];
+	/** The conversation messages. */
+	json messages [Name = "messages"];
+	/** Tool definitions. */
+	json tools [Name = "tools"];
+	/** Response format specification. */
+	json response_format [Name = "response_format"];
+	/** Tool choice configuration. */
+	json tool_choice [Name = "tool_choice"];
+}

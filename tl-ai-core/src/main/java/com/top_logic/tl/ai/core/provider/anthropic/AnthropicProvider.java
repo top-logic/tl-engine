@@ -7,64 +7,48 @@ package com.top_logic.tl.ai.core.provider.anthropic;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.top_logic.tl.ai.core.message.AssistantMessage;
-import com.top_logic.tl.ai.core.message.CompactionMarker;
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.PdfContent;
-import com.top_logic.tl.ai.core.message.SystemMessage;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.message.ToolResultMessage;
-import com.top_logic.tl.ai.core.message.ToolState;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
+import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.SSEReader;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.core.provider.ToolChoice;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.ContentBlockDeltaEvent;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.ContentBlockInfo;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.ContentBlockStartEvent;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.ContentBlockStopEvent;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.DeltaInfo;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.MessageDeltaEvent;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.MessageDeltaInfo;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.MessageInfo;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.MessageStartEvent;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.StreamErrorEvent;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.StreamErrorInfo;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.UsageInfo;
 
-import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
-import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * {@link LLMProvider} for the Anthropic Messages API.
+ * {@link AbstractStreamingProvider} for the Anthropic Messages API.
  *
- * <p>Uses {@link HttpClient} for HTTP and msgbuf {@link JsonWriter}/{@link JsonReader} for JSON.
+ * <p>Uses {@link HttpClient} for HTTP and msgbuf {@link JsonReader} for JSON. Serialization is
+ * delegated to {@link AnthropicRequestBuilder}.
  * Thread-safe: a single instance handles concurrent streams.</p>
  */
-public class AnthropicProvider implements LLMProvider {
+public class AnthropicProvider extends AbstractStreamingProvider {
 
 	private static final String DEFAULT_BASE_URL = "https://api.anthropic.com";
 
 	private static final String DEFAULT_API_VERSION = "2023-06-01";
-
-	private final HttpClient _httpClient;
-
-	private final String _apiKey;
-
-	private final String _baseUrl;
 
 	private final String _apiVersion;
 
@@ -80,506 +64,163 @@ public class AnthropicProvider implements LLMProvider {
 
 	/** Creates an {@link AnthropicProvider}. */
 	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion, HttpClient httpClient) {
-		_apiKey = apiKey;
-		_baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+		super(apiKey, baseUrl, httpClient);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
-		_httpClient = Objects.requireNonNull(httpClient, "HTTP client must not be null.");
 	}
 
-	private static HttpClient defaultHttpClient() {
-		return HttpClient.newBuilder()
-			.connectTimeout(Duration.ofSeconds(30))
-			.build();
+	/** Creates an {@link AnthropicProvider} with configurable timeouts and headers. */
+	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
+		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
 	}
 
 	@Override
-	public void stream(ProviderRequest request, StreamHandler handler) throws ProviderException {
-		Objects.requireNonNull(request, "Request must not be null.");
-		Objects.requireNonNull(handler, "Handler must not be null.");
+	protected String endpointPath() {
+		return "/v1/messages";
+	}
 
-		String body = buildRequestJson(request);
-
-		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-			.uri(URI.create(_baseUrl + "/v1/messages"))
-			.header("Content-Type", "application/json")
-			.header("Accept", "text/event-stream")
-			.header("anthropic-version", _apiVersion)
-			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-			.timeout(Duration.ofMinutes(10));
+	@Override
+	protected void addAuthHeaders(HttpRequest.Builder builder) {
 		if (_apiKey != null && !_apiKey.isBlank()) {
-			requestBuilder.header("x-api-key", _apiKey);
-		}
-		HttpRequest httpRequest = requestBuilder.build();
-
-		HttpResponse<InputStream> response;
-		try {
-			response = _httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
-		} catch (IOException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-				"Connection failed: " + e.getMessage(), e);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
-		}
-
-		if (response.statusCode() != 200) {
-			handleErrorResponse(response);
-		}
-
-		try (InputStream responseBody = response.body()) {
-			processStream(responseBody, handler);
-		} catch (ProviderException e) {
-			throw e;
-		} catch (IOException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-				"Stream read error: " + e.getMessage(), e);
+			builder.header("x-api-key", _apiKey);
 		}
 	}
 
-	String buildRequestJson(ProviderRequest request) throws ProviderException {
-		StringW buffer = new StringW();
-		try (JsonWriter json = new JsonWriter(buffer)) {
-			json.beginObject();
-			json.name("model").value(request.model());
-			json.name("max_tokens").value(request.maxOutputTokens());
-			json.name("stream").value(true);
-			writeSamplingParams(json, request.modelOptions());
-			String cacheTtl = (String) request.modelOptions().get("cacheTtl");
-
-			if (request.systemPrompt() != null && !request.systemPrompt().isEmpty()) {
-				json.name("system");
-				json.beginArray();
-				json.beginObject();
-				json.name("type").value("text");
-				json.name("text").value(request.systemPrompt());
-				writeCacheControl(json, cacheTtl);
-				json.endObject();
-				json.endArray();
-			}
-
-			json.name("messages");
-			writeMessages(json, request.messages(), cacheTtl);
-
-			if (!request.tools().isEmpty()) {
-				json.name("tools");
-				writeTools(json, request.tools());
-			}
-
-			if (request.responseFormat() == ResponseFormat.JSON) {
-				json.name("response_format");
-				json.beginObject();
-				json.name("type").value("json_object");
-				json.endObject();
-			}
-
-			if (request.toolChoice() != null && request.toolChoice() != ToolChoice.AUTO) {
-				json.name("tool_choice");
-				json.beginObject();
-				json.name("type").value(request.toolChoice() == ToolChoice.REQUIRED ? "any" : "none");
-				json.endObject();
-			}
-
-			json.endObject();
-		} catch (IOException e) {
-			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
-				"Failed to build request JSON", e);
-		}
-		return buffer.toString();
+	@Override
+	protected void addExtraHeaders(HttpRequest.Builder builder) {
+		builder.header("anthropic-version", _apiVersion);
 	}
 
-	private void writeMessages(JsonWriter json, List<Message> messages, String cacheTtl) throws IOException {
-		// Pre-scan: count user-role messages (UserMessage or start of ToolResultMessage group).
-		int userRoleCount = 0;
-		for (int i = 0; i < messages.size(); i++) {
-			Message msg = messages.get(i);
-			if (msg instanceof UserMessage) {
-				userRoleCount++;
-			} else if (msg instanceof ToolResultMessage) {
-				if (i == 0 || !(messages.get(i - 1) instanceof ToolResultMessage)) {
-					userRoleCount++;
-				}
-			}
-		}
-
-		int cacheFrom = userRoleCount - Math.min(2, userRoleCount);
-
-		json.beginArray();
-		int i = 0;
-		int userRoleOrdinal = 0;
-		while (i < messages.size()) {
-			Message msg = messages.get(i);
-
-			if (msg instanceof SystemMessage || msg instanceof CompactionMarker) {
-				i++;
-			} else if (msg instanceof UserMessage user) {
-				boolean cache = userRoleOrdinal >= cacheFrom;
-				userRoleOrdinal++;
-
-				json.beginObject();
-				json.name("role").value("user");
-				json.name("content");
-				writeUserContent(json, user.content(), cache, cacheTtl);
-				json.endObject();
-				i++;
-			} else if (msg instanceof AssistantMessage assistant) {
-				json.beginObject();
-				json.name("role").value("assistant");
-				json.name("content");
-				writeAssistantContent(json, assistant.content());
-				json.endObject();
-				i++;
-			} else if (msg instanceof ToolResultMessage) {
-				boolean cache = userRoleOrdinal >= cacheFrom;
-				userRoleOrdinal++;
-
-				json.beginObject();
-				json.name("role").value("user");
-				json.name("content");
-				json.beginArray();
-				while (i < messages.size()
-					&& messages.get(i) instanceof ToolResultMessage tr) {
-					boolean lastInGroup = (i + 1 >= messages.size()
-						|| !(messages.get(i + 1) instanceof ToolResultMessage));
-					writeToolResult(json, tr, cache && lastInGroup, cacheTtl);
-					i++;
-				}
-				json.endArray();
-				json.endObject();
-			}
-		}
-		json.endArray();
+	@Override
+	protected String buildRequestJson(ProviderRequest request) throws ProviderException {
+		return AnthropicRequestBuilder.buildRequestJson(request);
 	}
 
-	private void writeUserContent(JsonWriter json, List<ContentPart> parts, boolean cache, String cacheTtl)
-			throws IOException {
-		json.beginArray();
-		for (int i = 0; i < parts.size(); i++) {
-			ContentPart part = parts.get(i);
-			boolean lastPart = cache && (i == parts.size() - 1);
-
-			if (part instanceof TextContent text) {
-				json.beginObject();
-				json.name("type").value("text");
-				json.name("text").value(text.text());
-				if (lastPart) {
-					writeCacheControl(json, cacheTtl);
-				}
-				json.endObject();
-			} else if (part instanceof ImageContent image) {
-				json.beginObject();
-				json.name("type").value("image");
-				json.name("source");
-				json.beginObject();
-				if (image.url().startsWith("data:")) {
-					String dataUri = image.url();
-					int commaIdx = dataUri.indexOf(',');
-					String base64Data = commaIdx >= 0 ? dataUri.substring(commaIdx + 1) : dataUri;
-					json.name("type").value("base64");
-					json.name("media_type").value(image.mediaType());
-					json.name("data").value(base64Data);
-				} else {
-					json.name("type").value("url");
-					json.name("url").value(image.url());
-				}
-				json.endObject();
-				if (lastPart) {
-					writeCacheControl(json, cacheTtl);
-				}
-				json.endObject();
-			} else if (part instanceof PdfContent pdf) {
-				json.beginObject();
-				json.name("type").value("document");
-				json.name("source");
-				json.beginObject();
-				json.name("type").value("base64");
-				json.name("media_type").value(pdf.mediaType());
-				json.name("data").value(pdf.data());
-				json.endObject();
-				if (lastPart) {
-					writeCacheControl(json, cacheTtl);
-				}
-				json.endObject();
-			} /* ToolCall and ThinkingContent not valid in user messages. */
-		}
-		json.endArray();
-	}
-
-	private void writeAssistantContent(JsonWriter json, List<ContentPart> parts) throws IOException {
-		json.beginArray();
-		for (ContentPart part : parts) {
-			if (part instanceof TextContent text) {
-				json.beginObject();
-				json.name("type").value("text");
-				json.name("text").value(text.text());
-				json.endObject();
-			} else if (part instanceof ToolCall toolCall) {
-				json.beginObject();
-				json.name("type").value("tool_use");
-				json.name("id").value(toolCall.id());
-				json.name("name").value(toolCall.name());
-				String args = toolCall.arguments();
-				json.name("input").jsonValue(args.isEmpty() ? "{}" : args);
-				json.endObject();
-			} /* ImageContent, PdfContent, ThinkingContent not valid/serialized in assistant messages. */
-		}
-		json.endArray();
-	}
-
-	private void writeToolResult(JsonWriter json, ToolResultMessage result, boolean cache, String cacheTtl)
-			throws IOException {
-		json.beginObject();
-		json.name("type").value("tool_result");
-		json.name("tool_use_id").value(result.toolCallId());
-
-		ToolState state = result.state();
-		String content;
-		if (state instanceof ToolState.Completed c) {
-			content = c.result();
-		} else if (state instanceof ToolState.Failed f) {
-			content = f.error();
-		} else {
-			content = "";
-		}
-		json.name("content").value(content);
-
-		if (result.state() instanceof ToolState.Failed) {
-			json.name("is_error").value(true);
-		}
-		if (cache) {
-			writeCacheControl(json, cacheTtl);
-		}
-		json.endObject();
-	}
-
-	private void writeTools(JsonWriter json, List<ToolSchema> tools) throws IOException {
-		json.beginArray();
-		for (ToolSchema tool : tools) {
-			json.beginObject();
-			json.name("name").value(tool.name());
-			json.name("description").value(tool.description());
-			json.name("input_schema").jsonValue(tool.inputSchemaJson());
-			json.endObject();
-		}
-		json.endArray();
-	}
-
-	/**
-	 * Writes optional sampling parameters from model options.
-	 */
-	private void writeSamplingParams(JsonWriter json, Map<String, Object> modelOptions) throws IOException {
-		Object temperature = modelOptions.get("temperature");
-		if (temperature != null) {
-			json.name("temperature").value(Double.parseDouble(temperature.toString()));
-		}
-
-		Object topP = modelOptions.get("topP");
-		if (topP != null) {
-			json.name("top_p").value(Double.parseDouble(topP.toString()));
-		}
-
-		Object topK = modelOptions.get("top_k");
-		if (topK != null) {
-			json.name("top_k").value(Long.parseLong(topK.toString()));
-		}
-	}
-
-	/**
-	 * Writes a {@code cache_control} block. When {@code ttl} is non-null (e.g. {@code "1h"}),
-	 * includes the TTL; otherwise uses the API default of 5 minutes.
-	 */
-	static void writeCacheControl(JsonWriter json, String ttl) throws IOException {
-		json.name("cache_control");
-		json.beginObject();
-		json.name("type").value("ephemeral");
-		if (ttl != null) {
-			json.name("ttl").value(ttl);
-		}
-		json.endObject();
-	}
-
-	private void processStream(InputStream input, StreamHandler handler)
+	@Override
+	protected void processStream(InputStream input, StreamHandler handler)
 			throws IOException, ProviderException {
 
 		String messageId = null;
 		String model = null;
 		String finishReason = null;
-		int inputTokens = 0;
-		int outputTokens = 0;
-		int cacheReadTokens = 0;
-		int cacheWriteTokens = 0;
-		Map<Integer, ContentBlock> blocks = new LinkedHashMap<>();
+		int inputTokens = 0, outputTokens = 0, cacheReadTokens = 0, cacheWriteTokens = 0;
+		ContentBlockAccumulator accumulator = new ContentBlockAccumulator();
+
+		handler.onEvent(new StreamEvent.StreamStart());
 
 		SSEReader.Event event;
 		try (SSEReader sse = new SSEReader(input)) {
 		while ((event = sse.next()) != null) {
 			String data = event.data();
-			if (data == null || data.isEmpty()) {
-				continue;
-			}
+			if (data == null || data.isEmpty()) continue;
 
 			switch (event.event()) {
 				case "message_start" -> {
-					try (JsonReader json = jsonReader(data)) {
-						json.beginObject();
-						while (json.hasNext()) {
-							if ("message".equals(json.nextName())) {
-								json.beginObject();
-								while (json.hasNext()) {
-									switch (json.nextName()) {
-										case "id" -> messageId = json.nextString();
-										case "model" -> model = json.nextString();
-										case "usage" -> {
-											int[] u = parseUsage(json);
-											inputTokens = u[0];
-											outputTokens = u[1];
-											cacheReadTokens = u[2];
-											cacheWriteTokens = u[3];
-										}
-										default -> json.skipValue();
-									}
-								}
-								json.endObject();
-							} else {
-								json.skipValue();
-							}
-						}
-						json.endObject();
+					MessageStartEvent e = MessageStartEvent.readMessageStartEvent(jsonReader(data));
+					MessageInfo msg = e.getMessage();
+					messageId = msg.getId();
+					model = msg.getModel();
+					UsageInfo u = msg.getUsage();
+					if (u != null) {
+						inputTokens = u.getInputTokens();
+						outputTokens = u.getOutputTokens();
+						cacheReadTokens = u.getCacheReadInputTokens();
+						cacheWriteTokens = u.getCacheCreationInputTokens();
 					}
 				}
 
 				case "content_block_start" -> {
-					int index = -1;
-					String blockType = null;
-					String toolId = null;
-					String toolName = null;
+					ContentBlockStartEvent e = ContentBlockStartEvent.readContentBlockStartEvent(jsonReader(data));
+					ContentBlockInfo block = e.getContentBlock();
+					int idx = e.getIndex();
+					accumulator.addBlock(idx, block.getType(), block.getId(), block.getName());
 
-					try (JsonReader json = jsonReader(data)) {
-						json.beginObject();
-						while (json.hasNext()) {
-							switch (json.nextName()) {
-								case "index" -> index = json.nextInt();
-								case "content_block" -> {
-									json.beginObject();
-									while (json.hasNext()) {
-										switch (json.nextName()) {
-											case "type" -> blockType = json.nextString();
-											case "id" -> toolId = json.nextString();
-											case "name" -> toolName = json.nextString();
-											default -> json.skipValue();
-										}
-									}
-									json.endObject();
-								}
-								default -> json.skipValue();
+					switch (block.getType()) {
+						case "text" -> handler.onEvent(new StreamEvent.TextStart(idx));
+						case "thinking" -> handler.onEvent(new StreamEvent.ThinkingStart(idx));
+						case "tool_use" -> {
+							if (block.getId() != null && block.getName() != null) {
+								handler.onEvent(new StreamEvent.ToolCallStart(idx, block.getId(), block.getName()));
 							}
-						}
-						json.endObject();
-					}
-
-					if (index >= 0 && blockType != null) {
-						ContentBlock block = new ContentBlock(blockType);
-						block._id = toolId;
-						block._name = toolName;
-						blocks.put(index, block);
-
-						if ("tool_use".equals(blockType) && toolId != null && toolName != null) {
-							handler.onEvent(new StreamEvent.ToolCallStart(index, toolId, toolName));
 						}
 					}
 				}
 
 				case "content_block_delta" -> {
-					int index = -1;
-					String deltaType = null;
-					String text = null;
-					String partialJson = null;
+					ContentBlockDeltaEvent e = ContentBlockDeltaEvent.readContentBlockDeltaEvent(jsonReader(data));
+					DeltaInfo delta = e.getDelta();
+					int idx = e.getIndex();
 
-					try (JsonReader json = jsonReader(data)) {
-						json.beginObject();
-						while (json.hasNext()) {
-							switch (json.nextName()) {
-								case "index" -> index = json.nextInt();
-								case "delta" -> {
-									json.beginObject();
-									while (json.hasNext()) {
-										switch (json.nextName()) {
-											case "type" -> deltaType = json.nextString();
-											case "text" -> text = json.nextString();
-											case "partial_json" -> partialJson = json.nextString();
-											default -> json.skipValue();
-										}
-									}
-									json.endObject();
-								}
-								default -> json.skipValue();
+					switch (delta.getType()) {
+						case "text_delta" -> {
+							if (delta.getText() != null) {
+								accumulator.appendText(idx, delta.getText());
+								handler.onEvent(new StreamEvent.TextDelta(idx, delta.getText()));
 							}
 						}
-						json.endObject();
-					}
-
-					ContentBlock block = blocks.get(index);
-					if (block != null && index >= 0) {
-						if ("text_delta".equals(deltaType) && text != null) {
-							block._text.append(text);
-							handler.onEvent(new StreamEvent.TextDelta(index, text));
-						} else if ("thinking_delta".equals(deltaType) && text != null) {
-							block._text.append(text);
-							handler.onEvent(new StreamEvent.ThinkingDelta(index, text));
-						} else if ("input_json_delta".equals(deltaType) && partialJson != null) {
-							block._arguments.append(partialJson);
-							handler.onEvent(new StreamEvent.ToolCallDelta(index, partialJson));
+						case "thinking_delta" -> {
+							String text = delta.getThinking();
+							if (text != null && !text.isEmpty()) {
+								accumulator.appendText(idx, text);
+								handler.onEvent(new StreamEvent.ThinkingDelta(idx, text));
+							}
+						}
+						case "input_json_delta" -> {
+							if (delta.getPartialJson() != null) {
+								accumulator.appendArguments(idx, delta.getPartialJson());
+								handler.onEvent(new StreamEvent.ToolCallDelta(idx, delta.getPartialJson()));
+							}
+						}
+						case "signature_delta" -> {
+							String sig = delta.getSignature();
+							if (sig != null && !sig.isEmpty()) {
+								accumulator.setContinuityToken(idx, sig);
+							}
 						}
 					}
 				}
 
 				case "content_block_stop" -> {
-					// Block already accumulated — nothing to do.
+					ContentBlockStopEvent e = ContentBlockStopEvent.readContentBlockStopEvent(jsonReader(data));
+					int idx = e.getIndex();
+					String blockType = accumulator.getBlockType(idx);
+					if (blockType != null) {
+						switch (blockType) {
+							case "text" -> handler.onEvent(new StreamEvent.TextEnd(idx));
+							case "thinking" -> handler.onEvent(new StreamEvent.ThinkingEnd(idx));
+							case "tool_use" -> handler.onEvent(new StreamEvent.ToolCallEnd(idx));
+						}
+					}
 				}
 
 				case "message_delta" -> {
-					try (JsonReader json = jsonReader(data)) {
-						json.beginObject();
-						while (json.hasNext()) {
-							switch (json.nextName()) {
-								case "delta" -> {
-									json.beginObject();
-									while (json.hasNext()) {
-										switch (json.nextName()) {
-											case "stop_reason" -> {
-												switch (json.peek()) {
-													case NULL -> json.skipValue();
-													default -> finishReason = json.nextString();
-												}
-											}
-											default -> json.skipValue();
-										}
-									}
-									json.endObject();
-								}
-								case "usage" -> {
-									// message_delta only carries output_tokens (incremental).
-									int[] u = parseUsage(json);
-									outputTokens += u[1];
-								}
-								default -> json.skipValue();
-							}
-						}
-						json.endObject();
+					MessageDeltaEvent e = MessageDeltaEvent.readMessageDeltaEvent(jsonReader(data));
+					MessageDeltaInfo d = e.getDelta();
+					if (d != null && d.getStopReason() != null && !d.getStopReason().isEmpty()) {
+						finishReason = d.getStopReason();
+					}
+					UsageInfo u = e.getUsage();
+					if (u != null) {
+						outputTokens += u.getOutputTokens();
 					}
 				}
 
 				case "message_stop" -> {
-					List<ContentPart> content = buildContentParts(blocks);
-					TokenUsage usage = new TokenUsage(
-						inputTokens, outputTokens, 0, cacheReadTokens, cacheWriteTokens);
 					handler.onEvent(new StreamEvent.MessageComplete(
 						messageId, model,
 						finishReason != null ? finishReason : "end_turn",
-						usage, content));
+						new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens, cacheWriteTokens),
+						accumulator.buildContentParts()));
 				}
 
 				case "error" -> {
-					throw parseStreamError(data);
+					StreamErrorEvent e = StreamErrorEvent.readStreamErrorEvent(jsonReader(data));
+					StreamErrorInfo err = e.getError();
+					String errType = err != null ? err.getType() : "";
+					String errMsg = err != null ? err.getMessage() : data;
+					handler.onEvent(new StreamEvent.Error(errMsg, classifyError(errType, 0)));
 				}
 
 				default -> { /* Ignore unknown event types. */ }
@@ -588,54 +229,10 @@ public class AnthropicProvider implements LLMProvider {
 		}
 	}
 
-	private static JsonReader jsonReader(String json) {
-		return new JsonReader(new StringR(json));
-	}
-
-	private int[] parseUsage(JsonReader json) throws IOException {
-		int input = 0, output = 0, cacheRead = 0, cacheWrite = 0;
-		json.beginObject();
-		while (json.hasNext()) {
-			switch (json.nextName()) {
-				case "input_tokens" -> input = json.nextInt();
-				case "output_tokens" -> output = json.nextInt();
-				case "cache_read_input_tokens" -> cacheRead = json.nextInt();
-				case "cache_creation_input_tokens" -> cacheWrite = json.nextInt();
-				default -> json.skipValue();
-			}
-		}
-		json.endObject();
-		return new int[] { input, output, cacheRead, cacheWrite };
-	}
-
-	private List<ContentPart> buildContentParts(Map<Integer, ContentBlock> blocks) {
-		List<ContentPart> parts = new ArrayList<>(blocks.size());
-		for (ContentBlock block : blocks.values()) {
-			if ("text".equals(block._type)) {
-				String text = block._text.toString();
-				if (!text.isEmpty()) {
-					parts.add(new TextContent(text));
-				}
-			} else if ("thinking".equals(block._type)) {
-				String text = block._text.toString();
-				if (!text.isEmpty()) {
-					parts.add(new ThinkingContent(text));
-				}
-			} else if ("tool_use".equals(block._type)) {
-				parts.add(new ToolCall(block._id, block._name, block._arguments.toString()));
-			}
-		}
-		return parts;
-	}
-
-	private void handleErrorResponse(HttpResponse<InputStream> response) throws ProviderException {
+	@Override
+	protected void handleErrorResponse(HttpResponse<InputStream> response) throws ProviderException {
 		int status = response.statusCode();
-		String body = "";
-		try (InputStream is = response.body()) {
-			body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			// Best effort.
-		}
+		String body = drainResponseBody(response);
 
 		Duration retryAfter = parseRetryAfter(response.headers());
 		String requestId = response.headers().firstValue("request-id").orElse(null);
@@ -643,37 +240,6 @@ public class AnthropicProvider implements LLMProvider {
 		ProviderException.Kind kind = classifyError(error[0], status);
 
 		throw new ProviderException(kind, status, error[1], retryAfter, requestId, null);
-	}
-
-	private ProviderException parseStreamError(String data) {
-		String type = "";
-		String message = "";
-		try (JsonReader json = jsonReader(data)) {
-			json.beginObject();
-			while (json.hasNext()) {
-				if ("error".equals(json.nextName())) {
-					json.beginObject();
-					while (json.hasNext()) {
-						switch (json.nextName()) {
-							case "type" -> type = json.nextString();
-							case "message" -> message = json.nextString();
-							default -> json.skipValue();
-						}
-					}
-					json.endObject();
-				} else {
-					json.skipValue();
-				}
-			}
-			json.endObject();
-		} catch (Exception e) {
-			if (message.isEmpty()) {
-				message = data;
-			}
-		}
-
-		ProviderException.Kind kind = classifyError(type, 0);
-		return new ProviderException(kind, 0, message);
 	}
 
 	/**
@@ -746,31 +312,4 @@ public class AnthropicProvider implements LLMProvider {
 		};
 	}
 
-	private Duration parseRetryAfter(java.net.http.HttpHeaders headers) {
-		return headers.firstValue("retry-after")
-			.map(value -> {
-				try {
-					return Duration.ofSeconds(Long.parseLong(value));
-				} catch (NumberFormatException e) {
-					return null;
-				}
-			})
-			.orElse(null);
-	}
-
-	private static final class ContentBlock {
-		final String _type;
-
-		final StringBuilder _text = new StringBuilder();
-
-		String _id;
-
-		String _name;
-
-		final StringBuilder _arguments = new StringBuilder();
-
-		ContentBlock(String type) {
-			_type = type;
-		}
-	}
 }

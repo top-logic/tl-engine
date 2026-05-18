@@ -11,7 +11,7 @@ import java.util.Map;
 import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.tl.ai.core.provider.LLMProviderRegistry;
+import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -275,23 +276,40 @@ public class ChatSessionManager {
 	 * Creates a default {@link ConversationMemory} with summarization strategy.
 	 *
 	 * <p>
-	 * Uses the system's default model from {@link LLMProviderRegistry} for summarization.
+	 * Uses the system's default model from {@link LLMService} for summarization.
 	 * Falls back to truncation if no default model is configured or if the registry is not
 	 * available.
 	 * </p>
 	 */
 	private static ConversationMemory createDefaultMemory() {
 		CompactionStrategy strategy = createCompactionStrategy();
-		return ConversationMemory.withDefaults(strategy, DEFAULT_CONTEXT_WINDOW_TOKENS);
+		int contextWindow = resolveContextWindow();
+		return ConversationMemory.withDefaults(strategy, contextWindow);
+	}
+
+	private static int resolveContextWindow() {
+		LLMService registry = LLMService.getInstance();
+		if (registry == null) {
+			return DEFAULT_CONTEXT_WINDOW_TOKENS;
+		}
+		String defaultModel = registry.getDefaultModel();
+		if (defaultModel == null || defaultModel.isBlank()) {
+			return DEFAULT_CONTEXT_WINDOW_TOKENS;
+		}
+		ModelInfo info = registry.getModel(defaultModel);
+		if (info == null) {
+			return DEFAULT_CONTEXT_WINDOW_TOKENS;
+		}
+		return info.limits().contextWindow();
 	}
 
 	private static CompactionStrategy createCompactionStrategy() {
-		LLMProviderRegistry registry = LLMProviderRegistry.getInstance();
+		LLMService registry = LLMService.getInstance();
 		if (registry == null) {
-			Logger.warn("LLMProviderRegistry not available, falling back to truncation.", ChatSessionManager.class);
+			Logger.warn("LLMService not available, falling back to truncation.", ChatSessionManager.class);
 			return new TruncatingStrategy();
 		}
-		String defaultModel = registry.getConfig().getDefaultModel();
+		String defaultModel = registry.getDefaultModel();
 		if (defaultModel == null || defaultModel.isBlank()) {
 			Logger.warn("No default model configured, falling back to truncation.", ChatSessionManager.class);
 			return new TruncatingStrategy();

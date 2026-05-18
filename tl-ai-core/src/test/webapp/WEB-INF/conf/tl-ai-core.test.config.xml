@@ -38,6 +38,13 @@
 				<entry value="com.top_logic.tl.ai.core.agent.AgentParams" />
 				<entry value="com.top_logic.tl.ai.core.agent.AgentResult" />
 				<entry value="com.top_logic.tl.ai.core.agent.approval.ApprovalRequest" />
+				<entry value="com.top_logic.tl.ai.core.provider.anthropic.messages" />
+				<entry value="com.top_logic.tl.ai.core.provider.openai.messages" />
+				<entry value="com.top_logic.tl.ai.core.provider.chatcompletions.messages" />
+				<entry value="com.top_logic.tl.ai.core.provider.catalog.ModelInfo" />
+				<entry value="com.top_logic.tl.ai.core.provider.AgentModelAssignment" />
+				<entry value="com.top_logic.tl.ai.core.agent.AgentDefinition" />
+				<entry value="com.top_logic.tl.ai.core.agent.SkillDefinition" />
 			</ignore>
 		</config>
 	</configs>

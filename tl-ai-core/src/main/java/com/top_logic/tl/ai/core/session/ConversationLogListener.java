@@ -12,9 +12,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.message.ContentPart;
+import com.top_logic.tl.ai.core.message.ThinkingContent;
 
 /**
  * Converts {@link AgentEvent}s into {@link Part}s and appends them to a
@@ -150,6 +153,33 @@ public class ConversationLogListener implements AgentEventListener {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			turn.addUsage(e.turnUsage());
+			backfillContinuityTokens(turn, e.contentParts());
+		}
+	}
+
+	private void backfillContinuityTokens(Turn turn, List<ContentPart> contentParts) {
+		List<ThinkingContent> thinkingContents = contentParts.stream()
+			.filter(ThinkingContent.class::isInstance)
+			.map(ThinkingContent.class::cast)
+			.toList();
+		if (thinkingContents.isEmpty()) {
+			return;
+		}
+		List<Part.ThinkingPart> thinkingParts = turn.assistantParts().stream()
+			.filter(Part.ThinkingPart.class::isInstance)
+			.map(Part.ThinkingPart.class::cast)
+			.toList();
+		int count = Math.min(thinkingParts.size(), thinkingContents.size());
+		for (int i = 0; i < count; i++) {
+			String token = thinkingContents.get(i).continuityToken();
+			if (token != null) {
+				Part.ThinkingPart old = thinkingParts.get(i);
+				int idx = turn.assistantParts().indexOf(old);
+				if (idx >= 0) {
+					turn.assistantParts().set(idx, new Part.ThinkingPart(
+						old.id(), old.timestamp(), old.text(), token));
+				}
+			}
 		}
 	}
 
@@ -380,15 +410,17 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
-	 * Resolve a completed delegation with result summary and duration.
+	 * Resolve a completed delegation with result summary, duration, and sub-agent metadata.
 	 */
-	public void resolveDelegation(String delegationId, String resultSummary, long durationMs) {
+	public void resolveDelegation(String delegationId, String resultSummary,
+			long durationMs, AgentResult agentResult) {
 		_activeDelegations.remove(delegationId);
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			Part existing = turn.findPart(delegationId);
 			if (existing instanceof Part.DelegationPart dp) {
-				turn.updatePart(delegationId, dp.completed(resultSummary, null, durationMs));
+				turn.updatePart(delegationId, dp.completed(resultSummary, null, durationMs,
+					agentResult.turnsUsed(), agentResult.totalUsage(), agentResult.stopReason()));
 			}
 		}
 	}
@@ -484,7 +516,7 @@ public class ConversationLogListener implements AgentEventListener {
 			}
 			if (_childThinkingBuffer.length() > 0) {
 				dp.childParts().add(new Part.ThinkingPart(
-					UUID.randomUUID().toString(), Instant.now(), _childThinkingBuffer.toString()));
+					UUID.randomUUID().toString(), Instant.now(), _childThinkingBuffer.toString(), null));
 				_childThinkingBuffer.setLength(0);
 			}
 		}
@@ -516,7 +548,7 @@ public class ConversationLogListener implements AgentEventListener {
 		if (_thinkingBuffer.length() > 0) {
 			turn.addAssistantPart(new Part.ThinkingPart(
 				UUID.randomUUID().toString(), Instant.now(),
-				_thinkingBuffer.toString()));
+				_thinkingBuffer.toString(), null));
 			_thinkingBuffer.setLength(0);
 		}
 	}

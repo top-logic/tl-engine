@@ -6,12 +6,22 @@
 package com.top_logic.tl.ai.tool.api;
 
 /**
- * Marker interface for tool execution context objects.
+ * Execution context available to all tools, regardless of which module defines them.
  *
- * <p>
- * Concrete runtime context implementations live in the tool runtime module.
- * </p>
+ * <p>Tools in {@code tl-ai-core} may downcast to the full {@code ToolContext} for
+ * access to security, transactions, and approval. Tools in external modules use
+ * only this interface.</p>
  */
 public interface ToolExecutionContext {
-	// Marker interface.
+
+	/**
+	 * Report progress to the UI during long-running operations.
+	 */
+	ProgressReporter progressReporter();
+
+	/**
+	 * Token for cooperative cancellation. Tools should check this periodically
+	 * during long-running operations.
+	 */
+	CancellationToken cancellationToken();
 }

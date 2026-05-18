@@ -133,6 +133,89 @@ public class TestFlowSvg extends TestCase {
 	}
 
 	/**
+	 * The generated SVG must inject a default {@code font-size} CSS rule that matches the
+	 * measurement scale ({@code textSize} points converted to pixels). Otherwise a {@code <text>}
+	 * element without explicit {@code font-size} would inherit the browser default (typically
+	 * 16px) regardless of {@code textSize}, leading to text that overflows its measured box.
+	 */
+	public void testDefaultFontCssInjected() throws IOException {
+		Diagram diagram = Diagram.create().setRoot(Text.create().setValue("Hello"));
+
+		// 12pt * 96/72 = 16px
+		String svg12 = readSvg(FlowFactory.toSvg(diagram, "d12.svg", 12.0, null, null));
+		assertTrue("Default font-family CSS missing: " + svg12,
+			svg12.contains("text:not([font-family]):not([class]){font-family:Arial;}"));
+		assertTrue("Default font-size CSS for 12pt should be 16px: " + svg12,
+			svg12.contains("text:not([font-size]):not([class]){font-size:16px;}"));
+
+		// 24pt * 96/72 = 32px
+		String svg24 = readSvg(FlowFactory.toSvg(diagram, "d24.svg", 24.0, null, null));
+		assertTrue("Default font-size CSS for 24pt should be 32px: " + svg24,
+			svg24.contains("text:not([font-size]):not([class]){font-size:32px;}"));
+	}
+
+	/**
+	 * The auto-sized viewBox width must grow proportionally with the requested {@code textSize}.
+	 * If measurement is hard-coded to a fixed font size (independent of {@code textSize}), the
+	 * viewBox width would not change.
+	 */
+	public void testBoxScalesWithTextSize() throws IOException {
+		Diagram d1 = Diagram.create().setRoot(Text.create().setValue("Hello World"));
+		Diagram d2 = Diagram.create().setRoot(Text.create().setValue("Hello World"));
+
+		FlowFactory.toSvg(d1, "small.svg", 12.0, null, null);
+		FlowFactory.toSvg(d2, "large.svg", 24.0, null, null);
+
+		double w12 = d1.getViewBoxWidth();
+		double w24 = d2.getViewBoxWidth();
+
+		assertTrue("Expected viewBox width > 0 for 12pt, got " + w12, w12 > 0);
+		assertTrue("Doubling textSize must roughly double the measured width; got "
+			+ w12 + " vs " + w24, w24 > 1.8 * w12 && w24 < 2.2 * w12);
+	}
+
+	/**
+	 * A bold text must measure wider than the same text in the default weight; otherwise the
+	 * {@code fontWeight} from the {@link Text} is ignored during measurement.
+	 */
+	public void testBoldTextIsWider() throws IOException {
+		Diagram normal = Diagram.create()
+			.setRoot(Text.create().setValue("Hello World"));
+		Diagram bold = Diagram.create()
+			.setRoot(Text.create().setValue("Hello World").setFontWeight("bold"));
+
+		FlowFactory.toSvg(normal, "normal.svg", 12.0, null, null);
+		FlowFactory.toSvg(bold, "bold.svg", 12.0, null, null);
+
+		assertTrue("Bold text must measure wider than regular; got "
+			+ normal.getViewBoxWidth() + " vs " + bold.getViewBoxWidth(),
+			bold.getViewBoxWidth() > normal.getViewBoxWidth());
+	}
+
+	/**
+	 * A text with an explicit {@code font-size} must produce a box that scales with that size,
+	 * independent of the context's default {@code textSize}.
+	 */
+	public void testPerTextFontSizeRespected() throws IOException {
+		Diagram small = Diagram.create()
+			.setRoot(Text.create().setValue("Hello").setFontSize("16px"));
+		Diagram large = Diagram.create()
+			.setRoot(Text.create().setValue("Hello").setFontSize("32px"));
+
+		FlowFactory.toSvg(small, "small-text.svg", 12.0, null, null);
+		FlowFactory.toSvg(large, "large-text.svg", 12.0, null, null);
+
+		assertTrue("Text at 32px must measure roughly twice as wide as text at 16px; got "
+			+ small.getViewBoxWidth() + " vs " + large.getViewBoxWidth(),
+			large.getViewBoxWidth() > 1.8 * small.getViewBoxWidth()
+				&& large.getViewBoxWidth() < 2.2 * small.getViewBoxWidth());
+	}
+
+	private static String readSvg(BinaryData svg) throws IOException {
+		return StreamUtilities.readAllFromStream(svg);
+	}
+
+	/**
 	 * Counts the number of non-overlapping occurrences of a substring in a string.
 	 */
 	private int countOccurrences(String text, String substring) {

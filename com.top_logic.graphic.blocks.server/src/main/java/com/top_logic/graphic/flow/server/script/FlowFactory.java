@@ -36,6 +36,7 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
+import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.graphic.flow.data.Align;
@@ -1406,19 +1407,34 @@ public class FlowFactory extends TLScriptFunctions {
 
 						if (_svgStarted) {
 							// Add default styles to the generated SVG.
+							tagWriter.beginTag("style");
+
+							// Synchronize the rendered font size with the AWT measurement. The
+							// AWT measurement uses textSize as a point value (and the resulting
+							// dimensions are already converted to CSS px inside AWTContext); the
+							// SVG/browser, however, treats unitless font-size as pixels.
+							// Without an explicit px default here, a <text> without font-size
+							// would inherit the browser default (typically 16px) regardless of
+							// textSize, and text would overflow its measured box.
+							double textSizePx = textSize * AWTContext.PX_PER_PT;
+							tagWriter.writeText(
+								"text:not([font-family]):not([class]){font-family:"
+									+ RenderContext.DEFAULT_FONT_FAMILY + ";}"
+									+ "text:not([font-size]):not([class]){font-size:"
+									+ formatPx(textSizePx) + "px;}");
+
 							BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
 							if (styles == null) {
 								Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
 							} else {
-								tagWriter.beginTag("style");
 								try (InputStream in = styles.getStream()) {
 									StreamUtilities.copyReaderWriterContents(
 										new InputStreamReader(in, StandardCharsets.UTF_8), tagWriter);
 								} catch (IOException ex) {
 									Logger.error("Failed to copy styles.", ex, FlowFactory.class);
 								}
-								tagWriter.endTag("style");
 							}
+							tagWriter.endTag("style");
 							_svgStarted = false;
 						}
 					}
@@ -1431,6 +1447,14 @@ public class FlowFactory extends TLScriptFunctions {
 		// Convert to binary data
 		byte[] svgBytes = buffer.toString().getBytes(StandardCharsets.UTF_8);
 		return BinaryDataFactory.createBinaryData(svgBytes, "image/svg+xml", filename);
+	}
+
+	private static String formatPx(double value) {
+		int intValue = (int) value;
+		if (value == intValue) {
+			return Integer.toString(intValue);
+		}
+		return Double.toString(value);
 	}
 
 }

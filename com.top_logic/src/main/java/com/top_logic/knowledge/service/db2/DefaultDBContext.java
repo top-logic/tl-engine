@@ -31,6 +31,7 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.IdentityHashSet;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.InlineSet;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.ResKey;
@@ -843,26 +844,22 @@ public class DefaultDBContext extends DBContext {
 			// Otherwise, rollback that is called after a failed commit would deny execution.
 	    	innermostTransaction = null;
 			return result;
+		} catch (KnowledgeBaseException | KnowledgeBaseRuntimeException | I18NRuntimeException | Error ex) {
+			doRollback(ex);
+			throw ex;
 		} catch (Throwable ex) {
-			try {
-				rollbackComplete(false);
-				checkLongRunningFailed();
-			} catch (Throwable rollbackFailure) {
-				ex.addSuppressed(rollbackFailure);
-			}
-			if (ex instanceof KnowledgeBaseException) {
-				// Do not duplicate exception.
-				throw (KnowledgeBaseException) ex;
-			} else if (ex instanceof KnowledgeBaseRuntimeException || ex instanceof KnowledgeBaseUIException) {
-				// Do not mask KB internal failures.
-				throw (RuntimeException) ex;
-			} else if (ex instanceof Error) {
-				// Do not mask VM internal problems.
-				throw (Error) ex;
-			}
+			doRollback(ex);
 			throw new KnowledgeBaseException("Database operation failed.", ex);
         }
-		
+	}
+
+	private void doRollback(Throwable ex) {
+		try {
+			rollbackComplete(false);
+			checkLongRunningFailed();
+		} catch (Throwable rollbackFailure) {
+			ex.addSuppressed(rollbackFailure);
+		}
 	}
 
 	private void checkVetoReferences() {

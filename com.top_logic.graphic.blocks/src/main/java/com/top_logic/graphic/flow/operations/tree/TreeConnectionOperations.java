@@ -67,7 +67,7 @@ public interface TreeConnectionOperations extends Drawable {
 		// once per parent by TreeLayoutOperations.drawGridBuses; the per-connection draw then only
 		// adds the horizontal stub from the relevant sub-column bus into the child's left edge.
 		TreeLayout owner = self().getOwner();
-		TreeRenderInfo info = ((TreeLayoutOperations) owner).treeInfo();
+		TreeRenderInfo info = owner.treeInfo();
 		TreeNode parentNode = info.getNodeForAnchor(parent.getAnchor());
 		boolean grid = info.getGridInfo(parentNode) != null;
 

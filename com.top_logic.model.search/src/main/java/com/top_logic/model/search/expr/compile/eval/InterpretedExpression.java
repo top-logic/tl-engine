@@ -5,9 +5,13 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
+import java.util.function.Function;
+
+import com.top_logic.dob.MetaObject;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
+import com.top_logic.model.search.expr.compile.transform.FilterCompiler.Parameters;
 
 /**
  * {@link Value} that must be interpreted in memory.
@@ -39,8 +43,18 @@ public class InterpretedExpression extends AbstractValue {
 	}
 
 	@Override
-	public Expression compiled() {
-		throw new UnsupportedOperationException();
+	public boolean notifyExpectedCompiledType(MetaObject type) {
+		throw new UnsupportedOperationException("No compiled part");
+	}
+
+	@Override
+	public Function<Parameters, Expression> compiled() {
+		throw new UnsupportedOperationException("No compiled part");
+	}
+
+	@Override
+	public MetaObject compiledType() {
+		throw new UnsupportedOperationException("No compiled part");
 	}
 
 	@Override

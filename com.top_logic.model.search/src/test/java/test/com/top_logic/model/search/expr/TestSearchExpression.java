@@ -69,6 +69,7 @@ import com.top_logic.model.search.expr.ToSystemCalendar;
 import com.top_logic.model.search.expr.ToUserCalendar;
 import com.top_logic.model.search.expr.config.operations.Label;
 import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
@@ -84,6 +85,37 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestSearchExpression extends AbstractSearchExpressionTest {
+
+	public void testKBSearch() {
+		with("TestSearchExpression-testKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertNotNull(a0);
+				assertNotNull(
+					"Test should test delegating filter access to KB, therefore the name attribute must be a database column",
+					a0.tTable().getAttributeOrNull("name"));
+				TLObject a1 = scenario.getObject("a1");
+				assertNotNull(a1);
+				TLObject a2 = scenario.getObject("a2");
+				assertNotNull(a2);
+				SearchExpression search = search(
+					"x -> all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'A0').singleElement() == $x");
+				assertTrue((Boolean) executeCompiled(search, a0));
+
+				QueryExecutor search1 = QueryExecutor.compile(search(
+					"name -> all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == $name)"));
+				assertEquals(list(a0), search1.execute("A0"));
+				assertEquals(set(a1, a2), asSet(search1.execute("A1")));
+				assertEquals("Search must not fail using type-incompatible argument.", list(), search1.execute(list()));
+
+				TLObject a3 = scenario.getObject("a3");
+				assertNotNull(a3);
+				assertEquals(list(a3), search1.execute("true"));
+				assertEquals("Fuzzy match expected.", list(a3), execute(search(
+					"all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == true)")));
+				assertEquals("Fuzzy match expected.", list(a3), search1.execute(true));
+			});
+	}
 
 	public void testSimpleSearch() {
 		with("TestSearchExpression-testSimpleSearch.scenario.xml",
@@ -2456,7 +2488,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	private Object value(TLObject obj, String name) {
-		return obj.tValue(((TLClass) obj.tType()).getPart(name));
+		return obj.tValue(obj.tType().getPart(name));
 	}
 
 	public static Test suite() {

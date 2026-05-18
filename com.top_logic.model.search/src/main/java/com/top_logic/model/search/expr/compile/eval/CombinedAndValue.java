@@ -5,11 +5,16 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
+import java.util.function.Function;
+
+import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
+import com.top_logic.model.search.expr.compile.transform.FilterCompiler.Parameters;
 
 /**
  * Special {@link Value} that represents an {@link And} operation where one part can be
@@ -19,7 +24,7 @@ import com.top_logic.model.search.expr.SearchExpressionFactory;
  */
 public class CombinedAndValue extends AbstractValue {
 
-	private Expression _compiled;
+	private Function<Parameters, Expression> _compiled;
 
 	private SearchExpression _interpreted;
 
@@ -31,7 +36,7 @@ public class CombinedAndValue extends AbstractValue {
 	 * @param interpreted
 	 *        See {@link #interpreted()}.
 	 */
-	public CombinedAndValue(Expression compiled, SearchExpression interpreted) {
+	public CombinedAndValue(Function<Parameters, Expression> compiled, SearchExpression interpreted) {
 		_compiled = compiled;
 		_interpreted = interpreted;
 	}
@@ -47,13 +52,23 @@ public class CombinedAndValue extends AbstractValue {
 	}
 
 	@Override
-	public Expression compiled() {
+	public Function<Parameters, Expression> compiled() {
 		return _compiled;
+	}
+
+	@Override
+	public MetaObject compiledType() {
+		return MOPrimitive.BOOLEAN;
 	}
 
 	@Override
 	public SearchExpression interpreted() {
 		return _interpreted;
+	}
+
+	@Override
+	public boolean notifyExpectedCompiledType(MetaObject type) {
+		return compiledType().isSubtypeOf(type);
 	}
 
 	@Override
@@ -65,9 +80,12 @@ public class CombinedAndValue extends AbstractValue {
 			interpretedAnd = interpreted();
 		}
 
-		Expression compiledAnd;
+		Function<Parameters, Expression> compiledAnd;
 		if (other.hasCompiledPart()) {
-			compiledAnd = ExpressionFactory.and(compiled(), other.compiled());
+			if (!other.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
+				return new InterpretedExpression(orig);
+			}
+			compiledAnd = params -> ExpressionFactory.and(compiled().apply(params), other.compiled().apply(params));
 		} else {
 			compiledAnd = compiled();
 		}

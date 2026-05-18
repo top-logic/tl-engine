@@ -33,7 +33,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
  * Knowledgebase, Knowledgebases are created on demand.
  *</p>
  *
- * @author  Klaus Halfmann / Jörg Connotte
+ * @author  Klaus Halfmann / JÃ¶rg Connotte
  */
 @ServiceDependencies({ ConnectionPoolRegistry.Module.class,
 	ApplicationConfig.Module.class,

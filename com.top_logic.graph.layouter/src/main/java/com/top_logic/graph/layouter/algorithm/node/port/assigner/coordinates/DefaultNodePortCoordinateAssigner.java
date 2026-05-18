@@ -19,7 +19,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
 /**
  * Assign {@link NodePort} coordinates.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultNodePortCoordinateAssigner implements NodePortAssignAlgorithm {
 	/**

@@ -38,7 +38,7 @@ public class EncryptedDataManager extends BLOBDataManager {
     private SecretKeySpec keySpec;
 
 	/**
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends AbstractDataManager.Config {
 		/**

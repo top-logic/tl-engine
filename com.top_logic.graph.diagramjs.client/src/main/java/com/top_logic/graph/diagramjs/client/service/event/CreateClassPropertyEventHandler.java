@@ -18,7 +18,7 @@ import com.top_logic.graph.diagramjs.util.DiagramJSGraphControlCommon;
 /**
  * Triggers server side create dialog for creating a class property.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class CreateClassPropertyEventHandler implements EventHandler {
 

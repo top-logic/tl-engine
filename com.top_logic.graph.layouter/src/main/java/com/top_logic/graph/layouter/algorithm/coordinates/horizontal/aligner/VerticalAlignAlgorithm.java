@@ -15,7 +15,7 @@ import com.top_logic.graph.layouter.model.layer.DefaultAlternatingLayer;
  * Aligns the nodes of a layered graph in blocks. Each block is 'connected' and contains at most one
  * node per layer.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface VerticalAlignAlgorithm {
 

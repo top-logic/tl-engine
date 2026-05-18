@@ -8,7 +8,7 @@ package com.top_logic.client.diagramjs.event;
 /**
  * General diagramjs event names.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface GeneralEventNames extends CommonEventNames {
 

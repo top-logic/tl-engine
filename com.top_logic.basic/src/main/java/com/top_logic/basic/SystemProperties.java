@@ -31,7 +31,7 @@ public class SystemProperties extends ManagedClass {
 	/**
 	 * Configuration for system properties.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<SystemProperties> {
 		/**
@@ -97,7 +97,7 @@ public class SystemProperties extends ManagedClass {
 	/**
 	 * Module for {@link SystemProperties}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<SystemProperties> {
 

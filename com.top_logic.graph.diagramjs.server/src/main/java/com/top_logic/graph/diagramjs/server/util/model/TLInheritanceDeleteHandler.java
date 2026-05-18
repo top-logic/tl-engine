@@ -23,14 +23,14 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Delete handler for {@link TLInheritance}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLInheritanceDeleteHandler extends AbstractCommandHandler {
 
 	/**
 	 * Configuration of {@link TLInheritanceDeleteHandler}.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends AbstractCommandHandler.Config {
 

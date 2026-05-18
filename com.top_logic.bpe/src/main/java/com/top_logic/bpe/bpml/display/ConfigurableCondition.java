@@ -27,7 +27,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * {@link RuleCondition} that determines either a {@link SequenceFlow} can be accessed or not and
  * under which circumstances.
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ConfigurableCondition extends AbstractConfiguredInstance<ConfigurableCondition.Config<?>> implements RuleCondition {
 

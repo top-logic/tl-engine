@@ -68,13 +68,13 @@ public class TestStreamFinder extends TestCase {
 			for (int i = 0; i < 1111; i++) {
 				pw.println("This is a dummy Text to fill this file with Text to be searched");
 				pw.println("0123456789 the quick brown fox jumps over the lazy dogs back.");
-				pw.println("ÄÖÜäöüßêÁÒ THE QUICK BROWN FOX JUMPS OVER THE LAZY DOGS BACK:");
+				pw.println("Ã„Ã–ÃœÃ¤Ã¶Ã¼ÃŸÃªÃÃ’ THE QUICK BROWN FOX JUMPS OVER THE LAZY DOGS BACK:");
 			}
-			pw.println("[{IgnoreMe}]=^°" + SEARCH + "\\//?~*+-.,;:_");
+			pw.println("[{IgnoreMe}]=^Â°" + SEARCH + "\\//?~*+-.,;:_");
 			for (int i = 0; i < 100; i++) {
 				pw.println("This is a dummy Text to fill this file with Text to be searched");
 				pw.println("0123456789 the quick brown fox jumps over the lazy dogs back.");
-				pw.println("ÄÖÜäöüßêÁÒ THE QUICK BROWN FOX JUMPS OVER THE LAZY DOGS BACK:");
+				pw.println("Ã„Ã–ÃœÃ¤Ã¶Ã¼ÃŸÃªÃÃ’ THE QUICK BROWN FOX JUMPS OVER THE LAZY DOGS BACK:");
 			}
 		} finally {
 			out.close();

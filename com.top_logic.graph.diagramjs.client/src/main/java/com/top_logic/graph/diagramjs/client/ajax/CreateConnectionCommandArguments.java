@@ -14,7 +14,7 @@ import com.top_logic.common.remote.shared.SharedObject;
 /**
  * The arguments for calling the CreateTLAssociationCommand.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateConnectionCommandArguments extends AJAXArguments {
 

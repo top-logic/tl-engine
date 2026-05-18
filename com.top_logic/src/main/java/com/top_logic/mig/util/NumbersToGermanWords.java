@@ -19,17 +19,17 @@ public class NumbersToGermanWords {
     /** Singular german numbers */
     private static final String[] NULL_BIS_ZWOELF = 
         {"Null"    , "Eins", "Zwei"    , "Drei", 
-         "Vier"    , "Fünf", "Sechs"   , "Sieben", 
-         "Acht"    , "Neun", "Zehn"    , "Elf"   , "Zwölf" };
+         "Vier"    , "FÃ¼nf", "Sechs"   , "Sieben", 
+         "Acht"    , "Neun", "Zehn"    , "Elf"   , "ZwÃ¶lf" };
          
     /** (Start of) Plural german numbers (first variant) */
     private static final String[] EINUNDZWANZIG_BIS = 
-        {"Null",    "Ein",      "Zwei",   "Drei",   "Vier", "Fünf", 
-         "Sechs",   "Sieben",   "Acht",   "Neun",   "Zehn", "Elf", "Zwölf"};
+        {"Null",    "Ein",      "Zwei",   "Drei",   "Vier", "FÃ¼nf", 
+         "Sechs",   "Sieben",   "Acht",   "Neun",   "Zehn", "Elf", "ZwÃ¶lf"};
          
     /** (Start of) Plural german numbers (second variant) */
     private static final String[] DREIZEHN_BIS_NEUNZEHN = 
-        {"Null",    "Eins",     "Zwei",   "Drei",   "Vier", "Fünf", 
+        {"Null",    "Eins",     "Zwei",   "Drei",   "Vier", "FÃ¼nf", 
          "Sech",    "Sieb",     "Acht",   "Neun",   "Zehn"};
     
     /** Single Millions,Billions etc. */     
@@ -122,11 +122,11 @@ public class NumbersToGermanWords {
                 return EINUNDZWANZIG_BIS[iZahl - 20] + "undzwanzig";
             }            
             else if (zahl == 30) {
-                return "Dreißig";
+                return "DreiÃŸig";
             }
             
             else if (zahl <= 39){
-                return EINUNDZWANZIG_BIS[iZahl - 30] + "unddreißig";
+                return EINUNDZWANZIG_BIS[iZahl - 30] + "unddreiÃŸig";
             }
             
             else  { //  40 - 99 
@@ -177,7 +177,7 @@ public class NumbersToGermanWords {
             return kiloAndMore(tausender) + "tausend" 
                                 + hunderterrest(hunderterrest);
         }
-        //  Bereich bis zur größten darstellbaren Long - Zahl 
+        //  Bereich bis zur grÃ¶ÃŸten darstellbaren Long - Zahl 
         else { // (aZahl >= 1000000L ) 
             return overOneMillion(aZahl);                    
         }

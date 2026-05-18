@@ -13,7 +13,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Provides the defining {@link ThemeConfig} from a given {@link ThemeResource}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeConfigByResourceProvider implements ModelProvider {
 

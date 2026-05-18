@@ -21,7 +21,7 @@ import com.top_logic.model.TLModelPart;
  * Creates a new {@link GraphPart}, client side representation, for a newly created, diagram
  * relevant, {@link TLModelPart}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class PostGraphPartCreationAction implements PostCreateAction {
 

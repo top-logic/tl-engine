@@ -16,7 +16,7 @@ import com.top_logic.util.Resources;
 /**
  * Solver for quadratic equations.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class QuadraticEquationSolver implements Consumer<RealPolynom> {
 

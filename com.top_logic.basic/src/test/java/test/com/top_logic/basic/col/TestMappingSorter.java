@@ -192,8 +192,8 @@ public class TestMappingSorter extends BasicTestCase {
 
 	public void testLabeledSort() {
 		NamedConstant o1 = new NamedConstant("Aber");
-		NamedConstant o2 = new NamedConstant("Ärger");
-		NamedConstant o3 = new NamedConstant("über");
+		NamedConstant o2 = new NamedConstant("Ã„rger");
+		NamedConstant o3 = new NamedConstant("Ã¼ber");
 		NamedConstant o4 = new NamedConstant("Uboot");
 		
 		Mapping<Object, String> toString = new Mapping<>() {

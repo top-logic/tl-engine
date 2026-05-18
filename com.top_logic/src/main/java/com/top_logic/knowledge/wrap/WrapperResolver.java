@@ -24,7 +24,7 @@ import com.top_logic.layout.ResourceProvider;
  * A UI-centric resource name for a dynamic type is constructed by {@link #getResourceType(String)}.
  * </p>
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface WrapperResolver {
 

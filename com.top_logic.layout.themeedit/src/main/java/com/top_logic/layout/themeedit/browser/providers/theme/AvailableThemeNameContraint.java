@@ -17,7 +17,7 @@ import com.top_logic.layout.themeedit.browser.providers.I18NConstants;
 /**
  * Checks if the theme name is free.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class AvailableThemeNameContraint extends ValueConstraint<String> {
 

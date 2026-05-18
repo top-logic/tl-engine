@@ -28,9 +28,9 @@ public class DemoLargeTableModelBuilder implements ListModelBuilder {
 												   "Matthias", "Alexander"};
 	private final static String[] surNames = {"Schmidt", "Krause", "Schubert", "Klein",
 											  "Rose", "Schill", "Vogler", "Ganter",
-											  "Brunner", "Lehner", "H‰rtig", "Aﬂmann",
+											  "Brunner", "Lehner", "H√§rtig", "A√ümann",
 											  "Baader", "Spallek", "Nagel", "Hochberger",
-											  "Pfitzmann", "Petersohn", "Flach", "Meiﬂner"};
+											  "Pfitzmann", "Petersohn", "Flach", "Mei√üner"};
 
 	/**
 	 * Singleton {@link DemoLargeTableModelBuilder} instance.

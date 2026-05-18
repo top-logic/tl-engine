@@ -27,14 +27,14 @@ import com.top_logic.dsa.repos.RepositoryInfo;
 /**
  * Cloud based implementation of a top-logic repository.
  * 
- * @author    <a href="mailto:Michael Gänsler@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:Michael GÃ¤nsler@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CloudBasedRepository<C extends CloudContainerObject, L extends CloudLeafObject> extends AbstractRepository<C, L> {
 
 	/**
 	 * Configuration of {@link CloudBasedRepository}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config<I extends CloudBasedRepository<?, ?>> extends AbstractRepository.Config<I> {
 

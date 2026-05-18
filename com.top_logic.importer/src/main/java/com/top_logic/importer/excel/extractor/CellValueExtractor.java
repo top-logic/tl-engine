@@ -21,14 +21,14 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Extract a cell values by using the configured {@link Transformer} in the mapping configurations.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CellValueExtractor implements Extractor {
 
 	/**
 	 * Extractor can handle several cells. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends Extractor.Config {
 
@@ -40,7 +40,7 @@ public class CellValueExtractor implements Extractor {
     /**
      * Mapping will contain the cell name here. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface MappingConfig extends AbstractExcelFileImportParser.MappingConfig {
 

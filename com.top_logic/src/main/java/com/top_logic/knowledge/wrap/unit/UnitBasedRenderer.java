@@ -15,7 +15,7 @@ import com.top_logic.layout.Renderer;
 /**
  * Render a number value based on the unit the instance has been initialized with.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class UnitBasedRenderer implements Renderer<Number> {
 

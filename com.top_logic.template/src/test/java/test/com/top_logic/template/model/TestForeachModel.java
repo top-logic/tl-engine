@@ -68,7 +68,7 @@ public class TestForeachModel extends BasicTestCase {
 		"<%/ foreach %>";
 		
 		String theExpected = "start\n" +
-		"Bentz, Schneider, Sattler, G‰nsler, Mausz" +
+		"Bentz, Schneider, Sattler, G√§nsler, Mausz" +
 		"\ne\"nd";
 		
 		String theResult = ModelUtils.doExpand(toParse);
@@ -85,7 +85,7 @@ public class TestForeachModel extends BasicTestCase {
 		                 "<%/ foreach %>";
 		
 		String theExpected = "start\n" +
-				             "<Bentz>, <Schneider>, <Sattler>, <G‰nsler>, <Mausz>" +
+				             "<Bentz>, <Schneider>, <Sattler>, <G√§nsler>, <Mausz>" +
 				             "\nend";
 		
 		String theResult = ModelUtils.doExpand(toParse);
@@ -295,17 +295,17 @@ public class TestForeachModel extends BasicTestCase {
 				             "  </Person>\n" +
 				             "  <Person Value=\"199\" Enabled=\"true\">\n" +
 				             "    <Name>Michael</Name>\n" +
-				             "    <Familyname>G‰nsler</Familyname>\n" +
+				             "    <Familyname>G√§nsler</Familyname>\n" +
 				             "    <Accounts>\n" +
 				             "      <acc name=\"acc0\">\n" +
-				             "        <login>mg‰</login>\n" +
-				             "        <id>acc_mg‰</id>\n" +
-				             "        <passwd>0mg‰123</passwd>\n" +
+				             "        <login>mg√§</login>\n" +
+				             "        <id>acc_mg√§</id>\n" +
+				             "        <passwd>0mg√§123</passwd>\n" +
 				             "      </acc>\n" +
 				             "      <acc name=\"acc1\">\n" +
-				             "        <login>mg‰</login>\n" +
-				             "        <id>acc_mg‰</id>\n" +
-				             "        <passwd>1mg‰123</passwd>\n" +
+				             "        <login>mg√§</login>\n" +
+				             "        <id>acc_mg√§</id>\n" +
+				             "        <passwd>1mg√§123</passwd>\n" +
 				             "      </acc>\n" +
 				             "    </Accounts>\n" +
 				             "  </Person>\n" +

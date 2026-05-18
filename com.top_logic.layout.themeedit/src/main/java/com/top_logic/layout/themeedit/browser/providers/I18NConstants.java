@@ -16,7 +16,7 @@ import com.top_logic.layout.ResPrefix;
  * @see ResPrefix
  * @see ResKey
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class I18NConstants extends I18NConstantsBase {
 

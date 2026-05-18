@@ -334,13 +334,13 @@ public final class Query {
                     continue;
                   
                 case '"':                  
-				case '\u00c4': // Ä (not used in switch case for encoding problems)
-				case '\u00e4': // ä (not used in switch case for encoding problems)
-				case '\u00d6': // Ö (not used in switch case for encoding problems)
-				case '\u00f6': // ö (not used in switch case for encoding problems)
-				case '\u00dc': // Ü (not used in switch case for encoding problems)
-				case '\u00fc': // ü (not used in switch case for encoding problems)
-				case '\u00df': // ß (not used in switch case for encoding problems)
+				case '\u00c4': // Ã„ (not used in switch case for encoding problems)
+				case '\u00e4': // Ã¤ (not used in switch case for encoding problems)
+				case '\u00d6': // Ã– (not used in switch case for encoding problems)
+				case '\u00f6': // Ã¶ (not used in switch case for encoding problems)
+				case '\u00dc': // Ãœ (not used in switch case for encoding problems)
+				case '\u00fc': // Ã¼ (not used in switch case for encoding problems)
+				case '\u00df': // ÃŸ (not used in switch case for encoding problems)
                     retval.append(ch);
                     continue;
                   

@@ -10,7 +10,7 @@ import com.top_logic.basic.config.annotation.TagName;
 /**
  * {@link JSONValue} primitive for a string.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @TagName(JSONString.TAG_NAME)
 public interface JSONString extends JSONValue {

@@ -31,7 +31,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Provide {@link Wrapper}s as defined by the configuration for list and grid components.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WrapperListModelBuilder<C extends WrapperListModelBuilder.Config> extends AbstractConfiguredInstance<C>
 		implements ListModelBuilder {
@@ -39,7 +39,7 @@ public class WrapperListModelBuilder<C extends WrapperListModelBuilder.Config> e
 	/**
 	 * Configuration for getting attributes from an {@link AbstractWrapperResolver} (factory).
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends PolymorphicConfiguration<WrapperListModelBuilder<?>> {
 

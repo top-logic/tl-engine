@@ -12,7 +12,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * Utilities to add propeties to an existant {@link JavaScriptObject}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class JavaScriptObjectUtil {
 

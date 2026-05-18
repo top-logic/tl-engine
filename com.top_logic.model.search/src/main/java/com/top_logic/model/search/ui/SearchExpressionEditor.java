@@ -17,7 +17,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Editor to create {@link SearchExpression}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface SearchExpressionEditor {
 

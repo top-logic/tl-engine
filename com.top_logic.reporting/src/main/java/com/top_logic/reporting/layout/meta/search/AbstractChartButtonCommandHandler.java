@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Allow a GOTO from {@link ChartGotoAware} via a {@link CategoryURLGenerator} and a {@link AttributedSearchResultSet}
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractChartButtonCommandHandler extends AJAXCommandHandler {
 

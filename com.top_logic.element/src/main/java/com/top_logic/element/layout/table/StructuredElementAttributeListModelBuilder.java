@@ -17,7 +17,7 @@ import com.top_logic.model.TLObject;
 /**
  * Build a list model with values from an attribute of a {@link TLObject}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementAttributeListModelBuilder<C extends StructuredElementAttributeListModelBuilder.Config<?>>
 		extends StructureReferenceListModelBuilder<C> {
@@ -25,7 +25,7 @@ public class StructuredElementAttributeListModelBuilder<C extends StructuredElem
 	/**
 	 * Configuration for getting attributes from a structured element.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config<I extends StructuredElementAttributeListModelBuilder<?>>
 			extends StructureReferenceListModelBuilder.Config<I> {

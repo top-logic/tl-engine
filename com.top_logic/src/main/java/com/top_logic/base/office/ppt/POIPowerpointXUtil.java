@@ -967,7 +967,7 @@ public class POIPowerpointXUtil {
 		            case '*':
 		            case '/':
 		            case '=':
-		            case '€':
+		            case 'Â€':
 		            case '$':
 		            case '(':
 		            case ')':

@@ -21,7 +21,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * In contrast to the {@link ShowHiddenElementsHandler}, these changes are permanent.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 @Label("Show all elements")
 public class ShowAllElements extends AbstractCommandHandler {

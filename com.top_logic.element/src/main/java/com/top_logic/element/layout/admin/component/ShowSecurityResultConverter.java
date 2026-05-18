@@ -44,7 +44,7 @@ import com.top_logic.tool.boundsec.wrap.Group;
 /**
  * Convert the result from the security storage to a human readable object.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ShowSecurityResultConverter {
 
@@ -322,7 +322,7 @@ public class ShowSecurityResultConverter {
 	/**
 	 * Resolve a collection of business objects on demand. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public class ShowSecurityBusinessObjectResolver {
 

@@ -48,7 +48,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
  * If there is no matching business component, we use the nearest {@link Selectable} to find a
  * context we can reconstruct later on.
  * 
- * @author <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link SetHomepageHandler}.
  */

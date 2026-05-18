@@ -8,7 +8,7 @@ package com.top_logic.graph.diagramjs.server.util.layout;
 /**
  * Dimension for a graphical component.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Dimension {
 	private double _width;

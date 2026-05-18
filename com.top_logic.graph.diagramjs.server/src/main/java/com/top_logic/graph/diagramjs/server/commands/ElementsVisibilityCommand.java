@@ -26,7 +26,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @see ElementsVisibilityHandler
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ElementsVisibilityCommand extends ControlCommand {
 

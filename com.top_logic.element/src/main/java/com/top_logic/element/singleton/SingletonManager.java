@@ -11,7 +11,7 @@ import com.top_logic.basic.config.annotation.Name;
 /**
  * Configuration for the singleton manager.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface SingletonManager extends ConfigurationItem {
 	String CLASS = "class";

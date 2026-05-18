@@ -41,7 +41,7 @@ import com.top_logic.util.regex.TLRegexBuilder;
 /**
  * Command calculating autocompletion suggestions for the given prefix.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLScriptAutoCompletionCommand extends ControlCommand implements TLScriptConstants {
 

@@ -116,8 +116,8 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 		Wrapper wrapper4 = new TestWrapper("bbb", DummyKnowledgeObject.item("idb"));
 		Wrapper wrapper5 = new TestWrapper("ccc", DummyKnowledgeObject.item("idc"));
 		Wrapper wrapper6 = new TestWrapper("ddd", DummyKnowledgeObject.item("idd"));
-		Wrapper wrapper7 = new TestWrapper("‹‹‹", DummyKnowledgeObject.item("id‹"));
-		Wrapper wrapper8 = new TestWrapper("ﬂﬂﬂ", DummyKnowledgeObject.item("idﬂ"));
+		Wrapper wrapper7 = new TestWrapper("√ú√ú√ú", DummyKnowledgeObject.item("id√ú"));
+		Wrapper wrapper8 = new TestWrapper("√ü√ü√ü", DummyKnowledgeObject.item("id√ü"));
         
         List<Wrapper> list = new ArrayList<>(8);
         list.add(wrapper8);

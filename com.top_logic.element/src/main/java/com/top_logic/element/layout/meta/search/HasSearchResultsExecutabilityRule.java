@@ -14,7 +14,7 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * Checks if an {@link AttributedSearchResultSet} contains result objects.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class HasSearchResultsExecutabilityRule implements ExecutabilityRule {
 

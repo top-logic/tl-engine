@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Ordered {@link NodeLayering}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class OrderedNodeLayering extends NodeLayering<OrderedNodeLayer> {
 

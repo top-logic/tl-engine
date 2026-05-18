@@ -13,7 +13,7 @@ import com.top_logic.layout.form.model.SelectField;
  * Special version of the {@link DefaultFormFieldControlProvider} which
  * uses a selection control instead of a select control for select fields.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SelectionControlProvider extends DefaultFormFieldControlProvider {
 

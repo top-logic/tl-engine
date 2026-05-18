@@ -8,7 +8,7 @@ package com.top_logic.graph.diagramjs.server.util.layout;
 /**
  * Bounds for a graphical component.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Bounds {
 	private Position _position;

@@ -39,14 +39,14 @@ import com.top_logic.tool.boundsec.assistent.ValidatingUploadHandler.ImportMessa
  * 
  * <p>This class will normally be used by an {@link AbstractImportPerformer}.</p>
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractImportParser implements ConfiguredInstance<AbstractImportParser.Config> {
 
     /**
      * Base configuration of import parsers. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public interface Config extends PolymorphicConfiguration<AbstractImportParser> {
 //

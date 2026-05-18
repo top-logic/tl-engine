@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Command to create an resource folder.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateResourceFolderCommand implements Command {
 

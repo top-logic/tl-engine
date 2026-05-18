@@ -35,7 +35,7 @@ public abstract class TestBase64Encoder extends TestCase {
 	public void testEncryptDecryptSpecialChars() {
 		Base64Encoder encoder = newBase64Encoder("My funny key");
 
-		encodeDecode(encoder, "value To Encod%&ง$_#+~*.:,;!^-e.");
+		encodeDecode(encoder, "value To Encod%&ยง$_#+~*.:,;!^-e.");
 	}
 
 	public void testEncryptDecryptLongValue() {

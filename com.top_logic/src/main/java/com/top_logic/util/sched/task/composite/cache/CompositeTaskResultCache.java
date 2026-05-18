@@ -30,7 +30,7 @@ import com.top_logic.util.sched.task.result.TaskResult;
  * {@link Task} and all its descendants, recursively.
  * <p>
  * The relations are initialized when the constructor is called. The runtime complexity is optimized
- * from the naive O(n²) approach to O(n*log(n)), where "n" is the number of {@link TaskResult}s per
+ * from the naive O(nÂ²) approach to O(n*log(n)), where "n" is the number of {@link TaskResult}s per
  * {@link Task}. Algorithm: Sort the {@link TaskResult}s for each {@link Task} separately by date.
  * Move along the lists of parent and child {@link TaskResult}s and take the first child
  * {@link TaskResult} from each list as the corresponding one. <br/>

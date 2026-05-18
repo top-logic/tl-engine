@@ -11,7 +11,7 @@ import com.top_logic.bpe.execution.model.ProcessExecution;
 /**
  * Defines conditions that govern sequence flow transitions.
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public interface RuleCondition {
 

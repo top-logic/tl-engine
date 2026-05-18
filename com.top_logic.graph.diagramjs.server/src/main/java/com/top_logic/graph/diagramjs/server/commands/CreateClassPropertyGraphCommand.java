@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * A {@link ControlCommand} for creating class properties.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateClassPropertyGraphCommand extends ControlCommand {
 

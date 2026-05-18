@@ -17,7 +17,7 @@ import com.top_logic.basic.tools.NameBuilder;
 /**
  * Abstract base implementation of a kafka topic.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractKafkaTopic<M extends Object> implements KafkaTopic<M> {
 

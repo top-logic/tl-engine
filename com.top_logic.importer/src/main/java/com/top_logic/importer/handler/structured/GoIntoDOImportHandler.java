@@ -18,7 +18,7 @@ import com.top_logic.importer.xml.XMLFileImportParser;
 /**
  * Set the name of the given {@link Wrapper} from the data of the given {@link DataObject}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GoIntoDOImportHandler<C extends XMLFileImportParser.MappingConfig, O extends Object> extends AbstractDOImportHandler<C, O> {
 

@@ -48,7 +48,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Wrapper for IMAP based mails.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class IMAPMail extends AbstractContainerWrapper implements Mail {
 

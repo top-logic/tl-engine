@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Abstract;
  * Abstract interface for a json node value. A {@link JSONValue} could be a {@link String},
  * {@link Integer}, {@link Float}, {@link Boolean}, {@link List} or a {@link JSONObject}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @Abstract
 public interface JSONValue extends ConfigurationItem {

@@ -10,7 +10,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * The basic graphical representation of a diagram component.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class Base extends JavaScriptObject {
 

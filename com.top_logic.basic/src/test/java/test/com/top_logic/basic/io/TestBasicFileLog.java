@@ -27,7 +27,7 @@ public class TestBasicFileLog extends BasicTestCase {
 
 	private File basicPath;
 
-	private static String THE_TEXT = "Müller und daß Änliche mit Üblen Umläutern";
+	private static String THE_TEXT = "MÃ¼ller und daÃŸ Ã„nliche mit Ãœblen UmlÃ¤utern";
 
 	public TestBasicFileLog(String aName) {
 		super(aName);

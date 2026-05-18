@@ -43,7 +43,7 @@ public class TestAbstractReloadable extends TestCase {
         assertNull(ser.getDescription());
         assertEquals(0, ser.getConfiguration().getNames().size());
         
-        assertEquals("seitw‰rts", ser.getProperty("vorm‰rz" , "seitw‰rts"));
+        assertEquals("seitw√§rts", ser.getProperty("vorm√§rz" , "seitw√§rts"));
         
         assertTrue(ser.usesXMLProperties());
     }

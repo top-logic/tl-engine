@@ -28,7 +28,7 @@ import com.top_logic.util.Resources;
  * The ClassificationDatasetGenerator creates from a risk item version holder, risk items and
  * classification list a {@link Dataset} for a category chart (e.g. bar chart).
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ClassificationDatasetGenerator {
 

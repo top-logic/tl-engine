@@ -17,7 +17,7 @@ import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 /**
  * Editor to create a new theme variable.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateThemeVariableFormBuilder
 		extends DeclarativeFormBuilder<ThemeSetting.Config<?>, CreateThemeVariableFormBuilder.EditModel> {
@@ -42,7 +42,7 @@ public class CreateThemeVariableFormBuilder
 	/**
 	 * Base edit properties.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends ConfigurationItem {
 		

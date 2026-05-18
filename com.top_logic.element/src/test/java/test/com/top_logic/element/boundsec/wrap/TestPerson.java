@@ -61,8 +61,8 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	/**
-	 * @see "Ticket #3171: Security-Problem durch Wiederverwendung existierender Representative-Group für neuen Benutzer"
-	 * @see "Ticket #3350: Person.getRepresentativeGroup() überprüft nur auf (nicht eindeutigen) Namen"
+	 * @see "Ticket #3171: Security-Problem durch Wiederverwendung existierender Representative-Group fÃ¼r neuen Benutzer"
+	 * @see "Ticket #3350: Person.getRepresentativeGroup() Ã¼berprÃ¼ft nur auf (nicht eindeutigen) Namen"
 	 */
 	public void testRepresentativeGroup() {
 		Person p1;

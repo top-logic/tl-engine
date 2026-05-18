@@ -31,7 +31,7 @@ public class PersistencyLayer extends ManagedClass {
 	/**
 	 * Configuration for {@link PersistencyLayer}
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<PersistencyLayer> {
 		/**

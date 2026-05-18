@@ -37,14 +37,14 @@ import com.top_logic.tool.boundsec.assistent.EVAAssistantController;
 /**
  * Import values provided by a {@link TextFileImportParser}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ListDataImportPerformer<C extends ListDataImportPerformer.Config> extends AbstractImportPerformer<C> {
 
     /**
      * Configuration for a ListDataImportPerformer. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends AbstractImportPerformer.Config {
 
@@ -69,7 +69,7 @@ public class ListDataImportPerformer<C extends ListDataImportPerformer.Config> e
     /**
      * Configuration of one fixed value column.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface MappingConfig extends NamedConfiguration {
 

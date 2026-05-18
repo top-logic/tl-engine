@@ -453,7 +453,7 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
         aOut.writeContent(res.getString(getResPrefix().key("progressHeader")));
         aOut.endTag("h2");
 
-        // Setzt das DIV für den Fortschrits-Text
+        // Setzt das DIV fÃ¼r den Fortschrits-Text
         aOut.writeContent(lineSeparator + "<div id=\"" + PROGRESS_TEXT
                           + "\" class=\"" + PROGRESS_TEXT + "\" style=\"width: "
                           + progressComponentWidth + ";\">");
@@ -533,14 +533,14 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
         
         HTMLUtil.endDiv(aOut);
 
-        // Setzt das DIV Messages für die Meldungen
+        // Setzt das DIV Messages fÃ¼r die Meldungen
         aOut.writeContent(lineSeparator + "<div id=\"" + MESSAGES
                           + "\" class=\"" + MESSAGES + "\" style=\"width: "
                           + progressComponentWidth + "; height: "
                           + progressComponentHeight + ";\">");
         aOut.writeContent(lineSeparator + "</div>");
 
-        // Setzt die Timeout-Funktion entsprechend des übergebenen
+        // Setzt die Timeout-Funktion entsprechend des Ã¼bergebenen
         // Refresh-Intervalls
         aOut.beginScript();
 		aOut.append(getRefreshCommand((refreshInterval * 1000)));

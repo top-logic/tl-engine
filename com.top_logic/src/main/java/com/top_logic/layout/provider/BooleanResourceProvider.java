@@ -13,7 +13,7 @@ import com.top_logic.mig.html.DefaultResourceProvider;
 /**
  * {@link ResourceProvider} that displays {@link Boolean}s with tristate checkbox images.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class BooleanResourceProvider extends DefaultResourceProvider {
 

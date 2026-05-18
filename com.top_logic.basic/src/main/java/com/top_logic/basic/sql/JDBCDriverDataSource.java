@@ -27,7 +27,7 @@ import com.top_logic.basic.Logger;
  * For ODBC use the <code>sun.jdbc.odbc.ee.DataSource</code>.
  * See %JAVA_HOME%docs/guide/jdbc/getstart/bridge.html
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class JDBCDriverDataSource implements DataSource, Serializable {
 

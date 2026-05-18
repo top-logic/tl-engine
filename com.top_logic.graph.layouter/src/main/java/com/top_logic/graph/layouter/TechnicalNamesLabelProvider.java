@@ -11,7 +11,7 @@ import com.top_logic.model.TLNamedPart;
 /**
  * Label provider for technical names of {@link TLNamedPart}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TechnicalNamesLabelProvider implements LabelProvider {
 

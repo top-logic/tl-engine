@@ -31,7 +31,7 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 /**
  * Provide an excel context for XLS, XLSX or CSV files.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class ExcelContextProvider<T> {
 

@@ -44,7 +44,7 @@ import com.top_logic.util.Resources;
  * This component is able to create, modify and delete a {@link com.top_logic.element.structured.StructuredElement}.
  * It will only refer the interface, not the implementation behind.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AdminElementComponent extends EditAttributedComponent {
 

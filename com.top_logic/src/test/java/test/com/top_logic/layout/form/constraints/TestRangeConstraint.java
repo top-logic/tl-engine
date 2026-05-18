@@ -87,7 +87,7 @@ public class TestRangeConstraint extends BasicTestCase {
         assertTrue(rc.check("AAA"));
         assertTrue(rc.check("Kabelsalat"));
         try {
-            rc.check("zu Groﬂ");
+            rc.check("zu Gro√ü");
             fail("Expected CheckException");
         } catch (CheckException expected) { /* expected */ }
     }

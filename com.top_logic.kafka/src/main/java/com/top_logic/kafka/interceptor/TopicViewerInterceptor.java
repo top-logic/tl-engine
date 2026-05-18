@@ -27,7 +27,7 @@ import com.top_logic.kafka.services.sensors.Sensor;
 /**
  * Convert consumed records from kafka into {@link Sensor} entries.
  * 
- * @author <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  */
 public class TopicViewerInterceptor extends AbstractConfiguredInstance<TopicViewerInterceptor.Config>
 		implements ConsumerProcessor<String, String> {
@@ -130,7 +130,7 @@ public class TopicViewerInterceptor extends AbstractConfiguredInstance<TopicView
 	/**
 	 * String based kafka topic returning messages as string.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class StringKafkaTopic extends AbstractKafkaTopic<String> {
 

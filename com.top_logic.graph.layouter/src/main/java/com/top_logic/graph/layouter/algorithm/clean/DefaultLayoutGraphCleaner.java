@@ -24,7 +24,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
 /**
  * Default layout graph cleaner. Removes dummy nodes and insert waypoints instead.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultLayoutGraphCleaner implements GraphCleanAlgorithm<LayoutGraph> {
 

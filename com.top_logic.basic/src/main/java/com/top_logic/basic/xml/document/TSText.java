@@ -12,7 +12,7 @@ import org.w3c.dom.Text;
 /**
  * Thread safe immutable {@link Text} implementation
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TSText extends TSCharacterData implements Text {
 

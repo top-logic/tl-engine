@@ -13,7 +13,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 /**
  * {@link Filter} nodes that are marked.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class FilterMarkedNode implements Filter<LayoutNode> {
 	Set<LayoutNode> _markedNodes;

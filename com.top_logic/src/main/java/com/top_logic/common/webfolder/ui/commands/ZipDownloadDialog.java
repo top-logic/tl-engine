@@ -45,7 +45,7 @@ public class ZipDownloadDialog extends AbstractFormPageDialog {
 	/**
 	 * Command for doing the zip download.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class ZipDownloadCommand implements Command {
 	    

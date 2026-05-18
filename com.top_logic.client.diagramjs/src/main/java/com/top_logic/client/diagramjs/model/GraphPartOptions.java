@@ -10,7 +10,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * General graph part options.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class GraphPartOptions extends JavaScriptObject {
 

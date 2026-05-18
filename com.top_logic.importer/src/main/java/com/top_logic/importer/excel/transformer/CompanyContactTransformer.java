@@ -19,7 +19,7 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Transform given text into a {@link CompanyContact}.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CompanyContactTransformer implements Transformer<CompanyContact> {
 

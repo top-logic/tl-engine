@@ -15,7 +15,7 @@ import com.top_logic.basic.json.JSON.ValueAnalyzer;
 /**
  * Strategy for determining the {@link JSON} encoding for a {@link JSONObject} configuration.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class JSONConfigValueAnalyzer implements ValueAnalyzer {
 

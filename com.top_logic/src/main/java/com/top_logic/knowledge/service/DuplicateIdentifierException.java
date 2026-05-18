@@ -11,7 +11,7 @@ import com.top_logic.dob.DataObjectException;
 /**
  * This Exception is thrown in case an Idnetifier is found twice
  *
- * @author      Klaus Halfmann / Jörg Connotte
+ * @author      Klaus Halfmann / JÃ¶rg Connotte
  */
 public class DuplicateIdentifierException extends DataObjectException {
 

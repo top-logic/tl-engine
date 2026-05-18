@@ -63,7 +63,7 @@ import com.top_logic.knowledge.service.KBUtils;
 /**
  * Lucene implementation of the {@link AnalyzeService}.
  *
- * @author Dieter Rothbächer
+ * @author Dieter RothbÃ¤cher
  */
 @ServiceDependencies({LuceneIndex.Module.class, FormatConverterFactory.Module.class, MimeTypes.Module.class})
 public class LuceneAnalyzeService extends DefaultAnalyzeService<LuceneAnalyzeService.Config> {
@@ -103,7 +103,7 @@ public class LuceneAnalyzeService extends DefaultAnalyzeService<LuceneAnalyzeSer
 	/**
 	 * Configuration for {@link LuceneAnalyzeService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends DefaultAnalyzeService.Config<LuceneAnalyzeService> {
 		/**

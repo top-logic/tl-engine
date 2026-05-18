@@ -33,7 +33,7 @@ import com.top_logic.knowledge.wrap.person.Person;
  * wrapped by this class. This will provide the access to the data and some
  * more functions.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class UserSession extends AbstractWrapper {
 

@@ -27,7 +27,7 @@ import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 /**
  * Table of comments for objects. 
  * 
- * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  */
 public class CommentTableComponent extends TableComponent implements DecorationValueProvider {
     

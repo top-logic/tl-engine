@@ -103,7 +103,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
- * @author Dieter Rothb‰cher
+ * @author Dieter Rothb√§cher
  */
 public class FormComponent extends BuilderComponent implements FormHandler, FormFieldConstants,
 		TableFieldConfigurator {

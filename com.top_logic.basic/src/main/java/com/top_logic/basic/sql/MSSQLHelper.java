@@ -401,7 +401,7 @@ public class MSSQLHelper extends DBHelper {
 	public String fnCurrDate() {
 		// Using {fn CURRDATE()} leads to:
 		/* Bei der Konvertierung eines char-Datentyps in einen datetime-Datentyp liegt der
-		 * datetime-Wert außerhalb des gültigen Bereichs. */
+		 * datetime-Wert auÃŸerhalb des gÃ¼ltigen Bereichs. */
 		return "CAST(GETDATE() AS DATETIME)";
 	}
 

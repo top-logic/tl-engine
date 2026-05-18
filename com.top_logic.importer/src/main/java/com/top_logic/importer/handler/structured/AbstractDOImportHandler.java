@@ -19,7 +19,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 /**
  * Handle an import operation on the given kind of object.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractDOImportHandler<C extends XMLFileImportParser.MappingConfig, O extends Object> implements ConfiguredInstance<C> {
 

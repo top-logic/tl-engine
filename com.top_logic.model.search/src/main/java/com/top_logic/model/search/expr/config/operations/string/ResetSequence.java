@@ -36,7 +36,7 @@ import com.top_logic.model.util.TLModelUtil;
  * Returns true if reset was successful, false if it failed. Note: This method modifies the database
  * and should not be used in read-only queries.
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ResetSequence extends GenericMethod {
 

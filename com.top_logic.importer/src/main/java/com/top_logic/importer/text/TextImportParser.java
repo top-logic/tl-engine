@@ -25,14 +25,14 @@ import com.top_logic.basic.util.ResourcesModule;
 /**
  * Convert a string to the defined type of object.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class TextImportParser<T> implements Mapping<String, T>, ConfiguredInstance<TextImportParser.Config> {
 
     /**
      * Base configuration for a {@link TextImportParser}. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends PolymorphicConfiguration<TextImportParser<?>>, NamedConfiguration {
     }
@@ -54,7 +54,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
     /**
      * Convert the string to a none null, trimmed string. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Text extends TextImportParser<String> {
 
@@ -80,7 +80,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
     /**
      * Convert the string to a date or null (when string is <code>null</code> or empty). 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Date extends TextImportParser<java.util.Date> {
 
@@ -123,7 +123,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
     /**
      * Convert the string to a boolean or null (when string is <code>null</code> or empty). 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Boolean extends TextImportParser<java.lang.Boolean> {
 
@@ -159,7 +159,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
     /**
      * Convert the string to a number or null (when string is <code>null</code> or empty). 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static abstract class AbstractNumber<T extends Number> extends TextImportParser<T> {
 
@@ -217,7 +217,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
     /**
      * Convert the string to a float or null (when string is <code>null</code> or empty). 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Float extends AbstractNumber<java.lang.Float> {
 
@@ -243,7 +243,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
     /**
      * Convert the string to an integer or null (when string is <code>null</code> or empty). 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Integer extends AbstractNumber<java.lang.Integer> {
 
@@ -269,7 +269,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
     /**
      * Convert the string to a long or null (when string is <code>null</code> or empty). 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Long extends AbstractNumber<java.lang.Long> {
 

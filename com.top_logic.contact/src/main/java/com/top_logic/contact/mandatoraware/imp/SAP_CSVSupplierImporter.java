@@ -36,7 +36,7 @@ public class SAP_CSVSupplierImporter extends CSVImporter {
      */ 
     protected String COLUMNS_SUPPL[] = { "Kreditor","Lnd","Name 1","Name 2",
                                          "Ort","Ortsteil","Postfach","PLZ-Postf.","Postleitz.","Rg",
-                                         "SuchBegr","Straﬂe","Adresse","Name 1","Name 2","Ort","Branche",
+                                         "SuchBegr","Stra√üe","Adresse","Name 1","Name 2","Ort","Branche",
                                          "Telebox","Telefon-1","Telefon-2","Telefaxnummer","Teletexnummer","Telexnummer" };
 
     /** 

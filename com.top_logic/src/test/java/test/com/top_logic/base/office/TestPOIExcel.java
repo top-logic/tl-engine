@@ -67,7 +67,7 @@ import com.top_logic.dsa.util.MimeTypes;
 /**
  * Tests for the POI excel classes.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @SuppressWarnings("javadoc")
 public class TestPOIExcel extends AbstractPOIExcelTest {
@@ -86,10 +86,10 @@ public class TestPOIExcel extends AbstractPOIExcelTest {
 		ModuleLayoutConstants.SRC_TEST_DIR + "/test/com/top_logic/base/office/data/";
 
 	/** Template sheet for formula handling. */
-	private static final String FORMULA_SHEET = "Ausfüllen";
+	private static final String FORMULA_SHEET = "AusfÃ¼llen";
 
 //	/** Template sheet for filling in data. */
-//	private static final String FILL_SHEET = "Befüllen";
+//	private static final String FILL_SHEET = "BefÃ¼llen";
 
 	/** Header text for a merge region. */
 	private static final String TEST_VALUES_HEADER = "Testdaten programmatisch gesetzt";

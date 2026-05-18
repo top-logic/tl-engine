@@ -29,7 +29,7 @@ import com.top_logic.util.error.TopLogicException;
  * The remove will only be performed, if the removing is allowed by the
  * element itself.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementRemoveHandler extends AbstractDeleteCommandHandler {
 

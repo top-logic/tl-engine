@@ -41,7 +41,7 @@ import com.top_logic.util.Resources;
 /**
  * Search input control with a full text search engine in its background.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class QuickSearchViewConfiguration extends AbstractConfiguredInstance<QuickSearchViewConfiguration.Config>
 		implements ViewConfiguration {

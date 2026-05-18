@@ -14,7 +14,7 @@ import com.top_logic.util.TLContext;
 /**
  * Label provider for an {@link Amount}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AmountLabelProvider implements LabelProvider {
 
@@ -61,7 +61,7 @@ public class AmountLabelProvider implements LabelProvider {
     /**
      * Display an amount without its label (but with its format). 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class NoUnitAmountLabelProvider extends AmountLabelProvider {
 

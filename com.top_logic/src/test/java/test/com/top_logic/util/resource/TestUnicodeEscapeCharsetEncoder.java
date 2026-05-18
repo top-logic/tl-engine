@@ -36,7 +36,7 @@ public class TestUnicodeEscapeCharsetEncoder extends TestCase {
 	 * Test encoding characters that are all within the base {@link Charset}.
 	 */
 	public void testEncodeLatin() throws IOException {
-		assertEquals("ÄÖÜ äöü ß áéíóú àèìòù âêîôû", encode("ÄÖÜ äöü ß áéíóú àèìòù âêîôû", "ISO-8859-1"));
+		assertEquals("Ã„Ã–Ãœ Ã¤Ã¶Ã¼ ÃŸ Ã¡Ã©Ã­Ã³Ãº Ã Ã¨Ã¬Ã²Ã¹ Ã¢ÃªÃ®Ã´Ã»", encode("Ã„Ã–Ãœ Ã¤Ã¶Ã¼ ÃŸ Ã¡Ã©Ã­Ã³Ãº Ã Ã¨Ã¬Ã²Ã¹ Ã¢ÃªÃ®Ã´Ã»", "ISO-8859-1"));
 	}
 	
 	

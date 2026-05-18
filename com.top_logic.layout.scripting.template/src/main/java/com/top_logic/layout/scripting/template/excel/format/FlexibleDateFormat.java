@@ -21,7 +21,7 @@ import com.top_logic.basic.time.CalendarUtil;
 /**
  * Flexible date formatter which can handle absolute and relative dates.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FlexibleDateFormat extends AbstractFormattedConfigurationValueProvider<Date> {
 

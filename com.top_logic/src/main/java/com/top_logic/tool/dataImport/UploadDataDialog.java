@@ -27,7 +27,7 @@ import com.top_logic.util.Resources;
 /**
  * A {@link SimpleFormDialog} to upload a data file.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class UploadDataDialog extends SimpleFormDialog {
 	/**

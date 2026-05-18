@@ -21,7 +21,7 @@ import com.top_logic.model.TLClass;
 /**
  * Groups the attribute, label and attributes tag.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MetaGroupTag extends AbstractTag {
 

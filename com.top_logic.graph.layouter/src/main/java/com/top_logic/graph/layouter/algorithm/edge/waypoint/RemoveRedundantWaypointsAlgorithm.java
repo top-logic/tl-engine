@@ -12,7 +12,7 @@ import com.top_logic.graph.layouter.model.Waypoint;
 /**
  * Algorithm to remove redunant waypoints.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface RemoveRedundantWaypointsAlgorithm {
 

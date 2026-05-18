@@ -11,7 +11,7 @@ import com.top_logic.model.access.StorageMapping;
 /**
  * {@link StorageMapping} for HTML attributes.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredTextAttributeStorageMapping implements StorageMapping<StructuredText> {
 

@@ -16,7 +16,7 @@ import com.top_logic.importer.base.StructuredDataImportPerformer.StructureImport
 /**
  * Update an attributed object with values from the imported data object.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class UpdateDOImportHandler<C extends AbstractAttributedDOImportHandler.Config, O extends Wrapper> extends AbstractAttributedDOImportHandler<C, O> {
 

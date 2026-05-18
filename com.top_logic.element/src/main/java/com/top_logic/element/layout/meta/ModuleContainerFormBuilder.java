@@ -27,7 +27,7 @@ public class ModuleContainerFormBuilder extends DeclarativeFormBuilder<ModuleCon
 	/**
 	 * Model of the displayed form.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	/**
 	 * Model of the displayed form.

@@ -2076,7 +2076,7 @@ public class POIExcelUtil {
 	 * This implementation will return an {@link ErrorEval#VALUE_INVALID} when evaluating a sum
 	 * field failed.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static final class TLSumProduct implements Function {
 

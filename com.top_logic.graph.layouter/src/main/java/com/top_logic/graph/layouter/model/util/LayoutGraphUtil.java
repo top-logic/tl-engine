@@ -61,7 +61,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Util methods to get informations about the graph structure.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayoutGraphUtil implements LayoutGraphUtilConstants {
 

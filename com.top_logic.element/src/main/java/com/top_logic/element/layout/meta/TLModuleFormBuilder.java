@@ -36,7 +36,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * {@link DeclarativeFormBuilder} for a {@link TLModule}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLModuleFormBuilder extends DeclarativeFormBuilder<TLModule, TLModuleFormBuilder.EditModel> {
 
@@ -55,7 +55,7 @@ public class TLModuleFormBuilder extends DeclarativeFormBuilder<TLModule, TLModu
 	/**
 	 * Base edit properties of all {@link TLModule} configurations.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	@DisplayOrder({
 		EditModel.NAME,

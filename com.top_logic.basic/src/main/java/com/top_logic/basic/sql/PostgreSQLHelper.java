@@ -35,7 +35,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 /**
  * {@link DBHelper} for the PostgreSQL database engine.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class PostgreSQLHelper extends DBHelper {
 

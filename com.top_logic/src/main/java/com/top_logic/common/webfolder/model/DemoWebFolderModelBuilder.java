@@ -22,7 +22,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Demo model builder for a {@link WebFolderComponent} using a configured web folder.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DemoWebFolderModelBuilder extends AbstractConfiguredInstance<DemoWebFolderModelBuilder.Config>
 		implements ModelBuilder {

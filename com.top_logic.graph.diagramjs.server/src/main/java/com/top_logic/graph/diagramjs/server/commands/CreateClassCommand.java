@@ -25,7 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * {@link ControlCommand} for creating a class.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateClassCommand extends ControlCommand {
 

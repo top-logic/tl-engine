@@ -26,7 +26,7 @@ import com.top_logic.mig.html.HTMLConstants;
  *   <li>The {@link FormGroup} has a property called {@link GridComponent#PROP_ATTRIBUTED} with an {@link Wrapper}.</li>
  * </ol>
  * 
- * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
  */
 public class GridIconCellRenderer implements HTMLConstants {
 

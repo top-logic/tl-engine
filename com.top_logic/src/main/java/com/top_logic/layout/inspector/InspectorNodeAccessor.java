@@ -11,7 +11,7 @@ import com.top_logic.layout.inspector.model.nodes.InspectorTreeNode;
 /**
  * Provide access to the values in an {@link InspectorTreeNode}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class InspectorNodeAccessor {
 

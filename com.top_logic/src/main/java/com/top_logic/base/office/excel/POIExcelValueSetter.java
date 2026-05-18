@@ -34,7 +34,7 @@ import com.top_logic.basic.col.TupleFactory.Tuple;
 /**
  * Bring values from {@link ExcelValue} into a POI based excel {@link Workbook}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class POIExcelValueSetter implements POITypeSupporter {
 

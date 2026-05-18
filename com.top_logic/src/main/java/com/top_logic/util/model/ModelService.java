@@ -103,7 +103,7 @@ import com.top_logic.util.model.check.StringSizeCheck;
 /**
  * Provides the business model, this application is working on.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @ServiceDependencies({
 	PersistencyLayer.Module.class,
@@ -619,7 +619,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	/**
 	 * Module definition for the {@link ModelService}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class Module extends TypedRuntimeModule<ModelService> {
 

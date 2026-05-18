@@ -36,7 +36,7 @@ import com.top_logic.util.error.TopLogicException;
  * Override the default GotoHandler to cooperate with the {@link StackHandler}.
  * 
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StackedGotoHandler extends GotoHandler {
 
@@ -408,7 +408,7 @@ public class StackedGotoHandler extends GotoHandler {
 	/**
 	 * Handle the stack of open dialogs.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class StackHandler {
 

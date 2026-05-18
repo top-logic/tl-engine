@@ -11,7 +11,7 @@ import java.util.function.Function;
  * Computes equality using the {@link Object#equals(Object)} on the results of a given
  * mapping-{@link Function}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CustomEqualitySpecification<T> extends EqualitySpecification<T> {
 

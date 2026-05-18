@@ -26,7 +26,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * Used within {@link ExcelCell} to define formula expressions for cells.
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ExcelFormula extends GenericMethod {
 

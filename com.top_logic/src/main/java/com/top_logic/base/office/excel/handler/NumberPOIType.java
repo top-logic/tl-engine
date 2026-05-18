@@ -17,7 +17,7 @@ import com.top_logic.basic.util.NumberUtil;
 /**
  * Set number values to excel cells via POI (which are always Double).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class NumberPOIType implements PoiTypeHandler {
 

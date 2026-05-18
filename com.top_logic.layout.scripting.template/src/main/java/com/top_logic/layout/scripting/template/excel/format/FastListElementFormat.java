@@ -16,7 +16,7 @@ import com.top_logic.model.format.TLClassifierFormat;
  * {@link #getResources}. The names are compared case-insensitive.
  * </p>
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link TLClassifierFormat}.
  */

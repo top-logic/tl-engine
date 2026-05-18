@@ -11,7 +11,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 /**
  * {@link Filter} segment source {@link LayoutNode}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class FilterSegmentSourceNode implements Filter<LayoutNode> {
 

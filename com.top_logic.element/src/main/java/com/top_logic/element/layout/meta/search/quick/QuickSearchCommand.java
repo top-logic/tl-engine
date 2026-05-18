@@ -71,7 +71,7 @@ import com.top_logic.util.TLContext;
 /**
  * Search command to the quick full text search.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class QuickSearchCommand extends AbstractSearchCommand {
 

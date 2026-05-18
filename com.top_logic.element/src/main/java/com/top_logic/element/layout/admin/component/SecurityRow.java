@@ -29,7 +29,7 @@ import com.top_logic.util.Utils;
 /**
  * Representation of a row from the security storage.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface SecurityRow {
 
@@ -64,7 +64,7 @@ public interface SecurityRow {
 	/**
 	 * Simple implementation of the interface which is just string based.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public class SimpleSecurityRow implements SecurityRow {
 
@@ -111,7 +111,7 @@ public interface SecurityRow {
 	/**
 	 * Security row which provides real business objects.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public class ComplexSecurityRow implements SecurityRow {
 

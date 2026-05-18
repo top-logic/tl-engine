@@ -16,7 +16,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSClassNode;
 /**
  * Handler for resized diagramJS objects.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class ShapeResizeEventHandler implements EventHandler {
 

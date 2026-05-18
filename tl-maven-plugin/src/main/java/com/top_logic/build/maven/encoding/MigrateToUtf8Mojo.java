@@ -138,6 +138,7 @@ public class MigrateToUtf8Mojo extends AbstractMojo {
 			}
 			if (!skipEclipse) {
 				migrateEclipsePrefs(root);
+				migrateEclipsePropertiesFileOverrides(root);
 			}
 			if (!skipPoms) {
 				migratePoms(root);
@@ -352,6 +353,122 @@ public class MigrateToUtf8Mojo extends AbstractMojo {
 			Files.write(file, buf.toString().getBytes(StandardCharsets.UTF_8));
 		}
 		return new int[] { flipped, dropped };
+	}
+
+	// --- Eclipse .properties per-file overrides ---
+
+	private void migrateEclipsePropertiesFileOverrides(Path root) throws IOException {
+		List<Path> moduleDirs = new ArrayList<>();
+		Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+				if (!dir.equals(root) && PRUNE_DIRS.contains(dir.getFileName().toString())) {
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+				if (file.getFileName().toString().equals("pom.xml")) {
+					moduleDirs.add(file.getParent());
+				}
+				return FileVisitResult.CONTINUE;
+			}
+		});
+
+		int modulesTouched = 0;
+		int entriesAdded = 0;
+		for (Path module : moduleDirs) {
+			List<String> propertiesFiles = collectPropertiesFiles(module);
+			if (propertiesFiles.isEmpty()) {
+				continue;
+			}
+			Path prefs = module.resolve(".settings").resolve(ECLIPSE_PREFS_NAME);
+			int added = addPropertiesFileEntries(prefs, propertiesFiles);
+			if (added > 0) {
+				modulesTouched++;
+				entriesAdded += added;
+			}
+		}
+
+		getLog().info("Eclipse .properties per-file overrides:");
+		getLog().info("  Modules scanned: " + moduleDirs.size());
+		getLog().info("  Modules touched: " + modulesTouched);
+		getLog().info("  Entries added:   " + entriesAdded + " ("
+			+ (dryRun ? "dry run" : "written") + ")");
+	}
+
+	private List<String> collectPropertiesFiles(Path module) throws IOException {
+		List<String> out = new ArrayList<>();
+		Path moduleAbs = module.toAbsolutePath().normalize();
+		Files.walkFileTree(module, new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+				if (dir.equals(module)) {
+					return FileVisitResult.CONTINUE;
+				}
+				String name = dir.getFileName().toString();
+				if (PRUNE_DIRS.contains(name) || ".settings".equals(name)) {
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+				// Prune nested Maven modules.
+				if (Files.isRegularFile(dir.resolve("pom.xml"))) {
+					return FileVisitResult.SKIP_SUBTREE;
+				}
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+				if (file.getFileName().toString().endsWith(".properties")) {
+					Path rel = moduleAbs.relativize(file.toAbsolutePath().normalize());
+					String posix = rel.toString().replace(File.separatorChar, '/');
+					out.add("/" + posix);
+				}
+				return FileVisitResult.CONTINUE;
+			}
+		});
+		java.util.Collections.sort(out);
+		return out;
+	}
+
+	private int addPropertiesFileEntries(Path prefs, List<String> propertiesFiles) throws IOException {
+		List<String> lines;
+		if (Files.exists(prefs)) {
+			lines = new ArrayList<>(Files.readAllLines(prefs, StandardCharsets.UTF_8));
+		} else {
+			lines = new ArrayList<>();
+			lines.add("eclipse.preferences.version=1");
+		}
+		Set<String> keys = new HashSet<>();
+		for (String line : lines) {
+			int eq = line.indexOf('=');
+			if (eq > 0) {
+				keys.add(line.substring(0, eq));
+			}
+		}
+		int added = 0;
+		for (String path : propertiesFiles) {
+			String key = "encoding/" + path;
+			if (keys.contains(key)) {
+				continue;
+			}
+			lines.add(key + "=UTF-8");
+			added++;
+		}
+		if (added == 0) {
+			return 0;
+		}
+		if (!dryRun) {
+			Files.createDirectories(prefs.getParent());
+			StringBuilder buf = new StringBuilder();
+			for (String line : lines) {
+				buf.append(line).append('\n');
+			}
+			Files.write(prefs, buf.toString().getBytes(StandardCharsets.UTF_8));
+		}
+		return added;
 	}
 
 	// --- POMs ---

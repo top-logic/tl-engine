@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -652,8 +653,8 @@ public abstract class StreamUtilities {
 	}
 
 	/**
-	 * Writes the given {@link Properties} in {@link #ISO_8859_1} encoding to the given output.
-	 * 
+	 * Writes the given {@link Properties} in UTF-8 encoding to the given output.
+	 *
 	 * <p>
 	 * Output is normalized in following sense:
 	 * <ul>
@@ -665,18 +666,19 @@ public abstract class StreamUtilities {
 	 * After the entries have been written, the output stream is flushed. The output stream remains
 	 * open after this method returns.
 	 * </p>
-	 * 
+	 *
 	 * @param out
 	 *        Stream to write content to.
 	 * @param props
 	 *        The {@link Properties} to write.
 	 */
 	public static void storeNormalized(OutputStream out, Properties props) throws IOException {
-		ByteArrayStream buffer = new ByteArrayStream();
-		props.store(buffer, null);
+		Charset cs = StandardCharsets.UTF_8;
 
-		// Properties are written ISO-8859-1 encoded.
-		Charset cs = ISO_8859_1;
+		ByteArrayStream buffer = new ByteArrayStream();
+		try (OutputStreamWriter bufferWriter = new OutputStreamWriter(buffer, cs)) {
+			props.store(bufferWriter, null);
+		}
 
 		List<String> allLines;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(buffer.getStream(), cs))) {

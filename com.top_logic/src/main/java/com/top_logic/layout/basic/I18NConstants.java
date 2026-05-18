@@ -106,11 +106,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 FAILED_TO_COMPUTE_STATE__MSG;
 
-	/**
-	 * @en A page title setter requires either a value or a function to be configured.
-	 */
-	public static ResKey PAGE_TITLE_REQUIRES_VALUE_OR_FUNCTION;
-
 	static {
 		initConstants(I18NConstants.class);
 	}

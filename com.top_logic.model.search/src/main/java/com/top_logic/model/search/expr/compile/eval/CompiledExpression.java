@@ -5,17 +5,22 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
+import java.util.function.Function;
+
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
+import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
+import com.top_logic.knowledge.search.InternalExpressionFactory;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.compile.transform.FilterCompiler.Parameters;
 
 /**
  * {@link Value} that represents an expression that can be completely compiled to a database query.
@@ -25,7 +30,21 @@ import com.top_logic.model.search.expr.SearchExpression;
 public class CompiledExpression extends Value {
 
 	private MetaObject _type;
-	private final Expression _compiled;
+
+	private final Function<Parameters, Expression> _compiled;
+
+	/**
+	 * Creates a {@link CompiledExpression} whose compiled expression has no
+	 * {@link ExpressionFactory#param(String) parameters}.
+	 *
+	 * @param type
+	 *        The table type of this compiled value.
+	 * @param compiled
+	 *        See {@link #compiled()}.
+	 */
+	public CompiledExpression(MetaObject type, Expression compiled) {
+		this(type, params -> compiled);
+	}
 
 	/**
 	 * Creates a {@link CompiledExpression}.
@@ -35,7 +54,10 @@ public class CompiledExpression extends Value {
 	 * @param compiled
 	 *        See {@link #compiled()}.
 	 */
-	public CompiledExpression(MetaObject type, Expression compiled) {
+	public CompiledExpression(MetaObject type, Function<Parameters, Expression> compiled) {
+		if (type == MOPrimitive.INVALID_TYPE) {
+			throw new IllegalArgumentException();
+		}
 		_type = type;
 		_compiled = compiled;
 	}
@@ -43,7 +65,11 @@ public class CompiledExpression extends Value {
 	@Override
 	public Value processEquals(SearchExpression orig, Value other) {
 		if (!other.hasInterpretedPart()) {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.eqBinary(_compiled, other.compiled()));
+			if (!other.notifyExpectedCompiledType(_type)) {
+				return new InterpretedExpression(orig);
+			}
+			return new CompiledExpression(MOPrimitive.BOOLEAN,
+				params -> ExpressionFactory.eqBinary(_compiled.apply(params), other.compiled().apply(params)));
 		}
 		return new InterpretedExpression(orig);
 	}
@@ -61,10 +87,12 @@ public class CompiledExpression extends Value {
 						switch (part.getModelKind()) {
 							case PROPERTY:
 								return new CompiledExpression(attr.getMetaObject(),
-									ExpressionFactory.attribute(_compiled, attr.getOwner().getName(), attr.getName()));
+									params -> InternalExpressionFactory.attributeTyped(_compiled.apply(params),
+										attr));
 							case REFERENCE:
 								return new CompiledExpression(attr.getMetaObject(),
-									ExpressionFactory.reference(_compiled, attr.getOwner().getName(), attr.getName()));
+									params -> InternalExpressionFactory.referenceTyped(_compiled.apply(params),
+										(MOReference) attr));
 							default:
 								break;
 						}
@@ -77,9 +105,15 @@ public class CompiledExpression extends Value {
 
 	@Override
 	public Value processAnd(SearchExpression orig, Value other) {
-		Expression compiledAnd;
+		if (_type != MOPrimitive.BOOLEAN) {
+			return new InterpretedExpression(orig);
+		}
+		Function<Parameters, Expression> compiledAnd;
 		if (other.hasCompiledPart()) {
-			compiledAnd = ExpressionFactory.and(compiled(), other.compiled());
+			if (!other.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
+				return new InterpretedExpression(orig);
+			}
+			compiledAnd = params -> ExpressionFactory.and(compiled().apply(params), other.compiled().apply(params));
 		} else {
 			compiledAnd = compiled();
 		}
@@ -93,15 +127,22 @@ public class CompiledExpression extends Value {
 
 	@Override
 	public Value processOr(SearchExpression orig, Value other) {
+		if (_type != MOPrimitive.BOOLEAN) {
+			return new InterpretedExpression(orig);
+		}
 		if (!other.hasInterpretedPart()) {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.or(_compiled, other.compiled()));
+			if (!other.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
+				return new InterpretedExpression(orig);
+			}
+			return new CompiledExpression(MOPrimitive.BOOLEAN,
+				params -> ExpressionFactory.or(compiled().apply(params), other.compiled().apply(params)));
 		}
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
 	public Value processNot(SearchExpression orig) {
-		return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.not(_compiled));
+		return new CompiledExpression(MOPrimitive.BOOLEAN, params -> ExpressionFactory.not(compiled().apply(params)));
 	}
 
 	@Override
@@ -110,8 +151,18 @@ public class CompiledExpression extends Value {
 	}
 
 	@Override
-	public Expression compiled() {
+	public boolean notifyExpectedCompiledType(MetaObject type) {
+		return _type.isSubtypeOf(type);
+	}
+
+	@Override
+	public Function<Parameters, Expression> compiled() {
 		return _compiled;
+	}
+
+	@Override
+	public MetaObject compiledType() {
+		return _type;
 	}
 
 	@Override

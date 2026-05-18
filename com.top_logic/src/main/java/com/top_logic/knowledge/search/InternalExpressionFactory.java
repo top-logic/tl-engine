@@ -27,11 +27,26 @@ import com.top_logic.dob.meta.MOReference.ReferencePart;
 public class InternalExpressionFactory {
 
 	/**
-	 * Creates an {@link Reference} for the given {@link MOReference} which contains type
-	 * informations.
+	 * Creates a {@link Reference} with the default {@link ExpressionFactory#context() context
+	 * expression} for the given {@link MOReference} which contains type informations.
+	 * 
+	 * @see ExpressionFactory#reference(MOReference)
 	 */
 	public static Reference referenceTyped(MOReference attribute) {
-		return newTypedReference(attribute, null);
+		return referenceTyped(context(), attribute);
+	}
+
+	/**
+	 * Creates a {@link Reference} with the given context expression for the given
+	 * {@link MOReference} which contains type informations.
+	 * 
+	 * @param context
+	 *        Value of {@link Reference#getContext()}.
+	 * 
+	 * @see ExpressionFactory#reference(Expression, String, String)
+	 */
+	public static Reference referenceTyped(Expression context, MOReference attribute) {
+		return newTypedReference(context, attribute, null);
 	}
 
 	/**
@@ -39,19 +54,38 @@ public class InternalExpressionFactory {
 	 * {@link MOReference} which contains type informations.
 	 */
 	public static Expression referenceTyped(MOReference attribute, ReferencePart accessPart) {
-		return newTypedReference(attribute, accessPart);
+		return newTypedReference(context(), attribute, accessPart);
 	}
 
-	private static Reference newTypedReference(MOReference attribute, ReferencePart accessPart) {
+	private static Reference newTypedReference(Expression context, MOReference attribute, ReferencePart accessPart) {
 		String ownerType = ExpressionFactory.getOwnerTypeName(attribute);
 		String attributeName = attribute.getName();
-		Reference reference = new Reference(context(), ownerType, attributeName, accessPart);
+		Reference reference = new Reference(context, ownerType, attributeName, accessPart);
 		InternalExpressionFactory.setReferenceAttributeImpl(reference, attribute);
 		return reference;
 	}
 
+	/**
+	 * Creates an {@link Attribute} with the default {@link ExpressionFactory#context() context
+	 * expression} for the given {@link MOAttribute} which contains type informations.
+	 * 
+	 * @see ExpressionFactory#attribute(MOAttribute)
+	 */
 	public static Attribute attributeTyped(MOAttribute attribute) {
-		Attribute attr = new Attribute(context(), ExpressionFactory.getOwnerTypeName(attribute), attribute.getName());
+		return attributeTyped(context(), attribute);
+	}
+
+	/**
+	 * Creates an {@link Attribute} with the given context expression for the given
+	 * {@link MOAttribute} which contains type informations.
+	 * 
+	 * @param context
+	 *        Value of {@link Attribute#getContext()}.
+	 * 
+	 * @see ExpressionFactory#attribute(Expression, String, String)
+	 */
+	public static Attribute attributeTyped(Expression context, MOAttribute attribute) {
+		Attribute attr = new Attribute(context, ExpressionFactory.getOwnerTypeName(attribute), attribute.getName());
 		InternalExpressionFactory.setAttributeImpl(attr, attribute);
 		return attr;
 	}

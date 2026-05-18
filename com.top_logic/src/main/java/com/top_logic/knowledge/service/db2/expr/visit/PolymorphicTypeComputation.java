@@ -400,7 +400,10 @@ public class PolymorphicTypeComputation implements QueryVisitor<MetaObject, Meta
 	}
 
 	/**
-	 * Computes the type of the given object
+	 * Computes the type of the given object.
+	 * 
+	 * @return The literal type of the given object or {@link MetaObject#INVALID_TYPE} when no
+	 *         usable type can be determined.
 	 */
 	public static MetaObject getLiteralType(Object literalValue) {
 		MetaObject result;

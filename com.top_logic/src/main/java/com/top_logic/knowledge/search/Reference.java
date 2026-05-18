@@ -88,6 +88,9 @@ public class Reference extends ContextExpression {
 	 * Access to the reference attribute
 	 */
 	public MOReference getAttribute() {
+		if (_attribute == null) {
+			throw new IllegalStateException("No type binding yet.");
+		}
 		return _attribute;
 	}
 

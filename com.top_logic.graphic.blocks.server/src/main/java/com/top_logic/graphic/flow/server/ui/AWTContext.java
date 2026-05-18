@@ -81,6 +81,22 @@ public class AWTContext implements RenderContext {
 		return _defaultSizePt * PX_PER_PT;
 	}
 
+	/**
+	 * Extra horizontal padding (in CSS px) added to AWT-measured text widths.
+	 *
+	 * <p>
+	 * {@link Font#getStringBounds} returns the advance width (where the next glyph would be
+	 * placed). The visible ink ends a bit before that — by a font-design-dependent right-side
+	 * bearing. For Arial Regular that bearing is comfortably wide (~1 px at 16 CSS px), so the
+	 * text appears to sit inside its box with visible margin. For Arial Bold the bearing is much
+	 * smaller (&lt; 0.5 px), and once the browser adds its sub-pixel anti-aliasing the bold ink
+	 * appears to touch (or graze) the right edge of the box. This margin compensates for that
+	 * cross-engine rendering wobble, so the visible box-vs-ink relation stays consistent across
+	 * font weights.
+	 * </p>
+	 */
+	private static final double WIDTH_SAFETY_PX = 1.0;
+
 	@Override
 	public TextMetricsImpl measure(String text, String fontFamily, String fontSize, String fontWeight) {
 		Font font = font(fontFamily, fontSize, fontWeight);
@@ -89,7 +105,7 @@ public class AWTContext implements RenderContext {
 
 		// Convert from AWT points to CSS pixels — see class JavaDoc.
 		return new TextMetricsImpl(
-			bounds.getWidth() * PX_PER_PT,
+			bounds.getWidth() * PX_PER_PT + WIDTH_SAFETY_PX,
 			bounds.getHeight() * PX_PER_PT,
 			metrics.getAscent() * PX_PER_PT);
 	}
@@ -100,8 +116,12 @@ public class AWTContext implements RenderContext {
 		int style = isBold(fontWeight) ? Font.BOLD : Font.PLAIN;
 
 		FontKey key = new FontKey(family, sizePt, style);
+		// Construct the Font with the requested style up-front (instead of deriving from a PLAIN
+		// font), so that AWT picks the real bold/italic face — Font.decode(name).deriveFont(style,
+		// size) tends to synthesize bold by thickening strokes rather than loading the actual
+		// bold font, which underestimates the width of CSS bold renderings in the browser.
 		return _fontCache.computeIfAbsent(key,
-			k -> Font.decode(k.family).deriveFont(k.style, k.sizePt));
+			k -> new Font(k.family, k.style, 1).deriveFont(k.sizePt));
 	}
 
 	/**

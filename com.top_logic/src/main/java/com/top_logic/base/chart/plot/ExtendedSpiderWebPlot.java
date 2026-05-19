@@ -411,7 +411,7 @@ public class ExtendedSpiderWebPlot extends SpiderWebPlot {
     /**
      * Label generator which will only create labels of a defined maximum width. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class SpiderChartLabelGenerator extends StandardCategoryItemLabelGenerator {
 

@@ -29,7 +29,7 @@ import com.top_logic.layout.processor.CompileTimeApplication;
  * Tool that applies all {@link ThemeSettings} configs and {@link ThemeConfig} and stores them to a
  * given theme folder.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class MergeThemeConfigs {
 

@@ -34,7 +34,7 @@ import com.top_logic.util.regex.TLRegexBuilder;
 /**
  * {@link CodeEditorControl} for editing {@link Expr TL-Script expressions}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class TLScriptCodeEditorControl extends CodeEditorControl implements TLScriptConstants {
 

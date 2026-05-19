@@ -16,7 +16,7 @@ import com.top_logic.basic.config.annotation.Nullable;
  * Configuration for the {@link StructuredTextControl}. It consists of a list of editor feature
  * names that should be included.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface TextEditorConfig extends NamedConfigMandatory {
 

@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Mark up interface for a short cut cell value (which is no "key:value" pair but only a "value").
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Shortcut {

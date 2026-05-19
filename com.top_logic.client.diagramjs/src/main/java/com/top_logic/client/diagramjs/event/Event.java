@@ -11,7 +11,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * Event object passed to the {@link EventHandler} containing all necessary informations about this
  * emitted event.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class Event extends JavaScriptObject {
 

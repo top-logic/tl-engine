@@ -16,7 +16,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Actualize the search results.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class RefreshSearchHandler extends AbstractCommandHandler {
 

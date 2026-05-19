@@ -15,7 +15,7 @@ import com.top_logic.element.core.TLElementVisitor;
  * 
  * This filter can be used to find a special element in s structure of elements.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class OneHitVisitor implements TLElementVisitor {
 

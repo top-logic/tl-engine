@@ -102,7 +102,7 @@ public class BasicTestCase extends TestCase implements InContext {
 
 	private static final Pattern SPECIAL_CHARACTERS = Pattern.compile("[^ _.$a-zA-Z0-9]+");
 
-	private static final String LATIN_CHARS = "öäüÖÄÜßáàéèíìóòúù€";
+	private static final String LATIN_CHARS = "Ã¶Ã¤Ã¼Ã–Ã„ÃœÃŸÃ¡Ã Ã©Ã¨Ã­Ã¬Ã³Ã²ÃºÃ¹Â€";
 
 	/** Use with {@link Assert#assertEquals(double, double, double)} */
     public static final double EPSILON = 1E-20;

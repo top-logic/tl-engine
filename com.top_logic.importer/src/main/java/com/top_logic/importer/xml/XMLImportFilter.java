@@ -26,7 +26,7 @@ import com.top_logic.importer.text.TextImportParser;
 /**
  * Base filter class providing the configuration and the reading of a value from an {@link Attributes}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class XMLImportFilter extends AbstractConfigurableFilter<Attributes, XMLImportFilter.Config> {
 
@@ -152,7 +152,7 @@ public abstract class XMLImportFilter extends AbstractConfigurableFilter<Attribu
     /**
      * Check if the found string value is equal to the expected one. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Equals extends XMLImportFilter {
 
@@ -172,7 +172,7 @@ public abstract class XMLImportFilter extends AbstractConfigurableFilter<Attribu
     /**
      * Check if the found string value is larger than the expected one. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Larger extends XMLImportFilter {
 
@@ -195,7 +195,7 @@ public abstract class XMLImportFilter extends AbstractConfigurableFilter<Attribu
     /**
      * Check if the found string value is smaller than the expected one. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Smaller extends XMLImportFilter {
 
@@ -218,7 +218,7 @@ public abstract class XMLImportFilter extends AbstractConfigurableFilter<Attribu
     /**
      * Check if the found string value is empty. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Empty extends XMLImportFilter {
 
@@ -240,7 +240,7 @@ public abstract class XMLImportFilter extends AbstractConfigurableFilter<Attribu
     /**
      * Check if the found string has an expected length. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class Length extends XMLImportFilter {
 

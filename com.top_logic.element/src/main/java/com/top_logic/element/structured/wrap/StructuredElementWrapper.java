@@ -32,7 +32,7 @@ import com.top_logic.tool.boundsec.BoundObject;
  * caching of parent and children can be deactivated by changing the constant
  * {@link WrapperTLElement#USE_CACHE}. 
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class StructuredElementWrapper extends WrapperTLElement {
 

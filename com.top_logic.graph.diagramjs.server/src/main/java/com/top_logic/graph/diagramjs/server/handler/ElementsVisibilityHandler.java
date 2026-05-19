@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * Handler to handle diagram graph parts visibility changes.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface ElementsVisibilityHandler {
 

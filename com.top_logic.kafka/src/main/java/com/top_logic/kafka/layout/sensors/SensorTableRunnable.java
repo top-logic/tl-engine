@@ -16,7 +16,7 @@ import com.top_logic.layout.table.model.EditableRowTableModel;
 /**
  * Identify sensors which have changed their signal or state.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SensorTableRunnable implements TableComponentValueUpdater {
 

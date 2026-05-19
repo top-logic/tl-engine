@@ -26,7 +26,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * Creates reusable style objects that can be used with {@link ExcelCell}.
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ExcelStyle extends GenericMethod {
 

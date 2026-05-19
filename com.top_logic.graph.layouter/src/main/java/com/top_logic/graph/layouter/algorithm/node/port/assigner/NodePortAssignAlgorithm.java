@@ -12,7 +12,7 @@ import com.top_logic.graph.layouter.model.NodePort;
 /**
  * Algorithm to assign {@link NodePort}s for a given {@link LayoutNode}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface NodePortAssignAlgorithm {
 	/**

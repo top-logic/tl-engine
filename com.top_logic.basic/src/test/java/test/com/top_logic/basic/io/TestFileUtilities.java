@@ -70,7 +70,7 @@ public class TestFileUtilities extends BasicTestCase {
             // It will NOT work when using \n\r or \r I know 
             largeBuf.append("This is a dummy Text to fill this file with some Data\n");
             largeBuf.append("0123456789 the quick brown fox jumps over the lazy dogs back.\n");
-                          // ƒ     ÷     ‹     ‰     ˆ     ¸     ﬂ     Í      ¡     “ 
+                          // √Ñ     √ñ     √ú     √§     √∂     √º     √ü     √™      √Å     √í 
             largeBuf.append("\u00c4\u00d6\u00dc\u00e5\u00f6\u00fc\u00df\u00ea\u00cA\u00d2 ");
             largeBuf.append("THE QUICK BROWN FOX JUMPS OVER THE LAZY DOGS BACK:\n");
         }
@@ -342,7 +342,7 @@ public class TestFileUtilities extends BasicTestCase {
     public void testStrings () throws IOException 
     {
         File strFile = BasicTestCase.createNamedTestFile("testStringMethods.txt");
-        String str   = "Blah\nBlubber\nMBA Pˆrsˆn\nBlurks";
+        String str   = "Blah\nBlubber\nMBA P√∂rs√∂n\nBlurks";
         FileUtilities.writeStringToFile(str, strFile);
         
         List strL = FileUtilities.readWordsFromFile(strFile);
@@ -353,7 +353,7 @@ public class TestFileUtilities extends BasicTestCase {
         strL = FileUtilities.readWordsFromFile(strFile.getPath());
         assertEquals(5, strL.size());
         assertEquals("Blubber"  , strL.get(1));
-        assertEquals("Pˆrsˆn"   , strL.get(3));
+        assertEquals("P√∂rs√∂n"   , strL.get(3));
 
         // Will not work outside Windoof ...
         final FileInputStream is = new FileInputStream(strFile);

@@ -61,7 +61,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Editor for backwards {@link TLReference}s
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 
@@ -283,7 +283,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 	/**
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends TLReferenceFormBuilder.EditModel {
 

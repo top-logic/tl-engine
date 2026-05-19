@@ -9,7 +9,7 @@ package com.top_logic.base.mail;
 /**
  * Indicates that there is no session for a HTTP request.
  *
- * @author  Michael Gänsler
+ * @author  Michael GÃ¤nsler
  */
 public class NoSessionFoundException extends Exception {
 

@@ -15,7 +15,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSLabel;
 /**
  * {@link HandleFactory} crating diagramJS objects as generalized shared objects on the client.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DiagramJSHandleFactory implements HandleFactory {
 

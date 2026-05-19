@@ -69,7 +69,7 @@ public class TestExcelTransformerPrimitives extends AbstractTestExcelTransformer
         this.doTestValue(2, "String", "Huhu",   aTransformer, aContext, aLogger);
 
         if (!isMandatory) { 
-            this.doTestValue(3, "String",  "!\"ง$%&/()=", aTransformer, aContext, aLogger);
+            this.doTestValue(3, "String",  "!\"ยง$%&/()=", aTransformer, aContext, aLogger);
             this.doTestValue(4, "String",  null,          aTransformer, aContext, aLogger);
             this.doTestValue(6, "Unknown", null,          aTransformer, aContext, aLogger);
         }
@@ -210,7 +210,7 @@ public class TestExcelTransformerPrimitives extends AbstractTestExcelTransformer
     protected void doTestSubString(Transformer<String> aTransformer, ExcelContext aContext, ImportLogger aLogger) {
         this.doTestValue(1, "String", "Hallo", aTransformer, aContext, aLogger);
         this.doTestValue(2, "String", "Huhu",  aTransformer, aContext, aLogger);
-        this.doTestValue(3, "String", "!\"ง$", aTransformer, aContext, aLogger);
+        this.doTestValue(3, "String", "!\"ยง$", aTransformer, aContext, aLogger);
         this.doTestValue(4, "Unknown", null,   aTransformer, aContext, aLogger);
     }
     

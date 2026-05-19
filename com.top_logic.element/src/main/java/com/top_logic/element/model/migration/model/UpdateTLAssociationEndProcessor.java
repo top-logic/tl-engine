@@ -31,7 +31,7 @@ import com.top_logic.model.migration.data.TypePart;
 /**
  * {@link MigrationProcessor} updating a {@link TLAssociationEnd}.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public class UpdateTLAssociationEndProcessor
 		extends TLModelBaseLineMigrationProcessor<UpdateTLAssociationEndProcessor.Config> {

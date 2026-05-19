@@ -14,7 +14,7 @@ import com.top_logic.layout.ReadOnlyAccessor;
 /**
  * Accessor class to company contacts.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CompanyContactAccessor extends ReadOnlyAccessor<Object> {
 

@@ -18,7 +18,7 @@ import com.top_logic.tool.boundsec.assistent.CommandHolder;
 import com.top_logic.tool.boundsec.commandhandlers.UploadHandler;
 
 /**
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AbstractExcelImportController extends AbstractAssistentController {
 

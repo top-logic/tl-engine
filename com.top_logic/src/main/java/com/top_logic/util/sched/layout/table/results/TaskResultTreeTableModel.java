@@ -28,7 +28,7 @@ import com.top_logic.util.sched.task.result.TaskResult;
  * <p>
  * <ul>
  * <li>The relation "parent {@link TaskResult}" => "child {@link TaskResult}s" is cached.</li>
- * <li>The aforementioned relation is calculated in O(n*log(n)) and not in the naive O(n²).</li>
+ * <li>The aforementioned relation is calculated in O(n*log(n)) and not in the naive O(nÂ²).</li>
  * <li>As price for that, the whole tree is build in advance and not on demand.</li>
  * </ul>
  * </p>

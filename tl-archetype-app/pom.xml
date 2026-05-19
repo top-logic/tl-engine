@@ -23,7 +23,7 @@
 
 	<properties>
 		<tlVersion>${project.version}</tlVersion>
-		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<developers>

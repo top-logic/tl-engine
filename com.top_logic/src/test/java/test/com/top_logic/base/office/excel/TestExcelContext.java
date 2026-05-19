@@ -28,7 +28,7 @@ import com.top_logic.basic.io.CSVReader;
 /**
  * Test case for the excel context.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TestExcelContext extends TestCase {
 
@@ -147,11 +147,11 @@ public class TestExcelContext extends TestCase {
 		Assert.assertNotNull(aContext.getString("URL"));
 
 		if (!isCSV) {
-			Assert.assertTrue(aContext.isInvalid("Ungültig"));
+			Assert.assertTrue(aContext.isInvalid("UngÃ¼ltig"));
 			Assert.assertNotNull(aContext.getURL("URL"));
 		}
 		else { 
-			Assert.assertFalse(aContext.isInvalid("Ungültig"));
+			Assert.assertFalse(aContext.isInvalid("UngÃ¼ltig"));
 			Assert.assertNull(aContext.getURL("URL"));
 		}
 	}

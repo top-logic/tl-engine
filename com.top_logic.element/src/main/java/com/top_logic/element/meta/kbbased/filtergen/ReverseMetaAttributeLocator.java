@@ -20,7 +20,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * Locator for resolving a wrapper value reverse (by using
  * {@link WrapperMetaAttributeUtil#getWrappersWithValue(com.top_logic.basic.TLID, com.top_logic.model.TLObject)}).
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ReverseMetaAttributeLocator extends BackReferenceAttributeValueLocator {
 

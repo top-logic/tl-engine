@@ -21,7 +21,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * {@link LongestPathLayeringFinder} for a given {@link LayoutGraph}. The sink {@link LayoutNode}s
  * are on top and the sources on the bottom.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LongestPathFromSinkLayeringFinder extends LongestPathLayeringFinder {
 

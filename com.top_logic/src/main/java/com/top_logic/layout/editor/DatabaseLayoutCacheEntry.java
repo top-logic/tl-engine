@@ -61,7 +61,7 @@ import com.top_logic.mig.html.layout.TLLayout;
  * All database layouts are cached for every choosable theme.
  * </p>
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DatabaseLayoutCacheEntry {
 

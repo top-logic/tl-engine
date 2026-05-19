@@ -13,7 +13,7 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
 /**
  * Maps a given path to a subpath beginning from webapp.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class PathWebappSuffixMapping implements Function<Path, String> {
 

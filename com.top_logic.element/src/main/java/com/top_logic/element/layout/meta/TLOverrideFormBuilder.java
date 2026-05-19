@@ -45,7 +45,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * Editor for overriding {@link TLProperty}s
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLOverrideFormBuilder extends TLStructuredTypePartFormBuilder {
 
@@ -171,7 +171,7 @@ public class TLOverrideFormBuilder extends TLStructuredTypePartFormBuilder {
 	/**
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface EditModel extends TLStructuredTypePartFormBuilder.EditModel {
 

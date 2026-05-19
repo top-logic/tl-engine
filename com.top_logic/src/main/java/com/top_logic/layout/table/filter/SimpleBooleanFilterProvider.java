@@ -10,7 +10,7 @@ package com.top_logic.layout.table.filter;
  * {@link BooleanTableFilterProvider} for {@link Boolean} values that interprets <code>null</code>
  * as <code>false</code>.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SimpleBooleanFilterProvider extends BooleanTableFilterProvider {
 

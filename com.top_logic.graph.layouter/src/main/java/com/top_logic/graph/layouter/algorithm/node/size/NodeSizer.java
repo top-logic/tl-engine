@@ -13,7 +13,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 /**
  * General sizer for a {@link LayoutNode}. Sets the width and height of a node.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class NodeSizer implements NodeSizeAlgorithm {
 

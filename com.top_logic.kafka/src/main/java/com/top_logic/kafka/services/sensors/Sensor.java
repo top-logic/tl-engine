@@ -12,14 +12,14 @@ import com.top_logic.basic.tools.NameBuilder;
 /**
  * Interface for a sensor displayed in the sensor cockpit.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface Sensor<A extends Object, R extends Object> {
 
     /**
      * Possible states of a sensor. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public enum SensorActivityState {
 
@@ -83,7 +83,7 @@ public interface Sensor<A extends Object, R extends Object> {
     /**
      * Abstract base implementation of a sensor. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static abstract class AbstractSensor<A extends Object, R extends Object> implements Sensor<A, R> {
 

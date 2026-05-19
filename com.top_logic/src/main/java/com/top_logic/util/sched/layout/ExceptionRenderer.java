@@ -17,7 +17,7 @@ import com.top_logic.layout.Renderer;
 /**
  * Render a special image for an exception.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExceptionRenderer implements Renderer<String> {
 

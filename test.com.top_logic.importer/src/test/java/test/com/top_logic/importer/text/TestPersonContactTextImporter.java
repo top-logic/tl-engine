@@ -22,7 +22,7 @@ import com.top_logic.importer.text.TextFileImportParser.Config;
 /**
  * Test import of {@link PersonContact}s via text file.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class TestPersonContactTextImporter extends AbstractTestImporter {
 

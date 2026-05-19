@@ -37,7 +37,7 @@ public class DefaultAnalyzeService<C extends DefaultAnalyzeService.Config<?>> ex
 	/**
 	 * Configuration for {@link DefaultAnalyzeService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config<I extends DefaultAnalyzeService<?>> extends ConfiguredManagedClass.Config<I> {
 		/**

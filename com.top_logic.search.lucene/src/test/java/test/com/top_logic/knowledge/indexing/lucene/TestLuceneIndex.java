@@ -30,7 +30,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 /**
  * Test case for the {@link com.top_logic.knowledge.indexing.lucene.LuceneIndex}
  *
- * @author    Dieter Rothb‰cher
+ * @author    Dieter Rothb√§cher
  */
 public class TestLuceneIndex extends BasicTestCase {
     

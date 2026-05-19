@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 /**
  * {@link GenericMethod} to remove a value from a collection-valued property.
  *
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class Remove extends GenericMethod {
 

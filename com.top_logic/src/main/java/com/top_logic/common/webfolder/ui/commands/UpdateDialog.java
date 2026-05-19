@@ -51,7 +51,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Update dialog providing the {@link DataField} for identifying the file to be uploaded (and updated).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael G�nsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class UpdateDialog extends AbstractFormPageDialog {
 
@@ -63,7 +63,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 	 * When updating a {@link Document} will become new version.
 	 * Moreover the stuff from the {@link DataField} will be used as content for that new version.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael G�nsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
 	public static class UpdateCommand implements Command {
 	

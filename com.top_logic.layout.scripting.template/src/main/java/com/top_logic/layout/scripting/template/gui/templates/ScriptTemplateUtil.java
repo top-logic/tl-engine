@@ -13,7 +13,7 @@ import com.top_logic.layout.tree.model.StructureTreeModel.Node;
 /**
  * Utilities for ScriptRecorder templates.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ScriptTemplateUtil {
 

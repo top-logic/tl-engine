@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -652,8 +653,8 @@ public abstract class StreamUtilities {
 	}
 
 	/**
-	 * Writes the given {@link Properties} in {@link #ISO_8859_1} encoding to the given output.
-	 * 
+	 * Writes the given {@link Properties} in UTF-8 encoding to the given output.
+	 *
 	 * <p>
 	 * Output is normalized in following sense:
 	 * <ul>
@@ -665,35 +666,56 @@ public abstract class StreamUtilities {
 	 * After the entries have been written, the output stream is flushed. The output stream remains
 	 * open after this method returns.
 	 * </p>
-	 * 
+	 *
 	 * @param out
 	 *        Stream to write content to.
 	 * @param props
 	 *        The {@link Properties} to write.
 	 */
 	public static void storeNormalized(OutputStream out, Properties props) throws IOException {
-		ByteArrayStream buffer = new ByteArrayStream();
-		props.store(buffer, null);
+		storeNormalized(out, props, StandardCharsets.UTF_8);
+	}
 
-		// Properties are written ISO-8859-1 encoded.
-		Charset cs = ISO_8859_1;
+	/**
+	 * Writes the given {@link Properties} in the given encoding to the given output.
+	 *
+	 * <p>
+	 * Output is normalized in following sense:
+	 * <ul>
+	 * <li>No "current date" is contained in the output.</li>
+	 * <li>Lines are sorted in natural order.</li>
+	 * </ul>
+	 * </p>
+	 * <p>
+	 * After the entries have been written, the output stream is flushed. The output stream remains
+	 * open after this method returns.
+	 * </p>
+	 *
+	 * @param out
+	 *        Stream to write content to.
+	 * @param props
+	 *        The {@link Properties} to write.
+	 */
+	public static void storeNormalized(OutputStream out, Properties props, Charset cs) throws IOException {
+		ByteArrayStream buffer = new ByteArrayStream();
+		try (OutputStreamWriter bufferWriter = new OutputStreamWriter(buffer, cs)) {
+			props.store(bufferWriter, null);
+		}
 
 		List<String> allLines;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(buffer.getStream(), cs))) {
-
-			// Remove first line containing the current date!
-			String firstLine = br.readLine();
-			if (firstLine == null) {
-				// Does actually not occur, but is complained by FindBugs.
-				// If first line is null, nothing must be written.
-				return;
-			}
-			assert firstLine.charAt(0) == '#' : "First line is a comment containing the current date.";
-
 			// Sort all lines
 			allLines = new ArrayList<>();
 			String line;
 			while ((line = br.readLine()) != null) {
+				if (line.isEmpty()) {
+					continue;
+				}
+
+				if (line.charAt(0) == '#') {
+					continue;
+				}
+
 				allLines.add(line);
 			}
 			allLines.sort(null);

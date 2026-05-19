@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * Matcher for a TLModelPart containing relevant informations about the module, type and attribute.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ModelPartMatch {
 	private String _moduleName;

@@ -15,7 +15,7 @@ import com.top_logic.layout.Renderer;
 /**
  * {@link Renderer}for a {@link ThemeImage}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeImageRenderer implements Renderer<ThemeImage> {
 

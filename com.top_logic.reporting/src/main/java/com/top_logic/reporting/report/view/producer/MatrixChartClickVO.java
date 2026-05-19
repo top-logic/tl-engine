@@ -10,7 +10,7 @@ import com.top_logic.reporting.report.control.producer.ChartContext;
 /**
  * A click information to be used in {@link AbstractMatrixChartProducer}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MatrixChartClickVO {
     

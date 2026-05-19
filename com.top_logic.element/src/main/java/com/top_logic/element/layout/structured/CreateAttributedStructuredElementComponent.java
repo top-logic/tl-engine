@@ -43,7 +43,7 @@ import com.top_logic.model.TLObject;
 /**
  * Create component for attributed structured elements.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link AbstractCreateComponent} with {@link CreateFormBuilder}
  */
@@ -259,7 +259,7 @@ public class CreateAttributedStructuredElementComponent extends CreateAttributed
     /**
 	 * Create a new attributed structured element.
 	 * 
-	 * @author <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+	 * @author <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
 	 */
     public static class CreateAttributedStructuredElementCommandHandler extends AbstractCreateAttributedCommandHandler {
 

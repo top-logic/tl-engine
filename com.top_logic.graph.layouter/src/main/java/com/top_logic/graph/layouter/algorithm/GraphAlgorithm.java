@@ -11,7 +11,7 @@ package com.top_logic.graph.layouter.algorithm;
  * @param <G>
  *        Type of graph.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class GraphAlgorithm<G> {
 	private G _graph;

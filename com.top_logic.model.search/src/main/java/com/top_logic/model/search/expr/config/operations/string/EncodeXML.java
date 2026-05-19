@@ -25,7 +25,7 @@ import com.top_logic.model.util.TLModelUtil;
  * Function is responsible for safely encoding strings to prevent XML injection and ensure proper
  * XML formatting.
  * 
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class EncodeXML extends GenericMethod {
 

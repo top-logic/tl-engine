@@ -238,7 +238,7 @@ public class TestDBHelper extends AbstractConnectionTest {
 	}
 
 	public void testString() throws SQLException, ParseException {
-		doTest(col(spec(DBType.STRING, 100, 0, false, false, true), "Hello World ���߀!", null));
+		doTest(col(spec(DBType.STRING, 100, 0, false, false, true), "Hello World öäüß!", null));
 		doTest(col(spec(DBType.STRING, 100, 0, false, true, true), "Hello world!", null));
 		doTest(col(spec(DBType.STRING, 10000, 0, false, false, false),
 			BasicTestCase.randomString(999, true, true, true, false), null));

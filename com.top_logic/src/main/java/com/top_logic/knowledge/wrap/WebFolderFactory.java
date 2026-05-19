@@ -78,7 +78,7 @@ public class WebFolderFactory extends ManagedClass {
 	/**
 	 * Configuration for {@link WebFolderFactory}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<WebFolderFactory> {
 		/**
@@ -263,7 +263,7 @@ public class WebFolderFactory extends ManagedClass {
 	/**
 	 * Module for {@link WebFolderFactory}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<WebFolderFactory> {
 

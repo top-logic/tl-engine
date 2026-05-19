@@ -67,7 +67,7 @@ public class TestSwingRenderer extends TestCase {
         ValueAxis rangeAxis1 = new NumberAxis("TEUR");
         SwingMain.customizeValueAxis(sds, 0, rangeAxis1, SwingMain.AXIS_FULL, bottomMargin, topMargin);
         
-        /* Create the category axis and set the label position to 90°. */
+        /* Create the category axis and set the label position to 90Â°. */
         CategoryAxis categoryAxis = new CategoryAxis();
         // categoryAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
         
@@ -162,7 +162,7 @@ public class TestSwingRenderer extends TestCase {
         ValueAxis rangeAxis1 = new NumberAxis("TEUR");
         SwingMain.customizeValueAxis(sds, 0, rangeAxis1, SwingMain.AXIS_FULL, bottomMargin, topMargin);
         
-        /* Create the category axis and set the label position to 90°. */
+        /* Create the category axis and set the label position to 90Â°. */
         CategoryAxis categoryAxis = new CategoryAxis();
         // categoryAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
         

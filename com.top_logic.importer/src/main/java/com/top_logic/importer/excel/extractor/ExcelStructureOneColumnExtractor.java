@@ -18,7 +18,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 /**
  * Extract the level of the element from only one cell by pattern matching.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExcelStructureOneColumnExtractor<C extends ExcelStructureOneColumnExtractor.ColumnConfig> extends AbstractExcelStructureExtractor<C> {
 

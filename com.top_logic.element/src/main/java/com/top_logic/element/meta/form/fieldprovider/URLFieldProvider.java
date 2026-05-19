@@ -14,7 +14,7 @@ import com.top_logic.layout.form.constraints.URLConstraint;
 /**
  * Create field for an URL.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class URLFieldProvider extends StringFieldProvider {
 

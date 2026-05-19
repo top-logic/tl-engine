@@ -24,7 +24,7 @@ import com.top_logic.util.Utils;
  * The GanttNodeBuilder creates the {@link GanttRow}s shown in the Gantt tree and the {@link GanttNode}
  * shown in the chart.
  * 
- * @author <a href=mailto:jes@top-logic.com>Jens Sch‰fer</a>
+ * @author <a href=mailto:jes@top-logic.com>Jens Sch√§fer</a>
  */
 public abstract class GanttNodeBuilder {
 

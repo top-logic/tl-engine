@@ -521,16 +521,16 @@ public class WebFrameTest extends HttpUnitTest {
      */
     public void xtestIFrameForm() throws Exception {
     	String login="//Login.html (main page that is loaded - this page embed the IFrame).\n"+
-    	" \n"+
+    	"Â \n"+
     	"<html>\n"+
     	"<Head>\n"+
     	"<Script>\n"+
     	"<!--\n"+
     	"function SetLoginForm(name, password, Submit) {\n"+
-    	"  document.loginForm.name.value = name;\n"+
-    	"  document.loginForm.password.value = password;\n"+
-    	" \n"+
-    	"  document.loginForm.submit();\n"+
+    	"Â  document.loginForm.name.value = name;\n"+
+    	"Â  document.loginForm.password.value = password;\n"+
+    	"Â \n"+
+    	"Â  document.loginForm.submit();\n"+
     	"}\n"+
     	"-->\n"+
     	"</Script>\n"+
@@ -547,13 +547,13 @@ public class WebFrameTest extends HttpUnitTest {
     	"</html>\n";
 
     	String loginDialog="// LoginDialog.html - IFrame\n"+
-    	" \n"+
+    	"Â \n"+
     	"<html>\n"+
     	"<Head>\n"+
     	"<Script>\n"+
     	"<!--\n"+
     	"function SubmitToParent(action) {\n"+
-    	"  parent.SetLoginForm(document.submit_to_parent.name.value,document.submit_to_parent.password.value);\n"+
+    	"Â  parent.SetLoginForm(document.submit_to_parent.name.value,document.submit_to_parent.password.value);\n"+
     	"}\n"+
     	"-->\n"+
     	"</Script>\n"+

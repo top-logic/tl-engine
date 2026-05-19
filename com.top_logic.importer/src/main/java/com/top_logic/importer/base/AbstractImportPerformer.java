@@ -38,14 +38,14 @@ import com.top_logic.util.Utils;
  * 
  * <p>This class normally uses the data provided by an {@link AbstractImportParser}.</p>
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.Config> implements ProcessFileHandler, ConfiguredInstance<AbstractImportPerformer.Config> {
 
 	/**
 	 * Configuration for a AbstractImportPerformer.
 	 * 
-	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public interface Config extends PolymorphicConfiguration<AbstractImportPerformer<?>> {
 
@@ -351,7 +351,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
     /**
      * Object performed by the {@link AbstractImportPerformer}. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class ImportResult {
 

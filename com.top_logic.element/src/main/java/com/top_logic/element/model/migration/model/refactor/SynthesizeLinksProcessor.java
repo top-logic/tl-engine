@@ -53,7 +53,7 @@ import com.top_logic.model.migration.data.TypePart;
  * {@link MigrationProcessor} adding links to the association table of the configured
  * {@link TLReference} between all objects of the configured source and target types.
  *
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<SynthesizeLinksProcessor.Config<?>>
 		implements MigrationProcessor {

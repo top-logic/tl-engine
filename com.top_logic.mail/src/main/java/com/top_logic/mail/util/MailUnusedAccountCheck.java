@@ -50,7 +50,7 @@ public class MailUnusedAccountCheck extends UnusedAccountCheck {
 	/**
 	 * Configuration for {@link MailUnusedAccountCheck}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends UnusedAccountCheck.Config {
 		/**

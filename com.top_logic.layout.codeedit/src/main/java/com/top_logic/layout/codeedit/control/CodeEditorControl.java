@@ -40,7 +40,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * {@link Control} displaying an embedded source code editor.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CodeEditorControl extends AbstractFormFieldControl {
 

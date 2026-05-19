@@ -25,7 +25,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * 
  * <p>The {@link PoiTypeHandler} can be used to set values into an excel sheet.</p>
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class POITypeProvider extends ManagedClass {
 

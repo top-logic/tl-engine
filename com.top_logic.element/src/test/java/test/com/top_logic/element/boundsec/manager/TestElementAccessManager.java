@@ -584,14 +584,14 @@ public class TestElementAccessManager extends BasicTestCase {
 
 			theRoot = (StructuredElementWrapper) projectRoot();
             theRoot.setValue("Name", "Universum");
-            project1 = (StructuredElementWrapper)theRoot.createChild("Milchstraﬂe", "Project");
+            project1 = (StructuredElementWrapper)theRoot.createChild("Milchstra√üe", "Project");
             project2 = (StructuredElementWrapper)theRoot.createChild("Pegasus", "Project");
             project3 = (StructuredElementWrapper)theRoot.createChild("Andromeda", "Project");
             project4 = (StructuredElementWrapper)theRoot.createChild("Centaurus", "Project");
 
             workPackage1_1 = (StructuredElementWrapper)project1.createChild("Sterne", "Workpackage");
             workPackage1_2 = (StructuredElementWrapper)project1.createChild("Planeten", "Workpackage");
-            workPackage1_3 = (StructuredElementWrapper)project1.createChild("Schwarze Lˆcher", "Workpackage");
+            workPackage1_3 = (StructuredElementWrapper)project1.createChild("Schwarze L√∂cher", "Workpackage");
 
             project1_1 = (StructuredElementWrapper)project1.createChild("Merkur", "Subproject");
             project1_2 = (StructuredElementWrapper)project1.createChild("Venus", "Subproject");
@@ -604,7 +604,7 @@ public class TestElementAccessManager extends BasicTestCase {
             project1_9 = (StructuredElementWrapper)project1.createChild("Pluto", "Subproject");
 
             project1_3_1 = (StructuredElementWrapper)project1_3.createChild("Mond", "Subproject");
-            workPackage1_3_1 = (StructuredElementWrapper)project1_3.createChild("Oberfl‰che", "Workpackage");
+            workPackage1_3_1 = (StructuredElementWrapper)project1_3.createChild("Oberfl√§che", "Workpackage");
             workPackage1_3_2 = (StructuredElementWrapper)project1_3.createChild("Klima", "Workpackage");
             workPackage1_3_3 = (StructuredElementWrapper)project1_3.createChild("Lebewesen", "Workpackage");
 

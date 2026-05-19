@@ -27,7 +27,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * Applies changes to a {@link TLModule} model element.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLModuleApplyHandler extends DeclarativeApplyHandler<EditModel, TLModule> {
 

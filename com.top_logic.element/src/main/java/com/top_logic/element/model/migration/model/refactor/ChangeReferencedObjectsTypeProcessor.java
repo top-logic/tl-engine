@@ -45,7 +45,7 @@ import com.top_logic.model.migration.data.TypePart;
  * {@link MigrationProcessor} that changes the type of objects that are referenced by a given
  * reference from some concrete source type to some concrete destination type.
  *
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ChangeReferencedObjectsTypeProcessor
 		extends AbstractConfiguredInstance<ChangeReferencedObjectsTypeProcessor.Config<?>>

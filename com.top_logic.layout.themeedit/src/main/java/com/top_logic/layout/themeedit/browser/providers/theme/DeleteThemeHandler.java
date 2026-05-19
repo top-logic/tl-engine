@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Handler to delete the given theme.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DeleteThemeHandler extends AbstractCommandHandler {
 

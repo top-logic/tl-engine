@@ -20,7 +20,7 @@ import com.top_logic.util.TLContextManager;
 /**
  * Provides a dialog for updating an existing document on the server. 
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class UpdateExecutable extends AbstractWebfolderAction {
 

@@ -51,7 +51,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	/**
 	 * Configuration for {@link PerformanceMonitor}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<PerformanceMonitor> {
 		/**
@@ -934,7 +934,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	/**
 	 * Module for {@link PerformanceMonitor}
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<PerformanceMonitor> {
 

@@ -18,7 +18,7 @@ import com.top_logic.model.TLType;
 /**
  * Builds for the given model a layouted {@link SharedGraph}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DiagramJSGraphBuilder implements GraphModelBuilder {
 

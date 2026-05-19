@@ -73,7 +73,7 @@ import com.top_logic.util.Resources;
 /**
  * Dialog to select a top-logic object from full-text search.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class SelectObjectDialog {
 	private static final int MINIMUM_SEARCH_STRING_LENGTH = 3;

@@ -37,7 +37,7 @@ import com.top_logic.graph.layouter.model.layer.SegmentContainer;
  * To build such blocks there exists 4 different strategies to traverse the layered graph. From top
  * to bottom and left to right.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class BrandesKoepfCoordinateAssigner extends HorizontalCoordinatesAssigner {
 

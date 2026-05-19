@@ -43,7 +43,7 @@ import com.top_logic.model.TLClass;
 /**
  * Display results from a search in a table.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class AttributedSearchResultComponent extends TableComponent
 		implements SupportColumnChange, AttributedSearchResultSetAware {
@@ -181,7 +181,7 @@ public class AttributedSearchResultComponent extends TableComponent
     /**
      * Search result builder, which takes care of the defined meta element of the calling component.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class AttributedSearchResultBuilder extends SearchResultBuilder {
 
@@ -292,7 +292,7 @@ public class AttributedSearchResultComponent extends TableComponent
 	/**
 	 * Simple supporting class for getting a meta element for a string.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static final class MetaElementProvider implements SearchModelBuilder {
 

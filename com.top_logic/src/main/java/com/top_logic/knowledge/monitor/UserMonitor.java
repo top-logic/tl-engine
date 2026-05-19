@@ -208,7 +208,7 @@ public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
 	/**
      * Special iterator for all currently open user sessions.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public class OpenSessionIterator extends FilteredIterator<UserSession> {
 

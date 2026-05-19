@@ -10,7 +10,7 @@ import com.top_logic.element.structured.StructuredElement;
 /**
  * Locator for resolving some structured element depending references.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementLocator extends CustomSingleSourceValueLocator {
 

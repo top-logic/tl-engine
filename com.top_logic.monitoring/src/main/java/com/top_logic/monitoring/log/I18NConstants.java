@@ -28,7 +28,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Failed to read log file {0}. The encoding {1} failed to parse the characters. The file
 	 *     will be re-read with UTF-8 with unparseable characters being replaced by the Unicode
-	 *     "Replacement Character": \uFFFD
+	 *     Replacement Character.
 	 */
 	public static ResKey2 FILE_IN_WRONG_ENCODING__NAME_ENCODING;
 

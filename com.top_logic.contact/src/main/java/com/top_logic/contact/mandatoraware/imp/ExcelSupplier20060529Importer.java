@@ -52,7 +52,7 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
                                                       // ZZSPC_SPL is allowed, too
     /*
     "Kreditor","Lnd","Name 1","Name 2","Ort","Ortsteil","Postfach","PLZ-Postf.",
-       "Postleitz.","Rg","SuchBegr","Straﬂe","Adresse","Name 1","Name 2","Ort",
+       "Postleitz.","Rg","SuchBegr","Stra√üe","Adresse","Name 1","Name 2","Ort",
        "Branche","Telebox","Telefon-1","Telefon-2","Telefaxnummer","Teletexnummer","Telexnummer" };
     */
 

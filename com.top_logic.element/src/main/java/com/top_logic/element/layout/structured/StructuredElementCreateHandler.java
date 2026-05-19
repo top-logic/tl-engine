@@ -24,7 +24,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
  * Create a new {@link StructuredElement} in the context of a
  * {@link StructuredElementCreateComponent}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link GenericCreateHandler} together with {@link CreateFormBuilder}.
  */

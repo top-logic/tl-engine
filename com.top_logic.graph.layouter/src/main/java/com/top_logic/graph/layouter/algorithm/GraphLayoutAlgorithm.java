@@ -10,7 +10,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph;
 /**
  * Abstract layout graph algorithm which is applied on a {@link LayoutGraph}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class GraphLayoutAlgorithm extends GraphAlgorithm<LayoutGraph> {
 

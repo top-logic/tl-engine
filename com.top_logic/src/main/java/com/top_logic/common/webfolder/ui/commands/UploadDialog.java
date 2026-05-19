@@ -45,7 +45,7 @@ import com.top_logic.util.Resources;
 /**
  * Upload dialog providing the {@link DataField} for identifying the file to be uploaded.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class UploadDialog extends AbstractFormPageDialog {
 

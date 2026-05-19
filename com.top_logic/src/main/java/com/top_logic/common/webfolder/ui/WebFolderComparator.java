@@ -15,7 +15,7 @@ import com.top_logic.util.TLCollator;
  * Comparator for grouping web folders and other objects before looking at the name of the business
  * object.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderComparator implements Comparator<FolderNode> {
 

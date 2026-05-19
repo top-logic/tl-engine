@@ -21,7 +21,7 @@ import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
  * {@link Renderer} writing a shot representation of a value with a tool-tip showing the complete
  * content.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class FirstLineRenderer implements Renderer<Object> {
 

@@ -54,14 +54,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Base class for excel and CSV based import upload handler with a {@link Config configuration}.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileImportParser.Config> extends AbstractImportParser implements TypedAnnotatable {
     
     /**
      * Configuration for parsing the excel file. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends AbstractImportParser.Config {
 
@@ -111,7 +111,7 @@ public abstract class AbstractExcelFileImportParser<C extends AbstractExcelFileI
     /**
      * Configuration of a mapping from excel cell to a java representation stored in the result map. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface MappingConfig extends ListDataImportPerformer.MappingConfig {
 

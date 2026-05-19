@@ -10,6 +10,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -134,11 +137,9 @@ public class RefactorResources implements FileHandler {
 	}
 
 	private void writeProperties(String fileName, Properties properties) throws FileNotFoundException, IOException {
-		FileOutputStream out = new FileOutputStream(new File(fileName));
-		try {
+		try (OutputStreamWriter out =
+			new OutputStreamWriter(new FileOutputStream(new File(fileName)), StandardCharsets.UTF_8)) {
 			properties.store(out, null);
-		} finally {
-			out.close();
 		}
 	}
 
@@ -155,11 +156,9 @@ public class RefactorResources implements FileHandler {
 		Properties properties = new Properties();
 		File file = new File(fileName);
 		if (file.exists()) {
-			FileInputStream in = new FileInputStream(file);
-			try {
+			try (InputStreamReader in =
+				new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
 				properties.load(in);
-			} finally {
-				in.close();
 			}
 		}
 		return properties;

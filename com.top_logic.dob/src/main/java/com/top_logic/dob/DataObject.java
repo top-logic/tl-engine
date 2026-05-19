@@ -50,7 +50,7 @@ public interface DataObject extends StaticTyped, NamedValues, Serializable {
 
     /** Sets the identifier when not already set.
      *
-     * Once the identifier is set you can´t override the existing one.
+     * Once the identifier is set you canÂ´t override the existing one.
      */
     public void setIdentifier (TLID anIdentifier);
 

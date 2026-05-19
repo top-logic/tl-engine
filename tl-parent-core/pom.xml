@@ -119,7 +119,6 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>8.0.0-SNAPSHOT</version>
 
 				<executions>
 					<execution>

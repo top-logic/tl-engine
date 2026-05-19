@@ -226,7 +226,7 @@ public class SAPProgressComponent extends AJAXProgressComponent {
      * Handler for displaying the rest of information provided by the internal importer to
      * the UI. 
      * 
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
     public static class FinishSAPImportCommandHandler extends AJAXCommandHandler {
         

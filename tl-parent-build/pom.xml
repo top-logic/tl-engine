@@ -23,7 +23,7 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		
 		<!-- By default, generate JavaDoc only to a project-local location. -->
 		<javadocOutput>${project.build.directory}/tl-doc</javadocOutput>
@@ -120,7 +120,6 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>8.0.0-SNAPSHOT</version>
 				<executions>
 					<execution>
 						<id>translate-system-messages</id>

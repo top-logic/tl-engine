@@ -253,7 +253,7 @@ public class NewDataManager extends AbstractDataManager {
 				// block searches that are performed during other parallel
 				// modifications, even if independent identifier ranges are affected.
 				//
-				// Alternative w‰re " WITH(TABLOCK HOLDLOCK)" in lockHintModify() und lockHintCreate().
+				// Alternative w√§re " WITH(TABLOCK HOLDLOCK)" in lockHintModify() und lockHintCreate().
 				return " WITH(READPAST)";
 			} else {
 				return "";

@@ -778,7 +778,7 @@ public class TestDateUtil extends BasicTestCase {
         
         try {
             // unknown time period
-            DateUtil.add(refDate, "3ü");
+            DateUtil.add(refDate, "3Ã¼");
             fail("Expected Exception");
         } catch (Exception e) {
             // expected

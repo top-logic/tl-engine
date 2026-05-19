@@ -11,7 +11,7 @@ import java.util.LinkedHashSet;
 /**
  * General layer where the items are unordered.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class UnorderedLayer<I> extends AbstractLayer<I> {
 

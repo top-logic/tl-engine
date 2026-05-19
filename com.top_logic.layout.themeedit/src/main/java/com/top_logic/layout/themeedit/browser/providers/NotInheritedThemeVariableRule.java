@@ -18,7 +18,7 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * Prevent deletion of an inherited theme variable.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class NotInheritedThemeVariableRule implements ExecutabilityRule {
 

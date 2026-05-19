@@ -26,7 +26,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * Selfloops are removed and other conflicting edges are reversed.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class EadesLinSmythAcycleFinder extends AcycleFinder {
 

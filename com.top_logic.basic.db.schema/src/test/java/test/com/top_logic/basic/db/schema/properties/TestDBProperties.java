@@ -27,7 +27,7 @@ import com.top_logic.dsa.DataAccessService;
 /** 
  * Test for the {@link DBProperties}.
  *
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @SuppressWarnings("javadoc")
 public class TestDBProperties extends BasicTestCase {

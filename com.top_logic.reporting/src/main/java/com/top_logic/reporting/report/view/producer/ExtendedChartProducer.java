@@ -21,7 +21,7 @@ import com.top_logic.reporting.report.view.component.ExtendedProducerChartCompon
 /**
  * Producer for chart information handled by the {@link ExtendedProducerChartComponent}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface ExtendedChartProducer {
     

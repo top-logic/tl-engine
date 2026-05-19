@@ -32,7 +32,7 @@ import com.top_logic.util.TLContext;
  * An extension of the {@link StackedBarRenderer} that can draw positive and negative totals at the
  * top and bottom of the stacked bars.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExtendedStackedBarRenderer extends StackedBarRenderer {
 

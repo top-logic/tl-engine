@@ -10,7 +10,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 /**
  * Two dimensional waypoint to describe a part of an edge.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Waypoint {
 	private double _x;

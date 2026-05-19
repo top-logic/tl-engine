@@ -13,7 +13,7 @@ import com.top_logic.util.TLContext;
 /**
  * Compares {@link CodeCompletion} by ascending names lexicographic.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CompletionByNameComparator implements Comparator<CodeCompletion> {
 

@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Proxy excel context for handling different types of excel files.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ProxyExcelContext extends ExcelContext {
 

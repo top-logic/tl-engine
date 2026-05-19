@@ -8,7 +8,7 @@ package com.top_logic.model.search.ui.selector;
 /**
  * Describes where the search expression is created.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public enum SearchType {
 

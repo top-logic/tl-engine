@@ -9,7 +9,7 @@ package com.top_logic.knowledge.service;
 /**
  * Exception is thrown if a Identifier is not found in tables.
  *
- * @author Jörg Connotte
+ * @author JÃ¶rg Connotte
  */
 public class UnknownIdentifierException extends Exception {
 

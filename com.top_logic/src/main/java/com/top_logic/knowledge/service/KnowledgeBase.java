@@ -57,7 +57,7 @@ import com.top_logic.model.TLObject;
  * KnowledgeAssociations. By executing quieries on the KnowledgeBase
  * it is possible to find KnowledgeObjects matching to the request.
  *
- * @author  Jörg Connotte
+ * @author  JÃ¶rg Connotte
  */
 public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 

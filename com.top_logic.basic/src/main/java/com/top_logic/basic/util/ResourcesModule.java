@@ -12,7 +12,9 @@ import static java.util.Objects.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -974,7 +976,7 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 				if (propertiesData != null) {
 					try (InputStream in = propertiesData.getStream()) {
 						if (in != null) {
-							result.load(in);
+							result.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 							Logger.debug("Loading I18N properties " + resourceName + ".", DefaultBundle.class);
 						}
 					}
@@ -996,7 +998,7 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 				while (messages.hasMoreElements()) {
 					URL url = messages.nextElement();
 					try (InputStream in = url.openStream()) {
-						result.load(in);
+						result.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 					}
 				}
 			} catch (IOException ex) {

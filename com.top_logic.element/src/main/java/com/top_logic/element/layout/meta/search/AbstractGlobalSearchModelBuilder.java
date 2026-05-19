@@ -12,7 +12,7 @@ import com.top_logic.model.TLClass;
  * Abstract model builder for {@link AttributedSearchComponent} when the used meta element
  * is defined as a global meta element.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractGlobalSearchModelBuilder implements SearchModelBuilder {
 

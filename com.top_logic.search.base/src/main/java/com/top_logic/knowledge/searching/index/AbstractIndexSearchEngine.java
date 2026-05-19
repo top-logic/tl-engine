@@ -24,7 +24,7 @@ public abstract class AbstractIndexSearchEngine<C extends AbstractIndexSearchEng
 	/**
 	 * Configuration for {@link AbstractIndexSearchEngine}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config<I extends AbstractIndexSearchEngine<?>> extends AbstractSearchEngine.Config<I> {
 

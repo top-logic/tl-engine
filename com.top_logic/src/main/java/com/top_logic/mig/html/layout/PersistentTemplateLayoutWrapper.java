@@ -14,7 +14,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 /**
  * {@link AbstractWrapper} representing a template layout stored in the database.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class PersistentTemplateLayoutWrapper extends AbstractWrapper {
 

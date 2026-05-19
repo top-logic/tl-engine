@@ -22,7 +22,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * Implementing classes will only need to define the real storing of a value from
  * a {@link FormField} to the representing {@link Wrapper}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractApplyTreeEditCommandHandler extends AbstractApplyCommandHandler {
 

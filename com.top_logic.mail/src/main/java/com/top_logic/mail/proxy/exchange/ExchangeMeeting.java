@@ -40,7 +40,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * MS-Exchange implementation for the {@link MailMeeting} interface. 
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExchangeMeeting extends AbstractMailMeeting {
 
@@ -426,7 +426,7 @@ public class ExchangeMeeting extends AbstractMailMeeting {
     /**
 	 * Handle calendar values in a stream.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     private static class CalendarDataHandler extends DataHandler {
 
@@ -438,7 +438,7 @@ public class ExchangeMeeting extends AbstractMailMeeting {
     /**
 	 * Data source for calendar values.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     private static class CalendarDataSource implements DataSource {
 

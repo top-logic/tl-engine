@@ -168,14 +168,14 @@ public class TestXMLPrettyPrinter extends BasicTestCase {
 
 	public void testDumpEncoding() {
 		Document document = DOMUtil.newDocument();
-		Element r = document.createElement("ä");
+		Element r = document.createElement("Ã¤");
 		// To minimise output
 		_config.setXMLHeader(false);
 
 		_config.setEncoding(StringServices.UTF8);
-		assertEquals("<ä/>", XMLPrettyPrinter.prettyPrint(_config, r));
+		assertEquals("<Ã¤/>", XMLPrettyPrinter.prettyPrint(_config, r));
 		_config.setEncoding("utf-16");
-		assertEquals("<ä/>", XMLPrettyPrinter.prettyPrint(_config, r));
+		assertEquals("<Ã¤/>", XMLPrettyPrinter.prettyPrint(_config, r));
 	}
 
 	public void testNamespaceAssignment() throws IOException {

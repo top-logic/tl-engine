@@ -14,7 +14,7 @@ import java.util.Random;
 
 /**
  * Diese Klasse generiert aus zwei Bits-stelligen Primzahlen
- * einen öffentlichen oder privaten Schlüssel für eine RSA-Codierung.
+ * einen Ã¶ffentlichen oder privaten SchlÃ¼ssel fÃ¼r eine RSA-Codierung.
  */
 class RSAKey implements Serializable, PrivateKey, PublicKey {
 
@@ -24,7 +24,7 @@ class RSAKey implements Serializable, PrivateKey, PublicKey {
     /** Stellen der Primzahlen in Bits. */
     public static int BITS = 340;
 
-    /** Klassenintern Modulus und Schlüssel. */
+    /** Klassenintern Modulus und SchlÃ¼ssel. */
     private BigInteger modulo     = new BigInteger("0");
 
     private BigInteger privateKey = new BigInteger("0");
@@ -42,10 +42,10 @@ class RSAKey implements Serializable, PrivateKey, PublicKey {
         if (e.compareTo (n)!= (-1)) {
             e = new BigInteger (n.toString ());
         }
-        // Sicherstellen, daß e mit phi den ggT 1 hat.
+        // Sicherstellen, daÃŸ e mit phi den ggT 1 hat.
         for(;!e.gcd (this.phi (p,q)).equals(BigInteger.valueOf (1));) {
             e = e.subtract(BigInteger.valueOf(1));
-            // Sicherstellen, daß e größer 1 ist.
+            // Sicherstellen, daÃŸ e grÃ¶ÃŸer 1 ist.
             if (e.compareTo(BigInteger.valueOf(1))!=(1)) {
                 e = new BigInteger(n.toString());
             }

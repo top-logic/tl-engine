@@ -15,7 +15,7 @@ import com.top_logic.basic.config.format.MillisFormat;
 /**
  * Configuration for the start stop listener.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface StartStopListenerConfig extends ConfigurationItem {
 	String STARTUP_SLEEP = "startupSleep";

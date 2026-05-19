@@ -61,7 +61,7 @@ public class ExcelChecker extends LazyActionProvider {
 	/**
 	 * I18N values.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public interface I18NConfig extends ConfigurationItem {
         /** German translation. */

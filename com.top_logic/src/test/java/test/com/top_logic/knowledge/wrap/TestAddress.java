@@ -46,7 +46,7 @@ public class TestAddress extends BasicTestCase {
 	protected static final String FAX_1_V 			= "dffsf";
 	/** Fax-Nr. of address. */
 	protected static final String FAX_2_V 			= "uiouo";
-	protected static final String E_MAIL_V			="kllök";
+	protected static final String E_MAIL_V			="kllÃ¶k";
 	protected static final String ASS_TYPE          ="jkkjljoo";
 	
 	/**

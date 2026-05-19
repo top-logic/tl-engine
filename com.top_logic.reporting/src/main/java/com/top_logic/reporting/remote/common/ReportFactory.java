@@ -93,8 +93,8 @@ public final class ReportFactory extends ManagedClass {
      * Convenience method to handle special content. E.g. replace image references in the map with byte[]-representation 
      * of this image.
      * 
-     * TODO CCA: verschiedene keys können das selbe image referenzieren und image sollte dann nicht 
-     * mehrfach übertragen werden!
+     * TODO CCA: verschiedene keys kÃ¶nnen das selbe image referenzieren und image sollte dann nicht 
+     * mehrfach Ã¼bertragen werden!
      */
 	public static void handleSpecialContentForWrite(Map aValueMap) throws IOException {
 		if (aValueMap == null) {
@@ -152,7 +152,7 @@ public final class ReportFactory extends ManagedClass {
                 aValueMap.put(key, map);
             }
             
-            // TODO CCA: Object[][] (enthält String, File oder ImageReplacerData)
+            // TODO CCA: Object[][] (enthÃ¤lt String, File oder ImageReplacerData)
         }
     }
 	

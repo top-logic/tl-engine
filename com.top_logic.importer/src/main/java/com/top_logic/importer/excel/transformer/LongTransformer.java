@@ -13,7 +13,7 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Transform a cell value into a long object.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class LongTransformer implements Transformer<Long> {
 

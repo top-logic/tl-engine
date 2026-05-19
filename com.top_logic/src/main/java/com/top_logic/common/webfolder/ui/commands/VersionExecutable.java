@@ -14,7 +14,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Opens a dialog which displays the different versions of the held document.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class VersionExecutable implements Command {
 

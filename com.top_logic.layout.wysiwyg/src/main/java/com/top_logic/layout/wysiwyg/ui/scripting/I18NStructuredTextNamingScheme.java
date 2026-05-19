@@ -25,7 +25,7 @@ import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 /**
  * {@link ModelNamingScheme} of {@link I18NStructuredText} values.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class I18NStructuredTextNamingScheme
 		extends AbstractGlobalModelNamingScheme<I18NStructuredText, I18NStructuredTextNamingScheme.Name> {

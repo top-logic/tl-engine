@@ -17,7 +17,7 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Post processing for a map of values read from an excel file in the {@link AbstractExcelFileImportParser}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface ImportParserPostProcessor {
 
@@ -38,7 +38,7 @@ public interface ImportParserPostProcessor {
     /**
      * Simple implementation of interface which will do nothing. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class SimpleImportParserPostProcessor<C extends SimpleImportParserPostProcessor.Config> implements ImportParserPostProcessor {
 

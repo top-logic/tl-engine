@@ -56,7 +56,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Wrapper representation of a mail folder on a mail server.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class IMAPMailFolder extends AbstractContainerWrapper implements MailFolder {
 

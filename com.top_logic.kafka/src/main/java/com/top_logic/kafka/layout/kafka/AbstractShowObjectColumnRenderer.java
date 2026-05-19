@@ -37,7 +37,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link Renderer} writing a button opening a message box with a formatted display of the object
  * provided.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractShowObjectColumnRenderer<T> implements Renderer<T> {
 
@@ -77,7 +77,7 @@ public abstract class AbstractShowObjectColumnRenderer<T> implements Renderer<T>
 	/**
 	 * Show the given object in a message box.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	private final class ShowObjectCommand implements Command {
 

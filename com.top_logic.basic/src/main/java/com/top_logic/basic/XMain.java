@@ -10,8 +10,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -260,7 +262,7 @@ public class XMain extends Main {
     protected void fetchProperties (String fileName) {
         try {
             properties = new Properties ();
-            properties.load (new FileInputStream (fileName));
+            properties.load (new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
             
             info("Using properties from file '" + fileName + "'");
         } catch (FileNotFoundException fnfx) {

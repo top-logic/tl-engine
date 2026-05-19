@@ -13,7 +13,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 /**
  * Interface for a sensor displayed in the sensor cockpit.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface KafkaTopic<M extends Object> {
 

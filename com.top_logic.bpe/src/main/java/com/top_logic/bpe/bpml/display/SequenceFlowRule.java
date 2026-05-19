@@ -15,7 +15,7 @@ import com.top_logic.basic.config.container.ConfigPart;
  * Defines configuration rules for sequence flows in business process execution. Manages conditions
  * that determine process flow behavior and transitions.
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public interface SequenceFlowRule extends ConfigPart {
 

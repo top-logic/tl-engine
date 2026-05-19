@@ -55,9 +55,9 @@ import com.top_logic.util.Utils;
  */
 public class DemoOrderContext extends FormContext {
 
-	private static final DemoAddress ADDRESS_1 = new DemoAddress("R¸sselsheimer Straﬂe", "22", "DE-60326", "Frankfurt am Main");
-	private static final DemoAddress ADDRESS_2 = new DemoAddress("Dornhofstraﬂe", "18", "DE-65234", "Neu-Isenburg");
-	private static final DemoAddress ADDRESS_3 = new DemoAddress("Bahnhofstraﬂe", "2b", "DE-32199", "Allerliebstlingen");
+	private static final DemoAddress ADDRESS_1 = new DemoAddress("R√ºsselsheimer Stra√üe", "22", "DE-60326", "Frankfurt am Main");
+	private static final DemoAddress ADDRESS_2 = new DemoAddress("Dornhofstra√üe", "18", "DE-65234", "Neu-Isenburg");
+	private static final DemoAddress ADDRESS_3 = new DemoAddress("Bahnhofstra√üe", "2b", "DE-32199", "Allerliebstlingen");
 
 	private static final AddressLabelProvider ADDRESS_LABEL_PROVIDER =
 		new AddressLabelProvider();
@@ -302,8 +302,8 @@ public class DemoOrderContext extends FormContext {
 		lastAddresses = FormFactory.newSelectField(fieldName, Arrays.asList(new Object[] {
 			ADDRESS_1,
 			new DemoAddress("Esslenstrasse", "3", "CH-8280", "Kreuzlingen"),
-			new DemoAddress("Fritz-Walter-Straﬂe", "17", "DE-73145", "Lustiglingen"),
-			new DemoAddress("Hauptstraﬂe", "17a", "DE-43211", "Unbekantingen"),
+			new DemoAddress("Fritz-Walter-Stra√üe", "17", "DE-73145", "Lustiglingen"),
+			new DemoAddress("Hauptstra√üe", "17a", "DE-43211", "Unbekantingen"),
 			ADDRESS_2,
 			ADDRESS_3,
 			new DemoAddress("Marktplatz", "1", "DE-63229", "Zuvielhausen")
@@ -452,7 +452,7 @@ public class DemoOrderContext extends FormContext {
 		            throw new CheckException("Der Werte sollte nicht leer sein.");
 		        }
 		        else {
-		            throw new CheckException("Danke f¸r Ihre Eingabe.");
+		            throw new CheckException("Danke f√ºr Ihre Eingabe.");
 		        }
 		    }
 		});

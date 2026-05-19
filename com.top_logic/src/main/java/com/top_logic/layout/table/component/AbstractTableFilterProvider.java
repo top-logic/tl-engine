@@ -31,7 +31,7 @@ import com.top_logic.layout.table.filter.PopupFilterDialogBuilder;
 /**
  * Abstract filter provider for plugging some {@link ConfiguredFilter} into a table column filter.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractTableFilterProvider
 		implements TableFilterProvider, ConfiguredInstance<PolymorphicConfiguration<AbstractTableFilterProvider>> {

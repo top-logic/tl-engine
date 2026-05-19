@@ -1,4 +1,13 @@
 eclipse.preferences.version=1
-encoding//src/main/java=ISO-8859-1
-encoding//src/test/java=ISO-8859-1
-encoding/<project>=ISO-8859-1
+encoding//src/main/java=UTF-8
+encoding//src/test/java=UTF-8
+encoding/<project>=UTF-8
+encoding//src/main/java/META-INF/messages_de.properties=UTF-8
+encoding//src/main/java/META-INF/messages_en.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/layoutWysiwygMessages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/layoutWysiwygMessages_en.properties=UTF-8
+encoding//src/main/webapp/script/ckeditor/plugins/ajax/plugin-origin.properties=UTF-8
+encoding//src/main/webapp/script/ckeditor/plugins/imageUploader/plugin-origin.properties=UTF-8
+encoding//src/main/webapp/script/ckeditor/plugins/indentblock/plugin-origin.properties=UTF-8
+encoding//src/main/webapp/script/ckeditor/plugins/templates/plugin-origin.properties=UTF-8
+encoding//src/main/webapp/script/ckeditor/plugins/xml/plugin-origin.properties=UTF-8

@@ -14,7 +14,7 @@ import com.top_logic.layout.inspector.model.nodes.InspectorTreeNode;
  * 
  * @see InspectProperty#isPrivate()
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class NotPrivateFilter implements Filter<InspectorTreeNode> {
 

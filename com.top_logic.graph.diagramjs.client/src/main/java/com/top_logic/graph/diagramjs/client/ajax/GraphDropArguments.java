@@ -11,7 +11,7 @@ import com.top_logic.graph.common.util.GraphControlCommon;
 /**
  * Arguments value holder for the {@link GraphControlCommon#GRAPH_DROP_COMMAND}.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class GraphDropArguments extends AJAXArguments {
 

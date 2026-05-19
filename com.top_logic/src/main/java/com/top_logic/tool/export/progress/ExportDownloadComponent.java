@@ -23,7 +23,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Download component to be used, when {@link ExportProgressComponent export} has finished his work.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ExportDownloadComponent extends PageComponent {
 

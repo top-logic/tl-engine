@@ -578,7 +578,7 @@ public class SQLLoaderInsertWriter implements InsertWriter {
 			case CLOB:
 			case STRING: {
 				/* Char size is needed: When the column e.g. contains 256 CHAR and the value
-				 * contains non ASCII chars (ä,ö,ü,ß,...) the row can not be imported. */
+				 * contains non ASCII chars (Ã¤,Ã¶,Ã¼,ÃŸ,...) the row can not be imported. */
 				out.append(_sqlDialect.columnRef(colName));
 				int lengthFieldLength = String.valueOf(size(col)).length();
 				out.append(" VARCHARC(")

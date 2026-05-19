@@ -13,7 +13,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 /**
  * Business logic plugin for the importer framework.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface ObjectProvider {
 
@@ -39,7 +39,7 @@ public interface ObjectProvider {
     /**
      * Simple version of an {@link ObjectProvider} which knows no objects and accepts all models. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static final class SimpleObjectProvider implements ObjectProvider {
 

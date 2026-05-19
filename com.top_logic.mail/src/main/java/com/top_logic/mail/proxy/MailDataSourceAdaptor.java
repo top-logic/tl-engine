@@ -46,7 +46,7 @@ import com.top_logic.mail.proxy.exchange.ExchangeMail;
  * 
  * &lt;protocol&gt;://&lt;folder 1&gt;/&lt;folder n&gt;?&lt;mail ID&gt;&amp;&lt;attachment no&gt;
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
 

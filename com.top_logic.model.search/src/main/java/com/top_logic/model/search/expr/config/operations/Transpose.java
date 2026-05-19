@@ -30,7 +30,7 @@ import com.top_logic.model.util.TLModelUtil;
  * returns tuples (as lists) of the combined elements.
  * </p>
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class Transpose extends GenericMethod {
 

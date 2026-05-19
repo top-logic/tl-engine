@@ -740,7 +740,7 @@ public class WebClientTest extends HttpUnitTest {
 
 	/**
 	 * test for bug report [ 1283878 ] FileNotFoundException using Sun JDK 1.5 on empty error pages
-	 * by Roger Lindsjö  
+	 * by Roger LindsjÃ¶  
 	 * @throws Exception
 	 */
 	public void testEmptyErrorPage() throws Exception {

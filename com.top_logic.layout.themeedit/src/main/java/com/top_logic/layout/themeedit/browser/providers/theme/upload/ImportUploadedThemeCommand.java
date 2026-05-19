@@ -33,7 +33,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Command executes the import of the uploaded {@link Theme}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 

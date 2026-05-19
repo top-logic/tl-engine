@@ -52,7 +52,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Configuration Service for the StructuredText.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredTextConfigService extends ManagedClass {
 	
@@ -227,7 +227,7 @@ public class StructuredTextConfigService extends ManagedClass {
 	 * @see StructuredTextConfigService#getHtmlConfig(List, String)
 	 * @see StructuredTextConfigService#getI18nHTMLConfig(List, String)
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<StructuredTextConfigService> {
 

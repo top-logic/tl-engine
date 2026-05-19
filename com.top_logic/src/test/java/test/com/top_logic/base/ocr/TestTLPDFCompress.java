@@ -100,8 +100,8 @@ public class TestTLPDFCompress extends BasicTestCase {
         assertTrue(txtFile.exists());
         String txt = FileUtilities.readFileToString(txtFile);
         assertContains("Systemerstellung"   , txt);
-        assertContains("Aktivit‰ten"        , txt);
-        assertContains("Begriffskl‰rungen"  , txt);
+        assertContains("Aktivit√§ten"        , txt);
+        assertContains("Begriffskl√§rungen"  , txt);
     }
 
     /**

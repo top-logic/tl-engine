@@ -38,7 +38,7 @@ import com.top_logic.util.Resources;
 /**
  * Very special renderer for comments assigned to a wrapper.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CommentTableRenderer extends DefaultTableRenderer {
 

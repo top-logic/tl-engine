@@ -11,7 +11,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph;
 /**
  * Assigner for the horizontal coordinates of an layouted graph.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class HorizontalCoordinatesAssigner extends GraphLayoutAlgorithm
 		implements HorizontalCoordinateAlgorithm {

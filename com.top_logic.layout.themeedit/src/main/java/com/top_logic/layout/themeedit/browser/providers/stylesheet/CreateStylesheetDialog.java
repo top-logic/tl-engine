@@ -26,7 +26,7 @@ import com.top_logic.util.Resources;
 /**
  * A {@link SimpleFormDialog} for creating a new Stylesheet.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateStylesheetDialog extends SimpleFormDialog {
 

@@ -16,7 +16,7 @@ import com.top_logic.basic.util.ResKey;
  * <p>This instance can be used to find an expected log message when the 
  * importer has been finished.</p>
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class PlainMessageLogger extends AbstractLogger {
 

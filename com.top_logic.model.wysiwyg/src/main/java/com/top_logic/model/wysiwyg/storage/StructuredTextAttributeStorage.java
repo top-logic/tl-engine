@@ -43,7 +43,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * {@link AbstractStorage} to store source code and images for a HTML attribute.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class StructuredTextAttributeStorage<C extends StructuredTextAttributeStorage.Config<?>>
 		extends CommonStructuredTextAttributeStorage<C> implements ColumnStorage {

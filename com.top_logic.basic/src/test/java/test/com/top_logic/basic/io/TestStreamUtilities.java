@@ -20,6 +20,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import junit.framework.Test;
@@ -329,21 +330,22 @@ public class TestStreamUtilities extends BasicTestCase {
 		StreamUtilities.storeNormalized(actual, props);
 
 		Properties loaded = new Properties();
-		loaded.load(new ByteArrayInputStream(actual.toByteArray()));
+		loaded.load(new InputStreamReader(new ByteArrayInputStream(actual.toByteArray()), StandardCharsets.UTF_8));
 		assertEquals("Serialized must semantically be equal.", props, loaded);
 
 		StringWriter expected = new StringWriter();
 		try (BufferedWriter bw = new BufferedWriter(expected)) {
-			bw.write("A=\\u00DF");
+			bw.write("A=ß");
 			bw.newLine();
-			bw.write("a1=\\u00FC");
+			bw.write("a1=ü");
 			bw.newLine();
 			bw.write("b=b");
 			bw.newLine();
-			bw.write("c=\\u00E4");
+			bw.write("c=ä");
 			bw.newLine();
 		}
-		assertEquals("Unexpected content.", expected.toString(), new String(actual.toByteArray(), "ISO-8859-1"));
+		assertEquals("Unexpected content.", expected.toString(),
+			new String(actual.toByteArray(), StandardCharsets.UTF_8));
 	}
 
 	/**

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<object id="a0"	type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="A0" />
+		<attribute name="other">
+			<ref id="a2"/>
+		</attribute>
+	</object>
+	<object id="a1"	type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="A1"/>
+		<attribute name="other">
+			<ref id="a2"/>
+		</attribute>
+	</object>
+	<object id="a2"	type="TestSearchExpression:WithDatabaseColumns">
+		<attribute name="name" value="A2"/>
+	</object>
+</objects>

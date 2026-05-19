@@ -22,6 +22,11 @@
 					att_type="Double"
 					mandatory="false"
 				/>
+				<reference
+					att_name="other"
+					mandatory="false"
+					target-type="WithDatabaseColumns"
+				/>
 			</attributes>
 		</metaobject>
 	</metaobjects>

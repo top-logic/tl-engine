@@ -199,6 +199,16 @@
 						<property name="name" type="tl.core:String"></property>
 						<property name="int" type="tl.core:Integer"></property>
 						<property name="double" type="tl.core:Double"></property>
+						<reference name="other" type="WithDatabaseColumns">
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="other"
+										storage-type="WithDatabaseColumns"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 				

@@ -122,6 +122,29 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 			});
 	}
 
+	public void testReferenceKBSearch() {
+		with("TestSearchExpression-testReferenceKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertNotNull(a0);
+				TLObject a1 = scenario.getObject("a1");
+				assertNotNull(a1);
+				TLObject a2 = scenario.getObject("a2");
+				assertNotNull(a2);
+
+				QueryExecutor search = QueryExecutor.compile(search(
+					"other -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == $other)"));
+				assertEquals(set(a1, a0), asSet(search.execute(a2)));
+				// TODO: searching with null argument fails!
+				// assertEquals(set(a2), asSet(search.execute((TLObject) null)));
+
+				SearchExpression searchNullAsLiteral = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == null)");
+				assertEquals(set(a2), executeAsSet(searchNullAsLiteral));
+
+			});
+	}
+
 	/**
 	 * TLScript only uses {@link Double} values, the {@link KnowledgeBase} also uses
 	 * {@link Integer}. This test tests usage of integer values together with {@link KBQuery}.

@@ -1874,6 +1874,11 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-maven-plugin</artifactId>
+					<version>${tl.version}</version>
+				</plugin>
+				<plugin>
 					<artifactId>maven-clean-plugin</artifactId>
 					<version>3.5.0</version>
 				</plugin>

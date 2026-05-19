@@ -70,6 +70,9 @@ public class CompiledExpression extends Value {
 			}
 			return new CompiledExpression(MOPrimitive.BOOLEAN,
 				params -> ExpressionFactory.eqBinary(_compiled.apply(params), other.compiled().apply(params)));
+		} else if (other instanceof NullLiteral) {
+			return new CompiledExpression(MOPrimitive.BOOLEAN,
+				params -> ExpressionFactory.isNull(compiled().apply(params)));
 		}
 		return new InterpretedExpression(orig);
 	}

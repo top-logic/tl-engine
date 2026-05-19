@@ -1468,6 +1468,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopy() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
@@ -1507,6 +1511,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopyFilter() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
@@ -1536,6 +1544,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopyConstructor() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");

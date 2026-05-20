@@ -30,15 +30,27 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 
 	/**
 	 * Entry point for the diagram layout.
-	 * 
+	 *
 	 * <p>
-	 * This method computes the size and positions of all diagram elements.
+	 * This method computes the size and positions of all diagram elements. Afterwards, any
+	 * {@link Diagram#getViewBoxWidth() view-box width} or {@link Diagram#getViewBoxHeight() height}
+	 * still on its default of {@code 0} is auto-fitted to the laid-out root so the produced SVG
+	 * has sensible dimensions out of the box. Callers that want a fixed view-box (e.g. zoom,
+	 * pan, framing) should set the corresponding properties before calling this method; explicitly
+	 * non-zero values are preserved.
 	 * </p>
 	 */
 	default void layout(RenderContext context) {
 		Box root = self().getRoot();
 		root.computeIntrinsicSize(context, 0, 0);
 		root.distributeSize(context, 0, 0, root.getWidth(), root.getHeight());
+
+		if (self().getViewBoxWidth() == 0) {
+			self().setViewBoxWidth(root.getWidth());
+		}
+		if (self().getViewBoxHeight() == 0) {
+			self().setViewBoxHeight(root.getHeight());
+		}
 	}
 
 	@Override

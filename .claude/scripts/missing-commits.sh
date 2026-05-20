@@ -7,13 +7,15 @@
 # commits are correctly recognized as already present.
 #
 # Usage:
+#   ./missing-commits.sh <source>                         # target = current branch
 #   ./missing-commits.sh <target> <source>                # list only
 #   ./missing-commits.sh <target> <source> --apply        # cherry-pick twin-free commits
 #   ./missing-commits.sh <target> <source> --apply --all  # cherry-pick all missing commits
 #   ./missing-commits.sh -h | --help
 #
 # Target comes first so changes from several source branches can be collected
-# into one target by just varying the second argument.
+# into one target by just varying the second argument. With a single argument
+# the current branch is used as target.
 #
 # --apply skips commits that have a same-message twin on <target> (probable
 # rebases). --all overrides that and cherry-picks every missing commit.
@@ -21,7 +23,7 @@
 set -euo pipefail
 
 usage() {
-    sed -n '3,19p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,21p' "$0" | sed 's/^# \{0,1\}//'
     exit "${1:-0}"
 }
 
@@ -38,13 +40,16 @@ for arg in "$@"; do
     esac
 done
 
-if [[ ${#POS[@]} -ne 2 ]]; then
-    echo "Error: need exactly two branch arguments" >&2
+if [[ ${#POS[@]} -eq 1 ]]; then
+    TARGET="$(git symbolic-ref --short -q HEAD || echo HEAD)"
+    SOURCE="${POS[0]}"
+elif [[ ${#POS[@]} -eq 2 ]]; then
+    TARGET="${POS[0]}"
+    SOURCE="${POS[1]}"
+else
+    echo "Error: need one or two branch arguments" >&2
     usage 2
 fi
-
-TARGET="${POS[0]}"
-SOURCE="${POS[1]}"
 
 for ref in "$SOURCE" "$TARGET"; do
     if ! git rev-parse --verify --quiet "$ref" >/dev/null; then

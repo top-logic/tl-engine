@@ -388,10 +388,6 @@ The platform supports multiple databases:
 
 Database-specific drivers are included in test scope for internal modules.
 
-### Encoding
-
-Source files use **ISO-8859-1** encoding (`project.build.sourceEncoding=ISO-8859-1` in parent POM).
-
 ### Version Management
 
 - Central version is defined in `tl-parent-all` — read it from there when needed.
@@ -408,7 +404,7 @@ When creating a new TopLogic module:
 
 ### Resource File Normalization
 
-`.properties` files under `WEB-INF/conf/resources/` must be normalized (sorted keys, ISO-8859-1 encoding):
+`.properties` files under `WEB-INF/conf/resources/` must be normalized:
 
 ```bash
 mvn -N tl:normalize-resource-file -Dresource=<path>
@@ -426,7 +422,7 @@ Changes to `.view.xml` files take effect after a logout/login — no application
 
 ### Layout Normalization
 
-XML layout files can be normalized using:
+XML layout files must be normalized using:
 
 ```bash
 mvn exec:java@normalize-layouts
@@ -493,7 +489,7 @@ Commit messages in this project must follow a specific format:
 - **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
 - **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - **Never amend commits** unless explicitly asked to do so. Always create new commits.
-- Keep the message plain and focused on describing the change. Do NOT append the triggering user prompt or other conversational text to the message body.
+- Keep the message plain and focused on describing the change.
 
 ### Git PR Conventions
 

@@ -1,5 +1,27 @@
 {
   "enabledPlugins": {
     "tl-claude-tools@toplogic": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(mvn *)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "filesystem": {
+      "allowWrite": [
+        "~/.npm",
+        "/tmp"
+      ]
+    },
+    "network": {
+      "allowedHosts": [
+        "registry.npmjs.org",
+        "api-free.deepl.com"
+      ]
+    }
   }
 }

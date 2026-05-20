@@ -102,6 +102,7 @@ import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.dob.meta.TypeSystem;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.event.BranchEvent;
@@ -2752,6 +2753,16 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	public MORepository getMORepository() {
         return moRepository;
     }
+
+	/**
+	 * Casts {@link #getMORepository()} to {@link TypeSystem}.
+	 * 
+	 * @see KBUtils#typeSystem(KnowledgeBase)
+	 */
+	@FrameworkInternal
+	public TypeSystem getTypeSystem() {
+		return moRepository;
+	}
 
     @Override
 	public Transaction beginTransaction(ResKey commitMessage) {

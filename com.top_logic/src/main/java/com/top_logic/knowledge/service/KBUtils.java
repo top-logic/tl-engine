@@ -43,6 +43,7 @@ import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.dob.meta.TypeSystem;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
 import com.top_logic.knowledge.event.CommitEvent;
@@ -857,6 +858,16 @@ public class KBUtils {
 			return false;
 		}
 		return filter.test(item);
+	}
+
+	/**
+	 * Determines the {@link TypeSystem} for the given {@link KnowledgeBase}.
+	 * 
+	 * @param kb
+	 *        {@link KnowledgeBase} to get type system from.
+	 */
+	public static TypeSystem typeSystem(KnowledgeBase kb) {
+		return ((DBKnowledgeBase) kb).getTypeSystem();
 	}
 
 }

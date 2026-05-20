@@ -9,13 +9,20 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonToken;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
@@ -95,7 +102,7 @@ public final class AnnotatedTools {
 					P p = param.getAnnotation(P.class);
 					String paramName = param.getName();
 					json.name(paramName);
-					writeParamSchema(json, param.getType(), p);
+					writeParamSchema(json, param.getType(), param.getParameterizedType(), p);
 				}
 				json.endObject();
 
@@ -130,9 +137,20 @@ public final class AnnotatedTools {
 		return ToolExecutionContext.class.isAssignableFrom(param.getType());
 	}
 
-	private static void writeParamSchema(JsonWriter json, Class<?> type, P p) throws IOException {
+	private static void writeParamSchema(JsonWriter json, Class<?> type, Type genericType, P p) throws IOException {
 		json.beginObject();
+		writeTypeSchema(json, type, genericType);
+		if (p != null && !p.value().isEmpty()) {
+			json.name("description").value(p.value());
+		}
+		json.endObject();
+	}
 
+	/**
+	 * Emits ONLY the {@code type} (and {@code items} / {@code properties} / {@code enum}) keys —
+	 * no description, no opening/closing braces.
+	 */
+	private static void writeTypeSchema(JsonWriter json, Class<?> type, Type genericType) throws IOException {
 		if (type == String.class) {
 			json.name("type").value("string");
 		} else if (type == int.class || type == Integer.class
@@ -155,25 +173,67 @@ public final class AnnotatedTools {
 			json.name("type").value("array");
 			json.name("items");
 			json.beginObject();
-			json.name("type").value("string");
+			Class<?> elementType = resolveListElementType(genericType);
+			Type elementGenericType = resolveListElementGenericType(genericType);
+			if (elementType != null) {
+				writeTypeSchema(json, elementType, elementGenericType);
+			} else {
+				json.name("type").value("string");
+			}
 			json.endObject();
+		} else if (type.isRecord()) {
+			writeRecordSchema(json, type);
 		} else {
-			json.name("type").value("string");
+			// Fallback for non-record POJOs: an open object schema. The LLM may struggle
+			// without per-field info, but at least it knows to emit an object, not a string.
+			json.name("type").value("object");
+			json.name("additionalProperties").value(true);
 		}
-
-		if (p != null && !p.value().isEmpty()) {
-			json.name("description").value(p.value());
-		}
-
-		json.endObject();
 	}
+
+	private static void writeRecordSchema(JsonWriter json, Class<?> type) throws IOException {
+		json.name("type").value("object");
+		json.name("properties");
+		json.beginObject();
+		for (RecordComponent rc : type.getRecordComponents()) {
+			json.name(rc.getName());
+			json.beginObject();
+			writeTypeSchema(json, rc.getType(), rc.getGenericType());
+			json.endObject();
+		}
+		json.endObject();
+		// additionalProperties:false keeps the schema strict; LLMs respect it.
+		json.name("additionalProperties").value(false);
+	}
+
+	private static Class<?> resolveListElementType(Type listGenericType) {
+		if (listGenericType instanceof ParameterizedType pt) {
+			Type arg = pt.getActualTypeArguments()[0];
+			if (arg instanceof Class<?> c) {
+				return c;
+			}
+			if (arg instanceof ParameterizedType apt && apt.getRawType() instanceof Class<?> rc) {
+				return rc;
+			}
+		}
+		return null;
+	}
+
+	private static Type resolveListElementGenericType(Type listGenericType) {
+		if (listGenericType instanceof ParameterizedType pt) {
+			return pt.getActualTypeArguments()[0];
+		}
+		return null;
+	}
+
+	// --- Argument coercion ---
 
 	/**
 	 * Coerce a JSON-parsed value to the target Java parameter type.
 	 *
 	 * @throws IllegalArgumentException with a clean, LLM-facing message on type mismatch
 	 */
-	static Object coerceArg(Object value, Class<?> targetType, String paramName) {
+	static Object coerceArg(Object value, Class<?> targetType, Type genericType, String paramName) {
 		if (value == null) {
 			if (targetType.isPrimitive()) {
 				throw new IllegalArgumentException(
@@ -183,7 +243,7 @@ public final class AnnotatedTools {
 		}
 
 		try {
-			return doCoerce(value, targetType);
+			return doCoerce(value, targetType, genericType);
 		} catch (IllegalArgumentException e) {
 			throw new IllegalArgumentException(
 				"Parameter '" + paramName + "': expected " + targetType.getSimpleName()
@@ -192,7 +252,7 @@ public final class AnnotatedTools {
 		}
 	}
 
-	private static Object doCoerce(Object value, Class<?> targetType) {
+	private static Object doCoerce(Object value, Class<?> targetType, Type genericType) {
 		if (targetType == String.class) {
 			return value.toString();
 		}
@@ -238,12 +298,118 @@ public final class AnnotatedTools {
 			return enumValue;
 		}
 
-		if (List.class.isAssignableFrom(targetType)) {
-			return value;
+		if (List.class.isAssignableFrom(targetType) && value instanceof List<?> list) {
+			return coerceList(list, genericType);
+		}
+
+		if (targetType.isRecord() && value instanceof Map<?, ?> map) {
+			return coerceRecord(map, targetType);
+		}
+
+		// LLMs sometimes stringify complex args as JSON text instead of emitting a real object.
+		if (value instanceof String s) {
+			String trimmed = s.trim();
+			if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+				Object parsed = parseJsonTree(s);
+				return doCoerce(parsed, targetType, genericType);
+			}
 		}
 
 		return value;
 	}
+
+	private static List<Object> coerceList(List<?> list, Type genericType) {
+		Class<?> elementType = resolveListElementType(genericType);
+		Type elementGenericType = resolveListElementGenericType(genericType);
+		if (elementType == null || elementType == String.class) {
+			return new ArrayList<>(list);
+		}
+		List<Object> result = new ArrayList<>(list.size());
+		for (Object item : list) {
+			result.add(doCoerce(item, elementType, elementGenericType));
+		}
+		return result;
+	}
+
+	private static Object coerceRecord(Map<?, ?> map, Class<?> recordType) {
+		RecordComponent[] components = recordType.getRecordComponents();
+		Object[] args = new Object[components.length];
+		for (int i = 0; i < components.length; i++) {
+			RecordComponent rc = components[i];
+			Object raw = map.get(rc.getName());
+			args[i] = coerceArg(raw, rc.getType(), rc.getGenericType(), rc.getName());
+		}
+		try {
+			Class<?>[] paramTypes = new Class<?>[components.length];
+			for (int i = 0; i < components.length; i++) {
+				paramTypes[i] = components[i].getType();
+			}
+			return recordType.getDeclaredConstructor(paramTypes).newInstance(args);
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalArgumentException(
+				"Failed to construct record " + recordType.getSimpleName() + " from " + map, e);
+		}
+	}
+
+	// --- msgbuf-based JSON string → Map/List tree ---
+
+	private static Object parseJsonTree(String json) {
+		try (JsonReader reader = new JsonReader(new StringR(json))) {
+			return readValue(reader);
+		} catch (IOException e) {
+			throw new IllegalArgumentException("Failed to parse JSON string: " + e.getMessage(), e);
+		}
+	}
+
+	private static Object readValue(JsonReader reader) throws IOException {
+		JsonToken token = reader.peek();
+		return switch (token) {
+			case STRING -> reader.nextString();
+			case NUMBER -> {
+				double d = reader.nextDouble();
+				if (d == Math.floor(d) && !Double.isInfinite(d)) {
+					if (d >= Integer.MIN_VALUE && d <= Integer.MAX_VALUE) {
+						yield (int) d;
+					}
+					yield (long) d;
+				}
+				yield d;
+			}
+			case BOOLEAN -> reader.nextBoolean();
+			case NULL -> {
+				reader.nextNull();
+				yield null;
+			}
+			case BEGIN_OBJECT -> readObject(reader);
+			case BEGIN_ARRAY -> readArray(reader);
+			default -> {
+				reader.skipValue();
+				yield null;
+			}
+		};
+	}
+
+	private static Map<String, Object> readObject(JsonReader reader) throws IOException {
+		Map<String, Object> map = new LinkedHashMap<>();
+		reader.beginObject();
+		while (reader.hasNext()) {
+			map.put(reader.nextName(), readValue(reader));
+		}
+		reader.endObject();
+		return map;
+	}
+
+	private static List<Object> readArray(JsonReader reader) throws IOException {
+		List<Object> list = new ArrayList<>();
+		reader.beginArray();
+		while (reader.hasNext()) {
+			list.add(readValue(reader));
+		}
+		reader.endArray();
+		return list;
+	}
+
+	// --- ReflectiveTool ---
 
 	/**
 	 * A {@link Tool} backed by a reflective method invocation.
@@ -312,7 +478,8 @@ public final class AnnotatedTools {
 				} else {
 					String paramName = params[i].getName();
 					Object rawValue = args.get(paramName);
-					invokeArgs[i] = coerceArg(rawValue, params[i].getType(), paramName);
+					invokeArgs[i] = coerceArg(rawValue, params[i].getType(),
+						params[i].getParameterizedType(), paramName);
 				}
 			}
 

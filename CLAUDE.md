@@ -537,11 +537,13 @@ try (JsonWriter writer = new JsonWriter(new WriterAdapter(javaIoWriter))) {
 
 ### Generator Plugin
 
-The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke its `generate` goal explicitly (using the plugin version configured in the build):
+The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke its `generate` goal by plugin prefix, targeting a module that declares the plugin (`com.top_logic.basic`, `com.top_logic.graphic.blocks`, or `tl-tools-resources`):
 
 ```bash
-mvn de.haumacher.msgbuf:msgbuf-generator-maven-plugin:<version>:generate
+mvn msgbuf-generator:generate -pl com.top_logic.basic
 ```
+
+The prefix is `msgbuf-generator` (not `msgbuf`); no version is needed — Maven resolves it from the target module's POM (`${msgbuf.version}`).
 
 ## Additional Resources
 

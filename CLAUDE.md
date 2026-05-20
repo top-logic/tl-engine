@@ -16,15 +16,15 @@ TopLogic is an open-source, model-based, no-code web application development pla
 
 ```bash
 # Build entire engine from root (tl-parent-all)
-mvn clean install
+mvn install
 
-# Build without tests (faster, default configuration)
-mvn clean install -DskipTests=true
-
-# Build specific module
-cd com.top_logic.basic
-mvn clean install
+# Build specific module (path-based -pl, from project root)
+mvn install -pl com.top_logic.basic
 ```
+
+Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTests=true` is not needed.
+
+**IMPORTANT**: Always build from the project root using `-pl <module-dir>`. NEVER `cd` into a module directory and run Maven there. The project uses a relative local repository (`.m2/repository` via `.mvn/maven.config`), so changing directories causes each module to use its own isolated local repo, leading to missing artifact errors.
 
 ### Refreshing the Workspace After a Branch Switch
 
@@ -42,18 +42,26 @@ The script enumerates all reactor modules via one `mvn exec:exec` run, compares 
 Tests are **skipped by default** (`skipTests=true` in tl-parent-all). To run tests:
 
 ```bash
-# Run tests in specific module
-cd com.top_logic.basic
-mvn test -DskipTests=false
+# Run tests in specific module (from project root)
+mvn test -DskipTests=false -pl com.top_logic.basic
 
 # Run single test class
-mvn test -DskipTests=false -Dtest=ClassName
+mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName
 
 # Run specific test method
-mvn test -DskipTests=false -Dtest=ClassName#methodName
+mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
 ```
 
 **Important**: Tests require database configuration. Many tests use H2 in-memory databases, but some require specific database drivers (MySQL, Oracle, PostgreSQL, DB2, MS SQL Server).
+
+**Stale dependency jars**: If compilation fails with "cannot find symbol" for classes that DO exist in the source tree, the local Maven repository has outdated jars. Fix: run `mvn install` on the dependency modules, then recompile the failing module.
+
+**Build pitfalls**:
+- **Use `mvn install`, not just `compile`**, when building dependent modules in sequence — downstream modules need the updated artifacts in the local Maven repository.
+- **To force recompilation without clean**: `touch` the changed `.java` files, then run `mvn compile`.
+- **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
+- **Always preserve full build output**: Use `tee` to save output to a log file while still seeing it live: `mvn -B install -pl com.top_logic.basic 2>&1 | tee com.top_logic.basic/target/mvn-build.log`. This way you can search the full output afterwards without having to re-run the build.
+- **GWT client → server WAR dependency**: `tl-react-flow-server` packages the GWT JavaScript from `tl-react-flow-client` as a WAR overlay. The Jetty server serves GWT files from the server's web-fragment.war, NOT from the client's. **Always rebuild `com.top_logic.react.flow.server` after changing `com.top_logic.react.flow.client`**, otherwise the app serves stale JavaScript. Full rebuild command: `mvn install -pl com.top_logic.react.flow.common,com.top_logic.react.flow.client,com.top_logic.react.flow.server,com.top_logic.demo`.
 
 ### Other Useful Commands
 
@@ -210,6 +218,12 @@ public interface MyConfig extends ConfigurationItem {
 
 Configuration is typically loaded from XML files using `InstantiationContext`.
 
+**TypedConfiguration pitfalls:**
+- `@ClassDefault(MyClass.class)` is REQUIRED on Config interfaces extending `PolymorphicConfiguration<T>` — otherwise the framework tries to instantiate the base interface.
+- `@TagName("name")` only works in **list-typed** `PolymorphicConfiguration` properties. For single-valued properties, tag names do NOT work — the parser interprets child elements as property names. Fix: use a `List<>` property and extract the first element, or use `@DefaultContainer`.
+- `@Mandatory` is at `com.top_logic.basic.config.annotation.Mandatory` (not `com.top_logic.basic.config`).
+- Tests using TypedConfiguration need `TypeIndex.Module.INSTANCE` in their service setup.
+
 ### Knowledge Base Access
 
 Objects are accessed through the Knowledge Base API:
@@ -236,6 +250,22 @@ UI components extend `LayoutComponent` and are configured declaratively:
     </component>
 </layout>
 ```
+
+### React Controls (`com.top_logic.layout.react`)
+
+React controls use a bridge library (`tl-react-bridge`) that provides a single shared React instance.
+
+**Critical**: Controls MUST import `React` from `'tl-react-bridge'`, NEVER from `'react'` directly. Importing from `'react'` bundles a duplicate React copy, causing "useState is null" errors at runtime.
+
+```typescript
+// Correct:
+import { React, useTLState } from 'tl-react-bridge';
+
+// Wrong — causes runtime errors:
+import React, { useState } from 'react';
+```
+
+The JS/TS build runs via `frontend-maven-plugin` during `mvn compile`. Do NOT run `npx vite build` directly.
 
 ### Model Definitions
 
@@ -333,6 +363,15 @@ throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based (JUnit 4.13.2)
 
+### Manual Verification with Playwright
+
+After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
+
+1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+2. **Start the demo app** using the `tl-app` skill.
+3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
+4. **Only then report the work as complete.**
+
 ## Important Notes
 
 ### Database Support
@@ -345,13 +384,33 @@ Database-specific drivers are included in test scope for internal modules.
 
 ### Encoding
 
-Source files use **UTF-8** encoding (`project.build.sourceEncoding=UTF-8` in parent POM).
+Source files use **ISO-8859-1** encoding (`project.build.sourceEncoding=ISO-8859-1` in parent POM).
 
 ### Version Management
 
 - Central version is defined in `tl-parent-all` — read it from there when needed.
 - Use `${tl.version}` property for internal dependencies
 - External dependencies versioned via properties (e.g., `${jetty.version}`)
+
+### New Module Setup
+
+When creating a new TopLogic module:
+- Use `tl-parent-core-internal` as the parent POM.
+- Register the module in `tl-parent-engine/pom.xml`.
+- `web-fragment.xml` goes in `src/main/java/META-INF/`.
+- Configuration files go in `src/main/webapp/WEB-INF/conf/`.
+
+### Resource File Normalization
+
+`.properties` files under `WEB-INF/conf/resources/` must be normalized (sorted keys, ISO-8859-1 encoding):
+
+```bash
+mvn tl:normalize-resource-file -Dresource=<path>
+```
+
+### Theme / CSS Reloading
+
+To reload CSS changes at runtime: Use sidebar menu "Entwickleroptionen" (Developer Options) "Theme neu laden" (Reload Theme), then **reload the page** in the browser. The theme reload alone doesn't update the browser.
 
 ### Layout Normalization
 
@@ -383,6 +442,7 @@ mvn exec:java@migrate-ticket28336
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output
+- **docs/faq/** - FAQ articles for common development tasks and pitfalls
 
 ## Trac Ticket System
 
@@ -420,6 +480,7 @@ Commit messages in this project must follow a specific format:
 - **Format**: `Ticket #<number>: <description>`
 - **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
 - **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
+- **Never amend commits** unless explicitly asked to do so. Always create new commits.
 - Keep the message plain and focused on describing the change
 
 ### Git PR Conventions
@@ -436,6 +497,43 @@ Commit messages in this project must follow a specific format:
 **CI:** Jenkins automatically builds each PR and posts the result as a review (APPROVED on success, REQUEST_CHANGES on failure).
 
 **After merge:** The source branch is deleted automatically.
+
+## msgbuf Library
+
+The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library (version 1.1.11) for type-safe protocol message generation from `.proto` files.
+
+### Key Pitfall: Writer Types
+
+`de.haumacher.msgbuf.json.JsonWriter` takes `de.haumacher.msgbuf.io.Writer` — **not** `java.io.Writer`. The compiler error "StringWriter cannot be converted to Writer" is misleading because `StringWriter` IS a `java.io.Writer`, but the constructor expects the msgbuf `Writer` interface. The error omits the package, making it look like a standard Java type.
+
+**Correct usage:**
+
+```java
+// For in-memory string serialization:
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
+
+StringW out = new StringW();
+try (JsonWriter writer = new JsonWriter(out)) {
+    myMessage.writeTo(writer);
+}
+String json = out.toString();
+
+// To wrap a java.io.Writer (server-side only):
+import de.haumacher.msgbuf.server.io.WriterAdapter;
+
+try (JsonWriter writer = new JsonWriter(new WriterAdapter(javaIoWriter))) {
+    myMessage.writeTo(writer);
+}
+```
+
+### Generator Plugin
+
+The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke explicitly:
+
+```bash
+mvn de.haumacher.msgbuf:msgbuf-generator-maven-plugin:1.1.11:generate
+```
 
 ## Additional Resources
 

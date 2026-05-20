@@ -26,6 +26,17 @@ cd com.top_logic.basic
 mvn clean install
 ```
 
+### Refreshing the Workspace After a Branch Switch
+
+Switching branches can leave stale jars in the local Maven repo (installed artifacts older than the current sources). A full rebuild is expensive. Use:
+
+```bash
+.claude/scripts/rebuild-stale.sh            # detect + rebuild stale modules
+.claude/scripts/rebuild-stale.sh --dry-run  # only list them
+```
+
+The script enumerates all reactor modules via one `mvn exec:exec` run, compares the newest mtime under each module's `pom.xml` + `src/` against the installed jar in the local Maven repo, and rebuilds only the stale ones in the correct order (`mvn install -pl <list> -am -DskipTests`).
+
 ### Running Tests
 
 Tests are **skipped by default** (`skipTests=true` in tl-parent-all). To run tests:

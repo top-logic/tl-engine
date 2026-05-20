@@ -20,7 +20,8 @@
     "network": {
       "allowedHosts": [
         "registry.npmjs.org",
-        "api-free.deepl.com"
+        "api-free.deepl.com",
+        "tl.bos.local"
       ]
     }
   }

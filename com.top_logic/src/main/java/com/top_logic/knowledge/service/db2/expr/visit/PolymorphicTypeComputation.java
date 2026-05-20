@@ -14,6 +14,7 @@ import java.util.List;
 import com.top_logic.dob.IdentifierTypes;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.StaticTyped;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClass;
@@ -22,7 +23,6 @@ import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MOTupleImpl;
 import com.top_logic.dob.meta.TypeSystem;
 import com.top_logic.dob.util.MetaObjectUtils;
-import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.search.AllOf;
 import com.top_logic.knowledge.search.AnyOf;
 import com.top_logic.knowledge.search.Attribute;
@@ -409,10 +409,10 @@ public class PolymorphicTypeComputation implements QueryVisitor<MetaObject, Meta
 		MetaObject result;
 		if (literalValue == null) {
 			result = MetaObject.NULL_TYPE;
-		} else if (literalValue instanceof KnowledgeItem) {
-			result = ((KnowledgeItem) literalValue).tTable();
-		} else if (literalValue instanceof ObjectKey) {
-			result = ((ObjectKey) literalValue).getObjectType();
+		} else if (literalValue instanceof StaticTyped item) {
+			result = item.tTable();
+		} else if (literalValue instanceof ObjectKey key) {
+			result = key.getObjectType();
 		} else {
 			MOPrimitive primitive = MOPrimitive.getPrimitive(literalValue.getClass());
 			if (primitive != null) {

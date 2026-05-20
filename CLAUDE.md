@@ -24,7 +24,7 @@ mvn install -pl com.top_logic.basic
 
 Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTests=true` is not needed.
 
-**IMPORTANT**: Always build from the project root using `-pl <module-dir>`. NEVER `cd` into a module directory and run Maven there. The project uses a relative local repository (`.m2/repository` via `.mvn/maven.config`), so changing directories causes each module to use its own isolated local repo, leading to missing artifact errors.
+**IMPORTANT**: Always build from the project root using `-pl <module-dir>`, never by `cd`-ing into a module directory. The build uses a workspace-local Maven repository under `.m2/repository`, selected via `.mvn/maven.config`. That file is **not** checked in — it is git-ignored and must be generated once per workspace (and per git worktree) with `.claude/scripts/local-m2.sh`. The script writes an absolute `-Dmaven.repo.local` path, so the repository resolves to the same location regardless of the directory Maven is invoked from.
 
 ### Refreshing the Workspace After a Branch Switch
 

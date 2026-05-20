@@ -6,15 +6,8 @@
 
 package com.top_logic.model.search.expr.compile.eval;
 
-import java.util.function.Function;
-
-import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.attr.MOPrimitive;
-import com.top_logic.knowledge.search.Expression;
-import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.compile.transform.FilterCompiler.Parameters;
 
 /**
  * Representation of "literal(null)".
@@ -35,8 +28,7 @@ public class NullLiteral extends Value {
 	@Override
 	public Value processEquals(SearchExpression orig, Value other) {
 		if (!other.hasInterpretedPart()) {
-			return new CompiledExpression(MOPrimitive.BOOLEAN,
-				params -> ExpressionFactory.isNull(other.compiled().apply(params)));
+			return new CompiledIsNull(other.compiled());
 		}
 		return new InterpretedExpression(orig);
 	}
@@ -66,29 +58,9 @@ public class NullLiteral extends Value {
 	}
 
 	@Override
-	public boolean hasCompiledPart() {
+	public CompiledValue compiled() {
 		// literal null can not be delegated to the KB. It must be replaced.
-		return false;
-	}
-
-	@Override
-	public Function<Parameters, Expression> compiled() {
-		throw new UnsupportedOperationException("Not compiled: " + this);
-	}
-
-	@Override
-	public MetaObject compiledType() {
-		throw new UnsupportedOperationException("Not compiled: " + this);
-	}
-
-	@Override
-	public boolean notifyExpectedCompiledType(MetaObject type) {
-		throw new UnsupportedOperationException("Not compiled: " + this);
-	}
-
-	@Override
-	public boolean hasInterpretedPart() {
-		return true;
+		return null;
 	}
 
 	@Override

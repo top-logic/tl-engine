@@ -6,8 +6,7 @@
 package com.top_logic.model.search.expr;
 
 
-import java.util.List;
-
+import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.TLAssociationEnd;
@@ -15,7 +14,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.search.expr.KBQuery.Parameter;
+import com.top_logic.model.search.expr.compile.eval.CompiledValue;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.html.AttributeMacro;
 import com.top_logic.model.search.expr.html.HtmlMacro;
@@ -74,11 +73,12 @@ public class SearchExpressionFactory {
 	 *        The type of items retrieved.
 	 * @param query
 	 *        The knowledge base query to execute.
-	 * @param parameters
-	 *        Parameters that are used in the given query.
+	 * @param compiled
+	 *        Factory to create an additional filter {@link Expression} that could not be created
+	 *        during compile time to use at execution time.
 	 */
-	public static KBQuery query(TLClass classType, SetExpression query, List<Parameter> parameters) {
-		return new KBQuery(classType, query, parameters);
+	public static KBQuery query(TLClass classType, SetExpression query, CompiledValue compiled) {
+		return new KBQuery(classType, query, compiled);
 	}
 
 	/**

@@ -5,19 +5,11 @@
  */
 package com.top_logic.model.search.expr.compile.transform;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.TypeContext;
 import com.top_logic.knowledge.search.AllOf;
-import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.knowledge.service.db2.expr.visit.DefaultDescendingQueryVisitor;
@@ -25,12 +17,10 @@ import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.All;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.Call;
-import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.Foreach;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.KBQuery;
-import com.top_logic.model.search.expr.KBQuery.Parameter;
 import com.top_logic.model.search.expr.Lambda;
 import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.Not;
@@ -38,7 +28,9 @@ import com.top_logic.model.search.expr.Or;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.Var;
-import com.top_logic.model.search.expr.compile.eval.CompiledExpression;
+import com.top_logic.model.search.expr.compile.eval.CompiledAnd;
+import com.top_logic.model.search.expr.compile.eval.CompiledContext;
+import com.top_logic.model.search.expr.compile.eval.CompiledValue;
 import com.top_logic.model.search.expr.compile.eval.InterpretedExpression;
 import com.top_logic.model.search.expr.compile.eval.Value;
 import com.top_logic.model.search.expr.compile.eval.Variable;
@@ -87,10 +79,9 @@ public class FilterCompiler extends Rewriter<Void> {
 			}
 			Value evaluator = testFunction.visit(ExpressionCompiler.INSTANCE, new VarBinding(varName, tableType));
 			if (evaluator.hasCompiledPart()) {
-				Parameters parameters = new Parameters();
-				Expression compiled = evaluator.compiled().apply(parameters);
+				CompiledValue compiled = evaluator.compiled();
 
-				SearchExpression enhancedBase = base.visit(new InjectCompiled(compiled, parameters.toParameterList()), null);
+				SearchExpression enhancedBase = base.visit(InjectCompiled.INSTANCE, compiled);
 				if (evaluator.hasInterpretedPart()) {
 					SearchExpression subExpression = evaluator.interpreted();
 					return SearchExpressionFactory.filter(enhancedBase,
@@ -103,80 +94,57 @@ public class FilterCompiler extends Rewriter<Void> {
 		return super.visitFilter(expr, arg);
 	}
 
-	private static class InjectCompiled extends Rewriter<Expression> {
+	private static class InjectCompiled extends Rewriter<CompiledValue> {
 
-		private final Expression _expression;
+		/**
+		 * Singleton {@link FilterCompiler.InjectCompiled} instance.
+		 */
+		public static final FilterCompiler.InjectCompiled INSTANCE = new FilterCompiler.InjectCompiled();
 
-		private final List<Parameter> _parameters;
-
-		InjectCompiled(Expression expression, List<Parameter> parameters) {
-			_expression = expression;
-			_parameters = parameters;
+		private InjectCompiled() {
+			// Singleton constructor.
 		}
 
 		@Override
-		public SearchExpression visitFilter(Filter expr, Expression arg) {
+		public SearchExpression visitFilter(Filter expr, CompiledValue arg) {
 			// Only transform into base.
 			return composeFilter(expr, arg, descendPart(expr, arg, expr.getBase()), expr.getFunction());
 		}
 
 		@Override
-		public SearchExpression visitForeach(Foreach expr, Expression arg) {
+		public SearchExpression visitForeach(Foreach expr, CompiledValue arg) {
 			throw new UnreachableAssertion("Foreach was not considered during filter optimization, see GetTableType.");
 		}
 
 		@Override
-		public SearchExpression visitAll(All expr, Expression arg) {
+		public SearchExpression visitAll(All expr, CompiledValue arg) {
 			throw new UnreachableAssertion("Meta-model access should have been eliminated before.");
 		}
 
 		@Override
-		public SearchExpression visitKBQuery(KBQuery expr, Expression arg) {
-			SetExpression newQuery = ExpressionFactory.filter(expr.getQuery(), _expression);
-			List<Parameter> newParameters;
-			if (_parameters.isEmpty()) {
-				newParameters = expr.getParameters();
+		public SearchExpression visitKBQuery(KBQuery expr, CompiledValue arg) {
+			CompiledValue oldParamExpr = expr.getCompiled();
+			SetExpression oldQuery = expr.getQuery();
+
+			SetExpression newQuery;
+			CompiledValue newParamExpr;
+			if (arg.needsEvalContext()) {
+				if (oldParamExpr == null) {
+					newParamExpr = arg;
+				} else {
+					newParamExpr = new CompiledAnd(oldParamExpr, arg);
+				}
+				newQuery = oldQuery;
 			} else {
-				List<Parameter> oldParams = expr.getParameters();
-				newParameters = new ArrayList<>(oldParams);
-				newParameters.addAll(_parameters);
+				newParamExpr = oldParamExpr;
+				try {
+					newQuery = ExpressionFactory.filter(oldQuery, arg.buildExpression(null));
+				} catch (CompiledValue.IncompatibleTypes ex) {
+					throw new IllegalArgumentException("Expression is independent of types.", ex);
+				}
 			}
-			return SearchExpressionFactory.query(expr.getClassType(), newQuery, newParameters);
+			return SearchExpressionFactory.query(expr.getClassType(), newQuery, newParamExpr);
 		}
-	}
-
-	/**
-	 * Helper class to create unique parameter names.
-	 */
-	public static class Parameters {
-
-		private final Map<NamedConstant, KBQuery.Parameter> _parameters = new LinkedHashMap<>();
-
-		/**
-		 * Gets or creates a parameter name for the given type
-		 * 
-		 * @param type
-		 *        Type of the parameter. Consecutive calls for the same key must use the same type.
-		 * @param key
-		 *        Logical identifier for the parameter. Used to fetch the argument for the parameter
-		 *        from the {@link EvalContext} during execution of the expression.
-		 */
-		public String getParameterName(MetaObject type, NamedConstant key) {
-			Parameter param = _parameters.computeIfAbsent(key, constant -> new Parameter(type, constant));
-			if (param.type() != type) {
-				throw new IllegalArgumentException("Parameter for '" + key
-					+ "' was created before for different type: " + param.type() + " != " + type);
-			}
-			return param.name();
-		}
-		
-		List<KBQuery.Parameter> toParameterList() {
-			if (_parameters.isEmpty()) {
-				return Collections.emptyList();
-			}
-			return new ArrayList<>(_parameters.values());
-		}
-
 	}
 
 	private static record VarBinding(Object varName, MetaObject tableType) {
@@ -236,7 +204,7 @@ public class FilterCompiler extends Rewriter<Void> {
 		@Override
 		public Value visitVar(Var expr, VarBinding arg) {
 			if (expr.getName().equals(arg.varName())) {
-				return new CompiledExpression(arg.tableType(), ExpressionFactory.context());
+				return new CompiledContext(arg.tableType());
 			}
 			return new Variable(expr.getKey());
 		}

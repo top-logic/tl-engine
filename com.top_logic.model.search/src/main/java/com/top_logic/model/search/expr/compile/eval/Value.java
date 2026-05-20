@@ -5,11 +5,7 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
-import java.util.function.Function;
-
 import com.top_logic.dob.MetaObject;
-import com.top_logic.knowledge.search.Expression;
-import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.knowledge.service.db2.expr.visit.PolymorphicTypeComputation;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
@@ -18,7 +14,6 @@ import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.Not;
 import com.top_logic.model.search.expr.Or;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.compile.transform.FilterCompiler.Parameters;
 
 /**
  * Building block of a {@link SearchExpression} interpreter that separates expressions into those
@@ -82,43 +77,24 @@ public abstract class Value {
 	/**
 	 * Whether this {@link Value} has a {@link #compiled() compilation result}.
 	 */
-	public abstract boolean hasCompiledPart();
+	public final boolean hasCompiledPart() {
+		return compiled() != null;
+	}
 
 	/**
-	 * The compilation result of this {@link Value}, if {@link #hasCompiledPart()}.
-	 * 
-	 * @return Mapping that creates the actual {@link Expression} based on the given
-	 *         {@link Parameters} object.
+	 * Compiled part of this {@link Value}. May be <code>null</code>.
 	 */
-	public abstract Function<Parameters, Expression> compiled();
-
-	/**
-	 * The database type of the {@link #compiled() compilation result}, if
-	 * {@link #hasCompiledPart()}.
-	 */
-	public abstract MetaObject compiledType();
-
-	/**
-	 * Checks that the {@link #compiledType()} is compatible with the given {@link MetaObject} if
-	 * possible.
-	 * 
-	 * <p>
-	 * The value may adapt its own {@link #compiledType()} with respect to the argument type.
-	 * </p>
-	 * 
-	 * @param type
-	 *        The expected super type of {@link #compiledType()} for this {@link Value}.
-	 * @return <code>true</code> if {@link #compiledType()} is compatible with the given type.
-	 */
-	public abstract boolean notifyExpectedCompiledType(MetaObject type);
+	public abstract CompiledValue compiled();
 
 	/**
 	 * Whether this {@link Value} has an {@link #interpreted() interpretation result}.
 	 */
-	public abstract boolean hasInterpretedPart();
+	public final boolean hasInterpretedPart() {
+		return interpreted() != null;
+	}
 
 	/**
-	 * The interpretation of this {@link Value}, if {@link #hasInterpretedPart()}.
+	 * The interpretation of this {@link Value}. May be <code>null</code>.
 	 */
 	public abstract SearchExpression interpreted();
 
@@ -140,7 +116,7 @@ public abstract class Value {
 		if (literalType == MetaObject.INVALID_TYPE) {
 			return new InterpretedExpression(orig);
 		}
-		return new CompiledExpression(literalType, ExpressionFactory.literal(literal));
+		return new CompiledLiteral(literalType, literal);
 	}
 
 }

@@ -135,8 +135,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				QueryExecutor search = QueryExecutor.compile(search(
 					"other -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == $other)"));
 				assertEquals(set(a1, a0), asSet(search.execute(a2)));
-				// TODO: searching with null argument fails!
-				// assertEquals(set(a2), asSet(search.execute((TLObject) null)));
+				assertEquals(set(a2), asSet(search.execute((TLObject) null)));
 
 				SearchExpression searchNullAsLiteral = search(
 					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == null)");

@@ -54,7 +54,7 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 	/**
 	 * Computes the result based on concrete values.
 	 */
-	public final Object compute(Object leftResult, Object rightResult) {
+	public final Boolean compute(Object leftResult, Object rightResult) {
 		return Boolean.valueOf(equals(leftResult, rightResult));
 	}
 

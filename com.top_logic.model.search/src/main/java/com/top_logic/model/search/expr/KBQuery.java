@@ -6,18 +6,18 @@
 package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.basic.NamedConstant;
-import com.top_logic.basic.StringServices;
-import com.top_logic.dob.MetaObject;
+import com.top_logic.basic.col.CloseableIterator;
+import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
-import com.top_logic.knowledge.search.ParameterDeclaration;
-import com.top_logic.knowledge.search.RevisionQuery;
-import com.top_logic.knowledge.search.RevisionQueryArguments;
 import com.top_logic.knowledge.search.SetExpression;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.compile.eval.CompiledAnd;
+import com.top_logic.model.search.expr.compile.eval.CompiledValue;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
 
@@ -28,7 +28,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * {@link KBQuery} expressions are created internally during the query optimization process.
  * </p>
  * 
- * @see SearchExpressionFactory#query(TLClass, SetExpression, List)
+ * @see SearchExpressionFactory#query(TLClass, SetExpression, CompiledValue)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -38,13 +38,12 @@ public class KBQuery extends SearchExpression {
 
 	private final SetExpression _query;
 
-	private final List<Parameter> _parameters;
+	private final CompiledValue _compiled;
 
-
-	KBQuery(TLClass classType, SetExpression query, List<Parameter> parameters) {
+	KBQuery(TLClass classType, SetExpression query, CompiledValue compiled) {
 		_classType = classType;
 		_query = query;
-		_parameters = parameters;
+		_compiled = compiled;
 	}
 
 	/**
@@ -62,62 +61,82 @@ public class KBQuery extends SearchExpression {
 	}
 
 	/**
-	 * This method returns the parameters.
+	 * The dynamically factory an additional filer {@link Expression}.
 	 * 
-	 * @return Returns the parameters.
+	 * @return May be <code>null</code>.
 	 */
-	public List<Parameter> getParameters() {
-		return _parameters;
+	public CompiledValue getCompiled() {
+		return _compiled;
 	}
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		RevisionQueryArguments queryArgs = ExpressionFactory.revisionArgs();
-		List<ParameterDeclaration> paramDecls;
-		if (_parameters.isEmpty()) {
-			paramDecls = ExpressionFactory.NO_QUERY_PARAMETERS;
-		} else {
-			paramDecls = new ArrayList<>();
-			Object[] arguments = new Object[_parameters.size()];
-			int argIdx = 0;
-			for (Parameter param : _parameters) {
-				paramDecls.add(ExpressionFactory.paramDecl(param.type(), param.name()));
-				arguments[argIdx++] = definitions.getVarOrNull(param.argumentKey());
-			}
-			queryArgs.setArguments(arguments);
+		KnowledgeBase kb = definitions.getKnowledgeBase();
 
+		List<CompiledValue> dynamicFilterParts = flatAnds(_compiled);
+		List<CompiledValue> deferredFilterParts = Collections.emptyList();
+
+		SetExpression query = getQuery();
+		for (CompiledValue part : dynamicFilterParts) {
+			try {
+				Expression expression = part.buildExpression(definitions);
+				query = ExpressionFactory.filter(query, expression);
+			} catch (CompiledValue.IncompatibleTypes ex) {
+				// Could not be resolved to valid expression. Store for later in memory evaluation.
+				if (deferredFilterParts.size() == 0) {
+					deferredFilterParts = new ArrayList<>();
+				}
+				deferredFilterParts.add(part);
+			}
 		}
-		RevisionQuery<TLObject> query =
-			ExpressionFactory.queryResolved(paramDecls, getQuery(), ExpressionFactory.NO_ORDER, TLObject.class);
-		return definitions.getKnowledgeBase().search(query, queryArgs);
+
+		List<TLObject> result = new ArrayList<>();
+		try (CloseableIterator<TLObject> dbResult =
+			kb.searchStream(ExpressionFactory.queryResolved(query, TLObject.class))) {
+			dbResult:
+			while (dbResult.hasNext()) {
+				TLObject match = dbResult.next();
+				for (CompiledValue deferred : deferredFilterParts) {
+					if (!(Boolean) deferred.eval(match, definitions)) {
+						continue dbResult;
+					}
+				}
+				result.add(match);
+			}
+		}
+
+		return result;
+	}
+
+	private List<CompiledValue> flatAnds(CompiledValue compiled) {
+		if (compiled == null) {
+			return Collections.emptyList();
+		}
+		if (compiled instanceof CompiledAnd and) {
+			ArrayList<CompiledValue> ands = new ArrayList<>();
+			addTopLevelAndPart(ands, and);
+		}
+		return Collections.singletonList(compiled);
+	}
+
+	private void addTopLevelAndPart(ArrayList<CompiledValue> ands, CompiledAnd and) {
+		CompiledValue left = and.left();
+		if (left instanceof CompiledAnd) {
+			addTopLevelAndPart(ands, (CompiledAnd) left);
+		} else {
+			ands.add(left);
+		}
+		CompiledValue right = and.right();
+		if (right instanceof CompiledAnd) {
+			addTopLevelAndPart(ands, (CompiledAnd) right);
+		} else {
+			ands.add(right);
+		}
 	}
 
 	@Override
 	public <R, A> R visit(Visitor<R, A> visitor, A arg) {
 		return visitor.visitKBQuery(this, arg);
-	}
-
-	/**
-	 * Parameter object for a {@link KBQuery}.
-	 * 
-	 * @param name
-	 *        Name of a {@link com.top_logic.knowledge.search.Parameter} in the
-	 *        {@link KBQuery#getQuery() query}.
-	 * @param type
-	 *        Expected type for the {@link com.top_logic.knowledge.search.Parameter}.
-	 * @param argumentKey
-	 *        The key to get the value for the parameter {@link #name()} from the
-	 *        {@link EvalContext}.
-	 */
-	public static record Parameter(String name, MetaObject type, NamedConstant argumentKey) {
-
-		/**
-		 * Creates a new {@link Parameter} with random {@link Parameter#name()}.
-		 */
-		public Parameter(MetaObject type, NamedConstant argumentKey) {
-			this(StringServices.randomUUID(), type, argumentKey);
-		}
-
 	}
 
 }

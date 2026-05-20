@@ -6,25 +6,25 @@
 
 package com.top_logic.model.search.expr.compile.eval;
 
-import java.util.function.Function;
-
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
+import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.db2.expr.visit.PolymorphicTypeComputation;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.compile.transform.FilterCompiler.Parameters;
 
 /**
- * Value whose {@link #compiled()} is filled during execution with an argument from the
- * {@link EvalContext}.
+ * Value whose {@link #buildExpression(EvalContext) expression} is a literal with an argument from
+ * the {@link EvalContext}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class Variable extends Value {
+public class Variable extends CompiledValue {
 
 	private MetaObject _type = MOPrimitive.INVALID_TYPE;
 
@@ -44,11 +44,11 @@ public class Variable extends Value {
 	@Override
 	public Value processEquals(SearchExpression orig, Value other) {
 		if (!other.hasInterpretedPart()) {
-			if (!notifyExpectedCompiledType(other.compiledType())) {
+			CompiledValue otherCompiled = other.compiled();
+			if (!notifyExpectedCompiledType(otherCompiled.compiledType())) {
 				return new InterpretedExpression(orig);
 			}
-			return new CompiledExpression(MOPrimitive.BOOLEAN,
-				params -> ExpressionFactory.eqBinary(compiled().apply(params), other.compiled().apply(params)));
+			return new CompiledEquals(this, otherCompiled);
 		}
 		return new InterpretedExpression(orig);
 	}
@@ -63,7 +63,7 @@ public class Variable extends Value {
 		if (!notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
 			return new InterpretedExpression(orig);
 		}
-		return new CompiledExpression(MOPrimitive.BOOLEAN, params -> ExpressionFactory.not(compiled().apply(params)));
+		return new CompiledNot(this);
 	}
 
 	@Override
@@ -72,11 +72,11 @@ public class Variable extends Value {
 			return new InterpretedExpression(orig);
 		}
 		if (!other.hasInterpretedPart()) {
-			if (!other.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
+			CompiledValue otherCompiled = other.compiled();
+			if (!otherCompiled.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
 				return new InterpretedExpression(orig);
 			}
-			return new CompiledExpression(MOPrimitive.BOOLEAN,
-				params -> ExpressionFactory.or(compiled().apply(params), other.compiled().apply(params)));
+			return new CompiledOr(this, otherCompiled);
 		}
 		return new InterpretedExpression(orig);
 	}
@@ -86,12 +86,13 @@ public class Variable extends Value {
 		if (!notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
 			return new InterpretedExpression(orig);
 		}
-		Function<Parameters, Expression> compiledAnd;
-		if (other.hasCompiledPart()) {
-			if (!other.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
+		CompiledValue compiledAnd;
+		CompiledValue otherCompiled = other.compiled();
+		if (otherCompiled != null) {
+			if (!otherCompiled.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
 				return new InterpretedExpression(orig);
 			}
-			compiledAnd = params -> ExpressionFactory.and(compiled().apply(params), other.compiled().apply(params));
+			compiledAnd = new CompiledAnd(compiled(), otherCompiled);
 		} else {
 			compiledAnd = compiled();
 		}
@@ -99,39 +100,13 @@ public class Variable extends Value {
 		if (other.hasInterpretedPart()) {
 			return new CombinedAndValue(compiledAnd, other.interpreted());
 		} else {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, compiledAnd);
+			return compiledAnd;
 		}
-	}
-
-	@Override
-	public boolean hasCompiledPart() {
-		return true;
-	}
-
-	@Override
-	public Function<Parameters, Expression> compiled() {
-		return params -> {
-			MetaObject compiledType = compiledType();
-			if (compiledType == MOPrimitive.INVALID_TYPE) {
-				throw new IllegalStateException("Correct type for variable not yet set. Key: " + _key);
-			}
-			return ExpressionFactory.param(params.getParameterName(compiledType, _key));
-		};
 	}
 
 	@Override
 	public MetaObject compiledType() {
 		return _type;
-	}
-
-	@Override
-	public boolean hasInterpretedPart() {
-		return false;
-	}
-
-	@Override
-	public SearchExpression interpreted() {
-		return null;
 	}
 
 	@Override
@@ -141,6 +116,37 @@ public class Variable extends Value {
 			return true;
 		}
 		return _type.isSubtypeOf(type);
+	}
+
+	@Override
+	public Expression buildExpression(EvalContext context) throws CompiledValue.IncompatibleTypes {
+		Object argument = value(context);
+		MetaObject argumentType = PolymorphicTypeComputation.getLiteralType(argument);
+		if (!KBUtils.typeSystem(context.getKnowledgeBase()).hasCommonInstances(compiledType(), argumentType)) {
+			throw new CompiledValue.IncompatibleTypes();
+		}
+		return ExpressionFactory.literal(argument);
+	}
+
+	@Override
+	public Object eval(TLObject item, EvalContext context) {
+		return value(context);
+	}
+
+	private Object value(EvalContext context) {
+		return context.getVar(key());
+	}
+
+	@Override
+	public boolean needsEvalContext() {
+		return true;
+	}
+
+	/**
+	 * The key to get the literal value from the {@link EvalContext}.
+	 */
+	public NamedConstant key() {
+		return _key;
 	}
 
 }

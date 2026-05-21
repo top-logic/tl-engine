@@ -45,7 +45,6 @@ import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.DefaultScriptDocumentation.DocumentationParameter;
 import com.top_logic.util.error.TopLogicException;
@@ -184,7 +183,7 @@ public class TLScriptMethod extends GenericMethod {
 						} else {
 							Object defaultValue = defaultValue(p);
 							descriptor.optional(p.getName(), () -> SearchExpressionFactory.literal(defaultValue));
-							docuParam.setOptional(ToString.toString(defaultValue));
+							docuParam.setOptional(asString(defaultValue));
 						}
 					}
 					_documentationParams.add(docuParam);
@@ -436,7 +435,7 @@ public class TLScriptMethod extends GenericMethod {
 				return 
 					input -> input instanceof String ? 
 						input : 
-							(input == null ? null : ToString.toString(input));
+							(input == null ? null : asString(input));
 			} else if (type.isEnum()) {
 				return input -> asEnum(param, type, input);
 			} else if (type.isArray()) {
@@ -462,7 +461,7 @@ public class TLScriptMethod extends GenericMethod {
 			if (input == null) {
 				return null;
 			}
-			String externalName = input instanceof String ? (String) input : ToString.toString(input);
+			String externalName = input instanceof String ? (String) input : asString(input);
 			try {
 				@SuppressWarnings("unchecked")
 				Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) type;

@@ -20,7 +20,6 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
@@ -86,7 +85,7 @@ public class JMSSend extends GenericMethod {
 		} else if (rawData instanceof Map) {
 			producer.send((Map<?, ?>) rawData);
 		} else {
-			producer.send(ToString.toString(rawData));
+			producer.send(asString(rawData));
 		}
 	}
 

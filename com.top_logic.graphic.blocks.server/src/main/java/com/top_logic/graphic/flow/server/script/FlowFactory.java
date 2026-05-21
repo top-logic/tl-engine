@@ -78,7 +78,7 @@ import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.VerticalLayout;
 import com.top_logic.graphic.flow.server.ui.AWTContext;
 import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -746,7 +746,7 @@ public class FlowFactory extends TLScriptFunctions {
 			href = data instanceof BinaryDataSource c
 				? "data:" + c.getContentType() + ";base64,"
 					+ Base64.getEncoder().encodeToString(StreamUtilities.readStreamContents(c.toData()))
-				: ToString.toString(data);
+				: SearchExpression.asString(data);
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}

@@ -63,7 +63,6 @@
 					<declaration file="/WEB-INF/model/TestGenericImportStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/prodElement.model.xml"/>
 					<declaration file="/WEB-INF/model/projElement.model.xml"/>
-					<declaration file="/WEB-INF/model/securityChildren.model.xml"/>
 					<declaration file="/WEB-INF/model/TestTypes.model.xml"/>
 					<declaration file="/WEB-INF/model/ticket28519.model.xml"/>
 					<declaration file="/WEB-INF/model/TestXMLInstanceImporter.model.xml"/>

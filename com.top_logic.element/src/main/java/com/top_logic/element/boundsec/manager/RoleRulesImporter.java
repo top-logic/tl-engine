@@ -60,8 +60,6 @@ public class RoleRulesImporter {
 
 	private ResKey _resKey;
 
-	private String _base;
-
 	private boolean _inherit;
 
     /**
@@ -122,7 +120,6 @@ public class RoleRulesImporter {
 	 */
 	public void loadRule(RoleRuleConfig roleRule) {
 		int numberProblems = _problems.size();
-		_base = roleRule.getBase();
 		_resKey = roleRule.getResKey();
 
 		_inherit = roleRule.isInherit();
@@ -173,10 +170,10 @@ public class RoleRulesImporter {
 		for (BoundedRole role : roles) {
 			if (Type.inheritance.equals(roleRuleConfig.getType())) {
 				addRule(
-					new RoleRule(_metaElement, _sourceMetaElement, _inherit, role, sourceRole, path, _base, _resKey));
+					new RoleRule(_metaElement, _sourceMetaElement, _inherit, role, sourceRole, path, _resKey));
 			} else {
 				addRule(
-					new RoleRule(_metaElement, _inherit, role, path, _base, _resKey));
+					new RoleRule(_metaElement, _inherit, role, path, _resKey));
 			}
 		}
 	}

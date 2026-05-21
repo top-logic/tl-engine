@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -50,9 +51,6 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	/** Name of the value of {@link #getType()} in the configuration. */
 	String XML_ATTRIBUTE_TYPE = "type";
 
-	/** Name of the value of {@link #getBase()} in the configuration. */
-	String XML_ATTRIBUTE_BASE = "base";
-
 	/** Name of the value of {@link #isInherit()} in the configuration. */
 	String XML_ATTRIBUTE_INHERIT = "inherit";
 
@@ -61,6 +59,7 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	 * role to.
 	 */
 	@Name(RoleRuleConfig.XML_TAG_PATH_ELEMENT)
+	@DefaultContainer
 	List<PolymorphicConfiguration<? extends PathElement>> getPathElements();
 
 	/**
@@ -105,12 +104,6 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	 */
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_TYPE)
 	Type getType();
-
-	/**
-	 * Definition of the "base" object to copy roles from.
-	 */
-	@Name(RoleRuleConfig.XML_ATTRIBUTE_BASE)
-	String getBase();
 
 	/**
 	 * {@link ResKey} defining the internationalisation for the rule.

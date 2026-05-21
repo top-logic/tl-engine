@@ -32,7 +32,7 @@
 				<class name="SecurityChildRoot">
 					<annotations>
 						<table name="StructuredElement"/>
-						<implementation-binding class-name="test.com.top_logic.element.boundsec.manager.SecurityChild"/>
+						<implementation-binding class-name="test.com.top_logic.model.search.rules.SecurityChild"/>
 						<instance-presentation
 							expanded-icon="/tree/proj/iO.png"
 							icon="/tree/proj/i.png"
@@ -64,7 +64,7 @@
 				<class name="SecurityChild">
 					<annotations>
 						<table name="StructuredElement"/>
-						<implementation-binding class-name="test.com.top_logic.element.boundsec.manager.SecurityChild"/>
+						<implementation-binding class-name="test.com.top_logic.model.search.rules.SecurityChild"/>
 						<instance-presentation icon="/tree/proj/i.png"/>
 					</annotations>
 					<generalizations>

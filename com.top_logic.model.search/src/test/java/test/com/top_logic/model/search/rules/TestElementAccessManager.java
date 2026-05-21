@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.element.boundsec.manager;
+package test.com.top_logic.model.search.rules;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,13 +44,13 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.dsa.DatabaseAccessException;
+import com.top_logic.element.boundsec.ElementBoundHelper;
 import com.top_logic.element.boundsec.ElementSecurityStorage;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.ElementSecurityUpdateManager;
 import com.top_logic.element.boundsec.manager.StorageAccessManager;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.element.singleton.ElementSingletonManager;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.element.structured.StructuredElementFactory;
 import com.top_logic.element.structured.wrap.StructuredElementWrapper;
@@ -631,9 +631,7 @@ public class TestElementAccessManager extends BasicTestCase {
             // Test singleton rule stuff:
 
 			Transaction tx3 = begin();
-			TLObject theSecurityRoot =
-				ElementSingletonManager
-					.getSingleton(ElementSingletonManager.SINGLETON_PREFIX_STRUCTURE_ROOT + "SecurityStructure");
+			TLObject theSecurityRoot = ElementBoundHelper.getSecurityRoot();
 			theSecurityRoot.tUpdateByName("name", "SecurityRoot");
 			theSecurityRoot.tUpdateByName(nutzerAttr, Collections.singletonList(personAphrodite));
 			theSecurityRoot.tUpdateByName(hauptnutzerAttr,

@@ -54,45 +54,51 @@
 		</rule>
 
 		<rule
-			base="structureRoot@SecurityStructure"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.allUsers"
 			role="projElement.Nutzer"
 		>
 			<path>
+				<script-step expr="`SecurityStructure#ROOT`"/>
 				<step attribute="SecurityStructure:SecurityStructure.Root#Nutzer"/>
 			</path>
 		</rule>
 		<rule
-			base="structureRoot@SecurityStructure"
 			inherit="false"
 			meta-element="projElement:Project"
 			resource-key="roleRule.mainUsers"
 			role="projElement.Hauptbenutzer"
 		>
 			<path>
+				<script-step expr="`SecurityStructure#ROOT`"/>
 				<step attribute="SecurityStructure:SecurityStructure.Root#Hauptbenutzer"/>
 			</path>
 		</rule>
 
 		<rule
-			base="structureRoot@SecurityStructure"
 			inherit="true"
 			meta-element="projElement:projElement.Part"
 			resource-key="roleRule.observer"
 			role="projElement.Nutzer"
 			source-role="projElement.Beobachter"
 			type="inheritance"
-		/>
+		>
+			<path>
+				<script-step expr="`SecurityStructure#ROOT`"/>
+			</path>
+		</rule>
 		<rule
-			base="structureRoot@SecurityStructure"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.projectObserver"
 			role="projElement.Projektbeobachter"
 			type="inheritance"
-		/>
+		>
+			<path>
+				<script-step expr="`SecurityStructure#ROOT`"/>
+			</path>
+		</rule>
 
 		<rule
 			inherit="true"

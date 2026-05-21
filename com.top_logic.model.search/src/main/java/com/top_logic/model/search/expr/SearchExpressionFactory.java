@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.List;
+
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.knowledge.search.SetExpression;
@@ -77,10 +79,10 @@ public class SearchExpressionFactory {
 	 * @param query
 	 *        The knowledge base query to execute.
 	 * @param compiled
-	 *        Factory to create an additional filter {@link Expression} that could not be created
+	 *        Factories to create an additional filter {@link Expression} that could not be created
 	 *        during compile time to use at execution time.
 	 */
-	public static KBQuery query(TLClass classType, SetExpression query, CompiledValue compiled) {
+	public static KBQuery query(TLClass classType, SetExpression query, List<CompiledValue> compiled) {
 		return new KBQuery(classType, query, compiled);
 	}
 

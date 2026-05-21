@@ -107,7 +107,7 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitKBQuery(KBQuery expr, A arg) {
-		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()), wrap(expr.getCompiled()));
+		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()), wrap(expr.getDynamicFilters()));
 	}
 
 	@Override

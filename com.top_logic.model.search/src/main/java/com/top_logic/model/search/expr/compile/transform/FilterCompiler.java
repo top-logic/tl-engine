@@ -5,12 +5,17 @@
  */
 package com.top_logic.model.search.expr.compile.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.TypeContext;
 import com.top_logic.knowledge.search.AllOf;
+import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
+import com.top_logic.knowledge.search.Parameter;
 import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.knowledge.service.db2.expr.visit.DefaultDescendingQueryVisitor;
 import com.top_logic.model.search.expr.Access;
@@ -40,6 +45,19 @@ import com.top_logic.model.search.expr.visit.DefaultDescendingVisitor;
 /**
  * {@link Rewriter} that (partially) compiles {@link Filter#getFunction()} and injects the compiled
  * part of the filter function into the {@link SetExpression} of {@link KBQuery} access expressions.
+ * 
+ * <p>
+ * The system attempts to extract an {@link Expression} from the filter to be passed to the
+ * database. Anything that cannot, in principle, be passed to the database is then evaluated on the
+ * in-memory result.
+ * </p>
+ * 
+ * <p>
+ * If outer variables are accessed in the {@link Filter#getFunction() filter function}, a database
+ * filter expression cannot be created at compile time, because the values for these arguments are
+ * required ({@link Parameter} cannot be used because an argument could be null; see #9479). In this
+ * case, the creation of the {@link Expression} is deferred to evaluation time.
+ * </p>
  * 
  * <p>
  * As pre-requisite, the {@link CreateTableAccess} transformation must be executed.
@@ -123,27 +141,47 @@ public class FilterCompiler extends Rewriter<Void> {
 
 		@Override
 		public SearchExpression visitKBQuery(KBQuery expr, CompiledValue arg) {
-			CompiledValue oldParamExpr = expr.getCompiled();
-			SetExpression oldQuery = expr.getQuery();
+			List<CompiledValue> dynamicFilters = expr.getDynamicFilters();
+			List<CompiledValue> extendedDynamicFilters = new ArrayList<>(dynamicFilters);
+			Expression filter = buildFilter(ExpressionFactory.literal(Boolean.TRUE), extendedDynamicFilters, arg);
 
-			SetExpression newQuery;
-			CompiledValue newParamExpr;
-			if (arg.needsEvalContext()) {
-				if (oldParamExpr == null) {
-					newParamExpr = arg;
-				} else {
-					newParamExpr = new CompiledAnd(oldParamExpr, arg);
-				}
-				newQuery = oldQuery;
+			SetExpression newQuery = ExpressionFactory.filter(expr.getQuery(), filter);
+			List<CompiledValue> newDynamicFilters;
+			if (dynamicFilters.size() == extendedDynamicFilters.size()) {
+				newDynamicFilters = dynamicFilters;
 			} else {
-				newParamExpr = oldParamExpr;
-				try {
-					newQuery = ExpressionFactory.filter(oldQuery, arg.buildExpression(null));
-				} catch (CompiledValue.IncompatibleTypes ex) {
-					throw new IllegalArgumentException("Expression is independent of types.", ex);
+				newDynamicFilters = extendedDynamicFilters;
+			}
+
+			return SearchExpressionFactory.query(expr.getClassType(), newQuery, newDynamicFilters);
+		}
+
+		/**
+		 * Creates the expression that can be created now, i.e. at compile time.
+		 * 
+		 * <p>
+		 * For this split top level {@link CompiledAnd ANDs} because the parts can be handled
+		 * separately: When one part needs the evaluation context for creation of the expression,
+		 * the other part may be integrated in the "static" {@link SetExpression}.
+		 * </p>
+		 */
+		private Expression buildFilter(Expression filter, List<CompiledValue> dynamicalValues,
+				CompiledValue value) {
+			if (value instanceof CompiledAnd and) {
+				filter = buildFilter(filter, dynamicalValues, and.left());
+				filter = buildFilter(filter, dynamicalValues, and.right());
+			} else {
+				if (value.needsEvalContext()) {
+					dynamicalValues.add(value);
+				} else {
+					try {
+						filter = ExpressionFactory.and(filter, value.buildExpression(null));
+					} catch (CompiledValue.IncompatibleTypes ex) {
+						throw new IllegalArgumentException("Expression is independent of types.", ex);
+					}
 				}
 			}
-			return SearchExpressionFactory.query(expr.getClassType(), newQuery, newParamExpr);
+			return filter;
 		}
 	}
 

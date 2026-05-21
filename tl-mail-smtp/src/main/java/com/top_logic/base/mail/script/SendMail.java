@@ -171,7 +171,7 @@ public class SendMail extends GenericMethod {
 	}
 
 	private DataHandler asDataHandler(Object input) {
-		return toDataHandler(input, this::asString);
+		return toDataHandler(input, SearchExpression::asString);
 	}
 
 	/**

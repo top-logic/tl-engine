@@ -8,14 +8,12 @@ package com.top_logic.model.search.expr.compile.eval;
 
 import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
-import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.EvalContext;
-import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SearchExpressionFactory;
+import com.top_logic.model.search.expr.IsEqual;
 
 /**
  * {@link CompiledExpression} representing the equality of two {@link CompiledValue}.
@@ -67,13 +65,7 @@ public class CompiledEquals extends CompiledExpression {
 	}
 
 	private static boolean isEqual(Object leftVal, Object rightVal) {
-		if (false) {
-			// TL-Script equality must be used.
-			return Utils.equals(leftVal, rightVal);
-		}
-		return SearchExpression.isTrue(SearchExpressionFactory
-			.isEqual(SearchExpressionFactory.literal(leftVal), SearchExpressionFactory.literal(rightVal))
-			.compute(leftVal, rightVal));
+		return IsEqual.equals(leftVal, rightVal);
 	}
 
 }

@@ -54,14 +54,22 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 	/**
 	 * Computes the result based on concrete values.
 	 */
-	public static Boolean compute(Object leftResult, Object rightResult) {
+	public Boolean compute(Object leftResult, Object rightResult) {
 		return Boolean.valueOf(equals(leftResult, rightResult));
 	}
 
-	private static boolean equals(Object leftResult, Object rightResult) {
-		if (isCollection(leftResult) || isCollection(rightResult)) {
-			int leftSize = size(leftResult);
-			int rightSize = size(rightResult);
+	/**
+	 * Checks whether the both elements are treated as equal in TL-Script.
+	 * 
+	 * @param left
+	 *        Left element of the equality check. May be <code>null</code>.
+	 * @param right
+	 *        Right element of the equality check. May be <code>null</code>.
+	 */
+	public static boolean equals(Object left, Object right) {
+		if (isCollection(left) || isCollection(right)) {
+			int leftSize = size(left);
+			int rightSize = size(right);
 			if (leftSize != rightSize) {
 				return false;
 			}
@@ -69,18 +77,18 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 				return true;
 			}
 			if (leftSize == 1) {
-				return equals(singleElement(leftResult), singleElement(rightResult));
+				return equals(singleElement(left), singleElement(right));
 			}
-			if (isSet(leftResult) && isSet(rightResult)) {
-				return Utils.equals(leftResult, rightResult);
-			} else if (isList(leftResult) && isList(rightResult)) {
-				return equalsCollectionOfEqualLength(leftResult, rightResult);
+			if (isSet(left) && isSet(right)) {
+				return Utils.equals(left, right);
+			} else if (isList(left) && isList(right)) {
+				return equalsCollectionOfEqualLength(left, right);
 			} else {
-				return Utils.equals(leftResult, rightResult);
+				return Utils.equals(left, right);
 			}
-		} else if (isNumber(leftResult) && isNumber(rightResult)) {
-			Number leftNumber = normalize((Number) leftResult);
-			Number rightNumber = normalize((Number) rightResult);
+		} else if (isNumber(left) && isNumber(right)) {
+			Number leftNumber = normalize((Number) left);
+			Number rightNumber = normalize((Number) right);
 			if (isLong(leftNumber) && isLong(rightNumber)) {
 				return leftNumber.longValue() == rightNumber.longValue();
 			} else {
@@ -89,21 +97,21 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 				 * comparison will work as expected. */
 				return leftNumber.doubleValue() == rightNumber.doubleValue();
 			}
-		} else if (isStringLike(leftResult) || isStringLike(rightResult)) {
-			String leftString = asString(leftResult);
-			String rightString = asString(rightResult);
+		} else if (isStringLike(left) || isStringLike(right)) {
+			String leftString = asString(left);
+			String rightString = asString(right);
 			return leftString.equals(rightString);
-		} else if (leftResult instanceof TLClassifier && rightResult instanceof TLClassifier) {
+		} else if (left instanceof TLClassifier && right instanceof TLClassifier) {
 			// Historic objects refer to historic classifiers, but when comparing classifiers, they
 			// are compared without version, since the model must only be used in current and
 			// classifiers are part of the data and the model.
 
-			TLClassifier leftClassifier = (TLClassifier) leftResult;
-			TLClassifier rightClassifier = (TLClassifier) rightResult;
+			TLClassifier leftClassifier = (TLClassifier) left;
+			TLClassifier rightClassifier = (TLClassifier) right;
 
 			return WrapperHistoryUtils.equalsUnversioned(leftClassifier, rightClassifier);
 		} else {
-			return Utils.equals(leftResult, rightResult);
+			return Utils.equals(left, right);
 		}
 	}
 

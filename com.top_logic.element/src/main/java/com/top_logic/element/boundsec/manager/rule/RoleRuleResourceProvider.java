@@ -7,22 +7,19 @@ package com.top_logic.element.boundsec.manager.rule;
 
 import java.io.IOError;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.Named;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.DefaultResourceProvider;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.model.TLClass;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 
 /**
@@ -78,63 +75,52 @@ public class RoleRuleResourceProvider extends DefaultResourceProvider {
             RoleRule rule = (RoleRule)object;
             Resources resources = Resources.getInstance();
 			if (simpleTooltip) {
-				return resources.getMessage(I18NConstants.SIMPLE_TOOLTIP, rule.getId());
+				return resources.getString(I18NConstants.SIMPLE_TOOLTIP__ID.fill(rule.getId()));
             }
             MetaResourceProvider meta = MetaResourceProvider.INSTANCE;
 
-            List values = new ArrayList();
-
 			ResKey resourceKey = rule.getResourceKey();
-            values.add(resourceKey == null ? StringServices.EMPTY_STRING : resources.getString(resourceKey));
-            values.add(resourceKey == null ? StringServices.EMPTY_STRING : resourceKey);
+			String name = resourceKey == null ? StringServices.EMPTY_STRING : resources.getString(resourceKey);
+			String key = resourceKey == null ? StringServices.EMPTY_STRING : meta.getLabel(resourceKey);
 
-            values.add(rule.getType());
-            values.add(rule.getRole());
-            values.add(rule.getMetaElement());
-            values.add(rule.getSourceRole());
-            values.add(rule.getBaseString());
+			String type = meta.getLabel(rule.getType());
+			String role = name(rule.getRole());
+			String metaElement = name(rule.getMetaElement());
+			String sourceRole = name(rule.getSourceRole());
 
-            values.add(rule.getId());
+            String id = rule.getId();
 
-            values.add(rule.getSourceMetaElement());
-            values.add(rule.getPath());
+			String sourceMetaElement = name(rule.getSourceMetaElement());
+			String path = pathAsString(rule.getPath());
 
-            for (int i = 0, length = values.size(); i < length; i++) {
-                Object value = values.get(i);
-				if (value instanceof TLClass) {
-                    value = ((TLClass)value).getName();
-                }
-                else if (value instanceof BoundedRole) {
-                    value = ((BoundedRole)value).getName();
-                }
-
-                if (value instanceof List) {
-                    StringBuilder sb = new StringBuilder();
-                    for (Iterator it = ((List)value).iterator(); it.hasNext(); ) {
-                        PathElement element = (PathElement)it.next();
-                        if (element instanceof IdentityPathElement) continue;
-                        sb.append("<br/>").append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append("> ");
-						try {
-							element.appendForTooltip(sb);
-						} catch (IOException ex) {
-							throw new IOError(ex);
-						}
-                    }
-                    values.set(i, sb.toString());
-                }
-                else {
-                    values.set(i, TagUtil.encodeXML(StringServices.getEmptyString(meta.getLabel(value))));
-                }
-            }
-			return resources.getMessage(I18NConstants.ROLE_RULE_TOOLTIP, values.toArray());
+			return resources.getString(I18NConstants.ROLE_RULE_TOOLTIP__NAME_KEY_TYPE_ROLE_ME_ID_SOURCEME_PATH
+				.fill(name, key, type, role, metaElement, sourceRole, id, sourceMetaElement, path));
         }
 		else if (object instanceof RoleProvider) {
 			RoleProvider rule = (RoleProvider) object;
-			return Resources.getInstance().getMessage(I18NConstants.SIMPLE_TOOLTIP, rule.getId());
+			return Resources.getInstance().getString(I18NConstants.SIMPLE_TOOLTIP__ID.fill(rule.getId()));
 		}
         return super.getTooltip(object);
     }
 
+	private static String pathAsString(List<? extends PathElement> value) throws IOError {
+		StringBuilder sb = new StringBuilder();
+		for (Iterator<? extends PathElement> it = value.iterator(); it.hasNext();) {
+			PathElement element = it.next();
+		    if (element instanceof IdentityPathElement) continue;
+		    sb.append("<br/>").append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append(HTMLConstants.NBSP).append("> ");
+			try {
+				element.appendForTooltip(sb);
+			} catch (IOException ex) {
+				throw new IOError(ex);
+			}
+		}
+		return sb.toString();
+	}
+
+	private static String name(Named named) {
+		return named == null ? StringServices.EMPTY_STRING : named.getName();
+	}
 
     @Override
     public ThemeImage getImage(Object object, Flavor aFlavor) {

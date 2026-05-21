@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.element.boundsec.manager;
+package test.com.top_logic.model.search.rules;
 
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.structured.StructuredElement;

@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.element.boundsec.manager.rule.BaseObjects;
@@ -369,49 +368,16 @@ public class ElementAccessHelper {
 			uncheckedAddAll(sources, theResult);
 		}
 
-		// handle base object
-		TLObject theBaseObject = rule.getBase();
-		if (theBaseObject == null) {
-			// no base object, therefore the calculated objects are already the result
-			// Filter the objects that do not fit the meta object / meta element of the rule
-			for (Iterator<BoundObject> theIt = theResult.iterator(); theIt.hasNext();) {
-				BoundObject theObject = theIt.next();
-				if (!(rule.matches(theObject))) {
-					theIt.remove();
-				}
-			}
-
-			return BaseObjects.of(theResult);
-		} else {
-			if (theResult.contains(theBaseObject)) {
-				return BaseObjects.of(getTargetObjects(rule));
-			} else {
-				return BaseObjects.of(Collections.emptySet());
+		// Filter the objects that do not fit the meta object / meta element of the rule
+		for (Iterator<BoundObject> theIt = theResult.iterator(); theIt.hasNext();) {
+			BoundObject theObject = theIt.next();
+			if (!(rule.matches(theObject))) {
+				theIt.remove();
 			}
 		}
+
+		return BaseObjects.of(theResult);
 	}
-
-    /**
-     * Get all objects potentially affected by this rule
-     *
-     * @return never NULL
-     */
-    public static Set<BoundObject> getTargetObjects(RoleRule aRule) {
-		Set<BoundObject> theResult = new HashSet<>();
-		TLClass theME = aRule.getMetaElement();
-		Iterable<TLClass> theMEs =
-			aRule.isInherit() ? TLModelUtil.getConcreteSpecializations(theME) : Collections.singleton(theME);
-		for (TLClass theFoundME : theMEs) {
-			try (CloseableIterator<BoundObject> theObjectIterator =
-				MetaElementUtil.iterateDirectInstances(theFoundME, BoundObject.class)) {
-				while (theObjectIterator.hasNext()) {
-					theResult.add(theObjectIterator.next());
-				}
-			}
-
-		}
-		return theResult;
-    }
 
 	/**
 	 * Gets a set with the given type and all specializations.

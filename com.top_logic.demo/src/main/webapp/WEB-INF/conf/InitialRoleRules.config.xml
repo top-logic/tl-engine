@@ -50,12 +50,13 @@
 						</inheritance-rule>
 
 						<inheritance-rule
-							base="structureRoot@DemoSecurity"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.B"
 							role="DemoSecurity.SecurityAdministratorB"
 							source-role="DemoSecurity.SecurityAdministrator"
-						/>
+						>
+							<script-step expr="`DemoSecurity#ROOT`"/>
+						</inheritance-rule>
 
 						<inheritance-rule
 							inherit="true"
@@ -142,11 +143,12 @@
 						</rule>
 
 						<inheritance-rule
-							base="structureRoot@DemoTypes"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.B"
 							role="DemoTypes.BAdministrator"
-						/>
+						>
+							<script-step expr="`DemoTypes#ROOT`"/>
+						</inheritance-rule>
 					</rules>
 				</role-rules>
 			</instance>

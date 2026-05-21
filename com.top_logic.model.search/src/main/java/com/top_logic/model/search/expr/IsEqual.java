@@ -54,11 +54,11 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 	/**
 	 * Computes the result based on concrete values.
 	 */
-	public final Boolean compute(Object leftResult, Object rightResult) {
+	public static Boolean compute(Object leftResult, Object rightResult) {
 		return Boolean.valueOf(equals(leftResult, rightResult));
 	}
 
-	private boolean equals(Object leftResult, Object rightResult) {
+	private static boolean equals(Object leftResult, Object rightResult) {
 		if (isCollection(leftResult) || isCollection(rightResult)) {
 			int leftSize = size(leftResult);
 			int rightSize = size(rightResult);
@@ -107,7 +107,7 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 		}
 	}
 
-	private boolean equalsCollectionOfEqualLength(Object left, Object right) {
+	private static boolean equalsCollectionOfEqualLength(Object left, Object right) {
 		Collection<?> leftCollection = (Collection<?>) left;
 		Collection<?> rightCollection = (Collection<?>) right;
 		for (Iterator<?> it1 = leftCollection.iterator(), it2 = rightCollection.iterator(); it1.hasNext();) {

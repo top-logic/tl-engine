@@ -16,7 +16,6 @@ import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.search.expr.compile.eval.CompiledAnd;
 import com.top_logic.model.search.expr.compile.eval.CompiledValue;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
@@ -28,7 +27,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * {@link KBQuery} expressions are created internally during the query optimization process.
  * </p>
  * 
- * @see SearchExpressionFactory#query(TLClass, SetExpression, CompiledValue)
+ * @see SearchExpressionFactory#query(TLClass, SetExpression, List)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -38,12 +37,12 @@ public class KBQuery extends SearchExpression {
 
 	private final SetExpression _query;
 
-	private final CompiledValue _compiled;
+	private final List<CompiledValue> _dynamic;
 
-	KBQuery(TLClass classType, SetExpression query, CompiledValue compiled) {
+	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters) {
 		_classType = classType;
 		_query = query;
-		_compiled = compiled;
+		_dynamic = dynamicFilters;
 	}
 
 	/**
@@ -61,24 +60,21 @@ public class KBQuery extends SearchExpression {
 	}
 
 	/**
-	 * {@link CompiledValue} that dynamically creates a filter {@link Expression} at evaluation time
-	 * based on the given arguments.
-	 * 
-	 * @return May be <code>null</code>.
+	 * List of {@link CompiledValue}s that dynamically creates a filter {@link Expression} at
+	 * evaluation time based on the given arguments.
 	 */
-	public CompiledValue getCompiled() {
-		return _compiled;
+	public List<CompiledValue> getDynamicFilters() {
+		return _dynamic;
 	}
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
 		KnowledgeBase kb = definitions.getKnowledgeBase();
 
-		List<CompiledValue> dynamicFilterParts = flatAnds(_compiled);
 		List<CompiledValue> deferredFilterParts = Collections.emptyList();
 
 		SetExpression query = getQuery();
-		for (CompiledValue part : dynamicFilterParts) {
+		for (CompiledValue part : _dynamic) {
 			try {
 				Expression expression = part.buildExpression(definitions);
 				query = ExpressionFactory.filter(query, expression);
@@ -107,32 +103,6 @@ public class KBQuery extends SearchExpression {
 		}
 
 		return result;
-	}
-
-	private List<CompiledValue> flatAnds(CompiledValue compiled) {
-		if (compiled == null) {
-			return Collections.emptyList();
-		}
-		if (compiled instanceof CompiledAnd and) {
-			ArrayList<CompiledValue> ands = new ArrayList<>();
-			addTopLevelAndPart(ands, and);
-		}
-		return Collections.singletonList(compiled);
-	}
-
-	private void addTopLevelAndPart(ArrayList<CompiledValue> ands, CompiledAnd and) {
-		CompiledValue left = and.left();
-		if (left instanceof CompiledAnd andPart) {
-			addTopLevelAndPart(ands, andPart);
-		} else {
-			ands.add(left);
-		}
-		CompiledValue right = and.right();
-		if (right instanceof CompiledAnd andPart) {
-			addTopLevelAndPart(ands, andPart);
-		} else {
-			ands.add(right);
-		}
 	}
 
 	@Override

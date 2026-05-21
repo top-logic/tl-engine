@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr.compile.transform;
 
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -60,7 +61,7 @@ public class CreateTableAccess extends Rewriter<Void> {
 					MOClass tableType = (MOClass) _typeContext.getType(tableName);
 					SetExpression tableQuery = AttributeOperations.tableQuery(tableType, types);
 					result = union(result,
-						query(classType, tableQuery, null));
+						query(classType, tableQuery, Collections.emptyList()));
 				} catch (UnknownTypeException ex) {
 					throw new IllegalArgumentException("Reference to undefined table type '" + tableName + "'.", ex);
 				}

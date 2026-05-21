@@ -61,7 +61,8 @@ public class KBQuery extends SearchExpression {
 	}
 
 	/**
-	 * The dynamically factory an additional filer {@link Expression}.
+	 * {@link CompiledValue} that dynamically creates a filter {@link Expression} at evaluation time
+	 * based on the given arguments.
 	 * 
 	 * @return May be <code>null</code>.
 	 */
@@ -97,7 +98,7 @@ public class KBQuery extends SearchExpression {
 			while (dbResult.hasNext()) {
 				TLObject match = dbResult.next();
 				for (CompiledValue deferred : deferredFilterParts) {
-					if (!(Boolean) deferred.eval(match, definitions)) {
+					if (!SearchExpression.asBoolean(deferred.eval(match, definitions))) {
 						continue dbResult;
 					}
 				}
@@ -121,14 +122,14 @@ public class KBQuery extends SearchExpression {
 
 	private void addTopLevelAndPart(ArrayList<CompiledValue> ands, CompiledAnd and) {
 		CompiledValue left = and.left();
-		if (left instanceof CompiledAnd) {
-			addTopLevelAndPart(ands, (CompiledAnd) left);
+		if (left instanceof CompiledAnd andPart) {
+			addTopLevelAndPart(ands, andPart);
 		} else {
 			ands.add(left);
 		}
 		CompiledValue right = and.right();
-		if (right instanceof CompiledAnd) {
-			addTopLevelAndPart(ands, (CompiledAnd) right);
+		if (right instanceof CompiledAnd andPart) {
+			addTopLevelAndPart(ands, andPart);
 		} else {
 			ands.add(right);
 		}

@@ -9,6 +9,12 @@
   <artifactId>tl-ai-parent</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <scm>
+    <connection>scm:git:https://github.com/top-logic/tl-ai.git</connection>
+    <developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-ai.git</developerConnection>
+    <url>https://github.com/top-logic/tl-ai</url>
+    <tag>HEAD</tag>
+  </scm>
   <modules>
     <module>tl-ai-mcp-server</module>
     <module>tl-chat</module>

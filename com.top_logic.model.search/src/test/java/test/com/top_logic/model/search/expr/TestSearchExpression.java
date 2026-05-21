@@ -7,7 +7,6 @@ package test.com.top_logic.model.search.expr;
 
 import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -79,7 +78,6 @@ import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -1058,7 +1056,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 * Test for {@link ToSystemCalendar}
 	 */
 	public void testSystemCalendar() throws ParseException {
-		assertEquals(NumberFormat.getInstance(TLContext.getLocale()).format(2019) + "-8-5",
+		assertEquals("2019-8-5",
 			execute(
 				search(
 					"{c=date(2019, 8 - 1, 5).toSystemCalendar(); " +
@@ -1069,7 +1067,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 * Test for {@link ToUserCalendar}
 	 */
 	public void testUserCalendar() throws ParseException {
-		assertEquals(NumberFormat.getInstance(TLContext.getLocale()).format(2019) + "-8-5T15:38:52.123",
+		assertEquals("2019-8-5T15:38:52.123",
 			execute(
 				search(
 					"{c=dateTime(" +

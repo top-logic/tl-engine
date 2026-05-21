@@ -853,6 +853,9 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			}
 			return value.toString();
 		}
+		if (value instanceof Boolean || value instanceof CharSequence) {
+			return value.toString();
+		}
 		return MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 	

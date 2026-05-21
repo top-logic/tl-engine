@@ -62,7 +62,7 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void beginGroup(Object model) {
+	public void beginGroup() {
 		beginBeginTag(G);
 	}
 
@@ -119,22 +119,22 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void beginPath(Object model) {
+	public void beginPath() {
 		beginBeginTag(PATH);
 	}
 
 	@Override
-	public void beginPolyline(Object model) {
+	public void beginPolyline() {
 		beginBeginTag(POLYLINE);
 	}
 
 	@Override
-	public void beginPolygon(Object model) {
+	public void beginPolygon() {
 		beginBeginTag(POLYGON);
 	}
 
 	@Override
-	public void beginClipPath(Object model) {
+	public void beginClipPath() {
 		beginBeginTag(CLIP_PATH);
 	}
 

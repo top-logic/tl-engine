@@ -4,9 +4,8 @@
 
   <parent>
     <groupId>com.top-logic</groupId>
-    <artifactId>tl-parent-core</artifactId>
-    <version>8.0.0-alpha3</version>
-    <relativePath/>
+    <artifactId>tl-ai-parent</artifactId>
+    <version>1.0.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-ai-tool-api</artifactId>

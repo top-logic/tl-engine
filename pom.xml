@@ -2,11 +2,19 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.top-logic</groupId>
-    <artifactId>tl-parent-all</artifactId>
+    <artifactId>tl-parent-core</artifactId>
     <version>8.0.0-alpha3</version>
+    <relativePath />
   </parent>
   <artifactId>tl-ai-parent</artifactId>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <scm>
+    <connection>scm:git:https://github.com/top-logic/tl-ai.git</connection>
+    <developerConnection>scm:git:http://tl.bos.local:3000/TopLogic/tl-ai.git</developerConnection>
+    <url>https://github.com/top-logic/tl-ai</url>
+    <tag>HEAD</tag>
+  </scm>
   <modules>
     <module>tl-ai-mcp-server</module>
     <module>tl-chat</module>
@@ -18,8 +26,8 @@
   <properties>
     <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
   </properties>
-  <dependencies/>
+  <dependencies />
   <build>
-    <plugins/>
+    <plugins />
   </build>
 </project>

@@ -6,10 +6,11 @@
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app</artifactId>
 		<version>8.0.0-alpha3</version>
-		<relativePath/>
+		<relativePath />
 	</parent>
 	
 	<artifactId>tl-ai-demo</artifactId>
+  
 	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
@@ -21,22 +22,22 @@
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-mcp-server</artifactId>
-			<version>${tl.version}</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-chat</artifactId>
-			<version>${tl.version}</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-core</artifactId>
-			<version>${tl.version}</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-ai-vector-index</artifactId>
-			<version>${tl.version}</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>

@@ -1022,13 +1022,12 @@ message GanttEdge {
 
 	/**
 	 * Stroke color applied when the constraint is violated (enforce != NONE and
-	 * source endpoint position > target endpoint position). Empty = use normal
-	 * {@link #getStrokeColor() strokeColor}.
+	 * source endpoint position > target endpoint position). Empty = use normal {@link #strokeColor}.
 	 */
 	@Nullable
 	string violatedStrokeColor;
 
-	/** Line thickness when violated. Zero = use normal {@link #getStrokeWidth() strokeWidth}. */
+	/** Line thickness when violated. Zero = use normal {@link #strokeWidth}. */
 	double violatedStrokeWidth;
 
 	/** Dash pattern when violated. Empty = use normal dashes. */
@@ -1088,8 +1087,7 @@ abstract message GanttItem {
 	 *
 	 * <p>
 	 * Empty list means: all rows with {@link GanttRow#isAcceptsDrop() acceptsDrop = true}.
-	 * When set, only the listed rows are valid drop targets (intersected with
-	 * {@link GanttRow#isAcceptsDrop() acceptsDrop}).
+	 * When set, only the listed rows are valid drop targets (intersected with {@link GanttRow#acceptsDrop}).
 	 * </p>
 	 */
 	transient repeated java.lang.Object validDropTargets;
@@ -1270,7 +1268,7 @@ message GanttAxis {
  * </p>
  *
  * <p>
- * Inherits {@link #getContents() contents} from {@link Layout} — the layout populates it with the
+ * Inherits {@link Layout#contents} — the layout populates it with the
  * {@link GanttItem#box} elements so that standard layout/render dispatch reaches them.
  * </p>
  */
@@ -1378,10 +1376,10 @@ message GanttLayout extends Layout {
 	/** Pan start Y coordinate in SVG space (set on pointer down). */
 	transient double panStartY;
 
-	/** The {@link #getScrollX() scrollX} value at the start of a pan gesture. */
+	/** The {@link #scrollX} value at the start of a pan gesture. */
 	transient double panStartScrollX;
 
-	/** The {@link #getScrollY() scrollY} value at the start of a pan gesture. */
+	/** The {@link #scrollY} value at the start of a pan gesture. */
 	transient double panStartScrollY;
 }
 

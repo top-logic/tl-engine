@@ -12,7 +12,7 @@ package com.top_logic.react.flow.data;
  * </p>
  *
  * <p>
- * Inherits {@link #getContents() contents} from {@link Layout} — the layout populates it with the
+ * Inherits {@link Layout#getContents()} — the layout populates it with the
  * {@link GanttItem#getBox()} elements so that standard layout/render dispatch reaches them.
  * </p>
  */
@@ -324,7 +324,7 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	com.top_logic.react.flow.data.GanttLayout setPanStartY(double value);
 
 	/**
-	 * The {@link #getScrollX() scrollX} value at the start of a pan gesture.
+	 * The {@link #getScrollX()} value at the start of a pan gesture.
 	 */
 	double getPanStartScrollX();
 
@@ -334,7 +334,7 @@ public interface GanttLayout extends Layout, com.top_logic.react.flow.operations
 	com.top_logic.react.flow.data.GanttLayout setPanStartScrollX(double value);
 
 	/**
-	 * The {@link #getScrollY() scrollY} value at the start of a pan gesture.
+	 * The {@link #getScrollY()} value at the start of a pan gesture.
 	 */
 	double getPanStartScrollY();
 

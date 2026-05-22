@@ -213,8 +213,7 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 
 	/**
 	 * Stroke color applied when the constraint is violated (enforce != NONE and
-	 * source endpoint position > target endpoint position). Empty = use normal
-	 * {@link #getStrokeColor() strokeColor}.
+	 * source endpoint position > target endpoint position). Empty = use normal {@link #getStrokeColor()}.
 	 */
 	String getViolatedStrokeColor();
 
@@ -229,7 +228,7 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	boolean hasViolatedStrokeColor();
 
 	/**
-	 * Line thickness when violated. Zero = use normal {@link #getStrokeWidth() strokeWidth}.
+	 * Line thickness when violated. Zero = use normal {@link #getStrokeWidth()}.
 	 */
 	double getViolatedStrokeWidth();
 

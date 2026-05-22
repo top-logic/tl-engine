@@ -4,13 +4,13 @@
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<artifactId>tl-parent-all</artifactId>
+		<artifactId>tl-parent-app</artifactId>
 		<version>8.0.0-alpha3</version>
 		<relativePath />
 	</parent>
 	
 	<artifactId>tl-ai-demo</artifactId>
-  <version>8.0.0-alpha3</version>
+  
 	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>

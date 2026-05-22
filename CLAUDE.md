@@ -366,8 +366,9 @@ are not resolvable symbols: literals (`{@code null}`, `{@code true}`), expressio
 (`{@code end >= start}`), method parameter names (JavaDoc has no link syntax for parameters), and
 external/JS identifiers.
 
-- This applies to `*.proto` files too: msgbuf copies field comments verbatim into the generated
-  getter JavaDoc, so use `{@link #getX() x}` (with readable link text) in proto comments.
+- In `*.proto` files, reference a field by its **proto field name**, not the generated getter:
+  `{@link #strokeColor}` (same message) or `{@link OtherMessage#fieldName}` (another message). The
+  msgbuf generator rewrites field links to the correct getter — do NOT guess `getStrokeColor()`.
 - The `TLDoclet` "Invalid camel case word" warning flags bare `camelCase` words in JavaDoc — wrap
   them in a `{@link}` (preferred) or, only for non-symbols, `{@code}`.
 

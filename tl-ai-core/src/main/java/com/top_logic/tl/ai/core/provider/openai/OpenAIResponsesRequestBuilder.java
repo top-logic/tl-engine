@@ -150,11 +150,12 @@ public final class OpenAIResponsesRequestBuilder {
 				item.put("arguments", args.isEmpty() ? "{}" : args);
 				items.add(item);
 			} else if (part instanceof ThinkingContent thinking) {
+				if (thinking.continuityToken() == null) {
+					continue;
+				}
 				Map<String, Object> item = new LinkedHashMap<>();
 				item.put("type", "reasoning");
-				if (thinking.continuityToken() != null) {
-					item.put("encrypted_content", thinking.continuityToken());
-				}
+				item.put("encrypted_content", thinking.continuityToken());
 				item.put("summary", List.of(Map.of("type", "summary_text", "text", thinking.text())));
 				items.add(item);
 			}

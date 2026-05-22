@@ -16,6 +16,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 
+import com.top_logic.basic.Logger;
+
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
 
@@ -114,6 +116,10 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		}
 
 		if (response.statusCode() != 200) {
+			if (Logger.isDebugEnabled(AbstractStreamingProvider.class)) {
+				Logger.debug("LLM provider request failed: " + response.statusCode() + " "
+					+ _baseUrl + endpointPath() + "; request body: " + body, AbstractStreamingProvider.class);
+			}
 			handleErrorResponse(response);
 		}
 

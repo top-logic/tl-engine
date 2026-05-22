@@ -152,6 +152,10 @@ public class AgentFactory {
 
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 
+		Conversation effectiveConversation =
+			conversationMemory != null ? conversationMemory.conversation() : conversation;
+		int messageCountBefore = effectiveConversation.messages().size();
+
 		AgentLoop loop;
 		if (conversationMemory != null) {
 			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory, maxToolResultChars);
@@ -161,16 +165,18 @@ public class AgentFactory {
 			loop.run(conversation, context, listener);
 		}
 
-		return extractResponseText(conversation, conversationMemory);
+		return extractResponseText(effectiveConversation, messageCountBefore);
 	}
 
 	/**
-	 * Extracts the response text from the last {@link AssistantMessage} in the conversation.
+	 * Extracts the response text from the last {@link AssistantMessage} appended at or after
+	 * {@code fromIndex}. Returns an empty string when the current run added no assistant
+	 * message, so a prior assistant turn restored from history is not mistaken for a fresh
+	 * reply.
 	 */
-	static String extractResponseText(Conversation conversation, ConversationMemory memory) {
-		Conversation effectiveConversation = memory != null ? memory.conversation() : conversation;
-		List<Message> messages = effectiveConversation.messages();
-		for (int i = messages.size() - 1; i >= 0; i--) {
+	static String extractResponseText(Conversation conversation, int fromIndex) {
+		List<Message> messages = conversation.messages();
+		for (int i = messages.size() - 1; i >= fromIndex; i--) {
 			if (messages.get(i) instanceof AssistantMessage assistant) {
 				StringBuilder sb = new StringBuilder();
 				for (ContentPart part : assistant.content()) {

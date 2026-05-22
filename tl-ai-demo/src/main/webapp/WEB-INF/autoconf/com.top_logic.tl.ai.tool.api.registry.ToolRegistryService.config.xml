@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<!--
+		Materialised override so that the ToolRegistryService autoconf file always exists at boot.
+		Without this seed, the first user-created tool factory triggers a brand-new autoconf file
+		that the in-memory config tree only sees after a full application restart; subsequent
+		edits to that file then work via the normal service-restart path.
+
+		Contract: any new default factory added in tl-ai-tool-api or tl-ai-vector-index must be
+		mirrored here, otherwise the override hides it.
+	-->
+	<services>
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+				<tool-factories>
+				</tool-factories>
+			</instance>
+		</config>
+	</services>
+</application>

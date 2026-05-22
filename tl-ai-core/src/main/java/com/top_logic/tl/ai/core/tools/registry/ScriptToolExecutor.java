@@ -5,23 +5,24 @@
  */
 package com.top_logic.tl.ai.core.tools.registry;
 
-import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * A {@link Tool} that executes tools implemented in TL-Script.
+ * A {@link Tool} that executes a TL-Script body compiled with named-parameter bindings.
  *
  * <p>
- * This executor takes a TL-Script {@link QueryExecutor} and passes tool parameters as script
- * arguments. The script's return value is converted to a string as the tool result.
+ * Named arguments arriving from the LLM are translated to the positional {@link Args} array
+ * matching the body's {@code Define}-lambda nesting order by {@link ScriptParamCoercion}.
  * </p>
  */
 public class ScriptToolExecutor implements Tool {
@@ -34,7 +35,7 @@ public class ScriptToolExecutor implements Tool {
 
 	private final QueryExecutor _executor;
 
-	private final List<String> _parameterNames;
+	private final ScriptParamCoercion _coercion;
 
 	private final ToolMode _mode;
 
@@ -42,29 +43,15 @@ public class ScriptToolExecutor implements Tool {
 
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
-	 *
-	 * @param name
-	 *        The tool name.
-	 * @param description
-	 *        The tool description.
-	 * @param inputSchemaJson
-	 *        The JSON Schema string describing the tool's input parameters.
-	 * @param executor
-	 *        The TL-Script query executor that implements the tool logic.
-	 * @param parameterNames
-	 *        The ordered list of parameter names as defined in the tool configuration.
-	 * @param mode
-	 *        The {@link ToolMode} for this tool.
-	 * @param concurrencySafe
-	 *        Whether this tool is concurrency-safe.
 	 */
 	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
-			QueryExecutor executor, List<String> parameterNames, ToolMode mode, boolean concurrencySafe) {
+			QueryExecutor executor, ScriptParamCoercion coercion, ToolMode mode,
+			boolean concurrencySafe) {
 		_name = name;
 		_description = description;
 		_schema = new ToolSchema(name, description, inputSchemaJson);
 		_executor = executor;
-		_parameterNames = parameterNames;
+		_coercion = coercion;
 		_mode = mode;
 		_concurrencySafe = concurrencySafe;
 	}
@@ -97,15 +84,12 @@ public class ScriptToolExecutor implements Tool {
 	@Override
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
 		try {
-			Object[] positionalArgs = new Object[_parameterNames.size()];
-			if (args != null) {
-				for (int i = 0; i < _parameterNames.size(); i++) {
-					positionalArgs[i] = args.get(_parameterNames.get(i));
-				}
-			}
-
-			return ToolResult.of(ToString.toString(_executor.execute(positionalArgs)));
+			Object[] positional = _coercion.coerce(args);
+			Object result = _executor.executeWith(Args.some(positional));
+			return ToolResult.of(ToString.toString(result));
 		} catch (Exception ex) {
+			Logger.error("Error executing script tool '" + _name + "': " + ex.getMessage(), ex,
+				ScriptToolExecutor.class);
 			return ToolResult.of("Error executing tool: " + ex.getMessage());
 		}
 	}

@@ -126,12 +126,13 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private interface Step {
 
 		/**
-		 * Applies the inverse of this step to a single object.
+		 * Applies the inverse of this step to every object in {@code objects} and collects all
+		 * results.
 		 *
-		 * @return the inverse result, or {@code null} if this step cannot be inverted for the given
-		 *         object (causes fallback to {@link BaseObjects#all()})
+		 * @return the union of all inverse results, or {@code null} if any individual inversion
+		 *         failed (causes fallback to {@link BaseObjects#all()})
 		 */
-		Collection<? extends TLObject> applyInverse(TLObject obj);
+		Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects);
 
 		/**
 		 * Whether this step directly navigates via the given part, making this step the relevant
@@ -164,9 +165,12 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private record AccessStep(TLStructuredTypePart part) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
 			if (part instanceof TLReference ref) {
-				return obj.tReferers(ref);
+				return objects.stream()
+					.map(obj -> obj.tReferers(ref))
+					.flatMap(Set::stream)
+					.collect(Collectors.toSet());
 			}
 			return null; // non-reference attribute, not invertible
 		}
@@ -195,8 +199,11 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private record ReferersStep(TLReference reference) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
-			return asObjects(obj.tValue(reference));
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			return objects.stream()
+				.map(obj -> asObjects(obj.tValue(reference)))
+				.flatMap(Collection::stream)
+				.collect(Collectors.toSet());
 		}
 
 		@Override
@@ -231,8 +238,8 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private record FilterStep(List<Step> predicateChain) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
-			return Collections.singleton(obj);
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			return objects;
 		}
 
 		@Override
@@ -267,14 +274,17 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private record BranchStep(List<Step> left, List<Step> right) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
-			Collection<? extends TLObject> fromLeft = applyChainInverse(left, obj);
-			Collection<? extends TLObject> fromRight = applyChainInverse(right, obj);
-			if (fromLeft == null || fromRight == null) {
-				return null;
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			Set<TLObject> result = new HashSet<>();
+			for (TLObject obj : objects) {
+				Collection<? extends TLObject> fromLeft = applyChainInverse(left, obj);
+				Collection<? extends TLObject> fromRight = applyChainInverse(right, obj);
+				if (fromLeft == null || fromRight == null) {
+					return null;
+				}
+				result.addAll(fromLeft);
+				result.addAll(fromRight);
 			}
-			Set<TLObject> result = new HashSet<>(fromLeft);
-			result.addAll(fromRight);
 			return result;
 		}
 
@@ -326,8 +336,8 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private record LetBindingStep(List<Step> bindingChain) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
-			return Collections.singleton(obj);
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			return objects;
 		}
 
 		@Override
@@ -376,18 +386,22 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private record ConstantBranchStep(TLObject root, List<Step> steps) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
-			Collection<? extends TLObject> current = Collections.singleton(obj);
-			for (int i = 0; i < steps.size(); i++) {
-				current = applyInverseToAll(steps.get(i), current);
-				if (current == null) {
-					// Can't determine whether obj is in the result: fall back to BaseObjects.all().
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			for (TLObject obj : objects) {
+				Collection<? extends TLObject> current = Collections.singleton(obj);
+				for (int i = 0; i < steps.size(); i++) {
+					current = steps.get(i).applyInverse(current);
+					if (current == null) {
+						// Can't determine whether obj is in the result: fall back to
+						// BaseObjects.all().
+						return null;
+					}
+				}
+				// obj IS in the constant result: every base object contributes obj through this
+				// branch.
+				if (current.contains(root)) {
 					return null;
 				}
-			}
-			// obj IS in the constant result: every base object contributes obj through this branch.
-			if (current.contains(root)) {
-				return null;
 			}
 			return Collections.emptySet();
 		}
@@ -409,7 +423,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 				// accumulation order) and check whether root is reachable.
 				Collection<? extends TLObject> current = Collections.singleton(element);
 				for (int j = i + 1; j < steps.size(); j++) {
-					current = applyInverseToAll(steps.get(j), current);
+					current = steps.get(j).applyInverse(current);
 					if (current == null) {
 						return null; // cannot determine -> conservative
 					}
@@ -453,8 +467,8 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
-			return Collections.singleton(obj);
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			return objects;
 		}
 
 		@Override
@@ -500,21 +514,24 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			Collection<TLStructuredTypePart> elseExternalParts) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
 			if (ifChain == null || elseChain == null) {
 				// One branch not fully analyzable: cannot determine all sources.
 				return null;
 			}
-			Collection<? extends TLObject> fromIf = applyChainInverse(ifChain, obj);
-			if (fromIf == null) {
-				return null;
+			Set<TLObject> result = new HashSet<>();
+			for (TLObject obj : objects) {
+				Collection<? extends TLObject> fromIf = applyChainInverse(ifChain, obj);
+				if (fromIf == null) {
+					return null;
+				}
+				Collection<? extends TLObject> fromElse = applyChainInverse(elseChain, obj);
+				if (fromElse == null) {
+					return null;
+				}
+				result.addAll(fromIf);
+				result.addAll(fromElse);
 			}
-			Collection<? extends TLObject> fromElse = applyChainInverse(elseChain, obj);
-			if (fromElse == null) {
-				return null;
-			}
-			Set<TLObject> result = new HashSet<>(fromIf);
-			result.addAll(fromElse);
 			return result;
 		}
 
@@ -571,8 +588,16 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private record ForeachStep(List<Step> innerChain) implements Step {
 
 		@Override
-		public Collection<? extends TLObject> applyInverse(TLObject obj) {
-			return applyChainInverse(innerChain, obj);
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			Set<TLObject> result = new HashSet<>();
+			for (TLObject obj : objects) {
+				Collection<? extends TLObject> inv = applyChainInverse(innerChain, obj);
+				if (inv == null) {
+					return null;
+				}
+				result.addAll(inv);
+			}
+			return result;
 		}
 
 		@Override
@@ -1015,7 +1040,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private static Collection<? extends TLObject> applyChainInverse(List<Step> chain, int from,
 			Collection<? extends TLObject> objs) {
 		for (int i = from; i >= 0; i--) {
-			objs = applyInverseToAll(chain.get(i), objs);
+			objs = chain.get(i).applyInverse(objs);
 			if (objs == null) {
 				return null;
 			}
@@ -1117,25 +1142,6 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			return BaseObjects.all();
 		}
 		return BaseObjects.of(allBases);
-	}
-
-	/**
-	 * Applies the inverse of {@code step} to every object in {@code objects} and collects all
-	 * results.
-	 *
-	 * @return the union of all inverse results, or {@code null} if any individual inversion failed
-	 */
-	private static Collection<? extends TLObject> applyInverseToAll(Step step,
-			Collection<? extends TLObject> objects) {
-		Set<TLObject> result = new HashSet<>();
-		for (TLObject obj : objects) {
-			Collection<? extends TLObject> inv = step.applyInverse(obj);
-			if (inv == null) {
-				return null;
-			}
-			result.addAll(inv);
-		}
-		return result;
 	}
 
 	/**

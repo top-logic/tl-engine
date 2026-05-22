@@ -53,7 +53,9 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
 
   const iconOnly = resolvedMode === 'icon-only';
   const showIcon = resolvedMode === 'icon-only' || resolvedMode === 'icon-label';
-  const showLabel = resolvedMode === 'label-only' || resolvedMode === 'icon-label';
+  // In icon-only mode without an image, the label glyph is the visible content.
+  const showLabel = resolvedMode === 'label-only' || resolvedMode === 'icon-label'
+    || (iconOnly && !resolvedImage);
 
   // Prefer an explicit tooltip; on icon-only buttons fall back to the label so it stays
   // discoverable when the visible button carries no text.

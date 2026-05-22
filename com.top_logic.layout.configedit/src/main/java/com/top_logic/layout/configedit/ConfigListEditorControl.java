@@ -146,14 +146,14 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			moveUp(indexOf(item));
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		moveUpButton.setIconOnly(true);
+		moveUpButton.setDisplayMode("icon-only");
 		moveUpButton.setDisabled(index == 0);
 
 		ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
 			moveDown(indexOf(item));
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		moveDownButton.setIconOnly(true);
+		moveDownButton.setDisplayMode("icon-only");
 		moveDownButton.setDisabled(index == listSize - 1);
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
@@ -163,7 +163,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		removeButton.setIconOnly(true);
+		removeButton.setDisplayMode("icon-only");
 
 		List<ReactControl> headerActions = List.of(moveUpButton, moveDownButton, removeButton);
 

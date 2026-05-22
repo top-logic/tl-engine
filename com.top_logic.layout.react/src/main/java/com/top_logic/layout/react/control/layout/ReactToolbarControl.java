@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -31,12 +32,17 @@ public class ReactToolbarControl extends ReactControl {
 
 	private final List<ReactControl> _allChildren = new ArrayList<>();
 
+	private final List<Object> _groups = new ArrayList<>();
+
 	/**
 	 * Creates a new empty {@link ReactToolbarControl}.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
 	 */
-	public ReactToolbarControl() {
-		super(null, REACT_MODULE);
-		getReactState().put(GROUPS, new ArrayList<>());
+	public ReactToolbarControl(ReactContext context) {
+		super(context, null, REACT_MODULE);
+		putState(GROUPS, _groups);
 	}
 
 	/**
@@ -65,7 +71,8 @@ public class ReactToolbarControl extends ReactControl {
 			group.put("icon", icon);
 		}
 		group.put("items", new ArrayList<>(items));
-		groupList().add(group);
+		_groups.add(group);
+		putState(GROUPS, _groups);
 		_allChildren.addAll(items);
 	}
 
@@ -94,14 +101,14 @@ public class ReactToolbarControl extends ReactControl {
 			child.cleanupTree();
 		}
 		_allChildren.clear();
-		groupList().clear();
+		_groups.clear();
 
 		// Adopt new groups from the rebuilt toolbar.
 		_allChildren.addAll(newToolbar._allChildren);
-		groupList().addAll(newToolbar.groupList());
+		_groups.addAll(newToolbar._groups);
 
 		// Push full groups state to client.
-		putState(GROUPS, groupList());
+		putState(GROUPS, _groups);
 	}
 
 	@Override
@@ -109,10 +116,5 @@ public class ReactToolbarControl extends ReactControl {
 		for (ReactControl child : _allChildren) {
 			child.cleanupTree();
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private List<Object> groupList() {
-		return (List<Object>) getReactState().get(GROUPS);
 	}
 }

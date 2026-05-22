@@ -14,7 +14,7 @@
 	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
-		<msgbuf.version>1.2.1</msgbuf.version>
+		<msgbuf.version>1.2.2</msgbuf.version>
 	</properties>
 
 	<dependencies>

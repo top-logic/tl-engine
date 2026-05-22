@@ -135,6 +135,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	/**
 	 * The command's clique.
 	 */
+	@Override
 	public String getClique() {
 		return _config.getClique();
 	}

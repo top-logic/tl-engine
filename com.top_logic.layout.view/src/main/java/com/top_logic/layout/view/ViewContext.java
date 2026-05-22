@@ -127,6 +127,7 @@ public interface ViewContext extends ReactContext {
 	 * requests via this opener.
 	 * </p>
 	 */
+	@Override
 	ContextMenuOpener getContextMenuOpener();
 
 	/**

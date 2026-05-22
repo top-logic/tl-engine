@@ -26,6 +26,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.table.ReactCellControlProvider;
@@ -747,7 +748,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DETAIL);
-		button.setDisplayMode("icon-only");
+		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		return button;
 	}
 
@@ -838,7 +839,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 			return HandlerResult.DEFAULT_RESULT;
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DELETE);
-		button.setDisplayMode("icon-only");
+		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		return button;
 	}
 

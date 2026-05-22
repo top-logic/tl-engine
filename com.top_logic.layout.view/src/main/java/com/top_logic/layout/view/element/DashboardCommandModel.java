@@ -16,6 +16,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -27,7 +28,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * Factories create an {@code edit} command (visible when the dashboard is not in edit mode)
  * and a {@code done} command (visible when the dashboard is in edit mode). Both carry
- * {@link CommandModel#PLACEMENT_TOOLBAR} so that a surrounding
+ * {@link CommandPlacement#TOOLBAR} so that a surrounding
  * {@link com.top_logic.layout.view.element.CommandScopeElement CommandScopeElement}
  * (panel, window, app bar) renders them in its chrome.
  * </p>
@@ -130,8 +131,8 @@ public class DashboardCommandModel implements CommandModel {
 	}
 
 	@Override
-	public String getPlacement() {
-		return PLACEMENT_TOOLBAR;
+	public CommandPlacement getPlacement() {
+		return CommandPlacement.TOOLBAR;
 	}
 
 	@Override

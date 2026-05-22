@@ -8,6 +8,7 @@ package test.com.top_logic.layout.view.command;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -48,8 +49,8 @@ final class FakeCommandModels {
 			}
 
 			@Override
-			public String getPlacement() {
-				return PLACEMENT_CONTEXT_MENU;
+			public CommandPlacement getPlacement() {
+				return CommandPlacement.CONTEXT_MENU;
 			}
 
 			@Override

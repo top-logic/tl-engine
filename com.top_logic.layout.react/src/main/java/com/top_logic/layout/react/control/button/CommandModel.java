@@ -30,18 +30,6 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public interface CommandModel {
 
-	/** Placement value: rendered in the toolbar area. */
-	String PLACEMENT_TOOLBAR = "toolbar";
-
-	/** Placement value: rendered in a button bar. */
-	String PLACEMENT_BUTTON_BAR = "buttonBar";
-
-	/** Placement value: rendered in the context menu. */
-	String PLACEMENT_CONTEXT_MENU = "contextMenu";
-
-	/** Placement value: not rendered (programmatic only). */
-	String PLACEMENT_NONE = "none";
-
 	/**
 	 * The command name for lookup via scope resolution (may be {@code null}).
 	 */
@@ -95,11 +83,11 @@ public interface CommandModel {
 	 * Where the command should be rendered.
 	 *
 	 * <p>
-	 * Returns a placement identifier such as {@code "toolbar"}, {@code "buttonBar"}, or
-	 * {@code "contextMenu"}. Used by containers (e.g. panels) to decide where to create buttons.
+	 * Used by containers (e.g. panels) to decide where to create buttons. Never {@code null};
+	 * defaults to {@link CommandPlacement#NONE} for programmatic-only commands.
 	 * </p>
 	 */
-	String getPlacement();
+	CommandPlacement getPlacement();
 
 	/**
 	 * The clique identifier used to group this command with other related commands.

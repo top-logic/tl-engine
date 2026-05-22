@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.tool.boundsec.CommandGroupReference;

@@ -39,7 +39,7 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for an explicit button tooltip (plain text). */
 	private static final String TOOLTIP = "tooltip";
 
-	/** State key for the button display mode ("icon-only", "icon-label", "label-only"). */
+	/** State key for the button display mode (see {@link ButtonDisplayMode}). */
 	private static final String DISPLAY_MODE = "displayMode";
 
 	private final ButtonAction _action;
@@ -129,10 +129,10 @@ public class ReactButtonControl extends ReactControl {
 	 * Sets the display mode.
 	 *
 	 * @param displayMode
-	 *        One of "icon-only", "icon-label", or "label-only".
+	 *        The display mode, or {@code null} to fall back to the React component default.
 	 */
-	public void setDisplayMode(String displayMode) {
-		putState(DISPLAY_MODE, displayMode);
+	public void setDisplayMode(ButtonDisplayMode displayMode) {
+		putState(DISPLAY_MODE, displayMode == null ? null : displayMode.getExternalName());
 	}
 
 	private void putImageState(ThemeImage image) {

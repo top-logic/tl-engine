@@ -11,7 +11,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
-import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -32,8 +32,8 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  * </p>
  * <ul>
  * <li>Creating a {@link CommandScope} and derived {@link ViewContext}</li>
- * <li>Building clique-grouped toolbars for {@link CommandModel#PLACEMENT_TOOLBAR} and
- * {@link CommandModel#PLACEMENT_BUTTON_BAR} placed commands via {@link ToolbarBuilder}</li>
+ * <li>Building clique-grouped toolbars for {@link CommandPlacement#TOOLBAR} and
+ * {@link CommandPlacement#BUTTON_BAR} placed commands via {@link ToolbarBuilder}</li>
  * <li>Rebuilding the toolbars when the set of commands changes (implicit commands)</li>
  * </ul>
  */
@@ -43,7 +43,7 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 	 * Configuration for {@link CommandScopeElement}.
 	 *
 	 * <p>
-	 * Commands with {@link CommandModel#PLACEMENT_TOOLBAR toolbar} placement are automatically
+	 * Commands with {@link CommandPlacement#TOOLBAR toolbar} placement are automatically
 	 * rendered in the element's toolbar. Commands are available to child elements via the command
 	 * scope.
 	 * </p>
@@ -76,9 +76,9 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// reactive rebuild.
 		CliqueRegistry registry = new CliqueRegistry();
 		ReactToolbarControl toolbar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandModel.PLACEMENT_TOOLBAR, registry);
+			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry);
 		ReactToolbarControl buttonBar =
-			ToolbarBuilder.buildOrEmpty(context, scope, CommandModel.PLACEMENT_BUTTON_BAR, registry);
+			ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry);
 
 		// Phase 5: Let subclass create the chrome control.
 		ToolbarControl chrome = createChromeControl(derivedContext, content, toolbar, buttonBar);
@@ -87,9 +87,9 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 		// the existing toolbar controls keep their SSE registration.
 		scope.addListener(() -> {
 			toolbar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandModel.PLACEMENT_TOOLBAR, registry));
+				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.TOOLBAR, registry));
 			buttonBar.replaceGroups(
-				ToolbarBuilder.buildOrEmpty(context, scope, CommandModel.PLACEMENT_BUTTON_BAR, registry));
+				ToolbarBuilder.buildOrEmpty(context, scope, CommandPlacement.BUTTON_BAR, registry));
 		});
 
 		// Phase 7: Lazy attach on render, cleanup on dispose.
@@ -106,10 +106,10 @@ public abstract class CommandScopeElement extends CommandCarrierElement {
 	 * @param content
 	 *        The child content control.
 	 * @param toolbar
-	 *        The clique-grouped toolbar for {@link CommandModel#PLACEMENT_TOOLBAR} commands (empty
+	 *        The clique-grouped toolbar for {@link CommandPlacement#TOOLBAR} commands (empty
 	 *        if there are none).
 	 * @param buttonBar
-	 *        The clique-grouped button bar for {@link CommandModel#PLACEMENT_BUTTON_BAR} commands
+	 *        The clique-grouped button bar for {@link CommandPlacement#BUTTON_BAR} commands
 	 *        (empty if there are none).
 	 * @return The chrome control (panel, window, etc.).
 	 */

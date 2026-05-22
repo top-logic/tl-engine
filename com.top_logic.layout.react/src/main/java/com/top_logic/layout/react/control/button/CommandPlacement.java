@@ -3,10 +3,10 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.view.command;
+package com.top_logic.layout.react.control.button;
 
 /**
- * Where a {@link ViewCommand} is rendered in the UI.
+ * Where a {@link CommandModel} is rendered in the UI.
  */
 public enum CommandPlacement {
 

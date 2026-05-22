@@ -11,34 +11,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
+
 /**
  * Registry of standard and local cliques with ordering and display mode metadata.
  *
  * <p>
  * Standard cliques are registered at class load time. Local cliques (panel-specific) are added via
- * {@link #withLocalClique(String, String, String, String, String)}.
+ * {@link #withLocalClique(String, String, String, ToolbarGroupDisplay, String)}.
  * </p>
  */
 public class CliqueRegistry {
-
-	/** Display mode: commands shown inline with separators between groups. */
-	public static final String DISPLAY_INLINE = "inline";
-
-	/** Display mode: commands collapsed into a dropdown menu. */
-	public static final String DISPLAY_MENU = "menu";
 
 	private static final List<CliqueInfo> STANDARD_CLIQUES;
 
 	static {
 		List<CliqueInfo> list = new ArrayList<>();
-		list.add(new CliqueInfo(CommandCliques.CREATE, 100, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.EDIT, 200, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.DELETE, 300, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.COMMIT, 400, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.NAVIGATE, 500, DISPLAY_INLINE, null, null));
-		list.add(new CliqueInfo(CommandCliques.VIEW, 600, DISPLAY_MENU, "View", null));
-		list.add(new CliqueInfo(CommandCliques.EXPORT, 700, DISPLAY_MENU, "Export", null));
-		list.add(new CliqueInfo(CommandCliques.MORE, 800, DISPLAY_MENU, "More", null));
+		list.add(new CliqueInfo(CommandCliques.CREATE, 100, ToolbarGroupDisplay.INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.EDIT, 200, ToolbarGroupDisplay.INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.DELETE, 300, ToolbarGroupDisplay.INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.COMMIT, 400, ToolbarGroupDisplay.INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.NAVIGATE, 500, ToolbarGroupDisplay.INLINE, null, null));
+		list.add(new CliqueInfo(CommandCliques.VIEW, 600, ToolbarGroupDisplay.MENU, "View", null));
+		list.add(new CliqueInfo(CommandCliques.EXPORT, 700, ToolbarGroupDisplay.MENU, "Export", null));
+		list.add(new CliqueInfo(CommandCliques.MORE, 800, ToolbarGroupDisplay.MENU, "More", null));
 		STANDARD_CLIQUES = Collections.unmodifiableList(list);
 	}
 
@@ -67,13 +63,13 @@ public class CliqueRegistry {
 	 * @param beforeClique
 	 *        Insert before this clique (may be {@code null}). {@code afterClique} takes precedence.
 	 * @param display
-	 *        Display mode ({@link #DISPLAY_INLINE} or {@link #DISPLAY_MENU}).
+	 *        Display mode (may be {@code null}, defaults to {@link ToolbarGroupDisplay#INLINE}).
 	 * @param label
 	 *        Menu trigger label (only for menu display, may be {@code null}).
 	 * @return A new registry with the local clique inserted.
 	 */
 	public CliqueRegistry withLocalClique(String name, String afterClique, String beforeClique,
-			String display, String label) {
+			ToolbarGroupDisplay display, String label) {
 		CliqueRegistry copy = new CliqueRegistry();
 		copy._orderedCliques.clear();
 		copy._orderedCliques.addAll(_orderedCliques);
@@ -109,7 +105,8 @@ public class CliqueRegistry {
 			order = copy._orderedCliques.get(copy._orderedCliques.size() - 1).order() + 100;
 		}
 
-		CliqueInfo info = new CliqueInfo(name, order, display != null ? display : DISPLAY_INLINE, label, null);
+		CliqueInfo info = new CliqueInfo(name, order,
+			display != null ? display : ToolbarGroupDisplay.INLINE, label, null);
 		copy._orderedCliques.add(insertIndex, info);
 		copy._cliqueMap.put(name, info);
 		return copy;
@@ -127,7 +124,7 @@ public class CliqueRegistry {
 			return info;
 		}
 		// Unknown clique: inline, appended at end.
-		return new CliqueInfo(name, Integer.MAX_VALUE, DISPLAY_INLINE, null, null);
+		return new CliqueInfo(name, Integer.MAX_VALUE, ToolbarGroupDisplay.INLINE, null, null);
 	}
 
 	/**
@@ -145,14 +142,13 @@ public class CliqueRegistry {
 	 * @param order
 	 *        Sort order (lower = earlier).
 	 * @param display
-	 *        Display mode: {@link CliqueRegistry#DISPLAY_INLINE} or
-	 *        {@link CliqueRegistry#DISPLAY_MENU}.
+	 *        Display mode of the clique group.
 	 * @param label
 	 *        Menu trigger label (only for menu display, may be {@code null}).
 	 * @param icon
 	 *        Menu trigger icon (only for menu display, may be {@code null}).
 	 */
-	public record CliqueInfo(String name, int order, String display, String label, String icon) {
+	public record CliqueInfo(String name, int order, ToolbarGroupDisplay display, String label, String icon) {
 		// Record.
 	}
 }

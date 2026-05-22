@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.control.nav.ReactAppBarControl.AppBarVariant;
@@ -31,7 +32,6 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
-import com.top_logic.layout.view.command.CommandPlacement;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandConfirmation;
@@ -234,7 +234,7 @@ public class AppBarElement implements UIElement {
 
 		for (CommandModel model : currentCommands) {
 			if (!actionButtons.containsKey(model)
-				&& CommandModel.PLACEMENT_TOOLBAR.equals(model.getPlacement())) {
+				&& model.getPlacement() == CommandPlacement.TOOLBAR) {
 				ReactButtonControl button = new ReactButtonControl(context, model);
 				appBar.addToolbarButton(button);
 				actionButtons.put(model, button);

@@ -34,6 +34,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
@@ -530,7 +531,7 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
-		public String getPlacement() {
+		public CommandPlacement getPlacement() {
 			return _inner.getPlacement();
 		}
 

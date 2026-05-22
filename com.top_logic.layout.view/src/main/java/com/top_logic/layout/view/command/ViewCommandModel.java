@@ -14,6 +14,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -115,21 +116,9 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	@Override
-	public String getPlacement() {
+	public CommandPlacement getPlacement() {
 		CommandPlacement placement = _config.getPlacement();
-		if (placement == null) {
-			return PLACEMENT_NONE;
-		}
-		switch (placement) {
-			case TOOLBAR:
-				return PLACEMENT_TOOLBAR;
-			case BUTTON_BAR:
-				return PLACEMENT_BUTTON_BAR;
-			case CONTEXT_MENU:
-				return PLACEMENT_CONTEXT_MENU;
-			default:
-				return PLACEMENT_NONE;
-		}
+		return placement == null ? CommandPlacement.NONE : placement;
 	}
 
 	/**

@@ -51,19 +51,21 @@ public class ReactToolbarControl extends ReactControl {
 	 * @param name
 	 *        The clique name.
 	 * @param display
-	 *        Display mode: "inline" or "menu".
+	 *        Display mode of the group.
 	 * @param label
-	 *        Menu trigger label (only for "menu" display, may be {@code null}).
+	 *        Menu trigger label (only for {@link ToolbarGroupDisplay#MENU} display, may be
+	 *        {@code null}).
 	 * @param icon
-	 *        Menu trigger icon (only for "menu" display, may be {@code null}).
+	 *        Menu trigger icon (only for {@link ToolbarGroupDisplay#MENU} display, may be
+	 *        {@code null}).
 	 * @param items
 	 *        The child controls in this group.
 	 */
-	public void addGroup(String name, String display, String label, String icon,
+	public void addGroup(String name, ToolbarGroupDisplay display, String label, String icon,
 			List<ReactControl> items) {
 		Map<String, Object> group = new LinkedHashMap<>();
 		group.put("name", name);
-		group.put("display", display);
+		group.put("display", display.getExternalName());
 		if (label != null) {
 			group.put("label", label);
 		}

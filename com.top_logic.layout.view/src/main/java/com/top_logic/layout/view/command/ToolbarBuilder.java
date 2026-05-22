@@ -12,7 +12,9 @@ import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
@@ -40,14 +42,13 @@ public class ToolbarBuilder {
 	 * @param scope
 	 *        The command scope containing explicit and implicit commands.
 	 * @param placement
-	 *        The target placement to filter commands for (a {@code CommandModel.PLACEMENT_*}
-	 *        value).
+	 *        The target placement to filter commands for.
 	 * @param registry
 	 *        The clique registry (with any local cliques applied).
 	 * @return A toolbar control (never {@code null}).
 	 */
 	public static ReactToolbarControl buildOrEmpty(ReactContext context, CommandScope scope,
-			String placement, CliqueRegistry registry) {
+			CommandPlacement placement, CliqueRegistry registry) {
 		ReactToolbarControl result = build(context, scope, placement, registry);
 		return result != null ? result : new ReactToolbarControl(context);
 	}
@@ -60,18 +61,17 @@ public class ToolbarBuilder {
 	 * @param scope
 	 *        The command scope containing explicit and implicit commands.
 	 * @param placement
-	 *        The target placement to filter commands for (a {@code CommandModel.PLACEMENT_*}
-	 *        value).
+	 *        The target placement to filter commands for.
 	 * @param registry
 	 *        The clique registry (with any local cliques applied).
 	 * @return A toolbar control, or {@code null} if no commands match the placement.
 	 */
 	public static ReactToolbarControl build(ReactContext context, CommandScope scope,
-			String placement, CliqueRegistry registry) {
+			CommandPlacement placement, CliqueRegistry registry) {
 		// Filter by placement.
 		List<CommandModel> filtered = new ArrayList<>();
 		for (CommandModel model : scope.getAllCommands()) {
-			if (placement.equals(model.getPlacement())) {
+			if (placement == model.getPlacement()) {
 				filtered.add(model);
 			}
 		}
@@ -122,7 +122,7 @@ public class ToolbarBuilder {
 		// change listener.
 		ReactButtonControl button = new ReactButtonControl(context, model);
 		if (model.getImage() != null) {
-			button.setDisplayMode("icon-label");
+			button.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
 		}
 		return button;
 	}

@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.view.UIElement;
@@ -36,7 +37,7 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  *
  * <p>
  * Commands declared inside a {@code <context-menu>} element with
- * {@link CommandModel#PLACEMENT_CONTEXT_MENU placement="contextMenu"} are collected into a single
+ * {@link CommandPlacement#CONTEXT_MENU placement="CONTEXT_MENU"} are collected into a single
  * {@link ContextMenuContribution} bound to an implicit {@code contextTarget} channel (or to the
  * channel referenced via the optional {@code input} attribute). The element's chrome is a
  * {@link ContextMenuRegionControl} that relays {@code openContextMenu} client events to the
@@ -108,7 +109,7 @@ public class ContextMenuElement extends CommandCarrierElement {
 		// Filter command models for context-menu placement.
 		List<CommandModel> contextMenuCommands = new ArrayList<>();
 		for (ViewCommandModel model : commandModels) {
-			if (CommandModel.PLACEMENT_CONTEXT_MENU.equals(model.getPlacement())) {
+			if (model.getPlacement() == CommandPlacement.CONTEXT_MENU) {
 				contextMenuCommands.add(model);
 			}
 		}

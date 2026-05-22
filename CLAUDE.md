@@ -357,6 +357,20 @@ throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(
 - Use `ResKey` (no params), `ResKey1` (1 param), `ResKey2` (2 params), etc.
 - JavaDoc comment must start with `@en` for English default text
 
+### JavaDoc Conventions
+
+**Reference members, methods, and types with `{@link}`, not `{@code}`.** A `{@link #getScrollX()}`
+is checked by the compiler/doclet, so a later rename breaks the build instead of silently leaving
+stale documentation (`{@code scrollX}` would rot unnoticed). Reserve `{@code ...}` for things that
+are not resolvable symbols: literals (`{@code null}`, `{@code true}`), expressions
+(`{@code end >= start}`), method parameter names (JavaDoc has no link syntax for parameters), and
+external/JS identifiers.
+
+- This applies to `*.proto` files too: msgbuf copies field comments verbatim into the generated
+  getter JavaDoc, so use `{@link #getX() x}` (with readable link text) in proto comments.
+- The `TLDoclet` "Invalid camel case word" warning flags bare `camelCase` words in JavaDoc — wrap
+  them in a `{@link}` (preferred) or, only for non-symbols, `{@code}`.
+
 ## Testing Conventions
 
 - Test classes use the `test.` package prefix (e.g., `test.com.top_logic.basic.GenericTest`)
@@ -483,6 +497,8 @@ Commit messages in this project must follow a specific format:
 - **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - **Never amend commits** unless explicitly asked to do so. Always create new commits.
 - Keep the message plain and focused on describing the change
+- **Commit completed work at the end of each turn** without waiting to be asked, so every step of
+  work lands as its own commit. Group unrelated changes into separate commits.
 
 ### Git PR Conventions
 

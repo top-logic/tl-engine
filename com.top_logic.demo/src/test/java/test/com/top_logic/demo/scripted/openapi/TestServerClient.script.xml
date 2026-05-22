@@ -3057,7 +3057,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","boolean","long"]);
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="TestOpenAPI, A0 Ja Mein String Wert Nein 16.546"
+						value="TestOpenAPI, A0 true Mein String Wert false 16546"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -3169,7 +3169,7 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="TestOpenAPI, A0 Ja Mein String Wert 17.11.2021 2.265"
+						value="TestOpenAPI, A0 true Mein String Wert 17.11.2021 2265"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"

@@ -1443,7 +1443,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaJaJaJaNein"
+						value="truetruetruetruefalse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1498,7 +1498,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaJaJaJaNein"
+						value="truetruetruetruefalse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1554,7 +1554,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaNeinNeinNeinNeinNein"
+						value="truefalsefalsefalsefalsefalse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1609,7 +1609,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaNeinNeinJaNein"
+						value="truefalsefalsetruefalse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1665,7 +1665,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaJaJaJaJaJa"
+						value="truetruetruetruetruetrue"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1725,7 +1725,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaJaNeinJaJaJaJaJaJaJa"
+						value="truetruefalsetruetruetruetruetruetruetrue"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1785,7 +1785,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaNeinJaNeinNeinJaNein"
+						value="truefalsetruefalsefalsetruefalse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1863,7 +1863,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaJaJaJaNeinJaJaJaJaJaNeinJaNeinJaNeinNeinJaNeinJaJa"
+						value="truetruetruetruefalsetruetruetruetruetruefalsetruefalsetruefalsefalsetruefalsetruetrue"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1953,7 +1953,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaJaJaNeinJaJaNeinJaJaJaJaJaNeinNeinJaNeinJaNeinNeinNeinNeinJaNeinJaJaNeinNein"
+						value="truetruetruefalsetruetruefalsetruetruetruetruetruefalsefalsetruefalsetruefalsefalsefalsefalsetruefalsetruetruefalsefalse"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -2018,7 +2018,7 @@
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="JaJaNeinNeinNein"
+						value="truetruefalsefalsefalse"
 					/>
 				</action>
 			</actions>

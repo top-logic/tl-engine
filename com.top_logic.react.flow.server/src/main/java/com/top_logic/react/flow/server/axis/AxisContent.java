@@ -12,6 +12,11 @@ import com.top_logic.react.flow.data.GanttRow;
 
 /**
  * Result of {@link AxisProvider#buildAxis}: rows and items representing the axis visually.
+ *
+ * @param rows
+ *        The axis rows.
+ * @param items
+ *        The axis items placed on the axis rows.
  */
 public record AxisContent(List<GanttRow> rows, List<GanttItem> items) {
 }

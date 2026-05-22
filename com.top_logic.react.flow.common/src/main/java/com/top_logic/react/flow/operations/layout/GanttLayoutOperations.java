@@ -65,6 +65,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 	/**
 	 * Geometry of a single row: its Y start (inclusive), Y end (exclusive), and total height.
+	 *
+	 * @param yStart
+	 *        The Y coordinate where the row starts (inclusive).
+	 * @param yEnd
+	 *        The Y coordinate where the row ends (exclusive).
 	 */
 	record RowGeometry(double yStart, double yEnd) {
 

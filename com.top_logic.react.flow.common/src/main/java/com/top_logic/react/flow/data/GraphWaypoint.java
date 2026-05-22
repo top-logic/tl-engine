@@ -21,6 +21,9 @@ public interface GraphWaypoint extends de.haumacher.msgbuf.graph.SharedGraphNode
 	/** @see #getY() */
 	String Y__PROP = "y";
 
+	/**
+	 * The X coordinate of the waypoint.
+	 */
 	double getX();
 
 	/**
@@ -28,6 +31,9 @@ public interface GraphWaypoint extends de.haumacher.msgbuf.graph.SharedGraphNode
 	 */
 	com.top_logic.react.flow.data.GraphWaypoint setX(double value);
 
+	/**
+	 * The Y coordinate of the waypoint.
+	 */
 	double getY();
 
 	/**

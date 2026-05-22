@@ -207,7 +207,10 @@ message GraphEdge extends Widget {
  * A waypoint on an edge path.
  */
 message GraphWaypoint {
+	/** The X coordinate of the waypoint. */
 	double x;
+
+	/** The Y coordinate of the waypoint. */
 	double y;
 }
 
@@ -947,7 +950,10 @@ message GanttRow {
 
 /** Which end of an item a Gantt edge attaches to. */
 enum GanttEndpoint {
+	/** The edge attaches to the start of the item. */
 	START;
+
+	/** The edge attaches to the end of the item. */
 	END;
 }
 
@@ -1016,12 +1022,13 @@ message GanttEdge {
 
 	/**
 	 * Stroke color applied when the constraint is violated (enforce != NONE and
-	 * source endpoint position > target endpoint position). Empty = use normal strokeColor.
+	 * source endpoint position > target endpoint position). Empty = use normal
+	 * {@link #getStrokeColor() strokeColor}.
 	 */
 	@Nullable
 	string violatedStrokeColor;
 
-	/** Line thickness when violated. Zero = use normal strokeWidth. */
+	/** Line thickness when violated. Zero = use normal {@link #getStrokeWidth() strokeWidth}. */
 	double violatedStrokeWidth;
 
 	/** Dash pattern when violated. Empty = use normal dashes. */
@@ -1081,7 +1088,8 @@ abstract message GanttItem {
 	 *
 	 * <p>
 	 * Empty list means: all rows with {@link GanttRow#isAcceptsDrop() acceptsDrop = true}.
-	 * When set, only the listed rows are valid drop targets (intersected with acceptsDrop).
+	 * When set, only the listed rows are valid drop targets (intersected with
+	 * {@link GanttRow#isAcceptsDrop() acceptsDrop}).
 	 * </p>
 	 */
 	transient repeated java.lang.Object validDropTargets;
@@ -1262,7 +1270,7 @@ message GanttAxis {
  * </p>
  *
  * <p>
- * Inherits {@code contents} from {@link Layout} — the layout populates it with the
+ * Inherits {@link #getContents() contents} from {@link Layout} — the layout populates it with the
  * {@link GanttItem#box} elements so that standard layout/render dispatch reaches them.
  * </p>
  */
@@ -1370,10 +1378,10 @@ message GanttLayout extends Layout {
 	/** Pan start Y coordinate in SVG space (set on pointer down). */
 	transient double panStartY;
 
-	/** ScrollX value at the start of a pan gesture. */
+	/** The {@link #getScrollX() scrollX} value at the start of a pan gesture. */
 	transient double panStartScrollX;
 
-	/** ScrollY value at the start of a pan gesture. */
+	/** The {@link #getScrollY() scrollY} value at the start of a pan gesture. */
 	transient double panStartScrollY;
 }
 

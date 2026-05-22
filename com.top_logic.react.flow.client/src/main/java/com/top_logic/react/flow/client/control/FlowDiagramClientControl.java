@@ -1032,7 +1032,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	/**
 	 * Walks DOM parent chain from event target to find a {@link GanttLayout}.
-	 * Returns null if the event target is not inside a GanttLayout.
+	 * Returns {@code null} if the event target is not inside such a layout.
 	 */
 	@SuppressWarnings("unusable-by-js")
 	@Override

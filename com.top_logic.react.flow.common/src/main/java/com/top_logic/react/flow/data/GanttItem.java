@@ -184,7 +184,8 @@ public interface GanttItem extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 *
 	 * <p>
 	 * Empty list means: all rows with {@link GanttRow#isAcceptsDrop() acceptsDrop = true}.
-	 * When set, only the listed rows are valid drop targets (intersected with acceptsDrop).
+	 * When set, only the listed rows are valid drop targets (intersected with
+		 * {@link GanttRow#isAcceptsDrop() acceptsDrop}).
 	 * </p>
 	 */
 	java.util.List<java.lang.Object> getValidDropTargets();

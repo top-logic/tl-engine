@@ -5,8 +5,14 @@ package com.top_logic.react.flow.data;
  */
 public enum GanttEndpoint implements de.haumacher.msgbuf.data.ProtocolEnum {
 
+	/**
+	 * The edge attaches to the start of the item.
+	 */
 	START("START"),
 
+	/**
+	 * The edge attaches to the end of the item.
+	 */
 	END("END"),
 
 	;

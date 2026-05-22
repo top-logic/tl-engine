@@ -3,7 +3,7 @@ package com.top_logic.react.flow.client.bridge;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * JsInterop bridge to the React SSE/Command infrastructure.
+ * {@code JsInterop} bridge to the React SSE/Command infrastructure.
  *
  * <p>
  * Provides access to {@code window.TLReact.subscribe()} for receiving SSE events

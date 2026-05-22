@@ -1507,6 +1507,10 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Dash pattern.
 	 * @param decorations
 	 *        Edge decorations.
+	 * @param selectable
+	 *        Whether the edge can be interactively selected by the user.
+	 * @param userObject
+	 *        Application object backing the edge, or {@code null}.
 	 * @return The new edge.
 	 */
 	@SideEffectFree
@@ -1548,6 +1552,27 @@ public class FlowFactory extends TLScriptFunctions {
 		return edge;
 	}
 
+	/**
+	 * Creates a row for a Gantt layout.
+	 *
+	 * @param model
+	 *        The application object backing this row.
+	 * @param label
+	 *        The rendering content shown in the row header.
+	 * @param children
+	 *        Child rows forming a hierarchy, or {@code null} for a leaf row.
+	 * @param acceptsDrop
+	 *        Whether items may be dropped into this row during drag. Defaults to {@code true}.
+	 * @param backgroundColor
+	 *        Background color of the row lane, or {@code null} for a transparent lane.
+	 * @param borderColor
+	 *        Stroke color of the row lane border, or {@code null} for no border.
+	 * @param rowPadding
+	 *        Vertical padding (top and bottom) inside the row, in pixels.
+	 * @param minContentHeight
+	 *        Minimum content height for this row, in pixels.
+	 * @return The new row.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt row")
 	public static GanttRow ganttRow(
@@ -1575,6 +1600,45 @@ public class FlowFactory extends TLScriptFunctions {
 		return row;
 	}
 
+	/**
+	 * Creates a span item (a bar covering a start-to-end range) for a Gantt layout.
+	 *
+	 * @param model
+	 *        The application object backing this item.
+	 * @param rowModel
+	 *        The application object of the row this item belongs to.
+	 * @param box
+	 *        The rendering content of the item.
+	 * @param start
+	 *        Start position on the axis.
+	 * @param end
+	 *        End position on the axis; must satisfy {@code end >= start}.
+	 * @param canMove
+	 *        Convenience flag setting both {@code canMoveTime} and {@code canMoveRow}, or
+	 *        {@code null} to leave them untouched.
+	 * @param canMoveTime
+	 *        Whether the user may drag the item along the axis.
+	 * @param canMoveRow
+	 *        Whether the user may drag the item to another row.
+	 * @param canResize
+	 *        Convenience flag setting both {@code canResizeStart} and {@code canResizeEnd}, or
+	 *        {@code null} to leave them untouched.
+	 * @param canResizeStart
+	 *        Whether the user may drag the start edge to change the start.
+	 * @param canResizeEnd
+	 *        Whether the user may drag the end edge to change the end.
+	 * @param canBeEdge
+	 *        Convenience flag setting both {@code canBeEdgeSource} and {@code canBeEdgeTarget}, or
+	 *        {@code null} to leave them untouched.
+	 * @param canBeEdgeSource
+	 *        Whether a new dependency edge may originate from this item.
+	 * @param canBeEdgeTarget
+	 *        Whether a new dependency edge may terminate at this item.
+	 * @param validDropTargets
+	 *        Business objects of the rows where this item may be dropped, or {@code null} for all
+	 *        drop-accepting rows.
+	 * @return The new span item.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt span item")
 	public static GanttSpan ganttSpan(
@@ -1611,6 +1675,33 @@ public class FlowFactory extends TLScriptFunctions {
 		return span;
 	}
 
+	/**
+	 * Creates a point item (a marker at a single axis position) for a Gantt layout.
+	 *
+	 * @param model
+	 *        The application object backing this item.
+	 * @param rowModel
+	 *        The application object of the row this item belongs to.
+	 * @param box
+	 *        The rendering content of the item.
+	 * @param at
+	 *        Position of the point on the axis.
+	 * @param canMove
+	 *        Convenience flag setting both {@code canMoveTime} and {@code canMoveRow}, or
+	 *        {@code null} to leave them untouched.
+	 * @param canMoveTime
+	 *        Whether the user may drag the item along the axis.
+	 * @param canMoveRow
+	 *        Whether the user may drag the item to another row.
+	 * @param canBeEdge
+	 *        Convenience flag setting both {@code canBeEdgeSource} and {@code canBeEdgeTarget}, or
+	 *        {@code null} to leave them untouched.
+	 * @param canBeEdgeSource
+	 *        Whether a new dependency edge may originate from this item.
+	 * @param canBeEdgeTarget
+	 *        Whether a new dependency edge may terminate at this item.
+	 * @return The new point item.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt point item")
 	public static GanttPoint ganttPoint(
@@ -1638,6 +1729,35 @@ public class FlowFactory extends TLScriptFunctions {
 		return milestone;
 	}
 
+	/**
+	 * Creates a dependency edge between two Gantt items.
+	 *
+	 * @param model
+	 *        The application object backing this edge.
+	 * @param sourceModel
+	 *        The application object identifying the source item.
+	 * @param sourceEndpoint
+	 *        Which end of the source item the edge attaches to.
+	 * @param targetModel
+	 *        The application object identifying the target item.
+	 * @param targetEndpoint
+	 *        Which end of the target item the edge attaches to.
+	 * @param enforce
+	 *        Constraint enforcement mode, or {@code null} for {@link GanttEnforce#NONE}.
+	 * @param strokeColor
+	 *        Stroke color for the normal (non-violated) state.
+	 * @param strokeWidth
+	 *        Line thickness in pixels for the normal state.
+	 * @param dashes
+	 *        Dash pattern for the normal state, or {@code null} for a solid line.
+	 * @param violatedStrokeColor
+	 *        Stroke color applied when the constraint is violated.
+	 * @param violatedStrokeWidth
+	 *        Line thickness when the constraint is violated.
+	 * @param violatedDashes
+	 *        Dash pattern applied when the constraint is violated.
+	 * @return The new edge.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt edge")
 	public static GanttEdge ganttEdge(
@@ -1667,6 +1787,27 @@ public class FlowFactory extends TLScriptFunctions {
 		return edge;
 	}
 
+	/**
+	 * Creates a line decoration overlaid on a Gantt chart at a single axis position.
+	 *
+	 * @param model
+	 *        The application object backing this decoration.
+	 * @param at
+	 *        Position of the line on the axis.
+	 * @param color
+	 *        Stroke color of the line, or {@code null} for the default color.
+	 * @param label
+	 *        Rendering content shown as the line's label.
+	 * @param relevantFor
+	 *        Business objects this decoration is relevant for, or {@code null}.
+	 * @param canMove
+	 *        Whether the user may drag the line to another position.
+	 * @param strokeWidth
+	 *        Stroke width of the line, in pixels.
+	 * @param dashes
+	 *        Dash pattern, or {@code null} for a solid line.
+	 * @return The new line decoration.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt line decoration")
 	public static GanttLineDecoration ganttLineDeco(
@@ -1692,6 +1833,27 @@ public class FlowFactory extends TLScriptFunctions {
 		return deco;
 	}
 
+	/**
+	 * Creates a range decoration overlaid on a Gantt chart covering an axis range.
+	 *
+	 * @param model
+	 *        The application object backing this decoration.
+	 * @param from
+	 *        Start position of the range on the axis.
+	 * @param to
+	 *        End position of the range on the axis; must satisfy {@code to >= from}.
+	 * @param color
+	 *        Fill color of the range, or {@code null} for the default color.
+	 * @param label
+	 *        Rendering content shown as the range's label.
+	 * @param relevantFor
+	 *        Business objects this decoration is relevant for, or {@code null}.
+	 * @param canMove
+	 *        Whether the user may drag the range to another position.
+	 * @param canResize
+	 *        Whether the user may drag the range's edges to resize it.
+	 * @return The new range decoration.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt range decoration")
 	public static GanttRangeDecoration ganttRangeDeco(
@@ -1716,6 +1878,19 @@ public class FlowFactory extends TLScriptFunctions {
 		return deco;
 	}
 
+	/**
+	 * Creates an axis configuration for a Gantt layout.
+	 *
+	 * @param providerId
+	 *        Name of the registered server-side axis provider that computes ticks and snap data.
+	 * @param rangeMin
+	 *        Lowest position representable on the axis, in layout units.
+	 * @param rangeMax
+	 *        Highest position representable on the axis, in layout units.
+	 * @param zoom
+	 *        Zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
+	 * @return The new axis.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt axis")
 	public static GanttAxis ganttAxis(
@@ -1733,6 +1908,20 @@ public class FlowFactory extends TLScriptFunctions {
 			.setCurrentZoom(pixelsPerUnit).setSnapGranularity(snap);
 	}
 
+	/**
+	 * Builds the axis rows and items for the given range from a registered axis provider.
+	 *
+	 * @param providerId
+	 *        Name of the registered server-side axis provider.
+	 * @param rangeMin
+	 *        Lowest position to cover, in layout units.
+	 * @param rangeMax
+	 *        Highest position to cover, in layout units.
+	 * @param zoom
+	 *        Zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
+	 * @return The rows and items representing the axis, or an empty result if no provider is
+	 *         registered for {@code providerId}.
+	 */
 	@SideEffectFree
 	@Label("Build axis rows and items from a registered axis provider")
 	public static AxisContent ganttAxisContent(
@@ -1749,6 +1938,23 @@ public class FlowFactory extends TLScriptFunctions {
 		return provider.buildAxis(rangeMin, rangeMax, pixelsPerUnit);
 	}
 
+	/**
+	 * Creates a Gantt layout from its rows, items, edges, and decorations.
+	 *
+	 * @param rootRows
+	 *        The root rows of the row forest.
+	 * @param items
+	 *        All items placed in the chart.
+	 * @param edges
+	 *        Dependency edges between items, or {@code null} for none.
+	 * @param decorations
+	 *        Decorations overlaid on the chart, or {@code null} for none.
+	 * @param axis
+	 *        The axis configuration.
+	 * @param frozenRows
+	 *        Number of leading root rows forming the frozen header, or {@code null} for none.
+	 * @return The new Gantt layout.
+	 */
 	@SideEffectFree
 	@Label("Create Gantt layout")
 	public static GanttLayout gantt(

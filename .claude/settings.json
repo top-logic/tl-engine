@@ -14,8 +14,14 @@
         "/tmp"
       ]
     },                                                                                                                                                                                                                                     
-    "network": {                                                                                                                                                                                                                                 
-      "allowedHosts": ["registry.npmjs.org", "api-free.deepl.com"]
+    "network": {
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "api-free.deepl.com",
+        "nodejs.org",
+        "dev.top-logic.com",
+        "repo.maven.apache.org"
+      ]
     }                                                                                                                                                                                                                                            
   }
 }

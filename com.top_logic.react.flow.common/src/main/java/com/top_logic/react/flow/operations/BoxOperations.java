@@ -53,13 +53,22 @@ public interface BoxOperations extends WidgetOperations {
 
 	/**
 	 * Computes the preferred size of this element and all of its children.
-	 * 
+	 *
 	 * <p>
 	 * After this method completes, the properties {@link Box#getWidth()} and
 	 * {@link Box#getHeight()} must be set to the preferred size of this {@link Box}.
 	 * </p>
+	 *
+	 * <p>
+	 * The {@code availableWidth} and {@code availableHeight} parameters communicate the upper
+	 * bound that the parent is willing to allocate to this box. Regular boxes <b>ignore</b> these
+	 * hints and report their natural intrinsic size; only boxes that vary their behavior based on
+	 * the available space (such as level-of-detail containers) consult them. A value of
+	 * {@link Double#POSITIVE_INFINITY} means the parent does not constrain the box.
+	 * </p>
 	 */
-	void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY);
+	void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight);
 
 	/**
 	 * Places this diagram element and its children at the given coordinates and adjust its

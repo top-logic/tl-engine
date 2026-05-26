@@ -20,14 +20,16 @@ public interface FloatingLayoutOperations extends BoxOperations {
 	FloatingLayout self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
 		double width = 0;
 		double height = 0;
 		for (Box node : self().getNodes()) {
-			node.computeIntrinsicSize(context, node.getX(), node.getY());
+			node.computeIntrinsicSize(context, node.getX(), node.getY(),
+					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
 			width = Math.max(width, node.getX() + node.getWidth());
 			height = Math.max(height, node.getY() + node.getHeight());

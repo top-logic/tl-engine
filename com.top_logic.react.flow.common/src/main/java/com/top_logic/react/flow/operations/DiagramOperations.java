@@ -37,7 +37,8 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 	 */
 	default void layout(RenderContext context) {
 		Box root = self().getRoot();
-		root.computeIntrinsicSize(context, 0, 0);
+		root.computeIntrinsicSize(context, 0, 0,
+				Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 		root.distributeSize(context, 0, 0, root.getWidth(), root.getHeight());
 	}
 

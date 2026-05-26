@@ -35,8 +35,9 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 	SelectableBox self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		DecorationOperations.super.computeIntrinsicSize(context, 0, 0);
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
+		DecorationOperations.super.computeIntrinsicSize(context, 0, 0, availableWidth, availableHeight);
 	}
 
 	@Override

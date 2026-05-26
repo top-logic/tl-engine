@@ -16,11 +16,13 @@ public interface AlignOperations extends DecorationOperations {
 	com.top_logic.react.flow.data.Align self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
-		DecorationOperations.super.computeIntrinsicSize(context, offsetX, offsetY);
+		DecorationOperations.super.computeIntrinsicSize(context, offsetX, offsetY,
+				availableWidth, availableHeight);
 
 		BoxOperations content = self().getContent();
 		self().setWidth(content.self().getWidth());

@@ -39,15 +39,19 @@ public interface PaddingOperations extends DecorationOperations {
 	}
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
 		double x = offsetX + self().getLeft();
 		double y = offsetY + self().getTop();
 
+		double contentAvailW = availableWidth - self().getLeft() - self().getRight();
+		double contentAvailH = availableHeight - self().getTop() - self().getBottom();
+
 		Box content = self().getContent();
-		content.computeIntrinsicSize(context, x, y);
+		content.computeIntrinsicSize(context, x, y, contentAvailW, contentAvailH);
 
 		self().setWidth(self().getLeft() + content.getWidth() + self().getRight());
 		self().setHeight(self().getTop() + content.getHeight() + self().getBottom());

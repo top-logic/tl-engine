@@ -18,8 +18,10 @@ public interface BorderOperations extends DecorationOperations {
 	com.top_logic.react.flow.data.Border self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		DecorationOperations.super.computeIntrinsicSize(context, offsetX, offsetY);
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
+		DecorationOperations.super.computeIntrinsicSize(context, offsetX, offsetY,
+				availableWidth, availableHeight);
 
 		double width = self().getContent().self().getWidth();
 		double height = self().getContent().self().getHeight();

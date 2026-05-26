@@ -22,7 +22,8 @@ public interface PolygonalChainOperations extends BoxOperations {
 	PolygonalChain self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setX(offsetX);
 		self().setY(offsetY);
 

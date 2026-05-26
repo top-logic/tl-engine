@@ -19,7 +19,8 @@ public interface ImageOperations extends BoxOperations {
 	com.top_logic.react.flow.data.Image self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setWidth(self().getImgWidth());
 		self().setHeight(self().getImgHeight());
 	}

@@ -44,8 +44,10 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	TreeLayout self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		FloatingLayoutOperations.super.computeIntrinsicSize(context, offsetX, offsetY);
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
+		FloatingLayoutOperations.super.computeIntrinsicSize(context, offsetX, offsetY,
+				availableWidth, availableHeight);
 
 		for (TreeConnection connection : self().getConnections()) {
 			connection.layout(context);

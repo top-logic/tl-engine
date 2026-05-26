@@ -467,7 +467,8 @@ public class TestGanttLayout extends TestCase {
 		}
 
 		@Override
-		public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+				double availableWidth, double availableHeight) {
 			setX(offsetX);
 			setY(offsetY);
 			// Width is intentionally left 0 here; the layout forces span width via distributeSize.
@@ -502,7 +503,8 @@ public class TestGanttLayout extends TestCase {
 		}
 
 		@Override
-		public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+				double availableWidth, double availableHeight) {
 			setX(offsetX);
 			setY(offsetY);
 			setWidth(_fixedWidth);

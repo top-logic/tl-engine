@@ -31,12 +31,13 @@ public interface CompassLayoutOperations extends BoxOperations {
 	com.top_logic.react.flow.data.CompassLayout self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		self().getNorth().computeIntrinsicSize(context, offsetX, offsetY);
-		self().getSouth().computeIntrinsicSize(context, offsetX, offsetY);
-		self().getWest().computeIntrinsicSize(context, offsetX, offsetY);
-		self().getEast().computeIntrinsicSize(context, offsetX, offsetY);
-		self().getCenter().computeIntrinsicSize(context, offsetX, offsetY);
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
+		self().getNorth().computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
+		self().getSouth().computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
+		self().getWest().computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
+		self().getEast().computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
+		self().getCenter().computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
 
 		self().setHPadding(Math.max(self().getWest().getWidth(), self().getEast().getWidth()));
 		self().setVPadding(Math.max(self().getNorth().getHeight(), self().getSouth().getHeight()));

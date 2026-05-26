@@ -19,11 +19,12 @@ public interface StackOperations extends BoxOperations {
 	Stack self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		double width = 0;
 		double height = 0;
 		for (Box content : self().getContents()) {
-			content.computeIntrinsicSize(context, offsetX, offsetY);
+			content.computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
 
 			width = Math.max(width, content.getWidth());
 			height = Math.max(height, content.getHeight());

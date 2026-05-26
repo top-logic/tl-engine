@@ -19,7 +19,8 @@ public interface SizedOperations extends DecorationOperations {
 	Sized self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		if (self().getDesiredX() != null) {
 			offsetX = self().getDesiredX().doubleValue();
 		}
@@ -30,8 +31,15 @@ public interface SizedOperations extends DecorationOperations {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
+		double contentAvailW = self().getMaxWidth() != null
+				? Math.min(availableWidth, self().getMaxWidth().doubleValue())
+				: availableWidth;
+		double contentAvailH = self().getMaxHeight() != null
+				? Math.min(availableHeight, self().getMaxHeight().doubleValue())
+				: availableHeight;
+
 		Box content = self().getContent();
-		content.computeIntrinsicSize(context, offsetX, offsetY);
+		content.computeIntrinsicSize(context, offsetX, offsetY, contentAvailW, contentAvailH);
 
 		double width = content.getWidth();
 		if (self().getMinWidth() != null) {

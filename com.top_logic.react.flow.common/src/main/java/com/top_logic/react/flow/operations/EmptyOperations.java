@@ -23,7 +23,8 @@ public interface EmptyOperations extends BoxOperations {
 	}
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setWidth(self().getMinWidth());
 		self().setHeight(self().getMinHeight());
 	}

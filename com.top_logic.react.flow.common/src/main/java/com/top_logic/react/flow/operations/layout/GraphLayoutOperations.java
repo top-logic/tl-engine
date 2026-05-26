@@ -43,7 +43,8 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 	GraphLayout self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
@@ -52,12 +53,14 @@ public interface GraphLayoutOperations extends FloatingLayoutOperations {
 
 		// Step 1: Compute intrinsic sizes of all child nodes and edge decorations.
 		for (Box node : nodes) {
-			node.computeIntrinsicSize(context, 0, 0);
+			node.computeIntrinsicSize(context, 0, 0,
+					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 		}
 		for (GraphEdge edge : edges) {
 			for (EdgeDecoration decoration : edge.getDecorations()) {
 				if (decoration.getContent() != null) {
-					decoration.getContent().computeIntrinsicSize(context, 0, 0);
+					decoration.getContent().computeIntrinsicSize(context, 0, 0,
+							Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 				}
 			}
 		}

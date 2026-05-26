@@ -27,7 +27,8 @@ public interface VerticalLayoutOperations extends BoxOperations {
 	}
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		double height = 0;
 		double maxWidth = 0;
 
@@ -45,7 +46,9 @@ public interface VerticalLayoutOperations extends BoxOperations {
 			}
 			y = offsetY + height;
 
-			row.computeIntrinsicSize(context, x, y);
+			// Children get the full available width; height is residual after siblings above.
+			double rowAvailH = availableHeight - height;
+			row.computeIntrinsicSize(context, x, y, availableWidth, rowAvailH);
 
 			height += row.getHeight();
 			maxWidth = Math.max(maxWidth, row.getWidth());

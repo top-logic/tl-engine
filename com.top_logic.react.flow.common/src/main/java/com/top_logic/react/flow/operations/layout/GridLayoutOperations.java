@@ -60,7 +60,8 @@ public interface GridLayoutOperations extends BoxOperations {
 	}
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
@@ -70,7 +71,8 @@ public interface GridLayoutOperations extends BoxOperations {
 		for (int r = 0; r < self().getRows(); r++) {
 			for (int c = 0; c < self().getCols(); c++) {
 				Box element = get(c, r);
-				element.computeIntrinsicSize(context, offsetX, offsetY);
+				element.computeIntrinsicSize(context, offsetX, offsetY,
+						Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 
 				self().getColWidth().set(c, Math.max(self().getColWidth().get(c), element.getWidth()));
 				self().getRowHeight().set(r, Math.max(self().getRowHeight().get(r), element.getHeight()));

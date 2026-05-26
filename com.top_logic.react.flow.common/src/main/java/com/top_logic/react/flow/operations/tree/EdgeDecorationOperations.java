@@ -24,7 +24,8 @@ public interface EdgeDecorationOperations extends WidgetOperations {
 	 */
 	default void layout(RenderContext context) {
 		Box content = self().getContent();
-		content.computeIntrinsicSize(context, 0, 0);
+		content.computeIntrinsicSize(context, 0, 0,
+				Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 		content.distributeSize(context, 0, 0, content.getWidth(), content.getHeight());
 	}
 

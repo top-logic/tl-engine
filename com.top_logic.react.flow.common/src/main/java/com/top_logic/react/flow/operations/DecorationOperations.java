@@ -18,9 +18,10 @@ public interface DecorationOperations extends BoxOperations {
 	com.top_logic.react.flow.data.Decoration self();
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		Box content = self().getContent();
-		content.computeIntrinsicSize(context, offsetX, offsetY);
+		content.computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
 		self().setWidth(content.getWidth());
 		self().setHeight(content.getHeight());
 	}

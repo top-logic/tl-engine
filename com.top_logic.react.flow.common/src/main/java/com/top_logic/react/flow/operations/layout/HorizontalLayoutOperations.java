@@ -27,7 +27,8 @@ public interface HorizontalLayoutOperations extends BoxOperations {
 	}
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		double width = 0;
 		double maxHeight = 0;
 
@@ -46,7 +47,9 @@ public interface HorizontalLayoutOperations extends BoxOperations {
 			}
 			x = offsetX + width;
 
-			col.computeIntrinsicSize(context, x, y);
+			// Children get the residual available width; height stays as-is (single row).
+			double colAvailW = availableWidth - width;
+			col.computeIntrinsicSize(context, x, y, colAvailW, availableHeight);
 
 			width += col.getWidth();
 			maxHeight = Math.max(maxHeight, col.getHeight());

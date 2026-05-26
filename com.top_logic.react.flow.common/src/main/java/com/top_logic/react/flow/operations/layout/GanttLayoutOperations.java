@@ -45,8 +45,8 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  *
  * <p>
  * Layout uses a two-pass algorithm: pass 1 calls
- * {@link Box#computeIntrinsicSize(RenderContext, double, double)} on every item box and records
- * per-row maximum intrinsic heights. Pass 2 calls
+ * {@link Box#computeIntrinsicSize(RenderContext, double, double, double, double)} on every item
+ * box and records per-row maximum intrinsic heights. Pass 2 calls
  * {@link Box#distributeSize(RenderContext, double, double, double, double)} on every item box
  * with the final cell dimensions so that all boxes in the same row grow to the same height.
  * Span widths are forced to {@code (end - start) * zoom}; milestone widths are intrinsic.
@@ -80,7 +80,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
 		GanttLayout self = (GanttLayout) this;
 		GanttAxis axis = self.getAxis();
 
@@ -124,13 +125,15 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double tmpY = offsetY + itemRowPadding; // rough y, refined in pass 2
 			if (item instanceof GanttSpan span) {
 				tmpX = offsetX + tmpLabelWidth + (span.getStart() - rangeMin) * zoom;
-				box.computeIntrinsicSize(context, tmpX, tmpY);
+				double spanWidth = (span.getEnd() - span.getStart()) * zoom;
+				box.computeIntrinsicSize(context, tmpX, tmpY, spanWidth, Double.POSITIVE_INFINITY);
 				double intrinsicHeight = box.getHeight();
 				if (intrinsicHeight > rowMaxContentHeight[idx]) {
 					rowMaxContentHeight[idx] = intrinsicHeight;
 				}
 			} else if (item instanceof GanttPoint pt) {
-				box.computeIntrinsicSize(context, 0, 0);
+				box.computeIntrinsicSize(context, 0, 0,
+						Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 				// Accept whatever intrinsic size the box reports.
 				// Width and height may be 0 (e.g. empty FloatingLayout) — that's OK.
 				double intrinsicHeight = box.getHeight();
@@ -152,7 +155,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// Label x is rough; what matters here is the intrinsic width.
 			double tmpX = offsetX + rowLabelPadding + depth * indentWidth;
 			double tmpY = offsetY + row.getRowPadding();
-			label.computeIntrinsicSize(context, tmpX, tmpY);
+			label.computeIntrinsicSize(context, tmpX, tmpY,
+					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 			double labelW = label.getWidth() + depth * indentWidth;
 			if (labelW > maxLabelIntrinsicWidth) {
 				maxLabelIntrinsicWidth = labelW;
@@ -165,7 +169,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			for (GanttDecoration deco : decos) {
 				Box decoLabel = deco.getLabel();
 				if (decoLabel != null) {
-					decoLabel.computeIntrinsicSize(context, 0, 0);
+					decoLabel.computeIntrinsicSize(context, 0, 0,
+							Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 				}
 			}
 		}
@@ -324,7 +329,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
 		GanttLayout self = (GanttLayout) this;
-		computeIntrinsicSize(context, offsetX, offsetY);
+		computeIntrinsicSize(context, offsetX, offsetY, width, height);
 		if (width > self.getWidth()) {
 			self.setWidth(width);
 		}

@@ -618,8 +618,6 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 			Object val = fd.getAttributeValue(key);
 			contentPayload.put(indexKey, val == null ? null : val.toString());
 		}
-//		contentPayload.put("objectKey", aDoc.tId().asString());
-//		contentPayload.put("_text", content);
 		content = JSONObject.toJSONString(contentPayload);
 
 

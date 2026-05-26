@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.TupleFactory;
@@ -26,6 +27,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -137,39 +139,27 @@ public class RoleRule implements RoleProvider {
     }
 
     /**
-     * <code>true</code> if the rule applies to the given meta element
-     */
-    public boolean matches(TLClass aME) {
-        if (aME == null) {
-            return false;
-        }
-        if (this.inherit) {
-			return MetaElementUtil.hasGeneralization(aME, metaElement);
-		} else {
-			return this.metaElement.equals(aME);
-        }
-    }
+	 * <code>true</code> if the rule is applicable to the given item
+	 */
+	public boolean matches(TLObject itemWrapper) {
+		if (!itemWrapper.tValid())
+			return false;
 
-    /**
-     * true if the rule is applicable to the given wrapper
-     */
-    public boolean matches(Wrapper aWrapper) {
-    	if (aWrapper == null || !aWrapper.tValid()) return false;
-
-		if (!(aWrapper instanceof Wrapper)) {
+		TLStructuredType itemType = itemWrapper.tType();
+		if (itemType == null) {
 			return false;
 		}
-		return this.matches((TLClass) ((Wrapper) aWrapper).tType());
+		if (this.inherit) {
+			return MetaElementUtil.hasGeneralization(itemType, metaElement);
+		} else {
+			return this.metaElement.equals(itemType);
+		}
     }
     
     @Override
 	public boolean matches(BoundObject anObject) {
-    	return (anObject instanceof Wrapper)
-    		? this.matches((Wrapper) anObject)
-    	    : false;
+		return matches((TLObject) anObject);
     }
-
-
 
     /**
      * Getter
@@ -232,7 +222,7 @@ public class RoleRule implements RoleProvider {
 	 * @since 5.7.4
 	 */
 	public Collection<Group> getGroupsFor(Wrapper base) {
-		if (base == null || !base.tValid()) {
+		if (base == null) {
     		return Collections.emptySet();
     	}
 		if (!matches(base)) {
@@ -292,11 +282,7 @@ public class RoleRule implements RoleProvider {
 			return BaseObjects.all();
 		}
 
-		for (Iterator<TLObject> it = theCollector.iterator(); it.hasNext();) {
-			if (!matches((Wrapper) it.next())) {
-				it.remove();
-			}
-		}
+		theCollector.removeIf(Predicate.not(this::matches));
 		return BaseObjects.of((Set) theCollector);
     }
 

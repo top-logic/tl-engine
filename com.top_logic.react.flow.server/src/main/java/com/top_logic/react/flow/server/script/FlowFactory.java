@@ -2175,4 +2175,90 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 	}
 
+	/**
+	 * Builds a horizontal sequence of year labels for a days-since-epoch range, suitable as
+	 * the content of an {@link LOD} variant on an axis row.
+	 *
+	 * @param rangeMin
+	 *        Lower bound of the range, interpreted as days since the Unix epoch.
+	 * @param rangeMax
+	 *        Upper bound of the range, interpreted as days since the Unix epoch.
+	 * @return A {@link HorizontalLayout} of year text labels, gap-stretched to fill the
+	 *         available width.
+	 */
+	@SideEffectFree
+	@Label("Axis: year ticks")
+	public static Box axisDaysYearTicks(double rangeMin, double rangeMax) {
+		java.time.LocalDate min = java.time.LocalDate.ofEpochDay((long) Math.floor(rangeMin));
+		java.time.LocalDate max = java.time.LocalDate.ofEpochDay((long) Math.ceil(rangeMax));
+		List<Box> ticks = new ArrayList<>();
+		for (int year = min.getYear(); year <= max.getYear(); year++) {
+			ticks.add(Text.create().setValue(String.valueOf(year)));
+		}
+		return horizontalAxis(ticks);
+	}
+
+	/**
+	 * Builds a horizontal sequence of month labels for a days-since-epoch range.
+	 *
+	 * @param rangeMin
+	 *        Lower bound of the range, interpreted as days since the Unix epoch.
+	 * @param rangeMax
+	 *        Upper bound of the range, interpreted as days since the Unix epoch.
+	 * @param withYear
+	 *        If {@code true}, labels include the year (e.g. {@code "Jan 2026"}); otherwise
+	 *        only the month abbreviation ({@code "Jan"}).
+	 * @return A {@link HorizontalLayout} of month text labels, gap-stretched to fill the
+	 *         available width.
+	 */
+	@SideEffectFree
+	@Label("Axis: month ticks")
+	public static Box axisDaysMonthTicks(double rangeMin, double rangeMax,
+			@BooleanDefault(false) boolean withYear) {
+		java.time.LocalDate min = java.time.LocalDate.ofEpochDay((long) Math.floor(rangeMin));
+		java.time.LocalDate max = java.time.LocalDate.ofEpochDay((long) Math.ceil(rangeMax));
+		List<Box> ticks = new ArrayList<>();
+		java.time.LocalDate cursor = min.withDayOfMonth(1);
+		while (!cursor.isAfter(max)) {
+			String abbr = cursor.getMonth().name().substring(0, 1)
+				+ cursor.getMonth().name().substring(1, 3).toLowerCase();
+			String label = withYear ? abbr + " " + cursor.getYear() : abbr;
+			ticks.add(Text.create().setValue(label));
+			cursor = cursor.plusMonths(1);
+		}
+		return horizontalAxis(ticks);
+	}
+
+	/**
+	 * Builds a horizontal sequence of day-of-month labels for a days-since-epoch range.
+	 *
+	 * @param rangeMin
+	 *        Lower bound of the range, interpreted as days since the Unix epoch.
+	 * @param rangeMax
+	 *        Upper bound of the range, interpreted as days since the Unix epoch.
+	 * @return A {@link HorizontalLayout} of day-of-month text labels, gap-stretched to fill
+	 *         the available width.
+	 */
+	@SideEffectFree
+	@Label("Axis: day ticks")
+	public static Box axisDaysDayTicks(double rangeMin, double rangeMax) {
+		long minDay = (long) Math.floor(rangeMin);
+		long maxDay = (long) Math.ceil(rangeMax);
+		List<Box> ticks = new ArrayList<>();
+		for (long d = minDay; d <= maxDay; d++) {
+			int dayOfMonth = java.time.LocalDate.ofEpochDay(d).getDayOfMonth();
+			ticks.add(Text.create().setValue(String.valueOf(dayOfMonth)));
+		}
+		return horizontalAxis(ticks);
+	}
+
+	private static Box horizontalAxis(List<Box> ticks) {
+		if (ticks.isEmpty()) {
+			return Empty.create();
+		}
+		return HorizontalLayout.create()
+			.setContents(ticks)
+			.setFill(SpaceDistribution.STRETCH_GAP);
+	}
+
 }

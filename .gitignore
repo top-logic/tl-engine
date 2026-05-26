@@ -12,3 +12,5 @@
 /.venv/
 /.worktrees
 /.playwright-mcp/
+/.mvn
+/.m2

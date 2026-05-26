@@ -375,6 +375,10 @@ public class ElementSecurityUpdateManager implements ConfiguredInstance<ElementS
 						// Rule is completely rebuild.
 						continue;
 					}
+					if (!rule.matches((BoundObject) createdObject)) {
+						// object is inadequate for the rule
+						continue;
+					}
 					add(rulesToObjectsMap, rule, (BoundObject) createdObject);
 				}
 			}

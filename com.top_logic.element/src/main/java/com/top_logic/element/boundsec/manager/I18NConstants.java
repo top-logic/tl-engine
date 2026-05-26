@@ -78,6 +78,11 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("admin.security.import.roleRules.problem.unknownMetaElement")
 	public static ResKey1 UNKNOWN_META_ELEMENT;
 
+	/**
+	 * @en The singleton {0} can not be resolved.
+	 */
+	public static ResKey1 INVALID_SINGLETON__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

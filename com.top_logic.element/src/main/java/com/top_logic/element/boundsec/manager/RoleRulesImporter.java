@@ -22,16 +22,20 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.boundsec.manager.rule.DefaultRoleRule;
 import com.top_logic.element.boundsec.manager.rule.IdentityPathElement;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
 import com.top_logic.element.boundsec.manager.rule.RoleRule;
+import com.top_logic.element.boundsec.manager.rule.SingletonRule;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
+import com.top_logic.element.boundsec.manager.rule.config.SingletonRuleConfig;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -124,7 +128,7 @@ public class RoleRulesImporter {
 
 		_inherit = roleRule.isInherit();
 		_metaElement = getMetaElement(roleRule.getMetaElement());
-		if (roleRule.getMetaElement() == null) {
+		if (roleRule.getMetaElement() == null && !(roleRule instanceof SingletonRuleConfig)) {
 			addProblem(I18NConstants.NO_META_ELEMENT_DECLARED);
 		}
 		_sourceMetaElement = getMetaElement(roleRule.getSourceMetaElement());
@@ -167,13 +171,26 @@ public class RoleRulesImporter {
 
 	private void createRules(RoleRuleConfig roleRuleConfig, BoundedRole sourceRole, Collection<BoundedRole> roles,
 			List<PathElement> path) {
-		for (BoundedRole role : roles) {
-			if (Type.inheritance.equals(roleRuleConfig.getType())) {
-				addRule(
-					new RoleRule(_metaElement, _sourceMetaElement, _inherit, role, sourceRole, path, _resKey));
-			} else {
-				addRule(
-					new RoleRule(_metaElement, _inherit, role, path, _resKey));
+		if (roleRuleConfig instanceof SingletonRuleConfig singletonRuleConf) {
+			TLObject singleton;
+			try {
+				singleton = TLModelUtil.resolveQualifiedName(singletonRuleConf.getTarget());
+			} catch (Exception ex) {
+				addProblem(I18NConstants.INVALID_SINGLETON__NAME.fill(singletonRuleConf.getTarget()));
+				return;
+			}
+			for (BoundedRole role : roles) {
+				addRule(new SingletonRule(singleton, role, path, _resKey));
+			}
+		} else {
+			for (BoundedRole role : roles) {
+				if (Type.inheritance.equals(roleRuleConfig.getType())) {
+					addRule(new DefaultRoleRule(_metaElement, _sourceMetaElement, _inherit, role, sourceRole, path,
+						Type.inheritance, _resKey));
+				} else {
+					addRule(
+						new DefaultRoleRule(_metaElement, null, _inherit, role, null, path, Type.reference, _resKey));
+				}
 			}
 		}
 	}

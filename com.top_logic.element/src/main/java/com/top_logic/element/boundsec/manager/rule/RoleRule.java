@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -22,12 +21,10 @@ import com.top_logic.basic.col.TupleFactory.Tuple;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.ElementAccessHelper;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
-import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -41,28 +38,15 @@ import com.top_logic.util.Utils;
  *
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
-public class RoleRule implements RoleProvider {
+public abstract class RoleRule implements RoleProvider {
 
-    /** The meta element type of objects the role applies to */
-    private TLClass metaElement;
-
-    /** The meta element type of objects an inheritance rule may inherit from */
-    private TLClass sourceMetaElement;
-
-    /** Indicates that the role is to be applied to sub types too */
-    private boolean     inherit;
     /** the role to apply by this rule */
     private BoundRole   role;
-    /** the role to request in case of an inheritance rule that maps one role to another one */
-    private BoundRole   sourceRole;
     /**
      * a list {@link com.top_logic.element.boundsec.manager.rule.PathElement}s
      * determining the groups the role is given to
      */
     private List<PathElement>        path;
-
-    /** the type of the rule */
-    private Type        type;
 
     /**
      * The resource key (prefix) used to get a name and a description for the role
@@ -74,34 +58,21 @@ public class RoleRule implements RoleProvider {
     /**
      * Constructor with all attributes
      */
-    private RoleRule(TLClass aME, TLClass aSourceME, boolean isInterit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, Type aType, ResKey aResourceKey) {
-        super();
-		this.metaElement = Objects.requireNonNull(aME);
-        this.sourceMetaElement = aSourceME;
-        this.inherit           = isInterit;
-        this.role              = aRole;
-        this.sourceRole        = aSourceRole;
-        this.path              = aPath;
-        this.type              = aType;
-        this.resourceKey       = aResourceKey;
-        this.id                = this.computeId(aME, aSourceME, isInterit, aRole, aSourceRole, aPath, aType);
-    }
+	protected RoleRule(BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey, String id) {
+		super();
+		this.role = aRole;
+		this.path = aPath;
+		this.resourceKey = aResourceKey;
+		this.id = id;
+	}
 
-    /**
-     * Constructor for reference rules on meta elements
-     */
-    public RoleRule(TLClass aME, boolean isInterit, BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey) {
-        this(aME, null, isInterit, aRole, null, aPath, Type.reference, aResourceKey);
-    }
-
-    /**
-     * Constructor for inheritance rules on meta elements
-     */
-    public RoleRule(TLClass aME, TLClass aSourceME, boolean isInterit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, ResKey aResourceKey) {
-        this(aME, aSourceME, isInterit, aRole, aSourceRole, aPath, Type.inheritance, aResourceKey);
-    }
-
-    public String computeId(TLClass aME, TLClass aSourceME, boolean isInherit, BoundRole aRole, BoundRole aSourceRole, List<PathElement> aPath, Type aType) {
+	/**
+	 * Computes an ID based on the given informations.
+	 * 
+	 * @see #getId()
+	 */
+	protected static String computeId(TLClass aME, TLClass aSourceME, boolean isInherit, BoundRole aRole,
+			BoundRole aSourceRole, List<PathElement> aPath, Type aType) {
         StringBuffer theSB = new StringBuffer();
 		theSB.append("me:");
 		theSB.append(aME.getName());
@@ -130,9 +101,6 @@ public class RoleRule implements RoleProvider {
         return theSB.toString();
     }
 
-    /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getId()
-	 */
     @Override
 	public String getId() {
         return this.id;
@@ -141,20 +109,7 @@ public class RoleRule implements RoleProvider {
     /**
 	 * <code>true</code> if the rule is applicable to the given item
 	 */
-	public boolean matches(TLObject itemWrapper) {
-		if (!itemWrapper.tValid())
-			return false;
-
-		TLStructuredType itemType = itemWrapper.tType();
-		if (itemType == null) {
-			return false;
-		}
-		if (this.inherit) {
-			return MetaElementUtil.hasGeneralization(itemType, metaElement);
-		} else {
-			return this.metaElement.equals(itemType);
-		}
-    }
+	public abstract boolean matches(TLObject itemWrapper);
     
     @Override
 	public boolean matches(BoundObject anObject) {
@@ -164,20 +119,15 @@ public class RoleRule implements RoleProvider {
     /**
      * Getter
      */
-    public TLClass getMetaElement() {
-        return (metaElement);
-    }
+	public abstract TLClass getMetaElement();
 
     /**
-     * Getter
-     */
-    public TLClass getSourceMetaElement() {
-        return (sourceMetaElement);
-    }
-
-    /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getRole()
+	 * Getter
+	 * 
+	 * @return May be <code>null</code>.
 	 */
+	public abstract TLClass getSourceMetaElement();
+
     @Override
 	public BoundRole getRole() {
         return (role);
@@ -186,9 +136,7 @@ public class RoleRule implements RoleProvider {
     /**
 	 * Indicates, that the rule also applies to the sub types (in case of a set {@link TLClass}) 
 	 */
-    public boolean isInherit() {
-        return (inherit);
-    }
+	public abstract boolean isInherit();
 
     /**
      * This method returns the resourceKey.
@@ -252,7 +200,8 @@ public class RoleRule implements RoleProvider {
             if (theRole == null) {
                 theRole = this.getRole();
             }
-            CollectionUtil.mapIgnoreNull(theCollector.iterator(), theResult, new HasRoleGroupMapper(theRole, this.sourceMetaElement));
+			CollectionUtil.mapIgnoreNull(theCollector.iterator(), theResult,
+				new HasRoleGroupMapper(theRole, getSourceMetaElement()));
             Set<Group> theFinalResult = new HashSet<>();
             Utils.fold(theFinalResult, theResult.iterator(), new Utils.FolderFunction() {
                 @Override
@@ -328,22 +277,6 @@ public class RoleRule implements RoleProvider {
             }
         }
 		return true;
-    }
-
-    /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getSourceRole()
-	 */
-    @Override
-	public BoundRole getSourceRole() {
-        return this.sourceRole == null ? this.role : this.sourceRole;
-    }
-
-    /**
-	 * @see com.top_logic.element.boundsec.manager.rule.RoleProvider#getType()
-	 */
-    @Override
-	public Type getType() {
-        return (this.type);
     }
 
 	@Override

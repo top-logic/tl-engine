@@ -26,10 +26,10 @@
 					<en>Open</en>
 					<de>&#xD6;ffnen</de>
 				</label>
-				<frame-label>
-					<en>Person Detail</en>
-					<de>Personendetails</de>
-				</frame-label>
+				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					inputs="selectedPerson"
+					expr="p -> $p.get(`tl.accounts:Person#name`)"
+				/>
 			</command>
 		</commands>
 		<table

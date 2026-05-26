@@ -13,6 +13,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -114,17 +115,18 @@ public class NavigatePushCommand implements ViewCommand {
 		String getBindInputTo();
 
 		/**
-		 * Static breadcrumb label for the pushed frame.
+		 * Provider for the pushed frame's breadcrumb label.
 		 *
 		 * <p>
-		 * Captured at push time and stored in {@link TileFrame#getLabel()}. A dynamic label
-		 * provider (computed from current channel values) will be added later via a label-provider
-		 * abstraction.
+		 * Resolved exactly once at push time; the resulting {@link ResKey} is captured into
+		 * {@link TileFrame#getLabel()}. Use {@link StaticTileLabel &lt;static&gt;} for fixed
+		 * text, {@link ScriptedTileLabel &lt;scripted&gt;} for a label derived from caller-scope
+		 * channels at the push moment.
 		 * </p>
 		 */
 		@Name(FRAME_LABEL)
 		@Nullable
-		ResKey getFrameLabel();
+		PolymorphicConfiguration<? extends TileLabelProvider> getFrameLabel();
 	}
 
 	private final String _view;
@@ -133,7 +135,7 @@ public class NavigatePushCommand implements ViewCommand {
 
 	private final String _bindInputTo;
 
-	private final ResKey _frameLabel;
+	private final TileLabelProvider _frameLabel;
 
 	/**
 	 * Creates a new {@link NavigatePushCommand}.
@@ -143,7 +145,8 @@ public class NavigatePushCommand implements ViewCommand {
 		_view = config.getView();
 		_bindings = config.getBindings();
 		_bindInputTo = config.getBindInputTo();
-		_frameLabel = config.getFrameLabel();
+		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getFrameLabel();
+		_frameLabel = labelConfig != null ? context.getInstance(labelConfig) : null;
 	}
 
 	@Override
@@ -173,7 +176,8 @@ public class NavigatePushCommand implements ViewCommand {
 			params.put(binding.getChannel(), parentChannel.get());
 		}
 
-		scope.push(_view, _frameLabel, Collections.unmodifiableMap(params));
+		ResKey label = _frameLabel != null ? _frameLabel.compute(viewContext) : null;
+		scope.push(_view, label, Collections.unmodifiableMap(params));
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

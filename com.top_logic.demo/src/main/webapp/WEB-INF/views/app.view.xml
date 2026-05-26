@@ -174,6 +174,15 @@
 							<de>Befehlsanzeige-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="tiles-demo"
+						icon="bi bi-layers"
+					>
+						<view-ref view="demo/tiles-demo.view.xml"/>
+						<label>
+							<en>Tiles Demo</en>
+							<de>Tiles-Demo</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<!-- Intentionally NOT routed: demonstrates that items
 					     with route="" do not produce URL segments and are

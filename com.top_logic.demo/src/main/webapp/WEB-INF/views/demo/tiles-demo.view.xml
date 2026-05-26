@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<!--
+	Drill-down tile navigation demo:
+	- Outer view declares the navPath channel that holds the List<TileFrame> drill-down path.
+	- The initial frame is a table of accounts; selecting one and clicking "Open"
+	  pushes a detail frame onto the stack.
+-->
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+
+	<tile-stack
+		path="navPath"
+		initial="demo/tiles-demo/overview.view.xml"
+	/>
+</view>

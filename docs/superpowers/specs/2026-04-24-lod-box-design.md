@@ -1,7 +1,7 @@
-# LOD-Box — Design (Brainstorming)
+# LOD-Box — Design
 
 Ticket: #29108 (Teilbereich Gantt / Flow-Lib generisch)
-Status: Brainstorming — Optionen offen, Entscheidungen markiert mit **[offen]**.
+Status: Design abgeschlossen für Phase 1 — Umsetzung läuft.
 Begleitender Mockup: `2026-04-24-lod-box-mockup.html`
 
 ## Ziel
@@ -93,11 +93,8 @@ Reihenfolge ist **richest → most compact**, erste passende gewinnt. Begründun
 public interface RenderContext {
     TextMetrics measure(String text);
 
-    /** Horizontaler Zoom-Faktor; 1.0 wenn unbekannt. */
-    default double getZoomX() { return 1.0; }
-
-    /** Vertikaler Zoom-Faktor; 1.0 wenn unbekannt. */
-    default double getZoomY() { return 1.0; }
+    /** Aktueller Zoom-Faktor (Gantt: pixelsPerUnit). 1.0 wenn unbekannt. */
+    default double getZoom() { return 1.0; }
 }
 ```
 
@@ -147,7 +144,7 @@ public interface LODOperations extends BoxOperations {
     default void computeIntrinsicSize(RenderContext ctx,
                                       double offsetX, double offsetY,
                                       double availableWidth, double availableHeight) {
-        double zoom = ctx.getZoomX();
+        double zoom = ctx.getZoom();
         LODVariant chosen = null;
         for (LODVariant v : self().getVariants()) {
             // Optionale Zusatz-Gates zuerst — billiger als Probe-Intrinsic.
@@ -200,7 +197,7 @@ Und der Draw wird über die bestehende Visitor/Dispatch-Mechanik an `chosenVaria
 double zoom = axis.getCurrentZoom(); // pixelsPerUnit
 
 // Zoom einmal pro Pass auf den Context legen.
-RenderContext spanCtx = context.withZoom(zoom, /*zoomY*/ 1.0);
+RenderContext spanCtx = context.withZoom(zoom);
 
 for (GanttItem item : self.getItems()) {
     Box box = item.getBox();
@@ -219,30 +216,25 @@ for (GanttItem item : self.getItems()) {
 }
 ```
 
-**Wichtig:** `zoomY = 1.0` — die Gantt-Zeile zoomt vertikal **nicht**. Eine LOD-Box innerhalb eines Spans entscheidet horizontale Varianten (Textlänge), nicht vertikale.
+**Hinweis:** Der Zoom-Skalar betrifft die horizontale Achse (Gantt-Zeit). Eine LOD-Box entscheidet anhand der zur Verfügung stehenden Breite, welche Variante materialisiert wird; vertikale Anpassungen sind in Phase 1 nicht vorgesehen.
 
 Für **Zeilen-Labels** im Gantt-Sidebar: `availableWidth` = `columnWidth`. Zoom bleibt 1, weil der Sidebar nicht gezoomt wird.
 
 Für **Dekorations-Labels**: wenn sie nicht an ein Item gebunden sind, haben sie typischerweise keine feste Breite — `availableWidth = POSITIVE_INFINITY`.
 
-## Dimension von "Zoom" **[offen]**
+## Dimension von "Zoom" **[entschieden]**
 
-- **Ein Skalar** (z. B. `zoomX`): bildet Gantt 1:1 ab. Einfach.
-- **Zwei Skalare** (`zoomX`, `zoomY`): nötig falls jemand später einen vertikalen Zoom einbaut (z. B. zoombarer Graph-Editor).
-- **Affine Matrix (CTM)**: vollständig, aber massiver Overhead für heutigen Anwendungsfall.
+Ein einziger Skalar `zoom` auf `RenderContext`. Das Diagramm hat global nur einen Zoom; vertikaler Zoom ist heute nicht relevant. Falls später ein Graph-Editor mit getrennten Achsen kommt, wird erweitert.
 
-Empfehlung: **zwei Skalare**. Das deckt den aktuellen Fall sauber ab und kostet fast nichts.
+```java
+default double getZoom() { return 1.0; }
+```
 
-Effektive-Pixel-Frage: Soll "Pixelbreite" die *logische* oder die *nach Ancestor-Transformen effektive* sein? Solange Flow-Lib keine nested SVG-Transformationen mit Skalierung aufbaut, sind beide identisch. **Entscheidung:** logische Breite genügt; bei späterer Einführung nested scaling wird `zoomX/zoomY` multiplikativ durchgereicht.
+Effektive-Pixel-Frage: Solange Flow-Lib keine nested SVG-Transformationen mit Skalierung aufbaut, sind logische und effektive Breite identisch. Logische Breite genügt; bei späterer Einführung nested scaling wird `zoom` multiplikativ durchgereicht.
 
-## Intrinsic-Size-Stabilität **[offen, wichtig]**
+## Intrinsic-Size-Stabilität **[entschieden]**
 
-Frage: Darf die intrinsische Höhe einer LOD-Box je nach gewählter Variante schwanken?
-
-- **Ja** (gewähltes Modell): Row-Height wird über Items ermittelt; wenn Rich-Variante 40px und Compact 18px hoch ist, bekommt die Zeile bei zoom-out eine kleinere Höhe. Möglicherweise erwünscht (dichte Übersicht), möglicherweise irritierend (Zeile "zuckt" beim Zoomen).
-- **Nein** (Option): `LOD` selbst deklariert einen festen `minHeight`/`fixedHeight`; alle Varianten werden dort hineingezwängt.
-
-Empfehlung: **"Ja" mit opt-in Stabilizer** — per optionalem `fixedHeight`-Attribut auf `LOD`, sonst variabel. Der Gantt-Demo kann damit experimentieren, welches Verhalten besser wirkt.
+Default: variabel — Höhe folgt der gewählten Variante. Opt-in Stabilizer per `fixedHeight`-Attribut auf `LOD`: ist es gesetzt, reportet die LOD-Box stets diese Höhe unabhängig von der Wahl. Die Gantt-Demo-Achsenzeilen setzen `fixedHeight`, damit der Wechsel zwischen Granularitäten die Zeilenhöhe nicht zucken lässt.
 
 ## Nicht-Gantt-Anwendungsfälle
 
@@ -253,45 +245,41 @@ Damit das Konzept nicht nur Gantt-intern ist, sollten wir ≥ 2 nicht-Gantt-Fäl
 3. **Graph-Nodes bei Diagram-Zoom** — wenn der ganze Diagram-Viewport gezoomt wird (nicht Gantt-Fall, aber `FlowDiagramClientControl` hat ein Diagram-Pan/Zoom), dann reicht `DiagramOperations.draw` den Zoom als `zoomX=zoomY=currentScale` durch. Knotenboxen mit LOD können daraufhin Labels ausblenden.
 4. **Tabellen-Zellen in `GridLayout`** — wenn eine Spalte schmal ist, fallback auf abgekürzten Inhalt.
 
-## Zusammenspiel mit Axis-Providern **[entschieden — konvergent]**
+## Zusammenspiel mit Axis-Providern **[entschieden — konvergent, eine LOD pro Zeile]**
 
 Axis-Ticks werden heute vom serverseitigen `AxisProvider` (Java-Interface, registriert in `AxisProviderService`, ausgewählt über `GanttAxis.providerId`) erzeugt: pro Aufruf `(rangeMin, rangeMax, pixelsPerUnit) → AxisContent(rows, items)`. Die Methode hat schon eine *implizite* LOD-Logik ("bei zoom < X zeig nur Jahre, sonst Monate"), eingebrannt in Java.
 
 **Beobachtung:** `AxisProvider` ist konzeptionell schon ein Box-Generator — er liefert `Text.create()...`-Items. Was er an Eigenleistung erbringt, ist (a) Tick-Enumeration in einem Range, (b) Granularitätswahl über Zoom. Beides lässt sich in Flow-Mechanik ausdrücken, sobald LOD steht — die visuelle Tick-Erzeugung wird damit komplett zu regulärem Diagrammaufbau.
 
-### Phase-1-Vorgehen: pure Flow-Mechanik
+### Phase-1-Vorgehen: pure Flow-Mechanik, ein LOD-Wrapper pro Zeile
 
-Achseninhalt wird durch reguläre `GanttSpan`/`GanttPoint`-Items mit LOD-Boxen als Inhalt ausgedrückt. Beispiel für die Demo (Tage-seit-Epoch-Achse):
+**Wichtige Verfeinerung:** Die ursprüngliche Idee „LOD-Box pro Tick" liefert keine Synchronisation zwischen Zeilen — bei mittlerem Zoom passen sowohl Jahres- als auch Monatslabels gleichzeitig und werden beide gezeigt. Stattdessen wird **pro Achsen-Zeile ein einziges Wrapper-Item** emittiert, dessen LOD-Varianten ganze Sub-Layouts mit allen Ticks der jeweiligen Granularität sind. Die Wahl koppelt damit auf einen einzigen Pro-Zeile-Entscheid, und mehrere Zeilen schalten anhand desselben Zooms synchron um.
+
+Demo-Aufbau (Tage-seit-Epoch-Achse, zwei Zeilen):
 
 ```
-// Year row: ein GanttSpan pro Jahr, Inhalt zoom-adaptiv
-GanttSpan jan-dec 2024
+// Zeile 1 — Oben: ein Wrapper-Span über den gesamten Range
+GanttSpan rangeMin..rangeMax
    .box = LOD(
-              Text("2024"),     // reichste Variante
-              Text("'24"),      // mittel
-              empty             // Fallback
+              fixedHeight: 18,
+              YearTicksLayout,           // reichste Variante: alle Year-Spans
+              MonthLabeledTicksLayout    // Fallback: alle Month-Spans "Jan 2026", ...
            )
 
-// Month row: ein GanttPoint pro Monatsanfang
-GanttPoint 2024-03-01
+// Zeile 2 — Unten: dito
+GanttSpan rangeMin..rangeMax
    .box = LOD(
-              Text("March 2024"),
-              Text("Mar"),
-              Text("M"),
-              empty
-           )
-
-// Day row: ein GanttPoint pro Tag
-GanttPoint 2024-03-15
-   .box = LOD(
-              Text("Fri 15"),
-              Text("15"),
-              tickMark(),
-              empty
+              fixedHeight: 16,
+              MonthShortTicksLayout,     // "Jan", "Feb", ...
+              DayTicksLayout             // "1", "2", ...
            )
 ```
 
-**Inter-Layer-Suppression emergiert** aus der LOD-Wahl pro Tick: bei `zoom = 0.5 px/day` ist ein Monat 15 px breit, keine Variante außer Empty passt — die Monatszeile zeigt nur leere Inhalte. Bei `zoom = 50 px/day` ist ein Tag 50 px breit, "Fri 15" passt, die Tageszeile materialisiert. Keine `activeWhen`-Schwellen, keine zentrale Dispatch-Logik nötig.
+`YearTicksLayout` ist z. B. ein `HorizontalLayout` aus mehreren Year-Spans mit `Text("2024")`-Inhalten; `MonthLabeledTicksLayout` analog mit Month-Spans und `Text("Jan 2026")`. Die LOD-Box probiert *YearTicksLayout* zuerst — wenn dessen Intrinsic-Breite in die Wrapper-Breite passt (also wenn pro Jahr genug Pixel zur Verfügung stehen, dass die Year-Spans nicht überlappen), wird sie gewählt. Sonst Fallback auf die kompaktere Granularität.
+
+**Synchronisation zwischen Zeilen:** entsteht dadurch, dass beide Wrapper denselben Zoom sehen und Varianten mit gleicher Schwellbreite verwenden. Ohne zentrale Dispatch-Logik, ohne `activeWhen`-Schwellen.
+
+**Leerzeilen-Kollaps entfällt:** Da jede Zeile genau eine Granularitäts-Variante materialisiert (die letzte ist immer der kompakteste Layout, kein Empty-Fallback), gibt es keine leeren Zeilen mehr zu kollabieren.
 
 ### Was bleibt vom AxisProvider
 
@@ -341,27 +329,27 @@ reactFlowLODGated(
 |----|--------------------------------------------------------------------|----------------------------------------------------|
 | 1  | Varianten-Reihenfolge richest→compact vs umgekehrt                 | **entschieden**: richest→compact                   |
 | 2  | Constraints via `RenderContext` vs als Methodenparameter           | **entschieden**: Methodenparameter, symmetrisch zu `distributeSize` |
-| 3  | Ein Zoom-Skalar vs zwei vs volle Matrix                            | zwei Skalare (`zoomX`, `zoomY`) im `RenderContext` |
+| 3  | Ein Zoom-Skalar vs zwei vs volle Matrix                            | **entschieden**: ein Skalar `zoom` im `RenderContext` |
 | 4  | Auto-Fit vs deklarierte `minWidth`-Schwellen                       | **entschieden**: Auto-Fit primär, `minWidth`/`minZoom` als optionale Zusatz-Gates |
-| 5  | Variante-abhängige vs fixe intrinsische Höhe                       | variabel, opt-in `fixedHeight` bei `LOD`           |
-| 6  | Axis-Ticks via LOD integrieren?                                    | **entschieden**: ja, konvergent. Achseninhalt = reguläre Items mit LOD-Boxen; `AxisProvider` schrumpft auf Snap + Position-Konversion |
+| 5  | Variante-abhängige vs fixe intrinsische Höhe                       | **entschieden**: variabel, opt-in `fixedHeight` bei `LOD`; Achsenzeilen setzen `fixedHeight` |
+| 6  | Axis-Ticks via LOD integrieren?                                    | **entschieden**: ja, konvergent. Pro Achsen-Zeile **ein** Wrapper-Item mit LOD über ganze Sub-Layouts (nicht LOD pro Tick) — das löst Inter-Zeilen-Sync |
 | 7  | LOD als `Box`-Subtyp vs als Markierungs-Decorator (wie `Fill`)     | `Box`-Subtyp, analog zu `Stack`                    |
 | 8  | Unterstützt eine Variante ihrerseits LOD (Rekursion)?              | ja — emergiert natürlich aus der Semantik          |
-| 9  | Hysterese beim Varianten-Wechsel?                                  | **[offen]** erst nach Nutzer-Feedback entscheiden  |
+| 9  | Hysterese beim Varianten-Wechsel?                                  | **entschieden**: nein, harter Snap                 |
 | 10 | Animation zwischen Varianten?                                      | erst einmal nein; harter Snap                      |
 | 11 | Verhalten in Flex-Containern, wo `availableWidth` erst in distribute bekannt ist | **[offen]**: vorerst Richest-Wahl mit `POSITIVE_INFINITY`; iteratives Reflow-Protokoll als Folgeticket |
 
 ## Validierung in Phase 1
 
-Drei Punkte, die der erste Prototyp verproben muss, bevor die Konvergenz "Achse = LOD-Items" als tragfähig gilt:
+Zwei Punkte, die der erste Prototyp verproben muss, bevor die Konvergenz "Achse = LOD-Wrapper pro Zeile" als tragfähig gilt:
 
-1. **Leerzeilen-Kollaps.** Eine Tageszeile, deren Ticks bei niedrigem Zoom alle die Empty-Variante wählen, soll keine Row-Höhe belegen. Frage: kollabiert `GanttLayout.computeIntrinsicSize` automatisch korrekt, sobald die Row-Höhe aus den maximalen Item-Intrinsic-Höhen entsteht (Empty-Box hat Höhe 0 → Row-Höhe 0)? Oder brauchen wir eine explizite "Row sichtbar wenn mindestens ein Item nicht-leer"-Regel? Verprobungsschritt: Demo mit drei Tick-Zeilen (Year/Month/Day) bauen, durch Zoom-Range fahren, Row-Heights inspizieren.
+1. **Synchroner Granularitäts-Wechsel zwischen Zeilen.** Beim kontinuierlichen Zoomen müssen Zeile 1 und Zeile 2 zur passenden Zoom-Schwelle umschalten, ohne dass eine der beiden „nachhängt" oder beide gleichzeitig die gröbere Variante zeigen. Verprobungsschritt: Demo mit zwei LOD-Achsen-Zeilen, Ctrl+Wheel-Zoom über den ganzen Range, optische Inspektion.
 
-2. **Snap-Granularität in Phase 1.** `snapGranularity(pixelsPerUnit)` ist Metadaten, kein Box-Inhalt — geht nicht in Flow-Mechanik auf. Phase-1-Vorschlag: bleibt vorerst ein einfacher Skalar auf `GanttAxis` (z. B. immer 1.0 für die Demo). Folgeüberlegung: später ein deklaratives Recipe "snap = die Periode der feinsten visuell aktiven Zeile" — allerdings erst, *nachdem* wir verstanden haben, wie sich "visuell aktive Zeile" sauber aus LOD ableitet (siehe Punkt 1).
+2. **Position ↔ Domain-Wert-Konvertierung.** Drag&Drop-Snap, Tooltips, Server-seitige Verifikation brauchen die Konvertierung "Position 19432 ↔ 2023-03-15". Das ist nicht visuell — es ist semantisch. Phase-1-Vorschlag: bleibt eine schmale anwendungsseitige API (im Rumpf des heutigen `AxisProvider` oder als separates `AxisSemantics`-Interface), getrennt vom visuellen Achsenaufbau. Konsequenz: aus `AxisProvider` wird nicht "weg", sondern "schrumpft auf Position-Konversion + Snap"; die `buildAxis(...)`-Methode entfällt.
 
-3. **Position ↔ Domain-Wert-Konvertierung.** Drag&Drop-Snap, Tooltips, Server-seitige Verifikation brauchen die Konvertierung "Position 19432 ↔ 2023-03-15". Das ist nicht visuell — es ist semantisch. Phase-1-Vorschlag: bleibt eine schmale anwendungsseitige API (im Rumpf des heutigen `AxisProvider` oder als separates `AxisSemantics`-Interface), getrennt vom visuellen Achsenaufbau. Konsequenz: aus `AxisProvider` wird nicht "weg", sondern "schrumpft auf Position-Konversion + Snap"; die `buildAxis(...)`-Methode entfällt.
+Wenn beide Punkte sauber durchlaufen, ist die Konvergenz validiert und die Lazy-Materialisierung (Tick-Grammatik-Iterator) eine reine Performance-Folgearbeit.
 
-Wenn alle drei Punkte sauber durchlaufen, ist die Konvergenz validiert und die Lazy-Materialisierung (Tick-Grammatik-Iterator) eine reine Performance-Folgearbeit.
+`snapGranularity` bleibt als einfacher Skalar auf `GanttAxis` (heute schon der Fall). Eine spätere Folgeüberlegung kann „snap = Periode der feinsten visuell aktiven Zeile" deklarativ ableiten — Phase 1 braucht das nicht.
 
 ## Was eine spätere Implementation-Plan-Iteration klären muss
 

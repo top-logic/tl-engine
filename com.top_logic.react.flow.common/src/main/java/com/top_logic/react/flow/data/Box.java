@@ -23,6 +23,9 @@ public interface Box extends Widget, com.top_logic.react.flow.operations.BoxOper
 		/** Visit case for {@link com.top_logic.react.flow.data.Stack}.*/
 		R visit(com.top_logic.react.flow.data.Stack self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.react.flow.data.LOD}.*/
+		R visit(com.top_logic.react.flow.data.LOD self, A arg) throws E;
+
 		/** Visit case for {@link com.top_logic.react.flow.data.CompassLayout}.*/
 		R visit(com.top_logic.react.flow.data.CompassLayout self, A arg) throws E;
 
@@ -123,6 +126,7 @@ public interface Box extends Widget, com.top_logic.react.flow.operations.BoxOper
 			case Image.IMAGE__TYPE: result = com.top_logic.react.flow.data.Image.create(); break;
 			case Empty.EMPTY__TYPE: result = com.top_logic.react.flow.data.Empty.create(); break;
 			case Stack.STACK__TYPE: result = com.top_logic.react.flow.data.Stack.create(); break;
+			case LOD.LOD__TYPE: result = com.top_logic.react.flow.data.LOD.create(); break;
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
 			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;

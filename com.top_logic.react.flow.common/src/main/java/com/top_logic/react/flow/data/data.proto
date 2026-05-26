@@ -579,6 +579,55 @@ message Stack extends Box {
 	repeated Box contents;
 }
 
+/**
+ * A container that carries multiple rendering variants and renders the one that best fits
+ * the available rendering space.
+ *
+ * <p>
+ * Variants are declared from richest to most compact. During intrinsic sizing, each variant
+ * is measured; the first whose intrinsic width fits into the available width (and which
+ * satisfies its optional extra gates) is selected. The last variant should be a universal
+ * fallback that always fits.
+ * </p>
+ */
+@Operations("com.top_logic.react.flow.operations.LODOperations")
+message LOD extends Box {
+	/** Rendering variants from richest to most compact. The last entry serves as fallback. */
+	repeated LODVariant variants;
+
+	/**
+	 * If set to a positive value, the LOD reports this height as its intrinsic height
+	 * regardless of the chosen variant. Avoids row-height jitter when zooming between
+	 * variants of different intrinsic height.
+	 */
+	double fixedHeight;
+
+	/** The index of the variant chosen during the last intrinsic-sizing pass. */
+	transient int chosenIndex;
+}
+
+/** One rendering option of an {@link LOD} box. */
+@Operations("com.top_logic.react.flow.operations.LODVariantOperations")
+message LODVariant extends Widget {
+	/** The content rendered when this variant is selected. */
+	Box content;
+
+	/**
+	 * Optional extra gate: minimum render zoom factor required for this variant.
+	 * A value of {@code 0} disables the gate.
+	 */
+	double minZoom;
+
+	/**
+	 * Optional extra lower bound on the available width, independent of intrinsic width.
+	 * A value of {@code 0} disables the gate.
+	 */
+	double minWidth;
+
+	/** Optional analogue to {@link #minWidth} for the vertical axis. */
+	double minHeight;
+}
+
 /** A box that draws some decoration around another box. */
 @Operations("com.top_logic.react.flow.operations.DecorationOperations")
 abstract message Decoration extends Box {

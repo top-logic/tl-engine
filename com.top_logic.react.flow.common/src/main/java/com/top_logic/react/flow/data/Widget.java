@@ -32,6 +32,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.react.flow.data.Stack}. */
 		STACK,
 
+		/** Type literal for {@link com.top_logic.react.flow.data.LOD}. */
+		LOD,
+
 		/** Type literal for {@link com.top_logic.react.flow.data.SelectableBox}. */
 		SELECTABLE_BOX,
 
@@ -94,6 +97,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 
 		/** Type literal for {@link com.top_logic.react.flow.data.TreeConnector}. */
 		TREE_CONNECTOR,
+
+		/** Type literal for {@link com.top_logic.react.flow.data.LODVariant}. */
+		LODVARIANT,
 		;
 
 	}
@@ -115,6 +121,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 
 		/** Visit case for {@link com.top_logic.react.flow.data.TreeConnector}.*/
 		R visit(com.top_logic.react.flow.data.TreeConnector self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.react.flow.data.LODVariant}.*/
+		R visit(com.top_logic.react.flow.data.LODVariant self, A arg) throws E;
 
 	}
 
@@ -208,11 +217,13 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case TreeConnection.TREE_CONNECTION__TYPE: result = com.top_logic.react.flow.data.TreeConnection.create(); break;
 			case EdgeDecoration.EDGE_DECORATION__TYPE: result = com.top_logic.react.flow.data.EdgeDecoration.create(); break;
 			case TreeConnector.TREE_CONNECTOR__TYPE: result = com.top_logic.react.flow.data.TreeConnector.create(); break;
+			case LODVariant.LODVARIANT__TYPE: result = com.top_logic.react.flow.data.LODVariant.create(); break;
 			case FloatingLayout.FLOATING_LAYOUT__TYPE: result = com.top_logic.react.flow.data.FloatingLayout.create(); break;
 			case Text.TEXT__TYPE: result = com.top_logic.react.flow.data.Text.create(); break;
 			case Image.IMAGE__TYPE: result = com.top_logic.react.flow.data.Image.create(); break;
 			case Empty.EMPTY__TYPE: result = com.top_logic.react.flow.data.Empty.create(); break;
 			case Stack.STACK__TYPE: result = com.top_logic.react.flow.data.Stack.create(); break;
+			case LOD.LOD__TYPE: result = com.top_logic.react.flow.data.LOD.create(); break;
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
 			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;

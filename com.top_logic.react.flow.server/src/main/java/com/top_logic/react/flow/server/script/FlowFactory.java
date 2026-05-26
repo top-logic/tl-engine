@@ -78,6 +78,8 @@ import com.top_logic.react.flow.data.Image;
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageOrientation;
 import com.top_logic.react.flow.data.ImageScale;
+import com.top_logic.react.flow.data.LOD;
+import com.top_logic.react.flow.data.LODVariant;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.OffsetPosition;
 import com.top_logic.react.flow.data.Padding;
@@ -257,6 +259,82 @@ public class FlowFactory extends TLScriptFunctions {
 			.setContents(contents)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
+	}
+
+	/**
+	 * Creates a level-of-detail box that renders one of {@code variants} depending on the
+	 * available space.
+	 *
+	 * <p>
+	 * Each entry of {@code variants} is either an {@link LODVariant} (created via
+	 * {@link #lodVariant}) or a plain {@link Box} which is wrapped into a variant without
+	 * additional gates. The variants are probed in declared order (richest first); the first
+	 * one that fits the available width and height is rendered. The last entry serves as
+	 * the unconditional fallback.
+	 * </p>
+	 *
+	 * @param variants
+	 *        Rendering variants from richest to most compact.
+	 * @param fixedHeight
+	 *        If positive, the LOD reports this height as its intrinsic height regardless of
+	 *        the chosen variant. Useful for axis rows to avoid layout jitter when zooming.
+	 * @param cssClass
+	 *        The css class for the LOD box.
+	 * @param userObject
+	 *        User object of the new LOD box.
+	 * @return The new LOD box.
+	 */
+	@SideEffectFree
+	@Label("Level of detail")
+	public static LOD lod(
+			List<Object> variants,
+			double fixedHeight,
+			String cssClass,
+			Object userObject) {
+		LOD result = LOD.create()
+			.setFixedHeight(fixedHeight)
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+		if (variants != null) {
+			for (Object v : variants) {
+				if (v instanceof LODVariant lv) {
+					result.addVariant(lv);
+				} else if (v instanceof Box box) {
+					result.addVariant(LODVariant.create().setContent(box));
+				} else if (v != null) {
+					throw new IllegalArgumentException(
+						"LOD variant must be a Box or LODVariant, got: " + v.getClass().getName());
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Creates a single {@link LODVariant} with optional zoom/width/height gates.
+	 *
+	 * @param content
+	 *        Content rendered when this variant is chosen.
+	 * @param minZoom
+	 *        Optional minimum zoom factor; below this value the variant is skipped.
+	 * @param minWidth
+	 *        Optional minimum available width; below this value the variant is skipped.
+	 * @param minHeight
+	 *        Optional minimum available height; below this value the variant is skipped.
+	 * @return The new LOD variant.
+	 */
+	@SideEffectFree
+	@Label("LOD variant")
+	public static LODVariant lodVariant(
+			Box content,
+			double minZoom,
+			double minWidth,
+			double minHeight) {
+		return LODVariant.create()
+			.setContent(content)
+			.setMinZoom(minZoom)
+			.setMinWidth(minWidth)
+			.setMinHeight(minHeight);
 	}
 
 	/**

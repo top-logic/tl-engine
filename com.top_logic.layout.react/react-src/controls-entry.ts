@@ -57,6 +57,7 @@ import TLColorInput from './controls/TLColorInput';
 import TLIconSelect from './controls/TLIconSelect';
 import TLDashboard from './controls/TLDashboard';
 import TLToolbar from './controls/TLToolbar';
+import TLTileStack from './controls/TLTileStack';
 
 
 register('TLButton', TLButton);
@@ -107,3 +108,4 @@ register('TLColorInput', TLColorInput);
 register('TLIconSelect', TLIconSelect);
 register('TLDashboard', TLDashboard);
 register('TLToolbar', TLToolbar);
+register('TLTileStack', TLTileStack);

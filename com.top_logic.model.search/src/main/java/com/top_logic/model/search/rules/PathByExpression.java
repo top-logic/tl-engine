@@ -39,12 +39,15 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.cache.TLModelOperations;
 import com.top_logic.model.search.expr.Access;
+import com.top_logic.model.search.expr.All;
 import com.top_logic.model.search.expr.BinaryOperation;
 import com.top_logic.model.search.expr.Call;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.Foreach;
 import com.top_logic.model.search.expr.IfElse;
@@ -59,6 +62,7 @@ import com.top_logic.model.search.expr.Var;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.expr.visit.DefaultDescendingVisitor;
 import com.top_logic.model.search.expr.visit.GenericDescendingVisitor;
 import com.top_logic.model.search.expr.visit.ToString;
 import com.top_logic.model.util.TLModelUtil;
@@ -96,6 +100,49 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class PathByExpression extends AbstractConfiguredInstance<PathByExpression.Config> implements PathElement {
+
+	/**
+	 * {@link DefaultDescendingVisitor} that checks whether a {@link Var} is contained with a key
+	 * different to the argument key.
+	 */
+	private static final class UsesUndefinedVariable extends DefaultDescendingVisitor<Boolean, Set<NamedConstant>> {
+
+		static final UsesUndefinedVariable INSTANCE = new UsesUndefinedVariable();
+
+		public boolean check(SearchExpression expr) {
+			Set<NamedConstant> allowed = new HashSet<>();
+			return expr.visit(this, allowed);
+		}
+
+		@Override
+		public Boolean visitLambda(Lambda expr, Set<NamedConstant> arg) {
+			NamedConstant key = expr.getKey();
+			boolean added = arg.add(key);
+			if (!added) {
+				throw new IllegalStateException("Key '" + key + "' is also used by a different Lambda");
+			}
+			try {
+				return super.visitLambda(expr, arg);
+			} finally {
+				arg.remove(key);
+			}
+		}
+
+		@Override
+		public Boolean visitVar(Var expr, Set<NamedConstant> arg) {
+			return !arg.contains(expr.getKey());
+		}
+
+		@Override
+		protected Boolean combine(Boolean result1, Boolean result2) {
+			return result1.booleanValue() || result2.booleanValue();
+		}
+
+		@Override
+		protected Boolean none() {
+			return Boolean.FALSE;
+		}
+	}
 
 	/**
 	 * Typed configuration interface definition for {@link PathByExpression}.
@@ -235,11 +282,25 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 * tracked separately via {@link LetBindingStep}s at position&nbsp;0 of the enclosing chain.
 	 * </p>
 	 */
-	private record FilterStep(List<Step> predicateChain) implements Step {
+	private record FilterStep(Lambda filterLambda, List<Step> predicateChain) implements Step {
 
 		@Override
 		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
-			return objects;
+			if (filterLambda == null) {
+				return objects;
+			}
+
+			Set<TLObject> result = new HashSet<>();
+			EvalContext evalContext = null;
+			for (TLObject obj : objects) {
+				if (evalContext == null) {
+					evalContext = new EvalContext(false, obj.tKnowledgeBase(), obj.tType().getModel(), null, null);
+				}
+				if (SearchExpression.isTrue(filterLambda.eval(evalContext, obj))) {
+					result.add(obj);
+				}
+			}
+			return result;
 		}
 
 		@Override
@@ -613,6 +674,78 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 	}
 
+	/**
+	 * Step representing an {@code all(module:Type)} source expression, optionally followed by a
+	 * chain of steps applied to the enumerated objects.
+	 *
+	 * <p>
+	 * {@link #steps} are the forward steps applied to the output of {@code all(instanceType)} (in
+	 * application order). {@link #outerLetBindings} captures {@link LetBindingStep}s collected from
+	 * the enclosing lambda's pending-let-binding list during filter-predicate analysis; each such
+	 * step represents a navigation path starting from the outer lambda parameter (the base object)
+	 * to an attribute that appears on the outer-variable side of a filter comparison.
+	 * </p>
+	 *
+	 * <ul>
+	 * <li>{@link #applyInverse}: returns {@code null} (all base objects may be relevant) when any
+	 * input object is reachable from {@code all(instanceType)} via the inverse of {@link #steps},
+	 * and an empty set when none is.</li>
+	 * <li>{@link #usesPart}: checks both the steps over enumerated instances ({@link #steps}) and
+	 * the outer-variable attribute paths ({@link #outerLetBindings}).</li>
+	 * <li>{@link #pivot}: for parts used within {@link #steps} (enumerated-instance side), returns
+	 * {@code null} conservatively when any enumerated instance is affected, or an empty set when
+	 * none is. For parts used only via {@link #outerLetBindings} (base-object side), computes the
+	 * precise set of affected base objects via {@link #chainPivot}.</li>
+	 * </ul>
+	 */
+	private record AllStep(TLStructuredType instanceType, List<Step> steps, List<Step> outerLetBindings)
+			implements Step {
+
+		@Override
+		public Collection<? extends TLObject> applyInverse(Collection<? extends TLObject> objects) {
+			for (TLObject obj : objects) {
+				Collection<? extends TLObject> current = applyChainInverse(steps, obj);
+				if (current == null) {
+					return null;
+				}
+				boolean anyCompatible = current.stream()
+					.anyMatch(result -> TLModelUtil.isCompatibleInstance(instanceType, result));
+				if (anyCompatible) {
+					return null;
+				}
+			}
+			return Collections.emptySet();
+		}
+
+		@Override
+		public boolean usesPart(TLStructuredTypePart part) {
+			return chainUsesPart(steps, part) || chainUsesPart(outerLetBindings, part);
+		}
+
+		@Override
+		public Collection<? extends TLObject> pivot(TLObject element, TLStructuredTypePart part,
+				Supplier<?> partValue) {
+			if (chainUsesPart(steps, part)) {
+				// The part is used within the steps that process the enumerated instances (e.g. a
+				// filter-predicate attribute). If backward navigation through those steps from the
+				// changed element yields an empty set, no enumerated instance is affected and no
+				// base object needs re-evaluation.
+				Collection<? extends TLObject> innerPivot = chainPivot(steps, element, part, partValue);
+				if (innerPivot != null && innerPivot.isEmpty()) {
+					return Collections.emptySet();
+				}
+				// At least one enumerated instance is affected (or the result is indeterminate),
+				// but without further context we cannot determine which base objects correspond.
+				return null;
+			}
+			// The part is referenced on the base-object side via an outer-variable expression
+			// captured in outerLetBindings. Backward navigation through those chains yields the
+			// precise set of affected base objects.
+			return chainPivot(outerLetBindings, element, part, partValue);
+		}
+
+	}
+
 	/** The compiled expression used by {@link #getValues(TLObject)} for forward navigation. */
 	private QueryExecutor _expression;
 
@@ -804,7 +937,15 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 				if (predicateChain == null && hasParts(filterLambda.getBody())) {
 					return null;
 				}
-				steps.add(new FilterStep(predicateChain != null ? predicateChain : Collections.emptyList()));
+
+				Lambda l;
+				if (hasOuterVariableAccess(filterLambda)) {
+					l = null;
+				} else {
+					l = filterLambda;
+				}
+
+				steps.add(new FilterStep(l, predicateChain != null ? predicateChain : Collections.emptyList()));
 				current = filter.getBase();
 			} else if (current instanceof Foreach foreach) {
 				if (!(foreach.getFunction() instanceof Lambda innerLambda)) {
@@ -929,10 +1070,24 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 				// pendingLetBindings here would be for variables not used by the constant literal;
 				// they are discarded because the constant output does not depend on them.
 				return Collections.singletonList(new ConstantBranchStep(literalObj, new ArrayList<>(steps)));
+			} else if (current instanceof All all) {
+				ArrayList<Step> outerSteps = new ArrayList<>(steps);
+				Collections.reverse(outerSteps);
+				AllStep allStep =
+					new AllStep(all.getInstanceType(), outerSteps, new ArrayList<>(pendingLetBindings));
+				return Collections.singletonList(allStep);
 			} else {
 				return null; // unsupported expression node
 			}
 		}
+	}
+
+	/**
+	 * Checks whether some part of the {@link Lambda} has access to variables that are not defined
+	 * within the Lambda
+	 */
+	private static boolean hasOuterVariableAccess(Lambda filterLambda) {
+		return UsesUndefinedVariable.INSTANCE.check(filterLambda);
 	}
 
 	/**

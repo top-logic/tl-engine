@@ -22,18 +22,7 @@
 				<role name="DemoTypes.Responsible"/>
 			</roles>
 			<singletons>
-				<singleton type="Root">
-					<role-assignments>
-						<role-assignment
-							group="demoTypeAdministrators"
-							role="DemoTypes.Administrator"
-						/>
-						<role-assignment
-							group="demoTypeBAdministrators"
-							role="DemoTypes.BAdministrator"
-						/>
-					</role-assignments>
-				</singleton>
+				<singleton type="Root"/>
 			</singletons>
 		</annotations>
 		<datatype name="DemoTime"

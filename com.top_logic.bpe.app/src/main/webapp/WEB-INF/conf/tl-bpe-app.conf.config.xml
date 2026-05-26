@@ -22,12 +22,7 @@
 							<role name="SecurityStructure.superuser"/>
 						</roles>
 						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="SecurityStructure.user" group="user"/>
-									<role-assignment role="SecurityStructure.superuser" group="superuser"/>
-								</role-assignments>
-							</singleton>
+							<singleton type="Root"/>
 						</singletons>
 					</module>
 				</settings>
@@ -41,6 +36,26 @@
 			</instance>
 		</config>
 		
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<singleton-rule
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.user"
+					>
+						<group-with-name name="user"/>
+					</singleton-rule>
+					
+					<singleton-rule
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.superuser"
+					>
+						<group-with-name name="superuser"/>
+					</singleton-rule>
+				</role-rules>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
 			<instance default-group="user">
 				<groups>

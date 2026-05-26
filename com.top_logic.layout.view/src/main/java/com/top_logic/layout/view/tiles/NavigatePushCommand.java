@@ -29,15 +29,15 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * {@link ViewCommand} that pushes a new {@link TileFrame} onto the enclosing
- * {@link TileStackScope tile stack}.
+ * {@link ViewCommand} that pushes a new {@link TileFrame} onto the enclosing {@link TileStackScope
+ * tile stack}.
  *
  * <p>
  * Resolves the target stack via {@link ViewContext#getTileStackScope()} - the command must be
  * executed from within a frame that was mounted by a {@link TileStackElement &lt;tile-stack&gt;}.
- * Captured at execution time: the command's {@link ViewCommand.Config#getInput() input} (mapped
- * onto a named channel of the new frame, if {@link Config#getBindInputTo() bind-input-to} is set)
- * and the current value of every channel referenced by a {@code <bind>}.
+ * Captured at execution time: the command's {@link Config#getInput() input} (mapped onto a named
+ * channel of the new frame, if {@link Config#getBindInputTo() bind-input-to} is set) and the
+ * current value of every channel referenced by a {@code <bind>}.
  * </p>
  *
  * <p>
@@ -102,12 +102,12 @@ public class NavigatePushCommand implements ViewCommand {
 
 		/**
 		 * Name of the channel in the pushed view that should receive the command's
-		 * {@link ViewCommand.Config#getInput() input} value.
+		 * {@link #getInput() input} value.
 		 *
 		 * <p>
 		 * Convenience for the common case where the drill-down target is a single business object
-		 * (e.g. the row selected in a table). If {@code null}, the input is not propagated -
-		 * use explicit {@code <bind>}s instead.
+		 * (e.g. the row selected in a table). If {@code null}, the input is not propagated - use
+		 * explicit {@code <bind>}s instead.
 		 * </p>
 		 */
 		@Name(BIND_INPUT_TO)

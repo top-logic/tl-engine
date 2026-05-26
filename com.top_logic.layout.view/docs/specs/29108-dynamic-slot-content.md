@@ -127,7 +127,14 @@ seed anything; they pass `ViewContext` through unchanged.
 
 ### 3.3 Who opts in
 
-Three categories of UIElement in practice:
+`<slot>` and `<slot-content>` are both ordinary UIElements. The container that
+happens to contain `<slot>` in its child list is **not** a "slot host" — it is
+just an ordinary container, the same kind it already was, rendering its
+children. It does not need a `SlotHost` interface, a dedicated child slot for
+the placeholder, or any awareness of the slot mechanism.
+
+This means the only opt-in concern in the whole design is **seeding a
+`SlotScope`**. There are exactly two categories of UIElement:
 
 1. **Scope seeders** — rare, deliberate. Containers that want to be a slot
    communication boundary. `AppShellElement` is the default seeder for the
@@ -137,20 +144,27 @@ Three categories of UIElement in practice:
    from elsewhere in the shell, or a modal dialog with its own action region.
    These are ~3–5 elements in the whole codebase, not a routine pattern.
 
-2. **Slot hosts** — elements that render a `<slot>` placeholder somewhere in
-   their content. The host renders the placeholder at the chosen position; it
-   does **not** manage the registry. `AppBarElement` would be one such host;
-   a status-bar element another. The host needs zero knowledge of which
-   container above it owns the scope.
-
-3. **Everything else** — transparent. Containers like `<stack>`, `<split>`,
-   `<view>`, `<form>`, `<tab>`, `<grid>` do not seed scopes and do not host
-   slots. They forward `ViewContext` to their children unchanged. They do not
-   need to know the slot mechanism exists.
+2. **Everything else** — transparent. Every other container — `<stack>`,
+   `<split>`, `<view>`, `<form>`, `<tab>`, `<grid>`, including any container
+   that happens to contain a `<slot>` child — does not seed a scope. They
+   forward `ViewContext` to their children unchanged. They do not need to know
+   the slot mechanism exists.
 
 A `<slot-content>` element only requires that *some* ancestor in its chain has
-opted in. The contributor is fully decoupled from which specific element owns
-the scope and where the matching `<slot>` is rendered.
+opted in (category 1). The contributor is fully decoupled from which specific
+element owns the scope, and from where the matching `<slot>` placeholder is
+positioned in the rendered UI.
+
+**Prerequisite: containers must accept arbitrary UIElement children.** For a
+`<slot name="X"/>` placeholder to render inside e.g. `<app-bar>`, the
+`AppBarElement` config must accept arbitrary UIElement children at the position
+where the slot is placed. Most existing layout containers (`<stack>`,
+`<split>`, `<view>`) already do. `AppBarElement` today has a closed schema
+(`<title>`, `<variant>`, `<commands>`); generalizing it to accept arbitrary
+children is a separable refactor, prerequisite to adopting slots in the
+app-bar, but **not** part of the slot mechanism itself. The slot mechanism
+adds no new container-side requirement beyond "the container renders its child
+UIElements".
 
 ### 3.4 Where the scope API lives
 

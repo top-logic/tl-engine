@@ -159,7 +159,7 @@ const { useCallback: Tt } = e, Rt = ({ controlId: l, state: t }) => {
     return /* @__PURE__ */ e.createElement("td", { key: s.name }, a != null ? String(a) : "");
   })))));
 };
-function _e({ encoded: l, className: t }) {
+function Se({ encoded: l, className: t }) {
   if (l.startsWith("css:")) {
     const n = l.substring(4);
     return /* @__PURE__ */ e.createElement("i", { className: n + (t ? " " + t : "") });
@@ -186,7 +186,7 @@ const { useCallback: $t } = e, Ot = ({ controlId: l, command: t, label: n, image
       "data-tooltip": b,
       "aria-label": v ? o : void 0
     },
-    C && m && /* @__PURE__ */ e.createElement(_e, { encoded: m, className: "tlReactButton__image" }),
+    C && m && /* @__PURE__ */ e.createElement(Se, { encoded: m, className: "tlReactButton__image" }),
     D && /* @__PURE__ */ e.createElement("span", { className: "tlReactButton__label" }, o)
   );
 }, { useCallback: Ft } = e, Ht = ({ controlId: l, command: t, label: n, active: r, disabled: i }) => {
@@ -800,7 +800,7 @@ function qe(l, t, n, r) {
     } else c.type === "command" ? i.push({ id: c.id, type: "command", groupId: r }) : c.type === "group" && (i.push({ id: c.id, type: "group" }), (n.get(c.id) ?? c.expanded) && !t && i.push(...qe(c.children, t, n, c.id)));
   return i;
 }
-const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l, className: "tlSidebar__icon" }) : null, _n = ({ item: l, active: t, collapsed: n, onSelect: r, tabIndex: i, itemRef: c, onFocus: s }) => /* @__PURE__ */ e.createElement(
+const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className: "tlSidebar__icon " + l, "aria-hidden": "true" }) : null, _n = ({ item: l, active: t, collapsed: n, onSelect: r, tabIndex: i, itemRef: c, onFocus: s }) => /* @__PURE__ */ e.createElement(
   "button",
   {
     className: "tlSidebar__item tlSidebar__navItem" + (t ? " tlSidebar__navItem--active" : ""),
@@ -1226,7 +1226,7 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
         onClick: () => c(s.id),
         "aria-current": u ? "page" : void 0
       },
-      /* @__PURE__ */ e.createElement("span", { className: "tlBottomBar__iconWrap" }, /* @__PURE__ */ e.createElement(_e, { encoded: s.icon, className: "tlBottomBar__icon" }), s.badge && /* @__PURE__ */ e.createElement("span", { className: "tlBottomBar__badge" }, s.badge)),
+      /* @__PURE__ */ e.createElement("span", { className: "tlBottomBar__iconWrap" }, /* @__PURE__ */ e.createElement("i", { className: "tlBottomBar__icon " + s.icon, "aria-hidden": "true" }), s.badge && /* @__PURE__ */ e.createElement("span", { className: "tlBottomBar__badge" }, s.badge)),
       /* @__PURE__ */ e.createElement("span", { className: "tlBottomBar__label" }, s.label)
     );
   }));
@@ -1260,12 +1260,12 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
   return Mn(() => {
     n.length < r.current && n.length > 0, r.current = n.length;
   }, [n.length]), n.length === 0 ? null : /* @__PURE__ */ e.createElement("div", { id: l, className: "tlDialogManager" }, n.map((i) => /* @__PURE__ */ e.createElement(K, { key: i.controlId, control: i })));
-}, { useCallback: De, useRef: ye, useState: Ie } = e, An = {
+}, { useCallback: De, useRef: Ce, useState: Ie } = e, An = {
   "js.window.close": "Close",
   "js.window.maximize": "Maximize",
   "js.window.restore": "Restore"
 }, Bn = ["n", "ne", "e", "se", "s", "sw", "w", "nw"], $n = ({ controlId: l }) => {
-  const t = G(), n = ne(), r = ae(An), i = t.title ?? "", c = t.width ?? "32rem", s = t.height ?? null, u = t.minHeight ?? null, a = t.resizable === !0, o = t.child, m = t.actions ?? [], p = t.toolbar, h = t.buttonBar, [N, f] = Ie(null), [T, w] = Ie(null), [v, C] = Ie(null), D = ye(null), [M, b] = Ie(!1), _ = ye(null), E = ye(null), W = ye(null), k = ye(null), S = ye(null), B = De(() => {
+  const t = G(), n = ne(), r = ae(An), i = t.title ?? "", c = t.width ?? "32rem", s = t.height ?? null, u = t.minHeight ?? null, a = t.resizable === !0, o = t.child, m = t.actions ?? [], p = t.toolbar, h = t.buttonBar, [N, f] = Ie(null), [T, w] = Ie(null), [v, C] = Ie(null), D = Ce(null), [M, b] = Ie(!1), _ = Ce(null), E = Ce(null), W = Ce(null), k = Ce(null), S = Ce(null), B = De(() => {
     n("close");
   }, [n]), x = De((J, A) => {
     A.preventDefault();
@@ -1287,8 +1287,8 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
       const X = V.clientX - P.startX, te = V.clientY - P.startY;
       let ee = P.startW, ie = P.startH, ue = 0, me = 0;
       P.symmetric ? (P.dir.includes("e") && (ee = P.startW + 2 * X), P.dir.includes("w") && (ee = P.startW - 2 * X), P.dir.includes("s") && (ie = P.startH + 2 * te), P.dir.includes("n") && (ie = P.startH - 2 * te)) : (P.dir.includes("e") && (ee = P.startW + X), P.dir.includes("w") && (ee = P.startW - X, ue = X), P.dir.includes("s") && (ie = P.startH + te), P.dir.includes("n") && (ie = P.startH - te, me = te));
-      const he = Math.max(200, ee), be = Math.max(100, ie);
-      P.symmetric ? (ue = (P.startW - he) / 2, me = (P.startH - be) / 2) : (P.dir.includes("w") && he === 200 && (ue = P.startW - 200), P.dir.includes("n") && be === 100 && (me = P.startH - 100)), E.current = he, W.current = be, f(he), w(be);
+      const he = Math.max(200, ee), _e = Math.max(100, ie);
+      P.symmetric ? (ue = (P.startW - he) / 2, me = (P.startH - _e) / 2) : (P.dir.includes("w") && he === 200 && (ue = P.startW - 200), P.dir.includes("n") && _e === 100 && (me = P.startH - 100)), E.current = he, W.current = _e, f(he), w(_e);
       const R = {
         x: P.startPos.x + ue,
         y: P.startPos.y + me
@@ -1569,7 +1569,7 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
           tabIndex: M ? 0 : -1,
           onClick: () => T(v.id)
         },
-        v.icon && /* @__PURE__ */ e.createElement(_e, { encoded: v.icon, className: "tlMenu__icon" }),
+        v.icon && /* @__PURE__ */ e.createElement("i", { className: "tlMenu__icon " + v.icon, "aria-hidden": "true" }),
         /* @__PURE__ */ e.createElement("span", { className: "tlMenu__label" }, v.label)
       );
     })
@@ -1630,29 +1630,29 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
       const oe = _.current;
       if (!oe) return;
       const pe = Math.max(it, oe.startWidth + (L - oe.startX) + H);
-      b((Ce) => ({ ...Ce, [oe.column]: pe }));
+      b((ge) => ({ ...ge, [oe.column]: pe }));
     }, re = () => {
       const oe = C.current, pe = v.current;
       if (!oe || !_.current) return;
-      const Ce = oe.getBoundingClientRect(), nt = 40, lt = 8, St = oe.scrollLeft;
-      L > Ce.right - nt ? oe.scrollLeft += lt : L < Ce.left + nt && (oe.scrollLeft = Math.max(0, oe.scrollLeft - lt));
+      const ge = oe.getBoundingClientRect(), nt = 40, lt = 8, St = oe.scrollLeft;
+      L > ge.right - nt ? oe.scrollLeft += lt : L < ge.left + nt && (oe.scrollLeft = Math.max(0, oe.scrollLeft - lt));
       const rt = oe.scrollLeft - St;
       rt !== 0 && (pe && (pe.scrollLeft = oe.scrollLeft), H += rt, Z()), Q.current = requestAnimationFrame(re);
     };
     Q.current = requestAnimationFrame(re);
-    const ge = (oe) => {
+    const Ee = (oe) => {
       L = oe.clientX, Z();
     }, Le = (oe) => {
-      document.removeEventListener("mousemove", ge), document.removeEventListener("mouseup", Le), Q.current !== null && (cancelAnimationFrame(Q.current), Q.current = null);
+      document.removeEventListener("mousemove", Ee), document.removeEventListener("mouseup", Le), Q.current !== null && (cancelAnimationFrame(Q.current), Q.current = null);
       const pe = _.current;
       if (pe) {
-        const Ce = Math.max(it, pe.startWidth + (oe.clientX - pe.startX) + H);
-        n("columnResize", { column: pe.column, width: Ce }), _.current = null, E.current = !0, requestAnimationFrame(() => {
+        const ge = Math.max(it, pe.startWidth + (oe.clientX - pe.startX) + H);
+        n("columnResize", { column: pe.column, width: ge }), _.current = null, E.current = !0, requestAnimationFrame(() => {
           E.current = !1;
         });
       }
     };
-    document.addEventListener("mousemove", ge), document.addEventListener("mouseup", Le);
+    document.addEventListener("mousemove", Ee), document.addEventListener("mouseup", Le);
   }, [n]), A = e.useCallback(() => {
     v.current && C.current && (v.current.scrollLeft = C.current.scrollLeft), D.current !== null && clearTimeout(D.current), D.current = window.setTimeout(() => {
       const R = C.current;
@@ -1721,7 +1721,7 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
       document.removeEventListener("mousedown", R), document.removeEventListener("keydown", I);
     };
   }, [B]);
-  const ue = c.reduce((R, I) => R + $(I), 0) + (f ? T : 0), me = m === s && s > 0, he = m > 0 && m < s, be = e.useCallback((R) => {
+  const ue = c.reduce((R, I) => R + $(I), 0) + (f ? T : 0), me = m === s && s > 0, he = m > 0 && m < s, _e = e.useCallback((R) => {
     R && (R.indeterminate = he);
   }, [he]);
   return /* @__PURE__ */ e.createElement(
@@ -1758,7 +1758,7 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
         "input",
         {
           type: "checkbox",
-          ref: be,
+          ref: _e,
           className: "tlTableView__checkbox",
           checked: me,
           onChange: P
@@ -1858,14 +1858,14 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(_e, { encoded: l
         ),
         c.map((I, g) => {
           const L = $(I), H = g === c.length - 1, Z = g < p, re = g === p - 1;
-          let ge = "tlTableView__cell";
-          Z && (ge += " tlTableView__cell--frozen"), re && (ge += " tlTableView__cell--frozenLast");
+          let Ee = "tlTableView__cell";
+          Z && (Ee += " tlTableView__cell--frozen"), re && (Ee += " tlTableView__cell--frozenLast");
           const Le = h && g === 0, oe = R.treeDepth ?? 0;
           return /* @__PURE__ */ e.createElement(
             "div",
             {
               key: I.name,
-              className: ge,
+              className: Ee,
               "data-row": R.id,
               "data-col": I.name,
               style: {
@@ -2719,7 +2719,7 @@ function Cl() {
   return l(), Ue.exports = gl(), Ue.exports;
 }
 var yl = Cl();
-const { useState: ve, useCallback: ce, useRef: Te, useEffect: we, useMemo: Ze } = e;
+const { useState: be, useCallback: ce, useRef: Te, useEffect: ye, useMemo: Ze } = e;
 function tt({ image: l }) {
   if (!l) return null;
   if (l.startsWith("/"))
@@ -2808,7 +2808,7 @@ const Sl = ({ controlId: l, state: t }) => {
   }), f = N["js.dropdownSelect.nothingFound"], T = ce(
     (g) => N["js.dropdownSelect.removeChip"].replace("{0}", g),
     [N]
-  ), [w, v] = ve(!1), [C, D] = ve(""), [M, b] = ve(-1), [_, E] = ve(!1), [W, k] = ve({}), [S, B] = ve(null), [x, $] = ve(null), [q, le] = ve(null), Q = Te(null), J = Te(null), A = Te(null), j = Te(r);
+  ), [w, v] = be(!1), [C, D] = be(""), [M, b] = be(-1), [_, E] = be(!1), [W, k] = be({}), [S, B] = be(null), [x, $] = be(null), [q, le] = be(null), Q = Te(null), J = Te(null), A = Te(null), j = Te(r);
   j.current = r;
   const U = Te(-1), d = Ze(
     () => new Set(r.map((g) => g.value)),
@@ -2821,11 +2821,11 @@ const Sl = ({ controlId: l, state: t }) => {
     }
     return g;
   }, [m, d, C]);
-  we(() => {
+  ye(() => {
     C && y.length === 1 ? b(0) : b(-1);
-  }, [y.length, C]), we(() => {
+  }, [y.length, C]), ye(() => {
     w && o && J.current && J.current.focus();
-  }, [w, o, r]), we(() => {
+  }, [w, o, r]), ye(() => {
     var H, Z;
     if (U.current < 0) return;
     const g = U.current;
@@ -2834,13 +2834,13 @@ const Sl = ({ controlId: l, state: t }) => {
       ".tlDropdownSelect__chipRemove"
     );
     L && L.length > 0 ? L[Math.min(g, L.length - 1)].focus() : (Z = Q.current) == null || Z.focus();
-  }, [r]), we(() => {
+  }, [r]), ye(() => {
     if (!w) return;
     const g = (L) => {
       Q.current && !Q.current.contains(L.target) && A.current && !A.current.contains(L.target) && (v(!1), D(""));
     };
     return document.addEventListener("mousedown", g), () => document.removeEventListener("mousedown", g);
-  }, [w]), we(() => {
+  }, [w]), ye(() => {
     if (!w || !Q.current) return;
     const g = Q.current.getBoundingClientRect(), L = window.innerHeight - g.bottom, Z = L < 300 && g.top > L;
     k({
@@ -2971,10 +2971,10 @@ const Sl = ({ controlId: l, state: t }) => {
       S < x ? Z = q === "before" ? Z - 1 : Z : Z = q === "before" ? Z : Z + 1, L.splice(Z, 0, H), j.current = L, n("valueChanged", { value: L.map((re) => re.value) }), B(null), $(null), le(null);
     },
     [S, x, q, n]
-  ), be = ce(() => {
+  ), _e = ce(() => {
     B(null), $(null), le(null);
   }, []);
-  if (we(() => {
+  if (ye(() => {
     if (M < 0 || !A.current) return;
     const g = A.current.querySelector(
       `[id="${l}-opt-${M}"]`
@@ -3056,7 +3056,7 @@ const Sl = ({ controlId: l, state: t }) => {
           onDragStart: h ? (Z) => ue(L, Z) : void 0,
           onDragOver: h ? (Z) => me(L, Z) : void 0,
           onDrop: h ? he : void 0,
-          onDragEnd: h ? be : void 0,
+          onDragEnd: h ? _e : void 0,
           dragClassName: h ? H : void 0
         }
       );
@@ -3155,8 +3155,8 @@ function Ll(l) {
 function Ye(l, t, n) {
   return kt(...xl(l, t, n));
 }
-const { useCallback: ke, useRef: ft } = e, Dl = ({ color: l, onColorChange: t }) => {
-  const [n, r, i] = Ll(l), c = ft(null), s = ft(null), u = ke(
+const { useCallback: we, useRef: ft } = e, Dl = ({ color: l, onColorChange: t }) => {
+  const [n, r, i] = Ll(l), c = ft(null), s = ft(null), u = we(
     (f, T) => {
       var D;
       const w = (D = c.current) == null ? void 0 : D.getBoundingClientRect();
@@ -3165,17 +3165,17 @@ const { useCallback: ke, useRef: ft } = e, Dl = ({ color: l, onColorChange: t })
       t(Ye(n, v, C));
     },
     [n, t]
-  ), a = ke(
+  ), a = we(
     (f) => {
       f.preventDefault(), f.target.setPointerCapture(f.pointerId), u(f.clientX, f.clientY);
     },
     [u]
-  ), o = ke(
+  ), o = we(
     (f) => {
       f.buttons !== 0 && u(f.clientX, f.clientY);
     },
     [u]
-  ), m = ke(
+  ), m = we(
     (f) => {
       var C;
       const T = (C = s.current) == null ? void 0 : C.getBoundingClientRect();
@@ -3184,12 +3184,12 @@ const { useCallback: ke, useRef: ft } = e, Dl = ({ color: l, onColorChange: t })
       t(Ye(v, r, i));
     },
     [r, i, t]
-  ), p = ke(
+  ), p = we(
     (f) => {
       f.preventDefault(), f.target.setPointerCapture(f.pointerId), m(f.clientY);
     },
     [m]
-  ), h = ke(
+  ), h = we(
     (f) => {
       f.buttons !== 0 && m(f.clientY);
     },
@@ -3470,7 +3470,7 @@ const Ml = {
       title: u ?? ""
     }
   );
-}, { useState: Re, useCallback: Ee, useEffect: je, useRef: ht, useLayoutEffect: Hl, useMemo: Wl } = e, zl = {
+}, { useState: Re, useCallback: ve, useEffect: je, useRef: ht, useLayoutEffect: Hl, useMemo: Wl } = e, zl = {
   "js.iconSelect.simpleTab": "Simple",
   "js.iconSelect.advancedTab": "Advanced",
   "js.iconSelect.filterPlaceholder": "Filter icons…",
@@ -3521,22 +3521,22 @@ const Ml = {
     return n.filter(
       ($) => $.prefix.toLowerCase().includes(x) || $.label.toLowerCase().includes(x) || $.terms != null && $.terms.some((q) => q.includes(x))
     );
-  }, [n, m]), b = Ee((x) => {
+  }, [n, m]), b = ve((x) => {
     p(x.target.value);
-  }, []), _ = Ee(
+  }, []), _ = ve(
     (x) => {
       i(x);
     },
     [i]
-  ), E = Ee((x) => {
+  ), E = ve((x) => {
     N(x);
-  }, []), W = Ee((x) => {
+  }, []), W = ve((x) => {
     N(x.target.value);
-  }, []), k = Ee(() => {
+  }, []), k = ve(() => {
     i(h || null);
-  }, [h, i]), S = Ee(() => {
+  }, [h, i]), S = ve(() => {
     i(null);
-  }, [i]), B = Ee(async (x) => {
+  }, [i]), B = ve(async (x) => {
     x.preventDefault(), T(!1);
     try {
       await s();
@@ -3610,7 +3610,7 @@ const Ml = {
               (q.key === "Enter" || q.key === " ") && (q.preventDefault(), a === "simple" ? _($.encoded) : E($.encoded));
             }
           },
-          /* @__PURE__ */ e.createElement(_e, { encoded: $.encoded })
+          /* @__PURE__ */ e.createElement(Se, { encoded: $.encoded })
         ))
       )
     ),
@@ -3622,7 +3622,7 @@ const Ml = {
         value: h,
         onChange: W
       }
-    )), /* @__PURE__ */ e.createElement("div", { className: "tlIconSelect__previewArea" }, /* @__PURE__ */ e.createElement("span", { className: "tlIconSelect__editLabel" }, u["js.iconSelect.previewLabel"]), /* @__PURE__ */ e.createElement("div", { className: "tlIconSelect__previewIcon" }, h && /* @__PURE__ */ e.createElement(_e, { encoded: h })), /* @__PURE__ */ e.createElement("span", { className: "tlIconSelect__previewLabel" }, h ? h.startsWith("css:") ? h.substring(4) : h : ""))),
+    )), /* @__PURE__ */ e.createElement("div", { className: "tlIconSelect__previewArea" }, /* @__PURE__ */ e.createElement("span", { className: "tlIconSelect__editLabel" }, u["js.iconSelect.previewLabel"]), /* @__PURE__ */ e.createElement("div", { className: "tlIconSelect__previewIcon" }, h && /* @__PURE__ */ e.createElement(Se, { encoded: h })), /* @__PURE__ */ e.createElement("span", { className: "tlIconSelect__previewLabel" }, h ? h.startsWith("css:") ? h.substring(4) : h : ""))),
     a === "advanced" && /* @__PURE__ */ e.createElement("div", { className: "tlIconSelect__actions" }, /* @__PURE__ */ e.createElement("button", { className: "tlIconSelect__btn tlIconSelect__btn--cancel", onClick: c }, u["js.iconSelect.cancel"]), /* @__PURE__ */ e.createElement("button", { className: "tlIconSelect__btn tlIconSelect__btn--clear", onClick: S }, u["js.iconSelect.clear"]), /* @__PURE__ */ e.createElement("button", { className: "tlIconSelect__btn tlIconSelect__btn--ok", onClick: k }, u["js.iconSelect.ok"]))
   );
 }, Vl = { "js.iconSelect.chooseIcon": "Choose icon" }, { useState: Kl, useCallback: Ae, useRef: Yl } = e, Gl = ({ controlId: l, state: t }) => {
@@ -3648,7 +3648,7 @@ const Ml = {
       title: u ?? "",
       "aria-label": r["js.iconSelect.chooseIcon"]
     },
-    u ? /* @__PURE__ */ e.createElement(_e, { encoded: u }) : /* @__PURE__ */ e.createElement("i", { className: "fa-solid fa-icons" })
+    u ? /* @__PURE__ */ e.createElement(Se, { encoded: u }) : /* @__PURE__ */ e.createElement("i", { className: "fa-solid fa-icons" })
   ), i && /* @__PURE__ */ e.createElement(
     Ul,
     {
@@ -3660,8 +3660,8 @@ const Ml = {
       onCancel: f,
       onLoadIcons: T
     }
-  )) : /* @__PURE__ */ e.createElement("span", { id: l, className: "tlIconSelect tlIconSelect--immutable" }, /* @__PURE__ */ e.createElement("span", { className: "tlIconSelect__swatch" }, u ? /* @__PURE__ */ e.createElement(_e, { encoded: u }) : null));
-}, { useCallback: Se, useEffect: Xl, useMemo: _t, useRef: ql, useState: Xe } = e, Zl = {
+  )) : /* @__PURE__ */ e.createElement("span", { id: l, className: "tlIconSelect tlIconSelect--immutable" }, /* @__PURE__ */ e.createElement("span", { className: "tlIconSelect__swatch" }, u ? /* @__PURE__ */ e.createElement(Se, { encoded: u }) : null));
+}, { useCallback: ke, useEffect: Xl, useMemo: _t, useRef: ql, useState: Xe } = e, Zl = {
   quarter: 0.25,
   third: 1 / 3,
   half: 0.5,
@@ -3752,19 +3752,19 @@ const lr = ({ controlId: l }) => {
     const _ = {};
     for (const E of o) _[E.id] = E;
     return _;
-  }, [o]), [p, h] = Xe(null), [N, f] = Xe(null), T = Se((_, E) => {
+  }, [o]), [p, h] = Xe(null), [N, f] = Xe(null), T = ke((_, E) => {
     if (!a) {
       _.preventDefault();
       return;
     }
     h(E), _.dataTransfer.effectAllowed = "move", _.dataTransfer.setData("text/plain", E);
-  }, [a]), w = Se((_, E) => {
+  }, [a]), w = ke((_, E) => {
     if (!a || !p || p === E) return;
     _.preventDefault(), _.dataTransfer.dropEffect = "move";
     const W = _.currentTarget.getBoundingClientRect(), k = _.clientX < W.left + W.width / 2;
     f((S) => S && S.id === E && S.before === k ? S : { id: E, before: k });
-  }, [a, p]), v = Se(() => {
-  }, []), C = Se((_, E, W) => {
+  }, [a, p]), v = ke(() => {
+  }, []), C = ke((_, E, W) => {
     const k = i.map(($) => $.id), S = k.indexOf(_);
     if (S < 0) return;
     k.splice(S, 1);
@@ -3775,12 +3775,12 @@ const lr = ({ controlId: l }) => {
     }
     const x = W ? B : B + 1;
     k.splice(x, 0, _), n("reorder", { order: k });
-  }, [i, n]), D = Se((_, E) => {
+  }, [i, n]), D = ke((_, E) => {
     if (!a || !p || p === E) return;
     _.preventDefault();
     const W = _.currentTarget.getBoundingClientRect(), k = _.clientX < W.left + W.width / 2;
     C(p, E, k), h(null), f(null);
-  }, [a, p, C]), M = Se(() => {
+  }, [a, p, C]), M = ke(() => {
     h(null), f(null);
   }, []), b = {
     display: "grid",
@@ -3851,7 +3851,7 @@ const lr = ({ controlId: l }) => {
       "aria-expanded": t,
       "aria-haspopup": "true"
     },
-    l.icon && /* @__PURE__ */ e.createElement(_e, { encoded: l.icon, className: "tlToolbar__menuIcon" }),
+    l.icon && /* @__PURE__ */ e.createElement(Se, { encoded: l.icon, className: "tlToolbar__menuIcon" }),
     /* @__PURE__ */ e.createElement("span", null, l.label ?? l.name),
     /* @__PURE__ */ e.createElement("svg", { className: "tlToolbar__chevron", viewBox: "0 0 24 24", "aria-hidden": "true" }, /* @__PURE__ */ e.createElement("polyline", { points: "6,9 12,15 18,9" }))
   ), t && /* @__PURE__ */ e.createElement(

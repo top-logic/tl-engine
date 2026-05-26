@@ -30,6 +30,28 @@
 				<structures>
 					<structure name="tl.doc"/>
 				</structures>
+				<role-rules>
+					<singleton-rule
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.Admin"
+					>
+						<group-with-name name="Admin"/>
+					</singleton-rule>
+					
+					<singleton-rule
+						target="tl.doc#ROOT"
+						role="tl.doc.DocumentationReader"
+					>
+						<group-with-name name="DocumentationReader"/>
+					</singleton-rule>
+					
+					<singleton-rule
+						target="tl.doc#ROOT"
+						role="tl.doc.DocumentationWriter"
+					>
+						<group-with-name name="DocumentationWriter"/>
+					</singleton-rule>
+				</role-rules>
 			</instance>
 		</config>
 
@@ -41,11 +63,7 @@
 							<role name="SecurityStructure.Admin"/>
 						</roles>
 						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="SecurityStructure.Admin" group="Admin"/>
-								</role-assignments>
-							</singleton>
+							<singleton type="Root"/>
 						</singletons>
 					</module>
 					<module name="tl.doc">
@@ -54,22 +72,12 @@
 							<role name="tl.doc.DocumentationWriter"/>
 						</roles>
 						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment
-										group="DocumentationReader"
-										role="tl.doc.DocumentationReader"
-									/>
-									<role-assignment
-										group="DocumentationWriter"
-										role="tl.doc.DocumentationWriter"
-									/>
-								</role-assignments>
-							</singleton>
+							<singleton type="Root"/>
 						</singletons>
 					</module>
 				</settings>
-		</instance></config>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

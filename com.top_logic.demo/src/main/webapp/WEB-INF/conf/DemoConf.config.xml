@@ -156,13 +156,6 @@
 						<roles>
 							<role name="SecurityStructure.OwnerRole"/>
 						</roles>
-						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="SecurityStructure.OwnerRole" group="securityOwner"/>
-								</role-assignments>
-							</singleton>
-						</singletons>
 					</module>
 				</settings>
 				<model-filter>
@@ -175,6 +168,19 @@
 						<name-filter name="Ticket:Feedback" />
 					</blacklist>
 				</model-filter>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<singleton-rule
+						target="SecurityStructure#ROOT"
+						role="SecurityStructure.OwnerRole"
+					>
+						<group-with-name name="securityOwner"/>
+					</singleton-rule>
+				</role-rules>
 			</instance>
 		</config>
 

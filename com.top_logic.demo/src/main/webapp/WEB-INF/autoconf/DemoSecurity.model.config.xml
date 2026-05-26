@@ -19,12 +19,7 @@
 							<role name="DemoSecurity.navigation"/>
 						</roles>
 						<singletons>
-							<singleton type="Root">
-								<role-assignments>
-									<role-assignment role="DemoSecurity.SecurityAdministrator" group="securityAdministrators"/>
-									<role-assignment role="DemoSecurity.User" group="user"/>
-								</role-assignments>
-							</singleton>
+							<singleton type="Root"/>
 						</singletons>
 					</module>
 				</settings>
@@ -47,6 +42,21 @@
 	            <structures>
 	            	<structure name="DemoSecurity"/>
 				</structures>
+				<role-rules>
+					<singleton-rule
+						target="DemoSecurity#ROOT"
+						role="DemoSecurity.User"
+					>
+						<group-with-name name="user"/>
+					</singleton-rule>
+					
+					<singleton-rule
+						target="DemoSecurity#ROOT"
+						role="DemoSecurity.SecurityAdministrator"
+					>
+						<group-with-name name="securityAdministrators"/>
+					</singleton-rule>
+				</role-rules>
 			</instance>
 		</config>
 	</services>

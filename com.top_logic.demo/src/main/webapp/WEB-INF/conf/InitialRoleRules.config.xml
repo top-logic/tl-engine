@@ -149,6 +149,20 @@
 						>
 							<script-step expr="`DemoTypes#ROOT`"/>
 						</inheritance-rule>
+
+						<singleton-rule
+							role="DemoTypes.Administrator"
+							target="DemoTypes#ROOT"
+						>
+							<group-with-name name="demoTypeAdministrators"/>
+						</singleton-rule>
+
+						<singleton-rule
+							role="DemoTypes.BAdministrator"
+							target="DemoTypes#ROOT"
+						>
+							<group-with-name name="demoTypeBAdministrators"/>
+						</singleton-rule>
 					</rules>
 				</role-rules>
 			</instance>

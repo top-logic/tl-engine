@@ -20,26 +20,24 @@ r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(rea
 
 /* Top axis: year labels by default, switches to "Jan 2026" labels at high zoom. */
 axisTop = reactFlowGanttSpan(model: "axis:top:wrap", rowModel: "axis:top",
-	box: reactFlowAlign(
-		reactFlowLod(
-			fixedHeight: 18,
-			variants: list(
-				reactFlowLodVariant(content: reactFlowAxisDaysMonthTicks(rangeMin: 20450, rangeMax: 20600, withYear: true), minZoom: 15),
-				reactFlowAxisDaysYearTicks(rangeMin: 20450, rangeMax: 20600)
-			)
-		), vAlign: "middle"),
+	box: reactFlowLod(
+		fixedHeight: 18,
+		variants: list(
+			reactFlowLodVariant(content: reactFlowAxisDaysMonthTicks(rangeMin: 20450, rangeMax: 20600, withYear: true), minZoom: 15),
+			reactFlowAxisDaysYearTicks(rangeMin: 20450, rangeMax: 20600)
+		)
+	),
 	start: 20450, end: 20600, canMove: false, canResize: false, canBeEdge: false);
 
 /* Bottom axis: short month labels by default, switches to day-of-month at high zoom. */
 axisBot = reactFlowGanttSpan(model: "axis:bot:wrap", rowModel: "axis:bottom",
-	box: reactFlowAlign(
-		reactFlowLod(
-			fixedHeight: 16,
-			variants: list(
-				reactFlowLodVariant(content: reactFlowAxisDaysDayTicks(rangeMin: 20450, rangeMax: 20600), minZoom: 15),
-				reactFlowAxisDaysMonthTicks(rangeMin: 20450, rangeMax: 20600, withYear: false)
-			)
-		), vAlign: "middle"),
+	box: reactFlowLod(
+		fixedHeight: 16,
+		variants: list(
+			reactFlowLodVariant(content: reactFlowAxisDaysDayTicks(rangeMin: 20450, rangeMax: 20600), minZoom: 15),
+			reactFlowAxisDaysMonthTicks(rangeMin: 20450, rangeMax: 20600, withYear: false)
+		)
+	),
 	start: 20450, end: 20600, canMove: false, canResize: false, canBeEdge: false);
 
 /* Freeze label in Markers row */

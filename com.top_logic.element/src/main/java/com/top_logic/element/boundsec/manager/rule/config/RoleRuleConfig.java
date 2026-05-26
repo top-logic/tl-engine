@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
@@ -26,6 +27,16 @@ import com.top_logic.model.TLClass;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@DisplayOrder({
+	RoleRuleConfig.XML_ATTRIBUTE_META_ELEMENT,
+	RoleRuleConfig.XML_ATTRIBUTE_ROLE,
+	RoleRuleConfig.XML_ATTRIBUTE_INHERIT,
+	RoleRuleConfig.XML_ATTRIBUTE_TYPE,
+	RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_ELEMENT,
+	RoleRuleConfig.XML_ATTRIBUTE_SOURCE_ROLE,
+	RoleRuleConfig.XML_ATTRIBUTE_RESOURCE_KEY,
+	RoleRuleConfig.XML_TAG_PATH_ELEMENT,
+})
 public interface RoleRuleConfig extends ConfigurationItem {
 
 	/** Name of the value of {@link #getMetaElement()} in the configuration. */

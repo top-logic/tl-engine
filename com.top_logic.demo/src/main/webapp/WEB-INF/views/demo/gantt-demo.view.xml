@@ -12,16 +12,16 @@
    LOD that picks between two granularities depending on the current axis zoom. Both rows use
    the same minZoom threshold so they switch in sync. === */
 
-r_axisTop = reactFlowGanttRow(model: "axis:top",    label: reactFlowPadding(reactFlowText("Year/Month"), all: 4), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 20);
-r_axisBot = reactFlowGanttRow(model: "axis:bottom", label: reactFlowPadding(reactFlowText("Month/Day"),  all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 18);
-r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowPadding(reactFlowText("Markers"),  all: 4), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 32);
+r_axisTop = reactFlowGanttRow(model: "axis:top",    label: reactFlowAlign(reactFlowPadding(reactFlowText("Year/Month"), all: 4), vAlign: "middle"), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 20);
+r_axisBot = reactFlowGanttRow(model: "axis:bottom", label: reactFlowAlign(reactFlowPadding(reactFlowText("Month/Day"),  all: 4), vAlign: "middle"), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 18);
+r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowAlign(reactFlowPadding(reactFlowText("Markers"),  all: 4), vAlign: "middle"), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 32);
 
 /* Range: Jan 1 2026 (day 20454) ... May 27 2026 (day 20600). */
 
-/* Top axis: year labels by default, switches to "Jan 2026" labels at high zoom. */
+/* Top axis: year labels by default, switches to "Jan 2026" labels at high zoom.
+   fixedHeight is omitted so the zebra tick cells stretch to the full row height. */
 axisTop = reactFlowGanttSpan(model: "axis:top:wrap", rowModel: "axis:top",
 	box: reactFlowLod(
-		fixedHeight: 18,
 		variants: list(
 			reactFlowLodVariant(content: reactFlowAxisDaysMonthTicks(rangeMin: 20450, rangeMax: 20600, withYear: true), minZoom: 15),
 			reactFlowAxisDaysYearTicks(rangeMin: 20450, rangeMax: 20600)
@@ -29,10 +29,10 @@ axisTop = reactFlowGanttSpan(model: "axis:top:wrap", rowModel: "axis:top",
 	),
 	start: 20450, end: 20600, canMove: false, canResize: false, canBeEdge: false);
 
-/* Bottom axis: short month labels by default, switches to day-of-month at high zoom. */
+/* Bottom axis: short month labels by default, switches to day-of-month at high zoom.
+   fixedHeight is omitted so the zebra tick cells stretch to the full row height. */
 axisBot = reactFlowGanttSpan(model: "axis:bot:wrap", rowModel: "axis:bottom",
 	box: reactFlowLod(
-		fixedHeight: 16,
 		variants: list(
 			reactFlowLodVariant(content: reactFlowAxisDaysDayTicks(rangeMin: 20450, rangeMax: 20600), minZoom: 15),
 			reactFlowAxisDaysMonthTicks(rangeMin: 20450, rangeMax: 20600, withYear: false)

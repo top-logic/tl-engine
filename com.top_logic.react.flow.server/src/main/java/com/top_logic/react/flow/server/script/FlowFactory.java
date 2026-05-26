@@ -2179,12 +2179,17 @@ public class FlowFactory extends TLScriptFunctions {
 	 * Builds a horizontal sequence of year labels for a days-since-epoch range, suitable as
 	 * the content of an {@link LOD} variant on an axis row.
 	 *
+	 * <p>
+	 * Each tick cell carries a subtle alternating background ("zebra") and its label is centered
+	 * both horizontally and vertically within the cell.
+	 * </p>
+	 *
 	 * @param rangeMin
 	 *        Lower bound of the range, interpreted as days since the Unix epoch.
 	 * @param rangeMax
 	 *        Upper bound of the range, interpreted as days since the Unix epoch.
-	 * @return A {@link HorizontalLayout} of year text labels, gap-stretched to fill the
-	 *         available width.
+	 * @return A {@link HorizontalLayout} of year tick cells, stretched to fill the available
+	 *         width.
 	 */
 	@SideEffectFree
 	@Label("Axis: year ticks")
@@ -2192,14 +2197,20 @@ public class FlowFactory extends TLScriptFunctions {
 		java.time.LocalDate min = java.time.LocalDate.ofEpochDay((long) Math.floor(rangeMin));
 		java.time.LocalDate max = java.time.LocalDate.ofEpochDay((long) Math.ceil(rangeMax));
 		List<Box> ticks = new ArrayList<>();
+		int index = 0;
 		for (int year = min.getYear(); year <= max.getYear(); year++) {
-			ticks.add(Text.create().setValue(String.valueOf(year)));
+			ticks.add(axisTickCell(String.valueOf(year), index++));
 		}
 		return horizontalAxis(ticks);
 	}
 
 	/**
 	 * Builds a horizontal sequence of month labels for a days-since-epoch range.
+	 *
+	 * <p>
+	 * Each tick cell carries a subtle alternating background ("zebra") and its label is centered
+	 * both horizontally and vertically within the cell.
+	 * </p>
 	 *
 	 * @param rangeMin
 	 *        Lower bound of the range, interpreted as days since the Unix epoch.
@@ -2208,8 +2219,8 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param withYear
 	 *        If {@code true}, labels include the year (e.g. {@code "Jan 2026"}); otherwise
 	 *        only the month abbreviation ({@code "Jan"}).
-	 * @return A {@link HorizontalLayout} of month text labels, gap-stretched to fill the
-	 *         available width.
+	 * @return A {@link HorizontalLayout} of month tick cells, stretched to fill the available
+	 *         width.
 	 */
 	@SideEffectFree
 	@Label("Axis: month ticks")
@@ -2218,12 +2229,13 @@ public class FlowFactory extends TLScriptFunctions {
 		java.time.LocalDate min = java.time.LocalDate.ofEpochDay((long) Math.floor(rangeMin));
 		java.time.LocalDate max = java.time.LocalDate.ofEpochDay((long) Math.ceil(rangeMax));
 		List<Box> ticks = new ArrayList<>();
+		int index = 0;
 		java.time.LocalDate cursor = min.withDayOfMonth(1);
 		while (!cursor.isAfter(max)) {
 			String abbr = cursor.getMonth().name().substring(0, 1)
 				+ cursor.getMonth().name().substring(1, 3).toLowerCase();
 			String label = withYear ? abbr + " " + cursor.getYear() : abbr;
-			ticks.add(Text.create().setValue(label));
+			ticks.add(axisTickCell(label, index++));
 			cursor = cursor.plusMonths(1);
 		}
 		return horizontalAxis(ticks);
@@ -2232,12 +2244,17 @@ public class FlowFactory extends TLScriptFunctions {
 	/**
 	 * Builds a horizontal sequence of day-of-month labels for a days-since-epoch range.
 	 *
+	 * <p>
+	 * Each tick cell carries a subtle alternating background ("zebra") and its label is centered
+	 * both horizontally and vertically within the cell.
+	 * </p>
+	 *
 	 * @param rangeMin
 	 *        Lower bound of the range, interpreted as days since the Unix epoch.
 	 * @param rangeMax
 	 *        Upper bound of the range, interpreted as days since the Unix epoch.
-	 * @return A {@link HorizontalLayout} of day-of-month text labels, gap-stretched to fill
-	 *         the available width.
+	 * @return A {@link HorizontalLayout} of day-of-month tick cells, stretched to fill the
+	 *         available width.
 	 */
 	@SideEffectFree
 	@Label("Axis: day ticks")
@@ -2245,11 +2262,31 @@ public class FlowFactory extends TLScriptFunctions {
 		long minDay = (long) Math.floor(rangeMin);
 		long maxDay = (long) Math.ceil(rangeMax);
 		List<Box> ticks = new ArrayList<>();
+		int index = 0;
 		for (long d = minDay; d <= maxDay; d++) {
 			int dayOfMonth = java.time.LocalDate.ofEpochDay(d).getDayOfMonth();
-			ticks.add(Text.create().setValue(String.valueOf(dayOfMonth)));
+			ticks.add(axisTickCell(String.valueOf(dayOfMonth), index++));
 		}
 		return horizontalAxis(ticks);
+	}
+
+	/** Subtle alternating fill colors for axis tick zebra striping. */
+	private static final String AXIS_TICK_FILL_EVEN = "rgba(0,0,0,0.03)";
+
+	private static final String AXIS_TICK_FILL_ODD = "rgba(0,0,0,0.08)";
+
+	/**
+	 * Builds a single axis tick cell: a {@link Fill} that paints an alternating zebra
+	 * background and centers its text label within the row height via {@link Align}.
+	 */
+	private static Box axisTickCell(String label, int index) {
+		String bg = (index % 2 == 0) ? AXIS_TICK_FILL_EVEN : AXIS_TICK_FILL_ODD;
+		return Fill.create()
+			.setFillStyle(bg)
+			.setContent(Align.create()
+				.setXAlign(Alignment.MIDDLE)
+				.setYAlign(Alignment.MIDDLE)
+				.setContent(Text.create().setValue(label)));
 	}
 
 	private static Box horizontalAxis(List<Box> ticks) {
@@ -2258,7 +2295,7 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		return HorizontalLayout.create()
 			.setContents(ticks)
-			.setFill(SpaceDistribution.STRETCH_GAP);
+			.setFill(SpaceDistribution.STRETCH_CONTENT);
 	}
 
 }

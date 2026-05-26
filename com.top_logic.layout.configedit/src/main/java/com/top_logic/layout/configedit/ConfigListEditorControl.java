@@ -23,6 +23,7 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
@@ -146,14 +147,14 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			moveUp(indexOf(item));
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		moveUpButton.setDisplayMode("icon-only");
+		moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		moveUpButton.setDisabled(index == 0);
 
 		ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
 			moveDown(indexOf(item));
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		moveDownButton.setDisplayMode("icon-only");
+		moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		moveDownButton.setDisabled(index == listSize - 1);
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
@@ -163,7 +164,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		removeButton.setDisplayMode("icon-only");
+		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
 		List<ReactControl> headerActions = List.of(moveUpButton, moveDownButton, removeButton);
 

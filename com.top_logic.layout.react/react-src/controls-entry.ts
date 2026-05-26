@@ -58,6 +58,8 @@ import TLIconSelect from './controls/TLIconSelect';
 import TLDashboard from './controls/TLDashboard';
 import TLToolbar from './controls/TLToolbar';
 import TLTileStack from './controls/TLTileStack';
+import TLSlot from './controls/TLSlot';
+import TLSlotContent from './controls/TLSlotContent';
 
 
 register('TLButton', TLButton);
@@ -109,3 +111,5 @@ register('TLIconSelect', TLIconSelect);
 register('TLDashboard', TLDashboard);
 register('TLToolbar', TLToolbar);
 register('TLTileStack', TLTileStack);
+register('TLSlot', TLSlot);
+register('TLSlotContent', TLSlotContent);

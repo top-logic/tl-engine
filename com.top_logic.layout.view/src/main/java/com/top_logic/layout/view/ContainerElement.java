@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,10 +60,19 @@ public abstract class ContainerElement implements UIElement {
 
 	/**
 	 * Creates controls for all children.
+	 *
+	 * <p>
+	 * Each child is created with a {@link ViewContext} whose
+	 * {@link ViewContext#getSlotPath() slot path} is extended by the child's index, so that
+	 * sibling children have distinct positions in the slot routing tree.
+	 * </p>
 	 */
 	protected List<IReactControl> createChildControls(ViewContext context) {
-		return _children.stream()
-			.map(child -> child.createControl(context))
-			.collect(Collectors.toList());
+		List<IReactControl> result = new ArrayList<>(_children.size());
+		for (int i = 0; i < _children.size(); i++) {
+			ViewContext childContext = context.withChildSlotPath(Integer.toString(i));
+			result.add(_children.get(i).createControl(childContext));
+		}
+		return result;
 	}
 }

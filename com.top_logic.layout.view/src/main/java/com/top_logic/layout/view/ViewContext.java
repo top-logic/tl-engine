@@ -15,6 +15,8 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.slot.SlotPath;
+import com.top_logic.layout.view.slot.SlotRegistry;
 import com.top_logic.layout.view.tiles.TileStackScope;
 
 /**
@@ -187,6 +189,43 @@ public interface ViewContext extends ReactContext {
 	 * @return A new context with the given error sink.
 	 */
 	ViewContext withErrorSink(ErrorSink errorSink);
+
+	/**
+	 * The current position in the rendered view tree, used by the slot mechanism to route
+	 * {@code <slot-content>} contributions to the nearest matching {@code <slot>} placeholder.
+	 *
+	 * <p>
+	 * Containers extend the path by one segment per child via {@link #withChildSlotPath(String)}.
+	 * Containers that do not extend it have all children share the same path, which is fine when
+	 * the slot mechanism does not need to distinguish their positions.
+	 * </p>
+	 */
+	SlotPath getSlotPath();
+
+	/**
+	 * The shared slot registry for this view tree.
+	 *
+	 * <p>
+	 * One registry per root {@link ViewContext}. Child contexts inherit the same registry, so
+	 * {@code <slot>} and {@code <slot-content>} anywhere in the tree see each other.
+	 * </p>
+	 */
+	SlotRegistry getSlotRegistry();
+
+	/**
+	 * Creates a child context with the {@link #getSlotPath() slot path} extended by one segment.
+	 *
+	 * <p>
+	 * Called by container elements once per child when building their child controls, so that two
+	 * sibling children get distinct positions in the slot routing tree.
+	 * </p>
+	 *
+	 * @param segment
+	 *        Segment identifier (typically the child index as a string, but any unique-per-parent
+	 *        string works).
+	 * @return A new context with the extended slot path.
+	 */
+	ViewContext withChildSlotPath(String segment);
 
 	/**
 	 * Registers a channel in this context.

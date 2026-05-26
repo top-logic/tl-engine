@@ -164,10 +164,12 @@ public class AppShellElement implements UIElement {
 		};
 		opener.bindReactContext(() -> openerContext);
 
-		// Create slot controls in the scoped context.
-		ReactControl header = createSlotControl(scopedContext, _header);
-		ReactControl content = createSlotControl(scopedContext, _content);
-		ReactControl footer = createSlotControl(scopedContext, _footer);
+		// Create slot controls. Each of the three structural slots (header, content, footer) gets
+		// its own slot-path segment so that <slot> placeholders and <slot-content> contributions
+		// declared in different regions have distinct positions for routing.
+		ReactControl header = createSlotControl(scopedContext.withChildSlotPath("header"), _header);
+		ReactControl content = createSlotControl(scopedContext.withChildSlotPath("content"), _content);
+		ReactControl footer = createSlotControl(scopedContext.withChildSlotPath("footer"), _footer);
 
 		ReactAppShellControl shellControl =
 			new ReactAppShellControl(context, header, content, footer, snackbar, errorSink, menuControl);

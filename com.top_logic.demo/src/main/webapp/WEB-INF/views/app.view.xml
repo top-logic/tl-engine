@@ -175,7 +175,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="tiles-demo"
-						icon="bi bi-layers"
+						icon="css:bi bi-layers"
 					>
 						<view-ref view="demo/tiles-demo.view.xml"/>
 						<label>

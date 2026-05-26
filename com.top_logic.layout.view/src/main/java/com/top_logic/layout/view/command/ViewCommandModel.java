@@ -7,10 +7,9 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -80,9 +79,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		if (key == null) {
 			return "";
 		}
-		return ResourcesModule.getInstance()
-			.getBundle(Locale.getDefault())
-			.getString(key);
+		return Resources.getInstance().getString(key);
 	}
 
 	/**
@@ -103,9 +100,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		if (key == null) {
 			return null;
 		}
-		return ResourcesModule.getInstance()
-			.getBundle(Locale.getDefault())
-			.getString(key);
+		return Resources.getInstance().getString(key);
 	}
 
 	/**

@@ -4057,7 +4057,30 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 }
 
 .tlToolbar__dropdownItem {
-	padding: var(--spacing-03) var(--spacing-04);
+	display: flex;
+}
+
+/* Dropdown opens over a light surface — reset the inverse colors that
+   buttons inherit when the toolbar lives inside a dark panel header,
+   and let buttons fill the row so the dropdown reads as a clean list. */
+.tlToolbar__dropdown .tlReactButton {
+	box-shadow: none;
+	border-radius: 0;
+	background: transparent;
+	color: var(--text-primary);
+	width: 100%;
+	justify-content: flex-start;
+	font-weight: normal;
+	padding: var(--spacing-02) var(--spacing-04);
+}
+
+.tlToolbar__dropdown button.tlReactButton:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--text-primary);
+}
+
+.tlToolbar__dropdown .tlReactButton--icon {
+	color: var(--icon-primary);
 }
 
 .tlToolbar__dropdownSeparator {

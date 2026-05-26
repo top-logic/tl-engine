@@ -1,5 +1,6 @@
 import { React, useTLState, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useRef, useState, useEffect } = React;
 
@@ -89,14 +90,19 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
         aria-expanded={open}
         aria-haspopup="true"
       >
-        {group.icon && <i className={group.icon} aria-hidden="true" />}
+        {group.icon && <ThemeIcon encoded={group.icon} className="tlToolbar__menuIcon" />}
         <span>{group.label ?? group.name}</span>
         <svg className="tlToolbar__chevron" viewBox="0 0 24 24" aria-hidden="true">
           <polyline points="6,9 12,15 18,9" />
         </svg>
       </button>
       {open && (
-        <div ref={menuRef} className="tlToolbar__dropdown" role="menu">
+        <div
+          ref={menuRef}
+          className="tlToolbar__dropdown"
+          role="menu"
+          onClick={() => setOpen(false)}
+        >
           {visibleItems.map((item, i) => (
             <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
               <TLChild control={item} />

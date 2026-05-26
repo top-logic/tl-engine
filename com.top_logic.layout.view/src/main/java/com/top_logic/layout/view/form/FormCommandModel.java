@@ -7,12 +7,11 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -194,9 +193,7 @@ public class FormCommandModel implements CommandModel {
 
 	@Override
 	public String getLabel() {
-		return ResourcesModule.getInstance()
-			.getBundle(Locale.getDefault())
-			.getString(_labelKey);
+		return Resources.getInstance().getString(_labelKey);
 	}
 
 	@Override

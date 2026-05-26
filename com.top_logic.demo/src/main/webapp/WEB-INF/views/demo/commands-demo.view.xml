@@ -1,52 +1,97 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<panel title="Command Display Demo">
+	<panel>
+		<title>
+			<en>Command Display Demo</en>
+			<de>Befehlsanzeige-Demo</de>
+		</title>
 		<commands>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="New Item"
 				clique="create"
 				placement="TOOLBAR"
-			/>
+			>
+				<label>
+					<en>New Item</en>
+					<de>Neuer Eintrag</de>
+				</label>
+			</command>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="Import"
 				clique="create"
 				placement="TOOLBAR"
-			/>
+			>
+				<label>
+					<en>Import</en>
+					<de>Importieren</de>
+				</label>
+			</command>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="Edit"
 				clique="edit"
 				placement="TOOLBAR"
-			/>
+			>
+				<label>
+					<en>Edit</en>
+					<de>Bearbeiten</de>
+				</label>
+			</command>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="Delete"
 				clique="delete"
 				placement="TOOLBAR"
-			/>
+			>
+				<label>
+					<en>Delete</en>
+					<de>L&#xF6;schen</de>
+				</label>
+			</command>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="Export Excel"
 				clique="export"
 				placement="TOOLBAR"
-			/>
+			>
+				<label>
+					<en>Export Excel</en>
+					<de>Nach Excel exportieren</de>
+				</label>
+			</command>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="Export PDF"
 				clique="export"
 				placement="TOOLBAR"
-			/>
+			>
+				<label>
+					<en>Export PDF</en>
+					<de>Nach PDF exportieren</de>
+				</label>
+			</command>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="Save"
 				clique="commit"
 				placement="BUTTON_BAR"
-			/>
+			>
+				<label>
+					<en>Save</en>
+					<de>Speichern</de>
+				</label>
+			</command>
 			<command class="com.top_logic.demo.view.command.DemoCommand"
-				label="Cancel"
 				clique="commit"
 				placement="BUTTON_BAR"
-			/>
+			>
+				<label>
+					<en>Cancel</en>
+					<de>Abbrechen</de>
+				</label>
+			</command>
 		</commands>
 
 		<stack direction="column" gap="default">
-			<card title="Panel Content" variant="elevated">
-				<demo-counter label="Items"/>
+			<card variant="elevated">
+				<title>
+					<en>Panel Content</en>
+					<de>Panel-Inhalt</de>
+				</title>
+				<demo-counter>
+					<label>
+						<en>Items</en>
+						<de>Eintr&#xE4;ge</de>
+					</label>
+				</demo-counter>
 			</card>
 		</stack>
 	</panel>

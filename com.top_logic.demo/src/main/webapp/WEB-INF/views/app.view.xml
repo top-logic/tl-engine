@@ -6,7 +6,7 @@
 			<sidebar active-item="dashboard">
 				<items>
 					<nav-item id="dashboard"
-						icon="bi bi-speedometer2"
+						icon="css:bi bi-speedometer2"
 					>
 						<view-ref view="demo/dashboard.view.xml"/>
 						<label>
@@ -15,7 +15,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="dashboard-layout"
-						icon="bi bi-grid-1x2"
+						icon="css:bi bi-grid-1x2"
 					>
 						<label>
 							<en>Dashboard Layout</en>
@@ -24,7 +24,7 @@
 						<view-ref view="demo/dashboard-layout-demo.view.xml"/>
 					</nav-item>
 					<nav-item id="tabs"
-						icon="bi bi-layout-text-window-reverse"
+						icon="css:bi bi-layout-text-window-reverse"
 					>
 						<view-ref view="demo/tabs-demo.view.xml"/>
 						<label>
@@ -33,7 +33,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="split"
-						icon="bi bi-layout-split"
+						icon="css:bi bi-layout-split"
 					>
 						<view-ref view="demo/split-demo.view.xml"/>
 						<label>
@@ -42,7 +42,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="channels"
-						icon="bi bi-table"
+						icon="css:bi bi-table"
 					>
 						<view-ref view="demo/channels-demo.view.xml"/>
 						<label>
@@ -51,7 +51,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="forms"
-						icon="bi bi-pencil-square"
+						icon="css:bi bi-pencil-square"
 					>
 						<view-ref view="demo/form-demo.view.xml"/>
 						<label>
@@ -60,7 +60,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="input-controls"
-						icon="bi bi-input-cursor"
+						icon="css:bi bi-input-cursor"
 					>
 						<view-ref view="demo/input-controls-demo.view.xml"/>
 						<label>
@@ -69,7 +69,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="charts"
-						icon="bi bi-bar-chart-line"
+						icon="css:bi bi-bar-chart-line"
 					>
 						<view-ref view="demo/chart-demo.view.xml"/>
 						<label>
@@ -78,7 +78,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="tlscript"
-						icon="bi bi-code-square"
+						icon="css:bi bi-code-square"
 					>
 						<view-ref view="demo/tlscript-editor-demo.view.xml"/>
 						<label>
@@ -87,7 +87,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="config-editor"
-						icon="bi bi-sliders"
+						icon="css:bi bi-sliders"
 					>
 						<view-ref view="demo/config-editor-demo.view.xml"/>
 						<label>
@@ -96,7 +96,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="dialogs"
-						icon="bi bi-window-stack"
+						icon="css:bi bi-window-stack"
 					>
 						<view-ref view="demo/dialog-demo.view.xml"/>
 						<label>
@@ -105,7 +105,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="context-menu"
-						icon="bi bi-menu-button-wide"
+						icon="css:bi bi-menu-button-wide"
 					>
 						<view-ref view="demo/context-menu-demo.view.xml"/>
 						<label>
@@ -114,7 +114,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="errors"
-						icon="bi bi-exclamation-triangle"
+						icon="css:bi bi-exclamation-triangle"
 					>
 						<view-ref view="demo/error-handling-demo.view.xml"/>
 						<label>
@@ -123,7 +123,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="constraints"
-						icon="bi bi-check-circle"
+						icon="css:bi bi-check-circle"
 					>
 						<view-ref view="demo/constraint-test.view.xml"/>
 						<label>
@@ -132,7 +132,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="flow-diagram"
-						icon="bi bi-diagram-3"
+						icon="css:bi bi-diagram-3"
 					>
 						<view-ref view="demo/flow-diagram-demo.view.xml"/>
 						<label>
@@ -141,7 +141,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="graph-layout"
-						icon="bi bi-diagram-2"
+						icon="css:bi bi-diagram-2"
 					>
 						<view-ref view="demo/graph-layout-demo.view.xml"/>
 						<label>
@@ -150,7 +150,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="module-graph"
-						icon="bi bi-bezier2"
+						icon="css:bi bi-bezier2"
 					>
 						<view-ref view="demo/module-graph-demo.view.xml"/>
 						<label>
@@ -159,7 +159,7 @@
 						</label>
 					</nav-item>
 					<nav-item id="gantt-demo"
-						icon="bi bi-bar-chart-steps"
+						icon="css:bi bi-bar-chart-steps"
 					>
 						<view-ref view="demo/gantt-demo.view.xml"/>
 						<label>
@@ -167,15 +167,19 @@
 							<de>Gantt-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="commands-demo" label="Commands Demo" icon="bi bi-menu-button-wide">
-						<view-ref view="demo/commands-demo.view.xml" />
+					<nav-item id="commands-demo" icon="css:bi bi-menu-button-wide">
+						<view-ref view="demo/commands-demo.view.xml"/>
+						<label>
+							<en>Commands Demo</en>
+							<de>Befehlsanzeige-Demo</de>
+						</label>
 					</nav-item>
 					<separator/>
 					<!-- Intentionally NOT routed: demonstrates that items
 					     with route="" do not produce URL segments and are
 					     not affected by browser back/forward. -->
 					<nav-item id="settings"
-						icon="bi bi-gear"
+						icon="css:bi bi-gear"
 						route="none"
 					>
 						<view-ref view="demo/settings.view.xml"/>
@@ -191,7 +195,7 @@
 			<bottom-bar active-item="dashboard">
 				<items>
 					<item id="dashboard"
-						icon="bi bi-speedometer2"
+						icon="css:bi bi-speedometer2"
 					>
 						<label>
 							<en>Dashboard</en>
@@ -199,7 +203,7 @@
 						</label>
 					</item>
 					<item id="messages"
-						icon="bi bi-chat-dots"
+						icon="css:bi bi-chat-dots"
 					>
 						<label>
 							<en>Messages</en>
@@ -207,7 +211,7 @@
 						</label>
 					</item>
 					<item id="settings"
-						icon="bi bi-gear"
+						icon="css:bi bi-gear"
 					>
 						<label>
 							<en>Settings</en>

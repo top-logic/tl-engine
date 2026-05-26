@@ -6,30 +6,36 @@
 
 ## 1. Problem
 
-The tile-stack demo currently renders its breadcrumb as a "secondary header" inside the
-tab body. In real applications a breadcrumb belongs in the app bar, not under it. The
-naive fix — moving the breadcrumb into `<app-bar>` — fails for two reasons:
+Many UI patterns need a descendant view to project content into an ancestor region:
 
-1. **Scope.** The breadcrumb binds to a `navPath` channel declared on the tile-stack
-   view. Channels are visible only within their declaring view's subtree; the app bar
-   is an ancestor and cannot see them. Forcing every breadcrumb-using feature to
-   declare its channel at app-shell scope destroys module independence — every nav
-   feature would have to register its channels globally.
-2. **Tab independence.** Different tabs may host different tile-stacks with their own
-   independent navigation paths. The app-bar breadcrumb has to *follow the active tab*.
-   No data-flow channel models this cleanly: the value the app bar should display is
-   not a path, it is a UI fragment whose identity depends on which subtree is mounted.
+- A drill-down view contributes its breadcrumb to the app bar.
+- A form view contributes its "Edit" / "Save" buttons to the app bar's action area.
+- A wizard step contributes its "Next" primary-action button to the wizard frame.
+- A detail view contributes status indicators to a tab's title bar.
 
-The right primitive is not a wider channel. It is a **named portal slot**: an ancestor
-declares a region; a descendant declares content for that region; the framework wires
-the two together at render time, scoped to lifecycle (mount/unmount of the descendant).
+What these have in common is structural: **the content is owned by the descendant
+(its lifecycle, its data bindings, its channel references), but rendered by the
+ancestor.** The descendant's locally-declared channels and bindings should not have
+to escape their scope just to be visible at the rendering site.
+
+TopLogic today has no general primitive for this. It has one ad-hoc mechanism —
+`CommandScope` — that handles exactly one case (commands surfacing in the app-bar
+toolbar) and only for one artifact type (`CommandModel`). Other cases either don't
+exist (breadcrumb) or are handled by widening channel scope, which forces every
+contributing module to register channels globally and destroys modularity.
+
+The right primitive is a general one: a pair of regular UIElements — a **slot**
+placeholder and **slot-content** contributor — that communicate through a
+`ViewContext`-resident scope, named by string, scoped by `ViewContext` nesting.
+Everything else (breadcrumb in app-bar, toolbar buttons, wizard primary actions,
+status indicators) is an application of this one primitive.
 
 ## 2. Prior art in TopLogic
 
-The framework already implements this pattern — for commands.
+### 2.1 `CommandScope` — the ad-hoc precursor
 
-`AppShellElement` (`com.top_logic.layout.view.element.AppShellElement`) seeds a shared
-`CommandScope` into the `ViewContext` (lines 122–126, 154):
+`AppShellElement` (`com.top_logic.layout.view.element.AppShellElement`) seeds a
+shared `CommandScope` into the `ViewContext` for its subtree (lines 122–126, 154):
 
 ```java
 CommandScope sharedScope = context.getCommandScope();
@@ -42,64 +48,249 @@ ViewContext scopedContext = context
     ...;
 ```
 
-Descendant elements (form edit commands, dashboard layout edit) register their
-`ViewCommandModel`s into this scope on attach. `AppBarElement` reads from the same
-scope (lines 139–159), renders the commands with `TOOLBAR` placement as trailing
-action buttons, observes changes via `scope.addListener(...)`, and removes contributed
+Descendant elements (form edit commands, dashboard layout edit) call
+`scope.addCommand(model)` on attach. `AppBarElement` reads from the same scope
+(lines 139–159), renders entries with `TOOLBAR` placement as trailing action
+buttons, observes changes via `scope.addListener(...)`, and removes contributed
 commands on cleanup.
 
-This is exactly the contribution model needed for breadcrumbs — except the contributed
-artifact is a UI fragment (a `ReactControl`), not a `CommandModel`, and the routing is
-by named slot, not by `CommandPlacement` enum.
+This is the right shape — descendant contributes, ancestor consumes, scope mediates,
+listener observes change — but **narrowed to one type (`CommandModel`) and one
+implicit target (the app-bar toolbar, picked by `CommandPlacement` enum).**
+Generalizing it removes the special-case nature.
 
-## 3. Proposal: `ContentScope` and named slots
+### 2.2 Static slots on `AppShellElement`
 
-### 3.1 Java surface
+`AppShellElement` also uses "slot" in another sense (lines 44–46): the
+`<header>` / `<content>` / `<footer>` configuration slots that determine
+**structure** — *which* elements are mounted as the shell's three regions. These
+are statically declared in XML when the shell is configured. They are not the
+subject of this spec. Dynamic slot content is about *runtime* contributions to a
+named region, not the structural composition of the shell itself.
 
-A new shared scope, analogous to `CommandScope`:
+## 3. Proposal
+
+### 3.1 Mental model
+
+`<slot>` and `<slot-content>` are **two ordinary UIElements that communicate
+through a `SlotScope` resident in the `ViewContext`**, identified by string name.
+Neither is privileged: any subtree can declare a slot at any nesting depth, and
+any subtree can contribute to it.
+
+```
++-----------------------------------------------------------+
+|  view subtree                                             |
+|                                                           |
+|   ContainerA  (seeds SlotScope into ViewContext)          |
+|   |                                                       |
+|   +-- ... <slot name="foo"/>     <-- reads from scope     |
+|   |                                                       |
+|   +-- ... <slot-content slot="foo">   <-- writes to scope |
+|              <some-ui-element/>                           |
+|           </slot-content>                                 |
+|                                                           |
++-----------------------------------------------------------+
+```
+
+- The **scope** is a mutable registry keyed by slot name.
+- The **slot element** subscribes and renders contributions in registration order.
+- The **slot-content element** registers its children on mount and unregisters on
+  unmount.
+- Mount/unmount is driven by the normal `UIElement` / control lifecycle — no
+  separate route-awareness logic is needed.
+
+The `<slot>` and `<slot-content>` elements know nothing about each other directly.
+They both know about the `SlotScope`. Scope is the *only* shared state.
+
+### 3.2 Where the scope comes from
+
+Any `UIElement` may seed a `SlotScope` into its derived `ViewContext`:
 
 ```java
-public final class ContentScope {
+ViewContext scoped = context.withSlotScope(new SlotScope());
+```
 
-    /** Add a contribution under a named slot. */
-    public ContentHandle contribute(String slotName, UIElement content);
+A descendant `<slot>` reads from `context.getSlotScope()`; so does
+`<slot-content>`. If no scope is seeded in any ancestor, both error at startup
+("no enclosing slot scope").
 
-    /** All current contributions for a slot, in registration order. */
+`AppShellElement` seeds one default scope for the entire shell so that the common
+case ("any descendant contributes to a slot anywhere in the shell, e.g. the
+app-bar") works without configuration. Other elements (a wizard frame, a complex
+dialog, a detail pane) may seed *additional* scopes to isolate their internal
+slot communication from the outer shell — exactly how `CommandScope` nesting
+works today. Inner scopes shadow outer scopes for descendants inside them.
+
+### 3.3 Java surface
+
+```java
+public final class SlotScope {
+    public SlotHandle contribute(String slotName, UIElement content);
     public List<UIElement> get(String slotName);
-
-    /** Observe add/remove for any slot. */
-    public void addListener(ContentScopeListener listener);
+    public void addListener(SlotScopeListener listener);
 }
 
-public interface ContentHandle extends AutoCloseable {
+public interface SlotHandle extends AutoCloseable {
     @Override void close();   // removes the contribution
 }
+
+public interface SlotScopeListener {
+    void slotsChanged(Set<String> changedSlotNames);
+}
 ```
 
-`ViewContext` gains `getContentScope()` / `withContentScope(...)`, matching the
-`CommandScope` pair. `AppShellElement` seeds a single `ContentScope` for the whole
-shell, just as it does for `CommandScope`.
+`ViewContext` gains `getSlotScope()` / `withSlotScope(...)`, mirroring the
+existing `CommandScope` pair.
 
-### 3.2 XML surface
+### 3.4 XML surface
 
-Two new elements:
+`<slot>` and `<slot-content>` are regular `UIElement` configurations. They can
+appear anywhere a `UIElement` can — inside `<app-bar>`, inside `<stack>`, inside a
+custom container, inside another `<slot-content>`. There is no positional or
+container-type restriction.
 
-**`<slot name="...">`** — declares a named slot on an ancestor. Used inside containers
-that can host dynamic content (initially: `<app-bar>`):
+**Slot placeholder:**
 
 ```xml
+<slot name="secondary"/>
+```
+
+Renders the current contributions to `secondary` from the nearest enclosing
+`SlotScope`. Optionally accepts a fallback for the empty case:
+
+```xml
+<slot name="secondary">
+    <empty>
+        <text>no breadcrumb</text>
+    </empty>
+</slot>
+```
+
+**Slot contribution:**
+
+```xml
+<slot-content slot="secondary">
+    <tile-breadcrumb path="navPath">
+        <home-label><en>Accounts</en></home-label>
+    </tile-breadcrumb>
+</slot-content>
+```
+
+The contribution's children are constructed in the *declaring* view's context —
+so the `navPath` channel reference resolves against the view that owns it, not
+against the slot's host. The slot host only adopts already-constructed controls
+for rendering.
+
+### 3.5 Lifecycle
+
+| Event | Effect |
+|-------|--------|
+| `<slot-content>` element creates its child controls | Children registered into nearest `SlotScope`, listener notified, slot host re-renders. |
+| Containing view detaches (route change, conditional unmount, exception in teardown) | `SlotHandle.close()` called via standard `UIElement` cleanup hook; contributions removed; slot host re-renders. |
+| Multiple `<slot-content>` elements target the same slot | All contributions are rendered, in registration order, wrapped in a `ReactStackControl` (same pattern `AppShellElement.createSlotControl` uses today for static slots). |
+| `<slot>` host has zero contributions | Renders the configured `<empty>` fallback, or nothing if none configured. Visual collapsing (zero height, hidden border) is a styling concern for the host element, not this spec. |
+| `<slot-content>` declared but no enclosing scope seeds a matching scope | Startup error. |
+| `<slot>` declared but no enclosing scope | Startup error. |
+
+### 3.6 Conflict resolution
+
+All contributions render, in registration order. The simplest rule, matches the
+existing static-slot multi-element behaviour in `AppShellElement`, and has no
+hidden precedence.
+
+If a use case appears for "single-winner" or "highest-priority-wins", it goes on
+`<slot-content>` as an explicit attribute (`replace="true"`, `priority="N"`) — not
+as implicit behaviour and not in this spec.
+
+### 3.7 Scope boundaries and nesting
+
+Slot names are local to the seeding `SlotScope`. Two unrelated subtrees that each
+seed their own `SlotScope` and each use `<slot name="primary"/>` and
+`<slot-content slot="primary">` do not interfere — each pair communicates within
+its own scope.
+
+A `<slot-content>` finds its target by walking up the `ViewContext` chain to the
+nearest `SlotScope`. To project content "past" an inner scope into an outer one,
+the inner scope's seeding container would have to expose it (not part of this
+spec; can be added later if needed via something like
+`<slot-content slot="..." scope="outer">`).
+
+## 4. Generalization: `CommandScope` becomes redundant
+
+The existing `CommandScope` is a special case of `SlotScope` where:
+
+- the artifact type is `CommandModel` instead of `UIElement`,
+- the routing key is `CommandPlacement` (an enum) instead of a string slot name,
+- the consumer is hard-coded inside `AppBarElement` instead of expressed as a
+  `<slot>` UIElement,
+- the contribution is via `ViewCommandModel.attach()` against an implicit scope
+  pulled from `ViewContext`, instead of via a `<slot-content>` UIElement.
+
+With the slot mechanism in place, the app-bar's toolbar is just another slot host:
+
+```xml
+<!-- before: app-bar has special <commands> child + hidden CommandScope logic -->
 <app-bar variant="flat">
-    <commands>...</commands>
+    <commands>
+        <open-designer placement="TOOLBAR">...</open-designer>
+    </commands>
     <title>Task Manager</title>
-    <slot name="secondary"/>
 </app-bar>
+
+<!-- after: app-bar has a regular slot; commands are slot-content contributing buttons -->
+<app-bar variant="flat">
+    <title>Task Manager</title>
+    <slot name="toolbar"/>
+</app-bar>
+
+<!-- declared near the app-shell, or inside any descendant view: -->
+<slot-content slot="toolbar">
+    <button command="open-designer" placement="TOOLBAR">
+        <label><en>Designer</en></label>
+        <tooltip><en>Open the view designer.</en></tooltip>
+    </button>
+</slot-content>
+
+<!-- and a form's edit command, declared inside the form view: -->
+<slot-content slot="toolbar">
+    <button command="form-edit"><label><en>Edit</en></label></button>
+    <button command="form-save"><label><en>Save</en></label></button>
+</slot-content>
 ```
 
-**`<slot-content slot="...">`** — descendant contribution. Its children are registered
-into the named slot when the surrounding view is mounted, and unregistered when it
-unmounts:
+The form's "Edit" / "Save" buttons appear when the form view is mounted, disappear
+when it unmounts, render in the order they were declared. No `CommandScope`, no
+`addCommand` / `removeCommand` API, no `CommandPlacement` enum, no cleanup hook
+inside `AppBarElement`. The same lifecycle hooks that handle the breadcrumb
+contribution handle these buttons.
+
+**This spec does not commit to migrating `CommandScope` now.** It commits to making
+the new mechanism general enough that such a migration is a pure refactor, not a
+re-design — and that any *new* "contribute to ancestor" use case (breadcrumb,
+status badge, wizard primary action, contextual filter chip) goes through the
+slot mechanism directly without inventing a parallel narrow scope.
+
+## 5. Worked examples
+
+### 5.1 Breadcrumb in app bar
+
+Drill-down view contributes its breadcrumb into the app bar's `secondary` slot:
 
 ```xml
+<!-- app.view.xml -->
+<app-shell>
+    <header>
+        <app-bar variant="flat">
+            <title>Task Manager</title>
+            <slot name="secondary"/>
+        </app-bar>
+    </header>
+    <content>...</content>
+</app-shell>
+```
+
+```xml
+<!-- tiles-demo.view.xml -->
 <view>
     <channels><channel name="navPath"/></channels>
 
@@ -109,84 +300,17 @@ unmounts:
         </tile-breadcrumb>
     </slot-content>
 
-    <tile-stack path="navPath" initial="..."/>
+    <tile-stack path="navPath" initial="demo/tiles-demo/overview.view.xml"/>
 </view>
 ```
 
-The breadcrumb's channel reference (`path="navPath"`) is still resolved in the view
-that declared `<slot-content>`, not in the app bar. The app bar only adopts the
-already-instantiated control. The channel never has to leave its home scope.
+The `navPath` channel stays local. The breadcrumb's path resolution happens
+where the channel exists. Only the rendered control is adopted by the slot host.
 
-### 3.3 Lifecycle
+### 5.2 Multiple tile-stacks sharing one breadcrumb (channel pattern)
 
-| Event | Effect |
-|-------|--------|
-| `<slot-content>` element creates its control | Contribution registered into ancestor `ContentScope`, scope listeners notified, app bar re-renders the slot. |
-| Containing view detaches (tab change, route change, conditional render) | Contribution removed via the `ContentHandle.close()` returned at registration, app bar re-renders the slot. |
-| Multiple `<slot-content>` elements target the same slot | All contributions are rendered, in registration order. Same as `AppShellElement`'s `createSlotControl` wrapping multiple elements in a `ReactStackControl`. |
-| App bar declares `<slot name="X"/>` but no contributions exist | Slot renders as empty. App bar layout collapses the empty region (CSS `:empty` or explicit visibility logic). |
-
-The mount/unmount tie-in falls out naturally because nav-item routing already
-controls which view subtree is currently materialized — only the active tab's
-`<slot-content>` is attached, so only its contribution is in the scope.
-
-### 3.4 Conflict resolution
-
-For the breadcrumb case there is exactly one active tile-stack tab at a time, so
-conflicts do not arise. The general rule: **all contributions render in registration
-order**, wrapped in a `ReactStackControl` as `AppShellElement` already does.
-Consumers that want "single-winner" semantics can declare the slot with a maximum
-count or a `replace` policy if a use case appears; we do not pre-build that.
-
-### 3.5 Scope boundaries
-
-The `ContentScope` is seeded at `AppShellElement` and inherited via `ViewContext`
-into every descendant. Slot names are global within the app shell — `name="secondary"`
-on an `<app-bar>` matches any descendant's `<slot-content slot="secondary">`,
-regardless of which feature module declared either side.
-
-This is the same global-name model `CommandScope` uses with `CommandPlacement`. If
-later we need scoped/local slots (e.g. a slot owned by a sub-view, not the app
-shell), we add a second seeding point — `ContentScope` is hierarchical the same way
-`CommandScope` is.
-
-## 4. Worked examples
-
-### 4.1 Breadcrumb in app bar
-
-Today (tile demo only):
-
-```xml
-<view>
-    <channels><channel name="navPath"/></channels>
-    <stack direction="column" gap="default">
-        <tile-breadcrumb path="navPath">...</tile-breadcrumb>
-        <tile-stack path="navPath" initial="..."/>
-    </stack>
-</view>
-```
-
-With dynamic slot content:
-
-```xml
-<view>
-    <channels><channel name="navPath"/></channels>
-
-    <slot-content slot="secondary">
-        <tile-breadcrumb path="navPath">...</tile-breadcrumb>
-    </slot-content>
-
-    <tile-stack path="navPath" initial="..."/>
-</view>
-```
-
-The app bar declares `<slot name="secondary"/>` once. Any tile-stack tab fills it
-when active; the `navPath` channel stays local.
-
-### 4.2 Multiple tile-stacks sharing one breadcrumb
-
-Two stacks in one view, one breadcrumb, all bound to the same channel. No new
-framework feature needed — channel scoping already handles this:
+This needs no slot mechanism — channel semantics already cover it. Included to
+answer the natural question "how do I synchronize two stacks":
 
 ```xml
 <view>
@@ -203,74 +327,138 @@ framework feature needed — channel scoping already handles this:
 </view>
 ```
 
-Drill into either stack: the channel updates, both stacks re-render, the breadcrumb
-re-renders. This is a property of channels, not of slots. Worth including in the
-demo because the question comes up naturally.
+Two stacks bound to the same channel name in the same scope. Drill into either:
+the channel updates, both stacks re-render, the breadcrumb re-renders.
 
-### 4.3 Independent tile-stack tabs
+### 5.3 Independent tile-stack tabs
 
-Tab A and Tab B each declare their own `navPath` channel locally. Each contributes
-its own breadcrumb to `slot="secondary"` on mount. Only the active tab is mounted, so
-only its breadcrumb is in the scope, so the app bar shows the right one. Switching
-tabs implicitly switches the breadcrumb. No app-level channel multiplexer needed.
+Tab A and Tab B each declare their own local `navPath` channel and their own
+`<slot-content slot="secondary">`. Only the active tab is mounted (nav-item
+routing handles this). Only the active tab's slot-content is in the scope.
+Switching tabs implicitly switches the visible breadcrumb. No app-level
+multiplexer needed; no global channel needed.
 
-## 5. Non-goals
+### 5.4 Toolbar buttons from a form (CommandScope replacement)
 
-- **Cross-window / cross-app-shell portals.** The scope is bounded by `AppShellElement`.
-- **Replacing the static `<header>/<content>/<footer>` slots on `AppShellElement`.**
-  Those configure the *shell structure* (which elements exist), not dynamic content
-  into one of them. They stay.
-- **Reordering / priority across contributions.** Registration order is the contract.
-  If precedence is ever needed, it goes on `<slot-content>` as an explicit `priority`
-  attribute — not implicit and not part of this spec.
-- **Content-aware empty-state rendering inside the slot.** The slot is "empty" iff
-  no contributions are registered. The app bar's visual treatment of an empty slot
-  (collapse vs reserve space) is a styling concern for `ReactAppBarControl`, not a
-  framework concern.
+Form view contributes its action buttons to the toolbar, no `CommandScope`:
 
-## 6. Open questions
+```xml
+<!-- form view -->
+<view>
+    <slot-content slot="toolbar">
+        <button command="edit"><label><en>Edit</en></label></button>
+        <button command="save" disabled-while-clean="true">
+            <label><en>Save</en></label>
+        </button>
+    </slot-content>
 
-1. **Slot declaration site.** Initial proposal puts `<slot>` on `<app-bar>` only. Should
-   it be more general — e.g. allowed on any `UIElement` that opts in by implementing
-   a `SlotHost` interface? Generalizing now is cheap; deferring is also cheap.
-2. **Slot identity vs. position.** If `<slot name="secondary"/>` appears in multiple
-   places in the shell (unlikely, but possible if `<app-bar>` is duplicated), which
-   one receives contributions? Proposal: error at startup. Slot names are unique
-   within an `AppShellElement`.
-3. **Stale references on hot-reload.** `ContentHandle` is `AutoCloseable`; if a view
-   is detached without `close()` being called (e.g. an exception in tear-down), the
-   contribution leaks. Mitigation: weak references, or a periodic GC sweep tied to
-   shell render. Same risk exists today in `CommandScope`; out of scope.
-4. **Naming.** "Slot" matches existing TopLogic terminology (`AppShellElement` already
-   uses it for header/content/footer). "Slot-content" is verbose; alternatives:
-   `<projects-to slot="...">`, `<header-content slot="...">`, `<contribute slot="...">`.
-   Bikeshed.
+    <form-component .../>
+</view>
+```
 
-## 7. Migration
+When the form unmounts, both buttons disappear from the toolbar automatically.
 
-This feature is purely additive. No existing view XML breaks. The tile-stack demo
-opts into the new pattern by:
+### 5.5 Wizard with its own private slot scope
 
-1. Adding `<slot name="secondary"/>` to the demo's `<app-bar>` in `app.view.xml`.
-2. Wrapping the breadcrumb in `tiles-demo.view.xml` in `<slot-content slot="secondary">`
-   and removing the surrounding `<stack direction="column">` (no longer needed since
-   the breadcrumb and stack live in different regions).
+A wizard frame seeds its own `SlotScope` and exposes a `primary-action` slot:
 
-Other consumers can adopt incrementally; nothing forces them.
+```xml
+<wizard>  <!-- this element calls context.withSlotScope(new SlotScope()) -->
+    <header>
+        <stepper steps="..."/>
+        <slot name="primary-action"/>
+    </header>
 
-## 8. Implementation sketch (for sizing only)
+    <step id="account">
+        <slot-content slot="primary-action">
+            <button command="next">Next</button>
+        </slot-content>
+        <form .../>
+    </step>
+
+    <step id="review">
+        <slot-content slot="primary-action">
+            <button command="submit" variant="primary">Submit</button>
+        </slot-content>
+        <review-panel/>
+    </step>
+</wizard>
+```
+
+The wizard's private scope shadows the app-shell's. `<slot-content slot="toolbar">`
+declared inside a step would still bubble up to the wizard's scope first; if the
+wizard's scope doesn't know `toolbar`, an explicit decision is needed (current
+proposal: error; alternative: chain through to outer scope — open question 6.1).
+
+## 6. Non-goals
+
+- **Migrating `CommandScope` to slot-content as part of this work.** The design
+  enables it as a future refactor; the migration is not in scope here.
+- **Replacing the static `<header>` / `<content>` / `<footer>` slots on
+  `AppShellElement`.** Those configure shell *structure* (which elements exist).
+  They are unrelated to the dynamic mechanism here.
+- **Reordering or priority across contributions.** Registration order is the
+  contract.
+- **Cross-window or cross-app-shell portals.** Scope is bounded by `ViewContext`
+  inheritance.
+
+## 7. Open questions
+
+1. **Inner-scope passthrough.** When a `<slot-content slot="X">` is declared inside
+   an inner scope that does not host `X`, should it bubble to the outer scope or
+   error? Symmetric question for `<slot>`. Proposal: error (explicit is better).
+   Alternative: implicit bubble (`scope="outer"` attribute to opt in).
+2. **Naming.** Element names `<slot>` and `<slot-content>` chosen for symmetry and
+   to match existing `AppShellElement` "slot" vocabulary, but conflict-rich at the
+   reading level (the static slots and the dynamic slots share the word). Possible
+   alternatives: `<outlet>` / `<contribute>`, `<region>` / `<region-content>`,
+   `<projects-to>`. Bikeshed; will not block the design.
+3. **Slot uniqueness within a scope.** If two `<slot name="X"/>` elements appear
+   in the same scope (e.g. two app-bars), do contributions fan out to both, or is
+   the second a configuration error? Proposal: fan out — contributions render in
+   *all* matching slot hosts. Cheap to implement, matches the listener model.
+4. **Empty-state contract.** Should `<slot>` always allocate space (and the host
+   styles it as collapsed when empty), or should it actually not render anything
+   when empty? Proposal: don't render when empty; host can wrap in its own
+   container if it wants reserved space.
+5. **Leak resistance.** If a view unmounts without `SlotHandle.close()` being
+   reached (exception in teardown), the contribution leaks. Same risk in
+   `CommandScope` today. Mitigation deferred — possibly weak references on
+   contributions, possibly periodic sweep.
+6. **Scope discovery API.** Should `<slot-content>` allow an explicit scope
+   selector (`scope="app"`, `scope="wizard"`) for cases where the nearest scope
+   is not the intended target? Adds complexity; defer until a real need appears.
+
+## 8. Migration of existing code
+
+Purely additive. No existing view XML breaks.
+
+- `AppShellElement` gains a `SlotScope` seed alongside its existing `CommandScope`
+  seed. Both coexist.
+- `AppBarElement` is extended to accept nested `<slot>` children (in addition to
+  its current `<commands>` block). The existing `<commands>` / `CommandScope`
+  path remains untouched; the new `<slot>` path is opt-in.
+- The tile-stack demo migrates: breadcrumb moved into a `<slot-content>` in
+  `tiles-demo.view.xml`; `<slot name="secondary"/>` added to the demo `app-bar`.
+- Optional follow-up ticket (not this one): port `<open-designer>` and all
+  `placement="TOOLBAR"` commands to `<slot-content slot="toolbar">`-wrapped
+  buttons. Then deprecate `CommandScope`, `ViewCommandModel`, the `<commands>`
+  block on `AppBarElement`, and the `CommandPlacement` enum.
+
+## 9. Implementation sketch (for sizing only)
 
 | Component | Estimated effort |
 |-----------|------------------|
-| `ContentScope` + `ContentScopeListener` + `ContentHandle` | small, mirror of `CommandScope` |
-| `ViewContext.getContentScope()` / `withContentScope(...)` | small, mirror of command pair |
-| `AppShellElement` seeds `ContentScope` | trivial (3 lines) |
-| `<slot name="...">` element + reads from scope, observes changes | small |
-| `<slot-content slot="...">` element + register/unregister lifecycle | small |
-| `AppBarElement` accepts nested `<slot>` declarations | small |
-| `ReactAppBarControl` renders slot region | small to medium (depending on layout) |
+| `SlotScope`, `SlotScopeListener`, `SlotHandle` | small (mirror of `CommandScope`) |
+| `ViewContext.getSlotScope()` / `withSlotScope(...)` | small |
+| `AppShellElement` seeds default `SlotScope` | trivial (3 lines) |
+| `<slot>` element + control that subscribes/renders | small |
+| `<slot-content>` element + register/unregister lifecycle | small |
+| `AppBarElement` accepts nested `<slot>` children | small |
+| `ReactAppBarControl` renders slot region | small to medium |
 | Tile-stack demo migration | trivial |
-| Multi-tab demo (linked stacks + independent tab) | small |
+| Multi-tab demo views | small |
+| **(Follow-up, separate ticket)** CommandScope deprecation | medium (touches every existing toolbar consumer) |
 
-Total: probably one ticket's worth of work, well under the cost of trying to make
-this work with channels alone.
+This ticket: probably one to two days of focused work. Follow-up ticket:
+separate, larger, well-scoped.

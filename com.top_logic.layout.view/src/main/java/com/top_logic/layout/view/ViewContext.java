@@ -15,6 +15,7 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.tiles.TileStackScope;
 
 /**
  * Hierarchical context for UIElement control creation.
@@ -116,6 +117,34 @@ public interface ViewContext extends ReactContext {
 	 *         path, and channels.
 	 */
 	ViewContext withCommandScope(CommandScope scope);
+
+	/**
+	 * The {@link TileStackScope} of the enclosing
+	 * {@link com.top_logic.layout.view.tiles.TileStackElement &lt;tile-stack&gt;}, or
+	 * {@code null} if no tile stack is in scope.
+	 *
+	 * <p>
+	 * Used by {@link com.top_logic.layout.view.tiles.NavigatePushCommand &lt;navigate-push&gt;} to
+	 * resolve the target stack from within a mounted frame.
+	 * </p>
+	 */
+	TileStackScope getTileStackScope();
+
+	/**
+	 * Creates a derived context with the given {@link TileStackScope}.
+	 *
+	 * <p>
+	 * Called by {@link com.top_logic.layout.view.tiles.TileStackElement} when mounting a frame to
+	 * make the stack reachable for descendants. Nested stacks deliberately override (not inherit)
+	 * the scope - {@code <navigate-push>} from inside a frame always targets the nearest
+	 * enclosing stack.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The tile stack scope to set.
+	 * @return A new context with the given scope.
+	 */
+	ViewContext withTileStackScope(TileStackScope scope);
 
 	/**
 	 * The {@link ContextMenuOpener} of the nearest enclosing frame, or {@code null} if no opener is

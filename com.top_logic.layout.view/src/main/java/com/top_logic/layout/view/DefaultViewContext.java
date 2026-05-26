@@ -21,6 +21,7 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.tiles.TileStackScope;
 
 /**
  * Default implementation of {@link ViewContext}.
@@ -41,6 +42,8 @@ public class DefaultViewContext implements ViewContext {
 
 	private final CommandScope _commandScope;
 
+	private final TileStackScope _tileStackScope;
+
 	private final ErrorSink _errorSink;
 
 	private FormModel _formModel;
@@ -59,7 +62,7 @@ public class DefaultViewContext implements ViewContext {
 	 *        infrastructure.
 	 */
 	public DefaultViewContext(ReactContext reactContext) {
-		this(reactContext, "view", new HashMap<>(), null, null, null, null,
+		this(reactContext, "view", new HashMap<>(), null, null, null, null, null,
 			resolveReloadListeners(reactContext), null);
 	}
 
@@ -71,13 +74,14 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	private DefaultViewContext(ReactContext reactContext, String personalizationPath,
-			Map<String, ViewChannel> channels, CommandScope commandScope, FormModel formModel,
-			ErrorSink errorSink, DirtyChannel dirtyChannel, List<ViewReloadListener> reloadListeners,
-			ContextMenuOpener contextMenuOpener) {
+			Map<String, ViewChannel> channels, CommandScope commandScope, TileStackScope tileStackScope,
+			FormModel formModel, ErrorSink errorSink, DirtyChannel dirtyChannel,
+			List<ViewReloadListener> reloadListeners, ContextMenuOpener contextMenuOpener) {
 		_reactContext = reactContext;
 		_personalizationPath = personalizationPath;
 		_channels = channels;
 		_commandScope = commandScope;
+		_tileStackScope = tileStackScope;
 		_formModel = formModel;
 		_errorSink = errorSink;
 		_dirtyChannel = dirtyChannel;
@@ -88,7 +92,7 @@ public class DefaultViewContext implements ViewContext {
 	@Override
 	public ViewContext childContext(String segment) {
 		return new DefaultViewContext(_reactContext, _personalizationPath + "." + segment, _channels, _commandScope,
-			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
+			_tileStackScope, _formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
 	}
 
 	@Override
@@ -123,14 +127,25 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public ViewContext withCommandScope(CommandScope scope) {
-		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _formModel, _errorSink,
-			_dirtyChannel, _reloadListeners, _contextMenuOpener);
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, scope, _tileStackScope,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
+	}
+
+	@Override
+	public TileStackScope getTileStackScope() {
+		return _tileStackScope;
+	}
+
+	@Override
+	public ViewContext withTileStackScope(TileStackScope scope) {
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, _commandScope, scope,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
 	}
 
 	@Override
 	public ViewContext withErrorSink(ErrorSink errorSink) {
 		return new DefaultViewContext(_reactContext, _personalizationPath, _channels,
-			_commandScope, _formModel, errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
+			_commandScope, _tileStackScope, _formModel, errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener);
 	}
 
 	@Override
@@ -143,8 +158,8 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public ViewContext withContextMenuOpener(ContextMenuOpener opener) {
-		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, _commandScope, _formModel,
-			_errorSink, _dirtyChannel, _reloadListeners, opener);
+		return new DefaultViewContext(_reactContext, _personalizationPath, _channels, _commandScope, _tileStackScope,
+			_formModel, _errorSink, _dirtyChannel, _reloadListeners, opener);
 	}
 
 	@Override

@@ -102,26 +102,69 @@ any subtree can contribute to it.
 The `<slot>` and `<slot-content>` elements know nothing about each other directly.
 They both know about the `SlotScope`. Scope is the *only* shared state.
 
-### 3.2 Where the scope comes from
+### 3.2 Slot position vs. slot scope
 
-Any `UIElement` may seed a `SlotScope` into its derived `ViewContext`:
+Two independent concerns, easy to confuse:
+
+**Position** — where in the rendered UI does a contribution appear?
+Determined by *where the `<slot>` element is positioned in its parent's child
+list*. `<slot name="toolbar"/>` placed inside `<app-bar>` renders contributions
+at that position inside the app bar. The slot's positional parent (`app-bar`)
+is the **visual host**.
+
+**Scope** — which `<slot-content>` elements can target which `<slot>` element?
+Determined by which **ancestor container** has opted in by seeding a
+`SlotScope` into its derived `ViewContext`. The slot's positional parent is
+**not** required to be the scope owner. Both `<slot>` and `<slot-content>`
+walk up their respective `ViewContext` chains to find the nearest seeded
+`SlotScope`; they meet at the lowest common ancestor that opted in.
+
+In the typical app, the only opt-in is `AppShellElement`. The app-bar contains
+the `<slot>`, deep descendants contain `<slot-content>`, and they connect
+through the single shell-level scope. The app-bar itself does **not** seed
+anything; intermediate containers (`<stack>`, `<split>`, `<view>`, …) do not
+seed anything; they pass `ViewContext` through unchanged.
+
+### 3.3 Who opts in
+
+Three categories of UIElement in practice:
+
+1. **Scope seeders** — rare, deliberate. Containers that want to be a slot
+   communication boundary. `AppShellElement` is the default seeder for the
+   common case. Additional seeders only exist when an element wants its
+   internal slot-content *isolated* from an outer shell scope: e.g. a wizard
+   frame whose `primary-action` slot must not be filled by random contributions
+   from elsewhere in the shell, or a modal dialog with its own action region.
+   These are ~3–5 elements in the whole codebase, not a routine pattern.
+
+2. **Slot hosts** — elements that render a `<slot>` placeholder somewhere in
+   their content. The host renders the placeholder at the chosen position; it
+   does **not** manage the registry. `AppBarElement` would be one such host;
+   a status-bar element another. The host needs zero knowledge of which
+   container above it owns the scope.
+
+3. **Everything else** — transparent. Containers like `<stack>`, `<split>`,
+   `<view>`, `<form>`, `<tab>`, `<grid>` do not seed scopes and do not host
+   slots. They forward `ViewContext` to their children unchanged. They do not
+   need to know the slot mechanism exists.
+
+A `<slot-content>` element only requires that *some* ancestor in its chain has
+opted in. The contributor is fully decoupled from which specific element owns
+the scope and where the matching `<slot>` is rendered.
+
+### 3.4 Where the scope API lives
 
 ```java
 ViewContext scoped = context.withSlotScope(new SlotScope());
 ```
 
-A descendant `<slot>` reads from `context.getSlotScope()`; so does
-`<slot-content>`. If no scope is seeded in any ancestor, both error at startup
-("no enclosing slot scope").
+`AppShellElement` calls this once. Other seeders call it when they want
+isolation. Inner seeded scopes shadow outer ones for descendants inside them,
+exactly as `CommandScope` nesting works today. If no scope is seeded in any
+ancestor, `<slot>` and `<slot-content>` both error at startup ("no enclosing
+slot scope") — explicit failure rather than silent no-op.
 
-`AppShellElement` seeds one default scope for the entire shell so that the common
-case ("any descendant contributes to a slot anywhere in the shell, e.g. the
-app-bar") works without configuration. Other elements (a wizard frame, a complex
-dialog, a detail pane) may seed *additional* scopes to isolate their internal
-slot communication from the outer shell — exactly how `CommandScope` nesting
-works today. Inner scopes shadow outer scopes for descendants inside them.
-
-### 3.3 Java surface
+### 3.5 Java surface
 
 ```java
 public final class SlotScope {
@@ -142,7 +185,7 @@ public interface SlotScopeListener {
 `ViewContext` gains `getSlotScope()` / `withSlotScope(...)`, mirroring the
 existing `CommandScope` pair.
 
-### 3.4 XML surface
+### 3.6 XML surface
 
 `<slot>` and `<slot-content>` are regular `UIElement` configurations. They can
 appear anywhere a `UIElement` can — inside `<app-bar>`, inside `<stack>`, inside a
@@ -181,7 +224,7 @@ so the `navPath` channel reference resolves against the view that owns it, not
 against the slot's host. The slot host only adopts already-constructed controls
 for rendering.
 
-### 3.5 Lifecycle
+### 3.7 Lifecycle
 
 | Event | Effect |
 |-------|--------|
@@ -192,7 +235,7 @@ for rendering.
 | `<slot-content>` declared but no enclosing scope seeds a matching scope | Startup error. |
 | `<slot>` declared but no enclosing scope | Startup error. |
 
-### 3.6 Conflict resolution
+### 3.8 Conflict resolution
 
 All contributions render, in registration order. The simplest rule, matches the
 existing static-slot multi-element behaviour in `AppShellElement`, and has no
@@ -202,7 +245,7 @@ If a use case appears for "single-winner" or "highest-priority-wins", it goes on
 `<slot-content>` as an explicit attribute (`replace="true"`, `priority="N"`) — not
 as implicit behaviour and not in this spec.
 
-### 3.7 Scope boundaries and nesting
+### 3.9 Scope boundaries and nesting
 
 Slot names are local to the seeding `SlotScope`. Two unrelated subtrees that each
 seed their own `SlotScope` and each use `<slot name="primary"/>` and

@@ -10,9 +10,13 @@ import asyncio
 import base64
 import os
 import sys
-import keyring
 import xmlrpc.client
+from pathlib import Path
 from typing import Any
+
+# Local credential helper (env > file > keyring resolution).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import credentials as _credentials  # noqa: E402
 
 try:
     from mcp.server import Server
@@ -34,7 +38,7 @@ class TracMCPServer:
         self._load_credentials()
 
     def _load_credentials(self):
-        """Load credentials from OS keyring (no plaintext files)."""
+        """Load credentials: env var > credentials file > OS keyring."""
         try:
             trac_url = os.environ.get("TRAC_URL", self.TRAC_URL)
 
@@ -43,16 +47,17 @@ class TracMCPServer:
             acc_user = os.environ.get("TRAC_KEYRING_ACCOUNT_USER", "username")
             acc_pass = os.environ.get("TRAC_KEYRING_ACCOUNT_PASS", "password")
 
-            username = keyring.get_password(service, acc_user)
-            password = keyring.get_password(service, acc_pass)
+            username = _credentials.get(service, acc_user, env_var="TRAC_USERNAME")
+            password = _credentials.get(service, acc_pass, env_var="TRAC_PASSWORD")
 
             if not username or not password:
                 print(
-                    "Error: Missing Trac credentials in OS keyring.\n"
-                    f"  service: {service}\n"
-                    f"  username key: {acc_user}\n"
-                    f"  password key: {acc_pass}\n"
-                    "Run: ./scripts/setup-mcp-credentials.sh trac",
+                    "Error: Missing Trac credentials.\n"
+                    "  Checked env: TRAC_USERNAME, TRAC_PASSWORD\n"
+                    f"  Checked file: {_credentials.CRED_FILE} "
+                    f"(keys: {service}__{acc_user}, {service}__{acc_pass})\n"
+                    f"  Checked keyring service: {service}\n"
+                    "Run: ./mcp-servers/scripts/setup-mcp.sh trac",
                     file=sys.stderr,
                 )
                 sys.exit(1)
@@ -70,7 +75,7 @@ class TracMCPServer:
             )
 
         except Exception as e:
-            print(f"Error loading credentials from keyring: {e}", file=sys.stderr)
+            print(f"Error loading credentials: {e}", file=sys.stderr)
             sys.exit(1)
 
     def setup_handlers(self):

@@ -21,15 +21,17 @@ SERVICE="${JENKINS_KEYRING_SERVICE:-tl-engine-jenkins-mcp}"
 ACC_USER="${JENKINS_KEYRING_ACCOUNT_USER:-username}"
 ACC_PASS="${JENKINS_KEYRING_ACCOUNT_PASS:-password}"
 
-# Read credentials from keyring using venv Python
-JENKINS_USERNAME=$("$VENV_PYTHON" -c "import keyring; print(keyring.get_password('$SERVICE', '$ACC_USER') or '')" 2>/dev/null)
-JENKINS_PASSWORD=$("$VENV_PYTHON" -c "import keyring; print(keyring.get_password('$SERVICE', '$ACC_PASS') or '')" 2>/dev/null)
+# Resolution order: env vars (JENKINS_USERNAME / JENKINS_PASSWORD), credentials
+# file, then OS keyring. Handled by mcp-servers/credentials.py.
+CRED_HELPER="$REPO_ROOT/mcp-servers/credentials.py"
+JENKINS_USERNAME=$("$VENV_PYTHON" "$CRED_HELPER" get "$SERVICE" "$ACC_USER" --env JENKINS_USERNAME)
+JENKINS_PASSWORD=$("$VENV_PYTHON" "$CRED_HELPER" get "$SERVICE" "$ACC_PASS" --env JENKINS_PASSWORD)
 
 if [[ -z "$JENKINS_USERNAME" || -z "$JENKINS_PASSWORD" ]]; then
-    echo "Error: Missing Jenkins credentials in OS keyring." >&2
-    echo "  service: $SERVICE" >&2
-    echo "  username key: $ACC_USER" >&2
-    echo "  password key: $ACC_PASS" >&2
+    echo "Error: Missing Jenkins credentials." >&2
+    echo "  Checked env: JENKINS_USERNAME, JENKINS_PASSWORD" >&2
+    echo "  Checked file: \${TL_MCP_CRED_FILE:-~/.config/tl-engine-mcp/credentials.env} (keys: ${SERVICE}__${ACC_USER}, ${SERVICE}__${ACC_PASS})" >&2
+    echo "  Checked keyring service: $SERVICE" >&2
     echo "Run: ./mcp-servers/scripts/setup-mcp.sh jenkins" >&2
     exit 1
 fi

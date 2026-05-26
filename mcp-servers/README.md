@@ -4,7 +4,7 @@ MCP server integrations for Trac (tickets), Jenkins (CI/CD), and Gitea (git host
 
 ## Setup
 
-Prerequisites: Python 3.7+ with venv, curl or wget, OS keyring (GNOME Keyring, KWallet, macOS Keychain).
+Prerequisites: Python 3.7+ with venv, curl or wget. An OS keyring (GNOME Keyring, KWallet, macOS Keychain) is preferred; if none is available the script automatically falls back to a file-based store.
 
 ```bash
 # Set up all servers (interactive)
@@ -16,9 +16,19 @@ Prerequisites: Python 3.7+ with venv, curl or wget, OS keyring (GNOME Keyring, K
 ./mcp-servers/scripts/setup-mcp.sh gitea
 ```
 
-The script creates a Python venv (`.venv`), installs tools, and stores credentials in your OS keyring.
+The script creates a Python venv (`.venv`), installs tools, and stores credentials.
 
-Credentials are stored system-wide in the OS keyring, so you only need to enter them once. When setting up a new workspace, the script detects existing credentials and skips the prompts. To re-enter credentials (e.g., after a password change), use `--force`:
+### Credential resolution order
+
+Every component (setup script, wrapper scripts, Trac server) reads credentials in this order:
+
+1. **Environment variable** — `TRAC_USERNAME` / `TRAC_PASSWORD`, `JENKINS_USERNAME` / `JENKINS_PASSWORD`, `GITEA_TOKEN`. Useful for CI or scripted/headless setups.
+2. **Credentials file** — `~/.config/tl-engine-mcp/credentials.env` (mode 0600). Override path with `TL_MCP_CRED_FILE`.
+3. **OS keyring** — service names `tl-engine-trac-mcp`, `tl-engine-jenkins-mcp`, `tl-engine-gitea-mcp`.
+
+The setup script probes the keyring on startup. If it's usable, secrets go to the keyring; otherwise they're written to the credentials file with 0600 permissions. The mode is announced at the top of each run.
+
+Credentials persist across workspaces, so the script detects existing credentials and skips the prompts. To re-enter credentials (e.g., after a password change), use `--force`:
 
 ```bash
 ./mcp-servers/scripts/setup-mcp.sh --force trac
@@ -60,9 +70,17 @@ Once connected, ask Claude Code things like:
 | Error | Fix |
 |-------|-----|
 | "Virtual environment not found" | Run `./mcp-servers/scripts/setup-mcp.sh all` |
-| "Missing credentials in OS keyring" | Re-run `./mcp-servers/scripts/setup-mcp.sh --force <service>` |
+| "Missing <service> credentials" (error lists env / file / keyring) | Run `./mcp-servers/scripts/setup-mcp.sh --force <service>`, or set the env vars listed in the error |
+| `WARN: keyring ... failed: Prompt dismissed` (or similar) | Keyring backend is unusable; setup will fall back to `~/.config/tl-engine-mcp/credentials.env`. To force the file path: `TL_MCP_CRED_FILE=/path/file ./mcp-servers/scripts/setup-mcp.sh <service>` |
 | "gitea-mcp: command not found" | Ensure `~/.local/bin` is in your PATH: `export PATH="$PATH:$HOME/.local/bin"` |
 | Server not showing in Claude Code | Check `claude mcp list`, verify `.mcp.json` exists, restart Claude Code |
+
+Inspect the active storage backend at any time with:
+
+```bash
+.venv/bin/python mcp-servers/credentials.py location   # prints "keyring" or "file:<path>"
+.venv/bin/python mcp-servers/credentials.py probe      # prints "yes" or "no"
+```
 
 ## File Locations
 
@@ -70,6 +88,8 @@ Once connected, ask Claude Code things like:
 |------|---------|
 | `.mcp.json` | Server configuration (shared via git) |
 | `mcp-servers/trac-mcp-server.py` | Trac server implementation |
+| `mcp-servers/credentials.py` | Credential resolver (env > file > keyring) |
 | `mcp-servers/scripts/setup-mcp.sh` | Setup script |
 | `mcp-servers/scripts/mcp-*-wrapper.sh` | Credential wrapper scripts |
+| `~/.config/tl-engine-mcp/credentials.env` | File-based credential store (mode 0600, fallback when keyring is unusable) |
 | `.venv/` | Python venv (local, not in git) |

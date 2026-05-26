@@ -121,23 +121,47 @@ ensure_venv() {
     "$PIP" install -U mcp keyring secretstorage >/dev/null 2>&1
 }
 
-# --- Store Credentials in Keyring ---
-store_in_keyring() {
-    local service="$1"
-    local key="$2"
-    local value="$3"
+# --- Credential storage (keyring with file fallback) ---
+# Uses mcp-servers/credentials.py so wrappers and the Trac server share
+# the exact same resolution rules.
 
-    "$PY" - <<PYTHON
-import keyring
-keyring.set_password("${service}", "${key}", """${value}""")
-PYTHON
+CRED_HELPER="mcp-servers/credentials.py"
+
+# STORAGE_MODE is set by ensure_storage_mode() once the venv is ready.
+STORAGE_MODE=""
+
+ensure_storage_mode() {
+    # Probe the keyring; on failure, every set/get falls back to the file.
+    if [ "$("$PY" "$CRED_HELPER" probe)" = "yes" ]; then
+        STORAGE_MODE="keyring"
+        info "Credential storage: OS keyring"
+    else
+        STORAGE_MODE="file"
+        local loc
+        loc=$("$PY" "$CRED_HELPER" location)
+        warn "OS keyring is not usable in this environment. Falling back to file storage."
+        warn "Credentials will be written to: ${loc#file:} (mode 0600)."
+    fi
 }
 
-get_from_keyring() {
-    local service="$1"
-    local key="$2"
+store_credential() {
+    local service="$1" key="$2" value="$3"
+    local args=("$CRED_HELPER" set "$service" "$key" "$value")
+    if [ "$STORAGE_MODE" = "file" ]; then
+        args+=("--prefer-file")
+    fi
+    # Pass value via argv; helper does no shell interpolation.
+    "$PY" "${args[@]}" >/dev/null
+}
 
-    "$PY" -c "import keyring; print(keyring.get_password('$service', '$key') or '')" 2>/dev/null
+get_credential() {
+    local service="$1" key="$2" env_var="${3:-}"
+    local args=("$CRED_HELPER" get "$service" "$key")
+    if [ -n "$env_var" ]; then
+        args+=(--env "$env_var")
+    fi
+    # `|| true` so set -e cannot kill the script on a non-zero exit from the helper.
+    "$PY" "${args[@]}" || true
 }
 
 # --- Setup Trac ---
@@ -149,13 +173,13 @@ setup_trac() {
         die "Cannot find mcp-servers/trac-mcp-server.py. Run from repo root."
     fi
 
-    # Check for existing credentials in keyring
+    # Check for existing credentials (env > file > keyring)
     local existing_user existing_pass
-    existing_user=$(get_from_keyring "$TRAC_KEYRING_SERVICE" "username")
-    existing_pass=$(get_from_keyring "$TRAC_KEYRING_SERVICE" "password")
+    existing_user=$(get_credential "$TRAC_KEYRING_SERVICE" "username" "TRAC_USERNAME")
+    existing_pass=$(get_credential "$TRAC_KEYRING_SERVICE" "password" "TRAC_PASSWORD")
 
     if [[ -n "$existing_user" && -n "$existing_pass" ]] && [ "$FORCE_CREDENTIALS" = false ]; then
-        info "Trac credentials already in keyring (user: $existing_user). Skipping prompt."
+        info "Trac credentials already configured (user: $existing_user). Skipping prompt."
         TRAC_USERNAME="$existing_user"
         TRAC_PASSWORD="$existing_pass"
     else
@@ -163,33 +187,29 @@ setup_trac() {
         read -r -p "Trac username: " TRAC_USERNAME
         [ -n "$TRAC_USERNAME" ] || die "Username cannot be empty."
 
-        read -r -s -p "Trac password (stored in OS keyring): " TRAC_PASSWORD
+        read -r -s -p "Trac password (stored in $STORAGE_MODE): " TRAC_PASSWORD
         echo
         [ -n "$TRAC_PASSWORD" ] || die "Password cannot be empty."
 
-        # Store credentials
-        info "Storing Trac credentials in keyring (service: $TRAC_KEYRING_SERVICE)"
-        store_in_keyring "$TRAC_KEYRING_SERVICE" "username" "$TRAC_USERNAME"
-        store_in_keyring "$TRAC_KEYRING_SERVICE" "password" "$TRAC_PASSWORD"
+        info "Storing Trac credentials (service: $TRAC_KEYRING_SERVICE, storage: $STORAGE_MODE)"
+        store_credential "$TRAC_KEYRING_SERVICE" "username" "$TRAC_USERNAME"
+        store_credential "$TRAC_KEYRING_SERVICE" "password" "$TRAC_PASSWORD"
     fi
 
     # Validate connection
     info "Validating Trac connection: $TRAC_URL"
-    "$PY" - <<PYTHON || warn "Validation failed. Check credentials and URL."
+    TRAC_URL="$TRAC_URL" \
+    TRAC_USERNAME="$TRAC_USERNAME" \
+    TRAC_PASSWORD="$TRAC_PASSWORD" \
+    "$PY" - <<'PYTHON' || warn "Validation failed. Check credentials and URL."
 import base64
+import os
 import sys
 import xmlrpc.client
-import keyring
 
-url = "${TRAC_URL}"
-service = "${TRAC_KEYRING_SERVICE}"
-
-username = keyring.get_password(service, "username")
-password = keyring.get_password(service, "password")
-
-if not username or not password:
-    print("Keyring lookup failed.", file=sys.stderr)
-    sys.exit(2)
+url = os.environ["TRAC_URL"]
+username = os.environ["TRAC_USERNAME"]
+password = os.environ["TRAC_PASSWORD"]
 
 class BasicAuthTransport(xmlrpc.client.Transport):
     def send_headers(self, connection, headers):
@@ -250,26 +270,25 @@ WRAPPER
         info "mcp-jenkins already installed."
     fi
 
-    # Check for existing credentials in keyring
+    # Check for existing credentials (env > file > keyring)
     local existing_user existing_pass
-    existing_user=$(get_from_keyring "$JENKINS_KEYRING_SERVICE" "username")
-    existing_pass=$(get_from_keyring "$JENKINS_KEYRING_SERVICE" "password")
+    existing_user=$(get_credential "$JENKINS_KEYRING_SERVICE" "username" "JENKINS_USERNAME")
+    existing_pass=$(get_credential "$JENKINS_KEYRING_SERVICE" "password" "JENKINS_PASSWORD")
 
     if [[ -n "$existing_user" && -n "$existing_pass" ]] && [ "$FORCE_CREDENTIALS" = false ]; then
-        info "Jenkins credentials already in keyring (user: $existing_user). Skipping prompt."
+        info "Jenkins credentials already configured (user: $existing_user). Skipping prompt."
     else
         # Prompt for credentials
         read -r -p "Jenkins username: " JENKINS_USERNAME
         [ -n "$JENKINS_USERNAME" ] || die "Username cannot be empty."
 
-        read -r -s -p "Jenkins API token (stored in OS keyring): " JENKINS_PASSWORD
+        read -r -s -p "Jenkins API token (stored in $STORAGE_MODE): " JENKINS_PASSWORD
         echo
         [ -n "$JENKINS_PASSWORD" ] || die "API token cannot be empty."
 
-        # Store credentials
-        info "Storing Jenkins credentials in keyring (service: $JENKINS_KEYRING_SERVICE)"
-        store_in_keyring "$JENKINS_KEYRING_SERVICE" "username" "$JENKINS_USERNAME"
-        store_in_keyring "$JENKINS_KEYRING_SERVICE" "password" "$JENKINS_PASSWORD"
+        info "Storing Jenkins credentials (service: $JENKINS_KEYRING_SERVICE, storage: $STORAGE_MODE)"
+        store_credential "$JENKINS_KEYRING_SERVICE" "username" "$JENKINS_USERNAME"
+        store_credential "$JENKINS_KEYRING_SERVICE" "password" "$JENKINS_PASSWORD"
     fi
 
     echo "  Jenkins setup complete."
@@ -335,21 +354,20 @@ setup_gitea() {
         fi
     fi
 
-    # Check for existing credentials in keyring
+    # Check for existing credentials (env > file > keyring)
     local existing_token
-    existing_token=$(get_from_keyring "$GITEA_KEYRING_SERVICE" "token")
+    existing_token=$(get_credential "$GITEA_KEYRING_SERVICE" "token" "GITEA_TOKEN")
 
     if [[ -n "$existing_token" ]] && [ "$FORCE_CREDENTIALS" = false ]; then
-        info "Gitea token already in keyring. Skipping prompt."
+        info "Gitea token already configured. Skipping prompt."
     else
         # Prompt for token
-        read -r -s -p "Gitea access token (stored in OS keyring): " GITEA_TOKEN
+        read -r -s -p "Gitea access token (stored in $STORAGE_MODE): " GITEA_TOKEN
         echo
         [ -n "$GITEA_TOKEN" ] || die "Access token cannot be empty."
 
-        # Store credentials
-        info "Storing Gitea token in keyring (service: $GITEA_KEYRING_SERVICE)"
-        store_in_keyring "$GITEA_KEYRING_SERVICE" "token" "$GITEA_TOKEN"
+        info "Storing Gitea token (service: $GITEA_KEYRING_SERVICE, storage: $STORAGE_MODE)"
+        store_credential "$GITEA_KEYRING_SERVICE" "token" "$GITEA_TOKEN"
     fi
 
     echo "  Gitea setup complete."
@@ -391,23 +409,24 @@ setup_all() {
 
 # --- Main ---
 main() {
-    ensure_repo_root
-    check_prereqs
-    ensure_venv
-
-    # Ensure BIN_DIR is in PATH
-    case ":$PATH:" in
-        *":$BIN_DIR:"*) ;;
-        *) warn "$BIN_DIR is not in your PATH. Add it with: export PATH=\"\$PATH:$BIN_DIR\"" ;;
-    esac
-
-    # Parse --force flag
+    # Parse --force flag (and any future global flags) before doing work.
     while [[ "${1:-}" == --* ]]; do
         case "$1" in
             --force) FORCE_CREDENTIALS=true; shift ;;
             *) die "Unknown option: $1" ;;
         esac
     done
+
+    ensure_repo_root
+    check_prereqs
+    ensure_venv
+    ensure_storage_mode
+
+    # Ensure BIN_DIR is in PATH
+    case ":$PATH:" in
+        *":$BIN_DIR:"*) ;;
+        *) warn "$BIN_DIR is not in your PATH. Add it with: export PATH=\"\$PATH:$BIN_DIR\"" ;;
+    esac
 
     case "${1:-}" in
         all)

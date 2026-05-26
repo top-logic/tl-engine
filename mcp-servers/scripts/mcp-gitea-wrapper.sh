@@ -20,13 +20,16 @@ fi
 SERVICE="${GITEA_KEYRING_SERVICE:-tl-engine-gitea-mcp}"
 ACC_TOKEN="${GITEA_KEYRING_ACCOUNT_TOKEN:-token}"
 
-# Read credentials from keyring using venv Python
-GITEA_TOKEN=$("$VENV_PYTHON" -c "import keyring; print(keyring.get_password('$SERVICE', '$ACC_TOKEN') or '')" 2>/dev/null)
+# Resolution order: env var (GITEA_TOKEN), credentials file, then OS keyring.
+# Handled by mcp-servers/credentials.py.
+CRED_HELPER="$REPO_ROOT/mcp-servers/credentials.py"
+GITEA_TOKEN=$("$VENV_PYTHON" "$CRED_HELPER" get "$SERVICE" "$ACC_TOKEN" --env GITEA_TOKEN)
 
 if [[ -z "$GITEA_TOKEN" ]]; then
-    echo "Error: Missing Gitea credentials in OS keyring." >&2
-    echo "  service: $SERVICE" >&2
-    echo "  token key: $ACC_TOKEN" >&2
+    echo "Error: Missing Gitea credentials." >&2
+    echo "  Checked env: GITEA_TOKEN" >&2
+    echo "  Checked file: \${TL_MCP_CRED_FILE:-~/.config/tl-engine-mcp/credentials.env} (key: ${SERVICE}__${ACC_TOKEN})" >&2
+    echo "  Checked keyring service: $SERVICE" >&2
     echo "Run: ./mcp-servers/scripts/setup-mcp.sh gitea" >&2
     exit 1
 fi

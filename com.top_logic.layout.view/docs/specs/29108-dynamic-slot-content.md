@@ -72,134 +72,128 @@ named region, not the structural composition of the shell itself.
 
 ### 3.1 Mental model
 
-`<slot>` and `<slot-content>` are **two ordinary UIElements that communicate
-through a `SlotScope` resident in the `ViewContext`**, identified by string name.
-Neither is privileged: any subtree can declare a slot at any nesting depth, and
-any subtree can contribute to it.
+`<slot>` and `<slot-content>` are **two ordinary UIElements that find each
+other by tree position**. A `<slot-content slot="X">` contribution renders at
+the position of the nearest `<slot name="X"/>` in the surrounding tree —
+"nearest" measured by lowest-common-ancestor distance. No scope opt-in, no
+registry seeded by an ancestor, no `SlotScope` API. The container structure of
+the view itself is the routing mechanism.
 
 ```
 +-----------------------------------------------------------+
 |  view subtree                                             |
 |                                                           |
-|   ContainerA  (seeds SlotScope into ViewContext)          |
+|   AnyContainer                                            |
 |   |                                                       |
-|   +-- ... <slot name="foo"/>     <-- reads from scope     |
+|   +-- ... <slot name="foo"/>                              |
 |   |                                                       |
-|   +-- ... <slot-content slot="foo">   <-- writes to scope |
+|   +-- ... <slot-content slot="foo">                       |
 |              <some-ui-element/>                           |
 |           </slot-content>                                 |
 |                                                           |
 +-----------------------------------------------------------+
 ```
 
-- The **scope** is a mutable registry keyed by slot name.
-- The **slot element** subscribes and renders contributions in registration order.
-- The **slot-content element** registers its children on mount and unregisters on
-  unmount.
-- Mount/unmount is driven by the normal `UIElement` / control lifecycle — no
-  separate route-awareness logic is needed.
+- The **slot element** is the placeholder. It renders all `<slot-content>`
+  contributions whose tree-nearest matching slot is this one.
+- The **slot-content element** is the contribution. On mount, it makes its
+  children available to the nearest matching `<slot>`; on unmount, it
+  withdraws them.
+- "Nearest" means: walk up from `<slot-content>` to its parent, the parent's
+  parent, … At each ancestor, check for a matching `<slot>` in any of the
+  *other* subtrees rooted at that ancestor. The first match wins.
+- `AnyContainer` above is *any* UIElement that accepts children — `<stack>`,
+  `<view>`, `<app-shell>`, anything. The container does not opt into
+  anything; it does not need to be aware that the slot mechanism exists.
 
-The `<slot>` and `<slot-content>` elements know nothing about each other directly.
-They both know about the `SlotScope`. Scope is the *only* shared state.
+The `<slot>` and `<slot-content>` elements still know nothing about each
+other directly. The framework finds the match by traversing the live element
+tree.
 
-### 3.2 Slot position vs. slot scope
+### 3.2 Slot position vs. slot routing
 
-Two independent concerns, easy to confuse:
+Two independent concerns:
 
-**Position** — where in the rendered UI does a contribution appear?
-Determined by *where the `<slot>` element is positioned in its parent's child
-list*. `<slot name="toolbar"/>` placed inside `<app-bar>` renders contributions
-at that position inside the app bar. The slot's positional parent (`app-bar`)
-is the **visual host**.
+**Position** — where in the rendered UI does a contribution visually appear?
+Determined by *where the `<slot>` element is placed in its parent's child
+list*. `<slot name="toolbar"/>` placed inside `<app-bar>` between `<title>`
+and the right edge renders contributions at that position inside the app bar.
 
-**Scope** — which `<slot-content>` elements can target which `<slot>` element?
-Determined by which **ancestor container** has opted in by seeding a
-`SlotScope` into its derived `ViewContext`. The slot's positional parent is
-**not** required to be the scope owner. Both `<slot>` and `<slot-content>`
-walk up their respective `ViewContext` chains to find the nearest seeded
-`SlotScope`; they meet at the lowest common ancestor that opted in.
+**Routing** — which `<slot-content>` elements get rendered by which `<slot>`?
+Determined by tree-distance. A `<slot-content>` is routed to the nearest
+`<slot>` with matching name as seen from its position in the tree. The
+container that visually contains the slot (e.g. `<app-bar>`) does not need to
+do anything — it just renders its children, one of which happens to be a
+slot.
 
-In the typical app, the only opt-in is `AppShellElement`. The app-bar contains
-the `<slot>`, deep descendants contain `<slot-content>`, and they connect
-through the single shell-level scope. The app-bar itself does **not** seed
-anything; intermediate containers (`<stack>`, `<split>`, `<view>`, …) do not
-seed anything; they pass `ViewContext` through unchanged.
+### 3.3 No opt-in needed
 
-### 3.3 Who opts in
+Because routing is structural, no UIElement opts into anything. There is no
+"scope seeder" category, no `SlotHost` interface, no `withSlotScope(...)`
+API. Every UIElement is uniformly transparent to the slot mechanism. The only
+thing the framework provides is: given the current tree and a `<slot-content
+slot="X">`, find the nearest `<slot name="X"/>` and route there.
 
-`<slot>` and `<slot-content>` are both ordinary UIElements. The container that
-happens to contain `<slot>` in its child list is **not** a "slot host" — it is
-just an ordinary container, the same kind it already was, rendering its
-children. It does not need a `SlotHost` interface, a dedicated child slot for
-the placeholder, or any awareness of the slot mechanism.
+**Isolation via tree position, not via explicit scope.** If a panel contains
+its own `<slot name="primary-action"/>` and child views inside it use
+`<slot-content slot="primary-action">`, those contributions go to the panel's
+slot — they never escape outward because a closer match exists. A second
+panel elsewhere in the tree with its own `<slot name="primary-action"/>`
+similarly contains its own contributions. The two panels do not interfere,
+without anyone declaring a "scope".
 
-This means the only opt-in concern in the whole design is **seeding a
-`SlotScope`**. There are exactly two categories of UIElement:
+This subsumes everything the explicit-scope design needed:
 
-1. **Scope seeders** — rare, deliberate. Containers that want to be a slot
-   communication boundary. `AppShellElement` is the default seeder for the
-   common case. Additional seeders only exist when an element wants its
-   internal slot-content *isolated* from an outer shell scope: e.g. a wizard
-   frame whose `primary-action` slot must not be filled by random contributions
-   from elsewhere in the shell, or a modal dialog with its own action region.
-   These are ~3–5 elements in the whole codebase, not a routine pattern.
-
-2. **Everything else** — transparent. Every other container — `<stack>`,
-   `<split>`, `<view>`, `<form>`, `<tab>`, `<grid>`, including any container
-   that happens to contain a `<slot>` child — does not seed a scope. They
-   forward `ViewContext` to their children unchanged. They do not need to know
-   the slot mechanism exists.
-
-A `<slot-content>` element only requires that *some* ancestor in its chain has
-opted in (category 1). The contributor is fully decoupled from which specific
-element owns the scope, and from where the matching `<slot>` placeholder is
-positioned in the rendered UI.
+- **Wizard private slot:** the wizard contains `<slot name="primary-action"/>`;
+  step-internal `<slot-content slot="primary-action">` is closer to the
+  wizard's slot than to any outer same-named slot, so it goes to the wizard.
+  No `withSlotScope` call from `WizardElement`.
+- **Multiple simultaneously-mounted wizards:** each wizard's subtree contains
+  its own slot and its own steps. Each step's slot-content finds its own
+  wizard's slot as nearest. No interference.
+- **Modal dialog with its own action region:** same pattern as wizard. Dialog
+  contains the slot; its descendants find that slot first.
 
 **Prerequisite: containers must accept arbitrary UIElement children.** For a
 `<slot name="X"/>` placeholder to render inside e.g. `<app-bar>`, the
-`AppBarElement` config must accept arbitrary UIElement children at the position
-where the slot is placed. Most existing layout containers (`<stack>`,
-`<split>`, `<view>`) already do. `AppBarElement` today has a closed schema
-(`<title>`, `<variant>`, `<commands>`); generalizing it to accept arbitrary
-children is a separable refactor, prerequisite to adopting slots in the
-app-bar, but **not** part of the slot mechanism itself. The slot mechanism
-adds no new container-side requirement beyond "the container renders its child
-UIElements".
+`AppBarElement` config must accept arbitrary UIElement children at the
+position where the slot is placed. Most existing layout containers
+(`<stack>`, `<split>`, `<view>`) already do. `AppBarElement` today has a
+closed schema (`<title>`, `<variant>`, `<commands>`); generalizing it to
+accept arbitrary children is a separable refactor, prerequisite to adopting
+slots in the app-bar, but **not** part of the slot mechanism itself. The slot
+mechanism adds no new container-side requirement beyond "the container
+renders its child UIElements".
 
-### 3.4 Where the scope API lives
+### 3.4 Java surface
 
-```java
-ViewContext scoped = context.withSlotScope(new SlotScope());
-```
+The slot mechanism is implemented as a framework-internal tree-aware
+registry. From an application author's perspective there is no API to call —
+the only surface is the `<slot>` and `<slot-content>` UIElements in XML.
 
-`AppShellElement` calls this once. Other seeders call it when they want
-isolation. Inner seeded scopes shadow outer ones for descendants inside them,
-exactly as `CommandScope` nesting works today. If no scope is seeded in any
-ancestor, `<slot>` and `<slot-content>` both error at startup ("no enclosing
-slot scope") — explicit failure rather than silent no-op.
-
-### 3.5 Java surface
+For the framework's own use, the registry exposes:
 
 ```java
-public final class SlotScope {
-    public SlotHandle contribute(String slotName, UIElement content);
-    public List<UIElement> get(String slotName);
-    public void addListener(SlotScopeListener listener);
+public interface SlotRegistry {
+    /** Called by <slot> on attach. */
+    SlotHandle registerSlot(UIElement slot, String name, SlotPosition position);
+
+    /** Called by <slot-content> on attach. */
+    SlotHandle registerContribution(UIElement contributor, String name,
+                                    SlotPosition position, List<UIElement> content);
 }
 
 public interface SlotHandle extends AutoCloseable {
-    @Override void close();   // removes the contribution
-}
-
-public interface SlotScopeListener {
-    void slotsChanged(Set<String> changedSlotNames);
+    @Override void close();
 }
 ```
 
-`ViewContext` gains `getSlotScope()` / `withSlotScope(...)`, mirroring the
-existing `CommandScope` pair.
+`SlotPosition` is whatever the framework needs to compute LCA distance —
+typically a path from the root of the rendered tree to this element.
+There is exactly one `SlotRegistry` per rendered view tree, established
+implicitly by the framework. Application code does not see it.
 
-### 3.6 XML surface
+### 3.5 XML surface
 
 `<slot>` and `<slot-content>` are regular `UIElement` configurations. They can
 appear anywhere a `UIElement` can — inside `<app-bar>`, inside `<stack>`, inside a
@@ -212,8 +206,8 @@ container-type restriction.
 <slot name="secondary"/>
 ```
 
-Renders the current contributions to `secondary` from the nearest enclosing
-`SlotScope`. Optionally accepts a fallback for the empty case:
+Renders all `<slot-content slot="secondary">` contributions whose tree-nearest
+matching slot is this one. Optionally accepts a fallback for the empty case:
 
 ```xml
 <slot name="secondary">
@@ -238,18 +232,19 @@ so the `navPath` channel reference resolves against the view that owns it, not
 against the slot's host. The slot host only adopts already-constructed controls
 for rendering.
 
-### 3.7 Lifecycle
+### 3.6 Lifecycle
 
 | Event | Effect |
 |-------|--------|
-| `<slot-content>` element creates its child controls | Children registered into nearest `SlotScope`, listener notified, slot host re-renders. |
-| Containing view detaches (route change, conditional unmount, exception in teardown) | `SlotHandle.close()` called via standard `UIElement` cleanup hook; contributions removed; slot host re-renders. |
-| Multiple `<slot-content>` elements target the same slot | All contributions are rendered, in registration order, wrapped in a `ReactStackControl` (same pattern `AppShellElement.createSlotControl` uses today for static slots). |
-| `<slot>` host has zero contributions | Renders the configured `<empty>` fallback, or nothing if none configured. Visual collapsing (zero height, hidden border) is a styling concern for the host element, not this spec. |
-| `<slot-content>` declared but no enclosing scope seeds a matching scope | Startup error. |
-| `<slot>` declared but no enclosing scope | Startup error. |
+| `<slot-content>` element creates its child controls | Children registered with the slot registry; framework recomputes the nearest matching `<slot>` and notifies it; that slot re-renders. |
+| Containing view detaches (route change, conditional unmount, exception in teardown) | `SlotHandle.close()` called via standard `UIElement` cleanup hook; contributions removed; affected slot re-renders. |
+| Multiple `<slot-content>` elements target the same slot | All contributions render, in registration order, wrapped in a `ReactStackControl` (same pattern `AppShellElement.createSlotControl` uses today for static slots). |
+| `<slot>` has zero contributions | Renders the configured `<empty>` fallback, or nothing if none configured. Visual collapsing (zero height, hidden border) is a styling concern for the containing element, not this spec. |
+| `<slot-content>` declared but no matching `<slot>` exists anywhere in the tree at mount time | Configurable: error (default, surfaces typos and accidental orphaning) or silent (for opt-in tolerance to absent hosts). |
+| A new `<slot>` mounts after some `<slot-content>` is already active | Framework recomputes nearest-match for every active contribution. Any contribution whose nearest slot is now the new one migrates to it; the previous slot re-renders without those contributions. |
+| A `<slot>` unmounts while it has contributions | Framework recomputes nearest-match for those contributions. They migrate to the next-nearest matching slot, or become orphaned (per the rule above) if none remains. |
 
-### 3.8 Conflict resolution
+### 3.7 Conflict resolution
 
 All contributions render, in registration order. The simplest rule, matches the
 existing static-slot multi-element behaviour in `AppShellElement`, and has no
@@ -259,31 +254,55 @@ If a use case appears for "single-winner" or "highest-priority-wins", it goes on
 `<slot-content>` as an explicit attribute (`replace="true"`, `priority="N"`) — not
 as implicit behaviour and not in this spec.
 
-### 3.9 Scope boundaries and nesting
+### 3.8 Nested same-name slots
 
-Slot names are local to the seeding `SlotScope`. Two unrelated subtrees that each
-seed their own `SlotScope` and each use `<slot name="primary"/>` and
-`<slot-content slot="primary">` do not interfere — each pair communicates within
-its own scope.
+When two `<slot>`s with the same name exist in nested containers, each
+`<slot-content>` is routed to the one nearest to it by tree-distance. The
+inner slot is reached by contributions inside the inner container; the outer
+slot is reached by contributions outside the inner container.
 
-A `<slot-content>` finds its target by walking up the `ViewContext` chain to the
-nearest `SlotScope`. To project content "past" an inner scope into an outer one,
-the inner scope's seeding container would have to expose it (not part of this
-spec; can be added later if needed via something like
-`<slot-content slot="..." scope="outer">`).
+```
+<outer>
+    <slot name="toolbar"/>                  [A]
+    <inner>
+        <slot name="toolbar"/>              [B]
+        <view-1>
+            <slot-content slot="toolbar">   --> routed to [B]
+                <button-x/>
+            </slot-content>
+        </view-1>
+    </inner>
+    <view-2>
+        <slot-content slot="toolbar">       --> routed to [A]
+            <button-y/>
+        </slot-content>
+    </view-2>
+</outer>
+```
+
+The outer slot `[A]` shows `button-y`. The inner slot `[B]` shows `button-x`.
+Neither shows the other. This is the entire isolation mechanism. There is no
+"scope" object, no opt-in by `<inner>`, no `withSlotScope` call. The mere
+presence of `<slot name="toolbar"/>` inside `<inner>` is what isolates
+contributions originating from inside `<inner>`.
+
+To explicitly target an outer slot from inside an inner same-named one, an
+`<slot-content slot="X" target="outer">` (or similar) attribute could be
+added later if a real use case appears — see open question 7.1.
 
 ## 4. Generalization: `CommandScope` becomes redundant
 
-The existing `CommandScope` is a special case of `SlotScope` where:
+The existing `CommandScope` is a narrow precursor of the slot mechanism:
 
-- the artifact type is `CommandModel` instead of `UIElement`,
+- the artifact type is `CommandModel` instead of arbitrary `UIElement` children,
 - the routing key is `CommandPlacement` (an enum) instead of a string slot name,
 - the consumer is hard-coded inside `AppBarElement` instead of expressed as a
-  `<slot>` UIElement,
+  `<slot>` UIElement at an arbitrary position,
 - the contribution is via `ViewCommandModel.attach()` against an implicit scope
-  pulled from `ViewContext`, instead of via a `<slot-content>` UIElement.
+  pulled from `ViewContext`, instead of via a `<slot-content>` UIElement at an
+  arbitrary position in the tree.
 
-With the slot mechanism in place, the app-bar's toolbar is just another slot host:
+With the slot mechanism in place, the app-bar's toolbar is just an inline slot:
 
 ```xml
 <!-- before: app-bar has special <commands> child + hidden CommandScope logic -->
@@ -415,12 +434,14 @@ Form view contributes its action buttons to the toolbar, no `CommandScope`:
 
 When the form unmounts, both buttons disappear from the toolbar automatically.
 
-### 5.5 Wizard with its own private slot scope
+### 5.5 Wizard with a private primary-action slot
 
-A wizard frame seeds its own `SlotScope` and exposes a `primary-action` slot:
+A wizard frame contains its own `<slot name="primary-action"/>`. Step-internal
+contributions are automatically routed to the wizard's slot rather than to any
+same-named slot outside the wizard — because the wizard's slot is closer:
 
 ```xml
-<wizard>  <!-- this element calls context.withSlotScope(new SlotScope()) -->
+<wizard>
     <header>
         <stepper steps="..."/>
         <slot name="primary-action"/>
@@ -442,10 +463,21 @@ A wizard frame seeds its own `SlotScope` and exposes a `primary-action` slot:
 </wizard>
 ```
 
-The wizard's private scope shadows the app-shell's. `<slot-content slot="toolbar">`
-declared inside a step would still bubble up to the wizard's scope first; if the
-wizard's scope doesn't know `toolbar`, an explicit decision is needed (current
-proposal: error; alternative: chain through to outer scope — open question 6.1).
+`WizardElement` does not opt into anything, does not call any framework API.
+It just contains a slot. The framework routes each step's `<slot-content
+slot="primary-action">` to the wizard's slot because it is the nearest match
+by tree distance.
+
+If something further out (e.g. the app-shell) also defines `<slot
+name="primary-action"/>`, the wizard's slot wins for everything inside the
+wizard; the outer slot still receives contributions originating from outside
+the wizard.
+
+A different question is what happens when a step contributes to a slot that
+the wizard does *not* define locally (e.g. `<slot-content slot="toolbar">`).
+That contribution walks past the wizard, finds the outer `<slot
+name="toolbar"/>` (e.g. in the app-bar), and is routed there. The wizard does
+not isolate names it does not itself host.
 
 ## 6. Non-goals
 
@@ -456,66 +488,76 @@ proposal: error; alternative: chain through to outer scope — open question 6.1
   They are unrelated to the dynamic mechanism here.
 - **Reordering or priority across contributions.** Registration order is the
   contract.
-- **Cross-window or cross-app-shell portals.** Scope is bounded by `ViewContext`
-  inheritance.
+- **Cross-window portals.** Routing is bounded by the rendered view tree.
 
 ## 7. Open questions
 
-1. **Inner-scope passthrough.** When a `<slot-content slot="X">` is declared inside
-   an inner scope that does not host `X`, should it bubble to the outer scope or
-   error? Symmetric question for `<slot>`. Proposal: error (explicit is better).
-   Alternative: implicit bubble (`scope="outer"` attribute to opt in).
-2. **Naming.** Element names `<slot>` and `<slot-content>` chosen for symmetry and
-   to match existing `AppShellElement` "slot" vocabulary, but conflict-rich at the
-   reading level (the static slots and the dynamic slots share the word). Possible
-   alternatives: `<outlet>` / `<contribute>`, `<region>` / `<region-content>`,
-   `<projects-to>`. Bikeshed; will not block the design.
-3. **Slot uniqueness within a scope.** If two `<slot name="X"/>` elements appear
-   in the same scope (e.g. two app-bars), do contributions fan out to both, or is
-   the second a configuration error? Proposal: fan out — contributions render in
-   *all* matching slot hosts. Cheap to implement, matches the listener model.
-4. **Empty-state contract.** Should `<slot>` always allocate space (and the host
-   styles it as collapsed when empty), or should it actually not render anything
-   when empty? Proposal: don't render when empty; host can wrap in its own
-   container if it wants reserved space.
-5. **Leak resistance.** If a view unmounts without `SlotHandle.close()` being
-   reached (exception in teardown), the contribution leaks. Same risk in
-   `CommandScope` today. Mitigation deferred — possibly weak references on
-   contributions, possibly periodic sweep.
-6. **Scope discovery API.** Should `<slot-content>` allow an explicit scope
-   selector (`scope="app"`, `scope="wizard"`) for cases where the nearest scope
-   is not the intended target? Adds complexity; defer until a real need appears.
+1. **Explicit outer-slot targeting.** When an inner same-named `<slot>`
+   exists, all inner `<slot-content>` is captured by it. If a deeply-nested
+   view legitimately needs to project content to an *outer* same-named slot,
+   the design currently has no syntax for that. Proposal: defer; add
+   `<slot-content slot="X" target="outer">` (or a path expression) only when a
+   real use case appears.
+2. **Naming.** Element names `<slot>` and `<slot-content>` chosen for
+   symmetry, but conflict-rich at the reading level (the static configuration
+   "slots" on `AppShellElement` and the dynamic slots here share the word).
+   Possible alternatives: `<outlet>` / `<contribute>`, `<region>` /
+   `<region-content>`, `<projects-to>`. Bikeshed; will not block the design.
+3. **Multiple `<slot>`s with the same name at the same tree-distance.** If a
+   contribution has two equally-near matching slots (e.g. tied LCA distance
+   via different sibling branches), do contributions fan out to all, or is
+   this a configuration error? Proposal: error (forces unique resolution).
+   Alternative: fan out (cheaper, but harder to reason about). The vast
+   majority of real configurations will never trigger this.
+4. **Orphan policy.** When a `<slot-content>` mounts but no matching `<slot>`
+   exists anywhere in the tree, is that an error or silently dropped?
+   Proposal: configurable per-contribution via `required="true|false"`,
+   defaulting to `true` (error) because typos and accidentally orphaned
+   contributions are bugs we want surfaced.
+5. **Empty-state contract.** Should `<slot>` always allocate space (and the
+   containing element styles it as collapsed when empty), or should it
+   actually not render anything when empty? Proposal: don't render when
+   empty; the containing element can wrap it in its own container if it
+   wants reserved space.
+6. **Leak resistance.** If a view unmounts without `SlotHandle.close()` being
+   reached (exception in teardown), the contribution leaks. Mitigation
+   deferred — possibly weak references, possibly periodic sweep.
+7. **Tree-traversal cost.** The naive routing algorithm is O(tree-size) per
+   contribution. For typical app shells this is trivial; for very large
+   dynamic trees it might warrant indexing slots by name globally and
+   computing LCA-distance lazily. Implementation concern, not design.
 
 ## 8. Migration of existing code
 
 Purely additive. No existing view XML breaks.
 
-- `AppShellElement` gains a `SlotScope` seed alongside its existing `CommandScope`
-  seed. Both coexist.
-- `AppBarElement` is extended to accept nested `<slot>` children (in addition to
-  its current `<commands>` block). The existing `<commands>` / `CommandScope`
-  path remains untouched; the new `<slot>` path is opt-in.
+- The slot routing infrastructure is added; no element opts in.
+- `AppBarElement` is extended to accept nested arbitrary UIElement children
+  (in addition to its current `<commands>` block). The existing `<commands>`
+  / `CommandScope` path remains untouched; the new `<slot>`-child path is
+  opt-in.
 - The tile-stack demo migrates: breadcrumb moved into a `<slot-content>` in
-  `tiles-demo.view.xml`; `<slot name="secondary"/>` added to the demo `app-bar`.
+  `tiles-demo.view.xml`; `<slot name="secondary"/>` added to the demo
+  `app-bar`.
 - Optional follow-up ticket (not this one): port `<open-designer>` and all
   `placement="TOOLBAR"` commands to `<slot-content slot="toolbar">`-wrapped
-  buttons. Then deprecate `CommandScope`, `ViewCommandModel`, the `<commands>`
-  block on `AppBarElement`, and the `CommandPlacement` enum.
+  buttons. Then deprecate `CommandScope`, `ViewCommandModel`, the
+  `<commands>` block on `AppBarElement`, and the `CommandPlacement` enum.
 
 ## 9. Implementation sketch (for sizing only)
 
 | Component | Estimated effort |
 |-----------|------------------|
-| `SlotScope`, `SlotScopeListener`, `SlotHandle` | small (mirror of `CommandScope`) |
-| `ViewContext.getSlotScope()` / `withSlotScope(...)` | small |
-| `AppShellElement` seeds default `SlotScope` | trivial (3 lines) |
-| `<slot>` element + control that subscribes/renders | small |
+| Tree-aware slot registry: maintain `(name, position)` index, compute nearest-match | small to medium (the only genuinely new code) |
+| Parent-pointer / position tracking on rendered UIElements (if not already present) | small if existing infrastructure can be reused, else medium |
+| `SlotHandle` and registration lifecycle hooks | small |
+| `<slot>` element + control that renders contributions in registration order | small |
 | `<slot-content>` element + register/unregister lifecycle | small |
-| `AppBarElement` accepts nested `<slot>` children | small |
-| `ReactAppBarControl` renders slot region | small to medium |
+| `AppBarElement` accepts arbitrary UIElement children (prerequisite for inline `<slot>`) | small |
+| `ReactAppBarControl` renders the slot region | small to medium |
 | Tile-stack demo migration | trivial |
 | Multi-tab demo views | small |
 | **(Follow-up, separate ticket)** CommandScope deprecation | medium (touches every existing toolbar consumer) |
 
-This ticket: probably one to two days of focused work. Follow-up ticket:
-separate, larger, well-scoped.
+This ticket: probably one to two days of focused work. The novel piece is the
+tree-aware nearest-match routing; everything else is plumbing.

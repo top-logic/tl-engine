@@ -52,4 +52,50 @@ public interface RenderContext {
 		return measure(text);
 	}
 
+	/**
+	 * The current rendering zoom factor.
+	 *
+	 * <p>
+	 * Conceptually the multiplier from logical units to screen pixels along the active axis. In
+	 * Gantt content this is the {@code pixelsPerUnit} of the time axis; in non-zoomed contexts the
+	 * value is {@code 1.0}.
+	 * </p>
+	 *
+	 * <p>
+	 * Level-of-detail boxes consult this value to decide which content variant to render.
+	 * </p>
+	 */
+	default double getZoom() {
+		return 1.0;
+	}
+
+	/**
+	 * Returns a context that delegates all text measurement to this context but reports the given
+	 * zoom factor from {@link #getZoom()}.
+	 */
+	default RenderContext withZoom(double zoom) {
+		RenderContext self = this;
+		return new RenderContext() {
+			@Override
+			public TextMetrics measure(String text) {
+				return self.measure(text);
+			}
+
+			@Override
+			public TextMetrics measure(String text, String fontFamily, double fontSize) {
+				return self.measure(text, fontFamily, fontSize);
+			}
+
+			@Override
+			public TextMetrics measure(String text, String fontFamily, double fontSize, String fontWeight) {
+				return self.measure(text, fontFamily, fontSize, fontWeight);
+			}
+
+			@Override
+			public double getZoom() {
+				return zoom;
+			}
+		};
+	}
+
 }

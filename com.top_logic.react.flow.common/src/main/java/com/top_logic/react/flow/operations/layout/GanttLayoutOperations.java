@@ -100,6 +100,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double rowLabelPadding = self.getRowLabelPadding();
 		double indentWidth = self.getIndentWidth();
 
+		// Items inside the chart area see the time axis zoom so that LOD boxes can adapt their
+		// content variant; sidebar labels and decoration labels stay at zoom 1 because they are
+		// not laid out along the zooming axis.
+		RenderContext itemContext = context.withZoom(zoom);
+
 		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
 		double[] rowMaxContentHeight = new double[totalRows];
 		for (int i = 0; i < totalRows; i++) {
@@ -126,13 +131,13 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			if (item instanceof GanttSpan span) {
 				tmpX = offsetX + tmpLabelWidth + (span.getStart() - rangeMin) * zoom;
 				double spanWidth = (span.getEnd() - span.getStart()) * zoom;
-				box.computeIntrinsicSize(context, tmpX, tmpY, spanWidth, Double.POSITIVE_INFINITY);
+				box.computeIntrinsicSize(itemContext, tmpX, tmpY, spanWidth, Double.POSITIVE_INFINITY);
 				double intrinsicHeight = box.getHeight();
 				if (intrinsicHeight > rowMaxContentHeight[idx]) {
 					rowMaxContentHeight[idx] = intrinsicHeight;
 				}
 			} else if (item instanceof GanttPoint pt) {
-				box.computeIntrinsicSize(context, 0, 0,
+				box.computeIntrinsicSize(itemContext, 0, 0,
 						Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 				// Accept whatever intrinsic size the box reports.
 				// Width and height may be 0 (e.g. empty FloatingLayout) — that's OK.
@@ -206,12 +211,12 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			if (item instanceof GanttSpan span) {
 				double x = offsetX + columnWidth + (span.getStart() - rangeMin) * zoom;
 				double w = (span.getEnd() - span.getStart()) * zoom;
-				box.distributeSize(context, x, itemY, w, contentHeight);
+				box.distributeSize(itemContext, x, itemY, w, contentHeight);
 			} else if (item instanceof GanttPoint pt) {
 				double cx = offsetX + columnWidth + (pt.getAt() - rangeMin) * zoom;
 				double w = box.getWidth();
 				// Give the full row content height so it can grow with siblings.
-				box.distributeSize(context, cx - w / 2.0, itemY, w, contentHeight);
+				box.distributeSize(itemContext, cx - w / 2.0, itemY, w, contentHeight);
 			}
 		}
 

@@ -525,13 +525,25 @@ public class TestScriptPathElement extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that an {@code if/else} expression with an unanalyzable else-branch
-	 * ({@code all(...).filter(...)}) causes {@link PathByExpression#getSources} and relevant
-	 * {@link PathByExpression#getPathBase} calls to fall back to {@link BaseObjects#all()}, while
-	 * parts used only in the analyzable condition and if-branch still yield precise results.
+	 * Tests an {@code if/else} expression whose else-branch is {@code all(...).filter(...)} with a
+	 * filter predicate that references the outer lambda parameter.
+	 *
+	 * <p>
+	 * The else-branch is represented by an {@code AllStep} and is fully analyzable:
+	 * </p>
+	 * <ul>
+	 * <li>{@link PathByExpression#getSources} still returns {@link BaseObjects#all()} because
+	 * {@code AllStep.applyInverse} returns {@code null} for destinations compatible with the
+	 * enumerated type ({@code Assignment}).</li>
+	 * <li>For {@code Assembly#plant} (the outer-variable attribute captured in
+	 * {@code outerLetBindings}), {@link PathByExpression#getPathBase} returns the precise base
+	 * object rather than {@link BaseObjects#all()}.</li>
+	 * <li>For {@code Assignment#plant} (an attribute of the enumerated instances inside the
+	 * filter), backward navigation yields a non-empty set of affected instances but not the
+	 * corresponding base objects, so {@link BaseObjects#all()} is returned conservatively.</li>
+	 * </ul>
 	 */
-	public void testIfElseWithUnanalyzableElseBranch() {
-		// else-branch is all(...).filter(...): not analyzable -> elseExternalParts = {plant parts}.
+	public void testIfElseWithAllStepElseBranch() {
 		PathByExpression path = newPathByExpression("assembly ->"
 			+ " $assembly.get(`TestScriptPathElement:Assembly#area`) != null"
 			+ " ? $assembly.get(`TestScriptPathElement:Assembly#area`)"
@@ -547,7 +559,8 @@ public class TestScriptPathElement extends BasicTestCase {
 			Assembly assembly1 = createAssembly("assembly1", zai1, plant1);
 			Assignment assignIf = createAssignment("assignIf", plant1, z1);
 
-			// getSources falls back because else-chain is not analyzable.
+			// getSources falls back because AllStep.applyInverse returns null for Assignment
+			// destinations (compatible with the enumerated type).
 			assertTrue(path.getSources(assignIf).isAll());
 
 			// Condition part: backward navigation through condChain gives the exact base object.
@@ -560,8 +573,14 @@ public class TestScriptPathElement extends BasicTestCase {
 			assertPathBase(set(assembly1), path, zai1,
 				TestScriptPathElementFactory.getTemplateZAreaInstanceAttr());
 
-			// Parts in the unanalyzable else-branch: fall back to BaseObjects.all().
-			assertPathBaseIsAll(path, assembly1, TestScriptPathElementFactory.getPlantAssemblyAttr());
+			// Assembly#plant is the outer-variable attribute (captured in outerLetBindings):
+			// AllStep computes the precise pivot -> {assembly1}.
+			assertPathBase(set(assembly1), path, assembly1,
+				TestScriptPathElementFactory.getPlantAssemblyAttr());
+
+			// Assignment#plant is an attribute of enumerated instances inside the filter (steps).
+			// AllStep knows that assignIf is an affected instance but cannot determine which
+			// base assemblies correspond -> conservative BaseObjects.all().
 			assertPathBaseIsAll(path, assignIf, TestScriptPathElementFactory.getPlantAssignmentAttr());
 
 			tx.commit();
@@ -645,6 +664,131 @@ public class TestScriptPathElement extends BasicTestCase {
 			// plantsObj is identified as the base object rather than falling back to BaseObjects.all().
 			assertPathBase(set(plantsObj), path, plantsObj,
 				TestScriptPathElementFactory.getNamePlantsAttr());
+
+			tx.commit();
+		}
+	}
+
+	/**
+	 * Tests {@link PathByExpression#getSources} for an expression rooted in
+	 * {@code all(module:Type)}.
+	 *
+	 * <p>
+	 * An object of the enumerated type can in principle be produced by the expression for any base
+	 * object, so {@link PathByExpression#getSources} must return {@link BaseObjects#all()}. An
+	 * object of a different type can never appear in the result, so the method must return an empty
+	 * set.
+	 * </p>
+	 */
+	public void testAllStepGetSources() {
+		// Produces all Assignments whose plant equals the base Assembly's plant.
+		PathByExpression path = newPathByExpression(
+			"base -> all(`TestScriptPathElement:Assignment`)"
+				+ ".filter(a -> $a.get(`TestScriptPathElement:Assignment#plant`)"
+				+ " == $base.get(`TestScriptPathElement:Assembly#plant`))");
+		try (Transaction tx = beginTX()) {
+			Plant plant1 = createPlant("plant1");
+			ZArea z1 = createZArea("z1");
+			Assignment assign1 = createAssignment("assign1", plant1, z1);
+
+			// assign1 is an Assignment (the enumerated type): any base assembly could produce it
+			// via the filter, so getSources must return BaseObjects.all().
+			assertTrue(path.getSources(assign1).isAll());
+
+			// plant1 is a Plant, not an Assignment; it can never appear in the result of
+			// all(Assignment).filter(...), so getSources must return an empty set.
+			assertSources(set(), path, plant1);
+
+			tx.commit();
+		}
+	}
+
+	/**
+	 * Tests {@link PathByExpression#getPathBase} for an expression rooted in
+	 * {@code all(module:Type)}.
+	 *
+	 * <p>
+	 * Two cases are distinguished:
+	 * </p>
+	 * <ul>
+	 * <li><b>Base-object side</b> ({@code outerLetBindings}): when an attribute of the outer
+	 * lambda parameter changes, backward navigation through the captured outer-variable chain
+	 * yields the precise base object.</li>
+	 * <li><b>Enumerated-instance side</b> ({@code steps}): when an attribute of an enumerated
+	 * instance changes, the corresponding base objects cannot be determined without evaluating the
+	 * full expression, so {@link BaseObjects#all()} is returned conservatively.</li>
+	 * </ul>
+	 */
+	public void testAllStepGetPathBase() {
+		// Produces all Assignments whose plant equals the base Assembly's plant.
+		PathByExpression path = newPathByExpression(
+			"base -> all(`TestScriptPathElement:Assignment`)"
+				+ ".filter(a -> $a.get(`TestScriptPathElement:Assignment#plant`)"
+				+ " == $base.get(`TestScriptPathElement:Assembly#plant`))");
+		try (Transaction tx = beginTX()) {
+			Plant plant1 = createPlant("plant1");
+			ZArea z1 = createZArea("z1");
+			ZAreaInstance zai1 = createZAreaInstance(z1);
+			Assembly assembly1 = createAssembly("assembly1", zai1, plant1);
+			Assignment assign1 = createAssignment("assign1", plant1, z1);
+
+			// Base-object side: Assembly#plant is referenced via the outer variable (base).
+			// outerLetBindings captures AccessStep(Assembly#plant) -> pivot = {assembly1}.
+			assertPathBase(set(assembly1), path, assembly1,
+				TestScriptPathElementFactory.getPlantAssemblyAttr());
+
+			// Enumerated-instance side: Assignment#plant is inside the all()-steps.
+			// assign1 is an affected enumerated Assignment, but the corresponding base
+			// assemblies cannot be determined -> BaseObjects.all().
+			assertPathBaseIsAll(path, assign1, TestScriptPathElementFactory.getPlantAssignmentAttr());
+
+			tx.commit();
+		}
+	}
+
+	/**
+	 * Tests the empty-set optimisation in {@link PathByExpression#getPathBase} for the
+	 * enumerated-instance side of an {@code all(module:Type)} step.
+	 *
+	 * <p>
+	 * The filter predicate uses a {@code referers} step: when the changed attribute value is
+	 * {@code null} (i.e. a reference is being removed), backward navigation through the
+	 * {@code ReferersStep} yields an empty set of enumerated instances. Because no enumerated
+	 * instance is affected, no base object needs re-evaluation and an empty set is returned
+	 * instead of {@link BaseObjects#all()}.
+	 * </p>
+	 *
+	 * <p>
+	 * When the new attribute value is non-{@code null} (a reference is being set), backward
+	 * navigation yields a non-empty set, and {@link BaseObjects#all()} is returned conservatively.
+	 * </p>
+	 */
+	public void testAllStepGetPathBaseEnumeratedSideEmpty() {
+		// Produces all ZAreaInstances that are pointed to by the base Assembly via Assembly#area.
+		// The filter reads: "zai whose referers via Assembly#area include the base object".
+		PathByExpression path = newPathByExpression(
+			"base -> all(`TestScriptPathElement:ZAreaInstance`)"
+				+ ".filter(zai -> $zai"
+				+ ".referers(`TestScriptPathElement:Assembly#area`)"
+				+ ".containsElement($base))");
+		try (Transaction tx = beginTX()) {
+			Plant plant1 = createPlant("plant1");
+			ZArea z1 = createZArea("z1");
+			ZAreaInstance zai1 = createZAreaInstance(z1);
+			Assembly assembly1 = createAssembly("assembly1", zai1, plant1);
+
+			// Assembly#area is the enumerated-instance side (inside the filter via ReferersStep).
+			// partValue = null simulates removing the reference: ReferersStep.pivot returns empty
+			// -> no ZAreaInstance is affected -> optimisation fires -> empty result.
+			BaseObjects<? extends Collection<?>> baseForNull =
+				path.getPathBase(assembly1, TestScriptPathElementFactory.getAreaAssemblyAttr(), () -> null);
+			assertFalse("Expected a concrete set, not BaseObjects.all(), when partValue is null",
+				baseForNull.isAll());
+			assertEquals(set(), toSet(baseForNull.get()));
+
+			// partValue = zai1 (non-null): ReferersStep.pivot returns {zai1} -> non-empty
+			// -> some ZAreaInstance is affected -> conservative BaseObjects.all().
+			assertPathBaseIsAll(path, assembly1, TestScriptPathElementFactory.getAreaAssemblyAttr());
 
 			tx.commit();
 		}

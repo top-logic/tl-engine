@@ -3868,6 +3868,9 @@ const lr = ({ controlId: l }) => {
 }, cr = ({ controlId: l }) => {
   const r = (G().groups ?? []).filter((i) => i.items.some((c) => c != null));
   return r.length === 0 ? null : /* @__PURE__ */ e.createElement("div", { id: l, className: "tlToolbar", role: "toolbar" }, r.map((i, c) => /* @__PURE__ */ e.createElement(e.Fragment, { key: i.name }, c > 0 && /* @__PURE__ */ e.createElement("span", { className: "tlToolbar__separator", "aria-hidden": "true" }), i.display === "menu" ? /* @__PURE__ */ e.createElement(sr, { group: i }) : /* @__PURE__ */ e.createElement(ar, { group: i }))));
+}, ir = ({ controlId: l }) => {
+  const t = G();
+  return /* @__PURE__ */ e.createElement("div", { id: l, className: "tlTileStack", style: { width: "100%", height: "100%" } }, t.frame && /* @__PURE__ */ e.createElement(K, { control: t.frame }));
 };
 z("TLButton", Ot);
 z("TLToggleButton", Ht);
@@ -3917,3 +3920,4 @@ z("TLColorInput", Fl);
 z("TLIconSelect", Gl);
 z("TLDashboard", lr);
 z("TLToolbar", cr);
+z("TLTileStack", ir);

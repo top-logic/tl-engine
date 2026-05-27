@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.core.log.Log;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
@@ -29,6 +30,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.SecurityConfiguration;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
@@ -84,16 +86,35 @@ public class CompoundSecurityLayout extends BoundLayout {
     /** The Sum of the command groups of all children */
 	private Collection<BoundCommandGroup> commandGroups;
 
-    private String securityDomain;
-
     /**
      * Create a CompoundSecurityLayout from XML which is the default usage.
      */
     public CompoundSecurityLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
         this.useDefaultChecker = atts.getUseDefaultChecker();
-		this.securityDomain = atts.getSecurityDomain();
-    }
+
+		checkValidSecurityDomain(context, atts);
+
+	}
+
+	private void checkValidSecurityDomain(InstantiationContext context, Config atts) {
+		String securityDomain = atts.getSecurityDomain();
+		if (securityDomain == null) {
+			return;
+		}
+		Collection<String> knownStructures = AccessManager.getInstance().getStructureNames();
+		if (!knownStructures.contains(securityDomain)) {
+			context.info(
+				"Configured security-domain '" + securityDomain + "' in '" + this
+						+ "' is not a known security structure: " + knownStructures,
+				Log.WARN);
+		}
+	}
+
+	@Override
+	public Config getConfig() {
+		return (Config) super.getConfig();
+	}
 
     /**
      * Collect the CommandGroups of the children
@@ -109,8 +130,8 @@ public class CompoundSecurityLayout extends BoundLayout {
         }
     }
 
-    public String getSecurityDomain() {
-        return this.securityDomain;
+	public final String getSecurityDomain() {
+		return getConfig().getSecurityDomain();
     }
 
 	@Override

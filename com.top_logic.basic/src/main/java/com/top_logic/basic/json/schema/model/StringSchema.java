@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Validates string instances with length, pattern, format, and content constraints.
  * </p>
  */
-public class StringSchema extends Schema {
+public class StringSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.StringSchema} instance.

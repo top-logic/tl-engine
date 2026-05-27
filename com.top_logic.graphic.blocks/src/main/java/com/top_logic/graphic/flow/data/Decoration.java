@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A box that draws some decoration around another box.
  */
-public interface Decoration extends Box, com.top_logic.graphic.flow.operations.DecorationOperations {
+public interface Decoration extends com.top_logic.graphic.flow.data.Box, com.top_logic.graphic.flow.operations.DecorationOperations {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Decoration} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> {

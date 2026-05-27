@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A box whose content is clipped.
  */
-public interface ClipBox extends Decoration, com.top_logic.graphic.flow.operations.ClipBoxOperations {
+public interface ClipBox extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.ClipBoxOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.ClipBox} instance.

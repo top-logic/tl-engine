@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A rectangular region of a {@link Diagram}.
  */
-public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOperations {
+public interface Box extends com.top_logic.graphic.flow.data.Widget, com.top_logic.graphic.flow.operations.BoxOperations {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Box} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> extends com.top_logic.graphic.flow.data.Decoration.Visitor<R,A,E>, com.top_logic.graphic.flow.data.Layout.Visitor<R,A,E> {
@@ -119,13 +119,11 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 		int id = in.nextInt();
 		switch (type) {
 			case FloatingLayout.FLOATING_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.FloatingLayout.create(); break;
+			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.TreeLayout.create(); break;
 			case Text.TEXT__TYPE: result = com.top_logic.graphic.flow.data.Text.create(); break;
 			case Image.IMAGE__TYPE: result = com.top_logic.graphic.flow.data.Image.create(); break;
 			case Empty.EMPTY__TYPE: result = com.top_logic.graphic.flow.data.Empty.create(); break;
 			case Stack.STACK__TYPE: result = com.top_logic.graphic.flow.data.Stack.create(); break;
-			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.CompassLayout.create(); break;
-			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.graphic.flow.data.PolygonalChain.create(); break;
-			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.TreeLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.graphic.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.graphic.flow.data.ClickTarget.create(); break;
 			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.graphic.flow.data.ContextMenu.create(); break;
@@ -137,9 +135,11 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.graphic.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.graphic.flow.data.ClipBox.create(); break;
+			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.CompassLayout.create(); break;
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.GridLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.create(); break;
+			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.graphic.flow.data.PolygonalChain.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
 		if (result != null) {

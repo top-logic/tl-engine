@@ -8,7 +8,7 @@ package com.top_logic.basic.json.schema.model;
  * Serializes as {"type": "boolean"}.
  * </p>
  */
-public class BooleanSchema extends Schema {
+public class BooleanSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.BooleanSchema} instance.

@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A line of text.
  */
-public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOperations {
+public interface Text extends com.top_logic.graphic.flow.data.Box, com.top_logic.graphic.flow.operations.TextOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Text} instance.

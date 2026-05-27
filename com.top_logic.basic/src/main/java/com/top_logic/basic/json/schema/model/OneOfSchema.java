@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Instance must validate against EXACTLY ONE subschema.
  * </p>
  */
-public class OneOfSchema extends Schema {
+public class OneOfSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.OneOfSchema} instance.

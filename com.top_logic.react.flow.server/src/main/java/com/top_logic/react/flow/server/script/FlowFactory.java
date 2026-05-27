@@ -2176,126 +2176,159 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	/**
-	 * Builds a horizontal sequence of year labels for a days-since-epoch range, suitable as
-	 * the content of an {@link LOD} variant on an axis row.
+	 * Builds a list of year span items for a days-since-epoch range, one
+	 * {@link GanttSpan} per calendar year overlapping the range. Each span is positioned at the
+	 * year's actual start/end on the axis, so cell widths automatically reflect the proportion of
+	 * the year that is visible.
 	 *
 	 * <p>
-	 * Each tick cell carries a subtle alternating background ("zebra") and its label is centered
-	 * both horizontally and vertically within the cell.
+	 * Each span carries a subtle alternating background ("zebra") and a centered year label that
+	 * is automatically hidden when the cell becomes too narrow to fit it (via an {@link LOD} with
+	 * an empty fallback variant).
 	 * </p>
 	 *
 	 * @param rangeMin
 	 *        Lower bound of the range, interpreted as days since the Unix epoch.
 	 * @param rangeMax
 	 *        Upper bound of the range, interpreted as days since the Unix epoch.
-	 * @return A {@link HorizontalLayout} of year tick cells, stretched to fill the available
-	 *         width.
+	 * @param rowModel
+	 *        Business object of the row on which the year spans are placed.
+	 * @return Year span items, in chronological order.
 	 */
 	@SideEffectFree
-	@Label("Axis: year ticks")
-	public static Box axisDaysYearTicks(double rangeMin, double rangeMax) {
-		java.time.LocalDate min = java.time.LocalDate.ofEpochDay((long) Math.floor(rangeMin));
-		java.time.LocalDate max = java.time.LocalDate.ofEpochDay((long) Math.ceil(rangeMax));
-		List<Box> ticks = new ArrayList<>();
+	@Label("Axis: year spans")
+	public static List<GanttItem> axisDaysYearSpans(double rangeMin, double rangeMax,
+			@Mandatory Object rowModel) {
+		long rangeMinDay = (long) Math.floor(rangeMin);
+		long rangeMaxDay = (long) Math.ceil(rangeMax);
+		java.time.LocalDate min = java.time.LocalDate.ofEpochDay(rangeMinDay);
+		java.time.LocalDate max = java.time.LocalDate.ofEpochDay(rangeMaxDay);
+		List<GanttItem> items = new ArrayList<>();
 		int index = 0;
 		for (int year = min.getYear(); year <= max.getYear(); year++) {
-			ticks.add(axisTickCell(String.valueOf(year), index++));
+			long yearStart = java.time.LocalDate.of(year, 1, 1).toEpochDay();
+			long yearEnd = java.time.LocalDate.of(year + 1, 1, 1).toEpochDay();
+			long start = Math.max(rangeMinDay, yearStart);
+			long end = Math.min(rangeMaxDay, yearEnd);
+			items.add(axisSpan("axis:year:" + year, rowModel, start, end,
+				String.valueOf(year), index++));
 		}
-		return horizontalAxis(ticks);
+		return items;
 	}
 
 	/**
-	 * Builds a horizontal sequence of month labels for a days-since-epoch range.
+	 * Builds a list of month span items for a days-since-epoch range, one {@link GanttSpan} per
+	 * calendar month overlapping the range.
 	 *
 	 * <p>
-	 * Each tick cell carries a subtle alternating background ("zebra") and its label is centered
-	 * both horizontally and vertically within the cell.
+	 * Each span carries a subtle alternating background ("zebra") and a centered month label that
+	 * is hidden when the cell becomes too narrow to fit it (via an {@link LOD} with an empty
+	 * fallback variant).
 	 * </p>
 	 *
 	 * @param rangeMin
 	 *        Lower bound of the range, interpreted as days since the Unix epoch.
 	 * @param rangeMax
 	 *        Upper bound of the range, interpreted as days since the Unix epoch.
+	 * @param rowModel
+	 *        Business object of the row on which the month spans are placed.
 	 * @param withYear
 	 *        If {@code true}, labels include the year (e.g. {@code "Jan 2026"}); otherwise
 	 *        only the month abbreviation ({@code "Jan"}).
-	 * @return A {@link HorizontalLayout} of month tick cells, stretched to fill the available
-	 *         width.
+	 * @return Month span items, in chronological order.
 	 */
 	@SideEffectFree
-	@Label("Axis: month ticks")
-	public static Box axisDaysMonthTicks(double rangeMin, double rangeMax,
+	@Label("Axis: month spans")
+	public static List<GanttItem> axisDaysMonthSpans(double rangeMin, double rangeMax,
+			@Mandatory Object rowModel,
 			@BooleanDefault(false) boolean withYear) {
-		java.time.LocalDate min = java.time.LocalDate.ofEpochDay((long) Math.floor(rangeMin));
-		java.time.LocalDate max = java.time.LocalDate.ofEpochDay((long) Math.ceil(rangeMax));
-		List<Box> ticks = new ArrayList<>();
+		long rangeMinDay = (long) Math.floor(rangeMin);
+		long rangeMaxDay = (long) Math.ceil(rangeMax);
+		java.time.LocalDate min = java.time.LocalDate.ofEpochDay(rangeMinDay);
+		java.time.LocalDate max = java.time.LocalDate.ofEpochDay(rangeMaxDay);
+		List<GanttItem> items = new ArrayList<>();
 		int index = 0;
 		java.time.LocalDate cursor = min.withDayOfMonth(1);
 		while (!cursor.isAfter(max)) {
+			java.time.LocalDate next = cursor.plusMonths(1);
 			String abbr = cursor.getMonth().name().substring(0, 1)
 				+ cursor.getMonth().name().substring(1, 3).toLowerCase();
 			String label = withYear ? abbr + " " + cursor.getYear() : abbr;
-			ticks.add(axisTickCell(label, index++));
-			cursor = cursor.plusMonths(1);
+			long start = Math.max(rangeMinDay, cursor.toEpochDay());
+			long end = Math.min(rangeMaxDay, next.toEpochDay());
+			items.add(axisSpan(
+				"axis:month:" + cursor.getYear() + "-" + cursor.getMonthValue(),
+				rowModel, start, end,
+				label, index++));
+			cursor = next;
 		}
-		return horizontalAxis(ticks);
+		return items;
 	}
 
 	/**
-	 * Builds a horizontal sequence of day-of-month labels for a days-since-epoch range.
-	 *
-	 * <p>
-	 * Each tick cell carries a subtle alternating background ("zebra") and its label is centered
-	 * both horizontally and vertically within the cell.
-	 * </p>
+	 * Builds a list of day span items for a days-since-epoch range, one {@link GanttSpan} per day
+	 * in the range. Day labels are hidden automatically at zoom levels where the per-day cell
+	 * width is too narrow to fit the digits.
 	 *
 	 * @param rangeMin
 	 *        Lower bound of the range, interpreted as days since the Unix epoch.
 	 * @param rangeMax
 	 *        Upper bound of the range, interpreted as days since the Unix epoch.
-	 * @return A {@link HorizontalLayout} of day-of-month tick cells, stretched to fill the
-	 *         available width.
+	 * @param rowModel
+	 *        Business object of the row on which the day spans are placed.
+	 * @return Day span items, in chronological order.
 	 */
 	@SideEffectFree
-	@Label("Axis: day ticks")
-	public static Box axisDaysDayTicks(double rangeMin, double rangeMax) {
+	@Label("Axis: day spans")
+	public static List<GanttItem> axisDaysDaySpans(double rangeMin, double rangeMax,
+			@Mandatory Object rowModel) {
 		long minDay = (long) Math.floor(rangeMin);
 		long maxDay = (long) Math.ceil(rangeMax);
-		List<Box> ticks = new ArrayList<>();
+		List<GanttItem> items = new ArrayList<>();
 		int index = 0;
-		for (long d = minDay; d <= maxDay; d++) {
+		for (long d = minDay; d < maxDay; d++) {
 			int dayOfMonth = java.time.LocalDate.ofEpochDay(d).getDayOfMonth();
-			ticks.add(axisTickCell(String.valueOf(dayOfMonth), index++));
+			// Zero-pad to two digits so every cell's label has the same intrinsic width.
+			// Otherwise the LOD's "label fits" gate would accept "1"-"9" but reject "10"-"31",
+			// producing a half-rendered row.
+			String label = String.format("%02d", dayOfMonth);
+			items.add(axisSpan("axis:day:" + d, rowModel, d, d + 1,
+				label, index++));
 		}
-		return horizontalAxis(ticks);
+		return items;
 	}
 
-	/** Subtle alternating fill colors for axis tick zebra striping. */
+	/** Subtle alternating fill colors for axis-span zebra striping. */
 	private static final String AXIS_TICK_FILL_EVEN = "rgba(0,0,0,0.03)";
 
 	private static final String AXIS_TICK_FILL_ODD = "rgba(0,0,0,0.08)";
 
 	/**
-	 * Builds a single axis tick cell: a {@link Fill} that paints an alternating zebra
-	 * background and centers its text label within the row height via {@link Align}.
+	 * Builds a single axis span: a non-interactive {@link GanttSpan} positioned at
+	 * {@code [start, end)}, whose box paints an alternating zebra background and contains an
+	 * {@link LOD} that shows the label when it fits the cell width and falls back to empty
+	 * otherwise.
 	 */
-	private static Box axisTickCell(String label, int index) {
+	private static GanttSpan axisSpan(String modelId, Object rowModel,
+			long start, long end, String label, int index) {
 		String bg = (index % 2 == 0) ? AXIS_TICK_FILL_EVEN : AXIS_TICK_FILL_ODD;
-		return Fill.create()
+		Box centeredLabel = Align.create()
+			.setXAlign(Alignment.MIDDLE)
+			.setYAlign(Alignment.MIDDLE)
+			.setContent(Text.create().setValue(label));
+		Box cell = Fill.create()
 			.setFillStyle(bg)
-			.setContent(Align.create()
-				.setXAlign(Alignment.MIDDLE)
-				.setYAlign(Alignment.MIDDLE)
-				.setContent(Text.create().setValue(label)));
-	}
-
-	private static Box horizontalAxis(List<Box> ticks) {
-		if (ticks.isEmpty()) {
-			return Empty.create();
-		}
-		return HorizontalLayout.create()
-			.setContents(ticks)
-			.setFill(SpaceDistribution.STRETCH_CONTENT);
+			.setContent(LOD.create()
+				.addVariant(LODVariant.create().setContent(centeredLabel))
+				.addVariant(LODVariant.create().setContent(Empty.create())));
+		return GanttSpan.create()
+			.setUserObject(modelId)
+			.setRowModel(rowModel)
+			.setBox(cell)
+			.setStart(start).setEnd(end)
+			.setCanMoveTime(false).setCanMoveRow(false)
+			.setCanResizeStart(false).setCanResizeEnd(false)
+			.setCanBeEdgeSource(false).setCanBeEdgeTarget(false);
 	}
 
 }

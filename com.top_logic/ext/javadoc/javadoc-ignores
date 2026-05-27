@@ -5076,7 +5076,6 @@ com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Invalid camel case word 
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.ApplyRoleCommand.COMMAND_ID
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.DeleteRoleCommand.COMMAND_ID
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.FIELD_DESC
-com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.FIELD_MASTER
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.FIELD_NAME
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.FIELD_SYSTEM
 com.top_logic.tool.boundsec.gui.RolesTableModelBuilder.java: Invalid camel case word 'ModelBuilder', this may only be used within JavaDoc links or HTML code tags.

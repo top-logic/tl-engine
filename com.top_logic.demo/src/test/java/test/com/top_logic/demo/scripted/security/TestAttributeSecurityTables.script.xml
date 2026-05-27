@@ -1406,7 +1406,7 @@
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1443,7 +1443,7 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1458,7 +1458,7 @@
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1495,7 +1495,7 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1510,7 +1510,7 @@
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1547,7 +1547,7 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1562,7 +1562,7 @@
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1599,7 +1599,7 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1614,7 +1614,7 @@
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1651,7 +1651,7 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 						>
 							<arguments/>
@@ -1685,7 +1685,7 @@
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 							command-label="Neu..."
 							command-name="displayDialog_newRoleDialog"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							user-id="root"
 						>
@@ -1719,7 +1719,7 @@
 							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 							command-label="Speichern"
 							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+							component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 							component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 							user-id="root"
 						>
@@ -5460,7 +5460,7 @@
 									command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 									command-label="Löschen..."
 									command-name="deleteRole"
-									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 								>
 									<arguments/>
@@ -5494,7 +5494,7 @@
 									command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 									command-label="Löschen..."
 									command-name="deleteRole"
-									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 								>
 									<arguments/>
@@ -5528,7 +5528,7 @@
 									command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 									command-label="Löschen..."
 									command-name="deleteRole"
-									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 								>
 									<arguments/>
@@ -5562,7 +5562,7 @@
 									command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 									command-label="Löschen..."
 									command-name="deleteRole"
-									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 								>
 									<arguments/>
@@ -5596,7 +5596,7 @@
 									command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 									command-label="Löschen..."
 									command-name="deleteRole"
-									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 								>
 									<arguments/>
@@ -5647,7 +5647,7 @@
 									command-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent$DeleteRoleCommand"
 									command-label="Löschen..."
 									command-name="deleteRole"
-									component-implementation-comment="com.top_logic.element.layout.role.ScopedEditRoleComponent"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 									component-name="com.top_logic.element/admin/security/roleEditor/adminRolesView.layout.xml#EditRole"
 									user-id="root"
 								>

@@ -18,7 +18,6 @@ import java.util.List;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.FileManager;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.Settings;
@@ -440,7 +439,7 @@ public class WrapperGenerator {
 				msg.append("' in module '");
 				msg.append(module.getName());
 				msg.append("'.");
-				Logger.error(msg.toString(), ex, WrapperGenerator.class);
+				_log.error(msg.toString(), ex);
 			}
 		}
 	}

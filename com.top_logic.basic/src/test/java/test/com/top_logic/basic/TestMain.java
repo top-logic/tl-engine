@@ -38,9 +38,9 @@ public class TestMain extends TestCase {
 			public Exception run() {
 				try {
             Main.main(new String[0]);
-            String sout = bos.toString(); 
+            String sout = bos.toString();
             // oldOut.println(sout);
-            assertTrue(sout.startsWith("This tool does nothing"));
+            assertTrue(sout.startsWith("[INFO] This tool does nothing"));
             bos.reset();
             
             Main.main(new String[] { "-h"} );

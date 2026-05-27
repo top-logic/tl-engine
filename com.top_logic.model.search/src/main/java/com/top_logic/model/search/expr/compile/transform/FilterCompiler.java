@@ -22,6 +22,7 @@ import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.All;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.Call;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.Foreach;
 import com.top_logic.model.search.expr.IsEqual;
@@ -157,13 +158,18 @@ public class FilterCompiler extends Rewriter<Void> {
 		}
 
 		/**
-		 * Creates the expression that can be created now, i.e. at compile time.
+		 * Analyzes the given CompiledValue and extends the given filter expression as much as
+		 * possible at compile time.
 		 * 
 		 * <p>
-		 * For this split top level {@link CompiledAnd ANDs} because the parts can be handled
-		 * separately: When one part needs the evaluation context for creation of the expression,
-		 * the other part may be integrated in the "static" {@link SetExpression}.
+		 * To do this, top-level {@link CompiledAnd ANDs} are broken down into their individual
+		 * parts and handled separately.
 		 * </p>
+		 * 
+		 * <p>
+		 * If a {@link CompiledValue} requires the {@link EvalContext evaluation context} and
+		 * therefore a filter expression cannot be created, the {@link CompiledValue} is added to
+		 * the <code>dynamicValues</code>.
 		 */
 		private Expression buildFilter(Expression filter, List<CompiledValue> dynamicalValues,
 				CompiledValue value) {
@@ -177,7 +183,9 @@ public class FilterCompiler extends Rewriter<Void> {
 					try {
 						filter = ExpressionFactory.and(filter, value.buildExpression(null));
 					} catch (CompiledValue.IncompatibleTypes ex) {
-						throw new IllegalArgumentException("Expression is independent of types.", ex);
+						/* This case must not happen because the CompiledValue does not access the
+						 * context. */
+						dynamicalValues.add(value);
 					}
 				}
 			}

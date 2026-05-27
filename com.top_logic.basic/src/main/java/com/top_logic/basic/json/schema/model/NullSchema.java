@@ -8,7 +8,7 @@ package com.top_logic.basic.json.schema.model;
  * Serializes as {"type": "null"}.
  * </p>
  */
-public class NullSchema extends Schema {
+public class NullSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.NullSchema} instance.

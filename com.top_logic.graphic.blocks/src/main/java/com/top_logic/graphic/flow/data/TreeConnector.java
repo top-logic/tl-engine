@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * An anchor point of a connection to a node of the diagram.
  */
-public interface TreeConnector extends Widget, com.top_logic.graphic.flow.operations.tree.TreeConnectorOperations {
+public interface TreeConnector extends com.top_logic.graphic.flow.data.Widget, com.top_logic.graphic.flow.operations.tree.TreeConnectorOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.TreeConnector} instance.

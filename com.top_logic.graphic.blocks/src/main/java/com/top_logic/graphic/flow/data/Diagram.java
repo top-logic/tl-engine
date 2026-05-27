@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * Top-level diagram element that can be layouted and rendered.
  */
-public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.DiagramOperations {
+public interface Diagram extends com.top_logic.graphic.flow.data.Widget, com.top_logic.graphic.flow.operations.DiagramOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Diagram} instance.

@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A box that shows a tooltip when the mouse hovers over its contents.
  */
-public interface Tooltip extends Decoration, com.top_logic.graphic.flow.operations.TooltipOperations {
+public interface Tooltip extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.TooltipOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Tooltip} instance.

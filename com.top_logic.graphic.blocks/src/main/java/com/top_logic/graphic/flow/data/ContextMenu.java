@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A box defines a custom context menu region.
  */
-public interface ContextMenu extends Decoration, com.top_logic.graphic.flow.operations.ContextMenuOperations {
+public interface ContextMenu extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.ContextMenuOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.ContextMenu} instance.

@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Instance must NOT validate against the subschema.
  * </p>
  */
-public class NotSchema extends Schema {
+public class NotSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.NotSchema} instance.

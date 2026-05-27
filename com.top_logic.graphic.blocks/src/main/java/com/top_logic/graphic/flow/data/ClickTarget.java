@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A box that reacts on interactive mouse click events invoking a callback.
  */
-public interface ClickTarget extends Decoration, com.top_logic.graphic.flow.operations.ClickTargetOperations {
+public interface ClickTarget extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.ClickTargetOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.ClickTarget} instance.

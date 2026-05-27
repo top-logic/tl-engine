@@ -25,6 +25,17 @@
 			</instance>
 		</config>
 
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance class="com.top_logic.base.services.InitialRolesManager">
+				<roles>
+					<role name="SecurityStructure.Admin"/>
+					<role name="tl.doc.DocumentationReader"/>
+					<role name="tl.doc.DocumentationWriter"/>
+				</roles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
 				<structures>
@@ -58,19 +69,7 @@
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<settings>
-					<module name="SecurityStructure">
-						<roles>
-							<role name="SecurityStructure.Admin"/>
-						</roles>
-						<singletons>
-							<singleton type="Root"/>
-						</singletons>
-					</module>
 					<module name="tl.doc">
-						<roles>
-							<role name="tl.doc.DocumentationReader"/>
-							<role name="tl.doc.DocumentationWriter"/>
-						</roles>
 						<singletons>
 							<singleton type="Root"/>
 						</singletons>

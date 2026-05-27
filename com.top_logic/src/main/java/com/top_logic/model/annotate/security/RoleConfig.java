@@ -12,7 +12,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 /**
  * Definition of a role.
  * 
- * @see TLRoleDefinitions#getRoles()
+ * @see com.top_logic.base.services.InitialRolesManager.Config#getRoles()
  * @see BoundedRole
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

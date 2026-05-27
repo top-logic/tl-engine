@@ -7,8 +7,6 @@
 		<profile name="DemoSecurity.SecurityAdministrator"/>
 		<profile name="DemoSecurity.SecurityAdministratorB"/>
 		<profile name="DemoSecurity.User"/>
-		<profile name="DemoSecurity.navigation"/>
-		<profile name="DemoSecurity.selection"/>
 		<profile name="DemoTypes.Administrator">
 			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
 				<commandGroup name="Create"/>
@@ -64,7 +62,7 @@
 		<profile name="DemoTypes.BAdministrator"/>
 		<profile name="DemoTypes.BooleanAdministrator"/>
 		<profile name="DemoTypes.DateAdministrator"/>
-		<profile name="DemoTypes.Navigation">
+		<profile name="navigation">
 			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
 				<commandGroup name="Read"/>
 			</view>
@@ -122,7 +120,7 @@
 				<commandGroup name="Write"/>
 			</view>
 		</profile>
-		<profile name="DemoTypes.Selection"/>
+		<profile name="selection"/>
 		<profile name="DemoTypes.StringAdministrator"/>
 		<profile name="SecurityStructure.OwnerRole">
 			<view name="com.top_logic.demo/search/searchChart.layout.xml#searchChart">

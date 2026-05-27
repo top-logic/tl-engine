@@ -13,7 +13,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
  * Priority of {@link DiffElement}s defining the order in which elements of a model patch are
@@ -48,15 +47,6 @@ enum Priority {
 	 * </p>
 	 */
 	RENAME,
-
-	/**
-	 * Deletion of a {@link BoundedRole}.
-	 * 
-	 * @implNote Must occur before removing {@link TLModule}s.
-	 * 
-	 * @see #CREATE_ROLE
-	 */
-	DELETE_ROLE,
 
 	/**
 	 * Deletion of backwards references.
@@ -196,12 +186,5 @@ enum Priority {
 	 * Creation of a {@link TLModuleSingleton}.
 	 */
 	CREATE_SINGLETONS,
-
-	/**
-	 * Creation of a {@link BoundedRole}.
-	 * 
-	 * @see #DELETE_ROLE
-	 */
-	CREATE_ROLE
 
 }

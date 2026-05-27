@@ -7,15 +7,6 @@
 				<singletons>
 					<singleton type="ProjectRoot"/>
 				</singletons>
-				<roles>
-					<role name="projElement.Verantwortlicher"/>
-					<role name="projElement.Mitarbeiter"/>
-					<role name="projElement.TeilprojektVerantwortlicher"/>
-					<role name="projElement.Nutzer"/>
-					<role name="projElement.Hauptbenutzer"/>
-					<role name="projElement.Beobachter"/>
-					<role name="projElement.Projektbeobachter"/>
-				</roles>
 			</annotations>
 			<types>
 				<interface name="ProjElement">

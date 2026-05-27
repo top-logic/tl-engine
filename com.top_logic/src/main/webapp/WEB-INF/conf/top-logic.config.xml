@@ -42,6 +42,7 @@
 			       <module key="com.top_logic.tool.export.ExportQueueManager$Module" value="true"/>
 			       <module key="com.top_logic.tool.export.ExportRegistryFactory$Module" value="true"/>
 			       <module key="com.top_logic.base.services.InitialGroupManager$Module" value="true" />
+			       <module key="com.top_logic.base.services.InitialRolesManager$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService$Module" value="true" />
 			       <module key="com.top_logic.base.administration.MaintenanceWindowManager$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.SessionService$Module" value="true"/>
@@ -778,6 +779,15 @@
 		
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
 			<instance class="com.top_logic.base.services.InitialGroupManager">
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance class="com.top_logic.base.services.InitialRolesManager">
+				<roles>
+					<role name="navigation"/>
+					<role name="selection"/>
+				</roles>
 			</instance>
 		</config>
 

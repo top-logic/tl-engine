@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
+import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
@@ -87,6 +88,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	MetaElementFactory.Module.class,
 	BoundHelper.Module.class,
+	InitialRolesManager.Module.class,
 })
 public class ElementAccessManager extends AccessManager {
 

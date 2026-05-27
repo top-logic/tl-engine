@@ -56,6 +56,20 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="projElement.Verantwortlicher"/>
+					<role name="projElement.Mitarbeiter"/>
+					<role name="projElement.TeilprojektVerantwortlicher"/>
+					<role name="projElement.Nutzer"/>
+					<role name="projElement.Hauptbenutzer"/>
+					<role name="projElement.Beobachter"/>
+					<role name="projElement.Projektbeobachter"/>
+				</roles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<declarations>
@@ -76,17 +90,6 @@
 					</module>
 					<module name="Benchmark" enabled="true">
 						<factory value="test.com.top_logic.element.meta.benchmark.model.BenchmarkFactory"/>
-					</module>
-					<module name="projElement">
-						<roles>
-							<role name="projElement.Verantwortlicher"/>
-							<role name="projElement.Mitarbeiter"/>
-							<role name="projElement.TeilprojektVerantwortlicher"/>
-							<role name="projElement.Nutzer"/>
-							<role name="projElement.Hauptbenutzer"/>
-							<role name="projElement.Beobachter"/>
-							<role name="projElement.Projektbeobachter"/>
-						</roles>
 					</module>
 				</settings>
 				<classifications>

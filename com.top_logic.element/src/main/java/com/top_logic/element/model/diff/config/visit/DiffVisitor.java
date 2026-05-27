@@ -9,12 +9,10 @@ import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
 import com.top_logic.element.model.diff.config.CreateClassifier;
 import com.top_logic.element.model.diff.config.CreateModule;
-import com.top_logic.element.model.diff.config.CreateRole;
 import com.top_logic.element.model.diff.config.CreateSingleton;
 import com.top_logic.element.model.diff.config.CreateStructuredTypePart;
 import com.top_logic.element.model.diff.config.CreateType;
 import com.top_logic.element.model.diff.config.Delete;
-import com.top_logic.element.model.diff.config.DeleteRole;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.diff.config.MakeAbstract;
 import com.top_logic.element.model.diff.config.MakeConcrete;
@@ -25,8 +23,8 @@ import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
-import com.top_logic.element.model.diff.config.UpdateBag;
 import com.top_logic.element.model.diff.config.UpdateAbstract;
+import com.top_logic.element.model.diff.config.UpdateBag;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateMultiplicity;
 import com.top_logic.element.model.diff.config.UpdateOrdered;
@@ -50,12 +48,6 @@ public interface DiffVisitor<R, A, E extends Throwable> {
 
 	/** Visit case for {@link CreateSingleton}. */
 	R visit(CreateSingleton diff, A arg) throws E;
-
-	/** Visit case for {@link CreateRole}. */
-	R visit(CreateRole diff, A arg) throws E;
-
-	/** Visit case for {@link DeleteRole}. */
-	R visit(DeleteRole diff, A arg) throws E;
 
 	/** Visit case for {@link CreateType}. */
 	R visit(CreateType diff, A arg) throws E;

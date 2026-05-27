@@ -135,15 +135,22 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="SecurityStructure.OwnerRole"/>
+					<role name="DemoTypes.Administrator"/>
+					<role name="DemoTypes.BAdministrator"/>
+					<role name="DemoTypes.BooleanAdministrator"/>
+					<role name="DemoTypes.StringAdministrator"/>
+					<role name="DemoTypes.DateAdministrator"/>
+					<role name="DemoTypes.Responsible"/>
+				</roles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
-				<settings>
-					<module name="SecurityStructure">
-						<roles>
-							<role name="SecurityStructure.OwnerRole"/>
-						</roles>
-					</module>
-				</settings>
 				<model-filter>
 					<blacklist>
 						<!-- These types are inherited from "com.top_logic.remote".

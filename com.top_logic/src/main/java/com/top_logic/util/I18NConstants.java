@@ -31,9 +31,6 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Application startup: {0} {1} */
 	public static ResKey2 APPLICATION_STARTUP__NAME_VERSION;
 
-	/** @en Created groups and roles. */
-	public static ResKey CREATING_INITIAL_GROUPS_AND_ROLES;
-
 	/** @en Initialized view permissions. */
 	public static ResKey INITIALIZING_LAYOUT_BASED_SECURITY;
 

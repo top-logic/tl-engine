@@ -27,7 +27,7 @@
 				autoFocusSelection="true"
 				resPrefix="layouts.demo.editSecurityStructureWithExport.Tree."
 			>
-				<security-filter selectionRole="DemoSecurity.selection"/>
+				<security-filter selectionRole="selection"/>
 				<layoutInfo
 					minSize="100"
 					size="220"
@@ -35,7 +35,7 @@
 				<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
 					structureName="${structure}"
 				>
-					<has-some-role roles="DemoSecurity.navigation"/>
+					<has-some-role roles="navigation"/>
 				</modelBuilder>
 			</treeView>
 			<tabbar name="${structure}demoStructureTab">

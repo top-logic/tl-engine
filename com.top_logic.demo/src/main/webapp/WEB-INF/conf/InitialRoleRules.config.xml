@@ -61,21 +61,21 @@
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.All"
-							role="DemoSecurity.selection"
+							role="selection"
 							source-role="DemoSecurity.Role1,DemoSecurity.Role2,DemoSecurity.SecurityAdministrator,DemoSecurity.SecurityAdministratorB,DemoSecurity.User"
 						/>
 
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.All"
-							role="DemoSecurity.navigation"
-							source-role="DemoSecurity.selection"
+							role="navigation"
+							source-role="selection"
 						/>
 
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurityElementContainer"
-							role="DemoSecurity.navigation"
+							role="navigation"
 						>
 							<path>
 								<step attribute="DemoSecurity:DemoSecurityElementContainer#children"/>
@@ -85,14 +85,14 @@
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Navigation"
-							source-role="DemoTypes.Selection"
+							role="navigation"
+							source-role="selection"
 						/>
 
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoTypes:DemoTypesContainer"
-							role="DemoTypes.Navigation"
+							role="navigation"
 						>
 							<path>
 								<step attribute="DemoTypes:DemoTypesContainer#children"/>
@@ -115,7 +115,7 @@
 						<inheritance-rule
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
-							role="DemoTypes.Selection"
+							role="selection"
 							source-role="DemoTypes.Administrator,DemoTypes.Responsible,DemoTypes.BAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.StringAdministrator"
 						/>
 

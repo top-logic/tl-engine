@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Instance must equal exactly this value.
  * </p>
  */
-public class ConstSchema extends Schema {
+public class ConstSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.ConstSchema} instance.

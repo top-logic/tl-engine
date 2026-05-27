@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * If instance validates against 'if', 'then' is applied, otherwise 'else'.
  * </p>
  */
-public class ConditionalSchema extends Schema {
+public class ConditionalSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.ConditionalSchema} instance.

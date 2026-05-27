@@ -8,7 +8,7 @@ package com.top_logic.basic.json.schema.model;
  * and property schemas.
  * </p>
  */
-public class ObjectSchema extends Schema {
+public class ObjectSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.ObjectSchema} instance.

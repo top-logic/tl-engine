@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Validates array instances with size, uniqueness, and item constraints.
  * </p>
  */
-public class ArraySchema extends Schema {
+public class ArraySchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.ArraySchema} instance.

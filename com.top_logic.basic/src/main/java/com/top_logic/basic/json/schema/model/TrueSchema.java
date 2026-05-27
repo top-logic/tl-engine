@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Equivalent to an empty schema object {}.
  * </p>
  */
-public class TrueSchema extends Schema {
+public class TrueSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.TrueSchema} instance.

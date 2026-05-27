@@ -25,7 +25,7 @@
 						<channel name="navPath"/>
 					</channels>
 
-					<slot-content slot="secondary">
+					<slot-content to="secondary">
 						<tile-breadcrumb path="navPath">
 							<home-label>
 								<en>Workspace A &#x2013; Accounts</en>
@@ -50,7 +50,7 @@
 						<channel name="navPath"/>
 					</channels>
 
-					<slot-content slot="secondary">
+					<slot-content to="secondary">
 						<tile-breadcrumb path="navPath">
 							<home-label>
 								<en>Workspace B &#x2013; Accounts</en>

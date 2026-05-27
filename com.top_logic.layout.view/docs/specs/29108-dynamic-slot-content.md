@@ -73,7 +73,7 @@ named region, not the structural composition of the shell itself.
 ### 3.1 Mental model
 
 `<slot>` and `<slot-content>` are **two ordinary UIElements that find each
-other by tree position**. A `<slot-content slot="X">` contribution renders at
+other by tree position**. A `<slot-content to="X">` contribution renders at
 the position of the nearest `<slot name="X"/>` in the surrounding tree —
 "nearest" measured by lowest-common-ancestor distance. No scope opt-in, no
 registry seeded by an ancestor, no `SlotScope` API. The container structure of
@@ -87,7 +87,7 @@ the view itself is the routing mechanism.
 |   |                                                       |
 |   +-- ... <slot name="foo"/>                              |
 |   |                                                       |
-|   +-- ... <slot-content slot="foo">                       |
+|   +-- ... <slot-content to="foo">                       |
 |              <some-ui-element/>                           |
 |           </slot-content>                                 |
 |                                                           |
@@ -132,11 +132,11 @@ Because routing is structural, no UIElement opts into anything. There is no
 "scope seeder" category, no `SlotHost` interface, no `withSlotScope(...)`
 API. Every UIElement is uniformly transparent to the slot mechanism. The only
 thing the framework provides is: given the current tree and a `<slot-content
-slot="X">`, find the nearest `<slot name="X"/>` and route there.
+to="X">`, find the nearest `<slot name="X"/>` and route there.
 
 **Isolation via tree position, not via explicit scope.** If a panel contains
 its own `<slot name="primary-action"/>` and child views inside it use
-`<slot-content slot="primary-action">`, those contributions go to the panel's
+`<slot-content to="primary-action">`, those contributions go to the panel's
 slot — they never escape outward because a closer match exists. A second
 panel elsewhere in the tree with its own `<slot name="primary-action"/>`
 similarly contains its own contributions. The two panels do not interfere,
@@ -145,7 +145,7 @@ without anyone declaring a "scope".
 This subsumes everything the explicit-scope design needed:
 
 - **Wizard private slot:** the wizard contains `<slot name="primary-action"/>`;
-  step-internal `<slot-content slot="primary-action">` is closer to the
+  step-internal `<slot-content to="primary-action">` is closer to the
   wizard's slot than to any outer same-named slot, so it goes to the wizard.
   No `withSlotScope` call from `WizardElement`.
 - **Multiple simultaneously-mounted wizards:** each wizard's subtree contains
@@ -195,6 +195,14 @@ implicitly by the framework. Application code does not see it.
 
 ### 3.5 XML surface
 
+> **Note on attribute naming.** The `<slot-content>` element uses
+> `to="X"` (not `slot="X"`) to identify the target slot. The framework's
+> typed-configuration descriptor resolver treats property names and
+> polymorphic child tag names in the same namespace; a property named
+> `slot` would clash with the `<slot>` child tag that the default
+> container `<children>` admits. Renaming the attribute to `to` removes
+> the ambiguity and reads naturally as "contribute to slot X".
+
 `<slot>` and `<slot-content>` are regular `UIElement` configurations. They can
 appear anywhere a `UIElement` can — inside `<app-bar>`, inside `<stack>`, inside a
 custom container, inside another `<slot-content>`. There is no positional or
@@ -206,7 +214,7 @@ container-type restriction.
 <slot name="secondary"/>
 ```
 
-Renders all `<slot-content slot="secondary">` contributions whose tree-nearest
+Renders all `<slot-content to="secondary">` contributions whose tree-nearest
 matching slot is this one. Optionally accepts a fallback for the empty case:
 
 ```xml
@@ -220,7 +228,7 @@ matching slot is this one. Optionally accepts a fallback for the empty case:
 **Slot contribution:**
 
 ```xml
-<slot-content slot="secondary">
+<slot-content to="secondary">
     <tile-breadcrumb path="navPath">
         <home-label><en>Accounts</en></home-label>
     </tile-breadcrumb>
@@ -267,13 +275,13 @@ slot is reached by contributions outside the inner container.
     <inner>
         <slot name="toolbar"/>              [B]
         <view-1>
-            <slot-content slot="toolbar">   --> routed to [B]
+            <slot-content to="toolbar">   --> routed to [B]
                 <button-x/>
             </slot-content>
         </view-1>
     </inner>
     <view-2>
-        <slot-content slot="toolbar">       --> routed to [A]
+        <slot-content to="toolbar">       --> routed to [A]
             <button-y/>
         </slot-content>
     </view-2>
@@ -287,7 +295,7 @@ presence of `<slot name="toolbar"/>` inside `<inner>` is what isolates
 contributions originating from inside `<inner>`.
 
 To explicitly target an outer slot from inside an inner same-named one, an
-`<slot-content slot="X" target="outer">` (or similar) attribute could be
+`<slot-content to="X" target="outer">` (or similar) attribute could be
 added later if a real use case appears — see open question 7.1.
 
 ## 4. Generalization: `CommandScope` becomes redundant
@@ -320,7 +328,7 @@ With the slot mechanism in place, the app-bar's toolbar is just an inline slot:
 </app-bar>
 
 <!-- declared near the app-shell, or inside any descendant view: -->
-<slot-content slot="toolbar">
+<slot-content to="toolbar">
     <button command="open-designer" placement="TOOLBAR">
         <label><en>Designer</en></label>
         <tooltip><en>Open the view designer.</en></tooltip>
@@ -328,7 +336,7 @@ With the slot mechanism in place, the app-bar's toolbar is just an inline slot:
 </slot-content>
 
 <!-- and a form's edit command, declared inside the form view: -->
-<slot-content slot="toolbar">
+<slot-content to="toolbar">
     <button command="form-edit"><label><en>Edit</en></label></button>
     <button command="form-save"><label><en>Save</en></label></button>
 </slot-content>
@@ -370,7 +378,7 @@ Drill-down view contributes its breadcrumb into the app bar's `secondary` slot:
 <view>
     <channels><channel name="navPath"/></channels>
 
-    <slot-content slot="secondary">
+    <slot-content to="secondary">
         <tile-breadcrumb path="navPath">
             <home-label><en>Accounts</en></home-label>
         </tile-breadcrumb>
@@ -392,7 +400,7 @@ answer the natural question "how do I synchronize two stacks":
 <view>
     <channels><channel name="navPath"/></channels>
 
-    <slot-content slot="secondary">
+    <slot-content to="secondary">
         <tile-breadcrumb path="navPath"/>
     </slot-content>
 
@@ -409,7 +417,7 @@ the channel updates, both stacks re-render, the breadcrumb re-renders.
 ### 5.3 Independent tile-stack tabs
 
 Tab A and Tab B each declare their own local `navPath` channel and their own
-`<slot-content slot="secondary">`. Only the active tab is mounted (nav-item
+`<slot-content to="secondary">`. Only the active tab is mounted (nav-item
 routing handles this). Only the active tab's slot-content is in the scope.
 Switching tabs implicitly switches the visible breadcrumb. No app-level
 multiplexer needed; no global channel needed.
@@ -421,7 +429,7 @@ Form view contributes its action buttons to the toolbar, no `CommandScope`:
 ```xml
 <!-- form view -->
 <view>
-    <slot-content slot="toolbar">
+    <slot-content to="toolbar">
         <button command="edit"><label><en>Edit</en></label></button>
         <button command="save" disabled-while-clean="true">
             <label><en>Save</en></label>
@@ -448,14 +456,14 @@ same-named slot outside the wizard — because the wizard's slot is closer:
     </header>
 
     <step id="account">
-        <slot-content slot="primary-action">
+        <slot-content to="primary-action">
             <button command="next">Next</button>
         </slot-content>
         <form .../>
     </step>
 
     <step id="review">
-        <slot-content slot="primary-action">
+        <slot-content to="primary-action">
             <button command="submit" variant="primary">Submit</button>
         </slot-content>
         <review-panel/>
@@ -465,7 +473,7 @@ same-named slot outside the wizard — because the wizard's slot is closer:
 
 `WizardElement` does not opt into anything, does not call any framework API.
 It just contains a slot. The framework routes each step's `<slot-content
-slot="primary-action">` to the wizard's slot because it is the nearest match
+to="primary-action">` to the wizard's slot because it is the nearest match
 by tree distance.
 
 If something further out (e.g. the app-shell) also defines `<slot
@@ -474,7 +482,7 @@ wizard; the outer slot still receives contributions originating from outside
 the wizard.
 
 A different question is what happens when a step contributes to a slot that
-the wizard does *not* define locally (e.g. `<slot-content slot="toolbar">`).
+the wizard does *not* define locally (e.g. `<slot-content to="toolbar">`).
 That contribution walks past the wizard, finds the outer `<slot
 name="toolbar"/>` (e.g. in the app-bar), and is routed there. The wizard does
 not isolate names it does not itself host.
@@ -496,7 +504,7 @@ not isolate names it does not itself host.
    exists, all inner `<slot-content>` is captured by it. If a deeply-nested
    view legitimately needs to project content to an *outer* same-named slot,
    the design currently has no syntax for that. Proposal: defer; add
-   `<slot-content slot="X" target="outer">` (or a path expression) only when a
+   `<slot-content to="X" target="outer">` (or a path expression) only when a
    real use case appears.
 2. **Naming.** Element names `<slot>` and `<slot-content>` chosen for
    symmetry, but conflict-rich at the reading level (the static configuration
@@ -540,7 +548,7 @@ Purely additive. No existing view XML breaks.
   `tiles-demo.view.xml`; `<slot name="secondary"/>` added to the demo
   `app-bar`.
 - Optional follow-up ticket (not this one): port `<open-designer>` and all
-  `placement="TOOLBAR"` commands to `<slot-content slot="toolbar">`-wrapped
+  `placement="TOOLBAR"` commands to `<slot-content to="toolbar">`-wrapped
   buttons. Then deprecate `CommandScope`, `ViewCommandModel`, the
   `<commands>` block on `AppBarElement`, and the `CommandPlacement` enum.
 

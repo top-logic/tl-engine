@@ -44,8 +44,8 @@ public class SlotContentElement implements UIElement {
 		@ClassDefault(SlotContentElement.class)
 		Class<? extends UIElement> getImplementationClass();
 
-		/** Configuration name for {@link #getSlot()}. */
-		String SLOT = "slot";
+		/** Configuration name for {@link #getTo()}. */
+		String TO = "to";
 
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
@@ -53,10 +53,15 @@ public class SlotContentElement implements UIElement {
 		/**
 		 * Name of the target {@code <slot>}. Contribution is routed to the nearest such slot in
 		 * the tree.
+		 *
+		 * <p>
+		 * Attribute is called {@code to} (not {@code slot}) to avoid ambiguity with the {@code
+		 * <slot>} child tag name inside the default container.
+		 * </p>
 		 */
-		@Name(SLOT)
+		@Name(TO)
 		@Mandatory
-		String getSlot();
+		String getTo();
 
 		/**
 		 * The contributed child elements.
@@ -76,7 +81,7 @@ public class SlotContentElement implements UIElement {
 	 */
 	@CalledByReflection
 	public SlotContentElement(InstantiationContext context, Config config) {
-		_slotName = config.getSlot();
+		_slotName = config.getTo();
 		_children = new ArrayList<>(config.getChildren().size());
 		for (PolymorphicConfiguration<? extends UIElement> childConfig : config.getChildren()) {
 			_children.add(context.getInstance(childConfig));

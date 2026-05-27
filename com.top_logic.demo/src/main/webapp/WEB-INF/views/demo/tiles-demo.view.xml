@@ -3,7 +3,7 @@
 <!--
 	Drill-down tile navigation demo:
 	- Outer view declares the navPath channel that holds the List<TileFrame> drill-down path.
-	- The breadcrumb is contributed to the app bar via <slot-content slot="secondary">; the
+	- The breadcrumb is contributed to the app bar via <slot-content to="secondary">; the
 	  app shell hosts the matching <slot name="secondary"/>, so the breadcrumb appears at the
 	  app-bar level rather than inside the tab. It reads the same channel; clicking a crumb
 	  truncates the path back to that depth.
@@ -15,7 +15,7 @@
 		<channel name="navPath"/>
 	</channels>
 
-	<slot-content slot="secondary">
+	<slot-content to="secondary">
 		<tile-breadcrumb path="navPath">
 			<home-label>
 				<en>Accounts</en>

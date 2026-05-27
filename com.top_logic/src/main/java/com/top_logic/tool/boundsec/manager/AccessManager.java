@@ -62,8 +62,6 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 
 	}
 
-	private final Collection<String> _structureNames;
-
 	/**
 	 * Called by the {@link TypedConfiguration} for creating a {@link AccessManager}.
 	 * <p>
@@ -79,7 +77,6 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	@CalledByReflection
 	public AccessManager(InstantiationContext context, Config config) {
 		super(context, config);
-		_structureNames = config.getStructures();
         ReloadableManager.getInstance().addReloadable(this);
     }
 
@@ -196,8 +193,8 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 		return result;
 	}
 
-	public Collection<String> getStructureNames() {
-		return _structureNames;
+	public final Collection<String> getStructureNames() {
+		return getConfig().getStructures();
 	}
 
 	/**

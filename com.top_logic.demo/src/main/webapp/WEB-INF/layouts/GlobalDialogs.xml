@@ -30,7 +30,7 @@
 		</components>
 	</securityLayout>
 	<securityLayout name="globalDialogDemoPlainTop"
-		securityDomain="DemoPlain"
+		securityDomain="DemoTypes"
 		titleKey="demo.DemoPlain.edit.dialog.tabber"
 	>
 		<components>

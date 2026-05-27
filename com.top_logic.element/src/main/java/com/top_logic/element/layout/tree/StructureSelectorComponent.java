@@ -77,12 +77,9 @@ public class StructureSelectorComponent extends FormComponent implements Selecta
 			structureNames = StringServices.toList(theStructureNames, ',');
         }
         
-        // TODO Ticket #1262, #3630: remove null check if ElementAccessManager is a service
-		if (structureNames != null) {
-			_structureRoots = new ArrayList<>(structureNames.size());
-			for (Iterator<String> theIt = structureNames.iterator(); theIt.hasNext();) {
-				_structureRoots.add(TLModelUtil.findModule(theIt.next()));
-            }
+		_structureRoots = new ArrayList<>(structureNames.size());
+		for (Iterator<String> theIt = structureNames.iterator(); theIt.hasNext();) {
+			_structureRoots.add(TLModelUtil.findModule(theIt.next()));
         }
     }
 

@@ -48,6 +48,11 @@
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
+			<view name="mainTabbar.layout.xml#globalDialogDemoPlainTop">
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
 			<view name="mainTabbar.layout.xml#globalDialogDemoTypesTop">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>

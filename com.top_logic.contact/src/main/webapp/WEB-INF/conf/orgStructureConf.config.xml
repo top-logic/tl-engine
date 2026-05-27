@@ -42,6 +42,9 @@
 
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
+				<structures>
+	            	<structure name="orgStructure"/>
+				</structures>
 				<role-rules>
 					<rules>
 						  <!-- Selection role implies navigation role -->

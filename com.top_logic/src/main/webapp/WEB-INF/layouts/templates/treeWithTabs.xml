@@ -8,7 +8,7 @@
 			value=""
 		/>
 		<param name="navigationRole"
-			value="${domain}.navigation"
+			value="navigation"
 		/>
 		<param name="tabIcon"
 			optional="true"

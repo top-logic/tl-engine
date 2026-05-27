@@ -9,8 +9,8 @@ import java.util.Collection;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -19,11 +19,10 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
-import com.top_logic.util.I18NConstants;
 import com.top_logic.util.model.ModelService;
 
 /**
- * The {@link InitialGroupManager} installs groups and roles for the application:
+ * The {@link InitialGroupManager} installs groups for the application:
  * 
  * <p>
  * It ensures that for each existing user there is a representative group.
@@ -61,20 +60,18 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 		 * Groups to bring to existence during startup.
 		 */
 		@Name(GROUPS)
-		@Key(GroupConfig.NAME)
+		@Key(GroupConfig.NAME_ATTRIBUTE)
 		Collection<GroupConfig> getGroups();
 
 		/**
 		 * Definition of a group.
 		 */
-		public interface GroupConfig extends ConfigurationItem {
-			/** Property name of {@link #getName()}. */
-			String NAME = "name";
+		public interface GroupConfig extends NamedConfigMandatory {
 
 			/**
 			 * Name of the group to create.
 			 */
-			@Name(NAME)
+			@Override
 			String getName();
 		}
 	}
@@ -99,7 +96,7 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 	protected void startUp() {
 		super.startUp();
 
-		Transaction tx = kb().beginTransaction(I18NConstants.CREATING_INITIAL_GROUPS_AND_ROLES);
+		Transaction tx = kb().beginTransaction(I18NConstants.CREATING_INITIAL_GROUPS);
 		try {
 			init();
 			tx.commit();

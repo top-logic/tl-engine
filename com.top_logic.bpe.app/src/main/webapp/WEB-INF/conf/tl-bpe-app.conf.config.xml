@@ -17,10 +17,6 @@
 				</declarations>
 				<settings>
 					<module name="SecurityStructure">
-						<roles>
-							<role name="SecurityStructure.user"/>
-							<role name="SecurityStructure.superuser"/>
-						</roles>
 						<singletons>
 							<singleton type="Root"/>
 						</singletons>
@@ -33,6 +29,15 @@
 						 />
 					</blacklist>
 				</model-filter>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="SecurityStructure.user"/>
+					<role name="SecurityStructure.superuser"/>
+				</roles>
 			</instance>
 		</config>
 		

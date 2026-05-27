@@ -10,6 +10,19 @@
 				</declarations>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="projElement.Verantwortlicher"/>
+					<role name="projElement.Mitarbeiter"/>
+					<role name="projElement.TeilprojektVerantwortlicher"/>
+					<role name="projElement.Nutzer"/>
+					<role name="projElement.Hauptbenutzer"/>
+					<role name="projElement.Beobachter"/>
+					<role name="projElement.Projektbeobachter"/>
+				</roles>
+			</instance>
+		</config>
 	</services>
 	
 	<configs>

@@ -641,14 +641,6 @@ com.top_logic.element.layout.person.SaveRolesHandler.java: Missing documentation
 com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Invalid camel case word 'MetaAttributeName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Missing documentation: com.top_logic.element.layout.provider.MetaElementLabelProvider
 com.top_logic.element.layout.provider.ZipFolderNameProvider.java: Missing documentation: com.top_logic.element.layout.provider.ZipFolderNameProvider.INSTANCE
-com.top_logic.element.layout.role.GlobalEditRoleComponent.java: Invalid camel case word 'BoundedRoles', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.GlobalEditRoleComponent.java: Invalid camel case word 'GlobalEditRoleComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.GlobalRolesTableModelBuilder.java: Invalid camel case word 'ModelBuilder', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.role.ScopedEditRoleComponent
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Invalid camel case word 'BoundedRoles', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Invalid camel case word 'ScopedEditRoleComponent', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedEditRoleComponent.java: Invalid camel case word 'StructuredElement', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.role.ScopedRolesTableModelBuilder.java: Invalid camel case word 'ModelBuilder', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.scripting.ChildNamingScheme.java: Missing documentation: com.top_logic.element.layout.scripting.ChildNamingScheme.ChildName
 com.top_logic.element.layout.scripting.CommentNamingScheme.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.scripting.CommentNamingScheme
 com.top_logic.element.layout.scripting.ScriptingElementUtil.java: Invalid camel case word 'ScriptingFramework', this may only be used within JavaDoc links or HTML code tags.

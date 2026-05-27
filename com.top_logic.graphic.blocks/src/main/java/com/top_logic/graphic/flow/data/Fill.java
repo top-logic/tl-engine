@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A background drawn below some content.
  */
-public interface Fill extends Decoration, com.top_logic.graphic.flow.operations.FillOperations {
+public interface Fill extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.FillOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Fill} instance.

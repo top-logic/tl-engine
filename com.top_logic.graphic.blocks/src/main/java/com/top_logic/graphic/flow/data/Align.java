@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * An alignment of some box within a potentially larger content box.
  */
-public interface Align extends Decoration, com.top_logic.graphic.flow.operations.AlignOperations {
+public interface Align extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.AlignOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Align} instance.

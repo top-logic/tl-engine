@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * Padding around some content.
  */
-public interface Padding extends Decoration, com.top_logic.graphic.flow.operations.PaddingOperations {
+public interface Padding extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.PaddingOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Padding} instance.

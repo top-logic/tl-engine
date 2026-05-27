@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * Element with explicit given width and height.
  */
-public interface Sized extends Decoration, com.top_logic.graphic.flow.operations.SizedOperations {
+public interface Sized extends com.top_logic.graphic.flow.data.Decoration, com.top_logic.graphic.flow.operations.SizedOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Sized} instance.

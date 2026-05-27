@@ -62,7 +62,7 @@
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.All"
 							role="DemoSecurity.selection"
-							source-role="DemoSecurity.Role1,DemoSecurity.Role2,DemoSecurity.Role3,DemoSecurity.SecurityAdministrator,DemoSecurity.SecurityAdministratorB,DemoSecurity.User"
+							source-role="DemoSecurity.Role1,DemoSecurity.Role2,DemoSecurity.SecurityAdministrator,DemoSecurity.SecurityAdministratorB,DemoSecurity.User"
 						/>
 
 						<inheritance-rule

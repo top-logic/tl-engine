@@ -4,7 +4,6 @@
 	<profiles>
 		<profile name="DemoSecurity.Role1"/>
 		<profile name="DemoSecurity.Role2"/>
-		<profile name="DemoSecurity.Role3"/>
 		<profile name="DemoSecurity.SecurityAdministrator"/>
 		<profile name="DemoSecurity.SecurityAdministratorB"/>
 		<profile name="DemoSecurity.User"/>

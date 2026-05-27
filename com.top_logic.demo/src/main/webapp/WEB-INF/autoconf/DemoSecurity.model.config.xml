@@ -11,7 +11,6 @@
 						<roles>
 							<role name="DemoSecurity.Role1"/>
 							<role name="DemoSecurity.Role2"/>
-							<role name="DemoSecurity.Role3"/>
 							<role name="DemoSecurity.SecurityAdministrator"/>
 							<role name="DemoSecurity.SecurityAdministratorB"/>
 							<role name="DemoSecurity.User"/>

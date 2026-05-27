@@ -148,7 +148,7 @@ public class TabBarElement implements UIElement {
 		for (TabEntry entry : _tabs) {
 			DirtyChannel dirtyChannel = new DirtyChannel();
 			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
-				() -> createContent(entry._children, context, dirtyChannel), dirtyChannel);
+				() -> createContent(entry, context, dirtyChannel), dirtyChannel);
 			String effectiveRoute = SidebarElement.resolveRoute(entry._route, entry._id);
 			if (effectiveRoute != null) {
 				tabDef.withRoute(effectiveRoute);
@@ -159,11 +159,15 @@ public class TabBarElement implements UIElement {
 		return new ReactTabBarControl(context, null, tabDefs, activeTab);
 	}
 
-	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
+	private static ReactControl createContent(TabEntry entry, ViewContext context,
 			DirtyChannel dirtyChannel) {
-		ViewContext tabContext = context.childContext("tab");
+		// Per-tab context: extend the personalization key with "tab" (legacy) and the slot path
+		// with the tab id so that two tabs containing the same-named <slot-content> route into
+		// independent positions in the slot tree.
+		ViewContext tabContext = context.childContext("tab").withChildSlotPath(entry._id);
 		tabContext.setDirtyChannel(dirtyChannel);
 
+		List<UIElement> elements = entry._children;
 		if (elements.size() == 1) {
 			return (ReactControl) elements.get(0).createControl(tabContext);
 		}

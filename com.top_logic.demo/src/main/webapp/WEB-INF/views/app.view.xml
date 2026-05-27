@@ -183,6 +183,15 @@
 							<de>Tiles-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="tiles-multi-demo"
+						icon="css:bi bi-columns-gap"
+					>
+						<view-ref view="demo/tiles-multi-demo.view.xml"/>
+						<label>
+							<en>Tiles Multi-Tab Demo</en>
+							<de>Tiles Mehr-Tab-Demo</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<!-- Intentionally NOT routed: demonstrates that items
 					     with route="" do not produce URL segments and are
@@ -248,6 +257,15 @@
 					<en>Task Manager</en>
 					<de>Aufgabenverwaltung</de>
 				</title>
+				<children>
+					<!--
+						Inline projection slot. Any descendant view in the shell may push content
+						here by declaring <slot-content slot="secondary">...</slot-content>;
+						the slot routes contributions to the nearest matching <slot> by tree
+						distance (this one wins for everything inside the shell content).
+					-->
+					<slot name="secondary"/>
+				</children>
 			</app-bar>
 		</header>
 	</app-shell>

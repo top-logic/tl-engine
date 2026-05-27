@@ -35,6 +35,8 @@ public class ReactAppBarControl extends ToolbarControl {
 
 	private static final String VARIANT = "variant";
 
+	private static final String CHILDREN = "children";
+
 	/**
 	 * Visual variant of the app bar.
 	 */
@@ -60,6 +62,8 @@ public class ReactAppBarControl extends ToolbarControl {
 
 	private ReactControl _leading;
 
+	private final List<ReactControl> _children;
+
 	/**
 	 * Creates an app bar with full configuration.
 	 *
@@ -71,11 +75,16 @@ public class ReactAppBarControl extends ToolbarControl {
 	 *        Optional leading control, or {@code null}.
 	 * @param actions
 	 *        Initial trailing action controls (may be empty).
+	 * @param children
+	 *        Inline children rendered between the title and the actions area (e.g. a
+	 *        {@code <slot>} placeholder for content projected by descendant views).
 	 */
 	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
-			ReactControl leading, List<? extends ReactControl> actions) {
+			ReactControl leading, List<? extends ReactControl> actions,
+			List<? extends ReactControl> children) {
 		super(context, null, REACT_MODULE);
 		_leading = leading;
+		_children = new java.util.ArrayList<>(children);
 		setTitle(title);
 		putState(VARIANT, variant.getExternalName());
 		if (leading != null) {
@@ -85,9 +94,19 @@ public class ReactAppBarControl extends ToolbarControl {
 		// Alias the toolbarButtons list under "actions" so TLAppBar reads the same list.
 		putState(ACTIONS, getState(TOOLBAR_BUTTONS));
 
+		putState(CHILDREN, _children);
+
 		for (ReactControl action : actions) {
 			addToolbarButton(action);
 		}
+	}
+
+	/**
+	 * Creates an app bar without inline children.
+	 */
+	public ReactAppBarControl(ReactContext context, String title, AppBarVariant variant,
+			ReactControl leading, List<? extends ReactControl> actions) {
+		this(context, title, variant, leading, actions, List.of());
 	}
 
 	/**
@@ -115,6 +134,25 @@ public class ReactAppBarControl extends ToolbarControl {
 			_leading.cleanupTree();
 		}
 		cleanupToolbarButtons();
+		for (ReactControl child : _children) {
+			child.cleanupTree();
+		}
+	}
+
+	@Override
+	protected void propagateAttach() {
+		super.propagateAttach();
+		for (ReactControl child : _children) {
+			child.attach();
+		}
+	}
+
+	@Override
+	protected void propagateDetach() {
+		super.propagateDetach();
+		for (ReactControl child : _children) {
+			child.detach();
+		}
 	}
 
 	@Override

@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -70,6 +71,9 @@ public class AppBarElement implements UIElement {
 		/** Configuration name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
 
+		/** Configuration name for {@link #getChildren()}. */
+		String CHILDREN = "children";
+
 		/**
 		 * The bar title.
 		 */
@@ -95,6 +99,19 @@ public class AppBarElement implements UIElement {
 		@EntryTag("command")
 		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+
+		/**
+		 * Arbitrary inline children rendered between the title and the actions area.
+		 *
+		 * <p>
+		 * Typically a single {@code <slot>} that lets deeper views project content into the app
+		 * bar (e.g. a breadcrumb or a context-specific control group), but any UIElement can be
+		 * placed here.
+		 * </p>
+		 */
+		@Name(CHILDREN)
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}
 
 	private final ResKey _title;
@@ -104,6 +121,8 @@ public class AppBarElement implements UIElement {
 	private final List<ViewCommand> _commands;
 
 	private final List<ViewCommand.Config> _commandConfigs;
+
+	private final List<UIElement> _children;
 
 	/**
 	 * Creates a new {@link AppBarElement} from configuration.
@@ -123,6 +142,11 @@ public class AppBarElement implements UIElement {
 					_commandConfigs.add((ViewCommand.Config) cmdConfig);
 				}
 			}
+		}
+
+		_children = new ArrayList<>(config.getChildren().size());
+		for (PolymorphicConfiguration<? extends UIElement> childConfig : config.getChildren()) {
+			_children.add(context.getInstance(childConfig));
 		}
 	}
 
@@ -150,8 +174,16 @@ public class AppBarElement implements UIElement {
 			derivedContext = context.withCommandScope(scope);
 		}
 
+		// Build inline children (e.g. a <slot> for content projected by descendant views).
+		List<ReactControl> childControls = new ArrayList<>(_children.size());
+		for (int i = 0; i < _children.size(); i++) {
+			ViewContext childContext = derivedContext.withChildSlotPath(Integer.toString(i));
+			childControls.add((ReactControl) _children.get(i).createControl(childContext));
+		}
+
 		// Create the app bar control.
-		ReactAppBarControl appBar = new ReactAppBarControl(derivedContext, title, _variant, null, List.of());
+		ReactAppBarControl appBar =
+			new ReactAppBarControl(derivedContext, title, _variant, null, List.of(), childControls);
 
 		// Sync toolbar-placed commands as action buttons.
 		Map<CommandModel, ReactButtonControl> actionButtons = new HashMap<>();

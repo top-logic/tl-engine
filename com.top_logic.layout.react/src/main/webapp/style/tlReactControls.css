@@ -1453,7 +1453,7 @@ button.tlSidebar__flyoutItem:focus-visible {
 }
 
 .tlAppBar__title {
-	flex: 1;
+	flex: 0 1 auto;
 	margin: 0;
 	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
@@ -1464,11 +1464,21 @@ button.tlSidebar__flyoutItem:focus-visible {
 	white-space: nowrap;
 }
 
+.tlAppBar__children {
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: var(--spacing-02);
+	overflow: hidden;
+}
+
 .tlAppBar__actions {
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-01);
 	flex-shrink: 0;
+	margin-left: auto;
 }
 
 /* --- TLBreadcrumb ---------------------------------------------------------- */

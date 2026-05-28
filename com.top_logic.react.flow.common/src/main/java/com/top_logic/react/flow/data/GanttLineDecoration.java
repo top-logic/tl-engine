@@ -25,7 +25,7 @@ public interface GanttLineDecoration extends com.top_logic.react.flow.data.Gantt
 	String DASHES__PROP = "dashes";
 
 	/**
-	 * Position of the line on the axis; see {@link GanttAxis} for position semantics.
+	 * Position of the line on the axis; see {@link GanttLayout#getRangeMin()} for position semantics.
 	 */
 	double getAt();
 

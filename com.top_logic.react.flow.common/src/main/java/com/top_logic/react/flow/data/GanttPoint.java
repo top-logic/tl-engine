@@ -19,7 +19,7 @@ public interface GanttPoint extends com.top_logic.react.flow.data.GanttItem {
 	String AT__PROP = "at";
 
 	/**
-	 * Position of the point on the axis; see {@link GanttAxis} for position semantics.
+	 * Position of the point on the axis; see {@link GanttLayout#getRangeMin()} for position semantics.
 	 */
 	double getAt();
 

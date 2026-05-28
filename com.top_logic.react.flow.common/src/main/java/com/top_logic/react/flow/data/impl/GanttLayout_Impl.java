@@ -73,7 +73,15 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 		}
 	};
 
-	private com.top_logic.react.flow.data.GanttAxis _axis = null;
+	private double _rangeMin = 0.0d;
+
+	private double _rangeMax = 0.0d;
+
+	private double _initialZoom = 1.0;
+
+	private double _zoom = 1.0;
+
+	private double _snapTo = 1.0;
 
 	private double _indentWidth = 16.0;
 
@@ -252,26 +260,93 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 	}
 
 	@Override
-	public final com.top_logic.react.flow.data.GanttAxis getAxis() {
-		return _axis;
+	public final double getRangeMin() {
+		return _rangeMin;
 	}
 
 	@Override
-	public com.top_logic.react.flow.data.GanttLayout setAxis(com.top_logic.react.flow.data.GanttAxis value) {
-		internalSetAxis(value);
+	public com.top_logic.react.flow.data.GanttLayout setRangeMin(double value) {
+		internalSetRangeMin(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getAxis()} without chain call utility. */
-	protected final void internalSetAxis(com.top_logic.react.flow.data.GanttAxis value) {
-		_listener.beforeSet(this, AXIS__PROP, value);
-		_axis = value;
-		_listener.afterChanged(this, AXIS__PROP);
+	/** Internal setter for {@link #getRangeMin()} without chain call utility. */
+	protected final void internalSetRangeMin(double value) {
+		_listener.beforeSet(this, RANGE_MIN__PROP, value);
+		_rangeMin = value;
+		_listener.afterChanged(this, RANGE_MIN__PROP);
 	}
 
 	@Override
-	public final boolean hasAxis() {
-		return _axis != null;
+	public final double getRangeMax() {
+		return _rangeMax;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setRangeMax(double value) {
+		internalSetRangeMax(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRangeMax()} without chain call utility. */
+	protected final void internalSetRangeMax(double value) {
+		_listener.beforeSet(this, RANGE_MAX__PROP, value);
+		_rangeMax = value;
+		_listener.afterChanged(this, RANGE_MAX__PROP);
+	}
+
+	@Override
+	public final double getInitialZoom() {
+		return _initialZoom;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setInitialZoom(double value) {
+		internalSetInitialZoom(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getInitialZoom()} without chain call utility. */
+	protected final void internalSetInitialZoom(double value) {
+		_listener.beforeSet(this, INITIAL_ZOOM__PROP, value);
+		_initialZoom = value;
+		_listener.afterChanged(this, INITIAL_ZOOM__PROP);
+	}
+
+	@Override
+	public final double getZoom() {
+		return _zoom;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setZoom(double value) {
+		internalSetZoom(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getZoom()} without chain call utility. */
+	protected final void internalSetZoom(double value) {
+		_listener.beforeSet(this, ZOOM__PROP, value);
+		_zoom = value;
+		_listener.afterChanged(this, ZOOM__PROP);
+	}
+
+	@Override
+	public final double getSnapTo() {
+		return _snapTo;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setSnapTo(double value) {
+		internalSetSnapTo(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSnapTo()} without chain call utility. */
+	protected final void internalSetSnapTo(double value) {
+		_listener.beforeSet(this, SNAP_TO__PROP, value);
+		_snapTo = value;
+		_listener.afterChanged(this, SNAP_TO__PROP);
 	}
 
 	@Override
@@ -581,7 +656,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			ITEMS__PROP, 
 			EDGES__PROP, 
 			DECORATIONS__PROP, 
-			AXIS__PROP, 
+			RANGE_MIN__PROP, 
+			RANGE_MAX__PROP, 
+			INITIAL_ZOOM__PROP, 
+			ZOOM__PROP, 
+			SNAP_TO__PROP, 
 			INDENT_WIDTH__PROP, 
 			ROW_LABEL_MIN_WIDTH__PROP, 
 			ROW_LABEL_PADDING__PROP, 
@@ -634,7 +713,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case ITEMS__PROP: return getItems();
 			case EDGES__PROP: return getEdges();
 			case DECORATIONS__PROP: return getDecorations();
-			case AXIS__PROP: return getAxis();
+			case RANGE_MIN__PROP: return getRangeMin();
+			case RANGE_MAX__PROP: return getRangeMax();
+			case INITIAL_ZOOM__PROP: return getInitialZoom();
+			case ZOOM__PROP: return getZoom();
+			case SNAP_TO__PROP: return getSnapTo();
 			case INDENT_WIDTH__PROP: return getIndentWidth();
 			case ROW_LABEL_MIN_WIDTH__PROP: return getRowLabelMinWidth();
 			case ROW_LABEL_PADDING__PROP: return getRowLabelPadding();
@@ -659,7 +742,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case ITEMS__PROP: internalSetItems(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttItem.class, value)); break;
 			case EDGES__PROP: internalSetEdges(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttEdge.class, value)); break;
 			case DECORATIONS__PROP: internalSetDecorations(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttDecoration.class, value)); break;
-			case AXIS__PROP: internalSetAxis((com.top_logic.react.flow.data.GanttAxis) value); break;
+			case RANGE_MIN__PROP: internalSetRangeMin((double) value); break;
+			case RANGE_MAX__PROP: internalSetRangeMax((double) value); break;
+			case INITIAL_ZOOM__PROP: internalSetInitialZoom((double) value); break;
+			case ZOOM__PROP: internalSetZoom((double) value); break;
+			case SNAP_TO__PROP: internalSetSnapTo((double) value); break;
 			case INDENT_WIDTH__PROP: internalSetIndentWidth((double) value); break;
 			case ROW_LABEL_MIN_WIDTH__PROP: internalSetRowLabelMinWidth((double) value); break;
 			case ROW_LABEL_PADDING__PROP: internalSetRowLabelPadding((double) value); break;
@@ -704,10 +791,16 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			x.writeTo(scope, out);
 		}
 		out.endArray();
-		if (hasAxis()) {
-			out.name(AXIS__PROP);
-			getAxis().writeTo(scope, out);
-		}
+		out.name(RANGE_MIN__PROP);
+		out.value(getRangeMin());
+		out.name(RANGE_MAX__PROP);
+		out.value(getRangeMax());
+		out.name(INITIAL_ZOOM__PROP);
+		out.value(getInitialZoom());
+		out.name(ZOOM__PROP);
+		out.value(getZoom());
+		out.name(SNAP_TO__PROP);
+		out.value(getSnapTo());
 		out.name(INDENT_WIDTH__PROP);
 		out.value(getIndentWidth());
 		out.name(ROW_LABEL_MIN_WIDTH__PROP);
@@ -757,12 +850,24 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 				out.endArray();
 				break;
 			}
-			case AXIS__PROP: {
-				if (hasAxis()) {
-					getAxis().writeTo(scope, out);
-				} else {
-					out.nullValue();
-				}
+			case RANGE_MIN__PROP: {
+				out.value(getRangeMin());
+				break;
+			}
+			case RANGE_MAX__PROP: {
+				out.value(getRangeMax());
+				break;
+			}
+			case INITIAL_ZOOM__PROP: {
+				out.value(getInitialZoom());
+				break;
+			}
+			case ZOOM__PROP: {
+				out.value(getZoom());
+				break;
+			}
+			case SNAP_TO__PROP: {
+				out.value(getSnapTo());
 				break;
 			}
 			case INDENT_WIDTH__PROP: {
@@ -864,7 +969,11 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 				setDecorations(newValue);
 			}
 			break;
-			case AXIS__PROP: setAxis(com.top_logic.react.flow.data.GanttAxis.readGanttAxis(scope, in)); break;
+			case RANGE_MIN__PROP: setRangeMin(in.nextDouble()); break;
+			case RANGE_MAX__PROP: setRangeMax(in.nextDouble()); break;
+			case INITIAL_ZOOM__PROP: setInitialZoom(in.nextDouble()); break;
+			case ZOOM__PROP: setZoom(in.nextDouble()); break;
+			case SNAP_TO__PROP: setSnapTo(in.nextDouble()); break;
 			case INDENT_WIDTH__PROP: setIndentWidth(in.nextDouble()); break;
 			case ROW_LABEL_MIN_WIDTH__PROP: setRowLabelMinWidth(in.nextDouble()); break;
 			case ROW_LABEL_PADDING__PROP: setRowLabelPadding(in.nextDouble()); break;

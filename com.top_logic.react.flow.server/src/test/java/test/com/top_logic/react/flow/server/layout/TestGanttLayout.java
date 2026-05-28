@@ -17,7 +17,7 @@ import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DragEdge;
 import com.top_logic.react.flow.data.DropArea;
-import com.top_logic.react.flow.data.GanttAxis;
+
 import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
@@ -52,7 +52,7 @@ public class TestGanttLayout extends TestCase {
 	public void testLayoutHeightScalesWithRows() {
 		GanttLayout layout = GanttLayout.create()
 			.setRowLabelMinWidth(200.0)
-			.setAxis(axis(0, 100));
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0);
 		addRowsWithLabels(layout, Arrays.asList(
 			row("r1", "Row 1"),
 			row("r2", "Row 2"),
@@ -100,14 +100,6 @@ public class TestGanttLayout extends TestCase {
 		}
 	}
 
-	private static GanttAxis axis(double min, double max) {
-		return GanttAxis.create()
-			.setProviderId("test")
-			.setRangeMin(min)
-			.setRangeMax(max)
-			.setCurrentZoom(1.0);
-	}
-
 	private static Box cell(String label) {
 		return Border.create().setContent(Padding.create().setAll(2.0).setContent(Text.create().setValue(label)));
 	}
@@ -117,7 +109,7 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setRowLabelMinWidth(200.0)
-			.setAxis(axis(0, 100))
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
 			.setItems(Arrays.asList(span));
 		addRowsWithLabels(layout, Arrays.asList(
 			row("r1", "Row 1"),
@@ -156,7 +148,7 @@ public class TestGanttLayout extends TestCase {
 
 	public void testRowLanesRenderLabels() throws Exception {
 		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100));
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0);
 		addRowsWithLabels(layout, Arrays.asList(
 			row("r1", "Alpha"),
 			row("r2", "Bravo")));
@@ -176,7 +168,7 @@ public class TestGanttLayout extends TestCase {
 		parent.setChildren(Arrays.asList(child));
 
 		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100))
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
 			.setIndentWidth(16.0);
 		addRowsWithLabels(layout, Arrays.asList(parent));
 		Diagram d = Diagram.create().setRoot(layout);
@@ -202,7 +194,7 @@ public class TestGanttLayout extends TestCase {
 			.setEnforce(GanttEnforce.STRICT);
 
 		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100))
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
 			.setItems(Arrays.asList(a, b))
 			.setEdges(Arrays.asList(edge));
 		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2")));
@@ -228,7 +220,7 @@ public class TestGanttLayout extends TestCase {
 			.setLabel(Text.create().setValue("Freeze"));
 
 		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100))
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
 			.setDecorations(Arrays.asList(freeze));
 		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
 		Diagram d = Diagram.create().setRoot(layout);
@@ -247,7 +239,7 @@ public class TestGanttLayout extends TestCase {
 			.setLabel(Text.create().setValue("Today"));
 
 		GanttLayout layout = GanttLayout.create()
-			.setAxis(axis(0, 100))
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
 			.setDecorations(Arrays.asList(today));
 		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
 		Diagram d = Diagram.create().setRoot(layout);
@@ -260,7 +252,7 @@ public class TestGanttLayout extends TestCase {
 	public void testDistributeSizeUsesGivenWidth() {
 		GanttLayout layout = GanttLayout.create()
 			.setRowLabelMinWidth(200.0)
-			.setAxis(axis(0, 100));
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0);
 		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
 
 		Diagram d = Diagram.create().setRoot(layout);
@@ -304,7 +296,7 @@ public class TestGanttLayout extends TestCase {
 
 		GanttLayout layout = GanttLayout.create()
 			.setRowLabelMinWidth(200.0)
-			.setAxis(axis(0, 100))
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
 			.setItems(Arrays.asList(tallSpan));
 		addRowsWithLabels(layout, Arrays.asList(
 			row("r1", "Row 1"),
@@ -350,7 +342,7 @@ public class TestGanttLayout extends TestCase {
 		GanttLayout layout = GanttLayout.create()
 			.setRowLabelMinWidth(200.0)
 			.setRowLabelPadding(ROW_LABEL_PADDING)
-			.setAxis(axis(0, 100));
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0);
 		layout.setRootRows(Arrays.asList(wideRow));
 		layout.addContent(wideLabel);
 
@@ -418,7 +410,7 @@ public class TestGanttLayout extends TestCase {
 	public void testConstrainMoveSnapsX() {
 		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
 		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
-		layout.getAxis().setSnapGranularity(1.0);
+		layout.setSnapTo(1.0);
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new AWTContext(12f));
 		double[] result = ((DragController) layout).constrainMove(span.getBox(), 205.7, span.getBox().getY());
@@ -434,7 +426,7 @@ public class TestGanttLayout extends TestCase {
 		}
 		GanttLayout layout = GanttLayout.create()
 			.setRowLabelMinWidth(200.0)
-			.setAxis(axis(0, 100))
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
 			.setItems(Arrays.asList(span));
 		addRowsWithLabels(layout, rows);
 		layout.addContent(span.getBox());

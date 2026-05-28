@@ -14,7 +14,6 @@ import java.util.Map;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.DragEdge;
 import com.top_logic.react.flow.data.DropArea;
-import com.top_logic.react.flow.data.GanttAxis;
 import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
@@ -83,7 +82,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
 			double availableWidth, double availableHeight) {
 		GanttLayout self = (GanttLayout) this;
-		GanttAxis axis = self.getAxis();
 
 		// Build depth-first row index map (rowId -> 0-based index) and row list for depth lookup.
 		Map<String, Integer> rowIndex = new LinkedHashMap<>();
@@ -94,8 +92,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 		int totalRows = counter[0];
 
-		double zoom = axis.getCurrentZoom();
-		double rangeMin = axis.getRangeMin();
+		double zoom = self.getZoom();
+		double rangeMin = self.getRangeMin();
 		double rowLabelMinWidth = self.getRowLabelMinWidth();
 		double rowLabelPadding = self.getRowLabelPadding();
 		double indentWidth = self.getIndentWidth();
@@ -284,7 +282,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// Viewport mode: keep existing external dimensions. Zooming changes the
 			// virtual content width but not the viewport box size.
 		} else {
-			self.setWidth(columnWidth + (axis.getRangeMax() - rangeMin) * zoom);
+			self.setWidth(columnWidth + (self.getRangeMax() - rangeMin) * zoom);
 			self.setHeight(totalHeight);
 		}
 
@@ -371,7 +369,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double headerH = self.getHeaderHeight();
 		double scrollX = self.getScrollX();
 		double scrollY = self.getScrollY();
-		double zoom = self.getAxis().getCurrentZoom();
+		double zoom = self.getZoom();
 		double scrollXPx = scrollX * zoom;
 
 		// Determine frozen row IDs.
@@ -486,8 +484,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 * This may be larger than the viewport width ({@code self.getWidth()}) when zoomed in.
 	 */
 	private static double virtualTotalWidth(GanttLayout self) {
-		GanttAxis axis = self.getAxis();
-		return self.getColumnWidth() + (axis.getRangeMax() - axis.getRangeMin()) * axis.getCurrentZoom();
+		return self.getColumnWidth() + (self.getRangeMax() - self.getRangeMin()) * self.getZoom();
 	}
 
 	private static void drawRowLanes(GanttLayout self, SvgWriter out,
@@ -676,9 +673,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			chartY1 = chartY0 + fallbackHeight;
 		}
 
-		GanttAxis axis = self.getAxis();
-		double zoom = axis.getCurrentZoom();
-		double rangeMin = axis.getRangeMin();
+		double zoom = self.getZoom();
+		double rangeMin = self.getRangeMin();
 		double chartX0 = self.getX() + self.getColumnWidth();
 
 		out.beginGroup();
@@ -1009,9 +1005,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		List<String> validTargetIds = item.getValidDropTargetIds();
 		boolean hasTargetRestriction = validTargetIds != null && !validTargetIds.isEmpty();
 
-		GanttAxis axis = self.getAxis();
 		double columnWidth = self.getColumnWidth();
-		double chartWidth = (axis.getRangeMax() - axis.getRangeMin()) * axis.getCurrentZoom();
+		double chartWidth = (self.getRangeMax() - self.getRangeMin()) * self.getZoom();
 
 		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
 		Map<String, GanttRow> rowsById = buildRowIndex(self);
@@ -1084,12 +1079,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	default double[] constrainMove(Box box, double proposedX, double proposedY) {
 		GanttLayout self = (GanttLayout) this;
 		GanttItem item = findItemByBox(self, box);
-		GanttAxis axis = self.getAxis();
-		double zoom = axis.getCurrentZoom();
-		double snap = axis.getSnapGranularity();
+		double zoom = self.getZoom();
+		double snap = self.getSnapTo();
 		double columnWidth = self.getColumnWidth();
-		double rangeMin = axis.getRangeMin();
-		double rangeMax = axis.getRangeMax();
+		double rangeMin = self.getRangeMin();
+		double rangeMax = self.getRangeMax();
 		double chartX0 = self.getX() + columnWidth;
 		double chartX1 = self.getX() + columnWidth + (rangeMax - rangeMin) * zoom;
 
@@ -1147,9 +1141,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	@Override
 	default double constrainResize(Box box, DragEdge edge, double proposedEdgePos) {
 		GanttLayout self = (GanttLayout) this;
-		GanttAxis axis = self.getAxis();
-		double zoom = axis.getCurrentZoom();
-		double snap = axis.getSnapGranularity();
+		double zoom = self.getZoom();
+		double snap = self.getSnapTo();
 		double columnWidth = self.getColumnWidth();
 		double chartX0 = self.getX() + columnWidth;
 
@@ -1184,9 +1177,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			return;
 		}
 
-		GanttAxis axis = self.getAxis();
-		double zoom = axis.getCurrentZoom();
-		double rangeMin = axis.getRangeMin();
+		double zoom = self.getZoom();
+		double rangeMin = self.getRangeMin();
 		double columnWidth = self.getColumnWidth();
 		double layoutX = self.getX();
 
@@ -1267,15 +1259,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	private static void handleGanttScroll(GanttLayout self, SVGWheelEvent event) {
-		GanttAxis axis = self.getAxis();
-		double zoom = axis.getCurrentZoom();
+		double zoom = self.getZoom();
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();
 		double dataH = self.getDataHeight();
 
 		double viewportContentW = self.getWidth() - colW;
 		double viewportContentH = self.getHeight() - headerH;
-		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * zoom;
+		double virtualContentW = (self.getRangeMax() - self.getRangeMin()) * zoom;
 
 		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
 		double maxScrollY = Math.max(0, dataH - viewportContentH);
@@ -1303,8 +1294,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	private static void handleGanttZoom(GanttLayout self, SVGWheelEvent event) {
-		GanttAxis axis = self.getAxis();
-		double currentZoom = axis.getCurrentZoom();
+		double currentZoom = self.getZoom();
 
 		double delta = event.getDeltaY() == 0 ? event.getDeltaX() : event.getDeltaY();
 		double direction = Math.signum(delta);
@@ -1325,17 +1315,17 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double mouseXInChart = Math.max(0, event.getOffsetX() - self.getX() - colW);
 
 		double scrollXPxBefore = self.getScrollX() * currentZoom;
-		double timeUnderMouse = (mouseXInChart + scrollXPxBefore) / currentZoom + axis.getRangeMin();
+		double timeUnderMouse = (mouseXInChart + scrollXPxBefore) / currentZoom + self.getRangeMin();
 
-		double newScrollXPx = (timeUnderMouse - axis.getRangeMin()) * newZoom - mouseXInChart;
+		double newScrollXPx = (timeUnderMouse - self.getRangeMin()) * newZoom - mouseXInChart;
 		double newScrollX = newScrollXPx / newZoom;
 
-		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * newZoom;
+		double virtualContentW = (self.getRangeMax() - self.getRangeMin()) * newZoom;
 		double viewportContentW = self.getWidth() - colW;
 		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / newZoom);
 		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
 
-		axis.setCurrentZoom(newZoom);
+		self.setZoom(newZoom);
 		self.setScrollX(newScrollX);
 
 		event.requestRelayout();
@@ -1344,7 +1334,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	@Override
 	default double[] svgToLayout(double svgX, double svgY) {
 		GanttLayout self = (GanttLayout) this;
-		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
+		double scrollXPx = self.getScrollX() * self.getZoom();
 		double scrollY = self.getScrollY();
 		return new double[] { svgX + scrollXPx, svgY + scrollY };
 	}
@@ -1352,7 +1342,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	@Override
 	default double[] layoutToSvg(double layoutX, double layoutY) {
 		GanttLayout self = (GanttLayout) this;
-		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
+		double scrollXPx = self.getScrollX() * self.getZoom();
 		double scrollY = self.getScrollY();
 		return new double[] { layoutX - scrollXPx, layoutY - scrollY };
 	}
@@ -1378,15 +1368,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	@Override
 	default void panTo(double svgX, double svgY) {
 		GanttLayout self = (GanttLayout) this;
-		GanttAxis axis = self.getAxis();
-		double zoom = axis.getCurrentZoom();
+		double zoom = self.getZoom();
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();
 		double dataH = self.getDataHeight();
 
 		double viewportContentW = self.getWidth() - colW;
 		double viewportContentH = self.getHeight() - headerH;
-		double virtualContentW = (axis.getRangeMax() - axis.getRangeMin()) * zoom;
+		double virtualContentW = (self.getRangeMax() - self.getRangeMin()) * zoom;
 
 		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
 		double maxScrollY = Math.max(0, dataH - viewportContentH);
@@ -1413,7 +1402,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			return;
 		}
 
-		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
+		double scrollXPx = self.getScrollX() * self.getZoom();
 		double scrollY = self.getScrollY();
 
 		renderer.setTranslate(ganttId + "-scroll-deco", -scrollXPx, 0);
@@ -1428,7 +1417,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			return;
 		}
 
-		double scrollXPx = self.getScrollX() * self.getAxis().getCurrentZoom();
+		double scrollXPx = self.getScrollX() * self.getZoom();
 		double scrollY = self.getScrollY();
 
 		event.updateTransform(ganttId + "-scroll-deco", -scrollXPx, 0);

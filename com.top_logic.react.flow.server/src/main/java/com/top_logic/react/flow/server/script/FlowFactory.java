@@ -40,7 +40,6 @@ import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.react.flow.data.Align;
 import com.top_logic.react.flow.data.Alignment;
-import com.top_logic.react.flow.data.GanttAxis;
 import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
@@ -52,9 +51,6 @@ import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
-import com.top_logic.react.flow.server.axis.AxisContent;
-import com.top_logic.react.flow.server.axis.AxisProvider;
-import com.top_logic.react.flow.server.axis.AxisProviderService;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ClickTarget;
@@ -1957,66 +1953,6 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	/**
-	 * Creates an axis configuration for a Gantt layout.
-	 *
-	 * @param providerId
-	 *        Name of the registered server-side axis provider that computes ticks and snap data.
-	 * @param rangeMin
-	 *        Lowest position representable on the axis, in layout units.
-	 * @param rangeMax
-	 *        Highest position representable on the axis, in layout units.
-	 * @param zoom
-	 *        Zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
-	 * @return The new axis.
-	 */
-	@SideEffectFree
-	@Label("Create Gantt axis")
-	public static GanttAxis ganttAxis(
-			@Mandatory String providerId,
-			double rangeMin,
-			double rangeMax,
-			Double zoom) {
-		double pixelsPerUnit = zoom != null ? zoom : 1.0;
-		AxisProviderService svc = AxisProviderService.Module.INSTANCE.getImplementationInstance();
-		AxisProvider provider = (svc != null) ? svc.lookup(providerId) : null;
-		double snap = provider != null ? provider.snapGranularity(pixelsPerUnit) : 1.0;
-		return GanttAxis.create()
-			.setProviderId(providerId)
-			.setRangeMin(rangeMin).setRangeMax(rangeMax)
-			.setCurrentZoom(pixelsPerUnit).setSnapGranularity(snap);
-	}
-
-	/**
-	 * Builds the axis rows and items for the given range from a registered axis provider.
-	 *
-	 * @param providerId
-	 *        Name of the registered server-side axis provider.
-	 * @param rangeMin
-	 *        Lowest position to cover, in layout units.
-	 * @param rangeMax
-	 *        Highest position to cover, in layout units.
-	 * @param zoom
-	 *        Zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
-	 * @return The rows and items representing the axis, or an empty result if no provider is
-	 *         registered for {@code providerId}.
-	 */
-	@SideEffectFree
-	@Label("Build axis rows and items from a registered axis provider")
-	public static AxisContent ganttAxisContent(
-			@Mandatory String providerId,
-			double rangeMin,
-			double rangeMax,
-			Double zoom) {
-		double pixelsPerUnit = zoom != null ? zoom : 1.0;
-		AxisProviderService svc = AxisProviderService.Module.INSTANCE.getImplementationInstance();
-		AxisProvider provider = (svc != null) ? svc.lookup(providerId) : null;
-		if (provider == null) {
-			return new AxisContent(java.util.Collections.emptyList(), java.util.Collections.emptyList());
-		}
-		return provider.buildAxis(rangeMin, rangeMax, pixelsPerUnit);
-	}
-
-	/**
 	 * Creates a Gantt layout from its rows, items, edges, and decorations.
 	 *
 	 * @param rootRows
@@ -2027,8 +1963,16 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Dependency edges between items, or {@code null} for none.
 	 * @param decorations
 	 *        Decorations overlaid on the chart, or {@code null} for none.
-	 * @param axis
-	 *        The axis configuration.
+	 * @param rangeMin
+	 *        Lowest position on the time axis, in layout units (pixels at zoom 1.0).
+	 * @param rangeMax
+	 *        Highest position on the time axis, in layout units (pixels at zoom 1.0).
+	 * @param initialZoom
+	 *        Initial zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
+	 *        Initialises the dynamic {@code zoom} field on the layout.
+	 * @param snapTo
+	 *        Granularity for client-side drag snapping, in position units (not pixels).
+	 *        {@code null} or {@code 1.0} means snap to the nearest integer position unit.
 	 * @param frozenRows
 	 *        Number of leading root rows forming the frozen header, or {@code null} for none.
 	 * @return The new Gantt layout.
@@ -2040,7 +1984,10 @@ public class FlowFactory extends TLScriptFunctions {
 			@Mandatory List<GanttItem> items,
 			List<GanttEdge> edges,
 			List<GanttDecoration> decorations,
-			@Mandatory GanttAxis axis,
+			double rangeMin,
+			double rangeMax,
+			Double initialZoom,
+			Double snapTo,
 			Integer frozenRows) {
 
 		// 1. Assign row IDs depth-first, build userObject -> rowId index.
@@ -2112,10 +2059,15 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 
 		// 5. Build the layout.
+		double startZoom = initialZoom != null ? initialZoom : 1.0;
 		GanttLayout layout = GanttLayout.create()
 			.setRootRows(rootRows)
 			.setItems(items)
-			.setAxis(axis);
+			.setRangeMin(rangeMin)
+			.setRangeMax(rangeMax)
+			.setInitialZoom(startZoom)
+			.setZoom(startZoom)
+			.setSnapTo(snapTo != null ? snapTo : 1.0);
 		if (edges != null) {
 			layout.setEdges(edges);
 		}

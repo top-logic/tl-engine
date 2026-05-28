@@ -40,8 +40,20 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	/** @see #getDecorations() */
 	String DECORATIONS__PROP = "decorations";
 
-	/** @see #getAxis() */
-	String AXIS__PROP = "axis";
+	/** @see #getRangeMin() */
+	String RANGE_MIN__PROP = "rangeMin";
+
+	/** @see #getRangeMax() */
+	String RANGE_MAX__PROP = "rangeMax";
+
+	/** @see #getInitialZoom() */
+	String INITIAL_ZOOM__PROP = "initialZoom";
+
+	/** @see #getZoom() */
+	String ZOOM__PROP = "zoom";
+
+	/** @see #getSnapTo() */
+	String SNAP_TO__PROP = "snapTo";
 
 	/** @see #getIndentWidth() */
 	String INDENT_WIDTH__PROP = "indentWidth";
@@ -163,19 +175,59 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	void removeDecoration(com.top_logic.react.flow.data.GanttDecoration value);
 
 	/**
-	 * Time axis configuration.
+	 * Lowest position representable on the time axis, in layout units (pixels at zoom 1.0).
+	 * The domain meaning of one unit (a day, a sprint, a millisecond, ...) is determined by
+	 * the application that places items on the chart -- the chart itself only sees doubles.
 	 */
-	com.top_logic.react.flow.data.GanttAxis getAxis();
+	double getRangeMin();
 
 	/**
-	 * @see #getAxis()
+	 * @see #getRangeMin()
 	 */
-	com.top_logic.react.flow.data.GanttLayout setAxis(com.top_logic.react.flow.data.GanttAxis value);
+	com.top_logic.react.flow.data.GanttLayout setRangeMin(double value);
 
 	/**
-	 * Checks, whether {@link #getAxis()} has a value.
+	 * Highest position representable on the time axis, in layout units (pixels at zoom 1.0).
 	 */
-	boolean hasAxis();
+	double getRangeMax();
+
+	/**
+	 * @see #getRangeMax()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setRangeMax(double value);
+
+	/**
+	 * Initial zoom factor: number of pixels per position unit when the chart is first opened.
+	 * One position unit at zoom 1.0 corresponds to one pixel on the chart.
+	 */
+	double getInitialZoom();
+
+	/**
+	 * @see #getInitialZoom()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setInitialZoom(double value);
+
+	/**
+	 * Current zoom factor. Initialised from {@link #getInitialZoom()} when the chart is built and
+	 * mutated by the client on Ctrl-wheel zoom gestures.
+	 */
+	double getZoom();
+
+	/**
+	 * @see #getZoom()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setZoom(double value);
+
+	/**
+	 * Granularity used by the client to snap drag positions, in position units (not pixels).
+	 * A value of {@code 1.0} means: snap to the nearest integer position unit.
+	 */
+	double getSnapTo();
+
+	/**
+	 * @see #getSnapTo()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setSnapTo(double value);
 
 	/**
 	 * Horizontal indentation per row hierarchy level, in pixels.
@@ -238,7 +290,7 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	 * Horizontal scroll offset, in position units (not pixels).
 	 *
 	 * <p>
-	 * The pixel offset applied to the content and header groups is {@code scrollX * currentZoom}.
+	 * The pixel offset applied to the content and header groups is {@code scrollX * zoom}.
 	 * Using position units ensures that the viewport stays centered on the same time point
 	 * when zoom changes.
 	 * </p>

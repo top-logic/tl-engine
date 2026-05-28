@@ -95,17 +95,15 @@ gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "#888888", 
 /* Freeze range (colored strip — no label here, label is in Markers row) */
 freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)");
 
-/* === Axis config === */
-
-axis = reactFlowGanttAxis(providerId: "days-since-epoch", rangeMin: 20450, rangeMax: 20600, zoom: 8);
-
 reactFlowGantt(
 	rootRows:    list($r_axisYear, $r_axisMonth, $r_axisDay, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
 	items:       concat($yearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item)),
 	edges:       list($e1, $e2),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze),
-	axis: $axis,
-	frozenRows: 4
+	rangeMin:    20450,
+	rangeMax:    20600,
+	initialZoom: 8,
+	frozenRows:  4
 )
 }]]></createChart>
 		</flow-diagram>

@@ -17,11 +17,17 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
 
 /**
- * Tool that persists an HTML document and returns a relative URL the user can open in a browser.
+ * Tool that persists an HTML document and returns a URL the user can open in a browser.
  *
  * <p>
  * The returned URL is served by
  * {@link com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageServlet} mapped to {@code /html/*}.
+ * </p>
+ *
+ * <p>
+ * The URL is absolute when {@link AliasManager#HOST %HOST%} is configured (typical for any real
+ * deployment), and root-relative otherwise. Returning an absolute URL whenever possible matters
+ * because some LLMs will otherwise invent a host themselves when handed a root-relative path.
  * </p>
  */
 public class PublishHtmlPageTool {
@@ -36,13 +42,15 @@ public class PublishHtmlPageTool {
 	}
 
 	/**
-	 * Persists the given HTML and returns a relative URL.
+	 * Persists the given HTML and returns the URL of the freshly stored page.
 	 *
 	 * @param title
 	 *        Short human-readable title.
 	 * @param html
 	 *        Full self-contained HTML document.
-	 * @return Relative URL like {@code /html/a7f3b2...}.
+	 * @return The URL of the stored page. Absolute when {@link AliasManager#HOST %HOST%} is
+	 *         configured (e.g. {@code https://apps.example.com/hype/html/a7f3b2...}), root-relative
+	 *         otherwise (e.g. {@code /hype/html/a7f3b2...}).
 	 */
 	@ToolMethod(
 		name = "publishPage",
@@ -69,12 +77,42 @@ public class PublishHtmlPageTool {
 		GeneratedHtmlPageService service =
 			GeneratedHtmlPageService.Module.INSTANCE.getImplementationInstance();
 		GeneratedHtmlPage page = service.savePage(title, bytes, currentPerson());
-		return contextPath() + URL_PREFIX + page.getId();
+		return hostPrefix() + contextPath() + URL_PREFIX + page.getId();
+	}
+
+	/**
+	 * Resolves the application's public host (scheme + host + optional port) so the returned URL
+	 * is absolute when the deployment declares one.
+	 *
+	 * <p>
+	 * Reads the {@code %HOST%} alias. Returns the empty string when unset (e.g. unit tests, or a
+	 * dev deployment that hasn't bothered to configure it) — yielding a root-relative URL, same
+	 * as before the host prefix was introduced.
+	 * </p>
+	 *
+	 * <p>
+	 * Trailing slashes on the configured host are stripped so callers don't have to be careful
+	 * about whether they ended {@code %HOST%} with one.
+	 * </p>
+	 */
+	private static String hostPrefix() {
+		String host = AliasManager.getInstance().getAlias(AliasManager.HOST);
+		if (host == null) {
+			return "";
+		}
+		host = host.trim();
+		if (host.isEmpty()) {
+			return "";
+		}
+		while (host.endsWith("/")) {
+			host = host.substring(0, host.length() - 1);
+		}
+		return host;
 	}
 
 	/**
 	 * Resolves the application's deployment context path so the returned URL works regardless of
-	 * where the WAR is mounted (e.g. {@code /tl-ai-demo/api/html/...} vs. {@code /api/html/...}).
+	 * where the WAR is mounted (e.g. {@code /tl-ai-demo/html/...} vs. {@code /hype/html/...}).
 	 *
 	 * <p>
 	 * Reads the {@code %APP_CONTEXT%} alias maintained by {@link AliasManager}, which is

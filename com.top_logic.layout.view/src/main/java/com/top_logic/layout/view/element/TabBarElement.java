@@ -161,10 +161,13 @@ public class TabBarElement implements UIElement {
 
 	private static ReactControl createContent(TabEntry entry, ViewContext context,
 			DirtyChannel dirtyChannel) {
-		// Per-tab context: extend the personalization key with "tab" (legacy) and the slot path
-		// with the tab id so that two tabs containing the same-named <slot-content> route into
-		// independent positions in the slot tree.
-		ViewContext tabContext = context.childContext("tab").withChildSlotPath(entry._id);
+		// Per-tab context: extend the personalization key with "tab" (legacy), extend the slot
+		// path with the tab id so same-named <slot-content> in two tabs route into independent
+		// positions, and fork a fresh channel scope so each tab's <channels> declarations are
+		// independent of its siblings'.
+		ViewContext tabContext = context.childContext("tab")
+			.withChildSlotPath(entry._id)
+			.withFreshChannelScope();
 		tabContext.setDirtyChannel(dirtyChannel);
 
 		List<UIElement> elements = entry._children;

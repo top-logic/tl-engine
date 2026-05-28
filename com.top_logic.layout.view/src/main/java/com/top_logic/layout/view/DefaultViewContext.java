@@ -131,6 +131,13 @@ public class DefaultViewContext implements ViewContext {
 	}
 
 	@Override
+	public ViewContext withFreshChannelScope() {
+		return new DefaultViewContext(_reactContext, _personalizationPath, new HashMap<>(), _commandScope,
+			_tileStackScope, _formModel, _errorSink, _dirtyChannel, _reloadListeners, _contextMenuOpener,
+			_slotPath, _slotRegistry);
+	}
+
+	@Override
 	public String getPersonalizationKey() {
 		return _personalizationPath;
 	}

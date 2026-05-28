@@ -191,6 +191,21 @@ public interface ViewContext extends ReactContext {
 	ViewContext withErrorSink(ErrorSink errorSink);
 
 	/**
+	 * Creates a derived context with a fresh, empty channel registry.
+	 *
+	 * <p>
+	 * Channels declared in the new context are independent of channels declared in the parent
+	 * context. Used by container elements whose children are logically independent — e.g.
+	 * tab-bars — so that two sibling subtrees declaring the same channel name do not accidentally
+	 * share one channel instance.
+	 * </p>
+	 *
+	 * @return A new context with an empty channels map but otherwise the same fields as this
+	 *         context.
+	 */
+	ViewContext withFreshChannelScope();
+
+	/**
 	 * The current position in the rendered view tree, used by the slot mechanism to route
 	 * {@code <slot-content>} contributions to the nearest matching {@code <slot>} placeholder.
 	 *

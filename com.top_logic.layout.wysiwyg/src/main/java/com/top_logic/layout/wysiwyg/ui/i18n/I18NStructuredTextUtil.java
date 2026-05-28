@@ -39,8 +39,7 @@ public class I18NStructuredTextUtil {
 	 * @param locale
 	 *        Is not allowed to be null.
 	 * @param newSourceCode
-	 *        Is allowed to be null. The new value is passed without check or modification to the
-	 *        {@link StructuredText}.
+	 *        Is not allowed to be null.
 	 */
 	public static void updateTranslation(TLObject tlObject, String attribute, Locale locale, String newSourceCode) {
 		I18NStructuredText oldText = (I18NStructuredText) tlObject.tValueByName(attribute);
@@ -62,9 +61,8 @@ public class I18NStructuredTextUtil {
 	 *        The {@link Locale} for which the source code is updated. Must not be
 	 *        <code>null</code>.
 	 * @param newSourceCode
-	 *        The new source code of the {@link StructuredText} for the given {@link Locale}. May be
-	 *        <code>null</code>. The new value is passed without check or modification to the
-	 *        {@link StructuredText}.
+	 *        The new source code of the {@link StructuredText} for the given {@link Locale}. Must
+	 *        not be <code>null</code>.
 	 * 
 	 * @return A new {@link I18NStructuredText} that shares only the source code and
 	 *         {@link BinaryData} of the images, but not the {@link StructuredText}s, not the

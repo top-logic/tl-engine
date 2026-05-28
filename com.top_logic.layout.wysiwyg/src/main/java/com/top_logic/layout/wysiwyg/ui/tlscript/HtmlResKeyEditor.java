@@ -99,7 +99,10 @@ public class HtmlResKeyEditor extends AbstractEditor {
 			ResKey key = ((DefaultHtmlResKey) modelValue).content();
 			Map<Locale, StructuredText> content = new HashMap<>();
 			for (Entry<Locale, String> entry : ResKeyUtil.toMap(key).entrySet()) {
-				content.put(entry.getKey(), new StructuredText(entry.getValue()));
+				String value = entry.getValue();
+				if (value != null) {
+					content.put(entry.getKey(), new StructuredText(value));
+				}
 			}
 			if (content.isEmpty()) {
 				return I18NStructuredText.EMPTY;

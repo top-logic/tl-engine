@@ -17,8 +17,8 @@ import com.top_logic.layout.react.control.ReactControl;
 public interface SlotContribution {
 
 	/**
-	 * The target slot name (the value of the {@code slot} attribute on
-	 * {@code <slot-content slot="...">}).
+	 * The target slot name (the value of the {@code to} attribute on
+	 * {@code <slot-content to="...">}).
 	 */
 	String getSlotName();
 

@@ -260,7 +260,7 @@
 				<children>
 					<!--
 						Inline projection slot. Any descendant view in the shell may push content
-						here by declaring <slot-content slot="secondary">...</slot-content>;
+						here by declaring <slot-content to="secondary">...</slot-content>;
 						the slot routes contributions to the nearest matching <slot> by tree
 						distance (this one wins for everything inside the shell content).
 					-->

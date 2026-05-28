@@ -41,7 +41,7 @@ public class SlotElement implements UIElement {
 		String NAME = "name";
 
 		/**
-		 * The slot name. {@code <slot-content slot="X">} contributions are routed here when this
+		 * The slot name. {@code <slot-content to="X">} contributions are routed here when this
 		 * is the nearest matching {@code <slot name="X"/>} in the tree.
 		 */
 		@Name(NAME)

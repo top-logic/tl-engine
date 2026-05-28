@@ -14,7 +14,7 @@ import java.util.List;
 public interface SlotPlaceholder {
 
 	/**
-	 * The slot name (must match a {@code <slot-content slot="X">} for routing).
+	 * The slot name (must match a {@code <slot-content to="X">} for routing).
 	 */
 	String getSlotName();
 

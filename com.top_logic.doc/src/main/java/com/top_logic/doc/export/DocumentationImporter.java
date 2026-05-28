@@ -322,10 +322,10 @@ public class DocumentationImporter {
 				contents = getFileContents(contentResourcePath, StringServices.UTF8);
 			} catch (IOException ex) {
 				log.error("Failed to read contents of: '" + contentResourcePath + "'", ex);
-				contents = null;
+				contents = StringServices.EMPTY_STRING;
 			}
 		} else {
-			contents = null;
+			contents = StringServices.EMPTY_STRING;
 		}
 
 		Map<String, BinaryData> images = getImages(log, resourcePath);
@@ -425,9 +425,9 @@ public class DocumentationImporter {
 	 *        UUID of the new {@link Page}. If <code>null</code> a random ID will be generated
 	 *        automatically.
 	 * @param contents
-	 *        Source code of the new {@link Page}.
+	 *        Source code of the new {@link Page}. Never null.
 	 * @param images
-	 *        {@link Map} of images of the HTML page.
+	 *        {@link Map} of images of the HTML page. Never null.
 	 * @param position
 	 *        The relative position of the {@link Page} within its siblings.
 	 * @param source
@@ -439,7 +439,7 @@ public class DocumentationImporter {
 		String idStripped = id.strip(); // The id is not allowed to be null.
 		String titleStripped = stripNullsafe(title);
 		String uuidStripped = stripNullsafe(uuid);
-		String contentsStripped = stripNullsafe(contents);
+		String contentsStripped = contents.strip();
 		String sourceStripped = stripNullsafe(source);
 		KnowledgeBase kb = parent.tKnowledgeBase();
 		KnowledgeItem existingPage = findExistingPage(kb, uuidStripped, idStripped);

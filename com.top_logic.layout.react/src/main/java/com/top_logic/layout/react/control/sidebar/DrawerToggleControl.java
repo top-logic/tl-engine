@@ -10,13 +10,14 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
- * Hamburger button that toggles a target {@link ReactSidebarControl}'s collapsed state.
+ * Hamburger button that toggles a target {@link ReactSidebarControl}'s mobile drawer.
  *
  * <p>
  * Designed to be placed inside a {@code SlotContentControl} contributing to the app bar's
  * {@code appbar-leading} slot, so the button surfaces in the app bar while the sidebar lives in
  * the content area. CSS hides the button at desktop breakpoints; at mobile breakpoints the
- * sidebar's CSS turns the nav rail into an off-canvas drawer that this button opens.
+ * sidebar's CSS turns the nav rail into an off-canvas drawer that this button opens. The drawer
+ * state is independent of the desktop rail's persisted {@code collapsed} preference.
  * </p>
  */
 public class DrawerToggleControl extends ReactControl {
@@ -29,7 +30,7 @@ public class DrawerToggleControl extends ReactControl {
 	 * Creates a drawer-toggle button bound to the given sidebar.
 	 *
 	 * @param target
-	 *        The sidebar whose collapsed state this button toggles.
+	 *        The sidebar whose mobile drawer this button opens/closes.
 	 */
 	public DrawerToggleControl(ReactContext context, ReactSidebarControl target) {
 		super(context, null, REACT_MODULE);
@@ -41,6 +42,6 @@ public class DrawerToggleControl extends ReactControl {
 	 */
 	@ReactCommand("toggle")
 	void handleToggle() {
-		_target.toggleCollapse();
+		_target.toggleDrawer();
 	}
 }

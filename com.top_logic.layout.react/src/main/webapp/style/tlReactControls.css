@@ -1381,30 +1381,32 @@ button.tlDrawerToggle:focus-visible {
 	}
 
 	/* Turn the nav rail into a fixed off-canvas panel that slides in from the left.
-	 * The existing .tlSidebar--collapsed modifier is repurposed:
-	 *   collapsed  -> drawer hidden (translateX(-100%))
-	 *   expanded   -> drawer open (translateX(0)) with a backdrop overlay
+	 * Visibility is driven by the .tlSidebar--drawerOpen modifier (mobile-only state),
+	 * NOT the .tlSidebar--collapsed modifier (desktop rail preference). This way the
+	 * persisted desktop "collapsed" choice doesn't leak into mobile drawer behavior.
+	 *
+	 * The .tlSidebar prefix is required for specificity: the desktop rule
+	 * .tlSidebar--collapsed .tlSidebar__nav { width: 2.5rem } would otherwise win.
 	 */
-	.tlSidebar__nav {
+	.tlSidebar .tlSidebar__nav {
 		position: fixed;
 		top: 3.5rem; /* below the app bar */
 		left: 0;
 		bottom: 0;
 		width: 16rem;
-		transform: translateX(0);
+		transform: translateX(-100%);
 		transition: transform 0.2s ease;
 		z-index: 50;
-		box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
-	}
-
-	.tlSidebar--collapsed .tlSidebar__nav {
-		transform: translateX(-100%);
-		width: 16rem; /* override desktop 2.5rem rail */
 		box-shadow: none;
 	}
 
-	/* Backdrop when drawer is open. Clicking closes the drawer (handled in TLSidebar.tsx). */
-	.tlSidebar__backdrop {
+	.tlSidebar.tlSidebar--drawerOpen .tlSidebar__nav {
+		transform: translateX(0);
+		box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+	}
+
+	/* Backdrop only when drawer is open. Clicking closes the drawer (handled in TLSidebar.tsx). */
+	.tlSidebar--drawerOpen .tlSidebar__backdrop {
 		display: block;
 		position: fixed;
 		top: 3.5rem;

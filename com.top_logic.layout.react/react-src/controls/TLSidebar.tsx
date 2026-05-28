@@ -402,7 +402,13 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
 
   const items = (state.items as SidebarItemData[]) ?? [];
   const activeItemId = state.activeItemId as string;
-  const collapsed = state.collapsed as boolean;
+  const persistedCollapsed = state.collapsed as boolean;
+  const drawerOpen = state.drawerOpen as boolean;
+
+  // When the mobile drawer is open, render the nav fully expanded (labels visible) regardless
+  // of the desktop "collapsed" preference; the user just opened the drawer to navigate. On
+  // desktop drawerOpen is always false, so this collapses back to the persisted preference.
+  const collapsed = drawerOpen ? false : persistedCollapsed;
 
   // Lift group expanded state into parent.
   const [groupStates, setGroupStates] = useState<Map<string, boolean>>(() => {
@@ -441,6 +447,10 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleToggleCollapse = useCallback(() => {
     sendCommand('toggleCollapse', {});
+  }, [sendCommand]);
+
+  const handleToggleDrawer = useCallback(() => {
+    sendCommand('toggleDrawer', {});
   }, [sendCommand]);
 
   // Flyout state (collapsed-mode group popover).
@@ -579,13 +589,17 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   }, [items, collapsed, groupStates, focusedId, flyoutGroupId, moveFocus,
       handleSelect, handleExecute, handleToggleGroup, handleOpenFlyout, handleCloseFlyout]);
 
+  const rootClass = 'tlSidebar'
+    + (collapsed ? ' tlSidebar--collapsed' : '')
+    + (drawerOpen ? ' tlSidebar--drawerOpen' : '');
+
   return (
-    <div id={controlId} className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
+    <div id={controlId} className={rootClass}>
       {state.drawerToggleContribution && (
         <TLChild control={state.drawerToggleContribution} />
       )}
-      {!collapsed && (
-        <div className="tlSidebar__backdrop" onClick={handleToggleCollapse} aria-hidden="true" />
+      {drawerOpen && (
+        <div className="tlSidebar__backdrop" onClick={handleToggleDrawer} aria-hidden="true" />
       )}
       <nav className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
         {collapsed ? (

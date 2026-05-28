@@ -45,7 +45,9 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <ul>
  * <li>{@code items} - serialized item list</li>
  * <li>{@code activeItemId} - the currently selected navigation item ID</li>
- * <li>{@code collapsed} - whether the sidebar nav panel is collapsed</li>
+ * <li>{@code collapsed} - whether the desktop rail is collapsed (persisted user preference)</li>
+ * <li>{@code drawerOpen} - whether the mobile off-canvas drawer is currently shown
+ * (transient, always starts {@code false} on page load)</li>
  * <li>{@code activeContent} - the active item's content as a child control descriptor</li>
  * <li>{@code headerContent} - optional header slot child control descriptor (expanded mode)</li>
  * <li>{@code headerCollapsedContent} - optional header slot child control descriptor (collapsed
@@ -67,6 +69,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	private static final String ACTIVE_ITEM_ID = "activeItemId";
 
 	private static final String COLLAPSED = "collapsed";
+
+	private static final String DRAWER_OPEN = "drawerOpen";
 
 	private static final String ACTIVE_CONTENT = "activeContent";
 
@@ -107,6 +111,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	private String _activeItemId;
 
 	private boolean _collapsed;
+
+	private boolean _drawerOpen;
 
 	private final List<RouteChangeListener> _routeChangeListeners = new ArrayList<>();
 
@@ -177,6 +183,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		putState(ITEMS, itemList);
 		putState(ACTIVE_ITEM_ID, _activeItemId);
 		putState(COLLAPSED, Boolean.valueOf(_collapsed));
+		putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
 		if (_headerContent != null) {
 			putState(HEADER_CONTENT, _headerContent);
 		}
@@ -549,12 +556,11 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	/**
-	 * Toggles the sidebar's collapsed state.
+	 * Toggles the desktop rail's collapsed state (persisted user preference).
 	 *
 	 * <p>
-	 * Equivalent to the user clicking the in-rail collapse button. Exposed publicly so external
-	 * controls (e.g. a {@code DrawerToggleControl} placed in the app bar via the slot system) can
-	 * drive the same state transition.
+	 * Triggered by the user clicking the in-rail collapse button. On mobile this state is unused;
+	 * the mobile drawer's visibility is driven by {@link #toggleDrawer()} instead.
 	 * </p>
 	 */
 	public void toggleCollapse() {
@@ -571,6 +577,28 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	@ReactCommand("toggleCollapse")
 	void handleToggleCollapse() {
 		toggleCollapse();
+	}
+
+	/**
+	 * Toggles the mobile drawer's open state (transient — not persisted).
+	 *
+	 * <p>
+	 * Triggered by the hamburger button in the app bar or by a click on the drawer backdrop.
+	 * Independent of {@link #toggleCollapse()}, so the desktop rail preference is preserved across
+	 * mobile drawer interactions. Always defaults to {@code false} on a fresh page load.
+	 * </p>
+	 */
+	public void toggleDrawer() {
+		_drawerOpen = !_drawerOpen;
+		putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
+	}
+
+	/**
+	 * Handles mobile drawer toggle from the client.
+	 */
+	@ReactCommand("toggleDrawer")
+	void handleToggleDrawer() {
+		toggleDrawer();
 	}
 
 	/**

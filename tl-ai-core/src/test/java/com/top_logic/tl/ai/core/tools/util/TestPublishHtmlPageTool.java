@@ -12,6 +12,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.AliasManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService;
@@ -39,8 +40,9 @@ public class TestPublishHtmlPageTool extends BasicTestCase {
 	}
 
 	/**
-	 * Happy path: saving a page returns a relative URL under {@code /api/html/}
-	 * whose id segment is the 22-character base64url token produced by the service.
+	 * Happy path with no {@code %HOST%} alias configured: saving a page returns a root-relative
+	 * URL under {@code /html/} whose id segment is the 22-character base64url token produced by
+	 * the service.
 	 */
 	public void testReturnsRelativeUrlWithIdSegment() throws Exception {
 		String url;
@@ -49,13 +51,57 @@ public class TestPublishHtmlPageTool extends BasicTestCase {
 			tx.commit();
 		}
 		assertNotNull("tool must return a URL", url);
-		assertTrue("URL must start with /api/html/: " + url, url.startsWith("/api/html/"));
-		String id = url.substring("/api/html/".length());
+		assertTrue("URL must start with /html/: " + url, url.startsWith("/html/"));
+		String id = url.substring("/html/".length());
 		int cut = indexOfAny(id, "/?#");
 		if (cut >= 0) {
 			id = id.substring(0, cut);
 		}
 		assertEquals("id segment length", 22, id.length());
+	}
+
+	/**
+	 * When {@code %HOST%} is configured (typical for a real deployment), the returned URL must
+	 * be absolute — otherwise an LLM that receives a root-relative path may invent its own host.
+	 */
+	public void testPrependsHostAliasWhenConfigured() throws Exception {
+		AliasManager aliases = AliasManager.getInstance();
+		String previous = aliases.getAlias(AliasManager.HOST);
+		AliasManager.putVariable(aliases.getExpander(), "HOST", "https://app.example.test");
+		try {
+			String url;
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				url = _tool.publishPage("Hello", VALID_HTML);
+				tx.commit();
+			}
+			assertNotNull("tool must return a URL", url);
+			assertTrue("URL must be absolute when %HOST% is set: " + url,
+				url.startsWith("https://app.example.test/html/"));
+		} finally {
+			AliasManager.putVariable(aliases.getExpander(), "HOST", previous == null ? "" : previous);
+		}
+	}
+
+	/**
+	 * Trailing slashes on the configured {@code %HOST%} must not produce a double slash before
+	 * {@code /html/} — callers shouldn't have to be careful about whether they ended the alias
+	 * with one.
+	 */
+	public void testStripsTrailingSlashOnHostAlias() throws Exception {
+		AliasManager aliases = AliasManager.getInstance();
+		String previous = aliases.getAlias(AliasManager.HOST);
+		AliasManager.putVariable(aliases.getExpander(), "HOST", "https://app.example.test/");
+		try {
+			String url;
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				url = _tool.publishPage("Hello", VALID_HTML);
+				tx.commit();
+			}
+			assertTrue("trailing slash must be stripped: " + url,
+				url.startsWith("https://app.example.test/html/"));
+		} finally {
+			AliasManager.putVariable(aliases.getExpander(), "HOST", previous == null ? "" : previous);
+		}
 	}
 
 	/**

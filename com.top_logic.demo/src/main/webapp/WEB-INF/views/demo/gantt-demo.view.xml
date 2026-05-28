@@ -51,11 +51,10 @@ axisSpan = modelId -> rowModel -> start -> end -> label -> index ->
 		start: $start, end: $end,
 		canMove: false, canResize: false, canBeEdge: false);
 
-monthNames = list("Jan", "Feb", "Mar", "Apr", "May", "Jun",
-				  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
-
-/* Plain-integer formatter for year labels (avoids locale thousands separator: "2026" not "2,026"). */
-yearFmt = numberFormat("0");
+yearFmt    = dateFormat("yyyy");
+monthFmt   = dateFormat("MMM yyyy");
+monthIdFmt = dateFormat("yyyy-MM");
+dayFmt     = dateFormat("dd");
 
 clip = v -> lo -> hi -> $v < $lo ? $lo : ($v > $hi ? $hi : $v);
 
@@ -64,37 +63,31 @@ firstOfStartYear = $startCal.withDay(1).withMonth(0);
 yearSpans = count(2).foreach(i -> {
 	yStart = $firstOfStartYear.withYearAdded($i);
 	yEnd   = $firstOfStartYear.withYearAdded($i + 1);
-	year   = $yStart.year();
-	yLabel = format($yearFmt, $year);
-	$axisSpan("axis:year:" + $yLabel, "axis:year",
+	label  = $yearFmt.format($yStart.toDate());
+	$axisSpan("axis:year:" + $label, "axis:year",
 		$clip($dayNum($yStart), $rangeMin, $rangeMax),
 		$clip($dayNum($yEnd),   $rangeMin, $rangeMax),
-		$yLabel, $i)
+		$label, $i)
 });
 
 /* === Month spans: one cell per calendar month overlapping the range. === */
 firstOfStartMonth = $startCal.withDay(1);
 monthSpans = count(6).foreach(i -> {
-	mStart   = $firstOfStartMonth.withMonthAdded($i);
-	mEnd     = $firstOfStartMonth.withMonthAdded($i + 1);
-	mIdx     = $mStart.month();
-	mYr      = format($yearFmt, $mStart.year());
-	label    = $monthNames[$mIdx] + " " + $mYr;
-	id       = "axis:month:" + $mYr + "-" + ($mIdx + 1);
-	$axisSpan($id, "axis:month",
+	mStart = $firstOfStartMonth.withMonthAdded($i);
+	mEnd   = $firstOfStartMonth.withMonthAdded($i + 1);
+	mDate  = $mStart.toDate();
+	$axisSpan("axis:month:" + $monthIdFmt.format($mDate), "axis:month",
 		$clip($dayNum($mStart), $rangeMin, $rangeMax),
 		$clip($dayNum($mEnd),   $rangeMin, $rangeMax),
-		$label, $i)
+		$monthFmt.format($mDate), $i)
 });
 
-/* === Day spans: one cell per day in the range. Day-of-month is zero-padded so
-   the LOD's "label fits" gate behaves consistently from day 1 to day 31. === */
+/* === Day spans: one cell per day in the range. "dd" pads to 2 digits so the
+   LOD's "label fits" gate behaves consistently from day 1 to day 31. === */
 daySpans = count($rangeMax - $rangeMin).foreach(i -> {
-	dn         = $rangeMin + $i;
-	c          = $startCal.withDayAdded($i);
-	dayOfMonth = $c.day();
-	label      = $dayOfMonth < 10 ? "0" + $dayOfMonth : "" + $dayOfMonth;
-	$axisSpan("axis:day:" + $dn, "axis:day", $dn, $dn + 1, $label, $i)
+	dn = $rangeMin + $i;
+	$axisSpan("axis:day:" + $dn, "axis:day", $dn, $dn + 1,
+		$dayFmt.format($startCal.withDayAdded($i).toDate()), $i)
 });
 
 /* Freeze label in Markers row */

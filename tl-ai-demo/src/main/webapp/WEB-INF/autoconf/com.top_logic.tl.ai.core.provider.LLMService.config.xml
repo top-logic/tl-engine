@@ -27,7 +27,7 @@
 						name="xai"
 					/>
 				</providers>
-				<agent-execution default-model="claude-haiku-4-5-20251001"/>
+				<agent-execution default-model="claude-sonnet-4-6"/>
 				<model-catalog>
 					<llm-configuration>
 						<model name="claude-sonnet-4-6"

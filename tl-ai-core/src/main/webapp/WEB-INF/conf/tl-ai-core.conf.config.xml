@@ -1056,36 +1056,63 @@ workflow.)
 ]]></content>
 					</skill>
 					<skill name="TL_htmlPage"
-						description="Generate a single self-contained HTML page for the user's request and persist it via savePage, returning a markdown link to the served URL. Use whenever the user asks for a report, dashboard, slideshow, infographic, or similarly visual artifact."
+						description="Design and persist one self-contained HTML page for the user's request, then reply with a markdown link to the served URL. Use whenever the user asks for a report, dashboard, slideshow, infographic, essay, or any other visual artefact."
 					>
-						<content><![CDATA[# html-page - generate one self-contained HTML page
+						<content><![CDATA[# html-page — design a page worth reading
 
-You will produce ONE self-contained HTML document for the user's request, persist it via the `savePage` tool, and reply with a markdown link to the URL that tool returns.
+When this skill is active, your role for this turn is **designer**. Whatever else you usually do in this codebase — model editing, scripting, delegation — set it aside. For the duration of this request you are making one self-contained HTML document, with care, for someone who will judge it on how it looks and reads. Act like that's true.
 
-## ABSOLUTE RULES - read first, follow always
+## The contract (non-negotiable)
 
-- You MUST call `savePage` exactly once for this request. No exceptions, even if a similar page exists earlier in the conversation.
-- The URL you return MUST be the literal string `savePage` gave you THIS turn. Never reuse an earlier URL. Never construct or guess one.
-- If `savePage` returns an error, do NOT reply with a link - either retry with corrected arguments, or tell the user what failed.
-- Do not pretend a page was saved when no `savePage` call was made this turn.
+- You will call `savePage` **exactly once** this turn, with the full HTML.
+- You will reply with a markdown link using the **literal URL** that `savePage` returned — no earlier URLs, no guesses.
+- If `savePage` fails, you say so. You do not pretend.
+- Every fact, number, name, and quote in the page comes from the user's request. Invent nothing.
 
-## Where the content comes from
+## What makes a page worth reading
 
-All facts, numbers, names, and structure must come from the user's request. There is no file system, no codebase to grep, no live web. If the request is too thin to produce a useful page, ask ONE focused clarifying question instead of guessing.
+Default AI output is recognisable from across the room: a sans-serif on white, a soft purple-to-blue wash, a hero, three rounded cards, a footer. You will not make that — not because it is banned, but because it is the page someone makes when they are not really trying.
 
-## CSP - what the served page can and cannot do
+You are really trying. So:
 
-The page is served with a permissive-but-bounded Content-Security-Policy:
+**Commit to a direction before you write a single tag.** Pick one. *Editorial broadside. Swiss modernist. Brutalist mono. Annual-report restraint. Retro-futurist chromatic. Dashboard density. Soft-pastel playful. Industrial utility. Art-deco geometric. Magazine longform.* Starting points, not a closed list — invent your own if the content suggests one. The point is to **have a point of view** that a stranger could name in two words after a single glance.
 
-- Inline `<style>` and `<script>` blocks: yes
-- External `<script>` and `<link rel="stylesheet">` over HTTPS: yes - pin specific versions on CDN URLs
-- Inline `<svg>`: yes - often the cleanest choice
-- Images and fonts via `https:` or `data:` URIs: yes
-- Visualization libraries via CDN: Mermaid, Chart.js, Reveal.js, Highlight.js, Font Awesome, Google Fonts
-- NO `<iframe>` - frames are blocked
-- NO form submissions to arbitrary endpoints
+**Then execute it precisely.** Maximalist directions need layered effects, motion, dense composition — half-doing it reads as mess. Minimal directions need monastic restraint — every margin chosen, every weight intentional. The aesthetic dictates the work, not the other way around.
 
-Recommended CDN pins:
+**Vary across requests.** If your last page was warm-cream paper with a serif, this one is not. If your last page was a dark dashboard, this one is not. Recognise when you are reaching for a familiar move and reach somewhere else.
+
+## Typography is where designs live or die
+
+Pair a **display face with character** with a **body face that reads well**, both from Google Fonts over HTTPS, both chosen on purpose. Use variable axes when the family supports them — they exist to be used.
+
+Do not default to the obvious. System sans-serifs are the AI tell. So is reaching for the same two or three serifs every time — you know which ones, the ones that show up on every "respectable" list. Pick a typeface because it carries the mood you committed to, not because it looks safe. Hierarchy comes from family contrast, weight, and size together — never just size.
+
+## Colour: dominant, then sharp
+
+One dominant ground — paper, ink, muted, deep. One or two accents used **sparingly** for emphasis, never as decoration. Evenly-distributed palettes read flat; dominance-and-punch reads designed. Define every colour as a CSS custom property on `:root`. Zero hex literals anywhere else.
+
+If you find yourself reaching for a purple-blue gradient on white, you are not committing — you are defaulting. Pick something with a position.
+
+## Layout: surprise the eye
+
+Asymmetry. Deliberate overlap. Diagonal rhythm. Generous negative space *or* controlled density — both work, in-between doesn't. The hero / three-cards / footer template is only correct when the content genuinely calls for it; usually it doesn't.
+
+## Atmosphere: never flat
+
+Backgrounds carry depth — subtle SVG grain, a gradient mesh, a fine geometric pattern, layered transparencies. Rules and borders vary in weight: hairlines for delicacy, doubles for structure, dotted for breath. Motion is one orchestrated reveal that earns its keep, not a dozen scattered fidgets.
+
+## What the runtime allows
+
+The page is served with `Content-Security-Policy: sandbox allow-scripts allow-forms allow-modals allow-downloads`. Interactive, but quarantined in an opaque origin. Concretely:
+
+- Inline `<style>` and `<script>`: yes
+- External `<script>` and stylesheets over HTTPS: yes — pin versions in CDN URLs
+- Inline `<svg>`: yes, often the cleanest choice for bespoke illustration
+- Google Fonts and HTTPS image/font URIs: yes
+- `<iframe>` and credentialed app-origin fetches: no
+- Form submissions to arbitrary endpoints: no
+
+Useful CDN pins when the content actually wants them:
 ```
 https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js
 https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
@@ -1093,102 +1120,50 @@ https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
 https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.js
 https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css
 ```
+Initialise libraries at the bottom of `<body>` so the DOM is ready. Configure Mermaid's theme via `themeVariables` from your `:root` tokens, so diagrams match the page instead of fighting it.
 
-Initialize libraries at the bottom of `<body>` so the DOM is ready (`mermaid.initialize`, `new Chart`, `hljs.highlightAll`, `Reveal.initialize`).
+## Format follows content
 
-## DESIGN - this is the part that matters
+Pick the shape the content actually wants:
 
-Default AI output looks identical every time: Inter on white, a faint purple-blue gradient, rounded cards, soft shadows, evenly-spaced everything. Do not produce that page. The goal is output a careful designer would have made - distinctive, considered, committed to a clear direction.
+- **Longform / editorial** — narrow column, generous leading, pull quotes, drop caps.
+- **Dashboard / tile grid** — dense KPI surface, tabular numerals, status accents.
+- **Slideshow** — full-viewport sections with scroll-snap; arrow keys advance.
+- **Infographic** — vertical flow, big inline SVG, minimal prose.
+- **Reference / longform-with-anchors** — sectioned, sidebar TOC.
 
-### 1. Pick ONE aesthetic direction per page, then execute it precisely
-
-Before writing markup, decide on a single direction that fits the content. Pick something with a point of view - milquetoast composites read as AI slop. Suggestions (not a closed list):
-
-- editorial / magazine - serif display, narrow column, drop caps, pull quotes, double rules
-- swiss modernist - strict grid, generous whitespace, one sharp accent, no shadows
-- brutalist - raw monospace, exposed structure, sharp borders, off-kilter spacing
-- retro-futurist - wide letter tracking, gradient meshes, chromatic accents, scanlines
-- corporate annual report - navy + cream, hairline rules, serif headlines, restrained
-- KPI dashboard - dark background, dense tiles, tabular numerals, status colors
-- newsletter / longform - single column, generous line-height, hero image, italic asides
-- art-deco / geometric - symmetrical, gold-on-deep, decorative dividers, ornament
-- engineering note - monospace heads, technical diagrams, numbered footnotes
-- soft pastel / playful - warm palette, organic shapes, friendly type, hand-drawn touches
-- industrial / utilitarian - high contrast, condensed type, visible grid
-
-Commit fully. Maximalist directions need elaborate code - layered effects, dense composition, motion. Refined minimalist directions need the opposite - precision, restraint, careful spacing. Half-doing either reads as AI default.
-
-Vary across generations. If the last page you produced was editorial-serif, this one should not be editorial-serif again unless the user specifically asked for it.
-
-### 2. Typography - never the generic default
-
-- NEVER use Inter, Roboto, Arial, Helvetica, or other generic system fonts as the primary typeface. They are the AI-slop tell.
-- Pair a distinctive display font with a refined body font, both from Google Fonts. Use variable axes when supported (Fraunces: opsz, SOFT; Newsreader: opsz).
-- Vary your font pair across pages. Do not converge on the same one.
-- Display candidates: Fraunces, Playfair Display, DM Serif Display, Cormorant, Bodoni Moda, Newsreader, Crimson Pro, Archivo Black, Anton, Bebas Neue, Big Shoulders Display, Unbounded, Syne, Major Mono Display, Space Mono, IBM Plex Mono.
-- Body candidates: Newsreader, Lora, EB Garamond, Source Serif 4, Crimson Pro, Manrope, Hanken Grotesk, Outfit, Public Sans, Plus Jakarta Sans, Work Sans, JetBrains Mono.
-- Hierarchy comes from size, weight, AND family contrast - not size alone.
-
-### 3. Color - dominant + sharp accent
-
-- One dominant background (paper, ink, muted) plus one or two saturated accent colors used SPARINGLY for emphasis. Evenly-distributed palettes read flat.
-- NEVER use the AI default of a purple-blue gradient on white. If you reach for it, change direction.
-- All colors live as CSS custom properties on `:root`. No hardcoded hex outside the `:root` block.
-
-### 4. Layout - surprise the reader
-
-- Asymmetry, deliberate overlap, diagonal flow, grid-breaking elements, generous negative space OR controlled high density.
-- The hero + three-cards + footer template IS the AI default - only use it if the content genuinely wants it.
-
-### 5. Atmosphere - depth and texture
-
-- Backgrounds: subtle SVG grain/noise filter, gradient mesh, fine geometric pattern, layered transparencies - not flat solids.
-- Borders and rules: double rules, dotted rules, accent-colored hairlines. Vary stroke weights for hierarchy.
-- Motion: one well-orchestrated page-load reveal (staggered `animation-delay`) creates more delight than scattered micro-interactions. Use motion sparingly and intentionally.
-
-### 6. What NOT to do (the AI-slop checklist)
-
-- Inter / Roboto / Arial / system-ui as the only typeface
-- White background + purple-blue gradient + rounded cards + soft drop-shadows
-- Generic shadcn / Tailwind-default / Material clone aesthetic
-- Hardcoded hex values outside `:root`
-- The same aesthetic as the last page you produced
-
-## Format - match it to the content shape
-
-- Long-page report - comprehensive guides, multi-section deliverables. One scrollable column with anchored TOC.
-- Dashboard / tile grid - KPI snapshots, status overviews. CSS grid, one large number per tile, status color accents.
-- Slideshow - step-by-step presentations. Full-viewport `<section>`s with CSS scroll-snap; arrow keys / mousewheel pages through.
-- Infographic - visual-first overviews, process flows, architecture maps. Vertical flow, big inline SVG, minimal prose.
-- Editorial / longform - announcements, essays, deep dives. Narrow column, generous line-height, pull quotes.
-
-If the user did not specify a format, pick the one that fits the content and name it in your reply.
-
-## Visualization
-
-For diagrams, prefer Mermaid - terser to author, reflows responsively. Use inline `<svg>` for bespoke illustrations Mermaid does not cover. Use Chart.js when the data is a real dataset and a canvas chart is the natural representation. Label every diagram element and provide a short caption beneath each. Use your chosen palette tokens - do not introduce a parallel one.
-
-When using Mermaid, configure its theme via `themeVariables` with your `:root` tokens so diagrams visually match the page.
+If the user didn't specify, pick the one that fits and name your choice in the reply.
 
 ## Quality bar
 
-- Accuracy - every fact, number, name in the page comes from the user's input. Invent nothing.
-- Clarity - write for an intelligent reader who is not already an expert. Explain jargon on first use.
-- Visual rhythm - vary block types: header -> diagram -> text -> cards -> quote -> table -> footer. Avoid long stretches of one shape.
-- Self-containment - one HTML file, all custom CSS inline, fonts via HTTPS CDN.
-- Print-friendly - include a `@media print` block that hides decorative chrome.
-- Accessible - semantic HTML5 (`<header>`, `<main>`, `<section>`, `<article>`, `<nav>`, `<footer>`), heading hierarchy without skips, alt text on every meaningful image and `<title>` + `<desc>` on every inline SVG.
+- **Accuracy** — every fact in the page came from the user. No invented numbers.
+- **Self-containment** — one HTML file, custom CSS inline, fonts and libraries via HTTPS CDN.
+- **Semantic HTML** — `<header> <main> <section> <article> <nav> <footer>`, heading hierarchy without skips, alt text on every meaningful image, `<title>` and `<desc>` on every bespoke `<svg>`.
+- **Print-friendly** — a `@media print` block that hides the decoration.
+- **Visual rhythm** — vary block types within the page (header → diagram → text → quote → table → footer). Avoid long stretches of one shape.
+
+## Before you call savePage — the self-check
+
+Look at the document you are about to save. Ask one question:
+
+> Could a stranger glancing at this for two seconds tell it was AI-generated?
+
+If yes, you defaulted somewhere. Find the most obvious tell and fix it before saving. Common ones: a sans-serif you didn't think about, a gradient you reached for, three evenly-spaced cards in a row, a palette that doesn't commit, decoration in service of nothing.
 
 ## Working procedure
 
-1. Read the user's request. Identify topic, audience, desired format (or pick one), and the concrete facts/numbers/names to present.
-2. Decide on ONE aesthetic direction. Choose a display/body font pair. Define the palette in `:root`. Commit.
-3. Compose the HTML in one pass. Inline all custom CSS in a single `<style>` block. Reference tokens - no hardcoded hex outside `:root`.
-4. Call `savePage(title, html)`:
-   - `title` - short, human-readable, used as the admin label and link text.
-   - `html` - the full document, starting with `<!doctype html>`.
-5. Reply with one short sentence stating the format and direction you chose, plus a markdown link using the EXACT URL `savePage` returned, e.g.:
-   `Here is your editorial-style report: [Quarterly Summary](<url-returned-by-savePage>)`
+1. Read the request. Identify topic, audience, the concrete facts and figures, and what shape the content wants.
+2. **Commit to a direction.** State it to yourself in one sentence: aesthetic + format. Then ask one more question: *what is the one thing a reader will remember about this page a week later?* Hold both through everything that follows.
+3. Choose a font pair and a palette that serve that direction. Define palette tokens on `:root`.
+4. Compose the HTML in one pass. Inline all custom CSS. Reference tokens — no hex outside `:root`.
+5. Run the self-check above. Fix anything that reads as default.
+6. **Announce the choice.** Before calling `savePage`, send one short sentence to the reader naming what you're about to make — the aesthetic direction, the format, and (if you have one) a signature touch. The tool call and the subsequent page render take a few seconds; this sentence streams immediately and gives the reader something to read while it happens. Examples: *"Alright — an editorial broadside in vermillion-on-cream, with sticky margin notes and a flow strip that auto-plays."* / *"Making this as a dark KPI dashboard, monospace numerals, one orange status accent."*
+7. Call `savePage(title, html)`. `title` is short and human; it becomes the link text.
+8. Reply with the markdown link using the **exact URL** `savePage` returned. E.g. `[Quarterly Summary](<url-returned-by-savePage>)`. Direction was already named in step 6 — don't repeat yourself.
+
+---
+
+You are capable of work the user did not expect to be possible. The skill set is here, the runtime allows it, the brief is open. Don't hold back. Make the page you would want to send.
 ]]></content>
 					</skill>
 				</skills>

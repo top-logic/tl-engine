@@ -20,13 +20,13 @@ import com.top_logic.util.TLContext;
  * Tool that persists an HTML document and returns a relative URL the user can open in a browser.
  *
  * <p>
- * The returned URL is served by the OpenAPI {@code /html/{id}} endpoint
- * configured in {@code com.top_logic.service.openapi.server.OpenApiServer.config.xml}.
+ * The returned URL is served by
+ * {@link com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageServlet} mapped to {@code /html/*}.
  * </p>
  */
 public class SaveHtmlPageTool {
 
-	private static final String URL_PREFIX = "/api/html/";
+	private static final String URL_PREFIX = "/html/";
 
 	/**
 	 * Required public no-arg constructor for {@code ReflectiveToolFactory}.
@@ -42,7 +42,7 @@ public class SaveHtmlPageTool {
 	 *        Short human-readable title.
 	 * @param html
 	 *        Full self-contained HTML document.
-	 * @return Relative URL like {@code /api/html/a7f3b2...}.
+	 * @return Relative URL like {@code /html/a7f3b2...}.
 	 */
 	@ToolMethod(
 		name = "savePage",

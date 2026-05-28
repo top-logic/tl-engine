@@ -6,10 +6,11 @@ const I18N_KEYS = {
 };
 
 /**
- * Hamburger button that toggles a target sidebar's collapsed state by sending the
- * {@code toggle} command. Rendered inside the app bar's leading slot via a server-side
- * {@code SlotContentControl}; hidden at desktop breakpoints by CSS so it only appears
- * when the sidebar is in mobile drawer mode.
+ * Hamburger button that toggles a target sidebar's mobile drawer by sending the
+ * {@code toggle} command. Rendered into whichever slot the sidebar is configured to
+ * address via {@code drawer-open-slot-name} (typically the app bar's leading slot). The
+ * button is hidden at desktop breakpoints by CSS so it only appears when the sidebar is in
+ * mobile drawer mode.
  */
 const TLDrawerToggle: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();

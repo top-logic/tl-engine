@@ -1348,7 +1348,7 @@ button.tlSidebar__flyoutItem:focus-visible {
 	display: none;
 }
 
-/* --- Drawer toggle (mobile hamburger contributed to <slot name="appbar-leading"/>) -- */
+/* --- Drawer toggle (mobile hamburger contributed via the sidebar's drawer-open-slot-name) -- */
 
 .tlDrawerToggle {
 	display: none; /* desktop: hidden; mobile @media rules below override */

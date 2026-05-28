@@ -13,9 +13,10 @@ import com.top_logic.layout.react.control.ReactControl;
  * Hamburger button that toggles a target {@link ReactSidebarControl}'s mobile drawer.
  *
  * <p>
- * Designed to be placed inside a {@code SlotContentControl} contributing to the app bar's
- * {@code appbar-leading} slot, so the button surfaces in the app bar while the sidebar lives in
- * the content area. CSS hides the button at desktop breakpoints; at mobile breakpoints the
+ * Designed to be placed inside a {@code SlotContentControl} contributing to whichever slot the
+ * sidebar is configured to address via {@code drawer-open-slot-name}, so the button surfaces in
+ * the matched placeholder (typically the app bar's leading area) while the sidebar itself lives
+ * in the content area. CSS hides the button at desktop breakpoints; at mobile breakpoints the
  * sidebar's CSS turns the nav rail into an off-canvas drawer that this button opens. The drawer
  * state is independent of the desktop rail's persisted {@code collapsed} preference.
  * </p>

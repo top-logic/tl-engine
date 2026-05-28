@@ -53,6 +53,9 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <li>{@code footerContent} - optional footer slot child control descriptor (expanded mode)</li>
  * <li>{@code footerCollapsedContent} - optional footer slot child control descriptor (collapsed
  * mode)</li>
+ * <li>{@code drawerToggleContribution} - optional hidden child control descriptor whose
+ * {@code SlotContentControl} contributes a drawer-toggle button to {@code <slot
+ * name="appbar-leading"/>} (set via {@link #setDrawerToggleContribution(ReactControl)})</li>
  * </ul>
  */
 public class ReactSidebarControl extends ReactControl implements RoutingParticipant {
@@ -75,6 +78,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	private static final String FOOTER_COLLAPSED_CONTENT = "footerCollapsedContent";
 
+	private static final String DRAWER_TOGGLE_CONTRIBUTION = "drawerToggleContribution";
+
 	private static final String ITEM_ID_ARG = "itemId";
 
 	private static final String EXPANDED_ARG = "expanded";
@@ -94,6 +99,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	private final ReactControl _footerContent;
 
 	private final ReactControl _footerCollapsedContent;
+
+	private ReactControl _drawerToggleContribution;
 
 	private final LinkedHashMap<String, ReactControl> _contentCache = new LinkedHashMap<>();
 
@@ -185,6 +192,24 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	/**
+	 * Installs a control that the sidebar carries as an invisible child so its slot-content
+	 * contribution registers with the same lifecycle as the sidebar. Must be called before the
+	 * sidebar is rendered.
+	 *
+	 * <p>
+	 * Typical use: the {@code SidebarElement} creates a {@code SlotContentControl} containing a
+	 * drawer-toggle button targeting {@code <slot name="appbar-leading"/>}; the sidebar then owns
+	 * its attach/detach lifecycle so the contribution registers when the sidebar mounts.
+	 * </p>
+	 */
+	public void setDrawerToggleContribution(ReactControl contribution) {
+		_drawerToggleContribution = contribution;
+		if (contribution != null) {
+			putState(DRAWER_TOGGLE_CONTRIBUTION, contribution);
+		}
+	}
+
+	/**
 	 * Convenience constructor without collapsed-mode slot alternatives and no callbacks.
 	 */
 	public ReactSidebarControl(ReactContext context, List<SidebarItem> items, String initialActiveItemId,
@@ -218,6 +243,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		if (_footerContent != null) {
 			_footerContent.attach();
 		}
+		if (_drawerToggleContribution != null) {
+			_drawerToggleContribution.attach();
+		}
 		if (_activeItemId != null) {
 			ReactControl content = _contentCache.get(_activeItemId);
 			if (content != null) {
@@ -237,6 +265,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 		if (_footerContent != null) {
 			_footerContent.detach();
+		}
+		if (_drawerToggleContribution != null) {
+			_drawerToggleContribution.detach();
 		}
 		if (_activeItemId != null) {
 			ReactControl content = _contentCache.get(_activeItemId);
@@ -269,6 +300,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 		if (_footerCollapsedContent != null) {
 			_footerCollapsedContent.cleanupTree();
+		}
+		if (_drawerToggleContribution != null) {
+			_drawerToggleContribution.cleanupTree();
 		}
 	}
 
@@ -515,15 +549,28 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	/**
-	 * Handles collapse toggle from the client.
+	 * Toggles the sidebar's collapsed state.
+	 *
+	 * <p>
+	 * Equivalent to the user clicking the in-rail collapse button. Exposed publicly so external
+	 * controls (e.g. a {@code DrawerToggleControl} placed in the app bar via the slot system) can
+	 * drive the same state transition.
+	 * </p>
 	 */
-	@ReactCommand("toggleCollapse")
-	void handleToggleCollapse() {
+	public void toggleCollapse() {
 		_collapsed = !_collapsed;
 		if (_onCollapseChanged != null) {
 			_onCollapseChanged.accept(Boolean.valueOf(_collapsed));
 		}
 		putState(COLLAPSED, Boolean.valueOf(_collapsed));
+	}
+
+	/**
+	 * Handles collapse toggle from the client.
+	 */
+	@ReactCommand("toggleCollapse")
+	void handleToggleCollapse() {
+		toggleCollapse();
 	}
 
 	/**

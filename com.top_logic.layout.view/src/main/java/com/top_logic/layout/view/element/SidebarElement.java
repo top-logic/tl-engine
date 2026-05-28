@@ -26,6 +26,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.util.Resources;
+import com.top_logic.layout.react.control.sidebar.DrawerToggleControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SeparatorItem;
@@ -34,6 +35,7 @@ import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.slot.control.SlotContentControl;
 
 /**
  * UIElement that wraps {@link ReactSidebarControl}.
@@ -312,12 +314,22 @@ public class SidebarElement implements UIElement {
 			sidebarItems.add(itemElement.createSidebarItem(context));
 		}
 		String activeItem = _activeItem != null && !_activeItem.isEmpty() ? _activeItem : null;
-		return new ReactSidebarControl(context,
+		ReactSidebarControl sidebar = new ReactSidebarControl(context,
 			sidebarItems, activeItem,
 			collapsed, groupStates,
 			c -> PersonalizingExpandable.saveCollapsed(key + ".collapsed", c, _collapsed),
 			(gid, exp) -> saveGroupState(key, gid, exp),
 			null, null, null, null);
+
+		// Contribute a drawer-toggle button to the app bar's "appbar-leading" slot. The button is
+		// visible only at mobile breakpoints (CSS) and toggles the sidebar's collapsed state,
+		// which acts as "drawer closed/open" on mobile.
+		DrawerToggleControl toggleButton = new DrawerToggleControl(context, sidebar);
+		SlotContentControl drawerToggleSlot = new SlotContentControl(context, "appbar-leading",
+			context.getSlotPath(), context.getSlotRegistry(), List.of(toggleButton));
+		sidebar.setDrawerToggleContribution(drawerToggleSlot);
+
+		return sidebar;
 	}
 
 	private static String resolveKey(ViewContext context, String defaultSegment) {

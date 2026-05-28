@@ -581,6 +581,12 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} className={'tlSidebar' + (collapsed ? ' tlSidebar--collapsed' : '')}>
+      {state.drawerToggleContribution && (
+        <TLChild control={state.drawerToggleContribution} />
+      )}
+      {!collapsed && (
+        <div className="tlSidebar__backdrop" onClick={handleToggleCollapse} aria-hidden="true" />
+      )}
       <nav className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
         {collapsed ? (
           state.headerCollapsedContent && (

@@ -1342,6 +1342,91 @@ button.tlSidebar__flyoutItem:focus-visible {
 	letter-spacing: 0.04em;
 }
 
+/* --- Drawer backdrop (only used in mobile drawer mode; hidden on desktop). ---------- */
+
+.tlSidebar__backdrop {
+	display: none;
+}
+
+/* --- Drawer toggle (mobile hamburger contributed to <slot name="appbar-leading"/>) -- */
+
+.tlDrawerToggle {
+	display: none; /* desktop: hidden; mobile @media rules below override */
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	border-radius: var(--corner-radius, 4px);
+}
+
+button.tlDrawerToggle:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+button.tlDrawerToggle:focus-visible {
+	outline: 2px solid var(--focus, currentColor);
+	outline-offset: -2px;
+}
+
+/* --- Responsive: sidebar becomes an off-canvas drawer on small viewports ---- */
+
+@media (max-width: 768px) {
+	.tlDrawerToggle {
+		display: inline-flex;
+	}
+
+	/* Turn the nav rail into a fixed off-canvas panel that slides in from the left.
+	 * The existing .tlSidebar--collapsed modifier is repurposed:
+	 *   collapsed  -> drawer hidden (translateX(-100%))
+	 *   expanded   -> drawer open (translateX(0)) with a backdrop overlay
+	 */
+	.tlSidebar__nav {
+		position: fixed;
+		top: 3.5rem; /* below the app bar */
+		left: 0;
+		bottom: 0;
+		width: 16rem;
+		transform: translateX(0);
+		transition: transform 0.2s ease;
+		z-index: 50;
+		box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+	}
+
+	.tlSidebar--collapsed .tlSidebar__nav {
+		transform: translateX(-100%);
+		width: 16rem; /* override desktop 2.5rem rail */
+		box-shadow: none;
+	}
+
+	/* Backdrop when drawer is open. Clicking closes the drawer (handled in TLSidebar.tsx). */
+	.tlSidebar__backdrop {
+		display: block;
+		position: fixed;
+		top: 3.5rem;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.4);
+		z-index: 49;
+		cursor: pointer;
+	}
+
+	/* In-rail collapse arrow is meaningless on mobile; the AppBar hamburger replaces it. */
+	.tlSidebar__collapseBtn {
+		display: none;
+	}
+
+	/* Content takes full width regardless of nav state. */
+	.tlSidebar__content {
+		width: 100%;
+	}
+}
+
 /* --- TLStack --------------------------------------------------------------- */
 
 .tlStack {

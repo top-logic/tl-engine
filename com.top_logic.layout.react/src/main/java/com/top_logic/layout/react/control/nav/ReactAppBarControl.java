@@ -142,6 +142,9 @@ public class ReactAppBarControl extends ToolbarControl {
 	@Override
 	protected void propagateAttach() {
 		super.propagateAttach();
+		if (_leading != null) {
+			_leading.attach();
+		}
 		for (ReactControl child : _children) {
 			child.attach();
 		}
@@ -150,6 +153,9 @@ public class ReactAppBarControl extends ToolbarControl {
 	@Override
 	protected void propagateDetach() {
 		super.propagateDetach();
+		if (_leading != null) {
+			_leading.detach();
+		}
 		for (ReactControl child : _children) {
 			child.detach();
 		}

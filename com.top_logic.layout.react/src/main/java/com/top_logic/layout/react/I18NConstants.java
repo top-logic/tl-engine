@@ -170,6 +170,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.sidebar.collapse")
 	public static ResKey JS_SIDEBAR_COLLAPSE;
 
+	/**
+	 * @en Open navigation
+	 */
+	@CustomKey("js.sidebar.openDrawer")
+	public static ResKey JS_SIDEBAR_OPEN_DRAWER;
+
 	// -- Dialog client-side i18n keys --
 
 	/**

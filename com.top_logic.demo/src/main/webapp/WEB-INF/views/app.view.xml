@@ -257,6 +257,14 @@
 					<en>Task Manager</en>
 					<de>Aufgabenverwaltung</de>
 				</title>
+				<leading>
+					<!--
+						Mobile drawer-toggle target. The sidebar automatically contributes a
+						hamburger button into this slot via the slot-content registry; CSS makes
+						it visible only at small viewports.
+					-->
+					<slot name="appbar-leading"/>
+				</leading>
 				<children>
 					<!--
 						Inline projection slot. Any descendant view in the shell may push content

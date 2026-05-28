@@ -71,6 +71,9 @@ public class AppBarElement implements UIElement {
 		/** Configuration name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
 
+		/** Configuration name for {@link #getLeading()}. */
+		String LEADING = "leading";
+
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
@@ -112,6 +115,19 @@ public class AppBarElement implements UIElement {
 		@Name(CHILDREN)
 		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+
+		/**
+		 * Elements rendered in the leading slot before the title (e.g. a mobile drawer-toggle
+		 * button contributed via {@code <slot name="appbar-leading"/>}).
+		 *
+		 * <p>
+		 * Typically a single {@code <slot>} placeholder; if multiple elements are configured, they
+		 * render in the order given inside the leading area.
+		 * </p>
+		 */
+		@Name(LEADING)
+		@TreeProperty
+		List<PolymorphicConfiguration<? extends UIElement>> getLeading();
 	}
 
 	private final ResKey _title;
@@ -123,6 +139,8 @@ public class AppBarElement implements UIElement {
 	private final List<ViewCommand.Config> _commandConfigs;
 
 	private final List<UIElement> _children;
+
+	private final List<UIElement> _leading;
 
 	/**
 	 * Creates a new {@link AppBarElement} from configuration.
@@ -147,6 +165,11 @@ public class AppBarElement implements UIElement {
 		_children = new ArrayList<>(config.getChildren().size());
 		for (PolymorphicConfiguration<? extends UIElement> childConfig : config.getChildren()) {
 			_children.add(context.getInstance(childConfig));
+		}
+
+		_leading = new ArrayList<>(config.getLeading().size());
+		for (PolymorphicConfiguration<? extends UIElement> leadingConfig : config.getLeading()) {
+			_leading.add(context.getInstance(leadingConfig));
 		}
 	}
 
@@ -181,9 +204,27 @@ public class AppBarElement implements UIElement {
 			childControls.add((ReactControl) _children.get(i).createControl(childContext));
 		}
 
+		// Build leading control. Typically a single <slot name="appbar-leading"/> placeholder; if
+		// multiple are configured we wrap them so they all render in the leading area.
+		ReactControl leadingControl;
+		if (_leading.isEmpty()) {
+			leadingControl = null;
+		} else if (_leading.size() == 1) {
+			ViewContext leadingContext = derivedContext.withChildSlotPath("leading-0");
+			leadingControl = (ReactControl) _leading.get(0).createControl(leadingContext);
+		} else {
+			List<ReactControl> leadingControls = new ArrayList<>(_leading.size());
+			for (int i = 0; i < _leading.size(); i++) {
+				ViewContext leadingContext = derivedContext.withChildSlotPath("leading-" + i);
+				leadingControls.add((ReactControl) _leading.get(i).createControl(leadingContext));
+			}
+			leadingControl = new com.top_logic.layout.react.control.layout.ReactStackControl(derivedContext,
+				leadingControls);
+		}
+
 		// Create the app bar control.
 		ReactAppBarControl appBar =
-			new ReactAppBarControl(derivedContext, title, _variant, null, List.of(), childControls);
+			new ReactAppBarControl(derivedContext, title, _variant, leadingControl, List.of(), childControls);
 
 		// Sync toolbar-placed commands as action buttons.
 		Map<CommandModel, ReactButtonControl> actionButtons = new HashMap<>();

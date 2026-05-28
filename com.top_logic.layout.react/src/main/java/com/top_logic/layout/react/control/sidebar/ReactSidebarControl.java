@@ -318,6 +318,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 */
 	public void selectItem(String itemId) {
 		if (itemId.equals(_activeItemId)) {
+			// No navigation, but on mobile the user just picked something from the open drawer -
+			// fold the drawer away so the previously selected view stays visible.
+			closeDrawerIfOpen();
 			return;
 		}
 		ReactControl previousContent = _contentCache.get(_activeItemId);
@@ -333,6 +336,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		Object tx = beginUpdate();
 		putState(ACTIVE_ITEM_ID, itemId);
 		putState(ACTIVE_CONTENT, content);
+		closeDrawerIfOpen();
 		commitUpdate(tx);
 
 		if (previousContent != null) {
@@ -550,9 +554,27 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {
-			return cmdItem.getAction().execute(context);
+			HandlerResult result = cmdItem.getAction().execute(context);
+			closeDrawerIfOpen();
+			return result;
 		}
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Closes the mobile drawer if it is currently open; no-op otherwise.
+	 *
+	 * <p>
+	 * Called after a nav-item selection or command-item execution: the user has indicated
+	 * their next intent so the drawer should fold itself away. On desktop {@code _drawerOpen}
+	 * is always {@code false}, making this a no-op there.
+	 * </p>
+	 */
+	private void closeDrawerIfOpen() {
+		if (_drawerOpen) {
+			_drawerOpen = false;
+			putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
+		}
 	}
 
 	/**

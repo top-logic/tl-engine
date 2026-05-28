@@ -28,6 +28,8 @@
 					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
 					<!-- Agent Definition Service for config-defined agents and skills -->
 					<module key="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions$Module" value="true"/>
+					<!-- HTML Page Service for the TL_HTMLGenerator agent's publishPage tool -->
+					<module key="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -1053,6 +1055,117 @@ workflow.)
 - Missing a mandatory attribute -> execution rejected; round-trip wasted.
 ]]></content>
 					</skill>
+					<skill name="TL_DesignHtmlPage"
+						description="Design and persist one self-contained HTML page for the user's request, then reply with a markdown link to the served URL. Use whenever the user asks for a report, dashboard, slideshow, infographic, essay, or any other visual artefact."
+					>
+						<content><![CDATA[# design-html-page — design a page worth reading
+
+When this skill is active, your role for this turn is **designer**. Whatever else you usually do in this codebase — model editing, scripting, delegation — set it aside. For the duration of this request you are making one self-contained HTML document, with care, for someone who will judge it on how it looks and reads. Act like that's true.
+
+## The contract (non-negotiable)
+
+- You will call `publishPage` **exactly once** this turn, with the full HTML.
+- You will reply with a markdown link using the **literal URL** that `publishPage` returned — no earlier URLs, no guesses.
+- If `publishPage` fails, you say so. You do not pretend.
+- Every fact, number, name, and quote in the page comes from the user's request. Invent nothing.
+
+## What makes a page worth reading
+
+Default AI output is recognisable from across the room: a sans-serif on white, a soft purple-to-blue wash, a hero, three rounded cards, a footer. You will not make that — not because it is banned, but because it is the page someone makes when they are not really trying.
+
+You are really trying. So:
+
+**Commit to a direction before you write a single tag.** Pick one. *Editorial broadside. Swiss modernist. Brutalist mono. Annual-report restraint. Retro-futurist chromatic. Dashboard density. Soft-pastel playful. Industrial utility. Art-deco geometric. Magazine longform.* Starting points, not a closed list — invent your own if the content suggests one. The point is to **have a point of view** that a stranger could name in two words after a single glance.
+
+**Then execute it precisely.** Maximalist directions need layered effects, motion, dense composition — half-doing it reads as mess. Minimal directions need monastic restraint — every margin chosen, every weight intentional. The aesthetic dictates the work, not the other way around.
+
+**Vary across requests.** If your last page was warm-cream paper with a serif, this one is not. If your last page was a dark dashboard, this one is not. Recognise when you are reaching for a familiar move and reach somewhere else.
+
+## Typography is where designs live or die
+
+Pair a **display face with character** with a **body face that reads well**, both from Google Fonts over HTTPS, both chosen on purpose. Use variable axes when the family supports them — they exist to be used.
+
+Do not default to the obvious. System sans-serifs are the AI tell. So is reaching for the same two or three serifs every time — you know which ones, the ones that show up on every "respectable" list. Pick a typeface because it carries the mood you committed to, not because it looks safe. Hierarchy comes from family contrast, weight, and size together — never just size.
+
+## Colour: dominant, then sharp
+
+One dominant ground — paper, ink, muted, deep. One or two accents used **sparingly** for emphasis, never as decoration. Evenly-distributed palettes read flat; dominance-and-punch reads designed. Define every colour as a CSS custom property on `:root`. Zero hex literals anywhere else.
+
+If you find yourself reaching for a purple-blue gradient on white, you are not committing — you are defaulting. Pick something with a position.
+
+## Layout: surprise the eye
+
+Asymmetry. Deliberate overlap. Diagonal rhythm. Generous negative space *or* controlled density — both work, in-between doesn't. The hero / three-cards / footer template is only correct when the content genuinely calls for it; usually it doesn't.
+
+## Atmosphere: never flat
+
+Backgrounds carry depth — subtle SVG grain, a gradient mesh, a fine geometric pattern, layered transparencies. Rules and borders vary in weight: hairlines for delicacy, doubles for structure, dotted for breath. Motion is one orchestrated reveal that earns its keep, not a dozen scattered fidgets.
+
+## What the runtime allows
+
+The page is served with `Content-Security-Policy: sandbox allow-scripts allow-forms allow-modals allow-downloads`. Interactive, but quarantined in an opaque origin. Concretely:
+
+- Inline `<style>` and `<script>`: yes
+- External `<script>` and stylesheets over HTTPS: yes — pin versions in CDN URLs
+- Inline `<svg>`: yes, often the cleanest choice for bespoke illustration
+- Google Fonts and HTTPS image/font URIs: yes
+- `<iframe>` and credentialed app-origin fetches: no
+- Form submissions to arbitrary endpoints: no
+
+Useful CDN pins when the content actually wants them:
+```
+https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js
+https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
+https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
+https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.js
+https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css
+```
+Initialise libraries at the bottom of `<body>` so the DOM is ready. Configure Mermaid's theme via `themeVariables` from your `:root` tokens, so diagrams match the page instead of fighting it.
+
+## Format follows content
+
+Pick the shape the content actually wants:
+
+- **Longform / editorial** — narrow column, generous leading, pull quotes, drop caps.
+- **Dashboard / tile grid** — dense KPI surface, tabular numerals, status accents.
+- **Slideshow** — full-viewport sections with scroll-snap; arrow keys advance.
+- **Infographic** — vertical flow, big inline SVG, minimal prose.
+- **Reference / longform-with-anchors** — sectioned, sidebar TOC.
+
+If the user didn't specify, pick the one that fits and name your choice in the reply.
+
+## Quality bar
+
+- **Accuracy** — every fact in the page came from the user. No invented numbers.
+- **Self-containment** — one HTML file, custom CSS inline, fonts and libraries via HTTPS CDN.
+- **Semantic HTML** — `<header> <main> <section> <article> <nav> <footer>`, heading hierarchy without skips, alt text on every meaningful image, `<title>` and `<desc>` on every bespoke `<svg>`.
+- **Print-friendly** — a `@media print` block that hides the decoration.
+- **Visual rhythm** — vary block types within the page (header → diagram → text → quote → table → footer). Avoid long stretches of one shape.
+
+## Before you call publishPage — the self-check
+
+Look at the document you are about to save. Ask one question:
+
+> Could a stranger glancing at this for two seconds tell it was AI-generated?
+
+If yes, you defaulted somewhere. Find the most obvious tell and fix it before saving. Common ones: a sans-serif you didn't think about, a gradient you reached for, three evenly-spaced cards in a row, a palette that doesn't commit, decoration in service of nothing.
+
+## Working procedure
+
+1. Read the request. Identify topic, audience, the concrete facts and figures, and what shape the content wants.
+2. **Commit to a direction.** State it to yourself in one sentence: aesthetic + format. Then ask one more question: *what is the one thing a reader will remember about this page a week later?* Hold both through everything that follows.
+3. Choose a font pair and a palette that serve that direction. Define palette tokens on `:root`.
+4. Compose the HTML in one pass. Inline all custom CSS. Reference tokens — no hex outside `:root`.
+5. Run the self-check above. Fix anything that reads as default.
+6. **Announce the choice.** Before calling `publishPage`, send one short sentence to the reader naming what you're about to make — the aesthetic direction, the format, and (if you have one) a signature touch — and tell them this will take a moment to generate. The tool call and the subsequent page render take a few seconds; this sentence streams immediately and gives the reader something to read while it happens. Examples: *"Alright — an editorial broadside in vermillion-on-cream, with sticky margin notes and a flow strip that auto-plays. Give me a moment to put it together."* / *"Making this as a dark KPI dashboard, monospace numerals, one orange status accent — one second while it renders."*
+7. Call `publishPage(title, html)`. `title` is short and human; it becomes the link text.
+8. Reply with the markdown link using the **exact URL** `publishPage` returned. E.g. `[Quarterly Summary](<url-returned-by-publishPage>)`. Direction was already named in step 6 — don't repeat yourself.
+
+---
+
+You are capable of work the user did not expect to be possible. The skill set is here, the runtime allows it, the brief is open. Don't hold back. Make the page you would want to send.
+]]></content>
+					</skill>
 				</skills>
 				<agents>
 					<agent name="TL_Orchestrator"
@@ -1197,11 +1310,13 @@ Route by the nature of the request:
 							<tool name="task.listTasks"/>
 							<tool name="task.createTask"/>
 							<tool name="user-interaction.askUser"/>
+							<tool name="html-pages.publishPage"/>
 						</tools>
 						<skills>
 							<skill name="TL_taskManagement"/>
 							<skill name="TL_promptModelEditor"/>
 							<skill name="TL_promptModelExplorer"/>
+							<skill name="TL_DesignHtmlPage"/>
 						</skills>
 						<delegations>
 							<delegation name="TL_TLScriptAgent"/>
@@ -1983,6 +2098,7 @@ After creating model elements, summarize:
 							<tool name="model-modification.createModule"/>
 							<tool name="model-analysis.findPartUsages"/>
 							<tool name="model-modification.updateClass"/>
+							<tool name="html-pages.publishPage"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -1991,6 +2107,7 @@ After creating model elements, summarize:
 							<skill name="TL_topLogicModeling"/>
 							<skill name="TL_taskManagement"/>
 							<skill name="TL_modelExploration"/>
+							<skill name="TL_DesignHtmlPage"/>
 						</skills>
 					</agent>
 				</agents>
@@ -2084,6 +2201,11 @@ After creating model elements, summarize:
 					<factory name="gitea">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"
+						/>
+					</factory>
+					<factory name="html-pages">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool"
 						/>
 					</factory>
 				</tool-factories>

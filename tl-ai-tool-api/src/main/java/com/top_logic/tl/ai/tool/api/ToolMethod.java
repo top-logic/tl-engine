@@ -43,4 +43,11 @@ public @interface ToolMethod {
 	 */
 	boolean concurrencySafe() default true;
 
+	/**
+	 * Per-tool maximum character count before the agent loop truncates the result,
+	 * or {@code -1} to use the global default. Set to {@link Integer#MAX_VALUE} to
+	 * opt out of truncation entirely.
+	 */
+	int truncationHint() default -1;
+
 }

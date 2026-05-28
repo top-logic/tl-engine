@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
+	version="3.1">
+	<name>tl-ai-core</name>
+
+	<servlet>
+		<servlet-name>GeneratedHtmlPageServlet</servlet-name>
+		<servlet-class>com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>GeneratedHtmlPageServlet</servlet-name>
+		<url-pattern>/html/*</url-pattern>
+	</servlet-mapping>
+</web-fragment>

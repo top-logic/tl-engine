@@ -15,12 +15,18 @@ import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
 import com.vladsch.flexmark.ext.ins.InsExtension;
 import com.vladsch.flexmark.ext.superscript.SuperscriptExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
+import com.vladsch.flexmark.html.AttributeProvider;
+import com.vladsch.flexmark.html.AttributeProviderFactory;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.html.HtmlWriter;
+import com.vladsch.flexmark.html.IndependentAttributeProviderFactory;
+import com.vladsch.flexmark.html.renderer.AttributablePart;
+import com.vladsch.flexmark.html.renderer.LinkResolverContext;
 import com.vladsch.flexmark.html.renderer.NodeRenderer;
 import com.vladsch.flexmark.html.renderer.NodeRendererContext;
 import com.vladsch.flexmark.html.renderer.NodeRendererFactory;
 import com.vladsch.flexmark.html.renderer.NodeRenderingHandler;
+import com.vladsch.flexmark.util.html.MutableAttributes;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
@@ -64,10 +70,36 @@ public class Converters extends TLScriptFunctions {
 		MutableDataSet options = DEFAULT_OPTIONS;
 
 		Parser parser = Parser.builder(options).build();
-		HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+		HtmlRenderer renderer = HtmlRenderer.builder(options)
+			.attributeProviderFactory(NEW_TAB_LINK_FACTORY)
+			.build();
 
 		Node document = parser.parse(markdown);
 		return renderer.render(document);
+	}
+
+	/**
+	 * Forces every rendered link to open in a new tab. The chat UI is a single-page TopLogic
+	 * application, so following a link in the same tab would discard chat state.
+	 */
+	private static final AttributeProviderFactory NEW_TAB_LINK_FACTORY = new IndependentAttributeProviderFactory() {
+		@Override
+		public AttributeProvider apply(LinkResolverContext context) {
+			return NewTabLinkAttributeProvider.INSTANCE;
+		}
+	};
+
+	private static class NewTabLinkAttributeProvider implements AttributeProvider {
+
+		static final NewTabLinkAttributeProvider INSTANCE = new NewTabLinkAttributeProvider();
+
+		@Override
+		public void setAttributes(Node node, AttributablePart part, MutableAttributes attributes) {
+			if (part == AttributablePart.LINK) {
+				attributes.replaceValue("target", "_blank");
+				attributes.replaceValue("rel", "noopener noreferrer");
+			}
+		}
 	}
 
 	/**

@@ -45,6 +45,24 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey EXPORT_TO_DEV_ENV_ERROR;
 
+	/**
+	 * Success message after re-importing instances from the data folder, discarding any runtime
+	 * edits and restoring the code-baked definition.
+	 *
+	 * @en Instances reset from development environment.
+	 * @de Instanzen aus Entwicklungsumgebung zurückgesetzt.
+	 */
+	public static ResKey IMPORT_FROM_DEV_ENV_SUCCESS;
+
+	/**
+	 * Error message when re-importing instances from the data folder fails (file missing or
+	 * unreadable, XML invalid, importer failure).
+	 *
+	 * @en Failed to reset instances from development environment.
+	 * @de Fehler beim Zurücksetzen der Instanzen aus der Entwicklungsumgebung.
+	 */
+	public static ResKey IMPORT_FROM_DEV_ENV_ERROR;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

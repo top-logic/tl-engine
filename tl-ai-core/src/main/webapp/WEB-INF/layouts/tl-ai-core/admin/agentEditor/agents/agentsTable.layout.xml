@@ -46,6 +46,25 @@
 					<de>In Entwicklungsumgebung übernehmen</de>
 				</resourceKey>
 			</button>
+			<button id="importFromDevEnv"
+				class="com.top_logic.tl.ai.core.agent.ImportFromDataFolderCommand"
+				clique="exportButtons"
+				disabledImage="css:fa-solid fa-rotate-left"
+				file-name="agents.objects.xml"
+				group="Export"
+				image="css:fa-solid fa-rotate-left"
+			>
+				<resourceKey key="dynamic.importFromDevEnv">
+					<en>Reset from development environment</en>
+					<de>Aus Entwicklungsumgebung zurücksetzen</de>
+				</resourceKey>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.importFromDevEnv.agents.confirm">
+						<en>Reset all agents to the values committed in agents.objects.xml? Any runtime edits to existing agents will be discarded.</en>
+						<de>Alle Agenten auf die in agents.objects.xml festgehaltenen Werte zurücksetzen? Zur Laufzeit vorgenommene Änderungen an bestehenden Agenten gehen verloren.</de>
+					</confirmMessage>
+				</confirmation>
+			</button>
 		</buttons>
 		<contextMenu class="com.top_logic.layout.basic.contextmenu.component.factory.adapter.SelectableContextMenuProvider">
 			<contextMenuFactory>

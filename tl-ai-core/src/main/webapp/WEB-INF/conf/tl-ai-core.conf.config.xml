@@ -28,6 +28,8 @@
 					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
 					<!-- Agent Definition Service for config-defined agents and skills -->
 					<module key="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions$Module" value="true"/>
+					<!-- HTML Page Service for the TL_HTMLGenerator agent's savePage tool -->
+					<module key="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -1053,6 +1055,142 @@ workflow.)
 - Missing a mandatory attribute -> execution rejected; round-trip wasted.
 ]]></content>
 					</skill>
+					<skill name="TL_htmlPage"
+						description="Generate a single self-contained HTML page for the user's request and persist it via savePage, returning a markdown link to the served URL. Use whenever the user asks for a report, dashboard, slideshow, infographic, or similarly visual artifact."
+					>
+						<content><![CDATA[# html-page - generate one self-contained HTML page
+
+You will produce ONE self-contained HTML document for the user's request, persist it via the `savePage` tool, and reply with a markdown link to the URL that tool returns.
+
+## ABSOLUTE RULES - read first, follow always
+
+- You MUST call `savePage` exactly once for this request. No exceptions, even if a similar page exists earlier in the conversation.
+- The URL you return MUST be the literal string `savePage` gave you THIS turn. Never reuse an earlier URL. Never construct or guess one.
+- If `savePage` returns an error, do NOT reply with a link - either retry with corrected arguments, or tell the user what failed.
+- Do not pretend a page was saved when no `savePage` call was made this turn.
+
+## Where the content comes from
+
+All facts, numbers, names, and structure must come from the user's request. There is no file system, no codebase to grep, no live web. If the request is too thin to produce a useful page, ask ONE focused clarifying question instead of guessing.
+
+## CSP - what the served page can and cannot do
+
+The page is served with a permissive-but-bounded Content-Security-Policy:
+
+- Inline `<style>` and `<script>` blocks: yes
+- External `<script>` and `<link rel="stylesheet">` over HTTPS: yes - pin specific versions on CDN URLs
+- Inline `<svg>`: yes - often the cleanest choice
+- Images and fonts via `https:` or `data:` URIs: yes
+- Visualization libraries via CDN: Mermaid, Chart.js, Reveal.js, Highlight.js, Font Awesome, Google Fonts
+- NO `<iframe>` - frames are blocked
+- NO form submissions to arbitrary endpoints
+
+Recommended CDN pins:
+```
+https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js
+https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
+https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
+https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.js
+https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css
+```
+
+Initialize libraries at the bottom of `<body>` so the DOM is ready (`mermaid.initialize`, `new Chart`, `hljs.highlightAll`, `Reveal.initialize`).
+
+## DESIGN - this is the part that matters
+
+Default AI output looks identical every time: Inter on white, a faint purple-blue gradient, rounded cards, soft shadows, evenly-spaced everything. Do not produce that page. The goal is output a careful designer would have made - distinctive, considered, committed to a clear direction.
+
+### 1. Pick ONE aesthetic direction per page, then execute it precisely
+
+Before writing markup, decide on a single direction that fits the content. Pick something with a point of view - milquetoast composites read as AI slop. Suggestions (not a closed list):
+
+- editorial / magazine - serif display, narrow column, drop caps, pull quotes, double rules
+- swiss modernist - strict grid, generous whitespace, one sharp accent, no shadows
+- brutalist - raw monospace, exposed structure, sharp borders, off-kilter spacing
+- retro-futurist - wide letter tracking, gradient meshes, chromatic accents, scanlines
+- corporate annual report - navy + cream, hairline rules, serif headlines, restrained
+- KPI dashboard - dark background, dense tiles, tabular numerals, status colors
+- newsletter / longform - single column, generous line-height, hero image, italic asides
+- art-deco / geometric - symmetrical, gold-on-deep, decorative dividers, ornament
+- engineering note - monospace heads, technical diagrams, numbered footnotes
+- soft pastel / playful - warm palette, organic shapes, friendly type, hand-drawn touches
+- industrial / utilitarian - high contrast, condensed type, visible grid
+
+Commit fully. Maximalist directions need elaborate code - layered effects, dense composition, motion. Refined minimalist directions need the opposite - precision, restraint, careful spacing. Half-doing either reads as AI default.
+
+Vary across generations. If the last page you produced was editorial-serif, this one should not be editorial-serif again unless the user specifically asked for it.
+
+### 2. Typography - never the generic default
+
+- NEVER use Inter, Roboto, Arial, Helvetica, or other generic system fonts as the primary typeface. They are the AI-slop tell.
+- Pair a distinctive display font with a refined body font, both from Google Fonts. Use variable axes when supported (Fraunces: opsz, SOFT; Newsreader: opsz).
+- Vary your font pair across pages. Do not converge on the same one.
+- Display candidates: Fraunces, Playfair Display, DM Serif Display, Cormorant, Bodoni Moda, Newsreader, Crimson Pro, Archivo Black, Anton, Bebas Neue, Big Shoulders Display, Unbounded, Syne, Major Mono Display, Space Mono, IBM Plex Mono.
+- Body candidates: Newsreader, Lora, EB Garamond, Source Serif 4, Crimson Pro, Manrope, Hanken Grotesk, Outfit, Public Sans, Plus Jakarta Sans, Work Sans, JetBrains Mono.
+- Hierarchy comes from size, weight, AND family contrast - not size alone.
+
+### 3. Color - dominant + sharp accent
+
+- One dominant background (paper, ink, muted) plus one or two saturated accent colors used SPARINGLY for emphasis. Evenly-distributed palettes read flat.
+- NEVER use the AI default of a purple-blue gradient on white. If you reach for it, change direction.
+- All colors live as CSS custom properties on `:root`. No hardcoded hex outside the `:root` block.
+
+### 4. Layout - surprise the reader
+
+- Asymmetry, deliberate overlap, diagonal flow, grid-breaking elements, generous negative space OR controlled high density.
+- The hero + three-cards + footer template IS the AI default - only use it if the content genuinely wants it.
+
+### 5. Atmosphere - depth and texture
+
+- Backgrounds: subtle SVG grain/noise filter, gradient mesh, fine geometric pattern, layered transparencies - not flat solids.
+- Borders and rules: double rules, dotted rules, accent-colored hairlines. Vary stroke weights for hierarchy.
+- Motion: one well-orchestrated page-load reveal (staggered `animation-delay`) creates more delight than scattered micro-interactions. Use motion sparingly and intentionally.
+
+### 6. What NOT to do (the AI-slop checklist)
+
+- Inter / Roboto / Arial / system-ui as the only typeface
+- White background + purple-blue gradient + rounded cards + soft drop-shadows
+- Generic shadcn / Tailwind-default / Material clone aesthetic
+- Hardcoded hex values outside `:root`
+- The same aesthetic as the last page you produced
+
+## Format - match it to the content shape
+
+- Long-page report - comprehensive guides, multi-section deliverables. One scrollable column with anchored TOC.
+- Dashboard / tile grid - KPI snapshots, status overviews. CSS grid, one large number per tile, status color accents.
+- Slideshow - step-by-step presentations. Full-viewport `<section>`s with CSS scroll-snap; arrow keys / mousewheel pages through.
+- Infographic - visual-first overviews, process flows, architecture maps. Vertical flow, big inline SVG, minimal prose.
+- Editorial / longform - announcements, essays, deep dives. Narrow column, generous line-height, pull quotes.
+
+If the user did not specify a format, pick the one that fits the content and name it in your reply.
+
+## Visualization
+
+For diagrams, prefer Mermaid - terser to author, reflows responsively. Use inline `<svg>` for bespoke illustrations Mermaid does not cover. Use Chart.js when the data is a real dataset and a canvas chart is the natural representation. Label every diagram element and provide a short caption beneath each. Use your chosen palette tokens - do not introduce a parallel one.
+
+When using Mermaid, configure its theme via `themeVariables` with your `:root` tokens so diagrams visually match the page.
+
+## Quality bar
+
+- Accuracy - every fact, number, name in the page comes from the user's input. Invent nothing.
+- Clarity - write for an intelligent reader who is not already an expert. Explain jargon on first use.
+- Visual rhythm - vary block types: header -> diagram -> text -> cards -> quote -> table -> footer. Avoid long stretches of one shape.
+- Self-containment - one HTML file, all custom CSS inline, fonts via HTTPS CDN.
+- Print-friendly - include a `@media print` block that hides decorative chrome.
+- Accessible - semantic HTML5 (`<header>`, `<main>`, `<section>`, `<article>`, `<nav>`, `<footer>`), heading hierarchy without skips, alt text on every meaningful image and `<title>` + `<desc>` on every inline SVG.
+
+## Working procedure
+
+1. Read the user's request. Identify topic, audience, desired format (or pick one), and the concrete facts/numbers/names to present.
+2. Decide on ONE aesthetic direction. Choose a display/body font pair. Define the palette in `:root`. Commit.
+3. Compose the HTML in one pass. Inline all custom CSS in a single `<style>` block. Reference tokens - no hardcoded hex outside `:root`.
+4. Call `savePage(title, html)`:
+   - `title` - short, human-readable, used as the admin label and link text.
+   - `html` - the full document, starting with `<!doctype html>`.
+5. Reply with one short sentence stating the format and direction you chose, plus a markdown link using the EXACT URL `savePage` returned, e.g.:
+   `Here is your editorial-style report: [Quarterly Summary](<url-returned-by-savePage>)`
+]]></content>
+					</skill>
 				</skills>
 				<agents>
 					<agent name="TL_Orchestrator"
@@ -1197,11 +1335,13 @@ Route by the nature of the request:
 							<tool name="task.listTasks"/>
 							<tool name="task.createTask"/>
 							<tool name="user-interaction.askUser"/>
+							<tool name="html-pages.savePage"/>
 						</tools>
 						<skills>
 							<skill name="TL_taskManagement"/>
 							<skill name="TL_promptModelEditor"/>
 							<skill name="TL_promptModelExplorer"/>
+							<skill name="TL_htmlPage"/>
 						</skills>
 						<delegations>
 							<delegation name="TL_TLScriptAgent"/>
@@ -1983,6 +2123,7 @@ After creating model elements, summarize:
 							<tool name="model-modification.createModule"/>
 							<tool name="model-analysis.findPartUsages"/>
 							<tool name="model-modification.updateClass"/>
+							<tool name="html-pages.savePage"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -1991,6 +2132,7 @@ After creating model elements, summarize:
 							<skill name="TL_topLogicModeling"/>
 							<skill name="TL_taskManagement"/>
 							<skill name="TL_modelExploration"/>
+							<skill name="TL_htmlPage"/>
 						</skills>
 					</agent>
 				</agents>
@@ -2084,6 +2226,11 @@ After creating model elements, summarize:
 					<factory name="gitea">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"
+						/>
+					</factory>
+					<factory name="html-pages">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.util.SaveHtmlPageTool"
 						/>
 					</factory>
 				</tool-factories>

@@ -44,7 +44,8 @@ public class SkillTool {
 	@ToolMethod(
 		description = "Loads a skill by its id. Returns specialized instructions you MUST follow for the related task. Check the Available Skills section in your system instructions for skill ids and when to use them.",
 		mode = ToolMode.READ,
-		concurrencySafe = true)
+		concurrencySafe = true,
+		truncationHint = Integer.MAX_VALUE)
 	public String loadSkill(@P("Skill id from the catalog") String skillId) {
 		Skill skill = _skills.get(skillId);
 		if (skill == null) {

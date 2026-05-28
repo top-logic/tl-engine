@@ -24,4 +24,22 @@
 		/>
 	</metaobject>
 
+	<metaobject
+		object_name="GeneratedHtmlPage"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="id"
+			att_type="String"
+			db_size="32"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="title"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+	</metaobject>
+
 </objectlist>

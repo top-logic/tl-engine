@@ -79,7 +79,7 @@ public class AgentLoop {
 	// TODO: Memory/attachment injection between turns
 
 	/** Default maximum characters per tool result before truncation. */
-	public static final int DEFAULT_MAX_RESULT_CHARS = 4000;
+	public static final int DEFAULT_MAX_RESULT_CHARS = 20000;
 
 	private final AgentParams _config;
 

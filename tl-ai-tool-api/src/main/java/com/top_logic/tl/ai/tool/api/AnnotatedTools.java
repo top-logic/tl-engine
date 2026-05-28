@@ -74,10 +74,11 @@ public final class AnnotatedTools {
 		String description = String.join("\n", annotation.description());
 		ToolMode mode = annotation.mode();
 		boolean concurrencySafe = annotation.concurrencySafe();
+		int truncationHint = annotation.truncationHint();
 		ToolSchema schema = generateSchema(toolName, description, method);
 
 		return new ReflectiveTool(toolName, description, schema, mode, concurrencySafe,
-			provider, method);
+			truncationHint, provider, method);
 	}
 
 	private static ToolSchema generateSchema(String toolName, String description, Method method) {
@@ -426,18 +427,21 @@ public final class AnnotatedTools {
 
 		private final boolean _concurrencySafe;
 
+		private final int _truncationHint;
+
 		private final Object _provider;
 
 		private final Method _method;
 
 		ReflectiveTool(String name, String description, ToolSchema schema,
-				ToolMode mode, boolean concurrencySafe,
+				ToolMode mode, boolean concurrencySafe, int truncationHint,
 				Object provider, Method method) {
 			_name = name;
 			_description = description;
 			_schema = schema;
 			_mode = mode;
 			_concurrencySafe = concurrencySafe;
+			_truncationHint = truncationHint;
 			_provider = provider;
 			_method = method;
 		}
@@ -486,12 +490,12 @@ public final class AnnotatedTools {
 			try {
 				Object result = _method.invoke(_provider, invokeArgs);
 				if (_method.getReturnType() == void.class) {
-					return ToolResult.of("Success");
+					return new ToolResult("Success", null, _truncationHint);
 				}
 				if (result == null) {
-					return ToolResult.of("null");
+					return new ToolResult("null", null, _truncationHint);
 				}
-				return ToolResult.of(result.toString());
+				return new ToolResult(result.toString(), null, _truncationHint);
 			} catch (InvocationTargetException e) {
 				Throwable cause = e.getCause();
 				if (cause instanceof RuntimeException re) {

@@ -2041,61 +2041,6 @@
 						</action>
 					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-							columns="Rechte,Administrator"
-							label="true"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									tab-path="Administration > Berechtigungen > Rollenprofile"
-								/>
-								<path>
-									<named-member name="tree"/>
-								</path>
-							</model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-							command-label="Bearbeiten"
-							command-name="switchToAJAXEdit"
-							component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-							component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
-							command-label="Rollenprofile aufklappen"
-							command-name="expandRoleProfileTree"
-							component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-							component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$SetAllCommandHandler"
-							command-label="Alle an"
-							command-name="setAllAccess"
-							component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-							component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-						>
-							<arguments/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-							command-label="Speichern"
-							command-name="defaultSave"
-							component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-							component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-						>
-							<arguments/>
-						</action>
-					</actions>
-				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>

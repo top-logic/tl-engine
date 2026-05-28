@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -36,6 +37,7 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
+import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.callback.DiagramContextMenuProvider;
 import com.top_logic.graphic.flow.data.Align;
@@ -970,6 +972,29 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param parentOffset
 	 *        Offset to add to the parent Y coordinate after the alignment operation based on parent
 	 *        ratio.
+	 * @param childSplitThreshold
+	 *        Threshold above which a parent's children are split into a 2D sub-grid instead of a
+	 *        single vertical column. The exact layout depends on {@code rowWise}: column-wise
+	 *        splits the children column-major into sub-columns of at most
+	 *        {@code childSplitThreshold} children with a per-column bus and a bottom-bridge,
+	 *        row-wise splits them row-major into exactly {@code childSplitThreshold} sub-columns
+	 *        and routes all subtrees to a single column to the right of the sub-grid behind one
+	 *        shared vertical bus. A value of 0 disables sub-grid mode (single column per parent).
+	 * @param rowWise
+	 *        Selects the row-wise sub-grid algorithm. See {@code childSplitThreshold} for the
+	 *        difference. Only relevant when {@code childSplitThreshold} triggers sub-grid mode.
+	 * @param subGridCols
+	 *        Number of sub-columns of the row-wise sub-grid. Only relevant when {@code rowWise}
+	 *        is true. If {@code 0}, falls back to {@code childSplitThreshold}.
+	 * @param subGridStartCol
+	 *        Sub-column in which the first sub-grid child (child index 0) is placed; child
+	 *        {@code n} lands in column {@code (n + subGridStartCol) mod C}. Only relevant when
+	 *        {@code rowWise} is true. Defaults to {@code 0}.
+	 * @param bridgeGapY
+	 *        Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge
+	 *        that connects all sub-grid columns. Only relevant in column-wise sub-grid mode (i.e.
+	 *        when {@code childSplitThreshold} triggers sub-grid mode and {@code rowWise} is
+	 *        false).
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
@@ -979,22 +1004,27 @@ public class FlowFactory extends TLScriptFunctions {
 	@SideEffectFree
 	@Label("Create tree")
 	public static Box tree(
-		@Mandatory List<? extends Box> nodes, 
+		@Mandatory List<? extends Box> nodes,
 		@Mandatory List<? extends TreeConnection> connections,
-		@DoubleDefault(40) double gapX, 
+		@DoubleDefault(40) double gapX,
 		Double gapY,
 		Double sibblingGapY,
 		Double subtreeGapY,
 		DiagramDirection direction,
-		@StringDefault("black") String stroke, 
-		@DoubleDefault(1) double strokeWidth, 
+		@StringDefault("black") String stroke,
+		@DoubleDefault(1) double strokeWidth,
 		boolean compact,
 		@DoubleDefault(0.5)
 			double parentAlign,
 		@DoubleDefault(0)
 		double parentOffset,
+		@IntDefault(0) int childSplitThreshold,
+		boolean rowWise,
+		@IntDefault(0) int subGridCols,
+		@IntDefault(0) int subGridStartCol,
+		Double bridgeGapY,
 		String cssClass,
-		Object userObject 
+		Object userObject
 	) {
 		TreeLayout result = TreeLayout.create()
 			.setNodes(nodes.stream().filter(Objects::nonNull).toList())
@@ -1006,6 +1036,10 @@ public class FlowFactory extends TLScriptFunctions {
 			.setCompact(compact)
 			.setParentAlign(parentAlign)
 			.setParentOffset(parentOffset)
+			.setChildSplitThreshold(childSplitThreshold)
+			.setRowWise(rowWise)
+			.setSubGridCols(subGridCols)
+			.setSubGridStartCol(subGridStartCol)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 
@@ -1018,6 +1052,9 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		if (subtreeGapY != null) {
 			result.setSubtreeGapY(subtreeGapY);
+		}
+		if (bridgeGapY != null) {
+			result.setBridgeGapY(bridgeGapY);
 		}
 
 		return result;
@@ -1363,30 +1400,16 @@ public class FlowFactory extends TLScriptFunctions {
 		// Create render context for text measurement
 		AWTContext context = new AWTContext((float) textSize);
 
-		// Perform layout calculation
+		// Apply explicit viewBox dimensions before layout so they win over the auto-fit defaults
+		// applied by Diagram.layout() based on the laid-out root size.
+		if (width != null) {
+			diagram.setViewBoxWidth(width);
+		}
+		if (height != null) {
+			diagram.setViewBoxHeight(height);
+		}
+
 		diagram.layout(context);
-
-		// Set viewBox dimensions
-		Box root = diagram.getRoot();
-		if (width != null && height != null) {
-			diagram.setViewBoxWidth(width);
-			diagram.setViewBoxHeight(height);
-		} else if (width != null) {
-			diagram.setViewBoxWidth(width);
-			diagram.setViewBoxHeight(root.getHeight());
-		} else if (height != null) {
-			diagram.setViewBoxWidth(root.getWidth());
-			diagram.setViewBoxHeight(height);
-		} else {
-			diagram.setViewBoxWidth(root.getWidth());
-			diagram.setViewBoxHeight(root.getHeight());
-		}
-
-		// Ensure viewBox origin is set
-		if (diagram.getViewBoxX() == 0 && diagram.getViewBoxY() == 0) {
-			diagram.setViewBoxX(0);
-			diagram.setViewBoxY(0);
-		}
 
 		// Render to SVG
 		StringWriter buffer = new StringWriter();
@@ -1406,19 +1429,34 @@ public class FlowFactory extends TLScriptFunctions {
 
 						if (_svgStarted) {
 							// Add default styles to the generated SVG.
+							tagWriter.beginTag("style");
+
+							// Synchronize the rendered font size with the AWT measurement. The
+							// AWT measurement uses textSize as a point value (and the resulting
+							// dimensions are already converted to CSS px inside AWTContext); the
+							// SVG/browser, however, treats unitless font-size as pixels.
+							// Without an explicit px default here, a <text> without font-size
+							// would inherit the browser default (typically 16px) regardless of
+							// textSize, and text would overflow its measured box.
+							double textSizePx = textSize * AWTContext.PX_PER_PT;
+							tagWriter.writeText(
+								"text:not([font-family]):not([class]){font-family:"
+									+ RenderContext.DEFAULT_FONT_FAMILY + ";}"
+									+ "text:not([font-size]):not([class]){font-size:"
+									+ formatPx(textSizePx) + "px;}");
+
 							BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
 							if (styles == null) {
 								Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
 							} else {
-								tagWriter.beginTag("style");
 								try (InputStream in = styles.getStream()) {
 									StreamUtilities.copyReaderWriterContents(
 										new InputStreamReader(in, StandardCharsets.UTF_8), tagWriter);
 								} catch (IOException ex) {
 									Logger.error("Failed to copy styles.", ex, FlowFactory.class);
 								}
-								tagWriter.endTag("style");
 							}
+							tagWriter.endTag("style");
 							_svgStarted = false;
 						}
 					}
@@ -1431,6 +1469,14 @@ public class FlowFactory extends TLScriptFunctions {
 		// Convert to binary data
 		byte[] svgBytes = buffer.toString().getBytes(StandardCharsets.UTF_8);
 		return BinaryDataFactory.createBinaryData(svgBytes, "image/svg+xml", filename);
+	}
+
+	private static String formatPx(double value) {
+		int intValue = (int) value;
+		if (value == intValue) {
+			return Integer.toString(intValue);
+		}
+		return Double.toString(value);
 	}
 
 }

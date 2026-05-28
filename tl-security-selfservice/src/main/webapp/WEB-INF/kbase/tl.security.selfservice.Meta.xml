@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+
+		<metaobject
+			object_type="MOKnowledgeObject"
+			object_name="Invitation"
+			super_class="TLObject"
+			versioned="false"
+			db_name="TL_INVITATION"
+		>
+			<attributes>
+				<mo_attribute att_name="id" att_type="String" db_size="64" mandatory="true" />
+				<mo_attribute att_name="email" att_type="String" db_size="254" mandatory="true" />
+				<mo_attribute att_name="mfaRequirement" att_type="String" db_size="16" mandatory="false" />
+			</attributes>
+		</metaobject>
+
+	</metaobjects>
+
+</objectlist>

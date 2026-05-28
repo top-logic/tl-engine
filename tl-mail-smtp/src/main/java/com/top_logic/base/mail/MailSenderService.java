@@ -920,7 +920,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 	/**
 	 * Module for {@link MailSenderService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<MailSenderService> {
 

@@ -47,7 +47,7 @@ import com.top_logic.util.Resources;
 /**
  * Checks if the given data is a valid theme zip file.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeFileStructureContraint extends AbstractConstraint {
 

@@ -9,7 +9,7 @@ package com.top_logic.graph.diagramjs.util;
  * Code that is used both on the server in the control and on the client side when interacting with
  * the diagramjs control on the server.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface DiagramJSGraphControlCommon {
 

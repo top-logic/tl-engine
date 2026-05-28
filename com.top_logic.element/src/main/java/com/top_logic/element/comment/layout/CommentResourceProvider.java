@@ -15,7 +15,7 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CommentResourceProvider extends WrapperResourceProvider {
 

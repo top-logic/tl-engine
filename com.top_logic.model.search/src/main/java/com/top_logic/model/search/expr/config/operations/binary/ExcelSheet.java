@@ -27,7 +27,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * Used within {@link ExcelFile} to define individual sheets with their content.
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ExcelSheet extends GenericMethod {
 

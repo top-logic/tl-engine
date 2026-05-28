@@ -14,7 +14,7 @@ import com.top_logic.layout.Renderer;
 /**
  * If the value to be written is null, this renderer will write a defined string instead.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class NotEmptyRenderer<T> implements Renderer<T> {
 

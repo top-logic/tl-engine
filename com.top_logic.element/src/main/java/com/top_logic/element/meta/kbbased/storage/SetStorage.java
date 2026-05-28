@@ -534,10 +534,12 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	 *        The history type of the value of the reference.
 	 * @param deletionPolicy
 	 *        The deletion policy of the reference.
+	 * @param unversioned
+	 *        Whether reference values must be stored unversioned.
 	 * @return The {@link SetStorage} configuration.
 	 */
-	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy) {
-		return defaultConfig(Config.class, composite, historyType, deletionPolicy);
+	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
 	}
 
 	/**

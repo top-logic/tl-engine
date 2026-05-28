@@ -178,7 +178,7 @@ public class AJAXServlet extends TopLogicServlet {
      * session or the current session is timed out.
      */
     @Override
-	protected void forwardPage(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse) throws IOException, ServletException {
+	protected void forwardToPage(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse) throws IOException, ServletException {
 		// Send a reload action. This triggers the default action behavior of
 		// forwarding the user to the login page, if the session has timed out.
 		String redirectMessage =

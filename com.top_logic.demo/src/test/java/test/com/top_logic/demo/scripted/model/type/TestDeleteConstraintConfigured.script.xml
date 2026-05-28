@@ -460,13 +460,6 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Strukturen > Typendemo > TreeGrid"
-					/>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
 					user-id="root"
@@ -484,56 +477,38 @@
 						/>
 					</selection-model-name>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-					failure-expected="false"
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 					user-id="root"
 				>
-					<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
-						expand="true"
-					>
-						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
-								tab-path="Strukturen > Typendemo > TreeGrid"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context-model>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="TestStaticDeleteCheck"
-						/>
-					</model-name>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen > Typendemo > Typendemo"
+					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="P"
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestStaticDeleteCheck > P"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
-							tab-path="Strukturen > Typendemo > TreeGrid"
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
 						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
-					expected-failure-message="Object protected."
+					expected-failure-message="Objekt geschützt."
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-						command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+						command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
 						command-label="Löschen..."
-						command-name="dispatchingDelete"
-						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+						command-name="elementRemove"
+						component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
 						user-id="root"
 					>
 						<arguments/>
@@ -544,30 +519,26 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="pp"
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestStaticDeleteCheck > pp"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
-							tab-path="Strukturen > Typendemo > TreeGrid"
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
 						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 					expected-failure-message="Objekt 'pp' speziell geschützt."
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-						command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+						command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
 						command-label="Löschen..."
-						command-name="dispatchingDelete"
-						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+						command-name="elementRemove"
+						component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
 						user-id="root"
 					>
 						<arguments/>
@@ -578,30 +549,26 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="px"
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="TestStaticDeleteCheck > px"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
-							tab-path="Strukturen > Typendemo > TreeGrid"
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
 						/>
-						<path>
-							<named-member name="fieldTable"/>
-						</path>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
 					expected-failure-message="Objekt 'px' ist alternativ geschützt."
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-						command-implementation-comment="com.top_logic.layout.form.component.DispatchingDeleteHandler"
+						command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
 						command-label="Löschen..."
-						command-name="dispatchingDelete"
-						component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
-						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
+						command-name="elementRemove"
+						component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+						component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
 						user-id="root"
 					>
 						<arguments/>

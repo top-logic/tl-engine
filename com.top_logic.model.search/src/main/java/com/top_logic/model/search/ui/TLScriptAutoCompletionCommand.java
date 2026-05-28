@@ -21,7 +21,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Command calculating autocompletion suggestions for the given prefix.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class TLScriptAutoCompletionCommand extends ControlCommand implements TLScriptConstants {
 

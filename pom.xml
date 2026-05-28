@@ -4,7 +4,7 @@
 
 	<groupId>com.top-logic</groupId>
 	<artifactId>tl-parent-all</artifactId>
-	<version>7.11.0-SNAPSHOT</version>
+	<version>8.0.0-SNAPSHOT</version>
 
 	<name>${project.artifactId}</name>
 	<description>Aggregator module that builds the complete TopLogic application engine.</description>
@@ -29,20 +29,20 @@
     </licenses>
 
 	<properties>
-		<tl.version>7.11.0-SNAPSHOT</tl.version>
-		<jetty.version>12.0.33</jetty.version>
-		<poi.version>5.4.1</poi.version>
+		<tl.version>8.0.0-SNAPSHOT</tl.version>
+		<jetty.version>12.1.9</jetty.version>
+		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>
-		<slf4j.version>2.0.17</slf4j.version>
-		<log4j.version>2.25.3</log4j.version>
-		<fasterxml.version>2.21.1</fasterxml.version>
-		<msgbuf.version>1.1.12</msgbuf.version>
-		<bouncycastle.version>1.83</bouncycastle.version>
+		<slf4j.version>2.0.18</slf4j.version>
+		<log4j.version>2.26.0</log4j.version>
+		<fasterxml.version>2.21.3</fasterxml.version>
+		<msgbuf.version>1.2.2</msgbuf.version>
+		<bouncycastle.version>1.84</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
-		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
@@ -794,6 +794,11 @@
 				<artifactId>tl-service-jms-ibmmq</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-security-selfservice</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
 
 			<!-- License-Tool -->
 			<dependency>
@@ -839,29 +844,29 @@
 			<dependency>
 			    <groupId>com.mysql</groupId>
 			    <artifactId>mysql-connector-j</artifactId>
-			    <version>9.6.0</version>
+			    <version>9.7.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>com.oracle.database.jdbc</groupId>
 			    <artifactId>ojdbc11</artifactId>
-			    <version>23.26.1.0.0</version>
+			    <version>23.26.2.0.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.postgresql</groupId>
 			    <artifactId>postgresql</artifactId>
-			    <version>42.7.10</version>
+			    <version>42.7.11</version>
 			</dependency>
 
 			<!-- External dependencies -->
 			<dependency>
 				<groupId>com.networknt</groupId>
 				<artifactId>json-schema-validator</artifactId>
-				<version>3.0.1</version>
+				<version>3.0.3</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
 				<artifactId>jakarta.servlet-api</artifactId>
-				<version>6.0.0</version>
+				<version>6.1.0</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet.jsp</groupId>
@@ -956,7 +961,7 @@
 			<dependency>
 			    <groupId>commons-codec</groupId>
 			    <artifactId>commons-codec</artifactId>
-			    <version>1.15</version>
+			    <version>1.22.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
@@ -981,7 +986,7 @@
 			<dependency>
 			    <groupId>commons-io</groupId>
 			    <artifactId>commons-io</artifactId>
-			    <version>2.18.0</version>
+			    <version>2.22.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
@@ -1115,7 +1120,7 @@
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-core</artifactId>
-			    <version>11.4.11</version>
+			    <version>11.5.13</version>
 				<exclusions>
 					<!-- Do not include Log4j 1, because this collides with Log4j 2  -->
 					<exclusion>
@@ -1136,7 +1141,7 @@
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-			    <version>11.4.11</version>
+			    <version>11.5.13</version>
 				<exclusions>
 					<exclusion>
 						<!-- Don't include 'com.sun.activation:jakarta.activation', as it collides with 'jakarta.activation:jakarta.activation-api'. -->
@@ -1155,7 +1160,7 @@
 			<dependency>
 			    <groupId>org.yaml</groupId>
 			    <artifactId>snakeyaml</artifactId>
-			    <version>2.0</version>
+			    <version>2.6</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
@@ -1173,7 +1178,7 @@
 			<dependency>
 			    <groupId>org.slf4j</groupId>
 			    <artifactId>jcl-over-slf4j</artifactId>
-			    <version>2.0.17</version>
+			    <version>2.0.18</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
@@ -1222,7 +1227,7 @@
 			<dependency>
 			    <groupId>org.apache.xmlgraphics</groupId>
 			    <artifactId>xmlgraphics-commons</artifactId>
-			    <version>2.8</version>
+			    <version>2.11</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
@@ -1238,11 +1243,6 @@
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-servlet</artifactId>
 				<version>${jetty.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.jdt</groupId>
-				<artifactId>ecj</artifactId>
-				<version>3.33.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.xhtmlrenderer</groupId>
@@ -1272,7 +1272,7 @@
 			<dependency>
 			    <groupId>org.jsoup</groupId>
 			    <artifactId>jsoup</artifactId>
-			    <version>1.16.2</version>
+			    <version>1.22.2</version>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -1282,22 +1282,22 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.3.3</version>
+    			<version>6.5.2</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
 				<artifactId>json-smart</artifactId>
-				<version>2.4.11</version>
+				<version>2.6.0</version>
 			</dependency>			
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.3.3</version>
+    			<version>6.5.2</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>jakartaee-pac4j</artifactId>
-			    <version>8.0.1</version>
+			    <version>8.0.3</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.codelibs</groupId>
@@ -1331,7 +1331,7 @@
 		  	<dependency>
 			    <groupId>org.apache.maven</groupId>
 				<artifactId>maven-model-builder</artifactId>
-				<version>3.9.13</version>
+				<version>3.9.16</version>
 		  	</dependency>
 			<dependency>
 				<groupId>org.apache.logging.log4j</groupId>
@@ -1373,7 +1373,7 @@
     		<dependency>
 				<groupId>org.commonmark</groupId>
 				<artifactId>commonmark</artifactId>
-				<version>0.21.0</version>
+				<version>0.28.0</version>
 			</dependency>
 			
 			<!-- Test modules -->
@@ -1504,7 +1504,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>3.4.0</version>
 
 				<configuration>
 					<excludes>**/.srcexclude</excludes>
@@ -1774,7 +1774,7 @@
 			<plugin>
 			    <groupId>org.owasp</groupId>
 			    <artifactId>dependency-check-maven</artifactId>
-			    <version>12.1.9</version>
+			    <version>12.2.2</version>
 		        <configuration>
 	                <format>ALL</format>
 	                <skipProvidedScope>true</skipProvidedScope>
@@ -1839,7 +1839,7 @@
 	                <dependency>
 	                    <groupId>org.revapi</groupId>
 	                    <artifactId>revapi-java</artifactId>
-	                    <version>0.26.1</version>
+	                    <version>0.28.4</version>
 	                </dependency>
 	            </dependencies>
 	            
@@ -1911,7 +1911,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.9.8.2</version>
+				<version>4.9.8.3</version>
 				<!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
 				<!-- <dependencies>
 					<dependency>
@@ -1940,29 +1940,34 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
+					<groupId>com.top-logic</groupId>
+					<artifactId>tl-maven-plugin</artifactId>
+					<version>${tl.version}</version>
+				</plugin>
+				<plugin>
 					<artifactId>maven-clean-plugin</artifactId>
-					<version>3.2.0</version>
+					<version>3.5.0</version>
 				</plugin>
 				<!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_maven-plugin_packaging -->
 				<plugin>
 					<artifactId>maven-resources-plugin</artifactId>
-					<version>3.3.1</version>
+					<version>3.5.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.11.0</version>
+					<version>3.15.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-plugin-plugin</artifactId>
-					<version>3.11.0</version>
+					<version>3.15.2</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.2.5</version>
+					<version>3.5.6</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.3.0</version>
+					<version>3.4.2</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-install-plugin</artifactId>
@@ -1971,50 +1976,50 @@
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>exec-maven-plugin</artifactId>
-					<version>3.1.1</version>
+					<version>3.6.3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-site-plugin</artifactId>
-					<version>3.12.1</version>
+					<version>3.22.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>3.0.0</version>
+					<version>3.1.4</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-invoker-plugin</artifactId>
-					<version>3.5.1</version>
+					<version>3.10.1</version>
 				</plugin>
 		  		<plugin>
 		  			<groupId>org.codehaus.mojo</groupId>
 		  			<artifactId>license-maven-plugin</artifactId>
-		  			<version>2.0.1</version>
+		  			<version>2.7.1</version>
 		  		</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>3.3.2</version>
+					<version>3.12.0</version>
 				</plugin>
 		        <plugin>
 		            <groupId>org.apache.maven.plugins</groupId>
 		            <artifactId>maven-assembly-plugin</artifactId>
-		            <version>3.4.2</version>
+		            <version>3.8.0</version>
 		        </plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-enforcer-plugin</artifactId>
-					<version>3.1.0</version>
+					<version>3.6.3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>versions-maven-plugin</artifactId>
-					<version>2.15.0</version>
+					<version>2.21.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.vafer</groupId>
 					<artifactId>jdeb</artifactId>
-					<version>1.10</version>
+					<version>1.14</version>
 				</plugin>
 				<plugin>
 					<groupId>net.lopht.maven-plugins</groupId>
@@ -2024,7 +2029,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-war-plugin</artifactId>
-					<version>3.3.2</version>
+					<version>3.5.1</version>
 				</plugin>
 				
 				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->

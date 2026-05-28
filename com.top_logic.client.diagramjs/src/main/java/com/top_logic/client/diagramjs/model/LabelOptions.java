@@ -8,7 +8,7 @@ package com.top_logic.client.diagramjs.model;
 /**
  * Options for a {@link Label}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class LabelOptions extends GraphPartOptions {
 

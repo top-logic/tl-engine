@@ -46,7 +46,7 @@ public class AttributeValueLocatorFactory extends ManagedClass {
 	/**
 	 * Configuration for {@link AttributeValueLocatorFactory}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<AttributeValueLocatorFactory> {
 		/**

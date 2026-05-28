@@ -29,7 +29,7 @@ import com.top_logic.tool.execution.I18NConstants;
 /**
  * Handler to delete a theme variable.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DeleteThemeVariableHandler extends AbstractCommandHandler {
 

@@ -27,7 +27,7 @@ import com.top_logic.util.Resources;
  * The images will be taken from "[theme]/beacon/[key].png", where [theme]
  * points to the current theme and [key] is the I18N of the fast list element.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class BeaconRenderer implements Renderer<FastListElement> {
 

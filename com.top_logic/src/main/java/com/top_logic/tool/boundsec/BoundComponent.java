@@ -34,7 +34,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * {@link com.top_logic.tool.boundsec.BoundChecker} interface.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
- * @author    Dieter Rothb‰cher
+ * @author    Dieter Rothb√§cher
  */
 public abstract class BoundComponent extends AJAXComponent implements BoundCheckerComponent {
 

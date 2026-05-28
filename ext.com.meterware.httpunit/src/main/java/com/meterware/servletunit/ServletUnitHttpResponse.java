@@ -52,7 +52,7 @@ class ServletUnitHttpResponse implements HttpServletResponse {
     private boolean _committed;
     private Locale _locale = Locale.getDefault();
 
-    private static final Hashtable ENCODING_MAP = new Hashtable();
+    private static final Hashtable<String, String> ENCODING_MAP = new Hashtable<String, String>();
 
     /**
      * @deprecated Use encodeURL(String url)
@@ -122,11 +122,18 @@ class ServletUnitHttpResponse implements HttpServletResponse {
      * example, <code><em>https://hostname/path/file.html</em></code>).
      * Relative URLs are not permitted here.
      */
-    public void sendRedirect( String location ) throws IOException {
-        setStatus( HttpServletResponse.SC_MOVED_TEMPORARILY );
-        setHeader( "Location", location );
-    }
+    public void sendRedirect(String location, int sc, boolean clearBuffer) throws IOException {
+        if (isCommitted()) {
+            throw new IllegalStateException("Response already committed");
+        }
 
+        if (clearBuffer) {
+            resetBuffer();
+        }
+
+        setStatus(sc);
+        setHeader("Location", location);
+    }
 
     /**
      * Sends an error response to the client using the specified status
@@ -197,7 +204,7 @@ class ServletUnitHttpResponse implements HttpServletResponse {
      * value.
      **/
     public void setHeader( String name, String value ) {
-        ArrayList values = new ArrayList();
+        ArrayList<String> values = new ArrayList<String>();
         values.add( value );
         synchronized (_headers) {
             _headers.put( name.toUpperCase(), values );
@@ -340,9 +347,9 @@ class ServletUnitHttpResponse implements HttpServletResponse {
     public void addHeader( String name, String value ) {
         synchronized (_headers) {
             String key = name.toUpperCase();
-            ArrayList values = (ArrayList) _headers.get( key );
+            ArrayList<String> values = _headers.get( key );
             if (values == null) {
-                values = new ArrayList();
+                values = new ArrayList<String>();
                 _headers.put( key, values );
             }
             values.add( value );
@@ -422,8 +429,9 @@ class ServletUnitHttpResponse implements HttpServletResponse {
     public void setLocale( Locale locale ) {
         _locale = locale;
         if (_encoding == null) {
-            for (Iterator it = ENCODING_MAP.entrySet().iterator(); it.hasNext();) {
-                Map.Entry entry = (Map.Entry) it.next();
+            for (Iterator<?> it = ENCODING_MAP.entrySet().iterator(); it.hasNext();) {
+                @SuppressWarnings("rawtypes")
+				Map.Entry entry = (Map.Entry) it.next();
                 String locales = (String) entry.getValue();
                 if (locales.indexOf( locale.getLanguage() ) >= 0 || locales.indexOf( locale.toString() ) >= 0) {
                     _encoding = (String) entry.getKey();
@@ -493,8 +501,8 @@ class ServletUnitHttpResponse implements HttpServletResponse {
 
     public String[] getHeaderFieldNames() {
         if (!_headersComplete) completeHeaders();
-        Vector names = new Vector();
-        for (Enumeration e = _headers.keys(); e.hasMoreElements();) {
+        Vector<String> names = new Vector<String>();
+        for (Enumeration<String> e = _headers.keys(); e.hasMoreElements();) {
             names.addElement( e.nextElement() );
         }
         String[] result = new String[ names.size() ];
@@ -509,9 +517,9 @@ class ServletUnitHttpResponse implements HttpServletResponse {
     String getHeaderField( String name ) {
         if (!_headersComplete) completeHeaders();
 
-        ArrayList values;
+        ArrayList<?> values;
         synchronized (_headers) {
-            values = (ArrayList) _headers.get( name.toUpperCase() );
+            values = _headers.get( name.toUpperCase() );
         }
 
         return values == null ? null : (String) values.get( 0 );
@@ -527,14 +535,14 @@ class ServletUnitHttpResponse implements HttpServletResponse {
      */
     public String[] getHeaderFields(String name) {
         if (!_headersComplete) completeHeaders();
-        ArrayList values;
+        ArrayList<?> values;
         synchronized (_headers) {
-            values = (ArrayList) _headers.get(name.toUpperCase());
+            values = _headers.get(name.toUpperCase());
         }
         if (values == null)
             return (new String[0]);
         String results[] = new String[values.size()];
-        return ((String[]) values.toArray(results));
+        return values.toArray(results);
 
     }
 
@@ -569,11 +577,11 @@ class ServletUnitHttpResponse implements HttpServletResponse {
 
     private String _statusMessage = "OK";
 
-    private final Hashtable _headers = new Hashtable();
+    private final Hashtable<String, ArrayList<String>> _headers = new Hashtable<String, ArrayList<String>>();
 
     private boolean _headersComplete;
 
-    private Vector  _cookies = new Vector();
+    private Vector<Cookie>  _cookies = new Vector<Cookie>();
 
 
     private void completeHeaders() {
@@ -588,8 +596,8 @@ class ServletUnitHttpResponse implements HttpServletResponse {
         if (_cookies.isEmpty()) return;
 
         StringBuffer sb = new StringBuffer();
-        for (Enumeration e = _cookies.elements(); e.hasMoreElements();) {
-            Cookie cookie = (Cookie) e.nextElement();
+        for (Enumeration<Cookie> e = _cookies.elements(); e.hasMoreElements();) {
+            Cookie cookie = e.nextElement();
             sb.append( cookie.getName() ).append( '=' ).append( cookie.getValue() );
             if (cookie.getPath() != null) sb.append( ";path=" ).append( cookie.getPath() );
             if (cookie.getDomain() != null) sb.append( ";domain=" ).append( cookie.getDomain() );

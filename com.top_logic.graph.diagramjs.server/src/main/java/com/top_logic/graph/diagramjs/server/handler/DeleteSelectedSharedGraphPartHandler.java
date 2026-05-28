@@ -23,14 +23,14 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Handler to delete graph parts of a {@link SharedGraph}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DeleteSelectedSharedGraphPartHandler extends AbstractCommandHandler {
 
 	/**
 	 * Configuration of {@link DeleteSelectedSharedGraphPartHandler}.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends AbstractCommandHandler.Config {
 

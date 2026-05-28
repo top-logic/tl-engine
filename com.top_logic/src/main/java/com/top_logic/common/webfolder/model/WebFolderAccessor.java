@@ -27,7 +27,7 @@ import com.top_logic.layout.tree.model.UserObjectPropertyAccessor;
 /**
  * Accessing methods to different aspects needed by the web folder display.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WebFolderAccessor {
 

@@ -20,7 +20,7 @@ import com.top_logic.mig.html.HTMLUtil;
 /**
  * Providing the correct resource prefix for the web folder table.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class FolderTableRenderer extends DefaultTableRenderer {
 

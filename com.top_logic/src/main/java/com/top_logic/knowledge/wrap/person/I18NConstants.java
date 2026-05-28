@@ -39,6 +39,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CREATED_ROOT_ACCOUNT;
 
 	/**
+	 * @en Created anonymous account.
+	 */
+	public static ResKey CREATED_ANONYMOUS_ACCOUNT;
+
+	/**
 	 * @en Resetting password of root account.
 	 */
 	public static ResKey RESETTING_ROOT_PASSWORD;

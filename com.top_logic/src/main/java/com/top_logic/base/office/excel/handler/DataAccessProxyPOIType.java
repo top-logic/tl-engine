@@ -20,7 +20,7 @@ import com.top_logic.dsa.DataAccessProxy;
 /**
  * Embed the stream from a given data access proxy into an excel file (assumed that it is an image).
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DataAccessProxyPOIType extends AbstractImagePOIType {
 

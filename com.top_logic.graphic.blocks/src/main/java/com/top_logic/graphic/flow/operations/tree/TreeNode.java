@@ -1,6 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
+ *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.graphic.flow.operations.tree;
@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.graphic.flow.data.Box;
-import com.top_logic.graphic.flow.operations.tree.TreeRenderInfo.Column;
 
 /**
  * Temporary object that contains information for computing a tree layout.
@@ -24,11 +23,21 @@ class TreeNode {
 
 	private final List<TreeNode> _children = new ArrayList<>();
 
-	private Column _column;
+	private double _offsetX;
 
 	private double _offsetY;
 
-	private int _index;
+	/**
+	 * X coordinate of an explicit bus override for this node's outgoing connections, or
+	 * {@link Double#NaN} if no override is set.
+	 *
+	 * <p>Used by the row-wise sub-grid: a sub-grid child whose own children are rendered to the
+	 * right of the surrounding sub-grid (at the parent's {@code postGridX}) has its bus routed at
+	 * the parent's {@code childBusX} rather than the natural mid-x between this node and its
+	 * children. Without the override the bus would land in the middle of the surrounding sub-grid
+	 * and clash with sibling sub-grid nodes.
+	 */
+	private double _busXOverride = Double.NaN;
 
 	/**
 	 * Creates a {@link TreeNode}.
@@ -95,47 +104,17 @@ class TreeNode {
 	}
 
 	/**
-	 * The column of the tree layout, where this node has been placed.
-	 */
-	public Column getColumn() {
-		return _column;
-	}
-
-	/**
-	 * The index of this node within its {@link #getColumn()}.
-	 */
-	public int getIndex() {
-		return _index;
-	}
-
-	/**
-	 * @see #getColumn()
-	 * @see #getIndex()
-	 */
-	public void setColumn(Column column, int index) {
-		if (_column != null) {
-			throw new IllegalStateException("Not a tree or forest, cycle at: " + getBox());
-		}
-		_column = column;
-		_index = index;
-	}
-
-	/**
-	 * The tree level of this node.
-	 * 
-	 * @see Column#getLevel()
-	 */
-	public int getLevel() {
-		return _column.getLevel();
-	}
-
-	/**
 	 * The X coordinate of this node (defined by the tree layout algorithm).
-	 * 
-	 * @see Column#getOffsetX()
 	 */
 	public double getX() {
-		return getColumn().getOffsetX();
+		return _offsetX;
+	}
+
+	/**
+	 * @see #getX()
+	 */
+	public void setX(double offsetX) {
+		_offsetX = offsetX;
 	}
 
 	/**
@@ -160,10 +139,27 @@ class TreeNode {
 	}
 
 	/**
-	 * The node that precedes this node in its {@link #getColumn()}.
+	 * @see #getBusXOverride()
 	 */
-	public TreeNode getColumnPredecessor() {
-		return getIndex() == 0 ? null : getColumn().getNode(getIndex() - 1);
+	public boolean hasBusXOverride() {
+		return !Double.isNaN(_busXOverride);
+	}
+
+	/**
+	 * X coordinate of an explicit bus override for this node's outgoing connections, or
+	 * {@link Double#NaN} if no override is set.
+	 *
+	 * @see #hasBusXOverride()
+	 */
+	public double getBusXOverride() {
+		return _busXOverride;
+	}
+
+	/**
+	 * @see #getBusXOverride()
+	 */
+	public void setBusXOverride(double busXOverride) {
+		_busXOverride = busXOverride;
 	}
 
 }

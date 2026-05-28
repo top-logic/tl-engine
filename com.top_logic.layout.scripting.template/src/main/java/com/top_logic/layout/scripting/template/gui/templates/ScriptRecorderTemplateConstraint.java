@@ -29,7 +29,7 @@ import com.top_logic.util.Resources;
 /**
  * Checks if the given data is a valid collection of ScriptRecorder templates.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ScriptRecorderTemplateConstraint extends AbstractConstraint {
 

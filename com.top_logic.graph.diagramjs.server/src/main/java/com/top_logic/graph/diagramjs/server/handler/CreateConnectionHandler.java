@@ -8,7 +8,7 @@ package com.top_logic.graph.diagramjs.server.handler;
 /**
  * Handler to create a connection.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface CreateConnectionHandler extends CreateInheritanceHandler, CreateReferenceHandler {
 	// Pure sum interface.

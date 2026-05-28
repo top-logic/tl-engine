@@ -29,14 +29,14 @@ public final class ExportHandlerRegistry extends ManagedClass {
 	/**
 	 * Configuration for the export handlers {@link ExportHandlerRegistry}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<ExportHandlerRegistry> {
 
 		/**
 		 * Configuration {@link ExportHandler}.
 		 * 
-		 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+		 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 		 */
 		interface NamedExportHandler extends NamedConfigMandatory {
 
@@ -110,7 +110,7 @@ public final class ExportHandlerRegistry extends ManagedClass {
 	/**
 	 * Module for {@link ExportHandlerRegistry}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<ExportHandlerRegistry> {
 

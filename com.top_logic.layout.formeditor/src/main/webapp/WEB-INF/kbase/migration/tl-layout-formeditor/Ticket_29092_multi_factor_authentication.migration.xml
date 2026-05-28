@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29092_multi_factor_authentication"
+		module="tl-layout-formeditor"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-layout-formeditor"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.accounts:Person">
+			<annotation class="com.top_logic.element.layout.formeditor.definition.TLFormDefinition"/>
+		</remove-annotations>
+
+		<add-annotations name="tl.accounts:Person">
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.accounts:Person#name"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<field
+							attribute="authDeviceID"
+							fullQualifiedName="tl.accounts:Person#authDeviceID"
+							type="tl.core:String"
+							visibility="read-only"
+						/>
+						<field
+							attribute="mfaRequirement"
+							fullQualifiedName="tl.accounts:Person#mfaRequirement"
+							type="tl.accounts:MFARequirement"
+						/>
+						<code>
+							<impl class="com.top_logic.element.layout.formeditor.implementation.additional.IsAdminProvider"/>
+						</code>
+						<field
+							attribute="restrictedUser"
+							fullQualifiedName="tl.accounts:Person#restrictedUser"
+							type="tl.core:Boolean"
+						/>
+						<field class="com.top_logic.element.layout.formeditor.implementation.additional.GroupsField"
+							attribute="groups"
+							fullQualifiedName="tl.accounts:Person#groups"
+							type="tl.accounts:Group"
+							visibility="editable"
+						/>
+						<attribute-reference class="com.top_logic.layout.formeditor.accounts.RepresentativeField"
+							item="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+							name="members"
+							type="tl.accounts:Group"
+						/>
+						<field
+							attribute="deputyFor"
+							fullQualifiedName="tl.accounts:Person#deputyFor"
+							type="tl.accounts:GroupMember"
+						/>
+						<field
+							attribute="timezone"
+							fullQualifiedName="tl.accounts:Person#timezone"
+							type="tl.util:TimeZone"
+						/>
+						<field
+							attribute="language"
+							fullQualifiedName="tl.accounts:Person#language"
+							type="tl.util:Language"
+						/>
+						<field
+							attribute="country"
+							fullQualifiedName="tl.accounts:Person#country"
+							type="tl.util:Country"
+						/>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.StartPageAutomatism"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.CurrentStartPage"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.ThemeSelector"/>
+						</code>
+						<code>
+							<impl class="com.top_logic.model.form.implementation.additional.AutoTranslation"/>
+						</code>
+					</form>
+				</form-definition>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

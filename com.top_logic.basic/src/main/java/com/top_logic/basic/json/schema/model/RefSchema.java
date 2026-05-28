@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Can appear alongside other keywords in the same schema object.
  * </p>
  */
-public class RefSchema extends Schema {
+public class RefSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.RefSchema} instance.

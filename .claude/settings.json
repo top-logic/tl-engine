@@ -1,28 +1,31 @@
-{                                                                                                                                                                                                                                                  
-  "permissions": {                                                                                                                                                                                                                                 
-    "allow": [                                                                                                                                                                                                                                     
-      "Bash(npm *)",                                                                                                                                                                                                                               
+{
+  "enabledPlugins": {
+    "tl-claude-tools@toplogic": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
       "Bash(mvn *)"
-    ]                                                                                                                                                                                                                                              
-  },                                                      
-  "sandbox": {                                                                                                                                                                                                                                     
-    "enabled": true,                                                                                                                                                                                                                               
-    "autoAllowBashIfSandboxed": true,                                                                                                                                                                                                              
-    "filesystem": {                                                                                                                                                                                                                                
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true,
+    "filesystem": {
       "allowWrite": [
         "~/.npm",
         "/tmp"
       ]
-    },                                                                                                                                                                                                                                     
+    },
     "network": {
-      "allowedDomains": [
+      "allowedHosts": [
         "registry.npmjs.org",
         "api-free.deepl.com",
+        "tl.bos.local",
         "nodejs.org",
         "dev.top-logic.com",
         "repo.maven.apache.org"
       ]
-    }                                                                                                                                                                                                                                            
+    }
   }
 }
-

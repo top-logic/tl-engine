@@ -49,7 +49,7 @@ import com.top_logic.util.error.TopLogicException;
  * Stores custom service configurations in a separate configuration file in the autoconf folder of
  * the toplevel module.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLSaveServiceConfigHandler extends AbstractApplyCommandHandler {
 

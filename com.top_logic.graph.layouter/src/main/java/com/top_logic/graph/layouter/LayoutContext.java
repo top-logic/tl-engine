@@ -8,7 +8,7 @@ package com.top_logic.graph.layouter;
 /**
  * Context for graph layouting.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class LayoutContext {
 

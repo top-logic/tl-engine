@@ -26,7 +26,7 @@
 				isSecurityMaster="true"
 				partnerGroup="gridGroup"
 				resPrefix="${resPrefix}Tree."
-				securityObject="ref:null"
+				securityObject="ref:demoTypesRoot"
 				show-only-selectable-nodes="true"
 			>
 				<layoutInfo
@@ -35,6 +35,12 @@
 				/>
 				<modelBuilder class="com.top_logic.demo.model.types.util.CyclicDemoTreeBuilder"/>
 				<security-filter delegationDestination="${namePrefix}Edit"/>
+
+				<component-resolvers>
+					<component-resolver class="com.top_logic.layout.basic.page.DynamicPageTitle"
+						value="selection(self())"
+					/>
+				</component-resolvers>
 
 				<contextMenuFactory>
 					<customCommands>

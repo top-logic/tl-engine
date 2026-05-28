@@ -22,7 +22,7 @@ import com.top_logic.model.TLType;
 /**
  * Default sizer for a {@link LayoutNode}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class DefaultNodeSizer extends NodeSizer implements NodeConstants {
 

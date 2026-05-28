@@ -17,7 +17,7 @@ import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.util.TLContext;
 
 /**
- * @author    <a href=mailto:fsc@top-logic.com>Mandelfried Müller</a>
+ * @author    <a href=mailto:fsc@top-logic.com>Mandelfried MÃ¼ller</a>
  */
 public class SAPFormatHelper {
 

@@ -51,7 +51,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link DeclarativeFormBuilder} for properties of a {@link TLEnumeration}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLEnumerationFormBuilder
 		extends DeclarativeFormBuilder<TLEnumeration, TLEnumerationFormBuilder.EditModel> {

@@ -60,14 +60,14 @@ import com.top_logic.util.Utils;
  * {@link MailServerMessage}s and calls back AbstractMailServerDaemon#processMail(MailMessage)
  * resp.AbstractMailServerDaemon#processMeeting(ExchangeMeeting) to handle these mails.
  *
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemon.Config<?>> extends TokenBasedTask<C> {
 	
 	/**
 	 * Configuration for the mail server daemon.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config<I extends AbstractMailServerDaemon<?>> extends TokenBasedTask.Config<I> {
 
@@ -117,7 +117,7 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
      * Strategy for mails that cannot by identified or mails that triggered an
      * exception during the standard processing.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public enum UnknownMailStrategy implements ExternallyNamed {
 		/** Delete the mail. */
@@ -748,7 +748,7 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
     /**
      * Performing class for new mails arrived on the mail server.
      *
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public class MailDaemonCountListener extends MessageCountAdapter implements ConnectionListener {
 

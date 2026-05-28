@@ -6,9 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TopLogic is an open-source, model-based, no-code web application development platform. It combines declarative configuration (UML/BPMN modeling, WYSIWYG UI configuration) with extensible Java components. The platform enables both no-code application development and traditional Java/Maven development workflows.
 
-**Version**: 7.10.0-SNAPSHOT
-**Java Version**: 17
-**Build System**: Maven 3.6.0+
+**Build System**: Maven
 **License**: Dual-licensed (AGPL-3.0 / BOS-TopLogic-1.0)
 
 ## Build Commands
@@ -25,7 +23,7 @@ mvn install -pl com.top_logic.basic
 
 Tests are skipped by default (`skipTests=true` in tl-parent-all), so `-DskipTests=true` is not needed.
 
-**IMPORTANT**: Always build from the project root using `-pl <module-dir>`. NEVER `cd` into a module directory and run Maven there. The project uses a relative local repository (`.m2/repository` via `.mvn/maven.config`), so changing directories causes each module to use its own isolated local repo, leading to missing artifact errors.
+**IMPORTANT**: Always build from the project root using `-pl <module-dir>`, never by `cd`-ing into a module directory. The build uses a workspace-local Maven repository; generate it once per workspace with `.claude/scripts/local-m2.sh`. Never use the global Maven repository (`~/.m2/repository`) and never pass `-Dmaven.repo.local=$HOME/.m2/repository` — each workspace has its own local repo.
 
 ### Refreshing the Workspace After a Branch Switch
 
@@ -36,7 +34,7 @@ Switching branches can leave stale jars in the local Maven repo (installed artif
 .claude/scripts/rebuild-stale.sh --dry-run  # only list them
 ```
 
-The script enumerates all reactor modules via one `mvn exec:exec` run, compares the newest mtime under each module's `pom.xml` + `src/` against the installed jar in the local Maven repo, and rebuilds only the stale ones in the correct order (`mvn install -pl <list> -am -DskipTests`).
+The script enumerates all reactor modules via one `mvn exec:exec` run, compares the newest mtime under each module's `pom.xml` + `src/` against the installed jar in the local Maven repo, and rebuilds only the stale ones in the correct order (`mvn -B install -pl <list>`).
 
 ### Running Tests
 
@@ -46,12 +44,11 @@ Tests are **skipped by default** (`skipTests=true` in tl-parent-all). To run tes
 # Run tests in specific module (from project root)
 mvn test -DskipTests=false -pl com.top_logic.basic
 
-# Run single test class
-mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName
-
-# Run specific test method
-mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
+# Run single test class — -Dtest MUST be the fully qualified class name
+mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=test.com.top_logic.basic.SomeTest
 ```
+
+The `-Dtest` value **must be the fully qualified class name** — a simple class name does not work because `tl-parent-core` configures Surefire with `<include>test/TestAll.java</include>`, which only an FQN overrides. Running a single method (`-Dtest=Class#method`) does **not** work for tests with a `suite()` method: the suite setup (XMLProperties init, service startup) is skipped and the test fails with "Cannot start configuration service".
 
 **Important**: Tests require database configuration. Many tests use H2 in-memory databases, but some require specific database drivers (MySQL, Oracle, PostgreSQL, DB2, MS SQL Server).
 
@@ -63,6 +60,8 @@ mvn test -DskipTests=false -pl com.top_logic.basic -Dtest=ClassName#methodName
 - **Piping Maven output**: Always use `mvn -B` (batch mode) when piping output to `grep`, `tail`, etc. Without `-B`, Maven emits ANSI color codes that prevent text matching (e.g. `grep 'BUILD'` fails because the actual string is `[1;32mBUILD SUCCESS[m`).
 - **Always preserve full build output**: Use `tee` to save output to a log file while still seeing it live: `mvn -B install -pl com.top_logic.basic 2>&1 | tee com.top_logic.basic/target/mvn-build.log`. This way you can search the full output afterwards without having to re-run the build.
 - **GWT client → server WAR dependency**: `tl-react-flow-server` packages the GWT JavaScript from `tl-react-flow-client` as a WAR overlay. The Jetty server serves GWT files from the server's web-fragment.war, NOT from the client's. **Always rebuild `com.top_logic.react.flow.server` after changing `com.top_logic.react.flow.client`**, otherwise the app serves stale JavaScript. Full rebuild command: `mvn install -pl com.top_logic.react.flow.common,com.top_logic.react.flow.client,com.top_logic.react.flow.server,com.top_logic.demo`.
+- **Never call `javac` directly** — always build through Maven (`mvn compile` / `mvn install`), which handles the classpath, dependency resolution, and source encoding.
+- **Do not use the `-am` (also-make) flag** when verifying your own changes. List every module you modified explicitly on `-pl` (comma-separated, in dependency order). `-am` drags in the whole upstream dependency closure, hides which modules you actually touched, and slows every iteration down.
 
 ### Other Useful Commands
 
@@ -286,9 +285,11 @@ Types are defined in XML files (`*.model.xml`):
 
 ### UI Labels and I18N
 
-TopLogic generates UI labels from configuration interface properties. The `messages_en.properties` and `messages_de.properties` files in `src/main/java/META-INF/` are **generated during `mvn install`** from JavaDoc comments.
+TopLogic generates UI labels from configuration interface properties. The English `messages_en.properties` files in `src/main/java/META-INF/` are **generated during `mvn install`** from JavaDoc comments — **do NOT edit them directly**, changes are overwritten on the next build.
 
-**Do NOT edit `messages.properties` files directly** - changes will be overwritten on next build.
+The German `messages_de.properties` files are **maintained by hand**. The build seeds new keys (via DeepL auto-translation) but never overwrites existing entries, so correcting an awkward or wrong German translation directly in `messages_de.properties` is the normal workflow.
+
+Message generation runs as part of the `maven-javadoc-plugin` lifecycle (the `TLDoclet`). **Never pass `-Dmaven.javadoc.skip=true` when adding or renaming `I18NConstants`** — the doclet is skipped along with Javadoc, leaving the `messages_*.properties` files outdated.
 
 **To change a UI label:**
 
@@ -377,7 +378,16 @@ external/JS identifiers.
 - Test classes use the `test.` package prefix (e.g., `test.com.top_logic.basic.GenericTest`)
 - Many base test classes exist for common scenarios (see `Abstract*Test.java` patterns)
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
-- Tests are JUnit 4 based (JUnit 4.13.2)
+- Tests are JUnit 4 based
+
+### Manual Verification with Playwright
+
+After implementing a UI feature or fix, always verify it manually in a running application using Playwright before reporting the work as done. This means:
+
+1. **Ensure the feature is accessible in `com.top_logic.demo`** — if the feature is not already wired into the demo app, add the necessary configuration (layouts, views, model entries) so it can be reached in the browser.
+2. **Start the demo app** using the `tl-app` skill.
+3. **Use Playwright** to navigate to the feature, interact with it, and verify that it works as expected.
+4. **Only then report the work as complete.**
 
 ### Manual Verification with Playwright
 
@@ -390,6 +400,10 @@ After implementing a UI feature or fix, always verify it manually in a running a
 
 ## Important Notes
 
+### Demo App Credentials
+
+The demo application's default developer login is `root` / `root1234`.
+
 ### Database Support
 
 The platform supports multiple databases:
@@ -398,13 +412,9 @@ The platform supports multiple databases:
 
 Database-specific drivers are included in test scope for internal modules.
 
-### Encoding
-
-Source files use **ISO-8859-1** encoding (`project.build.sourceEncoding=ISO-8859-1` in parent POM).
-
 ### Version Management
 
-- Central version: `7.10.0-SNAPSHOT` defined in `tl-parent-all`
+- Central version is defined in `tl-parent-all` — read it from there when needed.
 - Use `${tl.version}` property for internal dependencies
 - External dependencies versioned via properties (e.g., `${jetty.version}`)
 
@@ -418,19 +428,27 @@ When creating a new TopLogic module:
 
 ### Resource File Normalization
 
-`.properties` files under `WEB-INF/conf/resources/` must be normalized (sorted keys, ISO-8859-1 encoding):
+`.properties` files under `WEB-INF/conf/resources/` must be normalized:
 
 ```bash
-mvn tl:normalize-resource-file -Dresource=<path>
+mvn -N tl:normalize-resource-file -Dresource=<path>
 ```
+
+The `-N` flag is essential — without it Maven resolves the full reactor (including GWT modules) and the command fails.
+
 
 ### Theme / CSS Reloading
 
 To reload CSS changes at runtime: Use sidebar menu "Entwickleroptionen" (Developer Options) "Theme neu laden" (Reload Theme), then **reload the page** in the browser. The theme reload alone doesn't update the browser.
 
+### View Configuration Reloading
+
+Changes to `.view.xml` files take effect after a logout/login — no application restart is needed. Views are loaded per session, not cached globally at startup.
+
+
 ### Layout Normalization
 
-XML layout files can be normalized using:
+XML layout files must be normalized using:
 
 ```bash
 mvn exec:java@normalize-layouts
@@ -497,7 +515,7 @@ Commit messages in this project must follow a specific format:
 - **Example**: `Ticket #28934: Add data URI SVG support to SVGReplacedElementFactory.`
 - **Important**: Do NOT include "Generated with Claude Code", "Co-Authored-By: Claude", or any AI-generation attribution lines
 - **Never amend commits** unless explicitly asked to do so. Always create new commits.
-- Keep the message plain and focused on describing the change
+- Keep the message plain and focused on describing the change.
 - **Commit completed work at the end of each turn** without waiting to be asked, so every step of
   work lands as its own commit. Group unrelated changes into separate commits.
 
@@ -518,7 +536,7 @@ Commit messages in this project must follow a specific format:
 
 ## msgbuf Library
 
-The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library (version 1.1.11) for type-safe protocol message generation from `.proto` files.
+The project uses the [msgbuf](https://github.com/msgbuf/msgbuf) library for type-safe protocol message generation from `.proto` files.
 
 ### Key Pitfall: Writer Types
 
@@ -547,11 +565,14 @@ try (JsonWriter writer = new JsonWriter(new WriterAdapter(javaIoWriter))) {
 
 ### Generator Plugin
 
-The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke explicitly:
+The msgbuf Maven plugin generates Java classes from `.proto` files. Note that its default lifecycle phase is **not** `generate-sources`, so `mvn generate-sources` alone won't trigger it. It runs during `mvn compile`. To run it in isolation, invoke its `generate` goal by plugin prefix, targeting a module that declares the plugin (`com.top_logic.basic`, `com.top_logic.graphic.blocks`, or `tl-tools-resources`):
 
 ```bash
-mvn de.haumacher.msgbuf:msgbuf-generator-maven-plugin:1.1.11:generate
+mvn msgbuf-generator:generate -pl com.top_logic.basic
 ```
+
+The prefix is `msgbuf-generator` (not `msgbuf`); no version is needed — Maven resolves it from the target module's POM (`${msgbuf.version}`).
+
 
 ## Additional Resources
 

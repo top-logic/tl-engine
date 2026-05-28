@@ -13,7 +13,7 @@ import com.top_logic.base.office.excel.POITypeSupporter;
 /**
  * Set character values to excel cells via POI.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CharacterPOIType extends StringPOIType {
 

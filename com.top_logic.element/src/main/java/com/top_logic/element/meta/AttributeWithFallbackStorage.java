@@ -281,7 +281,13 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 
 	@Override
 	public void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
-		update.setValue(object.tValue(_storageAttr));
+		if (update.isDisabled()) {
+			/* Use default value (either explicit or default value) as value because the user has no
+			 * chance to update the value and must therefore see the correct value. */
+			super.initUpdate(object, attribute, update);
+		} else {
+			update.setValue(object.tValue(_storageAttr));
+		}
 	}
 
 	@Override

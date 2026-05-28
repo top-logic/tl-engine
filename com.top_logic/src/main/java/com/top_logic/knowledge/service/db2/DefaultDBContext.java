@@ -31,6 +31,7 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.IdentityHashSet;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.InlineSet;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.ResKey;
@@ -78,6 +79,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.model.ModelService;
 
 /**
  * For every {@link Transaction} in progress in the {@link DBKnowledgeBase} there is a
@@ -842,26 +844,22 @@ public class DefaultDBContext extends DBContext {
 			// Otherwise, rollback that is called after a failed commit would deny execution.
 	    	innermostTransaction = null;
 			return result;
+		} catch (KnowledgeBaseException | KnowledgeBaseRuntimeException | I18NRuntimeException | Error ex) {
+			doRollback(ex);
+			throw ex;
 		} catch (Throwable ex) {
-			try {
-				rollbackComplete(false);
-				checkLongRunningFailed();
-			} catch (Throwable rollbackFailure) {
-				ex.addSuppressed(rollbackFailure);
-			}
-			if (ex instanceof KnowledgeBaseException) {
-				// Do not duplicate exception.
-				throw (KnowledgeBaseException) ex;
-			} else if (ex instanceof KnowledgeBaseRuntimeException || ex instanceof KnowledgeBaseUIException) {
-				// Do not mask KB internal failures.
-				throw (RuntimeException) ex;
-			} else if (ex instanceof Error) {
-				// Do not mask VM internal problems.
-				throw (Error) ex;
-			}
+			doRollback(ex);
 			throw new KnowledgeBaseException("Database operation failed.", ex);
         }
-		
+	}
+
+	private void doRollback(Throwable ex) {
+		try {
+			rollbackComplete(false);
+			checkLongRunningFailed();
+		} catch (Throwable rollbackFailure) {
+			ex.addSuppressed(rollbackFailure);
+		}
 	}
 
 	private void checkVetoReferences() {
@@ -1196,7 +1194,7 @@ public class DefaultDBContext extends DBContext {
 	}
 	
 	protected void handleSecurityUpdate(UpdateEvent event) {
-    	if (AccessManager.Module.INSTANCE.isActive()) {
+		if (AccessManager.Module.INSTANCE.isActive() && ModelService.Module.INSTANCE.isActive()) {
 			TLObjectChangeSet modelChangeSet = createModelChangeSet(event);
 			if (modelChangeSet == null) {
 				// No model change set available,
@@ -1204,7 +1202,8 @@ public class DefaultDBContext extends DBContext {
 			}
 			AccessManager.getInstance().handleSecurityUpdate(modelChangeSet, kb);
     	} else {
-			Logger.info("Commit without access manager, security is not updated.", DefaultDBContext.class);
+			Logger.info("Commit without access manager or model service. Security is not updated.",
+				DefaultDBContext.class);
     	}
     }
 

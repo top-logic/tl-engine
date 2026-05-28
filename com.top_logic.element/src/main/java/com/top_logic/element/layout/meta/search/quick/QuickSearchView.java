@@ -101,7 +101,7 @@ public class QuickSearchView extends WithPropertiesBase implements HTMLFragment 
 		CommandField searchCommand =
 			FormFactory.newCommandField("searchCommand", command, executability(searchField, config));
 		searchCommand.setImage(Icons.SEARCH);
-		searchCommand.setLabel(Resources.getInstance().getString(I18NConstants.EXECUTE_QUICK_SEARCH));
+		searchCommand.setLabel(I18NConstants.EXECUTE_QUICK_SEARCH);
 		form.addMember(searchCommand);
 
 		searchField.addKeyListener(toKeyEventListener(searchCommand));

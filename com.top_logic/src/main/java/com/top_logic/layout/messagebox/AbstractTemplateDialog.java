@@ -6,6 +6,7 @@
 package com.top_logic.layout.messagebox;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.layout.DisplayDimension;
@@ -49,7 +50,17 @@ public abstract class AbstractTemplateDialog extends AbstractFormDialogBase {
 
 	@Override
 	protected HTMLFragment createView() {
-		return new MessageBoxContentView(new TemplateControl(getFormContext(), getControlProvider(), getTemplate()));
+		TemplateControl control = new TemplateControl(getFormContext(), getControlProvider(), getTemplate());
+		MessageBoxContentView view = new MessageBoxContentView(control);
+		view.setCustomCSSClasses(getCSSClasses());
+		return view;
+	}
+
+	/**
+	 * Additional CSS classes to use for this dialog.
+	 */
+	protected CharSequence[] getCSSClasses() {
+		return ArrayUtil.EMPTY_STRING_ARRAY;
 	}
 
 	/**

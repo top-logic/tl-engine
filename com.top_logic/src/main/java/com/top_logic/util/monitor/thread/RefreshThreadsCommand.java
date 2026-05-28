@@ -19,7 +19,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * Refresh the thread list.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class RefreshThreadsCommand extends AbstractCommandHandler {
 

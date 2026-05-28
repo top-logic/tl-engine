@@ -12,7 +12,7 @@
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>
@@ -1070,7 +1070,7 @@ $newObject.set(`DemoTypes:DemoTypes.A#typedWrapper`, $model.elementAt(1));
 					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
 					command-label="Designmodus"
 					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 					component-name="rootLayout#masterFrame"
 					user-id="root"
 				>

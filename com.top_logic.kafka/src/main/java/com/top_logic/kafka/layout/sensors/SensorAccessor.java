@@ -11,7 +11,7 @@ import com.top_logic.layout.ReadOnlyAccessor;
 /**
  * Accessor to the sensor interface.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SensorAccessor extends ReadOnlyAccessor<Sensor<?, ?>> {
 

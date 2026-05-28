@@ -11,6 +11,12 @@
 		<profile name="DemoSecurity.navigation"/>
 		<profile name="DemoSecurity.selection"/>
 		<profile name="DemoTypes.Administrator">
+			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
 			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#createPlainCCreateAttributedDialog">
 				<commandGroup name="Create"/>
 				<commandGroup name="Read"/>
@@ -54,8 +60,24 @@
 		<profile name="DemoTypes.BAdministrator"/>
 		<profile name="DemoTypes.BooleanAdministrator"/>
 		<profile name="DemoTypes.DateAdministrator"/>
-		<profile name="DemoTypes.Navigation"/>
+		<profile name="DemoTypes.Navigation">
+			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#demoPlainView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesView">
+				<commandGroup name="Read"/>
+			</view>
+		</profile>
 		<profile name="DemoTypes.Responsible">
+			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
 			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#createPlainCCreateAttributedDialog">
 				<commandGroup name="Create"/>
 				<commandGroup name="Read"/>
@@ -1224,6 +1246,5 @@
 				<commandGroup name="Write"/>
 			</view>
 		</profile>
-		<profile name="mandatorStructure.navigation"/>
 	</profiles>
 </security>

@@ -18,7 +18,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
  * Post processing for a map of values after the {@link ListDataImportPerformer performer} has
  * handled an attributed.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public interface ImportPerformerPostProcessor {
 
@@ -69,7 +69,7 @@ public interface ImportPerformerPostProcessor {
 	/**
 	 * Collection of different post performers called one after the other.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public static class CollectingImportPerformerPostProcessor<C extends CollectingImportPerformerPostProcessor.Config> implements ImportPerformerPostProcessor {
         

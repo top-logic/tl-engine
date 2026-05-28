@@ -1,0 +1,110 @@
+<h2>Syntax</h2>
+<pre>	<code>$object.changeLog([maxEntries[, includeSubtree[, startRev[, stopRev[, author[, includeTechnical[, excludedModules]]]]]]])</code>
+	<code>changeLog()</code>
+</pre>
+<h2>Beschreibung</h2>
+<p>Liefert die Liste der Änderungen (<code class="hljs inlineCode">tl.changelog:ChangeSet</code>), die das angegebene Fachobjekt betreffen.</p>
+<p>Ist <code class="hljs inlineCode">includeSubtree</code> gesetzt (Standard), werden auch Änderungen an Objekten berücksichtigt, die sich zum Zeitpunkt der Änderung im Kompositions-Unterbaum des Objektes befanden. Wird der Parameter auf <code class="hljs inlineCode">false</code> gesetzt, werden ausschließlich Änderungen am Objekt selbst zurückgeliefert.</p>
+<p>Wird kein <code class="hljs inlineCode">object</code> übergeben oder <code class="hljs inlineCode">null</code>, so wird die globale Änderungshistorie der Anwendung zurückgeliefert (ohne Unterbaum-Einschränkung). In diesem Fall empfiehlt sich die Nutzung von <code class="hljs inlineCode">maxEntries</code>, um die Ergebnismenge zu begrenzen.</p>
+<p>Die optionalen Parameter <code class="hljs inlineCode">startRev</code> und <code class="hljs inlineCode">stopRev</code> grenzen den analysierten Revisionsbereich ein. Beide können entweder als Revisions-Objekt oder als Commit-Nummer (Ganzzahl) übergeben werden. Standardmäßig wird die gesamte Historie (ab Revision <code class="hljs inlineCode">1</code> bis zur aktuellen Revision) analysiert.</p>
+<p>Der optionale Parameter <code class="hljs inlineCode">author</code> beschränkt das Ergebnis auf Änderungen, die durch den angegebenen Account vorgenommen wurden. Es kann entweder eine <code class="hljs inlineCode">tl.accounts:Person</code> oder ein beliebiges Fachobjekt mit einer <code class="hljs inlineCode">account</code>-Referenz auf einen Account übergeben werden.</p>
+<p>Der optionale Schalter <code class="hljs inlineCode">includeTechnical</code> steuert, ob auch Änderungen ausgegeben werden, die ausschließlich technischer Natur sind (also keine Auswirkungen auf das Modell haben).</p>
+<p>Der optionale Parameter <code class="hljs inlineCode">excludedModules</code> ist eine Sammlung von Modulen, deren Änderungen nicht berücksichtigt werden sollen. Jedes Element kann entweder eine <code class="hljs inlineCode">TLModule</code>-Referenz oder ein Modulname als Zeichenkette sein.</p>
+<h2>Parameter</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Typ</th>
+   <th>Beschreibung</th>
+   <th>Pflicht</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>object</td>
+   <td>Fachobjekt</td>
+   <td>Das Fachobjekt, für das die Änderungen ermittelt werden sollen. <code class="hljs inlineCode">null</code> oder weglassen liefert die globale Änderungshistorie der Anwendung.</td>
+   <td>nein</td>
+   <td>null</td>
+  </tr>
+  <tr>
+   <td>maxEntries</td>
+   <td>Ganzzahl</td>
+   <td>Begrenzt die Anzahl der zurückgelieferten Änderungen, neueste zuerst. Ein Wert kleiner oder gleich 0 bedeutet keine Begrenzung.</td>
+   <td>nein</td>
+   <td>0</td>
+  </tr>
+  <tr>
+   <td>includeSubtree</td>
+   <td>Wahrheitswert</td>
+   <td>Legt fest, ob der komplette Kompositions-Unterbaum berücksichtigt wird (<code class="hljs inlineCode">true</code>) oder ausschließlich das Objekt selbst (<code class="hljs inlineCode">false</code>).</td>
+   <td>nein</td>
+   <td>true</td>
+  </tr>
+  <tr>
+   <td>startRev</td>
+   <td>Revision oder Ganzzahl</td>
+   <td>Erste zu analysierende Revision. Entweder als Revisions-Objekt oder als Commit-Nummer.</td>
+   <td>nein</td>
+   <td>1 (Initial-Revision)</td>
+  </tr>
+  <tr>
+   <td>stopRev</td>
+   <td>Revision oder Ganzzahl</td>
+   <td>Letzte zu analysierende Revision. Entweder als Revisions-Objekt oder als Commit-Nummer.</td>
+   <td>nein</td>
+   <td>aktuelle Revision</td>
+  </tr>
+  <tr>
+   <td>author</td>
+   <td><code class="hljs inlineCode">tl.accounts:Person</code> oder Fachobjekt mit <code class="hljs inlineCode">account</code>-Referenz</td>
+   <td>Schränkt das Ergebnis auf Änderungen ein, die durch den angegebenen Account vorgenommen wurden.</td>
+   <td>nein</td>
+   <td>null (kein Filter)</td>
+  </tr>
+  <tr>
+   <td>includeTechnical</td>
+   <td>Wahrheitswert</td>
+   <td>Legt fest, ob auch Änderungen ausgegeben werden, die ausschließlich technischer Natur sind (also keine Auswirkungen auf das Modell haben).</td>
+   <td>nein</td>
+   <td>false</td>
+  </tr>
+  <tr>
+   <td>excludedModules</td>
+   <td>Sammlung von <code class="hljs inlineCode">TLModule</code> oder Zeichenketten</td>
+   <td>Module, deren Änderungen nicht berücksichtigt werden sollen. Jedes Element kann entweder eine <code class="hljs inlineCode">TLModule</code>-Referenz oder ein Modulname als Zeichenkette sein.</td>
+   <td>nein</td>
+   <td>leer</td>
+  </tr>
+ </tbody>
+</table>
+<h2>Rückgabewert</h2>
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Liste von <code class="hljs inlineCode">tl.changelog:ChangeSet</code></p>
+<p>Die Liste der Änderungen in aufsteigender Revisions-Reihenfolge.</p>
+<h2>Beispiele</h2>
+<h3>Beispiel 1</h3>
+<pre>	<code>$project.changeLog()</code>
+</pre>
+<p>Liefert alle Änderungen am Projekt und an allen darin enthaltenen Unterobjekten.</p>
+<h3>Beispiel 2</h3>
+<pre>	<code>$project.changeLog(10, false)</code>
+</pre>
+<p>Liefert die zehn neuesten Änderungen, die direkt am Projekt-Objekt vorgenommen wurden (ohne Unterobjekte).</p>
+<h3>Beispiel 3</h3>
+<pre>	<code>changeLog(null, 50)</code>
+</pre>
+<p>Liefert die 50 neuesten Änderungen der gesamten Anwendung, ohne Unterbaum-Einschränkung.</p>
+<h3>Beispiel 4</h3>
+<pre>	<code>changeLog(author: $account, includeTechnical: true)</code>
+</pre>
+<p>Liefert alle Änderungen (inklusive rein technischer), die durch den angegebenen Account durchgeführt wurden.</p>
+<h3>Beispiel 5</h3>
+<pre>	<code>$project.changeLog(0, true, 1000, 2000)</code>
+</pre>
+<p>Liefert alle Änderungen am Projekt (inklusive Unterbaum), die zwischen den Revisionen 1000 und 2000 erfolgten.</p>
+<h3>Beispiel 6</h3>
+<pre>	<code>changeLog(excludedModules: [`tl.accounts`, "tl.legacy"])</code>
+</pre>
+<p>Liefert die globale Änderungshistorie ohne die Änderungen aus den Modulen <code class="hljs inlineCode">tl.accounts</code> und <code class="hljs inlineCode">tl.legacy</code>.</p>

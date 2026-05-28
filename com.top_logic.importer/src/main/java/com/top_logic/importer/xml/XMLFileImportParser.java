@@ -43,7 +43,7 @@ public class XMLFileImportParser<C extends XMLFileImportParser.Config> extends A
     /**
      * Configuration for parsing the XML file. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface Config extends AbstractImportParser.Config {
 
@@ -76,7 +76,7 @@ public class XMLFileImportParser<C extends XMLFileImportParser.Config> extends A
     /**
      * Configuration for all DOImportHandler.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public interface MappingConfig extends NamedConfiguration, PolymorphicConfiguration<AbstractDOImportHandler<MappingConfig, Object>> {
 

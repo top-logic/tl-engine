@@ -17,7 +17,7 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 /**
  * Annotation class for annotating the number of displayed rows of type {@link Integer#TYPE}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

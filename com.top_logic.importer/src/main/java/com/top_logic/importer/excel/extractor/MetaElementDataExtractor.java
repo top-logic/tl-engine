@@ -39,14 +39,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Extract values out of the definition of a meta element.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MetaElementDataExtractor<O extends TLStructuredTypePart, C extends MetaElementDataExtractor.Config> extends AbstractDataExtractor<O, C> {
 
 	/**
 	 * Configuration of the MetaElementDataExtractor.
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public interface Config extends AbstractDataExtractor.Config {
 

@@ -10,7 +10,7 @@ import com.top_logic.basic.func.Function0;
 /**
  * Generic wrapper function to supply a given result.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ResultSupplier<T> extends Function0<T> {
 

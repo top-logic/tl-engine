@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.InitialZoom;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.server.control.DiagramControl;
@@ -87,6 +88,8 @@ public class FlowChartComponent extends BuilderComponent
 	private Map<Object, List<Widget>> _observedIndex = Collections.emptyMap();
 
 	private final SelectionModel _selectionModel;
+
+	private final InitialZoom _initialZoom;
 
 	boolean _uiSelectionProcessed = false;
 
@@ -272,6 +275,13 @@ public class FlowChartComponent extends BuilderComponent
 		@Name(DIAGRAM)
 		ModelSpec getDiagram();
 
+		/**
+		 * The zoom level applied when the diagram is first displayed, when the model changes,
+		 * or when the view is refreshed. The user can still adjust the zoom interactively afterwards.
+		 */
+		@Name("initialZoom")
+		InitialZoom getInitialZoom();
+
 		@Override
 		@ClassDefault(FlowChartComponent.class)
 		Class<? extends LayoutComponent> getImplementationClass();
@@ -284,6 +294,7 @@ public class FlowChartComponent extends BuilderComponent
 		super(context, config);
 
 		_selectionModel = createSelectionModel(config);
+		_initialZoom = config.getInitialZoom();
 
 		ContextMenuFactory contextMenuFactory = context.getInstance(config.getContextMenuFactory());
 		_control.setContextMenuProvider(contextMenuFactory.createContextMenuProvider(this));
@@ -331,6 +342,7 @@ public class FlowChartComponent extends BuilderComponent
 		Diagram diagram = (Diagram) getBuilder().getModel(getModel(), this);
 		if (diagram != null) {
 			diagram.setMultiSelect(_selectionModel.isMultiSelectionSupported());
+			diagram.setInitialZoom(_initialZoom);
 		}
 
 		if (diagram != null) {

@@ -150,7 +150,7 @@ public class DispatchingAssistentFileUploadComponent extends AssistentFileUpload
     /**
      * Dispatcher for an import upload handler. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static class DispatchingUploadHandler extends ValidatingUploadHandler {
 

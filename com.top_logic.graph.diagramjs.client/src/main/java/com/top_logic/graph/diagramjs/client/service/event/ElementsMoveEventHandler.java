@@ -11,7 +11,7 @@ import com.top_logic.client.diagramjs.model.Shape;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSClassNode;
 
 /**
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class ElementsMoveEventHandler implements EventHandler {
 

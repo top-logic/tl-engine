@@ -197,7 +197,7 @@ public class JournalManager extends ManagedClass {
 	/**
 	 * Configuration for the data source of the {@link JournalManager}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<JournalManager> {
 		/**
@@ -1227,7 +1227,7 @@ public class JournalManager extends ManagedClass {
 	/**
 	 * Module for {@link JournalManager}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<JournalManager> {
 		/**

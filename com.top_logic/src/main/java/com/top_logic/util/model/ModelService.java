@@ -36,6 +36,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -101,7 +103,7 @@ import com.top_logic.util.model.check.StringSizeCheck;
 /**
  * Provides the business model, this application is working on.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 @ServiceDependencies({
 	PersistencyLayer.Module.class,
@@ -348,12 +350,12 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		};
 		checkConstraints(problems, objectsToCheck);
 
-		TopLogicException ex = null;
+		I18NRuntimeException ex = null;
 		for (ResKey message : allProblems) {
 			ex = new TopLogicException(message, ex);
 		}
 		if (ex != null) {
-			throw ex;
+			throw new TopLogicException(I18NConstants.CONSTRAINTS_VIOLATED, ex).initSeverity(ErrorSeverity.ERROR);
 		}
 	}
 
@@ -617,7 +619,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	/**
 	 * Module definition for the {@link ModelService}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class Module extends TypedRuntimeModule<ModelService> {
 

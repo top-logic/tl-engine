@@ -30,7 +30,7 @@ public class TestResourceText extends BasicTestCase {
 	public void testWithExitingResourceGerman() throws IOException {
 		/* Note: English translation can not be tested within same method, because resources are
 		 * cached. */
-		testWithExitingResource(Locale.GERMAN, "Deutsche Übersetzung für Key1");
+		testWithExitingResource(Locale.GERMAN, "Deutsche Ãœbersetzung fÃ¼r Key1");
 	}
 
 	public void testWithExistingResourceEnglish() throws IOException {
@@ -42,7 +42,7 @@ public class TestResourceText extends BasicTestCase {
 	public void testFallbackWithExistingResourceGerman() throws IOException {
 		/* Note: English translation can not be tested within same method, because resources are
 		 * cached. */
-		testFallbackWithExistingResource(Locale.GERMAN, "Deutsche Übersetzung für Key1", new SimpleDisplayValue() {
+		testFallbackWithExistingResource(Locale.GERMAN, "Deutsche Ãœbersetzung fÃ¼r Key1", new SimpleDisplayValue() {
 
 			@Override
 			public String get(DisplayContext context) {
@@ -68,7 +68,7 @@ public class TestResourceText extends BasicTestCase {
 	public void testFallbackWithNonExistingResourceGerman() throws IOException {
 		/* Note: English translation can not be tested within same method, because resources are
 		 * cached. */
-		testFallbackWithNonExistingResource(Locale.GERMAN, "Deutsche Übersetzung für Key1");
+		testFallbackWithNonExistingResource(Locale.GERMAN, "Deutsche Ãœbersetzung fÃ¼r Key1");
 	}
 
 	public void testFallbackWithNonExistingResourceEnglish() throws IOException {

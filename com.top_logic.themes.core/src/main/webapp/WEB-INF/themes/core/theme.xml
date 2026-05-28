@@ -19,5 +19,6 @@
 		<style name="/style/fontawesome/css/all.css"/>
 		<style name="/style/tl_iconFont.css"/>
 		<style name="/style/scripting.css"/>
+		<style name="/style/loginDialog.css"/>
 	</styles>
 </theme>

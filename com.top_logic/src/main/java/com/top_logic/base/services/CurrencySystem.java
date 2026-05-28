@@ -50,7 +50,7 @@ public class CurrencySystem extends ManagedClass {
 	/**
 	 * Configuration for currency system.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<CurrencySystem> {
 
@@ -201,7 +201,7 @@ public class CurrencySystem extends ManagedClass {
 	/**
 	 * Module for {@link CurrencySystem}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<CurrencySystem> {
 

@@ -14,7 +14,6 @@ import com.top_logic.layout.form.template.model.FormEditorElementTemplate;
 import com.top_logic.layout.formeditor.parts.ForeignAttributeDefinition;
 import com.top_logic.layout.formeditor.parts.ForeignAttributeTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
-import com.top_logic.util.Resources;
 
 /**
  * The field showing the members of the representative groups of an account.
@@ -48,8 +47,8 @@ public class RepresentativeField extends ForeignAttributeTemplateProvider {
 
 		FormMember displayingField = getDelegate().getMember();
 		if (displayingField != null) {
-			displayingField.setLabel(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES));
-			displayingField.setTooltip(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES.tooltip()));
+			displayingField.setLabel(I18NConstants.REPRESENTATIVES);
+			displayingField.setTooltip(I18NConstants.REPRESENTATIVES.tooltip());
 		}
 
 		return result;

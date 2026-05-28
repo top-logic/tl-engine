@@ -1,6 +1,5 @@
 <%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
 %><%@page import="com.top_logic.basic.util.ResKey"
-%><%@page import="com.top_logic.base.accesscontrol.ApplicationPages"
 %><%@page import="com.top_logic.layout.ContentHandlersRegistry"
 %><%@page import="com.top_logic.basic.version.Version"
 %><%@page import="com.top_logic.util.Resources"

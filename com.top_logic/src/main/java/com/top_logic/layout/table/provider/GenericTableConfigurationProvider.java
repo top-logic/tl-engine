@@ -39,7 +39,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * {@link TableConfigurationProvider} using information provided by the application {@link TLModel}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GenericTableConfigurationProvider extends DefaultTableConfigurationProvider {
 

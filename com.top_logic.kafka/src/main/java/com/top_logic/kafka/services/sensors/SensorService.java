@@ -18,7 +18,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 /**
  * Providing access to sensor instances.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SensorService extends ConfiguredManagedClass<SensorService.Config>
 {
@@ -108,7 +108,7 @@ public class SensorService extends ConfiguredManagedClass<SensorService.Config>
     /**
      * Module for {@link SensorService}.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
     public static final class Module extends TypedRuntimeModule<SensorService> {
 

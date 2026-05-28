@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import jakarta.activation.DataHandler;
 import jakarta.activation.DataSource;
@@ -170,6 +171,19 @@ public class SendMail extends GenericMethod {
 	}
 
 	private DataHandler asDataHandler(Object input) {
+		return toDataHandler(input, this::asString);
+	}
+
+	/**
+	 * Converts the given input to an {@link DataHandler}.
+	 * 
+	 * @param input
+	 *        The object to convert.
+	 * @param toString
+	 *        Method to create a {@link String} from the given input is neither an
+	 *        {@link HTMLFragment} nor a {@link BinaryDataSource}.
+	 */
+	public static DataHandler toDataHandler(Object input, Function<Object, String> toString) {
 		Object object;
 		if (input instanceof HTMLFragment html) {
 			object = new BinaryDataSource() {
@@ -241,7 +255,7 @@ public class SendMail extends GenericMethod {
 
 			@Override
 			public InputStream getInputStream() throws IOException {
-				return new ByteArrayInputStream(asString(object).getBytes(StandardCharsets.UTF_8));
+				return new ByteArrayInputStream(toString.apply(object).getBytes(StandardCharsets.UTF_8));
 			}
 
 			@Override
@@ -274,6 +288,18 @@ public class SendMail extends GenericMethod {
 		}
 
 		String email = asString(object);
+		return toAddress(email);
+	}
+
+	/**
+	 * Creates an {@link Address} from the given String
+	 * 
+	 * @param email
+	 *        The email to create an {@link Address} from.
+	 * @throws TopLogicException
+	 *         iff email address is invalid.
+	 */
+	public static Address toAddress(String email) {
 		try {
 			return new InternetAddress(email);
 		} catch (AddressException ex) {

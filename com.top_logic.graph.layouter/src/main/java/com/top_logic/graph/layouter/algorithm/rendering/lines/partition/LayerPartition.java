@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Layered partition for objects.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayerPartition<T> {
 

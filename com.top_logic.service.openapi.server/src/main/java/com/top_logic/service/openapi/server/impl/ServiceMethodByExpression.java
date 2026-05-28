@@ -6,6 +6,9 @@
 package com.top_logic.service.openapi.server.impl;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -14,9 +17,14 @@ import jakarta.activation.MimeTypeParseException;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.json.JsonUtilities;
+import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -64,52 +72,126 @@ public class ServiceMethodByExpression implements ServiceMethod {
 	@Override
 	public void handleRequest(Person account, Map<String, Object> arguments, HttpServletResponse resp)
 			throws IOException, ComputationFailure {
-		Object result;
+		ComputationEx2<Void, ComputationFailure, IOException> job = () -> {
+			writeResponse(inInteraction(arguments), resp);
+			return null;
+		};
 		if (account == null) {
-			result = ThreadContextManager.inSystemInteraction(ServiceMethodBuilderByExpression.class,
-				() -> inInteraction(arguments));
+			ThreadContextManager.inSystemInteraction(ServiceMethodBuilderByExpression.class, job);
 		} else {
-			result = TLContextManager.inPersonContext(account, () -> inInteraction(arguments));
+			TLContextManager.inPersonContext(account, job);
 		}
+	}
 
-		String contentType;
-		String charset;
+	/**
+	 * Writes the given script result to the HTTP response.
+	 *
+	 * <p>
+	 * Exposed for direct unit testing; not intended to be called by application code.
+	 * </p>
+	 */
+	@FrameworkInternal
+	public final void writeResponse(Object result, HttpServletResponse resp) throws IOException {
+		Object body;
 		int status;
-		String content;
+		String contentType;
+
 		if (result instanceof Response) {
 			Response response = ((Response) result);
 			status = response.getStatus();
-			if (response.getResult() == null) {
+			body = response.getResult();
+			if (body == null) {
 				resp.sendError(status);
 				return;
 			}
-			try {
-				MimeType mimeType = new MimeType(response.getContentType());
-				if (JsonUtilities.JSON_CONTENT_TYPE.equals(mimeType.getBaseType())) {
-					content = JSON.toString(response.getResult());
-				} else {
-					content = String.valueOf(response.getResult());
-				}
-				contentType = mimeType.getBaseType();
-				charset = mimeType.getParameter("charset");
-				if (charset == null) {
-					charset = "utf-8";
-				}
-			} catch (MimeTypeParseException ex) {
-				throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
-					.fill(response.getContentType(), ex.getMessage()), ex);
-			}
+			contentType = response.getContentType();
 		} else {
 			status = HttpServletResponse.SC_OK;
-			contentType = JsonUtilities.JSON_CONTENT_TYPE;
-			charset = JsonUtilities.DEFAULT_JSON_ENCODING;
-			content = JSON.toString(result);
+			body = result;
+			contentType = null;
+		}
+
+		if (contentType == null || contentType.isEmpty()) {
+			contentType = defaultContentType(body);
 		}
 
 		resp.setStatus(status);
-		resp.setContentType(contentType);
+
+		if (isBinary(body)) {
+			writeBinary(body, contentType, resp);
+		} else {
+			writeText(body, contentType, resp);
+		}
+	}
+
+	private static void writeText(Object body, String contentType, HttpServletResponse resp) throws IOException {
+		String baseType;
+		String charset;
+		try {
+			MimeType mimeType = new MimeType(contentType);
+			baseType = mimeType.getBaseType();
+			charset = mimeType.getParameter("charset");
+		} catch (MimeTypeParseException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_CONTENT_TYPE__VALUE_MSG
+				.fill(contentType, ex.getMessage()), ex);
+		}
+		if (charset == null) {
+			charset = "utf-8";
+		}
+		resp.setContentType(baseType);
 		resp.setCharacterEncoding(charset);
+		String content;
+		if (JsonUtilities.JSON_CONTENT_TYPE.equals(baseType)) {
+			content = JSON.toString(body);
+		} else {
+			content = String.valueOf(body);
+		}
 		resp.getWriter().write(content);
+	}
+
+	private static boolean isBinary(Object value) {
+		return value instanceof BinaryDataSource || value instanceof BinaryContent || value instanceof byte[]
+			|| value instanceof InputStream;
+	}
+
+	private static void writeBinary(Object value, String contentType, HttpServletResponse resp) throws IOException {
+		resp.setContentType(contentType);
+		OutputStream out = resp.getOutputStream();
+		if (value instanceof BinaryDataSource source) {
+			source.deliverTo(out);
+		} else if (value instanceof BinaryContent content) {
+			try (InputStream in = content.getStream()) {
+				StreamUtilities.copyStreamContents(in, out);
+			}
+		} else if (value instanceof byte[]) {
+			out.write((byte[]) value);
+		} else if (value instanceof InputStream) {
+			try (InputStream in = (InputStream) value) {
+				StreamUtilities.copyStreamContents(in, out);
+			}
+		} else {
+			throw new IllegalStateException("Not a binary value: " + value.getClass().getName());
+		}
+	}
+
+	private static String defaultContentType(Object value) {
+		if (value instanceof BinaryDataSource data) {
+			String contentType = data.getContentType();
+			if (contentType == null || contentType.isEmpty()) {
+				return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
+			}
+			return contentType;
+		}
+		if (value instanceof BinaryContent) {
+			return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
+		}
+		if (value instanceof byte[] || value instanceof InputStream) {
+			return BinaryDataSource.CONTENT_TYPE_OCTET_STREAM;
+		}
+		if (value instanceof Map || value instanceof Collection) {
+			return JsonUtilities.JSON_CONTENT_TYPE;
+		}
+		return "text/plain";
 	}
 
 	private Object inInteraction(Map<String, Object> arguments) throws ComputationFailure {

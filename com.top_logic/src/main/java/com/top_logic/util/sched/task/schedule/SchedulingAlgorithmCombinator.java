@@ -21,7 +21,6 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.table.ConfigKey;
-import com.top_logic.util.Resources;
 
 /**
  * Combines multiple {@link SchedulingAlgorithm}s.
@@ -147,7 +146,7 @@ public class SchedulingAlgorithmCombinator implements SchedulingAlgorithm {
 	protected FormGroup createChildFormGroup(SchedulingAlgorithm child, int index) {
 		FormGroup childGroup = AbstractSchedulingAlgorithm.createUI(child, NAME_STEM_FORM_GROUP_CHILD + index);
 		ResKey1 labelKey = I18NConstants.COMBINATOR_CHILD_TITLE__INDEX;
-		childGroup.setLabel(Resources.getInstance().getString(labelKey.fill(index + 1)));
+		childGroup.setLabel(labelKey.fill(index + 1));
 		return childGroup;
 	}
 

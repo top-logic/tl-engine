@@ -17,14 +17,14 @@ import com.top_logic.basic.shared.graph.ExplicitGraph;
  * 
  * @see ExplicitGraph
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class UserObjectGraph<V, E>
 		extends ExplicitGraph<UserObjectGraph<V, E>.UserObjectNode, UserObjectGraph<V, E>.UserObjectEdge> {
 	/**
 	 * Node containing a user object of generic type V.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public class UserObjectNode extends ExplicitGraph<UserObjectNode, UserObjectEdge>.Node {
 		private V _userObject;
@@ -55,7 +55,7 @@ public class UserObjectGraph<V, E>
 	/**
 	 * Edge containing a user object of generic type E.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public class UserObjectEdge extends ExplicitGraph<UserObjectNode, UserObjectEdge>.Edge {
 		private E _userObject;

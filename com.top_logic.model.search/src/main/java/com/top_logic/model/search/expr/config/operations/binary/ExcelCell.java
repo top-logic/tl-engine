@@ -27,7 +27,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * Used within {@link ExcelSheet} to define individual cells with their content and styling.
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public class ExcelCell extends GenericMethod {
 

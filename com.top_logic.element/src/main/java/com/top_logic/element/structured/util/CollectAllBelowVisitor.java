@@ -25,7 +25,7 @@ import com.top_logic.knowledge.wrap.WrapperNameComparator;
  * In case you do not need the features above better use the {@link AllElementVisitor} which will be much faster.
  *
  * @author   <a href=mailto:mga@top-logic.com>mga</a>
- * @author   Dirk Köhlhoff
+ * @author   Dirk KÃ¶hlhoff
  */
 public class CollectAllBelowVisitor implements TLElementVisitor {
 

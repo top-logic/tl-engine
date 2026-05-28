@@ -15,7 +15,7 @@ import com.top_logic.model.annotate.TargetType;
 /**
  * {@link TLAnnotation} that defines the number of displayed rows for Expr attributes.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @TagName("editor-rows")
 @TargetType(value = TLTypeKind.CUSTOM, name = "tl.model.search:Expr")

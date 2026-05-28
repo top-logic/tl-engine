@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29092_multi_factor_authentication"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29092_added_unversioned_link_tables"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-datatype name="tl.accounts:MfaRequirement"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="ENUM"/>
+			</annotations>
+			<enum-storage enum="com.top_logic.knowledge.wrap.person.MfaRequirement"/>
+		</create-datatype>
+		<create-property name="tl.accounts:Person#mfaSecret"
+			type="tl.core:Password"
+		>
+			<annotations>
+				<delete-protected/>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:Person#mfaRequirement"
+			type="tl.accounts:MfaRequirement"
+		/>
+
+		<reorder-part name="tl.accounts:Person#mfaSecret"/>
+		<reorder-part name="tl.accounts:Person#mfaRequirement"/>
+	</processors>
+	<post-processors/>
+</migration>

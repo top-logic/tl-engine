@@ -31,7 +31,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 /**
  * Test the {@link LuceneSearchEngine}.
  * 
- * @author Dieter Rothb‰cher
+ * @author Dieter Rothb√§cher
  */
 public class TestLuceneSearchEngine extends BasicTestCase {
 

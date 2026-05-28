@@ -13,6 +13,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
@@ -37,6 +39,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePartVisitor;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -81,6 +84,7 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 					// Back reference.
 					config = ReverseStorage.defaultConfig();
 				} else {
+					boolean unversioned = unversionedStorage(model);
 					HistoryType historyType = end.getHistoryType();
 					DeletionPolicy deletionPolicy = end.getDeletionPolicy();
 					if (deletionPolicy == null) {
@@ -95,22 +99,48 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 							if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
 								config = ImageGalleryStorage.imageGalleryConfig();
 							} else {
-								config = ListStorage.listConfig(composite, historyType, deletionPolicy);
+								config = ListStorage.listConfig(composite, historyType, deletionPolicy, unversioned);
 							}
 						} else {
-							config = SetStorage.setConfig(composite, historyType, deletionPolicy);
+							config = SetStorage.setConfig(composite, historyType, deletionPolicy, unversioned);
 						}
 					} else {
 						TLType endType = end.getType();
 						if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(endType))) {
 							config = TypedConfiguration.newConfigItem(DocumentStorage.Config.class);
 						} else {
-							config = SingletonLinkStorage.singletonLinkConfig(composite, historyType, deletionPolicy);
+							config = SingletonLinkStorage.singletonLinkConfig(composite, historyType, deletionPolicy,
+								unversioned);
 						}
 					}
 				}
 
 				return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+			}
+
+			private boolean unversionedStorage(TLReference model) {
+				if (model.tTransient()) {
+					// May happen during wrapper generation.
+					return true;
+				}
+				String tableName = TLAnnotations.getTable(model.getOwner());
+				MetaObject table = model.tKnowledgeBase().getMORepository().getTypeOrNull(tableName);
+
+				if (table == null) {
+					Logger.warn(
+						"Unknown table " + tableName + " for owner  " + model.getOwner() + " of reference " + model
+								+ ".",
+						StorageImplementationFactory.class);
+					return false;
+				}
+				if (table instanceof MOClass clazz) {
+					return !clazz.isVersioned();
+				}
+				Logger.warn(
+					"Table " + table + " for owner  " + model.getOwner() + " of reference " + model
+							+ " is not a class.",
+					StorageImplementationFactory.class);
+				return false;
 			}
 
 			@Override

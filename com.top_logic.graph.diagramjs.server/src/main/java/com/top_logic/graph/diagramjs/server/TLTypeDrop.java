@@ -22,7 +22,7 @@ import com.top_logic.model.TLType;
 /**
  * {@link TLTypeDrop} drop in a {@link DiagramJSGraphControl}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class TLTypeDrop implements GraphDropTarget {
 

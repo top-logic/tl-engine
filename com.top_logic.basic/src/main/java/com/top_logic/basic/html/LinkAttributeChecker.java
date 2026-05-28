@@ -12,7 +12,7 @@ import com.top_logic.basic.exception.I18NException;
 /**
  * Checker for the href attribute of a HTML anchor tag.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LinkAttributeChecker implements AttributeChecker {
 

@@ -15,7 +15,7 @@ import com.top_logic.graph.layouter.model.layer.UnorderedNodeLayer;
 /**
  * Algorithm to find a {@link LayoutNode} ordering for a given layered {@link LayoutGraph}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface LayerOrderingAlgorithm {
 	/**

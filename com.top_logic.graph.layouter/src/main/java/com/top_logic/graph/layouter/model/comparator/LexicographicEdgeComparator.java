@@ -17,7 +17,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
 /**
  * Compares {@link LayoutEdge}s lexicographic from top to bottom.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LexicographicEdgeComparator implements Comparator<Object> {
 

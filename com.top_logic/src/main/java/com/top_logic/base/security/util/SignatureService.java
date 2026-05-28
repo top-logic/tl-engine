@@ -36,7 +36,7 @@ public abstract class SignatureService extends ManagedClass {
 	/**
 	 * Configuration for {@link SignatureService}.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<SignatureService> {
 		/**

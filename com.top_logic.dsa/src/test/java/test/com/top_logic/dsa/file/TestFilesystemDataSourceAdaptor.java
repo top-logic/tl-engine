@@ -59,10 +59,10 @@ public class TestFilesystemDataSourceAdaptor extends TestDataSourceAdapter imple
             "~$name with Tilde and Dollar~",
             "~name with Tilde~"
             /*
-             // This will not work in Solaris ฐ, ง, ด are no ascii characters
-            "_ฐ^!ง$%&)(][}{=` ด+~'#,.-_",
+             // This will not work in Solaris ยฐ, ยง, ยด are no ascii characters
+            "_ยฐ^!ยง$%&)(][}{=` ยด+~'#,.-_",
              // This will not work in NT or Unix due to / \ resp. ;
-            " ฐ^!\"ง$%&/)(][}{=?\\`ด*+~'#,.;:-_|><"
+            " ยฐ^!\"ยง$%&/)(][}{=?\\`ยด*+~'#,.;:-_|><"
             */
         };
 

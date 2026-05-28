@@ -12,7 +12,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * 
  * This can be used to display a tree, which is bound by a master relation.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MasterBasedModelBuilder implements ModelBuilder {
 

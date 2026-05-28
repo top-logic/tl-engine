@@ -20,7 +20,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 /**
  * Set the description of the given {@link Wrapper} from the data of the given {@link DataObject}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CDataDOImportHandler<C extends CDataDOImportHandler.Config, O extends Wrapper> extends AbstractAttributedDOImportHandler<C, O> {
 

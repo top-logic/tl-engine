@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * General definition for a layer of items. Wrapper over {@link Collection}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class AbstractLayer<I> {
 	private Collection<I> _items;

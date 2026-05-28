@@ -13,6 +13,7 @@ import test.com.top_logic.basic.TestFactory;
 import test.com.top_logic.basic.TestFactoryProxy;
 import test.com.top_logic.basic.ThreadContextSetup;
 
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -51,7 +52,8 @@ public class TestPersonSetup extends ThreadContextSetup {
 		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		{
 			PersonManager r = PersonManager.getManager();
-			_testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), USER_ID, "dbSecurity");
+			_testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), USER_ID,
+				TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity"));
 			_testPerson.getAuthenticationDevice().setPassword(_testPerson, USER_PASSWORD.toCharArray());
 			tx.commit();
 		}

@@ -37,7 +37,7 @@ import com.top_logic.util.Resources;
  * 
  * @see Options#fun()
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class AllImplementationsWithI18N extends Function0<List<? extends Class<?>>>
 		implements OptionMappingProvider {

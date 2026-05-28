@@ -19,7 +19,7 @@ import com.top_logic.graph.layouter.model.util.DiagramJSLayoutGraphUtil;
 /**
  * Assign {@link NodePort} coordinates using TLModel label widths.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class DefaultNodePortCoordinateAssigner implements NodePortAssignAlgorithm {
 	/**

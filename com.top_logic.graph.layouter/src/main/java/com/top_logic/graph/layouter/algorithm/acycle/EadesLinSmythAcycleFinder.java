@@ -24,7 +24,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * 
  * Selfloops are removed and other conflicting edges are reversed.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class EadesLinSmythAcycleFinder extends AcycleFinder {
 

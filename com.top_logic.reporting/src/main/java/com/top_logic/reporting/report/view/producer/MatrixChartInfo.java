@@ -22,7 +22,7 @@ import com.top_logic.reporting.chart.info.TemplateInfo;
 /**
  * Template information to be used by the {@link AbstractMatrixChartProducer}.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class MatrixChartInfo implements TemplateInfo {
 

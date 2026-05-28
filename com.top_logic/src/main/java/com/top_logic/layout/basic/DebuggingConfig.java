@@ -12,7 +12,7 @@ import com.top_logic.basic.config.annotation.Name;
 /**
  * Configuration for debugging.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface DebuggingConfig extends ConfigurationItem {
 

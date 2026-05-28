@@ -27,6 +27,8 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import junit.framework.AssertionFailedError;
+
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
@@ -40,8 +42,6 @@ import jakarta.servlet.http.HttpSessionBindingEvent;
 import jakarta.servlet.http.HttpSessionBindingListener;
 import jakarta.servlet.http.HttpSessionEvent;
 import jakarta.servlet.http.HttpSessionListener;
-
-import junit.framework.AssertionFailedError;
 
 import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
@@ -59,8 +59,6 @@ import com.meterware.servletunit.ServletRunner;
 import com.meterware.servletunit.ServletUnitClient;
 
 import com.top_logic.base.accesscontrol.Login;
-import com.top_logic.base.accesscontrol.LoginHook;
-import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -82,7 +80,6 @@ import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.tooling.WebXmlBuilder;
 import com.top_logic.basic.util.Computation;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.ContentHandlersRegistry;
@@ -95,7 +92,6 @@ import com.top_logic.layout.scripting.runtime.ApplicationSession;
 import com.top_logic.layout.scripting.runtime.action.DynamicActionOp;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TopLogicServlet;
 
 /**
@@ -220,18 +216,6 @@ public class TestedApplication implements Application {
 							Login.getInstance().loginFromExternalAuth(request, response, user);
 						} catch (Exception ex) {
 							throw new Login.LoginFailedException("Unable to login " + user.getName(), ex);
-						}
-
-						LoginHook loginHook = LoginPageServlet.getConfiguredLoginHook();
-						if (loginHook != null) {
-							try {
-								ResKey reason = loginHook.check(request, response);
-								if (reason != null) {
-									throw new Login.LoginFailedException(Resources.getInstance().getString(reason));
-								}
-							} catch (ServletException e) {
-								throw (AssertionError) new AssertionError("Servlet unit request failed.").initCause(e);
-							}
 						}
 					}
 				});

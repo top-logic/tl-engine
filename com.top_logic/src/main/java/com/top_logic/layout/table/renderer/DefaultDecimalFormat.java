@@ -15,7 +15,7 @@ import com.top_logic.mig.html.HTMLFormatter;
 /**
  * Render a {@link Number} by using a user I18Ned {@link DecimalFormat decimal} to a cell.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DefaultDecimalFormat implements LabelProvider {
 

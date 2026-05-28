@@ -163,7 +163,7 @@ public class TestExpansionModel implements ExpansionModel {
 			DataObject p1 = createPerson("Till", "Bentz", false, false);
 			DataObject p2 = createPerson("Friedemann", "Schneider", false, false);
 			DataObject p3 = createPerson("Theo", "Sattler", false, true);
-			DataObject p4 = createPerson("Michael", "Gänsler", true, true);
+			DataObject p4 = createPerson("Michael", "GÃ¤nsler", true, true);
 			DataObject p5 = createPerson("Frank", "Mausz", false, true);
 
 			ArrayList<DataObject> group = new ArrayList<>();

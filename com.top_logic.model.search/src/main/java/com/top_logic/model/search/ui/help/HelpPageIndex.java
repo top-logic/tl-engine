@@ -7,6 +7,8 @@ package com.top_logic.model.search.ui.help;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -198,7 +200,7 @@ public class HelpPageIndex extends ConfiguredManagedClass<ConfiguredManagedClass
 			}
 			Properties properties = new Properties();
 			try (InputStream in = Files.newInputStream(path)) {
-				properties.load(in);
+				properties.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 			}
 			String name = path.getName(path.getNameCount() - 2).toString();
 			add(new PageImpl(properties.getProperty("uuid"), name, properties.getProperty("title"), content));

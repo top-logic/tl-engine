@@ -19,7 +19,7 @@ import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 /**
  * Provide data for a {@link DataObject}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class InspectorDataObjectNode extends InspectorTreeNode {
 

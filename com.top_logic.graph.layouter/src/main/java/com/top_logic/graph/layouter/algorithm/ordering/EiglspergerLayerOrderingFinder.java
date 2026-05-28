@@ -35,7 +35,7 @@ import com.top_logic.graph.layouter.model.layer.UnorderedNodeLayer;
  * Finds an ordering for the given layered graph, i.e. order each layer of nodes w.r.t. minimize the
  * edge crossings between two layers.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class EiglspergerLayerOrderingFinder extends LayerOrderingFinder {
 

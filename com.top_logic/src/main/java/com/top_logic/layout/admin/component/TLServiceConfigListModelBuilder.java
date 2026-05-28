@@ -17,7 +17,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * {@link ListModelBuilder} creating a collection of all {@link BasicRuntimeModule}s as model for a
  * {@link TableComponent}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLServiceConfigListModelBuilder implements ListModelBuilder {
 

@@ -21,7 +21,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
 /**
  * A {@link VerticalDownAligner} which aligns from right to left.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class VerticalRightDownAligner extends VerticalDownAligner {
 

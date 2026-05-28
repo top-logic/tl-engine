@@ -87,14 +87,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Component to display a dynamic automated layouted graph using library <code>UmlJS</code>.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class DiagramJSGraphComponent extends AbstractGraphComponent implements DiagramHandler, Selectable {
 
 	/**
 	 * Graph component configuration.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
 	public interface Config extends AbstractGraphComponent.Config, Selectable.SelectableConfig {
 

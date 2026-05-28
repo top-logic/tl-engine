@@ -222,7 +222,6 @@ import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InEditModeExecutable;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.TL5Types;
@@ -232,7 +231,7 @@ import com.top_logic.util.model.TL5Types;
  * 
  * @see GridComponent.Config
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class GridComponent extends EditComponent implements
 		SelectableWithSelectionModel, InAppSelectable,
@@ -2278,7 +2277,7 @@ public class GridComponent extends EditComponent implements
 			if (isTransient(rowObject)) {
 				HiddenField changeMarker = FormFactory.newHiddenField(NEW_OBJECT_MARKER_FIELD, 1);
 				changeMarker.setDefaultValue(0);
-				changeMarker.setLabel(Resources.getInstance().getString(I18NConstants.NEW_OBJECT_MARKER));
+				changeMarker.setLabel(I18NConstants.NEW_OBJECT_MARKER);
 				row.addMember(changeMarker);
 			}
             
@@ -3268,7 +3267,7 @@ public class GridComponent extends EditComponent implements
      * {@link GridComponent#PROP_ATTRIBUTED} (which is an {@link TLObject}) will be asked
      * for the value.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
 	public class GridAccessor implements Accessor<Object> {
 
@@ -3508,7 +3507,7 @@ public class GridComponent extends EditComponent implements
     /**
      * Handler to store the data of the currently selected row.
      *
-     * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+     * @author    <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
      */
 	public static class GridApplyCommandHandler extends AbstractApplyCommandHandler {
 
@@ -3581,7 +3580,7 @@ public class GridComponent extends EditComponent implements
 	/**
 	 * Allow execution only, when at least one row in {@link GridComponent} has been marked.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	protected static class HasMarkedGroupsRule implements ExecutabilityRule {
 
@@ -3699,7 +3698,7 @@ public class GridComponent extends EditComponent implements
     /**
      * Allow execution only, when {@link GridComponent} owns the token context. 
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class HasTokenContextRule implements ExecutabilityRule {
 
@@ -3748,7 +3747,7 @@ public class GridComponent extends EditComponent implements
 	/**
 	 * Simple handler for adding all rows marked to the clipboard.
 	 *
-	 * @author <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+	 * @author <a href=mailto:mga@top-logic.com>Michael GÃ¤nsler</a>
 	 */
     public static class AddSelectedToClipboard extends AJAXCommandHandler {
 
@@ -3806,7 +3805,7 @@ public class GridComponent extends EditComponent implements
 	 * 
 	 * @see SelectAllCheckboxes
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
     public static class ClearSelectedCheckboxes extends AJAXCommandHandler {
 
@@ -3904,7 +3903,7 @@ public class GridComponent extends EditComponent implements
      * If the given value is a {@link FormMember}, this class will use the
      * configured {@link ControlProvider}, otherwise the configured inner {@link Renderer}.
      * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+     * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
      */
 	public static class GridContentRenderer implements Renderer<Object> {
 

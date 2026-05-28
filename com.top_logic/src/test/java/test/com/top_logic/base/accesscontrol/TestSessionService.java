@@ -25,10 +25,10 @@ import com.meterware.servletunit.ServletUnitClient;
 
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.LoginCredentials;
-import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -48,7 +48,7 @@ public class TestSessionService extends BasicTestCase {
     public void testAddRemoveSession () throws Exception {
         
         ServletRunner		sr = new ServletRunner();
-        sr.registerServlet("lpServlet", LoginPageServlet.class.getName());
+		sr.registerServlet("lpServlet", TLLayoutServlet.class.getName());
 
         ServletUnitClient   sc = sr.newClient();
 
@@ -61,19 +61,24 @@ public class TestSessionService extends BasicTestCase {
         ThreadContext.pushSuperUser();
         try {
 			HttpServletResponse response = ic.getResponse();
-			try (LoginCredentials login =
+			SessionService myService;
+			LoginCredentials login =
 				LoginCredentials.fromUserAndPassword(PersonManager.getManager().getRoot(),
-					SecureRandomService.getInstance().getRandomString().toCharArray())) {
-
+					SecureRandomService.getInstance().getRandomString().toCharArray());
+			try {
 				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					login.getPerson().getAuthenticationDevice().setPassword(login.getPerson(), login.getPassword());
 					tx.commit();
 				}
 
-				Login.getInstance().login(servletRequest, response, login);
+				boolean checkLoginCredentials = Login.getInstance().checkLoginCredentials(login, servletRequest, response);
+				assertTrue(checkLoginCredentials);
+				myService = SessionService.getInstance();
+				myService.loginUser(servletRequest, response, login.getPerson());
+			} finally {
+				login.clearPassword();
 			}
             
-    		SessionService myService = SessionService.getInstance();
     		
     		assertTrue(myService.validateSession(servletRequest));
     		

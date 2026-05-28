@@ -22,12 +22,12 @@ public class TestURLPathBuilder extends TestCase {
 	public void testEscapeChars() {
 		URLPathBuilder builder = URLPathBuilder.newEmptyBuilder();
 
-		builder.addResource("äöß");
+		builder.addResource("Ã¤Ã¶ÃŸ");
 		builder.addResource("abc");
 		builder.addResource(" + ");
 		builder.appendParameter("param1", " + ");
 		assertEquals(URLPathParser.PATH_SEPARATOR
-			+ escape("ä") + escape("ö") + escape("ß")
+			+ escape("Ã¤") + escape("Ã¶") + escape("ÃŸ")
 			+ URLPathParser.PATH_SEPARATOR
 			+ "abc"
 			+ URLPathParser.PATH_SEPARATOR

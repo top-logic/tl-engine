@@ -29,14 +29,14 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
  * Processing instance for one {@link ExcelRow} and base class to the different excel based actions
  * (doing some administration stuff).
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class ExcelActionOp<C extends ExcelAction> extends AbstractApplicationActionOp<C> {
 
 	/**
 	 * Base configuration information for the {@link ExcelActionOp}s.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface ExcelAction extends ApplicationAction {
 

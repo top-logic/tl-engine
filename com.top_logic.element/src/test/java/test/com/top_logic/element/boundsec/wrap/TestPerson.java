@@ -12,6 +12,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -60,8 +61,8 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	/**
-	 * @see "Ticket #3171: Security-Problem durch Wiederverwendung existierender Representative-Group für neuen Benutzer"
-	 * @see "Ticket #3350: Person.getRepresentativeGroup() überprüft nur auf (nicht eindeutigen) Namen"
+	 * @see "Ticket #3171: Security-Problem durch Wiederverwendung existierender Representative-Group fÃ¼r neuen Benutzer"
+	 * @see "Ticket #3350: Person.getRepresentativeGroup() Ã¼berprÃ¼ft nur auf (nicht eindeutigen) Namen"
 	 */
 	public void testRepresentativeGroup() {
 		Person p1;
@@ -138,7 +139,7 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	private Person mkPerson(String name) {
-		return Person.create(kb(), name, "dbSecurity");
+		return Person.create(kb(), name, TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity"));
 	}
 
 	private String mkName() {

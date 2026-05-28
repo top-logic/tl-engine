@@ -4,7 +4,7 @@
   <parent>
 	  <groupId>com.top-logic</groupId>
 	  <artifactId>tl-parent-core-internal</artifactId>
-	  <version>7.11.0-SNAPSHOT</version>
+	  <version>8.0.0-SNAPSHOT</version>
 	  <relativePath>../tl-parent-core/internal</relativePath>
   </parent>
 
@@ -22,6 +22,7 @@
 		<groupId>de.haumacher.msgbuf</groupId>
 		<artifactId>msgbuf-api</artifactId>
 	</dependency>
+
   </dependencies>
   
   	<build>
@@ -39,6 +40,24 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+
+			<!--
+			  Override the restrictive Surefire <includes>test/TestAll.java</includes> inherited
+			  from tl-parent-core back to Surefire's default discovery. This module is a pure
+			  library without src/main/webapp, so the TestAll / AbstractBasicTestAll /
+			  ConfigLoader machinery used by the application modules cannot run here. Without
+			  this override, no tests would run and failures would silently pass the build.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>**/Test*.java</include>
+						<include>**/*Test.java</include>
+					</includes>
+				</configuration>
 			</plugin>
 		</plugins>
   	</build>

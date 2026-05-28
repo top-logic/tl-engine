@@ -13,7 +13,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 /**
  * {@link Comparator} for {@link LayoutNode} according to their measure.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayoutNodeMeasureComparator implements Comparator<LayoutNode> {
 

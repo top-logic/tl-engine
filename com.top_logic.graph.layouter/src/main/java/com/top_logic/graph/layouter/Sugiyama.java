@@ -32,7 +32,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * Implementation of the Sugiyama graph layouting algorithm. A hierarchical graph drawing in which
  * vertices are drawn in horizontal layers and edges downwards to the next layer.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class Sugiyama {
 

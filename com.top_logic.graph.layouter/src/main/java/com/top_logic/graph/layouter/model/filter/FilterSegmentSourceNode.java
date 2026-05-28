@@ -12,7 +12,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
 /**
  * {@link Predicate} that matches segment source {@link LayoutNode}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class FilterSegmentSourceNode implements Predicate<LayoutNode> {
 

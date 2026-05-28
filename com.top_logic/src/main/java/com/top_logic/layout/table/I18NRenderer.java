@@ -23,7 +23,7 @@ import com.top_logic.util.Resources;
  * This class will append the prefix and postfix to the given string, translate it via the
  * {@link Resources} and write it via the method {@link TagWriter#writeText(CharSequence)}.
  *
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class I18NRenderer implements Renderer<String> {
 

@@ -183,7 +183,8 @@ public class TLScriptMethod extends GenericMethod {
 							docuParam.setMandatory();
 						} else {
 							Object defaultValue = defaultValue(p);
-							descriptor.optional(p.getName(), () -> SearchExpressionFactory.literal(defaultValue));
+							descriptor.optional(p.getName(),
+								() -> SearchExpressionFactory.literal(SearchExpression.normalizeValue(defaultValue)));
 							docuParam.setOptional(ToString.toString(defaultValue));
 						}
 					}

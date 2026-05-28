@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -86,6 +87,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.LayoutContext;
 import com.top_logic.layout.LayoutLinker;
+import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.UpdateWriter;
 import com.top_logic.layout.WindowScopeProvider;
@@ -97,11 +99,15 @@ import com.top_logic.layout.basic.component.AJAXSupport;
 import com.top_logic.layout.basic.component.BasicAJAXSupport;
 import com.top_logic.layout.basic.component.ControlComponent.DispatchAction;
 import com.top_logic.layout.basic.component.ControlSupport;
+import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.DefaultChannel;
+import com.top_logic.layout.channel.PageTitleChannel;
+import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.layout.form.tag.js.JSObject;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.BrowserWindowControl;
 import com.top_logic.layout.structure.LayoutControl;
@@ -140,6 +146,10 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	 * Configuration for {@link MainLayout}. System identifiers for various document type definitions.
 	 */
 	public interface GlobalConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getLoginHooks()}. */
+		String LOGIN_HOOKS = "login-hooks";
+
 		/**
 		 * See {@link GlobalConfig#getDocType}.
 		 */
@@ -161,6 +171,12 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		@Name(EVENT_FORWARDER)
 		@ItemDefault(GlobalModelEventForwarder.class)
 		PolymorphicConfiguration<? extends ModelEventForwarder> getEventForwarder();
+
+		/**
+		 * The commands to execute when a user logs in.
+		 */
+		@Name(LOGIN_HOOKS)
+		List<? extends PolymorphicConfiguration<? extends LoginHook>> getLoginHooks();
 	}
 
 	/**
@@ -274,6 +290,29 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		@Name(CLOSE_DIALOG_ON_BACKGROUND_CLICK)
 		boolean closeDialogOnBackgroundClick();
 
+		/**
+		 * The browser tab title shown for this application.
+		 *
+		 * <p>
+		 * The {@link ModelSpec} value drives the {@link PageTitleChannel} of this
+		 * {@link MainLayout}; the resolved value is converted to a label and pushed to the
+		 * browser as new <code>document.title</code>. When unset or resolving to
+		 * <code>null</code>, the title configured via the resource key applies.
+		 * </p>
+		 *
+		 * <p>
+		 * Example: bind to the selection of a navigation component:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;page-title class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+		 *             input="selection(mainNavigation)"
+		 *             function="x -&gt; $x == null ? null : $x.get(`my.app:Project#name`)"/&gt;
+		 * </pre>
+		 */
+		@Name("page-title")
+		ModelSpec getPageTitleSpec();
+
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
 			Layout.Config.super.modifyIntrinsicCommands(registry);
@@ -335,6 +374,13 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	private static final String SKIP_NOTIFY_UNLOAD_JS_VARIABLE = "services.ajax.skipNotifyUnload";
 
 	private static final String DEFAULT_DOCTYPE_PATH = "http://www.w3.org/TR/xhtml1/DTD/";
+
+	/**
+	 * Channels of the {@link MainLayout}: the {@link #MODEL_CHANNEL model channel} extended
+	 * by the {@link PageTitleChannel}, which controls the browser tab title at runtime.
+	 */
+	public static final Map<String, ChannelSPI> MAIN_LAYOUT_CHANNELS =
+		channels(MODEL_CHANNEL, PageTitleChannel.INSTANCE);
 
     /** Name of class that will be called after resolving the complete Layout */
     protected String postProcessorClassName; // com.top_logic.mig.html.layout.LayoutResolvedListener
@@ -398,6 +444,8 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 	private final boolean _closeDialogOnBackgroundClick;
 
+	private List<LoginHook> _loginHooks;
+
     /** Create a MainLayout when importing from a XML-File 
      * Attributes supported here are:<ul>
      *   <li>framed               , default true </li>
@@ -414,7 +462,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
         icon                   = StringServices.nonEmpty(config.getIcon());
         headerIncludeFilePath  = StringServices.nonEmpty(config.getHeaderIncludeFilePath());
         postProcessorClassName = StringServices.nonEmpty(config.getPostProcessorClassName());
-		_modelEventForwarder = context.getInstance(getGlobalConfig().getEventForwarder());
+		GlobalConfig globalConfig = getGlobalConfig();
+		_modelEventForwarder = context.getInstance(globalConfig.getEventForwarder());
+		_loginHooks = TypedConfiguration.getInstanceList(context, globalConfig.getLoginHooks());
 		_closeDialogOnBackgroundClick = config.closeDialogOnBackgroundClick();
     }
     
@@ -423,6 +473,23 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		registerComponent(this);
 
 		super.createSubComponents(context);
+	}
+
+	@Override
+	protected Map<String, ChannelSPI> programmaticChannels() {
+		return MAIN_LAYOUT_CHANNELS;
+	}
+
+	@Override
+	public void linkChannels(Log log) {
+		super.linkChannels(log);
+
+		ModelSpec pageTitleSpec = ((Config) getConfig()).getPageTitleSpec();
+		if (pageTitleSpec != null) {
+			ComponentChannel pageTitleChannel = getChannel(PageTitleChannel.NAME);
+			ChannelLinking linking = getChannelLinking(pageTitleSpec);
+			pageTitleChannel.linkChannel(log, this, linking);
+		}
 	}
 
 	final BidiMap<String, LayoutComponent> getAvailableComponents() {
@@ -784,14 +851,20 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     }
     
 	/**
-	 * Factory method for creating a snipplet that reloads the complete
-	 * application.
+	 * Factory method for creating a snipplet that reloads the complete application.
 	 */
 	public static JSSnipplet createFullReload() {
 		// Note: Must not use a constant, because JSSnipplet is not immutable.
 		return new JSSnipplet("services.ajax.mainLayout." + SKIP_NOTIFY_UNLOAD_JS_VARIABLE + "=true;services.ajax.mainLayout.location.reload()");
 	}
     
+	/**
+	 * Adds a {@link #createFullReload() full reload snipplet} to the given {@link DisplayContext}.
+	 */
+	public static void addFullReload(DisplayContext context) {
+		context.getWindowScope().getTopLevelFrameScope().addClientAction(createFullReload());
+	}
+
     /** Access the MainLayout, which is this. */
     @Override
 	public MainLayout getMainLayout() {
@@ -1023,8 +1096,44 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 		createLayoutControl();
 
+		registerPageTitleListener();
+
 		// Start processing events.
 		layoutContext.processActions();
+	}
+
+	private void registerPageTitleListener() {
+		ComponentChannel channel = getChannel(PageTitleChannel.NAME);
+		channel.addListener((sender, oldValue, newValue) -> updatePageTitle(newValue));
+		Object initial = channel.get();
+		if (initial != null) {
+			updatePageTitle(initial);
+		}
+	}
+
+	/**
+	 * Pushes the current default page title (the value of the {@link PageTitleChannel}, or
+	 * the configured {@link #getTitleKey() title key} if the channel is unset) to the
+	 * browser.
+	 *
+	 * <p>
+	 * Used by per-component page title plug-ins to release their claim when the carrying
+	 * component becomes invisible.
+	 * </p>
+	 */
+	public void applyDefaultPageTitle() {
+		updatePageTitle(getChannel(PageTitleChannel.NAME).get());
+	}
+
+	private void updatePageTitle(Object value) {
+		String title;
+		if (value == null) {
+			ResKey titleKey = getTitleKey();
+			title = titleKey == null ? "" : Resources.getInstance().getString(titleKey);
+		} else {
+			title = MetaLabelProvider.INSTANCE.getLabel(value);
+		}
+		getWindowScope().setPageTitle(title);
 	}
 
 	private void createLayoutControl() {
@@ -1070,6 +1179,33 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     protected void initialValidateModel(DisplayContext aContext) {
         this.globallyValidateModel(aContext);
     }
+
+	/**
+	 * Processes the configured {@link LoginHook}s.
+	 * 
+	 * @see GlobalConfig#getLoginHooks()
+	 */
+	protected void processLoginHooks() {
+		if (_loginHooks.isEmpty()) {
+			return;
+		}
+		MainLayout mainLayout = this;
+		Runnable callback = new Runnable() {
+
+			private final Iterator<LoginHook> _hooks = _loginHooks.iterator();
+
+			@Override
+			public void run() {
+				if (_hooks.hasNext()) {
+					/* Note: It is not possible to use same DisplayContext for all all hooks because
+					 * the execution of a hook may require more than one interaction. */
+					_hooks.next().handleLogin(mainLayout, this);
+				}
+
+			}
+		};
+		callback.run();
+	}
 
     /**
 	 * Check, whether global state changes are allowed in this session's layout.
@@ -1150,10 +1286,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 			out.endEmptyTag();
 		}
 
-		ResKey theTitle;
-        if (writeTitle && null != (theTitle = getTitleKey())) {
+		if (writeTitle) {
 			out.beginTag(HTMLConstants.TITLE);
-			out.writeText(Resources.getInstance().getString(theTitle));
+			out.writeText(DefaultDisplayContext.getDisplayContext(req).getWindowScope().getPageTitle());
 			out.endTag(HTMLConstants.TITLE);
         }
         
@@ -1369,6 +1504,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 				/* Initialize the models. */
 				ml.initialValidateModel(context);
+				ml.processLoginHooks();
 			}
 		} finally {
 			layoutContext.enableUpdate(before);

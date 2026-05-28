@@ -174,7 +174,7 @@ public class TestResKeyEncoding extends TestCase {
 			.add(Locale.ENGLISH, "Hello world!");
 
 		literalBuilder.suffix("tooltip")
-			.add(Locale.GERMAN, "Begrüßung")
+			.add(Locale.GERMAN, "BegrÃ¼ÃŸung")
 			.add(Locale.ENGLISH, "Greeding");
 
 		ResKey literal = literalBuilder.build();
@@ -222,7 +222,7 @@ public class TestResKeyEncoding extends TestCase {
 		assertDecodeEncodedText(null);
 		assertDecodeEncodedText("");
 		assertDecodeEncodedText("Hello world");
-		assertDecodeEncodedText("/^°!\"§$%&/()=?\\´`+~*#'-_.:,'; \t\r\nöäüÖÄÜß€/");
+		assertDecodeEncodedText("/^Â°!\"Â§$%&/()=?\\Â´`+~*#'-_.:,'; \t\r\nÃ¶Ã¤Ã¼Ã–Ã„ÃœÃŸÂ€/");
 		assertDecodeEncodedText("!Starting with an exclamation mark");
 		assertDecodeEncodedText("Ending with an exclamation mark!");
 	}
@@ -237,7 +237,7 @@ public class TestResKeyEncoding extends TestCase {
 	public void testEncodeLiteralTranslations() {
 		assertDecodeEncodedTranslations("");
 		assertDecodeEncodedTranslations("Hello world");
-		assertDecodeEncodedTranslations("/^°!\"§$%&/()=?\\´`+~*#'-_.:,'; \t\r\nöäüÖÄÜß€/");
+		assertDecodeEncodedTranslations("/^Â°!\"Â§$%&/()=?\\Â´`+~*#'-_.:,'; \t\r\nÃ¶Ã¤Ã¼Ã–Ã„ÃœÃŸÂ€/");
 		assertDecodeEncodedTranslations("!Starting with an exclamation mark");
 		assertDecodeEncodedTranslations("Ending with an exclamation mark!");
 	}

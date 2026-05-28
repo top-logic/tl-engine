@@ -19,7 +19,7 @@ import com.top_logic.util.Utils;
  * When using the {@link #add(Amount)} and {@link #sub(Amount)} methods
  * the returned amount will be in the {@link #getSystemUnit() base unit}. 
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class Amount implements Comparable {
 

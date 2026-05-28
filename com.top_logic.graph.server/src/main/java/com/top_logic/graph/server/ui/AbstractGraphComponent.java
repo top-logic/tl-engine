@@ -17,14 +17,14 @@ import com.top_logic.layout.table.component.BuilderComponent;
 /**
  * A general component for graphs.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class AbstractGraphComponent extends BuilderComponent {
 
 	/**
 	 * {@link AbstractGraphComponent} configuration.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends BuilderComponent.Config {
 

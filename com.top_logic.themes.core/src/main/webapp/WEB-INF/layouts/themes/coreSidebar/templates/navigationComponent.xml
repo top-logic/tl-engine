@@ -16,11 +16,7 @@
 		>
 			<decorator class="com.top_logic.layout.tree.renderer.NavigationDecorator"
 				logoutTimer="%LOGOUT_TIMER%"
-			>
-				<logoutView class="com.top_logic.layout.component.configuration.LogoutView"
-					image="theme:IMAGES_CLOSE_BREADCRUMB_BTN"
-				/>
-			</decorator>
+			/>
 			<contentRenderer class="com.top_logic.layout.tree.renderer.ReadOnlyNavigationRenderer"
 				root-icon="theme:TOP_LOGIC_WITHOUT_TEXT"
 				root-label="navigation.breadcrumb.rootLabel"

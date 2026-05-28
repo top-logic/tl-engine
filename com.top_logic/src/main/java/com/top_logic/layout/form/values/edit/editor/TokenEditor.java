@@ -49,7 +49,6 @@ import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Editor for displaying and managing token values in a secure manner.
@@ -104,10 +103,9 @@ public class TokenEditor extends AbstractEditor {
 		FormGroup group = Fields.group(container, Fields.normalizeFieldName(model.getProperty().getPropertyName()));
 
 		HiddenField field = (HiddenField) super.createUI(editorFactory, group, model);
-		Resources resources = Resources.getInstance();
 
-		CommandField dialogOpener = addDialogOpener(group, field, resources);
-		CommandField clearCommand = addClearCommand(group, field, resources);
+		CommandField dialogOpener = addDialogOpener(group, field);
+		CommandField clearCommand = addClearCommand(group, field);
 
 		template(group, horizontalBox(
 			span(css(FormConstants.FLEXIBLE_CSS_CLASS),
@@ -130,11 +128,9 @@ public class TokenEditor extends AbstractEditor {
 	 * @param tokenField
 	 *        The field that will receive the new token value, encapsulated in a
 	 *        {@link Password}.
-	 * @param resources
-	 *        The resources for internationalization.
 	 * @return A command model configured with the dialog opener functionality.
 	 */
-	private CommandField addDialogOpener(FormGroup group, FormField tokenField, Resources resources) {
+	private CommandField addDialogOpener(FormGroup group, FormField tokenField) {
 		CommandField dialogOpener = new CommandField("opener") {
 
 			@Override
@@ -150,7 +146,7 @@ public class TokenEditor extends AbstractEditor {
 		};
 		group.addMember(dialogOpener);
 		dialogOpener.setImage(Icons.UPDATE_TOKEN);
-		dialogOpener.setLabel(resources.getString(I18NConstants.UPDATE_TOKEN_DIALOG_TITLE));
+		dialogOpener.setLabel(I18NConstants.UPDATE_TOKEN_DIALOG_TITLE);
 
 		tokenField.addListener(FormMember.IMMUTABLE_PROPERTY, new ImmutablePropertyListener() {
 			
@@ -176,11 +172,9 @@ public class TokenEditor extends AbstractEditor {
 	 *
 	 * @param tokenField
 	 *        The string field whose value will be cleared.
-	 * @param resources
-	 *        The resources for internationalization.
 	 * @return A command model configured with the clear functionality.
 	 */
-	private CommandField addClearCommand(FormGroup group, FormField tokenField, Resources resources) {
+	private CommandField addClearCommand(FormGroup group, FormField tokenField) {
 		CommandField clearCommand = new CommandField("clear") {
 
 			@Override
@@ -190,7 +184,7 @@ public class TokenEditor extends AbstractEditor {
 			}
 		};
 		group.addMember(clearCommand);
-		clearCommand.setLabel(resources.getString(I18NConstants.CLEAR_TOKEN_FIELD_LABEL));
+		clearCommand.setLabel(I18NConstants.CLEAR_TOKEN_FIELD_LABEL);
 		clearCommand.setImage(com.top_logic.layout.form.tag.Icons.DELETE_BUTTON);
 		clearCommand.setNotExecutableImage(com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED);
 
@@ -404,7 +398,7 @@ public class TokenEditor extends AbstractEditor {
 		@Override
 		protected void fillFormContext(FormContext context) {
 			StringField tokenField = FormFactory.newStringField(TOKEN_FIELD);
-			tokenField.setLabel(Resources.getInstance().getString(I18NConstants.UPDATE_TOKEN_DIALOG_TOKEN_FIELD_LABEL));
+			tokenField.setLabel(I18NConstants.UPDATE_TOKEN_DIALOG_TOKEN_FIELD_LABEL);
 			tokenField.setMandatory(true);
 			tokenField.initializeField(_tokenGenerator.get());
 			context.addMember(tokenField);

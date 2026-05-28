@@ -186,7 +186,7 @@ public class PopupViewConfiguration extends AbstractConfiguredInstance<PopupView
 			CommandModel commandModel = commandConfig.createCommandModel(component);
 
 			if (commandModel == null) {
-				Logger.error("Faild to create command model: " + commandConfig, PopupViewConfiguration.class);
+				Logger.error("Failed to create command model: " + commandConfig, PopupViewConfiguration.class);
 				continue;
 			}
 

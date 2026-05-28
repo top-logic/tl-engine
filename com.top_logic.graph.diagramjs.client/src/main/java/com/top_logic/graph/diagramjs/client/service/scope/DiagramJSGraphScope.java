@@ -17,7 +17,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSGraphModel;
  * Binding of a DiagramJS graph object to a {@link GraphModel} implemented by
  * {@link DefaultSharedObject}s for synchronization over a network.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DiagramJSGraphScope extends ObjectScope {
 

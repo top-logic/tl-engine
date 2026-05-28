@@ -23,7 +23,7 @@ import com.top_logic.base.office.excel.POITypeSupporter;
  * excel rounds the date to next day (e.g. 01.01.2009 23:59:59:999 -> 02.01.2009 00:00:00).
  * </p>
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class DatePOIType extends CalendarPOIType {
 

@@ -13,7 +13,7 @@ import com.top_logic.basic.listener.PropertyListener;
  * 
  * @see DiagramJSGraphComponent#showHiddenElements()
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface HiddenElementsVisibilityListener extends PropertyListener {
 

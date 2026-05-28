@@ -68,7 +68,7 @@ public class TestFormatter extends BasicTestCase {
 		assertEquals(Double.valueOf(1234.56), fm.parseNumber("1.234,56"));
         assertNull  (fm.parseNumber(null));
         assertNull  (fm.parseNumber(""));
-        assertNull  (fm.parseNumber("Das iss avver Übel"));
+        assertNull  (fm.parseNumber("Das iss avver Ãœbel"));
 
 		assertEquals("1.234", fm.formatNumber(Integer.valueOf(1234)));
 		assertEquals("1.234,56", fm.formatNumber(Double.valueOf(1234.56)));
@@ -187,7 +187,7 @@ public class TestFormatter extends BasicTestCase {
 		assertEquals(Double.valueOf(1234.56), fm.parseNumber("1,234.56"));
         assertNull  (fm.parseNumber(null));
         assertNull  (fm.parseNumber(""));
-        assertNull  (fm.parseNumber("Das iss avver Übel"));
+        assertNull  (fm.parseNumber("Das iss avver Ãœbel"));
         
         assertNotNull(fm.toString());
         

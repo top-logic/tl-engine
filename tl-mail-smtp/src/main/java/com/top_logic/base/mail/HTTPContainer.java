@@ -22,7 +22,7 @@ import com.top_logic.util.Constants;
  * A container providing the capability to get information out of the HTTP
  * request and the HTTP response.
  *
- * @author  Michael Gänsler
+ * @author  Michael GÃ¤nsler
  */
 public class HTTPContainer {
 

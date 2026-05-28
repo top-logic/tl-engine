@@ -56,7 +56,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Wrapper representation of a mail folder on a mail server.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class IMAPMailFolder extends AbstractContainerWrapper implements MailFolder {
 
@@ -123,6 +123,21 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
 	@Override
 	public void setValue(String aKey, Object aValue) {
 		PersistentObjectImpl.setValue(this, aKey, aValue);
+	}
+
+	@Override
+	public void tUpdate(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.setValue(this, part, value);
+	}
+
+	@Override
+	public void tAdd(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.addValue(this, part, value);
+	}
+
+	@Override
+	public void tRemove(TLStructuredTypePart part, Object value) {
+		PersistentObjectImpl.removeValue(this, part, value);
 	}
 
 	@Override

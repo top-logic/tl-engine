@@ -23,7 +23,7 @@ import com.top_logic.model.util.TLModelUtil;
 /**
  * The {@link TLEnumerationCreateHandler} handles the creation of a new {@link TLEnumeration}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLEnumerationCreateHandler extends AbstractCreateCommandHandler {
 

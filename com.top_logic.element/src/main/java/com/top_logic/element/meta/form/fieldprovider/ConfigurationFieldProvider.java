@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
@@ -40,7 +41,6 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.internal.ConfigurationStorageMapping;
-import com.top_logic.util.Resources;
 
 /**
  * {@link FieldProvider} for attributes using the {@link ConfigurationStorageMapping}.
@@ -165,7 +165,7 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 			_configType = configType;
 
 			_valueField = FormFactory.newHiddenField("model");
-			_valueField.setLabel(Resources.getInstance().getString(editContext.getLabelKey(), "model"));
+			_valueField.setLabel(editContext.getLabelKey().fallback(ResKey.text("model")));
 			addMember(getValueField());
 
 			OnValueChange listener = new OnValueChange();

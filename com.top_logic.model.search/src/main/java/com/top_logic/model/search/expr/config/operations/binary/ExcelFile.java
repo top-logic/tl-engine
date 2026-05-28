@@ -53,7 +53,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * Supports both matrix and cell-based content creation with styling and formulas.
  * 
- * @author <a href="mailto:jhu@top-logic.com">Jonathan H�sing</a>
+ * @author <a href="mailto:jhu@top-logic.com">Jonathan Häsing</a>
  */
 public class ExcelFile extends GenericMethod {
 

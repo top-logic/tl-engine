@@ -21,7 +21,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * side through java script. It expects that the LayoutComponent calling the
  * command is a ViewInfoComponent.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class OpenSeparateInspectorWindowCommandHandler extends OpenWindowCommand {
 

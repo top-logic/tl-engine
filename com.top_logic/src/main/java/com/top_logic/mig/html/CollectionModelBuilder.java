@@ -13,7 +13,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Simple model builder, which will take a collection as supported model.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CollectionModelBuilder implements ModelBuilder {
 

@@ -24,7 +24,7 @@ import com.top_logic.graph.layouter.model.layer.SegmentContainer;
  * 
  * @see VerticalAlignAlgorithm
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class VerticalAligner extends GraphLayoutAlgorithm implements VerticalAlignAlgorithm {
 

@@ -13,6 +13,7 @@ import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import com.top_logic.base.security.util.Password;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
@@ -20,6 +21,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.time.TimeZones;
@@ -58,7 +60,7 @@ import com.top_logic.util.Utils;
 @Label("account")
 public class Person extends AbstractBoundWrapper implements Author, GroupMember {
 
-    /**
+	/**
      * Type of KO as defined by KBMeta.xml
      */
     public static final String OBJECT_NAME = "Person";
@@ -82,6 +84,23 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 
 	/** The attribute "country". */
 	public static final String COUNTRY_ATTR = "country";
+
+	/** The attribute "admin" of type {@link #PERSON_TYPE}. */
+	public static final String ADMIN_ATTR = "admin";
+
+	/**
+	 * The attribute "mfaSecret" of type {@link #PERSON_TYPE}.
+	 * 
+	 * <p>
+	 * The value is a secret that is used to enable multi-factor-authentication for the user.
+	 * </p>
+	 */
+	public static final String MFA_SECRET_ATTR = "mfaSecret";
+
+	/**
+	 * The attribute "mfaRequirement" of type {@link #PERSON_TYPE}.
+	 */
+	public static final String MFA_REQUIREMENT_ATTR = "mfaRequirement";
 
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
@@ -274,6 +293,50 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 			tSetData(COUNTRY_ATTR, null);
 		} else {
 			tSetData(COUNTRY_ATTR, newValue.getCode());
+		}
+	}
+
+	/**
+	 * Type-safe access to the value of {@link #MFA_SECRET_ATTR}.
+	 */
+	public Password getMFASecret() {
+		String mfaSecret = tGetDataString(MFA_SECRET_ATTR);
+		if (StringServices.isEmpty(mfaSecret)) {
+			return null;
+		}
+		return new Password(mfaSecret);
+	}
+
+	/**
+	 * Setter for {@link #getMFASecret()}.
+	 */
+	public void setMFASecret(Password secret) {
+		if (secret == null) {
+			tSetData(MFA_SECRET_ATTR, null);
+		} else {
+			tSetData(MFA_REQUIREMENT_ATTR, secret.getCryptedValue());
+		}
+	}
+
+	/**
+	 * Type-safe access to the value of {@link #MFA_REQUIREMENT_ATTR}.
+	 */
+	public MfaRequirement getMFARequirement() {
+		String mfaRequirement = tGetDataString(MFA_REQUIREMENT_ATTR);
+		if (StringServices.isEmpty(mfaRequirement)) {
+			return null;
+		}
+		return ConfigUtil.getEnumConstant(MfaRequirement.class, mfaRequirement);
+	}
+
+	/**
+	 * Setter for {@link #getMFARequirement()}.
+	 */
+	public void setMFARequirement(MfaRequirement value) {
+		if (value == null) {
+			tSetData(MFA_REQUIREMENT_ATTR, null);
+		} else {
+			tSetData(MFA_REQUIREMENT_ATTR, ConfigUtil.getEnumExternalName(value));
 		}
 	}
 
@@ -521,32 +584,37 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 			return false;
 		}
 
-		return tGetDataBooleanValue("admin");
+		return tGetDataBooleanValue(ADMIN_ATTR);
 	}
 
 	/**
 	 * @see #isAdmin()
 	 */
 	public void setAdmin(boolean value) {
-		tSetDataBoolean("admin", value);
+		tSetDataBoolean(ADMIN_ATTR, value);
 	}
 
 	/**
-	 * Create a new {@link Person} in given {@link KnowledgeBase}. Does NOT check if such a person
-	 * already exists! Note: No user object will be created by this method
+	 * Create a new {@link Person} in given {@link KnowledgeBase}. This method does <b>NOT</b> check
+	 * if such a person already exists! Note: No user object will be created by this method
 	 * 
 	 * @param kb
-	 *        the {@link KnowledgeBase} in which the person is created.
+	 *        The {@link KnowledgeBase} in which the person is created.
 	 * @param userName
-	 *        the person (login) name
+	 *        The person (login) name.
+	 * @param authenticationDevice
+	 *        The device that is used to identify the new person. May be <code>null</code>.
 	 * 
-	 * @return the created person
+	 * @return The created person.
 	 */
-	public static Person create(KnowledgeBase kb, String userName, String authenticationDeviceID) {
+	public static Person create(KnowledgeBase kb, String userName, AuthenticationDevice authenticationDevice) {
 		KnowledgeObject handle = kb.createKnowledgeObject(OBJECT_NAME);
 		handle.setAttributeValue(AbstractWrapper.NAME_ATTRIBUTE, userName);
 		Person result = handle.getWrapper();
-		result.setAuthenticationDeviceID(authenticationDeviceID);
+		if (authenticationDevice != null) {
+			result.setAuthenticationDeviceID(authenticationDevice.getDeviceID());
+			result.setMFARequirement(authenticationDevice.getMFARequirement());
+		}
 		result.setCountry(DefaultCountryDefault.INSTANCE.defaultCountry());
 		result.setLanguage(DefaultLocaleDefault.INSTANCE.defaultLocale());
 		result.setTimeZone(UserTimeZoneDefault.INSTANCE.defaultUserTimeZone());

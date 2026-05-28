@@ -19,7 +19,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.xml.TagWriter;
@@ -36,6 +35,7 @@ import com.top_logic.layout.servlet.CacheControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.LayoutConstants;
+import com.top_logic.util.AbstractTopLogicServlet;
 
 /**
  * {@link ContentHandler} that manages window name creations in browser windows handled by
@@ -114,7 +114,7 @@ public class WindowRegistry<W extends WindowContext & ContentHandler> implements
 		url.appendRaw(request.getServletPath());
 		url.appendRaw("/");
 		url.appendRaw(windowId.getEncodedForm());
-		LoginPageServlet.appendCustomParameters(url, request);
+		AbstractTopLogicServlet.appendCustomParameters(url, request);
 
 		context.asResponse().sendRedirect(url.getURL());
 		return;

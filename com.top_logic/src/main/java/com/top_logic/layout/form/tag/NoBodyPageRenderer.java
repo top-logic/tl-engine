@@ -13,7 +13,7 @@ import com.top_logic.layout.DisplayContext;
 /**
  * {@link PageRenderer} that renders the page without a body and it's container tags.
  *
- * @author <a href="mailto:Jens.Sch‰fer@top-logic.com">Jens Sch‰fer</a>
+ * @author <a href="mailto:Jens.Sch√§fer@top-logic.com">Jens Sch√§fer</a>
  */
 public class NoBodyPageRenderer extends PageRenderer {
 

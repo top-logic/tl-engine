@@ -29,7 +29,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * {@link LayerCrossingMinimizer} which sweeps down, i.e. from the topmost layer to the lowermost
  * layer.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class LayerDownCrossingMinimizer extends LayerCrossingMinimizer {
 

@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 /**
  * Session local computation for roles assigned to a single person.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class RoleComputation {
 

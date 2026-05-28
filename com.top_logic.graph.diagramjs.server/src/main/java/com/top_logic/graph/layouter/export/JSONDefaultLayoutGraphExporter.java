@@ -33,7 +33,7 @@ import com.top_logic.model.util.TLModelUtil;
  * Default JSON graph exporter. Adds businessObjects to nodes and edges. In addition it generates
  * cardinalities out of the edge's businessObject.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class JSONDefaultLayoutGraphExporter implements JSONGraphExporter<LayoutGraph> {
 

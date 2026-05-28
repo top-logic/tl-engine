@@ -12,7 +12,7 @@ import com.top_logic.graph.layouter.model.comparator.ConnectedTopNodePortCompara
 /**
  * Default NodePortOrder which order ports by their horizontal coordinate.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultNodePortOrderer extends NodePortOrderer {
 

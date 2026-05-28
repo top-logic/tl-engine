@@ -10,7 +10,7 @@ import com.top_logic.layout.ResourceView;
 /**
  * Simply return the values got from parameters.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class SimpleResourceView implements ResourceView {
 

@@ -13,10 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.html.template.TagTemplate;
-import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.ResPrefix;
@@ -32,13 +30,9 @@ import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.ButtonControlProvider;
-import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
-import com.top_logic.layout.form.template.model.internal.TemplateControl;
 import com.top_logic.layout.messagebox.AbstractFormDialog;
-import com.top_logic.layout.messagebox.AbstractFormDialogBase;
+import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
-import com.top_logic.layout.messagebox.MessageBoxContentView;
 import com.top_logic.layout.structure.DefaultDialogModel;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.table.ConfigKey;
@@ -91,7 +85,7 @@ public class ManageMultipleTableSettings extends MultipleSettingsCommand {
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	protected class ManageMultipleTableSettingsDialog extends AbstractFormDialogBase {
+	protected class ManageMultipleTableSettingsDialog extends AbstractTemplateDialog {
 		private static final String NOT_EXECUTABLE_NO_SETTING_SELECTED = "deleteSettingNoSelection";
 
 		private static final String NOT_EXECUTABLE_NO_NAME_GIVEN = "addSettingNoName";
@@ -117,13 +111,7 @@ public class ManageMultipleTableSettings extends MultipleSettingsCommand {
 		}
 
 		@Override
-		protected HTMLFragment createView() {
-			ControlProvider cp = DefaultFormFieldControlProvider.INSTANCE;
-			Control content = new TemplateControl(getFormContext(), cp, createTemplate());
-			return new MessageBoxContentView(content);
-		}
-
-		private TagTemplate createTemplate() {
+		protected TagTemplate getTemplate() {
 			return TEMPLATE;
 		}
 

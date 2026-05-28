@@ -128,7 +128,7 @@
 							<input name="driver"
 								size="50"
 								type="text"
-								value="<%=driver %>"
+								value="<%=TagUtil.encodeXMLAttribute(StringServices.nonNull(driver))%>"
 							/>
 						</td>
 					</tr>
@@ -141,7 +141,7 @@
 							<input name="url"
 								size="50"
 								type="text"
-								value="<%=url %>"
+								value="<%=TagUtil.encodeXMLAttribute(StringServices.nonNull(url))%>"
 							/>
 						</td>
 					</tr>
@@ -154,7 +154,7 @@
 							<input name="table"
 								size="50"
 								type="text"
-								value="<%=table %>"
+								value="<%=TagUtil.encodeXMLAttribute(StringServices.nonNull(table))%>"
 							/>
 						</td>
 					</tr>
@@ -167,7 +167,7 @@
 							<input name="user"
 								size="50"
 								type="text"
-								value="<%= user %>"
+								value="<%=TagUtil.encodeXMLAttribute(StringServices.nonNull(user))%>"
 							/>
 						</td>
 					</tr>
@@ -180,7 +180,7 @@
 							<input name="password"
 								size="50"
 								type="password"
-								value="<%= password %>"
+								value="<%=TagUtil.encodeXMLAttribute(StringServices.nonNull(password))%>"
 							/>
 						</td>
 					</tr>

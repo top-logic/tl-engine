@@ -14,7 +14,7 @@ import com.top_logic.basic.tools.NameBuilder;
 /**
  * Message from kafka in a format to be used by the {@link KafkaTopicAccessor}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class KafkaMessage {
 

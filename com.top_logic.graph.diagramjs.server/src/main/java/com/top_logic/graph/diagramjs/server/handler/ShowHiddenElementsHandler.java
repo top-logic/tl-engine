@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.commandhandlers.ToggleCommandHandler;
  * @see DiagramJSGraphComponent#showHiddenElements()
  * @see GraphPart#isVisible()
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 @Label("Show hidden elements")
 public class ShowHiddenElementsHandler extends ToggleCommandHandler {

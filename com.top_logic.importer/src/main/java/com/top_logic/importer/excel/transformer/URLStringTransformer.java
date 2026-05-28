@@ -14,7 +14,7 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Special string transformer for URLs.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class URLStringTransformer<C extends URLStringTransformer.Config> extends StringTransformer<C> {
 

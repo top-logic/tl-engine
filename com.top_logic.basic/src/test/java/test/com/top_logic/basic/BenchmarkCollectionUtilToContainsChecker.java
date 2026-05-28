@@ -70,7 +70,7 @@ public class BenchmarkCollectionUtilToContainsChecker {
 		long elapsedNanos = watch.getElapsedNanos();
 		System.out.println(count + " " + (optimize ? "optimized" : "unoptimized")
 			+ " contains tests in list with size " + size + " took " + elapsedNanos / 1000.0
-			+ "µs (" + matches + " matches)");
+			+ "Âµs (" + matches + " matches)");
 
 		return elapsedNanos;
 	}

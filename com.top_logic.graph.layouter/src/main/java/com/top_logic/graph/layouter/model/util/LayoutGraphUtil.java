@@ -40,7 +40,7 @@ import com.top_logic.graph.layouter.model.layer.VirtualSegmentEdge;
 /**
  * Util methods to get informations about the graph structure.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class LayoutGraphUtil {
 

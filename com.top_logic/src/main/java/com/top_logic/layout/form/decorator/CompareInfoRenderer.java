@@ -20,7 +20,7 @@ import com.top_logic.layout.table.TableRenderer.Cell;
 /**
  * Render information from a {@link CompareInfo} to a {@link TagWriter}.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class CompareInfoRenderer extends AbstractCellRenderer {
 

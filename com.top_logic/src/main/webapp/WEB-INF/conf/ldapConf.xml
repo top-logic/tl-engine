@@ -19,6 +19,8 @@
         <entry name="%LDAP_MAPPING_ALL%" value="/WEB-INF/database/ldap/all-mapping.properties"/>
         <entry name="%LDAP_MAPPING_PERSON%" value="/WEB-INF/database/ldap/person-mapping.properties"/>
         <entry name="%LDAP_MAPPING_GROUP%" value="/WEB-INF/database/ldap/group-mapping.properties"/>
+
+        <entry name="%LDAP_MFA_REQUIREMENT%" value="optional"/>
 	</alias>
 	
     <properties>

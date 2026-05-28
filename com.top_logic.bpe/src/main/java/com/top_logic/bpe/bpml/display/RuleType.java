@@ -10,7 +10,7 @@ package com.top_logic.bpe.bpml.display;
  * 
  * @see RuleCondition#getRuleType()
  *
- * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
+ * @author <a href="mailto:Jonathan.HÃ¼sing@top-logic.com">Jonathan HÃ¼sing</a>
  */
 public enum RuleType {
 	/**

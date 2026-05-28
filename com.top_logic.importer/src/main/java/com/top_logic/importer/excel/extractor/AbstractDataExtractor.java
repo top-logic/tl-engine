@@ -24,14 +24,14 @@ import com.top_logic.importer.logger.ImportLogger;
 /**
  * Extract values out of the definition of known objects.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public abstract class AbstractDataExtractor<O extends Named, C extends AbstractDataExtractor.Config> implements Extractor {
 
 	/**
 	 * Configuration for the AbstractDataExtractor. 
 	 * 
-	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends Extractor.Config {
 
@@ -163,7 +163,7 @@ public abstract class AbstractDataExtractor<O extends Named, C extends AbstractD
 	/**
 	 * Enriched transformer with information about the translated and also the objects name.
 	 * 
-	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class NamedTransformer<T> {
 

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.security.selfservice">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.security.selfservice.model.impl"
+				interface-package="com.top_logic.security.selfservice.model"
+			/>
+		</annotations>
+		<class name="Invitation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="Invitation"/>
+			</annotations>
+			<attributes>
+				<property name="id"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<default-value>
+							<provider class="com.top_logic.model.provider.SecureStringDefaultProvider"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="email"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[email ->
+  all(`tl.accounts:Person`)
+    .filter(account -> $account.get(`tl.accounts:Person#name`) == $email)
+    .firstElement() != null ?
+  #("Es gibt bereits einen Zugang für die E-Mail-Adresse {0}."@de, "There is already an account for the email address {0}."@en).fill($email) :
+  null]]></check>
+							</constraint-by-expression>
+							<constraint-by-expression>
+								<check><![CDATA[email -> regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$").regexSearch($email).isEmpty() ?  #("''{0}'' ist keine gültige E-Mail-Adresse."@de, "''{0}'' is not a valid email address."@en).fill($email) :
+  null]]></check>
+							</constraint-by-expression>
+							<constraint-by-expression>
+								<check><![CDATA[email -> self ->
+  all(`tl.security.selfservice:Invitation`)
+    .filter(invitation -> $invitation != $self)
+    .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#email`) == $email)
+    .firstElement() != null ?
+  #("Es gibt bereits eine Einladung für die E-Mail-Adresse {0}."@de, "There is already an invitation for the email address {0}."@en).fill($email) :
+  null]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="mfaRequirement"
+					type="tl.accounts:MfaRequirement"
+				/>
+				<property name="createCallback"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="invitation -> person -> null"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

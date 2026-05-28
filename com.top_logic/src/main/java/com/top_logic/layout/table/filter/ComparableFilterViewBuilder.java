@@ -16,7 +16,6 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.table.filter.ComparableFilterConfiguration.Operators;
-import com.top_logic.util.Resources;
 
 /**
  * {@link FilterViewBuilder} of {@link ComparableFilterView}.
@@ -127,7 +126,7 @@ public class ComparableFilterViewBuilder implements FilterViewBuilder<Comparable
 			FormFactory.newSelectField(ComparableFilterView.SELECTABLE_VALUES_FIELD, options, true, false);
 		optionsField.setOptionComparator(filterConfiguration.getOptionComparator());
 		optionsField.setOptionLabelProvider(filterConfiguration.getOptionLabelProvider());
-		optionsField.setLabel(Resources.getInstance().getString(I18NConstants.FILTER_VALUES));
+		optionsField.setLabel(I18NConstants.FILTER_VALUES);
 		return optionsField;
 	}
 }

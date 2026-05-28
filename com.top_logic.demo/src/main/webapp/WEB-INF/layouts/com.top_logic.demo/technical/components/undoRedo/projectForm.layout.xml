@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/undoRedo/projectsTable.layout.xml#Table)">
+		<name key="dynamic.undoRedo-projectForm-name">
+			<en>Project details</en>
+			<de>Projekt-Details</de>
+		</name>
+		<forms>
+			<form type="tl.demo.projectManagement:ProjectScope">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="tl.demo.projectManagement:ProjectScope#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="description"
+						fullQualifiedName="tl.demo.projectManagement:ProjectScope#description"
+						type="tl.core:String"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

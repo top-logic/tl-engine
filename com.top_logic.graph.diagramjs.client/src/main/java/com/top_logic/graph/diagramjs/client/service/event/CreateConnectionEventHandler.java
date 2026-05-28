@@ -18,7 +18,7 @@ import com.top_logic.graph.diagramjs.util.DiagramJSGraphControlCommon;
 /**
  * Triggers server side create connection dialog.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public final class CreateConnectionEventHandler implements EventHandler {
 

@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
@@ -23,7 +24,6 @@ import jakarta.servlet.http.HttpSession;
 import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
-import com.top_logic.base.accesscontrol.LoginPageServlet;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.base.context.TLSessionContext;
@@ -49,15 +49,9 @@ import com.top_logic.util.filter.CompressionFilter;
 import com.top_logic.util.filter.CompressionServletResponseWrapper;
 
 /**
- * This is the upper class for Dispatcher- and LoginPageServlet. It provides
- * the main functionality to forward requests to other system components.
- * 
- * TODO refactor into Filters
- *
- *                                      invalidate
- * @author    <a href="mailto:karsten.buch@top-logic.com">Karsten Buch</a>
+ * {@link AbstractTopLogicServlet} that checks that a valid session exists for the request.
  */
-public class TopLogicServlet extends HttpServlet {
+public class TopLogicServlet extends AbstractTopLogicServlet {
 
 	/**
 	 * The name of log mark for the session id.
@@ -72,6 +66,8 @@ public class TopLogicServlet extends HttpServlet {
 	 */
 	private static final String TL_SESSION_ID_LOG_MARK = "tl-session-id";
 
+	private static final String TEST_SESSION = "testSession";
+
 	/**
 	 * Servlet-parameter for enabling adaptive compression.
 	 */
@@ -80,8 +76,16 @@ public class TopLogicServlet extends HttpServlet {
     /** Used when logging without actual session*/
     public static final String NO_SESSION = "*** No Session ***";
 
+	/**
+	 * Request parameter to indicate that the session check is currently processed.
+	 * 
+	 * @see #initSessionCheck(HttpServletRequest, HttpServletResponse)
+	 * @see #processSessionCheck(HttpServletRequest)
+	 */
+	public static final String SESSION_CHECK = "sessionCheckInProgress";
+
     /** Default {@link #maxServiceTime} if nothing else is configured */
-    public static final long MAX_SERVICE_TIME = 1000 * 2; // 2 Seconds
+	public static final long MAX_SERVICE_TIME = TimeUnit.SECONDS.toMillis(2);
     
     /** Subclasses may configure there maximal Service time here  */
     public static final String MAX_SERVICE_ATTR = TopLogicServlet.class.getName() + "maxServiceTime";
@@ -91,7 +95,7 @@ public class TopLogicServlet extends HttpServlet {
 
     /** Always use gzip compression, if possible */
 	private boolean alwaysZip;
-	
+
 	/**
 	 * Configuration for {@link TopLogicServlet}.
 	 */
@@ -171,10 +175,19 @@ public class TopLogicServlet extends HttpServlet {
 			throws IOException, ServletException {
 		setCachePolicy(response);
 
-		final TLSessionContext session = this.getSession(request, response);
+		if (!processSessionCheck(request)) {
+			this.forwardToPage(ApplicationPages.getInstance().getNoCookiePage(), request, response);
+			return;
+		}
+
+		TLSessionContext session = this.getSession(request, response);
 		if (session == null) {
-			// User has no session, request login.
-			redirectTo(ApplicationPages.getInstance().getLoginPage(), request, response);
+
+			if (initSessionCheck(request, response)) {
+				return;
+			}
+
+			handleNoSession(request, response);
 			return;
 		}
 
@@ -197,6 +210,23 @@ public class TopLogicServlet extends HttpServlet {
 
 		// Recursive call, through a request dispatcher include call.
 		inContext(request, response);
+	}
+
+	/**
+	 * Callback for subclasses to handle requests for which no session exist.
+	 * 
+	 * @param request
+	 *        Request handled in {@link #service(HttpServletRequest, HttpServletResponse)}.
+	 * @param response
+	 *        Request handled in {@link #service(HttpServletRequest, HttpServletResponse)}.
+	 * @throws ServletException
+	 *         If the request could not be handled.
+	 * @throws IOException
+	 *         If an input or output error is detected.
+	 */
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		// Nothing to do here
 	}
 
 	/** Sets a log mark with the session id while executing the runnable. */
@@ -434,29 +464,12 @@ public class TopLogicServlet extends HttpServlet {
 	 */
 	protected void redirectTo(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse)
 			throws IOException, ServletException {
-		URLPathBuilder url = URLPathBuilder.newEmptyBuilder();
-		url.appendRaw(aRequest.getContextPath());
-		url.appendRaw(aPage);
-		LoginPageServlet.appendCustomParameters(url, aRequest);
+		URLPathBuilder url = createRedirectURL(aPage, aRequest);
 
 		aResponse.sendRedirect(url.getURL());
     }
 
-	/**
-     * Forward the request to the given page.
-     *
-     * @param        aRequest            The send request.
-     * @param        aResponse           The send response.
-     * @param        aPage               The page to be forwarded to.
-     * @exception    IOException         If I/O operation fails.
-     * @exception    ServletException    If an error in servlet occures.
-     */
-	protected void forwardPage(String aPage, HttpServletRequest aRequest, HttpServletResponse aResponse)
-			throws IOException, ServletException {
-		getServletContext().getRequestDispatcher(aPage).forward(aRequest, aResponse);
-    }
-
-    /** Set the Cache policy at teh Response.
+	/** Set the Cache policy at teh Response.
      * 
      * Some Subclasses override this to set theire own cache Policy
      */
@@ -523,4 +536,70 @@ public class TopLogicServlet extends HttpServlet {
 			return session.getId();
 		}
 	}
+
+	/**
+	 * 
+	 * Checks whether cookies can be set.
+	 * 
+	 * <p>
+	 * This method is the second part of the check whether cookies can be set.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method checks whether the attribute that was set in
+	 * {@link #initSessionCheck(HttpServletRequest, HttpServletResponse)} can be read.
+	 * </p>
+	 *
+	 * @return <code>true</code> if cookies are enabled.
+	 * 
+	 * @see #initSessionCheck(HttpServletRequest, HttpServletResponse)
+	 */
+	private boolean processSessionCheck(HttpServletRequest request) {
+		boolean result = true;
+
+		if (request.getParameter(TopLogicServlet.SESSION_CHECK) != null) {
+			HttpSession session = request.getSession(false);
+			if (session != null) {
+				Object test = session.getAttribute(TEST_SESSION);
+				result = (test != null && test instanceof Boolean);
+				session.removeAttribute(TEST_SESSION);
+				session.invalidate();
+			} else {
+				result = false;
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Initializes the check whether cookies can be set.
+	 * 
+	 * <p>
+	 * This method is the first part of the check whether cookies can be set.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method creates a session and sets a cookie. The method
+	 * {@link #processSessionCheck(HttpServletRequest)} checks whether the cookie can be read.
+	 * </p>
+	 * 
+	 * @return <code>true</code> iff a redirect was sent.
+	 * 
+	 * @see #processSessionCheck(HttpServletRequest)
+	 */
+	private boolean initSessionCheck(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		if (request.getParameter(TopLogicServlet.SESSION_CHECK) == null) {
+			HttpSession testSession = request.getSession(true);
+			testSession.setAttribute(TEST_SESSION, true);
+
+			URLPathBuilder url = createRedirectURL(ApplicationPages.getInstance().getStartPage(), request);
+			url.appendParameter(TopLogicServlet.SESSION_CHECK, "true");
+
+			response.sendRedirect(url.getURL());
+			return true;
+		}
+		return false;
+	}
+
 }

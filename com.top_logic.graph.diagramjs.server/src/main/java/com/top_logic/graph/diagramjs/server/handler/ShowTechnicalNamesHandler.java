@@ -15,7 +15,7 @@ import com.top_logic.tool.boundsec.commandhandlers.ToggleCommandHandler;
 /**
  * Show technical names in graph parts.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @Label("Show technical names")
 public class ShowTechnicalNamesHandler extends ToggleCommandHandler {

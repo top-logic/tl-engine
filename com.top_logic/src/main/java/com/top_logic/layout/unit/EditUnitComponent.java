@@ -198,8 +198,7 @@ public class EditUnitComponent extends EditComponent {
 		String[] supportedLanguages = ResourcesModule.getInstance().getSupportedLocaleNames();
 		FormGroup languageGroup = new FormGroup(TRANSLATIONS_GROUP_NAME, I18NConstants.I18N_FORM_GROUP_PREFIX);
 		Resources resources = Resources.getInstance();
-		String groupLabel = resources.getString(I18NConstants.I18N_FORM_GROUP_TITLE);
-		languageGroup.setLabel(groupLabel);
+		languageGroup.setLabel(I18NConstants.I18N_FORM_GROUP_TITLE);
 		int i = 0;
 		for (String i18nAttributeKey : i18nAttributeKeys) {
 			FormGroup g = new FormGroup("group_" + i++, I18NConstants.I18N_FORM_GROUP_PREFIX);

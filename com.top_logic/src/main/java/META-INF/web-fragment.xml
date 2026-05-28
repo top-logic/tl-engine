@@ -65,13 +65,6 @@
 		<servlet-class>com.top_logic.base.services.simpleajax.PingServlet</servlet-class>
 	</servlet>
 
-	<!-- User name/password login -->
-    <servlet>
-        <servlet-name>LoginPageServlet</servlet-name>
-        <servlet-class>com.top_logic.base.accesscontrol.LoginPageServlet</servlet-class>
-        <load-on-startup>2</load-on-startup>
-    </servlet>
-    
 	<!-- Page rendering -->
     <servlet>
         <servlet-name>TLLayoutServlet</servlet-name>
@@ -108,11 +101,6 @@
         <url-pattern>/servlet/PingServlet</url-pattern>
     </servlet-mapping>
 
-    <servlet-mapping>
-        <servlet-name>LoginPageServlet</servlet-name>
-        <url-pattern>/servlet/login</url-pattern>
-    </servlet-mapping>
-	
     <servlet-mapping>
         <servlet-name>TLLayoutServlet</servlet-name>
         <url-pattern>/servlet/LayoutServlet/*</url-pattern>

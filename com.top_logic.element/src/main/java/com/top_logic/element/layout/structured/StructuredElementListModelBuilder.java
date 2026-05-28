@@ -16,7 +16,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * Simple list model builder returning the direct children of a {@link StructuredElement} as list.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementListModelBuilder implements ListModelBuilder {
 

@@ -17,6 +17,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.DataObjectException;
@@ -310,9 +311,8 @@ public class TestPerson extends BasicTestCase {
 		Person root = personManager.getRoot();
 		Transaction transactionCreatePerson = root.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
-			String authenticationDeviceID = root.getAuthenticationDeviceID();
-			Person testPerson =
-				Person.create(PersistencyLayer.getKnowledgeBase(), personName, authenticationDeviceID);
+			AuthenticationDevice authenticationDevice = root.getAuthenticationDevice();
+			Person testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), personName, authenticationDevice);
 			transactionCreatePerson.commit();
 			return testPerson;
 		} finally {

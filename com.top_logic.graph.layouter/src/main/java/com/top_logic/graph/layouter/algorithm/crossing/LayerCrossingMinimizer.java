@@ -33,7 +33,7 @@ import com.top_logic.graph.layouter.model.util.LayoutGraphUtil;
  * 
  * @see LayerCrossingReductionAlgorithm
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public abstract class LayerCrossingMinimizer implements LayerCrossingReductionAlgorithm {
 

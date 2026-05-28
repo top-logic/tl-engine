@@ -16,7 +16,7 @@ import com.top_logic.gui.config.ThemeConfig;
 /**
  * {@link GenericFunction} retrieving all {@link ThemeConfig} id's.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class AllThemeIds extends Function0<Collection<String>> {
 

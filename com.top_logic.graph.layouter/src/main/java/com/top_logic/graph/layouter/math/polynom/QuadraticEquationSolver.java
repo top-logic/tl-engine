@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 /**
  * Solver for quadratic equations.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F&ouml;rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class QuadraticEquationSolver implements Consumer<RealPolynom> {
 

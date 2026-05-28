@@ -522,7 +522,7 @@
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name=""
-								tab-path="Strukturen > Organisation"
+								tab-path="Strukturen > Flache Typen"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"

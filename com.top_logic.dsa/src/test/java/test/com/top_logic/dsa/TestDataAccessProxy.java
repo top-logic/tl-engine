@@ -47,7 +47,7 @@ public class TestDataAccessProxy extends BasicTestCase {
             "Test Name",
             "TestName",
             "_name_with_underscores_",
-            "_°^!§$%&)(][}{=` ´+~'#,.-_",
+            "_Â°^!Â§$%&)(][}{=` Â´+~'#,.-_",
             "~$name with Tilde and Dollar~",
             "~name with Tilde~"
         };

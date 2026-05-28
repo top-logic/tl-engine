@@ -13,7 +13,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 /**
  * {@link Predicate} that matches edges that are marked.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class FilterMarkedEdge implements Predicate<LayoutEdge> {
 	Set<LayoutEdge> _markedEdges;

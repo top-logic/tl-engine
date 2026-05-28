@@ -17,7 +17,7 @@ import com.top_logic.basic.shared.graph.ExplicitGraph;
 /**
  * Graph with a layout structure, i.e. every node has a x and y coordinate.
  * 
- * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGraph.LayoutEdge> {
 	/**
@@ -33,7 +33,7 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 	 * (v,w) we need two additional dummy nodes (namely p and q). (v,w) is now separated into (v,p),
 	 * (p,q) and (q,w). The edge (p,q) is called the "inner" segment.
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
 	public enum NodeType {
 		/**
@@ -62,7 +62,7 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 	 * Graph node suited for layouting. A node have a x and y coordinate and can be marked as a
 	 * dummy node which is not shown in the final layout.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
 	public class LayoutNode extends ExplicitGraph<LayoutNode, LayoutEdge>.Node {
 		private double _x;
@@ -312,7 +312,7 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 	/**
 	 * Graph edge for layouting.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven F�rster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
 	public class LayoutEdge extends ExplicitGraph<LayoutNode, LayoutEdge>.Edge {
 		private boolean _isSegment;

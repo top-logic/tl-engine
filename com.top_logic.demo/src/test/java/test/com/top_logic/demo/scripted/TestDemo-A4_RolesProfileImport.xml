@@ -9,19 +9,15 @@
 			template="script:/Rolle/Action-Rolle-Anlegen.xml"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Role_TestRolesProfileImport_01"
-					/>
-				</parameter>
+				<parameter name="Name"
+					value="Role_TestRolesProfileImport_01"
+				/>
 				<parameter name="Berechtigungsstruktur"
 					value="Zentrale Berechtigungen"
 				/>
-				<parameter name="ergebnis">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Role_TestRolesProfileImport_01"
-					/>
-				</parameter>
+				<parameter name="ergebnis"
+					value="Role_TestRolesProfileImport_01"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
@@ -183,20 +179,72 @@
 			template="script:/Rolle/Action-Rolle-Loeschen.xml"
 		>
 			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Role_TestRolesProfileImport_01"
-					/>
-				</parameter>
+				<parameter name="Name"
+					value="Role_TestRolesProfileImport_01"
+				/>
 				<parameter name="Berechtigungsstruktur"
 					value="Zentrale Berechtigungen"
 				/>
-				<parameter name="kontext">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Role_TestRolesProfileImport_01"
-					/>
-				</parameter>
+				<parameter name="kontext"
+					value="Role_TestRolesProfileImport_01"
+				/>
 			</parameters>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Administration > Berechtigungen > Rollenprofile"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.OpenRolesProfileImportDialog"
+			command-label="Importieren..."
+			command-name="importRolesProfiles"
+			component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+			component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datei"
+			>
+				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+						content-type="text/xml"
+						name="security.xml"
+						url="file:../com.top_logic.demo/src/main/webapp/WEB-INF/conf/security.xml"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Importieren"
+			user-id="root"
+		/>
+		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+			component-name="rootLayout#masterFrame"
+			label="Tabelle zurücksetzen"
+			user-id="root"
+		>
+			<business-object config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+				<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
+					/>
+					<path>
+						<named-member name="tree"/>
+					</path>
+				</default-table-data-owner>
+			</business-object>
 		</action>
 	</actions>
 </action>

@@ -36,7 +36,7 @@ import com.top_logic.util.TLResKeyUtil;
 /**
  * Utilities for the meta model.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class TLMetaModelUtil {
 

@@ -29,7 +29,7 @@ import com.top_logic.tool.execution.InViewModeExecutable;
 /**
  * Display the current revision of the components model.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class ShowCurrentRevisionCommandHandler extends AJAXCommandHandler {
 

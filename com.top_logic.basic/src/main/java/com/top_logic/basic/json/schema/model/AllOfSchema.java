@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Instance must validate against ALL subschemas.
  * </p>
  */
-public class AllOfSchema extends Schema {
+public class AllOfSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.AllOfSchema} instance.

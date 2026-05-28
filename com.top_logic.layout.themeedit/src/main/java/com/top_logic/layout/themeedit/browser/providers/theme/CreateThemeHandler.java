@@ -37,7 +37,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Creates a new {@link ThemeConfig}.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class CreateThemeHandler extends AbstractCommandHandler {
 

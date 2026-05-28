@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * Write several boxes on top of each other.
  */
-public interface Stack extends Box, com.top_logic.graphic.flow.operations.StackOperations {
+public interface Stack extends com.top_logic.graphic.flow.data.Box, com.top_logic.graphic.flow.operations.StackOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Stack} instance.

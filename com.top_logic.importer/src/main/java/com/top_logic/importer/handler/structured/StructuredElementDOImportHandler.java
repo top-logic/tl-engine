@@ -21,7 +21,7 @@ import com.top_logic.importer.base.StructuredDataImportPerformer.StructureImport
 /**
  * Import a work process element.
  * 
- * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author    <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementDOImportHandler<C extends StructuredElementDOImportHandler.Config, O extends AttributedStructuredElementWrapper> extends AbstractAttributedDOImportHandler<C, O> {
 

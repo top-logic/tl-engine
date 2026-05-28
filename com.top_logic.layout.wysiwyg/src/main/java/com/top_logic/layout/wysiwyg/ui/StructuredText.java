@@ -27,7 +27,7 @@ import com.top_logic.knowledge.searching.FullTextSearchable;
 /**
  * Structure containing used images and the source code for a HTML attribute.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 @Binding(StructuredTextValueBinding.class)
 @JsonBinding(StructuredTextJsonBinding.class)

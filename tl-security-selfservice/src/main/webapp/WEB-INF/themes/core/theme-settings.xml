@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="com.top_logic.security.selfservice.invitation.Icons.RESET_MFA"
+		value="css:fa-solid fa-rotate"
+	/>
+	<icon name="com.top_logic.security.selfservice.invitation.Icons.RESET_PASSWORD"
+		value="css:fa-solid fa-rotate"
+	/>
+</settings>

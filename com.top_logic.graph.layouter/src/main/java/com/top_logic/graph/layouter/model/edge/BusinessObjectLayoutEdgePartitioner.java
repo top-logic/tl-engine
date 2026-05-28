@@ -17,7 +17,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 /**
  * Partition a set of {@link LayoutEdge}'s. Edges are separated by the existance of an userObject.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class BusinessObjectLayoutEdgePartitioner implements LayoutEdgePartitioner {
 	private static final String NULL = "null";

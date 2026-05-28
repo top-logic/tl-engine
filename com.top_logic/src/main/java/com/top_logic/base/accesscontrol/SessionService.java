@@ -9,9 +9,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.EventListener;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,8 +26,11 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -34,16 +38,20 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.knowledge.monitor.UserMonitor;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
  * {@link ManagedClass} holding active user sessions.
  */
-@ServiceDependencies({ PersonManager.Module.class, ThreadContextManager.Module.class })
+@ServiceDependencies({
+	ThreadContextManager.Module.class,
+	/* The SessionService itself does not use the PersistencyLayer, but it caches Persons which
+	 * depend on the KB. Therefore it must be restarted, when the KB is restarted. */
+	PersistencyLayer.Module.class
+})
 public final class SessionService extends ConfiguredManagedClass<SessionService.Config>
 		implements HttpSessionBindingListener {
 	
@@ -51,35 +59,11 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * Configuration for {@link SessionService}.
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<SessionService> {
-		/**
-		 * @see #getOnlyOneSession()
-		 */
-		String ONLY_ONE_SESSION = "onlyOneSession";
-
-		/**
-		 * @see #getExcludeUIDs()
-		 */
-		String EXCLUDE_UIDS = "excludeUIDs";
 
 		/**
 		 * @see #getSecureSessionCookie()
 		 */
 		String SECURE_SESSION_COOKIE = "secureSessionCookie";
-
-		/**
-		 * Flag whether to allow only one session per user. If <code>true</code>, a user gets logged
-		 * out if he is logging in a second time.
-		 */
-		@Name(ONLY_ONE_SESSION)
-		boolean getOnlyOneSession();
-
-		/**
-		 * Comma separated list without spaces of login IDs, that are excluded from
-		 * {@link #getOnlyOneSession()}.
-		 */
-		@Name(EXCLUDE_UIDS)
-		@Label("Exclude user IDs")
-		String[] getExcludeUIDs();
 
 		/**
 		 * Whether the session cookie is secured with the <code>HttpOnly</code> option and the
@@ -88,6 +72,38 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		@Name(SECURE_SESSION_COOKIE)
 		@Mandatory
 		boolean getSecureSessionCookie();
+
+		/**
+		 * Configuration of user event listeners to react on login and logout.
+		 */
+		List<UserEventListenerConfig> getListeners();
+	}
+
+	/**
+	 * {@link NamedConfigMandatory} holding the configuration of an {@link UserEventListener}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface UserEventListenerConfig extends NamedConfigMandatory {
+
+		/**
+		 * Configuration of the event listener.
+		 */
+		PolymorphicConfiguration<? extends UserEventListener> getImpl();
+	}
+
+	/**
+	 * Listener for {@link UserEvent}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public interface UserEventListener extends EventListener {
+
+		/**
+		 * Handles the given {@link UserEvent}.
+		 */
+		void notifyUserEvent(UserEvent event);
+
 	}
 
 	/** Name used to attach the {@link TLSessionContext} to a HTTPSession. */
@@ -109,11 +125,9 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	private final Map<String, SessionInfo> _sessionMap = new ConcurrentHashMap<>(100);
 
 	/**
-	 * Consumer to consume {@link UserEvent}.
+	 * Consumers to consume {@link UserEvent}.
 	 */
-	private Consumer<UserEvent> _userEventConsumer;
-
-	private final PersonManager _personManager;
+	private final List<UserEventListener> _userEventListeners;
 
 	private final ThreadContextManager _threadContextManager;
 
@@ -122,8 +136,10 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 */
 	public SessionService(InstantiationContext context, Config config) {
 		super(context, config);
-		_personManager = PersonManager.getManager();
 		_threadContextManager = ThreadContextManager.getManager();
+		List<? extends PolymorphicConfiguration<? extends UserEventListener>> listenerConfigs =
+			config.getListeners().stream().map(UserEventListenerConfig::getImpl).toList();
+		_userEventListeners = TypedConfiguration.getInstanceListReadOnly(context, listenerConfigs);
 	}
 
     //------------------PUBLIC METHODS----------------------
@@ -338,15 +354,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
     /**
 	 * <p>
-	 * This method creates a new session for the given request and binds the given user to it. If
-	 * the given request already has a session, or the given user is null it will return null. This
-	 * method should be called by the LoginPageServlet only.
-	 * </p>
-	 * <p>
-	 * If the license is demo only single login is possible.
-	 * </p>
-	 * <p>
-	 * If there are more users in the system as the license allowed, only root can login single.
+	 * This method creates a new session for the given request and binds the given user to it.
 	 * </p>
 	 *
 	 * @param request
@@ -355,8 +363,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 *        The current response.
 	 * @param aUser
 	 *        Owner of the new session
-	 * @return a HttpSession or null
 	 */
+	@FrameworkInternal
 	public HttpSession loginUser(HttpServletRequest request, HttpServletResponse response, Person aUser) {
 		return login(request, response, aUser);
     }
@@ -553,12 +561,12 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
 	private void sendEvent(String sessionid, Person passiveUser, Person activeUser,
 			UserEvent.EventType mode) {
-		final Consumer<UserEvent> consumer = this.getUserEvtConsumer();
-		if (consumer != null) {
-			UserEvent theEvent =
-				new UserEvent(passiveUser, activeUser, sessionid, this.getClientIP(sessionid), mode);
-
-			consumer.accept(theEvent);
+		if (_userEventListeners.isEmpty()) {
+			return;
+		}
+		UserEvent event = new UserEvent(passiveUser, activeUser, sessionid, this.getClientIP(sessionid), mode);
+		for (UserEventListener consumer : _userEventListeners) {
+			consumer.notifyUserEvent(event);
 		}
 	}
 
@@ -583,16 +591,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
         }
     }
 
-	/**
-	 * The {@link Consumer} to notify about user event. May be <code>null</code>.
-	 */
-	private Consumer<UserEvent> getUserEvtConsumer() {
-		if (UserMonitor.Module.INSTANCE.isActive() && _userEventConsumer == null) {
-			this._userEventConsumer = UserMonitor.Module.INSTANCE.getImplementationInstance()::notifyUserEvent;
-		}
-		return (this._userEventConsumer);
-	}
-
     /**
 	 * The singleton {@link SessionService} instance.
 	 */
@@ -606,7 +604,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			invalidateSession(info.getSessionId());
 		}
 		_sessionMap.clear();
-		_userEventConsumer = null;
 		super.shutDown();
 	}
 	
@@ -618,20 +615,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 */
 	public TLSessionContext getSession(HttpSession session) {
 		return (TLSessionContext) session.getAttribute(CONTEXT_NAME);
-	}
-
-	/**
-	 * @see Config#ONLY_ONE_SESSION
-	 */
-	public boolean getOnlyOneSession() {
-		return getConfig().getOnlyOneSession();
-	}
-
-	/**
-	 * @see Config#getExcludeUIDs()
-	 */
-	public String[] getExcludeUIDs() {
-		return getConfig().getExcludeUIDs();
 	}
 
 	/**

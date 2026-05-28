@@ -17,7 +17,7 @@ import com.top_logic.tool.dataImport.UploadZipDialog;
 /**
  * A dialog to upload a ZIP file containing a theme.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeUploadDialog extends UploadZipDialog {
 

@@ -11,7 +11,7 @@ import com.top_logic.model.TLType;
 /**
  * Handler to create a reference between {@link TLClass}es.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public interface CreateReferenceHandler {
 

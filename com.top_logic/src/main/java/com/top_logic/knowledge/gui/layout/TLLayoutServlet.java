@@ -7,13 +7,18 @@ package com.top_logic.knowledge.gui.layout;
 
 import java.io.IOException;
 
+import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLPathParser;
@@ -34,10 +39,26 @@ import com.top_logic.util.TopLogicServlet;
 public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants {
 
 	/**
+	 * Init-parameter switch to disable XSS protection checking.
+	 */
+	public static final String DISABLE_SECURE_HEADER_CHECK = "disableSecureHeaderCheck";
+
+	/**
 	 * Configuration for {@link TLLayoutServlet}.
 	 */
 	public interface Config extends TopLogicServlet.Config {
 		// same configuration as parent
+	}
+
+	private boolean _enableChecks;
+
+	@Override
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+
+		String value = config.getInitParameter(DISABLE_SECURE_HEADER_CHECK);
+		_enableChecks = !"true".equals(value);
+
 	}
 
 	/**
@@ -46,6 +67,23 @@ public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants 
 	@Override
 	public Config getConfig() {
 		return ApplicationConfig.getInstance().getConfig(Config.class);
+	}
+
+	@Override
+	protected void doService(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+
+		if (_enableChecks) {
+			String protection = response.getHeader(HttpSecureHeaderFilter.X_XSS_PROTECTION);
+			if (protection == null || protection.isEmpty()) {
+				response.sendRedirect(request.getContextPath() + "/jsp/display/error/NoXssProtection.jsp");
+				return;
+			}
+			// Check only once.
+			_enableChecks = false;
+		}
+
+		super.doService(request, response);
 	}
     
     /**
@@ -98,4 +136,16 @@ public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants 
         doGet(req, resp);
     }
 
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		super.handleNoSession(request, response);
+
+		ThreadContextManager.inSystemInteraction(TopLogicServlet.class, () -> {
+			Person anonymous = PersonManager.getManager().getAnonymous();
+			SessionService.getInstance().loginUser(request, response, anonymous);
+		});
+
+		redirectToStartPage(request, response);
+	}
 }

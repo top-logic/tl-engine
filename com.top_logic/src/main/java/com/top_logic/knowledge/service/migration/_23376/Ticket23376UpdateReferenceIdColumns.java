@@ -33,7 +33,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 /**
  * {@link MigrationProcessor} updating id aspect of references as migration for Ticket 23376.
  *
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sven.foerster@top-logic.com">Sven FÃ¶rster</a>
  */
 public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 

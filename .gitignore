@@ -10,7 +10,7 @@
 /**/*~
 /.project
 /.venv/
-/.playwright-mcp
+/.playwright-mcp/
 /.worktrees
 /.mvn
 /.m2

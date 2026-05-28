@@ -29,7 +29,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSLabel;
 /**
  * Default listener for {@link ScopeEvent} on shared graphs.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultGraphScopeListener implements ScopeListener {
 

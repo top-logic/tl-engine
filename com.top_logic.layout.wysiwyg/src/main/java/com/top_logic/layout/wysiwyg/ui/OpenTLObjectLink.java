@@ -36,7 +36,7 @@ import com.top_logic.tool.boundsec.commandhandlers.OpenViewForModelCommand;
 /**
  * Handler to open a top-logic object link in a Popup Dialog.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class OpenTLObjectLink extends ControlCommand {
 

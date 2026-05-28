@@ -39,7 +39,7 @@ public class SafeHTML extends ManagedClass {
 	 * Configuration for {@link SafeHTML} specifying which attribute names, tag names and attribute
 	 * values are allowed.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ServiceConfiguration<SafeHTML> {
 		/**

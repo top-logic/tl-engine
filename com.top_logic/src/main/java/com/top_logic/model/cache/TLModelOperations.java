@@ -20,15 +20,19 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
 import com.top_logic.layout.provider.icon.ProxyIconProvider;
 import com.top_logic.layout.provider.icon.StaticIconProvider;
+import com.top_logic.mig.html.SimpleTooltipProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -37,6 +41,9 @@ import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
+import com.top_logic.model.annotate.ui.TLIDColumn;
+import com.top_logic.model.annotate.ui.TLLabel;
+import com.top_logic.model.annotate.ui.TLTooltip;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
@@ -283,6 +290,75 @@ public class TLModelOperations {
 			type = TLModelUtil.getPrimaryGeneralization(type);
 		}
 		return null;
+	}
+
+	/**
+	 * Retrieves the {@link TooltipProvider} for a given {@link TLType}.
+	 */
+	public TooltipProvider getTooltipProvider(TLType type) {
+		return computeTooltipProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLTooltip} annotation in the primary generalization hierarchy and
+	 * builds an {@link TooltipProvider} for the given type.
+	 */
+	protected TooltipProvider computeTooltipProvider(TLType type) {
+		while (type != null) {
+			TLTooltip annotation = type.getAnnotation(TLTooltip.class);
+			if (annotation != null) {
+				TooltipProvider provider = TypedConfigUtil.createInstance(annotation.getTooltipProvider());
+				return provider;
+			}
+
+			type = TLModelUtil.getPrimaryGeneralization(type);
+		}
+
+		return SimpleTooltipProvider.INSTANCE;
+	}
+
+	/**
+	 * Retrieves the {@link LabelProvider} for a given {@link TLType}.
+	 */
+	public LabelProvider getLabelProvider(TLType type) {
+		return computeLabelProvider(type);
+	}
+
+	/**
+	 * Looks up the first {@link TLLabel} annotation in the primary generalization hierarchy and
+	 * builds an {@link LabelProvider} for the given type.
+	 */
+	protected LabelProvider computeLabelProvider(final TLType type) {
+		TLType anchestorType = type;
+		while (anchestorType != null) {
+			TLLabel annotation = anchestorType.getAnnotation(TLLabel.class);
+			if (annotation != null) {
+				LabelProvider provider = TypedConfigUtil.createInstance(annotation.getLabelProvider());
+				return provider;
+			}
+
+			if (anchestorType instanceof TLStructuredType structuredType) {
+				TLIDColumn idColumn = structuredType.getAnnotation(TLIDColumn.class);
+				if (idColumn != null) {
+					TLStructuredTypePart idColumnPart = structuredType.getPart(idColumn.getValue());
+
+					if (idColumnPart != null) {
+						return new IDColumnLabelProvider(idColumnPart);
+					}
+				}
+			}
+
+			anchestorType = TLModelUtil.getPrimaryGeneralization(anchestorType);
+		}
+
+		if (type instanceof TLStructuredType structuredType) {
+			TLStructuredTypePart namePart = structuredType.getPart(TLNamed.NAME_ATTRIBUTE);
+			if (namePart != null) {
+				return new IDColumnLabelProvider(namePart);
+			}
+		}
+
+		return new SimpleLabelProvider(type);
 	}
 
 	/**

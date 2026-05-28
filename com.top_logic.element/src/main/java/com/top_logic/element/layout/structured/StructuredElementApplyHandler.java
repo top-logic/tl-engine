@@ -21,7 +21,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * 
  * TODO MGA: extract an AttributedApplyHandler.
  * 
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author     <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class StructuredElementApplyHandler extends AbstractApplyAttributedCommandHandler {
 

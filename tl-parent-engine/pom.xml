@@ -4,7 +4,7 @@
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>7.11.0-SNAPSHOT</version>
+		<version>8.0.0-SNAPSHOT</version>
 		<artifactId>tl-parent-all</artifactId>
 		<relativePath>..</relativePath>
 	</parent>
@@ -123,6 +123,7 @@
 		<module>../tl-service-jms</module>
 		<module>../tl-service-jms-activemq</module>
 		<module>../tl-service-jms-ibmmq</module>
+		<module>../tl-security-selfservice</module>
 
 		<!-- Migration utilities -->
 		<module>../com.top_logic.migrate.tl</module>
@@ -161,8 +162,7 @@
 			<plugin>
 		        <groupId>com.top-logic</groupId>
 		        <artifactId>tl-maven-plugin</artifactId>
-		        <version>7.11.0-SNAPSHOT</version>
-		        
+
 		        <executions>
 					<execution>
 						<id>index-javadoc</id>

@@ -19,14 +19,14 @@ import com.top_logic.layout.themeedit.browser.providers.theme.ThemeFormBuilder.E
 /**
  * {@link DeclarativeFormBuilder} for a theme configuration.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class ThemeFormBuilder extends DeclarativeFormBuilder<ThemeConfig, EditModel> {
 
 	/**
 	 * Model of the displayed form.
 	 *
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	@DisplayOrder({
 		ThemeConfig.ID_PROPERTY,

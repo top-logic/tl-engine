@@ -247,7 +247,7 @@ public abstract class OracleHelper extends DBHelper {
     /** 
      * Round x to y number of decimal places. 
      * 
-     * @see "Oracle® Database SQL Language Reference 11g Release 1, 5 Functions"
+     * @see "OracleÂ® Database SQL Language Reference 11g Release 1, 5 Functions"
      */ 
     @Override
     public String fnTruncate(String x, int y)
@@ -258,7 +258,7 @@ public abstract class OracleHelper extends DBHelper {
     /** 
      * Round x to y number of decimal places. 
      * 
-     * @see "Oracle® Database SQL Language Reference 11g Release 1, 5 Functions"
+     * @see "OracleÂ® Database SQL Language Reference 11g Release 1, 5 Functions"
      */ 
     @Override
     public String fnRound(String x, int y)

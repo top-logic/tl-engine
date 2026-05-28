@@ -11,6 +11,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.Hashtable;
 
+import junit.framework.Test;
+import junit.framework.TestCase;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -22,11 +25,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 
-import junit.framework.Test;
-import junit.framework.TestCase;
-
+import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.knowledge.KBSetup;
 
 import com.meterware.httpunit.WebResponse;
 import com.meterware.servletunit.InvocationContext;
@@ -285,7 +285,7 @@ public class TestCompressionServletResponseWrapper extends TestCase {
 	}
 
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(
+		return PersonManagerSetup.createPersonManagerSetup(
 					ServiceTestSetup.createSetup(
 						TestCompressionServletResponseWrapper.class,
 				SessionService.Module.INSTANCE,

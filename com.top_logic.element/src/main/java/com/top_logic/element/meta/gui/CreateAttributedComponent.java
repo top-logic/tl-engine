@@ -43,7 +43,7 @@ import com.top_logic.tool.boundsec.CommandHandlerUtil;
 /**
  * Generic component to create a new object.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  * 
  * @deprecated Use {@link AbstractCreateComponent} with {@link CreateFormBuilder}
  */

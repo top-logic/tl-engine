@@ -47,7 +47,7 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 	/**
 	 * Configuration for {@link ExportQueueManager}
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<ExportQueueManager> {
 		/**
@@ -333,7 +333,7 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 	/**
 	 * Module for {@link ExportQueueManager}
 	 * 
-	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+	 * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
 	 */
 	public static final class Module extends TypedRuntimeModule<ExportQueueManager> {
 

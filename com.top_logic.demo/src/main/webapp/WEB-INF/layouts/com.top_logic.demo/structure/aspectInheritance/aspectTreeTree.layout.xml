@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tree.template.xml"
+>
+	<arguments
+		defaultSelection="false"
+		isSecurityMaster="true"
+		rootVisible="false"
+	>
+		<name key="dynamic.f3b2d89d-eb83-4181-beff-869b09565be2">
+			<en>Aspect tree</en>
+			<de>Aspekt-Baum</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			nodePredicate="node->$node.instanceOf(`tl.demo.aspect:Common`)"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="`tl.demo.aspect#ROOT`"
+		/>
+		<securityObject class="com.top_logic.model.search.providers.SecurityObjectByExpression"
+			function="`DemoTypes#ROOT`"
+		/>
+	</arguments>
+</config:template-call>

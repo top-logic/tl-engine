@@ -10,6 +10,8 @@ import static com.top_logic.basic.StringServices.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
@@ -358,7 +360,7 @@ public class DocumentationImporter {
 	public static Properties loadProperties(String propertiesResource) throws IOException {
 		Properties result = new Properties();
 		try (InputStream in = FileManager.getInstance().getData(propertiesResource).getStream()) {
-			result.load(in);
+			result.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 		}
 		return result;
 	}

@@ -50,7 +50,7 @@ import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProv
 /**
  * Build a tree structure out of wrappers which are no structured elements.
  * 
- * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
  */
 public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder.Config>
 		extends AbstractTreeModelBuilder<Wrapper> implements ConfiguredInstance<C> {
@@ -58,7 +58,7 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 	/**
 	 * Configuration for structural information in the provided model.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface Config extends PolymorphicConfiguration<WrapperStructureModelBuilder<?>> {
 
@@ -80,7 +80,7 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 	/**
 	 * Configuration for a child node in the tree.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public interface ChildConfig extends NamedConfigMandatory {
 		// Empty here...
@@ -386,7 +386,7 @@ public class WrapperStructureModelBuilder<C extends WrapperStructureModelBuilder
 	/**
 	 * Model provider for a generic root object.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael GÃ¤nsler</a>
 	 */
 	public static class WrapperStructureModelProvider implements ModelProvider {
 

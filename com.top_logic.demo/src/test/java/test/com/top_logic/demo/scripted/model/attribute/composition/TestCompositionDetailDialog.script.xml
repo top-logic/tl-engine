@@ -514,7 +514,7 @@
 						>
 							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -530,7 +530,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -553,7 +553,7 @@
 						>
 							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -569,7 +569,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -596,7 +596,7 @@
 									<edited-object config:interface=""/>
 									<form-context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 										<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-											component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+											component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 											component-name="rootLayout#masterFrame"
 											require-visible="true"
 										/>
@@ -607,7 +607,7 @@
 								</row>
 								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 									<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-										component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+										component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 										component-name="rootLayout#masterFrame"
 										require-visible="true"
 									/>
@@ -624,7 +624,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -647,7 +647,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -1068,7 +1068,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -1217,7 +1217,7 @@
 						>
 							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -1233,7 +1233,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>
@@ -1340,7 +1340,7 @@
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
 								<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-									component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+									component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
 									component-name="rootLayout#masterFrame"
 									require-visible="true"
 								/>

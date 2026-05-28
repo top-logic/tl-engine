@@ -57,12 +57,12 @@ import com.top_logic.dsa.repos.file.FileRepository;
  * 
  * <pre>
  * Contents of _f__Some_File
- *    _0_revision                   # containing 4, "Härbört, true, false 
- *    _1_n_Müller                   # First Version by "Müller"
- *    _2_n_Ângstrøm                 # Second one by "Ângstrøm"
- *    _3_n_Müller                   # Third one by "Müller" again
+ *    _0_revision                   # containing 4, "HÃ¤rbÃ¶rt, true, false 
+ *    _1_n_MÃ¼ller                   # First Version by "MÃ¼ller"
+ *    _2_n_ÃngstrÃ¸m                 # Second one by "ÃngstrÃ¸m"
+ *    _3_n_MÃ¼ller                   # Third one by "MÃ¼ller" again
  *    _4_n_Some User                # Fouth one by "Some User"
- *    _5_d_Härbört                  # Deleted in Revision 5
+ *    _5_d_HÃ¤rbÃ¶rt                  # Deleted in Revision 5
  * </pre>
  * </p>
  * <p>
@@ -84,7 +84,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 	/**
 	 * Configuration of {@link FileRepository}.
 	 * 
-	 * @author <a href="mailto:mga@top-logic.com">Michael G�nsler</a>
+	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
 	public interface Config<I extends AbstractRepository<?, ?>> extends PolymorphicConfiguration<I> {
 

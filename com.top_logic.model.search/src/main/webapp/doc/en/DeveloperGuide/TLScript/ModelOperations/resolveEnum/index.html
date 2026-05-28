@@ -1,0 +1,46 @@
+<h2>Syntax</h2>
+<pre>	<code>resolveEnum($type, $name)
+</code>
+</pre>
+<h2>Description</h2>
+<p>Resolves a Java enum constant by the fully qualified class name <code class="hljs inlineCode">type</code> of the enum and its serialized name <code class="hljs inlineCode">name</code>. The serialized name is the name used in configuration files (XML, JSON). This is the inverse operation of <code class="hljs inlineCode">enumName()</code>.</p>
+<h2>Parameters</h2>
+<table class="tlDocTable">
+ <thead>
+  <tr>
+   <th>Name</th>
+   <th>Type</th>
+   <th>Description</th>
+   <th>Mandatory</th>
+   <th>Default</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>type</td>
+   <td>String</td>
+   <td>The fully qualified Java class name of the enum type.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+  <tr>
+   <td>name</td>
+   <td>String</td>
+   <td>The serialized name of the enum constant to resolve.</td>
+   <td>yes</td>
+   <td></td>
+  </tr>
+ </tbody>
+</table>
+<h2>Return value</h2>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Enum</p>
+<p>The enum constant of type <code class="hljs inlineCode">type</code> with the serialized name <code class="hljs inlineCode">name</code>.</p>
+<h2>Examples</h2>
+<h3>Resolve an enum constant by name</h3>
+<pre><code>resolveEnum("com.top_logic.basic.config.MapOperation", "add")</code></pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">MapOperation.ADD</code></p>
+<p>Resolves the <code class="hljs inlineCode">MapOperation</code> enum constant with serialized name <code class="hljs inlineCode">"add"</code>.</p>
+<h3>Round-trip with <code class="hljs inlineCode">enumName()</code></h3>
+<pre><code>enumName(resolveEnum("com.top_logic.basic.config.MapOperation", "add"))</code></pre>
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">"add"</code></p>
+<p></p>

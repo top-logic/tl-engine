@@ -18,7 +18,7 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
  * {@link AlternatingLayer} used by this implementation of {@link Sugiyama}. Alternated between
  * {@link LayoutNode}s and {@link SegmentContainer}s.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven FÃ¶rster</a>
  */
 public class DefaultAlternatingLayer extends AlternatingLayer<LayoutNode, SegmentContainer> {
 

@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.11.0-SNAPSHOT</version>
+    <version>8.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-graphic-blocks-server</artifactId>
@@ -42,6 +42,16 @@
       <type>war</type>
       <classifier>web-fragment</classifier>
       <scope>provided</scope>
+    </dependency>
+
+    <!-- Required so Surefire (configured in tl-parent-core to scan tl-basic's test-jar for
+         test/TestAll.class) actually finds and runs the module's tests. Without this dependency
+         the build silently passes even when test classes in this module fail. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   

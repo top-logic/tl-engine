@@ -18,7 +18,7 @@ import com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Tests for {@link SaveHtmlPageTool}.
+ * Tests for {@link PublishHtmlPageTool}.
  *
  * <p>
  * Exercises the tool-facing API that translates user-supplied string arguments
@@ -26,16 +26,16 @@ import com.top_logic.util.model.ModelService;
  * relative URL of the freshly stored page.
  * </p>
  */
-public class TestSaveHtmlPageTool extends BasicTestCase {
+public class TestPublishHtmlPageTool extends BasicTestCase {
 
 	private static final String VALID_HTML = "<!doctype html><html><body>hi</body></html>";
 
-	private SaveHtmlPageTool _tool;
+	private PublishHtmlPageTool _tool;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_tool = new SaveHtmlPageTool();
+		_tool = new PublishHtmlPageTool();
 	}
 
 	/**
@@ -45,7 +45,7 @@ public class TestSaveHtmlPageTool extends BasicTestCase {
 	public void testReturnsRelativeUrlWithIdSegment() throws Exception {
 		String url;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			url = _tool.savePage("Hello", VALID_HTML);
+			url = _tool.publishPage("Hello", VALID_HTML);
 			tx.commit();
 		}
 		assertNotNull("tool must return a URL", url);
@@ -63,7 +63,7 @@ public class TestSaveHtmlPageTool extends BasicTestCase {
 	 */
 	public void testRejectsEmptyHtml() {
 		try {
-			_tool.savePage("t", "");
+			_tool.publishPage("t", "");
 			fail("expected IllegalArgumentException for empty html");
 		} catch (IllegalArgumentException ex) {
 			assertMessageMentions(ex, "html");
@@ -75,7 +75,7 @@ public class TestSaveHtmlPageTool extends BasicTestCase {
 	 */
 	public void testRejectsBlankTitle() {
 		try {
-			_tool.savePage("   ", VALID_HTML);
+			_tool.publishPage("   ", VALID_HTML);
 			fail("expected IllegalArgumentException for blank title");
 		} catch (IllegalArgumentException ex) {
 			assertMessageMentions(ex, "title");
@@ -107,7 +107,7 @@ public class TestSaveHtmlPageTool extends BasicTestCase {
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(
 			ServiceTestSetup.createSetup(
-				new TestSuite(TestSaveHtmlPageTool.class),
+				new TestSuite(TestPublishHtmlPageTool.class),
 				ModelService.Module.INSTANCE,
 				GeneratedHtmlPageService.Module.INSTANCE));
 	}

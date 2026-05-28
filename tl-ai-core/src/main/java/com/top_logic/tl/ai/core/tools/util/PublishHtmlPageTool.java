@@ -24,14 +24,14 @@ import com.top_logic.util.TLContext;
  * {@link com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageServlet} mapped to {@code /html/*}.
  * </p>
  */
-public class SaveHtmlPageTool {
+public class PublishHtmlPageTool {
 
 	private static final String URL_PREFIX = "/html/";
 
 	/**
 	 * Required public no-arg constructor for {@code ReflectiveToolFactory}.
 	 */
-	public SaveHtmlPageTool() {
+	public PublishHtmlPageTool() {
 		// no state
 	}
 
@@ -45,12 +45,12 @@ public class SaveHtmlPageTool {
 	 * @return Relative URL like {@code /html/a7f3b2...}.
 	 */
 	@ToolMethod(
-		name = "savePage",
-		description = "Saves an HTML page and returns a URL. After generating the full HTML "
+		name = "publishPage",
+		description = "Publishes an HTML page and returns a URL. After generating the full HTML "
 			+ "document following the chosen design skill's spec, call this tool. Embed the "
 			+ "returned URL in your reply as a markdown link.",
 		mode = ToolMode.USER_SCOPED)
-	public String savePage(
+	public String publishPage(
 			@P("Short human-readable title for the page. Used in the admin list and as default link text. "
 				+ "If the HTML omits <title>, browsers may show this in the tab.") String title,
 			@P("Full self-contained HTML document. Must start with <!doctype html> and include "

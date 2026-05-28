@@ -28,7 +28,7 @@
 					<module key="com.top_logic.tl.ai.core.mcp.McpServerRegistry$Module" value="true"/>
 					<!-- Agent Definition Service for config-defined agents and skills -->
 					<module key="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions$Module" value="true"/>
-					<!-- HTML Page Service for the TL_HTMLGenerator agent's savePage tool -->
+					<!-- HTML Page Service for the TL_HTMLGenerator agent's publishPage tool -->
 					<module key="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService$Module" value="true"/>
 				</modules>
 			</instance>
@@ -1055,18 +1055,18 @@ workflow.)
 - Missing a mandatory attribute -> execution rejected; round-trip wasted.
 ]]></content>
 					</skill>
-					<skill name="TL_htmlPage"
+					<skill name="TL_DesignHtmlPage"
 						description="Design and persist one self-contained HTML page for the user's request, then reply with a markdown link to the served URL. Use whenever the user asks for a report, dashboard, slideshow, infographic, essay, or any other visual artefact."
 					>
-						<content><![CDATA[# html-page — design a page worth reading
+						<content><![CDATA[# design-html-page — design a page worth reading
 
 When this skill is active, your role for this turn is **designer**. Whatever else you usually do in this codebase — model editing, scripting, delegation — set it aside. For the duration of this request you are making one self-contained HTML document, with care, for someone who will judge it on how it looks and reads. Act like that's true.
 
 ## The contract (non-negotiable)
 
-- You will call `savePage` **exactly once** this turn, with the full HTML.
-- You will reply with a markdown link using the **literal URL** that `savePage` returned — no earlier URLs, no guesses.
-- If `savePage` fails, you say so. You do not pretend.
+- You will call `publishPage` **exactly once** this turn, with the full HTML.
+- You will reply with a markdown link using the **literal URL** that `publishPage` returned — no earlier URLs, no guesses.
+- If `publishPage` fails, you say so. You do not pretend.
 - Every fact, number, name, and quote in the page comes from the user's request. Invent nothing.
 
 ## What makes a page worth reading
@@ -1142,7 +1142,7 @@ If the user didn't specify, pick the one that fits and name your choice in the r
 - **Print-friendly** — a `@media print` block that hides the decoration.
 - **Visual rhythm** — vary block types within the page (header → diagram → text → quote → table → footer). Avoid long stretches of one shape.
 
-## Before you call savePage — the self-check
+## Before you call publishPage — the self-check
 
 Look at the document you are about to save. Ask one question:
 
@@ -1157,9 +1157,9 @@ If yes, you defaulted somewhere. Find the most obvious tell and fix it before sa
 3. Choose a font pair and a palette that serve that direction. Define palette tokens on `:root`.
 4. Compose the HTML in one pass. Inline all custom CSS. Reference tokens — no hex outside `:root`.
 5. Run the self-check above. Fix anything that reads as default.
-6. **Announce the choice.** Before calling `savePage`, send one short sentence to the reader naming what you're about to make — the aesthetic direction, the format, and (if you have one) a signature touch. The tool call and the subsequent page render take a few seconds; this sentence streams immediately and gives the reader something to read while it happens. Examples: *"Alright — an editorial broadside in vermillion-on-cream, with sticky margin notes and a flow strip that auto-plays."* / *"Making this as a dark KPI dashboard, monospace numerals, one orange status accent."*
-7. Call `savePage(title, html)`. `title` is short and human; it becomes the link text.
-8. Reply with the markdown link using the **exact URL** `savePage` returned. E.g. `[Quarterly Summary](<url-returned-by-savePage>)`. Direction was already named in step 6 — don't repeat yourself.
+6. **Announce the choice.** Before calling `publishPage`, send one short sentence to the reader naming what you're about to make — the aesthetic direction, the format, and (if you have one) a signature touch — and tell them this will take a moment to generate. The tool call and the subsequent page render take a few seconds; this sentence streams immediately and gives the reader something to read while it happens. Examples: *"Alright — an editorial broadside in vermillion-on-cream, with sticky margin notes and a flow strip that auto-plays. Give me a moment to put it together."* / *"Making this as a dark KPI dashboard, monospace numerals, one orange status accent — one second while it renders."*
+7. Call `publishPage(title, html)`. `title` is short and human; it becomes the link text.
+8. Reply with the markdown link using the **exact URL** `publishPage` returned. E.g. `[Quarterly Summary](<url-returned-by-publishPage>)`. Direction was already named in step 6 — don't repeat yourself.
 
 ---
 
@@ -1310,13 +1310,13 @@ Route by the nature of the request:
 							<tool name="task.listTasks"/>
 							<tool name="task.createTask"/>
 							<tool name="user-interaction.askUser"/>
-							<tool name="html-pages.savePage"/>
+							<tool name="html-pages.publishPage"/>
 						</tools>
 						<skills>
 							<skill name="TL_taskManagement"/>
 							<skill name="TL_promptModelEditor"/>
 							<skill name="TL_promptModelExplorer"/>
-							<skill name="TL_htmlPage"/>
+							<skill name="TL_DesignHtmlPage"/>
 						</skills>
 						<delegations>
 							<delegation name="TL_TLScriptAgent"/>
@@ -2098,7 +2098,7 @@ After creating model elements, summarize:
 							<tool name="model-modification.createModule"/>
 							<tool name="model-analysis.findPartUsages"/>
 							<tool name="model-modification.updateClass"/>
-							<tool name="html-pages.savePage"/>
+							<tool name="html-pages.publishPage"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>
@@ -2107,7 +2107,7 @@ After creating model elements, summarize:
 							<skill name="TL_topLogicModeling"/>
 							<skill name="TL_taskManagement"/>
 							<skill name="TL_modelExploration"/>
-							<skill name="TL_htmlPage"/>
+							<skill name="TL_DesignHtmlPage"/>
 						</skills>
 					</agent>
 				</agents>
@@ -2205,7 +2205,7 @@ After creating model elements, summarize:
 					</factory>
 					<factory name="html-pages">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.tl.ai.core.tools.util.SaveHtmlPageTool"
+							tool-class="com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool"
 						/>
 					</factory>
 				</tool-factories>

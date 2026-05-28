@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A box that computes the size and position of multiple content boxes.
  */
-public interface Layout extends Box {
+public interface Layout extends com.top_logic.react.flow.data.Box {
 
 	/** Visitor interface for the {@link com.top_logic.react.flow.data.Layout} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> extends com.top_logic.react.flow.data.RowLayout.Visitor<R,A,E> {
@@ -74,9 +74,9 @@ public interface Layout extends Box {
 		int id = in.nextInt();
 		switch (type) {
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GridLayout.create(); break;
-			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.VerticalLayout.create(); break;
+			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
 		if (result != null) {

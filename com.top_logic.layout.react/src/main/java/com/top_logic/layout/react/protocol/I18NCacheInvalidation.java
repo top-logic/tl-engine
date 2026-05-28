@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Tells the client to clear its i18n translation cache.
  */
-public interface I18NCacheInvalidation extends SSEEvent {
+public interface I18NCacheInvalidation extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.I18NCacheInvalidation} instance.

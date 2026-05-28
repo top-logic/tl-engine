@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A rectangular region of a {@link Diagram}.
  */
-public interface Box extends Widget, com.top_logic.react.flow.operations.BoxOperations {
+public interface Box extends com.top_logic.react.flow.data.Widget, com.top_logic.react.flow.operations.BoxOperations {
 
 	/** Visitor interface for the {@link com.top_logic.react.flow.data.Box} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> extends com.top_logic.react.flow.data.Decoration.Visitor<R,A,E>, com.top_logic.react.flow.data.Layout.Visitor<R,A,E> {
@@ -122,15 +122,13 @@ public interface Box extends Widget, com.top_logic.react.flow.operations.BoxOper
 		int id = in.nextInt();
 		switch (type) {
 			case FloatingLayout.FLOATING_LAYOUT__TYPE: result = com.top_logic.react.flow.data.FloatingLayout.create(); break;
+			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;
+			case GraphLayout.GRAPH_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GraphLayout.create(); break;
 			case Text.TEXT__TYPE: result = com.top_logic.react.flow.data.Text.create(); break;
 			case Image.IMAGE__TYPE: result = com.top_logic.react.flow.data.Image.create(); break;
 			case Empty.EMPTY__TYPE: result = com.top_logic.react.flow.data.Empty.create(); break;
 			case Stack.STACK__TYPE: result = com.top_logic.react.flow.data.Stack.create(); break;
 			case LOD.LOD__TYPE: result = com.top_logic.react.flow.data.LOD.create(); break;
-			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
-			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
-			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;
-			case GraphLayout.GRAPH_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GraphLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
 			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;
@@ -142,10 +140,12 @@ public interface Box extends Widget, com.top_logic.react.flow.operations.BoxOper
 			case Padding.PADDING__TYPE: result = com.top_logic.react.flow.data.Padding.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
+			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GridLayout.create(); break;
-			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.VerticalLayout.create(); break;
+			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
+			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
 		if (result != null) {

@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A connection in a {@link TreeLayout} that links contents of the diagram with one-to-many edges.
  */
-public interface TreeConnection extends Widget, com.top_logic.react.flow.operations.tree.TreeConnectionOperations {
+public interface TreeConnection extends com.top_logic.react.flow.data.Widget, com.top_logic.react.flow.operations.tree.TreeConnectionOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.TreeConnection} instance.

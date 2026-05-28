@@ -5,7 +5,7 @@ package com.top_logic.react.flow.data;
  *
  * @Operations com.top_logic.react.flow.operations.GraphEdgeOperations
  */
-public interface GraphEdge extends Widget, com.top_logic.react.flow.operations.GraphEdgeOperations {
+public interface GraphEdge extends com.top_logic.react.flow.data.Widget, com.top_logic.react.flow.operations.GraphEdgeOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GraphEdge} instance.

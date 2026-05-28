@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A background drawn below some content.
  */
-public interface Fill extends Decoration, com.top_logic.react.flow.operations.FillOperations {
+public interface Fill extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.FillOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Fill} instance.

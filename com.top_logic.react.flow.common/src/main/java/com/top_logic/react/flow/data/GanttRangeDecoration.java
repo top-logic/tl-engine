@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * Coloured range between two positions.
  */
-public interface GanttRangeDecoration extends GanttDecoration {
+public interface GanttRangeDecoration extends com.top_logic.react.flow.data.GanttDecoration {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GanttRangeDecoration} instance.

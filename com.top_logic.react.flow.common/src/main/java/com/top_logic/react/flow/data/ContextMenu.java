@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A box defines a custom context menu region.
  */
-public interface ContextMenu extends Decoration, com.top_logic.react.flow.operations.ContextMenuOperations {
+public interface ContextMenu extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.ContextMenuOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.ContextMenu} instance.

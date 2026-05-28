@@ -141,3 +141,5 @@ encoding//src/main/webapp/doc/en/tl-demo/TechnicalDemo/Tests/Override/page.prope
 encoding//src/main/webapp/doc/en/tl-demo/TechnicalDemo/Tests/page.properties=UTF-8
 encoding//src/main/webapp/doc/en/tl-demo/TechnicalDemo/page.properties=UTF-8
 encoding//src/main/webapp/doc/en/tl-demo/page.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.test.constraints.messages_de.properties=UTF-8
+encoding//src/main/webapp/WEB-INF/conf/resources/model.test.constraints.messages_en.properties=UTF-8

@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A horizontal row of boxes.
  */
-public interface HorizontalLayout extends RowLayout, com.top_logic.react.flow.operations.layout.HorizontalLayoutOperations {
+public interface HorizontalLayout extends com.top_logic.react.flow.data.RowLayout, com.top_logic.react.flow.operations.layout.HorizontalLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.HorizontalLayout} instance.

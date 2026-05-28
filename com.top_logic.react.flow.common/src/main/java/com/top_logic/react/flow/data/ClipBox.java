@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A box whose content is clipped.
  */
-public interface ClipBox extends Decoration, com.top_logic.react.flow.operations.ClipBoxOperations {
+public interface ClipBox extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.ClipBoxOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.ClipBox} instance.

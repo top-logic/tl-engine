@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * Write several boxes on top of each other.
  */
-public interface Stack extends Box, com.top_logic.react.flow.operations.StackOperations {
+public interface Stack extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.StackOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Stack} instance.

@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A box that accepts drop events by invoking a server callback.
  */
-public interface DropRegion extends Decoration, com.top_logic.react.flow.operations.DropRegionOperations {
+public interface DropRegion extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.DropRegionOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.DropRegion} instance.

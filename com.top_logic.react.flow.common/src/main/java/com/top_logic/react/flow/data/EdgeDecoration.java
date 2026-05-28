@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A decoration placed on an edge.
  */
-public interface EdgeDecoration extends Widget, com.top_logic.react.flow.operations.tree.EdgeDecorationOperations {
+public interface EdgeDecoration extends com.top_logic.react.flow.data.Widget, com.top_logic.react.flow.operations.tree.EdgeDecorationOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.EdgeDecoration} instance.

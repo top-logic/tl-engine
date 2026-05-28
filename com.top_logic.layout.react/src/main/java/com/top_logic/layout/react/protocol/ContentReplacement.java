@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Replaces the inner content of an element.
  */
-public interface ContentReplacement extends SSEEvent {
+public interface ContentReplacement extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.ContentReplacement} instance.

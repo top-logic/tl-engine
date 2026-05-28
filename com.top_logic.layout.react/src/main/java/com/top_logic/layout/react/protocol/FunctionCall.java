@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Calls a JavaScript function.
  */
-public interface FunctionCall extends SSEEvent {
+public interface FunctionCall extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.FunctionCall} instance.

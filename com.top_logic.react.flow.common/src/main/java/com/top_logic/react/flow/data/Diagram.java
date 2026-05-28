@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * Top-level diagram element that can be layouted and rendered.
  */
-public interface Diagram extends Widget, com.top_logic.react.flow.operations.DiagramOperations {
+public interface Diagram extends com.top_logic.react.flow.data.Widget, com.top_logic.react.flow.operations.DiagramOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Diagram} instance.

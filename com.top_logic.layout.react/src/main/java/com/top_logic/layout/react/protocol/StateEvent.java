@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Full state replacement for a React control.
  */
-public interface StateEvent extends SSEEvent {
+public interface StateEvent extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.StateEvent} instance.

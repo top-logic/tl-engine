@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A layout of a row of boxes.
  */
-public interface RowLayout extends Layout {
+public interface RowLayout extends com.top_logic.react.flow.data.Layout {
 
 	/** Visitor interface for the {@link com.top_logic.react.flow.data.RowLayout} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> {

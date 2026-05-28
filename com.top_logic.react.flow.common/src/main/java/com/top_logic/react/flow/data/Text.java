@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A line of text.
  */
-public interface Text extends Box, com.top_logic.react.flow.operations.TextOperations {
+public interface Text extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.TextOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Text} instance.

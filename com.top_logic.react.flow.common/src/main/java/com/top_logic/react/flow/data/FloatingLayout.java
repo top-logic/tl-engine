@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A layout that allows to freely place boxes at arbitrary positions. The layout does not impose any restrictions to the positions and sizes of the placed boxes.
  */
-public interface FloatingLayout extends Box, com.top_logic.react.flow.operations.layout.FloatingLayoutOperations {
+public interface FloatingLayout extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.layout.FloatingLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.FloatingLayout} instance.

@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * An empty region.
  */
-public interface Empty extends Box, com.top_logic.react.flow.operations.EmptyOperations {
+public interface Empty extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.EmptyOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Empty} instance.

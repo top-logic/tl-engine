@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Updates the CSS class attribute of an element.
  */
-public interface CssClassUpdate extends SSEEvent {
+public interface CssClassUpdate extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.CssClassUpdate} instance.

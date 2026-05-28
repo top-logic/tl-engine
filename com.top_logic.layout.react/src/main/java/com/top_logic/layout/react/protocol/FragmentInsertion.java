@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Inserts an HTML fragment relative to an element.
  */
-public interface FragmentInsertion extends SSEEvent {
+public interface FragmentInsertion extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.FragmentInsertion} instance.

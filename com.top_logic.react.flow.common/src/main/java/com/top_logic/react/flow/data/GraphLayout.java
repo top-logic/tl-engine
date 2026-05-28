@@ -9,7 +9,7 @@ package com.top_logic.react.flow.data;
  *
  * @Operations com.top_logic.react.flow.operations.layout.GraphLayoutOperations
  */
-public interface GraphLayout extends FloatingLayout, com.top_logic.react.flow.operations.layout.GraphLayoutOperations {
+public interface GraphLayout extends com.top_logic.react.flow.data.FloatingLayout, com.top_logic.react.flow.operations.layout.GraphLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GraphLayout} instance.

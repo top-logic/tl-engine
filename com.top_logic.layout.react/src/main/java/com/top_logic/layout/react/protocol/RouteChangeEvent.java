@@ -4,7 +4,7 @@ package com.top_logic.layout.react.protocol;
  * Tells the client to update the browser URL (pushState or replaceState).
  * Sent after a route-forming navigation on the server.
  */
-public interface RouteChangeEvent extends SSEEvent {
+public interface RouteChangeEvent extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.RouteChangeEvent} instance.

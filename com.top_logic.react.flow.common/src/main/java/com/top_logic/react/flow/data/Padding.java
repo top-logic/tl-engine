@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * Padding around some content.
  */
-public interface Padding extends Decoration, com.top_logic.react.flow.operations.PaddingOperations {
+public interface Padding extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.PaddingOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Padding} instance.

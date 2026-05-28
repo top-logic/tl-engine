@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Replaces an entire element.
  */
-public interface ElementReplacement extends SSEEvent {
+public interface ElementReplacement extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.ElementReplacement} instance.

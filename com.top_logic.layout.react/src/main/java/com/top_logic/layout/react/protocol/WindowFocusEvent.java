@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Instructs the target window to focus a previously opened window.
  */
-public interface WindowFocusEvent extends SSEEvent {
+public interface WindowFocusEvent extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.WindowFocusEvent} instance.

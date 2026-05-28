@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A task with start and end on the time axis.
  */
-public interface GanttSpan extends GanttItem {
+public interface GanttSpan extends com.top_logic.react.flow.data.GanttItem {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GanttSpan} instance.

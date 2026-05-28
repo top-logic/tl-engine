@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Executes a JavaScript code snippet.
  */
-public interface JSSnipplet extends SSEEvent {
+public interface JSSnipplet extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.JSSnipplet} instance.

@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * One rendering option of an {@link LOD} box.
  */
-public interface LODVariant extends Widget, com.top_logic.react.flow.operations.LODVariantOperations {
+public interface LODVariant extends com.top_logic.react.flow.data.Widget, com.top_logic.react.flow.operations.LODVariantOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.LODVariant} instance.

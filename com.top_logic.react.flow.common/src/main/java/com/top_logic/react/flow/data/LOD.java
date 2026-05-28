@@ -11,7 +11,7 @@ package com.top_logic.react.flow.data;
  * fallback that always fits.
  * </p>
  */
-public interface LOD extends Box, com.top_logic.react.flow.operations.LODOperations {
+public interface LOD extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.LODOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.LOD} instance.

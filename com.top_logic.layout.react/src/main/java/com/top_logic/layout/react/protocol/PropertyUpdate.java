@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Updates one or more properties on an element.
  */
-public interface PropertyUpdate extends SSEEvent {
+public interface PropertyUpdate extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.PropertyUpdate} instance.

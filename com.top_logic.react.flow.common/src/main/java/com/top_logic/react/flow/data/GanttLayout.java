@@ -16,7 +16,7 @@ package com.top_logic.react.flow.data;
  * {@link GanttItem#getBox()} elements so that standard layout/render dispatch reaches them.
  * </p>
  */
-public interface GanttLayout extends Layout, com.top_logic.react.flow.operations.layout.GanttLayoutOperations {
+public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.top_logic.react.flow.operations.layout.GanttLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GanttLayout} instance.

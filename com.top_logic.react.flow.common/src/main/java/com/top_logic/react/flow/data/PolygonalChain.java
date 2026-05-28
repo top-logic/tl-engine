@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A polygonal chain in the diagram.
  */
-public interface PolygonalChain extends Box, com.top_logic.react.flow.operations.PolygonalChainOperations {
+public interface PolygonalChain extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.PolygonalChainOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.PolygonalChain} instance.

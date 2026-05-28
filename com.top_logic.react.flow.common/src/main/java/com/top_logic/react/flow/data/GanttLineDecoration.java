@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * Vertical line at a single position on the time axis.
  */
-public interface GanttLineDecoration extends GanttDecoration {
+public interface GanttLineDecoration extends com.top_logic.react.flow.data.GanttDecoration {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GanttLineDecoration} instance.

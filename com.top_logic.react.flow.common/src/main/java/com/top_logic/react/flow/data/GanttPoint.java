@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A point item positioned at a single time on the axis.
  */
-public interface GanttPoint extends GanttItem {
+public interface GanttPoint extends com.top_logic.react.flow.data.GanttItem {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GanttPoint} instance.

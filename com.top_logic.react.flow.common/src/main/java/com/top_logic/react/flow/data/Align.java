@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * An alignment of some box within a potentially larger content box.
  */
-public interface Align extends Decoration, com.top_logic.react.flow.operations.AlignOperations {
+public interface Align extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.AlignOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Align} instance.

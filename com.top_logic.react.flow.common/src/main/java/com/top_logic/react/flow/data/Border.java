@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A border drawn around some content.
  */
-public interface Border extends Decoration, com.top_logic.react.flow.operations.BorderOperations {
+public interface Border extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.BorderOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Border} instance.

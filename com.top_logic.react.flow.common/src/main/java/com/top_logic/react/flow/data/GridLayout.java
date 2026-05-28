@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A tabular layout consisting of rows and columns.
  */
-public interface GridLayout extends Layout, com.top_logic.react.flow.operations.layout.GridLayoutOperations {
+public interface GridLayout extends com.top_logic.react.flow.data.Layout, com.top_logic.react.flow.operations.layout.GridLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.GridLayout} instance.

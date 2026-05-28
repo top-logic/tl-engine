@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * An embedded image.
  */
-public interface Image extends Box, com.top_logic.react.flow.operations.ImageOperations {
+public interface Image extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.ImageOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.Image} instance.

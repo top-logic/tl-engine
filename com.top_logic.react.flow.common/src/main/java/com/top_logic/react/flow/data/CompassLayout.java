@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A layout that places boxes around some centerd content box.
  */
-public interface CompassLayout extends Box, com.top_logic.react.flow.operations.layout.CompassLayoutOperations {
+public interface CompassLayout extends com.top_logic.react.flow.data.Box, com.top_logic.react.flow.operations.layout.CompassLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.CompassLayout} instance.

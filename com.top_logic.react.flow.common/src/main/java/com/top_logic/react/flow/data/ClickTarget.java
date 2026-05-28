@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A box that reacts on interactive mouse click events invoking a callback.
  */
-public interface ClickTarget extends Decoration, com.top_logic.react.flow.operations.ClickTargetOperations {
+public interface ClickTarget extends com.top_logic.react.flow.data.Decoration, com.top_logic.react.flow.operations.ClickTargetOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.ClickTarget} instance.

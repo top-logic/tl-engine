@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Instructs the target window to close a previously opened window.
  */
-public interface WindowCloseEvent extends SSEEvent {
+public interface WindowCloseEvent extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.WindowCloseEvent} instance.

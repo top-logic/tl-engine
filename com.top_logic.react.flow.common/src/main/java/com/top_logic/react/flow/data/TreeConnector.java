@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * An anchor point of a connection to a node of the diagram.
  */
-public interface TreeConnector extends Widget, com.top_logic.react.flow.operations.tree.TreeConnectorOperations {
+public interface TreeConnector extends com.top_logic.react.flow.data.Widget, com.top_logic.react.flow.operations.tree.TreeConnectorOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.TreeConnector} instance.

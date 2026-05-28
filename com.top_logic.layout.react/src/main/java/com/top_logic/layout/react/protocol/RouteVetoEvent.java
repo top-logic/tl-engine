@@ -4,7 +4,7 @@ package com.top_logic.layout.react.protocol;
  * Tells the client to correct the URL after a vetoed back-navigation.
  * Sent when a dirty-channel veto prevents the requested navigation.
  */
-public interface RouteVetoEvent extends SSEEvent {
+public interface RouteVetoEvent extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.RouteVetoEvent} instance.

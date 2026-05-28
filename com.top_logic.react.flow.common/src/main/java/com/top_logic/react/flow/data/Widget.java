@@ -213,21 +213,14 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		int id = in.nextInt();
 		switch (type) {
 			case Diagram.DIAGRAM__TYPE: result = com.top_logic.react.flow.data.Diagram.create(); break;
-			case GraphEdge.GRAPH_EDGE__TYPE: result = com.top_logic.react.flow.data.GraphEdge.create(); break;
-			case TreeConnection.TREE_CONNECTION__TYPE: result = com.top_logic.react.flow.data.TreeConnection.create(); break;
-			case EdgeDecoration.EDGE_DECORATION__TYPE: result = com.top_logic.react.flow.data.EdgeDecoration.create(); break;
-			case TreeConnector.TREE_CONNECTOR__TYPE: result = com.top_logic.react.flow.data.TreeConnector.create(); break;
-			case LODVariant.LODVARIANT__TYPE: result = com.top_logic.react.flow.data.LODVariant.create(); break;
 			case FloatingLayout.FLOATING_LAYOUT__TYPE: result = com.top_logic.react.flow.data.FloatingLayout.create(); break;
+			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;
+			case GraphLayout.GRAPH_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GraphLayout.create(); break;
 			case Text.TEXT__TYPE: result = com.top_logic.react.flow.data.Text.create(); break;
 			case Image.IMAGE__TYPE: result = com.top_logic.react.flow.data.Image.create(); break;
 			case Empty.EMPTY__TYPE: result = com.top_logic.react.flow.data.Empty.create(); break;
 			case Stack.STACK__TYPE: result = com.top_logic.react.flow.data.Stack.create(); break;
 			case LOD.LOD__TYPE: result = com.top_logic.react.flow.data.LOD.create(); break;
-			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
-			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
-			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.react.flow.data.TreeLayout.create(); break;
-			case GraphLayout.GRAPH_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GraphLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
 			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;
@@ -239,10 +232,17 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case Padding.PADDING__TYPE: result = com.top_logic.react.flow.data.Padding.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
+			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GridLayout.create(); break;
-			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.react.flow.data.VerticalLayout.create(); break;
+			case GanttLayout.GANTT_LAYOUT__TYPE: result = com.top_logic.react.flow.data.GanttLayout.create(); break;
+			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.react.flow.data.PolygonalChain.create(); break;
+			case GraphEdge.GRAPH_EDGE__TYPE: result = com.top_logic.react.flow.data.GraphEdge.create(); break;
+			case TreeConnection.TREE_CONNECTION__TYPE: result = com.top_logic.react.flow.data.TreeConnection.create(); break;
+			case EdgeDecoration.EDGE_DECORATION__TYPE: result = com.top_logic.react.flow.data.EdgeDecoration.create(); break;
+			case TreeConnector.TREE_CONNECTOR__TYPE: result = com.top_logic.react.flow.data.TreeConnector.create(); break;
+			case LODVariant.LODVARIANT__TYPE: result = com.top_logic.react.flow.data.LODVariant.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
 		if (result != null) {

@@ -3,7 +3,7 @@ package com.top_logic.react.flow.data;
 /**
  * A vertical column of boxes.
  */
-public interface VerticalLayout extends RowLayout, com.top_logic.react.flow.operations.layout.VerticalLayoutOperations {
+public interface VerticalLayout extends com.top_logic.react.flow.data.RowLayout, com.top_logic.react.flow.operations.layout.VerticalLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.react.flow.data.VerticalLayout} instance.

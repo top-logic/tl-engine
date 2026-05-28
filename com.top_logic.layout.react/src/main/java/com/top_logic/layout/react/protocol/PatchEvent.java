@@ -3,7 +3,7 @@ package com.top_logic.layout.react.protocol;
 /**
  * Incremental patch to a React control's state.
  */
-public interface PatchEvent extends SSEEvent {
+public interface PatchEvent extends com.top_logic.layout.react.protocol.SSEEvent {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.protocol.PatchEvent} instance.

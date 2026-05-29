@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.json.JsonValueBinding;
@@ -50,7 +51,7 @@ public class StructuredTextJsonBinding implements JsonValueBinding<StructuredTex
 	@Override
 	public StructuredText loadConfigItem(PropertyDescriptor property, JsonReader in, StructuredText baseValue)
 			throws IOException, ConfigurationException {
-		String sourceCode = "";
+		String sourceCode = StringServices.EMPTY_STRING;
 		Map<String, BinaryData> images = new HashMap<>();
 
 		in.beginObject();

@@ -234,7 +234,7 @@ public class TranslateDialog extends SimpleTemplateDialog {
 		String originalText = localize(sourceLocale, value);
 		String translatedText;
 		if (StringServices.isEmpty(originalText)) {
-			translatedText = "";
+			translatedText = StringServices.EMPTY_STRING;
 		} else {
 			translatedText = TranslationService.getInstance().translate(originalText, sourceLocale, targetLocale);
 		}

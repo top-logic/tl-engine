@@ -208,6 +208,12 @@
 						icon="css:bi bi-gear"
 						route="none"
 					>
+						<!--
+							Access controlled: only shown to users granted the "demo-restricted"
+							security scope (see SecurityScopeService in technicalDemoConf.config.xml).
+							The technical super user (root) bypasses the check and always sees it.
+						-->
+						<access-control scope="demo-restricted"/>
 						<view-ref view="demo/settings.view.xml"/>
 						<label>
 							<en>Settings (no routing)</en>

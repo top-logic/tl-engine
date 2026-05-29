@@ -37,6 +37,19 @@
 				</bundles>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
+			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
+				<scopes>
+					<scope id="demo-restricted">
+						<label>
+							<en>Restricted demo area</en>
+							<de>Geschuetzter Demo-Bereich</de>
+						</label>
+					</scope>
+				</scopes>
+			</instance>
+		</config>
 		
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>

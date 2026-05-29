@@ -14,7 +14,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -68,7 +68,7 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 		 * The top-level nodes of the security scope catalog.
 		 */
 		@Name(SCOPES)
-		@DefaultContainer
+		@EntryTag("scope")
 		List<ScopeConfig> getScopes();
 	}
 
@@ -115,7 +115,7 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 		 * Nested scope nodes (sub-groups or sub-scopes).
 		 */
 		@Name(SCOPES)
-		@DefaultContainer
+		@EntryTag("scope")
 		List<ScopeConfig> getScopes();
 	}
 

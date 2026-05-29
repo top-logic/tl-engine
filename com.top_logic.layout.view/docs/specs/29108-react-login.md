@@ -1,6 +1,7 @@
 # React UI Login & Self-Service (Ticket #29108)
 
-**Status:** Phase 1 complete (browser-verified). Phases 2–4 outstanding.
+**Status:** Phase 1 complete (browser-verified). Phase 2 password-expiry sub-flow
+complete (browser-verified); Phase 2 OTP + MFA-enrollment and Phases 3–4 outstanding.
 **Scope:** Authentication/identity for the new React view layer
 (`com.top_logic.layout.view`, served by `ViewServlet` at `/view/*`), parallel to
 — and independent of — the legacy `MainLayout`/`LoginViewDialog` UI.
@@ -124,9 +125,44 @@ Mirror the legacy `LoginViewDialog` follow-up steps, composed as dialog views.
 - Compose as additional `.view.xml` dialogs (change-password form, OTP entry,
   MFA-enroll with QR image) chained from the login flow; only call
   `PendingSessionAction.requestLogin` once the final step passes.
-- Open question: how to carry the partially-authenticated user between dialog
-  steps without yet swapping the session (a transient "pending auth" holder, or
-  chained dialog channels).
+- **Resolved (open question):** the partially-authenticated **account is carried
+  on a dialog channel** (`LoginAction.ACCOUNT_CHANNEL = "account"`), not via a
+  transient "pending-auth" holder. The session is not swapped until the final
+  step calls `LoginAction.completeLogin(...)`. Each step's *form input* is a small
+  transient model; cross-step state that can be re-derived (e.g. expiry) is not
+  carried at all.
+
+#### Phase 2a — password expiry → change password (DONE, browser-verified)
+- `LoginAction` now branches: after a successful `checkUserPassword`, if
+  `!Login.isPasswordValidAndNotExpired(password, account)` it opens
+  `change-password.view.xml` (transient `tl.login:PasswordChange` model on the
+  `model` channel + the `Person` on the `account` channel) **instead of** swapping
+  the session.
+- `ChangePasswordApplyAction` (`<change-password>`) reads the account from the
+  channel + the new passwords from the form, checks match/non-empty, then reuses
+  `AuthenticationDevice.setPassword` (validates the password policy, persists,
+  clears the expiry flag, maintains history) and finally `LoginAction.completeLogin`
+  → `PendingSessionAction.requestLogin` + reload.
+- `OpenDialogAction.openDialog(...)` extracted as a reusable static that seeds
+  multiple named channels (so Java actions can chain follow-up dialogs).
+- Demo affordance: `ExpirePasswordAction` (`<expire-password>`) wired into the
+  Formular-Demo accounts toolbar (`expirePassword` lives in the auth device's
+  internal credential store, not a model attribute, so it cannot be set from
+  TL-Script). New `tl.login:PasswordChange` transient type + `change-password.view.xml`.
+- **Verified (Playwright):** expire `root` → login `root`/`root1234` → forced
+  change dialog (app bar stays `anonymous`) → mismatch shows the error and keeps
+  the dialog open → matching new password → login completes (app bar shows `root`).
+
+#### Phase 2b — OTP verification + MFA enrollment (TODO)
+- OTP-entry dialog: text field + verify action reusing `MFAConfig` +
+  `DefaultCodeVerifier.isValidCode(secret, code)`; reuse the `account` channel.
+- MFA-enrollment dialog: needs a generic **image display** in the view layer for
+  the QR PNG — feasible by wrapping the existing `ReactPhotoViewerControl`
+  (`TLPhotoViewer`, renders a `BinaryDataValue` as `<img>`) behind a new
+  `<image>`/`<photo>` `UIElement`. Generate the secret (`Base32` + `SecureRandomService`)
+  and QR (`ZxingPngQrGenerator`); on OTP confirm, persist via `Person.setMFASecret`,
+  then `completeLogin`. Browser-verifying this needs a demo account configured
+  with MFA (add a demo affordance similar to `<expire-password>`).
 
 ### Phase 3 — self-service module (forgot password)
 - New module `com.top_logic.layout.view.selfservice` depending on

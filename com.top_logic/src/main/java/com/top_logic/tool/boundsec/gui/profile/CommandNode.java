@@ -14,7 +14,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.Config;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -72,15 +71,6 @@ class CommandNode extends SecurityNode {
 		StringBuilder res = new StringBuilder();
 		Resources resources = Resources.getInstance();
 		ConfigNode configNode = configNode();
-		for (BoundedRole role : roles) {
-			if (!configNode.isRoleRelevantForDomain(role)) {
-				continue;
-			}
-			ResKey securityStructureKey =
-				TLModelNamingConvention.getModuleLabelKey(role.getScope());
-			String label = resources.getString(securityStructureKey);
-			res.append(label).append("<br/>");
-		}
 		Config securityLayout = configNode.securityLayout();
 		if (securityLayout != configNode.config()) {
 			ResKey secLayoutLabel = LayoutComponent.Config.getEffectiveTitleKey(securityLayout);

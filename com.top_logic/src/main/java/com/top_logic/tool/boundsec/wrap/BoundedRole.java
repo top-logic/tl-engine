@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
@@ -31,19 +30,15 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.util.MetaObjectUtils;
-import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.Expression;
-import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.knowledge.util.ItemByNameCache;
-import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLModule;
@@ -129,18 +124,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 * Attribute of the {@link #ROLE_ASSIGNMENT_OBJECT_NAME} pointing to the role of the link.
 	 */
 	public static final String ATTRIBUTE_ROLE = "dest";
-
-	/**
-	 * Name of the {@link KnowledgeAssociation} binding a {@link BoundedRole} to a scope defining
-	 * that role.
-	 */
-    public static final String DEFINES_ROLE_ASSOCIATION = "definesRole";
-
-	private static final AssociationSetQuery<KnowledgeAssociation> ROLE_SCOPE =
-		AssociationQuery.createIncomingQuery("roleScope", DEFINES_ROLE_ASSOCIATION);
-
-	private static final AssociationSetQuery<KnowledgeAssociation> ROLES_IN_SCOPE =
-		AssociationQuery.createOutgoingQuery("rolesInScope", DEFINES_ROLE_ASSOCIATION);
 
 	private static volatile ItemByNameCache<String> BY_NAME_CACHE;
 
@@ -384,66 +367,16 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     }
     
     /**
-     * Get all global roles
-     * 
-     * @return the list of global BoundedRoles
-     */
-	public static List<BoundedRole> getAllGlobalRoles() {
-		Iterator<BoundedRole> theRoles = getAll(getDefaultKnowledgeBase()).iterator();
-		List<BoundedRole> theList = new ArrayList<>();
-        while (theRoles.hasNext()) {
-			BoundedRole theRole = theRoles.next();
-            if (theRole.isGlobal()) {
-                theList.add(theRole);
-            }
-        }
-        
-        return theList;
-    }
-
-    /**
-     * Get all scoped roles, i.e. the ones which 
-     * don't have a BoundObject.
-     * 
-     * @return the list of global BoundedRoles
-     */
-	public static List<BoundedRole> getAllScopedRoles() {
-		Iterator<BoundedRole> theRoles = getAll(getDefaultKnowledgeBase()).iterator();
-		List<BoundedRole> theList = new ArrayList<>();
-        while (theRoles.hasNext()) {
-			BoundedRole theRole = theRoles.next();
-            if (!theRole.isGlobal()) {
-                theList.add(theRole);
-            }
-        }
-        
-        return theList;
-    }
-    
-    @Override
-	public TLModule getScope() {
-		return CollectionUtil.getSingleValueFromCollection(resolveWrappersTyped(ROLE_SCOPE, TLModule.class));
-    }
-    
-    /**
-     * Check if the role is global, i.e.
-     * does not have a BoundObject
-     * 
-     * @return true if the role is global
-     */
-    public boolean isGlobal() {
-        return this.getScope() == null;
-    }
-    
-    /**
 	 * Get the roles bound to the given {@link TLModule}.
 	 * 
 	 * @param scope
 	 *        The {@link TLModule}. Must not be <code>null</code>.
 	 * @return the roles. May be empty but not <code>null</code>.
+	 * @deprecated All roles are global. Call {@link #getAll()}.
 	 */
+	@Deprecated
 	public static Set<BoundedRole> getDefinedRoles(TLModule scope) {
-		return AbstractWrapper.resolveWrappersTyped(scope, ROLES_IN_SCOPE, BoundedRole.class);
+		return new HashSet<>(getAll());
     }
     
     /**
@@ -455,36 +388,13 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	 *        The role name requested.
 	 * @return The role with the given name defined in the given scope, or <code>null</code> if no
 	 *         such role exists.
+	 * @deprecated All roles are global. Call {@link #getRoleByName(String)}.
 	 */
+	@Deprecated
 	public static BoundedRole getDefinedRole(TLModule scope, String roleName) {
-		Collection<BoundedRole> roles = BoundedRole.getDefinedRoles(scope);
-		for (BoundedRole role : roles) {
-			if (roleName.equals(role.getName())) {
-				return role;
-            }
-        }
-		return null;
+		return getRoleByName(roleName);
     }
     
-    @Override
-	public void bind(TLModule scope) throws IllegalStateException {
-		TLModule currentScope = getScope();
-		if (currentScope == null) {
-			// Not bound, bind it.
-			KnowledgeItem roleHandle = tHandle();
-			KnowledgeBase kb = roleHandle.getKnowledgeBase();
-			kb.createAssociation(scope.tHandle(), roleHandle, DEFINES_ROLE_ASSOCIATION);
-		} else if (currentScope != scope) {
-			throw new IllegalStateException("Cannot bind role '" + getName() + "' to '" + scope
-				+ "', already bound to '" + currentScope + "'.");
-		}
-    }
-    
-    @Override
-	public void unbind() {
-		tKnowledgeBase().deleteAll(resolveLinks(ROLE_SCOPE));
-	}
-
 	/**
 	 * Removes a direct role association for the given person to the given role.
 	 *

@@ -92,7 +92,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle SecurityStructure.maintenanceMode erstellen"
+			comment="Rolle maintenanceMode erstellen"
 			failure-message=""
 			user-id="root"
 		>
@@ -137,7 +137,7 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="SecurityStructure.maintenanceMode"
+					comment="maintenanceMode"
 					failure-message=""
 					user-id="root"
 				>
@@ -204,7 +204,7 @@
 					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="SecurityStructure.maintenanceActivate"
+					comment="maintenanceActivate"
 					failure-message=""
 					user-id="root"
 				>
@@ -339,7 +339,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Berechtigungen für Rolle SecurityStructure.maintenanceMode"
+			comment="Berechtigungen für Rolle maintenanceMode"
 			failure-message=""
 			user-id="root"
 		>
@@ -380,7 +380,7 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="SecurityStructure.maintenanceMode"
+							comment="maintenanceMode"
 							failure-message=""
 							user-id="root"
 						>
@@ -551,7 +551,7 @@
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="SecurityStructure.maintenanceActivate"
+							comment="maintenanceActivate"
 							failure-message=""
 							user-id="root"
 						>
@@ -639,7 +639,7 @@
 							</actions>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="SecurityStructure.MaintenanceView"
+							comment="MaintenanceView"
 							failure-message=""
 							user-id="root"
 						>
@@ -810,7 +810,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle SecurityStructure.maintenanceMode an Nutzer testMaintenance1 vergeben"
+			comment="Rolle maintenanceMode an Nutzer testMaintenance1 vergeben"
 			failure-message=""
 			user-id="root"
 		>
@@ -921,7 +921,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle SecurityStructure.maintenanceActivate an Nutzer testMaintenance2 vergeben"
+			comment="Rolle maintenanceActivate an Nutzer testMaintenance2 vergeben"
 			failure-message=""
 			user-id="root"
 		>
@@ -1701,7 +1701,7 @@
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 									<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
-										name="SecurityStructure.maintenanceMode"
+										name="maintenanceMode"
 									/>
 								</selectee>
 								<selection-state boolean="true"/>
@@ -1731,7 +1731,7 @@
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 									<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
-										name="SecurityStructure.maintenanceActivate"
+										name="maintenanceActivate"
 									/>
 								</selectee>
 								<selection-state boolean="true"/>
@@ -1761,7 +1761,7 @@
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 									<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
-										name="SecurityStructure.MaintenanceView"
+										name="MaintenanceView"
 									/>
 								</selectee>
 								<selection-state boolean="true"/>

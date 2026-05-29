@@ -2899,7 +2899,7 @@
 											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 												<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 													knowledge-base="Default"
-													name="DemoTypes.StringNoRight"
+													name="StringNoRight"
 												/>
 											</business-object>
 										</field>
@@ -2932,7 +2932,7 @@
 											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 												<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 													knowledge-base="Default"
-													name="DemoTypes.StringNoRight"
+													name="StringNoRight"
 												/>
 											</business-object>
 										</field>
@@ -2965,7 +2965,7 @@
 											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 												<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 													knowledge-base="Default"
-													name="DemoTypes.StringRead"
+													name="StringRead"
 												/>
 											</business-object>
 										</field>
@@ -2998,7 +2998,7 @@
 											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 												<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 													knowledge-base="Default"
-													name="DemoTypes.StringReadExport"
+													name="StringReadExport"
 												/>
 											</business-object>
 										</field>
@@ -3031,7 +3031,7 @@
 											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 												<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 													knowledge-base="Default"
-													name="DemoTypes.StringWrite"
+													name="StringWrite"
 												/>
 											</business-object>
 										</field>
@@ -3064,7 +3064,7 @@
 											<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 												<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 													knowledge-base="Default"
-													name="DemoTypes.StringWriteExport"
+													name="StringWriteExport"
 												/>
 											</business-object>
 										</field>
@@ -5444,7 +5444,7 @@
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 											<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 												knowledge-base="Default"
-												name="DemoTypes.StringNoRight"
+												name="StringNoRight"
 											/>
 										</selectee>
 										<selection-state boolean="true"/>
@@ -5478,7 +5478,7 @@
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 											<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 												knowledge-base="Default"
-												name="DemoTypes.StringRead"
+												name="StringRead"
 											/>
 										</selectee>
 										<selection-state boolean="true"/>
@@ -5512,7 +5512,7 @@
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 											<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 												knowledge-base="Default"
-												name="DemoTypes.StringReadExport"
+												name="StringReadExport"
 											/>
 										</selectee>
 										<selection-state boolean="true"/>
@@ -5546,7 +5546,7 @@
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 											<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 												knowledge-base="Default"
-												name="DemoTypes.StringWrite"
+												name="StringWrite"
 											/>
 										</selectee>
 										<selection-state boolean="true"/>
@@ -5580,7 +5580,7 @@
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
 											<model-name config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 												knowledge-base="Default"
-												name="DemoTypes.StringWriteExport"
+												name="StringWriteExport"
 											/>
 										</selectee>
 										<selection-state boolean="true"/>

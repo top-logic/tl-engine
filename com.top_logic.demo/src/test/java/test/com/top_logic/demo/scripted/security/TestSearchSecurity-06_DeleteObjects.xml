@@ -109,7 +109,7 @@
 					<selection>
 						<selectee config:interface="com.top_logic.tool.boundsec.BoundedRoleNamingScheme$BoundedRoleName"
 							knowledge-base="Default"
-							name="DemoTypes.TestSearchRole"
+							name="TestSearchRole"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

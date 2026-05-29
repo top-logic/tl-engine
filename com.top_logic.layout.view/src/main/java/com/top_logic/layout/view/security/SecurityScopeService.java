@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.security;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -155,25 +156,33 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 	/**
 	 * Ensures a persistent {@link PersBoundComp} exists for every configured scope, so roles can be
 	 * assigned to view security scopes via the existing security administration.
+	 *
+	 * <p>
+	 * Runs as part of service startup, which may already be within an enclosing transaction. A
+	 * transaction is therefore opened only when there is actually something to create (and is then
+	 * committed, never rolled back), so the common idempotent re-boot does not touch the enclosing
+	 * transaction.
+	 * </p>
 	 */
 	private void materializePersBoundComps() {
-		try (Transaction tx = kb().beginTransaction(I18NConstants.CREATING_SECURITY_SCOPES)) {
-			int created = 0;
-			for (SecurityScope scope : _scopesById.values()) {
-				ComponentName name = scope.getSecurityId();
-				if (PersBoundComp.getInstance(kb(), name) == null) {
-					PersBoundComp.createInstance(kb(), name);
-					created++;
-				}
-			}
-			if (created > 0) {
-				tx.commit();
-				SecurityComponentCache.setupCache();
-				Logger.info("Created " + created + " security scope object(s).", SecurityScopeService.class);
-			} else {
-				tx.rollback();
+		List<ComponentName> missing = new ArrayList<>();
+		for (SecurityScope scope : _scopesById.values()) {
+			ComponentName name = scope.getSecurityId();
+			if (PersBoundComp.getInstance(kb(), name) == null) {
+				missing.add(name);
 			}
 		}
+		if (missing.isEmpty()) {
+			return;
+		}
+		try (Transaction tx = kb().beginTransaction(I18NConstants.CREATING_SECURITY_SCOPES)) {
+			for (ComponentName name : missing) {
+				PersBoundComp.createInstance(kb(), name);
+			}
+			tx.commit();
+		}
+		SecurityComponentCache.setupCache();
+		Logger.info("Created " + missing.size() + " security scope object(s).", SecurityScopeService.class);
 	}
 
 	/**

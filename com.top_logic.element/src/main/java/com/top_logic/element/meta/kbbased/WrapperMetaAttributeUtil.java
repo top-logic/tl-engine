@@ -145,7 +145,7 @@ public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAtt
 	public WrapperMetaAttributeUtil(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		try {
-			TypeSystem typeSystem = (TypeSystem) kb().getMORepository();
+			TypeSystem typeSystem = KBUtils.typeSystem(kb());
 			MetaObject baseType = typeSystem.getType(WRAPPER_ATTRIBUTE_ASSOCIATION_BASE);
 			_referenceAssociationTypes = typeSystem.getConcreteSubtypes(baseType);
 			_hasValueInAttributeQuery = MapUtil.newMap(_referenceAssociationTypes.size());

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.RandomAccess;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
@@ -32,6 +33,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -264,17 +266,21 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 				case 0:
 					return null;
 				case 1:
-					if (collection instanceof List<?>) {
-						return ((List<?>) collection).get(0);
-					} else {
-						return collection.iterator().next();
-					}
+					return firstElement(collection);
 				default:
 					throw new TopLogicException(
 						I18NConstants.ERROR_MORE_THAN_A_SINGLE_ELEMENT__VAL_EXPR.fill(value, context));
 			}
 		} else {
 			return value;
+		}
+	}
+
+	private static <T> T firstElement(Collection<T> collection) {
+		if (collection instanceof RandomAccess) {
+			return ((List<T>) collection).get(0);
+		} else {
+			return collection.iterator().next();
 		}
 	}
 
@@ -815,7 +821,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	/**
 	 * Converts the given value to a {@link String} value.
 	 */
-	public final String asString(Object value) {
+	public static String asString(Object value) {
 		return asString(value, "");
 	}
 
@@ -823,20 +829,34 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Converts the given value to a {@link String} value with a given default value to use for
 	 * <code>null</code>.
 	 */
-	public final String asString(Object value, String defaultValue) {
-		value = asSingleElement(value);
+	public static String asString(Object value, String defaultValue) {
+		if (value instanceof Collection<?> collectionValue) {
+			switch (collectionValue.size()) {
+				case 0:
+					return defaultValue;
+				case 1:
+					value = firstElement(collectionValue);
+					break;
+			}
+		}
 		if (value == null) {
 			return defaultValue;
 		}
-		if (value instanceof Double) {
-			double x = ((Double) value).doubleValue();
+		if (value instanceof Number number) {
+			/* Do not use MetaLabelProvider for numbers, because the result depends on the locale of
+			 * the user. */
+			double x = number.doubleValue();
 			if (Math.floor(x) == x) {
 				// Do not insist in marking numbers as floating point values. In TL-Script, all
 				// numbers are treated as Double internally.
 				return Long.toString((long) x);
 			}
+			return value.toString();
 		}
-		return value.toString();
+		if (value instanceof Boolean || value instanceof CharSequence) {
+			return value.toString();
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 	
 	/**

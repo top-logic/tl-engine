@@ -10,9 +10,8 @@ import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.knowledge.search.Expression;
-import com.top_logic.knowledge.search.ExpressionFactory;
-import com.top_logic.model.ModelKind;
+import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 
@@ -21,28 +20,33 @@ import com.top_logic.model.search.expr.SearchExpression;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CompiledExpression extends Value {
+public abstract class CompiledExpression extends CompiledValue {
 
 	private MetaObject _type;
-	private final Expression _compiled;
 
 	/**
 	 * Creates a {@link CompiledExpression}.
 	 *
 	 * @param type
 	 *        The table type of this compiled value.
-	 * @param compiled
-	 *        See {@link #compiled()}.
 	 */
-	public CompiledExpression(MetaObject type, Expression compiled) {
+	public CompiledExpression(MetaObject type) {
+		if (type == MOPrimitive.INVALID_TYPE) {
+			throw new IllegalArgumentException();
+		}
 		_type = type;
-		_compiled = compiled;
 	}
 
 	@Override
 	public Value processEquals(SearchExpression orig, Value other) {
 		if (!other.hasInterpretedPart()) {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.eqBinary(_compiled, other.compiled()));
+			CompiledValue otherCompiled = other.compiled();
+			if (!otherCompiled.notifyExpectedCompiledType(_type)) {
+				return new InterpretedExpression(orig);
+			}
+			return new CompiledEquals(this, otherCompiled);
+		} else if (other instanceof NullLiteral) {
+			return new CompiledIsNull(this);
 		}
 		return new InterpretedExpression(orig);
 	}
@@ -51,17 +55,19 @@ public class CompiledExpression extends Value {
 	public Value processAccess(SearchExpression orig, TLStructuredTypePart part) {
 		if (_type instanceof MOStructure) {
 			MOStructure tableType = (MOStructure) _type;
-			String partName = part.getName();
-			MOAttribute attr = tableType.getAttributeOrNull(partName);
-			if (attr != null) {
-				if (!AttributeOperations.getStorageImplementation(part).isReadOnly()) {
-					if (part.getModelKind() == ModelKind.PROPERTY) {
-						return new CompiledExpression(attr.getMetaObject(),
-							ExpressionFactory.attribute(_compiled, attr.getOwner().getName(), attr.getName()));
-					}
-					else if (part.getModelKind() == ModelKind.REFERENCE) {
-						return new CompiledExpression(attr.getMetaObject(),
-							ExpressionFactory.reference(_compiled, attr.getOwner().getName(), attr.getName()));
+
+			StorageImplementation storageImplementation = AttributeOperations.getStorageImplementation(part);
+			if (!storageImplementation.isReadOnly()) {
+				if (storageImplementation instanceof ColumnStorage columnStorage) {
+					MOAttribute attr = tableType.getAttributeOrNull(columnStorage.getStorageAttribute());
+					if (attr != null) {
+						switch (part.getModelKind()) {
+							case PROPERTY:
+							case REFERENCE:
+								return new CompiledAttributeAccess(part, attr, this);
+							default:
+								break;
+						}
 					}
 				}
 			}
@@ -71,44 +77,55 @@ public class CompiledExpression extends Value {
 
 	@Override
 	public Value processAnd(SearchExpression orig, Value other) {
-		if (other.hasInterpretedPart()) {
-			return new CombinedAndValue(_compiled, other.interpreted());
+		if (_type != MOPrimitive.BOOLEAN) {
+			return new InterpretedExpression(orig);
+		}
+		CompiledValue compiledAnd;
+		CompiledValue otherCompiled = other.compiled();
+		if (otherCompiled != null) {
+			if (!otherCompiled.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
+				return new InterpretedExpression(orig);
+			}
+			compiledAnd = new CompiledAnd(compiled(), otherCompiled);
 		} else {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.and(_compiled, other.compiled()));
+			compiledAnd = compiled();
+		}
+
+		if (other.hasInterpretedPart()) {
+			return new CombinedAndValue(compiledAnd, other.interpreted());
+		} else {
+			return compiledAnd;
 		}
 	}
 
 	@Override
 	public Value processOr(SearchExpression orig, Value other) {
+		if (_type != MOPrimitive.BOOLEAN) {
+			return new InterpretedExpression(orig);
+		}
 		if (!other.hasInterpretedPart()) {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.or(_compiled, other.compiled()));
+			CompiledValue otherCompiled = other.compiled();
+			if (!otherCompiled.notifyExpectedCompiledType(MOPrimitive.BOOLEAN)) {
+				return new InterpretedExpression(orig);
+			}
+			return new CompiledOr(this, otherCompiled);
 		}
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
 	public Value processNot(SearchExpression orig) {
-		return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.not(_compiled));
+		return new CompiledNot(this);
 	}
 
 	@Override
-	public boolean hasCompiledPart() {
-		return true;
+	public boolean notifyExpectedCompiledType(MetaObject type) {
+		return _type.isSubtypeOf(type);
 	}
 
 	@Override
-	public Expression compiled() {
-		return _compiled;
-	}
-
-	@Override
-	public boolean hasInterpretedPart() {
-		return false;
-	}
-
-	@Override
-	public SearchExpression interpreted() {
-		throw new UnsupportedOperationException();
+	public MetaObject compiledType() {
+		return _type;
 	}
 
 }

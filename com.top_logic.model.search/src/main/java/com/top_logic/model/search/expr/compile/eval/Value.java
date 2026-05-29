@@ -5,9 +5,8 @@
  */
 package com.top_logic.model.search.expr.compile.eval;
 
-import com.top_logic.dob.attr.MOPrimitive;
-import com.top_logic.knowledge.search.Expression;
-import com.top_logic.knowledge.search.ExpressionFactory;
+import com.top_logic.dob.MetaObject;
+import com.top_logic.knowledge.service.db2.expr.visit.PolymorphicTypeComputation;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.And;
@@ -78,20 +77,24 @@ public abstract class Value {
 	/**
 	 * Whether this {@link Value} has a {@link #compiled() compilation result}.
 	 */
-	public abstract boolean hasCompiledPart();
+	public final boolean hasCompiledPart() {
+		return compiled() != null;
+	}
 
 	/**
-	 * The compilation result of this {@link Value}, if {@link #hasCompiledPart()}.
+	 * Compiled part of this {@link Value}. May be <code>null</code>.
 	 */
-	public abstract Expression compiled();
+	public abstract CompiledValue compiled();
 
 	/**
 	 * Whether this {@link Value} has an {@link #interpreted() interpretation result}.
 	 */
-	public abstract boolean hasInterpretedPart();
+	public final boolean hasInterpretedPart() {
+		return interpreted() != null;
+	}
 
 	/**
-	 * The interpretation of this {@link Value}, if {@link #hasInterpretedPart()}.
+	 * The interpretation of this {@link Value}. May be <code>null</code>.
 	 */
 	public abstract SearchExpression interpreted();
 
@@ -105,25 +108,15 @@ public abstract class Value {
 	 * @return A {@link Value} representing the literal.
 	 */
 	public static Value literal(SearchExpression orig, Object literal) {
-		if (literal instanceof Boolean) {
-			return new CompiledExpression(MOPrimitive.BOOLEAN, ExpressionFactory.literal(literal));
+		if (literal == null) {
+			// Null literal is not allowed in the KB.
+			return new NullLiteral(orig);
 		}
-		if (literal instanceof String) {
-			return new CompiledExpression(MOPrimitive.STRING, ExpressionFactory.literal(literal));
+		MetaObject literalType = PolymorphicTypeComputation.getLiteralType(literal);
+		if (literalType == MetaObject.INVALID_TYPE) {
+			return new InterpretedExpression(orig);
 		}
-		if (literal instanceof Double) {
-			return new CompiledExpression(MOPrimitive.DOUBLE, ExpressionFactory.literal(literal));
-		}
-		if (literal instanceof Float) {
-			return new CompiledExpression(MOPrimitive.FLOAT, ExpressionFactory.literal(literal));
-		}
-		if (literal instanceof Long) {
-			return new CompiledExpression(MOPrimitive.LONG, ExpressionFactory.literal(literal));
-		}
-		if (literal instanceof Integer) {
-			return new CompiledExpression(MOPrimitive.INTEGER, ExpressionFactory.literal(literal));
-		}
-		return new InterpretedExpression(orig);
+		return new CompiledLiteral(literalType, literal);
 	}
 
 }

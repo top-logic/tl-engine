@@ -500,7 +500,7 @@ public abstract class AbstractDBKnowledgeBaseTest extends AbstractKnowledgeBaseT
 	 * Returns the {@link TypeSystem} of the current {@link KnowledgeBase}
 	 */
 	protected TypeSystem typeSystem() {
-		return (TypeSystem) kb().getMORepository();
+		return KBUtils.typeSystem(kb());
 	}
 
 	/**

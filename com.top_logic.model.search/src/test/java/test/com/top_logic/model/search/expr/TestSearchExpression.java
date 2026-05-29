@@ -7,7 +7,6 @@ package test.com.top_logic.model.search.expr;
 
 import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -64,6 +63,7 @@ import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
 import com.top_logic.model.search.expr.FormatExpr;
 import com.top_logic.model.search.expr.I18NConstants;
+import com.top_logic.model.search.expr.KBQuery;
 import com.top_logic.model.search.expr.Literal;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.ToDate;
@@ -73,11 +73,11 @@ import com.top_logic.model.search.expr.ToSystemCalendar;
 import com.top_logic.model.search.expr.ToUserCalendar;
 import com.top_logic.model.search.expr.config.operations.Label;
 import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -88,6 +88,113 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestSearchExpression extends AbstractSearchExpressionTest {
+
+	public void testKBSearch() {
+		with("TestSearchExpression-testKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertNotNull(a0);
+				assertNotNull(
+					"Test should test delegating filter access to KB, therefore the name attribute must be a database column",
+					a0.tTable().getAttributeOrNull("name"));
+				TLObject a1 = scenario.getObject("a1");
+				assertNotNull(a1);
+				TLObject a2 = scenario.getObject("a2");
+				assertNotNull(a2);
+				SearchExpression search = search(
+					"x -> all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == 'A0').singleElement() == $x");
+				assertTrue((Boolean) executeCompiled(search, a0));
+
+				QueryExecutor search1 = QueryExecutor.compile(search(
+					"name -> all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == $name)"));
+				assertEquals(list(a0), search1.execute("A0"));
+				assertEquals(set(a1, a2), asSet(search1.execute("A1")));
+				assertEquals("Search must not fail using type-incompatible argument.", list(), search1.execute(list()));
+
+				TLObject a3 = scenario.getObject("a3");
+				assertNotNull(a3);
+				assertEquals(list(a3), search1.execute("true"));
+				assertEquals("Fuzzy match expected.", list(a3), execute(search(
+					"all(`TestSearchExpression:A`).filter(x -> $x.get(`TestSearchExpression:A#name`) == true)")));
+				assertEquals("Fuzzy match expected.", list(a3), search1.execute(true));
+			});
+	}
+
+	public void testReferenceKBSearch() {
+		with("TestSearchExpression-testReferenceKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertNotNull(a0);
+				TLObject a1 = scenario.getObject("a1");
+				assertNotNull(a1);
+				TLObject a2 = scenario.getObject("a2");
+				assertNotNull(a2);
+
+				QueryExecutor search = QueryExecutor.compile(search(
+					"other -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == $other)"));
+				assertEquals(set(a1, a0), asSet(search.execute(a2)));
+				assertEquals(set(a2), asSet(search.execute((TLObject) null)));
+
+				SearchExpression searchNullAsLiteral = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#other`) == null)");
+				assertEquals(set(a2), executeAsSet(searchNullAsLiteral));
+
+			});
+	}
+
+	/**
+	 * TLScript only uses {@link Double} values, the {@link KnowledgeBase} also uses
+	 * {@link Integer}. This test tests usage of integer values together with {@link KBQuery}.
+	 */
+	public void testKBNumberTypes() {
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4");
+				assertNotNull(a4);
+				TLObject a5 = scenario.getObject("a5");
+				assertNotNull(a5);
+
+				SearchExpression filterKB = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == 15)");
+				assertEquals(list(a4), execute(filterKB));
+
+				SearchExpression filterKBWithParam = search(
+					"intVal -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == $intVal)");
+				assertEquals(list(a4), execute(filterKBWithParam, 15));
+
+				SearchExpression filterInMemory = search(
+					"all -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == 15)");
+				assertEquals(list(a4), execute(filterInMemory, list(a4, a5)));
+
+				SearchExpression filterInMemoryWithParam = search(
+					"all -> intVal -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#int`) == $intVal)");
+				assertEquals(list(a4), execute(filterInMemoryWithParam, list(a4, a5), 15));
+
+			});
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4");
+				assertNotNull(a4);
+				TLObject a5 = scenario.getObject("a5");
+				assertNotNull(a5);
+
+				SearchExpression filterKB = search(
+					"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == 16)");
+				assertEquals(list(a4), execute(filterKB));
+
+				SearchExpression filterKBWithParam = search(
+					"intVal -> all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == $intVal)");
+				assertEquals(list(a4), execute(filterKBWithParam, 16));
+
+				SearchExpression filterInMemory = search(
+					"all -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == 16)");
+				assertEquals(list(a4), execute(filterInMemory, list(a4, a5)));
+
+				SearchExpression filterInMemoryWithParam = search(
+					"all -> intVal -> $all.filter(x -> $x.get(`TestSearchExpression:WithDatabaseColumns#double`) == $intVal)");
+				assertEquals(list(a4), execute(filterInMemoryWithParam, list(a4, a5), 16));
+			});
+	}
 
 	public void testSimpleSearch() {
 		with("TestSearchExpression-testSimpleSearch.scenario.xml",
@@ -949,7 +1056,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 * Test for {@link ToSystemCalendar}
 	 */
 	public void testSystemCalendar() throws ParseException {
-		assertEquals(NumberFormat.getInstance(TLContext.getLocale()).format(2019) + "-8-5",
+		assertEquals("2019-8-5",
 			execute(
 				search(
 					"{c=date(2019, 8 - 1, 5).toSystemCalendar(); " +
@@ -960,7 +1067,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	 * Test for {@link ToUserCalendar}
 	 */
 	public void testUserCalendar() throws ParseException {
-		assertEquals(NumberFormat.getInstance(TLContext.getLocale()).format(2019) + "-8-5T15:38:52.123",
+		assertEquals("2019-8-5T15:38:52.123",
 			execute(
 				search(
 					"{c=dateTime(" +
@@ -1421,6 +1528,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopy() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
@@ -1487,6 +1598,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopyFilter() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
@@ -1516,6 +1631,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public void testCopyConstructor() {
+		if (!kb().getHistoryManager().hasHistory()) {
+			// Test uses historic objects
+			return;
+		}
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
@@ -2637,7 +2756,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	private Object value(TLObject obj, String name) {
-		return obj.tValue(((TLClass) obj.tType()).getPart(name));
+		return obj.tValue(obj.tType().getPart(name));
 	}
 
 	public static Test suite() {

@@ -50,7 +50,6 @@ import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.AllTypes;
@@ -354,7 +353,7 @@ public class ComputedColumnProviderByExpression
 			if (label instanceof ResKey) {
 				return (ResKey) label;
 			}
-			return ResKey.text(ToString.toString(label));
+			return ResKey.text(SearchExpression.asString(label));
 		}
 		return config.getColumnLabel();
 	}

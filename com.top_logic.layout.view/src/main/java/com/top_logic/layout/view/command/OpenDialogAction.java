@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -121,16 +122,47 @@ public class OpenDialogAction implements ViewAction {
 
 	@Override
 	public Object execute(ReactContext context, Object input) {
+		// Inject the chain's input into the configured dialog channel.
+		Map<String, ?> channelValues =
+			input != null ? Collections.singletonMap(_bindInputTo, input) : Collections.emptyMap();
+		openDialog(context, _dialogViewPath, _closeOnBackdrop, channelValues, _bindings);
+		return input;
+	}
+
+	/**
+	 * Opens a modal dialog loading the given view, seeding it with the given channel values and live
+	 * bindings inherited from the parent context.
+	 *
+	 * <p>
+	 * This is the reusable core of {@link OpenDialogAction#execute(ReactContext, Object)}; it is also
+	 * used to chain follow-up dialogs from Java {@link ViewAction}s (e.g. the forced change-password
+	 * step of the login flow) where more than one named channel must be transferred to the dialog.
+	 * </p>
+	 *
+	 * @param context
+	 *        The current context; must provide a {@link DialogManager} (otherwise this is a no-op).
+	 * @param dialogViewPath
+	 *        The full view path (including {@link ViewLoader#VIEW_BASE_PATH}).
+	 * @param closeOnBackdrop
+	 *        Whether clicking the backdrop closes the dialog.
+	 * @param channelValues
+	 *        Channel name to value; each entry is registered as a fresh channel on the dialog
+	 *        context, carrying the given value.
+	 * @param bindings
+	 *        Live bindings inherited from the parent context (may be empty).
+	 */
+	public static void openDialog(ReactContext context, String dialogViewPath, boolean closeOnBackdrop,
+			Map<String, ?> channelValues, List<ChannelBindingConfig> bindings) {
 		DialogManager mgr = context.getDialogManager();
 		if (mgr == null) {
-			return input;
+			return;
 		}
 
 		ViewElement dialogView;
 		try {
-			dialogView = ViewLoader.getOrLoadView(_dialogViewPath);
+			dialogView = ViewLoader.getOrLoadView(dialogViewPath);
 		} catch (ConfigurationException ex) {
-			throw new RuntimeException("Failed to load dialog view: " + _dialogViewPath, ex);
+			throw new RuntimeException("Failed to load dialog view: " + dialogViewPath, ex);
 		}
 
 		ViewContext dialogContext = new DefaultViewContext(context);
@@ -142,7 +174,7 @@ public class OpenDialogAction implements ViewAction {
 				dialogContext = dialogContext.withErrorSink(parentErrorSink);
 			}
 
-			for (ChannelBindingConfig binding : _bindings) {
+			for (ChannelBindingConfig binding : bindings) {
 				String parentChannelName = binding.getTo().getChannelName();
 				if (!parentViewContext.hasChannel(parentChannelName)) {
 					Logger.warn("Channel '" + parentChannelName + "' not found in parent context, skipping.",
@@ -154,20 +186,18 @@ public class OpenDialogAction implements ViewAction {
 			}
 		}
 
-		// Inject input into dialog channel.
-		if (input != null) {
-			DefaultViewChannel inputChannel = new DefaultViewChannel(_bindInputTo);
-			inputChannel.set(input);
-			dialogContext.registerChannel(_bindInputTo, inputChannel);
+		// Seed the dialog with the requested channel values.
+		for (Map.Entry<String, ?> entry : channelValues.entrySet()) {
+			DefaultViewChannel channel = new DefaultViewChannel(entry.getKey());
+			channel.set(entry.getValue());
+			dialogContext.registerChannel(entry.getKey(), channel);
 		}
 
-		ReactControl dialogControl = new ReloadableControl(_dialogViewPath, dialogContext,
+		ReactControl dialogControl = new ReloadableControl(dialogViewPath, dialogContext,
 			(ReactControl) dialogView.createControl(dialogContext));
 
-		mgr.openDialog(_closeOnBackdrop, dialogControl, result -> {
+		mgr.openDialog(closeOnBackdrop, dialogControl, result -> {
 			// Dialog closed.
 		});
-
-		return input;
 	}
 }

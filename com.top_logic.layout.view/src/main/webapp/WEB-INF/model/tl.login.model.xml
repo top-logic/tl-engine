@@ -26,5 +26,37 @@
 				</property>
 			</attributes>
 		</class>
+
+		<!--
+			Transient-only type holding the input of the forced "change password" step that follows a
+			login with an expired password. Instances are created in Java by LoginAction and bound to
+			the change-password dialog's form; the account whose password is changed is transferred
+			separately on the dialog's "account" channel.
+		-->
+		<class name="PasswordChange">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="newPassword"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+				<property name="newPasswordConfirm"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
 	</module>
 </model>

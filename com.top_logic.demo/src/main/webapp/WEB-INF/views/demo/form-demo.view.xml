@@ -43,6 +43,23 @@
 								<de>Bearbeiten</de>
 							</label>
 						</command>
+						<!--
+							Expires the selected account's password, forcing the React login's
+							change-password step on that account's next login. Exercises the
+							password-expiry login flow (Ticket #29108, phase 2).
+						-->
+						<generic-command placement="TOOLBAR"
+							input="selectedPerson"
+						>
+							<label>
+								<en>Expire password</en>
+								<de>Passwort ablaufen lassen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<expire-password/>
+						</generic-command>
 					</commands>
 					<table
 						selection="selectedPerson"

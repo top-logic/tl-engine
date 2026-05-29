@@ -19,6 +19,9 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.TileWidth;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.security.AccessChecks;
+import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.WithAccessControl;
 
 /**
  * A single tile in a {@link DashboardElement dashboard}.
@@ -36,7 +39,7 @@ public class TileElement implements UIElement {
 	 * Configuration for {@link TileElement}.
 	 */
 	@TagName("tile")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, WithAccessControl {
 
 		/** Config property name for {@link #getId()}. */
 		String ID = "id";
@@ -90,6 +93,8 @@ public class TileElement implements UIElement {
 
 	private final int _rowSpan;
 
+	private final AccessControl _accessControl;
+
 	private final UIElement _content;
 
 	/**
@@ -100,7 +105,19 @@ public class TileElement implements UIElement {
 		_id = config.getId();
 		_width = config.getWidth();
 		_rowSpan = Math.max(1, config.getRowSpan());
+		_accessControl = config.getAccessControl();
 		_content = context.getInstance(config.getContent());
+	}
+
+	/**
+	 * Whether this tile is accessible to the current user.
+	 *
+	 * <p>
+	 * A tile guarded by an inaccessible {@link AccessControl} is omitted from the dashboard.
+	 * </p>
+	 */
+	public boolean isAccessible() {
+		return AccessChecks.isAccessible(_accessControl);
 	}
 
 	/** The stable tile id. */

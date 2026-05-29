@@ -34,6 +34,9 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.security.AccessChecks;
+import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.slot.control.SlotContentControl;
 
@@ -114,6 +117,9 @@ public class SidebarElement implements UIElement {
 
 		/**
 		 * Creates a {@link SidebarItem} for use with {@link ReactSidebarControl}.
+		 *
+		 * @return The item, or {@code null} when the item must be omitted (e.g. because access is
+		 *         denied for the current user).
 		 */
 		SidebarItem createSidebarItem(ViewContext context);
 	}
@@ -122,7 +128,7 @@ public class SidebarElement implements UIElement {
 	 * A navigation item with content.
 	 */
 	@TagName("nav-item")
-	public interface NavItemConfig extends PolymorphicConfiguration<SidebarItemElement> {
+	public interface NavItemConfig extends PolymorphicConfiguration<SidebarItemElement>, WithAccessControl {
 
 		@Override
 		@ClassDefault(NavItemElement.class)
@@ -207,6 +213,8 @@ public class SidebarElement implements UIElement {
 
 		private final String _route;
 
+		private final AccessControl _accessControl;
+
 		private final List<UIElement> _children;
 
 		/**
@@ -218,6 +226,7 @@ public class SidebarElement implements UIElement {
 			_label = config.getLabel();
 			_icon = config.getIcon();
 			_route = config.getRoute();
+			_accessControl = config.getAccessControl();
 			_children = config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
@@ -225,6 +234,10 @@ public class SidebarElement implements UIElement {
 
 		@Override
 		public SidebarItem createSidebarItem(ViewContext context) {
+			if (!AccessChecks.isAccessible(_accessControl)) {
+				// Access denied for the current user: omit the navigation item entirely.
+				return null;
+			}
 			String label = Resources.getInstance().getString(_label);
 			DirtyChannel dirtyChannel = new DirtyChannel();
 			NavigationItem item = new NavigationItem(_id, label, _icon,
@@ -334,7 +347,10 @@ public class SidebarElement implements UIElement {
 
 		List<SidebarItem> sidebarItems = new ArrayList<>();
 		for (SidebarItemElement itemElement : _items) {
-			sidebarItems.add(itemElement.createSidebarItem(context));
+			SidebarItem item = itemElement.createSidebarItem(context);
+			if (item != null) {
+				sidebarItems.add(item);
+			}
 		}
 		String activeItem = _activeItem != null && !_activeItem.isEmpty() ? _activeItem : null;
 		ReactSidebarControl sidebar = new ReactSidebarControl(context,

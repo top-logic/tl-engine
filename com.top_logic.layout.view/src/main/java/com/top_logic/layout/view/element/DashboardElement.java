@@ -112,6 +112,10 @@ public class DashboardElement implements UIElement {
 		List<TileElement> ordered = applyPersonalOrder(_tiles);
 		List<Tile> reactTiles = new ArrayList<>(ordered.size());
 		for (TileElement t : ordered) {
+			if (!t.isAccessible()) {
+				// Access denied for the current user: omit the tile entirely.
+				continue;
+			}
 			reactTiles.add(new Tile(t.getId(), t.getWidth(), t.getRowSpan(), t.createContentControl(context)));
 		}
 		ReactDashboardControl control =

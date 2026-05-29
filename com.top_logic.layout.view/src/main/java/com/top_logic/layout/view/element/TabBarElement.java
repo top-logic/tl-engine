@@ -26,6 +26,9 @@ import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
+import com.top_logic.layout.view.security.AccessChecks;
+import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.util.Resources;
 
 /**
@@ -73,7 +76,7 @@ public class TabBarElement implements UIElement {
 	 * Configuration for a single tab.
 	 */
 	@TagName("tab")
-	public interface TabConfig extends com.top_logic.basic.config.ConfigurationItem {
+	public interface TabConfig extends WithAccessControl {
 
 		/** Configuration name for {@link #getId()}. */
 		String ID = "id";
@@ -137,7 +140,7 @@ public class TabBarElement implements UIElement {
 				.collect(Collectors.toList());
 			String label = Resources.getInstance().getString(tabConfig.getLabel());
 			String route = tabConfig.getRoute();
-			_tabs.add(new TabEntry(tabConfig.getId(), label, route, children));
+			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
 	}
@@ -146,6 +149,10 @@ public class TabBarElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		for (TabEntry entry : _tabs) {
+			if (!AccessChecks.isAccessible(entry._accessControl)) {
+				// Access denied for the current user: omit the tab entirely.
+				continue;
+			}
 			DirtyChannel dirtyChannel = new DirtyChannel();
 			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
 				() -> createContent(entry, context, dirtyChannel), dirtyChannel);
@@ -180,6 +187,7 @@ public class TabBarElement implements UIElement {
 		return new ReactStackControl(tabContext, children);
 	}
 
-	private record TabEntry(String _id, String _label, String _route, List<UIElement> _children) {
+	private record TabEntry(String _id, String _label, String _route, AccessControl _accessControl,
+			List<UIElement> _children) {
 	}
 }

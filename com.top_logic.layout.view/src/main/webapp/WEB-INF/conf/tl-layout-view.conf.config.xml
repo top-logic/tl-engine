@@ -7,6 +7,9 @@
 					<module key="com.top_logic.layout.view.form.FieldControlService$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.view.security.SecurityScopeService$Module"
+						value="true"
+					/>
 				</modules>
 			</instance>
 		</config>

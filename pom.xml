@@ -41,6 +41,8 @@
 		<bouncycastle.version>1.84</bouncycastle.version>
 		<batik.version>1.19</batik.version>
 		<tl.license.version>7.8.2</tl.license.version>
+		<!-- renovate: datasource=node-version depName=node -->
+		<node.version>20.10.0</node.version>
 		
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 

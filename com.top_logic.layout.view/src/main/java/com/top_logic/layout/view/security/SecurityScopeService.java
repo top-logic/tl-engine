@@ -11,15 +11,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.KBBasedManagedClass;
+import com.top_logic.knowledge.service.KnowledgeBaseFactory;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.tool.boundsec.BoundHelper;
+import com.top_logic.tool.boundsec.wrap.PersBoundComp;
+import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
 /**
  * Central catalog of {@link SecurityScope}s available to the declarative view system.
@@ -31,15 +39,27 @@ import com.top_logic.mig.html.layout.ComponentName;
  * UI units share one scope by referencing the same id without duplicating its label.
  * </p>
  *
+ * <p>
+ * At startup the service materializes a persistent {@link PersBoundComp} for every configured scope
+ * (keyed by its id), so the existing security administration tooling can assign roles to view
+ * security scopes just like to legacy components.
+ * </p>
+ *
  * @see AccessControl
  * @see SecurityScope
  */
-public class SecurityScopeService extends ConfiguredManagedClass<SecurityScopeService.Config> {
+@ServiceDependencies({
+	KnowledgeBaseFactory.Module.class,
+	PersistencyLayer.Module.class,
+	SecurityComponentCache.Module.class,
+	BoundHelper.Module.class,
+})
+public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeService.Config> {
 
 	/**
 	 * Configuration of the {@link SecurityScopeService}.
 	 */
-	public interface Config extends ConfiguredManagedClass.Config<SecurityScopeService> {
+	public interface Config extends KBBasedManagedClass.Config<SecurityScopeService> {
 
 		/** Configuration name for {@link #getScopes()}. */
 		String SCOPES = "scopes";
@@ -123,6 +143,36 @@ public class SecurityScopeService extends ConfiguredManagedClass<SecurityScopeSe
 				}
 			}
 			indexScopes(context, node.getScopes(), index);
+		}
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+		materializePersBoundComps();
+	}
+
+	/**
+	 * Ensures a persistent {@link PersBoundComp} exists for every configured scope, so roles can be
+	 * assigned to view security scopes via the existing security administration.
+	 */
+	private void materializePersBoundComps() {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.CREATING_SECURITY_SCOPES)) {
+			int created = 0;
+			for (SecurityScope scope : _scopesById.values()) {
+				ComponentName name = scope.getSecurityId();
+				if (PersBoundComp.getInstance(kb(), name) == null) {
+					PersBoundComp.createInstance(kb(), name);
+					created++;
+				}
+			}
+			if (created > 0) {
+				tx.commit();
+				SecurityComponentCache.setupCache();
+				Logger.info("Created " + created + " security scope object(s).", SecurityScopeService.class);
+			} else {
+				tx.rollback();
+			}
 		}
 	}
 

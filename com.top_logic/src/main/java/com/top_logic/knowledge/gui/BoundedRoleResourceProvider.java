@@ -24,9 +24,6 @@ public class BoundedRoleResourceProvider extends WrapperResourceProvider {
         super();
     }
     
-    /** 
-     * @see com.top_logic.layout.LabelProvider#getLabel(java.lang.Object)
-     */
     @Override
 	public String getLabel(Object anObject) {
         if (anObject instanceof BoundedRole) {
@@ -36,13 +33,6 @@ public class BoundedRoleResourceProvider extends WrapperResourceProvider {
 				Resources resources = Resources.getInstance();
 				String i18nLabel = resources.getString(RESOURCE_PREFIX.key(technicalName), null);
 				if (StringServices.isEmpty(i18nLabel)) {
-					String securityModule = role.getScope().getName();
-					if (technicalName.startsWith(securityModule)) {
-						if (technicalName.length() > securityModule.length()
-							&& technicalName.charAt(securityModule.length()) == '.') {
-							return technicalName.substring(securityModule.length() + 1);
-						}
-					}
 					return technicalName;
 				} else {
 					return i18nLabel;

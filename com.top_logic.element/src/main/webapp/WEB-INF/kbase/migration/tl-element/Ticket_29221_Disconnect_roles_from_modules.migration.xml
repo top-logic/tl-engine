@@ -71,6 +71,14 @@
 			table="TLModule"
 			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29221_Disconnect_roles_from_modules.column.xslt"
 		/>
+
+		<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor">
+			<application-tables>
+				<application-table name="definesRole"
+					db-name="DEFINES_ROLE"
+				/>
+			</application-tables>
+		</processor>
 	</processors>
 	<migration>
 		<type-mapping class=""/>

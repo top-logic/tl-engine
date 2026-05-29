@@ -18,7 +18,6 @@ import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutConfigTreeNode;
-import com.top_logic.model.TLModule;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -124,11 +123,7 @@ public class ConfigNode extends SecurityNode {
 	}
 
 	private boolean isRoleForDomain(BoundedRole role, String domain) {
-		TLModule scope = role.getScope();
-		if (scope == null) {
-			return false;
-		}
-		return scope.getName().equals(domain);
+		return true;
 	}
 
 	boolean needsCheckBox(Set<BoundedRole> set) {

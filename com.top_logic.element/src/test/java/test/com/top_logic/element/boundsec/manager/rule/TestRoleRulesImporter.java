@@ -36,9 +36,9 @@ import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLModule;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
@@ -50,7 +50,6 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 public class TestRoleRulesImporter extends BasicTestCase {
 
     private static final String ROLE_TEST_ROLE = "testRole";
-    private static final String STRUCTURE_PROJECT_ELEMENT = "projElement";
 
 	private final static String ROLE_RULES_VALID = "/WEB-INF/xml/roleRules/ValidRoleRules.xml";
 
@@ -64,32 +63,26 @@ public class TestRoleRulesImporter extends BasicTestCase {
 
 	private final static String ROLE_RULES_INVALID_ROLE = "/WEB-INF/xml/roleRules/InvalidRoleRoleRules.xml";
 
-    /**
-     * TODO TSA set up ...
-     */
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
 
-		TLModule scope = TLModelUtil.findModule(STRUCTURE_PROJECT_ELEMENT);
-		BoundedRole role = BoundedRole.createBoundedRole(ROLE_TEST_ROLE);
-		role.bind(scope);
-        assertTrue(role.getKnowledgeBase().commit());
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.forTest("Create test role"))) {
+			BoundedRole.createBoundedRole(ROLE_TEST_ROLE);
+			tx.commit();
+		}
     }
 
-    /**
-     * TODO TSA tear down up ...
-     */
     @Override
 	protected void tearDown() throws Exception {
-        final BoundedRole   theBR = BoundedRole.getRoleByName(ROLE_TEST_ROLE);
-        final KnowledgeBase theKB = theBR.getKnowledgeBase();
-        theBR.unbind();
-        theBR.tDelete();
-        theKB.commit();
+		final BoundedRole testRole = BoundedRole.getRoleByName(ROLE_TEST_ROLE);
+		try (Transaction tx = testRole.getKnowledgeBase().beginTransaction(ResKey.forTest("Delete test role"))) {
+			testRole.tDelete();
+			tx.commit();
+		}
         super.tearDown();
     }
-
 
     public void testInvalidMetaElementRules() throws Exception {
 		this.multiProblemTest(

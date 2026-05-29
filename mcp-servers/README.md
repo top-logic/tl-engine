@@ -1,11 +1,9 @@
 # MCP Servers for Claude Code
 
 The Trac (tickets), Jenkins (CI/CD), and Gitea (git hosting) MCP integrations
-are **no longer part of this repository**. They now live in a separate,
-installable package that is set up **once per machine** and registered globally
-in Claude Code — so every checkout and worktree picks them up automatically.
-There is no per-checkout `.venv`, no per-checkout setup, and no committed
-`.mcp.json`.
+are provided by the `tl-dev-mcp` package, installed once per machine and
+registered globally in Claude Code. Every checkout and worktree picks them up
+automatically.
 
 - Package repository: **https://git.top-logic.com/TopLogic/tl-dev-mcp.git**
 
@@ -41,9 +39,8 @@ tl-mcp-setup --register all
 uv tool upgrade tl-dev-mcp      # or: pipx upgrade tl-dev-mcp
 ```
 
-Because the servers are installed and registered once per machine, an update
-applies to every checkout and worktree at once — there is nothing to port into
-individual clones, and nothing to change in this repository.
+The servers are installed and registered once per machine, so an update applies
+to every checkout and worktree at once.
 
 See the package repository's `README.md` for full documentation (credential
 resolution order, service URLs, project-scoped `.mcp.json` as an alternative to

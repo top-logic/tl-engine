@@ -132,7 +132,7 @@ public class EditSecurityProfileComponent extends EditComponent
 
 	private Set<String> _excludedRoles;
 
-	Map<String, Set<BoundedRole>> _rolesMap = Collections.emptyMap();
+	Map<String, Set<BoundedRole>> _rolesMap;
 
 	private Collection<?> _oldExpansionModel;
 
@@ -231,6 +231,8 @@ public class EditSecurityProfileComponent extends EditComponent
 
 	private void resetRolesMap() {
 		_rolesMap = null;
+		// Ensure that the tree is rebuild when the roles map is re-created.
+		removeFormContext();
 	}
 
 	@Override

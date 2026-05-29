@@ -84,12 +84,6 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		// A login/logout initiated from the React UI swaps the underlying session here, on the
-		// reload request, rather than inside the command pipeline (see PendingSessionAction).
-		if (PendingSessionAction.apply(request, response)) {
-			return;
-		}
-
 		String pathInfo = request.getPathInfo();
 		String windowName = extractWindowName(pathInfo);
 
@@ -104,6 +98,15 @@ public class ViewServlet extends TopLogicServlet {
 		// ContentHandlersRegistry.startLogin() but without the SubsessionHandler /
 		// MainLayout setup that is specific to the traditional layout engine.
 		ensureSubSession(request, windowName);
+
+		// A login/logout initiated from the React UI swaps the underlying session here, on the
+		// reload request, rather than inside the command pipeline (see PendingSessionAction). This
+		// runs after the subsession context is installed, because the logout event fired by
+		// invalidateSession opens a knowledge-base transaction that requires a valid session
+		// context.
+		if (PendingSessionAction.apply(request, response)) {
+			return;
+		}
 
 		String routePath = extractRoutePath(pathInfo, windowName);
 

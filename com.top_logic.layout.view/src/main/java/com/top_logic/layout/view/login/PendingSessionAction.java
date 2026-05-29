@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.accesscontrol.SessionService;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
@@ -82,18 +81,24 @@ public class PendingSessionAction {
 		session.removeAttribute(PENDING_LOGIN_USER);
 		session.removeAttribute(PENDING_LOGOUT);
 
-		ThreadContextManager.inSystemInteraction(PendingSessionAction.class, () -> {
-			SessionService service = SessionService.getInstance();
-			service.invalidateSession(request.getSession());
+		// Runs within the current request's interaction context (the session being replaced), as
+		// the legacy LoginViewDialog.loginUserAndReload does. The swap must NOT run in a system
+		// interaction: invalidateSession fires a logout event that opens a knowledge-base
+		// transaction, which requires a valid session context.
+		Person target = pendingUser != null ? Person.byName(pendingUser) : null;
+		if (target == null) {
+			target = PersonManager.getManager().getAnonymous();
+		}
 
-			Person target = pendingUser != null ? Person.byName(pendingUser) : null;
-			if (target == null) {
-				target = PersonManager.getManager().getAnonymous();
-			}
-			service.loginUser(request, response, target);
-		});
+		SessionService service = SessionService.getInstance();
+		service.invalidateSession(request.getSession());
+		service.loginUser(request, response, target);
 
-		response.sendRedirect(currentUrl(request));
+		// loginUser performs the session-cookie check redirect itself; only redirect explicitly if
+		// it did not already commit the response.
+		if (!response.isCommitted()) {
+			response.sendRedirect(currentUrl(request));
+		}
 		return true;
 	}
 

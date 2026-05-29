@@ -41,6 +41,7 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
+import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.util.TLContextManager;
@@ -80,6 +81,12 @@ public class ViewServlet extends TopLogicServlet {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			return;
+		}
+
+		// A login/logout initiated from the React UI swaps the underlying session here, on the
+		// reload request, rather than inside the command pipeline (see PendingSessionAction).
+		if (PendingSessionAction.apply(request, response)) {
 			return;
 		}
 

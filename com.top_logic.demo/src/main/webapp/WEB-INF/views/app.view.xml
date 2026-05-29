@@ -276,6 +276,9 @@
 						distance (this one wins for everything inside the shell content).
 					-->
 					<slot name="secondary"/>
+
+					<!-- Current user with login/logout actions. -->
+					<user-menu/>
 				</children>
 			</app-bar>
 		</header>

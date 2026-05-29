@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
@@ -26,6 +27,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.UpdateChainLink;
 import com.top_logic.knowledge.service.db2.UpdateChainView;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -407,6 +410,19 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.HTML);
 
 		out.flushBuffer();
+	}
+
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		super.handleNoSession(request, response);
+
+		ThreadContextManager.inSystemInteraction(TopLogicServlet.class, () -> {
+			Person anonymous = PersonManager.getManager().getAnonymous();
+			SessionService.getInstance().loginUser(request, response, anonymous);
+		});
+
+		redirectToStartPage(request, response);
 	}
 
 }

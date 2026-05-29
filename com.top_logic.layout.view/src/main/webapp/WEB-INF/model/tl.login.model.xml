@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.login">
+		<!--
+			Transient-only type holding login form input. Instances are created with
+			new(`tl.login:Credentials`, transient: true) and never persisted, so no table is
+			declared.
+		-->
+		<class name="Credentials">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="password"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

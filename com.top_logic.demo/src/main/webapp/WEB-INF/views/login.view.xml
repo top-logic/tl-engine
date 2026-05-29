@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window width="380px">
+		<title>
+			<en>Login</en>
+			<de>Anmeldung</de>
+		</title>
+		<form input="model"
+			initial-edit-mode="true"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="password"/>
+			<commands>
+				<generic-command placement="TOOLBAR">
+					<label>
+						<en>Login</en>
+						<de>Anmeldung</de>
+					</label>
+					<store-form-state/>
+					<login/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

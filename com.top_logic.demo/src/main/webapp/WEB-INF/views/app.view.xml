@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <view>
+	<channels>
+		<!-- The currently active session user, for display in the app bar. -->
+		<derived-channel name="currentPerson"
+			expr="currentUser()"
+		/>
+	</channels>
 	<app-shell>
 		<content>
 			<sidebar active-item="dashboard"
@@ -254,6 +260,33 @@
 							<de>Oeffnet den View-Designer zur Bearbeitung der aktuellen Seite.</de>
 						</tooltip>
 					</open-designer>
+
+					<!-- Login: shown only for the anonymous user; opens the login dialog. -->
+					<generic-command placement="TOOLBAR">
+						<label>
+							<en>Login</en>
+							<de>Anmeldung</de>
+						</label>
+						<executability>
+							<anonymous-only/>
+						</executability>
+						<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
+						<open-dialog dialog-view="login.view.xml"
+							bind-input-to="model"
+							close-on-backdrop="true"
+						/>
+					</generic-command>
+
+					<!-- Logout: shown only for an authenticated user. -->
+					<logout-command placement="TOOLBAR">
+						<label>
+							<en>Logout</en>
+							<de>Abmeldung</de>
+						</label>
+						<executability>
+							<authenticated-only/>
+						</executability>
+					</logout-command>
 				</commands>
 				<title>
 					<en>Task Manager</en>
@@ -277,8 +310,10 @@
 					-->
 					<slot name="secondary"/>
 
-					<!-- Current user with login/logout actions. -->
-					<user-menu/>
+					<!-- Name of the currently active session user. -->
+					<text input="currentPerson"
+						css-class="tlAppBarUser"
+					/>
 				</children>
 			</app-bar>
 		</header>

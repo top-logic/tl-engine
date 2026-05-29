@@ -14,41 +14,6 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Login
-	 */
-	public static ResKey LOGIN_TITLE;
-
-	/**
-	 * @en User name
-	 */
-	public static ResKey LOGIN_USERNAME;
-
-	/**
-	 * @en Password
-	 */
-	public static ResKey LOGIN_PASSWORD;
-
-	/**
-	 * @en Login
-	 */
-	public static ResKey LOGIN_SUBMIT;
-
-	/**
-	 * @en Login
-	 */
-	public static ResKey LOGIN_ACTION;
-
-	/**
-	 * @en Logout
-	 */
-	public static ResKey LOGOUT_ACTION;
-
-	/**
-	 * @en Not logged in
-	 */
-	public static ResKey NOT_LOGGED_IN;
-
-	/**
 	 * @en Please enter user name and password.
 	 */
 	public static ResKey LOGIN_MISSING_CREDENTIALS;

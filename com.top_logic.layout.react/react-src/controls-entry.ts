@@ -62,8 +62,6 @@ import TLTileStack from './controls/TLTileStack';
 import TLSlot from './controls/TLSlot';
 import TLSlotContent from './controls/TLSlotContent';
 import TLDrawerToggle from './controls/TLDrawerToggle';
-import TLLogin from './controls/TLLogin';
-import TLUserMenu from './controls/TLUserMenu';
 
 
 register('TLButton', TLButton);
@@ -119,5 +117,3 @@ register('TLTileStack', TLTileStack);
 register('TLSlot', TLSlot);
 register('TLSlotContent', TLSlotContent);
 register('TLDrawerToggle', TLDrawerToggle);
-register('TLLogin', TLLogin);
-register('TLUserMenu', TLUserMenu);

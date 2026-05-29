@@ -13,7 +13,8 @@ automatically.
 bash <(curl -fsSL https://git.top-logic.com/TopLogic/tl-dev-mcp/raw/branch/main/install.sh)
 ```
 
-This single step:
+The only prerequisite is `curl` (or `wget`); if neither `uv` nor `pipx` is
+present, the script installs `uv` automatically. This single step:
 
 1. installs the `tl-trac-mcp` / `tl-jenkins-mcp` / `tl-gitea-mcp` tools (via
    `uv` or `pipx`),

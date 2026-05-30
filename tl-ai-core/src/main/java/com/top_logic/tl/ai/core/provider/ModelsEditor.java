@@ -17,17 +17,24 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueProvider;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Identity;
+import com.top_logic.util.Resources;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.ComplexField;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.selection.MultiSelectDialog;
+import com.top_logic.layout.form.selection.SelectDialogConfig;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.EditorFactory;
@@ -35,6 +42,7 @@ import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.form.values.edit.editor.AbstractEditor;
 import com.top_logic.layout.form.values.edit.editor.ConfigurationFormatAdapter;
 import com.top_logic.layout.form.values.edit.editor.Converters;
+import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -43,8 +51,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * Renders the {@link LLMProviderConfig.Config#getModels() models} property as a free-text,
  * comma-separated input field accompanied by a "Load models" command. The command queries the
- * provider's discovery endpoint and appends any newly discovered model IDs to the field, keeping
- * the existing entries untouched. This uniform UX works for every provider, including those whose
+ * provider's discovery endpoint and opens the standard multi-select chooser dialog (the same dialog
+ * an option-bound field uses) prefilled with the currently configured models. The chosen selection
+ * replaces the field value. This uniform UX works for every provider, including those whose
  * endpoint exposes no model listing: in that case the field simply remains editable by hand.
  * </p>
  */
@@ -75,14 +84,7 @@ public class ModelsEditor extends AbstractEditor {
 		CommandField load = new CommandField("loadModels") {
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {
-				List<String> discovered = discover(model.getModel());
-				if (discovered.isEmpty()) {
-					InfoService.showInfo(I18NConstants.NO_MODELS_FROM_ENDPOINT);
-					return HandlerResult.DEFAULT_RESULT;
-				}
-				int added = mergeInto(field, discovered);
-				InfoService.showInfo(I18NConstants.LOADED_MODELS__COUNT.fill(Integer.valueOf(added)));
-				return HandlerResult.DEFAULT_RESULT;
+				return openModelChooser(context, field, model.getModel());
 			}
 		};
 		group.addMember(load);
@@ -97,6 +99,56 @@ public class ModelsEditor extends AbstractEditor {
 			span(css(FormConstants.FLEXIBLE_CSS_CLASS), member(field)),
 			span(css(FormConstants.FIXED_RIGHT_CSS_CLASS), member(load), error(field))));
 		return group;
+	}
+
+	/**
+	 * Discovers the available models and opens a multi-select chooser dialog so the user can pick
+	 * which ones to keep. The chosen selection replaces the field value.
+	 *
+	 * <p>
+	 * The dialog options are the union of the currently configured models and the discovered ones
+	 * (current first), so manually entered entries that the endpoint does not report are not lost
+	 * and remain deselectable. The current models are pre-selected. If discovery yields nothing, no
+	 * dialog opens and the user keeps editing the field by hand.
+	 * </p>
+	 *
+	 * @param context
+	 *        The command execution context.
+	 * @param field
+	 *        The field holding the comma-separated model list.
+	 * @param config
+	 *        The provider configuration being edited.
+	 * @return Always {@link HandlerResult#DEFAULT_RESULT}.
+	 */
+	static HandlerResult openModelChooser(DisplayContext context, ComplexField field, ConfigurationItem config) {
+		List<String> discovered = discover(config);
+		if (discovered.isEmpty()) {
+			InfoService.showInfo(I18NConstants.NO_MODELS_FROM_ENDPOINT);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@SuppressWarnings("unchecked")
+		List<String> current = (List<String>) field.getValue();
+		List<String> options = merge(current, discovered);
+
+		FormContext chooserContext = new FormContext("loadModels", ResPrefix.GLOBAL);
+		ScriptingRecorder.annotateAsDontRecord(chooserContext);
+
+		SelectField selection = Fields.multiSelectField(chooserContext, "models", options);
+		selection.setLabel(Resources.getInstance().getString(I18NConstants.LOAD_MODELS));
+		// Pre-select the current value BEFORE registering the listener, so the preselection itself
+		// does not trigger a write-back.
+		Fields.selections(selection, current == null ? List.of() : new ArrayList<>(current));
+		selection.addValueListener((sender, oldValue, newValue) -> {
+			@SuppressWarnings("unchecked")
+			List<String> chosen = (List<String>) newValue;
+			field.setValue(new ArrayList<>(chosen));
+			InfoService.showInfo(I18NConstants.LOADED_MODELS__COUNT.fill(Integer.valueOf(chosen.size())));
+		});
+
+		SelectDialogConfig dialogConfig = TypedConfiguration.newConfigItem(SelectDialogConfig.class);
+		new MultiSelectDialog(selection, dialogConfig).open(context.getWindowScope());
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -133,27 +185,8 @@ public class ModelsEditor extends AbstractEditor {
 	}
 
 	/**
-	 * Appends the newly discovered model IDs to the current value of the given field, preserving
-	 * existing entries and their order, and updates the field value.
-	 *
-	 * @param field
-	 *        The field holding the current comma-separated model list.
-	 * @param discovered
-	 *        The discovered model IDs to append.
-	 * @return The number of entries actually added.
-	 */
-	public static int mergeInto(FormField field, List<String> discovered) {
-		@SuppressWarnings("unchecked")
-		List<String> existing = (List<String>) field.getValue();
-		List<String> merged = merge(existing, discovered);
-		int added = merged.size() - (existing == null ? 0 : existing.size());
-		field.setValue(merged);
-		return added;
-	}
-
-	/**
-	 * Merges two model lists: keeps every existing entry in order, then appends only the discovered
-	 * entries that are not already present.
+	 * Merges two model lists: keeps every existing entry in order, then appends only the entries
+	 * from the second list that are not already present.
 	 *
 	 * @param existing
 	 *        The currently configured model IDs, may be {@code null}.

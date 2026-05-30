@@ -23,6 +23,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOAD_MODELS;
 
 	/**
+	 * Tooltip of the button that clears the model allowlist.
+	 *
+	 * @en Clear models
+	 * @de Modelle leeren
+	 */
+	public static ResKey CLEAR_MODELS;
+
+	/**
 	 * Info message reporting how many model IDs were appended to the models field.
 	 *
 	 * @en {0} model(s) added.

@@ -5,8 +5,6 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
-import static com.top_logic.layout.form.template.model.Templates.*;
-
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -24,18 +22,13 @@ import com.top_logic.util.Resources;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.selection.MultiSelectDialog;
 import com.top_logic.layout.form.selection.SelectDialogConfig;
-import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
@@ -72,33 +65,12 @@ public class ModelsEditor extends AbstractEditor {
 		init(editorFactory, model, field, Identity.INSTANCE,
 			Converters.valueConverter(model.getProperty()));
 
+		// Render the value box as a free-text popup-select look-alike: the control attaches an
+		// expand icon (opens the discover-and-choose dialog) and a clear icon inline on the right,
+		// while keeping the box editable so model names can be typed directly.
+		field.setControlProvider(new ModelsControl.Provider(model.getModel()));
+
 		return field;
-	}
-
-	@Override
-	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
-		FormGroup group = Fields.group(container, Fields.normalizeFieldName(model.getProperty().getPropertyName()));
-
-		ComplexField field = (ComplexField) super.createUI(editorFactory, group, model);
-
-		CommandField load = new CommandField("loadModels") {
-			@Override
-			public HandlerResult executeCommand(DisplayContext context) {
-				return openModelChooser(context, field, model.getModel());
-			}
-		};
-		group.addMember(load);
-		load.setLabel(I18NConstants.LOAD_MODELS);
-		load.setImage(Icons.RELOAD_SMALL);
-		load.setNotExecutableImage(Icons.RELOAD_SMALL_DISABLED);
-		// Discovery is an edit-time action; hide it when the form is read-only so the button
-		// does not render as stray text overlapping the value.
-		load.setVisible(!field.isImmutable());
-
-		template(group, horizontalBox(
-			span(css(FormConstants.FLEXIBLE_CSS_CLASS), member(field)),
-			span(css(FormConstants.FIXED_RIGHT_CSS_CLASS), member(load), error(field))));
-		return group;
 	}
 
 	/**

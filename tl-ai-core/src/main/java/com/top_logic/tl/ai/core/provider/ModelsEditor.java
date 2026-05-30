@@ -28,6 +28,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
@@ -86,6 +87,11 @@ public class ModelsEditor extends AbstractEditor {
 		};
 		group.addMember(load);
 		load.setLabel(I18NConstants.LOAD_MODELS);
+		load.setImage(Icons.RELOAD_SMALL);
+		load.setNotExecutableImage(Icons.RELOAD_SMALL_DISABLED);
+		// Discovery is an edit-time action; hide it when the form is read-only so the button
+		// does not render as stray text overlapping the value.
+		load.setVisible(!field.isImmutable());
 
 		template(group, horizontalBox(
 			span(css(FormConstants.FLEXIBLE_CSS_CLASS), member(field)),

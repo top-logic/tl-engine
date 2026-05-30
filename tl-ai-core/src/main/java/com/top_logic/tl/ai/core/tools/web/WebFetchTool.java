@@ -82,9 +82,10 @@ public class WebFetchTool {
 		}
 
 		WebToolsService service = WebToolsService.getInstance();
-		int timeoutSeconds = service != null ? service.getFetchTimeoutSeconds() : 30;
-		int maxBytes = service != null ? service.getFetchMaxBytes() : 5_000_000;
-		int maxChars = service != null ? service.getFetchMaxChars() : 50_000;
+		// Clamp to safe minimums so a misconfigured (zero/negative) limit cannot break the fetch.
+		int timeoutSeconds = Math.max(1, service != null ? service.getFetchTimeoutSeconds() : 30);
+		int maxBytes = Math.max(1024, service != null ? service.getFetchMaxBytes() : 5_000_000);
+		int maxChars = Math.max(256, service != null ? service.getFetchMaxChars() : 50_000);
 
 		String currentUrl = url.trim();
 		try {

@@ -19,17 +19,13 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.Set;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
-import org.jsoup.select.NodeTraversor;
-import org.jsoup.select.NodeVisitor;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -48,9 +44,8 @@ public class WebFetchTool {
 
 	private static final String USER_AGENT = "TopLogic-AI-Agent/1.0 (+https://www.top-logic.com)";
 
-	private static final Set<String> BLOCK_TAGS = Set.of(
-		"p", "h1", "h2", "h3", "h4", "h5", "h6", "div", "section", "article", "tr", "li", "ul", "ol",
-		"table", "blockquote", "pre", "dd", "dt", "figure", "main", "aside", "hr");
+	private static final String JUNK_SELECTOR =
+		"script,style,noscript,iframe,svg,head,nav,footer,header,form,button,input,select,template";
 
 	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
 		.connectTimeout(Duration.ofSeconds(15))
@@ -72,7 +67,8 @@ public class WebFetchTool {
 	 * @return The extracted text, or an error string.
 	 */
 	@ToolMethod(
-		description = "Fetch a single web page by its URL and return the main textual content as plain text. "
+		description = "Fetch a single web page by its URL and return the main content as Markdown, "
+			+ "preserving headings, links, lists and tables. "
 			+ "Use after webSearch to read a specific result, or to read a URL the user provided. "
 			+ "Only public http(s) pages are supported.",
 		mode = ToolMode.READ)
@@ -137,7 +133,7 @@ public class WebFetchTool {
 				String text;
 				if (contentType.contains("html") || contentType.contains("xml")
 						|| (contentType.isEmpty() && looksLikeHtml(body))) {
-					text = htmlToText(body, currentUrl);
+					text = htmlToMarkdown(body, currentUrl);
 				} else if (contentType.startsWith("text/") || contentType.contains("json")
 						|| contentType.isEmpty()) {
 					text = body;
@@ -211,40 +207,31 @@ public class WebFetchTool {
 	}
 
 	/**
-	 * Converts an HTML document to readable plain text. Package-visible for testing.
+	 * Converts an HTML document to Markdown after stripping non-content chrome (scripts, styles,
+	 * navigation, etc.). Relative links and image sources are resolved against {@code baseUrl} so
+	 * the resulting Markdown contains usable absolute URLs. Package-visible for testing.
 	 */
-	static String htmlToText(String html, String baseUrl) {
+	static String htmlToMarkdown(String html, String baseUrl) {
 		Document document = Jsoup.parse(html, baseUrl);
-		document.select("script,style,noscript,iframe,svg,head,nav,footer,header,form,button,input,select,template")
-			.remove();
+		document.select(JUNK_SELECTOR).remove();
 		Element root = document.body() != null ? document.body() : document;
 
-		StringBuilder out = new StringBuilder();
-		NodeTraversor.traverse(new NodeVisitor() {
-			@Override
-			public void head(Node node, int depth) {
-				if (node instanceof TextNode textNode) {
-					out.append(textNode.text());
-				} else if ("li".equals(node.nodeName())) {
-					out.append("\n- ");
-				} else if ("br".equals(node.nodeName())) {
-					out.append('\n');
-				}
+		// Inline the resolved absolute URLs so links survive the conversion to Markdown.
+		for (Element link : root.select("a[href]")) {
+			String absolute = link.absUrl("href");
+			if (!absolute.isEmpty()) {
+				link.attr("href", absolute);
 			}
-
-			@Override
-			public void tail(Node node, int depth) {
-				if (BLOCK_TAGS.contains(node.nodeName())) {
-					out.append('\n');
-				}
+		}
+		for (Element image : root.select("img[src]")) {
+			String absolute = image.absUrl("src");
+			if (!absolute.isEmpty()) {
+				image.attr("src", absolute);
 			}
-		}, root);
+		}
 
-		return out.toString()
-			.replaceAll("[ \\t\\x0B\\f\\r]+", " ")
-			.replaceAll(" *\\n *", "\n")
-			.replaceAll("\\n{3,}", "\n\n")
-			.strip();
+		String markdown = Converters.htmlToMarkdown(root.html());
+		return markdown.replaceAll("\\n{3,}", "\n\n").strip();
 	}
 
 	private static byte[] readLimited(InputStream in, int maxBytes) throws IOException {

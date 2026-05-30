@@ -1,0 +1,47 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.tools.web;
+
+import java.net.URI;
+
+import junit.framework.TestCase;
+
+/**
+ * Tests for {@link WebFetchTool} URL validation and HTML extraction.
+ */
+public class TestWebFetchTool extends TestCase {
+
+	public void testRejectsNonHttpScheme() {
+		assertNotNull(WebFetchTool.validateUrl(URI.create("ftp://example.com/x")));
+		assertNotNull(WebFetchTool.validateUrl(URI.create("file:///etc/passwd")));
+	}
+
+	public void testRejectsCredentialsInUrl() {
+		assertNotNull(WebFetchTool.validateUrl(URI.create("https://user:pass@example.com/")));
+	}
+
+	public void testRejectsLoopbackAndPrivate() {
+		assertNotNull(WebFetchTool.validateUrl(URI.create("http://127.0.0.1/")));
+		assertNotNull(WebFetchTool.validateUrl(URI.create("http://localhost/")));
+		assertNotNull(WebFetchTool.validateUrl(URI.create("http://10.0.0.1/")));
+		assertNotNull(WebFetchTool.validateUrl(URI.create("http://192.168.1.1/")));
+		assertNotNull(WebFetchTool.validateUrl(URI.create("http://169.254.169.254/")));
+	}
+
+	public void testHtmlToTextStripsTagsAndScripts() {
+		String html = "<html><head><title>x</title><style>.a{}</style></head>"
+			+ "<body><nav>menu</nav><h1>Title</h1><p>Hello <b>world</b>.</p>"
+			+ "<script>evil()</script><ul><li>one</li><li>two</li></ul></body></html>";
+		String text = WebFetchTool.htmlToText(html, "https://example.com");
+
+		assertTrue("has heading", text.contains("Title"));
+		assertTrue("has paragraph", text.contains("Hello world."));
+		assertTrue("has list items", text.contains("one") && text.contains("two"));
+		assertFalse("no script body", text.contains("evil"));
+		assertFalse("no style body", text.contains(".a{}"));
+		assertFalse("no nav", text.contains("menu"));
+	}
+}

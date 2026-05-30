@@ -38,9 +38,22 @@
 
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
 			<instance class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
-				<!-- Configure a search engine to enable web_search. Example:
+				<!-- Configure exactly one search engine to enable web_search. Examples:
+
+				Tavily:
 				<search-engine class="com.top_logic.tl.ai.core.tools.web.TavilySearchEngine">
 					<api-key>YOUR_TAVILY_API_KEY</api-key>
+				</search-engine>
+
+				Brave:
+				<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
+					<api-key>YOUR_BRAVE_API_KEY</api-key>
+				</search-engine>
+
+				Google (Programmable Search; needs both the API key and the search-engine ID / cx):
+				<search-engine class="com.top_logic.tl.ai.core.tools.web.GoogleSearchEngine">
+					<api-key>YOUR_GOOGLE_API_KEY</api-key>
+					<search-engine-id>YOUR_GOOGLE_CX</search-engine-id>
 				</search-engine>
 				-->
 			</instance>

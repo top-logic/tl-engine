@@ -59,3 +59,37 @@ message TavilySearchResult {
 	/** The full raw page content, present when {@code include_raw_content} was requested. */
 	string raw_content [Name = "raw_content"];
 }
+
+/**
+ * Response payload from the Brave Web Search API ({@code GET /res/v1/web/search}).
+ *
+ * <p>
+ * The request is sent as URL query parameters, so no request message is modelled.
+ * </p>
+ */
+message BraveSearchResponse {
+	/** The web results section; absent when the response carries no web results. */
+	BraveWebResults web [Name = "web"];
+}
+
+/**
+ * The {@code web} section of a {@link BraveSearchResponse}.
+ */
+message BraveWebResults {
+	/** The organic web results. */
+	repeated BraveSearchResult results [Name = "results"];
+}
+
+/**
+ * A single organic result within a {@link BraveWebResults}.
+ */
+message BraveSearchResult {
+	/** The result title. */
+	string title [Name = "title"];
+
+	/** The result URL. */
+	string url [Name = "url"];
+
+	/** A short, query-relevant extract (may contain inline highlight markup). */
+	string description [Name = "description"];
+}

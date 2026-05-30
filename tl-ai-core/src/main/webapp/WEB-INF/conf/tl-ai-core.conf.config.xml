@@ -49,12 +49,6 @@
 				<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
 					<api-key>YOUR_BRAVE_API_KEY</api-key>
 				</search-engine>
-
-				Google (Programmable Search; needs both the API key and the search-engine ID / cx):
-				<search-engine class="com.top_logic.tl.ai.core.tools.web.GoogleSearchEngine">
-					<api-key>YOUR_GOOGLE_API_KEY</api-key>
-					<search-engine-id>YOUR_GOOGLE_CX</search-engine-id>
-				</search-engine>
 				-->
 			</instance>
 		</config>

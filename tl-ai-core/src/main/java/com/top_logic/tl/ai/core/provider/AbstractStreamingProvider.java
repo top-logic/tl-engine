@@ -92,8 +92,9 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		validateRequest(body);
 
 		String path = endpointPath(request);
+		URI uri = URI.create(_baseUrl + path);
 		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-			.uri(URI.create(_baseUrl + path))
+			.uri(uri)
 			.header("Content-Type", "application/json")
 			.header("Accept", acceptHeader())
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
@@ -104,6 +105,10 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		addCustomHeaders(requestBuilder);
 
 		HttpRequest httpRequest = requestBuilder.build();
+
+		String dumpLabel = getClass().getSimpleName() + " " + request.model() + " @" + uri.getHost();
+		boolean dumpStream = StreamDump.enabled(dumpLabel);
+		long startNanos = System.nanoTime();
 
 		HttpResponse<InputStream> response;
 		try {
@@ -116,6 +121,12 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
 		}
 
+		if (dumpStream) {
+			Logger.info("[stream-dump " + dumpLabel + "] response status=" + response.statusCode()
+				+ ", headers received +" + (System.nanoTime() - startNanos) / 1_000_000L + "ms",
+				AbstractStreamingProvider.class);
+		}
+
 		if (response.statusCode() != 200) {
 			if (Logger.isDebugEnabled(AbstractStreamingProvider.class)) {
 				Logger.debug("LLM provider request failed: " + response.statusCode() + " "
@@ -125,7 +136,9 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		}
 
 		try (InputStream responseBody = response.body()) {
-			processStream(responseBody, handler);
+			InputStream parseInput =
+				dumpStream ? StreamDump.wrap(responseBody, dumpLabel, startNanos) : responseBody;
+			processStream(parseInput, handler);
 		} catch (ProviderException e) {
 			throw e;
 		} catch (IOException e) {

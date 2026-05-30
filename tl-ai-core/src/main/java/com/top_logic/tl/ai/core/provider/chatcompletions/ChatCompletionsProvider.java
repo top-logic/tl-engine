@@ -13,6 +13,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -248,9 +249,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 		String finishReason = null;
 		int inputTokens = 0;
 		int outputTokens = 0;
-		ContentBlockAccumulator accumulator = new ContentBlockAccumulator();
-		int contentIndex = 0;
-		boolean textBlockOpen = false;
+		DeltaState state = new DeltaState();
 
 		handler.onEvent(new StreamEvent.StreamStart());
 
@@ -263,10 +262,8 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 				}
 
 				if ("[DONE]".equals(data)) {
-					if (textBlockOpen) {
-						handler.onEvent(new StreamEvent.TextEnd(0));
-					}
-					List<ContentPart> content = accumulator.buildContentParts();
+					closeOpenBlocks(state, handler);
+					List<ContentPart> content = state._accumulator.buildContentParts();
 					TokenUsage usage = new TokenUsage(inputTokens, outputTokens, 0, 0, 0);
 					handler.onEvent(new StreamEvent.MessageComplete(
 						messageId, model,
@@ -287,12 +284,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 									json.beginObject();
 									while (json.hasNext()) {
 										switch (json.nextName()) {
-											case "delta" -> {
-												int[] result = processDelta(json, accumulator, contentIndex,
-													textBlockOpen, handler);
-												contentIndex = result[0];
-												textBlockOpen = result[1] != 0;
-											}
+											case "delta" -> processDelta(json, state, handler);
 											case "finish_reason" -> {
 												if (json.peek() == JsonToken.NULL) {
 													json.skipValue();
@@ -333,13 +325,15 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	}
 
 	/**
-	 * Processes a single delta object from the Chat Completions stream.
+	 * Processes a single {@code delta} object from the Chat Completions stream.
 	 *
-	 * @return a two-element array: {@code [contentIndex, textBlockOpen]} where
-	 *         {@code textBlockOpen} is 1 if a text block is currently open, 0 otherwise.
+	 * <p>Text fragments are appended to a single text block. Tool calls are accumulated by their
+	 * protocol {@code index}: the first delta for an index carries {@code id} and {@code name} and
+	 * opens the block; later deltas for the same index carry only {@code arguments} fragments that
+	 * are concatenated. This matches the OpenAI / Azure OpenAI streaming wire format.</p>
 	 */
-	private int[] processDelta(JsonReader json, ContentBlockAccumulator accumulator,
-			int contentIndex, boolean textBlockOpen, StreamHandler handler) throws IOException {
+	private void processDelta(JsonReader json, DeltaState state, StreamHandler handler)
+			throws IOException {
 
 		json.beginObject();
 		while (json.hasNext()) {
@@ -347,64 +341,129 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 				case "content" -> {
 					String text = normalizeContent(json);
 					if (text != null && !text.isEmpty()) {
-						if (!textBlockOpen) {
-							accumulator.addBlock(contentIndex, "text", null, null);
-							handler.onEvent(new StreamEvent.TextStart(contentIndex));
-							textBlockOpen = true;
+						if (!state._textOpen) {
+							state._textContentIndex = state._nextContentIndex++;
+							state._accumulator.addBlock(state._textContentIndex, "text", null, null);
+							handler.onEvent(new StreamEvent.TextStart(state._textContentIndex));
+							state._textOpen = true;
 						}
-						accumulator.appendText(contentIndex, text);
-						handler.onEvent(new StreamEvent.TextDelta(contentIndex, text));
+						state._accumulator.appendText(state._textContentIndex, text);
+						handler.onEvent(new StreamEvent.TextDelta(state._textContentIndex, text));
 					}
 				}
-				case "tool_calls" -> {
-					json.beginArray();
-					while (json.hasNext()) {
-						String id = null;
-						String name = null;
-						String arguments = null;
-
-						json.beginObject();
-						while (json.hasNext()) {
-							switch (json.nextName()) {
-								case "id" -> id = json.nextString();
-								case "function" -> {
-									json.beginObject();
-									while (json.hasNext()) {
-										switch (json.nextName()) {
-											case "name" -> name = json.nextString();
-											case "arguments" -> arguments = readArguments(json);
-											default -> json.skipValue();
-										}
-									}
-									json.endObject();
-								}
-								default -> json.skipValue();
-							}
-						}
-						json.endObject();
-
-						if (id != null && name != null) {
-							accumulator.addBlock(contentIndex, "tool_use", id, name);
-							if (arguments != null && !arguments.isEmpty()) {
-								accumulator.appendArguments(contentIndex, arguments);
-							}
-
-							handler.onEvent(new StreamEvent.ToolCallStart(contentIndex, id, name));
-							if (arguments != null && !arguments.isEmpty()) {
-								handler.onEvent(new StreamEvent.ToolCallDelta(contentIndex, arguments));
-							}
-							handler.onEvent(new StreamEvent.ToolCallEnd(contentIndex));
-							contentIndex++;
-						}
-					}
-					json.endArray();
-				}
+				case "tool_calls" -> processToolCalls(json, state, handler);
 				default -> json.skipValue();
 			}
 		}
 		json.endObject();
+	}
 
-		return new int[] { contentIndex, textBlockOpen ? 1 : 0 };
+	/**
+	 * Processes a {@code tool_calls} array from a single delta, accumulating fragments into the tool
+	 * blocks tracked by {@link DeltaState}.
+	 *
+	 * <p>Only the first delta for a given protocol {@code index} carries {@code id} and
+	 * {@code name}; subsequent deltas carry just {@code arguments} fragments and are matched to the
+	 * already-opened block by index.</p>
+	 */
+	private void processToolCalls(JsonReader json, DeltaState state, StreamHandler handler)
+			throws IOException {
+
+		json.beginArray();
+		int position = 0;
+		while (json.hasNext()) {
+			Integer protocolIndex = null;
+			String id = null;
+			String name = null;
+			String arguments = null;
+
+			json.beginObject();
+			while (json.hasNext()) {
+				switch (json.nextName()) {
+					case "index" -> protocolIndex = json.nextInt();
+					case "id" -> {
+						if (json.peek() == JsonToken.NULL) {
+							json.skipValue();
+						} else {
+							id = json.nextString();
+						}
+					}
+					case "function" -> {
+						json.beginObject();
+						while (json.hasNext()) {
+							switch (json.nextName()) {
+								case "name" -> {
+									if (json.peek() == JsonToken.NULL) {
+										json.skipValue();
+									} else {
+										name = json.nextString();
+									}
+								}
+								case "arguments" -> arguments = readArguments(json);
+								default -> json.skipValue();
+							}
+						}
+						json.endObject();
+					}
+					default -> json.skipValue();
+				}
+			}
+			json.endObject();
+
+			// Streaming chunks always carry "index"; fall back to array position defensively.
+			int protocol = protocolIndex != null ? protocolIndex.intValue() : position;
+			position++;
+
+			Integer contentIndex = state._toolContentIndex.get(protocol);
+			if (contentIndex == null) {
+				// First delta for this tool call must carry id and name; without them there is no
+				// block to open, so the fragment is dropped (should not happen per protocol).
+				if (id == null || name == null) {
+					continue;
+				}
+				contentIndex = Integer.valueOf(state._nextContentIndex++);
+				state._toolContentIndex.put(protocol, contentIndex);
+				state._accumulator.addBlock(contentIndex.intValue(), "tool_use", id, name);
+				handler.onEvent(new StreamEvent.ToolCallStart(contentIndex.intValue(), id, name));
+			}
+
+			if (arguments != null && !arguments.isEmpty()) {
+				state._accumulator.appendArguments(contentIndex.intValue(), arguments);
+				handler.onEvent(new StreamEvent.ToolCallDelta(contentIndex.intValue(), arguments));
+			}
+		}
+		json.endArray();
+	}
+
+	/**
+	 * Emits the closing lifecycle events for every block opened during the stream. Chat Completions
+	 * has no per-block end signal, so all open blocks are closed when the stream terminates.
+	 */
+	private static void closeOpenBlocks(DeltaState state, StreamHandler handler) {
+		if (state._textOpen) {
+			handler.onEvent(new StreamEvent.TextEnd(state._textContentIndex));
+		}
+		for (Integer toolContentIndex : state._toolContentIndex.values()) {
+			handler.onEvent(new StreamEvent.ToolCallEnd(toolContentIndex.intValue()));
+		}
+	}
+
+	/**
+	 * Mutable per-stream state for Chat Completions delta processing: the content accumulator, the
+	 * next free content index, the single text block, and the mapping from a tool call's protocol
+	 * {@code index} to its assigned content-block index.
+	 */
+	private static final class DeltaState {
+
+		final ContentBlockAccumulator _accumulator = new ContentBlockAccumulator();
+
+		int _nextContentIndex = 0;
+
+		int _textContentIndex = -1;
+
+		boolean _textOpen = false;
+
+		final LinkedHashMap<Integer, Integer> _toolContentIndex = new LinkedHashMap<>();
 	}
 
 	/**

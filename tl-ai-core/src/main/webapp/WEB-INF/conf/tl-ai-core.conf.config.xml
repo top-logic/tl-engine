@@ -30,7 +30,17 @@
 					<module key="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions$Module" value="true"/>
 					<!-- HTML Page Service for the TL_HTMLGenerator agent's publishPage tool -->
 					<module key="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService$Module" value="true"/>
+					<!-- Web Tools Service: config for web_search / web_fetch -->
+					<module key="com.top_logic.tl.ai.core.tools.web.WebToolsService$Module" value="true"/>
 				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+			<instance class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+				<!-- Set the search API key here (stored encrypted), or via the
+				     tl_websearch_api_key environment variable. Provider defaults to "tavily". -->
+				<!-- <api-key>...</api-key> -->
 			</instance>
 		</config>
 
@@ -2206,6 +2216,16 @@ After creating model elements, summarize:
 					<factory name="html-pages">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool"
+						/>
+					</factory>
+					<factory name="web-search">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.web.WebSearchTool"
+						/>
+					</factory>
+					<factory name="web-fetch">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.web.WebFetchTool"
 						/>
 					</factory>
 				</tool-factories>

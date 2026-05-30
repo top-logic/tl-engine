@@ -38,9 +38,11 @@
 
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
 			<instance class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
-				<!-- Set the search API key here (stored encrypted), or via the
-				     tl_websearch_api_key environment variable. Provider defaults to "tavily". -->
-				<!-- <api-key>...</api-key> -->
+				<!-- Configure a search engine to enable web_search. Example:
+				<search-engine class="com.top_logic.tl.ai.core.tools.web.TavilySearchEngine">
+					<api-key>YOUR_TAVILY_API_KEY</api-key>
+				</search-engine>
+				-->
 			</instance>
 		</config>
 

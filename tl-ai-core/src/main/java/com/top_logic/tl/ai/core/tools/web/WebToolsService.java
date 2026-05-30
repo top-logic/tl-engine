@@ -7,23 +7,18 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
  * Service holding configuration for the web tools ({@link WebSearchTool}, {@link WebFetchTool}):
- * the search API key, the selected search provider, and fetch limits.
+ * the pluggable search engine and the fetch limits.
  */
 public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Config<?>> {
-
-	/** Environment variable / system property consulted when no API key is configured. */
-	public static final String API_KEY_ENV = "tl_websearch_api_key";
 
 	/**
 	 * Configuration of {@link WebToolsService}.
@@ -31,32 +26,11 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 	public interface Config<I extends WebToolsService> extends ConfiguredManagedClass.Config<I> {
 
 		/**
-		 * Configuration property name for the search provider.
+		 * Configuration property name for the search engine.
 		 *
-		 * @see #getProvider()
+		 * @see #getSearchEngine()
 		 */
-		String PROVIDER = "provider";
-
-		/**
-		 * Configuration property name for the API key.
-		 *
-		 * @see #getApiKey()
-		 */
-		String API_KEY = "api-key";
-
-		/**
-		 * Configuration property name for the API base URL.
-		 *
-		 * @see #getBaseUrl()
-		 */
-		String BASE_URL = "base-url";
-
-		/**
-		 * Configuration property name for the search depth.
-		 *
-		 * @see #getSearchDepth()
-		 */
-		String SEARCH_DEPTH = "search-depth";
+		String SEARCH_ENGINE = "search-engine";
 
 		/**
 		 * Configuration property name for the default maximum result count.
@@ -64,13 +38,6 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		 * @see #getMaxResults()
 		 */
 		String MAX_RESULTS = "max-results";
-
-		/**
-		 * Configuration property name for whether to request a synthesized answer.
-		 *
-		 * @see #getIncludeAnswer()
-		 */
-		String INCLUDE_ANSWER = "include-answer";
 
 		/**
 		 * Configuration property name for the fetch timeout (seconds).
@@ -94,42 +61,13 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		String FETCH_MAX_CHARS = "fetch-max-chars";
 
 		/**
-		 * The search provider id. Currently only {@code tavily} is supported.
+		 * The search engine backing {@code web_search}. If unset, web search is unavailable.
 		 *
-		 * @see #PROVIDER
+		 * @see #SEARCH_ENGINE
 		 */
-		@Name(PROVIDER)
-		@StringDefault("tavily")
-		String getProvider();
-
-		/**
-		 * The search API key. If blank, the {@value #API_KEY_ENV} environment variable (then system
-		 * property) is consulted as a fallback.
-		 *
-		 * @see #API_KEY
-		 */
-		@Name(API_KEY)
-		@Encrypted
+		@Name(SEARCH_ENGINE)
 		@Nullable
-		String getApiKey();
-
-		/**
-		 * The search API base URL.
-		 *
-		 * @see #BASE_URL
-		 */
-		@Name(BASE_URL)
-		@StringDefault("https://api.tavily.com")
-		String getBaseUrl();
-
-		/**
-		 * Search depth: {@code basic} (faster) or {@code advanced} (more thorough).
-		 *
-		 * @see #SEARCH_DEPTH
-		 */
-		@Name(SEARCH_DEPTH)
-		@StringDefault("basic")
-		String getSearchDepth();
+		PolymorphicConfiguration<? extends WebSearchEngine> getSearchEngine();
 
 		/**
 		 * Default maximum number of results returned by {@code web_search}.
@@ -139,15 +77,6 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		@Name(MAX_RESULTS)
 		@IntDefault(5)
 		int getMaxResults();
-
-		/**
-		 * Whether {@code web_search} requests a synthesized answer from the provider.
-		 *
-		 * @see #INCLUDE_ANSWER
-		 */
-		@Name(INCLUDE_ANSWER)
-		@BooleanDefault(true)
-		boolean getIncludeAnswer();
 
 		/**
 		 * Per-request timeout for {@code web_fetch}, in seconds.
@@ -179,6 +108,8 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 
 	private static volatile WebToolsService _instance;
 
+	private final InstantiationContext _context;
+
 	private WebSearchEngine _searchEngine;
 
 	/**
@@ -186,6 +117,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 	 */
 	public WebToolsService(InstantiationContext context, Config<?> config) {
 		super(context, config);
+		_context = context;
 	}
 
 	/**
@@ -199,7 +131,12 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 	protected void startUp() {
 		super.startUp();
 		_instance = this;
-		_searchEngine = createSearchEngine(getConfig());
+		PolymorphicConfiguration<? extends WebSearchEngine> engineConfig = getConfig().getSearchEngine();
+		_searchEngine = engineConfig == null ? null : _context.getInstance(engineConfig);
+		if (_searchEngine == null) {
+			Logger.info("No web search engine configured; web_search will be unavailable until one is set.",
+				WebToolsService.class);
+		}
 	}
 
 	@Override
@@ -207,38 +144,6 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		_instance = null;
 		_searchEngine = null;
 		super.shutDown();
-	}
-
-	private static WebSearchEngine createSearchEngine(Config<?> config) {
-		String apiKey = resolveApiKey(config);
-		if (apiKey == null) {
-			Logger.info("Web search API key not configured; web_search will be unavailable until set.",
-				WebToolsService.class);
-			return null;
-		}
-		String provider = config.getProvider() == null ? "" : config.getProvider().trim().toLowerCase();
-		switch (provider) {
-			case "tavily":
-				return new TavilySearchEngine(apiKey, config.getBaseUrl(), config.getSearchDepth(),
-					config.getIncludeAnswer(), false);
-			default:
-				Logger.error("Unknown web search provider '" + config.getProvider() + "'; web_search disabled.",
-					WebToolsService.class);
-				return null;
-		}
-	}
-
-	private static String resolveApiKey(Config<?> config) {
-		String key = config.getApiKey();
-		if (key != null && !key.isBlank()) {
-			return key;
-		}
-		key = System.getenv(API_KEY_ENV);
-		if (key != null && !key.isBlank()) {
-			return key;
-		}
-		key = System.getProperty(API_KEY_ENV);
-		return (key != null && !key.isBlank()) ? key : null;
 	}
 
 	/**

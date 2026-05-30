@@ -21,6 +21,15 @@ import java.util.List;
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchRequest;
 import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchResponse;
@@ -29,7 +38,95 @@ import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchResult;
 /**
  * {@link WebSearchEngine} backed by the Tavily Search API ({@code POST /search}).
  */
+@InApp
 public final class TavilySearchEngine implements WebSearchEngine {
+
+	/**
+	 * Configuration of {@link TavilySearchEngine}.
+	 */
+	public interface Config extends PolymorphicConfiguration<TavilySearchEngine> {
+
+		/**
+		 * Configuration property name for the API key.
+		 *
+		 * @see #getApiKey()
+		 */
+		String API_KEY = "api-key";
+
+		/**
+		 * Configuration property name for the API base URL.
+		 *
+		 * @see #getBaseUrl()
+		 */
+		String BASE_URL = "base-url";
+
+		/**
+		 * Configuration property name for the search depth.
+		 *
+		 * @see #getSearchDepth()
+		 */
+		String SEARCH_DEPTH = "search-depth";
+
+		/**
+		 * Configuration property name for whether to request a synthesized answer.
+		 *
+		 * @see #getIncludeAnswer()
+		 */
+		String INCLUDE_ANSWER = "include-answer";
+
+		/**
+		 * Configuration property name for whether to request full raw page content.
+		 *
+		 * @see #getIncludeRawContent()
+		 */
+		String INCLUDE_RAW_CONTENT = "include-raw-content";
+
+		/**
+		 * The Tavily API key (stored encrypted).
+		 *
+		 * @see #API_KEY
+		 */
+		@Name(API_KEY)
+		@Encrypted
+		@Mandatory
+		String getApiKey();
+
+		/**
+		 * The Tavily API base URL.
+		 *
+		 * @see #BASE_URL
+		 */
+		@Name(BASE_URL)
+		@StringDefault("https://api.tavily.com")
+		String getBaseUrl();
+
+		/**
+		 * Search depth: {@code basic} (faster) or {@code advanced} (more thorough).
+		 *
+		 * @see #SEARCH_DEPTH
+		 */
+		@Name(SEARCH_DEPTH)
+		@StringDefault("basic")
+		String getSearchDepth();
+
+		/**
+		 * Whether to request a synthesized answer from Tavily.
+		 *
+		 * @see #INCLUDE_ANSWER
+		 */
+		@Name(INCLUDE_ANSWER)
+		@BooleanDefault(true)
+		boolean getIncludeAnswer();
+
+		/**
+		 * Whether to request the full raw page content per result.
+		 *
+		 * @see #INCLUDE_RAW_CONTENT
+		 */
+		@Name(INCLUDE_RAW_CONTENT)
+		@BooleanDefault(false)
+		boolean getIncludeRawContent();
+	}
 
 	private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
@@ -48,26 +145,16 @@ public final class TavilySearchEngine implements WebSearchEngine {
 	private final boolean _includeRawContent;
 
 	/**
-	 * Creates a {@link TavilySearchEngine}.
-	 *
-	 * @param apiKey
-	 *        The Tavily API key; never {@code null} or blank.
-	 * @param baseUrl
-	 *        The API base URL, e.g. {@code https://api.tavily.com}.
-	 * @param searchDepth
-	 *        {@code basic} or {@code advanced}.
-	 * @param includeAnswer
-	 *        Whether to request a synthesized answer.
-	 * @param includeRawContent
-	 *        Whether to request full raw page content per result.
+	 * Creates a {@link TavilySearchEngine} from configuration.
 	 */
-	public TavilySearchEngine(String apiKey, String baseUrl, String searchDepth, boolean includeAnswer,
-			boolean includeRawContent) {
-		_apiKey = apiKey;
-		_baseUrl = baseUrl;
-		_searchDepth = searchDepth;
-		_includeAnswer = includeAnswer;
-		_includeRawContent = includeRawContent;
+	@SuppressWarnings("unused")
+	@CalledByReflection
+	public TavilySearchEngine(InstantiationContext context, Config config) {
+		_apiKey = config.getApiKey();
+		_baseUrl = config.getBaseUrl();
+		_searchDepth = config.getSearchDepth();
+		_includeAnswer = config.getIncludeAnswer();
+		_includeRawContent = config.getIncludeRawContent();
 	}
 
 	@Override

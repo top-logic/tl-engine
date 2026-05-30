@@ -62,8 +62,8 @@ public class WebSearchTool {
 		}
 		WebSearchEngine engine = service.getSearchEngine();
 		if (engine == null) {
-			return "Error: web search is not configured. Set the search API key via the WebToolsService "
-				+ "'api-key' configuration or the " + WebToolsService.API_KEY_ENV + " environment variable.";
+			return "Error: web search is not configured. Configure a search engine on the WebToolsService "
+				+ "(e.g. a TavilySearchEngine with an api-key).";
 		}
 
 		try {

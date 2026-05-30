@@ -7,15 +7,20 @@ package com.top_logic.tl.ai.core.provider.chatcompletions;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
+import com.top_logic.tl.ai.core.provider.AuthScheme;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -42,6 +47,27 @@ import de.haumacher.msgbuf.json.JsonWriter;
  */
 public class ChatCompletionsProvider extends AbstractStreamingProvider {
 
+	/** Default endpoint path used when no path template is configured. */
+	private static final String DEFAULT_PATH = "/v1/chat/completions";
+
+	/**
+	 * Path template for the endpoint, may contain {@code {model}} as a placeholder.
+	 * Defaults to {@value #DEFAULT_PATH}.
+	 */
+	private final String _pathTemplate;
+
+	/**
+	 * Additional query parameters appended to {@link #_pathTemplate} (e.g. {@code api-version}).
+	 * Empty map means no query string is appended.
+	 */
+	private final Map<String, String> _queryParams;
+
+	/**
+	 * Authentication scheme controlling how {@link #_apiKey} is sent.
+	 * Defaults to {@link AuthScheme#BEARER}.
+	 */
+	private final AuthScheme _authScheme;
+
 	/**
 	 * Creates a {@link ChatCompletionsProvider}.
 	 *
@@ -66,6 +92,9 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 */
 	public ChatCompletionsProvider(String apiKey, String baseUrl, HttpClient httpClient) {
 		super(apiKey, baseUrl, httpClient);
+		_pathTemplate = DEFAULT_PATH;
+		_queryParams = Map.of();
+		_authScheme = AuthScheme.BEARER;
 	}
 
 	/**
@@ -84,13 +113,81 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 */
 	public ChatCompletionsProvider(String apiKey, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+		this(apiKey, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders,
+			DEFAULT_PATH, Map.of(), AuthScheme.BEARER);
+	}
+
+	/**
+	 * Creates a {@link ChatCompletionsProvider} with full control over the endpoint path, query
+	 * parameters, and authentication scheme.
+	 *
+	 * <p>Use this constructor to configure Azure-OpenAI deployment paths or any other provider
+	 * that embeds the model name in the URL or uses a non-standard auth header.</p>
+	 *
+	 * @param apiKey
+	 *        The API key, may be {@code null} for unauthenticated providers.
+	 * @param baseUrl
+	 *        The base URL of the provider API (without trailing slash).
+	 * @param connectTimeoutSeconds
+	 *        The TCP connect timeout in seconds.
+	 * @param requestTimeoutSeconds
+	 *        The HTTP request timeout in seconds.
+	 * @param customHeaders
+	 *        Additional headers applied after provider-specific headers, allowing overrides.
+	 * @param pathTemplate
+	 *        Endpoint path template, e.g. {@code "/openai/deployments/{model}/chat/completions"}.
+	 *        The placeholder {@code {model}} is replaced with the URL-encoded model name at
+	 *        request time. Use {@code "/v1/chat/completions"} for the standard path.
+	 * @param queryParams
+	 *        Additional query parameters appended to the path, e.g.
+	 *        {@code Map.of("api-version", "2024-10-21")}. May be empty.
+	 * @param authScheme
+	 *        The authentication scheme to use for the {@code api-key} or {@code Authorization}
+	 *        header.
+	 */
+	public ChatCompletionsProvider(String apiKey, String baseUrl,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders,
+			String pathTemplate, Map<String, String> queryParams, AuthScheme authScheme) {
 		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
+		_pathTemplate = Objects.requireNonNullElse(pathTemplate, DEFAULT_PATH);
+		_queryParams = Map.copyOf(Objects.requireNonNullElse(queryParams, Map.of()));
+		_authScheme = Objects.requireNonNullElse(authScheme, AuthScheme.BEARER);
 	}
 
 	@Override
 	protected String endpointPath(ProviderRequest request) {
-		return "/v1/chat/completions";
+		// URLEncoder is form-encoding (space -> '+'), which is technically not RFC 3986 path
+		// encoding. Model identifiers and api-version values contain no spaces or reserved
+		// characters, so the output is identical to strict percent-encoding for these inputs.
+		String path = _pathTemplate.replace(
+			"{model}", URLEncoder.encode(request.model(), StandardCharsets.UTF_8));
+		if (_queryParams.isEmpty()) {
+			return path;
+		}
+		StringBuilder sb = new StringBuilder(path).append('?');
+		boolean first = true;
+		for (Map.Entry<String, String> entry : _queryParams.entrySet()) {
+			if (!first) {
+				sb.append('&');
+			}
+			sb.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
+				.append('=')
+				.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+			first = false;
+		}
+		return sb.toString();
+	}
+
+	@Override
+	protected void addAuthHeaders(HttpRequest.Builder builder) {
+		if (_authScheme == AuthScheme.API_KEY) {
+			if (_apiKey != null && !_apiKey.isBlank()) {
+				builder.header("api-key", _apiKey);
+			}
+		} else {
+			super.addAuthHeaders(builder);
+		}
 	}
 
 	@Override

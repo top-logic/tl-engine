@@ -71,7 +71,7 @@ public class MistralProvider extends AbstractStreamingProvider {
 	private static final int MAX_REQUEST_BODY_BYTES = 5_000_000;
 
 	@Override
-	protected String endpointPath() {
+	protected String endpointPath(ProviderRequest request) {
 		return "/v1/chat/completions";
 	}
 

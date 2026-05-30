@@ -68,7 +68,7 @@ public class OpenAIProvider extends AbstractStreamingProvider {
 	}
 
 	@Override
-	protected String endpointPath() {
+	protected String endpointPath(ProviderRequest request) {
 		return "/v1/responses";
 	}
 

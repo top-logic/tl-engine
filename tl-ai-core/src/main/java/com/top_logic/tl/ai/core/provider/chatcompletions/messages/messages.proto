@@ -10,8 +10,10 @@ option NoXml;
 message ChatCompletionsRequest {
 	/** The model identifier. */
 	string model [Name = "model"];
-	/** Maximum number of output tokens. */
-	int max_tokens [Name = "max_tokens"];
+	/** Maximum number of output tokens (legacy field; used by Mistral, xAI, local servers). */
+	json max_tokens [Name = "max_tokens"];
+	/** Maximum number of output tokens for GPT-5/o-series reasoning models (Azure/OpenAI). */
+	json max_completion_tokens [Name = "max_completion_tokens"];
 	/** Whether to stream the response. */
 	bool stream [Name = "stream"];
 	/** Sampling temperature. */

@@ -15,14 +15,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import junit.framework.TestCase;
+
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamEventContractAssertions;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-
-import junit.framework.TestCase;
 
 /**
  * Contract tests for {@link BedrockConverseProvider} stream parsing.
@@ -164,8 +164,9 @@ public class TestBedrockConverseStreamContract extends TestCase {
 	}
 
 	/**
-	 * An exception frame must emit exactly one {@link StreamEvent.Error} and no
-	 * {@link StreamEvent.MessageComplete}.
+	 * An exception frame must emit exactly one
+	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.Error} and no
+	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete}.
 	 */
 	public void testExceptionFrameEmitsError() throws Exception {
 		Map<String, String> excHeaders = new LinkedHashMap<>();
@@ -185,8 +186,9 @@ public class TestBedrockConverseStreamContract extends TestCase {
 	}
 
 	/**
-	 * When the stream ends without a metadata frame, a best-effort {@link StreamEvent.MessageComplete}
-	 * must still be emitted with the accumulated text content.
+	 * When the stream ends without a metadata frame, a best-effort
+	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete} must still be emitted
+	 * with the accumulated text content.
 	 */
 	public void testNoMetadataFallbackEmitsMessageComplete() throws Exception {
 		ByteArrayOutputStream buf = new ByteArrayOutputStream();

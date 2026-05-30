@@ -69,6 +69,12 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	private final AuthScheme _authScheme;
 
 	/**
+	 * JSON field name carrying the output-token limit.
+	 * Defaults to {@link TokenLimitParam#MAX_TOKENS}.
+	 */
+	private final TokenLimitParam _tokenLimitParam;
+
+	/**
 	 * Creates a {@link ChatCompletionsProvider}.
 	 *
 	 * @param apiKey
@@ -95,6 +101,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 		_pathTemplate = DEFAULT_PATH;
 		_queryParams = Map.of();
 		_authScheme = AuthScheme.BEARER;
+		_tokenLimitParam = TokenLimitParam.MAX_TOKENS;
 	}
 
 	/**
@@ -148,11 +155,32 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	public ChatCompletionsProvider(String apiKey, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders,
 			String pathTemplate, Map<String, String> queryParams, AuthScheme authScheme) {
+		this(apiKey, baseUrl, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders,
+			pathTemplate, queryParams, authScheme, TokenLimitParam.MAX_TOKENS);
+	}
+
+	/**
+	 * Creates a {@link ChatCompletionsProvider} with full control over the endpoint path, query
+	 * parameters, authentication scheme, and output-token limit field name.
+	 *
+	 * <p>Use this constructor for Azure OpenAI / OpenAI deployments serving GPT-5 or o-series
+	 * reasoning models, which require {@link TokenLimitParam#MAX_COMPLETION_TOKENS} instead of the
+	 * legacy {@code max_tokens} field.</p>
+	 *
+	 * @param tokenLimitParam
+	 *        Which JSON field the output-token limit is written under. See {@link TokenLimitParam}.
+	 *        Other parameters are as documented on the eight-argument constructor.
+	 */
+	public ChatCompletionsProvider(String apiKey, String baseUrl,
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders,
+			String pathTemplate, Map<String, String> queryParams, AuthScheme authScheme,
+			TokenLimitParam tokenLimitParam) {
 		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 		_pathTemplate = Objects.requireNonNullElse(pathTemplate, DEFAULT_PATH);
 		_queryParams = Map.copyOf(Objects.requireNonNullElse(queryParams, Map.of()));
 		_authScheme = Objects.requireNonNullElse(authScheme, AuthScheme.BEARER);
+		_tokenLimitParam = Objects.requireNonNullElse(tokenLimitParam, TokenLimitParam.MAX_TOKENS);
 	}
 
 	@Override
@@ -192,7 +220,8 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 
 	@Override
 	protected String buildRequestJson(ProviderRequest request) throws ProviderException {
-		return ChatCompletionsRequestBuilder.buildRequestJson(request, toolChoiceOverride(request));
+		return ChatCompletionsRequestBuilder.buildRequestJson(
+			request, toolChoiceOverride(request), _tokenLimitParam);
 	}
 
 	/**

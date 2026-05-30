@@ -22,8 +22,6 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
-import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonUtil;
 
 /**

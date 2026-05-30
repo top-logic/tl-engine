@@ -52,11 +52,30 @@ public class ChatCompletionsRequestBuilder {
 	 * Builds the JSON request body, allowing a provider-specific {@code tool_choice} override.
 	 */
 	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride) {
+		return buildRequestJson(request, toolChoiceOverride, TokenLimitParam.MAX_TOKENS);
+	}
+
+	/**
+	 * Builds the JSON request body, allowing a provider-specific {@code tool_choice} override and
+	 * selecting which JSON field carries the output-token limit.
+	 *
+	 * @param tokenLimitParam
+	 *        Which field name the output-token limit is written under. Use
+	 *        {@link TokenLimitParam#MAX_COMPLETION_TOKENS} for GPT-5/o-series reasoning models on
+	 *        Azure OpenAI; {@link TokenLimitParam#MAX_TOKENS} for all other backends.
+	 */
+	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride,
+			TokenLimitParam tokenLimitParam) {
 		ChatCompletionsRequest req = ChatCompletionsRequest.create()
 			.setModel(request.model())
-			.setMaxTokens(request.maxOutputTokens())
 			.setStream(true)
 			.setMessages(buildMessages(request));
+
+		if (tokenLimitParam == TokenLimitParam.MAX_COMPLETION_TOKENS) {
+			req.setMaxCompletionTokens(request.maxOutputTokens());
+		} else {
+			req.setMaxTokens(request.maxOutputTokens());
+		}
 
 		writeSamplingParams(req, request.modelOptions());
 

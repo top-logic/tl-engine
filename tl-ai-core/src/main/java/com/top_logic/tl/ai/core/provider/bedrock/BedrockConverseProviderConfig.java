@@ -23,14 +23,18 @@ import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 /**
  * {@link LLMProviderConfig} preset for the AWS Bedrock Converse streaming API.
  *
- * <p>Configures a {@link BedrockConverseProvider} against any Bedrock-compatible endpoint,
- * including Nexus-Claude gateways and direct regional AWS Bedrock endpoints
- * ({@code https://bedrock-runtime.{region}.amazonaws.com}). Authentication uses Bearer-token
- * scheme inherited from {@link BedrockConverseProvider}.</p>
+ * <p>
+ * Configures a {@link BedrockConverseProvider} against any Bedrock-compatible endpoint, including
+ * Nexus-Claude gateways and direct regional AWS Bedrock endpoints
+ * ({@code https://bedrock-runtime.{region}.amazonaws.com}). Authentication uses Bearer-token scheme
+ * inherited from {@link BedrockConverseProvider}.
+ * </p>
  *
- * <p>No model-listing endpoint exists on Bedrock, so models must be added to the
- * {@link LLMProviderConfig.Config#getModels() models} list manually and
- * {@link #discoverModels()} always returns an empty list.</p>
+ * <p>
+ * No model-listing endpoint exists on Bedrock, so models must be added to the
+ * {@link com.top_logic.tl.ai.core.provider.LLMProviderConfig.Config#getModels() models} list
+ * manually and {@link #discoverModels()} always returns an empty list.
+ * </p>
  */
 @Label("AWS Bedrock Converse provider")
 @InApp

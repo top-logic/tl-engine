@@ -21,6 +21,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #getMaxTokens() */
 	public static final String MAX_TOKENS__PROP = "max_tokens";
 
+	/** @see #getMaxCompletionTokens() */
+	public static final String MAX_COMPLETION_TOKENS__PROP = "max_completion_tokens";
+
 	/** @see #isStream() */
 	public static final String STREAM__PROP = "stream";
 
@@ -44,7 +47,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 
 	private String _model = "";
 
-	private int _maxTokens = 0;
+	private Object _maxTokens = null;
+
+	private Object _maxCompletionTokens = null;
 
 	private boolean _stream = false;
 
@@ -90,23 +95,57 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	}
 
 	/**
-	 * Maximum number of output tokens.
+	 * Maximum number of output tokens (legacy field; used by Mistral, xAI, local servers).
 	 */
-	public final int getMaxTokens() {
+	public final Object getMaxTokens() {
 		return _maxTokens;
 	}
 
 	/**
 	 * @see #getMaxTokens()
 	 */
-	public com.top_logic.tl.ai.core.provider.chatcompletions.messages.ChatCompletionsRequest setMaxTokens(int value) {
+	public com.top_logic.tl.ai.core.provider.chatcompletions.messages.ChatCompletionsRequest setMaxTokens(Object value) {
 		internalSetMaxTokens(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getMaxTokens()} without chain call utility. */
-	protected final void internalSetMaxTokens(int value) {
+	protected final void internalSetMaxTokens(Object value) {
 		_maxTokens = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMaxTokens()} has a value.
+	 */
+	public final boolean hasMaxTokens() {
+		return _maxTokens != null;
+	}
+
+	/**
+	 * Maximum number of output tokens for GPT-5/o-series reasoning models (Azure/OpenAI).
+	 */
+	public final Object getMaxCompletionTokens() {
+		return _maxCompletionTokens;
+	}
+
+	/**
+	 * @see #getMaxCompletionTokens()
+	 */
+	public com.top_logic.tl.ai.core.provider.chatcompletions.messages.ChatCompletionsRequest setMaxCompletionTokens(Object value) {
+		internalSetMaxCompletionTokens(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getMaxCompletionTokens()} without chain call utility. */
+	protected final void internalSetMaxCompletionTokens(Object value) {
+		_maxCompletionTokens = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getMaxCompletionTokens()} has a value.
+	 */
+	public final boolean hasMaxCompletionTokens() {
+		return _maxCompletionTokens != null;
 	}
 
 	/**
@@ -301,6 +340,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		java.util.List<String> local = java.util.Arrays.asList(
 			MODEL__PROP, 
 			MAX_TOKENS__PROP, 
+			MAX_COMPLETION_TOKENS__PROP, 
 			STREAM__PROP, 
 			TEMPERATURE__PROP, 
 			TOP_P__PROP, 
@@ -334,6 +374,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		switch (field) {
 			case MODEL__PROP: return getModel();
 			case MAX_TOKENS__PROP: return getMaxTokens();
+			case MAX_COMPLETION_TOKENS__PROP: return getMaxCompletionTokens();
 			case STREAM__PROP: return isStream();
 			case TEMPERATURE__PROP: return getTemperature();
 			case TOP_P__PROP: return getTopP();
@@ -349,7 +390,8 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	public void set(String field, Object value) {
 		switch (field) {
 			case MODEL__PROP: internalSetModel((String) value); break;
-			case MAX_TOKENS__PROP: internalSetMaxTokens((int) value); break;
+			case MAX_TOKENS__PROP: internalSetMaxTokens((Object) value); break;
+			case MAX_COMPLETION_TOKENS__PROP: internalSetMaxCompletionTokens((Object) value); break;
 			case STREAM__PROP: internalSetStream((boolean) value); break;
 			case TEMPERATURE__PROP: internalSetTemperature((Object) value); break;
 			case TOP_P__PROP: internalSetTopP((Object) value); break;
@@ -377,8 +419,14 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		super.writeFields(out);
 		out.name(MODEL__PROP);
 		out.value(getModel());
-		out.name(MAX_TOKENS__PROP);
-		out.value(getMaxTokens());
+		if (hasMaxTokens()) {
+			out.name(MAX_TOKENS__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getMaxTokens());
+		}
+		if (hasMaxCompletionTokens()) {
+			out.name(MAX_COMPLETION_TOKENS__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getMaxCompletionTokens());
+		}
 		out.name(STREAM__PROP);
 		out.value(isStream());
 		if (hasTemperature()) {
@@ -411,7 +459,8 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case MODEL__PROP: setModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case MAX_TOKENS__PROP: setMaxTokens(in.nextInt()); break;
+			case MAX_TOKENS__PROP: setMaxTokens(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
+			case MAX_COMPLETION_TOKENS__PROP: setMaxCompletionTokens(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case STREAM__PROP: setStream(in.nextBoolean()); break;
 			case TEMPERATURE__PROP: setTemperature(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TOP_P__PROP: setTopP(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;

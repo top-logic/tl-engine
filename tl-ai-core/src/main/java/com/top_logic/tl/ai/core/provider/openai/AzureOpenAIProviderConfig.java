@@ -12,8 +12,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.EnumDefaultValue;
 import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.EnumDefaultValue;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -26,16 +26,20 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider;
+import com.top_logic.tl.ai.core.provider.chatcompletions.TokenLimitParam;
 
 /**
  * {@link LLMProviderConfig} preset for Azure OpenAI Chat Completions deployment endpoints.
  *
- * <p>Configures a {@link ChatCompletionsProvider} with the Azure-specific deployment path
- * {@code /openai/deployments/{model}/chat/completions}, an {@code api-version} query parameter,
- * and a selectable authentication scheme ({@link AuthScheme#BEARER} for gateways such as Nexus
- * GPT / Carina chat; {@link AuthScheme#API_KEY} for real Azure OpenAI subscription-key auth).
- * No model-listing endpoint is available on Azure, so models must be added to the
- * {@link LLMProviderConfig.Config#getModels() models} list manually.</p>
+ * <p>
+ * Configures a {@link ChatCompletionsProvider} with the Azure-specific deployment path
+ * {@code /openai/deployments/{model}/chat/completions}, an {@code api-version} query parameter, and
+ * a selectable authentication scheme ({@link AuthScheme#BEARER} for gateways such as Nexus GPT /
+ * Carina chat; {@link AuthScheme#API_KEY} for real Azure OpenAI subscription-key auth). No
+ * model-listing endpoint is available on Azure, so models must be added to the
+ * {@link com.top_logic.tl.ai.core.provider.LLMProviderConfig.Config#getModels() models} list
+ * manually.
+ * </p>
  */
 @Label("Azure OpenAI provider")
 @InApp
@@ -148,7 +152,8 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 			apiKey, baseUrl, connectTimeout, requestTimeout, customHeaders,
 			"/openai/deployments/{model}/chat/completions",
 			Map.of("api-version", apiVersion),
-			authScheme);
+			authScheme,
+			TokenLimitParam.MAX_COMPLETION_TOKENS);
 	}
 
 	@Override

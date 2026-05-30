@@ -93,3 +93,29 @@ message BraveSearchResult {
 	/** A short, query-relevant extract (may contain inline highlight markup). */
 	string description [Name = "description"];
 }
+
+/**
+ * Response payload from the Google Custom Search JSON API ({@code GET /customsearch/v1}).
+ *
+ * <p>
+ * The request is sent as URL query parameters, so no request message is modelled.
+ * </p>
+ */
+message GoogleSearchResponse {
+	/** The organic search results; absent when the search yields no matches. */
+	repeated GoogleSearchResult items [Name = "items"];
+}
+
+/**
+ * A single organic result within a {@link GoogleSearchResponse}.
+ */
+message GoogleSearchResult {
+	/** The result title. */
+	string title [Name = "title"];
+
+	/** The result URL. */
+	string link [Name = "link"];
+
+	/** A short, query-relevant extract (snippet). */
+	string snippet [Name = "snippet"];
+}

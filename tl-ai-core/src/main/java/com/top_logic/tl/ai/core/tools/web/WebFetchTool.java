@@ -71,9 +71,9 @@ public class WebFetchTool {
 	 *        The absolute http(s) URL to fetch.
 	 * @return The extracted text, or an error string.
 	 */
-	@ToolMethod(name = "web_fetch",
+	@ToolMethod(
 		description = "Fetch a single web page by its URL and return the main textual content as plain text. "
-			+ "Use after web_search to read a specific result, or to read a URL the user provided. "
+			+ "Use after webSearch to read a specific result, or to read a URL the user provided. "
 			+ "Only public http(s) pages are supported.",
 		mode = ToolMode.READ)
 	public String webFetch(@P("The absolute http or https URL to fetch.") String url) {

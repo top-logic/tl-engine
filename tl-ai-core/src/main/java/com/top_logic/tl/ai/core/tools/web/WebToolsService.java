@@ -61,7 +61,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		String FETCH_MAX_CHARS = "fetch-max-chars";
 
 		/**
-		 * The search engine backing {@code web_search}. If unset, web search is unavailable.
+		 * The search engine backing {@code webSearch}. If unset, web search is unavailable.
 		 *
 		 * @see #SEARCH_ENGINE
 		 */
@@ -70,7 +70,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		PolymorphicConfiguration<? extends WebSearchEngine> getSearchEngine();
 
 		/**
-		 * Default maximum number of results returned by {@code web_search}.
+		 * Default maximum number of results returned by {@code webSearch}.
 		 *
 		 * @see #MAX_RESULTS
 		 */
@@ -79,7 +79,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		int getMaxResults();
 
 		/**
-		 * Per-request timeout for {@code web_fetch}, in seconds.
+		 * Per-request timeout for {@code webFetch}, in seconds.
 		 *
 		 * @see #FETCH_TIMEOUT_SECONDS
 		 */
@@ -88,7 +88,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		int getFetchTimeoutSeconds();
 
 		/**
-		 * Maximum number of bytes {@code web_fetch} reads from a page before stopping.
+		 * Maximum number of bytes {@code webFetch} reads from a page before stopping.
 		 *
 		 * @see #FETCH_MAX_BYTES
 		 */
@@ -97,7 +97,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		int getFetchMaxBytes();
 
 		/**
-		 * Maximum number of characters of extracted text {@code web_fetch} returns.
+		 * Maximum number of characters of extracted text {@code webFetch} returns.
 		 *
 		 * @see #FETCH_MAX_CHARS
 		 */
@@ -134,7 +134,7 @@ public class WebToolsService extends ConfiguredManagedClass<WebToolsService.Conf
 		PolymorphicConfiguration<? extends WebSearchEngine> engineConfig = getConfig().getSearchEngine();
 		_searchEngine = engineConfig == null ? null : _context.getInstance(engineConfig);
 		if (_searchEngine == null) {
-			Logger.info("No web search engine configured; web_search will be unavailable until one is set.",
+			Logger.info("No web search engine configured; webSearch will be unavailable until one is set.",
 				WebToolsService.class);
 		}
 	}

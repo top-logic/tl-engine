@@ -26,9 +26,11 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchRequest;
@@ -39,6 +41,7 @@ import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchResult;
  * {@link WebSearchEngine} backed by the Tavily Search API ({@code POST /search}).
  */
 @InApp
+@Label("Tavily")
 public final class TavilySearchEngine implements WebSearchEngine {
 
 	/**
@@ -101,13 +104,14 @@ public final class TavilySearchEngine implements WebSearchEngine {
 		String getBaseUrl();
 
 		/**
-		 * Search depth: {@code basic} (faster) or {@code advanced} (more thorough).
+		 * Search depth: {@link SearchDepth#BASIC} (faster) or {@link SearchDepth#ADVANCED} (more
+		 * thorough).
 		 *
 		 * @see #SEARCH_DEPTH
 		 */
 		@Name(SEARCH_DEPTH)
-		@StringDefault("basic")
-		String getSearchDepth();
+		@FormattedDefault("BASIC")
+		SearchDepth getSearchDepth();
 
 		/**
 		 * Whether to request a synthesized answer from Tavily.
@@ -138,7 +142,7 @@ public final class TavilySearchEngine implements WebSearchEngine {
 
 	private final String _baseUrl;
 
-	private final String _searchDepth;
+	private final SearchDepth _searchDepth;
 
 	private final boolean _includeAnswer;
 
@@ -163,7 +167,7 @@ public final class TavilySearchEngine implements WebSearchEngine {
 		TavilySearchRequest request = TavilySearchRequest.create();
 		request.setQuery(query);
 		request.setMaxResults(maxResults);
-		request.setSearchDepth(_searchDepth);
+		request.setSearchDepth(_searchDepth.apiValue());
 		request.setIncludeAnswer(_includeAnswer);
 		request.setIncludeRawContent(_includeRawContent);
 		if (includeDomains != null && !includeDomains.isEmpty()) {

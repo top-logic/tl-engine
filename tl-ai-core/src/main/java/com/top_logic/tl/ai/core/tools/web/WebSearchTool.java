@@ -35,7 +35,7 @@ public class WebSearchTool {
 	 *        Optional domain block-list. May be {@code null}.
 	 * @return Formatted results, or an error string.
 	 */
-	@ToolMethod(name = "web_search",
+	@ToolMethod(
 		description = "Search the web and return ranked results (title, URL, snippet). "
 			+ "Use this to find current information or sources on the public internet. "
 			+ "Cite any sources you rely on as markdown links.",

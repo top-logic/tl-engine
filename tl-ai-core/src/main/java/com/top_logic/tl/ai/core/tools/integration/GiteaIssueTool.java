@@ -72,7 +72,7 @@ public class GiteaIssueTool {
 	 *        An optional suggestion for how to fix the issue. May be {@code null}.
 	 * @return A confirmation message on success, or an error description on failure.
 	 */
-	@ToolMethod(name = "create_gitea_issue",
+	@ToolMethod(
 		description = "Create a Gitea issue to report a quality problem found during AI conversation review. "
 			+ "Use this to file issues for incorrect answers, bad delegation, tool misuse, "
 			+ "unhelpful responses, or inefficiencies.",

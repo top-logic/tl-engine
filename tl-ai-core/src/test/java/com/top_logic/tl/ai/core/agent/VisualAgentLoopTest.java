@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProvider;
+import com.top_logic.tl.ai.core.provider.anthropic.AnthropicMessagesProvider;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -139,7 +139,7 @@ public class VisualAgentLoopTest extends TestCase {
 		System.out.println(ANSI_CYAN + "  Agent Loop — Live (Anthropic API)" + ANSI_RESET);
 		System.out.println(ANSI_CYAN + "═══════════════════════════════════════════" + ANSI_RESET);
 
-		AnthropicProvider provider = new AnthropicProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
 
 		ToolSchema toolSpec = new ToolSchema("get_current_time",
 			"Returns the current server time in ISO-8601 format.",

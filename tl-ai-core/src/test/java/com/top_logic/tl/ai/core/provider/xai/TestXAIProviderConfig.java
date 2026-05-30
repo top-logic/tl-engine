@@ -13,7 +13,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider;
 import com.top_logic.tl.ai.core.provider.local.LocalProviderConfig;
 import com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
 
 /**
  * Tests for {@link XAIProviderConfig} protocol selection.
@@ -34,7 +34,7 @@ public class TestXAIProviderConfig extends TestCase {
 	}
 
 	/** */
-	public void testResponsesProtocolCreatesOpenAIProvider() {
+	public void testResponsesProtocolCreatesOpenAIResponsesProvider() {
 		XAIProviderConfig.Config config = TypedConfiguration.newConfigItem(XAIProviderConfig.Config.class);
 		config.setApiKey("test-key");
 		config.setProtocol(XAIProviderConfig.Protocol.RESPONSES);
@@ -43,7 +43,7 @@ public class TestXAIProviderConfig extends TestCase {
 			new XAIProviderConfig(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
 		LLMProvider provider = providerConfig.createProvider();
 
-		assertInstanceOf(OpenAIProvider.class, provider);
+		assertInstanceOf(OpenAIResponsesProvider.class, provider);
 	}
 
 	/** */

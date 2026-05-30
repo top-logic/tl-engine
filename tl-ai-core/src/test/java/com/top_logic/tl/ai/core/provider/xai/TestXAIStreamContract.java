@@ -13,19 +13,19 @@ import java.util.List;
 import com.top_logic.tl.ai.core.provider.AbstractProviderStreamTest;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
 
 /**
  * Contract tests for the xAI Responses API stream parsing.
  *
- * <p>The xAI Responses endpoint uses the same wire format as {@link OpenAIProvider}.
+ * <p>The xAI Responses endpoint uses the same wire format as {@link OpenAIResponsesProvider}.
  * This test verifies parsing of xAI-shaped Responses API SSE payloads via
- * {@link OpenAIProvider} directly, which is what {@link XAIProviderConfig} uses when
+ * {@link OpenAIResponsesProvider} directly, which is what {@link XAIProviderConfig} uses when
  * {@link XAIProviderConfig.Protocol#RESPONSES} is selected.</p>
  */
 public class TestXAIStreamContract extends AbstractProviderStreamTest {
 
-	static class TestableProvider extends OpenAIProvider {
+	static class TestableProvider extends OpenAIResponsesProvider {
 		/** */
 		TestableProvider() {
 			super("test-key", "https://api.x.ai");

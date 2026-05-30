@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
 
 /**
  * {@link LLMProviderConfig} for the <code>xAI</code> (Grok) API.
@@ -101,7 +101,7 @@ public class XAIProviderConfig implements LLMProviderConfig {
 		 *
 		 * <p>
 		 * {@link Protocol#CHAT_COMPLETIONS} produces a {@link ChatCompletionsProvider};
-		 * {@link Protocol#RESPONSES} produces an {@link OpenAIProvider}.
+		 * {@link Protocol#RESPONSES} produces an {@link OpenAIResponsesProvider}.
 		 * </p>
 		 */
 		@Name(PROTOCOL)
@@ -133,7 +133,7 @@ public class XAIProviderConfig implements LLMProviderConfig {
 		Map<String, String> customHeaders = _config.getCustomHeaders();
 
 		return switch (_config.getProtocol()) {
-			case RESPONSES -> new OpenAIProvider(apiKey, baseUrl, connectTimeout, requestTimeout, customHeaders);
+			case RESPONSES -> new OpenAIResponsesProvider(apiKey, baseUrl, connectTimeout, requestTimeout, customHeaders);
 			case CHAT_COMPLETIONS -> new ChatCompletionsProvider(apiKey, baseUrl, connectTimeout, requestTimeout, customHeaders);
 		};
 	}

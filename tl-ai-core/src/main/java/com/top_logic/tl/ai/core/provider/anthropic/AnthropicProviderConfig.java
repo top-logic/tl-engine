@@ -87,7 +87,7 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 	@Override
 	public LLMProvider createProvider() {
 		String baseUrl = ModelDiscoveryHelper.normalizeBaseUrl(_config.getBaseUrl());
-		return new AnthropicProvider(
+		return new AnthropicMessagesProvider(
 			_config.getApiKey(), baseUrl, _config.getVersion(),
 			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders());
 	}

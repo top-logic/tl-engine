@@ -17,13 +17,13 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 
 /**
- * Tests that {@link OpenAIProvider} includes caching directives in request JSON.
+ * Tests that {@link OpenAIResponsesProvider} includes caching directives in request JSON.
  */
 public class TestOpenAIProviderCaching extends TestCase {
 
 	/** */
 	public void testRequestIncludesStoreTrue() throws Exception {
-		OpenAIProvider provider = new OpenAIProvider("test-key");
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider("test-key");
 
 		UserMessage msg = new UserMessage(
 			UUID.randomUUID().toString(),

@@ -26,7 +26,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
 
 /**
  * Tests for xAI provider creation via {@link XAIProviderConfig}.
@@ -67,8 +67,8 @@ public class TestXAIProvider extends TestCase {
 
 	/** */
 	public void testResponsesProtocolToolArgumentsFromOutputItemDone() throws Exception {
-		// Use an OpenAIProvider directly since that's what RESPONSES protocol produces.
-		OpenAIProvider provider = new OpenAIProvider("test-key", "https://api.x.ai");
+		// Use an OpenAIResponsesProvider directly since that's what RESPONSES protocol produces.
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider("test-key", "https://api.x.ai");
 
 		String sse = ""
 			+ "event: message\n"
@@ -80,7 +80,7 @@ public class TestXAIProvider extends TestCase {
 			+ "event: message\n"
 			+ "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"model\":\"grok-4.20-reasoning\",\"status\":\"completed\",\"usage\":{\"input_tokens\":5,\"output_tokens\":3}}}\n\n";
 
-		Method processStream = OpenAIProvider.class.getDeclaredMethod(
+		Method processStream = OpenAIResponsesProvider.class.getDeclaredMethod(
 			"processStream", java.io.InputStream.class, StreamHandler.class);
 		processStream.setAccessible(true);
 

@@ -24,13 +24,13 @@ import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
 
 /**
- * Tests that {@link AnthropicProvider} serializes cache control hints correctly.
+ * Tests that {@link AnthropicMessagesProvider} serializes cache control hints correctly.
  */
 public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testSystemPromptHasCacheControl() throws Exception {
-		AnthropicProvider provider = new AnthropicProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -98,7 +98,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testEmptySystemPromptOmitted() throws Exception {
-		AnthropicProvider provider = new AnthropicProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -128,7 +128,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testNullSystemPromptOmitted() throws Exception {
-		AnthropicProvider provider = new AnthropicProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -158,7 +158,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testLastUserMessageHasCacheControl() throws Exception {
-		AnthropicProvider provider = new AnthropicProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
 		Instant now = Instant.now();
 
 		UserMessage user1 = new UserMessage(
@@ -191,7 +191,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testToolResultGroupHasCacheControl() throws Exception {
-		AnthropicProvider provider = new AnthropicProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
 		Instant now = Instant.now();
 
 		UserMessage user1 = new UserMessage(
@@ -226,7 +226,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testSingleUserMessageGetsCacheControl() throws Exception {
-		AnthropicProvider provider = new AnthropicProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
 
 		UserMessage user = new UserMessage(
 			UUID.randomUUID().toString(), Instant.now(),
@@ -248,7 +248,7 @@ public class TestAnthropicProviderCaching extends TestCase {
 
 	/** */
 	public void testThreeUserMessagesOnlyLastTwoCached() throws Exception {
-		AnthropicProvider provider = new AnthropicProvider("test-key");
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider("test-key");
 		Instant now = Instant.now();
 
 		UserMessage user1 = new UserMessage(

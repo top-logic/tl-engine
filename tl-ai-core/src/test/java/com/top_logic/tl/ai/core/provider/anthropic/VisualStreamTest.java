@@ -35,7 +35,7 @@ public class VisualStreamTest extends TestCase {
 			return;
 		}
 
-		AnthropicProvider provider = new AnthropicProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
 
 		UserMessage msg = new UserMessage(
 			UUID.randomUUID().toString(),

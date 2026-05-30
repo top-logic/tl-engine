@@ -70,7 +70,7 @@ public class OpenAIProviderConfig implements LLMProviderConfig {
 
 	@Override
 	public LLMProvider createProvider() {
-		return new OpenAIProvider(
+		return new OpenAIResponsesProvider(
 			_config.getApiKey(), resolveBaseUrl(),
 			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders());
 	}

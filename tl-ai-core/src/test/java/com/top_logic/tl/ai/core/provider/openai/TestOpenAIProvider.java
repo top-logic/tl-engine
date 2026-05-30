@@ -26,7 +26,7 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
- * Integration tests for {@link OpenAIProvider}.
+ * Integration tests for {@link OpenAIResponsesProvider}.
  *
  * <p>Requires an API key via system property {@code openai.api.key}
  * or environment variable {@code OPENAI_API_KEY}. Tests are skipped
@@ -42,7 +42,7 @@ public class TestOpenAIProvider extends TestCase {
 			return;
 		}
 
-		OpenAIProvider provider = new OpenAIProvider(apiKey);
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(apiKey);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -106,7 +106,7 @@ public class TestOpenAIProvider extends TestCase {
 			return;
 		}
 
-		OpenAIProvider provider = new OpenAIProvider(apiKey);
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(apiKey);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -157,7 +157,7 @@ public class TestOpenAIProvider extends TestCase {
 
 	/** */
 	public void testToolArgumentsFromOutputItemDone() throws Exception {
-		OpenAIProvider provider = new OpenAIProvider("test-key");
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider("test-key");
 
 		String sse = ""
 			+ "event: message\n"
@@ -169,7 +169,7 @@ public class TestOpenAIProvider extends TestCase {
 			+ "event: message\n"
 			+ "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"model\":\"gpt-5.5\",\"status\":\"completed\",\"usage\":{\"input_tokens\":5,\"output_tokens\":3}}}\n\n";
 
-		Method processStream = OpenAIProvider.class.getDeclaredMethod(
+		Method processStream = OpenAIResponsesProvider.class.getDeclaredMethod(
 			"processStream", java.io.InputStream.class, com.top_logic.tl.ai.core.provider.StreamHandler.class);
 		processStream.setAccessible(true);
 
@@ -202,7 +202,7 @@ public class TestOpenAIProvider extends TestCase {
 			return;
 		}
 
-		OpenAIProvider provider = new OpenAIProvider(apiKey);
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider(apiKey);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),

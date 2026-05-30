@@ -158,6 +158,36 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 		assertEquals("{\"y\":2}", calls.get(1).arguments());
 	}
 
+	/**
+	 * With {@code stream_options.include_usage}, OpenAI/Azure send {@code "usage": null} on every
+	 * content chunk and emit the populated usage in a trailing chunk whose {@code choices} array is
+	 * empty. The parser must tolerate the null intermediates and capture the final usage.
+	 */
+	public void testIncludeUsageFinalChunk() throws Exception {
+		String sse = ""
+			+ "data: {\"id\":\"chatcmpl-05\",\"model\":\"gpt-5\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hi\"},\"finish_reason\":null}],"
+			+ "\"usage\":null}\n\n"
+
+			+ "data: {\"id\":\"chatcmpl-05\",\"model\":\"gpt-5\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":null}\n\n"
+
+			+ "data: {\"id\":\"chatcmpl-05\",\"model\":\"gpt-5\",\"choices\":[],"
+			+ "\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":3,\"total_tokens\":14}}\n\n"
+
+			+ "data: [DONE]\n\n";
+
+		List<StreamEvent> events = _provider.parse(toStream(sse));
+		StreamEventContractAssertions.assertValidStream(events);
+
+		StreamEvent.MessageComplete complete = events.stream()
+			.filter(StreamEvent.MessageComplete.class::isInstance)
+			.map(StreamEvent.MessageComplete.class::cast)
+			.findFirst().orElseThrow();
+		assertEquals(11, complete.usage().inputTokens());
+		assertEquals(3, complete.usage().outputTokens());
+	}
+
 	private static ToolCall findToolCall(List<StreamEvent> events) {
 		return events.stream()
 			.filter(StreamEvent.MessageComplete.class::isInstance)

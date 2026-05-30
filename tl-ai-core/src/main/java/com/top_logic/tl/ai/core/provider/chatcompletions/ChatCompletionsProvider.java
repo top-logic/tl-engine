@@ -222,7 +222,21 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	@Override
 	protected String buildRequestJson(ProviderRequest request) throws ProviderException {
 		return ChatCompletionsRequestBuilder.buildRequestJson(
-			request, toolChoiceOverride(request), _tokenLimitParam);
+			request, toolChoiceOverride(request), _tokenLimitParam, includeUsage());
+	}
+
+	/**
+	 * Whether to set {@code stream_options.include_usage} so the server reports token usage in the
+	 * stream.
+	 *
+	 * <p>Defaults to {@code true}: OpenAI, Azure OpenAI and xAI omit usage from streamed responses
+	 * unless asked. Override to {@code false} for providers that report usage unconditionally or
+	 * reject the {@code stream_options} field (e.g. Mistral).</p>
+	 *
+	 * @return {@code true} to request a streaming usage report.
+	 */
+	protected boolean includeUsage() {
+		return true;
 	}
 
 	/**
@@ -300,15 +314,21 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 								json.endArray();
 							}
 							case "usage" -> {
-								json.beginObject();
-								while (json.hasNext()) {
-									switch (json.nextName()) {
-										case "prompt_tokens" -> inputTokens = json.nextInt();
-										case "completion_tokens" -> outputTokens = json.nextInt();
-										default -> json.skipValue();
+								// With stream_options.include_usage, intermediate chunks carry
+								// "usage": null and only the final chunk populates it.
+								if (json.peek() == JsonToken.NULL) {
+									json.skipValue();
+								} else {
+									json.beginObject();
+									while (json.hasNext()) {
+										switch (json.nextName()) {
+											case "prompt_tokens" -> inputTokens = json.nextInt();
+											case "completion_tokens" -> outputTokens = json.nextInt();
+											default -> json.skipValue();
+										}
 									}
+									json.endObject();
 								}
-								json.endObject();
 							}
 							default -> json.skipValue();
 						}

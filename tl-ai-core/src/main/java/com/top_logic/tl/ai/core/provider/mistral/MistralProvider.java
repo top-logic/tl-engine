@@ -73,6 +73,17 @@ public class MistralProvider extends ChatCompletionsProvider {
 	/**
 	 * {@inheritDoc}
 	 *
+	 * <p>Mistral reports token usage in its streamed responses unconditionally and does not accept
+	 * the {@code stream_options} field, so it must not be sent.</p>
+	 */
+	@Override
+	protected boolean includeUsage() {
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
 	 * <p>Mistral always sets {@code tool_choice} when tools are present, and maps
 	 * {@code REQUIRED} to {@code "any"} (Mistral's non-standard name for {@code "required"}).</p>
 	 */

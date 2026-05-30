@@ -66,10 +66,28 @@ public class ChatCompletionsRequestBuilder {
 	 */
 	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride,
 			TokenLimitParam tokenLimitParam) {
+		return buildRequestJson(request, toolChoiceOverride, tokenLimitParam, false);
+	}
+
+	/**
+	 * Builds the JSON request body, additionally requesting a streaming usage report.
+	 *
+	 * @param includeUsage
+	 *        When {@code true}, sets {@code stream_options.include_usage} so the server emits a final
+	 *        chunk carrying token usage. OpenAI, Azure OpenAI and xAI omit usage from streamed
+	 *        responses unless this flag is set; Mistral reports usage unconditionally and does not
+	 *        need it. Other parameters are as documented on the three-argument overload.
+	 */
+	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride,
+			TokenLimitParam tokenLimitParam, boolean includeUsage) {
 		ChatCompletionsRequest req = ChatCompletionsRequest.create()
 			.setModel(request.model())
 			.setStream(true)
 			.setMessages(buildMessages(request));
+
+		if (includeUsage) {
+			req.setStreamOptions(Map.of("include_usage", Boolean.TRUE));
+		}
 
 		if (tokenLimitParam == TokenLimitParam.MAX_COMPLETION_TOKENS) {
 			req.setMaxCompletionTokens(request.maxOutputTokens());

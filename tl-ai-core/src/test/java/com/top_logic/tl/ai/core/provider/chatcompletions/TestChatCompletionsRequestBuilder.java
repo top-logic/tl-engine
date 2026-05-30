@@ -33,6 +33,27 @@ import de.haumacher.msgbuf.json.JsonReader;
 public class TestChatCompletionsRequestBuilder extends TestCase {
 
 	/** */
+	public void testStreamOptionsIncludeUsage() throws Exception {
+		ProviderRequest request = new ProviderRequest(
+			"gpt-5", "", List.of(new UserMessage(
+				UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent("Hi")))),
+			List.of(), 256);
+
+		String withUsage =
+			ChatCompletionsRequestBuilder.buildRequestJson(request, null, TokenLimitParam.MAX_TOKENS, true);
+		assertTrue("include_usage must be requested when enabled: " + withUsage,
+			withUsage.contains("\"stream_options\"") && withUsage.contains("\"include_usage\":true"));
+
+		String withoutUsage =
+			ChatCompletionsRequestBuilder.buildRequestJson(request, null, TokenLimitParam.MAX_TOKENS, false);
+		assertFalse("stream_options must be absent when disabled: " + withoutUsage,
+			withoutUsage.contains("stream_options"));
+
+		assertFalse("stream_options must be absent by default: " + ChatCompletionsRequestBuilder.buildRequestJson(request),
+			ChatCompletionsRequestBuilder.buildRequestJson(request).contains("stream_options"));
+	}
+
+	/** */
 	public void testBasicTextRequest() throws Exception {
 		UserMessage user = new UserMessage(
 			UUID.randomUUID().toString(),

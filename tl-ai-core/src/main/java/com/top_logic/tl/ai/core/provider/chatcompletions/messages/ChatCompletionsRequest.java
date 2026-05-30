@@ -27,6 +27,9 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	/** @see #isStream() */
 	public static final String STREAM__PROP = "stream";
 
+	/** @see #getStreamOptions() */
+	public static final String STREAM_OPTIONS__PROP = "stream_options";
+
 	/** @see #getTemperature() */
 	public static final String TEMPERATURE__PROP = "temperature";
 
@@ -52,6 +55,8 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	private Object _maxCompletionTokens = null;
 
 	private boolean _stream = false;
+
+	private Object _streamOptions = null;
 
 	private Object _temperature = null;
 
@@ -166,6 +171,33 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	/** Internal setter for {@link #isStream()} without chain call utility. */
 	protected final void internalSetStream(boolean value) {
 		_stream = value;
+	}
+
+	/**
+	 * Streaming options, e.g. {@code {"include_usage": true}} to receive a final usage chunk.
+	 */
+	public final Object getStreamOptions() {
+		return _streamOptions;
+	}
+
+	/**
+	 * @see #getStreamOptions()
+	 */
+	public com.top_logic.tl.ai.core.provider.chatcompletions.messages.ChatCompletionsRequest setStreamOptions(Object value) {
+		internalSetStreamOptions(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStreamOptions()} without chain call utility. */
+	protected final void internalSetStreamOptions(Object value) {
+		_streamOptions = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getStreamOptions()} has a value.
+	 */
+	public final boolean hasStreamOptions() {
+		return _streamOptions != null;
 	}
 
 	/**
@@ -342,6 +374,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			MAX_TOKENS__PROP, 
 			MAX_COMPLETION_TOKENS__PROP, 
 			STREAM__PROP, 
+			STREAM_OPTIONS__PROP, 
 			TEMPERATURE__PROP, 
 			TOP_P__PROP, 
 			MESSAGES__PROP, 
@@ -376,6 +409,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			case MAX_TOKENS__PROP: return getMaxTokens();
 			case MAX_COMPLETION_TOKENS__PROP: return getMaxCompletionTokens();
 			case STREAM__PROP: return isStream();
+			case STREAM_OPTIONS__PROP: return getStreamOptions();
 			case TEMPERATURE__PROP: return getTemperature();
 			case TOP_P__PROP: return getTopP();
 			case MESSAGES__PROP: return getMessages();
@@ -393,6 +427,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			case MAX_TOKENS__PROP: internalSetMaxTokens((Object) value); break;
 			case MAX_COMPLETION_TOKENS__PROP: internalSetMaxCompletionTokens((Object) value); break;
 			case STREAM__PROP: internalSetStream((boolean) value); break;
+			case STREAM_OPTIONS__PROP: internalSetStreamOptions((Object) value); break;
 			case TEMPERATURE__PROP: internalSetTemperature((Object) value); break;
 			case TOP_P__PROP: internalSetTopP((Object) value); break;
 			case MESSAGES__PROP: internalSetMessages((Object) value); break;
@@ -429,6 +464,10 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 		}
 		out.name(STREAM__PROP);
 		out.value(isStream());
+		if (hasStreamOptions()) {
+			out.name(STREAM_OPTIONS__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getStreamOptions());
+		}
 		if (hasTemperature()) {
 			out.name(TEMPERATURE__PROP);
 			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getTemperature());
@@ -462,6 +501,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 			case MAX_TOKENS__PROP: setMaxTokens(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case MAX_COMPLETION_TOKENS__PROP: setMaxCompletionTokens(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case STREAM__PROP: setStream(in.nextBoolean()); break;
+			case STREAM_OPTIONS__PROP: setStreamOptions(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TEMPERATURE__PROP: setTemperature(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TOP_P__PROP: setTopP(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case MESSAGES__PROP: setMessages(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;

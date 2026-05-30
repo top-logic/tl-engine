@@ -16,6 +16,8 @@ message ChatCompletionsRequest {
 	json max_completion_tokens [Name = "max_completion_tokens"];
 	/** Whether to stream the response. */
 	bool stream [Name = "stream"];
+	/** Streaming options, e.g. {@code {"include_usage": true}} to receive a final usage chunk. */
+	json stream_options [Name = "stream_options"];
 	/** Sampling temperature. */
 	json temperature [Name = "temperature"];
 	/** Top-p sampling parameter. */

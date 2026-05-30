@@ -14,11 +14,8 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.func.Function3;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
@@ -75,26 +72,8 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		String getVersion();
 
 		@Override
-		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(LLMProviderConfig.Config.BASE_URL), @Ref(VERSION) })
-		List<String> getModels();
-
-		@Override
 		@StringDefault("anthropic")
 		String getCatalogProviderId();
-	}
-
-	/**
-	 * Options provider discovering available models from the Anthropic API.
-	 */
-	public static class ModelOptions extends Function3<List<String>, String, String, String> {
-		@Override
-		public List<String> apply(String apiKey, String baseUrl, String version) {
-			String url = ModelDiscoveryHelper.normalizeBaseUrl(baseUrl);
-			Map<String, String> headers = new LinkedHashMap<>();
-			headers.put("x-api-key", apiKey);
-			headers.put("anthropic-version", version);
-			return ModelDiscoveryHelper.fetchModels(url, headers);
-		}
 	}
 
 	private final Config _config;

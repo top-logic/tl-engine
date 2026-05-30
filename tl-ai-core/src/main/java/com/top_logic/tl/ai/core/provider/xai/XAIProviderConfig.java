@@ -16,12 +16,9 @@ import com.top_logic.basic.config.annotation.EnumDefaultValue;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.func.Function2;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
@@ -115,22 +112,8 @@ public class XAIProviderConfig implements LLMProviderConfig {
 		void setProtocol(Protocol value);
 
 		@Override
-		@Options(fun = ModelOptions.class, args = { @Ref(API_KEY), @Ref(LLMProviderConfig.Config.BASE_URL) })
-		List<String> getModels();
-
-		@Override
 		@StringDefault("xai")
 		String getCatalogProviderId();
-	}
-
-	/**
-	 * Options provider discovering available models from the <code>xAI</code> API.
-	 */
-	public static class ModelOptions extends Function2<List<String>, String, String> {
-		@Override
-		public List<String> apply(String apiKey, String baseUrl) {
-			return ModelDiscoveryHelper.fetchModels(apiKey, ModelDiscoveryHelper.normalizeBaseUrl(baseUrl));
-		}
 	}
 
 	private final Config _config;

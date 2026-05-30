@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 
 /**
  * Factory contract for LLM provider instances.
@@ -68,6 +69,7 @@ public interface LLMProviderConfig {
 		 */
 		@Name(MODELS)
 		@Format(CommaSeparatedStrings.class)
+		@PropertyEditor(ModelsEditor.class)
 		List<String> getModels();
 
 		/**

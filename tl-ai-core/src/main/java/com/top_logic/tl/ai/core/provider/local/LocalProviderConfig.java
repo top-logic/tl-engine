@@ -12,10 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.func.Function1;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
@@ -52,23 +49,6 @@ public class LocalProviderConfig implements LLMProviderConfig {
 
 		/** @see #getBaseUrl() */
 		void setBaseUrl(String value);
-
-		@Override
-		@Options(fun = ModelOptions.class, args = @Ref(LLMProviderConfig.Config.BASE_URL))
-		List<String> getModels();
-	}
-
-	/**
-	 * Options provider discovering available models from a local server.
-	 */
-	public static class ModelOptions extends Function1<List<String>, String> {
-		@Override
-		public List<String> apply(String baseUrl) {
-			if (baseUrl == null || baseUrl.isBlank()) {
-				return List.of();
-			}
-			return ModelDiscoveryHelper.fetchModels(null, ModelDiscoveryHelper.normalizeBaseUrl(baseUrl));
-		}
 	}
 
 	private final Config _config;

@@ -40,7 +40,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>Uses {@link HttpClient} for HTTP and msgbuf {@link JsonWriter}/{@link JsonReader} for JSON.
  * Thread-safe: a single instance handles concurrent streams.</p>
  */
-public abstract class ChatCompletionsProvider extends AbstractStreamingProvider {
+public class ChatCompletionsProvider extends AbstractStreamingProvider {
 
 	/**
 	 * Creates a {@link ChatCompletionsProvider}.
@@ -50,7 +50,7 @@ public abstract class ChatCompletionsProvider extends AbstractStreamingProvider 
 	 * @param baseUrl
 	 *        The base URL of the provider API (without trailing slash).
 	 */
-	protected ChatCompletionsProvider(String apiKey, String baseUrl) {
+	public ChatCompletionsProvider(String apiKey, String baseUrl) {
 		this(apiKey, baseUrl, defaultHttpClient());
 	}
 
@@ -64,7 +64,7 @@ public abstract class ChatCompletionsProvider extends AbstractStreamingProvider 
 	 * @param httpClient
 	 *        The HTTP client to use.
 	 */
-	protected ChatCompletionsProvider(String apiKey, String baseUrl, HttpClient httpClient) {
+	public ChatCompletionsProvider(String apiKey, String baseUrl, HttpClient httpClient) {
 		super(apiKey, baseUrl, httpClient);
 	}
 
@@ -82,7 +82,7 @@ public abstract class ChatCompletionsProvider extends AbstractStreamingProvider 
 	 * @param customHeaders
 	 *        Additional headers applied after provider-specific headers, allowing overrides.
 	 */
-	protected ChatCompletionsProvider(String apiKey, String baseUrl,
+	public ChatCompletionsProvider(String apiKey, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
 		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);

@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.provider.local;
 
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -18,14 +19,15 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider;
 
 /**
  * {@link LLMProviderConfig} for local <code>OpenAI</code>-compatible servers (Ollama, LM Studio, <code>vLLM</code>).
  *
  * <p>
- * The base URL is mandatory and no API key is required. Produces an {@link OpenAIProvider}
- * since local servers speak the <code>OpenAI</code> protocol.
+ * The base URL is mandatory and no API key is required. Local servers speak the OpenAI Chat
+ * Completions protocol ({@code /v1/chat/completions}), so this config produces a
+ * {@link ChatCompletionsProvider}.
  * </p>
  */
 @InApp
@@ -47,6 +49,9 @@ public class LocalProviderConfig implements LLMProviderConfig {
 		@Override
 		@Mandatory
 		String getBaseUrl();
+
+		/** @see #getBaseUrl() */
+		void setBaseUrl(String value);
 
 		@Override
 		@Options(fun = ModelOptions.class, args = @Ref(LLMProviderConfig.Config.BASE_URL))
@@ -76,9 +81,10 @@ public class LocalProviderConfig implements LLMProviderConfig {
 
 	@Override
 	public LLMProvider createProvider() {
-		return new OpenAIProvider(
+		Map<String, String> customHeaders = _config.getCustomHeaders();
+		return new ChatCompletionsProvider(
 			null, resolveBaseUrl(),
-			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders());
+			_config.getConnectTimeout(), _config.getRequestTimeout(), customHeaders);
 	}
 
 	@Override

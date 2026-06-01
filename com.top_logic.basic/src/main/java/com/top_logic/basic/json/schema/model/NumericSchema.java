@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Validates numeric instances with range and multiple-of constraints.
  * </p>
  */
-public class NumericSchema extends Schema {
+public class NumericSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.NumericSchema} instance.

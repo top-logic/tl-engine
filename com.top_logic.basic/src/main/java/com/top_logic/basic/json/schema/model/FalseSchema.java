@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Equivalent to {"not": {}}.
  * </p>
  */
-public class FalseSchema extends Schema {
+public class FalseSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.FalseSchema} instance.

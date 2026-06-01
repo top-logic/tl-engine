@@ -8,7 +8,7 @@ package com.top_logic.basic.json.schema.model;
  * and vocabulary declarations. Can contain any schema type as its content.
  * </p>
  */
-public class JsonSchemaDocument extends Schema {
+public class JsonSchemaDocument extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.JsonSchemaDocument} instance.

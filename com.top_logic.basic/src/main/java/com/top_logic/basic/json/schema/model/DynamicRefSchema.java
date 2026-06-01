@@ -8,7 +8,7 @@ package com.top_logic.basic.json.schema.model;
  * Works with <code>$dynamicAnchor</code>.
  * </p>
  */
-public class DynamicRefSchema extends Schema {
+public class DynamicRefSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.DynamicRefSchema} instance.

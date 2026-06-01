@@ -7,7 +7,7 @@ package com.top_logic.basic.json.schema.model;
  * Instance must equal one of the values in the enum array.
  * </p>
  */
-public class EnumSchema extends Schema {
+public class EnumSchema extends com.top_logic.basic.json.schema.model.Schema {
 
 	/**
 	 * Creates a {@link com.top_logic.basic.json.schema.model.EnumSchema} instance.

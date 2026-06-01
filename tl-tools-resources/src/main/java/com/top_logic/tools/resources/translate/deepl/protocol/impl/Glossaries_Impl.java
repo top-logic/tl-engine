@@ -35,18 +35,18 @@ public class Glossaries_Impl extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	@Override
-	public com.top_logic.tools.resources.translate.deepl.protocol.Glossaries addGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
-		internalAddGlossarie(value);
+	public com.top_logic.tools.resources.translate.deepl.protocol.Glossaries addGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
+		internalAddGlossary(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary)} without chain call utility. */
-	protected final void internalAddGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
+	/** Implementation of {@link #addGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary)} without chain call utility. */
+	protected final void internalAddGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
 		_glossaries.add(value);
 	}
 
 	@Override
-	public final void removeGlossarie(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
+	public final void removeGlossary(com.top_logic.tools.resources.translate.deepl.protocol.Glossary value) {
 		_glossaries.remove(value);
 	}
 

@@ -462,20 +462,20 @@ public class VersionInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Adds a value to the {@link #getDependencies()} list.
 	 */
-	public com.top_logic.basic.version.model.VersionInfo addDependencie(com.top_logic.basic.version.model.VersionInfo value) {
-		internalAddDependencie(value);
+	public com.top_logic.basic.version.model.VersionInfo addDependency(com.top_logic.basic.version.model.VersionInfo value) {
+		internalAddDependency(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addDependencie(com.top_logic.basic.version.model.VersionInfo)} without chain call utility. */
-	protected final void internalAddDependencie(com.top_logic.basic.version.model.VersionInfo value) {
+	/** Implementation of {@link #addDependency(com.top_logic.basic.version.model.VersionInfo)} without chain call utility. */
+	protected final void internalAddDependency(com.top_logic.basic.version.model.VersionInfo value) {
 		_dependencies.add(value);
 	}
 
 	/**
 	 * Removes a value from the {@link #getDependencies()} list.
 	 */
-	public final void removeDependencie(com.top_logic.basic.version.model.VersionInfo value) {
+	public final void removeDependency(com.top_logic.basic.version.model.VersionInfo value) {
 		_dependencies.remove(value);
 	}
 

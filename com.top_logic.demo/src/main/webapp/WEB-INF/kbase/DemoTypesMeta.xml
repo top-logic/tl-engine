@@ -32,5 +32,7 @@
 
 <association super_class="hasStructureChild" object_name="hasDemoStructureChild" />
 
+<metaobject object_type="MOKnowledgeObject" object_name="DemoUnversioned" abstract="false" super_class="GenericObject" versioned="false"/>
+
 </metaobjects>
 </objectlist>

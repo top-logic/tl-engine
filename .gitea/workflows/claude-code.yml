@@ -1,4 +1,12 @@
 name: Claude Code Assistant
+
+run-name: >-
+  ${{
+    github.event.pull_request.title
+    || github.event.issue.title
+    || github.workflow
+  }}
+
 on:
   issue_comment:
     types: [created]

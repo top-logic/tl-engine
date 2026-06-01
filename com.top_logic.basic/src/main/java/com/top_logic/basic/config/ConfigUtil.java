@@ -10,6 +10,8 @@ import static com.top_logic.basic.config.I18NConstants.*;
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
 import static java.util.Collections.*;
 
+import de.haumacher.msgbuf.data.ProtocolEnum;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -2174,7 +2176,8 @@ public class ConfigUtil {
 	 */
 	public static <T extends Enum<?>> T getEnum(Class<? extends T> enumType, String externalName)
 			throws ConfigurationException {
-		T result = getEnumConstant(enumType, externalName);
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		T result = (T) getEnumConstant((Class) enumType, externalName);
 		if (result != null) {
 			return result;
 		}

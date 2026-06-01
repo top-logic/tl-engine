@@ -23,13 +23,26 @@ public interface StorageWithFallback extends StorageDetail {
 
 	/**
 	 * The value that has been explicitly set for the given attribute on the given object.
-	 * 
+	 *
 	 * <p>
 	 * A value explicitly set overrides a {@link #getFallbackValue(TLObject, TLStructuredTypePart)
 	 * fallback value}.
 	 * </p>
 	 */
 	Object getExplicitValue(TLObject object, TLStructuredTypePart attribute);
+
+	/**
+	 * Explicitly sets the value of the given attribute on the given object.
+	 *
+	 * <p>
+	 * The value is stored in a way that it is later found again through
+	 * {@link #getExplicitValue(TLObject, TLStructuredTypePart)}. An explicitly set value overrides
+	 * the {@link #getFallbackValue(TLObject, TLStructuredTypePart) fallback value}.
+	 * </p>
+	 *
+	 * @see #getExplicitValue(TLObject, TLStructuredTypePart)
+	 */
+	void setExplicitValue(TLObject object, TLStructuredTypePart attribute, Object value);
 
 	/**
 	 * CSS class to set on values that have an explicit value assigned, or <code>null</code> if

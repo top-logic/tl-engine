@@ -146,6 +146,16 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object newValue) {
+
+		StorageDetail storageImplementation = part.getStorageImplementation();
+		if (storageImplementation instanceof StorageWithFallback) {
+			// Symmetric to directValue(): An explicitly set value of a fallback attribute is not
+			// stored in the fallback attribute itself but in its underlying storage attribute, from
+			// where it is read again as explicit value.
+			((StorageWithFallback) storageImplementation).setExplicitValue(this, part, newValue);
+			return;
+		}
+
 		checkDerived(part);
 		newValue = ensureMultiplicity(part, newValue);
 		Object oldValue = directUpdate(part, newValue);

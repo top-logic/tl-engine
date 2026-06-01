@@ -43,6 +43,7 @@ import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
@@ -629,8 +630,17 @@ public class ChangeLogBuilder {
 				do {
 					ObjectCreation creation = _remainingCreations.next();
 					MetaObject table = creation.getObjectType();
-					boolean technicalUpdate = analyzeTechnicalUpdate(_changeSet.getRevision(), table, createdKeys, creation);
-
+					boolean versionedChange = MetaObjectUtils.isVersioned(table);
+					boolean technicalUpdate;
+					if (versionedChange) {
+						technicalUpdate =
+							analyzeTechnicalUpdate(_changeSet.getRevision(), table, createdKeys, creation);
+					} else {
+						/* The creation may at most be an update of an "real" object. In this case
+						 * it is not possible to report a change. Therefore it is not necessary to
+						 * analyze it! */
+						technicalUpdate = false;
+					}
 					List<TLClass> classes = _classesByTable.get(table);
 					if (classes == null) {
 						// A pure technical object.
@@ -641,7 +651,18 @@ public class ChangeLogBuilder {
 						}
 					}
 
-					TLObject object = resolve(creation.getOriginalObject()).getWrapper();
+					TLObject object;
+					if (versionedChange) {
+						object = resolve(creation.getOriginalObject()).getWrapper();
+					} else {
+						// Access with historic key will fail. Try resolve object in current.
+						KnowledgeItem currentItem = resolve(inCurrent(creation.getOriginalObject()));
+						if (currentItem == null) {
+							// deleted in the meanwhile
+							continue;
+						}
+						object = currentItem.getWrapper();
+					}
 					if (excludedByModule(object) || isPersistentCacheObject(object)) {
 						if (stopOnChange && technicalUpdate) {
 							return true;
@@ -702,6 +723,13 @@ public class ChangeLogBuilder {
 			while (_remainingUpdates.hasNext()) {
 				ItemUpdate update = _remainingUpdates.next();
 				MetaObject table = update.getObjectType();
+				if (!MetaObjectUtils.isVersioned(table)) {
+					/* Note: an update event may be reported, when the clean-up task haven't been
+					 * run yet. */
+					/* It is not possible to fetch changes later for the "previous rev" to fill
+					 * change -> Ignore change. */
+					continue;
+				}
 				boolean technicalUpdate =
 					analyzeTechnicalUpdate(_changeSet.getRevision(), table, Collections.emptySet(), update);
 		
@@ -793,6 +821,11 @@ public class ChangeLogBuilder {
 				do {
 					ItemDeletion deletion = _remainingDeletions.next();
 					MetaObject table = deletion.getObjectType();
+					if (!MetaObjectUtils.isVersioned(table)) {
+						/* Note: an update event may be reported, when the clean-up task haven't
+						 * been run yet. */
+						continue;
+					}
 					boolean technicalUpdate =
 						analyzeTechnicalUpdate(_changeSet.getRevision(), table, deletedKeys, deletion);
 
@@ -902,6 +935,10 @@ public class ChangeLogBuilder {
 
 	private static ObjectKey inRevision(ObjectBranchId objId, long rev) {
 		return objId.toObjectKey(rev);
+	}
+
+	private static ObjectKey inCurrent(ObjectKey objId) {
+		return inRevision(objId, Revision.CURRENT_REV);
 	}
 
 	private static ObjectKey inRevision(ObjectKey objId, long rev) {

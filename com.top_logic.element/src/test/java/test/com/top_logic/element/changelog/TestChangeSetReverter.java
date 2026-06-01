@@ -160,6 +160,26 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 	}
 
 	/**
+	 * A change committed with a literal (non-keyed) commit message - as produced by an
+	 * application-specific undo button - must be revertible without failing while the change log is
+	 * scanned for revert/redo markers (Ticket #29314).
+	 */
+	public void testUndoChangeWithLiteralCommitMessage() {
+		TLObject root = createNode(null, "root");
+		TLObject child = createNode(root, "child");
+
+		try (Transaction tx = _kb.beginTransaction(ResKey.text("Application specific change."))) {
+			child.tUpdateByName("name", "child-renamed");
+			tx.commit();
+		}
+		assertEquals("child-renamed", child.tValueByName("name"));
+
+		List<ResKey> problems = ChangeSetReverter.undoLast(root, 0, true);
+		assertEquals(List.of(), problems);
+		assertEquals("child", child.tValueByName("name"));
+	}
+
+	/**
 	 * Two calls to {@link ChangeSetReverter#undoLast(TLObject, int, boolean)} undo two
 	 * consecutive real changes.
 	 */

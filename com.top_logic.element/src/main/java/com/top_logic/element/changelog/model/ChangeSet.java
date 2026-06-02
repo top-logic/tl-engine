@@ -376,17 +376,22 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 	@SuppressWarnings("deprecation")
 	private ResKey revert(ResKey message, Revision revision) {
 		long origRevision = revision.getCommitNumber();
-		String origMessage = message.getKey();
 
-		if (I18NConstants.REDO__MSG_REV.getKey().equals(origMessage)
-				|| I18NConstants.REDO__MSG.getKey().equals(origMessage) // Compatibility
-		) {
-			return I18NConstants.REVERTED__MSG_REV.fill(firstArg(message), origRevision);
-		}
-		if (I18NConstants.REVERTED__MSG_REV.getKey().equals(origMessage)
-				|| I18NConstants.REVERTED__MSG.getKey().equals(origMessage) // Compatibility
-		) {
-			return I18NConstants.REDO__MSG_REV.fill(firstArg(message), origRevision);
+		// A literal commit message (e.g. set by an application-specific undo button) has no key. Only
+		// messages with a real key can be the framework's revert/redo messages.
+		if (message.hasKey()) {
+			String origMessage = message.getKey();
+
+			if (I18NConstants.REDO__MSG_REV.getKey().equals(origMessage)
+					|| I18NConstants.REDO__MSG.getKey().equals(origMessage) // Compatibility
+			) {
+				return I18NConstants.REVERTED__MSG_REV.fill(firstArg(message), origRevision);
+			}
+			if (I18NConstants.REVERTED__MSG_REV.getKey().equals(origMessage)
+					|| I18NConstants.REVERTED__MSG.getKey().equals(origMessage) // Compatibility
+			) {
+				return I18NConstants.REDO__MSG_REV.fill(firstArg(message), origRevision);
+			}
 		}
 		return I18NConstants.REVERTED__MSG_REV.fill(message, origRevision);
 	}
@@ -404,7 +409,9 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 	 * </p>
 	 */
 	default boolean isRevert() {
-		return I18NConstants.REVERTED__MSG_REV.getKey().equals(getMessage().getKey());
+		ResKey message = getMessage();
+		// A literal commit message has no key and therefore cannot be the framework's revert message.
+		return message.hasKey() && I18NConstants.REVERTED__MSG_REV.getKey().equals(message.getKey());
 	}
 
 	/**
@@ -415,7 +422,9 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 	 * </p>
 	 */
 	default boolean isRedo() {
-		return I18NConstants.REDO__MSG_REV.getKey().equals(getMessage().getKey());
+		ResKey message = getMessage();
+		// A literal commit message has no key and therefore cannot be the framework's redo message.
+		return message.hasKey() && I18NConstants.REDO__MSG_REV.getKey().equals(message.getKey());
 	}
 
 	/**

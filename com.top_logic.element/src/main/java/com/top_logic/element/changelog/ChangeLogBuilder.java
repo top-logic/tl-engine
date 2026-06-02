@@ -724,8 +724,8 @@ public class ChangeLogBuilder {
 				ItemUpdate update = _remainingUpdates.next();
 				MetaObject table = update.getObjectType();
 				if (!MetaObjectUtils.isVersioned(table)) {
-					/* Note: an update event may be reported, when the clean-up task haven't been
-					 * run yet. */
+					/* Note: It is possible that an update event may be reported even though the
+					 * cleanup task has not yet been executed. */
 					/* It is not possible to fetch changes later for the "previous rev" to fill
 					 * change -> Ignore change. */
 					continue;
@@ -822,8 +822,8 @@ public class ChangeLogBuilder {
 					ItemDeletion deletion = _remainingDeletions.next();
 					MetaObject table = deletion.getObjectType();
 					if (!MetaObjectUtils.isVersioned(table)) {
-						/* Note: an update event may be reported, when the clean-up task haven't
-						 * been run yet. */
+						/* Note: It is possible that a deletion event may be reported even though
+						 * the cleanup task has not yet been executed. */
 						continue;
 					}
 					boolean technicalUpdate =

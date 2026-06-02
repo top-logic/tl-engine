@@ -21,7 +21,6 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.element.changelog.model.Change;
@@ -38,6 +37,7 @@ import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -498,7 +498,7 @@ public class ChangeSetAnalyzer {
 	}
 
 	private static ObjectKey inRevision(ObjectKey objId, long rev) {
-		return new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName());
+		return KBUtils.ensureHistoryContext(objId, rev);
 	}
 
 	private static ObjectKey inCurrent(ObjectKey objId) {

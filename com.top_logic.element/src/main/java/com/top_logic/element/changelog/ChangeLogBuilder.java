@@ -942,7 +942,7 @@ public class ChangeLogBuilder {
 	}
 
 	private static ObjectKey inRevision(ObjectKey objId, long rev) {
-		return new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName());
+		return KBUtils.ensureHistoryContext(objId, rev);
 	}
 
 	private Map<String, TLStructuredTypePart> lookupColumnBinding(TLStructuredType type) {

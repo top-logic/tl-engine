@@ -152,6 +152,13 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 		for (Change change : getChanges()) {
 			if (change instanceof Deletion deletion) {
 				TLObject deleted = deletion.getObject();
+				if (deleted == null || !deleted.tValid()) {
+					/* If the type is unversioned, the current object is stored in the deletion
+					 * instead of the historical object. This may now be invalid because, for
+					 * example, the container was deleted first. In this case, the "deleted" object
+					 * is null or invalid */
+					continue;
+				}
 				TLObject toDelete = WrapperHistoryUtils.getCurrent(deleted);
 				if (toDelete == null) {
 					continue;

@@ -34,5 +34,12 @@
 
 <metaobject object_type="MOKnowledgeObject" object_name="DemoUnversioned" abstract="false" super_class="GenericObject" versioned="false"/>
 
+<!-- 7.10 compatibility: The unversioned type is introduced in #29092 but used in #29318. -->
+		<association
+			db_name="HAS_WRAPPER_UNV"
+			object_name="hasWrapperAttValueUnversioned"
+			super_class="hasWrapperAttValue"
+			versioned="false"
+		/>
 </metaobjects>
 </objectlist>

@@ -30,7 +30,7 @@
 
 	<properties>
 		<tl.version>7.10.4-SNAPSHOT</tl.version>
-		<jetty.version>12.1.9</jetty.version>
+		<jetty.version>12.1.10</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>

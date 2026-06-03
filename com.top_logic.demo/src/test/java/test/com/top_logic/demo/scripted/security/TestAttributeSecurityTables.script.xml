@@ -35,6 +35,32 @@
 						/>
 					</parameters>
 				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Anlegen.xml"
+					template-name-comment="Gruppe Anlegen"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="testGroup"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+					template-name-comment="Gruppe Zuordnen"
+				>
+					<parameters>
+						<parameter name="Login"
+							value="testAttributeSecurityTable"
+						/>
+						<parameter name="Gruppe1"
+							value="Benutzer"
+						/>
+						<parameter name="Gruppe2"
+							value="testGroup"
+						/>
+					</parameters>
+				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -2179,261 +2205,217 @@
 			comment="Rollen an Objekte zuweisen"
 		>
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration"
+						tab-path="Administration > Development"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Berechtigungen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="DemoTypes"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Berechtigungen > Benutzerrechte"
+						tab-path="Administration > Development > Service Editor"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
+					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexRef"
-							table-name="Person"
-						>
-							<key-values>
-								<attribute name="name">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-										string="testAttributeSecurityTable"
-									/>
-								</attribute>
-							</key-values>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Zugriffssteuerung"
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#RolesPersonTable"
-							tab-path="Administration > Berechtigungen > Benutzerrechte"
+							tab-path="Administration > Development > Service Editor > Module"
 						/>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
-					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
-							expand="true"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-								<path>
-									<named-member name="tree"/>
-								</path>
-							</model-name>
-							<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-								label-path="ROOT"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
-							expand="true"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-								<path>
-									<named-member name="tree"/>
-								</path>
-							</model-name>
-							<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-								label-path="ROOT > securityroot"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ExpandActionOp"
-							expand="true"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-								<path>
-									<named-member name="tree"/>
-								</path>
-							</model-name>
-							<path config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
-								label-path="ROOT > securityroot > TestAttributeSecurity_NoRight"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="TestAttributeSecurity_NoRight"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="StringNoRight"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="TestAttributeSecurity_NoRight_X"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="StringNoRight"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="TestAttributeSecurity_Read"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="StringRead"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="TestAttributeSecurity_ReadExport"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="StringReadExport"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="TestAttributeSecurity_Write"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="StringWrite"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="TestAttributeSecurity_WriteExport"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="StringWriteExport"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="TestAttributeSecurity_Container"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Benutzerrechte > Nutzerrechte auf Strukturen pflegen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="Administrator"
-									/>
-								</values>
-							</value>
-						</action>
-					</actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+					template-name-comment="Rolle Rolle an Gruppe zuweisen"
+				>
+					<parameters>
+						<parameter name="Rollenregelnummer"
+							value="25"
+						/>
+						<parameter name="Typ"
+							value="DemoTypes:A"
+						/>
+						<parameter name="Gruppe"
+							value="testGroup"
+						/>
+						<parameter name="Objektname"
+							value="TestAttributeSecurity_NoRight"
+						/>
+						<parameter name="Rolle"
+							value="StringNoRight"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+					template-name-comment="Rolle Rolle an Gruppe zuweisen"
+				>
+					<parameters>
+						<parameter name="Rollenregelnummer"
+							value="26"
+						/>
+						<parameter name="Typ"
+							value="DemoTypes:X"
+						/>
+						<parameter name="Gruppe"
+							value="testGroup"
+						/>
+						<parameter name="Objektname"
+							value="TestAttributeSecurity_NoRight_X"
+						/>
+						<parameter name="Rolle"
+							value="StringNoRight"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+					template-name-comment="Rolle Rolle an Gruppe zuweisen"
+				>
+					<parameters>
+						<parameter name="Rollenregelnummer"
+							value="27"
+						/>
+						<parameter name="Typ"
+							value="DemoTypes:A"
+						/>
+						<parameter name="Gruppe"
+							value="testGroup"
+						/>
+						<parameter name="Objektname"
+							value="TestAttributeSecurity_Read"
+						/>
+						<parameter name="Rolle"
+							value="StringRead"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+					template-name-comment="Rolle Rolle an Gruppe zuweisen"
+				>
+					<parameters>
+						<parameter name="Rollenregelnummer"
+							value="28"
+						/>
+						<parameter name="Typ"
+							value="DemoTypes:A"
+						/>
+						<parameter name="Gruppe"
+							value="testGroup"
+						/>
+						<parameter name="Objektname"
+							value="TestAttributeSecurity_ReadExport"
+						/>
+						<parameter name="Rolle"
+							value="StringReadExport"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+					template-name-comment="Rolle Rolle an Gruppe zuweisen"
+				>
+					<parameters>
+						<parameter name="Rollenregelnummer"
+							value="29"
+						/>
+						<parameter name="Typ"
+							value="DemoTypes:A"
+						/>
+						<parameter name="Gruppe"
+							value="testGroup"
+						/>
+						<parameter name="Objektname"
+							value="TestAttributeSecurity_Write"
+						/>
+						<parameter name="Rolle"
+							value="StringWrite"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+					template-name-comment="Rolle Rolle an Gruppe zuweisen"
+				>
+					<parameters>
+						<parameter name="Rollenregelnummer"
+							value="30"
+						/>
+						<parameter name="Typ"
+							value="DemoTypes:A"
+						/>
+						<parameter name="Gruppe"
+							value="testGroup"
+						/>
+						<parameter name="Objektname"
+							value="TestAttributeSecurity_WriteExport"
+						/>
+						<parameter name="Rolle"
+							value="StringWriteExport"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+					template-name-comment="Rolle Rolle an Gruppe zuweisen"
+				>
+					<parameters>
+						<parameter name="Rollenregelnummer"
+							value="31"
+						/>
+						<parameter name="Typ"
+							value="DemoTypes:A"
+						/>
+						<parameter name="Gruppe"
+							value="testGroup"
+						/>
+						<parameter name="Objektname"
+							value="TestAttributeSecurity_Container"
+						/>
+						<parameter name="Rolle"
+							value="Administrator"
+						/>
+					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
 					command-name="defaultSave"
-					component-implementation-comment="com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent"
-					component-name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#EditPersonRoles"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+					command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+					command-name="restartAndReload"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
 				>
 					<arguments/>
 				</action>
@@ -5266,6 +5248,60 @@
 					</actions>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Lösche Rollenzuordnung"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Service Editor"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Zugriffssteuerung"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Module"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.TLResetServiceConfigHandler"
+							command-label="Konfiguration zurücksetzen"
+							command-name="resetServiceConfig"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+							component-name="rootLayout#masterFrame"
+							label="Ja"
+							user-id="root"
+						/>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+							command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+							command-name="restartAndReload"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 					comment="Delete Roles"
 				>
 					<actions>
@@ -5526,6 +5562,16 @@
 			comment="Nutzer löschen"
 		>
 			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Gruppe/Action-Gruppe-loeschen byName.xml"
+					template-name-comment="Gruppe loeschen byName"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="testGroup"
+						/>
+					</parameters>
+				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 					template="script:Nutzer/Nutzer-loeschen-byName.xml"
 					template-name-comment="Nutzer loeschen byName"

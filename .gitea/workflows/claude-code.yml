@@ -12,19 +12,16 @@ on:
     types: [created]
   pull_request_review_comment:
     types: [created]
-  issues:
-    types: [opened, assigned, labeled]
-  pull_request_review:
-    types: [submitted]
+#  issues:
+#    types: [opened, assigned, labeled]
+#  pull_request_review:
+#    types: [submitted]
 
 jobs:
   claude-response:
     if: |
           (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-          (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-          (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-          (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'claude') ||
-          (github.event_name == 'issues' && (github.event.action == 'opened' || github.event.action == 'assigned') && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+          (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,5 +31,22 @@ jobs:
           gitea_token: ${{ secrets.ACCESS_GITEA }}
           claude_git_name: Claude
           claude_git_email: claude@anthropic.com
+          disallowed_tools: >-
+            mcp__local_git_ops__push_branch,
+            mcp__local_git_ops__commit_files,
+            mcp__local_git_ops__create_branch,
+            mcp__local_git_ops__create_pull_request,
+            mcp__local_git_ops__delete_files,
+            mcp__gitea__delete_file,
+            mcp__gitea__merge_pull_request,
+            mcp__gitea__update_pull_request_branch
+          append_system_prompt: >-
+            You are configured for review-only mode in this CI. You CANNOT
+            commit, push, create branches, create pull requests, or merge.
+            Your role is to read code, analyze, and respond in comments.
+            Do not include todos like "commit changes" or "push branch" — those
+            capabilities are intentionally disabled. If a user requests code
+            changes, explain the proposed changes in your comment and recommend
+            that a human developer applies them.
         env:
           GITEA_SERVER_URL: https://git.top-logic.com

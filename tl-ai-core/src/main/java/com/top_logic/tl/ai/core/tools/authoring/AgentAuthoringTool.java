@@ -79,6 +79,17 @@ public class AgentAuthoringTool {
 
 	// ---- Skill mutations -------------------------------------------------
 
+	/**
+	 * Creates a new knowledge-base skill (reusable instruction text).
+	 *
+	 * @param name
+	 *        Unique skill name.
+	 * @param description
+	 *        Short description shown in the skill catalog.
+	 * @param content
+	 *        The skill's instruction content (markdown).
+	 * @return JSON-serialized {@link OperationResult} describing the outcome.
+	 */
 	@ToolMethod(description = "Create a new skill (reusable instruction text) in the knowledge base")
 	public String createSkill(
 			@P("Unique skill name") String name,
@@ -111,6 +122,17 @@ public class AgentAuthoringTool {
 		return success("Skill '" + name + "' created.");
 	}
 
+	/**
+	 * Updates an existing knowledge-base skill. Omitted fields are left unchanged.
+	 *
+	 * @param name
+	 *        Name of the skill to update.
+	 * @param description
+	 *        New description, or {@code null} to leave unchanged.
+	 * @param content
+	 *        New content, or {@code null} to leave unchanged.
+	 * @return JSON-serialized {@link OperationResult} describing the outcome.
+	 */
 	@ToolMethod(description = "Update an existing knowledge-base skill. Omitted fields are left unchanged.")
 	public String updateSkill(
 			@P("Name of the skill to update") String name,
@@ -145,6 +167,13 @@ public class AgentAuthoringTool {
 		return success("Skill '" + name + "' updated.");
 	}
 
+	/**
+	 * Deletes a knowledge-base skill by name.
+	 *
+	 * @param name
+	 *        Name of the skill to delete.
+	 * @return JSON-serialized {@link OperationResult} describing the outcome.
+	 */
 	@ToolMethod(description = "Delete a knowledge-base skill by name")
 	public String deleteSkill(@P("Name of the skill to delete") String name) {
 		try {
@@ -173,6 +202,11 @@ public class AgentAuthoringTool {
 
 	// ---- Skill queries ---------------------------------------------------
 
+	/**
+	 * Lists all knowledge-base skills.
+	 *
+	 * @return JSON-serialized {@link SkillListResult} with one summary per skill.
+	 */
 	@ToolMethod(description = "List all knowledge-base skills", mode = ToolMode.READ)
 	public String listSkills() {
 		SkillListResult result = SkillListResult.create();
@@ -185,6 +219,13 @@ public class AgentAuthoringTool {
 		return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "listSkills()");
 	}
 
+	/**
+	 * Gets the full definition of a knowledge-base skill.
+	 *
+	 * @param name
+	 *        Skill name.
+	 * @return JSON-serialized {@link SkillDetail}; {@code exists} is {@code false} if no such skill.
+	 */
 	@ToolMethod(description = "Get the full definition of a knowledge-base skill", mode = ToolMode.READ)
 	public String getSkill(@P("Skill name") String name) {
 		SkillDetail detail = SkillDetail.create();
@@ -202,6 +243,25 @@ public class AgentAuthoringTool {
 
 	// ---- Agent mutations -------------------------------------------------
 
+	/**
+	 * Creates a new agent in the knowledge base.
+	 *
+	 * @param name
+	 *        Unique agent name.
+	 * @param description
+	 *        Short description of the agent.
+	 * @param systemPrompt
+	 *        System prompt for the agent.
+	 * @param tools
+	 *        Qualified tool names the agent may use, or {@code null} for none.
+	 * @param mcpServers
+	 *        MCP server names the agent may use, or {@code null} for none.
+	 * @param skills
+	 *        Skill names the agent loads, or {@code null} for none.
+	 * @param delegations
+	 *        Names of agents this agent may delegate to, or {@code null} for none.
+	 * @return JSON-serialized {@link OperationResult} describing the outcome.
+	 */
 	@ToolMethod(description = "Create a new agent in the knowledge base")
 	public String createAgent(
 			@P("Unique agent name") String name,
@@ -246,6 +306,25 @@ public class AgentAuthoringTool {
 		return result("Agent '" + name + "' created.", warnings);
 	}
 
+	/**
+	 * Updates an existing knowledge-base agent. Omitted fields are left unchanged.
+	 *
+	 * @param name
+	 *        Name of the agent to update.
+	 * @param description
+	 *        New description, or {@code null} to leave unchanged.
+	 * @param systemPrompt
+	 *        New system prompt, or {@code null} to leave unchanged.
+	 * @param tools
+	 *        New tool list, or {@code null} to leave unchanged (an empty list replaces with none).
+	 * @param mcpServers
+	 *        New MCP server list, or {@code null} to leave unchanged (an empty list replaces with none).
+	 * @param skills
+	 *        New skill list, or {@code null} to leave unchanged (an empty list replaces with none).
+	 * @param delegations
+	 *        New delegation list, or {@code null} to leave unchanged (an empty list replaces with none).
+	 * @return JSON-serialized {@link OperationResult} describing the outcome.
+	 */
 	@ToolMethod(description = "Update an existing knowledge-base agent. Omitted fields are left unchanged.")
 	public String updateAgent(
 			@P("Name of the agent to update") String name,
@@ -302,6 +381,13 @@ public class AgentAuthoringTool {
 		return result("Agent '" + name + "' updated.", warnings);
 	}
 
+	/**
+	 * Deletes a knowledge-base agent by name.
+	 *
+	 * @param name
+	 *        Name of the agent to delete.
+	 * @return JSON-serialized {@link OperationResult} describing the outcome.
+	 */
 	@ToolMethod(description = "Delete a knowledge-base agent by name")
 	public String deleteAgent(@P("Name of the agent to delete") String name) {
 		try {
@@ -330,6 +416,11 @@ public class AgentAuthoringTool {
 
 	// ---- Agent queries ---------------------------------------------------
 
+	/**
+	 * Lists all knowledge-base agents.
+	 *
+	 * @return JSON-serialized {@link AgentListResult} with one summary per agent.
+	 */
 	@ToolMethod(description = "List all knowledge-base agents", mode = ToolMode.READ)
 	public String listAgents() {
 		AgentListResult result = AgentListResult.create();
@@ -342,6 +433,13 @@ public class AgentAuthoringTool {
 		return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "listAgents()");
 	}
 
+	/**
+	 * Gets the full definition of a knowledge-base agent.
+	 *
+	 * @param name
+	 *        Agent name.
+	 * @return JSON-serialized {@link AgentDetail}; {@code exists} is {@code false} if no such agent.
+	 */
 	@ToolMethod(description = "Get the full definition of a knowledge-base agent", mode = ToolMode.READ)
 	public String getAgent(@P("Agent name") String name) {
 		AgentDetail detail = AgentDetail.create();
@@ -361,6 +459,11 @@ public class AgentAuthoringTool {
 		return DataClassSerializer.toJson(detail, AgentAuthoringTool.class, "getAgent()");
 	}
 
+	/**
+	 * Lists all tools available to give to an agent (qualified names and descriptions).
+	 *
+	 * @return JSON-serialized {@link ToolListResult} with one summary per registered tool.
+	 */
 	@ToolMethod(description = "List all tools available to give to an agent (qualified names + descriptions)",
 		mode = ToolMode.READ)
 	public String listAvailableTools() {

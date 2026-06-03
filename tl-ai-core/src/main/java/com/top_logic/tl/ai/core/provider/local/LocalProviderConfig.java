@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider
  * {@link LLMProviderConfig} for local <code>OpenAI</code>-compatible servers (Ollama, LM Studio, <code>vLLM</code>).
  *
  * <p>
- * The base URL is mandatory and no API key is required. Local servers speak the OpenAI Chat
+ * The base URL is mandatory and no API key is required. Local servers speak the <code>OpenAI</code> Chat
  * Completions protocol ({@code /v1/chat/completions}), so this config produces a
  * {@link ChatCompletionsProvider}.
  * </p>

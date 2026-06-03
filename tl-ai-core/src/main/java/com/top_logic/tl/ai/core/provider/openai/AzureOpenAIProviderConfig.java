@@ -29,13 +29,13 @@ import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider
 import com.top_logic.tl.ai.core.provider.chatcompletions.TokenLimitParam;
 
 /**
- * {@link LLMProviderConfig} preset for Azure OpenAI Chat Completions deployment endpoints.
+ * {@link LLMProviderConfig} preset for Azure <code>OpenAI</code> Chat Completions deployment endpoints.
  *
  * <p>
  * Configures a {@link ChatCompletionsProvider} with the Azure-specific deployment path
  * {@code /openai/deployments/{model}/chat/completions}, an {@code api-version} query parameter, and
  * a selectable authentication scheme ({@link AuthScheme#BEARER} for gateways such as Nexus GPT /
- * Carina chat; {@link AuthScheme#API_KEY} for real Azure OpenAI subscription-key auth). No
+ * Carina chat; {@link AuthScheme#API_KEY} for real Azure <code>OpenAI</code> subscription-key auth). No
  * model-listing endpoint is available on Azure, so models must be added to the
  * {@link com.top_logic.tl.ai.core.provider.LLMProviderConfig.Config#getModels() models} list
  * manually.
@@ -83,7 +83,7 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 		/**
 		 * The API key for authentication.
 		 *
-		 * <p>For Azure OpenAI with {@link AuthScheme#API_KEY} this is the Azure subscription key.
+		 * <p>For Azure <code>OpenAI</code> with {@link AuthScheme#API_KEY} this is the Azure subscription key.
 		 * For gateway deployments using {@link AuthScheme#BEARER} this is the bearer token.</p>
 		 */
 		@Name(API_KEY)
@@ -105,7 +105,7 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 		 * The {@code api-version} query parameter sent on every request.
 		 *
 		 * <p>Defaults to {@code 2024-10-21}, which is the version required by Nexus GPT and
-		 * Carina chat gateways as well as production Azure OpenAI deployments.</p>
+		 * Carina chat gateways as well as production Azure <code>OpenAI</code> deployments.</p>
 		 */
 		@Name(API_VERSION)
 		@StringDefault("2024-10-21")
@@ -120,7 +120,7 @@ public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 		 * <p>{@link AuthScheme#BEARER} (the default) places the key in
 		 * {@code Authorization: Bearer <key>}, which is used by Nexus and Carina gateways.
 		 * {@link AuthScheme#API_KEY} places the key in {@code api-key: <key>}, which is required
-		 * by real Azure OpenAI resource endpoints.</p>
+		 * by real Azure <code>OpenAI</code> resource endpoints.</p>
 		 */
 		@Name(AUTH_SCHEME)
 		@ComplexDefault(BearerDefault.class)

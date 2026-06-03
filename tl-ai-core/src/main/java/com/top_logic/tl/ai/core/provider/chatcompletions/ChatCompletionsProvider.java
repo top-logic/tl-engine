@@ -35,13 +35,13 @@ import de.haumacher.msgbuf.json.JsonToken;
 import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
- * {@link AbstractStreamingProvider} base for providers that use the OpenAI Chat Completions wire
+ * {@link AbstractStreamingProvider} base for providers that use the <code>OpenAI</code> Chat Completions wire
  * protocol (SSE streaming, {@code /v1/chat/completions} endpoint shape).
  *
- * <p>Covers Mistral, xAI, Moonshot, ZAI, local servers, and any OpenAI-compatible endpoint.
+ * <p>Covers Mistral, <code>xAI</code>, Moonshot, ZAI, local servers, and any <code>OpenAI</code>-compatible endpoint.
  * Subclasses can override {@link #toolChoiceOverride(ProviderRequest)} to inject
  * provider-specific {@code tool_choice} values, and can override {@link #endpointPath} for
- * providers that encode the model name in the URL (e.g. Azure OpenAI).</p>
+ * providers that encode the model name in the URL (e.g. Azure <code>OpenAI</code>).</p>
  *
  * <p>Uses {@link HttpClient} for HTTP and msgbuf {@link JsonWriter}/{@link JsonReader} for JSON.
  * Thread-safe: a single instance handles concurrent streams.</p>
@@ -129,7 +129,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * Creates a {@link ChatCompletionsProvider} with full control over the endpoint path, query
 	 * parameters, and authentication scheme.
 	 *
-	 * <p>Use this constructor to configure Azure-OpenAI deployment paths or any other provider
+	 * <p>Use this constructor to configure Azure-<code>OpenAI</code> deployment paths or any other provider
 	 * that embeds the model name in the URL or uses a non-standard auth header.</p>
 	 *
 	 * @param apiKey
@@ -164,7 +164,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * Creates a {@link ChatCompletionsProvider} with full control over the endpoint path, query
 	 * parameters, authentication scheme, and output-token limit field name.
 	 *
-	 * <p>Use this constructor for Azure OpenAI / OpenAI deployments serving GPT-5 or o-series
+	 * <p>Use this constructor for Azure <code>OpenAI</code> / <code>OpenAI</code> deployments serving GPT-5 or o-series
 	 * reasoning models, which require {@link TokenLimitParam#MAX_COMPLETION_TOKENS} instead of the
 	 * legacy {@code max_tokens} field.</p>
 	 *
@@ -229,7 +229,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * Whether to set {@code stream_options.include_usage} so the server reports token usage in the
 	 * stream.
 	 *
-	 * <p>Defaults to {@code true}: OpenAI, Azure OpenAI and xAI omit usage from streamed responses
+	 * <p>Defaults to {@code true}: <code>OpenAI</code>, Azure <code>OpenAI</code> and <code>xAI</code> omit usage from streamed responses
 	 * unless asked. Override to {@code false} for providers that report usage unconditionally or
 	 * reject the {@code stream_options} field (e.g. Mistral).</p>
 	 *
@@ -241,7 +241,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 
 	/**
 	 * Returns a provider-specific {@code tool_choice} override string, or {@code null} to let
-	 * {@link ChatCompletionsRequestBuilder} apply standard OpenAI semantics.
+	 * {@link ChatCompletionsRequestBuilder} apply standard <code>OpenAI</code> semantics.
 	 *
 	 * <p>Override when the provider uses non-standard values, e.g. Mistral maps
 	 * {@code REQUIRED} to {@code "any"} and always sets a default when tools are present.</p>
@@ -365,7 +365,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * <p>Text fragments are appended to a single text block. Tool calls are accumulated by their
 	 * protocol {@code index}: the first delta for an index carries {@code id} and {@code name} and
 	 * opens the block; later deltas for the same index carry only {@code arguments} fragments that
-	 * are concatenated. This matches the OpenAI / Azure OpenAI streaming wire format.</p>
+	 * are concatenated. This matches the <code>OpenAI</code> / Azure <code>OpenAI</code> streaming wire format.</p>
 	 */
 	private void processDelta(JsonReader json, DeltaState state, StreamHandler handler)
 			throws IOException {

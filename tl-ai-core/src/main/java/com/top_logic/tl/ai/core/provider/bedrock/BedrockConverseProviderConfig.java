@@ -33,7 +33,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
  * <p>
  * No model-listing endpoint exists on Bedrock, so models must be added to the
  * {@link com.top_logic.tl.ai.core.provider.LLMProviderConfig.Config#getModels() models} list
- * manually and {@link #discoverModels()} always returns an empty list.
+ * manually and {@code discoverModels()} always returns an empty list.
  * </p>
  */
 @Label("AWS Bedrock")

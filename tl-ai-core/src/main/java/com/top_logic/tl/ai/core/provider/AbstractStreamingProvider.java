@@ -153,7 +153,7 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	 * The API endpoint path for the given request, e.g. {@code "/v1/messages"}.
 	 *
 	 * <p>The {@code request} parameter is provided so that providers whose endpoint encodes the
-	 * model name (e.g. Azure OpenAI) can compute the path dynamically. Simple providers that use
+	 * model name (e.g. Azure <code>OpenAI</code>) can compute the path dynamically. Simple providers that use
 	 * a fixed path may ignore it.</p>
 	 *
 	 * @param request

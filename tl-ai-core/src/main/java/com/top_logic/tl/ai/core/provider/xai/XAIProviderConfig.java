@@ -29,8 +29,8 @@ import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
  * {@link LLMProviderConfig} for the <code>xAI</code> (Grok) API.
  *
  * <p>
- * The <code>xAI</code> API supports both the OpenAI Chat Completions protocol
- * ({@code /v1/chat/completions}) and the OpenAI Responses protocol ({@code /v1/responses}).
+ * The <code>xAI</code> API supports both the <code>OpenAI</code> Chat Completions protocol
+ * ({@code /v1/chat/completions}) and the <code>OpenAI</code> Responses protocol ({@code /v1/responses}).
  * Use {@link Config#getProtocol()} to select the wire format.
  * The default is {@link Protocol#CHAT_COMPLETIONS}.
  * </p>
@@ -40,14 +40,14 @@ import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
 public class XAIProviderConfig implements LLMProviderConfig {
 
 	/**
-	 * Wire protocol to use when talking to the xAI endpoint.
+	 * Wire protocol to use when talking to the <code>xAI</code> endpoint.
 	 */
 	public enum Protocol {
 
-		/** OpenAI Chat Completions protocol ({@code /v1/chat/completions}, SSE with {@code [DONE]}). */
+		/** <code>OpenAI</code> Chat Completions protocol ({@code /v1/chat/completions}, SSE with {@code [DONE]}). */
 		CHAT_COMPLETIONS,
 
-		/** OpenAI Responses protocol ({@code /v1/responses}, event-typed SSE). */
+		/** <code>OpenAI</code> Responses protocol ({@code /v1/responses}, event-typed SSE). */
 		RESPONSES,
 	}
 

@@ -100,7 +100,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	}
 
 	/**
-	 * Maximum number of output tokens (legacy field; used by Mistral, xAI, local servers).
+	 * Maximum number of output tokens (legacy field; used by Mistral, <code>xAI</code>, local servers).
 	 */
 	public final Object getMaxTokens() {
 		return _maxTokens;
@@ -127,7 +127,7 @@ public class ChatCompletionsRequest extends de.haumacher.msgbuf.data.AbstractDat
 	}
 
 	/**
-	 * Maximum number of output tokens for GPT-5/o-series reasoning models (Azure/OpenAI).
+	 * Maximum number of output tokens for GPT-5/o-series reasoning models (Azure/<code>OpenAI</code>).
 	 */
 	public final Object getMaxCompletionTokens() {
 		return _maxCompletionTokens;

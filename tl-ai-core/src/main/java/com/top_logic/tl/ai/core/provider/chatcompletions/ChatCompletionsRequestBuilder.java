@@ -62,7 +62,7 @@ public class ChatCompletionsRequestBuilder {
 	 * @param tokenLimitParam
 	 *        Which field name the output-token limit is written under. Use
 	 *        {@link TokenLimitParam#MAX_COMPLETION_TOKENS} for GPT-5/o-series reasoning models on
-	 *        Azure OpenAI; {@link TokenLimitParam#MAX_TOKENS} for all other backends.
+	 *        Azure <code>OpenAI</code>; {@link TokenLimitParam#MAX_TOKENS} for all other backends.
 	 */
 	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride,
 			TokenLimitParam tokenLimitParam) {
@@ -74,7 +74,7 @@ public class ChatCompletionsRequestBuilder {
 	 *
 	 * @param includeUsage
 	 *        When {@code true}, sets {@code stream_options.include_usage} so the server emits a final
-	 *        chunk carrying token usage. OpenAI, Azure OpenAI and xAI omit usage from streamed
+	 *        chunk carrying token usage. <code>OpenAI</code>, Azure <code>OpenAI</code> and <code>xAI</code> omit usage from streamed
 	 *        responses unless this flag is set; Mistral reports usage unconditionally and does not
 	 *        need it. Other parameters are as documented on the three-argument overload.
 	 */

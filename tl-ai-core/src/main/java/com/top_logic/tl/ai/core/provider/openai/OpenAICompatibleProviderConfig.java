@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider;
 
 /**
- * {@link LLMProviderConfig} for third-party services that implement the OpenAI Chat Completions
+ * {@link LLMProviderConfig} for third-party services that implement the <code>OpenAI</code> Chat Completions
  * protocol.
  *
  * <p>

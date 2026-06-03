@@ -1,0 +1,127 @@
+package com.top_logic.tl.ai.core.tools.authoring.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Result of a create/update/delete authoring operation.
+ */
+message OperationResult {
+	/** Whether the operation succeeded. */
+	bool success;
+
+	/** Human-readable result message. */
+	string resultMessage;
+
+	/** Non-fatal warnings (e.g. references to not-yet-existing skills or agents). */
+	repeated string warnings;
+}
+
+/**
+ * Short agent entry for listings.
+ */
+message AgentSummary {
+	/** Agent name. */
+	string name;
+
+	/** Agent description. */
+	string description;
+}
+
+/**
+ * Result of listing knowledge-base agents.
+ */
+message AgentListResult {
+	/** The knowledge-base agents. */
+	repeated AgentSummary agents;
+}
+
+/**
+ * Full detail of a single knowledge-base agent.
+ */
+message AgentDetail {
+	/** Whether an agent with this name exists in the knowledge base. */
+	bool exists;
+
+	/** Agent name. */
+	string name;
+
+	/** Agent description. */
+	string description;
+
+	/** System prompt. */
+	string systemPrompt;
+
+	/** Qualified tool names. */
+	repeated string tools;
+
+	/** MCP server names. */
+	repeated string mcpServers;
+
+	/** Skill names. */
+	repeated string skills;
+
+	/** Names of agents this agent may delegate to. */
+	repeated string delegations;
+}
+
+/**
+ * Short skill entry for listings.
+ */
+message SkillSummary {
+	/** Skill name. */
+	string name;
+
+	/** Skill description. */
+	string description;
+}
+
+/**
+ * Result of listing knowledge-base skills.
+ */
+message SkillListResult {
+	/** The knowledge-base skills. */
+	repeated SkillSummary skills;
+}
+
+/**
+ * Full detail of a single knowledge-base skill.
+ */
+message SkillDetail {
+	/** Whether a skill with this name exists in the knowledge base. */
+	bool exists;
+
+	/** Skill name. */
+	string name;
+
+	/** Skill description. */
+	string description;
+
+	/** Skill instruction content. */
+	string content;
+}
+
+/**
+ * Short entry describing an available tool.
+ */
+message ToolSummary {
+	/** Qualified tool name ({factory}.{tool}). */
+	string name;
+
+	/** Tool description. */
+	string description;
+
+	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, or STRUCTURAL. */
+	string mode;
+}
+
+/**
+ * Result of listing available tools that an agent can be given.
+ */
+message ToolListResult {
+	/** The available tools. */
+	repeated ToolSummary tools;
+}

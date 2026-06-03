@@ -390,7 +390,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 * @see #CHAT_ENTRY_POINT
 		 */
 		@Name(CHAT_ENTRY_POINT)
-		@StringDefault("TL_Orchestrator")
+		@StringDefault("TL_SingleAgent")
 		@Options(fun = AllAgentNameOptions.class)
 		String getChatEntryPoint();
 

@@ -188,6 +188,34 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 		assertEquals(3, complete.usage().outputTokens());
 	}
 
+	/**
+	 * OpenAI/Azure automatic prompt caching reports cache hits in
+	 * {@code usage.prompt_tokens_details.cached_tokens}; this must round-trip into the
+	 * {@link com.top_logic.tl.ai.core.message.TokenUsage} cache-read field.
+	 */
+	public void testCachedTokensParsed() throws Exception {
+		String sse = ""
+			+ "data: {\"id\":\"chatcmpl-06\",\"model\":\"gpt-5\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hi\"},\"finish_reason\":null}]}\n\n"
+
+			+ "data: {\"id\":\"chatcmpl-06\",\"model\":\"gpt-5\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],"
+			+ "\"usage\":{\"prompt_tokens\":4096,\"completion_tokens\":12,"
+			+ "\"prompt_tokens_details\":{\"cached_tokens\":3072}}}\n\n"
+
+			+ "data: [DONE]\n\n";
+
+		List<StreamEvent> events = _provider.parse(toStream(sse));
+		StreamEventContractAssertions.assertValidStream(events);
+
+		StreamEvent.MessageComplete complete = events.stream()
+			.filter(StreamEvent.MessageComplete.class::isInstance)
+			.map(StreamEvent.MessageComplete.class::cast)
+			.findFirst().orElseThrow();
+		assertEquals(4096, complete.usage().inputTokens());
+		assertEquals(3072, complete.usage().cacheReadTokens());
+	}
+
 	private static ToolCall findToolCall(List<StreamEvent> events) {
 		return events.stream()
 			.filter(StreamEvent.MessageComplete.class::isInstance)

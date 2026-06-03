@@ -263,6 +263,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 		String finishReason = null;
 		int inputTokens = 0;
 		int outputTokens = 0;
+		int cachedTokens = 0;
 		DeltaState state = new DeltaState();
 
 		handler.onEvent(new StreamEvent.StreamStart());
@@ -278,7 +279,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 				if ("[DONE]".equals(data)) {
 					closeOpenBlocks(state, handler);
 					List<ContentPart> content = state._accumulator.buildContentParts();
-					TokenUsage usage = new TokenUsage(inputTokens, outputTokens, 0, 0, 0);
+					TokenUsage usage = new TokenUsage(inputTokens, outputTokens, 0, cachedTokens, 0);
 					handler.onEvent(new StreamEvent.MessageComplete(
 						messageId, model,
 						finishReason != null ? finishReason : "end_turn",
@@ -324,6 +325,20 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 										switch (json.nextName()) {
 											case "prompt_tokens" -> inputTokens = json.nextInt();
 											case "completion_tokens" -> outputTokens = json.nextInt();
+											// OpenAI-compatible usage reports cached prefix tokens in
+											// prompt_tokens_details.cached_tokens (read only; no write count).
+											// Providers that don't cache omit it, leaving cacheRead at 0.
+											case "prompt_tokens_details" -> {
+												json.beginObject();
+												while (json.hasNext()) {
+													if ("cached_tokens".equals(json.nextName())) {
+														cachedTokens = json.nextInt();
+													} else {
+														json.skipValue();
+													}
+												}
+												json.endObject();
+											}
 											default -> json.skipValue();
 										}
 									}

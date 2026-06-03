@@ -20,10 +20,14 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.xml.TagUtil;
+import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.tool.boundsec.wrap.Group;
+import com.top_logic.tool.boundsec.wrap.GroupNameMapping;
 
 /**
  * {@link PathElement} determining a {@link Group} with a configured name.
@@ -42,6 +46,8 @@ public class GroupWithName extends AbstractConfiguredInstance<GroupWithName.Conf
 		 * The name of the group which this {@link PathElement} returns.
 		 */
 		@Override
+		@Options(fun = Group.AllGroups.class, mapping = GroupNameMapping.class)
+		@ControlProvider(SelectionControlProvider.class)
 		String getName();
 	}
 

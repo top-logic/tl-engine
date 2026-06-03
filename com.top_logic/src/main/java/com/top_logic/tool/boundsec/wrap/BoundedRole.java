@@ -27,6 +27,7 @@ import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.util.MetaObjectUtils;
@@ -57,7 +58,20 @@ import com.top_logic.tool.boundsec.BoundRole;
 @Label("role")
 public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     
-    /** The type of KO wrapped by this class. */
+    /**
+	 * {@link Function0} delivering all {@link BoundedRole}s.
+	 * 
+	 * @see BoundedRole#getAll()
+	 */
+	public static class AllRoles extends Function0<List<BoundedRole>> {
+	
+		@Override
+		public List<BoundedRole> apply() {
+			return getAll();
+		}
+	}
+
+	/** The type of KO wrapped by this class. */
     public static final String OBJECT_NAME      = "BoundedRole";
     
 	/** Full qualified name of the {@link TLType} of a {@link BoundedRole}. */

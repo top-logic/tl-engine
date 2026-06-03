@@ -18,7 +18,16 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
+import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.config.TLModelPartMapping;
+import com.top_logic.model.resources.TLPartScopedResourceProvider;
+import com.top_logic.model.util.AllClasses;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
+import com.top_logic.tool.boundsec.wrap.RoleNameMapping;
 
 /**
  * Configuration of a role rule.
@@ -79,6 +88,9 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	 */
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_META_ELEMENT)
 	@Nullable
+	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
+	@OptionLabels(TLPartScopedResourceProvider.class)
+	@ControlProvider(SelectionControlProvider.class)
 	String getMetaElement();
 
 	/**
@@ -87,6 +99,9 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	 */
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_META_ELEMENT)
 	@Nullable
+	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
+	@OptionLabels(TLPartScopedResourceProvider.class)
+	@ControlProvider(SelectionControlProvider.class)
 	String getSourceMetaElement();
 
 	/**
@@ -94,6 +109,8 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	 */
 	@Format(CommaSeparatedStrings.class)
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_ROLE)
+	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
+	@ControlProvider(SelectionControlProvider.class)
 	List<String> getRole();
 
 	/**
@@ -102,6 +119,8 @@ public interface RoleRuleConfig extends ConfigurationItem {
 	 */
 	@Format(CommaSeparatedStrings.class)
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_ROLE)
+	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
+	@ControlProvider(SelectionControlProvider.class)
 	List<String> getSourceRole();
 
 	/**

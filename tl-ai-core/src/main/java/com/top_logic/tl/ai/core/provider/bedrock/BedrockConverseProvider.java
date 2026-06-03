@@ -116,6 +116,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 		int inputTokens = 0;
 		int outputTokens = 0;
 		int cacheReadTokens = 0;
+		int cacheWriteTokens = 0;
 		boolean metadataReceived = false;
 		ContentBlockAccumulator accumulator = new ContentBlockAccumulator();
 		// Tracks which text-block indices have already received a TextStart event.
@@ -207,10 +208,12 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 							inputTokens = usage[0];
 							outputTokens = usage[1];
 							cacheReadTokens = usage[2];
+							cacheWriteTokens = usage[3];
 							handler.onEvent(new StreamEvent.MessageComplete(
 								"", "",
 								finishReason,
-								new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens, 0),
+								new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens,
+									cacheWriteTokens),
 								accumulator.buildContentParts()));
 						}
 					}
@@ -225,7 +228,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 			handler.onEvent(new StreamEvent.MessageComplete(
 				"", "",
 				finishReason,
-				new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens, 0),
+				new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens, cacheWriteTokens),
 				accumulator.buildContentParts()));
 		}
 	}
@@ -415,13 +418,16 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 	/**
 	 * Extracts token counts from a {@code metadata} payload.
 	 *
-	 * @return three-element int array {@code [inputTokens, outputTokens, cacheReadTokens]}.
+	 * @return four-element int array
+	 *         {@code [inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens]}.
 	 */
 	private static int[] parseUsage(String payload) {
-		// payload: {"usage":{"inputTokens":I,"outputTokens":O,"cacheReadInputTokens":C?,...},...}
+		// payload: {"usage":{"inputTokens":I,"outputTokens":O,
+		//                    "cacheReadInputTokens":R?,"cacheWriteInputTokens":W?,...},...}
 		int inputTokens = 0;
 		int outputTokens = 0;
 		int cacheReadTokens = 0;
+		int cacheWriteTokens = 0;
 		try (JsonReader json = jsonReader(payload)) {
 			json.beginObject();
 			while (json.hasNext()) {
@@ -432,6 +438,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 							case "inputTokens" -> inputTokens = json.nextInt();
 							case "outputTokens" -> outputTokens = json.nextInt();
 							case "cacheReadInputTokens" -> cacheReadTokens = json.nextInt();
+							case "cacheWriteInputTokens" -> cacheWriteTokens = json.nextInt();
 							default -> json.skipValue();
 						}
 					}
@@ -443,7 +450,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 		} catch (Exception e) {
 			// Return whatever was parsed so far.
 		}
-		return new int[] { inputTokens, outputTokens, cacheReadTokens };
+		return new int[] { inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens };
 	}
 
 	/**

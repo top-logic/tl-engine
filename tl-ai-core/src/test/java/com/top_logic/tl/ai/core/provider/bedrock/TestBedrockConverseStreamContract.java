@@ -218,6 +218,35 @@ public class TestBedrockConverseStreamContract extends TestCase {
 		assertTrue("MessageComplete must contain a TextContent with text 'Hi'.", hasText);
 	}
 
+	/**
+	 * The metadata frame's {@code cacheReadInputTokens} and {@code cacheWriteInputTokens} must
+	 * round-trip into the {@link com.top_logic.tl.ai.core.message.TokenUsage} of the
+	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete}.
+	 */
+	public void testCacheTokenUsageParsed() throws Exception {
+		ByteArrayOutputStream buf = new ByteArrayOutputStream();
+		buf.write(frame(eventHeaders("messageStart"),
+			"{\"role\":\"assistant\"}"));
+		buf.write(frame(eventHeaders("contentBlockDelta"),
+			"{\"contentBlockIndex\":0,\"delta\":{\"text\":\"Hi\"}}"));
+		buf.write(frame(eventHeaders("contentBlockStop"),
+			"{\"contentBlockIndex\":0}"));
+		buf.write(frame(eventHeaders("messageStop"),
+			"{\"stopReason\":\"end_turn\"}"));
+		buf.write(frame(eventHeaders("metadata"),
+			"{\"usage\":{\"inputTokens\":5,\"outputTokens\":2,"
+				+ "\"cacheReadInputTokens\":900,\"cacheWriteInputTokens\":2403}}"));
+
+		List<StreamEvent> events = new TestableProvider().parse(
+			new ByteArrayInputStream(buf.toByteArray()));
+
+		StreamEventContractAssertions.assertValidStream(events);
+
+		StreamEvent.MessageComplete complete = findComplete(events);
+		assertEquals("cacheReadTokens", 900, complete.usage().cacheReadTokens());
+		assertEquals("cacheWriteTokens", 2403, complete.usage().cacheWriteTokens());
+	}
+
 	// ---- Helpers ----
 
 	private static StreamEvent.MessageComplete findComplete(List<StreamEvent> events) {

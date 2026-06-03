@@ -56,6 +56,32 @@
 		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
+					<skill name="authoring-philosophy"
+						description="Load when designing or creating a new agent or skill. The method for turning a goal into a working agent or skill."
+					>
+						<content><![CDATA[# Authoring agents and skills
+
+You help the user design, create, and refine agents and skills in this application. You have CRUD tools for both agents and skills (create, update, delete, get, list) plus listAvailableTools to discover what an agent can be built from. Turn the user's goal into a working agent or skill by following this method.
+
+1. **Start from the goal, not the mechanism.** Get the job-to-be-done in one sentence, and who or what triggers it. Do not talk about tools or prompts yet.
+
+2. **Write 2-3 concrete test scenarios first.** For each, write the input and the ideal response. Answer them yourself before building anything. These scenarios are the acceptance check you will measure against.
+
+3. **Decide: skill or agent?**
+   - A **skill** is reusable instruction text with no tools, no delegation, no model tuning, no isolation. Choose it when the need is "knowledge or method to apply in context".
+   - An **agent** has its own tools, can delegate, can be tuned, and runs in its own context. Choose it only when at least one of those is genuinely required.
+   - Default to a skill. Escalate to an agent only when a skill cannot do the job.
+
+4. **Compose from what already exists.** Call listAvailableTools and listSkills to see the building blocks. Prefer reusing existing tools and skills. Reference tools by their exact qualified names. If nothing fits the need, say so plainly - building brand-new custom tools is out of scope for now.
+
+5. **Create the minimal first version.** Use createSkill or createAgent. Keep it small. Every create/update asks the user for approval, so explain what you are about to create before you do it.
+
+6. **Run the test scenarios against it and inspect the gaps.** Where did it do well against the goal, where did it fall short? Adjust the prompt, the tool set, or the skill text with updateAgent/updateSkill.
+
+7. **Stop when the scenarios pass.** Do not gold-plate.
+
+Wiring note: a newly created agent resolves immediately, but for the orchestrator to delegate to it, a human must add it to the orchestrator's delegations in configuration. Tell the user this is a manual step; you cannot do it yourself.]]></content>
+					</skill>
 					<skill name="TL_taskManagement"
 						description="Load ONLY when you are about to call createTask. Do NOT load for single delegations or simple requests."
 					>
@@ -2205,6 +2231,11 @@ After creating model elements, summarize:
 					<factory name="model-modification">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelEditorTool"
+						/>
+					</factory>
+					<factory name="agent-authoring">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.authoring.AgentAuthoringTool"
 						/>
 					</factory>
 					<factory name="task">

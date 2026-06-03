@@ -41,7 +41,7 @@ import com.top_logic.tl.ai.core.provider.chatcompletions.TokenLimitParam;
  * manually.
  * </p>
  */
-@Label("Azure OpenAI provider")
+@Label("Azure OpenAI")
 @InApp
 public class AzureOpenAIProviderConfig implements LLMProviderConfig {
 

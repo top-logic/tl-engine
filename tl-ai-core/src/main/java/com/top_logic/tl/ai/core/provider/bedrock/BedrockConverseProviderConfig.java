@@ -36,7 +36,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
  * manually and {@link #discoverModels()} always returns an empty list.
  * </p>
  */
-@Label("AWS Bedrock Converse provider")
+@Label("AWS Bedrock")
 @InApp
 public class BedrockConverseProviderConfig implements LLMProviderConfig {
 

@@ -22,7 +22,7 @@ import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
 /**
  * {@link LLMProviderConfig} for the <code>OpenAI</code> cloud API.
  */
-@Label("OpenAI provider configuration")
+@Label("OpenAI")
 @InApp
 public class OpenAIProviderConfig implements LLMProviderConfig {
 

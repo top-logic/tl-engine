@@ -32,7 +32,7 @@ import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider
  * Produces a {@link ChatCompletionsProvider} targeting {@code /v1/chat/completions}.
  * </p>
  */
-@Label("OpenAI-compatible provider (Chat Completions)")
+@Label("OpenAI-compatible")
 @InApp
 public class OpenAICompatibleProviderConfig implements LLMProviderConfig {
 

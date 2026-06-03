@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -28,6 +29,7 @@ import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
  * {@code anthropic-version} header requirement.
  * </p>
  */
+@Label("Anthropic")
 @InApp
 public class AnthropicProviderConfig implements LLMProviderConfig {
 

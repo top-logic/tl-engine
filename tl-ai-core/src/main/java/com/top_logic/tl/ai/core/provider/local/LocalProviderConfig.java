@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
@@ -27,6 +28,7 @@ import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsProvider
  * {@link ChatCompletionsProvider}.
  * </p>
  */
+@Label("Local (OpenAI-compatible)")
 @InApp
 public class LocalProviderConfig implements LLMProviderConfig {
 

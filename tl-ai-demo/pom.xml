@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-app</artifactId>
-		<version>8.0.0-alpha3</version>
+		<version>8.0.0-alpha5</version>
 		<relativePath />
 	</parent>
 	
 	<artifactId>tl-ai-demo</artifactId>
-  <version>8.0.0-alpha3</version>
+  	
   
 	
 	<properties>

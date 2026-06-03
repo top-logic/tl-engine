@@ -8,7 +8,7 @@ package com.top_logic.tl.ai.core.tools.registry;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -86,7 +86,7 @@ public class ScriptToolExecutor implements Tool {
 		try {
 			Object[] positional = _coercion.coerce(args);
 			Object result = _executor.executeWith(Args.some(positional));
-			return ToolResult.of(ToString.toString(result));
+			return ToolResult.of(SearchExpression.asString(result));
 		} catch (Exception ex) {
 			Logger.error("Error executing script tool '" + _name + "': " + ex.getMessage(), ex,
 				ScriptToolExecutor.class);

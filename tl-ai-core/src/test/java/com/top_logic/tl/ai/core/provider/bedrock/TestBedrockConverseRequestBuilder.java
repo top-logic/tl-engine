@@ -58,10 +58,12 @@ public class TestBedrockConverseRequestBuilder extends TestCase {
 		@SuppressWarnings("unchecked")
 		java.util.List<Object> system = (java.util.List<Object>) root.get("system");
 		assertNotNull("system must be present", system);
-		assertEquals(1, system.size());
+		// system text block + trailing cachePoint
+		assertEquals(2, system.size());
 		@SuppressWarnings("unchecked")
 		java.util.Map<String, Object> sysBlock = (java.util.Map<String, Object>) system.get(0);
 		assertEquals("You are a helpful assistant.", sysBlock.get("text"));
+		assertTrue("system must end with a cachePoint", isCachePoint(system.get(1)));
 
 		// --- messages ---
 		@SuppressWarnings("unchecked")
@@ -76,10 +78,12 @@ public class TestBedrockConverseRequestBuilder extends TestCase {
 		@SuppressWarnings("unchecked")
 		java.util.List<Object> content0 = (java.util.List<Object>) msg0.get("content");
 		assertNotNull(content0);
-		assertEquals(1, content0.size());
+		// user text block + trailing cachePoint (last user turn is cached)
+		assertEquals(2, content0.size());
 		@SuppressWarnings("unchecked")
 		java.util.Map<String, Object> textBlock = (java.util.Map<String, Object>) content0.get(0);
 		assertEquals("Hello, what can you do?", textBlock.get("text"));
+		assertTrue("last user turn must end with a cachePoint", isCachePoint(content0.get(1)));
 
 		// --- inferenceConfig ---
 		@SuppressWarnings("unchecked")
@@ -213,7 +217,9 @@ public class TestBedrockConverseRequestBuilder extends TestCase {
 		@SuppressWarnings("unchecked")
 		java.util.List<Object> trContent = (java.util.List<Object>) trMsg.get("content");
 		assertNotNull(trContent);
-		assertEquals(1, trContent.size());
+		// toolResult block + trailing cachePoint (this is one of the last two user turns)
+		assertEquals(2, trContent.size());
+		assertTrue("tool-result turn must end with a cachePoint", isCachePoint(trContent.get(1)));
 
 		@SuppressWarnings("unchecked")
 		java.util.Map<String, Object> trBlock = (java.util.Map<String, Object>) trContent.get(0);
@@ -419,7 +425,9 @@ public class TestBedrockConverseRequestBuilder extends TestCase {
 		@SuppressWarnings("unchecked")
 		java.util.List<Object> content = (java.util.List<Object>) batchedMsg.get("content");
 		assertNotNull(content);
-		assertEquals("batched user message must contain two toolResult blocks", 2, content.size());
+		// two toolResult blocks + trailing cachePoint (this is the last user turn)
+		assertEquals("batched user message: two toolResult blocks + a cachePoint", 3, content.size());
+		assertTrue("batched tool-result turn must end with a cachePoint", isCachePoint(content.get(2)));
 
 		// first block → id1
 		@SuppressWarnings("unchecked")
@@ -461,5 +469,61 @@ public class TestBedrockConverseRequestBuilder extends TestCase {
 		assertNotNull(inferenceConfig);
 		assertEquals(0.7, ((Number) inferenceConfig.get("temperature")).doubleValue(), 1e-9);
 		assertEquals(0.9, ((Number) inferenceConfig.get("topP")).doubleValue(), 1e-9);
+	}
+
+	/** Test H: cache points land on the system prefix and the last two user turns only. */
+	public void testCachePointPlacement() throws Exception {
+		UserMessage u1 = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("first")));
+		AssistantMessage a1 = new AssistantMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("ok one")), new TokenUsage(1, 1, 0, 0, 0), "end_turn");
+		UserMessage u2 = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("second")));
+		AssistantMessage a2 = new AssistantMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("ok two")), new TokenUsage(1, 1, 0, 0, 0), "end_turn");
+		UserMessage u3 = new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("third")));
+
+		ProviderRequest request = new ProviderRequest(
+			"anthropic.claude-3-haiku-20240307-v1:0",
+			"You are helpful.",
+			List.of(u1, a1, u2, a2, u3),
+			List.of(),
+			256);
+
+		String json = BedrockConverseRequestBuilder.buildRequestJson(request);
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> root =
+			(java.util.Map<String, Object>) JsonUtil.parseJsonValue(json);
+
+		// system prefix is cached, with the expected {"cachePoint":{"type":"default"}} shape
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> system = (java.util.List<Object>) root.get("system");
+		Object sysLast = system.get(system.size() - 1);
+		assertTrue("system prefix must be cached", isCachePoint(sysLast));
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> cpInner =
+			(java.util.Map<String, Object>) ((java.util.Map<String, Object>) sysLast).get("cachePoint");
+		assertEquals("default", cpInner.get("type"));
+
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> messages = (java.util.List<Object>) root.get("messages");
+		// User turns are at indices 0, 2, 4; only the last two (2, 4) are cached.
+		assertFalse("oldest user turn must NOT be cached", lastBlockIsCachePoint(messages.get(0)));
+		assertTrue("2nd-newest user turn must be cached", lastBlockIsCachePoint(messages.get(2)));
+		assertTrue("newest user turn must be cached", lastBlockIsCachePoint(messages.get(4)));
+		// Assistant turns are never cached.
+		assertFalse("assistant turn must NOT be cached", lastBlockIsCachePoint(messages.get(1)));
+	}
+
+	private static boolean isCachePoint(Object block) {
+		return block instanceof java.util.Map<?, ?> map && map.containsKey("cachePoint");
+	}
+
+	@SuppressWarnings("unchecked")
+	private static boolean lastBlockIsCachePoint(Object message) {
+		java.util.List<Object> content =
+			(java.util.List<Object>) ((java.util.Map<String, Object>) message).get("content");
+		return !content.isEmpty() && isCachePoint(content.get(content.size() - 1));
 	}
 }

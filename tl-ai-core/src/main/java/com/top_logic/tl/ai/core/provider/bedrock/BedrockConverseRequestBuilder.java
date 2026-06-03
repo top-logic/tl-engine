@@ -60,11 +60,17 @@ public final class BedrockConverseRequestBuilder {
 			Map<String, Object> sysBlock = new LinkedHashMap<>();
 			sysBlock.put("text", request.systemPrompt());
 			system.add(sysBlock);
+			// Cache breakpoint after the system prompt. A cachePoint in the system field caches the
+			// preceding tools and system prefix — the large static portion of an agent request that
+			// is resent unchanged every turn. Mirrors the Anthropic builder's system cache_control.
+			system.add(cachePoint());
 			body.put("system", system);
 		}
 
-		// messages
-		body.put("messages", buildMessages(request.messages()));
+		// messages (with cache breakpoints on the most recent turns)
+		List<Object> messages = buildMessages(request.messages());
+		addConversationCachePoints(messages);
+		body.put("messages", messages);
 
 		// inferenceConfig: maxTokens always; temperature/topP only if present
 		body.put("inferenceConfig", buildInferenceConfig(request));
@@ -84,6 +90,46 @@ public final class BedrockConverseRequestBuilder {
 	}
 
 	// ---- Private helpers ----
+
+	/**
+	 * A Bedrock Converse {@code cachePoint} block: {@code {"cachePoint": {"type": "default"}}}.
+	 *
+	 * <p>Marks a prompt-cache breakpoint; everything from the start of the cacheable prefix up to
+	 * this point is cached for reuse on subsequent requests. Segments below the model's minimum
+	 * cacheable token count are silently ignored by Bedrock, so adding the marker unconditionally
+	 * is safe for short prompts.</p>
+	 */
+	private static Map<String, Object> cachePoint() {
+		Map<String, Object> block = new LinkedHashMap<>();
+		block.put("cachePoint", Map.of("type", "default"));
+		return block;
+	}
+
+	/**
+	 * Appends a {@link #cachePoint()} to the content of the last up to two user-role messages.
+	 *
+	 * <p>Mirrors the Anthropic builder, which caches the two most recent user turns so that a
+	 * growing agent loop gets cache hits on the conversation prefix turn after turn. Combined with
+	 * the system cache point this stays within Bedrock's four-breakpoint limit.</p>
+	 */
+	private static void addConversationCachePoints(List<Object> messages) {
+		List<Map<String, Object>> userTurns = new ArrayList<>();
+		for (Object entry : messages) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> map = (Map<String, Object>) entry;
+			if ("user".equals(map.get("role"))) {
+				userTurns.add(map);
+			}
+		}
+		int from = Math.max(0, userTurns.size() - 2);
+		for (int i = from; i < userTurns.size(); i++) {
+			@SuppressWarnings("unchecked")
+			List<Object> content = (List<Object>) userTurns.get(i).get("content");
+			if (content != null && !content.isEmpty()) {
+				content.add(cachePoint());
+			}
+		}
+	}
 
 	private static List<Object> buildMessages(List<Message> messages) {
 		List<Object> result = new ArrayList<>();

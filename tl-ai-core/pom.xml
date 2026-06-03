@@ -63,6 +63,12 @@
 			<version>0.64.8</version>
 		</dependency>
 
+		<!-- HTML parsing / text extraction for web_fetch (version managed by parent) -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+		</dependency>
+
 		<!-- MCP SDK (client for connecting to external MCP servers) -->
 		<dependency>
 			<groupId>io.modelcontextprotocol.sdk</groupId>

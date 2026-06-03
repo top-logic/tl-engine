@@ -21,6 +21,9 @@
 				<entry value="com.top_logic.tl.ai.core.tools.config.messages" />
 				<entry value="com.top_logic.tl.ai.core.tools.interaction.messages" />
 				<entry value="com.top_logic.tl.ai.core.tools.integration.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.web.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.web.WebSearchHit" />
+				<entry value="com.top_logic.tl.ai.core.tools.web.WebSearchResults" />
 				<entry value="com.top_logic.tl.ai.core.agent.skills.Skill" />
 				<entry value="com.top_logic.tl.ai.core.memory.CompactionResult" />
 				<entry value="com.top_logic.tl.ai.core.message.SystemMessage" />

@@ -30,7 +30,26 @@
 					<module key="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions$Module" value="true"/>
 					<!-- HTML Page Service for the TL_HTMLGenerator agent's publishPage tool -->
 					<module key="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService$Module" value="true"/>
+					<!-- Web Tools Service: config for webSearch / webFetch -->
+					<module key="com.top_logic.tl.ai.core.tools.web.WebToolsService$Module" value="true"/>
 				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+			<instance class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+				<!-- Configure exactly one search engine to enable webSearch. Examples:
+
+				Tavily:
+				<search-engine class="com.top_logic.tl.ai.core.tools.web.TavilySearchEngine">
+					<api-key>YOUR_TAVILY_API_KEY</api-key>
+				</search-engine>
+
+				Brave:
+				<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
+					<api-key>YOUR_BRAVE_API_KEY</api-key>
+				</search-engine>
+				-->
 			</instance>
 		</config>
 
@@ -1800,7 +1819,7 @@ You receive a serialized conversation turn as input. Analyze it for problems in 
    - Did the agent delegate to the right specialist? (correct routing)
    - Were tool calls appropriate and minimal? (no waste)
    - Does the response actually help the user? (useful and complete)
-3. If you find an issue: call `create_gitea_issue` with structured details
+3. If you find an issue: call `createGiteaIssue` with structured details
 4. If no issues found: respond with "No issues found."
 
 ---
@@ -1817,7 +1836,7 @@ You receive a serialized conversation turn as input. Analyze it for problems in 
 
 <<AVAILABLE_TOOLS>>]]></system-prompt>
 						<tools>
-							<tool name="gitea.create_gitea_issue"/>
+							<tool name="gitea.createGiteaIssue"/>
 						</tools>
 					</agent>
 					<agent name="TL_SingleAgent"
@@ -2206,6 +2225,16 @@ After creating model elements, summarize:
 					<factory name="html-pages">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool"
+						/>
+					</factory>
+					<factory name="web-search">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.web.WebSearchTool"
+						/>
+					</factory>
+					<factory name="web-fetch">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.web.WebFetchTool"
 						/>
 					</factory>
 				</tool-factories>

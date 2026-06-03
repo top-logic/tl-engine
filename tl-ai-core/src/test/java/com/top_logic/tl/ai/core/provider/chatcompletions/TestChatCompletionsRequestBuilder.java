@@ -33,6 +33,27 @@ import de.haumacher.msgbuf.json.JsonReader;
 public class TestChatCompletionsRequestBuilder extends TestCase {
 
 	/** */
+	public void testStreamOptionsIncludeUsage() throws Exception {
+		ProviderRequest request = new ProviderRequest(
+			"gpt-5", "", List.of(new UserMessage(
+				UUID.randomUUID().toString(), Instant.now(), List.of(new TextContent("Hi")))),
+			List.of(), 256);
+
+		String withUsage =
+			ChatCompletionsRequestBuilder.buildRequestJson(request, null, TokenLimitParam.MAX_TOKENS, true);
+		assertTrue("include_usage must be requested when enabled: " + withUsage,
+			withUsage.contains("\"stream_options\"") && withUsage.contains("\"include_usage\":true"));
+
+		String withoutUsage =
+			ChatCompletionsRequestBuilder.buildRequestJson(request, null, TokenLimitParam.MAX_TOKENS, false);
+		assertFalse("stream_options must be absent when disabled: " + withoutUsage,
+			withoutUsage.contains("stream_options"));
+
+		assertFalse("stream_options must be absent by default: " + ChatCompletionsRequestBuilder.buildRequestJson(request),
+			ChatCompletionsRequestBuilder.buildRequestJson(request).contains("stream_options"));
+	}
+
+	/** */
 	public void testBasicTextRequest() throws Exception {
 		UserMessage user = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -99,6 +120,55 @@ public class TestChatCompletionsRequestBuilder extends TestCase {
 			assertEquals("You are a helpful assistant.", systemContent);
 			assertEquals("user", userRole);
 			assertEquals("Hello, world!", userContent);
+		}
+	}
+
+	/**
+	 * The default convention emits {@code max_tokens} and never {@code max_completion_tokens}.
+	 */
+	public void testDefaultUsesMaxTokens() {
+		ProviderRequest request = new ProviderRequest(
+			"gpt-4o", null,
+			List.of(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+				List.of(new TextContent("Hi.")))),
+			List.of(), 512);
+
+		String json = ChatCompletionsRequestBuilder.buildRequestJson(request);
+
+		assertTrue("expected max_tokens field", json.contains("\"max_tokens\""));
+		assertFalse("max_completion_tokens must be absent by default",
+			json.contains("\"max_completion_tokens\""));
+	}
+
+	/**
+	 * {@link TokenLimitParam#MAX_COMPLETION_TOKENS} emits {@code max_completion_tokens} (carrying
+	 * the output-token limit) and omits the legacy {@code max_tokens} field, as required by GPT-5
+	 * and o-series reasoning models on the Chat Completions API.
+	 */
+	public void testMaxCompletionTokensParam() throws Exception {
+		ProviderRequest request = new ProviderRequest(
+			"gpt-5.5", null,
+			List.of(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+				List.of(new TextContent("Hi.")))),
+			List.of(), 512);
+
+		String json = ChatCompletionsRequestBuilder.buildRequestJson(request, null,
+			TokenLimitParam.MAX_COMPLETION_TOKENS);
+
+		assertTrue("expected max_completion_tokens field", json.contains("\"max_completion_tokens\""));
+		assertFalse("legacy max_tokens must be absent", json.contains("\"max_tokens\""));
+
+		try (JsonReader jr = new JsonReader(new StringR(json))) {
+			jr.beginObject();
+			int maxCompletionTokens = 0;
+			while (jr.hasNext()) {
+				switch (jr.nextName()) {
+					case "max_completion_tokens" -> maxCompletionTokens = jr.nextInt();
+					default -> jr.skipValue();
+				}
+			}
+			jr.endObject();
+			assertEquals(512, maxCompletionTokens);
 		}
 	}
 

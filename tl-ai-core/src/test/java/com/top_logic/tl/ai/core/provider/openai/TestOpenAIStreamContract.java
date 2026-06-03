@@ -15,11 +15,11 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 
 /**
- * Contract tests for {@link OpenAIProvider} stream parsing.
+ * Contract tests for {@link OpenAIResponsesProvider} stream parsing.
  */
 public class TestOpenAIStreamContract extends AbstractProviderStreamTest {
 
-	static class TestableProvider extends OpenAIProvider {
+	static class TestableProvider extends OpenAIResponsesProvider {
 		TestableProvider() {
 			super("test-key");
 		}

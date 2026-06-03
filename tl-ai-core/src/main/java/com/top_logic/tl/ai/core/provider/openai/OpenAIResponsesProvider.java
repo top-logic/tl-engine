@@ -40,35 +40,35 @@ import de.haumacher.msgbuf.json.JsonReader;
  * Request serialization is delegated to {@link OpenAIResponsesRequestBuilder}.
  * Thread-safe: a single instance handles concurrent streams.</p>
  */
-@Label("OpenAI provider")
-public class OpenAIProvider extends AbstractStreamingProvider {
+@Label("OpenAI Responses provider")
+public class OpenAIResponsesProvider extends AbstractStreamingProvider {
 
 	private static final String DEFAULT_BASE_URL = "https://api.openai.com";
 
-	/** Creates an {@link OpenAIProvider}. */
-	public OpenAIProvider(String apiKey) {
+	/** Creates an {@link OpenAIResponsesProvider}. */
+	public OpenAIResponsesProvider(String apiKey) {
 		this(apiKey, DEFAULT_BASE_URL);
 	}
 
-	/** Creates an {@link OpenAIProvider}. */
-	public OpenAIProvider(String apiKey, String baseUrl) {
+	/** Creates an {@link OpenAIResponsesProvider}. */
+	public OpenAIResponsesProvider(String apiKey, String baseUrl) {
 		this(apiKey, baseUrl, defaultHttpClient());
 	}
 
-	/** Creates an {@link OpenAIProvider}. */
-	public OpenAIProvider(String apiKey, String baseUrl, HttpClient httpClient) {
+	/** Creates an {@link OpenAIResponsesProvider}. */
+	public OpenAIResponsesProvider(String apiKey, String baseUrl, HttpClient httpClient) {
 		super(apiKey, baseUrl, httpClient);
 	}
 
-	/** Creates an {@link OpenAIProvider} with configurable timeouts and headers. */
-	public OpenAIProvider(String apiKey, String baseUrl,
+	/** Creates an {@link OpenAIResponsesProvider} with configurable timeouts and headers. */
+	public OpenAIResponsesProvider(String apiKey, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
 		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 	}
 
 	@Override
-	protected String endpointPath() {
+	protected String endpointPath(ProviderRequest request) {
 		return "/v1/responses";
 	}
 

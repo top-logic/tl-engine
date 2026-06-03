@@ -17,7 +17,11 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Step;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.constraint.annotation.Bound;
 import com.top_logic.basic.config.constraint.annotation.Comparision;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
@@ -96,9 +100,12 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		AgentOverride.REASONING_EFFORT,
 		AgentOverride.REASONING_SUMMARY,
 	})
-	public interface AgentOverride extends NamedConfigMandatory {
+	public interface AgentOverride extends NamedConfigMandatory, ConfigPart {
 		/** @see #getModel() */
 		String MODEL = "model";
+
+		/** @see #getOwner() */
+		String OWNER = "owner";
 
 		/** @see #getMaxTokens() */
 		String MAX_TOKENS = "max-tokens";
@@ -144,12 +151,27 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String getName();
 
 		/**
+		 * The enclosing {@link AgentExecutionConfig}, used to resolve configured models from the
+		 * provider section of the same edit form.
+		 *
+		 * @see #OWNER
+		 */
+		@Name(OWNER)
+		@Hidden
+		@Container
+		AgentExecutionConfig getOwner();
+
+		/**
 		 * The model to use for this agent.
 		 *
 		 * @see #MODEL
 		 */
 		@Name(MODEL)
-		@Options(fun = AllConfiguredModelOptions.class)
+		@Options(fun = ConfiguredModelOptions.class, args = @Ref(steps = {
+			@Step(OWNER),
+			@Step(AgentExecutionConfig.OWNER),
+			@Step(Config.PROVIDERS),
+		}))
 		@Constraint(value = ModelToolCallConstraint.class, args = @Ref(NAME_ATTRIBUTE))
 		String getModel();
 
@@ -302,15 +324,18 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 	/**
 	 * Provides all configured model names for selection in the admin UI.
+	 *
+	 * <p>
+	 * Derives the options from the {@link Config#getProviders() provider section} of the
+	 * configuration currently being edited, so a model added to a provider becomes selectable
+	 * immediately — without saving and restarting the service first.
+	 * </p>
 	 */
-	public static class AllConfiguredModelOptions extends Function0<List<String>> {
+	public static class ConfiguredModelOptions
+			extends Function1<List<String>, Map<String, LLMProviderConfig.Config>> {
 		@Override
-		public List<String> apply() {
-			LLMService service = getInstance();
-			if (service == null) {
-				return List.of();
-			}
-			return service.getConfiguredModelNames();
+		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
+			return modelNamesOf(providers);
 		}
 	}
 
@@ -329,7 +354,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		AgentExecutionConfig.DEFAULT_MODEL,
 		AgentExecutionConfig.AGENT_OVERRIDES,
 	})
-	public interface AgentExecutionConfig extends ConfigurationItem {
+	public interface AgentExecutionConfig extends ConfigPart {
 
 		/** Configuration property name for {@link #getChatEntryPoint()}. */
 		String CHAT_ENTRY_POINT = "chat-entry-point";
@@ -339,6 +364,20 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 
 		/** Configuration property name for {@link #getAgentOverrides()}. */
 		String AGENT_OVERRIDES = "agent-overrides";
+
+		/** @see #getOwner() */
+		String OWNER = "owner";
+
+		/**
+		 * The enclosing service {@link Config}, used to resolve configured models from its
+		 * {@link Config#getProviders() provider section} within the same edit form.
+		 *
+		 * @see #OWNER
+		 */
+		@Name(OWNER)
+		@Hidden
+		@Container
+		Config<?> getOwner();
 
 		/**
 		 * The agent that serves as the main entry point when a user opens a new chat session.
@@ -368,7 +407,10 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		 */
 		@Name(DEFAULT_MODEL)
 		@Mandatory
-		@Options(fun = AllConfiguredModelOptions.class)
+		@Options(fun = ConfiguredModelOptions.class, args = @Ref(steps = {
+			@Step(OWNER),
+			@Step(Config.PROVIDERS),
+		}))
 		String getDefaultModel();
 
 		/**
@@ -669,8 +711,24 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 	 * @return An immutable list of explicitly configured model names.
 	 */
 	public List<String> getConfiguredModelNames() {
+		return modelNamesOf(getConfig().getProviders());
+	}
+
+	/**
+	 * Collects the explicitly configured model names from the given provider map.
+	 *
+	 * @param providers
+	 *        The provider configurations keyed by name, or {@code null}.
+	 * @return An immutable list of the model names listed in each provider's
+	 *         {@link LLMProviderConfig.Config#getModels() allowlist}, de-duplicated in iteration
+	 *         order.
+	 */
+	static List<String> modelNamesOf(Map<String, LLMProviderConfig.Config> providers) {
+		if (providers == null) {
+			return List.of();
+		}
 		Set<String> result = new LinkedHashSet<>();
-		for (LLMProviderConfig.Config config : getConfig().getProviders().values()) {
+		for (LLMProviderConfig.Config config : providers.values()) {
 			List<String> models = config.getModels();
 			if (models != null) {
 				result.addAll(models);

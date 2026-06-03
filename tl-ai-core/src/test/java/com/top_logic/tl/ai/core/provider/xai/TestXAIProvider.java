@@ -11,22 +11,24 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.openai.OpenAIProvider;
+import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
 
 /**
- * Tests for {@link XAIProvider}.
+ * Tests for xAI provider creation via {@link XAIProviderConfig}.
  */
 public class TestXAIProvider extends TestCase {
 
@@ -38,8 +40,8 @@ public class TestXAIProvider extends TestCase {
 			return;
 		}
 
-		XAIProvider provider = new XAIProvider(apiKey);
-		String model = System.getProperty("xai.model", "grok-4.20-reasoning");
+		LLMProvider provider = createProvider(apiKey, XAIProviderConfig.Protocol.CHAT_COMPLETIONS);
+		String model = System.getProperty("xai.model", "grok-3-mini");
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -63,32 +65,9 @@ public class TestXAIProvider extends TestCase {
 	}
 
 	/** */
-	public void testRequestIncludesStoreTrue() throws Exception {
-		XAIProvider provider = new XAIProvider("test-key");
-
-		UserMessage msg = new UserMessage(
-			UUID.randomUUID().toString(),
-			Instant.now(),
-			List.of(new TextContent("Hello")));
-
-		ProviderRequest request = new ProviderRequest(
-			"grok-4.20-reasoning",
-			null,
-			List.of(msg),
-			List.of(),
-			1024,
-			Map.of());
-
-		Method buildRequestJson = OpenAIProvider.class.getDeclaredMethod("buildRequestJson", ProviderRequest.class);
-		buildRequestJson.setAccessible(true);
-		String json = (String) buildRequestJson.invoke(provider, request);
-		assertTrue("Request JSON must contain \"store\":true, was: " + json,
-			json.contains("\"store\":true"));
-	}
-
-	/** */
-	public void testToolArgumentsFromOutputItemDone() throws Exception {
-		XAIProvider provider = new XAIProvider("test-key");
+	public void testResponsesProtocolToolArgumentsFromOutputItemDone() throws Exception {
+		// Use an OpenAIResponsesProvider directly since that's what RESPONSES protocol produces.
+		OpenAIResponsesProvider provider = new OpenAIResponsesProvider("test-key", "https://api.x.ai");
 
 		String sse = ""
 			+ "event: message\n"
@@ -100,8 +79,8 @@ public class TestXAIProvider extends TestCase {
 			+ "event: message\n"
 			+ "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_1\",\"model\":\"grok-4.20-reasoning\",\"status\":\"completed\",\"usage\":{\"input_tokens\":5,\"output_tokens\":3}}}\n\n";
 
-		Method processStream = OpenAIProvider.class.getDeclaredMethod(
-			"processStream", java.io.InputStream.class, com.top_logic.tl.ai.core.provider.StreamHandler.class);
+		Method processStream = OpenAIResponsesProvider.class.getDeclaredMethod(
+			"processStream", java.io.InputStream.class, StreamHandler.class);
 		processStream.setAccessible(true);
 
 		List<StreamEvent> events = new ArrayList<>();
@@ -133,8 +112,8 @@ public class TestXAIProvider extends TestCase {
 			return;
 		}
 
-		XAIProvider provider = new XAIProvider(apiKey);
-		String model = System.getProperty("xai.model", "grok-4.20-reasoning");
+		LLMProvider provider = createProvider(apiKey, XAIProviderConfig.Protocol.CHAT_COMPLETIONS);
+		String model = System.getProperty("xai.model", "grok-3-mini");
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -160,6 +139,14 @@ public class TestXAIProvider extends TestCase {
 
 		boolean hasTextPart = complete.content().stream().anyMatch(ContentPart.class::isInstance);
 		assertTrue("Expected non-empty content in completion.", hasTextPart);
+	}
+
+	private static LLMProvider createProvider(String apiKey, XAIProviderConfig.Protocol protocol) {
+		XAIProviderConfig.Config config = TypedConfiguration.newConfigItem(XAIProviderConfig.Config.class);
+		config.setApiKey(apiKey);
+		config.setProtocol(protocol);
+		return new XAIProviderConfig(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config)
+			.createProvider();
 	}
 
 	private static String getApiKey() {

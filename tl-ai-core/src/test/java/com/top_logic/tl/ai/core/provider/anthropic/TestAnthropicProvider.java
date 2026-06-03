@@ -20,7 +20,7 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 
 /**
- * Integration tests for {@link AnthropicProvider}.
+ * Integration tests for {@link AnthropicMessagesProvider}.
  *
  * <p>Requires an API key via system property {@code anthropic.api.key}
  * or environment variable {@code ANTHROPIC_API_KEY}. Tests are skipped
@@ -36,7 +36,7 @@ public class TestAnthropicProvider extends TestCase {
 			return;
 		}
 
-		AnthropicProvider provider = new AnthropicProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),
@@ -99,7 +99,7 @@ public class TestAnthropicProvider extends TestCase {
 			return;
 		}
 
-		AnthropicProvider provider = new AnthropicProvider(apiKey);
+		AnthropicMessagesProvider provider = new AnthropicMessagesProvider(apiKey);
 
 		UserMessage userMsg = new UserMessage(
 			UUID.randomUUID().toString(),

@@ -52,11 +52,48 @@ public class ChatCompletionsRequestBuilder {
 	 * Builds the JSON request body, allowing a provider-specific {@code tool_choice} override.
 	 */
 	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride) {
+		return buildRequestJson(request, toolChoiceOverride, TokenLimitParam.MAX_TOKENS);
+	}
+
+	/**
+	 * Builds the JSON request body, allowing a provider-specific {@code tool_choice} override and
+	 * selecting which JSON field carries the output-token limit.
+	 *
+	 * @param tokenLimitParam
+	 *        Which field name the output-token limit is written under. Use
+	 *        {@link TokenLimitParam#MAX_COMPLETION_TOKENS} for GPT-5/o-series reasoning models on
+	 *        Azure <code>OpenAI</code>; {@link TokenLimitParam#MAX_TOKENS} for all other backends.
+	 */
+	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride,
+			TokenLimitParam tokenLimitParam) {
+		return buildRequestJson(request, toolChoiceOverride, tokenLimitParam, false);
+	}
+
+	/**
+	 * Builds the JSON request body, additionally requesting a streaming usage report.
+	 *
+	 * @param includeUsage
+	 *        When {@code true}, sets {@code stream_options.include_usage} so the server emits a final
+	 *        chunk carrying token usage. <code>OpenAI</code>, Azure <code>OpenAI</code> and <code>xAI</code> omit usage from streamed
+	 *        responses unless this flag is set; Mistral reports usage unconditionally and does not
+	 *        need it. Other parameters are as documented on the three-argument overload.
+	 */
+	public static String buildRequestJson(ProviderRequest request, String toolChoiceOverride,
+			TokenLimitParam tokenLimitParam, boolean includeUsage) {
 		ChatCompletionsRequest req = ChatCompletionsRequest.create()
 			.setModel(request.model())
-			.setMaxTokens(request.maxOutputTokens())
 			.setStream(true)
 			.setMessages(buildMessages(request));
+
+		if (includeUsage) {
+			req.setStreamOptions(Map.of("include_usage", Boolean.TRUE));
+		}
+
+		if (tokenLimitParam == TokenLimitParam.MAX_COMPLETION_TOKENS) {
+			req.setMaxCompletionTokens(request.maxOutputTokens());
+		} else {
+			req.setMaxTokens(request.maxOutputTokens());
+		}
 
 		writeSamplingParams(req, request.modelOptions());
 

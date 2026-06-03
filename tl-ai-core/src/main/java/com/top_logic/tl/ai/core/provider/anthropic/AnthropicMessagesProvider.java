@@ -44,7 +44,7 @@ import de.haumacher.msgbuf.json.JsonReader;
  * delegated to {@link AnthropicRequestBuilder}.
  * Thread-safe: a single instance handles concurrent streams.</p>
  */
-public class AnthropicProvider extends AbstractStreamingProvider {
+public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 
 	private static final String DEFAULT_BASE_URL = "https://api.anthropic.com";
 
@@ -52,24 +52,24 @@ public class AnthropicProvider extends AbstractStreamingProvider {
 
 	private final String _apiVersion;
 
-	/** Creates an {@link AnthropicProvider}. */
-	public AnthropicProvider(String apiKey) {
+	/** Creates an {@link AnthropicMessagesProvider}. */
+	public AnthropicMessagesProvider(String apiKey) {
 		this(apiKey, DEFAULT_BASE_URL, DEFAULT_API_VERSION);
 	}
 
-	/** Creates an {@link AnthropicProvider}. */
-	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion) {
+	/** Creates an {@link AnthropicMessagesProvider}. */
+	public AnthropicMessagesProvider(String apiKey, String baseUrl, String apiVersion) {
 		this(apiKey, baseUrl, apiVersion, defaultHttpClient());
 	}
 
-	/** Creates an {@link AnthropicProvider}. */
-	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion, HttpClient httpClient) {
+	/** Creates an {@link AnthropicMessagesProvider}. */
+	public AnthropicMessagesProvider(String apiKey, String baseUrl, String apiVersion, HttpClient httpClient) {
 		super(apiKey, baseUrl, httpClient);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
 	}
 
-	/** Creates an {@link AnthropicProvider} with configurable timeouts and headers. */
-	public AnthropicProvider(String apiKey, String baseUrl, String apiVersion,
+	/** Creates an {@link AnthropicMessagesProvider} with configurable timeouts and headers. */
+	public AnthropicMessagesProvider(String apiKey, String baseUrl, String apiVersion,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
 		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
@@ -77,7 +77,7 @@ public class AnthropicProvider extends AbstractStreamingProvider {
 	}
 
 	@Override
-	protected String endpointPath() {
+	protected String endpointPath(ProviderRequest request) {
 		return "/v1/messages";
 	}
 

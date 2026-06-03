@@ -91,10 +91,12 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		String body = buildRequestJson(request);
 		validateRequest(body);
 
+		String path = endpointPath(request);
+		URI uri = URI.create(_baseUrl + path);
 		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-			.uri(URI.create(_baseUrl + endpointPath()))
+			.uri(uri)
 			.header("Content-Type", "application/json")
-			.header("Accept", "text/event-stream")
+			.header("Accept", acceptHeader())
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
 			.timeout(_requestTimeout);
 
@@ -103,6 +105,10 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		addCustomHeaders(requestBuilder);
 
 		HttpRequest httpRequest = requestBuilder.build();
+
+		String dumpLabel = getClass().getSimpleName() + " " + request.model() + " @" + uri.getHost();
+		boolean dumpStream = StreamDump.enabled(dumpLabel);
+		long startNanos = System.nanoTime();
 
 		HttpResponse<InputStream> response;
 		try {
@@ -115,16 +121,24 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted", e);
 		}
 
+		if (dumpStream) {
+			Logger.info("[stream-dump " + dumpLabel + "] response status=" + response.statusCode()
+				+ ", headers received +" + (System.nanoTime() - startNanos) / 1_000_000L + "ms",
+				AbstractStreamingProvider.class);
+		}
+
 		if (response.statusCode() != 200) {
 			if (Logger.isDebugEnabled(AbstractStreamingProvider.class)) {
 				Logger.debug("LLM provider request failed: " + response.statusCode() + " "
-					+ _baseUrl + endpointPath() + "; request body: " + body, AbstractStreamingProvider.class);
+					+ _baseUrl + path + "; request body: " + body, AbstractStreamingProvider.class);
 			}
 			handleErrorResponse(response);
 		}
 
 		try (InputStream responseBody = response.body()) {
-			processStream(responseBody, handler);
+			InputStream parseInput =
+				dumpStream ? StreamDump.wrap(responseBody, dumpLabel, startNanos) : responseBody;
+			processStream(parseInput, handler);
 		} catch (ProviderException e) {
 			throw e;
 		} catch (IOException e) {
@@ -136,9 +150,16 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	// --- Abstract methods (subclass must implement) ---
 
 	/**
-	 * The API endpoint path, e.g. {@code "/v1/messages"}.
+	 * The API endpoint path for the given request, e.g. {@code "/v1/messages"}.
+	 *
+	 * <p>The {@code request} parameter is provided so that providers whose endpoint encodes the
+	 * model name (e.g. Azure <code>OpenAI</code>) can compute the path dynamically. Simple providers that use
+	 * a fixed path may ignore it.</p>
+	 *
+	 * @param request
+	 *        The request about to be sent. Never {@code null}.
 	 */
-	protected abstract String endpointPath();
+	protected abstract String endpointPath(ProviderRequest request);
 
 	/**
 	 * Builds the provider-specific JSON request body.
@@ -191,6 +212,16 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	}
 
 	/**
+	 * The value for the {@code Accept} request header.
+	 *
+	 * <p>Defaults to {@code "text/event-stream"} for SSE-based providers. Override to specify a
+	 * different media type (e.g. {@code "application/vnd.amazon.eventstream"} for Bedrock).</p>
+	 */
+	protected String acceptHeader() {
+		return "text/event-stream";
+	}
+
+	/**
 	 * Adds custom headers configured at construction time. Applied after all other headers so they
 	 * can override provider-specific values.
 	 */
@@ -224,10 +255,26 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	/**
 	 * Parses the {@code retry-after} header as a duration in seconds.
 	 *
-	 * @return the duration, or {@code null} if the header is absent or unparseable.
+	 * <p>When {@code retry-after} is absent or unparseable, falls back to the
+	 * {@code ratelimit-reset} header (also interpreted as whole seconds). This covers gateways
+	 * that send only {@code ratelimit-reset} without a {@code retry-after} header.</p>
+	 *
+	 * @return the duration, or {@code null} if neither header is present or parseable.
 	 */
 	protected Duration parseRetryAfter(java.net.http.HttpHeaders headers) {
-		return headers.firstValue("retry-after")
+		Duration primary = headers.firstValue("retry-after")
+			.map(value -> {
+				try {
+					return Duration.ofSeconds(Long.parseLong(value));
+				} catch (NumberFormatException e) {
+					return null;
+				}
+			})
+			.orElse(null);
+		if (primary != null) {
+			return primary;
+		}
+		return headers.firstValue("ratelimit-reset")
 			.map(value -> {
 				try {
 					return Duration.ofSeconds(Long.parseLong(value));

@@ -9,8 +9,8 @@
 		tabIcon="theme:TL_CHAT_AGENT"
 	>
 		<tabLabel key="dynamic.6b7ef77c-d359-4f47-a5fc-935fff9a54b6">
-			<en>Agent</en>
-			<de>Agent</de>
+			<en>Albert</en>
+			<de>Albert</de>
 		</tabLabel>
 		<components>
 			<layout-reference resource="tl-chat/chat/agent.layout.xml"/>

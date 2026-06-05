@@ -2193,3 +2193,23 @@
 	width: 14px;
 	height: 14px;
 }
+
+/* ========================================
+ * Sidebar agent icon (Albert)
+ * ----------------------------------------
+ * The neighbouring sidebar/accordion icons are FontAwesome glyphs
+ * (<i class="fa-solid ...">), which the FA stylesheet renders at 1em and
+ * shifts down by vertical-align:-.125em so they sit optically centred on the
+ * label. Albert is a custom SVG rendered as an <img class="accIcon">, which
+ * defaults to its intrinsic 24px size aligned to the text baseline -- so it
+ * appears larger and higher than its neighbours. Match the FA metrics so it
+ * lines up. Scoped to the Albert icon only.
+ * ======================================== */
+img.accIcon[src$="albert.svg"] {
+	/* Tune this one value to scale Albert relative to the label text. */
+	width: 1.4em;
+	height: 1.4em;
+	/* "middle" keeps the larger icon optically centred on the label
+	   (the -.125em baseline trick only works at 1em). */
+	vertical-align: middle;
+}

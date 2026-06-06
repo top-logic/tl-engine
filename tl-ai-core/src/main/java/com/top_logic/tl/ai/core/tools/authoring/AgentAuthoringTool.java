@@ -90,14 +90,16 @@ public class AgentAuthoringTool {
 	 *        The skill's instruction content (markdown).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new skill (reusable instruction text) in the knowledge base")
+	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the knowledge base")
 	public String createSkill(
-			@P("Unique skill name") String name,
-			@P("Short description shown in the skill catalog") String description,
-			@P("The skill's instruction content (markdown)") String content) {
+			@P("Unique skill name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
+			@P("Short description that tells the agent WHEN to load this skill, not what it does internally") String description,
+			@P("Skill content — use XML tags for sections (<core_rules>, <workflow>, etc.), flat imperative rules, no filler prose") String content,
+			@P(value = "Qualified tool names this skill provides when loaded (see listAvailableTools); omit for none",
+				required = false) List<String> tools) {
 		try {
 			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doCreateSkill(name, description, content));
+				() -> doCreateSkill(name, description, content, tools));
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "createSkill()");
 		} catch (Exception ex) {
 			Logger.error("createSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
@@ -106,17 +108,20 @@ public class AgentAuthoringTool {
 		}
 	}
 
-	private OperationResult doCreateSkill(String name, String description, String content) {
+	private OperationResult doCreateSkill(String name, String description, String content,
+			List<String> tools) {
 		requireName(name, "Skill");
 		if (findSkill(name) != null) {
 			throw new IllegalArgumentException("A skill named '" + name + "' already exists.");
 		}
+		validateSkillTools(tools);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Create skill: " + name))) {
 			Skill skill = TlAiCoreFactory.getInstance().createSkill();
 			skill.setName(name);
 			skill.setDescription(description);
 			skill.setContent(content);
+			skill.setTools(toSet(tools));
 			tx.commit();
 		}
 		return success("Skill '" + name + "' created.");
@@ -136,11 +141,13 @@ public class AgentAuthoringTool {
 	@ToolMethod(description = "Update an existing knowledge-base skill. Omitted fields are left unchanged.")
 	public String updateSkill(
 			@P("Name of the skill to update") String name,
-			@P(value = "New description (omit to leave unchanged)", required = false) String description,
-			@P(value = "New content (omit to leave unchanged)", required = false) String content) {
+			@P(value = "New description — tells the agent WHEN to load (omit to leave unchanged)", required = false) String description,
+			@P(value = "New content — use XML tags, flat imperative rules, no filler (omit to leave unchanged)", required = false) String content,
+			@P(value = "New tool list (omit to leave unchanged; empty replaces with none)",
+				required = false) List<String> tools) {
 		try {
 			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doUpdateSkill(name, description, content));
+				() -> doUpdateSkill(name, description, content, tools));
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "updateSkill()");
 		} catch (Exception ex) {
 			Logger.error("updateSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
@@ -149,10 +156,14 @@ public class AgentAuthoringTool {
 		}
 	}
 
-	private OperationResult doUpdateSkill(String name, String description, String content) {
+	private OperationResult doUpdateSkill(String name, String description, String content,
+			List<String> tools) {
 		Skill skill = findSkill(name);
 		if (skill == null) {
 			throw new IllegalArgumentException("No knowledge-base skill named '" + name + "'.");
+		}
+		if (tools != null) {
+			validateSkillTools(tools);
 		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Update skill: " + name))) {
@@ -161,6 +172,9 @@ public class AgentAuthoringTool {
 			}
 			if (content != null) {
 				skill.setContent(content);
+			}
+			if (tools != null) {
+				skill.setTools(toSet(tools));
 			}
 			tx.commit();
 		}
@@ -214,6 +228,7 @@ public class AgentAuthoringTool {
 			SkillSummary summary = SkillSummary.create();
 			summary.setName(skill.getName());
 			summary.setDescription(skill.getDescription());
+			summary.setTools(new ArrayList<>(skill.getTools()));
 			result.addSkill(summary);
 		}
 		return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "listSkills()");
@@ -237,6 +252,7 @@ public class AgentAuthoringTool {
 			detail.setExists(true);
 			detail.setDescription(skill.getDescription());
 			detail.setContent(skill.getContent());
+			detail.setTools(new ArrayList<>(skill.getTools()));
 		}
 		return DataClassSerializer.toJson(detail, AgentAuthoringTool.class, "getSkill()");
 	}
@@ -264,9 +280,9 @@ public class AgentAuthoringTool {
 	 */
 	@ToolMethod(description = "Create a new agent in the knowledge base")
 	public String createAgent(
-			@P("Unique agent name") String name,
+			@P("Unique agent name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description of the agent") String description,
-			@P("System prompt for the agent") String systemPrompt,
+			@P("System prompt — use XML tags for sections, flat imperative rules, start with identity sentence") String systemPrompt,
 			@P(value = "Qualified tool names the agent may use (see listAvailableTools); omit for none",
 				required = false) List<String> tools,
 			@P(value = "MCP server names the agent may use; omit for none", required = false) List<String> mcpServers,
@@ -574,6 +590,23 @@ public class AgentAuthoringTool {
 			}
 		}
 		return warnings;
+	}
+
+	private static void validateSkillTools(List<String> tools) {
+		if (tools == null || tools.isEmpty()) {
+			return;
+		}
+		Set<String> validTools = ToolRegistryService.getInstance().getToolNames();
+		List<String> unknown = new ArrayList<>();
+		for (String tool : tools) {
+			if (!validTools.contains(tool)) {
+				unknown.add(tool);
+			}
+		}
+		if (!unknown.isEmpty()) {
+			throw new IllegalArgumentException("Unknown tool(s): " + unknown
+				+ ". Call listAvailableTools to see valid qualified tool names.");
+		}
 	}
 
 	private static void requireName(String name, String kind) {

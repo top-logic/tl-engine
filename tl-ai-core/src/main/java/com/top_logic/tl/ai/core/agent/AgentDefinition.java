@@ -22,14 +22,14 @@ import java.util.List;
  * {@link com.top_logic.tl.ai.core.provider.LLMService LLMService}.
  * </p>
  *
- * @param name              unique agent name
- * @param description       human-readable description (shown in delegation catalogs)
- * @param systemPrompt      the agent's system prompt text
- * @param tools             qualified tool names (e.g. "model-browser.listModules")
- * @param mcpServers        MCP server names
- * @param skills            skill names (resolved via layered lookup)
- * @param delegations       agent names this agent can delegate to
- * @param source            where this definition originated
+ * @param name                  unique agent name
+ * @param description           human-readable description (shown in delegation catalogs)
+ * @param systemPrompt          the agent's system prompt text
+ * @param tools                 qualified tool names (e.g. "model-browser.listModules")
+ * @param mcpServers            MCP server names
+ * @param skills                skill names (resolved via layered lookup)
+ * @param delegations           agent names this agent can delegate to
+ * @param source                where this definition originated
  */
 public record AgentDefinition(
 		String name,

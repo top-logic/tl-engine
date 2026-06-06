@@ -28,6 +28,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
@@ -172,8 +173,11 @@ public class ChatProcessor {
 			// Allow sub-agent approval events to bubble up to the SSE handler
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
-			String result = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
-				() -> agentFactory.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener));
+			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
+			AgentFactory.RunResult runResult = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
+				() -> agentFactory.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener, sessionRegistry));
+			taskTracker.setActiveToolRegistry(runResult.registry());
+			String result = runResult.response();
 			state.setLastAgentResponse(result);
 
 			state.addPendingMessage(new ChatMessage("Agent", result));

@@ -5,24 +5,20 @@
  */
 package com.top_logic.tl.ai.core.agent.skills;
 
-import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
+import java.util.List;
 
 /**
- * An instruction fragment that can be loaded into an AI agent's context on demand via
- * {@link SkillTool}.
+ * Immutable runtime representation of a skill available to an agent.
  *
- * <p>
- * Skills are stored in the knowledge base. Agents discover available skills via a catalog in their
- * system prompt and load them at runtime by calling {@code loadSkill(id)}.
- * </p>
- *
- * @param id
- *        Unique skill identifier. Used by the agent to call {@code loadSkill(id)}.
- * @param description
- *        Human-readable description shown in the system prompt catalog.
- * @param content
- *        The actual prompt text.
+ * @param id          skill identifier
+ * @param description human-readable description
+ * @param content     full prompt text
+ * @param tools       qualified tool names delivered by this skill (may be empty)
  */
-public record Skill(String id, String description, String content) {
-	// Immutable value object — no additional methods needed.
+public record Skill(String id, String description, String content, List<String> tools) {
+
+	/** */
+	public Skill {
+		tools = tools != null ? List.copyOf(tools) : List.of();
+	}
 }

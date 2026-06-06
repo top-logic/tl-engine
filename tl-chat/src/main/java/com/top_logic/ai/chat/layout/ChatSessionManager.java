@@ -11,7 +11,6 @@ import java.util.Map;
 import com.top_logic.ai.chat.api.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
-import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -19,9 +18,12 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
+import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 
 /**
@@ -77,6 +79,12 @@ public class ChatSessionManager {
 		ConversationLog _conversationLog;
 
 		TaskStore _taskStore;
+
+		/**
+		 * Session-scoped tool registry (typically a {@link DynamicToolCatalog}).
+		 * Persists across agent runs so dynamically loaded tools survive between messages.
+		 */
+		ToolRegistry _toolRegistry;
 
 		/** */
 		SessionState(Chat chat, ConversationMemory conversationMemory) {
@@ -155,6 +163,28 @@ public class ChatSessionManager {
 				return state._taskStore;
 			}
 			return new TaskStore();
+		}
+	}
+
+	/**
+	 * Returns the active session's {@link ToolRegistry}, or {@code null} if none has been set.
+	 */
+	public ToolRegistry getActiveToolRegistry() {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			return state != null ? state._toolRegistry : null;
+		}
+	}
+
+	/**
+	 * Sets the active session's {@link ToolRegistry}.
+	 */
+	public void setActiveToolRegistry(ToolRegistry registry) {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state != null) {
+				state._toolRegistry = registry;
+			}
 		}
 	}
 

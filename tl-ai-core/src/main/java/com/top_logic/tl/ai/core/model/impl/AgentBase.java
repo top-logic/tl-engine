@@ -19,7 +19,7 @@ public interface AgentBase extends com.top_logic.model.TLNamed {
 
 	/**
 	 * Part <code>delegations</code> of <code>Agent</code>
-	 * 
+	 *
 	 * <p>
 	 * Declared as <code>tl.core:String</code> in configuration.
 	 * </p>

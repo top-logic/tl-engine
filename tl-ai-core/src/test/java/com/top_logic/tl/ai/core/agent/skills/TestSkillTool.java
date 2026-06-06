@@ -6,25 +6,45 @@
 package com.top_logic.tl.ai.core.agent.skills;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
+import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /** */
 public class TestSkillTool extends TestCase {
 
 	private SkillTool _tool;
 
+	private DynamicToolCatalog _dynamicCatalog;
+
 	@Override
 	protected void setUp() {
+		ToolCatalog base = new ToolCatalog();
+		base.freeze();
+		_dynamicCatalog = new DynamicToolCatalog(base);
+
 		Map<String, Skill> skills = new LinkedHashMap<>();
 		skills.put("test/frontmatter-skill",
-			new Skill("test/frontmatter-skill", "A test skill with frontmatter", "FRONTMATTER RULE content"));
+			new Skill("test/frontmatter-skill", "A test skill with frontmatter",
+				"FRONTMATTER RULE content", List.of("test.toolA", "test.toolB")));
 		skills.put("test/sample-skill",
-			new Skill("test/sample-skill", "test/sample-skill", "SAMPLE RULE content"));
-		_tool = new SkillTool(skills);
+			new Skill("test/sample-skill", "test/sample-skill",
+				"SAMPLE RULE content", List.of()));
+		skills.put("test/unresolvable-skill",
+			new Skill("test/unresolvable-skill", "A skill with bad tools",
+				"UNRESOLVABLE content", List.of("nonexistent.tool")));
+
+		_tool = new SkillTool(skills, _dynamicCatalog, TestSkillTool::resolveTool);
 	}
 
 	/** */
@@ -43,5 +63,67 @@ public class TestSkillTool extends TestCase {
 	public void testLoadSkillListsAvailableOnError() {
 		String result = _tool.loadSkill("nonexistent/skill");
 		assertTrue("Should list available skills", result.contains("test/frontmatter-skill"));
+	}
+
+	/** Loading a skill with tools adds them to the dynamic catalog. */
+	public void testLoadSkillAddsToolsToCatalog() {
+		assertNull("toolA not in catalog before load", _dynamicCatalog.getTool("test.toolA"));
+
+		_tool.loadSkill("test/frontmatter-skill");
+
+		assertNotNull("toolA in catalog after load", _dynamicCatalog.getTool("test.toolA"));
+		assertNotNull("toolB in catalog after load", _dynamicCatalog.getTool("test.toolB"));
+	}
+
+	/** Loading a skill with no tools still works (no overlay added). */
+	public void testLoadSkillWithNoToolsAddsNoOverlay() {
+		String result = _tool.loadSkill("test/sample-skill");
+		assertTrue("Should still return content", result.contains("SAMPLE RULE"));
+	}
+
+	/** Loading the same skill twice doesn't duplicate tools. */
+	public void testIdempotentLoad() {
+		_tool.loadSkill("test/frontmatter-skill");
+		String secondResult = _tool.loadSkill("test/frontmatter-skill");
+
+		// Should have 2 tool schemas (toolA, toolB), not 4
+		assertEquals(2, _dynamicCatalog.toolSchemas(t -> true).size());
+		// Second load should return short message, not full content
+		assertTrue("Should say already loaded", secondResult.contains("already loaded"));
+		assertFalse("Should NOT contain full skill content",
+			secondResult.contains("FRONTMATTER RULE"));
+	}
+
+	/** Result includes list of added tools. */
+	public void testResultListsAddedTools() {
+		String result = _tool.loadSkill("test/frontmatter-skill");
+		assertTrue("Should list added tools", result.contains("test.toolA"));
+		assertTrue("Should list added tools", result.contains("test.toolB"));
+	}
+
+	/** Unresolvable tool names are skipped with a warning in the result. */
+	public void testUnresolvableToolSkipped() {
+		String result = _tool.loadSkill("test/unresolvable-skill");
+		assertTrue("Should contain content", result.contains("UNRESOLVABLE"));
+	}
+
+	// ===== Helpers =====
+
+	private static Tool resolveTool(String qualifiedName) {
+		if (qualifiedName.startsWith("nonexistent.")) {
+			return null;
+		}
+		return new Tool() {
+			@Override public String name() { return qualifiedName; }
+			@Override public String description() { return "Stub: " + qualifiedName; }
+			@Override public ToolSchema schema() {
+				return new ToolSchema(qualifiedName, description(),
+					"{\"type\":\"object\",\"properties\":{}}");
+			}
+			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+				return ToolResult.of("ok");
+			}
+			@Override public ToolMode mode() { return ToolMode.READ; }
+		};
 	}
 }

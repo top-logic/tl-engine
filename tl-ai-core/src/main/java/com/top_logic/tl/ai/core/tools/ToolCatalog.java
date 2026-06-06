@@ -42,7 +42,7 @@ import de.haumacher.msgbuf.json.JsonToken;
  * @see Tool
  * @see AnnotatedTools
  */
-public class ToolCatalog implements ToolExecutor {
+public class ToolCatalog implements ToolRegistry {
 
 	private final Map<String, Tool> _tools = new LinkedHashMap<>();
 
@@ -125,6 +125,7 @@ public class ToolCatalog implements ToolExecutor {
 	}
 
 	/** Looks up a tool by name, or {@code null} if not registered. */
+	@Override
 	public Tool getTool(String name) {
 		return _tools.get(name);
 	}
@@ -145,6 +146,7 @@ public class ToolCatalog implements ToolExecutor {
 	}
 
 	/** Schemas of registered tools matching the given predicate. */
+	@Override
 	public List<ToolSchema> toolSchemas(Predicate<Tool> filter) {
 		return _tools.values().stream().filter(filter).map(Tool::schema).toList();
 	}
@@ -158,6 +160,17 @@ public class ToolCatalog implements ToolExecutor {
 			return failedResult(toolCall, start,
 				"Unknown tool: '" + toolCall.name() + "'. Available: " + _tools.keySet());
 		}
+
+		return executeTool(tool, toolCall, context);
+	}
+
+	/**
+	 * Execute a resolved tool with JSON argument parsing and error wrapping.
+	 *
+	 * <p>Package-private: shared between {@link ToolCatalog} and {@link DynamicToolCatalog}.</p>
+	 */
+	static ToolResultMessage executeTool(Tool tool, ToolCall toolCall, ToolContext context) {
+		Instant start = Instant.now();
 
 		Map<String, Object> args;
 		try {
@@ -185,7 +198,7 @@ public class ToolCatalog implements ToolExecutor {
 		}
 	}
 
-	private static String sanitizeError(Exception e) {
+	static String sanitizeError(Exception e) {
 		String message = e.getMessage();
 		if (message == null || message.isEmpty()) {
 			return e.getClass().getSimpleName();
@@ -193,7 +206,7 @@ public class ToolCatalog implements ToolExecutor {
 		return message;
 	}
 
-	private static ToolResultMessage failedResult(ToolCall toolCall, Instant start, String error) {
+	static ToolResultMessage failedResult(ToolCall toolCall, Instant start, String error) {
 		Instant end = Instant.now();
 		return new ToolResultMessage(
 			UUID.randomUUID().toString(), Instant.now(),

@@ -21,9 +21,14 @@ public class SkillSummary extends de.haumacher.msgbuf.data.AbstractDataObject im
 	/** @see #getDescription() */
 	public static final String DESCRIPTION__PROP = "description";
 
+	/** @see #getTools() */
+	public static final String TOOLS__PROP = "tools";
+
 	private String _name = "";
 
 	private String _description = "";
+
+	private final java.util.List<String> _tools = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link SkillSummary} instance.
@@ -74,6 +79,47 @@ public class SkillSummary extends de.haumacher.msgbuf.data.AbstractDataObject im
 		_description = value;
 	}
 
+	/**
+	 * Qualified tool names assigned to this skill.
+	 */
+	public final java.util.List<String> getTools() {
+		return _tools;
+	}
+
+	/**
+	 * @see #getTools()
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.SkillSummary setTools(java.util.List<? extends String> value) {
+		internalSetTools(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTools()} without chain call utility. */
+	protected final void internalSetTools(java.util.List<? extends String> value) {
+		_tools.clear();
+		_tools.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getTools()} list.
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.SkillSummary addTool(String value) {
+		internalAddTool(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addTool(String)} without chain call utility. */
+	protected final void internalAddTool(String value) {
+		_tools.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getTools()} list.
+	 */
+	public final void removeTool(String value) {
+		_tools.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return SKILL_SUMMARY__TYPE;
@@ -83,7 +129,8 @@ public class SkillSummary extends de.haumacher.msgbuf.data.AbstractDataObject im
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			NAME__PROP, 
-			DESCRIPTION__PROP);
+			DESCRIPTION__PROP, 
+			TOOLS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -110,6 +157,7 @@ public class SkillSummary extends de.haumacher.msgbuf.data.AbstractDataObject im
 		switch (field) {
 			case NAME__PROP: return getName();
 			case DESCRIPTION__PROP: return getDescription();
+			case TOOLS__PROP: return getTools();
 			default: return null;
 		}
 	}
@@ -119,6 +167,7 @@ public class SkillSummary extends de.haumacher.msgbuf.data.AbstractDataObject im
 		switch (field) {
 			case NAME__PROP: internalSetName((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
+			case TOOLS__PROP: internalSetTools(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
 	}
 
@@ -141,6 +190,12 @@ public class SkillSummary extends de.haumacher.msgbuf.data.AbstractDataObject im
 		out.value(getName());
 		out.name(DESCRIPTION__PROP);
 		out.value(getDescription());
+		out.name(TOOLS__PROP);
+		out.beginArray();
+		for (String x : getTools()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -148,6 +203,16 @@ public class SkillSummary extends de.haumacher.msgbuf.data.AbstractDataObject im
 		switch (field) {
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case TOOLS__PROP: {
+				java.util.List<String> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
+				}
+				in.endArray();
+				setTools(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

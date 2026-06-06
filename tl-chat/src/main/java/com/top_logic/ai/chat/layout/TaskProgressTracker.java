@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
@@ -204,6 +205,20 @@ public class TaskProgressTracker {
 	 */
 	public TaskStore getActiveTaskStore() {
 		return _sessionManager.getActiveTaskStore();
+	}
+
+	/**
+	 * Returns the session-scoped tool registry, or {@code null} if not yet created.
+	 */
+	public ToolRegistry getActiveToolRegistry() {
+		return _sessionManager.getActiveToolRegistry();
+	}
+
+	/**
+	 * Sets the session-scoped tool registry.
+	 */
+	public void setActiveToolRegistry(ToolRegistry registry) {
+		_sessionManager.setActiveToolRegistry(registry);
 	}
 
 	/**

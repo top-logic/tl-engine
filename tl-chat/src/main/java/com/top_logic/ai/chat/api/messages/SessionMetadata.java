@@ -183,7 +183,7 @@ public class SessionMetadata extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
-	 * Skill IDs loaded via loadSkill() in this session, for replay on restore.
+	 * Skill IDs loaded in this session, for replay on restore.
 	 */
 	public final java.util.List<String> getLoadedSkills() {
 		return _loadedSkills;

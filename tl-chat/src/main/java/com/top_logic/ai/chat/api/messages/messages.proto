@@ -672,7 +672,7 @@ message SessionMetadata {
 	/** Serialized <code>TaskStore</code> JSON (<code>PersistedTaskStore</code> format). */
 	string tasksJson;
 
-	/** Skill IDs loaded via loadSkill() in this session, for replay on restore. */
+	/** Skill IDs loaded in this session, for replay on restore. */
 	repeated string loadedSkills;
 }
 

@@ -12,6 +12,7 @@ import java.util.UUID;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -514,6 +515,87 @@ public class TestBedrockConverseRequestBuilder extends TestCase {
 		assertTrue("newest user turn must be cached", lastBlockIsCachePoint(messages.get(4)));
 		// Assistant turns are never cached.
 		assertFalse("assistant turn must NOT be cached", lastBlockIsCachePoint(messages.get(1)));
+	}
+
+	/** Test I: image content block (data URI) is serialized as Bedrock ImageBlock. */
+	public void testImageContentDataUri() throws Exception {
+		String base64Payload = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ";
+		ImageContent image = new ImageContent(
+			"data:image/png;base64," + base64Payload, "image/png");
+
+		UserMessage user = new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("What is in this image?"), image));
+
+		ProviderRequest request = new ProviderRequest(
+			"anthropic.claude-3-haiku-20240307-v1:0", null,
+			List.of(user), List.of(), 256);
+
+		String json = BedrockConverseRequestBuilder.buildRequestJson(request);
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> root =
+			(java.util.Map<String, Object>) JsonUtil.parseJsonValue(json);
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> messages = (java.util.List<Object>) root.get("messages");
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> msg = (java.util.Map<String, Object>) messages.get(0);
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> content = (java.util.List<Object>) msg.get("content");
+
+		// text block + image block + trailing cachePoint
+		assertEquals(3, content.size());
+
+		// text block
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> textBlock = (java.util.Map<String, Object>) content.get(0);
+		assertEquals("What is in this image?", textBlock.get("text"));
+
+		// image block: {"image": {"format": "png", "source": {"bytes": "<base64>"}}}
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> imageBlockWrapper = (java.util.Map<String, Object>) content.get(1);
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> imageBlock =
+			(java.util.Map<String, Object>) imageBlockWrapper.get("image");
+		assertNotNull("image block must be present", imageBlock);
+		assertEquals("png", imageBlock.get("format"));
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> source = (java.util.Map<String, Object>) imageBlock.get("source");
+		assertNotNull("image source must be present", source);
+		assertEquals(base64Payload, source.get("bytes"));
+	}
+
+	/** Test J: JPEG image with jpg subtype normalizes format to "jpeg". */
+	public void testImageContentJpgNormalization() throws Exception {
+		ImageContent image = new ImageContent(
+			"data:image/jpg;base64,/9j/4AAQ", "image/jpg");
+
+		UserMessage user = new UserMessage(
+			UUID.randomUUID().toString(), Instant.now(),
+			List.of(new TextContent("Describe this."), image));
+
+		ProviderRequest request = new ProviderRequest(
+			"anthropic.claude-3-haiku-20240307-v1:0", null,
+			List.of(user), List.of(), 256);
+
+		String json = BedrockConverseRequestBuilder.buildRequestJson(request);
+
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> root =
+			(java.util.Map<String, Object>) JsonUtil.parseJsonValue(json);
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> messages = (java.util.List<Object>) root.get("messages");
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> msg = (java.util.Map<String, Object>) messages.get(0);
+		@SuppressWarnings("unchecked")
+		java.util.List<Object> content = (java.util.List<Object>) msg.get("content");
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> imageBlockWrapper = (java.util.Map<String, Object>) content.get(1);
+		@SuppressWarnings("unchecked")
+		java.util.Map<String, Object> imageBlock =
+			(java.util.Map<String, Object>) imageBlockWrapper.get("image");
+		assertEquals("jpeg", imageBlock.get("format"));
 	}
 
 	private static boolean isCachePoint(Object block) {

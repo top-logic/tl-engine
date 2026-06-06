@@ -35,7 +35,7 @@ public class TestAgentAuthoringTool extends BasicTestCase {
 	}
 
 	public void testCreateGetListUpdateDeleteSkill() throws Exception {
-		String create = _tool.createSkill("authoring-test-skill", "A test skill", "Step 1. Do the thing.");
+		String create = _tool.createSkill("authoring-test-skill", "A test skill", "Step 1. Do the thing.", null);
 		assertTrue("create should report success: " + create, create.contains("\"success\":true"));
 
 		Skill skill = findSkill("authoring-test-skill");
@@ -49,7 +49,7 @@ public class TestAgentAuthoringTool extends BasicTestCase {
 		String list = _tool.listSkills();
 		assertTrue("listSkills should include the new skill: " + list, list.contains("authoring-test-skill"));
 
-		String update = _tool.updateSkill("authoring-test-skill", null, "Step 1. Do it better.");
+		String update = _tool.updateSkill("authoring-test-skill", null, "Step 1. Do it better.", null);
 		assertTrue("update should report success: " + update, update.contains("\"success\":true"));
 		assertEquals("content replaced", "Step 1. Do it better.", findSkill("authoring-test-skill").getContent());
 		assertEquals("description unchanged", "A test skill", findSkill("authoring-test-skill").getDescription());

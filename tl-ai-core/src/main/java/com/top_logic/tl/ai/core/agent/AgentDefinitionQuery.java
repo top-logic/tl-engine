@@ -198,11 +198,13 @@ public class AgentDefinitionQuery {
 			source);
 	}
 
-	private SkillDefinition toSkillDefinition(Skill skill, AgentSource source) {
+	private SkillDefinition toSkillDefinition(
+			com.top_logic.tl.ai.core.model.Skill skill, AgentSource source) {
 		return new SkillDefinition(
 			skill.getName(),
 			skill.getDescription(),
 			skill.getContent(),
+			List.copyOf(skill.getTools()),
 			source);
 	}
 

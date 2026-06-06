@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
@@ -29,10 +31,6 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -46,7 +44,12 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -85,7 +88,7 @@ public class AgentLoop {
 
 	private final LLMProvider _provider;
 
-	private final ToolCatalog _registry;
+	private final ToolRegistry _registry;
 
 	private final int _maxResultChars;
 
@@ -97,13 +100,23 @@ public class AgentLoop {
 	private final Set<String> _turnDeniedCallIds = ConcurrentHashMap.newKeySet();
 
 	/**
+	 * Tracks recent tool calls by signature ({@code name + "\0" + arguments}) to detect
+	 * duplicate calls. Maps signature to consecutive repeat count. Reset when a different
+	 * tool call is made.
+	 */
+	private final Map<String, Integer> _recentToolCallCounts = new LinkedHashMap<>();
+
+	/** Maximum times the same tool+args combination may be called before being blocked. */
+	private static final int MAX_DUPLICATE_TOOL_CALLS = 2;
+
+	/**
 	 * Creates a new agent loop with default result truncation.
 	 *
 	 * @param config   loop configuration
 	 * @param provider LLM provider for streaming responses
 	 * @param registry tool registry for tool lookup and execution
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry) {
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry) {
 		this(config, provider, registry, DEFAULT_MAX_RESULT_CHARS);
 	}
 
@@ -115,7 +128,7 @@ public class AgentLoop {
 	 * @param registry       tool registry for tool lookup and execution
 	 * @param maxResultChars maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
 			int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -135,7 +148,7 @@ public class AgentLoop {
 	 * @param registry tool registry for tool lookup and execution
 	 * @param memory   conversation memory with token tracking and compaction
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
 			ConversationMemory memory) {
 		this(config, provider, registry, memory, DEFAULT_MAX_RESULT_CHARS);
 	}
@@ -150,7 +163,7 @@ public class AgentLoop {
 	 * @param memory           conversation memory with token tracking and compaction
 	 * @param maxResultChars   maximum characters per tool result before truncation
 	 */
-	public AgentLoop(AgentParams config, LLMProvider provider, ToolCatalog registry,
+	public AgentLoop(AgentParams config, LLMProvider provider, ToolRegistry registry,
 			ConversationMemory memory, int maxResultChars) {
 		_config = Objects.requireNonNull(config, "Config must not be null.");
 		_provider = Objects.requireNonNull(provider, "Provider must not be null.");
@@ -563,9 +576,41 @@ public class AgentLoop {
 	private void executeSingle(ToolCall toolCall, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
+		ToolResultMessage duplicateResult = checkDuplicateToolCall(toolCall);
+		if (duplicateResult != null) {
+			conversation.add(duplicateResult);
+			reportResult(toolCall, duplicateResult, listener, runId, turn, _turnDeniedCallIds);
+			return;
+		}
+
 		ToolResultMessage result = executeWithSecurityCheck(toolCall, context, listener, runId, turn);
 		conversation.add(result);
 		reportResult(toolCall, result, listener, runId, turn, _turnDeniedCallIds);
+	}
+
+	/**
+	 * Checks if this tool call is a duplicate of a recent call with the same name and arguments.
+	 * Returns a synthetic error result if the call has been made too many times, {@code null}
+	 * otherwise.
+	 *
+	 * <p>Allows each unique tool+args combination up to {@link #MAX_DUPLICATE_TOOL_CALLS} times
+	 * (to account for legitimate retries). Beyond that, the call is blocked with a message
+	 * directing the LLM to use the result it already received.</p>
+	 */
+	private ToolResultMessage checkDuplicateToolCall(ToolCall toolCall) {
+		String signature = toolCall.name() + "\0" + toolCall.arguments();
+		int count = _recentToolCallCounts.merge(signature, 1, Integer::sum);
+
+		if (count > MAX_DUPLICATE_TOOL_CALLS) {
+			return errorResult(toolCall,
+				"DUPLICATE CALL BLOCKED: You have already called '" + toolCall.name()
+				+ "' with these exact arguments " + (count - 1) + " time(s). "
+				+ "The result is already in your conversation. "
+				+ "Use the result you already received instead of calling again. "
+				+ "If you need different information, call the tool with DIFFERENT arguments.");
+		}
+
+		return null;
 	}
 
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
@@ -831,6 +876,14 @@ public class AgentLoop {
 	private AssistantMessage callProviderOnce(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		List<ToolSchema> filteredTools = _registry.toolSchemas(new ToolPermissionFilter(context.security()));
+
+		if (Logger.isDebugEnabled(AgentLoop.class)) {
+			List<String> toolNames = filteredTools.stream().map(ToolSchema::name).toList();
+			Logger.debug("[AgentLoop " + runId + " turn " + turn + "] "
+				+ filteredTools.size() + " tools: " + toolNames
+				+ " | " + conversation.messages().size() + " messages",
+				AgentLoop.class);
+		}
 
 		ProviderRequest request = new ProviderRequest(
 			_config.model(),

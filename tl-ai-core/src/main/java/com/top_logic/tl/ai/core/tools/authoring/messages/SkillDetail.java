@@ -27,6 +27,9 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/** @see #getContent() */
 	public static final String CONTENT__PROP = "content";
 
+	/** @see #getTools() */
+	public static final String TOOLS__PROP = "tools";
+
 	private boolean _exists = false;
 
 	private String _name = "";
@@ -34,6 +37,8 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	private String _description = "";
 
 	private String _content = "";
+
+	private final java.util.List<String> _tools = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link SkillDetail} instance.
@@ -124,6 +129,47 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		_content = value;
 	}
 
+	/**
+	 * Qualified tool names assigned to this skill.
+	 */
+	public final java.util.List<String> getTools() {
+		return _tools;
+	}
+
+	/**
+	 * @see #getTools()
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.SkillDetail setTools(java.util.List<? extends String> value) {
+		internalSetTools(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTools()} without chain call utility. */
+	protected final void internalSetTools(java.util.List<? extends String> value) {
+		_tools.clear();
+		_tools.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getTools()} list.
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.SkillDetail addTool(String value) {
+		internalAddTool(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addTool(String)} without chain call utility. */
+	protected final void internalAddTool(String value) {
+		_tools.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getTools()} list.
+	 */
+	public final void removeTool(String value) {
+		_tools.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return SKILL_DETAIL__TYPE;
@@ -135,7 +181,8 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			EXISTS__PROP, 
 			NAME__PROP, 
 			DESCRIPTION__PROP, 
-			CONTENT__PROP);
+			CONTENT__PROP, 
+			TOOLS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -164,6 +211,7 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case NAME__PROP: return getName();
 			case DESCRIPTION__PROP: return getDescription();
 			case CONTENT__PROP: return getContent();
+			case TOOLS__PROP: return getTools();
 			default: return null;
 		}
 	}
@@ -175,6 +223,7 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case NAME__PROP: internalSetName((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 			case CONTENT__PROP: internalSetContent((String) value); break;
+			case TOOLS__PROP: internalSetTools(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 		}
 	}
 
@@ -201,6 +250,12 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		out.value(getDescription());
 		out.name(CONTENT__PROP);
 		out.value(getContent());
+		out.name(TOOLS__PROP);
+		out.beginArray();
+		for (String x : getTools()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -210,6 +265,16 @@ public class SkillDetail extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CONTENT__PROP: setContent(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case TOOLS__PROP: {
+				java.util.List<String> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
+				}
+				in.endArray();
+				setTools(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

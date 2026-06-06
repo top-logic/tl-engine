@@ -77,6 +77,9 @@ message SkillSummary {
 
 	/** Skill description. */
 	string description;
+
+	/** Qualified tool names assigned to this skill. */
+	repeated string tools;
 }
 
 /**
@@ -102,6 +105,9 @@ message SkillDetail {
 
 	/** Skill instruction content. */
 	string content;
+
+	/** Qualified tool names assigned to this skill. */
+	repeated string tools;
 }
 
 /**

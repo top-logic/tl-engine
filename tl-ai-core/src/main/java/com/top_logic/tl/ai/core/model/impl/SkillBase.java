@@ -72,4 +72,28 @@ public interface SkillBase extends com.top_logic.model.TLNamed {
 		tUpdateByName(DESCRIPTION_ATTR, newValue);
 	}
 
+	/**
+	 * Part <code>tools</code> of <code>Skill</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String TOOLS_ATTR = "tools";
+
+	/**
+	 * Getter for part {@link #TOOLS_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<String> getTools() {
+		return (java.util.Set<String>) tValueByName(TOOLS_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOOLS_ATTR}.
+	 */
+	default void setTools(java.util.Set<String> newValue) {
+		tUpdateByName(TOOLS_ATTR, newValue);
+	}
+
 }

@@ -167,6 +167,11 @@
 								<label-position value="above-value"/>
 							</annotations>
 						</field>
+						<field
+							attribute="tools"
+							fullQualifiedName="tl.ai.core:Skill#tools"
+							type="tl.core:String"
+						/>
 					</form>
 				</form-definition>
 			</annotations>
@@ -196,6 +201,16 @@
 					<annotations>
 						<multi-line/>
 						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="tools"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-tool-names/>
+						</options>
 					</annotations>
 				</property>
 			</attributes>

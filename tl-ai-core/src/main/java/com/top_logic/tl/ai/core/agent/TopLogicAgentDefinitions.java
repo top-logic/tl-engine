@@ -117,7 +117,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(TOOLS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("tool")
-		List<NameRef> getTools();
+		List<ToolRef> getTools();
 
 		/**
 		 * MCP server names available to this agent.
@@ -130,7 +130,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(MCP_SERVERS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("mcp-server")
-		List<NameRef> getMcpServers();
+		List<McpServerRef> getMcpServers();
 
 		/**
 		 * Skill names available to this agent.
@@ -143,7 +143,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(SKILLS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("skill")
-		List<NameRef> getSkills();
+		List<SkillRef> getSkills();
 
 		/**
 		 * Agent names this agent may delegate to.
@@ -156,7 +156,8 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(DELEGATIONS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("delegation")
-		List<NameRef> getDelegations();
+		List<DelegationRef> getDelegations();
+
 	}
 
 	/**
@@ -165,6 +166,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 	@DisplayOrder({
 		SkillConfig.DESCRIPTION,
 		SkillConfig.CONTENT,
+		SkillConfig.TOOLS,
 	})
 	public interface SkillConfig extends NamedConfigMandatory {
 
@@ -173,6 +175,9 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 
 		/** Configuration property name for {@link #getContent()}. */
 		String CONTENT = "content";
+
+		/** Configuration property name for {@link #getTools()}. */
+		String TOOLS = "tools";
 
 		/**
 		 * Human-readable description shown in the skill catalog.
@@ -189,6 +194,21 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Nullable
 		@LabelPositioning(LabelPosition.ABOVE)
 		String getContent();
+
+		/**
+		 * Qualified tool names delivered when this skill is loaded.
+		 *
+		 * <p>
+		 * Per-entry keyed list: application overlays may add or remove individual tools without
+		 * restating the full platform list. See {@link NameRef}.
+		 * </p>
+		 *
+		 * @see AgentConfig#getTools()
+		 */
+		@Name(TOOLS)
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("tool")
+		List<ToolRef> getTools();
 	}
 
 	/**
@@ -259,6 +279,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 				name,
 				cfg.getDescription(),
 				cfg.getContent(),
+				toNames(cfg.getTools()),
 				AgentSource.CONFIG));
 		}
 		_skills = Collections.unmodifiableMap(skills);
@@ -278,7 +299,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		}
 	}
 
-	private static List<String> toNames(List<NameRef> refs) {
+	private static List<String> toNames(List<? extends NameRef> refs) {
 		if (refs == null || refs.isEmpty()) {
 			return List.of();
 		}

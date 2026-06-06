@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -25,11 +26,15 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
+import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -135,6 +140,21 @@ public class AgentFactory {
 	public String runAgent(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener) {
+		return runAgent(name, conversation, conversationMemory, context, listener, null).response();
+	}
+
+	/**
+	 * Runs the named agent with an optional session-scoped tool registry.
+	 *
+	 * <p>When {@code sessionRegistry} is non-null and the agent has skills,
+	 * the existing registry is reused — tools loaded by previous runs in the same session
+	 * remain available without re-loading skills.</p>
+	 *
+	 * @return a {@link RunResult} carrying the response text and the tool registry used
+	 */
+	public RunResult runAgent(String name, Conversation conversation,
+			ConversationMemory conversationMemory, ToolContext context,
+			AgentEventListener listener, ToolRegistry sessionRegistry) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
 			throw new RuntimeException(
@@ -146,7 +166,10 @@ public class AgentFactory {
 
 		AgentParams coreConfig = buildConfig(agentDef, assignment);
 		LLMProvider provider = buildProvider(coreConfig.model());
-		ToolCatalog registry = buildToolCatalog(agentDef);
+		boolean hasDynamicLoading = !agentDef.skills().isEmpty();
+		ToolRegistry registry = sessionRegistry != null && hasDynamicLoading
+			? sessionRegistry
+			: buildToolCatalog(agentDef);
 
 		validateToolCapability(name, coreConfig.model(), registry);
 
@@ -165,8 +188,16 @@ public class AgentFactory {
 			loop.run(conversation, context, listener);
 		}
 
-		return extractResponseText(effectiveConversation, messageCountBefore);
+		return new RunResult(extractResponseText(effectiveConversation, messageCountBefore), registry);
 	}
+
+	/**
+	 * Result of {@link #runAgent}, carrying both the response text and the tool registry used.
+	 *
+	 * @param response The final assistant response text.
+	 * @param registry The tool registry used during the run.
+	 */
+	public record RunResult(String response, ToolRegistry registry) {}
 
 	/**
 	 * Extracts the response text from the last {@link AssistantMessage} appended at or after
@@ -236,7 +267,7 @@ public class AgentFactory {
 
 		AgentParams config = buildConfig(agentDef, assignment);
 		LLMProvider provider = buildProvider(config.model());
-		ToolCatalog registry = buildToolCatalog(agentDef);
+		ToolRegistry registry = buildToolCatalog(agentDef);
 
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 
@@ -305,8 +336,8 @@ public class AgentFactory {
 	/**
 	 * Validates that the model supports tool calls if the agent has tools assigned.
 	 */
-	private void validateToolCapability(String agentName, String model, ToolCatalog registry) {
-		if (registry.tools().isEmpty()) {
+	private void validateToolCapability(String agentName, String model, ToolRegistry registry) {
+		if (registry.toolSchemas(t -> true).isEmpty()) {
 			return;
 		}
 		LLMService llmRegistry = LLMService.getInstance();
@@ -419,15 +450,22 @@ public class AgentFactory {
 	}
 
 	/**
-	 * Builds a {@link ToolCatalog} containing the tools assigned
-	 * to the agent.
+	 * Builds a {@link ToolRegistry} containing the tools assigned to the agent.
 	 *
 	 * <p>
-	 * Resolves tool names from the agent's {@code tools} attribute against the service-level
-	 * {@link ToolRegistryService} and registers them in a core registry.
+	 * When the agent has skills, returns a {@link DynamicToolCatalog} with only bootstrap
+	 * tools; skill tools are loaded on demand via {@code loadSkill}. Otherwise returns a
+	 * frozen {@link ToolCatalog} with all tools pre-registered.
 	 * </p>
 	 */
-	ToolCatalog buildToolCatalog(AgentDefinition agent) {
+	ToolRegistry buildToolCatalog(AgentDefinition agent) {
+		if (!agent.skills().isEmpty()) {
+			return buildDynamicToolCatalog(agent);
+		}
+		return buildStaticToolCatalog(agent);
+	}
+
+	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent) {
 		ToolCatalog registry =
 			new ToolCatalog();
 
@@ -493,6 +531,140 @@ public class AgentFactory {
 		return registry.freeze();
 	}
 
+	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent) {
+		ToolCatalog baseCatalog = new ToolCatalog();
+
+		// Register only bootstrap tools from the agent's tools list
+		List<String> toolNames = agent.tools();
+		if (!toolNames.isEmpty()) {
+			ToolRegistryService serviceRegistry = ToolRegistryService.getInstance();
+			for (String toolName : toolNames) {
+				Tool tool = serviceRegistry.getTool(toolName);
+				if (tool == null) {
+					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
+					continue;
+				}
+				try {
+					baseCatalog.register(tool);
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException(
+						"Agent '" + agent.name() + "': " + e.getMessage()
+						+ " (qualified source: '" + toolName + "')", e);
+				}
+			}
+		}
+
+		// MCP tools go in the base (architectural, not skill-driven)
+		List<String> mcpServerNames = agent.mcpServers();
+		if (!mcpServerNames.isEmpty()
+				&& McpServerRegistry.Module.INSTANCE.isActive()) {
+			McpServerRegistry mcpRegistry = McpServerRegistry.getInstance();
+			for (String serverName : mcpServerNames) {
+				List<Tool> mcpTools = mcpRegistry.getTools(serverName);
+				if (mcpTools == null) {
+					Logger.warn("MCP server not found or not connected: " + serverName,
+						AgentFactory.class);
+					continue;
+				}
+				for (Tool mcpTool : mcpTools) {
+					baseCatalog.register(mcpTool);
+				}
+			}
+		}
+
+		// Delegation tools go in the base (architectural)
+		List<String> delegationNames = agent.delegations();
+		if (!delegationNames.isEmpty()) {
+			String parentName = agent.name();
+			AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+			for (String targetName : delegationNames) {
+				AgentDefinition target = query.findAgentByName(targetName);
+				String targetDesc = target != null ? target.description() : "No description";
+				String toolName = "delegate_to_" + targetName.replace('-', '_');
+				baseCatalog.register(
+					new DelegationTool(toolName, targetDesc, targetName, parentName, this::buildAgentLoop));
+			}
+		}
+
+		DynamicToolCatalog dynamicCatalog = new DynamicToolCatalog(baseCatalog.freeze());
+
+		// Build SkillTool with dynamic catalog and tool resolver
+		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog);
+		if (skillTool != null) {
+			ToolCatalog skillToolOverlay = new ToolCatalog();
+			for (Tool tool : AnnotatedTools.from(skillTool)) {
+				skillToolOverlay.register(tool);
+			}
+			dynamicCatalog.addOverlay(skillToolOverlay.freeze());
+		}
+
+		// Build SearchToolsTool
+		SearchToolsTool searchTool = buildSearchTool(agent);
+		if (searchTool != null) {
+			ToolCatalog searchOverlay = new ToolCatalog();
+			for (Tool tool : AnnotatedTools.from(searchTool)) {
+				searchOverlay.register(tool);
+			}
+			dynamicCatalog.addOverlay(searchOverlay.freeze());
+		}
+
+		return dynamicCatalog;
+	}
+
+	private SkillTool buildDynamicSkillTool(AgentDefinition agent, DynamicToolCatalog dynamicCatalog) {
+		List<String> skillNames = agent.skills();
+		if (skillNames.isEmpty()) {
+			return null;
+		}
+
+		Map<String, Skill> skillMap = new LinkedHashMap<>();
+		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+		for (String skillName : skillNames) {
+			SkillDefinition sd = query.findSkillByName(skillName);
+			if (sd != null && sd.content() != null) {
+				skillMap.put(sd.name(), new Skill(sd.name(), sd.description(), sd.content(), sd.tools()));
+			} else {
+				Logger.warn("Skill not found: " + skillName, AgentFactory.class);
+			}
+		}
+
+		if (skillMap.isEmpty()) {
+			return null;
+		}
+
+		Function<String, Tool> resolver = name -> ToolRegistryService.getInstance().getTool(name);
+		return new SkillTool(skillMap, dynamicCatalog, resolver);
+	}
+
+	private SearchToolsTool buildSearchTool(AgentDefinition agent) {
+		if (agent.skills().isEmpty()) {
+			return null;
+		}
+
+		// Collect all tool schemas from the global registry
+		ToolRegistryService registry = ToolRegistryService.getInstance();
+		Map<String, ToolSchema> allTools = new LinkedHashMap<>();
+		for (String toolName : registry.getToolNames()) {
+			Tool tool = registry.getTool(toolName);
+			if (tool != null) {
+				allTools.put(toolName, tool.schema());
+			}
+		}
+
+		// Collect skill definitions with their tools
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+		for (String skillName : agent.skills()) {
+			SkillDefinition sd = query.findSkillByName(skillName);
+			if (sd != null) {
+				skills.put(sd.name(), new Skill(sd.name(), sd.description(),
+					sd.content(), sd.tools()));
+			}
+		}
+
+		return new SearchToolsTool(allTools, skills);
+	}
+
 	/**
 	 * Builds a {@link SkillTool} for the agent's skills, or {@code null} if the agent has no
 	 * skills.
@@ -508,7 +680,7 @@ public class AgentFactory {
 		for (String skillName : skillNames) {
 			SkillDefinition sd = query.findSkillByName(skillName);
 			if (sd != null && sd.content() != null) {
-				skillMap.put(sd.name(), new Skill(sd.name(), sd.description(), sd.content()));
+				skillMap.put(sd.name(), new Skill(sd.name(), sd.description(), sd.content(), sd.tools()));
 			} else {
 				Logger.warn("Skill not found: " + skillName, AgentFactory.class);
 			}

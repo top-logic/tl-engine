@@ -1,0 +1,89 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.tools.interaction;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import junit.framework.TestCase;
+
+import com.top_logic.tl.ai.core.agent.skills.Skill;
+import com.top_logic.tl.ai.tool.api.ToolSchema;
+
+/**
+ * Tests for {@link SearchToolsTool}.
+ */
+public class TestSearchToolsTool extends TestCase {
+
+	private SearchToolsTool _tool;
+
+	@Override
+	protected void setUp() {
+		Map<String, ToolSchema> allTools = new LinkedHashMap<>();
+		allTools.put("model-browser.listModules",
+			new ToolSchema("model-browser.listModules", "List all modules in the data model",
+				"{\"type\":\"object\",\"properties\":{}}"));
+		allTools.put("model-browser.getType",
+			new ToolSchema("model-browser.getType", "Get details of a specific type",
+				"{\"type\":\"object\",\"properties\":{}}"));
+		allTools.put("script-exec.executeTLScript",
+			new ToolSchema("script-exec.executeTLScript", "Execute a TL-Script expression",
+				"{\"type\":\"object\",\"properties\":{}}"));
+		allTools.put("web-search.webSearch",
+			new ToolSchema("web-search.webSearch", "Search the web",
+				"{\"type\":\"object\",\"properties\":{}}"));
+
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		skills.put("TL_modelExploration", new Skill("TL_modelExploration",
+			"Explore the TopLogic data model",
+			"skill content",
+			List.of("model-browser.listModules", "model-browser.getType")));
+		skills.put("TL_scriptExecution", new Skill("TL_scriptExecution",
+			"Execute TL-Script expressions",
+			"skill content",
+			List.of("script-exec.executeTLScript")));
+
+		_tool = new SearchToolsTool(allTools, skills);
+	}
+
+	/** Searching for "model" finds the modelExploration skill. */
+	public void testSearchByKeyword() {
+		String result = _tool.searchTools("model");
+		assertTrue("Should mention TL_modelExploration", result.contains("TL_modelExploration"));
+	}
+
+	/** Results include the loadSkill hint. */
+	public void testResultIncludesLoadSkillHint() {
+		String result = _tool.searchTools("model");
+		assertTrue("Should include loadSkill hint",
+			result.contains("loadSkill(\"TL_modelExploration\")"));
+	}
+
+	/** Searching for "script" finds the scriptExecution skill. */
+	public void testSearchFindsScriptSkill() {
+		String result = _tool.searchTools("script");
+		assertTrue("Should mention TL_scriptExecution", result.contains("TL_scriptExecution"));
+	}
+
+	/** Tools not in any skill appear in ungrouped section. */
+	public void testUngroupedTools() {
+		String result = _tool.searchTools("web search");
+		assertTrue("Should show ungrouped tool", result.contains("web-search.webSearch"));
+	}
+
+	/** No matches returns a helpful message. */
+	public void testNoMatches() {
+		String result = _tool.searchTools("zzzznonexistent");
+		assertTrue("Should indicate no matches", result.contains("No tools found"));
+	}
+
+	/** Search is case-insensitive. */
+	public void testCaseInsensitive() {
+		String result = _tool.searchTools("MODEL");
+		assertTrue("Case insensitive match", result.contains("TL_modelExploration"));
+	}
+}

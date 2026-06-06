@@ -172,14 +172,8 @@ public final class BedrockConverseRequestBuilder {
 				Map<String, Object> block = new LinkedHashMap<>();
 				block.put("text", text.text());
 				content.add(block);
-			} else if (part instanceof ImageContent) {
-				// TODO image support: Bedrock Converse supports {"image":{"format":..,"source":{"bytes":..}}}
-				// but ImageContent only exposes a URL/data-URI, which requires non-trivial
-				// base64 extraction. Skipping for now.
-				// NOTE: a UserMessage that contains ONLY image parts will produce an empty
-				// content array here, which Bedrock Converse rejects with HTTP 400. Until image
-				// support is implemented, callers must ensure user messages contain at least one
-				// text part.
+			} else if (part instanceof ImageContent image) {
+				content.add(buildImageBlock(image));
 			}
 			// Other content types (PdfContent, etc.) are not supported by Bedrock Converse.
 		}
@@ -187,6 +181,54 @@ public final class BedrockConverseRequestBuilder {
 		entry.put("role", "user");
 		entry.put("content", content);
 		return entry;
+	}
+
+	/**
+	 * Builds a Bedrock Converse {@code image} content block from an {@link ImageContent}.
+	 *
+	 * <p>Bedrock expects: {@code {"image": {"format": "png", "source": {"bytes": "<base64>"}}}}.</p>
+	 */
+	private static Map<String, Object> buildImageBlock(ImageContent image) {
+		String base64Data;
+		if (image.url().startsWith("data:")) {
+			int commaIdx = image.url().indexOf(',');
+			base64Data = commaIdx >= 0 ? image.url().substring(commaIdx + 1) : image.url();
+		} else {
+			// Bedrock Converse requires raw bytes — URLs are not supported.
+			// Fall back to a text placeholder rather than silently dropping the image.
+			Map<String, Object> block = new LinkedHashMap<>();
+			block.put("text", "[Image URL not supported by Bedrock Converse: " + image.url() + "]");
+			return block;
+		}
+
+		String format = extractImageFormat(image.mediaType());
+
+		Map<String, Object> source = new LinkedHashMap<>();
+		source.put("bytes", base64Data);
+
+		Map<String, Object> imageBlock = new LinkedHashMap<>();
+		imageBlock.put("format", format);
+		imageBlock.put("source", source);
+
+		Map<String, Object> block = new LinkedHashMap<>();
+		block.put("image", imageBlock);
+		return block;
+	}
+
+	/**
+	 * Extracts the Bedrock image format string from a MIME type.
+	 *
+	 * @return one of {@code png}, {@code jpeg}, {@code gif}, {@code webp}
+	 */
+	private static String extractImageFormat(String mediaType) {
+		// mediaType is e.g. "image/png", "image/jpeg"
+		int slashIdx = mediaType.indexOf('/');
+		String subType = slashIdx >= 0 ? mediaType.substring(slashIdx + 1) : mediaType;
+		// Normalize "jpg" → "jpeg" (Bedrock only accepts "jpeg")
+		if ("jpg".equalsIgnoreCase(subType)) {
+			return "jpeg";
+		}
+		return subType.toLowerCase();
 	}
 
 	private static Map<String, Object> buildAssistantMessage(AssistantMessage assistant) {

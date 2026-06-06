@@ -117,7 +117,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(TOOLS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("tool")
-		List<NameRef> getTools();
+		List<ToolRef> getTools();
 
 		/**
 		 * MCP server names available to this agent.
@@ -130,7 +130,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(MCP_SERVERS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("mcp-server")
-		List<NameRef> getMcpServers();
+		List<McpServerRef> getMcpServers();
 
 		/**
 		 * Skill names available to this agent.
@@ -143,7 +143,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(SKILLS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("skill")
-		List<NameRef> getSkills();
+		List<SkillRef> getSkills();
 
 		/**
 		 * Agent names this agent may delegate to.
@@ -156,7 +156,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(DELEGATIONS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("delegation")
-		List<NameRef> getDelegations();
+		List<DelegationRef> getDelegations();
 
 	}
 
@@ -208,7 +208,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(TOOLS)
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("tool")
-		List<NameRef> getTools();
+		List<ToolRef> getTools();
 	}
 
 	/**
@@ -299,7 +299,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		}
 	}
 
-	private static List<String> toNames(List<NameRef> refs) {
+	private static List<String> toNames(List<? extends NameRef> refs) {
 		if (refs == null || refs.isEmpty()) {
 			return List.of();
 		}

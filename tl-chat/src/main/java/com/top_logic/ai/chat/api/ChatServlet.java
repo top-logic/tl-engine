@@ -663,10 +663,25 @@ public class ChatServlet extends HttpServlet {
 		return sdf.format(date);
 	}
 
-	/** Extracts text from assistant parts and sets server-rendered {@code contentHtml} on the turn. */
+	/**
+	 * Extracts text from assistant parts after the last tool call and sets server-rendered
+	 * {@code contentHtml} on the turn. Pre-tool narration is excluded so that only the
+	 * agent's final response is rendered.
+	 */
 	private static void computeContentHtml(PersistedTurn turn) {
+		List<PersistedPart> parts = turn.getAssistantParts();
+
+		int lastToolIndex = -1;
+		for (int i = parts.size() - 1; i >= 0; i--) {
+			if ("tool_call".equals(parts.get(i).getType())) {
+				lastToolIndex = i;
+				break;
+			}
+		}
+
 		StringBuilder text = new StringBuilder();
-		for (PersistedPart part : turn.getAssistantParts()) {
+		for (int i = lastToolIndex + 1; i < parts.size(); i++) {
+			PersistedPart part = parts.get(i);
 			if ("text".equals(part.getType()) && part.getTextData() != null) {
 				text.append(part.getTextData().getText());
 			}

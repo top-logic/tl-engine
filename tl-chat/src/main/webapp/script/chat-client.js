@@ -2409,17 +2409,28 @@
           }
         }
 
-        // Categorize assistant parts
+        // Categorize assistant parts.
+        // Only text/errors after the last tool call are included in the displayed
+        // response; pre-tool narration ("Let me look that up...") is stripped.
         const assistantParts = turn.assistantParts || [];
         const toolCalls = [];
         const approvals = [];
         const interactions = [];
         const delegations = [];
-        let textContent = "";
         let thinkingText = "";
         let wasCancelled = false;
 
-        for (const part of assistantParts) {
+        let lastToolIndex = -1;
+        for (let i = assistantParts.length - 1; i >= 0; i--) {
+          if (assistantParts[i].type === "tool_call") {
+            lastToolIndex = i;
+            break;
+          }
+        }
+
+        let textContent = "";
+        for (let i = 0; i < assistantParts.length; i++) {
+          const part = assistantParts[i];
           switch (part.type) {
             case "tool_call":
               toolCalls.push(part.toolCallData);
@@ -2434,7 +2445,9 @@
               delegations.push(part.delegationData);
               break;
             case "text":
-              textContent += part.textData ? part.textData.text : "";
+              if (i > lastToolIndex) {
+                textContent += part.textData ? part.textData.text : "";
+              }
               break;
             case "thinking":
               thinkingText += part.thinkingData ? part.thinkingData.text : "";
@@ -2448,7 +2461,7 @@
               }
               break;
             case "error":
-              if (part.errorData) {
+              if (part.errorData && i > lastToolIndex) {
                 textContent +=
                   "Error: " +
                   (part.errorData.errorMessage ||

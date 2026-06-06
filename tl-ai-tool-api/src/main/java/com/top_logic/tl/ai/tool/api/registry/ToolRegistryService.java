@@ -108,7 +108,7 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 				}
 
 				for (Tool tool : factory.createTools()) {
-					String qualifiedName = factoryName + "." + tool.name();
+					String qualifiedName = toProviderName(factoryName + "." + tool.name());
 					_tools.put(qualifiedName, tool);
 				}
 			} catch (Exception ex) {
@@ -126,7 +126,11 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 	 * @return The tool, or <code>null</code> if no tool with the given name exists.
 	 */
 	public Tool getTool(String qualifiedName) {
-		return _tools.get(qualifiedName);
+		Tool tool = _tools.get(qualifiedName);
+		if (tool == null && qualifiedName.contains(".")) {
+			tool = _tools.get(toProviderName(qualifiedName));
+		}
+		return tool;
 	}
 
 	/**
@@ -160,7 +164,7 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 		List<ToolSchema> schemas = new ArrayList<>();
 
 		for (String qualifiedName : qualifiedToolNames) {
-			Tool tool = _tools.get(qualifiedName);
+			Tool tool = getTool(qualifiedName);
 			if (tool != null) {
 				schemas.add(tool.schema());
 			} else {
@@ -177,6 +181,30 @@ public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryServ
 	 */
 	public static ToolRegistryService getInstance() {
 		return Module.INSTANCE.getImplementationInstance();
+	}
+
+	/**
+	 * Converts a config-notation qualified name ({@code factory.tool}) to the
+	 * provider-safe format ({@code factory__tool}).
+	 *
+	 * @param configName
+	 *        Qualified name in dot notation.
+	 * @return The provider-safe name using double-underscore separator.
+	 */
+	public static String toProviderName(String configName) {
+		int dot = configName.indexOf('.');
+		if (dot < 0) {
+			return sanitize(configName);
+		}
+		return sanitize(configName.substring(0, dot))
+			+ "__" + sanitize(configName.substring(dot + 1));
+	}
+
+	/**
+	 * Replaces characters outside {@code [a-zA-Z0-9_-]} with underscores.
+	 */
+	static String sanitize(String name) {
+		return name.replaceAll("[^a-zA-Z0-9_-]", "_");
 	}
 
 	/**

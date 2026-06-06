@@ -353,6 +353,9 @@ public final class DtoMapper {
 		if (taskStore != null) {
 			meta.setTasksJson(taskStore.toJson());
 		}
+		for (String skill : tracker.getLoadedSkills()) {
+			meta.addLoadedSkill(skill);
+		}
 		return toJson(meta);
 	}
 
@@ -383,6 +386,10 @@ public final class DtoMapper {
 			String mode = meta.getApprovalMode();
 			if (mode != null && !mode.isEmpty()) {
 				tracker.setApprovalMode(ApprovalMode.valueOf(mode));
+			}
+			List<String> loadedSkills = meta.getLoadedSkills();
+			if (loadedSkills != null && !loadedSkills.isEmpty()) {
+				tracker.loadLoadedSkills(new HashSet<>(loadedSkills));
 			}
 		} catch (Exception e) {
 			// Corrupted metadata — ignore and start fresh.

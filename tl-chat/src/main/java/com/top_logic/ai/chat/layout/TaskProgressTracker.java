@@ -58,6 +58,9 @@ public class TaskProgressTracker {
 	/** Tools approved for the current session. */
 	private final Set<String> _sessionApprovedTools = ConcurrentHashMap.newKeySet();
 
+	/** Skills loaded via loadSkill() in this session. */
+	private final Set<String> _loadedSkills = ConcurrentHashMap.newKeySet();
+
 	/** Cumulative token usage across all runs in this session. */
 	private volatile TokenUsage _cumulativeUsage = TokenUsage.EMPTY;
 
@@ -271,6 +274,22 @@ public class TaskProgressTracker {
 		_sessionApprovedTools.addAll(tools);
 	}
 
+	/** Adds a skill ID to the loaded set. */
+	public void addLoadedSkill(String skillId) {
+		_loadedSkills.add(skillId);
+	}
+
+	/** Returns the set of loaded skill IDs. */
+	public Set<String> getLoadedSkills() {
+		return Set.copyOf(_loadedSkills);
+	}
+
+	/** Loads skill IDs from persisted metadata. */
+	public void loadLoadedSkills(Set<String> skills) {
+		_loadedSkills.clear();
+		_loadedSkills.addAll(skills);
+	}
+
 	/** Adds token usage from a completed run. */
 	public void addTokenUsage(TokenUsage usage) {
 		_cumulativeUsage = _cumulativeUsage.add(usage);
@@ -281,9 +300,10 @@ public class TaskProgressTracker {
 		return _cumulativeUsage;
 	}
 
-	/** Resets session-specific state (approvals and tokens). */
+	/** Resets session-specific state (approvals, loaded skills, and tokens). */
 	public void resetSessionState() {
 		_sessionApprovedTools.clear();
+		_loadedSkills.clear();
 		_cumulativeUsage = TokenUsage.EMPTY;
 	}
 

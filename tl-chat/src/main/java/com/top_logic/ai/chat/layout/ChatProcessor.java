@@ -21,6 +21,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.top_logic.ai.chat.api.ChatSSEHandler;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -52,6 +54,7 @@ import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
+import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 
@@ -112,10 +115,14 @@ public class ChatProcessor {
 		UserInteractionStore interactionStore = new UserInteractionStore();
 		state.setUserInteractionStore(interactionStore);
 
+		Set<String> loadedSkills = ConcurrentHashMap.newKeySet();
+		loadedSkills.addAll(taskTracker.getLoadedSkills());
+
 		try (
 			ConversationLogListenerBinding.Binding b1 = ConversationLogListenerBinding.bind(logListener);
 			TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(taskStore);
-			UserInteractionStoreBinding.Binding b3 = UserInteractionStoreBinding.bind(interactionStore)) {
+			UserInteractionStoreBinding.Binding b3 = UserInteractionStoreBinding.bind(interactionStore);
+			LoadedSkillsBinding.Binding b4 = LoadedSkillsBinding.bind(loadedSkills)) {
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
@@ -177,6 +184,9 @@ public class ChatProcessor {
 			AgentFactory.RunResult runResult = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
 				() -> agentFactory.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener, sessionRegistry));
 			taskTracker.setActiveToolRegistry(runResult.registry());
+			for (String skillId : loadedSkills) {
+				taskTracker.addLoadedSkill(skillId);
+			}
 			String result = runResult.response();
 			state.setLastAgentResponse(result);
 

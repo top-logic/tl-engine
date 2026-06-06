@@ -46,6 +46,7 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -620,6 +621,7 @@ public class AgentLoop {
 		ConversationLogListener logListener = ConversationLogListenerBinding.getListener();
 		TaskStore taskStore = TaskStoreBinding.getStore();
 		UserInteractionStore interactionStore = UserInteractionStoreBinding.getStore();
+		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
 
 		ExecutorService executor = Executors.newCachedThreadPool();
 		try {
@@ -634,7 +636,9 @@ public class AgentLoop {
 							TaskStoreBinding.Binding b2 =
 								TaskStoreBinding.bind(taskStore);
 							UserInteractionStoreBinding.Binding b3 =
-								UserInteractionStoreBinding.bind(interactionStore)) {
+								UserInteractionStoreBinding.bind(interactionStore);
+							LoadedSkillsBinding.Binding b4 =
+								LoadedSkillsBinding.bind(loadedSkills)) {
 							return executeWithSecurityCheck(tc, context, listener, runId, turn);
 						}
 					}), executor));

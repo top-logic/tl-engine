@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
@@ -32,6 +33,7 @@ import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
+import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -603,7 +605,8 @@ public class AgentFactory {
 		DynamicToolCatalog dynamicCatalog = new DynamicToolCatalog(baseCatalog.freeze());
 
 		// Build SkillTool with dynamic catalog and tool resolver
-		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog);
+		Set<String> preloadedSkills = LoadedSkillsBinding.getSkills();
+		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog, preloadedSkills);
 		if (skillTool != null) {
 			ToolCatalog skillToolOverlay = new ToolCatalog();
 			for (Tool tool : AnnotatedTools.from(skillTool)) {
@@ -625,7 +628,8 @@ public class AgentFactory {
 		return dynamicCatalog;
 	}
 
-	private SkillTool buildDynamicSkillTool(AgentDefinition agent, DynamicToolCatalog dynamicCatalog) {
+	private SkillTool buildDynamicSkillTool(AgentDefinition agent, DynamicToolCatalog dynamicCatalog,
+			Set<String> preloadedSkillIds) {
 		List<String> skillNames = agent.skills();
 		if (skillNames.isEmpty()) {
 			return null;
@@ -647,7 +651,7 @@ public class AgentFactory {
 		}
 
 		Function<String, Tool> resolver = name -> ToolRegistryService.getInstance().getTool(name);
-		return new SkillTool(skillMap, dynamicCatalog, resolver);
+		return new SkillTool(skillMap, dynamicCatalog, resolver, preloadedSkillIds);
 	}
 
 	private SearchToolsTool buildSearchTool(AgentDefinition agent) {

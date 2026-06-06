@@ -50,12 +50,34 @@ public class SkillTool {
 	 * @param toolResolver
 	 *        resolves qualified tool names to {@link Tool} instances, or {@code null} for legacy
 	 *        behavior
+	 * @param preloadedSkillIds
+	 *        skill IDs to restore from a previous session; their tools are added to the catalog
+	 *        immediately. May be {@code null} or empty.
 	 */
 	public SkillTool(Map<String, Skill> skills, DynamicToolCatalog dynamicCatalog,
-			Function<String, Tool> toolResolver) {
+			Function<String, Tool> toolResolver, Set<String> preloadedSkillIds) {
 		_skills = skills;
 		_dynamicCatalog = dynamicCatalog;
 		_toolResolver = toolResolver;
+
+		if (preloadedSkillIds != null) {
+			for (String skillId : preloadedSkillIds) {
+				Skill skill = _skills.get(skillId);
+				if (skill != null) {
+					addSkillTools(skill);
+				} else {
+					Logger.info("Skipping restore of removed skill: " + skillId, SkillTool.class);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Creates a skill tool with dynamic tool loading and no preloaded skills.
+	 */
+	public SkillTool(Map<String, Skill> skills, DynamicToolCatalog dynamicCatalog,
+			Function<String, Tool> toolResolver) {
+		this(skills, dynamicCatalog, toolResolver, null);
 	}
 
 	/**
@@ -124,23 +146,24 @@ public class SkillTool {
 			return List.of();
 		}
 		_loadedSkills.add(skill.id());
+		LoadedSkillsBinding.addSkill(skill.id());
 
 		ToolCatalog overlay = new ToolCatalog();
 		List<String> added = new ArrayList<>();
 
 		for (String toolName : skill.tools()) {
-			// Skip if already in the catalog (from another skill)
-			if (_dynamicCatalog.getTool(toolName) != null) {
-				continue;
-			}
 			Tool tool = _toolResolver.apply(toolName);
 			if (tool == null) {
 				Logger.warn("Skill '" + skill.id() + "' references unknown tool: " + toolName,
 					SkillTool.class);
 				continue;
 			}
+			// Skip if already in the catalog (from another skill)
+			if (_dynamicCatalog.getTool(tool.name()) != null) {
+				continue;
+			}
 			overlay.register(tool);
-			added.add(toolName);
+			added.add(tool.name());
 		}
 
 		if (!overlay.tools().isEmpty()) {

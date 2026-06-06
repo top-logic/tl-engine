@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent.skills;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -19,6 +20,7 @@ import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /** */
 public class TestSkillTool extends TestCase {
@@ -67,12 +69,12 @@ public class TestSkillTool extends TestCase {
 
 	/** Loading a skill with tools adds them to the dynamic catalog. */
 	public void testLoadSkillAddsToolsToCatalog() {
-		assertNull("toolA not in catalog before load", _dynamicCatalog.getTool("test.toolA"));
+		assertNull("toolA not in catalog before load", _dynamicCatalog.getTool("test__toolA"));
 
 		_tool.loadSkill("test/frontmatter-skill");
 
-		assertNotNull("toolA in catalog after load", _dynamicCatalog.getTool("test.toolA"));
-		assertNotNull("toolB in catalog after load", _dynamicCatalog.getTool("test.toolB"));
+		assertNotNull("toolA in catalog after load", _dynamicCatalog.getTool("test__toolA"));
+		assertNotNull("toolB in catalog after load", _dynamicCatalog.getTool("test__toolB"));
 	}
 
 	/** Loading a skill with no tools still works (no overlay added). */
@@ -97,8 +99,8 @@ public class TestSkillTool extends TestCase {
 	/** Result includes list of added tools. */
 	public void testResultListsAddedTools() {
 		String result = _tool.loadSkill("test/frontmatter-skill");
-		assertTrue("Should list added tools", result.contains("test.toolA"));
-		assertTrue("Should list added tools", result.contains("test.toolB"));
+		assertTrue("Should list added tools", result.contains("test__toolA"));
+		assertTrue("Should list added tools", result.contains("test__toolB"));
 	}
 
 	/** Unresolvable tool names are skipped with a warning in the result. */
@@ -107,17 +109,55 @@ public class TestSkillTool extends TestCase {
 		assertTrue("Should contain content", result.contains("UNRESOLVABLE"));
 	}
 
+	/** Preloaded skill IDs restore tool overlays at construction time. */
+	public void testPreloadedSkillsRestoreTools() {
+		ToolCatalog base = new ToolCatalog();
+		base.freeze();
+		DynamicToolCatalog catalog = new DynamicToolCatalog(base);
+
+		Map<String, Skill> skills = new LinkedHashMap<>();
+		skills.put("test/frontmatter-skill",
+			new Skill("test/frontmatter-skill", "A test skill with frontmatter",
+				"FRONTMATTER RULE content", List.of("test.toolA", "test.toolB")));
+
+		Set<String> preloaded = Set.of("test/frontmatter-skill");
+		SkillTool tool = new SkillTool(skills, catalog, TestSkillTool::resolveTool, preloaded);
+
+		// Tools should be available immediately without calling loadSkill
+		assertNotNull("toolA available after preload", catalog.getTool("test__toolA"));
+		assertNotNull("toolB available after preload", catalog.getTool("test__toolB"));
+
+		// loadSkill should return "already loaded"
+		String result = tool.loadSkill("test/frontmatter-skill");
+		assertTrue("Should say already loaded", result.contains("already loaded"));
+	}
+
+	/** Preloading a skill that was removed is silently skipped. */
+	public void testPreloadedSkillRemovedSilently() {
+		ToolCatalog base = new ToolCatalog();
+		base.freeze();
+		DynamicToolCatalog catalog = new DynamicToolCatalog(base);
+
+		Map<String, Skill> skills = new LinkedHashMap<>(); // no skills registered
+
+		Set<String> preloaded = Set.of("removed/skill");
+		// Should not throw
+		new SkillTool(skills, catalog, TestSkillTool::resolveTool, preloaded);
+	}
+
 	// ===== Helpers =====
 
 	private static Tool resolveTool(String qualifiedName) {
 		if (qualifiedName.startsWith("nonexistent.")) {
 			return null;
 		}
+		// Simulate ToolRegistryService sanitization: config name → provider name
+		String providerName = ToolRegistryService.toProviderName(qualifiedName);
 		return new Tool() {
-			@Override public String name() { return qualifiedName; }
-			@Override public String description() { return "Stub: " + qualifiedName; }
+			@Override public String name() { return providerName; }
+			@Override public String description() { return "Stub: " + providerName; }
 			@Override public ToolSchema schema() {
-				return new ToolSchema(qualifiedName, description(),
+				return new ToolSchema(providerName, description(),
 					"{\"type\":\"object\",\"properties\":{}}");
 			}
 			@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {

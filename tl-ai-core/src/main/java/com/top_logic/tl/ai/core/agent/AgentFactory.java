@@ -191,7 +191,12 @@ public class AgentFactory {
 		return new RunResult(extractResponseText(effectiveConversation, messageCountBefore), registry);
 	}
 
-	/** Result of {@link #runAgent}, carrying both the response text and the tool registry used. */
+	/**
+	 * Result of {@link #runAgent}, carrying both the response text and the tool registry used.
+	 *
+	 * @param response The final assistant response text.
+	 * @param registry The tool registry used during the run.
+	 */
 	public record RunResult(String response, ToolRegistry registry) {}
 
 	/**

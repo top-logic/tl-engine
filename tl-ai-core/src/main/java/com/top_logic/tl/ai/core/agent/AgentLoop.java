@@ -21,7 +21,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
@@ -617,31 +619,40 @@ public class AgentLoop {
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
-		// Capture thread-local bindings from the calling thread for propagation.
+		// Capture thread-local bindings and the caller's sub-session from the calling thread:
+		// worker threads do not inherit thread-locals, so each must re-establish them.
 		ConversationLogListener logListener = ConversationLogListenerBinding.getListener();
 		TaskStore taskStore = TaskStoreBinding.getStore();
 		UserInteractionStore interactionStore = UserInteractionStoreBinding.getStore();
 		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
+		SubSessionContext userSession = ThreadContextManager.getSubSession();
 
 		ExecutorService executor = Executors.newCachedThreadPool();
 		try {
 			List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
 
 			for (ToolCall tc : batch) {
+				ComputationEx2<ToolResultMessage, RuntimeException, RuntimeException> job = () -> {
+					try (
+						ConversationLogListenerBinding.Binding b1 =
+							ConversationLogListenerBinding.bind(logListener);
+						TaskStoreBinding.Binding b2 =
+							TaskStoreBinding.bind(taskStore);
+						UserInteractionStoreBinding.Binding b3 =
+							UserInteractionStoreBinding.bind(interactionStore);
+						LoadedSkillsBinding.Binding b4 =
+							LoadedSkillsBinding.bind(loadedSkills)) {
+						return executeWithSecurityCheck(tc, context, listener, runId, turn);
+					}
+				};
+				// Propagate the caller's sub-session (e.g. the chat user's) onto the worker thread
+				// so parallel tools run in the same context as sequential ones; fall back to a
+				// system interaction only when the caller had no bound context.
 				futures.add(CompletableFuture.supplyAsync(
-					() -> ThreadContextManager.inSystemInteraction(AgentLoop.class, () -> {
-						try (
-							ConversationLogListenerBinding.Binding b1 =
-								ConversationLogListenerBinding.bind(logListener);
-							TaskStoreBinding.Binding b2 =
-								TaskStoreBinding.bind(taskStore);
-							UserInteractionStoreBinding.Binding b3 =
-								UserInteractionStoreBinding.bind(interactionStore);
-							LoadedSkillsBinding.Binding b4 =
-								LoadedSkillsBinding.bind(loadedSkills)) {
-							return executeWithSecurityCheck(tc, context, listener, runId, turn);
-						}
-					}), executor));
+					() -> userSession != null
+						? ThreadContextManager.inContext(userSession, job)
+						: ThreadContextManager.inSystemInteraction(AgentLoop.class, job),
+					executor));
 			}
 
 			List<ToolResultMessage> results = new ArrayList<>();

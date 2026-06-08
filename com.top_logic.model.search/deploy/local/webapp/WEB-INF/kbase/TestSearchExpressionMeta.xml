@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject
+			object_name="WithDatabaseColumns"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="name"
+					att_type="String"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="int"
+					att_type="Integer"
+					mandatory="false"
+				/>
+				<mo_attribute
+					att_name="double"
+					att_type="Double"
+					mandatory="false"
+				/>
+				<reference
+					att_name="other"
+					mandatory="false"
+					target-type="WithDatabaseColumns"
+				/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

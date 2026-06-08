@@ -17,7 +17,6 @@ import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -87,7 +86,7 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 
 	@Override
 	public String buildId(TLObject obj) {
-		return ToString.toString(_identity.execute(obj));
+		return SearchExpression.asString(_identity.execute(obj));
 	}
 
 }

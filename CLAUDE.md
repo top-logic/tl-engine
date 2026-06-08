@@ -484,7 +484,7 @@ This project uses **Trac** for issue tracking. Tickets are referenced using the 
 
 ### MCP Server Integration
 
-A Trac MCP server is configured in `.mcp.json` to allow Claude Code to interact with tickets at `http://tl/trac/`.
+A Trac MCP server (installed once per machine from the `tl-dev-mcp` package and registered in Claude Code at user scope) lets Claude Code interact with tickets at `http://tl/trac/`. See `mcp-servers/README.md` for the one-step setup.
 
 **When discussing "tickets" in this project, always use the Trac MCP server tools to retrieve ticket information.**
 

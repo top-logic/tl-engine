@@ -21,8 +21,8 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
-import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
 import com.top_logic.element.changelog.model.trans.TransientDeletion;
@@ -37,7 +37,9 @@ import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -241,7 +243,16 @@ public class ChangeSetAnalyzer {
 			do {
 				ObjectCreation creation = _remainingCreations.next();
 				MetaObject table = creation.getObjectType();
-				boolean technicalUpdate = analyzeTechnicalUpdate(_changeSet.getRevision(), table, createdKeys, creation);
+				boolean versionedChange = MetaObjectUtils.isVersioned(table);
+				boolean technicalUpdate;
+				if (versionedChange) {
+					technicalUpdate = analyzeTechnicalUpdate(_changeSet.getRevision(), table, createdKeys, creation);
+				} else {
+					/* The creation may at most be an update of an "real" object. In this case it is
+					 * not possible to report a change. Therefore it is not necessary to analyze
+					 * it! */
+					technicalUpdate = false;
+				}
 
 				List<TLClass> classes = _modelTables.getClassesForTable(table);
 				if (classes.isEmpty()) {
@@ -252,7 +263,18 @@ public class ChangeSetAnalyzer {
 					}
 				}
 
-				TLObject object = resolve(creation.getOriginalObject()).getWrapper();
+				TLObject object;
+				if (versionedChange) {
+					object = resolve(creation.getOriginalObject()).getWrapper();
+				} else {
+					// Access with historic key will fail. Try resolve object in current.
+					KnowledgeItem currentItem = resolve(inCurrent(creation.getOriginalObject()));
+					if (currentItem == null) {
+						// deleted in the meanwhile
+						continue;
+					}
+					object = currentItem.getWrapper();
+				}
 				if (excludedByModule(object) || isPersistentCacheObject(object)) {
 					if (stopOnChange && technicalUpdate) {
 						return true;
@@ -294,6 +316,13 @@ public class ChangeSetAnalyzer {
 		while (_remainingUpdates.hasNext()) {
 			ItemUpdate update = _remainingUpdates.next();
 			MetaObject table = update.getObjectType();
+			if (!MetaObjectUtils.isVersioned(table)) {
+				/* Note: It is possible that an update event may be reported even though the cleanup
+				 * task has not yet been executed. */
+				/* It is not possible to fetch changes later for the "previous rev" to fill change
+				 * -> Ignore change. */
+				continue;
+			}
 			boolean technicalUpdate =
 				analyzeTechnicalUpdate(_changeSet.getRevision(), table, Collections.emptySet(), update);
 
@@ -370,6 +399,11 @@ public class ChangeSetAnalyzer {
 			do {
 				ItemDeletion deletion = _remainingDeletions.next();
 				MetaObject table = deletion.getObjectType();
+				if (!MetaObjectUtils.isVersioned(table)) {
+					/* Note: It is possible that a deletion event may be reported even though the
+					 * cleanup task has not yet been executed. */
+					continue;
+				}
 				boolean technicalUpdate =
 					analyzeTechnicalUpdate(_changeSet.getRevision(), table, deletedKeys, deletion);
 
@@ -464,7 +498,11 @@ public class ChangeSetAnalyzer {
 	}
 
 	private static ObjectKey inRevision(ObjectKey objId, long rev) {
-		return new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName());
+		return KBUtils.ensureHistoryContext(objId, rev);
+	}
+
+	private static ObjectKey inCurrent(ObjectKey objId) {
+		return inRevision(objId, Revision.CURRENT_REV);
 	}
 
 	private boolean excludedByModule(TLObject obj) {

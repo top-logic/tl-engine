@@ -30,13 +30,13 @@
 
 	<properties>
 		<tl.version>8.0.0-SNAPSHOT</tl.version>
-		<jetty.version>12.1.9</jetty.version>
+		<jetty.version>12.1.10</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>
 		<slf4j.version>2.0.18</slf4j.version>
 		<log4j.version>2.26.0</log4j.version>
-		<fasterxml.version>2.21.3</fasterxml.version>
+		<fasterxml.version>2.21.4</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
 		<bouncycastle.version>1.84</bouncycastle.version>
 		<batik.version>1.19</batik.version>
@@ -1120,7 +1120,7 @@
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-core</artifactId>
-			    <version>11.5.13</version>
+			    <version>11.5.14</version>
 				<exclusions>
 					<!-- Do not include Log4j 1, because this collides with Log4j 2  -->
 					<exclusion>
@@ -1141,7 +1141,7 @@
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-			    <version>11.5.13</version>
+			    <version>11.5.14</version>
 				<exclusions>
 					<exclusion>
 						<!-- Don't include 'com.sun.activation:jakarta.activation', as it collides with 'jakarta.activation:jakarta.activation-api'. -->
@@ -1282,7 +1282,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.5.2</version>
+    			<version>6.5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1292,7 +1292,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.5.2</version>
+    			<version>6.5.3</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>

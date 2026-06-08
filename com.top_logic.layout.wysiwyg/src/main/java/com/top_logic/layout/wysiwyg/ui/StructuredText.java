@@ -11,6 +11,7 @@ import static java.util.Collections.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -76,7 +77,7 @@ public class StructuredText implements FullTextSearchable {
 	 * @see #getSourceCode()
 	 */
 	public void setSourceCode(String sourceCode) {
-		_sourceCode = sourceCode;
+		_sourceCode = Objects.requireNonNull(sourceCode);
 	}
 
 	/**
@@ -90,7 +91,7 @@ public class StructuredText implements FullTextSearchable {
 	 * @see #getImages()
 	 */
 	public void setImages(Map<String, BinaryData> images) {
-		_images = images;
+		_images = Objects.requireNonNull(images);
 	}
 
 	/**
@@ -117,8 +118,8 @@ public class StructuredText implements FullTextSearchable {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((_images == null) ? 0 : _images.hashCode());
-		result = prime * result + ((_sourceCode == null) ? 0 : _sourceCode.hashCode());
+		result = prime * result + _images.hashCode();
+		result = prime * result + _sourceCode.hashCode();
 		return result;
 	}
 
@@ -131,15 +132,9 @@ public class StructuredText implements FullTextSearchable {
 		if (getClass() != obj.getClass())
 			return false;
 		StructuredText other = (StructuredText) obj;
-		if (_images == null) {
-			if (other._images != null)
-				return false;
-		} else if (!_images.equals(other._images))
+		if (!_images.equals(other._images))
 			return false;
-		if (_sourceCode == null) {
-			if (other._sourceCode != null)
-				return false;
-		} else if (!_sourceCode.equals(other._sourceCode))
+		if (!_sourceCode.equals(other._sourceCode))
 			return false;
 		return true;
 	}
@@ -158,7 +153,7 @@ public class StructuredText implements FullTextSearchable {
 	/** If the {@link StructuredText} is null, the empty {@link String} is returned. */
 	public static String getSourceCodeNullSafe(StructuredText structuredText) {
 		if (structuredText == null) {
-			return "";
+			return StringServices.EMPTY_STRING;
 		}
 		return structuredText.getSourceCode();
 	}

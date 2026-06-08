@@ -5,6 +5,9 @@
  */
 package com.top_logic.model.search.expr.compile.transform;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
@@ -12,12 +15,14 @@ import com.top_logic.dob.meta.TypeContext;
 import com.top_logic.knowledge.search.AllOf;
 import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
+import com.top_logic.knowledge.search.Parameter;
 import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.knowledge.service.db2.expr.visit.DefaultDescendingQueryVisitor;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.All;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.Call;
+import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.Foreach;
 import com.top_logic.model.search.expr.IsEqual;
@@ -29,15 +34,31 @@ import com.top_logic.model.search.expr.Or;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.Var;
-import com.top_logic.model.search.expr.compile.eval.CompiledExpression;
+import com.top_logic.model.search.expr.compile.eval.CompiledAnd;
+import com.top_logic.model.search.expr.compile.eval.CompiledContext;
+import com.top_logic.model.search.expr.compile.eval.CompiledValue;
 import com.top_logic.model.search.expr.compile.eval.InterpretedExpression;
 import com.top_logic.model.search.expr.compile.eval.Value;
+import com.top_logic.model.search.expr.compile.eval.Variable;
 import com.top_logic.model.search.expr.interpreter.Rewriter;
 import com.top_logic.model.search.expr.visit.DefaultDescendingVisitor;
 
 /**
  * {@link Rewriter} that (partially) compiles {@link Filter#getFunction()} and injects the compiled
  * part of the filter function into the {@link SetExpression} of {@link KBQuery} access expressions.
+ * 
+ * <p>
+ * The system attempts to extract an {@link Expression} from the filter to be passed to the
+ * database. Anything that cannot, in principle, be passed to the database is then evaluated on the
+ * in-memory result.
+ * </p>
+ * 
+ * <p>
+ * If outer variables are accessed in the {@link Filter#getFunction() filter function}, a database
+ * filter expression cannot be created at compile time, because the values for these arguments are
+ * required ({@link Parameter} cannot be used because an argument could be null; see #9479). In this
+ * case, the creation of the {@link Expression} is deferred to evaluation time.
+ * </p>
  * 
  * <p>
  * As pre-requisite, the {@link CreateTableAccess} transformation must be executed.
@@ -77,7 +98,7 @@ public class FilterCompiler extends Rewriter<Void> {
 			}
 			Value evaluator = testFunction.visit(ExpressionCompiler.INSTANCE, new VarBinding(varName, tableType));
 			if (evaluator.hasCompiledPart()) {
-				Expression compiled = evaluator.compiled();
+				CompiledValue compiled = evaluator.compiled();
 
 				SearchExpression enhancedBase = base.visit(InjectCompiled.INSTANCE, compiled);
 				if (evaluator.hasInterpretedPart()) {
@@ -92,7 +113,8 @@ public class FilterCompiler extends Rewriter<Void> {
 		return super.visitFilter(expr, arg);
 	}
 
-	private static class InjectCompiled extends Rewriter<Expression> {
+	private static class InjectCompiled extends Rewriter<CompiledValue> {
+
 		/**
 		 * Singleton {@link FilterCompiler.InjectCompiled} instance.
 		 */
@@ -103,45 +125,76 @@ public class FilterCompiler extends Rewriter<Void> {
 		}
 
 		@Override
-		public SearchExpression visitFilter(Filter expr, Expression arg) {
+		public SearchExpression visitFilter(Filter expr, CompiledValue arg) {
 			// Only transform into base.
 			return composeFilter(expr, arg, descendPart(expr, arg, expr.getBase()), expr.getFunction());
 		}
 
 		@Override
-		public SearchExpression visitForeach(Foreach expr, Expression arg) {
+		public SearchExpression visitForeach(Foreach expr, CompiledValue arg) {
 			throw new UnreachableAssertion("Foreach was not considered during filter optimization, see GetTableType.");
 		}
 
 		@Override
-		public SearchExpression visitAll(All expr, Expression arg) {
+		public SearchExpression visitAll(All expr, CompiledValue arg) {
 			throw new UnreachableAssertion("Meta-model access should have been eliminated before.");
 		}
 
 		@Override
-		public SearchExpression visitKBQuery(KBQuery expr, Expression arg) {
-			return SearchExpressionFactory.query(expr.getClassType(), ExpressionFactory.filter(expr.getQuery(), arg));
+		public SearchExpression visitKBQuery(KBQuery expr, CompiledValue arg) {
+			List<CompiledValue> dynamicFilters = expr.getDynamicFilters();
+			List<CompiledValue> extendedDynamicFilters = new ArrayList<>(dynamicFilters);
+			Expression filter = buildFilter(ExpressionFactory.literal(Boolean.TRUE), extendedDynamicFilters, arg);
+
+			SetExpression newQuery = ExpressionFactory.filter(expr.getQuery(), filter);
+			List<CompiledValue> newDynamicFilters;
+			if (dynamicFilters.size() == extendedDynamicFilters.size()) {
+				newDynamicFilters = dynamicFilters;
+			} else {
+				newDynamicFilters = extendedDynamicFilters;
+			}
+
+			return SearchExpressionFactory.query(expr.getClassType(), newQuery, newDynamicFilters);
+		}
+
+		/**
+		 * Analyzes the given CompiledValue and extends the given filter expression as much as
+		 * possible at compile time.
+		 * 
+		 * <p>
+		 * To do this, top-level {@link CompiledAnd ANDs} are broken down into their individual
+		 * parts and handled separately.
+		 * </p>
+		 * 
+		 * <p>
+		 * If a {@link CompiledValue} requires the {@link EvalContext evaluation context} and
+		 * therefore a filter expression cannot be created, the {@link CompiledValue} is added to
+		 * the <code>dynamicValues</code>.
+		 */
+		private Expression buildFilter(Expression filter, List<CompiledValue> dynamicalValues,
+				CompiledValue value) {
+			if (value instanceof CompiledAnd and) {
+				filter = buildFilter(filter, dynamicalValues, and.left());
+				filter = buildFilter(filter, dynamicalValues, and.right());
+			} else {
+				if (value.needsEvalContext()) {
+					dynamicalValues.add(value);
+				} else {
+					try {
+						filter = ExpressionFactory.and(filter, value.buildExpression(null));
+					} catch (CompiledValue.IncompatibleTypes ex) {
+						/* This case must not happen because the CompiledValue does not access the
+						 * context. */
+						dynamicalValues.add(value);
+					}
+				}
+			}
+			return filter;
 		}
 	}
 
-	private static class VarBinding {
-
-		private final Object _varName;
-
-		private final MetaObject _tableType;
-
-		public VarBinding(Object varName, MetaObject tableType) {
-			_varName = varName;
-			_tableType = tableType;
-		}
-
-		public Object getVarName() {
-			return _varName;
-		}
-
-		public MetaObject getTableType() {
-			return _tableType;
-		}
+	private static record VarBinding(Object varName, MetaObject tableType) {
+		// nothing special here
 	}
 
 	private static class ExpressionCompiler extends DefaultDescendingVisitor<Value, VarBinding> {
@@ -182,7 +235,7 @@ public class FilterCompiler extends Rewriter<Void> {
 
 		@Override
 		public Value visitLambda(Lambda expr, VarBinding arg) {
-			if (arg.getVarName().equals(expr.getName())) {
+			if (arg.varName().equals(expr.getName())) {
 				// Reduce the filter function to its body. The function is re-assembled afterwards.
 				return expr.getBody().visit(this, arg);
 			}
@@ -196,10 +249,10 @@ public class FilterCompiler extends Rewriter<Void> {
 
 		@Override
 		public Value visitVar(Var expr, VarBinding arg) {
-			if (expr.getName().equals(arg.getVarName())) {
-				return new CompiledExpression(arg.getTableType(), ExpressionFactory.context());
+			if (expr.getName().equals(arg.varName())) {
+				return new CompiledContext(arg.tableType());
 			}
-			return super.visitVar(expr, arg);
+			return new Variable(expr.getKey());
 		}
 
 		@Override

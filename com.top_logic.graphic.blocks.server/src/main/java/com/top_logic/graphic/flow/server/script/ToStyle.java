@@ -7,7 +7,7 @@ package com.top_logic.graphic.flow.server.script;
 
 import com.top_logic.graphic.blocks.svg.SVGColor;
 import com.top_logic.graphic.blocks.svg.SvgUtil;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ValueConverter;
 
 /**
@@ -23,7 +23,7 @@ public class ToStyle implements ValueConverter {
 		if (javaValue instanceof SVGColor color) {
 			return SvgUtil.html(color);
 		}
-		return ToString.toString(javaValue);
+		return SearchExpression.asString(javaValue);
 	}
 
 }

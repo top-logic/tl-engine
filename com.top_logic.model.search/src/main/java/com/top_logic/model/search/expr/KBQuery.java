@@ -5,10 +5,18 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.top_logic.basic.col.CloseableIterator;
+import com.top_logic.knowledge.search.Expression;
 import com.top_logic.knowledge.search.ExpressionFactory;
 import com.top_logic.knowledge.search.SetExpression;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.compile.eval.CompiledValue;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
 
@@ -19,7 +27,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * {@link KBQuery} expressions are created internally during the query optimization process.
  * </p>
  * 
- * @see SearchExpressionFactory#query(TLClass, SetExpression)
+ * @see SearchExpressionFactory#query(TLClass, SetExpression, List)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -29,9 +37,12 @@ public class KBQuery extends SearchExpression {
 
 	private final SetExpression _query;
 
-	KBQuery(TLClass classType, SetExpression query) {
+	private final List<CompiledValue> _dynamic;
+
+	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters) {
 		_classType = classType;
 		_query = query;
+		_dynamic = dynamicFilters;
 	}
 
 	/**
@@ -48,9 +59,50 @@ public class KBQuery extends SearchExpression {
 		return _query;
 	}
 
+	/**
+	 * List of {@link CompiledValue}s that dynamically creates a filter {@link Expression} at
+	 * evaluation time based on the given arguments.
+	 */
+	public List<CompiledValue> getDynamicFilters() {
+		return _dynamic;
+	}
+
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		return definitions.getKnowledgeBase().search(ExpressionFactory.queryResolved(getQuery(), TLObject.class));
+		KnowledgeBase kb = definitions.getKnowledgeBase();
+
+		List<CompiledValue> deferredFilterParts = Collections.emptyList();
+
+		SetExpression query = getQuery();
+		for (CompiledValue part : _dynamic) {
+			try {
+				Expression expression = part.buildExpression(definitions);
+				query = ExpressionFactory.filter(query, expression);
+			} catch (CompiledValue.IncompatibleTypes ex) {
+				// Could not be resolved to valid expression. Store for later in memory evaluation.
+				if (deferredFilterParts.size() == 0) {
+					deferredFilterParts = new ArrayList<>();
+				}
+				deferredFilterParts.add(part);
+			}
+		}
+
+		List<TLObject> result = new ArrayList<>();
+		try (CloseableIterator<TLObject> dbResult =
+			kb.searchStream(ExpressionFactory.queryResolved(query, TLObject.class))) {
+			dbResult:
+			while (dbResult.hasNext()) {
+				TLObject match = dbResult.next();
+				for (CompiledValue deferred : deferredFilterParts) {
+					if (!SearchExpression.asBoolean(deferred.eval(match, definitions))) {
+						continue dbResult;
+					}
+				}
+				result.add(match);
+			}
+		}
+
+		return result;
 	}
 
 	@Override

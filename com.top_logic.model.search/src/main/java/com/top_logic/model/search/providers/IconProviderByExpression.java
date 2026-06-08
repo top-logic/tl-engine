@@ -15,7 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.icon.IconProvider;
-import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -82,7 +82,7 @@ public class IconProviderByExpression extends AbstractConfiguredInstance<IconPro
 		if (result == null) {
 			return null;
 		}
-		String iconKey = ToString.toString(result);
+		String iconKey = SearchExpression.asString(result);
 		return ThemeImage.internalDecode(iconKey);
 	}
 

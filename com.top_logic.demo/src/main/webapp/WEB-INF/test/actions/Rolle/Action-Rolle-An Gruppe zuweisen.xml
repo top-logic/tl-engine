@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<t:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	xmlns:t="http://www.top-logic.com/ns/template/1.0"
+>
+	<t:head>
+		<t:settings
+			output-format="xml"
+			output-xml-header="false"
+		/>
+		<t:parameters>
+			<t:parameter name="Rollenregelnummer"
+				type="string"
+			/>
+			<t:parameter name="Typ"
+				type="string"
+			/>
+			<t:parameter name="Gruppe"
+				type="string"
+			/>
+			<t:parameter name="Objektname"
+				type="string"
+			/>
+			<t:parameter name="Rolle"
+				type="string"
+			/>
+		</t:parameters>
+	</t:head>
+	<t:body>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="multi-set-equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+							/>
+							<path>
+								<labeled-member label="Dienst-Konfiguration"/>
+								<named-member name="outerContainer"/>
+								<named-member name="contentContainer"/>
+								<named-member name="content"/>
+								<labeled-member label="Rollen-Regeln"/>
+								<named-member name="outerContainer"/>
+								<named-member name="contentContainer"/>
+								<named-member name="content"/>
+								<labeled-member label="Regeln"/>
+								<named-member name="content"/>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+										value="${$Rollenregelnummer}"
+									/>
+								</object>
+								<labeled-member label="Rollenregel"/>
+								<labeled-member label="Meta-Element"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name"/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="${$Rollenregelnummer}"
+								/>
+							</object>
+							<labeled-member label="Rollenregel"/>
+							<labeled-member label="Meta-Element"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="${$Typ}"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="${$Rollenregelnummer}"
+								/>
+							</object>
+							<labeled-member label="Rollenregel"/>
+							<labeled-member label="Rolle"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="${$Rolle}"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="${$Rollenregelnummer}"
+								/>
+							</object>
+							<labeled-member label="Rollenregel"/>
+							<labeled-member label="Pfad"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.model.search.rules.PathByExpression"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="${$Rollenregelnummer}"
+								/>
+							</object>
+							<labeled-member label="Rollenregel"/>
+							<labeled-member label="Pfad"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="0"
+								/>
+							</object>
+							<labeled-member label="Pfad nach Ausdruck"/>
+							<labeled-member label="Ausdruck"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="as -> $as.filter(a -> $a.get(`${$Typ}#name`) == '${$Objektname}')"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="${$Rollenregelnummer}"
+								/>
+							</object>
+							<labeled-member label="Rollenregel"/>
+							<labeled-member label="Pfad"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.GroupWithName"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="${$Rollenregelnummer}"
+								/>
+							</object>
+							<labeled-member label="Rollenregel"/>
+							<labeled-member label="Pfad"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="1"
+								/>
+							</object>
+							<labeled-member label="Gruppe mit Namen"/>
+							<labeled-member label="Name"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="${$Gruppe}"
+							/>
+						</values>
+					</value>
+				</action>
+			</actions>
+		</action>
+	</t:body>
+</t:template>

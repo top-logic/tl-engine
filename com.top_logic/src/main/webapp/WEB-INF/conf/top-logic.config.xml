@@ -2274,6 +2274,21 @@
 			<!-- Attention: Do not use %TRANSLATION_API_KEY%, because this will be replaced by the value! -->
 			<protected-alias pattern="TRANSLATION_API_KEY" />
 		</config>
+
+		<config config:interface="com.top_logic.layout.admin.component.TLServicesCommandProvider$Config">
+			<commands-by-service-class service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+				<command id="restartAndReload"
+					class="com.top_logic.layout.admin.component.RestartAndReload"
+					image="theme:ICON_RELOAD_ACCESSMANAGER"
+					resourceKey="class.com.top_logic.tool.boundsec.manager.I18NConstants.RESTART_AND_RELOAD_ACCESS_MANAGER"
+				>
+					<executability>
+						<reference rule-id="InViewMode"/>
+					</executability>
+				</command>
+			</commands-by-service-class>
+		</config>
+
 	</configs>
 	
 	<defaults>

@@ -5,53 +5,98 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import jakarta.servlet.http.HttpSession;
+import java.util.Map;
+
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 
 /**
- * Session-scoped registry for {@link TaskProgressTracker} so the JSON chat API (servlet) can
- * resolve the same tracker used by the TL chat UI when both run in the same session.
+ * Bridges the TopLogic sub-session of an application window to the {@link TaskProgressTracker}
+ * used by the JSON chat API (servlet).
+ *
  * <p>
- * The servlet has only {@link HttpSession}; the layout uses {@link com.top_logic.layout.WindowScope}.
- * This registry stores the tracker in a session attribute so the API and the UI can share one
- * tracker per session when Option A is used: call {@link #registerSession(HttpSession, TaskProgressTracker)}
- * when building the chat component (e.g. when request/session is available in the layout context).
+ * A single {@code HttpSession} (one login) can host several TopLogic sub-sessions &ndash; one per
+ * browser window (cloned tabs, popped-out views). Each sub-session has its own
+ * {@link com.top_logic.layout.WindowScope} and therefore its own {@link TaskProgressTracker}. The
+ * plain HTTP request of the {@code ChatServlet} carries only the session cookie, so the servlet
+ * cannot tell the sub-sessions apart on its own.
+ * </p>
+ *
+ * <p>
+ * To make the right sub-session resolvable, the chat UI is rendered with a {@code data-window-id}
+ * attribute carrying the sub-session registry key (the {@code windowName}, see
+ * {@link #windowId(TLSessionContext, TLSubSessionContext)}). The client echoes this id with every
+ * chat request, and the servlet resolves it back to the sub-session via
+ * {@link TLSessionContext#getSubSession(String)} and to the tracker stored on it under
+ * {@link #CHAT_TRACKER}.
  * </p>
  */
 public final class ChatSessionRegistry {
 
-	private static final String SESSION_ATTR_TRACKER = "tl.chat.tracker";
+	/** The {@link TaskProgressTracker} of the chat UI rendered in a sub-session. */
+	public static final Property<TaskProgressTracker> CHAT_TRACKER =
+		TypedAnnotatable.property(TaskProgressTracker.class, "tl.chat.tracker");
 
 	private ChatSessionRegistry() {
+		// Static utility.
 	}
 
 	/**
-	 * Returns the {@link TaskProgressTracker} for the given session, creating one if none exists.
+	 * Stores the given tracker on the sub-session so {@link #resolveTracker} can find it.
+	 *
+	 * <p>
+	 * Called while rendering the chat component, where the application's sub-session is bound to the
+	 * current thread.
+	 * </p>
 	 */
-	public static TaskProgressTracker getOrCreate(HttpSession session) {
-		if (session == null) {
-			return new TaskProgressTracker();
-		}
-		synchronized (session) {
-			Object attr = session.getAttribute(SESSION_ATTR_TRACKER);
-			if (attr instanceof TaskProgressTracker tracker) {
-				return tracker;
-			}
-			TaskProgressTracker tracker = new TaskProgressTracker();
-			session.setAttribute(SESSION_ATTR_TRACKER, tracker);
-			return tracker;
+	public static void register(TLSubSessionContext subSession, TaskProgressTracker tracker) {
+		if (subSession != null && tracker != null) {
+			subSession.set(CHAT_TRACKER, tracker);
 		}
 	}
 
 	/**
-	 * Associates the given tracker with the session so that {@link #getOrCreate(HttpSession)}
-	 * returns this tracker for this session (Option A: share state between TL UI and JSON API).
-	 * Call this when building the chat component if the current request/session is available.
+	 * Resolves the sub-session addressed by the given client-provided window id, or {@code null} if
+	 * none matches (unknown or expired window).
 	 */
-	public static void registerSession(HttpSession session, TaskProgressTracker tracker) {
-		if (session != null && tracker != null) {
-			synchronized (session) {
-				session.setAttribute(SESSION_ATTR_TRACKER, tracker);
+	public static TLSubSessionContext resolveSubSession(TLSessionContext session, String windowId) {
+		if (session == null || windowId == null || windowId.isEmpty()) {
+			return null;
+		}
+		return session.getSubSession(windowId);
+	}
+
+	/**
+	 * Resolves the {@link TaskProgressTracker} for the given client-provided window id, or
+	 * {@code null} if the sub-session is unknown/expired or has no chat tracker.
+	 */
+	public static TaskProgressTracker resolveTracker(TLSessionContext session, String windowId) {
+		TLSubSessionContext subSession = resolveSubSession(session, windowId);
+		return subSession == null ? null : subSession.get(CHAT_TRACKER);
+	}
+
+	/**
+	 * The registry key ({@code windowName}) under which the given sub-session is registered in its
+	 * session, or {@code null} if it is not (yet) registered.
+	 *
+	 * <p>
+	 * This is the value the client must send back as the window id. It matches the key expected by
+	 * {@link TLSessionContext#getSubSession(String)}; layout sub-sessions are registered under their
+	 * {@code windowName} only (see
+	 * {@code ContentHandlersRegistry#startLogin}), so the reverse lookup is unambiguous.
+	 * </p>
+	 */
+	public static String windowId(TLSessionContext session, TLSubSessionContext subSession) {
+		if (session == null || subSession == null) {
+			return null;
+		}
+		for (Map.Entry<String, TLSubSessionContext> entry : session.getSubSessions().entrySet()) {
+			if (entry.getValue() == subSession) {
+				return entry.getKey();
 			}
 		}
+		return null;
 	}
 }

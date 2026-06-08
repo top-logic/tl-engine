@@ -7,8 +7,8 @@ package com.top_logic.ai.chat.layout;
 
 import java.io.IOException;
 
-import jakarta.servlet.http.HttpSession;
-
+import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagWriter;
@@ -22,6 +22,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * {@link ModelBuilder} that creates a {@link FormContext} with an embedded {@link ChatControl}.
@@ -48,8 +49,9 @@ public class ChatComponentBuilder implements ModelBuilder {
 		// Store user name from TLContext (available here) so ChatServlet can use it as fallback
 		storeUserName(taskTracker);
 
-		// So the JSON API (ChatServlet) uses the same tracker as this UI when in the same session
-		registerTrackerWithSession(component, taskTracker);
+		// Bind this window's sub-session to the tracker so the JSON API (ChatServlet) can resolve
+		// the same tracker - and the originating sub-session - from the client-provided window id.
+		registerTrackerWithSubSession(taskTracker);
 
 		// Create hidden field with custom ControlProvider that embeds ChatControl.
 		// ChatControl gets its Chat from taskTracker.getChat() which delegates to
@@ -120,22 +122,25 @@ public class ChatComponentBuilder implements ModelBuilder {
 	}
 
 	/**
-	 * Registers the given tracker with the current HTTP session when possible, so
-	 * {@link ChatSessionRegistry#getOrCreate(jakarta.servlet.http.HttpSession)} returns this
-	 * tracker for the JSON API (same state as the UI).
+	 * Stores the tracker on the current sub-session and records its window id, so the JSON API
+	 * ({@code ChatServlet}) can resolve this exact tracker from the client-provided window id.
+	 *
+	 * <p>
+	 * Runs while the chat component is rendered, where the application window's sub-session is bound
+	 * to the current thread (see {@link ChatSessionRegistry}).
+	 * </p>
 	 */
-	private static void registerTrackerWithSession(LayoutComponent component, TaskProgressTracker taskTracker) {
+	private static void registerTrackerWithSubSession(TaskProgressTracker taskTracker) {
 		try {
-			Object scope = component.getMainLayout().getWindowScope();
-			Object request = scope.getClass().getMethod("getRequest").invoke(scope);
-			if (request != null && request.getClass().getName().startsWith("jakarta.servlet.")) {
-				Object session = request.getClass().getMethod("getSession", boolean.class).invoke(request, Boolean.FALSE);
-				if (session != null) {
-					ChatSessionRegistry.registerSession((HttpSession) session, taskTracker);
-				}
+			TLSubSessionContext subSession = TLContextManager.getSubSession();
+			if (subSession == null) {
+				return;
 			}
+			TLSessionContext session = subSession.getSessionContext();
+			taskTracker.setWindowId(ChatSessionRegistry.windowId(session, subSession));
+			ChatSessionRegistry.register(subSession, taskTracker);
 		} catch (Exception e) {
-			Logger.debug("Could not register chat tracker with session (JSON API may use a separate tracker)", e,
+			Logger.debug("Could not bind chat tracker to sub-session (JSON API will not resolve this window)", e,
 				ChatComponentBuilder.class);
 		}
 	}

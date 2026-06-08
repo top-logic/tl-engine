@@ -19,6 +19,7 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Chat control that renders messages and an input section.
@@ -81,6 +82,8 @@ public class ChatControl extends AbstractControlBase {
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 		out.writeAttribute("data-tl-chat", "v1");
+		// Sub-session registry key so the JSON API can bind requests to this application window.
+		out.writeAttribute("data-window-id", _taskTracker.getWindowId());
 		out.writeAttribute("data-cancel-url", contextPath + "/chat/cancel");
 		out.writeAttribute("data-respond-url", contextPath + "/chat/respond");
 		out.writeAttribute("data-approval-mode-url", contextPath + "/chat/approval-mode");
@@ -488,7 +491,7 @@ public class ChatControl extends AbstractControlBase {
 						String storedName = chatControl._taskTracker.getUserName();
 					String userName = storedName != null ? storedName : "Anonymous";
 					ChatProcessor.SendResult result = ChatProcessor.sendMessage(
-						chatControl._taskTracker, userName, trimmedText, null);
+						chatControl._taskTracker, TLContextManager.getSubSession(), userName, trimmedText, null);
 					if (result.getTaskId() != null) {
 						chatControl._taskTracker.getAnyActiveProcessingState();
 						chatControl.requestRepaint();

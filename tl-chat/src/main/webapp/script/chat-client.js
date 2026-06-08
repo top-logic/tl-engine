@@ -91,6 +91,18 @@
     updates: CTX + "/chat/updates",
   };
 
+  // Registry key (windowName) of the TopLogic sub-session this chat was rendered in.
+  // Read from the chat root's data-window-id and echoed on every request so the server can
+  // bind the request to the correct application window (cloned tabs, popped-out views).
+  let WINDOW_ID = "";
+
+  // Appends the current windowId to a URL so the server can resolve the originating sub-session.
+  function withWindow(url) {
+    if (!WINDOW_ID) return url;
+    const sep = url.indexOf("?") >= 0 ? "&" : "?";
+    return url + sep + "windowId=" + encodeURIComponent(WINDOW_ID);
+  }
+
   // ========================================================================
   // State — Client-side state machine
   // ========================================================================
@@ -230,8 +242,9 @@
     connect(sessionId) {
       this.disconnect();
       this._sessionId = sessionId;
-      const url =
-        URLS.events + "?sessionId=" + encodeURIComponent(sessionId || "");
+      const url = withWindow(
+        URLS.events + "?sessionId=" + encodeURIComponent(sessionId || ""),
+      );
       this._source = new EventSource(url);
 
       const handlers = {
@@ -914,7 +927,7 @@
       btn.textContent = "Cancel";
       btn.style.display = "none";
       btn.addEventListener("click", () => {
-        fetch(URLS.cancel, { method: "POST" }).catch((err) =>
+        fetch(withWindow(URLS.cancel), { method: "POST" }).catch((err) =>
           console.error("[tl-chat] Cancel request failed:", err),
         );
       });
@@ -951,7 +964,7 @@
           this._inputEl.disabled = false;
           this._inputEl.placeholder = "Type a message...";
         }
-        fetch(URLS.respond, {
+        fetch(withWindow(URLS.respond), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ requestId: reqId, response: text }),
@@ -970,7 +983,7 @@
         // Ensure session exists before appending message (createNew clears the DOM)
         const sessionId = await Session._ensureSession();
         this.appendUserMessage(text, attachments);
-        await fetch(URLS.send, {
+        await fetch(withWindow(URLS.send), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1771,7 +1784,7 @@
       const body = { requestId, response: outcome };
       if (toolName) body.toolName = toolName;
       if (comment) body.comment = comment;
-      fetch(URLS.respond, {
+      fetch(withWindow(URLS.respond), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -1841,7 +1854,7 @@
       };
 
       const respond = (response) => {
-        fetch(URLS.respond, {
+        fetch(withWindow(URLS.respond), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -2065,7 +2078,7 @@
       if (Date.now() - this._lastEventTime < this._TIMEOUT_MS) return;
 
       try {
-        const resp = await fetch(URLS.updates);
+        const resp = await fetch(withWindow(URLS.updates));
         if (!resp.ok) return;
         const data = await resp.json();
         if (!data.processing && State.isActive()) {
@@ -2172,7 +2185,7 @@
     async loadList() {
       if (!this._listEl) return;
       try {
-        const resp = await fetch(URLS.sessions);
+        const resp = await fetch(withWindow(URLS.sessions));
         const data = await resp.json();
         this._renderList(data.sessions || []);
       } catch (e) {
@@ -2234,7 +2247,9 @@
         if (newTitle && newTitle !== session.title) {
           session.title = newTitle;
           fetch(
-            URLS.sessions + "/" + encodeURIComponent(session.id) + "/title",
+            withWindow(
+              URLS.sessions + "/" + encodeURIComponent(session.id) + "/title",
+            ),
             {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
@@ -2332,7 +2347,7 @@
       if (sessionId && !skipLoad) {
         try {
           const resp = await fetch(
-            URLS.sessions + "/" + encodeURIComponent(sessionId),
+            withWindow(URLS.sessions + "/" + encodeURIComponent(sessionId)),
           );
           const data = await resp.json();
           this._renderLoadedSession(data);
@@ -3235,7 +3250,7 @@
 
     async createNew() {
       try {
-        const resp = await fetch(URLS.sessions, {
+        const resp = await fetch(withWindow(URLS.sessions), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: "New Chat" }),
@@ -3273,7 +3288,7 @@
 
     async deleteSession(sessionId, itemEl) {
       try {
-        await fetch(URLS.sessions + "/" + encodeURIComponent(sessionId), {
+        await fetch(withWindow(URLS.sessions + "/" + encodeURIComponent(sessionId)), {
           method: "DELETE",
         });
         if (itemEl) itemEl.remove();
@@ -3298,6 +3313,7 @@
   // Init — Bootstrap
   // ========================================================================
   function initChat(root) {
+    WINDOW_ID = root.dataset.windowId || "";
     Render.init(root);
     Session.init(root);
     Welcome.init(root);
@@ -3376,7 +3392,7 @@
         const sessionId = await Session._ensureSession();
         this.hide();
         Render.appendUserMessage(text, attachments);
-        await fetch(URLS.send, {
+        await fetch(withWindow(URLS.send), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

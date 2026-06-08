@@ -52,6 +52,16 @@ public class TaskProgressTracker {
 	/** User's first name for the welcome screen greeting. */
 	private volatile String _welcomeName = null;
 
+	/**
+	 * Registry key ({@code windowName}) of the sub-session this tracker's chat UI was rendered in.
+	 *
+	 * <p>
+	 * Rendered into the client as {@code data-window-id} and echoed back by the client so the
+	 * {@code ChatServlet} can resolve the originating sub-session. See {@link ChatSessionRegistry}.
+	 * </p>
+	 */
+	private volatile String _windowId = null;
+
 	/** Session-scoped approval mode. Persists across messages/processing states. */
 	private volatile ApprovalMode _approvalMode = ApprovalMode.MANUAL;
 
@@ -173,6 +183,28 @@ public class TaskProgressTracker {
 	 */
 	public void setWelcomeName(String welcomeName) {
 		_welcomeName = welcomeName;
+	}
+
+	/**
+	 * Returns the window id ({@code windowName}) of the sub-session this tracker belongs to, or
+	 * {@code null} if the chat UI has not been rendered yet.
+	 *
+	 * @see ChatSessionRegistry#windowId(com.top_logic.base.context.TLSessionContext,
+	 *      com.top_logic.base.context.TLSubSessionContext)
+	 */
+	public String getWindowId() {
+		return _windowId;
+	}
+
+	/**
+	 * Stores the window id of the sub-session this tracker belongs to (set while rendering the chat
+	 * component).
+	 *
+	 * @param windowId
+	 *        The sub-session registry key.
+	 */
+	public void setWindowId(String windowId) {
+		_windowId = windowId;
 	}
 
 	/** Returns the session-scoped approval mode. */

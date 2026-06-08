@@ -17,7 +17,7 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
  * used by the JSON chat API (servlet).
  *
  * <p>
- * A single {@code HttpSession} (one login) can host several TopLogic sub-sessions &ndash; one per
+ * A single {@code HttpSession} (one login) can host several TopLogic sub-sessions - one per
  * browser window (cloned tabs, popped-out views). Each sub-session has its own
  * {@link com.top_logic.layout.WindowScope} and therefore its own {@link TaskProgressTracker}. The
  * plain HTTP request of the {@code ChatServlet} carries only the session cookie, so the servlet

@@ -651,8 +651,8 @@ public class ChatServlet extends TopLogicServlet {
 	 * <p>
 	 * A single login can host several sub-sessions (cloned tabs, popped-out views); the plain HTTP
 	 * request only identifies the login. The client therefore echoes the window id of its
-	 * application window, which we resolve to the originating sub-session here &ndash; once, centrally
-	 * &ndash; so the handlers (and the KnowledgeBase operations they trigger) see a valid, correct
+	 * application window, which we resolve to the originating sub-session here - once, centrally
+	 * - so the handlers (and the <code>KnowledgeBase</code> operations they trigger) see a valid, correct
 	 * session context, and the background agent acts on the user's UI. If the window cannot be
 	 * resolved (unknown id, closed window, server restart) the request is rejected so the client
 	 * reloads its application window.

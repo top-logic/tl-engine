@@ -17,8 +17,8 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  *
  * <p>
  * Tools access the {@code KnowledgeBase} and therefore need a thread-bound interaction. Rather than
- * having every tool establish one itself, the tool-call boundaries &ndash; the agent dispatcher
- * ({@link ToolCatalog}), the MCP server adapter, and the TL-Script bridge &ndash; route execution
+ * having every tool establish one itself, the tool-call boundaries - the agent dispatcher
+ * ({@link ToolCatalog}), the MCP server adapter, and the TL-Script bridge - route execution
  * through {@link #execute}. It reuses the caller's interaction when one is present (e.g. the chat
  * user's sub-session, so tools act in the user's context and on the user's UI), and otherwise
  * establishes a system interaction so context-less callers (the MCP server, background jobs) can

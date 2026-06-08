@@ -2,6 +2,8 @@
 
 <form name="AgentContent"
 	resPrefix="chat.layout.agent"
+	showMaximize="false"
+	showPopOut="true"
 >
 	<modelBuilder class="com.top_logic.ai.chat.layout.ChatComponentBuilder"/>
 </form>

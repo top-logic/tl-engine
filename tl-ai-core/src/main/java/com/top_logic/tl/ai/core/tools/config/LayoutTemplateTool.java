@@ -18,20 +18,19 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.TLLayout;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutCreateResponse;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateInfo;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateListResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
+import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -67,40 +66,34 @@ public class LayoutTemplateTool {
 	@ToolMethod(description = "List all available layout templates with names, labels, and groups. Use the template name with getConfigSchema (toplogic://schema/layout-template/{name}) to get the parameter schema.", mode = ToolMode.READ)
 	public String listLayoutTemplates() {
 		try {
-			LayoutTemplateListResponse response = ThreadContextManager.inSystemInteraction(
-				LayoutTemplateTool.class,
-				() -> {
-					LayoutTemplateListResponse result = LayoutTemplateListResponse.create();
-					Resources resources = Resources.getInstance();
+			LayoutTemplateListResponse response = LayoutTemplateListResponse.create();
+			Resources resources = Resources.getInstance();
 
-					Collection<DynamicComponentDefinition> definitions =
-						DynamicComponentService.getInstance().getComponentDefinitions();
+			Collection<DynamicComponentDefinition> definitions =
+				DynamicComponentService.getInstance().getComponentDefinitions();
 
-					for (DynamicComponentDefinition definition : definitions) {
-						// Skip assistant templates
-						if (definition.getAssistentFor().isPresent()) {
-							continue;
-						}
+			for (DynamicComponentDefinition definition : definitions) {
+				// Skip assistant templates
+				if (definition.getAssistentFor().isPresent()) {
+					continue;
+				}
 
-						LayoutTemplateInfo info = LayoutTemplateInfo.create();
-						info.setName(definition.definitionFile());
+				LayoutTemplateInfo info = LayoutTemplateInfo.create();
+				info.setName(definition.definitionFile());
 
-						// Resolve label
-						String label = resources.getString(definition.label(), null);
-						if (label != null && !label.isEmpty()) {
-							info.setLabel(label);
-						}
+				// Resolve label
+				String label = resources.getString(definition.label(), null);
+				if (label != null && !label.isEmpty()) {
+					info.setLabel(label);
+				}
 
-						// Add group memberships
-						for (String group : definition.getBelongingGroups()) {
-							info.addGroup(group);
-						}
+				// Add group memberships
+				for (String group : definition.getBelongingGroups()) {
+					info.addGroup(group);
+				}
 
-						result.addTemplate(info);
-					}
-
-					return result;
-				});
+				response.addTemplate(info);
+			}
 
 			Map<String, Object> args = new HashMap<>();
 			return DataClassSerializer.toJson(response, LayoutTemplateTool.class, "listLayoutTemplates()", args);
@@ -129,9 +122,7 @@ public class LayoutTemplateTool {
 	@ToolMethod(description = "Get the top-level layout key of the application. Use this as entry point for getLayout to navigate the layout tree.", mode = ToolMode.READ)
 	public String getTopLevelLayoutKey() {
 		try {
-			return ThreadContextManager.inSystemInteraction(
-				LayoutTemplateTool.class,
-				() -> LayoutConfig.getDefaultLayout());
+			return LayoutConfig.getDefaultLayout();
 		} catch (Exception ex) {
 			Logger.error("getTopLevelLayoutKey() error: " + ex.getMessage(), ex, LayoutTemplateTool.class);
 			return DataClassSerializer.errorToJson(
@@ -165,25 +156,18 @@ public class LayoutTemplateTool {
 			@P("The layout key (identifier). Use getTopLevelLayoutKey to find the top-level layout key.") String layoutKey) {
 
 		try {
-			String response = ThreadContextManager.inSystemInteraction(
-				LayoutTemplateTool.class,
-				() -> {
-					if (layoutKey == null || layoutKey.isEmpty()) {
-						throw new IllegalArgumentException("Layout key is required");
-					}
+			if (layoutKey == null || layoutKey.isEmpty()) {
+				throw new IllegalArgumentException("Layout key is required");
+			}
 
-					TLLayout layout = LayoutStorage.getInstance()
-						.getLayout(ThemeFactory.getTheme(), null, layoutKey);
+			TLLayout layout = LayoutStorage.getInstance()
+				.getLayout(ThemeFactory.getTheme(), null, layoutKey);
 
-					if (layout == null) {
-						throw new IllegalArgumentException("Layout not found: " + layoutKey);
-					}
+			if (layout == null) {
+				throw new IllegalArgumentException("Layout not found: " + layoutKey);
+			}
 
-					return buildLayoutResponse(layoutKey, layout);
-				});
-
-			return response;
-
+			return buildLayoutResponse(layoutKey, layout);
 		} catch (Exception ex) {
 			Logger.error("getLayout() error: " + ex.getMessage(), ex, LayoutTemplateTool.class);
 			Map<String, Object> args = new HashMap<>();
@@ -300,43 +284,38 @@ public class LayoutTemplateTool {
 			@P("JSON string with template arguments matching the template schema") String argumentsJson) {
 
 		try {
-			LayoutCreateResponse response = ThreadContextManager.inSystemInteraction(
-				LayoutTemplateTool.class,
-				() -> {
-					if (templateName == null || templateName.isEmpty()) {
-						throw new IllegalArgumentException("Template name is required");
-					}
-					if (layoutKey == null || layoutKey.isEmpty()) {
-						throw new IllegalArgumentException("Layout key is required");
-					}
-					if (argumentsJson == null || argumentsJson.isEmpty()) {
-						throw new IllegalArgumentException("Arguments JSON is required");
-					}
+			if (templateName == null || templateName.isEmpty()) {
+				throw new IllegalArgumentException("Template name is required");
+			}
+			if (layoutKey == null || layoutKey.isEmpty()) {
+				throw new IllegalArgumentException("Layout key is required");
+			}
+			if (argumentsJson == null || argumentsJson.isEmpty()) {
+				throw new IllegalArgumentException("Arguments JSON is required");
+			}
 
-					// Look up the template definition
-					DynamicComponentDefinition definition =
-						DynamicComponentService.getInstance().getComponentDefinition(templateName);
+			// Look up the template definition
+			DynamicComponentDefinition definition =
+				DynamicComponentService.getInstance().getComponentDefinition(templateName);
 
-					if (definition == null) {
-						throw new IllegalArgumentException("Template not found: " + templateName);
-					}
+			if (definition == null) {
+				throw new IllegalArgumentException("Template not found: " + templateName);
+			}
 
-					// Parse the JSON arguments using the template's descriptor
-					ConfigurationDescriptor descriptor = definition.descriptor();
-					ConfigurationItem arguments = new JsonConfigurationReader(
-						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, descriptor)
-							.schemaAware()
-							.setSource(CharacterContents.newContent(argumentsJson, "layout-arguments"))
-							.read();
+			// Parse the JSON arguments using the template's descriptor
+			ConfigurationDescriptor descriptor = definition.descriptor();
+			ConfigurationItem arguments = new JsonConfigurationReader(
+				SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, descriptor)
+					.schemaAware()
+					.setSource(CharacterContents.newContent(argumentsJson, "layout-arguments"))
+					.read();
 
-					// Store the layout (null person = global layout)
-					LayoutStorage.storeLayout(null, layoutKey, templateName, arguments);
+			// Store the layout (null person = global layout)
+			LayoutStorage.storeLayout(null, layoutKey, templateName, arguments);
 
-					LayoutCreateResponse result = LayoutCreateResponse.create();
-					result.setSuccess(true);
-					result.setLayoutKey(layoutKey);
-					return result;
-				});
+			LayoutCreateResponse response = LayoutCreateResponse.create();
+			response.setSuccess(true);
+			response.setLayoutKey(layoutKey);
 
 			Map<String, Object> args = new HashMap<>();
 			args.put("templateName", templateName);

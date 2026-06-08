@@ -22,7 +22,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -98,9 +97,7 @@ public class ModelAnnotationEditorTool {
 			ToolContext context) {
 
 		try {
-			String result = ThreadContextManager.inSystemInteraction(
-				ModelAnnotationEditorTool.class,
-				() -> doSetAnnotation(targetRef, configInterfaceName, configJson, context));
+			String result = doSetAnnotation(targetRef, configInterfaceName, configJson, context);
 
 			Logger.info("addAnnotation(targetRef=\"" + targetRef + "\", configInterfaceName=\""
 				+ configInterfaceName + "\") -> " + (result != null ? result.length() : 0) + " chars",
@@ -181,9 +178,7 @@ public class ModelAnnotationEditorTool {
 			ToolContext context) {
 
 		try {
-			AnnotationEditorResponse response = ThreadContextManager.inSystemInteraction(
-				ModelAnnotationEditorTool.class,
-				() -> doRemoveAnnotation(targetRef, configInterfaceName, context));
+			AnnotationEditorResponse response = doRemoveAnnotation(targetRef, configInterfaceName, context);
 
 			return DataClassSerializer.toJson(response, ModelAnnotationEditorTool.class,
 				"removeAnnotation()", buildArgs(targetRef, configInterfaceName));

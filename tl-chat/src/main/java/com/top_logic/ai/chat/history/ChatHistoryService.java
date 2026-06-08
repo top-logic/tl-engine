@@ -10,9 +10,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.top_logic.basic.LongID;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.LongID;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -32,9 +31,9 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * Each <code>ChatSession</code> belongs to a user (via owner attribute) and stores chat messages as a JSON blob
- * in a CLOB attribute. All methods that perform {@link KnowledgeBase} operations wrap themselves in
- * {@link ThreadContextManager#inSystemInteraction} so they can be called from any thread context
- * (servlet threads, background threads, etc.).
+ * in a CLOB attribute. All methods that perform {@link KnowledgeBase} operations require a TopLogic context to
+ * be bound on the calling thread. Such a context is established centrally at the request boundary (the chat
+ * servlet binds the user's sub-session for the duration of the request).
  * </p>
  */
 public class ChatHistoryService {
@@ -73,32 +72,30 @@ public class ChatHistoryService {
 			return Collections.emptyList();
 		}
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-				TLClass sessionType = getChatSessionType();
-				if (sessionType == null) {
-					return Collections.emptyList();
+			TLClass sessionType = getChatSessionType();
+			if (sessionType == null) {
+				return Collections.emptyList();
+			}
+
+			List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(sessionType, TLObject.class);
+			List<TLObject> userSessions = new ArrayList<>();
+			for (TLObject obj : allInstances) {
+				Object owner = obj.tValueByName(ATTR_OWNER);
+				if (person.equals(owner)) {
+					userSessions.add(obj);
 				}
+			}
 
-				List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(sessionType, TLObject.class);
-				List<TLObject> userSessions = new ArrayList<>();
-				for (TLObject obj : allInstances) {
-					Object owner = obj.tValueByName(ATTR_OWNER);
-					if (person.equals(owner)) {
-						userSessions.add(obj);
-					}
-				}
-
-				userSessions.sort((a, b) -> {
-					Date dateA = (Date) a.tValueByName(ATTR_LAST_UPDATED);
-					Date dateB = (Date) b.tValueByName(ATTR_LAST_UPDATED);
-					if (dateA == null && dateB == null) return 0;
-					if (dateA == null) return 1;
-					if (dateB == null) return -1;
-					return dateB.compareTo(dateA);
-				});
-
-				return userSessions;
+			userSessions.sort((a, b) -> {
+				Date dateA = (Date) a.tValueByName(ATTR_LAST_UPDATED);
+				Date dateB = (Date) b.tValueByName(ATTR_LAST_UPDATED);
+				if (dateA == null && dateB == null) return 0;
+				if (dateA == null) return 1;
+				if (dateB == null) return -1;
+				return dateB.compareTo(dateA);
 			});
+
+			return userSessions;
 		} catch (RuntimeException ex) {
 			Logger.error("Failed to get sessions: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return Collections.emptyList();
@@ -116,26 +113,24 @@ public class ChatHistoryService {
 	 */
 	public static TLObject createSession(String title, Person owner) {
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-				try (Transaction tx = kb.beginTransaction(ResKey.text("Create chat session"))) {
-					TLClass sessionType = getChatSessionType();
-					if (sessionType == null) {
-						return null;
-					}
-
-					TLFactory factory = ModelService.getInstance().getFactory();
-					TLObject session = factory.createObject(sessionType);
-
-					session.tUpdateByName(ATTR_TITLE, title);
-					session.tUpdateByName(ATTR_CREATED_AT, new Date());
-					session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
-					session.tUpdateByName(ATTR_OWNER, owner);
-
-					tx.commit();
-					return session;
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			try (Transaction tx = kb.beginTransaction(ResKey.text("Create chat session"))) {
+				TLClass sessionType = getChatSessionType();
+				if (sessionType == null) {
+					return null;
 				}
-			});
+
+				TLFactory factory = ModelService.getInstance().getFactory();
+				TLObject session = factory.createObject(sessionType);
+
+				session.tUpdateByName(ATTR_TITLE, title);
+				session.tUpdateByName(ATTR_CREATED_AT, new Date());
+				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
+				session.tUpdateByName(ATTR_OWNER, owner);
+
+				tx.commit();
+				return session;
+			}
 		} catch (Exception ex) {
 			Logger.error("Failed to create chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
@@ -151,16 +146,14 @@ public class ChatHistoryService {
 	 *        the new title.
 	 */
 	public static void updateTitle(TLObject session, String newTitle) {
-		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction(ResKey.text("Update chat session title"))) {
-				session.tUpdateByName(ATTR_TITLE, newTitle);
-				tx.commit();
-			} catch (Exception ex) {
-				Logger.error("Failed to update chat session title: " + ex.getMessage(), ex,
-					ChatHistoryService.class);
-			}
-		});
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Update chat session title"))) {
+			session.tUpdateByName(ATTR_TITLE, newTitle);
+			tx.commit();
+		} catch (Exception ex) {
+			Logger.error("Failed to update chat session title: " + ex.getMessage(), ex,
+				ChatHistoryService.class);
+		}
 	}
 
 	/**
@@ -194,18 +187,16 @@ public class ChatHistoryService {
 	}
 
 	private static void saveMessagesAndTouch(TLObject session, String messagesJson, boolean touch) {
-		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat messages"))) {
-				session.tUpdateByName(ATTR_MESSAGES, messagesJson);
-				if (touch) {
-					session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
-				}
-				tx.commit();
-			} catch (Exception ex) {
-				Logger.error("Failed to save chat messages: " + ex.getMessage(), ex, ChatHistoryService.class);
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat messages"))) {
+			session.tUpdateByName(ATTR_MESSAGES, messagesJson);
+			if (touch) {
+				session.tUpdateByName(ATTR_LAST_UPDATED, new Date());
 			}
-		});
+			tx.commit();
+		} catch (Exception ex) {
+			Logger.error("Failed to save chat messages: " + ex.getMessage(), ex, ChatHistoryService.class);
+		}
 	}
 
 	/**
@@ -224,19 +215,17 @@ public class ChatHistoryService {
 	 *        the JSON string of metadata, may be null.
 	 */
 	public static void saveMessagesAndMetadata(TLObject session, String messagesJson, String metadataJson) {
-		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat session state"))) {
-				session.tUpdateByName(ATTR_MESSAGES, messagesJson);
-				if (metadataJson != null) {
-					session.tUpdateByName(ATTR_METADATA, metadataJson);
-				}
-				tx.commit();
-			} catch (Exception ex) {
-				Logger.error("Failed to save chat session state: " + ex.getMessage(), ex,
-					ChatHistoryService.class);
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Save chat session state"))) {
+			session.tUpdateByName(ATTR_MESSAGES, messagesJson);
+			if (metadataJson != null) {
+				session.tUpdateByName(ATTR_METADATA, metadataJson);
 			}
-		});
+			tx.commit();
+		} catch (Exception ex) {
+			Logger.error("Failed to save chat session state: " + ex.getMessage(), ex,
+				ChatHistoryService.class);
+		}
 	}
 
 	/**
@@ -246,15 +235,13 @@ public class ChatHistoryService {
 	 *        the session object.
 	 */
 	public static void deleteSession(TLObject session) {
-		ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction(ResKey.text("Delete chat session"))) {
-				session.tDelete();
-				tx.commit();
-			} catch (Exception ex) {
-				Logger.error("Failed to delete chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
-			}
-		});
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.text("Delete chat session"))) {
+			session.tDelete();
+			tx.commit();
+		} catch (Exception ex) {
+			Logger.error("Failed to delete chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
+		}
 	}
 
 	/**
@@ -266,8 +253,7 @@ public class ChatHistoryService {
 	 */
 	public static String getMessagesJson(TLObject session) {
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
-				() -> (String) session.tValueByName(ATTR_MESSAGES));
+			return (String) session.tValueByName(ATTR_MESSAGES);
 		} catch (Exception ex) {
 			Logger.error("Failed to get messages JSON: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
@@ -279,8 +265,7 @@ public class ChatHistoryService {
 	 */
 	public static String getTitle(TLObject session) {
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
-				() -> (String) session.tValueByName(ATTR_TITLE));
+			return (String) session.tValueByName(ATTR_TITLE);
 		} catch (Exception ex) {
 			Logger.error("Failed to get session title: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
@@ -292,8 +277,7 @@ public class ChatHistoryService {
 	 */
 	public static String getMetadataJson(TLObject session) {
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
-				() -> (String) session.tValueByName(ATTR_METADATA));
+			return (String) session.tValueByName(ATTR_METADATA);
 		} catch (Exception ex) {
 			Logger.error("Failed to get session metadata: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
@@ -305,8 +289,7 @@ public class ChatHistoryService {
 	 */
 	public static Date getLastUpdated(TLObject session) {
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class,
-				() -> (Date) session.tValueByName(ATTR_LAST_UPDATED));
+			return (Date) session.tValueByName(ATTR_LAST_UPDATED);
 		} catch (Exception ex) {
 			Logger.error("Failed to get last updated: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return null;
@@ -336,14 +319,12 @@ public class ChatHistoryService {
 			return null; // Invalid ID format from client — not a server error
 		}
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-				KnowledgeObject ko = kb.getKnowledgeObject(TABLE_NAME, LongID.valueOf(id));
-				if (ko != null) {
-					return ko.getWrapper();
-				}
-				return null;
-			});
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			KnowledgeObject ko = kb.getKnowledgeObject(TABLE_NAME, LongID.valueOf(id));
+			if (ko != null) {
+				return ko.getWrapper();
+			}
+			return null;
 		} catch (Exception ex) {
 			Logger.error("Failed to find chat session " + objectId + ": " + ex.getMessage(), ex,
 				ChatHistoryService.class);
@@ -365,10 +346,8 @@ public class ChatHistoryService {
 			return false;
 		}
 		try {
-			return ThreadContextManager.inSystemInteraction(ChatHistoryService.class, () -> {
-				Object owner = session.tValueByName(ATTR_OWNER);
-				return person.equals(owner);
-			});
+			Object owner = session.tValueByName(ATTR_OWNER);
+			return person.equals(owner);
 		} catch (Exception ex) {
 			Logger.error("Failed to check session ownership: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return false;

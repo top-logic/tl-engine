@@ -19,7 +19,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -149,47 +148,7 @@ public class ModelAnnotationBrowserTool {
 			@P("Include inherited annotations from supertypes/definitions (default: false)") Boolean includeInherited) {
 
 		try {
-			String result = ThreadContextManager.inSystemInteraction(
-				ModelAnnotationBrowserTool.class,
-				() -> {
-					// 1. Validate and default parameters
-					if (targetRef == null || targetRef.isEmpty()) {
-						throw new IllegalArgumentException("Target reference is required");
-					}
-					boolean includeInheritedAnnotations = includeInherited != null && includeInherited;
-
-					// 2. Parse target reference
-					TargetRefParser parser = TargetRefParser.parse(targetRef);
-
-					// 3. Resolve to TLModelPart
-					TLModel model = ModelService.getApplicationModel();
-					TLModelPart target = parser.resolve(model);
-
-					// 4. Determine the actual kind based on the resolved target
-					String kind = TargetRefParser.determineKind(target, parser);
-
-					// 5. Collect annotations
-					List<InternalAnnotationInfo> annotations =
-						AnnotationCollector.collect(target, includeInheritedAnnotations);
-
-					// 6. Build response metadata using data classes
-					AnnotationListResponse responseData = AnnotationListResponse.create();
-					responseData.setTarget(targetRef);
-					responseData.setKind(kind);
-					responseData.setModule(parser.getModuleName());
-					responseData.setType(parser.getTypeName());
-
-					if ("part".equals(kind)) {
-						responseData.setPart(parser.getPartName());
-					}
-					if ("classifier".equals(kind)) {
-						responseData.setClassifier(parser.getPartName());
-					}
-					responseData.setIncludeInherited(includeInheritedAnnotations);
-
-					// 7. Build JSON with inline annotation config
-					return buildResponse(responseData, annotations);
-				});
+			String result = doGetCurrentAnnotations(targetRef, includeInherited);
 
 			Logger.info("getCurrentAnnotations(targetRef=\"" + targetRef + "\", includeInherited=" + includeInherited
 				+ ") -> " + (result != null ? result.length() : 0) + " chars",
@@ -207,6 +166,46 @@ public class ModelAnnotationBrowserTool {
 				"getCurrentAnnotations()",
 				args);
 		}
+	}
+
+	private String doGetCurrentAnnotations(String targetRef, Boolean includeInherited) throws IOException {
+		// 1. Validate and default parameters
+		if (targetRef == null || targetRef.isEmpty()) {
+			throw new IllegalArgumentException("Target reference is required");
+		}
+		boolean includeInheritedAnnotations = includeInherited != null && includeInherited;
+
+		// 2. Parse target reference
+		TargetRefParser parser = TargetRefParser.parse(targetRef);
+
+		// 3. Resolve to TLModelPart
+		TLModel model = ModelService.getApplicationModel();
+		TLModelPart target = parser.resolve(model);
+
+		// 4. Determine the actual kind based on the resolved target
+		String kind = TargetRefParser.determineKind(target, parser);
+
+		// 5. Collect annotations
+		List<InternalAnnotationInfo> annotations =
+			AnnotationCollector.collect(target, includeInheritedAnnotations);
+
+		// 6. Build response metadata using data classes
+		AnnotationListResponse responseData = AnnotationListResponse.create();
+		responseData.setTarget(targetRef);
+		responseData.setKind(kind);
+		responseData.setModule(parser.getModuleName());
+		responseData.setType(parser.getTypeName());
+
+		if ("part".equals(kind)) {
+			responseData.setPart(parser.getPartName());
+		}
+		if ("classifier".equals(kind)) {
+			responseData.setClassifier(parser.getPartName());
+		}
+		responseData.setIncludeInherited(includeInheritedAnnotations);
+
+		// 7. Build JSON with inline annotation config
+		return buildResponse(responseData, annotations);
 	}
 
 	/**

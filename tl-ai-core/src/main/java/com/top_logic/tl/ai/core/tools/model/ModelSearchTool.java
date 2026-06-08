@@ -16,7 +16,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -114,20 +113,7 @@ public class ModelSearchTool {
 
 		try {
 			// System interaction returns data class
-			SearchResponse response = ThreadContextManager.inSystemInteraction(
-				ModelSearchTool.class,
-				() -> {
-					// Validate parameters
-					if (query == null || query.trim().isEmpty()) {
-						throw new IllegalArgumentException("Search query is required");
-					}
-
-					// Perform search
-					List<SearchResult> results = performSearch(query, moduleFilter, kindFilter);
-
-					// Build response data class
-					return buildSearchResponse(results);
-				});
+			SearchResponse response = doSearchModel(query, moduleFilter, kindFilter);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -150,6 +136,19 @@ public class ModelSearchTool {
 			args.put("kindFilter", kindFilter);
 			return DataClassSerializer.toJson(errorResponse, ModelSearchTool.class, "searchModel()", args);
 		}
+	}
+
+	private SearchResponse doSearchModel(String query, List<String> moduleFilter, List<String> kindFilter) {
+		// Validate parameters
+		if (query == null || query.trim().isEmpty()) {
+			throw new IllegalArgumentException("Search query is required");
+		}
+
+		// Perform search
+		List<SearchResult> results = performSearch(query, moduleFilter, kindFilter);
+
+		// Build response data class
+		return buildSearchResponse(results);
 	}
 
 	/**

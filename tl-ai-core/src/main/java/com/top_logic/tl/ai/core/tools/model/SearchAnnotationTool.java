@@ -26,7 +26,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.utility.InAppFilter;
 import com.top_logic.layout.form.model.utility.TargetTypeFilter;
@@ -115,72 +114,7 @@ public class SearchAnnotationTool {
 					SearchAnnotationTool.class, "listAvailableAnnotations()", args);
 			}
 
-			AnnotationSearchResponse response = ThreadContextManager.inSystemInteraction(
-				SearchAnnotationTool.class,
-				() -> {
-					TargetRefParser parser = TargetRefParser.parse(targetRef.trim());
-					TLModelPart targetPart = parser.resolve(ModelService.getApplicationModel());
-					String targetKind = TargetRefParser.determineKind(targetPart, parser);
-
-					Class<? extends TLAnnotation> markerInterface = TLAnnotation.class;
-					TLType targetType = null;
-					TLTypeKind targetTypeKind = null;
-
-					if (targetPart instanceof TLStructuredTypePart) {
-						markerInterface = TLAttributeAnnotation.class;
-						targetType = ((TLStructuredTypePart) targetPart).getType();
-						targetTypeKind = TLTypeKind.getTLTypeKind((TLStructuredTypePart) targetPart);
-					} else if (targetPart instanceof TLClassifier) {
-						markerInterface = TLClassifierAnnotation.class;
-					} else if (targetPart instanceof TLType) {
-						markerInterface = TLTypeAnnotation.class;
-						targetType = (TLType) targetPart;
-						targetTypeKind = TLTypeKind.getTLTypeKind((TLType) targetPart);
-					} else if (targetPart instanceof TLModule) {
-						markerInterface = TLModuleAnnotation.class;
-					}
-
-					Predicate<Class<?>> filter =
-						new InAppFilter(NoCustomizations.INSTANCE);
-					if (targetTypeKind != null) {
-						filter = filter.and(
-							new TargetTypeFilter(NoCustomizations.INSTANCE, targetType, targetTypeKind));
-					}
-
-					Collection<Class<?>> annotationTypes =
-						TypeIndex.getInstance().getSpecializations(markerInterface, true, true, false);
-
-					List<AnnotationSearchResult> results = new ArrayList<>();
-					for (Class<?> annotationType : annotationTypes) {
-						if (!filter.test(annotationType)) {
-							continue;
-						}
-
-						String tagName = getTagName(annotationType);
-						String description = getDescription(annotationType);
-
-						AnnotationSearchResult result = AnnotationSearchResult.create();
-						result.setTagName(tagName);
-						result.setConfigInterface(annotationType.getName());
-						if (description != null) {
-							result.setDescription(description);
-						}
-
-						for (AnnotationPropertyInfo propInfo : getPolymorphicProperties(annotationType, targetTypeKind)) {
-							result.addImplementationOption(propInfo);
-						}
-						results.add(result);
-					}
-
-					AnnotationSearchResponse resp = AnnotationSearchResponse.create();
-					resp.setTotalMatches(results.size());
-					resp.setTargetRef(targetRef);
-					resp.setTargetKind(targetKind);
-					for (AnnotationSearchResult r : results) {
-						resp.addResult(r);
-					}
-					return resp;
-				});
+			AnnotationSearchResponse response = doListAvailableAnnotations(targetRef);
 
 			Map<String, Object> args = new HashMap<>();
 			args.put("targetRef", targetRef);
@@ -197,6 +131,71 @@ public class SearchAnnotationTool {
 				"listAvailableAnnotations()",
 				args);
 		}
+	}
+
+	private AnnotationSearchResponse doListAvailableAnnotations(String targetRef) {
+		TargetRefParser parser = TargetRefParser.parse(targetRef.trim());
+		TLModelPart targetPart = parser.resolve(ModelService.getApplicationModel());
+		String targetKind = TargetRefParser.determineKind(targetPart, parser);
+
+		Class<? extends TLAnnotation> markerInterface = TLAnnotation.class;
+		TLType targetType = null;
+		TLTypeKind targetTypeKind = null;
+
+		if (targetPart instanceof TLStructuredTypePart) {
+			markerInterface = TLAttributeAnnotation.class;
+			targetType = ((TLStructuredTypePart) targetPart).getType();
+			targetTypeKind = TLTypeKind.getTLTypeKind((TLStructuredTypePart) targetPart);
+		} else if (targetPart instanceof TLClassifier) {
+			markerInterface = TLClassifierAnnotation.class;
+		} else if (targetPart instanceof TLType) {
+			markerInterface = TLTypeAnnotation.class;
+			targetType = (TLType) targetPart;
+			targetTypeKind = TLTypeKind.getTLTypeKind((TLType) targetPart);
+		} else if (targetPart instanceof TLModule) {
+			markerInterface = TLModuleAnnotation.class;
+		}
+
+		Predicate<Class<?>> filter =
+			new InAppFilter(NoCustomizations.INSTANCE);
+		if (targetTypeKind != null) {
+			filter = filter.and(
+				new TargetTypeFilter(NoCustomizations.INSTANCE, targetType, targetTypeKind));
+		}
+
+		Collection<Class<?>> annotationTypes =
+			TypeIndex.getInstance().getSpecializations(markerInterface, true, true, false);
+
+		List<AnnotationSearchResult> results = new ArrayList<>();
+		for (Class<?> annotationType : annotationTypes) {
+			if (!filter.test(annotationType)) {
+				continue;
+			}
+
+			String tagName = getTagName(annotationType);
+			String description = getDescription(annotationType);
+
+			AnnotationSearchResult result = AnnotationSearchResult.create();
+			result.setTagName(tagName);
+			result.setConfigInterface(annotationType.getName());
+			if (description != null) {
+				result.setDescription(description);
+			}
+
+			for (AnnotationPropertyInfo propInfo : getPolymorphicProperties(annotationType, targetTypeKind)) {
+				result.addImplementationOption(propInfo);
+			}
+			results.add(result);
+		}
+
+		AnnotationSearchResponse resp = AnnotationSearchResponse.create();
+		resp.setTotalMatches(results.size());
+		resp.setTargetRef(targetRef);
+		resp.setTargetKind(targetKind);
+		for (AnnotationSearchResult r : results) {
+			resp.addResult(r);
+		}
+		return resp;
 	}
 
 	/**

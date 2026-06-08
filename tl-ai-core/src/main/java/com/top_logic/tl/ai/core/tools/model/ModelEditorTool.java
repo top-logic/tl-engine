@@ -20,7 +20,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
@@ -135,9 +134,7 @@ public class ModelEditorTool {
 			@P("German description for the module") String descDe) {
 
 		try {
-			ModuleResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doCreateModule(moduleName, labelEn, labelDe, descEn, descDe));
+			ModuleResponse response = doCreateModule(moduleName, labelEn, labelDe, descEn, descDe);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createModule()",
 				buildArgs("moduleName", moduleName));
@@ -207,9 +204,7 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			ModuleResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doUpdateModule(moduleName, labelEn, labelDe, descEn, descDe, context));
+			ModuleResponse response = doUpdateModule(moduleName, labelEn, labelDe, descEn, descDe, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateModule()",
 				buildArgs("moduleName", moduleName));
@@ -291,10 +286,8 @@ public class ModelEditorTool {
 			@P("Names of the classes this class directly extends, as a JSON array string") String generalizations) {
 
 		try {
-			ClassResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doCreateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
-					isAbstract, isFinal, generalizations));
+			ClassResponse response = doCreateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
+				isAbstract, isFinal, generalizations);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createClass()",
 				buildArgs("moduleName", moduleName, "className", className));
@@ -395,10 +388,8 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			ClassResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doUpdateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
-					isAbstract, isFinal, generalizations, context));
+			ClassResponse response = doUpdateClass(moduleName, className, labelEn, labelDe, descEn, descDe,
+				isAbstract, isFinal, generalizations, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateClass()",
 				buildArgs("moduleName", moduleName, "className", className));
@@ -518,10 +509,8 @@ public class ModelEditorTool {
 			@P("Whether this attribute must be overridden in specific classes (default: false)") Boolean isAbstract) {
 
 		try {
-			PropertyResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doCreateProperty(moduleName, className, propertyName, propertyType,
-					labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract));
+			PropertyResponse response = doCreateProperty(moduleName, className, propertyName, propertyType,
+				labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createProperty()",
 				buildArgs("moduleName", moduleName, "className", className, "propertyName", propertyName));
@@ -636,10 +625,8 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			PropertyResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doUpdateProperty(moduleName, className, propertyName,
-					labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract, context));
+			PropertyResponse response = doUpdateProperty(moduleName, className, propertyName,
+				labelEn, labelDe, descEn, descDe, mandatory, multiple, ordered, bag, isAbstract, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateProperty()",
 				buildArgs("moduleName", moduleName, "className", className, "propertyName", propertyName));
@@ -773,13 +760,11 @@ public class ModelEditorTool {
 			@P("Deletion policy: CLEAR_REFERENCE (default), DELETE_REFERER, STABILISE_REFERENCE, or VETO") String deletionPolicy) {
 
 		try {
-			ReferenceResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doCreateReference(moduleName, className, referenceName,
-					targetModule, targetClass,
-					labelEn, labelDe, descEn, descDe,
-					mandatory, multiple, ordered, bag, isAbstract,
-					composite, aggregate, navigate, historyType, deletionPolicy));
+			ReferenceResponse response = doCreateReference(moduleName, className, referenceName,
+				targetModule, targetClass,
+				labelEn, labelDe, descEn, descDe,
+				mandatory, multiple, ordered, bag, isAbstract,
+				composite, aggregate, navigate, historyType, deletionPolicy);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createReference()",
 				buildArgs("moduleName", moduleName, "className", className, "referenceName", referenceName));
@@ -920,11 +905,9 @@ public class ModelEditorTool {
 			@P("Whether the backward reference is navigable (default: true)") Boolean navigate) {
 
 		try {
-			BackwardReferenceResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doCreateBackwardReference(moduleName, className,
-					forwardReferenceName, backwardReferenceName,
-					labelEn, labelDe, descEn, descDe, navigate));
+			BackwardReferenceResponse response = doCreateBackwardReference(moduleName, className,
+				forwardReferenceName, backwardReferenceName,
+				labelEn, labelDe, descEn, descDe, navigate);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createBackwardReference()",
 				buildArgs("moduleName", moduleName, "className", className,
@@ -1052,9 +1035,7 @@ public class ModelEditorTool {
 			@P("JSON array of classifiers, each with: classifierName (required), default (boolean), label.en, label.de, description.en, description.de") String classifiersJson) {
 
 		try {
-			EnumResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doCreateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe, classifiersJson));
+			EnumResponse response = doCreateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe, classifiersJson);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "createEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
@@ -1204,10 +1185,8 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			EnumResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doUpdateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe,
-					addClassifiersJson, updateClassifiersJson, defaultClassifier, context));
+			EnumResponse response = doUpdateEnumeration(moduleName, enumName, labelEn, labelDe, descEn, descDe,
+				addClassifiersJson, updateClassifiersJson, defaultClassifier, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "updateEnumeration()",
 				buildArgs("moduleName", moduleName, "enumName", enumName));
@@ -1699,9 +1678,7 @@ public class ModelEditorTool {
 			ToolContext context) {
 
 		try {
-			DeleteResponse response = ThreadContextManager.inSystemInteraction(
-				ModelEditorTool.class,
-				() -> doDeleteModelElement(qualifiedName, context));
+			DeleteResponse response = doDeleteModelElement(qualifiedName, context);
 
 			return DataClassSerializer.toJson(response, ModelEditorTool.class, "deleteModelElement()",
 				buildArgs("qualifiedName", qualifiedName));

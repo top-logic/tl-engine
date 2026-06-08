@@ -14,7 +14,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -114,55 +113,7 @@ public class ModelBrowserTool {
 			Boolean includeFramework) {
 		try {
 			// System interaction returns data class
-			ModuleListResponse response = ThreadContextManager.inSystemInteraction(
-				ModelBrowserTool.class,
-				() -> {
-					// Get the application model and retrieve all modules
-					TLModel model = ModelService.getApplicationModel();
-					List<TLModule> tlModules = model.getModules().stream()
-						.sorted((m1, m2) -> m1.getName().compareTo(m2.getName()))
-						.collect(Collectors.toList());
-
-					// Build response using data classes
-					ModuleListResponse result = ModuleListResponse.create();
-					Resources resources = Resources.getInstance();
-
-					for (TLModule module : tlModules) {
-						// Skip framework modules unless explicitly requested
-						if (!Boolean.TRUE.equals(includeFramework) && isFrameworkModule(module)) {
-							continue;
-						}
-
-						ModuleInfo moduleInfo = ModuleInfo.create();
-						moduleInfo.setName(module.getName());
-
-						// Count only non-association types
-						long typeCount = module.getTypes().stream()
-							.filter(type -> type.getModelKind() != ModelKind.ASSOCIATION)
-							.count();
-						moduleInfo.setTypeCount(typeCount);
-
-						// Add label and description from module resource key
-						ResKey resourceKey = LabelVisitor.getModuleResourceKey(module);
-						String label = resources.getString(resourceKey, null);
-						if (label != null && !label.isEmpty()) {
-							moduleInfo.setLabel(label);
-						}
-						String description = resources.getString(resourceKey.tooltip(), null);
-						if (description != null && !description.isEmpty()) {
-							moduleInfo.setDescription(description);
-						}
-
-						// Determine if this is a framework module
-						// Framework modules are grouped under "tl" in the model editor
-						boolean isFramework = isFrameworkModule(module);
-						moduleInfo.setFrameworkModule(isFramework);
-
-						result.addModule(moduleInfo);
-					}
-
-					return result;
-				});
+			ModuleListResponse response = doListModules(includeFramework);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -179,6 +130,54 @@ public class ModelBrowserTool {
 				"listModules()",
 				args);
 		}
+	}
+
+	private ModuleListResponse doListModules(Boolean includeFramework) {
+		// Get the application model and retrieve all modules
+		TLModel model = ModelService.getApplicationModel();
+		List<TLModule> tlModules = model.getModules().stream()
+			.sorted((m1, m2) -> m1.getName().compareTo(m2.getName()))
+			.collect(Collectors.toList());
+
+		// Build response using data classes
+		ModuleListResponse result = ModuleListResponse.create();
+		Resources resources = Resources.getInstance();
+
+		for (TLModule module : tlModules) {
+			// Skip framework modules unless explicitly requested
+			if (!Boolean.TRUE.equals(includeFramework) && isFrameworkModule(module)) {
+				continue;
+			}
+
+			ModuleInfo moduleInfo = ModuleInfo.create();
+			moduleInfo.setName(module.getName());
+
+			// Count only non-association types
+			long typeCount = module.getTypes().stream()
+				.filter(type -> type.getModelKind() != ModelKind.ASSOCIATION)
+				.count();
+			moduleInfo.setTypeCount(typeCount);
+
+			// Add label and description from module resource key
+			ResKey resourceKey = LabelVisitor.getModuleResourceKey(module);
+			String label = resources.getString(resourceKey, null);
+			if (label != null && !label.isEmpty()) {
+				moduleInfo.setLabel(label);
+			}
+			String description = resources.getString(resourceKey.tooltip(), null);
+			if (description != null && !description.isEmpty()) {
+				moduleInfo.setDescription(description);
+			}
+
+			// Determine if this is a framework module
+			// Framework modules are grouped under "tl" in the model editor
+			boolean isFramework = isFrameworkModule(module);
+			moduleInfo.setFrameworkModule(isFramework);
+
+			result.addModule(moduleInfo);
+		}
+
+		return result;
 	}
 
 	/**
@@ -198,87 +197,7 @@ public class ModelBrowserTool {
 	public String listTypes(@P("The name of the module to list types from") String moduleName) {
 		try {
 			// System interaction returns data class
-			TypeListResponse response = ThreadContextManager.inSystemInteraction(
-				ModelBrowserTool.class,
-				() -> {
-					// Validate parameter
-					if (moduleName == null || moduleName.isEmpty()) {
-						ErrorResponse error = ErrorResponse.create();
-						error.setError("Module name is required");
-						throw new IllegalArgumentException("Module name is required");
-					}
-
-					// Get the application model and find the requested module
-					TLModel model = ModelService.getApplicationModel();
-					TLModule module = model.getModule(moduleName);
-
-					if (module == null) {
-						throw new IllegalArgumentException("Module not found: " + moduleName);
-					}
-
-					// Get all types in the module, excluding associations
-					List<TLType> tlTypes = module.getTypes().stream()
-						.filter(type -> type.getModelKind() != ModelKind.ASSOCIATION)
-						.sorted((t1, t2) -> t1.getName().compareTo(t2.getName()))
-						.collect(Collectors.toList());
-
-					// Build response using data classes
-					TypeListResponse result = TypeListResponse.create();
-					Resources resources = Resources.getInstance();
-
-					for (TLType type : tlTypes) {
-						TypeInfo typeInfo = TypeInfo.create();
-						typeInfo.setName(type.getName());
-						typeInfo.setQualifiedName(TLModelUtil.qualifiedName(type));
-
-						// Add meta-type (class, enumeration, datatype)
-						ModelKind modelKind = type.getModelKind();
-						typeInfo.setMetaType(modelKind.name().toLowerCase());
-
-						// Add classifier count for enumerations, part count for other structured types
-						if (type instanceof TLEnumeration) {
-							TLEnumeration enumeration = (TLEnumeration) type;
-							typeInfo.setClassifierCount(enumeration.getClassifiers().size());
-						} else if (type instanceof TLStructuredType) {
-							TLStructuredType structuredType = (TLStructuredType) type;
-							typeInfo.setPartCount(structuredType.getLocalParts().size());
-						}
-
-						// Add inheritance information for classes
-						if (type instanceof TLClass) {
-							TLClass tlClass = (TLClass) type;
-
-							// Add generalizations (supertypes)
-							for (TLClass generalization : tlClass.getGeneralizations()) {
-								typeInfo.addGeneralization(TLModelUtil.qualifiedName(generalization));
-							}
-
-							// Add specializations (subtypes)
-							for (TLClass specialization : tlClass.getSpecializations()) {
-								typeInfo.addSpecialization(TLModelUtil.qualifiedName(specialization));
-							}
-
-							// Add abstract and final flags
-							typeInfo.setAbstract(tlClass.isAbstract());
-							typeInfo.setFinal(tlClass.isFinal());
-						}
-
-						// Add label and description from type resource key
-						ResKey resourceKey = TLModelNamingConvention.getTypeLabelKey(type);
-						String label = resources.getString(resourceKey, null);
-						if (label != null && !label.isEmpty()) {
-							typeInfo.setLabel(label);
-						}
-						String description = resources.getString(resourceKey.tooltip(), null);
-						if (description != null && !description.isEmpty()) {
-							typeInfo.setDescription(description);
-						}
-
-						result.addType(typeInfo);
-					}
-
-					return result;
-				});
+			TypeListResponse response = doListTypes(moduleName);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -295,6 +214,86 @@ public class ModelBrowserTool {
 				"listTypes()",
 				args);
 		}
+	}
+
+	private TypeListResponse doListTypes(String moduleName) {
+		// Validate parameter
+		if (moduleName == null || moduleName.isEmpty()) {
+			ErrorResponse error = ErrorResponse.create();
+			error.setError("Module name is required");
+			throw new IllegalArgumentException("Module name is required");
+		}
+
+		// Get the application model and find the requested module
+		TLModel model = ModelService.getApplicationModel();
+		TLModule module = model.getModule(moduleName);
+
+		if (module == null) {
+			throw new IllegalArgumentException("Module not found: " + moduleName);
+		}
+
+		// Get all types in the module, excluding associations
+		List<TLType> tlTypes = module.getTypes().stream()
+			.filter(type -> type.getModelKind() != ModelKind.ASSOCIATION)
+			.sorted((t1, t2) -> t1.getName().compareTo(t2.getName()))
+			.collect(Collectors.toList());
+
+		// Build response using data classes
+		TypeListResponse result = TypeListResponse.create();
+		Resources resources = Resources.getInstance();
+
+		for (TLType type : tlTypes) {
+			TypeInfo typeInfo = TypeInfo.create();
+			typeInfo.setName(type.getName());
+			typeInfo.setQualifiedName(TLModelUtil.qualifiedName(type));
+
+			// Add meta-type (class, enumeration, datatype)
+			ModelKind modelKind = type.getModelKind();
+			typeInfo.setMetaType(modelKind.name().toLowerCase());
+
+			// Add classifier count for enumerations, part count for other structured types
+			if (type instanceof TLEnumeration) {
+				TLEnumeration enumeration = (TLEnumeration) type;
+				typeInfo.setClassifierCount(enumeration.getClassifiers().size());
+			} else if (type instanceof TLStructuredType) {
+				TLStructuredType structuredType = (TLStructuredType) type;
+				typeInfo.setPartCount(structuredType.getLocalParts().size());
+			}
+
+			// Add inheritance information for classes
+			if (type instanceof TLClass) {
+				TLClass tlClass = (TLClass) type;
+
+				// Add generalizations (supertypes)
+				for (TLClass generalization : tlClass.getGeneralizations()) {
+					typeInfo.addGeneralization(TLModelUtil.qualifiedName(generalization));
+				}
+
+				// Add specializations (subtypes)
+				for (TLClass specialization : tlClass.getSpecializations()) {
+					typeInfo.addSpecialization(TLModelUtil.qualifiedName(specialization));
+				}
+
+				// Add abstract and final flags
+				typeInfo.setAbstract(tlClass.isAbstract());
+				typeInfo.setFinal(tlClass.isFinal());
+			}
+
+			// Add label and description from type resource key
+			ResKey resourceKey = TLModelNamingConvention.getTypeLabelKey(type);
+			String label = resources.getString(resourceKey, null);
+			if (label != null && !label.isEmpty()) {
+				typeInfo.setLabel(label);
+			}
+			String description = resources.getString(resourceKey.tooltip(), null);
+			if (description != null && !description.isEmpty()) {
+				typeInfo.setDescription(description);
+			}
+
+			result.addType(typeInfo);
+		}
+
+		return result;
 	}
 
 	/**
@@ -323,104 +322,7 @@ public class ModelBrowserTool {
 
 		try {
 			// System interaction returns data class
-			TypePartListResponse response = ThreadContextManager.inSystemInteraction(
-				ModelBrowserTool.class,
-				() -> {
-					// Validate parameters
-					if (moduleName == null || moduleName.isEmpty()) {
-						throw new IllegalArgumentException("Module name is required");
-					}
-					if (typeName == null || typeName.isEmpty()) {
-						throw new IllegalArgumentException("Type name is required");
-					}
-
-					// Get the application model and find the requested module
-					TLModel model = ModelService.getApplicationModel();
-					TLModule module = model.getModule(moduleName);
-
-					if (module == null) {
-						throw new IllegalArgumentException("Module not found: " + moduleName);
-					}
-
-					// Find the type in the module
-					TLType type = module.getType(typeName);
-
-					if (type == null) {
-						throw new IllegalArgumentException("Type not found: " + typeName + " in module " + moduleName);
-					}
-
-					// Check if the type is structured (has parts)
-					if (!(type instanceof TLStructuredType)) {
-						throw new IllegalArgumentException("Type " + typeName + " is not a structured type and does not have parts");
-					}
-
-					// Check if the type is an enumeration (use {@link #listClassifiers(String, String)} instead)
-					if (type instanceof TLEnumeration) {
-						throw new IllegalArgumentException("Type " + typeName + " is an enumeration. Use listClassifiers() to retrieve its classifiers.");
-					}
-
-					TLStructuredType structuredType = (TLStructuredType) type;
-
-					// Default to false if not specified
-					boolean includeInheritedParts = includeInherited != null && includeInherited;
-
-					// Get parts based on include inherited flag, sorted by name
-					List<? extends TLStructuredTypePart> tlParts = (includeInheritedParts
-						? structuredType.getAllParts()
-						: structuredType.getLocalParts()).stream()
-						.sorted((p1, p2) -> p1.getName().compareTo(p2.getName()))
-						.collect(Collectors.toList());
-
-					// Build response using data classes
-					TypePartListResponse result = TypePartListResponse.create();
-					Resources resources = Resources.getInstance();
-
-					for (TLStructuredTypePart part : tlParts) {
-						TypePartInfo partInfo = TypePartInfo.create();
-						partInfo.setName(part.getName());
-
-						// Add part kind (property/reference)
-						ModelKind partKind = part.getModelKind();
-						partInfo.setKind(partKind.name().toLowerCase());
-
-						// Add owner information (type that defines this part)
-						TLStructuredType owner = part.getOwner();
-						partInfo.setDefinedIn(TLModelUtil.qualifiedName(owner));
-						partInfo.setInherited(!owner.equals(structuredType));
-
-						// Add type information
-						TLType partType = part.getType();
-						if (partType != null) {
-							partInfo.setType(TLModelUtil.qualifiedName(partType));
-						}
-
-						// Add multiplicity and collection characteristics
-						partInfo.setMandatory(part.isMandatory());
-						partInfo.setMultiple(part.isMultiple());
-						partInfo.setOrdered(part.isOrdered());
-						partInfo.setBag(part.isBag());
-
-						// Add structural properties
-						partInfo.setAbstract(part.isAbstract());
-						partInfo.setDerived(part.isDerived());
-						partInfo.setOverride(part.isOverride());
-
-						// Add label and description from part resource key
-						ResKey resourceKey = TLTypePartResourceProvider.labelKey(part);
-						String label = resources.getString(resourceKey, null);
-						if (label != null && !label.isEmpty()) {
-							partInfo.setLabel(label);
-						}
-						String description = resources.getString(resourceKey.tooltip(), null);
-						if (description != null && !description.isEmpty()) {
-							partInfo.setDescription(description);
-						}
-
-						result.addPart(partInfo);
-					}
-
-					return result;
-				});
+			TypePartListResponse response = doListTypeParts(moduleName, typeName, includeInherited);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -443,6 +345,103 @@ public class ModelBrowserTool {
 		}
 	}
 
+	private TypePartListResponse doListTypeParts(String moduleName, String typeName, Boolean includeInherited) {
+		// Validate parameters
+		if (moduleName == null || moduleName.isEmpty()) {
+			throw new IllegalArgumentException("Module name is required");
+		}
+		if (typeName == null || typeName.isEmpty()) {
+			throw new IllegalArgumentException("Type name is required");
+		}
+
+		// Get the application model and find the requested module
+		TLModel model = ModelService.getApplicationModel();
+		TLModule module = model.getModule(moduleName);
+
+		if (module == null) {
+			throw new IllegalArgumentException("Module not found: " + moduleName);
+		}
+
+		// Find the type in the module
+		TLType type = module.getType(typeName);
+
+		if (type == null) {
+			throw new IllegalArgumentException("Type not found: " + typeName + " in module " + moduleName);
+		}
+
+		// Check if the type is structured (has parts)
+		if (!(type instanceof TLStructuredType)) {
+			throw new IllegalArgumentException("Type " + typeName + " is not a structured type and does not have parts");
+		}
+
+		// Check if the type is an enumeration (use {@link #listClassifiers(String, String)} instead)
+		if (type instanceof TLEnumeration) {
+			throw new IllegalArgumentException("Type " + typeName + " is an enumeration. Use listClassifiers() to retrieve its classifiers.");
+		}
+
+		TLStructuredType structuredType = (TLStructuredType) type;
+
+		// Default to false if not specified
+		boolean includeInheritedParts = includeInherited != null && includeInherited;
+
+		// Get parts based on include inherited flag, sorted by name
+		List<? extends TLStructuredTypePart> tlParts = (includeInheritedParts
+			? structuredType.getAllParts()
+			: structuredType.getLocalParts()).stream()
+			.sorted((p1, p2) -> p1.getName().compareTo(p2.getName()))
+			.collect(Collectors.toList());
+
+		// Build response using data classes
+		TypePartListResponse result = TypePartListResponse.create();
+		Resources resources = Resources.getInstance();
+
+		for (TLStructuredTypePart part : tlParts) {
+			TypePartInfo partInfo = TypePartInfo.create();
+			partInfo.setName(part.getName());
+
+			// Add part kind (property/reference)
+			ModelKind partKind = part.getModelKind();
+			partInfo.setKind(partKind.name().toLowerCase());
+
+			// Add owner information (type that defines this part)
+			TLStructuredType owner = part.getOwner();
+			partInfo.setDefinedIn(TLModelUtil.qualifiedName(owner));
+			partInfo.setInherited(!owner.equals(structuredType));
+
+			// Add type information
+			TLType partType = part.getType();
+			if (partType != null) {
+				partInfo.setType(TLModelUtil.qualifiedName(partType));
+			}
+
+			// Add multiplicity and collection characteristics
+			partInfo.setMandatory(part.isMandatory());
+			partInfo.setMultiple(part.isMultiple());
+			partInfo.setOrdered(part.isOrdered());
+			partInfo.setBag(part.isBag());
+
+			// Add structural properties
+			partInfo.setAbstract(part.isAbstract());
+			partInfo.setDerived(part.isDerived());
+			partInfo.setOverride(part.isOverride());
+
+			// Add label and description from part resource key
+			ResKey resourceKey = TLTypePartResourceProvider.labelKey(part);
+			String label = resources.getString(resourceKey, null);
+			if (label != null && !label.isEmpty()) {
+				partInfo.setLabel(label);
+			}
+			String description = resources.getString(resourceKey.tooltip(), null);
+			if (description != null && !description.isEmpty()) {
+				partInfo.setDescription(description);
+			}
+
+			result.addPart(partInfo);
+		}
+
+		return result;
+	}
+
 	/**
 	 * Lists all classifiers in a TopLogic enumeration type.
 	 *
@@ -459,91 +458,7 @@ public class ModelBrowserTool {
 
 		try {
 			// System interaction returns data class
-			EnumerationResponse response = ThreadContextManager.inSystemInteraction(
-				ModelBrowserTool.class,
-				() -> {
-					// Validate inputs
-					if (moduleName == null || moduleName.trim().isEmpty()) {
-						throw new IllegalArgumentException("Module name is required");
-					}
-					if (enumName == null || enumName.trim().isEmpty()) {
-						throw new IllegalArgumentException("Enumeration name is required");
-					}
-
-					// Get model and module
-					TLModel model = ModelService.getApplicationModel();
-					TLModule module = model.getModule(moduleName);
-					if (module == null) {
-						throw new IllegalArgumentException("Module not found: " + moduleName);
-					}
-
-					// Get type
-					TLType type = module.getType(enumName);
-					if (type == null) {
-						throw new IllegalArgumentException("Type not found: " + enumName + " in module " + moduleName);
-					}
-
-					// Verify it's an enumeration
-					if (!(type instanceof TLEnumeration)) {
-						throw new IllegalArgumentException("Type " + enumName + " is not an enumeration (it's a " + type.getModelKind() + ")");
-					}
-
-					TLEnumeration enumeration = (TLEnumeration) type;
-
-					// Build response using data classes
-					EnumerationResponse result = EnumerationResponse.create();
-					Resources resources = Resources.getInstance();
-
-					// Set enumeration metadata
-					result.setEnumeration(TLModelUtil.qualifiedName(enumeration));
-					result.setModule(moduleName);
-					result.setName(enumName);
-					result.setClassifierCount(enumeration.getClassifiers().size());
-
-					// Check for UnorderedEnum annotation
-					UnorderedEnum unorderedAnnotation = enumeration.getAnnotation(UnorderedEnum.class);
-					result.setUnordered(unorderedAnnotation != null);
-
-					// Add label and description
-					ResKey enumResourceKey = TLModelNamingConvention.getTypeLabelKey(enumeration);
-					String enumLabel = resources.getString(enumResourceKey, null);
-					if (enumLabel != null && !enumLabel.isEmpty()) {
-						result.setLabel(enumLabel);
-					}
-					String enumDescription = resources.getString(enumResourceKey.tooltip(), null);
-					if (enumDescription != null && !enumDescription.isEmpty()) {
-						result.setDescription(enumDescription);
-					}
-
-					// Add classifiers
-					for (TLClassifier classifier : enumeration.getClassifiers()) {
-						ClassifierInfo classifierInfo = ClassifierInfo.create();
-						classifierInfo.setName(classifier.getName());
-						classifierInfo.setDefault(classifier.isDefault());
-						classifierInfo.setIndex(classifier.getIndex());
-
-						// Check for TLI18NKey annotation
-						TLI18NKey i18nKey = classifier.getAnnotation(TLI18NKey.class);
-						if (i18nKey != null && i18nKey.getValue() != null) {
-							classifierInfo.setCustomI18NKey(i18nKey.getValue().toString());
-						}
-
-						// Add label and description
-						ResKey classifierResourceKey = TLModelNamingConvention.resourceKey(classifier);
-						String classifierLabel = resources.getString(classifierResourceKey, null);
-						if (classifierLabel != null && !classifierLabel.isEmpty()) {
-							classifierInfo.setLabel(classifierLabel);
-						}
-						String classifierDescription = resources.getString(classifierResourceKey.tooltip(), null);
-						if (classifierDescription != null && !classifierDescription.isEmpty()) {
-							classifierInfo.setDescription(classifierDescription);
-						}
-
-						result.addClassifier(classifierInfo);
-					}
-
-					return result;
-				});
+			EnumerationResponse response = doListClassifiers(moduleName, enumName);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -562,6 +477,90 @@ public class ModelBrowserTool {
 				"listClassifiers()",
 				args);
 		}
+	}
+
+	private EnumerationResponse doListClassifiers(String moduleName, String enumName) {
+		// Validate inputs
+		if (moduleName == null || moduleName.trim().isEmpty()) {
+			throw new IllegalArgumentException("Module name is required");
+		}
+		if (enumName == null || enumName.trim().isEmpty()) {
+			throw new IllegalArgumentException("Enumeration name is required");
+		}
+
+		// Get model and module
+		TLModel model = ModelService.getApplicationModel();
+		TLModule module = model.getModule(moduleName);
+		if (module == null) {
+			throw new IllegalArgumentException("Module not found: " + moduleName);
+		}
+
+		// Get type
+		TLType type = module.getType(enumName);
+		if (type == null) {
+			throw new IllegalArgumentException("Type not found: " + enumName + " in module " + moduleName);
+		}
+
+		// Verify it's an enumeration
+		if (!(type instanceof TLEnumeration)) {
+			throw new IllegalArgumentException("Type " + enumName + " is not an enumeration (it's a " + type.getModelKind() + ")");
+		}
+
+		TLEnumeration enumeration = (TLEnumeration) type;
+
+		// Build response using data classes
+		EnumerationResponse result = EnumerationResponse.create();
+		Resources resources = Resources.getInstance();
+
+		// Set enumeration metadata
+		result.setEnumeration(TLModelUtil.qualifiedName(enumeration));
+		result.setModule(moduleName);
+		result.setName(enumName);
+		result.setClassifierCount(enumeration.getClassifiers().size());
+
+		// Check for UnorderedEnum annotation
+		UnorderedEnum unorderedAnnotation = enumeration.getAnnotation(UnorderedEnum.class);
+		result.setUnordered(unorderedAnnotation != null);
+
+		// Add label and description
+		ResKey enumResourceKey = TLModelNamingConvention.getTypeLabelKey(enumeration);
+		String enumLabel = resources.getString(enumResourceKey, null);
+		if (enumLabel != null && !enumLabel.isEmpty()) {
+			result.setLabel(enumLabel);
+		}
+		String enumDescription = resources.getString(enumResourceKey.tooltip(), null);
+		if (enumDescription != null && !enumDescription.isEmpty()) {
+			result.setDescription(enumDescription);
+		}
+
+		// Add classifiers
+		for (TLClassifier classifier : enumeration.getClassifiers()) {
+			ClassifierInfo classifierInfo = ClassifierInfo.create();
+			classifierInfo.setName(classifier.getName());
+			classifierInfo.setDefault(classifier.isDefault());
+			classifierInfo.setIndex(classifier.getIndex());
+
+			// Check for TLI18NKey annotation
+			TLI18NKey i18nKey = classifier.getAnnotation(TLI18NKey.class);
+			if (i18nKey != null && i18nKey.getValue() != null) {
+				classifierInfo.setCustomI18NKey(i18nKey.getValue().toString());
+			}
+
+			// Add label and description
+			ResKey classifierResourceKey = TLModelNamingConvention.resourceKey(classifier);
+			String classifierLabel = resources.getString(classifierResourceKey, null);
+			if (classifierLabel != null && !classifierLabel.isEmpty()) {
+				classifierInfo.setLabel(classifierLabel);
+			}
+			String classifierDescription = resources.getString(classifierResourceKey.tooltip(), null);
+			if (classifierDescription != null && !classifierDescription.isEmpty()) {
+				classifierInfo.setDescription(classifierDescription);
+			}
+
+			result.addClassifier(classifierInfo);
+		}
+
+		return result;
 	}
 
 	/**

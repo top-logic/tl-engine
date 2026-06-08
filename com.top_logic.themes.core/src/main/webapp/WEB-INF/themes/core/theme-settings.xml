@@ -1961,7 +1961,10 @@
 	<icon name="com.top_logic.layout.messagebox.Icons.IN_PROGRESS"
 		value="css:fas fa-running"
 	/>
-
+	<icon name="ICON_RELOAD_ACCESSMANAGER"
+		value="css:fa-solid fa-arrows-spin"
+	/>
+	
 	<!-- Style Tokens -->
 	<!-- Color Tokens -->
 	<color name="sb-track-color"

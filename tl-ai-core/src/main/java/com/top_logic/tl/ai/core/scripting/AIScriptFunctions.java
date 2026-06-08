@@ -37,6 +37,7 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -163,7 +164,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			ConversationLogListenerBinding.Binding b3 =
 				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
 			Map<String, Object> args = parameters != null ? parameters : Map.of();
-			return tool.execute(args, context).text();
+			return ToolExecutions.execute(tool, args, context).text();
 		} catch (Exception ex) {
 			return "Error invoking tool '" + toolName + "': " + ex.getMessage();
 		} finally {

@@ -181,7 +181,7 @@ public class ToolCatalog implements ToolRegistry {
 		}
 
 		try {
-			ToolResult toolResult = tool.execute(args, context);
+			ToolResult toolResult = ToolExecutions.execute(tool, args, context);
 			Instant end = Instant.now();
 			return new ToolResultMessage(
 				UUID.randomUUID().toString(), Instant.now(),

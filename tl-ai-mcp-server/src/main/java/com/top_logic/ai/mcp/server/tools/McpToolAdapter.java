@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
@@ -115,7 +116,7 @@ public class McpToolAdapter {
 				arguments = Map.of();
 			}
 
-			String result = tool.execute(arguments, null).text();
+			String result = ToolExecutions.execute(tool, arguments, null).text();
 
 			return McpSchema.CallToolResult.builder()
 				.content(List.of(new McpSchema.TextContent(result)))

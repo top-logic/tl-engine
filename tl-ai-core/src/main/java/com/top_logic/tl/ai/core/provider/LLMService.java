@@ -104,9 +104,6 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		/** @see #getModel() */
 		String MODEL = "model";
 
-		/** @see #getOwner() */
-		String OWNER = "owner";
-
 		/** @see #getMaxTokens() */
 		String MAX_TOKENS = "max-tokens";
 
@@ -151,27 +148,12 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String getName();
 
 		/**
-		 * The enclosing {@link AgentExecutionConfig}, used to resolve configured models from the
-		 * provider section of the same edit form.
-		 *
-		 * @see #OWNER
-		 */
-		@Name(OWNER)
-		@Hidden
-		@Container
-		AgentExecutionConfig getOwner();
-
-		/**
 		 * The model to use for this agent.
 		 *
 		 * @see #MODEL
 		 */
 		@Name(MODEL)
-		@Options(fun = ConfiguredModelOptions.class, args = @Ref(steps = {
-			@Step(OWNER),
-			@Step(AgentExecutionConfig.OWNER),
-			@Step(Config.PROVIDERS),
-		}))
+		@Options(fun = ServiceModelOptions.class)
 		@Constraint(value = ModelToolCallConstraint.class, args = @Ref(NAME_ATTRIBUTE))
 		String getModel();
 
@@ -336,6 +318,26 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		@Override
 		public List<String> apply(Map<String, LLMProviderConfig.Config> providers) {
 			return modelNamesOf(providers);
+		}
+	}
+
+	/**
+	 * Provides model names from the running {@link LLMService} instance.
+	 *
+	 * <p>
+	 * Unlike {@link ConfiguredModelOptions}, this does not require a {@link Container @Container}
+	 * chain to resolve the provider map. This makes it suitable for contexts where the container
+	 * reference is not yet set, such as during creation of a new {@link AgentOverride} entry in a
+	 * keyed map.
+	 * </p>
+	 */
+	public static class ServiceModelOptions extends Function0<List<String>> {
+		@Override
+		public List<String> apply() {
+			if (!LLMService.Module.INSTANCE.isActive()) {
+				return List.of();
+			}
+			return LLMService.getInstance().getConfiguredModelNames();
 		}
 	}
 

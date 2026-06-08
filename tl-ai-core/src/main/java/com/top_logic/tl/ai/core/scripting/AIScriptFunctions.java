@@ -29,7 +29,6 @@ import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
@@ -273,10 +272,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			UserInteractionStoreBinding.Binding b2 = UserInteractionStoreBinding.bind(new UserInteractionStore());
 			ConversationLogListenerBinding.Binding b3 =
 				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
+			int messageCountBefore = conversation.size();
 			loop.run(conversation, context, event -> {
 				/** no event listener setup for a tlscript function */
 			});
-			return extractResponseText(conversation);
+			return AgentFactory.extractResponseText(conversation, messageCountBefore);
 		} finally {
 			context.transaction().close();
 		}
@@ -324,25 +324,6 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		} finally {
 			context.transaction().close();
 		}
-	}
-
-	/**
-	 * Extracts the text from the last assistant message in a conversation.
-	 */
-	private static String extractResponseText(Conversation conversation) {
-		List<Message> messages = conversation.messages();
-		for (int i = messages.size() - 1; i >= 0; i--) {
-			if (messages.get(i) instanceof AssistantMessage assistant) {
-				StringBuilder text = new StringBuilder();
-				for (ContentPart part : assistant.content()) {
-					if (part instanceof TextContent tc) {
-						text.append(tc.text());
-					}
-				}
-				return text.toString();
-			}
-		}
-		return "";
 	}
 
 	/**

@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
@@ -21,6 +22,7 @@ import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
@@ -31,6 +33,7 @@ import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
+import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -201,17 +204,30 @@ public class AgentFactory {
 
 	/**
 	 * Extracts the response text from the last {@link AssistantMessage} appended at or after
-	 * {@code fromIndex}. Returns an empty string when the current run added no assistant
-	 * message, so a prior assistant turn restored from history is not mistaken for a fresh
-	 * reply.
+	 * {@code fromIndex}. Only text that appears <em>after</em> the last {@link ToolCall} in the
+	 * message is included; pre-tool narration (e.g. "Let me look that up...") is stripped.
+	 * When the message contains no tool calls, all text is returned.
+	 *
+	 * <p>Returns an empty string when the current run added no assistant message, so a prior
+	 * assistant turn restored from history is not mistaken for a fresh reply.</p>
 	 */
-	static String extractResponseText(Conversation conversation, int fromIndex) {
+	public static String extractResponseText(Conversation conversation, int fromIndex) {
 		List<Message> messages = conversation.messages();
 		for (int i = messages.size() - 1; i >= fromIndex; i--) {
 			if (messages.get(i) instanceof AssistantMessage assistant) {
+				List<ContentPart> content = assistant.content();
+
+				int lastToolIndex = -1;
+				for (int j = content.size() - 1; j >= 0; j--) {
+					if (content.get(j) instanceof ToolCall) {
+						lastToolIndex = j;
+						break;
+					}
+				}
+
 				StringBuilder sb = new StringBuilder();
-				for (ContentPart part : assistant.content()) {
-					if (part instanceof TextContent text) {
+				for (int j = lastToolIndex + 1; j < content.size(); j++) {
+					if (content.get(j) instanceof TextContent text) {
 						if (sb.length() > 0) {
 							sb.append("\n");
 						}
@@ -589,7 +605,8 @@ public class AgentFactory {
 		DynamicToolCatalog dynamicCatalog = new DynamicToolCatalog(baseCatalog.freeze());
 
 		// Build SkillTool with dynamic catalog and tool resolver
-		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog);
+		Set<String> preloadedSkills = LoadedSkillsBinding.getSkills();
+		SkillTool skillTool = buildDynamicSkillTool(agent, dynamicCatalog, preloadedSkills);
 		if (skillTool != null) {
 			ToolCatalog skillToolOverlay = new ToolCatalog();
 			for (Tool tool : AnnotatedTools.from(skillTool)) {
@@ -611,7 +628,8 @@ public class AgentFactory {
 		return dynamicCatalog;
 	}
 
-	private SkillTool buildDynamicSkillTool(AgentDefinition agent, DynamicToolCatalog dynamicCatalog) {
+	private SkillTool buildDynamicSkillTool(AgentDefinition agent, DynamicToolCatalog dynamicCatalog,
+			Set<String> preloadedSkillIds) {
 		List<String> skillNames = agent.skills();
 		if (skillNames.isEmpty()) {
 			return null;
@@ -633,7 +651,7 @@ public class AgentFactory {
 		}
 
 		Function<String, Tool> resolver = name -> ToolRegistryService.getInstance().getTool(name);
-		return new SkillTool(skillMap, dynamicCatalog, resolver);
+		return new SkillTool(skillMap, dynamicCatalog, resolver, preloadedSkillIds);
 	}
 
 	private SearchToolsTool buildSearchTool(AgentDefinition agent) {

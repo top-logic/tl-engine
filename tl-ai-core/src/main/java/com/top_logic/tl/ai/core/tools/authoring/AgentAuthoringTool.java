@@ -16,7 +16,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -98,8 +97,7 @@ public class AgentAuthoringTool {
 			@P(value = "Qualified tool names this skill provides when loaded (see listAvailableTools); omit for none",
 				required = false) List<String> tools) {
 		try {
-			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doCreateSkill(name, description, content, tools));
+			OperationResult result = doCreateSkill(name, description, content, tools);
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "createSkill()");
 		} catch (Exception ex) {
 			Logger.error("createSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
@@ -146,8 +144,7 @@ public class AgentAuthoringTool {
 			@P(value = "New tool list (omit to leave unchanged; empty replaces with none)",
 				required = false) List<String> tools) {
 		try {
-			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doUpdateSkill(name, description, content, tools));
+			OperationResult result = doUpdateSkill(name, description, content, tools);
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "updateSkill()");
 		} catch (Exception ex) {
 			Logger.error("updateSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
@@ -191,8 +188,7 @@ public class AgentAuthoringTool {
 	@ToolMethod(description = "Delete a knowledge-base skill by name")
 	public String deleteSkill(@P("Name of the skill to delete") String name) {
 		try {
-			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doDeleteSkill(name));
+			OperationResult result = doDeleteSkill(name);
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "deleteSkill()");
 		} catch (Exception ex) {
 			Logger.error("deleteSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
@@ -290,8 +286,8 @@ public class AgentAuthoringTool {
 			@P(value = "Names of agents this agent may delegate to; omit for none",
 				required = false) List<String> delegations) {
 		try {
-			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doCreateAgent(name, description, systemPrompt, tools, mcpServers, skills, delegations));
+			OperationResult result =
+				doCreateAgent(name, description, systemPrompt, tools, mcpServers, skills, delegations);
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "createAgent()");
 		} catch (Exception ex) {
 			Logger.error("createAgent() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
@@ -355,8 +351,8 @@ public class AgentAuthoringTool {
 			@P(value = "New delegation list (omit to leave unchanged; empty replaces with none)",
 				required = false) List<String> delegations) {
 		try {
-			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doUpdateAgent(name, description, systemPrompt, tools, mcpServers, skills, delegations));
+			OperationResult result =
+				doUpdateAgent(name, description, systemPrompt, tools, mcpServers, skills, delegations);
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "updateAgent()");
 		} catch (Exception ex) {
 			Logger.error("updateAgent() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
@@ -407,8 +403,7 @@ public class AgentAuthoringTool {
 	@ToolMethod(description = "Delete a knowledge-base agent by name")
 	public String deleteAgent(@P("Name of the agent to delete") String name) {
 		try {
-			OperationResult result = ThreadContextManager.inSystemInteraction(AgentAuthoringTool.class,
-				() -> doDeleteAgent(name));
+			OperationResult result = doDeleteAgent(name);
 			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "deleteAgent()");
 		} catch (Exception ex) {
 			Logger.error("deleteAgent() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);

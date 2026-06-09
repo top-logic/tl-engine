@@ -15,7 +15,6 @@ import java.util.TimeZone;
 
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -39,8 +38,8 @@ import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
@@ -48,6 +47,8 @@ import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.util.TLContextManager;
+import com.top_logic.util.TopLogicServlet;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -67,7 +68,7 @@ import de.haumacher.msgbuf.json.JsonReader;
  * in the {@code web-fragment.xml}, so only authenticated users can reach this servlet.
  * </p>
  */
-public class ChatServlet extends HttpServlet {
+public class ChatServlet extends TopLogicServlet {
 
 	private static final String PATH_SEND = "/send";
 	private static final String PATH_RESPOND = "/respond";
@@ -198,7 +199,8 @@ public class ChatServlet extends HttpServlet {
 			}
 		}
 
-		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		TaskProgressTracker tracker = currentTracker();
+		TLSubSessionContext subSession = TLContextManager.getSubSession();
 
 		if (activeSessionId != null) {
 			tracker.setActiveSessionId(activeSessionId);
@@ -209,8 +211,7 @@ public class ChatServlet extends HttpServlet {
 			Person person = resolveCurrentPerson(req);
 			if (person != null) {
 				try {
-					storedName = ThreadContextManager.inSystemInteraction(ChatServlet.class,
-						() -> person.getName());
+					storedName = person.getName();
 				} catch (Exception ex) {
 					Logger.error("Failed to resolve person name", ex, ChatServlet.class);
 				}
@@ -220,7 +221,8 @@ public class ChatServlet extends HttpServlet {
 			}
 		}
 		final String userName = storedName != null ? storedName : "Anonymous";
-		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, userName, messageText, attachments);
+		ChatProcessor.SendResult result =
+			ChatProcessor.sendMessage(tracker, subSession, userName, messageText, attachments);
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -261,7 +263,7 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 
-		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		TaskProgressTracker tracker = currentTracker();
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state == null) {
 			resp.sendError(HttpServletResponse.SC_CONFLICT, "No active processing state");
@@ -332,7 +334,7 @@ public class ChatServlet extends HttpServlet {
 			return;
 		}
 
-		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		TaskProgressTracker tracker = currentTracker();
 		tracker.setApprovalMode(approvalMode);
 
 		resp.setContentType("application/json");
@@ -341,7 +343,7 @@ public class ChatServlet extends HttpServlet {
 	}
 
 	private void handleCancel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+		TaskProgressTracker tracker = currentTracker();
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state == null) {
 			resp.setContentType(CONTENT_TYPE_JSON);
@@ -366,7 +368,7 @@ public class ChatServlet extends HttpServlet {
 	}
 
 	private void handleUpdates(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(true));
+		TaskProgressTracker tracker = currentTracker();
 
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state != null) {
@@ -384,6 +386,8 @@ public class ChatServlet extends HttpServlet {
 	}
 
 	private void handleSSE(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		TaskProgressTracker tracker = currentTracker();
+
 		resp.setContentType(CONTENT_TYPE_SSE);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.setHeader("Cache-Control", "no-cache");
@@ -392,7 +396,6 @@ public class ChatServlet extends HttpServlet {
 		AsyncContext asyncContext = req.startAsync();
 		asyncContext.setTimeout(0); // No timeout - connection stays open until client disconnects
 
-		TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(true));
 		ChatSSEHandler handler = new ChatSSEHandler(tracker, asyncContext, resp.getWriter());
 		handler.start();
 	}
@@ -435,7 +438,7 @@ public class ChatServlet extends HttpServlet {
 				return;
 			}
 
-			TaskProgressTracker tracker = ChatSessionRegistry.getOrCreate(req.getSession(false));
+			TaskProgressTracker tracker = currentTracker();
 
 			// Activate session on the tracker (switches Chat + ChatMemory)
 			if (tracker != null) {
@@ -633,6 +636,68 @@ public class ChatServlet extends HttpServlet {
 			return null;
 		}
 		return sessionContext.getOriginalUser();
+	}
+
+	/** The client-provided window id ({@code windowName}) of the originating sub-session, or null. */
+	private static String windowId(HttpServletRequest req) {
+		String id = req.getParameter("windowId");
+		return (id == null || id.isEmpty()) ? null : id;
+	}
+
+	/**
+	 * Binds the application-window sub-session addressed by the request's {@code windowId} to the
+	 * current thread before dispatching, so every chat endpoint runs in the user's UI context.
+	 *
+	 * <p>
+	 * A single login can host several sub-sessions (cloned tabs, popped-out views); the plain HTTP
+	 * request only identifies the login. The client therefore echoes the window id of its
+	 * application window, which we resolve to the originating sub-session here - once, centrally
+	 * - so the handlers (and the <code>KnowledgeBase</code> operations they trigger) see a valid, correct
+	 * session context, and the background agent acts on the user's UI. If the window cannot be
+	 * resolved (unknown id, closed window, server restart) the request is rejected so the client
+	 * reloads its application window.
+	 * </p>
+	 */
+	@Override
+	protected void doService(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		TLSubSessionContext subSession =
+			ChatSessionRegistry.resolveSubSession(TLContextManager.getSession(), windowId(req));
+		if (subSession == null || subSession.get(ChatSessionRegistry.CHAT_TRACKER) == null) {
+			sendStaleWindow(resp);
+			return;
+		}
+		// Install the resolved sub-session directly into this request's interaction, the same way
+		// the layout AJAXServlet binds the addressed sub-session. The interaction is request-scoped
+		// (set up by TopLogicServlet without a sub-session) and torn down at the end of the request,
+		// so no explicit restore is needed. Going through ThreadContextManager.inContext(...) would
+		// instead log an "Overriding subsession" info on every request.
+		TLContextManager.getInteraction().installSubSessionContext(subSession);
+		super.doService(req, resp);
+	}
+
+	/**
+	 * The {@link TaskProgressTracker} bound to the sub-session of the current request.
+	 *
+	 * <p>
+	 * Never null inside a handler: {@link #doService} rejects requests whose sub-session or tracker
+	 * cannot be resolved before any handler runs.
+	 * </p>
+	 */
+	private static TaskProgressTracker currentTracker() {
+		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		return subSession == null ? null : subSession.get(ChatSessionRegistry.CHAT_TRACKER);
+	}
+
+	/**
+	 * Rejects a request whose originating sub-session could not be resolved, instructing the client
+	 * to reload the application window.
+	 */
+	private static void sendStaleWindow(HttpServletResponse resp) throws IOException {
+		resp.setStatus(HttpServletResponse.SC_CONFLICT);
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"error\",\"error\":\"stale_window\"}");
 	}
 
 	/** Extracts session ID from path like "/sessions/123". */

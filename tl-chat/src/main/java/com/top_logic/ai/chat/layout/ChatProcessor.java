@@ -26,11 +26,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
@@ -55,6 +56,7 @@ import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 
@@ -181,8 +183,8 @@ public class ChatProcessor {
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
 			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
-			AgentFactory.RunResult runResult = ThreadContextManager.inSystemInteraction(ChatProcessor.class,
-				() -> agentFactory.runAgent(entryPointAgent, conversation, conversationMemory, toolContext, listener, sessionRegistry));
+			AgentFactory.RunResult runResult = agentFactory.runAgent(entryPointAgent, conversation, conversationMemory,
+				toolContext, listener, sessionRegistry);
 			taskTracker.setActiveToolRegistry(runResult.registry());
 			for (String skillId : loadedSkills) {
 				taskTracker.addLoadedSkill(skillId);
@@ -269,6 +271,9 @@ public class ChatProcessor {
 	 *
 	 * @param tracker
 	 *        Task progress tracker for this session.
+	 * @param userSession
+	 *        The user's application-window sub-session the background agent runs in, so its tools
+	 *        operate on the user's UI. Must not be null.
 	 * @param userName
 	 *        Display name of the user sending the message.
 	 * @param userMessage
@@ -277,8 +282,8 @@ public class ChatProcessor {
 	 *        File attachments sent with the message; may be null or empty.
 	 * @return The send result (task ID, or busy/error); never null.
 	 */
-	public static SendResult sendMessage(TaskProgressTracker tracker, String userName, String userMessage,
-			List<AttachmentDto> attachments) {
+	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
+			String userName, String userMessage, List<AttachmentDto> attachments) {
 		if (isProcessing(tracker)) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
 			return SendResult.busy();
@@ -328,7 +333,7 @@ public class ChatProcessor {
 		ConversationMemory conversationMemory = tracker.getConversationMemory();
 		// Pass state directly to background task so it is immune to tracker-level overwrites
 		Future<?> future = BACKGROUND_EXECUTOR.submit(
-			new AIBackgroundTask(tracker, state, conversationMemory, userMessage, attachments));
+			new AIBackgroundTask(tracker, state, conversationMemory, userMessage, attachments, userSession));
 		state._backgroundTask = future;
 
 		return SendResult.ok(taskId);
@@ -474,14 +479,21 @@ public class ChatProcessor {
 		private final String _userMessage;
 		private final List<AttachmentDto> _attachments;
 
+		private final SubSessionContext _userSession;
+
 		/** */
 		AIBackgroundTask(TaskProgressTracker taskTracker, AIProcessingState state,
-				ConversationMemory conversationMemory, String userMessage, List<AttachmentDto> attachments) {
+				ConversationMemory conversationMemory, String userMessage, List<AttachmentDto> attachments,
+				TLSubSessionContext userSession) {
 			_taskTracker = taskTracker;
 			_state = state;
 			_conversationMemory = conversationMemory;
 			_userMessage = userMessage;
 			_attachments = attachments;
+			// The originating application-window sub-session (resolved by ChatServlet from the
+			// client's window id), so the agent's tools act on the user's UI - not the servlet
+			// thread's throwaway sub-session.
+			_userSession = userSession;
 		}
 
 		@Override
@@ -489,7 +501,7 @@ public class ChatProcessor {
 			AIProcessingState state = _state;
 			state.setAgentThread(Thread.currentThread());
 			try {
-				ThreadContextManager.inSystemInteraction(ChatProcessor.class, () -> {
+				ThreadContextManager.inContext(_userSession, () -> {
 					try {
 						executeOrchestrator(_taskTracker, state, _conversationMemory, _userMessage, _attachments);
 						state.completeSuccessfully();

@@ -15,7 +15,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
@@ -94,50 +93,7 @@ public class TypeAnalysisTool {
 
 		try {
 			// System interaction returns data class
-			TypeUsageResponse response = ThreadContextManager.inSystemInteraction(
-				TypeAnalysisTool.class,
-				() -> {
-					// Validate parameter
-					if (qualifiedTypeName == null || qualifiedTypeName.isEmpty()) {
-						throw new IllegalArgumentException("Qualified type name is required");
-					}
-
-					// Get the application model and find the requested type
-					TLModel model = ModelService.getApplicationModel();
-					TLType type = TLModelUtil.findType(model, qualifiedTypeName);
-
-					if (type == null) {
-						throw new IllegalArgumentException("Type not found: " + qualifiedTypeName);
-					}
-
-					// Find all usages of this type
-					List<PropertyUsage> propertyUsages = findPropertyUsages(model, type);
-					List<ReferenceUsage> referenceUsages = findReferenceUsages(model, type);
-					List<String> subclasses = findSubclasses(type);
-
-					// Build response using data classes
-					TypeUsageResponse result = TypeUsageResponse.create();
-
-					// Add property usages (directly from {@link #findPropertyUsages(TLModel, TLType)})
-					for (PropertyUsage propertyUsage : propertyUsages) {
-						result.addProperty(propertyUsage);
-					}
-
-					// Add reference usages (directly from {@link #findReferenceUsages(TLModel, TLType)})
-					for (ReferenceUsage referenceUsage : referenceUsages) {
-						result.addReference(referenceUsage);
-					}
-
-					// Add subclasses
-					for (String subclass : subclasses) {
-						SubclassUsage subclassUsage = SubclassUsage.create();
-						subclassUsage.setSubclass(subclass);
-						subclassUsage.setUsage("generalization");
-						result.addSubclass(subclassUsage);
-					}
-
-					return result;
-				});
+			TypeUsageResponse response = doFindTypeUsages(qualifiedTypeName);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -183,60 +139,7 @@ public class TypeAnalysisTool {
 
 		try {
 			// System interaction returns data class
-			PartUsageResponse response = ThreadContextManager.inSystemInteraction(
-				TypeAnalysisTool.class,
-				() -> {
-					// Validate parameters
-					if (ownerTypeQualifiedName == null || ownerTypeQualifiedName.isEmpty() ||
-							partName == null || partName.isEmpty()) {
-						throw new IllegalArgumentException("Owner type and part name are required");
-					}
-
-					// Get the application model and find the requested type
-					TLModel model = ModelService.getApplicationModel();
-					TLType type = TLModelUtil.findType(model, ownerTypeQualifiedName);
-
-					if (type == null) {
-						throw new IllegalArgumentException("Type not found: " + ownerTypeQualifiedName);
-					}
-
-					// Check if type is structured (has parts)
-					if (!(type instanceof TLStructuredType structuredType)) {
-						throw new IllegalArgumentException("Type is not structured: " + ownerTypeQualifiedName);
-					}
-
-					// Get the part from the type
-					TLStructuredTypePart part = structuredType.getPart(partName);
-					if (part == null) {
-						throw new IllegalArgumentException("Part not found: " + partName + " in type " + ownerTypeQualifiedName);
-					}
-
-					// Find where the part is actually defined (may be in a superclass)
-					String definedIn = TLModelUtil.qualifiedName(part.getOwner());
-
-					// Determine part kind
-					String partKind = (part instanceof TLReference) ? "reference" : "property";
-
-					// Find subclasses that inherit this part
-					List<String> inheritedBy = new ArrayList<>();
-					if (type instanceof TLClass tlClass) {
-						findInheritingSubclasses(tlClass, partName, inheritedBy);
-					}
-
-					// Build response using data classes
-					PartUsageResponse result = PartUsageResponse.create();
-					result.setOwnerType(ownerTypeQualifiedName);
-					result.setPartName(partName);
-					result.setPartKind(partKind);
-					result.setDefinedIn(definedIn);
-
-					// Add inherited by subclasses
-					for (String subclass : inheritedBy) {
-						result.addInheritedBy(subclass);
-					}
-
-					return result;
-				});
+			PartUsageResponse response = doFindPartUsages(ownerTypeQualifiedName, partName);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -255,6 +158,102 @@ public class TypeAnalysisTool {
 				"findPartUsages()",
 				args);
 		}
+	}
+
+	private TypeUsageResponse doFindTypeUsages(String qualifiedTypeName) {
+		// Validate parameter
+		if (qualifiedTypeName == null || qualifiedTypeName.isEmpty()) {
+			throw new IllegalArgumentException("Qualified type name is required");
+		}
+
+		// Get the application model and find the requested type
+		TLModel model = ModelService.getApplicationModel();
+		TLType type = TLModelUtil.findType(model, qualifiedTypeName);
+
+		if (type == null) {
+			throw new IllegalArgumentException("Type not found: " + qualifiedTypeName);
+		}
+
+		// Find all usages of this type
+		List<PropertyUsage> propertyUsages = findPropertyUsages(model, type);
+		List<ReferenceUsage> referenceUsages = findReferenceUsages(model, type);
+		List<String> subclasses = findSubclasses(type);
+
+		// Build response using data classes
+		TypeUsageResponse result = TypeUsageResponse.create();
+
+		// Add property usages (directly from {@link #findPropertyUsages(TLModel, TLType)})
+		for (PropertyUsage propertyUsage : propertyUsages) {
+			result.addProperty(propertyUsage);
+		}
+
+		// Add reference usages (directly from {@link #findReferenceUsages(TLModel, TLType)})
+		for (ReferenceUsage referenceUsage : referenceUsages) {
+			result.addReference(referenceUsage);
+		}
+
+		// Add subclasses
+		for (String subclass : subclasses) {
+			SubclassUsage subclassUsage = SubclassUsage.create();
+			subclassUsage.setSubclass(subclass);
+			subclassUsage.setUsage("generalization");
+			result.addSubclass(subclassUsage);
+		}
+
+		return result;
+	}
+
+	private PartUsageResponse doFindPartUsages(String ownerTypeQualifiedName, String partName) {
+		// Validate parameters
+		if (ownerTypeQualifiedName == null || ownerTypeQualifiedName.isEmpty() ||
+				partName == null || partName.isEmpty()) {
+			throw new IllegalArgumentException("Owner type and part name are required");
+		}
+
+		// Get the application model and find the requested type
+		TLModel model = ModelService.getApplicationModel();
+		TLType type = TLModelUtil.findType(model, ownerTypeQualifiedName);
+
+		if (type == null) {
+			throw new IllegalArgumentException("Type not found: " + ownerTypeQualifiedName);
+		}
+
+		// Check if type is structured (has parts)
+		if (!(type instanceof TLStructuredType structuredType)) {
+			throw new IllegalArgumentException("Type is not structured: " + ownerTypeQualifiedName);
+		}
+
+		// Get the part from the type
+		TLStructuredTypePart part = structuredType.getPart(partName);
+		if (part == null) {
+			throw new IllegalArgumentException("Part not found: " + partName + " in type " + ownerTypeQualifiedName);
+		}
+
+		// Find where the part is actually defined (may be in a superclass)
+		String definedIn = TLModelUtil.qualifiedName(part.getOwner());
+
+		// Determine part kind
+		String partKind = (part instanceof TLReference) ? "reference" : "property";
+
+		// Find subclasses that inherit this part
+		List<String> inheritedBy = new ArrayList<>();
+		if (type instanceof TLClass tlClass) {
+			findInheritingSubclasses(tlClass, partName, inheritedBy);
+		}
+
+		// Build response using data classes
+		PartUsageResponse result = PartUsageResponse.create();
+		result.setOwnerType(ownerTypeQualifiedName);
+		result.setPartName(partName);
+		result.setPartKind(partKind);
+		result.setDefinedIn(definedIn);
+
+		// Add inherited by subclasses
+		for (String subclass : inheritedBy) {
+			result.addInheritedBy(subclass);
+		}
+
+		return result;
 	}
 
 	/**

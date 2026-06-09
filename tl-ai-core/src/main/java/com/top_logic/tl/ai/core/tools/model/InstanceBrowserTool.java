@@ -19,7 +19,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -121,70 +120,7 @@ public class InstanceBrowserTool {
 
 		try {
 			// System interaction returns data class
-			InstanceListResponse response = ThreadContextManager.inSystemInteraction(
-				InstanceBrowserTool.class,
-				() -> {
-					// Validate parameters
-					if (moduleName == null || moduleName.isEmpty()) {
-						throw new IllegalArgumentException("Module name is required");
-					}
-					if (typeName == null || typeName.isEmpty()) {
-						throw new IllegalArgumentException("Type name is required");
-					}
-
-					// Validate and normalize limit
-					int effectiveLimit = limit != null ? limit : DEFAULT_LIMIT;
-					if (effectiveLimit <= 0) {
-						throw new IllegalArgumentException("Limit must be positive, got: " + effectiveLimit);
-					}
-					if (effectiveLimit > MAX_LIMIT) {
-						effectiveLimit = MAX_LIMIT; // Clamp to maximum
-					}
-
-					// Decode cursor to offset
-					int offset = PaginationCursor.decode(cursor);
-
-					// Get the type using MetaElementUtil
-					TLClass type = MetaElementUtil.getGlobalType(moduleName, typeName);
-					if (type == null) {
-						throw new IllegalArgumentException(
-							"Type '" + typeName + "' not found in module '" + moduleName + "'");
-					}
-
-					// Get all instances of this type
-					List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(type, TLObject.class);
-					int totalCount = allInstances.size();
-
-					// Apply pagination
-					List<TLObject> pageInstances = allInstances.stream()
-						.skip(offset)
-						.limit(effectiveLimit)
-						.collect(Collectors.toList());
-
-					// Calculate next cursor
-					int nextOffset = offset + pageInstances.size();
-					String nextCursor = (nextOffset < totalCount) ? PaginationCursor.encode(nextOffset) : null;
-					boolean hasMore = nextOffset < totalCount;
-
-					// Build response using data class
-					InstanceListResponse result = InstanceListResponse.create();
-					result.setModule(moduleName);
-					result.setType(typeName);
-					result.setTotalCount(totalCount);
-					result.setLimit(effectiveLimit);
-					result.setOffset(offset);
-
-					// Add TIDs for this page
-					for (TLObject instance : pageInstances) {
-						result.addInstance(instance.tId().asString());
-					}
-
-					// Pagination metadata
-					result.setNextCursor(nextCursor);
-					result.setHasMore(hasMore);
-
-					return result;
-				});
+			InstanceListResponse response = doListInstances(moduleName, typeName, limit, cursor);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -207,6 +143,69 @@ public class InstanceBrowserTool {
 				"listInstances()",
 				args);
 		}
+	}
+
+	private InstanceListResponse doListInstances(String moduleName, String typeName, Integer limit, String cursor) {
+		// Validate parameters
+		if (moduleName == null || moduleName.isEmpty()) {
+			throw new IllegalArgumentException("Module name is required");
+		}
+		if (typeName == null || typeName.isEmpty()) {
+			throw new IllegalArgumentException("Type name is required");
+		}
+
+		// Validate and normalize limit
+		int effectiveLimit = limit != null ? limit : DEFAULT_LIMIT;
+		if (effectiveLimit <= 0) {
+			throw new IllegalArgumentException("Limit must be positive, got: " + effectiveLimit);
+		}
+		if (effectiveLimit > MAX_LIMIT) {
+			effectiveLimit = MAX_LIMIT; // Clamp to maximum
+		}
+
+		// Decode cursor to offset
+		int offset = PaginationCursor.decode(cursor);
+
+		// Get the type using MetaElementUtil
+		TLClass type = MetaElementUtil.getGlobalType(moduleName, typeName);
+		if (type == null) {
+			throw new IllegalArgumentException(
+				"Type '" + typeName + "' not found in module '" + moduleName + "'");
+		}
+
+		// Get all instances of this type
+		List<TLObject> allInstances = MetaElementUtil.getAllInstancesOf(type, TLObject.class);
+		int totalCount = allInstances.size();
+
+		// Apply pagination
+		List<TLObject> pageInstances = allInstances.stream()
+			.skip(offset)
+			.limit(effectiveLimit)
+			.collect(Collectors.toList());
+
+		// Calculate next cursor
+		int nextOffset = offset + pageInstances.size();
+		String nextCursor = (nextOffset < totalCount) ? PaginationCursor.encode(nextOffset) : null;
+		boolean hasMore = nextOffset < totalCount;
+
+		// Build response using data class
+		InstanceListResponse result = InstanceListResponse.create();
+		result.setModule(moduleName);
+		result.setType(typeName);
+		result.setTotalCount(totalCount);
+		result.setLimit(effectiveLimit);
+		result.setOffset(offset);
+
+		// Add TIDs for this page
+		for (TLObject instance : pageInstances) {
+			result.addInstance(instance.tId().asString());
+		}
+
+		// Pagination metadata
+		result.setNextCursor(nextCursor);
+		result.setHasMore(hasMore);
+
+		return result;
 	}
 
 	/**
@@ -276,70 +275,7 @@ public class InstanceBrowserTool {
 
 		try {
 			// System interaction returns data class
-			InstanceResponse response = ThreadContextManager.inSystemInteraction(
-				InstanceBrowserTool.class,
-				() -> {
-					// Validate parameter
-					if (tid == null || tid.isEmpty()) {
-						throw new IllegalArgumentException("TID is required");
-					}
-
-					// Parse TID (format: "type-name:hex-id")
-					String[] split = tid.split(":", 2);
-					if (split.length != 2) {
-						throw new IllegalArgumentException(
-							"Invalid TID format. Expected 'TypeName:id', got: " + tid);
-					}
-
-					String typeName = split[0];
-					String id = split[1];
-
-					// Convert string ID to TLID
-					TLID tlid = IdentifierUtil.fromExternalForm(id);
-
-					// Get the knowledge base
-					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
-					// Get the knowledge object
-					KnowledgeObject ko = kb.getKnowledgeObject(typeName, tlid);
-
-					if (ko == null) {
-						throw new IllegalArgumentException("Object with TID '" + tid + "' not found");
-					}
-
-					// Wrap it as a TLObject
-					TLObject tlObject = WrapperFactory.getWrapper(ko);
-
-					// Build response using data class
-					InstanceResponse result = InstanceResponse.create();
-					result.setTid(tid);
-
-					// Type information
-					TLStructuredType type = tlObject.tType();
-					if (type != null) {
-						result.setType(buildTypeInfo(type));
-
-						// Get all parts (attributes) of this type
-						for (TLStructuredTypePart part : type.getAllParts()) {
-							String partName = part.getName();
-							Object value = tlObject.tValue(part);
-
-							// Add attribute value as JSON string
-							result.putAttribute(partName, serializeAttributeValue(value));
-						}
-					}
-
-					// Additional metadata
-					InstanceMetadata metadata = InstanceMetadata.create();
-					metadata.setContainer(
-						tlObject.tContainer() != null ? tlObject.tContainer().tId().toString() : null);
-					metadata.setContainerReference(
-						tlObject.tContainerReference() != null ? tlObject.tContainerReference().getName() : null);
-					metadata.setTransient(tlObject.tTransient());
-					result.setMetadata(metadata);
-
-					return result;
-				});
+			InstanceResponse response = doGetInstance(tid);
 
 			// Serialize to JSON using DataClassSerializer with tracking
 			Map<String, Object> args = new HashMap<>();
@@ -356,6 +292,69 @@ public class InstanceBrowserTool {
 				"getInstance()",
 				args);
 		}
+	}
+
+	private InstanceResponse doGetInstance(String tid) throws IOException {
+		// Validate parameter
+		if (tid == null || tid.isEmpty()) {
+			throw new IllegalArgumentException("TID is required");
+		}
+
+		// Parse TID (format: "type-name:hex-id")
+		String[] split = tid.split(":", 2);
+		if (split.length != 2) {
+			throw new IllegalArgumentException(
+				"Invalid TID format. Expected 'TypeName:id', got: " + tid);
+		}
+
+		String typeName = split[0];
+		String id = split[1];
+
+		// Convert string ID to TLID
+		TLID tlid = IdentifierUtil.fromExternalForm(id);
+
+		// Get the knowledge base
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+
+		// Get the knowledge object
+		KnowledgeObject ko = kb.getKnowledgeObject(typeName, tlid);
+
+		if (ko == null) {
+			throw new IllegalArgumentException("Object with TID '" + tid + "' not found");
+		}
+
+		// Wrap it as a TLObject
+		TLObject tlObject = WrapperFactory.getWrapper(ko);
+
+		// Build response using data class
+		InstanceResponse result = InstanceResponse.create();
+		result.setTid(tid);
+
+		// Type information
+		TLStructuredType type = tlObject.tType();
+		if (type != null) {
+			result.setType(buildTypeInfo(type));
+
+			// Get all parts (attributes) of this type
+			for (TLStructuredTypePart part : type.getAllParts()) {
+				String partName = part.getName();
+				Object value = tlObject.tValue(part);
+
+				// Add attribute value as JSON string
+				result.putAttribute(partName, serializeAttributeValue(value));
+			}
+		}
+
+		// Additional metadata
+		InstanceMetadata metadata = InstanceMetadata.create();
+		metadata.setContainer(
+			tlObject.tContainer() != null ? tlObject.tContainer().tId().toString() : null);
+		metadata.setContainerReference(
+			tlObject.tContainerReference() != null ? tlObject.tContainerReference().getName() : null);
+		metadata.setTransient(tlObject.tTransient());
+		result.setMetadata(metadata);
+
+		return result;
 	}
 
 	/**

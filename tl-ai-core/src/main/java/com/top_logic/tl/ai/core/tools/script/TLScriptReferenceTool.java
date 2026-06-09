@@ -16,7 +16,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
@@ -75,25 +74,25 @@ public class TLScriptReferenceTool {
 	public String listTLScriptFunctions() {
 		Map<String, Object> args = new HashMap<>();
 
-		return ThreadContextManager.inSystemInteraction(
-			TLScriptReferenceTool.class,
-			() -> {
-				try {
-					SearchBuilder<?> searchBuilder = SearchBuilder.getInstance();
-					List<String> functionNames = searchBuilder.getMethodNames();
+		return doListTLScriptFunctions(args);
+	}
 
-					// Build response using msgbuf data class
-					FunctionListResult result = FunctionListResult.create();
-					result.setFunctions(functionNames);
+	private String doListTLScriptFunctions(Map<String, Object> args) {
+		try {
+			SearchBuilder<?> searchBuilder = SearchBuilder.getInstance();
+			List<String> functionNames = searchBuilder.getMethodNames();
 
-					return DataClassSerializer.toJson(result, TLScriptReferenceTool.class, "listTLScriptFunctions()", args);
+			// Build response using msgbuf data class
+			FunctionListResult result = FunctionListResult.create();
+			result.setFunctions(functionNames);
 
-				} catch (Exception ex) {
-					String error = "Failed to list TLScript functions: " + ex.getMessage();
-					Logger.error(error, ex, TLScriptReferenceTool.class);
-					return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "listTLScriptFunctions()", args);
-				}
-			});
+			return DataClassSerializer.toJson(result, TLScriptReferenceTool.class, "listTLScriptFunctions()", args);
+
+		} catch (Exception ex) {
+			String error = "Failed to list TLScript functions: " + ex.getMessage();
+			Logger.error(error, ex, TLScriptReferenceTool.class);
+			return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "listTLScriptFunctions()", args);
+		}
 	}
 
 	/**
@@ -115,76 +114,76 @@ public class TLScriptReferenceTool {
 		Map<String, Object> args = new HashMap<>();
 		args.put("functionName", functionName);
 
-		return ThreadContextManager.inSystemInteraction(
-			TLScriptReferenceTool.class,
-			() -> {
-				try {
-					// Validate parameters
-					if (functionName == null || functionName.trim().isEmpty()) {
-						String error = "Function name is required";
-						Logger.error("getTLScriptFunctionDocumentation() error: " + error,
-							TLScriptReferenceTool.class);
-						return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
-					}
+		return doGetTLScriptFunctionDocumentation(functionName, args);
+	}
 
-					SearchBuilder<?> searchBuilder = SearchBuilder.getInstance();
+	private String doGetTLScriptFunctionDocumentation(String functionName, Map<String, Object> args) {
+		try {
+			// Validate parameters
+			if (functionName == null || functionName.trim().isEmpty()) {
+				String error = "Function name is required";
+				Logger.error("getTLScriptFunctionDocumentation() error: " + error,
+					TLScriptReferenceTool.class);
+				return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
+			}
 
-					Optional<String> documentation =
-						searchBuilder.getDocumentation(DummyDisplayContext.newInstance(), functionName);
+			SearchBuilder<?> searchBuilder = SearchBuilder.getInstance();
 
-					// Retrieve parameter information from the function builder
-					List<String> parameters = new ArrayList<>();
-					try {
-						MethodBuilder<?> builder = searchBuilder.getBuilder(functionName);
-						if (builder != null) {
-							ArgumentDescriptor descriptor = builder.descriptor();
+			Optional<String> documentation =
+				searchBuilder.getDocumentation(DummyDisplayContext.newInstance(), functionName);
 
-							// TODO: Make in TL accessible.
+			// Retrieve parameter information from the function builder
+			List<String> parameters = new ArrayList<>();
+			try {
+				MethodBuilder<?> builder = searchBuilder.getBuilder(functionName);
+				if (builder != null) {
+					ArgumentDescriptor descriptor = builder.descriptor();
 
-							// Use reflection to access protected methods
-							Method getMaxArgCntMethod = descriptor.getClass().getDeclaredMethod("getMaxArgCnt");
-							getMaxArgCntMethod.setAccessible(true);
-							int maxArgs = (Integer) getMaxArgCntMethod.invoke(descriptor);
+					// TODO: Make in TL accessible.
 
-							if (maxArgs < 0) {
-								// Varargs function - indicate with special marker
-								parameters.add("...");
-							} else {
-								// Fixed number of arguments - retrieve each parameter name
-								Method getArgumentNameMethod = descriptor.getClass().getDeclaredMethod("getArgumentName", int.class);
-								getArgumentNameMethod.setAccessible(true);
-								for (int i = 0; i < maxArgs; i++) {
-									String paramName = (String) getArgumentNameMethod.invoke(descriptor, i);
-									parameters.add(paramName);
-								}
-							}
-						}
-					} catch (Exception ex) {
-						// Log parameter retrieval failure but continue with documentation
-						Logger.warn("Failed to retrieve parameters for function '" + functionName + "': " + ex.getMessage(),
-							TLScriptReferenceTool.class);
-					}
+					// Use reflection to access protected methods
+					Method getMaxArgCntMethod = descriptor.getClass().getDeclaredMethod("getMaxArgCnt");
+					getMaxArgCntMethod.setAccessible(true);
+					int maxArgs = (Integer) getMaxArgCntMethod.invoke(descriptor);
 
-					// Build response using msgbuf data class
-					FunctionDocResult result = FunctionDocResult.create()
-						.setParameters(parameters);
-
-					if (documentation.isPresent()) {
-						// Convert HTML documentation to Markdown
-						String htmlDoc = documentation.get();
-						String markdownDoc = Converters.htmlToMarkdown(htmlDoc);
-						result.setDocumentation(markdownDoc);
+					if (maxArgs < 0) {
+						// Varargs function - indicate with special marker
+						parameters.add("...");
 					} else {
-						result.setErrorMessage("No documentation available for function: " + functionName);
+						// Fixed number of arguments - retrieve each parameter name
+						Method getArgumentNameMethod = descriptor.getClass().getDeclaredMethod("getArgumentName", int.class);
+						getArgumentNameMethod.setAccessible(true);
+						for (int i = 0; i < maxArgs; i++) {
+							String paramName = (String) getArgumentNameMethod.invoke(descriptor, i);
+							parameters.add(paramName);
+						}
 					}
-
-					return DataClassSerializer.toJson(result, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
-
-				} catch (Exception ex) {
-					String error = "Failed to get function documentation: " + ex.getMessage();
-					Logger.error(error, ex, TLScriptReferenceTool.class);
-					return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
 				}
-			});
+			} catch (Exception ex) {
+				// Log parameter retrieval failure but continue with documentation
+				Logger.warn("Failed to retrieve parameters for function '" + functionName + "': " + ex.getMessage(),
+					TLScriptReferenceTool.class);
+			}
+
+			// Build response using msgbuf data class
+			FunctionDocResult result = FunctionDocResult.create()
+				.setParameters(parameters);
+
+			if (documentation.isPresent()) {
+				// Convert HTML documentation to Markdown
+				String htmlDoc = documentation.get();
+				String markdownDoc = Converters.htmlToMarkdown(htmlDoc);
+				result.setDocumentation(markdownDoc);
+			} else {
+				result.setErrorMessage("No documentation available for function: " + functionName);
+			}
+
+			return DataClassSerializer.toJson(result, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
+
+		} catch (Exception ex) {
+			String error = "Failed to get function documentation: " + ex.getMessage();
+			Logger.error(error, ex, TLScriptReferenceTool.class);
+			return DataClassSerializer.errorToJson(error, TLScriptReferenceTool.class, "getTLScriptFunctionDocumentation()", args);
+		}
 	}
 }

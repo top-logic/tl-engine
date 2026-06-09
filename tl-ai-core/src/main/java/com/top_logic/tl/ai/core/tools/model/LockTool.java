@@ -9,7 +9,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.tools.model.messages.LockStatusResponse;
@@ -60,9 +59,7 @@ public class LockTool {
 			@P("Qualified name of the model element to check") String qualifiedName) {
 
 		try {
-			return ThreadContextManager.inSystemInteraction(
-				LockTool.class,
-				() -> doCheckLock(qualifiedName));
+			return doCheckLock(qualifiedName);
 		} catch (Exception ex) {
 			Logger.error("checkLock() error: " + ex.getMessage(), ex, LockTool.class);
 			return DataClassSerializer.errorToJson("Failed to check lock: " + ex.getMessage(),

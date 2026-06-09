@@ -29,17 +29,13 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <pre>
  * public String myToolMethod(String param) {
  *     try {
- *         DataObject response = ThreadContextManager.inSystemInteraction(
- *             MyTool.class,
- *             () -> {
- *                 // Business logic returns data class
- *                 MyResponse result = MyResponse.create();
- *                 // ... populate result ...
- *                 return result;
- *             });
+ *         // Business logic returns a data class. The tool already runs inside a TopLogic
+ *         // interaction established by the call boundary, so no per-tool context setup is needed.
+ *         MyResponse result = MyResponse.create();
+ *         // ... populate result ...
  *
  *         // Serialize once at the end
- *         return DataClassSerializer.toJson(response, MyTool.class, "myToolMethod()");
+ *         return DataClassSerializer.toJson(result, MyTool.class, "myToolMethod()");
  *
  *     } catch (Exception ex) {
  *         // Exception handling at outermost level

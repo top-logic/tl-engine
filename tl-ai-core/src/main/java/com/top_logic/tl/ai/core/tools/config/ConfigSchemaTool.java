@@ -14,10 +14,8 @@ import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder.SchemaResolver;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.Schema;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
-
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -75,50 +73,46 @@ public class ConfigSchemaTool {
 	public String getConfigSchema(
 			@P("Schema URI (toplogic://schema/config/... or toplogic://schema/layout-template/{name}) or class name") String typeReference) {
 
-		return ThreadContextManager.inSystemInteraction(
-			ConfigSchemaTool.class,
-			() -> {
-				try {
-					// Handle layout template schema URIs
-					if (typeReference.startsWith(LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX)) {
-						return buildLayoutTemplateSchema(typeReference);
-					}
+		try {
+			// Handle layout template schema URIs
+			if (typeReference.startsWith(LAYOUT_TEMPLATE_SCHEMA_URI_PREFIX)) {
+				return buildLayoutTemplateSchema(typeReference);
+			}
 
-					// Extract class name from URI if needed
-					String className = extractClassName(typeReference);
+			// Extract class name from URI if needed
+			String className = extractClassName(typeReference);
 
-					// Load the class using the encoded name resolver
-					Class<?> targetClass = JsonConfigSchemaBuilder.loadEncodedClass(className);
+			// Load the class using the encoded name resolver
+			Class<?> targetClass = JsonConfigSchemaBuilder.loadEncodedClass(className);
 
-					Schema schema;
-					String schemaId;
+			Schema schema;
+			String schemaId;
 
-					if (ConfigurationItem.class.isAssignableFrom(targetClass)) {
-						// It's a configuration interface
-						schema = buildConfigInterfaceSchema(targetClass);
-						schemaId = buildSchemaUri(targetClass);
-					} else {
-						// Try to treat it as an implementation class
-						schema = buildImplementationClassSchema(targetClass);
-						schemaId = buildSchemaUri(targetClass);
-					}
+			if (ConfigurationItem.class.isAssignableFrom(targetClass)) {
+				// It's a configuration interface
+				schema = buildConfigInterfaceSchema(targetClass);
+				schemaId = buildSchemaUri(targetClass);
+			} else {
+				// Try to treat it as an implementation class
+				schema = buildImplementationClassSchema(targetClass);
+				schemaId = buildSchemaUri(targetClass);
+			}
 
-					// Add $id to identify this schema
-					schema.setId(schemaId);
+			// Add $id to identify this schema
+			schema.setId(schemaId);
 
-					// Serialize to JSON
-					return JsonSchemaWriter.toJson(schema, true);
+			// Serialize to JSON
+			return JsonSchemaWriter.toJson(schema, true);
 
-				} catch (ClassNotFoundException ex) {
-					String error = "Class not found: " + typeReference;
-					Logger.warn(error, ex, ConfigSchemaTool.class);
-					return buildErrorJson(error);
-				} catch (Exception ex) {
-					String error = "Failed to generate schema: " + ex.getMessage();
-					Logger.error(error, ex, ConfigSchemaTool.class);
-					return buildErrorJson(error);
-				}
-			});
+		} catch (ClassNotFoundException ex) {
+			String error = "Class not found: " + typeReference;
+			Logger.warn(error, ex, ConfigSchemaTool.class);
+			return buildErrorJson(error);
+		} catch (Exception ex) {
+			String error = "Failed to generate schema: " + ex.getMessage();
+			Logger.error(error, ex, ConfigSchemaTool.class);
+			return buildErrorJson(error);
+		}
 	}
 
 	/**

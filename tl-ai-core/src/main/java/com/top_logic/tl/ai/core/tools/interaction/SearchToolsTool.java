@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -106,7 +107,17 @@ public class SearchToolsTool {
 			}
 		}
 
-		if (skillMatches.isEmpty() && ungroupedMatches.isEmpty()) {
+		// Tools assigned to no skill cannot be loaded via loadSkill, so surfacing them
+		// to the agent only sends it chasing tools it can never acquire. Keep them out
+		// of the result and instead warn the developer about the misconfiguration.
+		if (!ungroupedMatches.isEmpty()) {
+			Logger.warn("searchTools query '" + query + "' matched " + ungroupedMatches.size()
+				+ " tool(s) assigned to no skill: " + ungroupedMatches
+				+ ". Assign them to a skill or they are unreachable for agents.",
+				SearchToolsTool.class);
+		}
+
+		if (skillMatches.isEmpty()) {
 			return "No tools found matching '" + query + "'. "
 				+ "Note: searchTools searches tool names and descriptions, not domain-specific "
 				+ "functions or APIs. If you're looking for a specific function (e.g. a TLScript "
@@ -114,7 +125,7 @@ public class SearchToolsTool {
 				+ "Do NOT call searchTools again with the same or similar query.";
 		}
 
-		return formatResults(skillMatches, ungroupedMatches);
+		return formatResults(skillMatches);
 	}
 
 	private boolean matchesQuery(String name, String description, String[] queryWords) {
@@ -127,11 +138,9 @@ public class SearchToolsTool {
 		return false;
 	}
 
-	private String formatResults(Map<String, List<String>> skillMatches,
-			List<String> ungroupedMatches) {
+	private String formatResults(Map<String, List<String>> skillMatches) {
 		StringBuilder sb = new StringBuilder();
-		int totalSkills = skillMatches.size() + (ungroupedMatches.isEmpty() ? 0 : 1);
-		sb.append("Found ").append(totalSkills).append(" relevant skill(s):\n\n");
+		sb.append("Found ").append(skillMatches.size()).append(" relevant skill(s):\n\n");
 
 		for (Map.Entry<String, List<String>> entry : skillMatches.entrySet()) {
 			String skillId = entry.getKey();
@@ -149,15 +158,6 @@ public class SearchToolsTool {
 				sb.append(" (+ ").append(tools.size() - 3).append(" more)");
 			}
 			sb.append("\n\n");
-		}
-
-		if (!ungroupedMatches.isEmpty()) {
-			sb.append("## Ungrouped tools\n");
-			sb.append("These tools are not part of any skill:\n");
-			for (String toolName : ungroupedMatches) {
-				ToolSchema schema = _allTools.get(toolName);
-				sb.append("- ").append(toolName).append(": ").append(schema.description()).append("\n");
-			}
 		}
 
 		return sb.toString().trim();

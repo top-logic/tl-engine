@@ -69,10 +69,14 @@ public class TestSearchToolsTool extends TestCase {
 		assertTrue("Should mention TL_scriptExecution", result.contains("TL_scriptExecution"));
 	}
 
-	/** Tools not in any skill appear in ungrouped section. */
-	public void testUngroupedTools() {
+	/**
+	 * Tools not assigned to any skill are unreachable for agents, so they must not appear
+	 * in the result — a query matching only such tools reports no matches.
+	 */
+	public void testUngroupedToolsHidden() {
 		String result = _tool.searchTools("web search");
-		assertTrue("Should show ungrouped tool", result.contains("web-search.webSearch"));
+		assertFalse("Must not show tool assigned to no skill", result.contains("web-search.webSearch"));
+		assertTrue("Should indicate no matches", result.contains("No tools found"));
 	}
 
 	/** No matches returns a helpful message. */

@@ -67,7 +67,14 @@ public class ConversationLogReplay {
 				}
 
 				// Add tool call to current content, then flush as assistant message.
-				currentContent.add(new ToolCall(tc.id(), tc.toolName(), tc.argsJson()));
+				// Arguments must be non-null, parseable JSON: no-argument tool calls are
+				// recorded with empty args, which the persist/load round-trip turns into
+				// null. Default those back to an empty JSON object.
+				String argsJson = tc.argsJson();
+				if (argsJson == null || argsJson.isBlank()) {
+					argsJson = "{}";
+				}
+				currentContent.add(new ToolCall(tc.id(), tc.toolName(), argsJson));
 				flushAssistantMessage(conversation, currentContent, turn);
 				currentContent = new ArrayList<>();
 

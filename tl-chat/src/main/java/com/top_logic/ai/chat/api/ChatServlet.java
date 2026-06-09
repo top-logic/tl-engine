@@ -390,8 +390,10 @@ public class ChatServlet extends TopLogicServlet {
 
 		resp.setContentType(CONTENT_TYPE_SSE);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.setHeader("Cache-Control", "no-cache");
+		resp.setHeader("Cache-Control", "no-cache, no-store, no-transform");
 		resp.setHeader("X-Accel-Buffering", "no");
+		resp.setHeader("Connection", "keep-alive");
+		resp.setBufferSize(0);
 
 		AsyncContext asyncContext = req.startAsync();
 		asyncContext.setTimeout(0); // No timeout - connection stays open until client disconnects

@@ -184,6 +184,7 @@ public class ChatSSEHandler implements AgentEventListener {
 			}
 		});
 
+		sendProxyBustPadding();
 		sendConnectedEvent();
 
 		_flushTask = SSE_EXECUTOR.scheduleWithFixedDelay(
@@ -238,6 +239,37 @@ public class ChatSSEHandler implements AgentEventListener {
 	/** Sends a provider error event to the client. */
 	public void sendProviderError(ProviderErrorEvent event) {
 		sendEvent("provider_error", DtoMapper.toJson(event));
+	}
+
+	/**
+	 * Sends an SSE comment block large enough to flush corporate proxy buffers.
+	 *
+	 * <p>
+	 * Many corporate proxies (Zscaler, BlueCoat, F5) buffer the response until they've
+	 * accumulated enough data (typically 4-8 KB). This padding forces the proxy to flush,
+	 * ensuring SSE events reach the browser immediately.
+	 * </p>
+	 */
+	private void sendProxyBustPadding() {
+		if (_closed.get()) {
+			return;
+		}
+		try {
+			synchronized (_writer) {
+				// SSE comments (lines starting with ':') are ignored by EventSource.
+				// Send 4 KB of padding to push through proxy buffers.
+				StringBuilder padding = new StringBuilder(4096);
+				padding.append(": proxy-bust-padding\n");
+				while (padding.length() < 4096) {
+					padding.append(": " + " ".repeat(253) + "\n");
+				}
+				padding.append('\n');
+				_writer.write(padding.toString());
+				_writer.flush();
+			}
+		} catch (Exception e) {
+			Logger.error("Failed to send proxy-bust padding", e, ChatSSEHandler.class);
+		}
 	}
 
 	private void sendConnectedEvent() {

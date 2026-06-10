@@ -160,18 +160,6 @@
 										value="Path to touched object"
 									/>
 								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-										label="Erforderlich"
-									>
-										<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 									component-name="rootLayout#masterFrame"
 									label="Ok"

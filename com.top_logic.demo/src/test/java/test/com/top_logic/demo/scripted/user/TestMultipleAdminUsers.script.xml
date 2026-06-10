@@ -597,6 +597,9 @@
 				<parameter name="processId"
 					value="userAdmin"
 				/>
+				<parameter name="deleteAdmin"
+					value="false"
+				/>
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"

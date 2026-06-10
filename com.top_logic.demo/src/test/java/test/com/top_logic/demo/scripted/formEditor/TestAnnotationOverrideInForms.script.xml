@@ -815,9 +815,6 @@
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="Default attribute1"
-							/>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
 								label="Attribute1"
 							/>
 						</values>
@@ -1321,7 +1318,7 @@
 							type="TestAnnotationOverrideInForms:B"
 						>
 							<annotations>
-								<visible-columns visible-columns="hiddenAttribute,attribute1"/>
+								<visible-columns visible-columns="attribute1,hiddenAttribute"/>
 								<main-properties properties="defaultAttribute1"/>
 							</annotations>
 						</field>
@@ -1442,7 +1439,7 @@
 							type="TestAnnotationOverrideInForms:B"
 						>
 							<annotations>
-								<visible-columns visible-columns="hiddenAttribute,attribute1"/>
+								<visible-columns visible-columns="attribute1,hiddenAttribute"/>
 								<main-properties properties="defaultAttribute1"/>
 								<read-only read-only-columns="defaultAttribute1"/>
 							</annotations>

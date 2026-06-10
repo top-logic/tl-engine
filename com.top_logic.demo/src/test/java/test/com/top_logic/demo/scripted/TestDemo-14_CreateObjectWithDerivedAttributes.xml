@@ -1359,7 +1359,7 @@
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/demo/create-A.xml"
+					template="script:/demo/create-X.xml"
 					template-name-comment="Create X"
 				>
 					<parameters>
@@ -1372,13 +1372,10 @@
 						<parameter name="ergebnis"
 							value="TDA1X"
 						/>
-						<parameter name="Typ"
-							value="Demo X"
-						/>
 					</parameters>
 				</action>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-					template="script:/demo/create-A.xml"
+					template="script:/demo/create-X.xml"
 					template-name-comment="Create X"
 				>
 					<parameters>
@@ -1390,9 +1387,6 @@
 						/>
 						<parameter name="ergebnis"
 							value="TDA2X"
-						/>
-						<parameter name="Typ"
-							value="Demo X"
 						/>
 					</parameters>
 				</action>

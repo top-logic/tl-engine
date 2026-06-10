@@ -22,13 +22,13 @@ public class TestPersistentSearchSecurity {
 	public static Test suite() {
 		String[] testCases = {
 			"01_CreateUsers",
-			"02_AssignRoleProfiles",
+//			"02_AssignRoleProfiles", // Not longer necessary. User is superuser
 			"03_SaveSearch",
 			"04_SaveAndPublishSearch",
 			"05_ChangeAndSaveSearch",
 			"06_PublishSearchAfterwards",
 			"07_UnpublishSearch",
-			"08_RevertRoleProfiles",
+//			"08_RevertRoleProfiles", // Not longer necessary. User is superuser
 			"09_DeleteUsers",
 		};
 		TestSuite theTestSuite = XmlScriptedTestUtil.suite(TestPersistentSearchSecurity.class, testCases);

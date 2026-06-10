@@ -129,176 +129,19 @@
 								/>
 							</parameters>
 						</action>
-					</actions>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Rolle anlegen"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Kommentar"
-							business-object=""
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Gruppe/Action-Gruppe-Zuordnen.xml"
+							template-name-comment="Gruppe Zuordnen"
 						>
 							<parameters>
-								<parameter name="text"
-									value="Rolle anlegen"
+								<parameter name="Login"
+									value="Berechtigung_ohne_Wirkung_01"
 								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Anlegen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="DemoTypes"
+								<parameter name="Gruppe1"
+									value="Superusers"
 								/>
-								<parameter name="ergebnis"
-									value="R_01"
-								/>
-								<parameter name="Name"
-									value="R_01"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Alle Rechte geben"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="DemoTypes"
-								/>
-								<parameter name="Name"
-									value="R_01"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Anlegen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="ergebnis"
-									value="R_02"
-								/>
-								<parameter name="Name"
-									value="R_02"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Alle Rechte geben"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="Name"
-									value="R_02"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Anlegen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="ergebnis"
-									value="R_04"
-								/>
-								<parameter name="Name"
-									value="R_04"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Alle Rechte geben"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="Name"
-									value="R_04"
-								/>
-							</parameters>
-						</action>
-					</actions>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Nutzer Rolle vergeben"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Kommentar"
-							business-object=""
-						>
-							<parameters>
-								<parameter name="text"
-									value="Nutzer Rolle vergeben"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Rolle zuweisen"
-							business-object="Nutzer"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="DemoTypes"
-								/>
-								<parameter name="kontext"
-									value="N_01"
-								/>
-								<parameter name="Rolle"
-									value="R_01"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Rolle zuweisen"
-							business-object="Nutzer"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="kontext"
-									value="N_01"
-								/>
-								<parameter name="Rolle"
-									value="R_02"
-								/>
-								<parameter name="Knoten"
-									value="SecurityRoot"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Rolle zuweisen"
-							business-object="Nutzer"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="kontext"
-									value="N_01"
-								/>
-								<parameter name="Rolle"
-									value="R_04"
-								/>
-								<parameter name="Knoten"
-									value="SecurityRoot"
+								<parameter name="Gruppe2"
+									value="Demo-Administratoren"
 								/>
 							</parameters>
 						</action>
@@ -331,54 +174,6 @@
 								/>
 								<parameter name="kontext"
 									value="K_01_01"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Loeschen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="DemoTypes"
-								/>
-								<parameter name="kontext"
-									value="R01"
-								/>
-								<parameter name="Name"
-									value="R_01"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Loeschen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="kontext"
-									value="R02"
-								/>
-								<parameter name="Name"
-									value="R_02"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.BusinessOperationTemplateActionOp"
-							business-action="Loeschen"
-							business-object="Rolle"
-						>
-							<parameters>
-								<parameter name="Berechtigungsstruktur"
-									value="Zentrale Berechtigungen"
-								/>
-								<parameter name="kontext"
-									value="R04"
-								/>
-								<parameter name="Name"
-									value="R_04"
 								/>
 							</parameters>
 						</action>

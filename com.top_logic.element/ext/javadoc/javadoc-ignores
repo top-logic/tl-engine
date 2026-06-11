@@ -629,15 +629,6 @@ com.top_logic.element.layout.meta.search.SearchFilterSupport.java: Invalid camel
 com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.java: Missing documentation: com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler
 com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.java: Missing documentation: com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.COMMAND_ID
 com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.java: Missing documentation: com.top_logic.element.layout.meta.search.SwitchSearchScopeCommandHandler.switchSearchScope
-com.top_logic.element.layout.person.ApplyRolesHandler.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.person.ApplyRolesHandler.java: Missing documentation: com.top_logic.element.layout.person.ApplyRolesHandler.COMMAND_ID
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.COL_CHECKBOX
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.COL_SELECTION
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.RolesNodeGroupInitializer
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.TREE_FIELD
-com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.java: Missing documentation: com.top_logic.element.layout.person.EditPersonOrGroupRolesMultiComponent.getTreeModel
-com.top_logic.element.layout.person.SaveRolesHandler.java: Missing documentation: com.top_logic.element.layout.person.SaveRolesHandler.COMMAND_ID
 com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Invalid camel case word 'MetaAttributeName', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.provider.MetaElementLabelProvider.java: Missing documentation: com.top_logic.element.layout.provider.MetaElementLabelProvider
 com.top_logic.element.layout.provider.ZipFolderNameProvider.java: Missing documentation: com.top_logic.element.layout.provider.ZipFolderNameProvider.INSTANCE

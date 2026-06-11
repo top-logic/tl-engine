@@ -1076,17 +1076,7 @@
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
-			<view name="com.top_logic.element/admin/security/groupRoles/adminGroupRolesView.layout.xml#adminGroupRolesView">
-				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
 			<view name="com.top_logic.element/admin/security/profilesLegacy/adminRolesConfigView.layout.xml#adminRolesConfigView">
-				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic.element/admin/security/roleAssignment/adminPersonsRolesView.layout.xml#adminPersonsRolesView">
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>

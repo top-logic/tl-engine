@@ -37,11 +37,13 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.cs.TLObjectChange;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.model.cs.TLObjectCreation;
 import com.top_logic.model.cs.TLObjectDeletion;
 import com.top_logic.model.cs.TLObjectUpdate;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Analyzer of changes from the {@link KnowledgeBase}.
@@ -73,7 +75,11 @@ public class KBChangeAnalzyer {
 	}
 
 	private void reset() {
-		_modelTables = ElementModelCacheService.getModelTables();
+		if (TLModelCacheService.Module.INSTANCE.isActive()) {
+			_modelTables = ElementModelCacheService.getModelTables();
+		} else {
+			_modelTables = new ModelTables(ModelService.getApplicationModel());
+		}
 		_objectChanges.clear();
 		_updatesByItem.clear();
 	}

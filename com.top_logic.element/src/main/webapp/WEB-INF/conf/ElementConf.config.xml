@@ -906,10 +906,6 @@
 							<reference rule-id="InEditMode"/>
 						</executability>
 					</handler>
-		            <handler id="savePersonOrGroupRoles" class="com.top_logic.element.layout.person.SaveRolesHandler"
-						clique="save" group="System"/>
-		            <handler id="applyPersonOrGroupRoles" class="com.top_logic.element.layout.person.ApplyRolesHandler"
-						clique="apply" group="System"/>
 		            <handler id="newMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$NewMandatorCommandHandler"
 						clique="create"/>
 		            <handler id="touchMetaAttribute" class="com.top_logic.element.meta.form.component.TouchMetaAttributeCommandHandler"/>

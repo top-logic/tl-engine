@@ -313,13 +313,13 @@ public class StructuredTextConfigService extends ManagedClass {
 
 		try {
 			_features = getFeatures(config.getFeatures(), instance);
-			_defaultEditorConfigProperties = JSON.fromString(JSON.toString(instance, config.getDefaultEditorConfig()));
+			_defaultEditorConfig = JSON.toString(instance, config.getDefaultEditorConfig());
+			_defaultEditorConfigProperties = JSON.fromString(_defaultEditorConfig);
 		} catch (ParseException ex) {
 			throw new TopLogicException(I18NConstants.JSON_PARSING_ERROR, ex);
 		}
 		_editorConfigs.put(BASE_TEMPLATE_PATH, getEditorConfigs(context, config));
 
-		_defaultEditorConfig = getEditorConfig(Collections.emptyList(), null, null);
 		_editorConfigs.get(BASE_TEMPLATE_PATH).put(FEATURE_SET_DEFAULT, _defaultEditorConfig);
 
 		_htmlConfig.put(BASE_TEMPLATE_PATH, resolveFeatureSet(BASE_TEMPLATE_PATH, FEATURE_SET_HTML));

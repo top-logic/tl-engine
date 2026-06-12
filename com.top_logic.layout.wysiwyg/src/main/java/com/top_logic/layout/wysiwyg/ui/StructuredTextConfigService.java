@@ -445,6 +445,8 @@ public class StructuredTextConfigService extends ManagedClass {
 	 * @return Editor configuration for the given feature set name with the defined templates.
 	 */
 	public String getEditorConfig(String featureSetName, String language, List<String> templateFiles, String templates) {
+		language = (language == null) ? getTemplateLanguage() : language;
+
 		String config = resolveFeatureSet(language, featureSetName);
 		if (config == null) {
 			Logger.warn("No HTML editor feature set '" + featureSetName + "' defined.",
@@ -475,7 +477,6 @@ public class StructuredTextConfigService extends ManagedClass {
 	}
 
 	private String resolveFeatureSet(String language, String featureSetName) {
-		language = (language == null) ? getTemplateLanguage() : language;
 		Map<String, String> languageConfig = _editorConfigs.get(language);
 		if(languageConfig == null) {
 			return addEditorsConfigLang(language).get(featureSetName);
@@ -529,6 +530,8 @@ public class StructuredTextConfigService extends ManagedClass {
 	 * @return Editor Configuration with all desired features and templates.
 	 */
 	public String getEditorConfig(List<String> featureNames, String language, List<String> templateFiles, String templates) {
+		language = (language == null) ? getTemplateLanguage() : language;
+
 		Map<?, ?> config = (Map<?, ?>) deepCopy(_defaultEditorConfigProperties);
 
 		mergeFeatures(config, featureNames);

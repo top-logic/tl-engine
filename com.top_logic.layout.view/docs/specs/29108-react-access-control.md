@@ -1,6 +1,7 @@
 # React UI Access Control (Ticket #29108)
 
-**Status:** Phases 1 & 2 complete (browser-verified; see §3 and §4). Phase 3 outstanding.
+**Status:** Phases 1 & 2 complete (browser-verified; see §3 and §4). Phase 3 in
+progress — minimal admin area done (see §4); role assignment & per-object security outstanding.
 **Scope:** Per-view access control for the new React view layer
 (`com.top_logic.layout.view`, served by `ViewServlet` at `/view/*`), parallel to
 — and independent of — the legacy `LayoutComponent`/`BoundChecker` security.
@@ -262,6 +263,34 @@ action* here", the analog of legacy command groups. Phase 2 expresses this as a
   forced server dispatch is rejected.
 
 ### Phase 3 — per-object security & admin UX
+
+**In progress — minimal admin area (DONE, browser-verified).** A reusable
+access-control admin area, the first piece of the "admin surface" below:
+- **Reusable views** in `com.top_logic.layout.view` (`WEB-INF/views/admin/`):
+  `admin.view.xml` (Administration → "Access control" → tabs Accounts / Groups /
+  Roles) plus per-entity master-detail views and create dialogs. Composed from
+  existing elements (`<table>` + selection channel, `<form>`/`<field>`,
+  `<split-panel>`, `<generic-command>` with `execute-script`/`with-transaction`/
+  `write-channel`/`open-dialog`/`close-dialog`); Delete uses `$obj.delete()` and
+  `<null-input-disabled/>` (no confirmation yet — `ViewCommandModel` confirmation
+  is still a TODO).
+- **Groups & Roles** create purely in XML (`new(transient)` → edit → `copy(false)`).
+  **Accounts** need Java — an account requires an authentication device, so a new
+  `CreateAccountAction` (`<create-account>`, package `…view.admin`) calls
+  `Person.create(kb, login, defaultDevice)` from a transient `tl.admin:NewAccount`
+  form (login only; password assigned later). Person `firstName`/`lastName` are
+  *derived* (not settable) — the account form edits `name`/`language`/`restrictedUser`.
+- **Wiring/demo:** an `administration` scope (admin-only) gates a new
+  "Administration" nav-item in the demo's `app.view.xml`.
+- **Verified (Playwright, root):** nav + gating; account create/edit/delete;
+  role create/delete; deep-link routing to tabs; Delete disabled with no selection.
+- **Commits:** `c773ebbf` (admin area), `a152a60f` (demo wiring).
+
+Remaining Phase 3 work:
+- **Role assignment to scopes.** The admin area lists accounts/groups/roles but
+  does not yet assign roles to the materialized `PersBoundComp`s — the missing
+  link that makes a non-admin able to pass (or be denied by) a scope, and the
+  prerequisite for the live role-based **command deny** demo deferred from Phase 2.
 - **Per-object roles.** Today the security object is always the root
   (structure-level). Allow a scope reference to bind a model channel
   (`<access-control scope="…" security-object="{chan}"/>`) so roles are checked

@@ -44,6 +44,17 @@ public class ScriptToolStore {
 
 	/**
 	 * Declaration of one TL-Script tool parameter as supplied by the caller.
+	 *
+	 * @param name
+	 *        Parameter name, bound as {@code $name} in the script body.
+	 * @param type
+	 *        Qualified TL type, e.g. {@code tl.core:String}.
+	 * @param description
+	 *        Human-readable description of the parameter.
+	 * @param mandatory
+	 *        Whether the parameter must be supplied.
+	 * @param multiple
+	 *        Whether the parameter accepts a list of values.
 	 */
 	public record ParamSpec(String name, String type, String description, boolean mandatory,
 			boolean multiple) {

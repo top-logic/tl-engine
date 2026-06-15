@@ -14,6 +14,15 @@
 					<en>Save Settings</en>
 					<de>Einstellungen speichern</de>
 				</label>
+				<!--
+					Command-level access control: executable only for users granted the "Write"
+					command group on the enclosing nav-item's "demo-restricted" scope (no explicit
+					scope, so it defaults to the enclosing unit's scope). The technical super user
+					(root) bypasses the check. Enforced both on the button and at server dispatch.
+				-->
+				<executability>
+					<security group="Write"/>
+				</executability>
 			</action>
 		</button>
 	</card>

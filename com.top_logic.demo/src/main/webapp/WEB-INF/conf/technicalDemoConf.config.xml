@@ -46,6 +46,9 @@
 							<en>Restricted demo area</en>
 							<de>Geschuetzter Demo-Bereich</de>
 						</label>
+						<groups>
+							<group name="Write"/>
+						</groups>
 					</scope>
 				</scopes>
 			</instance>

@@ -17,6 +17,7 @@
 			mode-switch="false"
 		>
 			<field attribute="login"/>
+			<field attribute="password"/>
 			<commands>
 				<generic-command placement="TOOLBAR">
 					<label>

@@ -7,6 +7,8 @@ package com.top_logic.layout.view.admin;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
+import java.util.Arrays;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -23,10 +25,11 @@ import com.top_logic.util.error.TopLogicException;
  * {@link ViewAction} that creates a new persistent {@link Person account} from a login name.
  *
  * <p>
- * Expects its input to be a (transient) object carrying a {@code login} attribute (e.g. the model of
- * the "new account" {@code <form>} after {@code <store-form-state/>}). The account is created with
- * the default {@link AuthenticationDevice}; an initial password is not set here (the administrator
- * assigns one afterwards). Must run inside a transaction (wrap the action in
+ * Expects its input to be a (transient) object carrying a {@code login} attribute and an optional
+ * {@code password} attribute (e.g. the model of the "new account" {@code <form>} after
+ * {@code <store-form-state/>}). The account is created with the default {@link AuthenticationDevice};
+ * when a password is given (and the device supports password change) it is set, so the account is
+ * immediately usable for login. Must run inside a transaction (wrap the action in
  * {@code <with-transaction>}); the created {@link Person} is returned as the action result.
  * </p>
  */
@@ -67,6 +70,19 @@ public class CreateAccountAction implements ViewAction {
 		}
 
 		AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
-		return Person.create(PersistencyLayer.getKnowledgeBase(), login, device);
+		Person account = Person.create(PersistencyLayer.getKnowledgeBase(), login, device);
+
+		Object passwordValue = newAccount.tValueByName("password");
+		String password = passwordValue == null ? null : passwordValue.toString();
+		if (password != null && !password.isEmpty() && device != null && device.allowPwdChange()) {
+			char[] passwordChars = password.toCharArray();
+			try {
+				// Throws a TopLogicException when the password violates the configured policy.
+				device.setPassword(account, passwordChars);
+			} finally {
+				Arrays.fill(passwordChars, (char) 0);
+			}
+		}
+		return account;
 	}
 }

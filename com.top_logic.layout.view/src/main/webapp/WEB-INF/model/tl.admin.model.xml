@@ -15,6 +15,15 @@
 				<property name="login"
 					type="tl.core:String"
 				/>
+				<property name="password"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

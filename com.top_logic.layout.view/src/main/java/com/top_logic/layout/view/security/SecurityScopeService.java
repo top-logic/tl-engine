@@ -16,6 +16,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -27,6 +28,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundHelper;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
@@ -93,6 +95,9 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 		/** Configuration name for {@link #getScopes()}. */
 		String SCOPES = "scopes";
 
+		/** Configuration name for {@link #getGroups()}. */
+		String GROUPS = "groups";
+
 		/**
 		 * The unique scope id.
 		 *
@@ -113,11 +118,44 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 		ResKey getLabel();
 
 		/**
+		 * The non-default command groups that command-level access rules may check against this
+		 * scope.
+		 *
+		 * <p>
+		 * The {@link com.top_logic.tool.boundsec.BoundChecker#getDefaultCommandGroup() default}
+		 * (visibility) group is always available and need not be listed here; only additional groups
+		 * (e.g. {@code Write}, {@code Delete}) used by a
+		 * {@link com.top_logic.layout.view.command.ViewExecutabilityRule security rule} need to be
+		 * declared, so that the materialized {@link PersBoundComp} carries them for role assignment.
+		 * </p>
+		 */
+		@Name(GROUPS)
+		@EntryTag("group")
+		List<GroupConfig> getGroups();
+
+		/**
 		 * Nested scope nodes (sub-groups or sub-scopes).
 		 */
 		@Name(SCOPES)
 		@EntryTag("scope")
 		List<ScopeConfig> getScopes();
+	}
+
+	/**
+	 * A command group declared on a {@link ScopeConfig}.
+	 */
+	public interface GroupConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getName()}. */
+		String NAME = "name";
+
+		/**
+		 * Reference to the {@link com.top_logic.tool.boundsec.BoundCommandGroup} (e.g. {@code Write},
+		 * {@code Delete}) that may be checked against the enclosing scope.
+		 */
+		@Name(NAME)
+		@Mandatory
+		CommandGroupReference getName();
 	}
 
 	private final Map<String, SecurityScope> _scopesById;
@@ -140,7 +178,11 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 				if (index.containsKey(id)) {
 					context.error("Duplicate security scope id '" + id + "'.");
 				} else {
-					index.put(id, new SecurityScope(ComponentName.newName(id), node.getLabel()));
+					List<CommandGroupReference> groupRefs = new ArrayList<>();
+					for (GroupConfig group : node.getGroups()) {
+						groupRefs.add(group.getName());
+					}
+					index.put(id, new SecurityScope(ComponentName.newName(id), node.getLabel(), groupRefs));
 				}
 			}
 			indexScopes(context, node.getScopes(), index);

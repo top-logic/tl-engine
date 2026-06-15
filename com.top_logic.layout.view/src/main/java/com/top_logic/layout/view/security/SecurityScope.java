@@ -7,6 +7,8 @@ package com.top_logic.layout.view.security;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
@@ -16,6 +18,7 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -43,6 +46,10 @@ public class SecurityScope extends AbstractBoundChecker {
 
 	private final ResKey _label;
 
+	private final List<CommandGroupReference> _commandGroupRefs;
+
+	private volatile Collection<BoundCommandGroup> _commandGroups;
+
 	/**
 	 * Creates a {@link SecurityScope}.
 	 *
@@ -50,10 +57,15 @@ public class SecurityScope extends AbstractBoundChecker {
 	 *        The stable security id, used as the {@link PersBoundComp} lookup key.
 	 * @param label
 	 *        Human-readable label for the security administration UI, may be {@code null}.
+	 * @param commandGroupRefs
+	 *        The non-default command groups declared on this scope (in addition to the
+	 *        {@link #getDefaultCommandGroup() default} visibility group), against which command-level
+	 *        access rules may be configured. Never {@code null}.
 	 */
-	public SecurityScope(ComponentName securityId, ResKey label) {
+	public SecurityScope(ComponentName securityId, ResKey label, List<CommandGroupReference> commandGroupRefs) {
 		super(securityId);
 		_label = label;
+		_commandGroupRefs = commandGroupRefs;
 	}
 
 	/**
@@ -78,6 +90,28 @@ public class SecurityScope extends AbstractBoundChecker {
 		return BoundChecker.allowShowModel(this, null);
 	}
 
+	/**
+	 * Whether the current user may execute a command of the given command group in the context of the
+	 * given security object.
+	 *
+	 * <p>
+	 * The command-level counterpart of {@link #isVisible()}: it checks the given {@code group}
+	 * (instead of the {@link #getDefaultCommandGroup() default} visibility group) against this scope's
+	 * persisted role assignment. As with visibility, a scope with no role assigned for the group
+	 * grants access to nobody except the technical super user.
+	 * </p>
+	 *
+	 * @param group
+	 *        The command group to check.
+	 * @param securityObject
+	 *        The object the roles are checked on. Pass the {@link SecurityRootObjectProvider security
+	 *        root} for a structure-level check, or a concrete model object for a per-object check.
+	 *        Must not be {@code null} (a {@code null} object would bypass the check).
+	 */
+	public boolean allowCommand(BoundCommandGroup group, BoundObject securityObject) {
+		return BoundChecker.allowCommandOnSecurityObject(this, group, securityObject);
+	}
+
 	@Override
 	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
 		return SecurityRootObjectProvider.INSTANCE.getSecurityRoot();
@@ -85,7 +119,22 @@ public class SecurityScope extends AbstractBoundChecker {
 
 	@Override
 	public Collection<BoundCommandGroup> getCommandGroups() {
-		return Collections.singletonList(getDefaultCommandGroup());
+		Collection<BoundCommandGroup> result = _commandGroups;
+		if (result == null) {
+			// Resolve lazily: the command group registry may not yet be available when this scope is
+			// constructed during service setup.
+			Set<BoundCommandGroup> groups = new LinkedHashSet<>();
+			groups.add(getDefaultCommandGroup());
+			for (CommandGroupReference ref : _commandGroupRefs) {
+				BoundCommandGroup group = ref.resolve();
+				if (group != null) {
+					groups.add(group);
+				}
+			}
+			result = Collections.unmodifiableSet(groups);
+			_commandGroups = result;
+		}
+		return result;
 	}
 
 	@Override

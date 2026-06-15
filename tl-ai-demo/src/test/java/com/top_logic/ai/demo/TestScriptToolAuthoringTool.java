@@ -151,6 +151,37 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		assertTrue("tool gone after delete", tool.getScriptTool("greet").contains("\"exists\":false"));
 	}
 
+	public void testNameSeparatorInsensitive() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		store.create("summarize-ingredient-costs", "X", "d", java.util.List.of(), "1", "READ", true);
+
+		// Lookup with underscores finds the tool created with hyphens.
+		ScriptToolConfig found = store.get("summarize_ingredient_costs");
+		assertNotNull("hyphen/underscore must resolve to the same tool", found);
+		assertEquals("stored name is canonicalized to underscores",
+			"summarize_ingredient_costs", found.getName());
+
+		// Creating the underscore variant is rejected as a duplicate.
+		try {
+			store.create("summarize_ingredient_costs", "X", "d", java.util.List.of(), "1", "READ", true);
+			fail("separator variant must be treated as a duplicate");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("already exists"));
+		}
+	}
+
+	public void testUpdateMissingListsExistingNames() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		store.create("summarize_ingredient_costs", "X", "d", java.util.List.of(), "1", "READ", true);
+		try {
+			store.update("wrong-name", null, "x", null, null, null, null);
+			fail("expected missing-tool rejection");
+		} catch (IllegalArgumentException ex) {
+			assertTrue("message should list existing names: " + ex.getMessage(),
+				ex.getMessage().contains("summarize_ingredient_costs"));
+		}
+	}
+
 	public static Test suite() {
 		BasicRuntimeModule<?>[] modules = {
 			SearchBuilder.Module.INSTANCE,

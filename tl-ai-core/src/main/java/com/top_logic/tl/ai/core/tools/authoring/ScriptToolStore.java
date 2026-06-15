@@ -20,15 +20,15 @@ import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
-import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
-import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
+import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
- * Read/mutate access to the TL-Script tools held by the {@code custom}
- * {@link ScriptToolFactory} inside a {@link ToolRegistryService.Config}.
+ * Read/mutate access to the TL-Script tools held by the {@code custom} {@link ScriptToolFactory}
+ * inside a {@link com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.Config}.
  *
  * <p>
  * Pure in-memory operations with no I/O: callers persist the wrapped config separately. All
@@ -71,6 +71,15 @@ public class ScriptToolStore {
 	}
 
 	/**
+	 * Canonicalizes a tool name so that {@code -} and {@code _} are treated as the same
+	 * character (canonical form uses {@code _}). Lets the agent reference a tool with either
+	 * separator and prevents near-duplicate names.
+	 */
+	private static String canonical(String name) {
+		return name == null ? null : name.replace('-', '_');
+	}
+
+	/**
 	 * Creates a new TL-Script tool in the {@code custom} factory.
 	 *
 	 * @throws IllegalArgumentException
@@ -80,18 +89,19 @@ public class ScriptToolStore {
 	public void create(String name, String label, String description, List<ParamSpec> parameters,
 			String implementation, String mode, boolean concurrencySafe) {
 		requireName(name);
+		String key = canonical(name);
 		Map<String, ScriptToolConfig> tools = customTools();
-		if (tools.containsKey(name)) {
+		if (tools.containsKey(key)) {
 			throw new IllegalArgumentException("A script tool named '" + name + "' already exists.");
 		}
-		tools.put(name, buildConfig(name, label, description, parameters, implementation, mode, concurrencySafe));
+		tools.put(key, buildConfig(key, label, description, parameters, implementation, mode, concurrencySafe));
 	}
 
 	/**
 	 * Returns the named tool config, or {@code null} if absent.
 	 */
 	public ScriptToolConfig get(String name) {
-		return customTools().get(name);
+		return customTools().get(canonical(name));
 	}
 
 	/**
@@ -180,13 +190,15 @@ public class ScriptToolStore {
 	public void update(String name, String label, String description, List<ParamSpec> parameters,
 			String implementation, String mode, Boolean concurrencySafe) {
 		requireName(name);
+		String key = canonical(name);
 		Map<String, ScriptToolConfig> tools = customTools();
-		ScriptToolConfig existing = tools.get(name);
+		ScriptToolConfig existing = tools.get(key);
 		if (existing == null) {
-			throw new IllegalArgumentException("No script tool named '" + name + "'.");
+			throw new IllegalArgumentException("No script tool named '" + name + "'. Existing: "
+				+ tools.keySet() + ".");
 		}
 		ScriptToolConfig merged = buildConfig(
-			name,
+			key,
 			label != null ? label : labelOf(existing),
 			description != null ? description : descriptionOf(existing),
 			parameters != null ? parameters : specsOf(existing),
@@ -194,7 +206,7 @@ public class ScriptToolStore {
 				: ExprFormat.INSTANCE.getSpecification(existing.getImplementation()),
 			mode != null ? mode : existing.getMode().name(),
 			concurrencySafe != null ? concurrencySafe.booleanValue() : existing.isConcurrencySafe());
-		tools.put(name, merged);
+		tools.put(key, merged);
 	}
 
 	/**
@@ -206,8 +218,9 @@ public class ScriptToolStore {
 	public void delete(String name) {
 		requireName(name);
 		Map<String, ScriptToolConfig> tools = customTools();
-		if (tools.remove(name) == null) {
-			throw new IllegalArgumentException("No script tool named '" + name + "'.");
+		if (tools.remove(canonical(name)) == null) {
+			throw new IllegalArgumentException("No script tool named '" + name + "'. Existing: "
+				+ tools.keySet() + ".");
 		}
 	}
 

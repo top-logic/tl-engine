@@ -181,6 +181,12 @@ Activation differs from skills and agents:
 - A created script tool is persisted to the ToolRegistryService configuration but is NOT usable until the application is restarted. Say this to the user every time.
 - After restart, assign `custom.{name}` to an agent's or skill's tools list like any other tool.
 - Use `listScriptTools` / `getScriptTool` to see tools already authored (including ones still pending a restart).
+
+Editing an existing tool:
+- First call `listScriptTools` to get its exact name, then `getScriptTool` to retrieve its current body and parameters.
+- Then call `updateScriptTool` with that exact name and your edits. Never create a second tool (or a renamed variant) to "replace" an existing one.
+- Tool names treat `-` and `_` as the same character (`my-tool` and `my_tool` are one tool), so reuse the existing name rather than inventing a separator variant.
+- If a lookup returns "not found", call `listScriptTools` to get the correct name instead of creating a new tool.
 </script_tools>]]></content>
 					<tools>
 						<tool name="agent-authoring.createAgent"/>

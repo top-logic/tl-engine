@@ -1,6 +1,6 @@
 # React UI Access Control (Ticket #29108)
 
-**Status:** Phase 1 complete (browser-verified). Phase 2 planned (see §4). Phase 3 outstanding.
+**Status:** Phases 1 & 2 complete (browser-verified; see §3 and §4). Phase 3 outstanding.
 **Scope:** Per-view access control for the new React view layer
 (`com.top_logic.layout.view`, served by `ViewServlet` at `/view/*`), parallel to
 — and independent of — the legacy `LayoutComponent`/`BoundChecker` security.
@@ -141,7 +141,51 @@ nav-item in `app.view.xml` carries `<access-control scope="demo-restricted"/>`.
 
 ## 4. Remaining phases
 
-### Phase 2 — command-level access control (PLANNED)
+### Phase 2 — command-level access control (DONE, browser-verified)
+
+**As built** (matches the plan below; one addition surfaced during verification):
+- `SecurityRule` (`…view.security`, `@TagName("security")`, implements
+  `ViewExecutabilityRule` + the new `ContextDependentRule` bind hook). Config:
+  optional `scope`, mandatory `group`, optional `security-object` channel.
+- `SecurityScope.allowCommand(group, object)` + `getCommandGroups()` returns the
+  default group plus the catalog-declared `<group>`s; `ScopeConfig.getGroups()`.
+- `ViewContext.getSecurityScope()` / `withSecurityScope(...)`, threaded by
+  nav-item/tab/tile content builds — **and across `<view-ref>`**
+  (`ReferenceElement`): the referenced view inherits the host unit's scope, just
+  like it already inherits the error sink and command scope. This was a real bug
+  found in the browser — without it a `<view-ref>`ed command's scope resolved to
+  `null` and the command was (correctly, but surprisingly) hidden even for root.
+- All four command hosts (`CommandCarrierElement`, `FormElement`,
+  `ButtonElement`, `AppBarElement`) now build rules through one shared
+  `ViewExecutabilityRules.build(configs, context)`, which binds context-dependent
+  rules uniformly. `ViewCommand.Config.getGroup()` removed.
+
+**Commits:** `a35044e6` (scope command groups) · `a581b204` (SecurityRule +
+threading + shared builder + drop `group`) · `1a2817c1` (`<view-ref>` scope
+propagation) · `650d40cc` (demo wiring).
+
+**Verified (Playwright, real browser):**
+- root → Settings → the `Write`-gated **"Save Settings"** button renders and is
+  enabled (scope resolved from the enclosing `demo-restricted` nav-item; admin
+  bypass); clicking it reaches the server (`DemoCommand` logged
+  `Demo command executed`), confirming the **server-side dispatch re-check**
+  passes via the same rule.
+- Anonymous → no Settings nav-item at all (Phase 1 visibility deny intact — no
+  regression).
+
+**Deny path — not yet shown live.** Observing a *role-based* command deny needs a
+logged-in **non-admin** who can reach a gated command: root is a technical admin
+and bypasses every command group, the only access-controlled area
+(`demo-restricted`) is admin-only at the visibility level, the demo seeds no
+non-admin account, and there is no role-assignment surface yet (that is Phase 3).
+The deny itself goes through the **same** `BoundChecker.allow()` (empty roles →
+deny) that Phase 1 already verified live for visibility — only the command group
+differs. A full live deny demo (create a non-admin account + a publicly visible
+`Write`-gated button) is a follow-up.
+
+---
+
+### Phase 2 — original plan
 Visibility (Phase 1) is the READ half — "may this user see this part of the
 app". The other half is command **executability**: "may this user run *this
 action* here", the analog of legacy command groups. Phase 2 expresses this as a

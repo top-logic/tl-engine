@@ -1,7 +1,7 @@
 package com.top_logic.layout.react.protocol;
 
 /**
- * Tells the client to update the browser URL (pushState or replaceState).
+ * Tells the client to update the browser URL ({@code pushState} or {@code replaceState}).
  * Sent after a route-forming navigation on the server.
  */
 public interface RouteChangeEvent extends com.top_logic.layout.react.protocol.SSEEvent {
@@ -33,7 +33,7 @@ public interface RouteChangeEvent extends com.top_logic.layout.react.protocol.SS
 	com.top_logic.layout.react.protocol.RouteChangeEvent setUrl(String value);
 
 	/**
-	 * If true, use replaceState instead of pushState (no new history entry).
+	 * If true, use {@code replaceState} instead of {@code pushState} (no new history entry).
 	 */
 	boolean isReplace();
 

@@ -19,10 +19,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link TileStackScope tile stack}.
  *
  * <p>
- * Resolves the target stack via {@link ViewContext#getTileStackScope()} - typically used by a
- * "Back" button inside a pushed frame. For breadcrumb-driven navigation, prefer letting the
+ * Resolves the target stack from the {@link ViewContext} - typically used by a "Back" button inside
+ * a pushed frame. For breadcrumb-driven navigation, prefer letting the
  * {@link TileBreadcrumbElement &lt;tile-breadcrumb&gt;} write directly to the path channel.
  * </p>
+ *
+ * @implNote Resolves the target stack via {@link ViewContext#getTileStackScope()}.
  */
 public class NavigatePopCommand implements ViewCommand {
 

@@ -33,7 +33,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * tile stack}.
  *
  * <p>
- * Resolves the target stack via {@link ViewContext#getTileStackScope()} - the command must be
+ * Resolves the target stack from the {@link ViewContext} - the command must be
  * executed from within a frame that was mounted by a {@link TileStackElement &lt;tile-stack&gt;}.
  * Captured at execution time: the command's {@link Config#getInput() input} (mapped onto a named
  * channel of the new frame, if {@link Config#getBindInputTo() bind-input-to} is set) and the
@@ -54,6 +54,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *   &lt;label&gt;&lt;en&gt;Open&lt;/en&gt;&lt;/label&gt;
  * &lt;/button&gt;
  * </pre>
+ *
+ * @implNote Resolves the target stack via {@link ViewContext#getTileStackScope()}.
  */
 public class NavigatePushCommand implements ViewCommand {
 
@@ -118,11 +120,13 @@ public class NavigatePushCommand implements ViewCommand {
 		 * Provider for the pushed frame's breadcrumb label.
 		 *
 		 * <p>
-		 * Resolved exactly once at push time; the resulting {@link ResKey} is captured into
-		 * {@link TileFrame#getLabel()}. Use {@link StaticTileLabel &lt;static&gt;} for fixed
+		 * Resolved exactly once at push time; the resulting {@link ResKey} is captured as the
+		 * pushed frame's label. Use {@link StaticTileLabel &lt;static&gt;} for fixed
 		 * text, {@link ScriptedTileLabel &lt;scripted&gt;} for a label derived from caller-scope
 		 * channels at the push moment.
 		 * </p>
+		 *
+		 * @implNote The resolved {@link ResKey} is captured into {@link TileFrame#getLabel()}.
 		 */
 		@Name(FRAME_LABEL)
 		@Nullable

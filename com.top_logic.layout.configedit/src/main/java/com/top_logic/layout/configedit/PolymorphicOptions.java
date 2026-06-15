@@ -46,6 +46,12 @@ public class PolymorphicOptions {
 	/**
 	 * Result of resolving the polymorphic options for a property: the raw option list and the
 	 * {@link OptionMapping} that translates between option and stored configuration value.
+	 *
+	 * @param options
+	 *        The raw option list offered for the property.
+	 * @param mapping
+	 *        The {@link OptionMapping} translating between an option and the stored configuration
+	 *        value.
 	 */
 	public record Choices(List<Object> options, OptionMapping mapping) {
 

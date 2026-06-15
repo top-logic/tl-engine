@@ -25,9 +25,7 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  * commands as structured toolbars.
  *
  * <p>
- * Subclasses implement
- * {@link #createChromeControl(ViewContext, ReactControl, ReactToolbarControl, ReactToolbarControl)}
- * to create their specific chrome (panel, window, etc.). This class adds, on top of
+ * Subclasses create their specific chrome (panel, window, etc.). This class adds, on top of
  * {@link CommandCarrierElement}:
  * </p>
  * <ul>
@@ -36,6 +34,9 @@ import com.top_logic.layout.view.command.ViewCommandModel;
  * {@link CommandPlacement#BUTTON_BAR} placed commands via {@link ToolbarBuilder}</li>
  * <li>Rebuilding the toolbars when the set of commands changes (implicit commands)</li>
  * </ul>
+ *
+ * @implNote Subclasses implement
+ *           {@link #createChromeControl(ViewContext, ReactControl, ReactToolbarControl, ReactToolbarControl)}.
  */
 public abstract class CommandScopeElement extends CommandCarrierElement {
 

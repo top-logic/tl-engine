@@ -217,8 +217,10 @@ public class FormElement extends ContainerElement {
 		 * <p>
 		 * When configured, the save button executes this {@link ViewAction} chain (similar to
 		 * {@link com.top_logic.layout.view.command.GenericViewCommand GenericViewCommand}) instead of
-		 * calling {@link FormControl#executeSave()}.
+		 * the default save behavior.
 		 * </p>
+		 *
+		 * @implNote The default behavior calls {@link FormControl#executeSave()}.
 		 */
 		@Name(SAVE_ACTIONS)
 		@TreeProperty
@@ -228,9 +230,11 @@ public class FormElement extends ContainerElement {
 		 * Optional action chain to execute on cancel instead of the default behavior.
 		 *
 		 * <p>
-		 * When configured, the cancel button executes this {@link ViewAction} chain instead of
-		 * calling {@link FormControl#executeCancel()}.
+		 * When configured, the cancel button executes this {@link ViewAction} chain instead of the
+		 * default cancel behavior.
 		 * </p>
+		 *
+		 * @implNote The default behavior calls {@link FormControl#executeCancel()}.
 		 */
 		@Name(CANCEL_ACTIONS)
 		@TreeProperty

@@ -29,7 +29,15 @@ public interface RoutingParticipant {
      */
     RouteSegment activeRouteSegment();
 
+    /**
+     * Registers a {@link RouteChangeListener} to be notified when this participant's active route
+     * changes.
+     */
     void addRouteChangeListener(RouteChangeListener listener);
 
+    /**
+     * Unregisters a {@link RouteChangeListener} previously registered via
+     * {@link #addRouteChangeListener(RouteChangeListener)}.
+     */
     void removeRouteChangeListener(RouteChangeListener listener);
 }

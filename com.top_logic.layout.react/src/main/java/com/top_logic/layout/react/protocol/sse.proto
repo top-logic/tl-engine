@@ -166,14 +166,14 @@ message WindowFocusEvent extends SSEEvent {
 }
 
 /**
- * Tells the client to update the browser URL (pushState or replaceState).
+ * Tells the client to update the browser URL ({@code pushState} or {@code replaceState}).
  * Sent after a route-forming navigation on the server.
  */
 message RouteChangeEvent extends SSEEvent {
 	/** The new URL path to display in the browser address bar (relative to view base). */
 	string url;
 
-	/** If true, use replaceState instead of pushState (no new history entry). */
+	/** If true, use {@code replaceState} instead of {@code pushState} (no new history entry). */
 	boolean replace;
 }
 

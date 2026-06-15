@@ -164,8 +164,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Resolves the property's tooltip HTML, derived from the getter's JavaDoc. Returned verbatim
-	 * (HTML), or {@code null} if no tooltip is defined.
+	 * Resolves the property's tooltip HTML, derived from the getter's {@code JavaDoc}. Returned
+	 * verbatim (HTML), or {@code null} if no tooltip is defined.
 	 *
 	 * @param property
 	 *        The property descriptor.
@@ -176,7 +176,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 	/**
 	 * Creates a header {@link ReactTextControl} for a property group (ITEM/LIST), carrying the
-	 * property's label and, if available, its JavaDoc tooltip.
+	 * property's label and, if available, its {@code JavaDoc} tooltip.
 	 */
 	protected ReactTextControl createGroupHeader(ReactContext context, PropertyDescriptor property) {
 		String label = resolveLabel(property);

@@ -18,9 +18,11 @@ import com.top_logic.layout.view.form.FormModel;
  * {@link ViewAction} that reads the current object from the enclosing form.
  *
  * <p>
- * Returns {@link FormModel#getCurrentObject()}, which in edit mode is the overlay containing the
- * user's edits. The input is ignored.
+ * Returns the form's current object, which in edit mode is the overlay containing the user's edits.
+ * The input is ignored.
  * </p>
+ *
+ * @implNote Returns {@link FormModel#getCurrentObject()}.
  */
 public class ReadFormObjectAction implements ViewAction {
 

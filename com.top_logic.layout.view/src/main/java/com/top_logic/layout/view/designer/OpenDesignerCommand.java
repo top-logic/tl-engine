@@ -30,9 +30,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Loads the designer view from {@code /WEB-INF/views/designer.view.xml}, builds the
- * {@link DesignTreeNode} tree from the application's default root view, and opens it via
- * {@link ReactWindowRegistry#openWindow(ReactContext, ReactControlProvider, Object, WindowOptions)}.
+ * {@link DesignTreeNode} tree from the application's default root view, and opens it in a new window
+ * via the {@link ReactWindowRegistry}.
  * </p>
+ *
+ * @implNote The window is opened through
+ *           {@link ReactWindowRegistry#openWindow(ReactContext, ReactControlProvider, Object, WindowOptions)}.
  */
 public class OpenDesignerCommand implements ViewCommand {
 

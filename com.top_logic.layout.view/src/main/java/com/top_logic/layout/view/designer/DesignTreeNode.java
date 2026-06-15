@@ -138,7 +138,7 @@ public abstract class DesignTreeNode {
 	}
 
 	/**
-	 * Rich tooltip HTML for this node (typically derived from JavaDoc), or {@code null} if no
+	 * Rich tooltip HTML for this node (typically derived from {@code JavaDoc}), or {@code null} if no
 	 * tooltip is available.
 	 */
 	public String getTooltipHtml() {

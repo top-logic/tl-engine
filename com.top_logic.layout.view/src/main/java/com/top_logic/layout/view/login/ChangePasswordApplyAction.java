@@ -34,12 +34,15 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * Password policy validation and the actual change are delegated to
- * {@link AuthenticationDevice#setPassword(Person, char[])} (which also clears the expiry flag and
- * maintains the password history), reusing the same headless logic as the legacy change-password
- * component. On success the session swap is triggered via {@link LoginAction#completeLogin}; on a
- * policy violation or mismatch a {@link TopLogicException} is raised so the form shows the error.
+ * Password policy validation and the actual change are delegated to the
+ * {@link AuthenticationDevice} (which also clears the expiry flag and maintains the password
+ * history), reusing the same headless logic as the legacy change-password component. On success the
+ * deferred session swap is triggered; on a policy violation or mismatch a {@link TopLogicException}
+ * is raised so the form shows the error.
  * </p>
+ *
+ * @implNote The change is performed via {@link AuthenticationDevice#setPassword(Person, char[])} and,
+ *           on success, the login is finished through {@link LoginAction#completeLogin}.
  */
 public class ChangePasswordApplyAction implements ViewAction {
 

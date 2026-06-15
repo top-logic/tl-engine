@@ -55,6 +55,11 @@ public class ContextMenuOpener {
 	/**
 	 * Pairing of a {@link ContextMenuContribution} with the concrete target value to publish into
 	 * the contribution's target sink.
+	 *
+	 * @param contribution
+	 *        The contribution that produces the context menu.
+	 * @param target
+	 *        The concrete target value to publish into the contribution's target sink.
 	 */
 	public record Targeted(ContextMenuContribution contribution, Object target) {
 		// record

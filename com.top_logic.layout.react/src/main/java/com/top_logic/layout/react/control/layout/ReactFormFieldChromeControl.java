@@ -232,7 +232,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        Optional caption, or {@code null}.
 	 * @param interactive
 	 *        When {@code true}, the popover remains open while the pointer hovers over it, so the
-	 *        user can select and copy content (e.g. JavaDoc with code snippets).
+	 *        user can select and copy content (e.g. {@code JavaDoc} with code snippets).
 	 */
 	public void setTooltip(String html, String caption, boolean interactive) {
 		_tooltipHtml = (html == null || html.isEmpty()) ? null : html;

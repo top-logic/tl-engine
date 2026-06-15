@@ -19,10 +19,11 @@ import com.top_logic.layout.view.form.FormModel;
  * {@link ViewAction} that discards the form overlay without applying changes.
  *
  * <p>
- * Delegates to {@link FormControl#executeCancel()} which resets the overlay and leaves edit mode.
- * Useful in cancel action chains for dialog forms where the dialog needs to be closed after
- * discarding changes.
+ * Resets the form overlay and leaves edit mode. Useful in cancel action chains for dialog forms
+ * where the dialog needs to be closed after discarding changes.
  * </p>
+ *
+ * @implNote Delegates to {@link FormControl#executeCancel()}.
  */
 public class DiscardFormStateAction implements ViewAction {
 

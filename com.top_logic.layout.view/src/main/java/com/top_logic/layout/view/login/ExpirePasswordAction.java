@@ -24,10 +24,12 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Expiry lives in the authentication device's internal credential store (not as a model attribute),
- * so it cannot be set from TL-Script; this action delegates to
- * {@link AuthenticationDevice#expirePassword(Person)}. It is primarily an administrative / demo
- * affordance to exercise the forced change-password login flow.
+ * so it cannot be set from TL-Script; this action delegates to the {@link AuthenticationDevice}. It
+ * is primarily an administrative / demo affordance to exercise the forced change-password login
+ * flow.
  * </p>
+ *
+ * @implNote Delegates to {@link AuthenticationDevice#expirePassword(Person)}.
  */
 public class ExpirePasswordAction implements ViewAction {
 

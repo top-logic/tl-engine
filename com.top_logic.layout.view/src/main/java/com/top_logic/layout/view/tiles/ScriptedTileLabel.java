@@ -30,9 +30,11 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * <p>
  * Resolves all {@link Config#getInputs() inputs} to channels at compute time, reads their current
  * values and passes them as positional arguments to the compiled expression. The expression's
- * result is wrapped in a literal {@link ResKey#text(String)} - intended for labels derived from
- * business object names; not localized.
+ * result is wrapped in a literal, unlocalized {@link ResKey} - intended for labels derived from
+ * business object names.
  * </p>
+ *
+ * @implNote The result is wrapped via {@link ResKey#text(String)}.
  */
 public class ScriptedTileLabel implements TileLabelProvider {
 

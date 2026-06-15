@@ -278,13 +278,19 @@ access-control admin area, the first piece of the "admin surface" below:
   **Accounts** need Java — an account requires an authentication device, so a new
   `CreateAccountAction` (`<create-account>`, package `…view.admin`) calls
   `Person.create(kb, login, defaultDevice)` from a transient `tl.admin:NewAccount`
-  form (login only; password assigned later). Person `firstName`/`lastName` are
-  *derived* (not settable) — the account form edits `name`/`language`/`restrictedUser`.
+  form and, when a `password` is given, `device.setPassword(account, …)` so the
+  account is **immediately usable for login** (password policy is enforced by the
+  device and surfaces as a form error). Person `firstName`/`lastName` are *derived*
+  (not settable) — the account form edits `name`/`language`/`restrictedUser`.
 - **Wiring/demo:** an `administration` scope (admin-only) gates a new
   "Administration" nav-item in the demo's `app.view.xml`.
-- **Verified (Playwright, root):** nav + gating; account create/edit/delete;
-  role create/delete; deep-link routing to tabs; Delete disabled with no selection.
-- **Commits:** `c773ebbf` (admin area), `a152a60f` (demo wiring).
+- **Verified (Playwright):** nav + gating; account create (login + password) /
+  edit / delete; role create / delete; deep-link routing to tabs; Delete disabled
+  with no selection. **Created a `tester` account, logged in as it, and confirmed
+  the sidebar omits Settings + Administration** — the first live non-admin
+  visibility-deny check (the admin-only scopes correctly deny a real non-admin).
+- **Commits:** `c773ebbf` (admin area), `a152a60f` (demo wiring), `cf0e6b72`
+  (initial password → usable accounts).
 
 Remaining Phase 3 work:
 - **Role assignment to scopes.** The admin area lists accounts/groups/roles but
@@ -315,6 +321,13 @@ Remaining Phase 3 work:
   it exists purely to exercise the feature. Real catalogs live per app.
 - **Catalog persistence.** Catalog is static config by design; if runtime-editable
   scopes are ever needed, that is a separate (migration-bearing) decision.
+- **Logout does not complete the session swap (pre-existing).** The React
+  `LogoutCommand` defers the swap to a `window.location.reload()` via
+  `PendingSessionAction.requestLogout`, but in testing the reload came back still
+  authenticated (the `<anonymous-only>` "Anmeldung" button stayed hidden). A fresh
+  browser context / app restart was needed to drop the session. Unrelated to
+  access control (it lives in the login work), but it blocks switching accounts in
+  one session and is worth fixing before relying on the admin UI for user testing.
 
 ---
 

@@ -19,6 +19,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
+import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.layout.admin.component.OverrideConfigurationWriter;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -48,25 +49,7 @@ public class ScriptToolConfigPersistence {
 	 */
 	public static void persist(ToolRegistryService.Config<?> serviceConfig) {
 		try {
-			File file = overlayFile();
-			FileUtilities.enforceDirectory(file.getParentFile());
-
-			ApplicationConfig.Config app = TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
-			ModuleConfiguration module = TypedConfiguration.newConfigItem(ModuleConfiguration.class);
-			module.setServiceClass(ToolRegistryService.class);
-			module.setInstance((ServiceConfiguration<?>) serviceConfig);
-			app.getServices().put(ToolRegistryService.class, module);
-
-			String xml;
-			try (StringWriter out = new StringWriter()) {
-				try (ConfigurationWriter writer =
-					new OverrideConfigurationWriter(out, Collections.singleton(TypedRuntimeModule.ModuleConfiguration.class))) {
-					TypedConfiguration.serialize(APPLICATION_ROOT_TAG, app, writer);
-				}
-				xml = out.toString();
-			}
-
-			FileUtilities.writeStringToFile(xml, file, StringServices.UTF8);
+			persistTo(overlayFile(), serviceConfig);
 			TLServiceUtils.reloadConfigurations();
 		} catch (Exception ex) {
 			throw new RuntimeException("Failed to persist TL-Script tool configuration: " + ex.getMessage(), ex);
@@ -74,6 +57,43 @@ public class ScriptToolConfigPersistence {
 			throw new RuntimeException(
 				"Failed to reload application configuration after persisting tool config: " + err.getMessage(), err);
 		}
+	}
+
+	/**
+	 * Serializes the given registry configuration as a pretty-printed XML overlay file.
+	 *
+	 * <p>
+	 * This method handles only the file write; the caller is responsible for reloading the
+	 * application configuration afterwards. Prefer {@link #persist(ToolRegistryService.Config)}
+	 * for normal use; call this method directly only when reload must be suppressed (e.g. in
+	 * tests).
+	 * </p>
+	 *
+	 * @param file
+	 *        Target file to write the overlay to.
+	 * @param serviceConfig
+	 *        The complete {@link ToolRegistryService} configuration to serialize.
+	 */
+	public static void persistTo(File file, ToolRegistryService.Config<?> serviceConfig) throws Exception {
+		FileUtilities.enforceDirectory(file.getParentFile());
+
+		ApplicationConfig.Config app = TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
+		ModuleConfiguration module = TypedConfiguration.newConfigItem(ModuleConfiguration.class);
+		module.setServiceClass(ToolRegistryService.class);
+		module.setInstance((ServiceConfiguration<?>) serviceConfig);
+		app.getServices().put(ToolRegistryService.class, module);
+
+		String xml;
+		try (StringWriter out = new StringWriter()) {
+			try (ConfigurationWriter writer =
+				new OverrideConfigurationWriter(out, Collections.singleton(TypedRuntimeModule.ModuleConfiguration.class))) {
+				TypedConfiguration.serialize(APPLICATION_ROOT_TAG, app, writer);
+			}
+			xml = out.toString();
+		}
+
+		xml = XMLPrettyPrinter.prettyPrint(xml);
+		FileUtilities.writeStringToFile(xml, file, StringServices.UTF8);
 	}
 
 	private static File overlayFile() {

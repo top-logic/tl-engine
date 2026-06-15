@@ -1,6 +1,6 @@
 # React UI Access Control (Ticket #29108)
 
-**Status:** Phase 1 complete (browser-verified). Phases 2–3 outstanding.
+**Status:** Phase 1 complete (browser-verified). Phase 2 planned (see §4). Phase 3 outstanding.
 **Scope:** Per-view access control for the new React view layer
 (`com.top_logic.layout.view`, served by `ViewServlet` at `/view/*`), parallel to
 — and independent of — the legacy `LayoutComponent`/`BoundChecker` security.
@@ -35,7 +35,9 @@ plumbing. The goal of Phase 1 is the visibility half of the legacy model: make
 3. **No inheritance, no re-checks.** A unit with an `<access-control>` is an
    independent gate; a unit without one is always shown. If the parent decided
    "visible", re-checking the same scope on a child is pointless — so there is no
-   scope threading through `ViewContext` and no cascading evaluation.
+   scope threading through `ViewContext` and no cascading evaluation. (Phase 2
+   relaxes this for *command executability* only: a command rule may default to
+   the enclosing unit's scope, which does thread the scope down — see §4.)
 4. **Reuse the legacy enforcement core, don't reimplement roles.** A scope is a
    `BoundChecker`; the decision goes through the same `BoundChecker.allow(...)`,
    `PersBoundComp`, and `AccessManager` as the legacy UI, so the React UI agrees
@@ -139,20 +141,81 @@ nav-item in `app.view.xml` carries `<access-control scope="demo-restricted"/>`.
 
 ## 4. Remaining phases
 
-### Phase 2 — command-level access control
-Visibility is the READ half. The other half is command executability, the
-analog of legacy command groups.
-- `ViewCommand.Config.getGroup()` already exists (a `CommandGroupReference`) but
-  is currently unread.
-- Add a security-guided `ViewExecutabilityRule` that, given a command's group and
-  an enclosing scope, hides/disables the command when denied — reusing
-  `allow(user, securityObject, group)`. The rule captures the scope at control
-  creation (its `isExecutable(input)` ignores `input`).
-- Decide how a command resolves "its" scope: from the enclosing removable unit
-  (would require threading the scope through `ViewContext` after all — reconsider
-  principle 3 for commands only), or an explicit reference on the command.
-- The server-side command dispatch (`ViewCommand.execute`) must re-check, not
-  just the button's executability.
+### Phase 2 — command-level access control (PLANNED)
+Visibility (Phase 1) is the READ half — "may this user see this part of the
+app". The other half is command **executability**: "may this user run *this
+action* here", the analog of legacy command groups. Phase 2 expresses this as a
+`ViewExecutabilityRule`, so it rides the existing command machinery end to end.
+
+#### Key decisions
+
+1. **Express the check as a rule, not as a `group` shortcut (option 2).**
+   `ViewCommand.Config.getGroup()` is dropped (it is currently unread). Security
+   is configured by adding an explicit security rule to a command's
+   `<executability>` list. A bare `group=` shortcut that desugars to such a rule
+   can be added later; nothing forces it now. Rationale: a `group` alone is not
+   enforceable (it is only the *verb* — it still needs a role mapping and a
+   security object), and an explicit rule keeps the gate self-contained and
+   consistent with Phase 1's explicit-opt-in model.
+2. **The server-side re-check is automatic — no new dispatch guard.**
+   `ReactButtonControl` wires `_action = model::executeCommand`
+   (`ReactButtonControl.java`), and `ViewCommandModel.executeCommand` already
+   re-evaluates `_rule.isExecutable(input)` and bails before
+   `ViewCommand.execute` (`ViewCommandModel.java`). So any check expressed as a
+   `ViewExecutabilityRule` is enforced server-side at dispatch for free. (Verify
+   the scripted/named-command invocation path also routes through
+   `executeCommand`; if so it is covered too.)
+3. **Two things are resolved, independently, on the rule:**
+   - **Scope** — *which* `PersBoundComp` holds the role→command-group mapping (a
+     Phase 1 `SecurityScope`, named by catalog id). The rule's `scope=` is
+     **optional**: explicit id wins; else the **nearest enclosing removable
+     unit's scope** (threaded through `ViewContext` — the principle-3 relaxation,
+     for commands only); else (guarded command with neither) it is a config
+     error → **fail closed + log**, matching Phase 1's unknown-scope handling.
+     Reusing the enclosing unit's scope yields the legacy "one `PersBoundComp`,
+     many command groups" model without legacy plumbing, and keeps the common
+     case un-noisy.
+   - **Security object** — the `BoundObject` the check runs against. The rule's
+     `security-object=` is an optional `ChannelRef`; **no channel ⇒ security
+     root** (structure-level, as Phase 1). A channel value enables per-object
+     checks for free.
+4. **Command groups are declared on the scope (for now).** `ScopeConfig` gains a
+   `groups` list; `SecurityScope.getCommandGroups()` returns the default
+   (visibility) group plus the declared ones, and boot materialization creates
+   the `PersBoundComp` with all of them so the admin UI can assign roles per
+   (scope, group). A rule may only reference a declared group. This is the light
+   first step; it is replaceable later by a boot-scan of the view tree that
+   collects `(scope, group)` pairs automatically (mirroring legacy
+   `CompoundSecurityLayoutCommandGroupCollector`) if maintaining the catalog list
+   by hand proves annoying.
+
+#### Work items
+
+- **`SecurityRule` (new, `…view.security`, implements `ViewExecutabilityRule`).**
+  Config: `scope` (optional catalog id), `group` (`CommandGroupReference`),
+  `security-object` (optional `ChannelRef`). Resolved at control-build time
+  against the `ViewContext`: capture the resolved `SecurityScope` (explicit or
+  enclosing) and the resolved security-object `ViewChannel`.
+  `isExecutable(input)` calls `scope.allow(group, object)` with `object` =
+  channel value (fresh at eval) or root; returns `NOT_EXEC_HIDDEN` (or disabled)
+  on deny. Fail closed on an unresolved scope.
+- **`SecurityScope`**: add `allow(BoundCommandGroup, BoundObject)` next to
+  `isVisible()`; have `getCommandGroups()` return default + declared groups.
+- **`ScopeConfig` + `SecurityScopeService`**: add the `groups` property; include
+  the declared groups in boot `PersBoundComp` materialization.
+- **`ViewContext` scope threading**: expose the current enclosing
+  `SecurityScope`; removable elements (`SidebarElement` nav-item, `TabBarElement`
+  tab, `TileElement`/`DashboardElement` tile) that carry an `<access-control>`
+  set it (try/finally) around building their content subtree, so command rules
+  built underneath can default to it. Honours the lazy-content build timing.
+- **`CommandCarrierElement.buildExecutabilityRule`**: thread the `ViewContext` in
+  so security rules can resolve their scope/channel (like input channels are
+  resolved today).
+- **Remove `ViewCommand.Config.getGroup()`/`GROUP`**; regenerate `messages_*`.
+- **Demo + Playwright verify**: add a `write`-gated command on the existing
+  `demo-restricted` scope (declare the `write` group on the scope). Confirm:
+  `root` sees + executes; a role-less non-admin sees it hidden/disabled and a
+  forced server dispatch is rejected.
 
 ### Phase 3 — per-object security & admin UX
 - **Per-object roles.** Today the security object is always the root

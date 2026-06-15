@@ -57,7 +57,7 @@
 			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 				<skills>
 					<skill name="TL_agenticAuthoring"
-						description="Load when creating, editing, or discussing agents and skills. Covers the philosophy of skills vs agents, tool assignment, prompt writing best practices, and post-creation wiring."
+						description="Load when creating, editing, or discussing agents, skills, or TL-Script tools. Covers the philosophy of skills vs agents, tool assignment, authoring TL-Script-backed tools, prompt writing best practices, and post-creation wiring."
 					>
 						<content><![CDATA[<philosophy>
 Agents start lean — minimal tools, minimal context. Skills are the delivery mechanism for capabilities: when an agent loads a skill, it gets the instructions AND the tools together, on demand. This keeps the agent's context window clean and focused.

@@ -171,8 +171,8 @@ Two homes for agents and skills — know which one you are working in:
 <script_tools>
 A TL-Script tool is a tool whose body is a single TL-Script expression. Create one when the capability is a short data query or mutation expressible in TL-Script — not when it needs Java.
 
-- Name: unique; referenced as `custom.{name}` once active. Never use the `TL_` prefix.
-- Parameters: each has a name (bound as `$name` in the body), a qualified TL type (e.g. `tl.core:String`, `tl.core:Integer`, `myModule:MyType`), a description, and mandatory/multiple flags.
+- Name: camelCase, unique; referenced as `custom.{name}` once active. Never use the `TL_` prefix.
+- Parameters: each has a name (bound as `$name` in the body), a qualified TL type (e.g. `tl.core:String`, `tl.core:Integer`, `myModule:MyType`), a description, and mandatory/multiple flags. An optional parameter may also carry a `defaultValue` — a TL-Script expression evaluated when the argument is omitted (otherwise the binding is null).
 - Body: a TL-Script expression; the return value becomes the tool result. Example: `"Hello " + $name`.
 - Mode: READ (no writes), USER_SCOPED, DATA_WRITE (default), or STRUCTURAL.
 - Validation is enforced at creation: unknown parameter types and unparseable scripts are rejected.

@@ -20,6 +20,7 @@ import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
+import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -156,6 +157,71 @@ public class ScriptToolStore {
 			throw new IllegalArgumentException("Unknown tool mode '" + mode
 				+ "'. Expected one of READ, USER_SCOPED, DATA_WRITE, STRUCTURAL.", ex);
 		}
+	}
+
+	/**
+	 * Updates an existing TL-Script tool. Null arguments leave the corresponding field unchanged;
+	 * a non-null {@code parameters} replaces the full parameter list.
+	 *
+	 * @throws IllegalArgumentException
+	 *         If no tool with the given name exists, or a new value fails validation.
+	 */
+	public void update(String name, String label, String description, List<ParamSpec> parameters,
+			String implementation, String mode, Boolean concurrencySafe) {
+		requireName(name);
+		Map<String, ScriptToolConfig> tools = customTools();
+		ScriptToolConfig existing = tools.get(name);
+		if (existing == null) {
+			throw new IllegalArgumentException("No script tool named '" + name + "'.");
+		}
+		ScriptToolConfig merged = buildConfig(
+			name,
+			label != null ? label : labelOf(existing),
+			description != null ? description : descriptionOf(existing),
+			parameters != null ? parameters : specsOf(existing),
+			implementation != null ? implementation
+				: ExprFormat.INSTANCE.getSpecification(existing.getImplementation()),
+			mode != null ? mode : existing.getMode().name(),
+			concurrencySafe != null ? concurrencySafe.booleanValue() : existing.isConcurrencySafe());
+		tools.put(name, merged);
+	}
+
+	/**
+	 * Removes a TL-Script tool.
+	 *
+	 * @throws IllegalArgumentException
+	 *         If no tool with the given name exists.
+	 */
+	public void delete(String name) {
+		requireName(name);
+		Map<String, ScriptToolConfig> tools = customTools();
+		if (tools.remove(name) == null) {
+			throw new IllegalArgumentException("No script tool named '" + name + "'.");
+		}
+	}
+
+	private static List<ParamSpec> specsOf(ScriptToolConfig cfg) {
+		List<ParamSpec> specs = new ArrayList<>();
+		for (ScriptParameter p : cfg.getParameters()) {
+			specs.add(new ParamSpec(p.getName(), p.getType().qualifiedName(),
+				descriptionText(p.getDescription()), p.isMandatory(), p.isMultiple()));
+		}
+		return specs;
+	}
+
+	private static String labelOf(ScriptToolConfig cfg) {
+		return cfg.getLabel() == null ? null
+			: ToolDescriptions.englishPlainText(cfg.getLabel());
+	}
+
+	private static String descriptionOf(ScriptToolConfig cfg) {
+		return cfg.getDescription() == null ? null
+			: ToolDescriptions.englishPlainText(cfg.getDescription());
+	}
+
+	private static String descriptionText(ResKey key) {
+		return key == null ? null
+			: ToolDescriptions.englishPlainText(key);
 	}
 
 	/**

@@ -83,6 +83,49 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		}
 	}
 
+	public void testUpdateReplacesFields() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		store.create("calc", "Calc", "old", List.of(), "1", "READ", true);
+
+		store.update("calc", null, "new description", null, "2", null, null);
+
+		ScriptToolConfig updated = store.get("calc");
+		assertNotNull(updated);
+		assertEquals("2", com.top_logic.model.search.expr.config.ExprFormat.INSTANCE
+			.getSpecification(updated.getImplementation()));
+		assertEquals("label preserved", "Calc",
+			com.top_logic.tl.ai.core.tools.registry.ToolDescriptions.englishPlainText(updated.getLabel()));
+		assertEquals("parameters preserved (still empty)", 0, updated.getParameters().size());
+		assertEquals("mode preserved", "READ", updated.getMode().name());
+	}
+
+	public void testUpdateMissingRejected() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		try {
+			store.update("ghost", null, "x", null, null, null, null);
+			fail("expected missing-tool rejection");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("ghost"));
+		}
+	}
+
+	public void testDelete() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		store.create("temp", "Temp", "d", List.of(), "1", "READ", true);
+		store.delete("temp");
+		assertNull("tool must be gone after delete", store.get("temp"));
+	}
+
+	public void testDeleteMissingRejected() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		try {
+			store.delete("ghost");
+			fail("expected missing-tool rejection");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("ghost"));
+		}
+	}
+
 	public static Test suite() {
 		BasicRuntimeModule<?>[] modules = {
 			SearchBuilder.Module.INSTANCE,

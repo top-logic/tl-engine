@@ -71,15 +71,6 @@ public class ScriptToolStore {
 	}
 
 	/**
-	 * Canonicalizes a tool name so that {@code -} and {@code _} are treated as the same
-	 * character (canonical form uses {@code _}). Lets the agent reference a tool with either
-	 * separator and prevents near-duplicate names.
-	 */
-	private static String canonical(String name) {
-		return name == null ? null : name.replace('-', '_');
-	}
-
-	/**
 	 * Creates a new TL-Script tool in the {@code custom} factory.
 	 *
 	 * @throws IllegalArgumentException
@@ -89,19 +80,18 @@ public class ScriptToolStore {
 	public void create(String name, String label, String description, List<ParamSpec> parameters,
 			String implementation, String mode, boolean concurrencySafe) {
 		requireName(name);
-		String key = canonical(name);
 		Map<String, ScriptToolConfig> tools = customTools();
-		if (tools.containsKey(key)) {
+		if (tools.containsKey(name)) {
 			throw new IllegalArgumentException("A script tool named '" + name + "' already exists.");
 		}
-		tools.put(key, buildConfig(key, label, description, parameters, implementation, mode, concurrencySafe));
+		tools.put(name, buildConfig(name, label, description, parameters, implementation, mode, concurrencySafe));
 	}
 
 	/**
 	 * Returns the named tool config, or {@code null} if absent.
 	 */
 	public ScriptToolConfig get(String name) {
-		return customTools().get(canonical(name));
+		return customTools().get(name);
 	}
 
 	/**
@@ -190,15 +180,14 @@ public class ScriptToolStore {
 	public void update(String name, String label, String description, List<ParamSpec> parameters,
 			String implementation, String mode, Boolean concurrencySafe) {
 		requireName(name);
-		String key = canonical(name);
 		Map<String, ScriptToolConfig> tools = customTools();
-		ScriptToolConfig existing = tools.get(key);
+		ScriptToolConfig existing = tools.get(name);
 		if (existing == null) {
 			throw new IllegalArgumentException("No script tool named '" + name + "'. Existing: "
 				+ tools.keySet() + ".");
 		}
 		ScriptToolConfig merged = buildConfig(
-			key,
+			name,
 			label != null ? label : labelOf(existing),
 			description != null ? description : descriptionOf(existing),
 			parameters != null ? parameters : specsOf(existing),
@@ -206,7 +195,7 @@ public class ScriptToolStore {
 				: ExprFormat.INSTANCE.getSpecification(existing.getImplementation()),
 			mode != null ? mode : existing.getMode().name(),
 			concurrencySafe != null ? concurrencySafe.booleanValue() : existing.isConcurrencySafe());
-		tools.put(key, merged);
+		tools.put(name, merged);
 	}
 
 	/**
@@ -218,9 +207,9 @@ public class ScriptToolStore {
 	public void delete(String name) {
 		requireName(name);
 		Map<String, ScriptToolConfig> tools = customTools();
-		if (tools.remove(canonical(name)) == null) {
+		if (tools.remove(name) == null) {
 			throw new IllegalArgumentException("No script tool named '" + name + "'. Existing: "
-				+ tools.keySet() + ".");
+				+ customTools().keySet() + ".");
 		}
 	}
 

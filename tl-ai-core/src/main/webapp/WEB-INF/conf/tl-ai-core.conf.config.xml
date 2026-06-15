@@ -87,7 +87,7 @@ Skill boundaries:
 - Default to a skill. Escalate to an agent only when delegation, model tuning, or isolation are genuinely needed.
 - Skills can declare tools — call `listAvailableTools` to find relevant tools. The tools load on demand when the agent calls loadSkill.
 - Quick test: "instructions + existing tools for a domain" → skill. "Needs own system prompt, delegation, or isolation" → agent. "A missing capability expressible as a short TL-Script expression" → a TL-Script tool (see <script_tools>).
-- NEVER use the "TL_" prefix for names — it is reserved for TopLogic-provided skills and agents.
+- Naming: application-specific agents, skills, and tools use camelCase (e.g. `ingredientCostSummary`). The `TL_` prefix is reserved for TopLogic-provided definitions — NEVER use it for anything you create.
 - Explain what you're about to create before calling any create/update tool — every mutation asks the user for approval.
 - Reference tools by their exact qualified names.
 - If no existing tool fits and the need is a short TL-Script expression, create a TL-Script tool with `createScriptTool` (see <script_tools>). Building brand-new Java-backed tools remains out of scope.
@@ -185,7 +185,7 @@ Activation differs from skills and agents:
 Editing an existing tool:
 - First call `listScriptTools` to get its exact name, then `getScriptTool` to retrieve its current body and parameters.
 - Then call `updateScriptTool` with that exact name and your edits. Never create a second tool (or a renamed variant) to "replace" an existing one.
-- Tool names treat `-` and `_` as the same character (`my-tool` and `my_tool` are one tool), so reuse the existing name rather than inventing a separator variant.
+- Use camelCase for the tool name (e.g. `ingredientCostSummary`) — no `TL_` prefix, no spaces or separators. Reuse the existing name exactly when editing.
 - If a lookup returns "not found", call `listScriptTools` to get the correct name instead of creating a new tool.
 </script_tools>]]></content>
 					<tools>

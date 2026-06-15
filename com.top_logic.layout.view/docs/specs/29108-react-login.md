@@ -1,7 +1,7 @@
 # React UI Login & Self-Service (Ticket #29108)
 
-**Status:** Phase 1 complete (browser-verified). Phase 2 password-expiry sub-flow
-complete (browser-verified); Phase 2 OTP + MFA-enrollment and Phases 3–4 outstanding.
+**Status:** Phase 1 complete (browser-verified). Phase 2 complete (browser-verified):
+password expiry (2a) + OTP verification and MFA enrollment (2b). Phases 3–4 outstanding.
 **Scope:** Authentication/identity for the new React view layer
 (`com.top_logic.layout.view`, served by `ViewServlet` at `/view/*`), parallel to
 — and independent of — the legacy `MainLayout`/`LoginViewDialog` UI.
@@ -154,16 +154,41 @@ Mirror the legacy `LoginViewDialog` follow-up steps, composed as dialog views.
   change dialog (app bar stays `anonymous`) → mismatch shows the error and keeps
   the dialog open → matching new password → login completes (app bar shows `root`).
 
-#### Phase 2b — OTP verification + MFA enrollment (TODO)
-- OTP-entry dialog: text field + verify action reusing `MFAConfig` +
-  `DefaultCodeVerifier.isValidCode(secret, code)`; reuse the `account` channel.
-- MFA-enrollment dialog: needs a generic **image display** in the view layer for
-  the QR PNG — feasible by wrapping the existing `ReactPhotoViewerControl`
-  (`TLPhotoViewer`, renders a `BinaryDataValue` as `<img>`) behind a new
-  `<image>`/`<photo>` `UIElement`. Generate the secret (`Base32` + `SecureRandomService`)
-  and QR (`ZxingPngQrGenerator`); on OTP confirm, persist via `Person.setMFASecret`,
-  then `completeLogin`. Browser-verifying this needs a demo account configured
-  with MFA (add a demo affordance similar to `<expire-password>`).
+#### Phase 2b — OTP verification + MFA enrollment (DONE, browser-verified)
+- `LoginAction.proceedAfterPassword(context, account)` factors the post-password
+  branching (mirroring `LoginViewDialog.doLogin`): a stored secret → OTP dialog;
+  MFA `REQUIRED` with no secret → enrollment dialog; else `completeLogin`. Both
+  the non-expiry login path and `ChangePasswordApplyAction` now funnel through it,
+  so MFA is enforced after a forced password change too.
+- `MfaSupport` — headless helpers reusing the legacy services: secret generation
+  (`Base32` + `SecureRandomService`), QR PNG (`ZxingPngQrGenerator` + `QrData`,
+  issuer = `APPLICATION_TITLE`), and `isValidCode` (`DefaultCodeVerifier` +
+  `MFAConfig`).
+- `VerifyOtpAction` (`<verify-otp>`) reads the code from the `tl.login:OtpEntry`
+  form model, the secret from a `secret` channel and the account from the
+  `account` channel; with `persist="true"` (enrollment) it stores the secret
+  before `completeLogin`. The secret is carried on the dialog `secret` channel
+  (existing for OTP login, freshly generated for enrollment) and never sent to
+  the client.
+- `ImageElement` (`<image>`) — generic `UIElement` wrapping
+  `ReactPhotoViewerControl` (`TLPhotoViewer`) to display a `BinaryData` from a
+  channel (the QR PNG on the `qr` channel). The single new generic widget this
+  phase needed.
+- Views: `otp.view.xml`, `mfa-enroll.view.xml` (QR `<image>` + code field) in the
+  view module; `tl.login:OtpEntry` transient type.
+- Demo affordance `EnableMfaAction` (`<enable-mfa>`) in the Formular-Demo accounts
+  toolbar: with a fixed `secret` it sets a known TOTP secret (OTP-login test),
+  without one it marks the account MFA-`REQUIRED` with no secret (enrollment test).
+- **Verified (Playwright):** OTP login with a computed valid code → completes;
+  wrong code → error, dialog stays, no session swap. Enrollment → dialog with a
+  scannable QR (decoded to a valid `otpauth://` URI), computed code → secret
+  persisted + login completes, and the next login switches to OTP.
+- **Bug found (not fixed here):** `Person.setMFASecret(Password)` writes the
+  secret to `MFA_REQUIREMENT_ATTR` instead of `MFA_SECRET_ATTR`. Both `VerifyOtpAction`
+  and `EnableMfaAction` avoid it by persisting via
+  `tUpdateByName(Person.MFA_SECRET_ATTR, password)` — note the attribute is
+  `Password`-typed (`PasswordMapping`), so a `Password` object must be stored, not
+  its crypted `String`. A separate tl-core fix for `setMFASecret` is recommended.
 
 ### Phase 3 — self-service module (forgot password)
 - New module `com.top_logic.layout.view.selfservice` depending on

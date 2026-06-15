@@ -18,6 +18,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool;
 import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore;
 import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore.ParamSpec;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
@@ -124,6 +125,30 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("ghost"));
 		}
+	}
+
+	public void testToolCreateGetListDeleteJson() {
+		ToolRegistryService.Config<?>[] holder = { newRegistryConfig() };
+		ScriptToolAuthoringTool tool = new ScriptToolAuthoringTool(
+			() -> holder[0],
+			cfg -> holder[0] = cfg);
+
+		String create = tool.createScriptTool("greet", "Greet", "Greets by name.",
+			List.of(new ScriptToolStore.ParamSpec("name", "tl.core:String", "who", true, false)),
+			"\"Hello \" + $name", "READ", Boolean.TRUE);
+		assertTrue("create should succeed: " + create, create.contains("\"success\":true"));
+		assertTrue("create should mention restart: " + create, create.toLowerCase().contains("restart"));
+
+		String get = tool.getScriptTool("greet");
+		assertTrue("get should expose the script body: " + get, get.contains("Hello"));
+		assertTrue("get should report existence: " + get, get.contains("\"exists\":true"));
+
+		String list = tool.listScriptTools();
+		assertTrue("list should include the tool: " + list, list.contains("greet"));
+
+		String delete = tool.deleteScriptTool("greet");
+		assertTrue("delete should succeed: " + delete, delete.contains("\"success\":true"));
+		assertTrue("tool gone after delete", tool.getScriptTool("greet").contains("\"exists\":false"));
 	}
 
 	public static Test suite() {

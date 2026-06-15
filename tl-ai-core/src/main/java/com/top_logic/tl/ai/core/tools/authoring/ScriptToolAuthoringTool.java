@@ -91,8 +91,8 @@ public class ScriptToolAuthoringTool {
 			@P("Unique tool name (referenced as custom.{name}); letters, digits, _ and -") String name,
 			@P(value = "Human-readable label", required = false) String label,
 			@P("Description telling the model when and how to call the tool") String description,
-			@P(value = "Declared parameters; each has name, type (qualified TL type e.g. tl.core:String), "
-				+ "description, mandatory, multiple", required = false) List<ScriptToolStore.ParamSpec> parameters,
+			@P(value = "Declared parameters. Each parameter object has: name; type (a qualified TL type, e.g. tl.core:String, tl.core:Integer, or myModule:MyType); description; mandatory (boolean); multiple (boolean, accepts a list); and defaultValue (optional TL-Script expression used when an optional parameter is omitted).",
+				required = false) List<ScriptToolStore.ParamSpec> parameters,
 			@P("TL-Script body; parameters are bound as $name (e.g. \"Hello \" + $name)") String implementation,
 			@P(value = "Tool mode: READ, USER_SCOPED, DATA_WRITE (default), or STRUCTURAL",
 				required = false) String mode,
@@ -122,7 +122,7 @@ public class ScriptToolAuthoringTool {
 			@P("Name of the tool to update") String name,
 			@P(value = "New label (omit to leave unchanged)", required = false) String label,
 			@P(value = "New description (omit to leave unchanged)", required = false) String description,
-			@P(value = "New full parameter list (omit to leave unchanged)",
+			@P(value = "Declared parameters. Each parameter object has: name; type (a qualified TL type, e.g. tl.core:String, tl.core:Integer, or myModule:MyType); description; mandatory (boolean); multiple (boolean, accepts a list); and defaultValue (optional TL-Script expression used when an optional parameter is omitted).",
 				required = false) List<ScriptToolStore.ParamSpec> parameters,
 			@P(value = "New TL-Script body (omit to leave unchanged)", required = false) String implementation,
 			@P(value = "New mode (omit to leave unchanged)", required = false) String mode,
@@ -189,6 +189,8 @@ public class ScriptToolAuthoringTool {
 						: ToolDescriptions.englishPlainText(p.getDescription()));
 					info.setMandatory(p.isMandatory());
 					info.setMultiple(p.isMultiple());
+					info.setDefaultValue(p.getDefaultValue() == null ? ""
+						: ExprFormat.INSTANCE.getSpecification(p.getDefaultValue()));
 					detail.addParameter(info);
 				}
 			}

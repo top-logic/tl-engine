@@ -150,6 +150,9 @@ message ScriptToolParamInfo {
 
 	/** Whether the parameter accepts a list of values. */
 	bool multiple;
+
+	/** Optional TL-Script default expression used when an optional parameter is omitted. */
+	string defaultValue;
 }
 
 /**

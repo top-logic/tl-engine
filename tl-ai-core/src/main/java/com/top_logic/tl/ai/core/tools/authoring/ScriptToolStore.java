@@ -55,9 +55,12 @@ public class ScriptToolStore {
 	 *        Whether the parameter must be supplied.
 	 * @param multiple
 	 *        Whether the parameter accepts a list of values.
+	 * @param defaultValue
+	 *        Optional TL-Script default expression used when an optional parameter is omitted;
+	 *        empty/null for none.
 	 */
 	public record ParamSpec(String name, String type, String description, boolean mandatory,
-			boolean multiple) {
+			boolean multiple, String defaultValue) {
 		// data carrier for tool input
 	}
 
@@ -144,6 +147,14 @@ public class ScriptToolStore {
 		if (spec.description() != null && !spec.description().isBlank()) {
 			p.setDescription(ResKey.text(spec.description()));
 		}
+		if (spec.defaultValue() != null && !spec.defaultValue().isBlank()) {
+			try {
+				p.setDefaultValue(ExprFormat.INSTANCE.getValue("defaultValue", spec.defaultValue()));
+			} catch (ConfigurationException ex) {
+				throw new IllegalArgumentException("Parameter '" + spec.name()
+					+ "' has an invalid default expression: " + ex.getMessage(), ex);
+			}
+		}
 		return p;
 	}
 
@@ -216,8 +227,10 @@ public class ScriptToolStore {
 	private static List<ParamSpec> specsOf(ScriptToolConfig cfg) {
 		List<ParamSpec> specs = new ArrayList<>();
 		for (ScriptParameter p : cfg.getParameters()) {
+			String def = p.getDefaultValue() == null ? null
+				: ExprFormat.INSTANCE.getSpecification(p.getDefaultValue());
 			specs.add(new ParamSpec(p.getName(), p.getType().qualifiedName(),
-				descriptionText(p.getDescription()), p.isMandatory(), p.isMultiple()));
+				descriptionText(p.getDescription()), p.isMandatory(), p.isMultiple(), def));
 		}
 		return specs;
 	}

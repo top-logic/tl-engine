@@ -30,6 +30,9 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #isMultiple() */
 	public static final String MULTIPLE__PROP = "multiple";
 
+	/** @see #getDefaultValue() */
+	public static final String DEFAULT_VALUE__PROP = "defaultValue";
+
 	private String _name = "";
 
 	private String _type = "";
@@ -39,6 +42,8 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	private boolean _mandatory = false;
 
 	private boolean _multiple = false;
+
+	private String _defaultValue = "";
 
 	/**
 	 * Creates a {@link ScriptToolParamInfo} instance.
@@ -149,6 +154,26 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		_multiple = value;
 	}
 
+	/**
+	 * Optional TL-Script default expression used when an optional parameter is omitted.
+	 */
+	public final String getDefaultValue() {
+		return _defaultValue;
+	}
+
+	/**
+	 * @see #getDefaultValue()
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo setDefaultValue(String value) {
+		internalSetDefaultValue(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDefaultValue()} without chain call utility. */
+	protected final void internalSetDefaultValue(String value) {
+		_defaultValue = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SCRIPT_TOOL_PARAM_INFO__TYPE;
@@ -161,7 +186,8 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 			TYPE__PROP, 
 			DESCRIPTION__PROP, 
 			MANDATORY__PROP, 
-			MULTIPLE__PROP);
+			MULTIPLE__PROP, 
+			DEFAULT_VALUE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -191,6 +217,7 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DESCRIPTION__PROP: return getDescription();
 			case MANDATORY__PROP: return isMandatory();
 			case MULTIPLE__PROP: return isMultiple();
+			case DEFAULT_VALUE__PROP: return getDefaultValue();
 			default: return null;
 		}
 	}
@@ -203,6 +230,7 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 			case MANDATORY__PROP: internalSetMandatory((boolean) value); break;
 			case MULTIPLE__PROP: internalSetMultiple((boolean) value); break;
+			case DEFAULT_VALUE__PROP: internalSetDefaultValue((String) value); break;
 		}
 	}
 
@@ -231,6 +259,8 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		out.value(isMandatory());
 		out.name(MULTIPLE__PROP);
 		out.value(isMultiple());
+		out.name(DEFAULT_VALUE__PROP);
+		out.value(getDefaultValue());
 	}
 
 	@Override
@@ -241,6 +271,7 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MANDATORY__PROP: setMandatory(in.nextBoolean()); break;
 			case MULTIPLE__PROP: setMultiple(in.nextBoolean()); break;
+			case DEFAULT_VALUE__PROP: setDefaultValue(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

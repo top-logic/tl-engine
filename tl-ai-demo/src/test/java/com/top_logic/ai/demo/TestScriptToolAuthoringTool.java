@@ -38,7 +38,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
 
 		store.create("greet", "Greet", "Greets a person by name.",
-			List.of(new ParamSpec("name", "tl.core:String", "Who to greet", true, false)),
+			List.of(new ParamSpec("name", "tl.core:String", "Who to greet", true, false, null)),
 			"\"Hello \" + $name", "READ", true);
 
 		ScriptToolConfig created = store.get("greet");
@@ -66,7 +66,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
 		try {
 			store.create("bad", "Bad", "d",
-				List.of(new ParamSpec("x", "no.such:Type", "", true, false)),
+				List.of(new ParamSpec("x", "no.such:Type", "", true, false, null)),
 				"$x", "READ", true);
 			fail("expected unresolvable-type rejection");
 		} catch (IllegalArgumentException ex) {
@@ -134,7 +134,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 			cfg -> holder[0] = cfg);
 
 		String create = tool.createScriptTool("greet", "Greet", "Greets by name.",
-			List.of(new ScriptToolStore.ParamSpec("name", "tl.core:String", "who", true, false)),
+			List.of(new ScriptToolStore.ParamSpec("name", "tl.core:String", "who", true, false, null)),
 			"\"Hello \" + $name", "READ", Boolean.TRUE);
 		assertTrue("create should succeed: " + create, create.contains("\"success\":true"));
 		assertTrue("create should mention restart: " + create, create.toLowerCase().contains("restart"));
@@ -160,6 +160,36 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		} catch (IllegalArgumentException ex) {
 			assertTrue("message should list existing names: " + ex.getMessage(),
 				ex.getMessage().contains("summarize_ingredient_costs"));
+		}
+	}
+
+	public void testOptionalParameterDefaultRoundTrips() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		store.create("greetCustom", "Greet", "d",
+			java.util.List.of(new ScriptToolStore.ParamSpec(
+				"currency", "tl.core:String", "currency symbol", false, false, "\"\\u20ac\"")),
+			"$currency", "READ", true);
+
+		ScriptToolConfig cfg = store.get("greetCustom");
+		assertNotNull(cfg);
+		assertEquals(1, cfg.getParameters().size());
+		assertNotNull("default expression must be stored",
+			cfg.getParameters().get(0).getDefaultValue());
+		assertEquals("default expression must round-trip", "\"\\u20ac\"",
+			com.top_logic.model.search.expr.config.ExprFormat.INSTANCE
+				.getSpecification(cfg.getParameters().get(0).getDefaultValue()));
+	}
+
+	public void testInvalidDefaultExpressionRejected() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		try {
+			store.create("bad", "B", "d",
+				java.util.List.of(new ScriptToolStore.ParamSpec(
+					"x", "tl.core:String", "", false, false, "this is ( not valid")),
+				"$x", "READ", true);
+			fail("expected invalid-default rejection");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().toLowerCase().contains("default"));
 		}
 	}
 

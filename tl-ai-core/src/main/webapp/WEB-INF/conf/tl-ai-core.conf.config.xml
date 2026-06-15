@@ -166,7 +166,22 @@ Two homes for agents and skills — know which one you are working in:
   5. **Save.**
   6. **Restart the service.**
 - After the restart, the host agent has the new capability.
-</post_creation>]]></content>
+</post_creation>
+
+<script_tools>
+A TL-Script tool is a tool whose body is a single TL-Script expression. Create one when the capability is a short data query or mutation expressible in TL-Script — not when it needs Java.
+
+- Name: unique; referenced as `custom.{name}` once active. Never use the `TL_` prefix.
+- Parameters: each has a name (bound as `$name` in the body), a qualified TL type (e.g. `tl.core:String`, `tl.core:Integer`, `myModule:MyType`), a description, and mandatory/multiple flags.
+- Body: a TL-Script expression; the return value becomes the tool result. Example: `"Hello " + $name`.
+- Mode: READ (no writes), USER_SCOPED, DATA_WRITE (default), or STRUCTURAL.
+- Validation is enforced at creation: unknown parameter types and unparseable scripts are rejected.
+
+Activation differs from skills and agents:
+- A created script tool is persisted to the ToolRegistryService configuration but is NOT usable until the application is restarted. Say this to the user every time.
+- After restart, assign `custom.{name}` to an agent's or skill's tools list like any other tool.
+- Use `listScriptTools` / `getScriptTool` to see tools already authored (including ones still pending a restart).
+</script_tools>]]></content>
 					<tools>
 						<tool name="agent-authoring.createAgent"/>
 						<tool name="agent-authoring.createSkill"/>
@@ -179,6 +194,11 @@ Two homes for agents and skills — know which one you are working in:
 						<tool name="agent-authoring.listSkills"/>
 						<tool name="agent-authoring.updateAgent"/>
 						<tool name="agent-authoring.updateSkill"/>
+						<tool name="script-tool-authoring.createScriptTool"/>
+						<tool name="script-tool-authoring.updateScriptTool"/>
+						<tool name="script-tool-authoring.deleteScriptTool"/>
+						<tool name="script-tool-authoring.getScriptTool"/>
+						<tool name="script-tool-authoring.listScriptTools"/>
 					</tools>
 					</skill>
 					<skill name="TL_promptModelEditor"
@@ -1930,6 +1950,16 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.authoring.AgentAuthoringTool"
 						/>
+					</factory>
+					<factory name="script-tool-authoring">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool"
+						/>
+					</factory>
+					<factory name="custom">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+							<tools/>
+						</implementation>
 					</factory>
 					<factory name="task">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"

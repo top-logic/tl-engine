@@ -8,7 +8,7 @@
 <template>
 	<params>
 		<param name="model"
-			value="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
+			value="provider(com.top_logic.layout.component.model.SecurityRootModelProvider)"
 		/>
 		<param name="namePrefix"
 			value=""

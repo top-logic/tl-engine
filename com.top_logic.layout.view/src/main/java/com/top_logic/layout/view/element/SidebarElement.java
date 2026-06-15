@@ -36,6 +36,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.slot.control.SlotContentControl;
@@ -240,8 +241,9 @@ public class SidebarElement implements UIElement {
 			}
 			String label = Resources.getInstance().getString(_label);
 			DirtyChannel dirtyChannel = new DirtyChannel();
+			SecurityScope scope = AccessChecks.resolveScope(_accessControl);
 			NavigationItem item = new NavigationItem(_id, label, _icon,
-				() -> createContent(_children, context, dirtyChannel), dirtyChannel);
+				() -> createContent(_children, context, dirtyChannel, scope), dirtyChannel);
 			String effectiveRoute = resolveRoute(_route, _id);
 			if (effectiveRoute != null) {
 				item.withRoute(effectiveRoute);
@@ -415,8 +417,10 @@ public class SidebarElement implements UIElement {
 	}
 
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
-			DirtyChannel dirtyChannel) {
-		ViewContext itemContext = context.childContext("sidebar-item");
+			DirtyChannel dirtyChannel, SecurityScope scope) {
+		ViewContext baseContext = context.childContext("sidebar-item");
+		// Establish the nav-item's security scope so command rules in its content default to it.
+		ViewContext itemContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
 		itemContext.setDirtyChannel(dirtyChannel);
 
 		if (elements.size() == 1) {

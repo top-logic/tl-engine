@@ -24,11 +24,11 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 
 /**
  * Abstract base for {@link UIElement}s that carry {@link ViewCommand} configurations.
@@ -101,29 +101,13 @@ public abstract class CommandCarrierElement extends ContainerElement {
 			ChannelRef inputRef = cmdConfig.getInput();
 			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
 
-			ViewExecutabilityRule rule = buildExecutabilityRule(cmdConfig);
+			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
 			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
 
 			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
 			models.add(model);
 		}
 		return models;
-	}
-
-	private ViewExecutabilityRule buildExecutabilityRule(ViewCommand.Config cmdConfig) {
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs = cmdConfig.getExecutability();
-		if (ruleConfigs.isEmpty()) {
-			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
-		}
-		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(CommandCarrierElement.class);
-		List<ViewExecutabilityRule> rules = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewExecutabilityRule> ruleConfig : ruleConfigs) {
-			ViewExecutabilityRule rule = instantiation.getInstance(ruleConfig);
-			if (rule != null) {
-				rules.add(rule);
-			}
-		}
-		return CombinedViewExecutabilityRule.combine(rules);
 	}
 
 	private ViewCommandConfirmation buildConfirmation(ViewCommand.Config cmdConfig) {

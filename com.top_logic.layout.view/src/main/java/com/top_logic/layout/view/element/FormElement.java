@@ -43,7 +43,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -418,7 +418,7 @@ public class FormElement extends ContainerElement {
 			ChannelRef inputRef = cmdConfig.getInput();
 			ViewChannel inputChannel = inputRef != null ? formContext.resolveChannel(inputRef) : null;
 
-			ViewExecutabilityRule rule = buildExecutabilityRule(cmdConfig);
+			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
 			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
 
 			ViewCommandModel inner =
@@ -447,24 +447,6 @@ public class FormElement extends ContainerElement {
 				}
 			}
 		});
-	}
-
-	private ViewExecutabilityRule buildExecutabilityRule(ViewCommand.Config cmdConfig) {
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs =
-			cmdConfig.getExecutability();
-		if (ruleConfigs.isEmpty()) {
-			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
-		}
-		DefaultInstantiationContext instantiation =
-			new DefaultInstantiationContext(FormElement.class);
-		List<ViewExecutabilityRule> rules = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewExecutabilityRule> ruleConfig : ruleConfigs) {
-			ViewExecutabilityRule rule = instantiation.getInstance(ruleConfig);
-			if (rule != null) {
-				rules.add(rule);
-			}
-		}
-		return CombinedViewExecutabilityRule.combine(rules);
 	}
 
 	private ViewCommandConfirmation buildConfirmation(ViewCommand.Config cmdConfig) {

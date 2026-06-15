@@ -15,6 +15,7 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.slot.SlotPath;
 import com.top_logic.layout.view.slot.SlotRegistry;
 import com.top_logic.layout.view.tiles.TileStackScope;
@@ -119,6 +120,34 @@ public interface ViewContext extends ReactContext {
 	 *         path, and channels.
 	 */
 	ViewContext withCommandScope(CommandScope scope);
+
+	/**
+	 * The {@link SecurityScope} established by the nearest enclosing removable unit that carries an
+	 * {@code <access-control>}, or {@code null} if none is in scope.
+	 *
+	 * <p>
+	 * Command-level security rules
+	 * ({@link com.top_logic.layout.view.security.SecurityRule}) default to this scope when they do
+	 * not name one explicitly, mirroring the legacy "one {@code PersBoundComp}, many command groups"
+	 * model: the command shares the role mapping of the unit that already gates its visibility.
+	 * </p>
+	 */
+	SecurityScope getSecurityScope();
+
+	/**
+	 * Creates a derived context whose {@link #getSecurityScope() security scope} is the given scope.
+	 *
+	 * <p>
+	 * Called by removable elements (nav-item, tab, tile) carrying an {@code <access-control>} when
+	 * building their content subtree, so that command rules built underneath default to the unit's
+	 * scope. Nested units override (not stack) the scope.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The security scope to establish for descendants.
+	 * @return A new context with the given security scope.
+	 */
+	ViewContext withSecurityScope(SecurityScope scope);
 
 	/**
 	 * The {@link TileStackScope} of the enclosing

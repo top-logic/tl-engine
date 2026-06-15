@@ -24,7 +24,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -118,7 +118,7 @@ public class ButtonElement implements UIElement {
 		ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
 
 		// Build executability rule.
-		ViewExecutabilityRule rule = buildExecutabilityRule();
+		ViewExecutabilityRule rule = ViewExecutabilityRules.build(_commandConfig.getExecutability(), context);
 
 		// Build confirmation.
 		ViewCommandConfirmation confirmation = buildConfirmation();
@@ -132,24 +132,6 @@ public class ButtonElement implements UIElement {
 		control.addBeforeWriteAction(model::attach);
 		control.addCleanupAction(model::detach);
 		return control;
-	}
-
-	private ViewExecutabilityRule buildExecutabilityRule() {
-		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> ruleConfigs =
-			_commandConfig.getExecutability();
-		if (ruleConfigs.isEmpty()) {
-			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
-		}
-		DefaultInstantiationContext instantiation =
-			new DefaultInstantiationContext(ButtonElement.class);
-		List<ViewExecutabilityRule> rules = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewExecutabilityRule> ruleConfig : ruleConfigs) {
-			ViewExecutabilityRule rule = instantiation.getInstance(ruleConfig);
-			if (rule != null) {
-				rules.add(rule);
-			}
-		}
-		return CombinedViewExecutabilityRule.combine(rules);
 	}
 
 	private ViewCommandConfirmation buildConfirmation() {

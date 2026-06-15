@@ -18,7 +18,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -69,9 +68,6 @@ public interface ViewCommand {
 
 		/** Configuration name for {@link #getCheckDirty()}. */
 		String CHECK_DIRTY = "check-dirty";
-
-		/** Configuration name for {@link #getGroup()}. */
-		String GROUP = "group";
 
 		/**
 		 * The programmatic name of this command.
@@ -159,13 +155,6 @@ public interface ViewCommand {
 		 */
 		@Name(CHECK_DIRTY)
 		DirtyCheckScope getCheckDirty();
-
-		/**
-		 * The command group for access control.
-		 */
-		@Name(GROUP)
-		@Nullable
-		CommandGroupReference getGroup();
 	}
 
 	/**

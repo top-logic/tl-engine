@@ -21,6 +21,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.security.WithAccessControl;
 
 /**
@@ -139,7 +140,9 @@ public class TileElement implements UIElement {
 	 * Creates the inner control of this tile.
 	 */
 	public ReactControl createContentControl(ViewContext context) {
-		IReactControl inner = _content.createControl(context);
+		SecurityScope scope = AccessChecks.resolveScope(_accessControl);
+		ViewContext contentContext = scope != null ? context.withSecurityScope(scope) : context;
+		IReactControl inner = _content.createControl(contentContext);
 		return (ReactControl) inner;
 	}
 

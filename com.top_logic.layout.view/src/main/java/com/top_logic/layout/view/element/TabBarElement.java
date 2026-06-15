@@ -28,6 +28,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
+import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.util.Resources;
 
@@ -172,9 +173,12 @@ public class TabBarElement implements UIElement {
 		// path with the tab id so same-named <slot-content> in two tabs route into independent
 		// positions, and fork a fresh channel scope so each tab's <channels> declarations are
 		// independent of its siblings'.
-		ViewContext tabContext = context.childContext("tab")
+		ViewContext baseContext = context.childContext("tab")
 			.withChildSlotPath(entry._id)
 			.withFreshChannelScope();
+		// Establish the tab's security scope so command rules in its content default to it.
+		SecurityScope scope = AccessChecks.resolveScope(entry._accessControl());
+		ViewContext tabContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;
 		tabContext.setDirtyChannel(dirtyChannel);
 
 		List<UIElement> elements = entry._children;

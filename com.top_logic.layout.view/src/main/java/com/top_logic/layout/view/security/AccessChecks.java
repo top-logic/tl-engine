@@ -31,14 +31,38 @@ public class AccessChecks {
 			// No access control: access is granted.
 			return true;
 		}
-		String scopeId = accessControl.getScope();
-		SecurityScope scope = SecurityScopeService.getInstance().getScope(scopeId);
+		SecurityScope scope = resolveScope(accessControl);
 		if (scope == null) {
-			Logger.error("Reference to undefined security scope '" + scopeId + "'.", AccessChecks.class);
 			// Fail closed: a misconfigured reference must not expose a guarded unit.
 			return false;
 		}
 		return scope.isVisible();
+	}
+
+	/**
+	 * Resolves the {@link SecurityScope} referenced by the given {@link AccessControl}.
+	 *
+	 * <p>
+	 * Used both for the visibility check ({@link #isAccessible(AccessControl)}) and to establish the
+	 * scope on the {@link com.top_logic.layout.view.ViewContext} for the guarded unit's content, so
+	 * that command-level rules built underneath can default to it.
+	 * </p>
+	 *
+	 * @param accessControl
+	 *        The access control of a unit, or {@code null} when the unit is not guarded.
+	 * @return The referenced scope, or {@code null} when {@code accessControl} is {@code null} or its
+	 *         scope id is undefined (the undefined case is logged).
+	 */
+	public static SecurityScope resolveScope(AccessControl accessControl) {
+		if (accessControl == null) {
+			return null;
+		}
+		String scopeId = accessControl.getScope();
+		SecurityScope scope = SecurityScopeService.getInstance().getScope(scopeId);
+		if (scope == null) {
+			Logger.error("Reference to undefined security scope '" + scopeId + "'.", AccessChecks.class);
+		}
+		return scope;
 	}
 
 	/**

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Minimal administration area for the React view UI. The outer tab-bar groups admin sections
+	(currently only "Access control"); the inner tab-bar holds the access-control entities. Add
+	further admin sections as sibling tabs of "access-control".
+-->
+<view>
+	<tab-bar active-tab="access-control">
+		<tabs>
+			<tab id="access-control">
+				<label>
+					<en>Access control</en>
+					<de>Zugriffskontrolle</de>
+				</label>
+				<tab-bar active-tab="accounts">
+					<tabs>
+						<tab id="accounts">
+							<label>
+								<en>Accounts</en>
+								<de>Konten</de>
+							</label>
+							<view-ref view="admin/accounts.view.xml"/>
+						</tab>
+						<tab id="groups">
+							<label>
+								<en>Groups</en>
+								<de>Gruppen</de>
+							</label>
+							<view-ref view="admin/groups.view.xml"/>
+						</tab>
+						<tab id="roles">
+							<label>
+								<en>Roles</en>
+								<de>Rollen</de>
+							</label>
+							<view-ref view="admin/roles.view.xml"/>
+						</tab>
+					</tabs>
+				</tab-bar>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

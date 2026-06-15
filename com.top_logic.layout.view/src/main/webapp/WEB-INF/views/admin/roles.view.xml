@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedRole"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="40"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Roles</en>
+						<de>Rollen</de>
+					</title>
+					<commands>
+						<generic-command placement="TOOLBAR">
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`tl.accounts:Role`, transient: true)"/>
+							<open-dialog
+								dialog-view="admin/create-role.view.xml"
+								bind-input-to="model"
+							>
+								<bind channel="selection" to="selectedRole"/>
+							</open-dialog>
+						</generic-command>
+						<generic-command placement="TOOLBAR" input="selectedRole">
+							<label>
+								<en>Delete</en>
+								<de>L&#xF6;schen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> $obj.delete()"/>
+							</with-transaction>
+							<write-channel name="selectedRole"/>
+						</generic-command>
+					</commands>
+					<table
+						selection="selectedRole"
+						types="tl.accounts:Role"
+						observed-types="tl.accounts:Role"
+					>
+						<rows>all(`tl.accounts:Role`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="60"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Role</en>
+						<de>Rolle</de>
+					</title>
+					<form input="selectedRole">
+						<field attribute="name"/>
+						<field attribute="description"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

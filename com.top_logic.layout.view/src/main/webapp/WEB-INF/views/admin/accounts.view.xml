@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedAccount"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="40"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Accounts</en>
+						<de>Konten</de>
+					</title>
+					<commands>
+						<generic-command placement="TOOLBAR">
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> new(`tl.admin:NewAccount`, transient: true)"/>
+							<open-dialog
+								dialog-view="admin/create-account.view.xml"
+								bind-input-to="model"
+							>
+								<bind channel="selection" to="selectedAccount"/>
+							</open-dialog>
+						</generic-command>
+						<generic-command placement="TOOLBAR" input="selectedAccount">
+							<label>
+								<en>Delete</en>
+								<de>L&#xF6;schen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="obj -> $obj.delete()"/>
+							</with-transaction>
+							<write-channel name="selectedAccount"/>
+						</generic-command>
+					</commands>
+					<table
+						selection="selectedAccount"
+						types="tl.accounts:Person"
+						observed-types="tl.accounts:Person"
+					>
+						<rows>all(`tl.accounts:Person`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="60"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Account</en>
+						<de>Konto</de>
+					</title>
+					<form input="selectedAccount">
+						<field attribute="name"/>
+						<field attribute="language"/>
+						<field attribute="restrictedUser"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

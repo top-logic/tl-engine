@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.admin">
+		<!--
+			Transient-only type holding the input of the "new account" form. Instances are created
+			with new(`tl.admin:NewAccount`, transient: true) and never persisted (the actual account
+			is created by the create-account action), so no table is declared.
+		-->
+		<class name="NewAccount">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="login"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

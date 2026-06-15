@@ -59,6 +59,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 EXPIRE_PASSWORD_DONE__USER;
 
+	/**
+	 * @en The entered code is not valid. Please try again.
+	 */
+	public static ResKey MFA_INVALID_CODE;
+
+	/**
+	 * @en Unable to create the QR code for multi-factor authentication.
+	 */
+	public static ResKey MFA_QR_CODE_FAILED;
+
+	/**
+	 * @en Enabled multi-factor authentication for "{0}".
+	 */
+	public static ResKey1 MFA_ENABLED__USER;
+
+	/**
+	 * @en No account selected to configure multi-factor authentication for.
+	 */
+	public static ResKey MFA_NO_ACCOUNT;
+
+	/**
+	 * @en Multi-factor authentication is now required for "{0}". The next login will ask to set it up.
+	 */
+	public static ResKey1 MFA_REQUIRED_SET__USER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -60,6 +60,40 @@
 							</executability>
 							<expire-password/>
 						</generic-command>
+						<!--
+							Marks the selected account as MFA-required with no secret, forcing the
+							React login's enrollment step on that account's next login. Exercises the
+							MFA-enrollment login flow (Ticket #29108, phase 2b).
+						-->
+						<generic-command placement="TOOLBAR"
+							input="selectedPerson"
+						>
+							<label>
+								<en>Require MFA (enroll)</en>
+								<de>MFA verlangen (Einrichtung)</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<enable-mfa/>
+						</generic-command>
+						<!--
+							Stores a fixed, known TOTP secret on the selected account, so the React
+							login's OTP-verification step can be exercised with a computed code
+							(Ticket #29108, phase 2b).
+						-->
+						<generic-command placement="TOOLBAR"
+							input="selectedPerson"
+						>
+							<label>
+								<en>Set MFA secret (OTP)</en>
+								<de>MFA-Schl&#252;ssel setzen (OTP)</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<enable-mfa secret="JBSWY3DPEHPK3PXP"/>
+						</generic-command>
 					</commands>
 					<table
 						selection="selectedPerson"

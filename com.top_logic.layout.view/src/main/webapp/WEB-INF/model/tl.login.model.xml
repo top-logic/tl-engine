@@ -58,5 +58,23 @@
 				</property>
 			</attributes>
 		</class>
+
+		<!--
+			Transient-only type holding the one-time code entered in the MFA step of the login flow
+			(OTP verification or enrollment confirmation). Instances are created in Java by
+			LoginAction and bound to the OTP / enrollment dialog's form; the account, the secret and
+			(for enrollment) the QR image are transferred separately on the dialog's "account",
+			"secret" and "qr" channels.
+		-->
+		<class name="OtpEntry">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="code"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

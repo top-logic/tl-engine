@@ -11,12 +11,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -45,10 +47,22 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * If the authenticated account's password has expired, the session swap is held back: a forced
- * {@link #CHANGE_PASSWORD_VIEW change-password dialog} is opened instead (the account is transferred
- * to it on its {@code "account"} channel), and the login completes only after
- * {@link ChangePasswordApplyAction} has applied a new password.
+ * Before the session swap, follow-up steps may be interposed (each composed as its own dialog view,
+ * with the account carried on the {@link #ACCOUNT_CHANNEL} channel):
+ * </p>
+ * <ul>
+ * <li>An expired password forces a {@link #CHANGE_PASSWORD_VIEW change-password dialog}
+ * ({@link ChangePasswordApplyAction}).</li>
+ * <li>An account with a TOTP secret must pass an {@link #OTP_VIEW OTP-verification dialog}
+ * ({@link VerifyOtpAction}).</li>
+ * <li>An account for which MFA is {@link MfaRequirement#REQUIRED required} but has no secret yet is
+ * sent through an {@link #MFA_ENROLL_VIEW enrollment dialog} that generates a secret, shows its QR
+ * code and confirms it via {@link VerifyOtpAction}.</li>
+ * </ul>
+ *
+ * <p>
+ * The actual session swap (via {@link PendingSessionAction}) happens only once the final step calls
+ * {@link #completeLogin}.
  * </p>
  */
 public class LoginAction implements ViewAction {
@@ -61,6 +75,21 @@ public class LoginAction implements ViewAction {
 
 	/** Dialog channel carrying the account whose (expired) password is being changed. */
 	public static final String ACCOUNT_CHANNEL = "account";
+
+	/** Dialog view for the OTP-verification step (account has an existing MFA secret). */
+	public static final String OTP_VIEW = "otp.view.xml";
+
+	/** Dialog view for the MFA-enrollment step (MFA required, no secret set yet). */
+	public static final String MFA_ENROLL_VIEW = "mfa-enroll.view.xml";
+
+	/** Dialog channel carrying the TOTP secret being verified (existing or freshly generated). */
+	public static final String SECRET_CHANNEL = "secret";
+
+	/** Dialog channel carrying the QR-code image shown during MFA enrollment. */
+	public static final String QR_CHANNEL = "qr";
+
+	/** Name of the transient model type holding the OTP form input. */
+	public static final String OTP_ENTRY_TYPE = "tl.login:OtpEntry";
 
 	/**
 	 * Configuration for {@link LoginAction}.
@@ -124,8 +153,26 @@ public class LoginAction implements ViewAction {
 			return input;
 		}
 
-		completeLogin(context, userName);
+		proceedAfterPassword(context, account);
 		return input;
+	}
+
+	/**
+	 * Continues the login flow after the password has been verified (and, when it was expired, a new
+	 * one applied): opens the {@link #OTP_VIEW OTP-verification dialog} if the account has a TOTP
+	 * secret, opens the {@link #MFA_ENROLL_VIEW enrollment dialog} if MFA is
+	 * {@link MfaRequirement#REQUIRED required} but no secret is set yet, and otherwise completes the
+	 * login.
+	 */
+	static void proceedAfterPassword(ReactContext context, Person account) {
+		Password secret = account.getMFASecret();
+		if (secret != null) {
+			openOtpDialog(context, account, secret);
+		} else if (account.getMFARequirement() == MfaRequirement.REQUIRED) {
+			openMfaEnrollDialog(context, account);
+		} else {
+			completeLogin(context, account.getName());
+		}
 	}
 
 	/**
@@ -134,20 +181,54 @@ public class LoginAction implements ViewAction {
 	 * {@link #PASSWORD_CHANGE_TYPE} model on its {@code "model"} channel.
 	 */
 	private static void openChangePasswordDialog(ReactContext context, Person account) {
+		Map<String, Object> channels = new LinkedHashMap<>();
+		channels.put("model", newTransient(PASSWORD_CHANGE_TYPE));
+		channels.put(ACCOUNT_CHANNEL, account);
+		replaceDialog(context, CHANGE_PASSWORD_VIEW, channels);
+	}
+
+	/**
+	 * Replaces the current (login) dialog with the OTP-verification dialog, transferring the account
+	 * and its existing TOTP secret on the {@link #ACCOUNT_CHANNEL} / {@link #SECRET_CHANNEL} channels.
+	 */
+	private static void openOtpDialog(ReactContext context, Person account, Password secret) {
+		Map<String, Object> channels = new LinkedHashMap<>();
+		channels.put("model", newTransient(OTP_ENTRY_TYPE));
+		channels.put(ACCOUNT_CHANNEL, account);
+		channels.put(SECRET_CHANNEL, secret);
+		replaceDialog(context, OTP_VIEW, channels);
+	}
+
+	/**
+	 * Replaces the current (login) dialog with the MFA-enrollment dialog, generating a fresh secret
+	 * and its QR code and transferring them on the {@link #SECRET_CHANNEL} / {@link #QR_CHANNEL}
+	 * channels (the secret is persisted only once {@link VerifyOtpAction} confirms a valid code).
+	 */
+	private static void openMfaEnrollDialog(ReactContext context, Person account) {
+		Password secret = MfaSupport.generateSecret();
+		Map<String, Object> channels = new LinkedHashMap<>();
+		channels.put("model", newTransient(OTP_ENTRY_TYPE));
+		channels.put(ACCOUNT_CHANNEL, account);
+		channels.put(SECRET_CHANNEL, secret);
+		channels.put(QR_CHANNEL, MfaSupport.createQrCode(account, secret));
+		replaceDialog(context, MFA_ENROLL_VIEW, channels);
+	}
+
+	/**
+	 * Closes the current top dialog and opens the given view as a modal dialog seeded with the given
+	 * channel values.
+	 */
+	private static void replaceDialog(ReactContext context, String view, Map<String, ?> channels) {
 		DialogManager dialogManager = context.getDialogManager();
 		if (dialogManager != null) {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
 		}
-
-		Map<String, Object> channels = new LinkedHashMap<>();
-		channels.put("model", newPasswordChange());
-		channels.put(ACCOUNT_CHANNEL, account);
-		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + CHANGE_PASSWORD_VIEW, true, channels,
+		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + view, true, channels,
 			Collections.emptyList());
 	}
 
-	private static TLObject newPasswordChange() {
-		TLClass type = (TLClass) TLModelUtil.findType(PASSWORD_CHANGE_TYPE);
+	private static TLObject newTransient(String typeName) {
+		TLClass type = (TLClass) TLModelUtil.findType(typeName);
 		return TransientObjectFactory.INSTANCE.createObject(type);
 	}
 

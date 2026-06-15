@@ -42,7 +42,8 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * @implNote The change is performed via {@link AuthenticationDevice#setPassword(Person, char[])} and,
- *           on success, the login is finished through {@link LoginAction#completeLogin}.
+ *           on success, the flow continues through {@link LoginAction#proceedAfterPassword} (which
+ *           runs any required MFA step before completing the login).
  */
 public class ChangePasswordApplyAction implements ViewAction {
 
@@ -100,7 +101,7 @@ public class ChangePasswordApplyAction implements ViewAction {
 			Arrays.fill(password, (char) 0);
 		}
 
-		LoginAction.completeLogin(context, account.getName());
+		LoginAction.proceedAfterPassword(context, account);
 		return input;
 	}
 

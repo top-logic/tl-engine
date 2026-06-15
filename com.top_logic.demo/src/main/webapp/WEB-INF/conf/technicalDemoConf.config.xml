@@ -50,6 +50,12 @@
 							<group name="Write"/>
 						</groups>
 					</scope>
+					<scope id="administration">
+						<label>
+							<en>Administration</en>
+							<de>Administration</de>
+						</label>
+					</scope>
 				</scopes>
 			</instance>
 		</config>

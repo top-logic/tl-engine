@@ -220,6 +220,23 @@
 							<de>Einstellungen (kein Routing)</de>
 						</label>
 					</nav-item>
+					<nav-item id="administration"
+						icon="css:bi bi-shield-lock"
+						route="none"
+					>
+						<!--
+							Minimal admin area (accounts / groups / roles). Access controlled by the
+							"administration" scope: with no roles assigned it is visible only to the
+							technical super user (root). The admin views are reusable assets provided
+							by com.top_logic.layout.view (WEB-INF/views/admin/).
+						-->
+						<access-control scope="administration"/>
+						<view-ref view="admin/admin.view.xml"/>
+						<label>
+							<en>Administration</en>
+							<de>Administration</de>
+						</label>
+					</nav-item>
 				</items>
 			</sidebar>
 		</content>

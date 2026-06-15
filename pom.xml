@@ -36,7 +36,7 @@
 		<zookeeper.version>3.9.5</zookeeper.version>
 		<slf4j.version>2.0.18</slf4j.version>
 		<log4j.version>2.26.0</log4j.version>
-		<fasterxml.version>2.21.4</fasterxml.version>
+		<fasterxml.version>2.22.0</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
 		<bouncycastle.version>1.84</bouncycastle.version>
 		<batik.version>1.19</batik.version>
@@ -861,7 +861,7 @@
 			<dependency>
 				<groupId>com.networknt</groupId>
 				<artifactId>json-schema-validator</artifactId>
-				<version>3.0.3</version>
+				<version>3.0.4</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
@@ -1911,7 +1911,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.9.8.3</version>
+				<version>4.10.2.0</version>
 				<!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
 				<!-- <dependencies>
 					<dependency>

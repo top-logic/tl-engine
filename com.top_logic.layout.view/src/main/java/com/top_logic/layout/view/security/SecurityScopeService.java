@@ -122,12 +122,16 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 		 * scope.
 		 *
 		 * <p>
-		 * The {@link com.top_logic.tool.boundsec.BoundChecker#getDefaultCommandGroup() default}
-		 * (visibility) group is always available and need not be listed here; only additional groups
-		 * (e.g. {@code Write}, {@code Delete}) used by a
-		 * {@link com.top_logic.layout.view.command.ViewExecutabilityRule security rule} need to be
-		 * declared, so that the materialized {@link PersBoundComp} carries them for role assignment.
+		 * The default (visibility) command group is always available and need not be listed here;
+		 * only additional groups (e.g. {@code Write}, {@code Delete}) used by a command security
+		 * rule need to be declared, so that the materialized security object carries them for role
+		 * assignment.
 		 * </p>
+		 *
+		 * @implNote The default group is
+		 *           {@link com.top_logic.tool.boundsec.BoundChecker#getDefaultCommandGroup()}; rules
+		 *           are {@link com.top_logic.layout.view.command.ViewExecutabilityRule}s and the
+		 *           materialized object is a {@link PersBoundComp}.
 		 */
 		@Name(GROUPS)
 		@EntryTag("group")

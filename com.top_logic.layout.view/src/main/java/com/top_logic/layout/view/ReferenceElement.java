@@ -123,6 +123,12 @@ public class ReferenceElement implements UIElement {
 		if (parentScope != null) {
 			childContext = childContext.withCommandScope(parentScope);
 		}
+		// Inherit the enclosing security scope so that command security rules in the referenced view
+		// default to the scope of the removable unit that hosts the reference.
+		com.top_logic.layout.view.security.SecurityScope parentSecurityScope = parentContext.getSecurityScope();
+		if (parentSecurityScope != null) {
+			childContext = childContext.withSecurityScope(parentSecurityScope);
+		}
 		com.top_logic.layout.view.channel.DirtyChannel parentDirtyChannel = parentContext.getDirtyChannel();
 		if (parentDirtyChannel != null) {
 			childContext.setDirtyChannel(parentDirtyChannel);

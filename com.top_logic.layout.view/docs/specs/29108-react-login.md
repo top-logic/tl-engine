@@ -75,8 +75,8 @@ remains the default.
 - **`com.top_logic.layout.view`:** the login composition — `PasswordInputControl`
   Provider, `<text>` element, `LoginAction`/`LogoutCommand`,
   `AnonymousOnly`/`AuthenticatedOnly`, `PendingSessionAction`,
-  `tl.login:Credentials` model + `login.view.xml` (currently the dialog view is
-  in the demo — see §5).
+  `tl.login:Credentials` model + `login.view.xml`/`change-password.view.xml`
+  (the reusable dialog views now ship in the view module, see §5).
 - **New module (Phase 3):** `…layout.view.selfservice` depending on
   `tl-security-selfservice` (mail/invitation deps the core lacks).
 
@@ -102,8 +102,9 @@ Login / logout / current-user display in the React UI, fully composed.
   `login/AuthenticatedOnly` (`<authenticated-only>`), `login/PendingSessionAction`,
   `login/I18NConstants`, `ViewServlet` swap hook, `WEB-INF/model/tl.login.model.xml`
   + `WEB-INF/autoconf/model.tl.login.config.xml`.
-- Demo: `WEB-INF/views/login.view.xml` and the app-bar composition in
-  `app.view.xml` (`currentPerson` channel + `<text>` + Login/Logout commands).
+- View module: `WEB-INF/views/login.view.xml` (reusable feature view).
+- Demo: the app-bar composition in `app.view.xml` (`currentPerson` channel +
+  `<text>` + Login/Logout commands), which opens `login.view.xml`.
 
 **Verified (Puppeteer, real browser):** anonymous (`"anonymous"` + Login) →
 dialog (modal window, Name/Password fields, Login/Cancel) → `root`/`root1234` →
@@ -192,10 +193,14 @@ Mirror the legacy `LoginViewDialog` follow-up steps, composed as dialog views.
 
 ## 5. Known follow-ups / cleanups
 
-- **`login.view.xml` location.** Currently in the demo. It's a reusable feature
-  view — move to `com.top_logic.layout.view/WEB-INF/views/` once
-  cross-module `FileManager` resolution for view files is confirmed, so any app
-  gets it for free.
+- **`login.view.xml` location.** ✅ Done. The reusable feature views
+  (`login.view.xml`, `change-password.view.xml`) now live in
+  `com.top_logic.layout.view/src/main/webapp/WEB-INF/views/` alongside
+  `designer.view.xml`. `ViewLoader` resolves them via the aggregated
+  `FileManager`, so any app depending on the view module gets them for free; the
+  demo only keeps `app.view.xml` (its app-bar composition) and the
+  `<expire-password>` demo affordance. References are unchanged (paths are
+  relative to `/WEB-INF/views/`).
 - **German model labels.** `tl.login:Credentials` field labels fall back to
   English defaults ("Name"/"Password"); add a model messages bundle if German
   labels are wanted.

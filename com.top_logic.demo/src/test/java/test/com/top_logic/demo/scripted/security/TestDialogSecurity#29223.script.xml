@@ -580,7 +580,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="superuser: TestDialogSecurity (Anlegen)"
+						label="SecurityStructure_superuser: TestDialogSecurity (Anlegen)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -614,7 +614,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="superuser: TestDialogSecurity > T1 (Löschen)"
+						label="SecurityStructure_superuser: TestDialogSecurity > T1 (Löschen)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -628,7 +628,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="superuser: TestDialogSecurity (Lesen)"
+						label="SecurityStructure_superuser: TestDialogSecurity (Lesen)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
@@ -642,7 +642,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="superuser: TestDialogSecurity > T1 (Lesen)"
+						label="SecurityStructure_superuser: TestDialogSecurity > T1 (Lesen)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"

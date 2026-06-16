@@ -101,19 +101,20 @@ public class RoleRulesImporter {
 	 * @param roleRules
 	 *        The {@link RoleRulesConfig role rules configuration} to create {@link RoleRule} from.
 	 */
-	public static RoleRulesImporter loadRules(ElementAccessManager accessManager, RoleRulesConfig roleRules) {
-		Map<String, BoundedRole> availableRoles = ElementAccessHelper.getAvailableRoles(null, accessManager).stream()
-			.collect(Collectors.toMap(BoundRole::getName, BoundedRole.class::cast));
+	public static RoleRulesImporter loadRules(RoleRulesConfig roleRules) {
+		Map<String, BoundedRole> availableRoles = BoundedRole.getAll()
+			.stream()
+			.collect(Collectors.toMap(BoundRole::getName, Function.identity()));
 
 		RoleRulesImporter importer = new RoleRulesImporter(availableRoles::get);
-		importer.loadRules(roleRules);
+		importer.load(roleRules);
 		return importer;
 	}
 
 	/**
 	 * Loads the given {@link RoleRulesConfig}.
 	 */
-	public void loadRules(RoleRulesConfig roleRules) {
+	public void load(RoleRulesConfig roleRules) {
 		for (RoleRuleConfig roleRule : roleRules.getRules()) {
 			loadRule(roleRule);
 		}

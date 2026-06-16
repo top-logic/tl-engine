@@ -357,7 +357,7 @@ public class ElementAccessManager extends AccessManager {
 	private boolean loadInitialRoleRules() {
 		try {
 			RoleRulesConfig roleRules = getConfig().getRoleRules();
-			RoleRulesImporter roleRulesImporter = RoleRulesImporter.loadRules(this, roleRules);
+			RoleRulesImporter roleRulesImporter = RoleRulesImporter.loadRules(roleRules);
 			if (!roleRulesImporter.getProblems().isEmpty()) {
 				/* Use english resources, because messages are written to log. */
 				Resources resource = Resources.getLogInstance();
@@ -564,14 +564,6 @@ public class ElementAccessManager extends AccessManager {
      */
     public Collection<TLClass> getSupportedMetaElements() {
 		return _securityModuleByClass.keySet();
-    }
-
-    /**
-     * Get the roles that can be given on the meta element
-     */
-	public Collection<? extends BoundRole> getRolesForMetaElement(TLClass aME) {
-		TLModule theBO = _securityModuleByClass.get(aME);
-        return BoundHelper.getInstance().getPossibleRoles(theBO);
     }
 
     @Override

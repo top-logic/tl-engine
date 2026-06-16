@@ -821,18 +821,6 @@ public class BoundHelper extends ManagedClass {
 		return !AccessManager.getInstance().getRoles(aPerson, anObject).isEmpty(); // anObject.hasAnyRole(aPerson);
     }
 
-	/**
-	 * All {@link BoundedRole}s defined for the given {@link TLModule}
-	 */
-	@Deprecated
-	public Set<? extends BoundedRole> getPossibleRoles(TLModule securityModule) {
-		if (securityModule != null) {
-			return BoundedRole.getDefinedRoles(securityModule);
-		} else {
-			return Collections.emptySet();
-        }
-    }
-
     /**
      * Make aDest have all the same Roles as aSource.
      *

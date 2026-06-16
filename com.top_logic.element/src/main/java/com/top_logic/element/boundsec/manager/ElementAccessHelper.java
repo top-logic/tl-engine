@@ -193,25 +193,6 @@ public class ElementAccessHelper {
 		}
 	}
 
-	public static List<? extends BoundRole> getAvailableRoles(TLClass aME, ElementAccessManager accessManager) {
-        List<BoundRole> theList = new ArrayList<>();
-        if (aME != null) {
-            theList.addAll(accessManager.getRolesForMetaElement(aME));
-        } else {
-            HashSet<BoundRole> theRoles = new HashSet<>();
-            for (Iterator<TLClass> theIt = accessManager.getSupportedMetaElements().iterator(); theIt.hasNext(); ) {
-                TLClass theME = theIt.next();
-                theRoles.addAll(getAvailableRoles(theME, accessManager));
-            }
-			Collection<? extends BoundRole> theElementRoles = accessManager.getSecurityRoot().getRoles();
-            if (theElementRoles != null) {
-            	theRoles.addAll(theElementRoles);
-            }
-            theList.addAll(theRoles);
-        }
-        return theList;
-    }
-
 	public static TLClassifier getClassifier(String aClassifierName) {
         return FastListElement.getElementByName(aClassifierName);
     }

@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.TLPrimitive;
@@ -87,6 +88,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	private final ReactFieldControlProvider _textProvider = new TextInputControlProvider();
 
+	private final ReactFieldControlProvider _selectProvider = new SelectControlProvider();
+
 	/**
 	 * Creates a {@link FieldControlService} from configuration.
 	 */
@@ -132,14 +135,19 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return provider.createControl(context, part, model);
 		}
 
-		// 2. Global service map by type name.
+		// 2. Option-based attributes use a select control.
+		if (model instanceof SelectFieldModel) {
+			return _selectProvider.createControl(context, part, model);
+		}
+
+		// 3. Global service map by type name.
 		TLType type = part.getType();
 		ReactFieldControlProvider mapped = _providerByTypeName.get(type.getName());
 		if (mapped != null) {
 			return mapped.createControl(context, part, model);
 		}
 
-		// 3. Built-in primitive-kind fallback.
+		// 4. Built-in primitive-kind fallback.
 		return primitiveFallback(context, part, model);
 	}
 

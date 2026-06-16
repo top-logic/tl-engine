@@ -14,8 +14,9 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -31,7 +32,6 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
-import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.view.model.ObservableTableModel;
 import com.top_logic.model.TLClass;
@@ -161,10 +161,16 @@ public class TableElement implements UIElement {
 		List<TLModelPartRef> getTypes();
 
 		/**
-		 * Column configuration for the table.
+		 * Explicit list of columns to display.
+		 *
+		 * <p>
+		 * When set, only the listed columns are shown, in the given order. Column metadata (label,
+		 * accessor, renderer) is still derived from {@link #getTypes()}. When empty, all columns
+		 * derived from {@link #getTypes()} are shown.
+		 * </p>
 		 */
 		@Name(COLUMNS)
-		PolymorphicConfiguration<TableConfigurationProvider> getColumns();
+		ColumnsConfig getColumns();
 
 		/**
 		 * Optional reference to a {@link ViewChannel} to write the selected row object(s) to.
@@ -174,11 +180,38 @@ public class TableElement implements UIElement {
 		ChannelRef getSelection();
 	}
 
+	/**
+	 * Container for the list of {@link ColumnConfig}s of a {@link TableElement}.
+	 */
+	public interface ColumnsConfig extends ConfigurationItem {
+
+		/**
+		 * The columns to display, in display order.
+		 */
+		@DefaultContainer
+		List<ColumnConfig> getColumns();
+	}
+
+	/**
+	 * Configuration for a single displayed column of a {@link TableElement}.
+	 */
+	@TagName("column")
+	public interface ColumnConfig extends ConfigurationItem {
+
+		/** Configuration name for {@link #getAttribute()}. */
+		String ATTRIBUTE = "attribute";
+
+		/**
+		 * The name of the attribute (column) to display.
+		 */
+		@Name(ATTRIBUTE)
+		@Mandatory
+		String getAttribute();
+	}
+
 	private final Config _config;
 
 	private final QueryExecutor _rowsExecutor;
-
-	private final TableConfigurationProvider _columnsProvider;
 
 	/**
 	 * Creates a new {@link TableElement} from configuration.
@@ -192,7 +225,6 @@ public class TableElement implements UIElement {
 	@CalledByReflection
 	public TableElement(InstantiationContext context, Config config) {
 		_config = config;
-		_columnsProvider = context.getInstance(config.getColumns());
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 	}
@@ -216,21 +248,29 @@ public class TableElement implements UIElement {
 		if (typeRefs != null && !typeRefs.isEmpty()) {
 			Set<TLClass> types = resolveTypes(typeRefs);
 			tableConfig = TableConfigurationFactory.build(new GenericTableConfigurationProvider(types));
-		} else if (_columnsProvider != null) {
-			tableConfig = TableConfigurationFactory.build(_columnsProvider);
 		} else {
 			tableConfig = TableConfigurationFactory.table();
 		}
 
 		// 4. Build column names from configuration.
-		List<String> columnNames = new ArrayList<>(tableConfig.getDefaultColumns());
-		if (columnNames.isEmpty()) {
-			columnNames = new ArrayList<>(tableConfig.createColumnIndex().keySet());
+		List<String> explicitColumns = explicitColumnNames();
+		List<String> columnNames = explicitColumns;
+		if (columnNames == null) {
+			columnNames = new ArrayList<>(tableConfig.getDefaultColumns());
+			if (columnNames.isEmpty()) {
+				columnNames = new ArrayList<>(tableConfig.createColumnIndex().keySet());
+			}
 		}
 
 		// 5. Create ObjectTableModel.
 		ObjectTableModel tableModel =
 			new ObjectTableModel(columnNames, tableConfig, new ArrayList<>(rows));
+		if (explicitColumns != null) {
+			// The ObjectTableModel constructor makes all declared columns visible (the column name
+			// list only defines their order). Restrict the displayed columns to the explicitly
+			// configured ones.
+			tableModel.getHeader().setVisibleColumns(explicitColumns);
+		}
 
 		// 6. Wrap in ObservableTableModel.
 		Set<TLStructuredType> observedTypes = resolveObservedTypes();
@@ -292,6 +332,26 @@ public class TableElement implements UIElement {
 			return Collections.emptyList();
 		}
 		return Collections.singletonList(result);
+	}
+
+	/**
+	 * The explicitly configured column names, or {@code null} if {@link Config#getColumns()} is not
+	 * set (so that the type-derived default columns are used).
+	 */
+	private List<String> explicitColumnNames() {
+		ColumnsConfig columnsConfig = _config.getColumns();
+		if (columnsConfig == null) {
+			return null;
+		}
+		List<ColumnConfig> columns = columnsConfig.getColumns();
+		if (columns.isEmpty()) {
+			return null;
+		}
+		List<String> columnNames = new ArrayList<>(columns.size());
+		for (ColumnConfig column : columns) {
+			columnNames.add(column.getAttribute());
+		}
+		return columnNames;
 	}
 
 	private static Set<TLClass> resolveTypes(List<TLModelPartRef> typeRefs) {

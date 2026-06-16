@@ -52,6 +52,9 @@
 						types="tl.accounts:Role"
 						observed-types="tl.accounts:Role"
 					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
 						<rows>all(`tl.accounts:Role`)</rows>
 					</table>
 				</panel>
@@ -67,6 +70,7 @@
 					</title>
 					<form input="selectedRole">
 						<field attribute="name"/>
+						<field attribute="isSystem"/>
 						<field attribute="description"/>
 					</form>
 				</panel>

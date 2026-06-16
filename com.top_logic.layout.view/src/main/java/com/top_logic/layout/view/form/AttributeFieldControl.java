@@ -117,8 +117,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			return _chrome;
 		}
 
-		_model = new AttributeFieldModel(current, part);
-		_model.setEditable(_formModel.isEditMode() && !_forceReadonly);
+		_model = createModel(current, part);
+		_model.setEditable(_formModel.isEditMode() && !_forceReadonly && !part.isDerived());
 		_formControl.registerParticipant(this);
 
 		addModelListener();
@@ -166,8 +166,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		if (_model == null) {
 			// First compatible object arrived or re-appearing after hide.
-			_model = new AttributeFieldModel(current, part);
-			_model.setEditable(source.isEditMode() && !_forceReadonly);
+			_model = createModel(current, part);
+			_model.setEditable(source.isEditMode() && !_forceReadonly && !part.isDerived());
 			_formControl.registerParticipant(this);
 
 			addModelListener();
@@ -185,7 +185,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		// Rebind existing model to the current object.
 		_model.setObject(current);
-		_model.setEditable(source.isEditMode() && !_forceReadonly);
+		_model.setEditable(source.isEditMode() && !_forceReadonly && !part.isDerived());
 		_formControl.registerParticipant(this);
 		_chrome.setDirty(_model.isDirty());
 
@@ -250,9 +250,23 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				_model.removeListener(_modelListener);
 				_modelListener = null;
 			}
+			if (_model instanceof AttributeSelectFieldModel) {
+				((AttributeSelectFieldModel) _model).dispose();
+			}
 			_formControl.unregisterParticipant(this);
 		}
 		_model = null;
+	}
+
+	/**
+	 * Creates the {@link AttributeFieldModel} for the given attribute, using an
+	 * {@link AttributeSelectFieldModel} for option-based attributes.
+	 */
+	private AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part) {
+		if (AttributeOptions.isSelect(part)) {
+			return new AttributeSelectFieldModel(object, part, _formControl);
+		}
+		return new AttributeFieldModel(object, part);
 	}
 
 	/**
@@ -288,6 +302,11 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				TLObjectOverlay overlay = _formControl.getOverlay();
 				if (validationModel != null && _model != null && overlay != null) {
 					validationModel.onValueChanged(overlay, _model.getPart());
+				}
+
+				// Let option-based fields recompute options that depend on this field.
+				if (_model != null) {
+					_formControl.notifyFieldChanged(_model.getPart());
 				}
 			}
 

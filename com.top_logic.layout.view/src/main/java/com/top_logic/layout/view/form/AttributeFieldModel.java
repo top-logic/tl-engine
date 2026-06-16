@@ -98,6 +98,13 @@ public class AttributeFieldModel extends AbstractFieldModel {
 	}
 
 	/**
+	 * The object this model currently reads from and writes to (base object or overlay).
+	 */
+	protected TLObject getObject() {
+		return _object;
+	}
+
+	/**
 	 * Re-reads the current value from the underlying object and fires a value change if the cached
 	 * value differs.
 	 *

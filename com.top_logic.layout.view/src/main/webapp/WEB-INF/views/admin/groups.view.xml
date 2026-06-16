@@ -52,6 +52,9 @@
 						types="tl.accounts:Group"
 						observed-types="tl.accounts:Group"
 					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
 						<rows>all(`tl.accounts:Group`)</rows>
 					</table>
 				</panel>
@@ -67,6 +70,9 @@
 					</title>
 					<form input="selectedGroup">
 						<field attribute="name"/>
+						<field attribute="isSystem"/>
+						<field attribute="defaultGroup"/>
+						<field attribute="members"/>
 					</form>
 				</panel>
 			</pane>

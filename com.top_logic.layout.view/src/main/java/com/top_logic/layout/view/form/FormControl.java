@@ -21,6 +21,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
@@ -80,6 +81,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private final List<FormModelListener> _formModelListeners = new ArrayList<>();
 
 	private final List<FormParticipant> _participants = new ArrayList<>();
+
+	private final List<FieldChangeListener> _fieldChangeListeners = new ArrayList<>();
 
 	private final ViewChannel.ChannelListener _inputListener = this::handleInputChanged;
 
@@ -179,6 +182,54 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 */
 	public void unregisterParticipant(FormParticipant participant) {
 		_participants.remove(participant);
+	}
+
+	/**
+	 * Listener notified when the value of a field in this form changes.
+	 *
+	 * <p>
+	 * Used by option-based fields whose options depend on other fields, so that they can recompute
+	 * their options when a dependency changes.
+	 * </p>
+	 */
+	public interface FieldChangeListener {
+
+		/**
+		 * Called after a field value changed.
+		 *
+		 * @param part
+		 *        The attribute whose field changed.
+		 */
+		void onFieldChanged(TLStructuredTypePart part);
+	}
+
+	/**
+	 * Registers a {@link FieldChangeListener}.
+	 */
+	public void addFieldChangeListener(FieldChangeListener listener) {
+		_fieldChangeListeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a {@link FieldChangeListener}.
+	 */
+	public void removeFieldChangeListener(FieldChangeListener listener) {
+		_fieldChangeListeners.remove(listener);
+	}
+
+	/**
+	 * Notifies all {@link FieldChangeListener}s that the field for the given attribute changed.
+	 *
+	 * @param part
+	 *        The attribute whose field value changed.
+	 */
+	public void notifyFieldChanged(TLStructuredTypePart part) {
+		if (_fieldChangeListeners.isEmpty()) {
+			return;
+		}
+		for (FieldChangeListener listener : new ArrayList<>(_fieldChangeListeners)) {
+			listener.onFieldChanged(part);
+		}
 	}
 
 	/**

@@ -52,6 +52,9 @@
 						types="tl.accounts:Person"
 						observed-types="tl.accounts:Person"
 					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
 						<rows>all(`tl.accounts:Person`)</rows>
 					</table>
 				</panel>
@@ -67,8 +70,19 @@
 					</title>
 					<form input="selectedAccount">
 						<field attribute="name"/>
+						<field attribute="firstName"/>
+						<field attribute="lastName"/>
 						<field attribute="language"/>
+						<field attribute="country"/>
+						<field attribute="timezone"/>
 						<field attribute="restrictedUser"/>
+						<field attribute="admin"/>
+						<field attribute="mfaRequirement"/>
+						<field attribute="authDeviceID"/>
+						<field attribute="unusedNotified"/>
+						<field attribute="groups"/>
+						<field attribute="representativeGroup"/>
+						<field attribute="deputyFor"/>
 					</form>
 				</panel>
 			</pane>

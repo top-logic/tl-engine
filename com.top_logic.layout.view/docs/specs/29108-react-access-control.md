@@ -321,13 +321,16 @@ Remaining Phase 3 work:
   it exists purely to exercise the feature. Real catalogs live per app.
 - **Catalog persistence.** Catalog is static config by design; if runtime-editable
   scopes are ever needed, that is a separate (migration-bearing) decision.
-- **Logout does not complete the session swap (pre-existing).** The React
-  `LogoutCommand` defers the swap to a `window.location.reload()` via
-  `PendingSessionAction.requestLogout`, but in testing the reload came back still
-  authenticated (the `<anonymous-only>` "Anmeldung" button stayed hidden). A fresh
-  browser context / app restart was needed to drop the session. Unrelated to
-  access control (it lives in the login work), but it blocks switching accounts in
-  one session and is worth fixing before relying on the admin UI for user testing.
+- **Logout / login reload occasionally lost (FIXED — `aa5b516f`).** The React
+  `LogoutCommand`/`LoginAction` defer the session swap to a
+  `window.location.reload()` enqueued on the SSE queue. `SSEUpdateQueue.flush()`
+  polled each event off the queue *before* writing it, so a write to a
+  dead/half-open connection dropped the event for good (reconnect only replays
+  control state via `sendFullState`, not one-off events) — the reload never fired
+  and logout/login was left half-applied (needed a fresh browser context / app
+  restart). Fixed by removing an event only after a successful write (retry on the
+  next reconnect) and synchronizing `flush()`. Verified a full
+  login → logout → login cycle in one browser context.
 
 ---
 

@@ -14,7 +14,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -62,7 +61,9 @@ public class LoginMethodsElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		String returnTo = DefaultDisplayContext.getDisplayContext().asRequest().getContextPath() + "/view/";
+		// Context-relative return path: the authentication servlet's redirect-to-start-page prepends
+		// the context path itself, so this must NOT include it (otherwise it would be doubled).
+		String returnTo = "/view/";
 
 		List<LoginMethod> methods = LoginMethods.all();
 		List<ReactControl> buttons = new ArrayList<>(methods.size());

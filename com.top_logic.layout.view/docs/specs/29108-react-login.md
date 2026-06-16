@@ -252,6 +252,16 @@ Mirror the legacy `LoginViewDialog` follow-up steps, composed as dialog views.
   the real Keycloak IdP sign-in page, with `redirect_uri` pointing back to
   `/servlet/callback`. The post-IdP callback → `loginUser` → `startPage` is pac4j's
   existing path.
+- **Fix — external auth vs. the anonymous view session.** `ExternalAuthenticationServlet`
+  with `reuseSession="true"` (the pac4j default) reused *any* existing HTTP session
+  and skipped the login. Because the view layer boots every browser as the
+  anonymous user, an SSO round-trip "reused" that anonymous session and returned to
+  the app still anonymous. Fixed in core: only reuse an *authenticated*
+  (non-anonymous) session; otherwise log the external user in (after which
+  `loginUser` installs a fresh session context and the per-tab subsession is
+  recreated with the SSO user). Legacy UIs are unaffected (they never hold an
+  anonymous session). End-to-end completion needs a real IdP login to confirm
+  (the demo points at the BOS `tl-demo` Keycloak realm).
 - **Not done (optional):** retrofitting the legacy `LoginViewDialog` to the same
   SPI so both UIs share one contract.
 

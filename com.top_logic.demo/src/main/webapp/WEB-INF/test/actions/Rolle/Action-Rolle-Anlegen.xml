@@ -17,9 +17,6 @@
 			<t:parameter name="Name"
 				type="string"
 			/>
-			<t:parameter name="Berechtigungsstruktur"
-				type="string"
-			/>
 			<t:parameter name="Tester"
 				default="root"
 				type="string"
@@ -28,7 +25,7 @@
 	</t:head>
 	<t:body>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle anlegen (Berechtigungsstruktur: '${$Berechtigungsstruktur}', Name: '${$Name}')"
+			comment="Rolle anlegen (Name: '${$Name}')"
 			user-id="${$Tester}"
 		>
 			<actions>
@@ -37,26 +34,6 @@
 						name=""
 						tab-path="Administration > Berechtigungen"
 					/>
-				</action>
-
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Berechtigungsstruktur"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-							tab-path="Administration > Berechtigungen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="${$Berechtigungsstruktur}"
-							/>
-						</values>
-					</value>
 				</action>
 
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">

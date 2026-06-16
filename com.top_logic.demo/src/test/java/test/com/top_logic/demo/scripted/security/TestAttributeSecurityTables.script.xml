@@ -1394,39 +1394,6 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Berechtigungen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="DemoTypes"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Berechtigungen > Rollen"
 					/>
 				</action>
@@ -1926,29 +1893,6 @@
 						tab-path="Administration > Berechtigungen > Rollenprofile"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="DemoTypes"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
@@ -2224,25 +2168,6 @@
 						</action>
 					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Berechtigungsstruktur"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-							tab-path="Administration > Berechtigungen"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-						<values>
-							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
-								ref="SecurityStructure"
-							/>
-						</values>
-					</value>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
@@ -2435,34 +2360,6 @@
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration"
 					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Berechtigungen"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="DemoTypes"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
@@ -5311,39 +5208,6 @@
 					comment="Delete Roles"
 				>
 					<actions>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Berechtigungen"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-								tab-path="Administration > Berechtigungen"
-							/>
-							<field-values>
-								<value>
-									<field-path>
-										<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-											field-label-comment="Berechtigungsstruktur"
-											field-name="structure"
-										/>
-									</field-path>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-										<list>
-											<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-												label="DemoTypes"
-											/>
-										</list>
-									</value>
-								</value>
-							</field-values>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Berechtigungen > Rollen"

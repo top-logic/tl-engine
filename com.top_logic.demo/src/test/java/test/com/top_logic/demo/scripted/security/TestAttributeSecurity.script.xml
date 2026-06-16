@@ -77,29 +77,6 @@
 						tab-path="Administration > Berechtigungen > Rollenprofile"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="DemoTypes"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
 					columns="Rechte,BooleanAdministrator"
 					label="true"
@@ -1137,29 +1114,6 @@
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Berechtigungen"
 					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-						tab-path="Administration > Berechtigungen"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-									field-label-comment="Berechtigungsstruktur"
-									field-name="structure"
-								/>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="DemoTypes"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"

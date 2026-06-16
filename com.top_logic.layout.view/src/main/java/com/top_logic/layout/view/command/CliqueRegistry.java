@@ -32,6 +32,9 @@ public class CliqueRegistry {
 		list.add(new CliqueInfo(CommandCliques.DELETE, 300, ToolbarGroupDisplay.INLINE, null, null));
 		list.add(new CliqueInfo(CommandCliques.COMMIT, 400, ToolbarGroupDisplay.INLINE, null, null));
 		list.add(new CliqueInfo(CommandCliques.NAVIGATE, 500, ToolbarGroupDisplay.INLINE, null, null));
+		// TODO: the menu-group labels below ("View"/"Export"/"More") are hardcoded English
+		// strings. They surface as the menu trigger's accessible name (and as visible text for
+		// the label-only triggers). Convert CliqueInfo#label to a ResKey for proper I18N.
 		list.add(new CliqueInfo(CommandCliques.VIEW, 600, ToolbarGroupDisplay.MENU, "View", null));
 		list.add(new CliqueInfo(CommandCliques.EXPORT, 700, ToolbarGroupDisplay.MENU, "Export", null));
 		list.add(new CliqueInfo(CommandCliques.MORE, 800, ToolbarGroupDisplay.MENU, "More", "css:bi bi-list"));

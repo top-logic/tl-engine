@@ -1,8 +1,9 @@
 import { React, useTLState, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
 
-const { useCallback, useRef, useState, useEffect } = React;
+const { useCallback, useRef, useState, useEffect, useLayoutEffect } = React;
 
 interface CliqueGroup {
   name: string;
@@ -36,12 +37,40 @@ const InlineGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
  */
 const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
   const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = useCallback(() => {
     setOpen(prev => !prev);
   }, []);
+
+  // Position the dropdown relative to the trigger via fixed coordinates. The dropdown is
+  // rendered through a portal into document.body so it escapes any clipping ancestor (e.g. a
+  // scrollable split-panel child); fixed positioning then keeps it anchored to the trigger.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const t = triggerRef.current;
+      if (!t) return;
+      const r = t.getBoundingClientRect();
+      // Right-align the menu to the trigger's right edge (anchoring via `right` avoids
+      // measuring the menu width and keeps it inside the viewport on the right).
+      setMenuStyle({
+        position: 'fixed',
+        top: r.bottom + 4,
+        right: Math.max(8, window.innerWidth - r.right),
+        left: 'auto',
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open]);
 
   // Close on outside click.
   useEffect(() => {
@@ -113,30 +142,36 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
           their live SSE subscription. If items were mounted lazily on open, they would read
           the toolbar's build-time snapshot and miss any executability change (e.g. a row
           getting selected) that happened while the menu was closed - showing stale
-          (disabled) entries. */}
-      <div
-        ref={menuRef}
-        className="tlToolbar__dropdown"
-        role="menu"
-        hidden={!open}
-        onClick={() => setOpen(false)}
-      >
-        {visibleItems.map((item, i) => (
-          <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-            <TLChild control={item} />
-          </div>
-        ))}
-        {group.subGroups?.map((sub, si) => (
-          <React.Fragment key={`sub-${si}`}>
-            <hr className="tlToolbar__dropdownSeparator" />
-            {sub.items.map((item, i) => (
-              <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-                <TLChild control={item} />
-              </div>
-            ))}
-          </React.Fragment>
-        ))}
-      </div>
+          (disabled) entries. It is portaled to document.body so a clipping ancestor cannot
+          cut it off; React context (and thus the child controls) propagates through the
+          portal. */}
+      {createPortal(
+        <div
+          ref={menuRef}
+          className="tlToolbar__dropdown"
+          role="menu"
+          hidden={!open}
+          style={open ? menuStyle : undefined}
+          onClick={() => setOpen(false)}
+        >
+          {visibleItems.map((item, i) => (
+            <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
+              <TLChild control={item} />
+            </div>
+          ))}
+          {group.subGroups?.map((sub, si) => (
+            <React.Fragment key={`sub-${si}`}>
+              <hr className="tlToolbar__dropdownSeparator" />
+              {sub.items.map((item, i) => (
+                <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
+                  <TLChild control={item} />
+                </div>
+              ))}
+            </React.Fragment>
+          ))}
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

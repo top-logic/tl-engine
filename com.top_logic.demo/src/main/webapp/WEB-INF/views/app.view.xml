@@ -58,15 +58,6 @@
 							<de>Channels-Demo</de>
 						</label>
 					</nav-item>
-					<nav-item id="forms"
-						icon="css:bi bi-pencil-square"
-					>
-						<view-ref view="demo/form-demo.view.xml"/>
-						<label>
-							<en>Form Demo</en>
-							<de>Formular-Demo</de>
-						</label>
-					</nav-item>
 					<nav-item id="input-controls"
 						icon="css:bi bi-input-cursor"
 					>

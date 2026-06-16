@@ -60,6 +60,34 @@
 								bind-input-to="model"
 							/>
 						</generic-command>
+						<!--
+							Expires the selected account's password, forcing the change-password
+							step on that account's next login.
+						-->
+						<generic-command placement="TOOLBAR" clique="more" input="selectedAccount">
+							<label>
+								<en>Expire password</en>
+								<de>Passwort ablaufen lassen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<expire-password/>
+						</generic-command>
+						<!--
+							Marks the selected account as MFA-required with no secret, forcing the
+							MFA-enrollment step on that account's next login.
+						-->
+						<generic-command placement="TOOLBAR" clique="more" input="selectedAccount">
+							<label>
+								<en>Require MFA (enroll)</en>
+								<de>MFA verlangen (Einrichtung)</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<enable-mfa/>
+						</generic-command>
 					</commands>
 					<table
 						selection="selectedAccount"

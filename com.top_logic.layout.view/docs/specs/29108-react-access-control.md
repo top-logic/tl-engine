@@ -292,11 +292,35 @@ access-control admin area, the first piece of the "admin surface" below:
 - **Commits:** `c773ebbf` (admin area), `a152a60f` (demo wiring), `cf0e6b72`
   (initial password → usable accounts).
 
+**Role assignment to scopes (DONE, browser-verified).** A permission matrix
+(`SecurityMatrixElement`, package `…view.admin`) on a new **Permissions** tab:
+rows = (scope, command group) from the `SecurityScopeService` catalog, columns =
+all `tl.accounts:Role`s, each cell a checkbox that grants/revokes that role's
+command group on that scope via `SecurityScope.setGranted(group, role, bool)`
+(which wraps `PersBoundComp.addAccess`/`removeAccess` in its own transaction —
+the value-listener has no ambient transaction; a buffered Save/Apply with one
+transaction is a possible future alternative). Notable:
+- The matrix is an app-specific widget, so it is referenced by `class=`, not a
+  global `@TagName`. View content lists resolve by tag name, so a no-`@TagName`
+  element is placed via the `children` property's entry tag — now made explicit:
+  `ContainerElement.Config.getChildren()` is `@EntryTag("child")`, used as
+  `<child class="…SecurityMatrixElement"/>`.
+- Cell checkboxes use the **new-style** `AbstractFieldModel` (a concrete
+  `FieldModel`) with a `FieldModelListener`, **not** the legacy
+  `FormContext`/`FormField`/`FormFieldAdapter` (those are legacy-compat only). A
+  plain `AbstractFieldModel` also skips the control's label resource lookup, so
+  there is no stray label resource to define.
+- **Verified (Playwright, root):** matrix renders (demo-restricted/Read,
+  demo-restricted/Write, administration/Read × all roles); toggling a checkbox
+  persists (still checked after a full reload that re-reads the `PersBoundComp`).
+- **Commit:** `c1099a82`.
+
 Remaining Phase 3 work:
-- **Role assignment to scopes.** The admin area lists accounts/groups/roles but
-  does not yet assign roles to the materialized `PersBoundComp`s — the missing
-  link that makes a non-admin able to pass (or be denied by) a scope, and the
-  prerequisite for the live role-based **command deny** demo deferred from Phase 2.
+- **Role → user assignment.** Granting a role *to a scope* is done; for a
+  non-admin (e.g. `tester`) to actually pass a gated scope, the role must also be
+  assigned *to the user* on the security object (the security-structure side).
+  That is the last link for the live role-based **command-deny** demo deferred
+  from Phase 2.
 - **Per-object roles.** Today the security object is always the root
   (structure-level). Allow a scope reference to bind a model channel
   (`<access-control scope="…" security-object="{chan}"/>`) so roles are checked

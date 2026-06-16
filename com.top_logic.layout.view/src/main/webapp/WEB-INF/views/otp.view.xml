@@ -27,7 +27,7 @@
 			</text>
 			<field attribute="code"/>
 			<commands>
-				<generic-command placement="BUTTON_BAR">
+				<generic-command placement="BUTTON_BAR" image="css:bi bi-check-lg">
 					<label>
 						<en>Verify</en>
 						<de>Best&#228;tigen</de>
@@ -39,7 +39,7 @@
 		</form>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand" image="css:bi bi-x-lg">
 					<label>
 						<en>Cancel</en>
 						<de>Abbrechen</de>

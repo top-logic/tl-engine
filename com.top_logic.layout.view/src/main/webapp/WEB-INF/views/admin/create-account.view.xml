@@ -22,7 +22,7 @@
 			<field attribute="restrictedUser"/>
 			<field attribute="admin"/>
 			<commands>
-				<generic-command placement="TOOLBAR">
+				<generic-command placement="BUTTON_BAR" image="css:bi bi-check-lg">
 					<label>
 						<en>Create</en>
 						<de>Erstellen</de>
@@ -38,7 +38,7 @@
 		</form>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand" image="css:bi bi-x-lg">
 					<label>
 						<en>Cancel</en>
 						<de>Abbrechen</de>

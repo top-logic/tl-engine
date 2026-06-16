@@ -264,7 +264,7 @@
 		<header>
 			<app-bar variant="flat">
 				<commands>
-					<open-designer placement="TOOLBAR">
+					<open-designer placement="TOOLBAR" image="css:bi bi-easel">
 						<label>
 							<en>Designer</en>
 							<de>Designer</de>
@@ -276,7 +276,7 @@
 					</open-designer>
 
 					<!-- Login: shown only for the anonymous user; opens the login dialog. -->
-					<generic-command placement="TOOLBAR">
+					<generic-command placement="TOOLBAR" image="css:bi bi-box-arrow-in-right">
 						<label>
 							<en>Login</en>
 							<de>Anmeldung</de>
@@ -292,7 +292,7 @@
 					</generic-command>
 
 					<!-- Logout: shown only for an authenticated user. -->
-					<logout-command placement="TOOLBAR">
+					<logout-command placement="TOOLBAR" image="css:bi bi-box-arrow-right">
 						<label>
 							<en>Logout</en>
 							<de>Abmeldung</de>

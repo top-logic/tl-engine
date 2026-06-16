@@ -20,7 +20,7 @@
 						<de>Gruppen</de>
 					</title>
 					<commands>
-						<generic-command placement="TOOLBAR">
+						<generic-command placement="TOOLBAR" image="css:bi bi-plus-lg">
 							<label>
 								<en>New</en>
 								<de>Neu</de>
@@ -33,7 +33,7 @@
 								<bind channel="selection" to="selectedGroup"/>
 							</open-dialog>
 						</generic-command>
-						<generic-command placement="TOOLBAR" input="selectedGroup">
+						<generic-command placement="TOOLBAR" clique="more" input="selectedGroup" image="css:bi bi-trash">
 							<label>
 								<en>Delete</en>
 								<de>L&#xF6;schen</de>

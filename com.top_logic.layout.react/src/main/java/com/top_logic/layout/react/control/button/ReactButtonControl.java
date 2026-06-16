@@ -42,6 +42,15 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for the button display mode (see {@link ButtonDisplayMode}). */
 	private static final String DISPLAY_MODE = "displayMode";
 
+	/** State key for the {@link ButtonAppearance appearance}. */
+	private static final String APPEARANCE = "appearance";
+
+	/** State key for the {@link ButtonSize size}. */
+	private static final String SIZE = "size";
+
+	/** State key for a direct client-side navigation target (bypasses the server command). */
+	private static final String NAVIGATE_URL = "navigateUrl";
+
 	private final ButtonAction _action;
 
 	private CommandModel _model;
@@ -133,6 +142,30 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setDisplayMode(ButtonDisplayMode displayMode) {
 		putState(DISPLAY_MODE, displayMode == null ? null : displayMode.getExternalName());
+	}
+
+	/**
+	 * Sets the button {@link ButtonAppearance appearance} (e.g. {@link ButtonAppearance#LINK} to
+	 * render the button as an inline text link).
+	 */
+	public void setAppearance(ButtonAppearance appearance) {
+		putState(APPEARANCE,
+			appearance == null || appearance == ButtonAppearance.DEFAULT ? null : appearance.getExternalName());
+	}
+
+	/**
+	 * Sets the button {@link ButtonSize size}.
+	 */
+	public void setSize(ButtonSize size) {
+		putState(SIZE, size == null || size == ButtonSize.DEFAULT ? null : size.getExternalName());
+	}
+
+	/**
+	 * Makes the button navigate the browser directly to the given URL on click instead of dispatching
+	 * a server command (e.g. an external SSO redirect). {@code null} clears it.
+	 */
+	public void setNavigateUrl(String url) {
+		putState(NAVIGATE_URL, url);
 	}
 
 	private void putImageState(ThemeImage image) {

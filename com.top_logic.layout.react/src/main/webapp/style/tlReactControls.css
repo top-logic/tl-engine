@@ -72,6 +72,50 @@ button.tlReactButton:disabled {
 	color: var(--text-disabled);
 }
 
+/* --- TLButton link variant: render the button as an inline text link ---- */
+
+.tlReactButton--link,
+button.tlReactButton--link {
+	height: auto;
+	padding: 0;
+	border: none;
+	box-shadow: none;
+	background: transparent;
+	font-weight: normal;
+	color: var(--link-primary, #0f62fe);
+	text-decoration: underline;
+}
+
+button.tlReactButton--link:not(:disabled):hover,
+button.tlReactButton--link:not(:disabled):active {
+	background: transparent;
+	box-shadow: none;
+	color: var(--link-primary-hover, #0043ce);
+}
+
+/* --- TLButton small size (independent of appearance) -------------------- */
+
+.tlReactButton--small,
+button.tlReactButton--small {
+	height: 1.5rem;
+	padding: 0 var(--spacing-02);
+	font-size: var(--body-compact-01-font-size, 0.875rem);
+}
+
+.tlReactButton--large,
+button.tlReactButton--large {
+	height: 2.5rem;
+	padding: 0 var(--spacing-05);
+	font-size: var(--heading-compact-03-font-size, 1rem);
+}
+
+/* A link keeps its inline layout regardless of size; only the font size differs. */
+button.tlReactButton--small.tlReactButton--link,
+button.tlReactButton--large.tlReactButton--link {
+	height: auto;
+	padding: 0;
+}
+
 /* --- TLButton icon-only variant ----------------------------------------- */
 
 .tlReactButton--icon {

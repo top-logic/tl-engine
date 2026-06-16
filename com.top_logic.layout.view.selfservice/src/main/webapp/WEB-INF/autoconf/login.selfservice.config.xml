@@ -11,7 +11,9 @@
 		-->
 		<config config:interface="com.top_logic.layout.view.login.LoginCommandsConfig">
 			<commands>
-				<button>
+				<button appearance="LINK"
+					size="SMALL"
+				>
 					<action class="com.top_logic.layout.view.command.GenericViewCommand">
 						<label>
 							<en>Forgot password?</en>

@@ -23,7 +23,6 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
-import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -69,8 +68,9 @@ public class LoginMethodsElement implements UIElement {
 		List<ReactControl> buttons = new ArrayList<>(methods.size());
 		for (LoginMethod method : methods) {
 			String label = Resources.getInstance().getString(method.getLabel());
-			String url = method.getInitiationUrl(returnTo);
-			ReactButtonControl button = new ReactButtonControl(context, label, ctx -> redirect(ctx, url));
+			ReactButtonControl button = new ReactButtonControl(context, label, ctx -> HandlerResult.DEFAULT_RESULT);
+			// Navigate the browser directly to the external login (no server/SSE round-trip).
+			button.setNavigateUrl(method.getInitiationUrl(returnTo));
 			ThemeImage icon = method.getIcon();
 			if (icon != null) {
 				button.setImage(icon);
@@ -79,12 +79,6 @@ public class LoginMethodsElement implements UIElement {
 		}
 		return new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.STRETCH, false,
 			buttons);
-	}
-
-	private static HandlerResult redirect(com.top_logic.layout.react.ReactContext context, String url) {
-		String js = "window.location.assign('" + url + "');";
-		context.getSSEQueue().enqueue(JSSnipplet.create().setCode(js));
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

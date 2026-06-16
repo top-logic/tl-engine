@@ -46,10 +46,21 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip as string | undefined;
   const hiddenStyle = resolvedHidden ? { display: 'none' as const } : undefined;
+  // Optional appearance modifier (e.g. "link" renders the button as an inline text link).
+  const appearance = state.appearance as string | undefined;
+  // Optional size modifier ("small" / "large"); absent means the default size.
+  const size = state.size as string | undefined;
+  // When set, clicking navigates the browser directly (e.g. an external SSO redirect) instead of
+  // dispatching a server command - this avoids depending on the asynchronous SSE round-trip.
+  const navigateUrl = state.navigateUrl as string | undefined;
 
   const handleClick = useCallback(() => {
+    if (navigateUrl) {
+      window.location.assign(navigateUrl);
+      return;
+    }
     sendCommand(resolvedCommand);
-  }, [sendCommand, resolvedCommand]);
+  }, [sendCommand, resolvedCommand, navigateUrl]);
 
   const iconOnly = resolvedMode === 'icon-only';
   const showIcon = resolvedMode === 'icon-only' || resolvedMode === 'icon-label';
@@ -69,7 +80,10 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       onClick={handleClick}
       disabled={resolvedDisabled}
       style={hiddenStyle}
-      className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')}
+      className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
+        + (appearance === 'link' ? ' tlReactButton--link' : '')
+        + (size === 'small' ? ' tlReactButton--small' : '')
+        + (size === 'large' ? ' tlReactButton--large' : '')}
       data-tooltip={tooltipAttr}
       aria-label={iconOnly ? resolvedLabel : undefined}
     >

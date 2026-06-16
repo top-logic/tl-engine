@@ -17,6 +17,8 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
+import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -53,8 +55,8 @@ public class ButtonElement implements UIElement {
 		/** Configuration name for {@link #getAction()}. */
 		String ACTION = "action";
 
-		/** Configuration name for {@link #getStyle()}. */
-		String STYLE = "style";
+		/** Configuration name for {@link #getAppearance()}. */
+		String APPEARANCE = "appearance";
 
 		/** Configuration name for {@link #getSize()}. */
 		String SIZE = "size";
@@ -71,10 +73,10 @@ public class ButtonElement implements UIElement {
 		PolymorphicConfiguration<? extends ViewCommand> getAction();
 
 		/**
-		 * Button display style.
+		 * Button appearance (e.g. {@link ButtonAppearance#LINK} to render as an inline text link).
 		 */
-		@Name(STYLE)
-		ButtonStyle getStyle();
+		@Name(APPEARANCE)
+		ButtonAppearance getAppearance();
 
 		/**
 		 * Button size.
@@ -125,6 +127,8 @@ public class ButtonElement implements UIElement {
 		ViewCommandModel model = new ViewCommandModel(_command, _commandConfig, inputChannel, rule, confirmation);
 
 		ReactButtonControl control = new ReactButtonControl(context, model);
+		control.setAppearance(_config.getAppearance());
+		control.setSize(_config.getSize());
 		control.addBeforeWriteAction(model::attach);
 		control.addCleanupAction(model::detach);
 		return control;

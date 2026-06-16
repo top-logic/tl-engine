@@ -361,24 +361,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
 
 	/**
-	 * @en Edit all languages
-	 */
-	@CustomKey("js.i18nString.allLanguages")
-	public static ResKey JS_I18N_STRING_ALL_LANGUAGES;
-
-	/**
-	 * @en OK
-	 */
-	@CustomKey("js.i18nString.ok")
-	public static ResKey JS_I18N_STRING_OK;
-
-	/**
-	 * @en Cancel
-	 */
-	@CustomKey("js.i18nString.cancel")
-	public static ResKey JS_I18N_STRING_CANCEL;
-
-	/**
 	 * @en Form group collapse toggled.
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;

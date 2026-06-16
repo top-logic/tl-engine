@@ -10,7 +10,6 @@
 import { register } from 'tl-react-bridge';
 
 import TLTextInput from './controls/TLTextInput';
-import TLI18NStringInput from './controls/TLI18NStringInput';
 import TLPasswordInput from './controls/TLPasswordInput';
 import TLNumberInput from './controls/TLNumberInput';
 import TLDatePicker from './controls/TLDatePicker';
@@ -69,7 +68,6 @@ import TLDrawerToggle from './controls/TLDrawerToggle';
 register('TLButton', TLButton);
 register('TLToggleButton', TLToggleButton);
 register('TLTextInput', TLTextInput);
-register('TLI18NStringInput', TLI18NStringInput);
 register('TLPasswordInput', TLPasswordInput);
 register('TLNumberInput', TLNumberInput);
 register('TLDatePicker', TLDatePicker);

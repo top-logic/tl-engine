@@ -8,7 +8,6 @@ package test.com.top_logic.element.boundsec.manager.rule;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,17 +28,13 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.LocationImpl;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.I18NConstants;
 import com.top_logic.element.boundsec.manager.RoleRulesImporter;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
-import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.model.TLClass;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
@@ -122,7 +117,7 @@ public class TestRoleRulesImporter extends BasicTestCase {
      */
 	public void multiProblemTest(String anInput, ResKey... expectedProblems) throws Exception {
 		RoleRulesConfig roleRulesConfig = getRoleRulesConfig(anInput);
-		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRulesConfig);
+		RoleRulesImporter importer = RoleRulesImporter.loadRules(roleRulesConfig);
 		List<ResKey> theProblems = importer.getProblems();
 		assertEquals(Arrays.asList(expectedProblems) + " != " + theProblems, expectedProblems.length,
 			theProblems.size());
@@ -133,7 +128,7 @@ public class TestRoleRulesImporter extends BasicTestCase {
 
 	public void testVaildRules() throws Exception {
 		RoleRulesConfig roleRules = getRoleRulesConfig(ROLE_RULES_VALID);
-		RoleRulesImporter importer = RoleRulesImporter.loadRules(elementAccessManager(), roleRules);
+		RoleRulesImporter importer = RoleRulesImporter.loadRules(roleRules);
 		assertTrue(importer.getProblems().isEmpty());
 
 	}
@@ -145,21 +140,6 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		ConfigurationItem configItem = ConfigurationReader.readContent(log, globalDescriptors, file);
 		assertTrue(configItem instanceof RoleRulesConfig);
 		return (RoleRulesConfig) configItem;
-	}
-
-    private TLClass getMetaElement(String aName) {
-		for (Iterator<TLClass> theIt = MetaElementFactory.getInstance().getAllMetaElements().iterator(); theIt
-			.hasNext();) {
-			TLClass theME = theIt.next();
-            if (theME.getName().equals(aName)) {
-                return theME;
-            }
-        }
-        return null;
-    }
-
-	private ElementAccessManager elementAccessManager() {
-		return (ElementAccessManager) AccessManager.getInstance();
 	}
 
 	/** Return the suite of tests to perform. */

@@ -42,7 +42,6 @@ import com.top_logic.knowledge.service.db2.SimpleQuery;
 import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
@@ -378,35 +377,6 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
      */
 	public static final List<BoundedRole> getAll() {
         return getAll(getDefaultKnowledgeBase());
-    }
-    
-    /**
-	 * Get the roles bound to the given {@link TLModule}.
-	 * 
-	 * @param scope
-	 *        The {@link TLModule}. Must not be <code>null</code>.
-	 * @return the roles. May be empty but not <code>null</code>.
-	 * @deprecated All roles are global. Call {@link #getAll()}.
-	 */
-	@Deprecated
-	public static Set<BoundedRole> getDefinedRoles(TLModule scope) {
-		return new HashSet<>(getAll());
-    }
-    
-    /**
-	 * The role with the given name defined in the given scope.
-	 * 
-	 * @param scope
-	 *        The object defining roles.
-	 * @param roleName
-	 *        The role name requested.
-	 * @return The role with the given name defined in the given scope, or <code>null</code> if no
-	 *         such role exists.
-	 * @deprecated All roles are global. Call {@link #getRoleByName(String)}.
-	 */
-	@Deprecated
-	public static BoundedRole getDefinedRole(TLModule scope, String roleName) {
-		return getRoleByName(roleName);
     }
     
 	/**

@@ -25,7 +25,6 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.element.boundsec.attribute.AttributeClassifierManager;
 import com.top_logic.element.boundsec.manager.ElementAccessHelper;
-import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.knowledge.wrap.list.FastListElement;
 import com.top_logic.layout.Accessor;
@@ -57,7 +56,6 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.tool.boundsec.BoundRole;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -178,12 +176,12 @@ public class AttributeClassifierRolesComponent extends EditComponent {
 
         TLClass theME = this.getMetaElement();
 
+		List theAvailable;
         Set  theSelected;
-        List theAvailable;
 
         AttributeClassifierManager theACM   = AttributeClassifierManager.getInstance();
         List                       theCList = theACM.getDeclaredClassifiers(theME);
-        theAvailable = ElementAccessHelper.getAvailableRoles(theME, (ElementAccessManager)AccessManager.getInstance());
+		theAvailable = new ArrayList<>(BoundedRole.getAll());
 
         for (Iterator theCIt = theCList.iterator(); theCIt.hasNext();) {
 

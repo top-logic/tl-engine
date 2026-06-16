@@ -1,7 +1,8 @@
 # React UI Login & Self-Service (Ticket #29108)
 
-**Status:** Phase 1 complete (browser-verified). Phase 2 complete (browser-verified):
-password expiry (2a) + OTP verification and MFA enrollment (2b). Phases 3–4 outstanding.
+**Status:** Phases 1–3 complete (browser-verified): login/logout (1), password
+expiry (2a), OTP verification + MFA enrollment (2b), forgot-password self-service
+(3). Phase 4 (SSO) outstanding.
 **Scope:** Authentication/identity for the new React view layer
 (`com.top_logic.layout.view`, served by `ViewServlet` at `/view/*`), parallel to
 — and independent of — the legacy `MainLayout`/`LoginViewDialog` UI.
@@ -190,15 +191,40 @@ Mirror the legacy `LoginViewDialog` follow-up steps, composed as dialog views.
   `Password`-typed (`PasswordMapping`), so a `Password` object must be stored, not
   its crypted `String`. A separate tl-core fix for `setMFASecret` is recommended.
 
-### Phase 3 — self-service module (forgot password)
-- New module `com.top_logic.layout.view.selfservice` depending on
-  `tl-security-selfservice`.
-- React forgot-password flow over `InvitationModule`
-  (`getResetPasswordMail`, verification-code generation/checking in
-  `AbstractVerificationCodeDialog`), then reuse the Phase-2 change-password view.
-- Contribute a "Forgot password?" affordance into `login.view.xml` (parallel to
-  how the legacy dialog gets `ForgotPasswordDialog$Opener` via `toolbar-commands`).
-- Requires `MailSenderService` configured; guard the affordance on that.
+### Phase 3 — self-service module (forgot password) (DONE, browser-verified)
+- **Generic login-command contribution point** (base module, replaces the
+  originally-planned hard-coded affordance): `LoginCommandsConfig` is an
+  application-config registry of extra login-dialog commands; the
+  `<login-commands>` element (`LoginCommandsElement`, added to `login.view.xml`)
+  renders them via `ReactStackControl`. Optional feature modules contribute
+  buttons through application config (a `<configs>` fragment) **without the base
+  view module depending on them** — this is also the surfacing mechanism Phase 4
+  will reuse for SSO buttons.
+- New module **`com.top_logic.layout.view.selfservice`** (`tl-layout-view-selfservice`;
+  deps `tl-layout-view` + `tl-security-selfservice` + `tl-mail-smtp`), registered
+  in `tl-parent-engine` and managed in the root POM; demo depends on it.
+  - `RequestPasswordResetAction` (`<request-password-reset>`): generates a code
+    (`InvitationModule` config size + `SecureRandomService`), looks up
+    `Person.byName`, emails it via `InvitationModule.getResetPasswordMail()` when
+    `MailSenderService.isConfigured()`, and opens the reset dialog carrying the
+    account / expected code / creation time on channels. Identical behaviour
+    whether or not the account exists (no user fishing).
+  - `ApplyPasswordResetAction` (`<apply-password-reset>`): checks the code +
+    validity (`InvitationModule.getConfig().getCodeValidity()`), then applies the
+    new password via `AuthenticationDevice.setPassword`. Does **not** log the user
+    in (mirrors the legacy logout-after-reset).
+  - `forgot-password.view.xml` / `reset-password.view.xml`; `tl.login:ForgotPassword`
+    / `tl.login:PasswordReset` transient types (kept in the base `tl.login` model);
+    autoconf contributing the "Forgot password?" button.
+- **Mail/dev note:** the originally-planned "guard the affordance on
+  `MailSenderService`" was dropped so the no-SMTP demo stays usable. Instead, when
+  mail is not configured the code is logged as a dev fallback (server log only,
+  never in a configured deployment); the affordance is always shown when the
+  selfservice module is deployed. (A visibility guard on mail is a possible
+  refinement; rate-limiting via `LoginFailuresModule` was also left out.)
+- **Verified (Playwright):** "Forgot password?" on the login dialog → request code
+  (dev-logged) → reset with code + new password → dialogs close, no auto-login,
+  new password accepted on next login; wrong code → error toast, dialog stays.
 
 ### Phase 4 — SSO providers ("Login with Google") via pac4j
 - Implement `LoginMethodProvider` in `com.top_logic.security.auth.pac4j`,

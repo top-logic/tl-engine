@@ -1614,6 +1614,46 @@ button.tlDrawerToggle:focus-visible {
 	margin-left: auto;
 }
 
+/* --- Controls placed on the primary (accent) app bar -------------------- */
+/* The primary app bar has a dark accent background; its title and slot text
+   inherit the on-accent (white) color. Buttons and the user-name text bring
+   their own foreground (accent-blue / primary-text), which is nearly
+   unreadable on the accent background. Re-map them to on-accent colors. */
+
+.tlAppBar--primary .tlAppBarUser {
+	color: var(--layer-accent-text);
+}
+
+.tlAppBar--primary .tlReactButton {
+	color: var(--layer-accent-text);
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
+}
+
+.tlAppBar--primary button.tlReactButton:not(:disabled):hover {
+	background: rgba(255, 255, 255, 0.16);
+}
+
+.tlAppBar--primary button.tlReactButton:not(:disabled):active {
+	background: rgba(255, 255, 255, 0.24);
+	color: var(--layer-accent-text);
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-text);
+}
+
+.tlAppBar--primary button.tlReactButton:disabled {
+	background: none;
+	color: rgba(255, 255, 255, 0.5);
+	box-shadow: inset 0px 0px 0px 2px rgba(255, 255, 255, 0.4);
+}
+
+.tlAppBar--primary .tlReactButton--icon {
+	box-shadow: none;
+	color: var(--icon-on-color, var(--layer-accent-text));
+}
+
+.tlAppBar--primary .tlReactButton--link {
+	color: var(--layer-accent-text);
+}
+
 /* --- TLBreadcrumb ---------------------------------------------------------- */
 
 .tlBreadcrumb {

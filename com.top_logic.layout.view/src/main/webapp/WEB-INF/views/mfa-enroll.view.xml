@@ -11,7 +11,8 @@
 		<!-- The QR-code PNG encoding the otpauth:// provisioning URI (set by LoginAction). -->
 		<channel name="qr"/>
 	</channels>
-	<window width="420px">
+	<window resizable="false"
+			width="420px">
 		<title>
 			<en>Set up two-factor authentication</en>
 			<de>Zwei-Faktor-Authentifizierung einrichten</de>

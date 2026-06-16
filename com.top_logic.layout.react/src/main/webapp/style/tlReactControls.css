@@ -99,7 +99,7 @@ button.tlReactButton--link:not(:disabled):active {
 button.tlReactButton--small {
 	height: 1.5rem;
 	padding: 0 var(--spacing-02);
-	font-size: var(--body-compact-01-font-size, 0.875rem);
+	font-size: var(--label-01-font-size, 0.75rem);
 }
 
 .tlReactButton--large,

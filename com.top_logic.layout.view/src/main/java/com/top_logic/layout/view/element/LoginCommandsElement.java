@@ -66,7 +66,9 @@ public class LoginCommandsElement implements UIElement {
 			ViewContext childContext = context.withChildSlotPath(Integer.toString(i));
 			children.add((ReactControl) _commands.get(i).createControl(childContext));
 		}
-		return new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER, false, children);
+		// A column whose cross-axis end alignment right-aligns the contributed commands (e.g. the
+		// self-service "Forgot password?" link sits at the right, below the password field).
+		return new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.END, false, children);
 	}
 
 }

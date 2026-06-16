@@ -1388,11 +1388,11 @@ const Ne = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className
       {
         className: `tlWindow__header${L ? " tlWindow__header--maximized" : ""}`,
         onMouseDown: L ? void 0 : T,
-        onDoubleClick: O
+        onDoubleClick: o ? O : void 0
       },
       /* @__PURE__ */ e.createElement("span", { className: "tlWindow__title", id: F }, i),
       p && /* @__PURE__ */ e.createElement("div", { className: "tlWindow__toolbar" }, /* @__PURE__ */ e.createElement(K, { control: p })),
-      /* @__PURE__ */ e.createElement(
+      o && /* @__PURE__ */ e.createElement(
         "button",
         {
           type: "button",

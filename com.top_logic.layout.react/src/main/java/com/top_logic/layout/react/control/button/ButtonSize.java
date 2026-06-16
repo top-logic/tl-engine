@@ -12,11 +12,11 @@ import com.top_logic.basic.config.ExternallyNamed;
  */
 public enum ButtonSize implements ExternallyNamed {
 
+	/** The standard button size (the default). */
+	DEFAULT("default"),
+
 	/** A compact button, e.g. for a secondary inline action. */
 	SMALL("small"),
-
-	/** The standard button size. */
-	DEFAULT("default"),
 
 	/** An emphasized, larger button. */
 	LARGE("large");

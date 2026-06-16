@@ -4,7 +4,8 @@
 	<channels>
 		<channel name="model"/>
 	</channels>
-	<window width="380px">
+	<window resizable="false"
+			width="380px">
 		<title>
 			<en>Login</en>
 			<de>Anmeldung</de>

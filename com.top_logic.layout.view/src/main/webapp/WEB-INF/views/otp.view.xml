@@ -9,7 +9,8 @@
 		<!-- The account's stored TOTP secret to verify against (set by LoginAction). -->
 		<channel name="secret"/>
 	</channels>
-	<window width="380px">
+	<window resizable="false"
+			width="380px">
 		<title>
 			<en>Two-factor authentication</en>
 			<de>Zwei-Faktor-Authentifizierung</de>

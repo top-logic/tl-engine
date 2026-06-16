@@ -269,7 +269,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         className={`tlWindow__header${maximized ? ' tlWindow__header--maximized' : ''}`}
         onMouseDown={maximized ? undefined : handleTitleMouseDown}
-        onDoubleClick={handleToggleMaximize}
+        onDoubleClick={resizable ? handleToggleMaximize : undefined}
       >
         <span className="tlWindow__title" id={titleId}>{title}</span>
         {toolbar && (
@@ -277,6 +277,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
             <TLChild control={toolbar} />
           </div>
         )}
+        {/* Maximizing only makes sense for resizable windows; fixed-size dialogs (e.g. login) omit it. */}
+        {resizable && (
         <button
           type="button"
           className="tlWindow__maximizeBtn"
@@ -296,6 +298,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
             </svg>
           )}
         </button>
+        )}
         <button
           type="button"
           className="tlWindow__closeBtn"

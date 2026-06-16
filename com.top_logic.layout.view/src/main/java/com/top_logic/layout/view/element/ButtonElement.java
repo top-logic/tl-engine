@@ -5,9 +5,6 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
@@ -24,11 +21,11 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**

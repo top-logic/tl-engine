@@ -17,10 +17,12 @@ import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 
 /**
- * {@link LoginMethodProvider} yielding one {@link Pac4jLoginMethod} per configured pac4j SSO client.
+ * {@link LoginMethodProvider} yielding one {@link Pac4jLoginMethod} per configured pac4j SSO
+ * client.
  *
  * <p>
- * Reads the static client configuration ({@link Pac4jConfigFactory.Config#getClients()}), so it
+ * Reads the static client configuration
+ * ({@link com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory.Config#getClients()}), so it
  * works regardless of whether the runtime clients have been instantiated, and yields nothing when
  * the pac4j module is inactive.
  * </p>

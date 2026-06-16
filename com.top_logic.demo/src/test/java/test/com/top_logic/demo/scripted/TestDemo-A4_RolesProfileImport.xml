@@ -20,160 +20,448 @@
 				/>
 			</parameters>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Berechtigungen"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
-			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-				tab-path="Administration > Berechtigungen"
-			/>
-			<field-values>
-				<value>
-					<field-path>
-						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-							field-label-comment="Berechtigungsstruktur"
-							field-name="structure"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Ensure role can be received."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Service Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Zugriffssteuerung"
 						/>
-					</field-path>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-						<list>
-							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-								label="Zentrale Berechtigungen"
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Module"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="customEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.config.SingletonRuleConfig"
 							/>
-						</list>
+						</values>
 					</value>
-				</value>
-			</field-values>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Berechtigungen > Rollenprofile"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-			columns="Rechte,Role_TestRolesProfileImport_01"
-			label="true"
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-					tab-path="Administration > Berechtigungen > Rollenprofile"
-				/>
-				<path>
-					<named-member name="tree"/>
-				</path>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Importieren..."
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			<field-values>
-				<value>
-					<field-path>
-						<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
-							field-label-comment="Datei"
-							field-name="input"
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
 						/>
-					</field-path>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
-						content-type="text/xml"
-						name="TestDemo-A4_RolesProfileImport.importFile.xml"
-						url="file:../com.top_logic.demo/src/test/java/test/com/top_logic/demo/scripted/TestDemo-A4_RolesProfileImport.importFile.xml"
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="25"
+								/>
+							</object>
+							<labeled-member label="Rollenregel für ein Singleton"/>
+							<labeled-member label="Ziel"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="SecurityStructure#ROOT"
 					/>
-				</value>
-			</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="25"
+								/>
+							</object>
+							<labeled-member label="Rollenregel für ein Singleton"/>
+							<labeled-member label="Rolle"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="Role_TestRolesProfileImport_01"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="25"
+								/>
+							</object>
+							<labeled-member label="Rollenregel für ein Singleton"/>
+							<labeled-member label="Pfad"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.element.boundsec.manager.rule.GroupWithName"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+						/>
+						<path>
+							<labeled-member label="Dienst-Konfiguration"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Rollen-Regeln"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Regeln"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="25"
+								/>
+							</object>
+							<labeled-member label="Rollenregel für ein Singleton"/>
+							<labeled-member label="Pfad"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="0"
+								/>
+							</object>
+							<labeled-member label="Gruppe mit Namen"/>
+							<labeled-member label="Name"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Benutzer"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+					command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+					command-name="restartAndReload"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Importieren"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
-				raw-value="true"
-			>
-				<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Berechtigungen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp">
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+						tab-path="Administration > Berechtigungen"
+					/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Berechtigungsstruktur"
+									field-name="structure"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+								<list>
+									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
+										label="Zentrale Berechtigungen"
+									/>
+								</list>
+							</value>
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp">
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Berechtigungen > Rollenprofile"
 					/>
-					<path>
-						<object>
-							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Administration > Berechtigungen > Rollenprofile (Lesen)"
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+					columns="Rechte,Role_TestRolesProfileImport_01"
+					label="true"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+							tab-path="Administration > Berechtigungen > Rollenprofile"
+						/>
+						<path>
+							<named-member name="tree"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Importieren..."
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field-values>
+						<value>
+							<field-path>
+								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.NamedFieldRef"
+									field-label-comment="Datei"
+									field-name="input"
+								/>
+							</field-path>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+								content-type="text/xml"
+								name="TestDemo-A4_RolesProfileImport.importFile.xml"
+								url="file:../com.top_logic.demo/src/test/java/test/com/top_logic/demo/scripted/TestDemo-A4_RolesProfileImport.importFile.xml"
 							/>
-						</object>
-						<named-member name="Role_TestRolesProfileImport_01"/>
-					</path>
-				</field-name>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-				string="true"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
-				raw-value="true"
-			>
-				<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-						tab-path="Administration > Berechtigungen > Rollenprofile"
+						</value>
+					</field-values>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Importieren"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+								tab-path="Administration > Berechtigungen > Rollenprofile"
+							/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="Administration > Berechtigungen > Rollenprofile (Lesen)"
+									/>
+								</object>
+								<named-member name="Role_TestRolesProfileImport_01"/>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="true"
 					/>
-					<path>
-						<object>
-							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Administration > Berechtigungen > Rollenprofile (Ändern)"
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+								tab-path="Administration > Berechtigungen > Rollenprofile"
 							/>
-						</object>
-						<named-member name="Role_TestRolesProfileImport_01"/>
-					</path>
-				</field-name>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-				string="true"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
-				raw-value="true"
-			>
-				<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-						tab-path="Administration > Berechtigungen > Rollenprofile"
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="Administration > Berechtigungen > Rollenprofile (Ändern)"
+									/>
+								</object>
+								<named-member name="Role_TestRolesProfileImport_01"/>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="true"
 					/>
-					<path>
-						<object>
-							<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="Administration > Berechtigungen > Rollenprofile (Exportieren)"
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.action.CurrentFieldValue"
+						raw-value="true"
+					>
+						<field-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+								tab-path="Administration > Berechtigungen > Rollenprofile"
 							/>
-						</object>
-						<named-member name="Role_TestRolesProfileImport_01"/>
-					</path>
-				</field-name>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-				string="false"
-			/>
+							<path>
+								<object>
+									<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+										value="Administration > Berechtigungen > Rollenprofile (Exportieren)"
+									/>
+								</object>
+								<named-member name="Role_TestRolesProfileImport_01"/>
+							</path>
+						</field-name>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
+						string="false"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Service Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Zugriffssteuerung"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Service Editor > Module"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.TLResetServiceConfigHandler"
+					command-label="Konfiguration zurücksetzen"
+					command-name="resetServiceConfig"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ja"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.admin.component.RestartAndReload"
+					command-label="Zugriffssteuerung neu starten und Rollenregeln neu laden"
+					command-name="restartAndReload"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic/admin/technical/services/servicesView.layout.xml#ServiceConfigEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 			template="script:/Rolle/Action-Rolle-Loeschen.xml"

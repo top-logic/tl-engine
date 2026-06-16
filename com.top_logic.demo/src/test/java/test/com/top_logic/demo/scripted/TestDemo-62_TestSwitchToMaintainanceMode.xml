@@ -160,7 +160,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Rolle maintenanceMode erstellen"
+			comment="Rollen erstellen"
 			failure-message=""
 			user-id="root"
 		>
@@ -402,377 +402,6 @@
 							user-id="root"
 						>
 							<arguments/>
-						</action>
-					</actions>
-				</action>
-			</actions>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Berechtigungen für Rolle maintenanceMode"
-			failure-message=""
-			user-id="root"
-		>
-			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-					comment="Zentrale Berechtigungen"
-					failure-message=""
-					user-id="root"
-				>
-					<actions>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							user-id="root"
-						>
-							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-								label="Berechtigungsstruktur"
-							>
-								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
-									tab-path="Administration > Berechtigungen"
-								/>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-										label="Zentrale Berechtigungen"
-									/>
-								</values>
-							</value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Berechtigungen > Rollenprofile"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="maintenanceMode"
-							failure-message=""
-							user-id="root"
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-									columns="Rechte,maintenanceMode"
-									label="true"
-									user-id="root"
-								>
-									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<named-member name="tree"/>
-										</path>
-									</model-name>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-									command-label="Bearbeiten"
-									command-name="switchToAJAXEdit"
-									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									failure-message=""
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster (Lesen)"
-												/>
-											</object>
-											<named-member name="maintenanceMode"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
-									comment="Kein Write-Command mehr an der Top-Level-Komponente für den Wartungsmodus mehr registriert"
-									failure-message=""
-									failure-pattern="\QCould not find object with substitute-id 'Administration > Tech. Administration > Wartungsfenster (Ändern)'\E"
-									user-id="root"
-								>
-									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
-										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster (Ändern)"
-												/>
-											</node>
-										</path>
-									</model-name>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Lesen)"
-												/>
-											</object>
-											<named-member name="maintenanceMode"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Ändern)"
-												/>
-											</object>
-											<named-member name="maintenanceMode"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster > abschalten (Lesen)"
-												/>
-											</object>
-											<named-member name="maintenanceMode"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster > abschalten (Ändern)"
-												/>
-											</object>
-											<named-member name="maintenanceMode"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-									command-label="Speichern"
-									command-name="defaultSave"
-									comment=""
-									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									failure-message=""
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-							</actions>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="maintenanceActivate"
-							failure-message=""
-							user-id="root"
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-									columns="Rechte,maintenanceActivate"
-									label="true"
-									user-id="root"
-								>
-									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<named-member name="tree"/>
-										</path>
-									</model-name>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-									command-label="Bearbeiten"
-									command-name="switchToAJAXEdit"
-									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									failure-message=""
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Lesen)"
-												/>
-											</object>
-											<named-member name="maintenanceActivate"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Ändern)"
-												/>
-											</object>
-											<named-member name="maintenanceActivate"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-									command-label="Speichern"
-									command-name="defaultSave"
-									comment=""
-									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									failure-message=""
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-							</actions>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-							comment="MaintenanceView"
-							failure-message=""
-							user-id="root"
-						>
-							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
-									columns="Rechte,MaintenanceView"
-									label="true"
-									user-id="root"
-								>
-									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<named-member name="tree"/>
-										</path>
-									</model-name>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
-									command-label="Bearbeiten"
-									command-name="switchToAJAXEdit"
-									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									failure-message=""
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-									user-id="root"
-								>
-									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-											tab-path="Administration > Berechtigungen > Rollenprofile"
-										/>
-										<path>
-											<object>
-												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-													value="Administration > Tech. Administration > Wartungsfenster (Lesen)"
-												/>
-											</object>
-											<named-member name="MaintenanceView"/>
-										</path>
-									</field>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-										value="true"
-									/>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-									command-label="Speichern"
-									command-name="defaultSave"
-									comment=""
-									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
-									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
-									failure-message=""
-									user-id="root"
-								>
-									<arguments/>
-								</action>
-							</actions>
 						</action>
 					</actions>
 				</action>
@@ -1471,6 +1100,377 @@
 					user-id="root"
 				>
 					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Berechtigungen für Rolle maintenanceMode"
+			failure-message=""
+			user-id="root"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Zentrale Berechtigungen"
+					failure-message=""
+					user-id="root"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Berechtigungsstruktur"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree"
+									tab-path="Administration > Berechtigungen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Zentrale Berechtigungen"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							comment=""
+							failure-message=""
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name=""
+								tab-path="Administration > Berechtigungen > Rollenprofile"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="maintenanceMode"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+									columns="Rechte,maintenanceMode"
+									label="true"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<named-member name="tree"/>
+										</path>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="switchToAJAXEdit"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster (Lesen)"
+												/>
+											</object>
+											<named-member name="maintenanceMode"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
+									comment="Kein Write-Command mehr an der Top-Level-Komponente für den Wartungsmodus mehr registriert"
+									failure-message=""
+									failure-pattern="\QCould not find object with substitute-id 'Administration > Tech. Administration > Wartungsfenster (Ändern)'\E"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.form.FormMemberName">
+										<form-handler-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<node config:interface="com.top_logic.layout.scripting.recorder.ref.field.BusinessObjectFieldRef">
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster (Ändern)"
+												/>
+											</node>
+										</path>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Lesen)"
+												/>
+											</object>
+											<named-member name="maintenanceMode"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Ändern)"
+												/>
+											</object>
+											<named-member name="maintenanceMode"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster > abschalten (Lesen)"
+												/>
+											</object>
+											<named-member name="maintenanceMode"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster > abschalten (Ändern)"
+												/>
+											</object>
+											<named-member name="maintenanceMode"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="maintenanceActivate"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+									columns="Rechte,maintenanceActivate"
+									label="true"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<named-member name="tree"/>
+										</path>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="switchToAJAXEdit"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Lesen)"
+												/>
+											</object>
+											<named-member name="maintenanceActivate"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Ändern)"
+												/>
+											</object>
+											<named-member name="maintenanceActivate"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="MaintenanceView"
+							failure-message=""
+							user-id="root"
+						>
+							<actions>
+								<action class="com.top_logic.layout.scripting.runtime.action.SetTableColumnsOp"
+									columns="Rechte,MaintenanceView"
+									label="true"
+									user-id="root"
+								>
+									<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<named-member name="tree"/>
+										</path>
+									</model-name>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+									command-label="Bearbeiten"
+									command-name="switchToAJAXEdit"
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster (Lesen)"
+												/>
+											</object>
+											<named-member name="MaintenanceView"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+									command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+									command-label="Speichern"
+									command-name="defaultSave"
+									comment=""
+									component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"
+									component-name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+									failure-message=""
+									user-id="root"
+								>
+									<arguments/>
+								</action>
+							</actions>
+						</action>
+					</actions>
 				</action>
 			</actions>
 		</action>

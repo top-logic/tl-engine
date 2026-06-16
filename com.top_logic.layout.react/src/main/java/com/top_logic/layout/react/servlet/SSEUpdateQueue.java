@@ -259,21 +259,41 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Flushes all pending events to the connected SSE client.
+	 *
+	 * <p>
+	 * An event is removed from the queue only after it has been written successfully. If the write
+	 * fails (a dead or half-open connection), the event stays queued and is retried on the next
+	 * {@link #setConnection(jakarta.servlet.AsyncContext) (re)connection}. This matters for one-off
+	 * events such as the login/logout {@code window.location.reload()}: dropping such an event on a
+	 * silently-broken connection would leave the action half-applied (e.g. a logout that never
+	 * reloads the page), since reconnects only replay control state via {@link #sendFullState}, not
+	 * one-off events.
+	 * </p>
+	 *
+	 * <p>
+	 * Synchronized so that concurrent callers (enqueue, heartbeat, (re)connect) cannot interleave
+	 * writes to the same connection or poll the same event twice.
+	 * </p>
 	 */
-	public void flush() {
+	public synchronized void flush() {
 		SSEConnection conn = _connection;
 		if (conn == null) {
 			return;
 		}
 		SSEEvent event;
-		while ((event = _pendingEvents.poll()) != null) {
+		while ((event = _pendingEvents.peek()) != null) {
 			String message = toDataMessage(toJson(event));
 			if (message == null) {
+				// Unserializable event: discard it, keeping it would block the queue forever.
+				_pendingEvents.poll();
 				continue;
 			}
 			if (!writeOrDisconnect(conn, message)) {
+				// Keep the event queued for retry on the next (re)connection.
 				return;
 			}
+			// Written successfully: now remove it from the queue.
+			_pendingEvents.poll();
 		}
 	}
 

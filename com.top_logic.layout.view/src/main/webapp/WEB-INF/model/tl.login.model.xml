@@ -76,5 +76,54 @@
 				/>
 			</attributes>
 		</class>
+
+		<!--
+			Transient-only type holding the account identifier entered in the first step of the
+			self-service forgot-password flow.
+		-->
+		<class name="ForgotPassword">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="username"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the self-service password-reset step: the
+			verification code mailed to the user plus the new password. The account and the expected
+			code are transferred separately on the reset dialog's "account" / "code" channels.
+		-->
+		<class name="PasswordReset">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="code"
+					type="tl.core:String"
+				/>
+				<property name="newPassword"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+				<property name="newPasswordConfirm"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
 	</module>
 </model>

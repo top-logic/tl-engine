@@ -15,6 +15,12 @@
 		>
 			<field attribute="name"/>
 			<field attribute="password"/>
+			<!--
+				Extra login commands contributed by optional feature modules (e.g. self-service
+				"Forgot password?", SSO providers) via the LoginCommandsConfig application config.
+				Renders nothing when nothing is contributed.
+			-->
+			<login-commands/>
 			<commands>
 				<generic-command placement="TOOLBAR">
 					<label>

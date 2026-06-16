@@ -61,9 +61,12 @@ import com.top_logic.util.error.TopLogicException;
  * </ul>
  *
  * <p>
- * The actual session swap (via {@link PendingSessionAction}) happens only once the final step calls
- * {@link #completeLogin}.
+ * The actual session swap (via {@link PendingSessionAction}) happens only once the final step
+ * completes the login.
  * </p>
+ *
+ * @implNote The deferred session swap is triggered by {@link #completeLogin}; the per-step MFA
+ *           branching is in {@link #proceedAfterPassword}.
  */
 public class LoginAction implements ViewAction {
 

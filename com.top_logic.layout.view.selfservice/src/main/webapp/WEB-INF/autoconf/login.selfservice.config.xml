@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<configs>
+		<!--
+			Contribute a "Forgot password?" button to the React login dialog. Rendered by the
+			<login-commands> element; mirrors the app-bar login button (create a transient input
+			model, then open the dialog).
+		-->
+		<config config:interface="com.top_logic.layout.view.login.LoginCommandsConfig">
+			<commands>
+				<button>
+					<action class="com.top_logic.layout.view.command.GenericViewCommand">
+						<label>
+							<en>Forgot password?</en>
+							<de>Passwort vergessen?</de>
+						</label>
+						<execute-script function="x -> new(`tl.login:ForgotPassword`, transient: true)"/>
+						<open-dialog dialog-view="forgot-password.view.xml"
+							bind-input-to="model"
+							close-on-backdrop="true"
+						/>
+					</action>
+				</button>
+			</commands>
+		</config>
+	</configs>
+</application>

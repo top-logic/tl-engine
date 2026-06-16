@@ -315,12 +315,23 @@ transaction is a possible future alternative). Notable:
   persists (still checked after a full reload that re-reads the `PersBoundComp`).
 - **Commit:** `c1099a82`.
 
+**Role → user is model configuration, not a UI feature** (correcting an earlier
+note). Which roles a user holds on an object comes from:
+- **Group membership** + a `<role-assignment role="…" group="…"/>` on a structure
+  root singleton — e.g. `DemoConf.config.xml` assigns `SecurityStructure.OwnerRole`
+  to group `securityOwner` on `SecurityStructure:Root`; and
+- **`AccessManager` role-rules** (`InitialRoleRules.config.xml`) that derive roles
+  along object paths (owner, responsible, …).
+
+The React `SecurityScope` checks against the same security root
+(`SecurityRootObjectProvider` → `BoundHelper.getDefaultObject()`), so a role
+granted to a group there is exactly what a gated scope sees. The deferred live
+**command-deny** demo therefore needs no new code: put `tester` in a group that
+holds a role on the root, grant that role the `Write` group on `demo-restricted`
+in the permission matrix → `tester` passes; remove it → denied.
+
 Remaining Phase 3 work:
-- **Role → user assignment.** Granting a role *to a scope* is done; for a
-  non-admin (e.g. `tester`) to actually pass a gated scope, the role must also be
-  assigned *to the user* on the security object (the security-structure side).
-  That is the last link for the live role-based **command-deny** demo deferred
-  from Phase 2.
+- **Wire + record the live command-deny demo** via the group/role config above.
 - **Per-object roles.** Today the security object is always the root
   (structure-level). Allow a scope reference to bind a model channel
   (`<access-control scope="…" security-object="{chan}"/>`) so roles are checked

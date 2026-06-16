@@ -13,6 +13,7 @@ import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -21,6 +22,7 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
 import com.top_logic.tool.boundsec.simple.AbstractBoundChecker;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
@@ -110,6 +112,46 @@ public class SecurityScope extends AbstractBoundChecker {
 	 */
 	public boolean allowCommand(BoundCommandGroup group, BoundObject securityObject) {
 		return BoundChecker.allowCommandOnSecurityObject(this, group, securityObject);
+	}
+
+	/**
+	 * Whether the given role is currently assigned the given command group on this scope.
+	 *
+	 * @param group
+	 *        The command group.
+	 * @param role
+	 *        The role to check.
+	 * @return {@code true} when the role grants the command group on this scope.
+	 */
+	public boolean isGranted(BoundCommandGroup group, BoundedRole role) {
+		PersBoundComp persBoundComp = persBoundComp();
+		return persBoundComp != null && persBoundComp.rolesForCommandGroup(group).contains(role);
+	}
+
+	/**
+	 * Grants or revokes the given command group for the given role on this scope, in its own
+	 * transaction.
+	 *
+	 * @param group
+	 *        The command group.
+	 * @param role
+	 *        The role to grant or revoke.
+	 * @param granted
+	 *        {@code true} to grant the command group to the role, {@code false} to revoke it.
+	 */
+	public void setGranted(BoundCommandGroup group, BoundedRole role, boolean granted) {
+		PersBoundComp persBoundComp = persBoundComp();
+		if (persBoundComp == null) {
+			return;
+		}
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			if (granted) {
+				persBoundComp.addAccess(group, role);
+			} else {
+				persBoundComp.removeAccess(group, role);
+			}
+			tx.commit();
+		}
 	}
 
 	@Override

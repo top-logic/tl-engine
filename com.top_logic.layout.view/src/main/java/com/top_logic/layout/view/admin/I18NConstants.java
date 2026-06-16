@@ -24,6 +24,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_ACCOUNT_EXISTS__LOGIN;
 
+	/**
+	 * @en Scope
+	 */
+	public static ResKey MATRIX_SCOPE_COLUMN;
+
+	/**
+	 * @en Command group
+	 */
+	public static ResKey MATRIX_GROUP_COLUMN;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

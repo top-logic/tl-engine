@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Permission matrix: rows are (scope, command group), columns are roles, each cell a checkbox
+	granting that role the command group on that scope. The matrix is an app-specific admin widget,
+	so it is referenced by class= rather than a reusable <tag>.
+-->
+<view>
+	<panel>
+		<title>
+			<en>Permissions</en>
+			<de>Berechtigungen</de>
+		</title>
+		<child class="com.top_logic.layout.view.admin.SecurityMatrixElement"/>
+	</panel>
+</view>

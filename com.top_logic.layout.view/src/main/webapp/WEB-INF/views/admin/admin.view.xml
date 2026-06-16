@@ -36,6 +36,13 @@
 							</label>
 							<view-ref view="admin/roles.view.xml"/>
 						</tab>
+						<tab id="permissions">
+							<label>
+								<en>Permissions</en>
+								<de>Berechtigungen</de>
+							</label>
+							<view-ref view="admin/permissions.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

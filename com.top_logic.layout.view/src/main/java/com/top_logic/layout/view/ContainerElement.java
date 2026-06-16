@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.react.control.IReactControl;
@@ -32,9 +33,16 @@ public abstract class ContainerElement implements UIElement {
 
 		/**
 		 * The child elements.
+		 *
+		 * <p>
+		 * Children are normally written directly using their own element tags (e.g.
+		 * {@code <card>}, {@code <table>}). The explicit {@code <child class="..."/>} entry tag
+		 * additionally allows referencing an element implementation that has no own tag name.
+		 * </p>
 		 */
 		@Name(CHILDREN)
 		@DefaultContainer
+		@EntryTag("child")
 		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
 	}

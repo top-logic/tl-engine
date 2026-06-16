@@ -13,7 +13,11 @@
 			<field attribute="name"/>
 			<field attribute="htmlDescription"/>
 			<commands>
-				<generic-command label="Create" placement="BUTTON_BAR">
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Create</en>
+						<de>Anlegen</de>
+					</label>
 					<store-form-state/>
 					<with-transaction>
 						<execute-script function="obj -> $obj.copy(transient: false)"/>
@@ -25,9 +29,12 @@
 		</form>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
-					label="Cancel"
-				/>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
 			</button>
 		</actions>
 	</window>

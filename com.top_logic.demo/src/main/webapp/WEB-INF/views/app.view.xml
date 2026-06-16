@@ -273,7 +273,7 @@
 						<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
 						<open-dialog dialog-view="login.view.xml"
 							bind-input-to="model"
-							close-on-backdrop="true"
+							close-on-backdrop="false"
 						/>
 					</generic-command>
 

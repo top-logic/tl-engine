@@ -142,7 +142,8 @@ public class RequestPasswordResetAction implements ViewAction {
 		channels.put(ACCOUNT_CHANNEL, account);
 		channels.put(EXPECTED_CODE_CHANNEL, code);
 		channels.put(CREATED_AT_CHANNEL, Long.valueOf(System.currentTimeMillis()));
-		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + RESET_PASSWORD_VIEW, true, channels,
+		// Do not close on a backdrop click: an accidental click outside must not abort the reset.
+		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + RESET_PASSWORD_VIEW, false, channels,
 			Collections.emptyList());
 	}
 

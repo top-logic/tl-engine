@@ -226,7 +226,9 @@ public class LoginAction implements ViewAction {
 		if (dialogManager != null) {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
 		}
-		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + view, true, channels,
+		// Do not close on a backdrop click: an accidental click outside must not silently abort the
+		// login flow (change-password / OTP / MFA-enrollment step).
+		OpenDialogAction.openDialog(context, ViewLoader.VIEW_BASE_PATH + view, false, channels,
 			Collections.emptyList());
 	}
 

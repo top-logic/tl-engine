@@ -22,7 +22,7 @@
 						<execute-script function="x -> new(`tl.login:ForgotPassword`, transient: true)"/>
 						<open-dialog dialog-view="forgot-password.view.xml"
 							bind-input-to="model"
-							close-on-backdrop="true"
+							close-on-backdrop="false"
 						/>
 					</action>
 				</button>

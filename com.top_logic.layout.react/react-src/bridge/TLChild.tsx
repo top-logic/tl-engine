@@ -41,6 +41,19 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
   // changing from false to true) trigger a re-render with the live state.
   const liveState = useSyncExternalStore(childCtx.store.subscribeStore, childCtx.store.getSnapshot);
 
+  // When the parent re-serializes this child with the same controlId but new state (e.g. a
+  // toolbar re-emitting its groups after a command's executability changed), the child's
+  // store was created once and would otherwise keep its mount-time snapshot. Sync the
+  // server-provided state into the store so an already-mounted child (e.g. an open dropdown
+  // item) reflects the update instead of waiting for a remount. Keyed on the serialized
+  // state so this only fires when the embedded state actually changes — controls that update
+  // solely via their own SSE patches keep a constant descriptor.state and are unaffected.
+  const stateKey = JSON.stringify(descriptor.state);
+  useEffect(() => {
+    childCtx.store.applyPatch(descriptor.state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateKey]);
+
   if (!Component) {
     return <span>[Component not registered: {descriptor.module}]</span>;
   }

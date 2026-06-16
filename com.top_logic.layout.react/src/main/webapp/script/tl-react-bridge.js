@@ -11154,8 +11154,10 @@ const Yb = ({ control: i }) => {
     [c.controlId]
   );
   L.useEffect(() => () => wi(c.controlId), [c.controlId]);
-  const d = L.useSyncExternalStore(o.store.subscribeStore, o.store.getSnapshot);
-  return s ? /* @__PURE__ */ Vt.jsx(mn.Provider, { value: o, children: /* @__PURE__ */ Vt.jsx(s, { controlId: c.controlId, state: d }) }) : /* @__PURE__ */ Vt.jsxs("span", { children: [
+  const d = L.useSyncExternalStore(o.store.subscribeStore, o.store.getSnapshot), m = JSON.stringify(c.state);
+  return L.useEffect(() => {
+    o.store.applyPatch(c.state);
+  }, [m]), s ? /* @__PURE__ */ Vt.jsx(mn.Provider, { value: o, children: /* @__PURE__ */ Vt.jsx(s, { controlId: c.controlId, state: d }) }) : /* @__PURE__ */ Vt.jsxs("span", { children: [
     "[Component not registered: ",
     c.module,
     "]"

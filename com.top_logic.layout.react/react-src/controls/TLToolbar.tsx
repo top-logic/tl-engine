@@ -69,8 +69,10 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
   const visibleItems = group.items.filter(item => item != null);
   if (visibleItems.length === 0) return null;
 
-  // Single item: render directly without dropdown.
-  if (visibleItems.length === 1 && !group.subGroups?.length) {
+  // Single item: render directly without dropdown. An icon-triggered menu (e.g. the
+  // burger overflow) always stays a menu, so its trigger icon remains stable regardless
+  // of how many items are currently enabled.
+  if (visibleItems.length === 1 && !group.subGroups?.length && !group.icon) {
     return (
       <div className="tlToolbar__group tlToolbar__group--inline">
         <span className="tlToolbar__item">
@@ -80,46 +82,61 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
     );
   }
 
+  // An icon (e.g. a burger "☰") renders as a compact icon-only trigger; the label is kept
+  // as the accessible name instead of visible text (which would not be internationalized).
+  const label = group.label ?? group.name;
+  const iconOnly = !!group.icon;
+
   return (
     <div className="tlToolbar__group tlToolbar__group--menu">
       <button
         ref={triggerRef}
         type="button"
-        className="tlToolbar__menuTrigger"
+        className={'tlToolbar__menuTrigger' + (iconOnly ? ' tlToolbar__menuTrigger--icon' : '')}
         onClick={handleToggle}
         aria-expanded={open}
         aria-haspopup="true"
+        aria-label={iconOnly ? label : undefined}
+        title={iconOnly ? label : undefined}
       >
-        {group.icon && <ThemeIcon encoded={group.icon} className="tlToolbar__menuIcon" />}
-        <span>{group.label ?? group.name}</span>
-        <svg className="tlToolbar__chevron" viewBox="0 0 24 24" aria-hidden="true">
-          <polyline points="6,9 12,15 18,9" />
-        </svg>
+        {iconOnly
+          ? <ThemeIcon encoded={group.icon!} className="tlToolbar__menuIcon" />
+          : <>
+              <span>{label}</span>
+              <svg className="tlToolbar__chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6,9 12,15 18,9" />
+              </svg>
+            </>
+        }
       </button>
-      {open && (
-        <div
-          ref={menuRef}
-          className="tlToolbar__dropdown"
-          role="menu"
-          onClick={() => setOpen(false)}
-        >
-          {visibleItems.map((item, i) => (
-            <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-              <TLChild control={item} />
-            </div>
-          ))}
-          {group.subGroups?.map((sub, si) => (
-            <React.Fragment key={`sub-${si}`}>
-              <hr className="tlToolbar__dropdownSeparator" />
-              {sub.items.map((item, i) => (
-                <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
-                  <TLChild control={item} />
-                </div>
-              ))}
-            </React.Fragment>
-          ))}
-        </div>
-      )}
+      {/* The dropdown stays mounted (only hidden when closed) so its item controls keep
+          their live SSE subscription. If items were mounted lazily on open, they would read
+          the toolbar's build-time snapshot and miss any executability change (e.g. a row
+          getting selected) that happened while the menu was closed - showing stale
+          (disabled) entries. */}
+      <div
+        ref={menuRef}
+        className="tlToolbar__dropdown"
+        role="menu"
+        hidden={!open}
+        onClick={() => setOpen(false)}
+      >
+        {visibleItems.map((item, i) => (
+          <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
+            <TLChild control={item} />
+          </div>
+        ))}
+        {group.subGroups?.map((sub, si) => (
+          <React.Fragment key={`sub-${si}`}>
+            <hr className="tlToolbar__dropdownSeparator" />
+            {sub.items.map((item, i) => (
+              <div key={i} className="tlToolbar__dropdownItem" role="menuitem">
+                <TLChild control={item} />
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
+      </div>
     </div>
   );
 };

@@ -34,7 +34,7 @@ public class CliqueRegistry {
 		list.add(new CliqueInfo(CommandCliques.NAVIGATE, 500, ToolbarGroupDisplay.INLINE, null, null));
 		list.add(new CliqueInfo(CommandCliques.VIEW, 600, ToolbarGroupDisplay.MENU, "View", null));
 		list.add(new CliqueInfo(CommandCliques.EXPORT, 700, ToolbarGroupDisplay.MENU, "Export", null));
-		list.add(new CliqueInfo(CommandCliques.MORE, 800, ToolbarGroupDisplay.MENU, "More", null));
+		list.add(new CliqueInfo(CommandCliques.MORE, 800, ToolbarGroupDisplay.MENU, "More", "css:bi bi-list"));
 		STANDARD_CLIQUES = Collections.unmodifiableList(list);
 	}
 

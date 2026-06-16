@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.view.UIElement;
@@ -124,6 +125,9 @@ public class ButtonElement implements UIElement {
 		ViewCommandModel model = new ViewCommandModel(_command, _commandConfig, inputChannel, rule, confirmation);
 
 		ReactButtonControl control = new ReactButtonControl(context, model);
+		if (_commandConfig.getImage() != null) {
+			control.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
+		}
 		control.setAppearance(_config.getAppearance());
 		control.setSize(_config.getSize());
 		control.addBeforeWriteAction(model::attach);

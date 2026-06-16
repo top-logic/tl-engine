@@ -3047,6 +3047,48 @@ button.tlToolbar__menuTrigger:focus-visible {
 	outline-offset: 1px;
 }
 
+/* Compact, square icon-only trigger (e.g. the burger overflow menu). */
+.tlToolbar__menuTrigger--icon {
+	gap: 0;
+	width: 2rem;
+	padding: 0;
+	justify-content: center;
+}
+
+.tlToolbar__menuIcon {
+	display: inline-flex;
+	align-items: center;
+	font-size: var(--heading-compact-03-font-size, 1rem);
+	line-height: 1;
+}
+
+/* The menu trigger visually mirrors a secondary button, so on an accent toolbar
+   surface (panel header or primary app bar) it needs the same on-accent
+   foreground the sibling buttons get - otherwise its accent-blue text/outline is
+   unreadable on the accent background. */
+.tlPanel__toolbar .tlToolbar__menuTrigger,
+.tlAppBar--primary .tlToolbar__menuTrigger {
+	color: var(--layer-accent-icon, var(--text-inverse));
+	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
+}
+
+.tlPanel__toolbar button.tlToolbar__menuTrigger:not(:disabled):hover,
+.tlAppBar--primary button.tlToolbar__menuTrigger:not(:disabled):hover {
+	background: var(--layer-accent-hover);
+}
+
+.tlPanel__toolbar button.tlToolbar__menuTrigger[aria-expanded="true"],
+.tlAppBar--primary button.tlToolbar__menuTrigger[aria-expanded="true"] {
+	background: var(--layer-accent-active, var(--layer-accent-hover));
+}
+
+/* The icon-only burger is a plain icon button: no outline box, on any surface. */
+.tlToolbar__menuTrigger--icon,
+.tlPanel__toolbar .tlToolbar__menuTrigger--icon,
+.tlAppBar--primary .tlToolbar__menuTrigger--icon {
+	box-shadow: none;
+}
+
 .tlReactCheckbox:disabled,
 .tlReactCheckbox--immutable {
 	opacity: 0.6;
@@ -4230,6 +4272,10 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	flex-shrink: 0;
 }
 
+.tlToolbar__dropdown[hidden] {
+	display: none;
+}
+
 .tlToolbar__dropdown {
 	position: absolute;
 	top: calc(100% + var(--spacing-02));
@@ -4264,6 +4310,16 @@ button.tlToolbar__menuTrigger[aria-expanded="true"] {
 .tlToolbar__dropdown button.tlReactButton:not(:disabled):hover {
 	background: var(--layer-hover);
 	color: var(--text-primary);
+}
+
+/* A disabled menu entry is plain greyed text, never an outlined box. The base
+   button:disabled rule re-adds an inset 2px outline (higher specificity than the
+   dropdown reset above), so stacked disabled items otherwise look like a series of
+   framed rows ("horizontal lines"). Override it here. */
+.tlToolbar__dropdown button.tlReactButton:disabled {
+	box-shadow: none;
+	background: transparent;
+	color: var(--text-disabled);
 }
 
 .tlToolbar__dropdown .tlReactButton--icon {

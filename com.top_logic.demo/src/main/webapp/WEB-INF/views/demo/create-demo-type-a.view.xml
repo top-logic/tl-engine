@@ -13,7 +13,7 @@
 			<field attribute="name"/>
 			<field attribute="htmlDescription"/>
 			<commands>
-				<generic-command label="Create" placement="TOOLBAR">
+				<generic-command label="Create" placement="BUTTON_BAR">
 					<store-form-state/>
 					<with-transaction>
 						<execute-script function="obj -> $obj.copy(transient: false)"/>

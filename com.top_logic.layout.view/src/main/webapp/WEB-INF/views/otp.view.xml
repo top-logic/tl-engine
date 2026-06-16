@@ -26,7 +26,7 @@
 			</text>
 			<field attribute="code"/>
 			<commands>
-				<generic-command placement="TOOLBAR">
+				<generic-command placement="BUTTON_BAR">
 					<label>
 						<en>Verify</en>
 						<de>Best&#228;tigen</de>

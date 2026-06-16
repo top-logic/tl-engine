@@ -15,7 +15,7 @@
 			<field attribute="quantity"/>
 			<field attribute="unitPrice"/>
 			<commands>
-				<generic-command placement="TOOLBAR">
+				<generic-command placement="BUTTON_BAR">
 					<label>
 						<en>OK</en>
 						<de>OK</de>

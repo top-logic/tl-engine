@@ -22,7 +22,7 @@
 			-->
 			<login-commands/>
 			<commands>
-				<generic-command placement="TOOLBAR">
+				<generic-command placement="BUTTON_BAR">
 					<label>
 						<en>Login</en>
 						<de>Anmeldung</de>

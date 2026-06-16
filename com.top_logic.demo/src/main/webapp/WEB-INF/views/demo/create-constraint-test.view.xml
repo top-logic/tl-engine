@@ -29,7 +29,7 @@
 				</columns>
 			</composition-table>
 			<commands>
-				<generic-command placement="TOOLBAR">
+				<generic-command placement="BUTTON_BAR">
 					<label>
 						<en>Create</en>
 						<de>Erstellen</de>

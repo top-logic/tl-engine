@@ -2290,9 +2290,6 @@ button.tlMenu__item--disabled:hover {
 }
 
 .tlText {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 	font-size: var(--body-compact-01-font-size, 0.875rem);
 	color: var(--text-primary, #161616);
 }
@@ -2300,6 +2297,13 @@ button.tlMenu__item--disabled:hover {
 .tlText--placeholder {
 	font-style: italic;
 	color: var(--text-helper, #6f6f6f);
+}
+
+/* Single-line truncation with an ellipsis (opt-in via the text element's overflow="ellipsis"). */
+.tlText--ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .tlTableView__checkboxCell {

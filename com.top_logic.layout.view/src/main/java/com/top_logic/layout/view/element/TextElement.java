@@ -54,6 +54,9 @@ public class TextElement implements UIElement {
 		/** Configuration name for {@link #getCssClass()}. */
 		String CSS_CLASS = "css-class";
 
+		/** Configuration name for {@link #getOverflow()}. */
+		String OVERFLOW = "overflow";
+
 		/**
 		 * Static text to display. Ignored when an {@link #getInput() input channel} is set.
 		 */
@@ -75,6 +78,14 @@ public class TextElement implements UIElement {
 		@Name(CSS_CLASS)
 		@Nullable
 		String getCssClass();
+
+		/**
+		 * How text longer than the available width is handled: {@link TextOverflow#WRAP wrapped}
+		 * onto multiple lines (the default) or truncated on a single line with an
+		 * {@link TextOverflow#ELLIPSIS ellipsis}.
+		 */
+		@Name(OVERFLOW)
+		TextOverflow getOverflow();
 	}
 
 	private final ResKey _label;
@@ -90,7 +101,16 @@ public class TextElement implements UIElement {
 	public TextElement(InstantiationContext context, Config config) {
 		_label = config.getLabel();
 		_inputRef = config.getInput();
-		_cssClass = config.getCssClass();
+		_cssClass = cssClass(config);
+	}
+
+	private static String cssClass(Config config) {
+		String userClass = config.getCssClass();
+		if (config.getOverflow() != TextOverflow.ELLIPSIS) {
+			return userClass;
+		}
+		String ellipsis = "tlText--ellipsis";
+		return userClass == null || userClass.isEmpty() ? ellipsis : ellipsis + " " + userClass;
 	}
 
 	@Override

@@ -20,6 +20,9 @@
 					<provider type="tl.core:Icon">
 						<impl class="com.top_logic.layout.view.form.IconSelectControlProvider"/>
 					</provider>
+					<provider type="tl.model.i18n:I18NString">
+						<impl class="com.top_logic.layout.view.form.I18NStringControlProvider"/>
+					</provider>
 					<provider type="tl.util:Color">
 						<impl class="com.top_logic.layout.view.form.ColorInputControlProvider"/>
 					</provider>

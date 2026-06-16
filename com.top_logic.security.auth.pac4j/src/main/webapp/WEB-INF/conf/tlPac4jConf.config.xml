@@ -31,5 +31,12 @@
 			isEnabled="true"
 			reuseSession="true"
 		/>
+
+		<!-- Surface one external login method per configured pac4j SSO client in login UIs. -->
+		<config config:interface="com.top_logic.base.accesscontrol.login.LoginMethodConfig">
+			<providers>
+				<provider class="com.top_logic.security.auth.pac4j.login.Pac4jLoginMethodProvider"/>
+			</providers>
+		</config>
 	</configs>
 </application>

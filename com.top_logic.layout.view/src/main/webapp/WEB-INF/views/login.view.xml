@@ -16,11 +16,16 @@
 			<field attribute="name"/>
 			<field attribute="password"/>
 			<!--
-				Extra login commands contributed by optional feature modules (e.g. self-service
-				"Forgot password?", SSO providers) via the LoginCommandsConfig application config.
-				Renders nothing when nothing is contributed.
+				Extra login commands contributed by optional feature modules (e.g. the self-service
+				"Forgot password?" button) via the LoginCommandsConfig application config. Renders
+				nothing when nothing is contributed.
 			-->
 			<login-commands/>
+			<!--
+				One redirect button per configured external login method (SSO providers, e.g. pac4j
+				clients), from LoginMethods. Renders nothing when none are configured.
+			-->
+			<login-methods/>
 			<commands>
 				<generic-command placement="BUTTON_BAR">
 					<label>

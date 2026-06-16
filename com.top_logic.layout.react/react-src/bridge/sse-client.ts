@@ -33,6 +33,13 @@ let _eventSource: EventSource | null = null;
 let _url: string | null = null;
 let _lastMessageTime: number = 0;
 let _heartbeatCheckInterval: ReturnType<typeof setInterval> | null = null;
+/**
+ * Set once the page starts navigating away (e.g. an external SSO redirect). The EventSource then
+ * closes as a side effect of the navigation; that must NOT be treated as a lost session and trigger
+ * a reload, which would abort the intentional navigation.
+ */
+let _navigatingAway = false;
+let _unloadListenerRegistered = false;
 
 /** Must exceed the server-side heartbeat interval (30 s) to avoid false reconnects. */
 const HEARTBEAT_TIMEOUT_MS = 45_000;
@@ -45,6 +52,13 @@ const HEARTBEAT_CHECK_INTERVAL_MS = 15_000;
  */
 export function connect(url: string): void {
   _url = url;
+
+  if (!_unloadListenerRegistered) {
+    _unloadListenerRegistered = true;
+    const markNavigatingAway = () => { _navigatingAway = true; };
+    window.addEventListener('beforeunload', markNavigatingAway);
+    window.addEventListener('pagehide', markNavigatingAway);
+  }
 
   if (_heartbeatCheckInterval) {
     clearInterval(_heartbeatCheckInterval);
@@ -85,6 +99,11 @@ function createEventSource(url: string): void {
   };
 
   _eventSource.onerror = () => {
+    if (_navigatingAway) {
+      // The page is navigating away (e.g. an external SSO redirect). The connection closing is
+      // expected; reloading here would abort the navigation.
+      return;
+    }
     if (_eventSource && _eventSource.readyState === EventSource.CLOSED) {
       // HTTP error (e.g. 401 after server restart) — session is gone.
       // Redirect to trigger re-login instead of retrying endlessly.

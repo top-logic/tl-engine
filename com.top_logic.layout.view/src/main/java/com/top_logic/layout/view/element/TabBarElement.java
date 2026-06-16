@@ -169,13 +169,13 @@ public class TabBarElement implements UIElement {
 
 	private static ReactControl createContent(TabEntry entry, ViewContext context,
 			DirtyChannel dirtyChannel) {
-		// Per-tab context: extend the personalization key with "tab" (legacy), extend the slot
+		// Per-tab context: extend the personalization key with "tab" (legacy) and extend the slot
 		// path with the tab id so same-named <slot-content> in two tabs route into independent
-		// positions, and fork a fresh channel scope so each tab's <channels> declarations are
-		// independent of its siblings'.
+		// positions. Channels are NOT forked: only a <view> declares channels, so tab content
+		// shares the enclosing view's channels. A tab needing its own channel namespace embeds a
+		// <view-ref> to a separate <view> and binds across that boundary.
 		ViewContext baseContext = context.childContext("tab")
-			.withChildSlotPath(entry._id)
-			.withFreshChannelScope();
+			.withChildSlotPath(entry._id);
 		// Establish the tab's security scope so command rules in its content default to it.
 		SecurityScope scope = AccessChecks.resolveScope(entry._accessControl());
 		ViewContext tabContext = scope != null ? baseContext.withSecurityScope(scope) : baseContext;

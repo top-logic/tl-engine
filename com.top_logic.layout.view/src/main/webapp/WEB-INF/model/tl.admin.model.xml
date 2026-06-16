@@ -24,6 +24,41 @@
 						</input-control>
 					</annotations>
 				</property>
+				<property name="language"
+					type="tl.util:Language"
+				/>
+				<property name="restrictedUser"
+					type="tl.core:Boolean"
+				/>
+				<property name="admin"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "reset password" form. Instances are created
+			with new(`tl.admin:PasswordReset`, transient: true), carry a reference to the account whose
+			password is reset, and are never persisted (the set-password action applies the password
+			directly to the referenced account), so no table is declared.
+		-->
+		<class name="PasswordReset">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="account"
+					type="tl.accounts:Person"
+				/>
+				<property name="password"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

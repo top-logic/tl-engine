@@ -17,6 +17,7 @@
 			mode-switch="false"
 		>
 			<field attribute="name"/>
+			<field attribute="isSystem"/>
 			<field attribute="description"/>
 			<commands>
 				<generic-command placement="TOOLBAR">

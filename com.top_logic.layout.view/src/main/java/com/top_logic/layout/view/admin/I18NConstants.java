@@ -25,6 +25,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_ACCOUNT_EXISTS__LOGIN;
 
 	/**
+	 * @en No account selected to set the password for.
+	 */
+	public static ResKey ERROR_MISSING_ACCOUNT;
+
+	/**
+	 * @en Please enter a new password.
+	 */
+	public static ResKey ERROR_MISSING_PASSWORD;
+
+	/**
+	 * @en Changing the password is not supported by the configured authentication device.
+	 */
+	public static ResKey ERROR_PASSWORD_CHANGE_UNSUPPORTED;
+
+	/**
 	 * @en Scope
 	 */
 	public static ResKey MATRIX_SCOPE_COLUMN;

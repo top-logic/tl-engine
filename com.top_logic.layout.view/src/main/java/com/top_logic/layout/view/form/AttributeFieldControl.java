@@ -5,9 +5,13 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
@@ -23,8 +27,13 @@ import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.definition.FormVisibility;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.util.Resources;
 
 /**
@@ -60,6 +69,14 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private ReactFormFieldChromeControl _chrome;
 
 	private ReactControl _innerControl;
+
+	private ModeSelector _modeSelector;
+
+	private Set<TLStructuredTypePart> _modeDependencies = Collections.emptySet();
+
+	private final FormControl.FieldChangeListener _modeListener = this::onModeDependencyChanged;
+
+	private boolean _modeListenerRegistered;
 
 	/**
 	 * Creates a new {@link AttributeFieldControl} and registers as listener on the form model.
@@ -106,7 +123,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 
 		TLStructuredTypePart part = resolvePart(current);
-		if (part == null) {
+		if (part == null || DisplayAnnotations.isHidden(part)) {
 			// Attribute not supported by this object's type - hide the field.
 			_innerControl = new ReactTextInputControl(
 				_context, new AbstractFieldModel(null) {
@@ -118,7 +135,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 
 		_model = createModel(current, part);
-		_model.setEditable(_formModel.isEditMode() && !_forceReadonly && !part.isDerived());
 		_formControl.registerParticipant(this);
 
 		addModelListener();
@@ -127,12 +143,14 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		String label = resolveLabel();
 		String helpText = resolveHelpText(part);
-		boolean mandatory = part.isMandatory();
 		boolean dirty = _model.isDirty();
 		boolean fullLine = resolveFullLine(part);
 
-		_chrome = new ReactFormFieldChromeControl(_context, label, mandatory,
+		_chrome = new ReactFormFieldChromeControl(_context, label, part.isMandatory(),
 			dirty, null, helpText, null, fullLine, true, _innerControl);
+
+		setupMode(part);
+		applyMode(_formModel.isEditMode());
 
 		return _chrome;
 	}
@@ -154,7 +172,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		TLStructuredTypePart part = resolvePart(current);
 
-		if (part == null) {
+		if (part == null || DisplayAnnotations.isHidden(part)) {
 			// Attribute not supported by this object's type - hide field.
 			_chrome.setVisible(false);
 			clearModel();
@@ -167,7 +185,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		if (_model == null) {
 			// First compatible object arrived or re-appearing after hide.
 			_model = createModel(current, part);
-			_model.setEditable(source.isEditMode() && !_forceReadonly && !part.isDerived());
 			_formControl.registerParticipant(this);
 
 			addModelListener();
@@ -176,18 +193,22 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 			_chrome.setLabel(resolveLabel());
 			_chrome.setHelpText(resolveHelpText(part));
-			_chrome.setRequired(part.isMandatory());
 			_chrome.setFullLine(resolveFullLine(part));
 			_chrome.setField(_innerControl);
 			_chrome.setDirty(false);
+
+			setupMode(part);
+			applyMode(source.isEditMode());
 			return;
 		}
 
 		// Rebind existing model to the current object.
 		_model.setObject(current);
-		_model.setEditable(source.isEditMode() && !_forceReadonly && !part.isDerived());
 		_formControl.registerParticipant(this);
 		_chrome.setDirty(_model.isDirty());
+
+		setupMode(part);
+		applyMode(source.isEditMode());
 
 		// Re-wire validation: the overlay changed, so the old listener (bound to the
 		// previous overlay by identity) won't match anymore. Remove it and re-create.
@@ -245,6 +266,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	private void clearModel() {
 		unwireValidation();
+		if (_modeListenerRegistered) {
+			_formControl.removeFieldChangeListener(_modeListener);
+			_modeListenerRegistered = false;
+		}
+		_modeSelector = null;
+		_modeDependencies = Collections.emptySet();
 		if (_model != null) {
 			if (_modelListener != null) {
 				_model.removeListener(_modelListener);
@@ -264,6 +291,85 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 */
 	private AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part) {
 		return FieldControlService.getInstance().createModel(object, part, _formControl);
+	}
+
+	/**
+	 * Resolves the (dynamic) visibility mode selector for the attribute and subscribes to form
+	 * field changes when the mode depends on other fields.
+	 */
+	private void setupMode(TLStructuredTypePart part) {
+		_modeSelector = DynamicVisibility.modeSelector(part);
+		if (_modeSelector != null && !_modeListenerRegistered) {
+			_formControl.addFieldChangeListener(_modeListener);
+			_modeListenerRegistered = true;
+		}
+	}
+
+	/**
+	 * Computes and applies the effective visibility, editability and mandatory state of the field,
+	 * honoring a dynamic {@link ModeSelector} (recording its dependencies) and otherwise the static
+	 * visibility annotations.
+	 */
+	private void applyMode(boolean editMode) {
+		if (_model == null || _chrome == null) {
+			return;
+		}
+		TLStructuredTypePart part = _model.getPart();
+		boolean visible = true;
+		boolean editable;
+		boolean mandatory;
+		FormVisibility mode = FormVisibility.DEFAULT;
+		if (_modeSelector != null) {
+			TLObject self = _formModel.getCurrentObject();
+			Set<TLStructuredTypePart> dependencies = new HashSet<>();
+			Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
+			OverlayLookup overlays = _formControl.getValidationModel();
+			mode = _modeSelector.getMode(self, part);
+			_modeSelector.traceDependencies(self, part, sink,
+				overlays != null ? overlays : AttributeOptions.NO_OVERLAYS);
+			_modeDependencies = dependencies;
+		}
+		switch (mode) {
+			case HIDDEN:
+				visible = false;
+				editable = false;
+				mandatory = false;
+				break;
+			case READ_ONLY:
+			case DISABLED:
+				editable = false;
+				mandatory = false;
+				break;
+			case EDITABLE:
+				editable = true;
+				mandatory = false;
+				break;
+			case MANDATORY:
+				editable = true;
+				mandatory = true;
+				break;
+			case DEFAULT:
+			default:
+				visible = !DisplayAnnotations.isHidden(part);
+				editable = DisplayAnnotations.isEditable(part);
+				mandatory = DisplayAnnotations.isMandatory(part);
+				break;
+		}
+		_chrome.setVisible(visible);
+		_chrome.setRequired(mandatory);
+		_model.setEditable(editMode && !_forceReadonly && editable);
+	}
+
+	private void onModeDependencyChanged(TLStructuredTypePart changedPart) {
+		if (_model == null || _modeSelector == null) {
+			return;
+		}
+		if (changedPart == _model.getPart()) {
+			return;
+		}
+		if (_modeDependencies.contains(changedPart)) {
+			applyMode(_formModel.isEditMode());
+		}
 	}
 
 	/**

@@ -19,6 +19,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -83,6 +84,28 @@ public class CreateAccountAction implements ViewAction {
 				Arrays.fill(passwordChars, (char) 0);
 			}
 		}
+
+		// Apply the optional profile fields entered in the create form.
+		copyAttribute(newAccount, account, "language");
+		copyAttribute(newAccount, account, "restrictedUser");
+		copyAttribute(newAccount, account, "admin");
+
 		return account;
+	}
+
+	/**
+	 * Copies a non-{@code null} attribute value from the create form to the account, skipping
+	 * attributes that the account's type does not have or that are calculated (read-only).
+	 */
+	private static void copyAttribute(TLObject from, Person to, String attribute) {
+		Object value = from.tValueByName(attribute);
+		if (value == null) {
+			return;
+		}
+		TLStructuredTypePart part = to.tType().getPart(attribute);
+		if (part == null || part.isDerived()) {
+			return;
+		}
+		to.tUpdateByName(attribute, value);
 	}
 }

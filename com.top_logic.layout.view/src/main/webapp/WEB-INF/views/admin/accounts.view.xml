@@ -46,6 +46,20 @@
 							</with-transaction>
 							<write-channel name="selectedAccount"/>
 						</generic-command>
+						<generic-command placement="TOOLBAR" input="selectedAccount">
+							<label>
+								<en>Reset password</en>
+								<de>Passwort zur&#xFC;cksetzen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script function="acc -> new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $acc)"/>
+							<open-dialog
+								dialog-view="admin/reset-password.view.xml"
+								bind-input-to="model"
+							/>
+						</generic-command>
 					</commands>
 					<table
 						selection="selectedAccount"

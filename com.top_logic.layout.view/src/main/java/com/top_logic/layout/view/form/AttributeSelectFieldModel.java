@@ -33,13 +33,39 @@ import com.top_logic.model.util.Pointer;
  * </p>
  *
  * <p>
- * Options are recomputed whenever a dependency of the (TL-Script) options expression changes in the
- * form, so that options depending on other fields stay up to date.
+ * Options come from an {@link OptionSource} and are recomputed whenever a dependency of the (possibly
+ * TL-Script) options expression changes in the form, so that options depending on other fields stay
+ * up to date.
  * </p>
  */
 public class AttributeSelectFieldModel extends AttributeFieldModel implements SelectFieldModel {
 
+	/**
+	 * Computes the option list for a select field.
+	 */
+	@FunctionalInterface
+	public interface OptionSource {
+
+		/**
+		 * Computes the available options.
+		 *
+		 * @param self
+		 *        The object owning the attribute (an editing overlay in edit mode, the persistent
+		 *        object in display mode).
+		 * @param overlays
+		 *        Lookup for the editing overlays of other in-form objects referenced by an option
+		 *        expression, or {@code null} in display mode.
+		 * @param dependencies
+		 *        Receives the attributes read while computing the options, so that the field can
+		 *        recompute when one of them changes.
+		 * @return The available options.
+		 */
+		List<?> compute(TLObject self, OverlayLookup overlays, Sink<Pointer> dependencies);
+	}
+
 	private final FormControl _formControl;
+
+	private final OptionSource _optionSource;
 
 	private final boolean _multiple;
 
@@ -60,10 +86,14 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 	 *        See {@link AttributeFieldModel#AttributeFieldModel(TLObject, TLStructuredTypePart)}.
 	 * @param formControl
 	 *        The enclosing form, providing the overlay lookup and field-change notifications.
+	 * @param optionSource
+	 *        Computes the available options.
 	 */
-	public AttributeSelectFieldModel(TLObject object, TLStructuredTypePart part, FormControl formControl) {
+	public AttributeSelectFieldModel(TLObject object, TLStructuredTypePart part, FormControl formControl,
+			OptionSource optionSource) {
 		super(object, part);
 		_formControl = formControl;
+		_optionSource = optionSource;
 		_multiple = part.isMultiple();
 		recomputeOptions();
 		_formControl.addFieldChangeListener(_fieldChangeListener);
@@ -159,7 +189,7 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 		Set<TLStructuredTypePart> dependencies = new HashSet<>();
 		Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
 		OverlayLookup overlays = _formControl.getValidationModel();
-		List<?> options = AttributeOptions.optionsFor(getObject(), getPart(), overlays, sink);
+		List<?> options = _optionSource.compute(getObject(), overlays, sink);
 		_dependencies = dependencies;
 		setOptions(options);
 	}

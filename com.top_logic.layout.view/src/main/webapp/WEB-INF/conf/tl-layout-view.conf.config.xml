@@ -23,6 +23,21 @@
 					<provider type="tl.util:Color">
 						<impl class="com.top_logic.layout.view.form.ColorInputControlProvider"/>
 					</provider>
+					<provider type="tl.util:Country">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.CountryOptionProvider"/>
+						</impl>
+					</provider>
+					<provider type="tl.util:Language">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.LanguageOptionProvider"/>
+						</impl>
+					</provider>
+					<provider type="tl.util:TimeZone">
+						<impl class="com.top_logic.layout.view.form.SelectControlProvider">
+							<option-provider class="com.top_logic.element.meta.complex.TimeZoneOptionProvider"/>
+						</impl>
+					</provider>
 				</providers>
 			</instance>
 		</config>

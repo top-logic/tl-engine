@@ -7,19 +7,13 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.element.meta.AttributeOperations;
-import com.top_logic.element.meta.ListOptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
-import com.top_logic.element.meta.complex.CountryOptionProvider;
-import com.top_logic.element.meta.complex.LanguageOptionProvider;
-import com.top_logic.element.meta.complex.TimeZoneOptionProvider;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.element.meta.kbbased.storage.mappings.JavaEnumMapping;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
@@ -37,23 +31,29 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.search.providers.OptionsByExpression;
 import com.top_logic.model.util.Pointer;
-import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Resolves the selectable options for a model attribute in the React view form layer.
+ * Resolves the selectable options for a model attribute from the attribute itself (its type or
+ * options annotation), for the React view form layer.
  *
  * <p>
- * Unlike the legacy form framework, option resolution here is fully decoupled from
- * {@code AttributeFormContext}/{@code AttributeUpdateContainer}/{@code TLFormObject}:
+ * Option resolution is decoupled from the legacy form framework
+ * ({@code AttributeFormContext}/{@code AttributeUpdateContainer}/{@code TLFormObject}):
  * </p>
  * <ul>
  * <li>A TL-Script options annotation ({@link OptionsByExpression}) is evaluated <em>natively</em>
  * through a {@link ScriptTracer} against the current (possibly edited) object, reporting the
  * attributes it reads to a {@link Sink} so the caller can recompute options when a dependency
  * changes.</li>
- * <li>All other generators, enumerations, references and option-bearing datatypes are resolved via
- * the platform model metadata.</li>
+ * <li>Other generators, enumerations, references and enum datatypes are resolved via the platform
+ * model metadata.</li>
  * </ul>
+ *
+ * <p>
+ * Type-specific datatypes that need an external option source (e.g. {@code tl.util:Country}) are not
+ * handled here; they are configured per type in {@link FieldControlService} with an
+ * {@link com.top_logic.element.meta.OptionProvider}.
+ * </p>
  *
  * @see AttributeSelectFieldModel
  */
@@ -75,15 +75,6 @@ public class AttributeOptions {
 	};
 
 	/**
-	 * Option sources for the well-known core datatypes that have a finite value range but no
-	 * per-attribute options annotation.
-	 */
-	private static final Map<String, ListOptionProvider> DATATYPE_OPTIONS = Map.of(
-		"tl.util:Country", CountryOptionProvider.INSTANCE,
-		"tl.util:Language", LanguageOptionProvider.INSTANCE,
-		"tl.util:TimeZone", new TimeZoneOptionProvider());
-
-	/**
 	 * Compiled options expressions, keyed by the attribute they belong to.
 	 */
 	private static final ConcurrentHashMap<TLStructuredTypePart, ScriptTracer> TRACERS =
@@ -94,10 +85,16 @@ public class AttributeOptions {
 	}
 
 	/**
-	 * Whether the given attribute should be edited through a select control backed by a defined set
-	 * of options.
+	 * Whether the given attribute is a select based on its model structure, i.e. an enumeration, a
+	 * non-composition reference, an enum datatype, or an attribute with a configured options
+	 * generator.
+	 *
+	 * <p>
+	 * This does not cover type-specific datatypes configured in {@link FieldControlService}; that
+	 * decision is made there.
+	 * </p>
 	 */
-	public static boolean isSelect(TLStructuredTypePart part) {
+	public static boolean isStructuralSelect(TLStructuredTypePart part) {
 		if (isComposition(part)) {
 			// Compositions are edited through a (composition) table, not a select.
 			return false;
@@ -110,7 +107,7 @@ public class AttributeOptions {
 			return true;
 		}
 		if (type instanceof TLPrimitive) {
-			return isEnumDatatype((TLPrimitive) type) || DATATYPE_OPTIONS.containsKey(TLModelUtil.qualifiedName(type));
+			return isEnumDatatype((TLPrimitive) type);
 		}
 		return false;
 	}
@@ -119,9 +116,8 @@ public class AttributeOptions {
 	 * Computes the option list for the given attribute in the context of the given object.
 	 *
 	 * @param self
-	 *        The object owning the attribute (an editing overlay in edit mode, the persistent object
-	 *        in display mode). Option expressions are evaluated against this object, so they see the
-	 *        current (edited) values of other fields.
+	 *        The object owning the attribute. Option expressions are evaluated against this object,
+	 *        so they see the current (edited) values of other fields.
 	 * @param part
 	 *        The attribute whose options to compute.
 	 * @param overlays
@@ -146,15 +142,8 @@ public class AttributeOptions {
 			return toList(generator.generate(SimpleEditContext.createContext(self, part)));
 		}
 		TLType type = part.getType();
-		if (type instanceof TLPrimitive) {
-			TLPrimitive primitive = (TLPrimitive) type;
-			if (isEnumDatatype(primitive)) {
-				return enumOptions(primitive);
-			}
-			ListOptionProvider datatypeOptions = DATATYPE_OPTIONS.get(TLModelUtil.qualifiedName(type));
-			if (datatypeOptions != null) {
-				return datatypeOptions.getOptionsList(SimpleEditContext.createContext(self, part));
-			}
+		if (type instanceof TLPrimitive && isEnumDatatype((TLPrimitive) type)) {
+			return enumOptions((TLPrimitive) type);
 		}
 		// Enumeration (classifiers) or reference (all instances).
 		return toList(AttributeOperations.allOptions(SimpleEditContext.createContext(self, part)));
@@ -173,7 +162,10 @@ public class AttributeOptions {
 		return Arrays.asList(mapping.getConfig().getEnum().getEnumConstants());
 	}
 
-	private static List<?> toList(OptionModel<?> model) {
+	/**
+	 * Flattens an {@link OptionModel} into a list.
+	 */
+	public static List<?> toList(OptionModel<?> model) {
 		if (model instanceof ListOptionModel) {
 			return new ArrayList<>(((ListOptionModel<?>) model).getBaseModel());
 		}
@@ -182,13 +174,6 @@ public class AttributeOptions {
 			result.add(option);
 		}
 		return result;
-	}
-
-	/**
-	 * Whether the given value is a non-{@code null} {@link Collection}.
-	 */
-	static boolean isCollection(Object value) {
-		return value instanceof Collection;
 	}
 
 }

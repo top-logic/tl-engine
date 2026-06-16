@@ -259,14 +259,11 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	/**
-	 * Creates the {@link AttributeFieldModel} for the given attribute, using an
-	 * {@link AttributeSelectFieldModel} for option-based attributes.
+	 * Creates the {@link AttributeFieldModel} for the given attribute (an
+	 * {@link AttributeSelectFieldModel} for option-based attributes).
 	 */
 	private AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part) {
-		if (AttributeOptions.isSelect(part)) {
-			return new AttributeSelectFieldModel(object, part, _formControl);
-		}
-		return new AttributeFieldModel(object, part);
+		return FieldControlService.getInstance().createModel(object, part, _formControl);
 	}
 
 	/**

@@ -352,33 +352,28 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Invalid number: {0}
-	 * @de Ung\u00FCltige Zahl: {0}
 	 */
 	public static ResKey1 ERROR_INVALID_NUMBER__VALUE;
 
 	/**
 	 * @en Invalid date: {0}
-	 * @de Ung\u00FCltiges Datum: {0}
 	 */
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
 
 	/**
 	 * @en Edit all languages
-	 * @de Alle Sprachen bearbeiten
 	 */
 	@CustomKey("js.i18nString.allLanguages")
 	public static ResKey JS_I18N_STRING_ALL_LANGUAGES;
 
 	/**
 	 * @en OK
-	 * @de OK
 	 */
 	@CustomKey("js.i18nString.ok")
 	public static ResKey JS_I18N_STRING_OK;
 
 	/**
 	 * @en Cancel
-	 * @de Abbrechen
 	 */
 	@CustomKey("js.i18nString.cancel")
 	public static ResKey JS_I18N_STRING_CANCEL;

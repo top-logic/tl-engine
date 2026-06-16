@@ -16,7 +16,7 @@ public enum ImageOrientation implements de.haumacher.msgbuf.data.ProtocolEnum {
 	FLIP_H("flipH"),
 
 	/**
-	 * The image is rotated by 180�.
+	 * The image is rotated by 180°.
 	 */
 	ROTATE_180("rotate180"),
 
@@ -26,22 +26,22 @@ public enum ImageOrientation implements de.haumacher.msgbuf.data.ProtocolEnum {
 	FLIP_V("flipV"),
 
 	/**
-	 * The image is flipped horizontally, and rotated by 270� counter-clockwise.
+	 * The image is flipped horizontally, and rotated by 270° counter-clockwise.
 	 */
 	FLIP_H_ROTATE_270("flipH_rotate270"),
 
 	/**
-	 * The image is rotated by 90� counter-clockwise.
+	 * The image is rotated by 90° counter-clockwise.
 	 */
 	ROTATE_90("rotate90"),
 
 	/**
-	 * The image is flipped horizontally and rotated by 90� counter-clockwise.
+	 * The image is flipped horizontally and rotated by 90° counter-clockwise.
 	 */
 	FLIP_H_ROTATE_90("flipH_rotate90"),
 
 	/**
-	 * The image is rotated by 270� counter-clockwise.
+	 * The image is rotated by 270° counter-clockwise.
 	 */
 	ROTATE_270("rotate270"),
 

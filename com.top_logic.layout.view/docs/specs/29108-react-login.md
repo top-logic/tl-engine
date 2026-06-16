@@ -1,8 +1,9 @@
 # React UI Login & Self-Service (Ticket #29108)
 
-**Status:** Phases 1–3 complete (browser-verified): login/logout (1), password
+**Status:** All phases complete (browser-verified): login/logout (1), password
 expiry (2a), OTP verification + MFA enrollment (2b), forgot-password self-service
-(3). Phase 4 (SSO) outstanding.
+(3), SSO providers via pac4j (4). Only optional follow-ups remain (see the phase
+notes and §5).
 **Scope:** Authentication/identity for the new React view layer
 (`com.top_logic.layout.view`, served by `ViewServlet` at `/view/*`), parallel to
 — and independent of — the legacy `MainLayout`/`LoginViewDialog` UI.
@@ -226,19 +227,33 @@ Mirror the legacy `LoginViewDialog` follow-up steps, composed as dialog views.
   (dev-logged) → reset with code + new password → dialogs close, no auto-login,
   new password accepted on next login; wrong code → error toast, dialog stays.
 
-### Phase 4 — SSO providers ("Login with Google") via pac4j
-- Implement `LoginMethodProvider` in `com.top_logic.security.auth.pac4j`,
-  enumerating clients via `Pac4jConfigFactory.getInstance().getPac4jConfig()
-  .getClients()`; one `LoginMethod` per client.
-- Add display label/icon to `ClientConfigurator.Config` (clients currently have
-  no presentation metadata).
-- Render the methods in `login.view.xml` as redirect buttons:
-  `window.location.assign(method.initiationUrl("/<ctx>/view/<window>/"))`. A
-  small generic mechanism is needed to surface `LoginMethods.all()` into the
-  view (e.g. a `<login-methods>` element or a channel) — design when starting.
-- Register the provider in the pac4j module's config (`LoginMethodConfig`).
-- Optional: retrofit the legacy `LoginViewDialog` to the same SPI so both UIs
-  share one contract.
+### Phase 4 — SSO providers ("Login with Google") via pac4j (DONE, browser-verified)
+- `Pac4jLoginMethodProvider` (`com.top_logic.security.auth.pac4j.login`) yields one
+  `Pac4jLoginMethod` per configured SSO client. It reads the **static** client
+  configuration (`Pac4jConfigFactory.getInstance().getConfig().getClients()`, a
+  `Map<name, ClientConfigurator.Config>`) rather than instantiating runtime
+  clients, so methods are listed without a live IdP and nothing is yielded when
+  the pac4j module is inactive.
+- `Pac4jLoginMethod.getInitiationUrl(returnTo)` →
+  `<ctx>/servlet/openid?client_name=<name>&startPage=<returnTo>`.
+- `ClientConfigurator.Config` gained optional `label` (`ResKey`) and `icon`
+  (`ThemeImage`); the provider falls back to `ResKey.text(name)`. The keycloak
+  demo client got a `<label>` ("Login with Keycloak").
+- Provider registered via `LoginMethodConfig` in `tlPac4jConf.config.xml`.
+- Surfacing: a new `<login-methods>` element (`LoginMethodsElement`, base view
+  module) renders one redirect button per `LoginMethods.all()`, doing a full-page
+  redirect via a `JSSnipplet` (`window.location.assign(initiationUrl)`) returning
+  to `/view/`. Added to `login.view.xml`; renders nothing when no method is
+  configured. (This is a sibling of the `<login-commands>` contribution point, not
+  the same registry: pac4j only registers the core provider and never depends on
+  the view module.)
+- **Verified (Playwright):** the React login dialog shows a "Mit Keycloak anmelden"
+  button; clicking it runs the full OIDC initiation through `/servlet/openid` to
+  the real Keycloak IdP sign-in page, with `redirect_uri` pointing back to
+  `/servlet/callback`. The post-IdP callback → `loginUser` → `startPage` is pac4j's
+  existing path.
+- **Not done (optional):** retrofitting the legacy `LoginViewDialog` to the same
+  SPI so both UIs share one contract.
 
 ---
 

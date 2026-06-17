@@ -34,7 +34,7 @@ Switching branches can leave stale jars in the local Maven repo (installed artif
 .claude/scripts/rebuild-stale.sh --dry-run  # only list them
 ```
 
-The script enumerates all reactor modules via one `mvn exec:exec` run, compares the newest mtime under each module's `pom.xml` + `src/` against the installed jar in the local Maven repo, and rebuilds only the stale ones in the correct order (`mvn -B install -pl <list>`).
+The script enumerates all reactor modules via one `mvn exec:exec` run, then flags a module as stale when **either** (a) its own `pom.xml` + `src/` mtime is newer than its installed jar (or the jar is missing) — *source-stale*; **or** (b) any reactor module it depends on is stale or has a newer jar — *dependency-stale*. Case (b) is propagated transitively over the reactor dependency graph (parsed from each module's `pom.xml`), so it catches **cross-module API drift**: e.g. `model.search`'s sources change and it is rebuilt, leaving `service.openapi.server` — whose own sources are untouched — compiled against the old `SearchExpression` API. A purely local mtime check would call that module fresh; the transitive check rebuilds it. It then rebuilds the whole stale set in the correct order (`mvn -B install -pl <list>`; Maven re-sorts `-pl` into reactor order). The dependency-stale rule is deliberately conservative (rebuilds rather than risk a binary-incompatible jar); after a full `mvn install` jars are written in topological order, so only genuine source-stale roots propagate.
 
 ### Running Tests
 

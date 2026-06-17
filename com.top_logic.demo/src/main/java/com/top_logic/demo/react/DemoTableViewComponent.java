@@ -30,7 +30,11 @@ import com.top_logic.table.Column;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
+import com.top_logic.table.Option;
 import com.top_logic.table.TreeStructure;
+import com.top_logic.table.filter.BooleanColumnFilter;
+import com.top_logic.table.filter.ComparableColumnFilter;
+import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -50,9 +54,14 @@ import com.top_logic.table.impl.TreeRowSource;
 public class DemoTableViewComponent extends LayoutComponent {
 
 	/** A demo employee row. */
-	public record Emp(int id, String name, String department, String status, int salary) {
+	public record Emp(int id, String name, String department, String status, int salary, boolean active) {
 		// Demo fixture.
 	}
+
+	private static final String[] DEPARTMENTS =
+		{ "Engineering", "Marketing", "Sales", "HR", "Finance", "Support" };
+
+	private static final String[] STATUSES = { "Active", "Inactive", "On Leave" };
 
 	/** A demo file-system row. */
 	public record FileRow(String name, String type, String size) {
@@ -135,33 +144,46 @@ public class DemoTableViewComponent extends LayoutComponent {
 
 	private List<Column<Emp, ?>> employeeColumns() {
 		Column<Emp, Integer> id = DefaultColumn.<Emp, Integer> builder("id", Emp::id)
-			.label(ResKey.text("ID")).width(70).sort(() -> Comparator.naturalOrder()).build();
+			.label(ResKey.text("ID")).width(70).sort(() -> Comparator.naturalOrder())
+			.filter(ComparableColumnFilter.integers()).build();
 		Column<Emp, String> name = DefaultColumn.<Emp, String> builder("name", Emp::name)
 			.label(ResKey.text("Name")).width(180).sort(() -> Comparator.naturalOrder())
 			.filter(TextColumnFilter.forStrings()).build();
 		Column<Emp, String> department = DefaultColumn.<Emp, String> builder("department", Emp::department)
 			.label(ResKey.text("Department")).width(150).sort(() -> Comparator.naturalOrder())
-			.filter(TextColumnFilter.forStrings()).build();
+			.filter(new OptionsColumnFilter<>(options(DEPARTMENTS))).build();
 		Column<Emp, String> status = DefaultColumn.<Emp, String> builder("status", Emp::status)
-			.label(ResKey.text("Status")).width(120).sort(() -> Comparator.naturalOrder()).build();
+			.label(ResKey.text("Status")).width(120).sort(() -> Comparator.naturalOrder())
+			.filter(new OptionsColumnFilter<>(options(STATUSES))).build();
 		Column<Emp, Integer> salary = DefaultColumn.<Emp, Integer> builder("salary", Emp::salary)
 			.label(ResKey.text("Salary")).width(120).sort(() -> Comparator.naturalOrder())
+			.filter(ComparableColumnFilter.integers())
 			.aggregate(group -> CellContent.text("Sum: " + group.members().stream().mapToInt(Emp::salary).sum()))
 			.build();
-		return List.of(id, name, department, status, salary);
+		Column<Emp, Boolean> active = DefaultColumn.<Emp, Boolean> builder("active", Emp::active)
+			.label(ResKey.text("Active")).width(90).sort(() -> Comparator.naturalOrder())
+			.filter(BooleanColumnFilter.INSTANCE).build();
+		return List.of(id, name, department, status, salary, active);
+	}
+
+	private static List<Option> options(String[] values) {
+		List<Option> options = new ArrayList<>(values.length);
+		for (String value : values) {
+			options.add(new Option(value, ResKey.text(value)));
+		}
+		return options;
 	}
 
 	private List<Emp> employees() {
-		String[] departments = { "Engineering", "Marketing", "Sales", "HR", "Finance", "Support" };
-		String[] statuses = { "Active", "Inactive", "On Leave" };
 		List<Emp> rows = new ArrayList<>();
 		for (int i = 0; i < 1000; i++) {
 			rows.add(new Emp(
 				i + 1,
 				"Employee " + (i + 1),
-				departments[i % departments.length],
-				statuses[i % statuses.length],
-				40000 + (i % 50) * 1000));
+				DEPARTMENTS[i % DEPARTMENTS.length],
+				STATUSES[i % STATUSES.length],
+				40000 + (i % 50) * 1000,
+				i % 2 == 0));
 		}
 		return rows;
 	}

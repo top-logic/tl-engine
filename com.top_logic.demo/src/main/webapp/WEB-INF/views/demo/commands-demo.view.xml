@@ -81,6 +81,7 @@
 		</commands>
 
 		<stack direction="column" gap="default">
+			<inset>
 			<card variant="elevated">
 				<title>
 					<en>Panel Content</en>
@@ -93,6 +94,7 @@
 					</label>
 				</demo-counter>
 			</card>
+			</inset>
 		</stack>
 	</panel>
 </view>

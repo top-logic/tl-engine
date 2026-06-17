@@ -26,12 +26,14 @@
 					<action class="com.top_logic.demo.view.command.SayGoodbyeAction"/>
 				</generic-command>
 			</commands>
+			<inset>
 			<card variant="elevated">
 				<title>
 					<en>Right-click anywhere in this card to open the context menu.</en>
 					<de>Rechtsklicken Sie in dieser Karte, um das Kontextmenue zu oeffnen.</de>
 				</title>
 			</card>
+			</inset>
 		</context-menu>
 	</panel>
 </view>

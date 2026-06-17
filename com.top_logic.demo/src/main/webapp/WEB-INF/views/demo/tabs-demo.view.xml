@@ -8,6 +8,7 @@
 					<en>Overview</en>
 					<de>&#xDC;bersicht</de>
 				</label>
+				<inset>
 				<card
 					variant="elevated"
 				>
@@ -22,12 +23,14 @@
 						</label>
 					</demo-counter>
 				</card>
+				</inset>
 			</tab>
 			<tab id="details">
 				<label>
 					<en>Details</en>
 					<de>Details</de>
 				</label>
+				<inset>
 				<card>
 					<title>
 						<en>Detail Content</en>
@@ -42,6 +45,7 @@
 						</action>
 					</button>
 				</card>
+				</inset>
 			</tab>
 			<!-- Intentionally NOT routed: demonstrates that tabs with
 			     route="" do not produce URL segments. -->
@@ -50,6 +54,7 @@
 					<en>History (no routing)</en>
 					<de>Verlauf (kein Routing)</de>
 				</label>
+				<inset>
 				<card>
 					<title>
 						<en>History Content</en>
@@ -62,6 +67,7 @@
 						</label>
 					</demo-counter>
 				</card>
+				</inset>
 			</tab>
 		</tabs>
 	</tab-bar>

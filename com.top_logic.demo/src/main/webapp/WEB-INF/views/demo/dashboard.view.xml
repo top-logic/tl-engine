@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <view>
+	<inset>
 	<stack
 		direction="column"
 		gap="default"
@@ -90,4 +91,5 @@
 			</card>
 		</grid>
 	</stack>
+	</inset>
 </view>

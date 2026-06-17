@@ -11,6 +11,7 @@
 				size="30"
 				unit="%"
 			>
+				<inset>
 				<card
 					variant="elevated"
 				>
@@ -27,11 +28,13 @@
 						</action>
 					</button>
 				</card>
+				</inset>
 			</pane>
 			<pane
 				size="70"
 				unit="%"
 			>
+				<inset>
 				<card>
 					<title>
 						<en>Content Area</en>
@@ -44,6 +47,7 @@
 						</label>
 					</demo-counter>
 				</card>
+				</inset>
 			</pane>
 		</panes>
 	</split-panel>

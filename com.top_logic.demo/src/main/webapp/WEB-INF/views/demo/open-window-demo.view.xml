@@ -28,6 +28,7 @@
 							<action class="com.top_logic.demo.view.command.SayGoodbyeAction"/>
 						</generic-command>
 					</commands>
+					<inset>
 					<card variant="elevated">
 						<title>
 							<en>Right-click in this sub-window to open the context menu.</en>
@@ -35,6 +36,7 @@
 						</title>
 						<demo-counter/>
 					</card>
+					</inset>
 				</context-menu>
 			</panel>
 		</content>

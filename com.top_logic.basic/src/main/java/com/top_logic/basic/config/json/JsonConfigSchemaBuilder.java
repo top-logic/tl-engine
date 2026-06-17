@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -21,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.constraint.algorithm.ConstraintAlgorithm;
@@ -741,13 +743,58 @@ public class JsonConfigSchemaBuilder {
 
 				result.putProperty(propertyName, schema);
 
-				// Mark as required if mandatory
-				if (property.isMandatory()) {
+				// Mark as required if mandatory, or if omitting the property would yield an invalid
+				// value (a non-nullable property whose default is itself incomplete). See #29325.
+				if (property.isMandatory() || mustBeProvided(property)) {
 					result.addRequired(propertyName);
 				}
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Whether an explicit value must be provided for the given property, because omitting it would
+	 * produce an invalid configuration.
+	 *
+	 * <p>
+	 * This is the case for a {@link PropertyDescriptor#isNullable() non-nullable} item property
+	 * whose default value is missing or an incomplete {@link ConfigurationItem} (one with unset
+	 * {@link com.top_logic.basic.config.annotation.Mandatory mandatory} nested properties, e.g. an
+	 * {@link com.top_logic.basic.config.annotation.defaults.ItemDefault item-default} whose concrete
+	 * configuration carries mandatory fields). Without an explicit value such a property silently
+	 * resolves to its un-instantiable default.
+	 * </p>
+	 */
+	private boolean mustBeProvided(PropertyDescriptor property) {
+		if (property.kind() != PropertyKind.ITEM) {
+			// Only configuration-valued properties can carry an incomplete default. Other kinds
+			// either have safe defaults (e.g. empty list/map, null) or are guarded by @Mandatory.
+			return false;
+		}
+		if (property.isNullable()) {
+			// Omitting the property yields null, which is a legal value.
+			return false;
+		}
+		Object defaultValue = property.getDefaultValue();
+		if (defaultValue == null) {
+			// Non-nullable, but there is no usable default: a value must be supplied.
+			return true;
+		}
+		if (defaultValue instanceof ConfigurationItem item) {
+			return !isComplete(item);
+		}
+		return false;
+	}
+
+	/**
+	 * Whether the given configuration item has all (recursively) mandatory properties set, i.e.
+	 * could be instantiated as is.
+	 */
+	private static boolean isComplete(ConfigurationItem item) {
+		BufferingProtocol log = new BufferingProtocol();
+		item.check(log);
+		return !log.hasErrors();
 	}
 
 	/**

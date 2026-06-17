@@ -1,0 +1,440 @@
+# Green-field Table Model — Specification
+
+**Status:** Draft for iteration · **Ticket:** #29108 · **Date:** 2026-06-17
+
+Supersedes the legacy-integration approach in
+[`2026-03-03-react-table-model-and-tree-design.md`](./2026-03-03-react-table-model-and-tree-design.md),
+which wires `ReactTableControl` onto the legacy `TableModel`. That integration was the
+bootstrap; this document is the clean replacement for the model layer behind it.
+
+## 1. Motivation
+
+The legacy table stack (`TableModel` / `TableViewModel` / `ObjectTableModel` /
+`TreeTableModel` + `TableConfiguration` / `ColumnConfiguration` + the
+`ConfiguredFilter` / `FilterDialogBuilder` machinery) is one conflated god-object that
+mixes four unrelated concerns:
+
+- **data storage** (always fully materialized in memory — no windowing/lazy/DB pushdown),
+- **view state** (sort/filter/order/width/frozen/selection, persisted through ~10
+  scattered `save*`/`load*` methods),
+- **tree flattening** (a parallel `TreeTableModel` universe instead of a variant of the
+  flat case),
+- **UI rendering & input** (column filters are welded to `FormContext`/`FormField` and a
+  `FilterDialogBuilder` that drags in `Control`/`DisplayContext`/`PopupHandler`).
+
+Designing **from the UI backward**, the React control already proves how little the UI
+truly needs: a *windowed sequence of rows*, each carrying a key + optional
+depth/expansion, plus per-cell value/renderer, plus a small command set. This spec
+defines the smallest clean model that satisfies that surface and covers every legacy
+capability, with **zero dependency on legacy table/form/control code**.
+
+## 2. Decisions locked for this draft
+
+1. **Fully generic.** `Column<R,V>`, `RowSource<R>`, `TableView<R>`. No untyped
+   `Accessor(Object,String)→Object`.
+2. **Neutral renderer.** A new `CellRenderer<V>` SAM in the model module; the React tier
+   supplies the `CellRenderer → ReactControl` adapter. (We accept that some casts may
+   surface later; revisit only if they do.)
+3. **Grouping & aggregation are first-class** from day one (`RowKind` + synthetic rows +
+   `Aggregator`), not a UI-only afterthought like legacy.
+4. **Query pushdown from the beginning.** `QueryRowSource` translates sort+filter to the
+   data tier; we do not defer it to "never".
+
+## 3. Architecture
+
+```
+        ┌───────────────────────────────────────────────┐
+        │  ReactTableControl2   (thin adapter, no legacy)│   UI tier
+        └───────────────────────┬───────────────────────┘
+                                 │ talks ONLY to:
+        ┌───────────────────────▼───────────────────────┐
+        │  TableView<R> = Columns + RowSource + ViewState│   binding / conversion
+        │  windowed read API · commands · change events  │
+        └───┬───────────────┬───────────────────┬────────┘
+            │               │                   │
+   ┌────────▼──────┐ ┌──────▼────────┐ ┌────────▼─────────┐
+   │ Column<R,V>[] │ │ RowSource<R>  │ │ TableViewState   │   model tier
+   │ declarative   │ │ windowed      │ │ serializable     │
+   └───────────────┘ └──────┬────────┘ └──────────────────┘
+                            │ implementations
+            ┌───────────────┼───────────────────┐
+       ListRowSource   QueryRowSource       TreeRowSource
+       (in-memory)     (DB/KB pushdown)     (flatten+expand+group)
+```
+
+**Provisional package root:** `com.top_logic.table` (parallel to legacy
+`com.top_logic.layout.table`, so old/new never collide). Subpackages: `.column`,
+`.rows`, `.view`, `.filter`, `.render`, `.react`. Name is bikeshed-open (see §12).
+
+## 4. Core types
+
+### 4.1 `Row<R>` — the windowed unit (unifies data / tree / group / aggregate)
+
+The single insight that collapses flat tables, tree tables, grouping, and footers into
+one abstraction: **everything the viewport displays is a `Row<R>`** with a *kind*, a
+*depth*, and *expansion* state.
+
+```java
+enum RowKind { DATA, GROUP_HEADER, AGGREGATE }
+
+interface Row<R> {
+    RowKind kind();
+
+    /** Stable identity — selection, expansion, incremental client patching. */
+    Object key();
+
+    /** Payload for DATA rows (and a group's representative row, if any). */
+    R data();
+
+    /** Group descriptor for GROUP_HEADER / AGGREGATE rows; null for DATA. */
+    GroupKey group();
+
+    /** Tree/group nesting. Flat data rows are depth 0. */
+    int depth();
+    boolean expandable();
+    boolean expanded();
+}
+```
+
+The React client already renders `depth`/`expandable`/`expanded` per row, so tree nodes,
+group headers, and collapsible groups all map onto the *existing* client protocol with no
+new client concepts. A `GROUP_HEADER`/`AGGREGATE` row is simply an expandable row whose
+cells are rendered differently (see §4.4).
+
+### 4.2 `Column<R,V>` — declarative, type-safe (replaces `ColumnConfiguration` + `Accessor`)
+
+```java
+interface Column<R, V> {
+    String name();
+    ResKey label();
+
+    /** Typed accessor. Replaces Accessor.getValue(Object, String). */
+    V value(R row);
+
+    /** Neutral renderer SAM; the React tier adapts CellRenderer → ReactControl. */
+    CellRenderer<V> renderer();
+
+    /** Sorting: in-memory comparator and/or query pushdown. Absent ⇒ not sortable. */
+    Optional<Sort<V>> sort();
+
+    /** Filtering: UI-neutral input descriptor + predicate + optional pushdown. */
+    Optional<ColumnFilter<V>> filter();
+
+    /** Inline editing via FieldModel. Absent ⇒ read-only. */
+    Optional<CellEditor<R, V>> editor();
+
+    /** Footer / group-total computation. Absent ⇒ no aggregate cell. */
+    Optional<Aggregator<R, V>> aggregate();
+
+    // display
+    int defaultWidth();
+    boolean frozenEligible();
+    CssClass css(R row);
+    Optional<CellExistence<R>> existence();   // gates filter visibility on empty columns
+}
+```
+
+A `TableView` holds `List<Column<R, ?>>`; per-cell access uses wildcard capture (a tiny
+`cell(Column<R,V>, R)` helper). Heterogeneous `V` across columns is expected.
+
+### 4.3 `CellRenderer<V>` — neutral rendering SAM (no React import)
+
+```java
+interface CellRenderer<V> {
+    /** Produce a UI-neutral cell description; the UI tier turns it into a control. */
+    CellContent render(V value);
+}
+```
+
+`CellContent` is a small neutral value (text / icon / label+tooltip+css / "editable:
+FieldModel" / "raw" escape hatch). The React adapter maps `CellContent → ReactControl`,
+shaped like today's `ReactCellControlProvider`. Default renderers reuse foundational
+`LabelProvider`/`ResourceProvider`-style SAMs (clean, no legacy table deps). If a column
+needs bespoke React, it uses the `raw` escape hatch carrying a `CellControlFactory`
+supplied by the React tier — keeping the column model itself React-agnostic.
+
+### 4.4 Cell access dispatch on `RowKind`
+
+```
+DATA          → column.renderer().render(column.value(row.data()))
+AGGREGATE     → column.aggregate().map(a -> render(a.over(group))).orElse(empty)
+GROUP_HEADER  → first column renders the group label (spanning); others empty/aggregate
+```
+
+### 4.5 `RowSource<R>` — windowed (replaces `TableModel`/`ObjectTableModel`/`TreeTableModel`)
+
+```java
+interface RowSource<R> {
+    /** Count of displayed rows after sort + filter + expansion + grouping. */
+    int size();
+
+    /** THE window. Enables lazy / DB-backed data. Returns synthetic + data rows. */
+    List<Row<R>> window(int from, int to);
+
+    /** Derive views — pure, no mutation of the receiver. */
+    RowSource<R> withOrder(SortSpec sort);
+    RowSource<R> withFilter(FilterSpec filter);
+    RowSource<R> withGrouping(GroupSpec grouping);
+
+    /** Per-option match counts for option-style filters (e.g. classification facets). */
+    MatchCounts matchCounts(String column);
+
+    /** Expansion (tree nodes AND collapsible group headers). */
+    void setExpanded(Object rowKey, boolean expanded);
+
+    void addListener(RowSourceListener l);   // SIZE_CHANGED | RANGE_INVALID(from,to)
+}
+```
+
+Implementations:
+
+- **`ListRowSource<R>`** — in-memory `List<R>`; sorts/filters/groups using the columns'
+  `Comparator`/predicates/aggregators; `window()` slices. Replaces `ObjectTableModel` /
+  `ArrayTableModel` / `EditableRowTableModel` / `CachedObjectTableModel`.
+- **`QueryRowSource<R>`** — `size()` = count query, `window()` = windowed query,
+  sort/filter pushed down via column pushdowns (§5). New capability: no full
+  materialization. Mutations (add/remove/edit) invalidate ranges.
+- **`TreeRowSource<N>`** — wraps a `TreeStructure<N>` and flattens the expanded, filtered
+  subtree into the windowed sequence; `depth/expandable/expanded` come from the node.
+  Encapsulates the legacy `_visibleSubtreeSize`, synthetic-node, and
+  filter-parents/filter-children logic that today is smeared across
+  `AbstractTreeTableModel`. **A tree is just a `RowSource`** — the UI tier never branches
+  on "tree vs flat".
+
+```java
+interface TreeStructure<N> {
+    List<N> roots();
+    List<N> children(N node);          // may be lazy; loader invoked on expand
+    boolean isLeaf(N node);
+    boolean isFinite();                // false ⇒ infinite/lazy tree (no descendant counts)
+    Object businessObject(N node);     // payload for cell value extraction
+}
+```
+
+Grouping composes with all three sources via `withGrouping` (in-memory grouping for
+`ListRowSource`; `GROUP BY` pushdown for `QueryRowSource`).
+
+### 4.6 `TableViewState` — serializable (replaces `TableViewModel.save*/load*` + `PagingModel`)
+
+```java
+final class TableViewState {              // pure data, JSON-serializable
+    List<String> columnOrder;             // visible columns, in order
+    Map<String,Integer> widths;
+    int frozenCount;
+    List<SortColumn> sort;                // (column, ascending)+
+    Map<String,FilterState> filters;      // serializable criteria — NO FormField
+    GroupSpec grouping;                   // grouping columns + aggregate spec
+    Set<Object> expanded;                 // tree + group expansion
+    Selection selection;                  // {mode: SINGLE|MULTI, Set<key>}
+    int pageSize;                         // 0 = virtual-scroll / show-all
+    int page;
+}
+
+interface ViewStateStore {                // thin persistence port (no legacy ConfigKey)
+    TableViewState load(TableId id);
+    void save(TableId id, TableViewState state);
+}
+```
+
+One value object is *both* the personalization payload *and* the client seed. The default
+`ViewStateStore` persists through `PersonalConfiguration` behind this port; the model
+never imports `PersonalConfiguration` directly.
+
+### 4.7 Sorting, filtering, editing, aggregation contracts
+
+```java
+interface Sort<V> {
+    Comparator<V> comparator();                 // in-memory
+    Optional<OrderPushdown> pushdown();         // query ORDER BY translation
+}
+
+interface ColumnFilter<V> {
+    FilterInput input();                        // UI-neutral descriptor (§6)
+    Predicate<V> predicate(FilterState state);  // in-memory
+    Optional<FilterPushdown> pushdown(FilterState state);  // query WHERE translation
+    boolean countsMatches();                    // produce facet counts?
+}
+
+interface CellEditor<R, V> {
+    FieldModel newField(R row, V current);      // AbstractFieldModel-based; React already binds it
+    void commit(R row, V edited);               // write-back (caller owns the transaction)
+}
+
+interface Aggregator<R, V> {
+    CellContent over(Group<R> group);           // sum/avg/min/max/count/median/custom
+}
+```
+
+### 4.8 `TableView<R>` — the binding / conversion object (the only thing the UI tier sees)
+
+```java
+interface TableView<R> {
+    // structure
+    List<ColumnView> columns();                 // ordered visible: name,label,width,sortable,
+                                                // filterable,sortDir,sortPriority,frozen,editable
+    int frozenColumnCount();
+
+    // data window
+    int rowCount();
+    List<Row<R>> rows(int from, int to);
+    CellContent cell(Row<R> row, String column);
+
+    // editing
+    FieldModel editor(Object rowKey, String column);   // for inline edit cells
+
+    // commands (UI → model: mutate view-state + re-derive RowSource)
+    void sort(SortSpec spec);
+    void filter(String column, FilterState state);
+    void group(GroupSpec spec);
+    void moveColumn(String column, int toIndex);
+    void resizeColumn(String column, int width);
+    void setColumnVisible(String column, boolean visible);
+    void setFrozenColumnCount(int count);
+    void setExpanded(Object rowKey, boolean expanded);
+    void select(Selection selection);
+    void commitEdit(Object rowKey, String column, Object value);
+    void window(int page, int pageSize);
+
+    // model → UI (incremental)
+    void addListener(TableViewListener l);      // COLUMNS | COUNT | RANGE(from,to) | SELECTION
+
+    // persistence + client seed
+    TableViewState state();
+}
+```
+
+`DefaultTableView<R>` composes `List<Column<R,?>> + RowSource<R> + TableViewState`,
+applies commands by mutating the view-state and calling
+`RowSource.withOrder/withFilter/withGrouping`, and emits incremental events. The
+client JSON protocol is ≈1:1 with `TableViewState` + a `rows()` call.
+
+## 5. Query pushdown
+
+Pushdown keeps the core model data-tier-agnostic via two extension SAMs the
+`QueryRowSource` backend interprets:
+
+```java
+interface OrderPushdown  { void contribute(QuerySink sink, boolean ascending); }
+interface FilterPushdown { void contribute(QuerySink sink); }
+```
+
+`QuerySink` is defined by the query backend (TL search expressions / KB query). A
+`QueryRowSource` binds columns' pushdowns to its backend; a column lacking a pushdown for
+an active sort/filter triggers a **declared fallback** (either: fetch-then-in-memory for
+that predicate, or reject with a clear error) — never a silent full materialization.
+`size()` is a count query; `window(from,to)` is `OFFSET/LIMIT` (or seek-based). Facet
+`matchCounts` is a `GROUP BY` count.
+
+## 6. Filter UI without legacy form code
+
+A column filter is **state + logic + a UI-neutral input descriptor** — no `FormField`,
+no `FilterDialogBuilder`, no `Control`:
+
+```java
+sealed interface FilterInput {                  // what inputs the dialog needs
+    record Text()                       implements FilterInput;   // + flags: caseSensitive, regexp, wholeField
+    record Range<V>(V exampleBound)     implements FilterInput;   // operator + 1–2 values
+    record Options(List<Option> values) implements FilterInput;   // multi-select + facet counts
+    record Bool()                       implements FilterInput;   // true/false/null tri-state
+}
+```
+
+`FilterState` is the serializable chosen criteria. The **React tier renders the descriptor
+natively** by building `AbstractFieldModel`s (which the existing React form controls —
+`ReactTextInputControl`, `ReactSelectFormFieldControl`, `ReactCheckboxControl`,
+`ReactNumberInputControl`, `ReactDatePickerControl` — already bind to) and writes the
+result back into `FilterState`. Apply/Reset mirror legacy semantics: edit transient field
+models, commit into `FilterState` on Apply, then `TableView.filter(col, state)` re-derives
+the `RowSource`. The legacy popup keeps working independently on the old stack; the two
+renderers never share view code, only `FilterState`.
+
+## 7. Capability coverage (vs. legacy survey)
+
+| Legacy capability | Green-field home | Note |
+|---|---|---|
+| Row data / materialization | `RowSource.size/window` | **+lazy/DB windowing** |
+| Accessor / cell value | `Column.value(R):V` | typed |
+| Cell rendering | `CellRenderer<V>` → `CellContent` | React adapts |
+| Sort: multi / custom / sort-key | `SortSpec` + `Column.sort` | comparator or pushdown |
+| Filter: per-column / global / counts / existence | `Column.filter` + `FilterState`; `RowSource.matchCounts`; `Column.existence` | dialog rebuilt in React |
+| Sidebar filter | same descriptors, different placement | pure UI concern |
+| Selection single / **multi / range** | `Selection` in view-state | **first-class** |
+| Reorder / resize / show-hide / frozen | view-state fields + commands | |
+| Tree: expand/collapse, lazy, synthetic, filter parents/children | `TreeRowSource` + `TreeStructure` | unified with flat |
+| Inline editing | `Column.editor` (`FieldModel` + commit) | replaces `FormTableModel` |
+| **Grouping / aggregation / footer** | `RowKind` synthetic rows + `Aggregator` + `GroupSpec` | **modeled, not UI-only** |
+| Personalization | `TableViewState` + `ViewStateStore` | one port |
+| Export (Excel/PDF) | iterate `Column.value` over `RowSource.window` | no UI tier |
+| Pagination | a `rows()` window | same API as virtual scroll |
+
+Export and print consume `Column` + `RowSource` directly (no UI), so they get
+lazy/windowed data and grouping for free.
+
+## 8. Dependency boundary
+
+**Allowed (fits well):** JDK (`Comparator`/`Predicate`/`Function`); `ResKey`/i18n;
+`FieldModel`/`AbstractFieldModel`; new neutral `CellRenderer`/`LabelProvider`-style SAMs;
+KB/search query API *inside `QueryRowSource` only*; `ReactControl`/`ReactContext` *inside
+the `.react` adapter only*.
+
+**Forbidden in the model tier:** `TableModel`, `TableViewModel`, `ObjectTableModel`,
+`TreeTableModel`, `Accessor`, `TableConfiguration`/`ColumnConfiguration`, `PagingModel`,
+`FormContext`/`FormField`/`FormGroup`, `Control`/`DisplayContext`,
+`FilterDialogBuilder`/`ConfiguredFilter`, direct `PersonalConfiguration`.
+
+Enforced by package discipline + an ArchUnit-style test asserting the `com.top_logic.table`
+tree imports none of the forbidden packages.
+
+## 9. Migration path (incremental, no big bang)
+
+1. **Define the SPIs** in `com.top_logic.table.*` (compile-only; no legacy imports).
+2. **`LegacyTableView implements TableView<Object>`** wrapping a legacy
+   `TableModel`/`TreeTableModel`. Port `ReactTableControl` → `ReactTableControl2` onto the
+   new `TableView` SPI *while still backed by legacy data*. Nothing visible changes; the UI
+   tier becomes legacy-free first.
+3. **`ListRowSource` + `TableViewState` + `DefaultTableView`** native; move demo tables
+   over. Verify in `com.top_logic.demo` with Playwright.
+4. **Filter redesign**: `ColumnFilter` + `FilterInput` + the React filter renderer
+   (§6); column filtering lands in the React table.
+5. **`QueryRowSource` (pushdown)** and **`TreeRowSource` (unification + grouping)**; retire
+   `ObjectTableModel`/`TreeTableModel` per table as they migrate.
+6. **Personalization** via `ViewStateStore`; **export** over the new SPI.
+
+Each step is independently shippable and keeps legacy tables working untouched.
+
+## 10. The React adapter (`com.top_logic.table.react`)
+
+`ReactTableControl2(TableView<?> view, CellControlFactory raw)`:
+- `columns` state ← `view.columns()`; `totalRowCount` ← `view.rowCount()`.
+- `scroll(start,count)` → `view.rows(...)` → row JSON `{key, depth?, expandable?, expanded?,
+  kind, selected, cells}`.
+- `cells[col]` ← adapter `CellContent → ReactControl` (text/icon/label/editable-FieldModel/raw).
+- commands `sort/select/selectAll/columnResize/columnReorder/expand/setFrozenColumnCount`
+  → corresponding `TableView` commands (same names as today; near drop-in).
+- new commands: `filter(col,state)`, `group(spec)`, `setColumnVisible`, `commitEdit`.
+- `TableViewListener` → SSE patches (range invalidation, count, columns, selection).
+
+`TLTableView.tsx` needs only additive changes: a column-header filter affordance + filter
+popup (composed from existing `TL*` inputs), a group/aggregate row style keyed on
+`row.kind`, and a column show/hide menu. Virtual scroll, multi-sort, selection, resize,
+reorder, freeze, and tree indent/expand are already present.
+
+## 11. Open questions
+
+- **Package name.** `com.top_logic.table` vs `com.top_logic.layout.table.v2` vs a new
+  module. A new module can't fully wall off legacy (FieldModel lives in tl-core), so the
+  boundary is discipline + ArchUnit regardless.
+- **`Row<R>` wrapper cost.** Wrapping every data row in a `Row<R>` adds an allocation per
+  windowed row. Acceptable for windowed sizes; confirm under virtual-scroll churn.
+- **Neutral renderer casts (decision 2).** Track whether `CellContent` forces awkward
+  casts in real columns; if so, reconsider a thin React-typed renderer.
+- **Transactions on `commit`.** `CellEditor.commit` assumes an ambient transaction owned by
+  the caller (matches the view-layer rule that value listeners open their own
+  `beginTransaction()`); confirm where the React edit command opens it.
+- **`matchCounts` cost under pushdown.** Facet counts as `GROUP BY` per filtered column can
+  be expensive; may need a debounce / opt-out per column.
+
+## 12. Next step
+
+Turn §4 into a compile-only SPI sketch (the actual interfaces + the `LegacyTableView`
+adapter signature) — no behavior change — as the first PR on this branch.

@@ -16,13 +16,11 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.Utils;
-import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.mig.html.layout.LayoutConfigTreeNode;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLModel;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.SecurityObjectProviderConfig;
@@ -33,7 +31,6 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.util.Resources;
-import com.top_logic.util.model.ModelService;
 
 /**
  * {@link SecurityNode} representing a {@link LayoutConfigTreeNode}.
@@ -177,10 +174,6 @@ public class ConfigNode extends SecurityNode {
 		return null;
 	}
 
-	private String domain() {
-		return findDomain(layoutNode());
-	}
-
 	boolean needsCheckBox(BoundedRole role) {
 		Set<TLClass> securityObjectTypes = getSecurityObjectTypes();
 		AccessManager accessManager = AccessManager.getInstance();
@@ -267,29 +260,5 @@ public class ConfigNode extends SecurityNode {
 		return bo instanceof CompoundSecurityLayout.Config;
 	}
 
-	private String findDomain(LayoutConfigTreeNode child) {
-		child = CompoundSecurityLayoutConfigDescender.findCompoundSecurityNode(child);
-		if (child == null) {
-			return ConfigNode.GLOBAL_DOMAIN;
-		}
-		CompoundSecurityLayout.Config conf = (CompoundSecurityLayout.Config) child.getConfig();
-		String securityDomain = conf.getSecurityDomain();
-		if (securityDomain != null) {
-			return securityDomain;
-		}
-		return findDomain(child.getParent());
-	}
 
-	/**
-	 * Access to the security domain for this node.
-	 */
-	public static class DomainAccessor extends ReadOnlyAccessor<ConfigNode> {
-
-		@Override
-		public Object getValue(ConfigNode object, String property) {
-			TLModel model = ModelService.getApplicationModel();
-			return model.getModule(object.domain());
-		}
-
-	}
 }

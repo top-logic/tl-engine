@@ -1681,6 +1681,28 @@
 							<addResourcesToClasspath>true</addResourcesToClasspath>
 						</configuration>
 					</execution>
+
+					<!-- Run with mvn exec:java@migrate-ticket29221 -->
+					<execution>
+						<id>migrate-ticket29221</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<skip>${skipNormalizeLayouts}</skip>
+
+							<mainClass>com.top_logic.layout.tools.ticket29221.RemoveSecurityDomain</mainClass>
+							<arguments>
+								<argument>${tl.layoutDir}</argument>
+							</arguments>
+						    	
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>true</addResourcesToClasspath>
+						</configuration>
+					</execution>
 		        </executions>
 			</plugin>
 

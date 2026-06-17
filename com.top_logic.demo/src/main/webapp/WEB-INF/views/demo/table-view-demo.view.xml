@@ -19,7 +19,10 @@
 						<en>Accounts (green-field table)</en>
 						<de>Konten (Green-Field-Tabelle)</de>
 					</title>
-					<table-view selection="selectedAccount">
+					<table-view
+						selection="selectedAccount"
+						types="tl.accounts:Person"
+					>
 						<columns>
 							<column attribute="name"/>
 							<column attribute="firstName"/>

@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
@@ -30,8 +31,12 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.filter.TextColumnFilter;
@@ -68,11 +73,23 @@ public class TableViewElement implements UIElement {
 		/** Configuration name for {@link #getRows()}. */
 		String ROWS = "rows";
 
+		/** Configuration name for {@link #getTypes()}. */
+		String TYPES = "types";
+
 		/** Configuration name for {@link #getColumns()}. */
 		String COLUMNS = "columns";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/**
+		 * Optional qualified TL type name(s) of the row objects, used to resolve column
+		 * labels from the model attributes. When unset, the type is derived from the first
+		 * row.
+		 */
+		@Name(TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getTypes();
 
 		/**
 		 * References to {@link ViewChannel}s whose values become positional arguments to
@@ -125,7 +142,7 @@ public class TableViewElement implements UIElement {
 		}
 		Collection<?> rows = executeRowsQuery(_rowsExecutor, readChannelValues(inputChannels));
 
-		List<Column<Object, ?>> columns = buildColumns();
+		List<Column<Object, ?>> columns = buildColumns(resolveRowType(rows));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
 		DefaultTableView<Object> view = DefaultTableView.create(columns, source);
 
@@ -148,25 +165,60 @@ public class TableViewElement implements UIElement {
 		return control;
 	}
 
-	private List<Column<Object, ?>> buildColumns() {
+	private List<Column<Object, ?>> buildColumns(TLStructuredType rowType) {
 		TableElement.ColumnsConfig columnsConfig = _config.getColumns();
 		if (columnsConfig == null || columnsConfig.getColumns().isEmpty()) {
 			throw new IllegalStateException("A <table-view> requires at least one <column>.");
 		}
 		List<Column<Object, ?>> columns = new ArrayList<>();
 		for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
-			columns.add(buildColumn(columnConfig.getAttribute()));
+			columns.add(buildColumn(columnConfig.getAttribute(), rowType));
 		}
 		return columns;
 	}
 
-	private static Column<Object, Object> buildColumn(String attribute) {
+	private static Column<Object, Object> buildColumn(String attribute, TLStructuredType rowType) {
 		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(ResKey.text(attribute))
+			.label(columnLabel(attribute, rowType))
 			.renderer(value -> CellContent.text(label(value)))
 			.sort(() -> Comparator.comparing(TableViewElement::label))
 			.filter(new TextColumnFilter<>(TableViewElement::label))
 			.build();
+	}
+
+	/**
+	 * The display label for a column: the model attribute's label if it can be resolved,
+	 * otherwise the attribute name.
+	 */
+	private static ResKey columnLabel(String attribute, TLStructuredType rowType) {
+		if (rowType != null) {
+			TLStructuredTypePart part = rowType.getPart(attribute);
+			if (part != null) {
+				return TLModelNamingConvention.resourceKey(part);
+			}
+		}
+		return ResKey.text(attribute);
+	}
+
+	/**
+	 * Resolves the row type used for column-label resolution: the first configured
+	 * {@link Config#getTypes() type}, or the type of the first row, or {@code null}.
+	 */
+	private TLStructuredType resolveRowType(Collection<?> rows) {
+		List<TLModelPartRef> typeRefs = _config.getTypes();
+		if (typeRefs != null && !typeRefs.isEmpty()) {
+			try {
+				return typeRefs.get(0).resolveClass();
+			} catch (ConfigurationException ex) {
+				throw new RuntimeException("Failed to resolve type: " + typeRefs.get(0).qualifiedName(), ex);
+			}
+		}
+		for (Object row : rows) {
+			if (row instanceof TLObject object) {
+				return object.tType();
+			}
+		}
+		return null;
 	}
 
 	private static Object attributeValue(Object row, String attribute) {

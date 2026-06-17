@@ -217,14 +217,6 @@ public class CompoundSecurityLayout extends BoundLayout {
     }
 
     /**
-     * Create a Visitor as configured by "security.layout.collector.name"
-     */
-    public static com.top_logic.basic.col.Mapping getSecurityDomainMapper() {
-		return ApplicationConfig.getInstance().getConfig(com.top_logic.base.security.SecurityConfiguration.class)
-			.getLayout().getDomainMapper();
-    }
-
-    /**
 	 * Remove access to this component using the given {@link BoundCommandGroup} for a given
 	 * {@link BoundedRole}.
 	 *

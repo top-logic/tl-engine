@@ -5037,7 +5037,6 @@ com.top_logic.tool.boundsec.commandhandlers.UploadHandler.java: Missing document
 com.top_logic.tool.boundsec.commandhandlers.UploadHandler.java: Missing documentation: com.top_logic.tool.boundsec.commandhandlers.UploadHandler.Config.getAllowEmptyFiles
 com.top_logic.tool.boundsec.commandhandlers.UploadHandler.java: Missing documentation: com.top_logic.tool.boundsec.commandhandlers.UploadHandler.updateAllowEmptyFiles
 com.top_logic.tool.boundsec.commandhandlers.stacked.StackedGotoHandler.java: Invalid camel case word 'GotoHandler', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.compound.CompoundSecurityFilter.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.boundsec.compound.CompoundSecurityFilter
 com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.java: Invalid camel case word 'BoundCommandGroup', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.java: Invalid camel case word 'BoundComponent', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.compound.CompoundSecurityLayout.java: Invalid camel case word 'BoundObject', this may only be used within JavaDoc links or HTML code tags.
@@ -5077,47 +5076,8 @@ com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: c
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.FIELD_SYSTEM
 com.top_logic.tool.boundsec.gui.RolesTableModelBuilder.java: Invalid camel case word 'ModelBuilder', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.gui.profile.ComponentAware.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.ComponentAware.setComponent
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.Config
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Invalid camel case word 'NodeGroup', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Invalid camel case word 'SelectField', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Invalid camel case word 'StringField', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ApplyRolesProfile
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ApplyRolesProfile.COMMAND_ID
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.COLUMN_PROVIDER_CONST
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.CollapseAllCommandHandler
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.CollapseAllCommandHandler.COMMAND_ID
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.adaptColumFields
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.applyRolesProfile
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.getColumnNames
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.getCommandGroups
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.getDeclaredColumns
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.getHeaderRenderer
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.getNodeResourceProvider
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ColumnProvider.getTableDeclaration
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.CommandGroupCollector
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.CommandGroupCollector.getCommandGroups
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ExpandAllCommandHandler
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.ExpandAllCommandHandler.COMMAND_ID
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.SEPARATOR_COLUMN
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.SetAllCommandHandler
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.SetAllCommandHandler.COMMAND_ID
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.TREE_FIELD
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.TabFrameVisitor
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.UnSetAllCommandHandler
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.UnSetAllCommandHandler.COMMAND_ID
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.allCommandGroups
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.columnProvider
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.createTreeModel
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.initCaches
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.nodeCommandGroups
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.nodeFilter
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.oldExpansionModel
-com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent.treeModel
 com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent.Config
 com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent.getAvailableLayoutTrees
-com.top_logic.tool.boundsec.gui.profile.RolesProfileColumnProvider.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.RolesProfileColumnProvider
-com.top_logic.tool.boundsec.gui.profile.RolesProfileColumnProvider.java: Missing documentation: com.top_logic.tool.boundsec.gui.profile.RolesProfileColumnProvider.applyProfile
 com.top_logic.tool.boundsec.manager.AccessManager.java: Invalid camel case word 'BoundObjects', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.manager.AccessManager.java: Invalid camel case word 'BoundRoles', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.manager.AccessManager.java: Invalid camel case word 'aBO', this may only be used within JavaDoc links or HTML code tags.

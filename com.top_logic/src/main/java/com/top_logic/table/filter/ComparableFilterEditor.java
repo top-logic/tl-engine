@@ -49,8 +49,6 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 
 	private final Function<String, ? extends V> _parser;
 
-	private final FilterFieldKind _valueKind;
-
 	private final SimpleSelectFieldModel _operator;
 
 	private final AbstractFieldModel _primary;
@@ -62,7 +60,6 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 	 */
 	public ComparableFilterEditor(ComparableColumnFilter<V> filter, RangeFilterState<V> current) {
 		_parser = filter.parser();
-		_valueKind = filter.valueKind();
 		ComparisonOperator operator =
 			current != null && current.operator() != null ? current.operator() : ComparisonOperator.EQ;
 		_operator = new SimpleSelectFieldModel(operator, List.of(ComparisonOperator.values()), false);
@@ -77,9 +74,9 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 	@Override
 	public List<FilterField> fields() {
 		return List.of(
-			new FilterField(I18NConstants.OPERATOR, _operator, FilterFieldKind.SELECT, OPERATOR_LABELS),
-			new FilterField(I18NConstants.VALUE, _primary, _valueKind),
-			new FilterField(I18NConstants.UPPER_BOUND, _secondary, _valueKind));
+			new FilterField(I18NConstants.OPERATOR, _operator, OPERATOR_LABELS),
+			new FilterField(I18NConstants.VALUE, _primary),
+			new FilterField(I18NConstants.UPPER_BOUND, _secondary));
 	}
 
 	@Override

@@ -52,7 +52,7 @@ public class OptionsFilterEditor implements FilterEditor {
 	public List<FilterField> fields() {
 		List<FilterField> fields = new ArrayList<>(_options.size());
 		for (int n = 0; n < _options.size(); n++) {
-			fields.add(new FilterField(label(_options.get(n)), _checks.get(n), FilterFieldKind.CHECKBOX));
+			fields.add(new FilterField(label(_options.get(n)), _checks.get(n)));
 		}
 		return fields;
 	}

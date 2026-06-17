@@ -26,14 +26,12 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 
 	private final Function<String, ? extends V> _parser;
 
-	private final FilterFieldKind _valueKind;
-
 	/**
 	 * Creates a {@link ComparableColumnFilter} with the given comparator and no editor
 	 * support.
 	 */
 	public ComparableColumnFilter(Comparator<? super V> comparator) {
-		this(comparator, null, FilterFieldKind.TEXT);
+		this(comparator, null);
 	}
 
 	/**
@@ -44,14 +42,10 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	 * @param parser
 	 *        Parses user input into a bound value (enables a filter editor), or
 	 *        {@code null}.
-	 * @param valueKind
-	 *        The input kind for the bound value fields.
 	 */
-	public ComparableColumnFilter(Comparator<? super V> comparator, Function<String, ? extends V> parser,
-			FilterFieldKind valueKind) {
+	public ComparableColumnFilter(Comparator<? super V> comparator, Function<String, ? extends V> parser) {
 		_comparator = comparator;
 		_parser = parser;
-		_valueKind = valueKind;
 	}
 
 	/**
@@ -62,11 +56,10 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	}
 
 	/**
-	 * A {@link ComparableColumnFilter} for {@link Integer}-valued columns, with a numeric
-	 * editor.
+	 * A {@link ComparableColumnFilter} for {@link Integer}-valued columns.
 	 */
 	public static ComparableColumnFilter<Integer> integers() {
-		return new ComparableColumnFilter<>(Comparator.naturalOrder(), Integer::valueOf, FilterFieldKind.NUMBER);
+		return new ComparableColumnFilter<>(Comparator.naturalOrder(), Integer::valueOf);
 	}
 
 	/**
@@ -74,13 +67,6 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	 */
 	public Function<String, ? extends V> parser() {
 		return _parser;
-	}
-
-	/**
-	 * The input kind for the bound value fields.
-	 */
-	public FilterFieldKind valueKind() {
-		return _valueKind;
 	}
 
 	@Override

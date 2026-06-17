@@ -427,22 +427,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_FILTER;
 
 	/**
-	 * @en Apply
-	 */
-	@CustomKey("js.table.apply")
-	public static ResKey JS_TABLE_APPLY;
-
-	/**
-	 * @en Clear
+	 * @en Reset
 	 */
 	@CustomKey("js.table.clear")
 	public static ResKey JS_TABLE_CLEAR;
-
-	/**
-	 * @en Cancel
-	 */
-	@CustomKey("js.table.cancel")
-	public static ResKey JS_TABLE_CANCEL;
 
 	/**
 	 * @en Selection changed.

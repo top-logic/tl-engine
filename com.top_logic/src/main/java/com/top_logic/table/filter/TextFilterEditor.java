@@ -38,10 +38,10 @@ public class TextFilterEditor implements FilterEditor {
 	@Override
 	public List<FilterField> fields() {
 		return List.of(
-			new FilterField(I18NConstants.PATTERN, _pattern, FilterFieldKind.TEXT),
-			new FilterField(I18NConstants.CASE_SENSITIVE, _caseSensitive, FilterFieldKind.CHECKBOX),
-			new FilterField(I18NConstants.REGEXP, _regexp, FilterFieldKind.CHECKBOX),
-			new FilterField(I18NConstants.WHOLE_FIELD, _wholeField, FilterFieldKind.CHECKBOX));
+			new FilterField(I18NConstants.PATTERN, _pattern),
+			new FilterField(I18NConstants.CASE_SENSITIVE, _caseSensitive),
+			new FilterField(I18NConstants.REGEXP, _regexp),
+			new FilterField(I18NConstants.WHOLE_FIELD, _wholeField));
 	}
 
 	@Override

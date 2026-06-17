@@ -34,9 +34,9 @@ public class BooleanFilterEditor implements FilterEditor {
 	@Override
 	public List<FilterField> fields() {
 		return List.of(
-			new FilterField(I18NConstants.VALUE_TRUE, _acceptTrue, FilterFieldKind.CHECKBOX),
-			new FilterField(I18NConstants.VALUE_FALSE, _acceptFalse, FilterFieldKind.CHECKBOX),
-			new FilterField(I18NConstants.VALUE_NONE, _acceptNull, FilterFieldKind.CHECKBOX));
+			new FilterField(I18NConstants.VALUE_TRUE, _acceptTrue),
+			new FilterField(I18NConstants.VALUE_FALSE, _acceptFalse),
+			new FilterField(I18NConstants.VALUE_NONE, _acceptNull));
 	}
 
 	@Override

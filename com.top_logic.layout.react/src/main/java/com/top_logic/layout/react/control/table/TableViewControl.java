@@ -45,6 +45,18 @@ import com.top_logic.util.Resources;
  */
 public class TableViewControl<R> extends ReactControl {
 
+	/**
+	 * Notified when the set of selected row keys changes.
+	 */
+	public interface SelectionListener {
+
+		/**
+		 * Called after the selection changed, with the current selected {@link Row#key()
+		 * keys}.
+		 */
+		void selectionChanged(Set<Object> selectedKeys);
+	}
+
 	private static final String COLUMNS = "columns";
 
 	private static final String TOTAL_ROW_COUNT = "totalRowCount";
@@ -95,6 +107,8 @@ public class TableViewControl<R> extends ReactControl {
 
 	private int _selectionAnchor = -1;
 
+	private SelectionListener _selectionListener;
+
 	/** Cell controls for currently buffered rows, keyed by row key then column name. */
 	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
 
@@ -119,6 +133,13 @@ public class TableViewControl<R> extends ReactControl {
 		putState(SELECTION_MODE, _selectionMode);
 		putState(TREE_MODE, Boolean.valueOf(_treeMode));
 		buildFullState();
+	}
+
+	/**
+	 * Sets the listener notified on selection changes, or {@code null} to remove it.
+	 */
+	public void setSelectionListener(SelectionListener listener) {
+		_selectionListener = listener;
 	}
 
 	// -- State building --
@@ -385,6 +406,9 @@ public class TableViewControl<R> extends ReactControl {
 		_view.select(new Selection(
 			"multi".equals(_selectionMode) ? SelectionMode.MULTI : SelectionMode.SINGLE,
 			new LinkedHashSet<>(_selectedKeys)));
+		if (_selectionListener != null) {
+			_selectionListener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
+		}
 	}
 
 }

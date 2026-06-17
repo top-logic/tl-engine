@@ -140,6 +140,12 @@ public class TestConfigEditorControl extends TestCase {
 		}
 
 		@Override
+		protected String resolveTooltip(PropertyDescriptor property) {
+			// Bypass Resources/ThreadContextManager in unit tests.
+			return null;
+		}
+
+		@Override
 		protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
 			return new TestableConfigEditorControl(context, nested);
 		}

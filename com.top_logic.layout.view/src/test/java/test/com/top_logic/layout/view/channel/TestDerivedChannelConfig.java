@@ -138,8 +138,8 @@ public class TestDerivedChannelConfig extends TestCase {
 		// Verify read-only behavior.
 		try {
 			viewContext.resolveChannel(new ChannelRef("hasSelection")).set(true);
-			fail("Expected IllegalStateException for read-only derived channel");
-		} catch (IllegalStateException expected) {
+			fail("Expected UnsupportedOperationException for read-only derived channel");
+		} catch (UnsupportedOperationException expected) {
 			// Expected.
 		}
 	}

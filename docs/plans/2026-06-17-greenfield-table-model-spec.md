@@ -496,12 +496,23 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
   other active filters; proper facets exclude the column's own filter and reflect the rest.
 - **No `TableViewListener` registration** in `TableViewControl` → external model changes
   don't refresh the control (only command-driven rebuilds). OK for static demos, not live data.
-- **Numeric range** only via `ComparableColumnFilter.integers()` (`Integer::valueOf`); no
-  float/long/**date** editors (a date column would need `ReactDatePickerControl`, not wired).
-- **Filter popup positioning** is naive (fixed at the funnel's bottom-left; no viewport-edge
-  flipping / scroll handling).
+- **Typed value inputs**: the filter value field is a generic text input + the filter's
+  parser (so a new datatype needs only a parser, no UI plugin). For *typed* widgets (number
+  spinner, date picker) in the view layer, route the value field through
+  `com.top_logic.layout.view.form.FieldControlService.createFieldControl(part, model)` — the
+  same datatype→control registry forms use. Not yet wired (would need the column's
+  `TLStructuredTypePart` threaded to the filter field).
 - **Selection** not persisted; no `ChannelVetoException`/veto handling like the legacy
   `ReactTableControl`.
+
+> **Filter UI (resolved 2026-06-17).** The filter dialog is now built from reused controls
+> — `ReactWindowControl` (window chrome), `ReactFormBuilder`/`ReactFormFieldChromeControl`
+> (labeled fields), `MessageButtons`/`ReactButtonControl` (footer) — opened via
+> `DialogManager`. The hand-rolled popup/buttons/labels in `TLTableView.tsx`, the
+> `FilterFieldKind` enum + `createFieldControl` switch, and the apply/clear/close commands
+> were deleted. The input control per field is chosen from the `FieldModel` itself
+> (`SelectFieldModel`→dropdown, boolean→checkbox, else text) — one generic rule, no
+> per-datatype branch.
 
 ### D. Verification gaps
 - **Options / range / boolean** filter kinds are unit-tested and wired into the legacy-compat

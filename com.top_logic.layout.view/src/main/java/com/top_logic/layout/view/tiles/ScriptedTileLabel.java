@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
@@ -30,11 +31,13 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * <p>
  * Resolves all {@link Config#getInputs() inputs} to channels at compute time, reads their current
  * values and passes them as positional arguments to the compiled expression. The expression's
- * result is wrapped in a literal, unlocalized {@link ResKey} - intended for labels derived from
- * business object names.
+ * result is converted to a {@link ResKey} according to its runtime type - intended for labels
+ * derived from business object names.
  * </p>
  *
- * @implNote The result is wrapped via {@link ResKey#text(String)}.
+ * @implNote A {@link ResKey} result (e.g. an {@code I18NString} attribute value) is returned as-is
+ *           so it stays localizable; a {@link String} is wrapped via {@link ResKey#text(String)};
+ *           any other object is labeled via {@link MetaLabelProvider}.
  */
 public class ScriptedTileLabel implements TileLabelProvider {
 
@@ -94,6 +97,15 @@ public class ScriptedTileLabel implements TileLabelProvider {
 		if (result == null) {
 			return null;
 		}
-		return ResKey.text(String.valueOf(result));
+		if (result instanceof ResKey) {
+			// An I18NString attribute value (or an explicit ResKey) is already localizable - keep it
+			// so the breadcrumb renders the translation, not its debug toString().
+			return (ResKey) result;
+		}
+		if (result instanceof String) {
+			return ResKey.text((String) result);
+		}
+		// Any other business object: derive its display label rather than its toString().
+		return ResKey.text(MetaLabelProvider.INSTANCE.getLabel(result));
 	}
 }

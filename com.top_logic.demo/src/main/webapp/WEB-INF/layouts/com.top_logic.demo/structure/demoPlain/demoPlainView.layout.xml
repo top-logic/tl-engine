@@ -34,7 +34,6 @@
 					newModelAction="set-parent-selection"
 					openerImage="theme:DEMO_NEW_CP"
 					resPrefix="layouts.demo.plain.createPlainC"
-					securityDomain="DemoTypes"
 					type="DemoPlain:C"
 				/>
 			</dialogs>

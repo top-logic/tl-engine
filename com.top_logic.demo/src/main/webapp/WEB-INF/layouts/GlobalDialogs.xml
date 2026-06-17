@@ -7,7 +7,6 @@
 	<layout-reference resource="admin/security/accounts/userSettings/dialog.layout.xml"/>
 	<layout-reference resource="admin/security/accounts/defaultFor/dialog.layout.xml"/>
 	<securityLayout name="globalDialogDemoTypesTop"
-		securityDomain="DemoTypes"
 		titleKey="demo.globalDialogs.DemoTypes.show.tabber"
 	>
 		<dialogInfo
@@ -30,7 +29,6 @@
 		</components>
 	</securityLayout>
 	<securityLayout name="globalDialogDemoPlainTop"
-		securityDomain="DemoTypes"
 		titleKey="demo.DemoPlain.edit.dialog.tabber"
 	>
 		<components>

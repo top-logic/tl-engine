@@ -55,7 +55,6 @@
 		name="${z_legacy_componentName}"
 		primaryChecker="${z_legacy_treeName}"
 		secondaryChecker="${z_legacy_contentName}"
-		securityDomain="${domain}"
 		titleKey="${z_legacy_tabLabel}"
 	>
 		<tabInfo id="${z_legacy_tabId}"

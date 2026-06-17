@@ -6,7 +6,6 @@
 >
 	<arguments
 		helpID="ID_db247e14_829c_4539_80d5_027d9546e3c1c"
-		securityDomain="SecurityStructure"
 		tabIcon="theme:IMAGE_BUTTONS_STRUCTURE22"
 		tabLabel="%LAYOUT_RESPREFIX%tab"
 	>

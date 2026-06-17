@@ -44,7 +44,6 @@
 
 	<securityLayout name="${z_legacy_componentName}"
 		helpIDLegacy="${helpIDLegacy}"
-		securityDomain="${domain}"
 		titleKey="${z_legacy_tabLabel}"
 		useDefaultChecker="${useDefaultChecker}"
 	>

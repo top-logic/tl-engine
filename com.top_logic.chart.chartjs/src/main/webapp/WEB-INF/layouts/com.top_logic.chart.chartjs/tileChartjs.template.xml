@@ -14,7 +14,7 @@
 					<property name="model"/>
 					<property name="chartDescription"/>
 					<property name="data"/>
-					<property name="securityDomain"/>
+
 					<property name="securityObject"/>
 					<property name="helpID"/>
 				</value>
@@ -85,7 +85,6 @@
 
 	<securityLayout name="TileLayout"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${name}"
 	>
 		<tile-info name="${tileName}"

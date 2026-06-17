@@ -15,8 +15,11 @@ import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
@@ -43,7 +46,7 @@ import com.top_logic.util.Resources;
  * @param <R>
  *        The row business object type.
  */
-public class TableViewControl<R> extends ReactControl {
+public class TableViewControl<R> extends ReactControl implements TooltipProvider {
 
 	/**
 	 * Notified when the set of selected row keys changes.
@@ -400,6 +403,36 @@ public class TableViewControl<R> extends ReactControl {
 	private Object keyAt(int rowIndex) {
 		List<Row<R>> single = _view.rows(rowIndex, rowIndex + 1);
 		return single.isEmpty() ? null : single.get(0).key();
+	}
+
+	@Override
+	public TooltipContent getTooltipContent(String key) {
+		if (key == null || !key.startsWith("row_")) {
+			return null;
+		}
+		int separator = key.indexOf('|');
+		if (separator < 0) {
+			return null;
+		}
+		int rowIndex;
+		try {
+			rowIndex = Integer.parseInt(key.substring(4, separator));
+		} catch (NumberFormatException ex) {
+			return null;
+		}
+		if (rowIndex < 0 || rowIndex >= _view.rowCount()) {
+			return null;
+		}
+		List<Row<R>> single = _view.rows(rowIndex, rowIndex + 1);
+		if (single.isEmpty()) {
+			return null;
+		}
+		CellContent content = _view.cell(single.get(0), key.substring(separator + 1));
+		if (content instanceof CellContent.Labeled labeled
+				&& labeled.tooltip() != null && !labeled.tooltip().isEmpty()) {
+			return new TooltipContent(labeled.tooltip(), null);
+		}
+		return null;
 	}
 
 	private void pushSelection() {

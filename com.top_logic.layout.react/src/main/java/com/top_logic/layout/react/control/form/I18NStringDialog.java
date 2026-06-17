@@ -25,11 +25,6 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl;
-import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
-import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
-import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
@@ -43,9 +38,12 @@ import com.top_logic.util.TLContext;
  * supported languages.
  *
  * <p>
- * Composed entirely from existing controls - a {@code TLWindow} chrome holding a {@code TLStack} of
- * one {@code TLFormField}-wrapped {@code TLTextInput} per supported language, with standard
- * {@code TLButton} OK/Cancel actions. No bespoke component is introduced.
+ * Composed entirely from existing controls - a {@code TLWindow} chrome holding a
+ * {@link ReactFormBuilder responsive form} of one {@code TLTextInput} per supported language (each
+ * wrapped in standard {@code TLFormField} chrome, with the optional translate action as an inline
+ * adornment), plus standard {@code TLButton} OK/Cancel actions. The form renders through the same
+ * {@code TLFormLayout}/{@code TLFormField} pipeline as a model-bound form, so label wrapping and
+ * field anatomy match. No bespoke component is introduced.
  * </p>
  */
 public class I18NStringDialog {
@@ -67,21 +65,20 @@ public class I18NStringDialog {
 		Locale displayLocale = TLContext.getLocale();
 		ResKey current = mainModel.getValue() instanceof ResKey ? (ResKey) mainModel.getValue() : null;
 
-		// One field model + text-input row per supported language. When a translation service is
-		// active, each (supported) row also gets a "Translate" link that fills the other rows from
-		// it - the clicked row is the explicit translation source.
+		// One field per supported language, built through the shared form pipeline so labels,
+		// chrome and wrapping match a model-bound form. When a translation service is active, each
+		// (supported) field gets an inline "Translate" icon button that fills the other fields from
+		// it - the clicked field is the explicit translation source.
 		boolean canTranslate = TranslationService.isActive();
 		Translator translator = canTranslate ? TranslationService.getInstance() : null;
 		Map<Locale, FieldModel> perLocale = new LinkedHashMap<>();
-		List<ReactControl> rows = new ArrayList<>();
+		ReactFormBuilder form = new ReactFormBuilder(context);
 		for (Locale locale : resources.getSupportedLocalesInDisplayOrder()) {
 			String value = current == null ? null : ResKeyUtil.translateWithoutFallback(locale, current);
 			AbstractFieldModel model = new AbstractFieldModel(value);
 			perLocale.put(locale, model);
 
 			ReactControl input = new ReactTextInputControl(context, model);
-			ReactControl row =
-				new ReactFormFieldChromeControl(context, locale.getDisplayLanguage(displayLocale), input);
 			if (canTranslate && translator.isSupported(locale)) {
 				Locale source = locale;
 				ReactButtonControl translateButton = new ReactButtonControl(context,
@@ -92,15 +89,11 @@ public class I18NStringDialog {
 					});
 				translateButton.setImage(ThemeImage.icon("css:fa-solid fa-language"));
 				translateButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-				ReactStackControl rowStack = new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT,
-					StackAlign.END, false, List.of(row, translateButton));
-				rowStack.setGrowFirst(true);
-				row = rowStack;
+				input = ReactFormBuilder.inputWithAdornment(context, input, translateButton);
 			}
-			rows.add(row);
+			form.addField(locale.getDisplayLanguage(displayLocale), input);
 		}
-		ReactStackControl body =
-			new ReactStackControl(context, StackDirection.COLUMN, StackGap.DEFAULT, StackAlign.STRETCH, false, rows);
+		ReactControl body = form.build();
 
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.I18N_STRING_ALL_LANGUAGES_TITLE),

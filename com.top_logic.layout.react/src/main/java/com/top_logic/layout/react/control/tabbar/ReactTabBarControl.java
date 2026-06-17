@@ -59,6 +59,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	/** Tab info key for the tab display label. */
 	private static final String TAB_LABEL = "label";
 
+	/** Tab info key for the tab CSS icon class. */
+	private static final String TAB_ICON = "icon";
+
 	/** Command argument key for the selected tab ID. */
 	private static final String TAB_ID_ARG = "tabId";
 
@@ -91,6 +94,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			Map<String, Object> tabInfo = new HashMap<>();
 			tabInfo.put(TAB_ID, tab.getId());
 			tabInfo.put(TAB_LABEL, tab.getLabel());
+			if (tab.getIcon() != null) {
+				tabInfo.put(TAB_ICON, tab.getIcon());
+			}
 			tabList.add(tabInfo);
 		}
 		putState(TABS, tabList);

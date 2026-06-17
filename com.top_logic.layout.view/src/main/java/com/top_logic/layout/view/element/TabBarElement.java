@@ -91,11 +91,21 @@ public class TabBarElement implements UIElement {
 		/** Configuration name for {@link #getRoute()}. */
 		String ROUTE = "route";
 
+		/** Configuration name for {@link #getIcon()}. */
+		String ICON = "icon";
+
 		/**
 		 * The unique tab identifier.
 		 */
 		@Name(ID)
 		String getId();
+
+		/**
+		 * The CSS icon class shown next to the tab label (e.g. {@code "css:fa-solid fa-tags"}), or
+		 * empty for no icon.
+		 */
+		@Name(ICON)
+		String getIcon();
 
 		/**
 		 * The tab display label.
@@ -141,7 +151,8 @@ public class TabBarElement implements UIElement {
 				.collect(Collectors.toList());
 			String label = Resources.getInstance().getString(tabConfig.getLabel());
 			String route = tabConfig.getRoute();
-			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getAccessControl(), children));
+			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getIcon(),
+				tabConfig.getAccessControl(), children));
 		}
 		_activeTab = config.getActiveTab();
 	}
@@ -157,6 +168,9 @@ public class TabBarElement implements UIElement {
 			DirtyChannel dirtyChannel = new DirtyChannel();
 			TabDefinition tabDef = new TabDefinition(entry._id, entry._label,
 				() -> createContent(entry, context, dirtyChannel), dirtyChannel);
+			if (entry._icon != null && !entry._icon.isEmpty()) {
+				tabDef.withIcon(entry._icon);
+			}
 			String effectiveRoute = SidebarElement.resolveRoute(entry._route, entry._id);
 			if (effectiveRoute != null) {
 				tabDef.withRoute(effectiveRoute);
@@ -191,7 +205,7 @@ public class TabBarElement implements UIElement {
 		return new ReactStackControl(tabContext, children);
 	}
 
-	private record TabEntry(String _id, String _label, String _route, AccessControl _accessControl,
-			List<UIElement> _children) {
+	private record TabEntry(String _id, String _label, String _route, String _icon,
+			AccessControl _accessControl, List<UIElement> _children) {
 	}
 }

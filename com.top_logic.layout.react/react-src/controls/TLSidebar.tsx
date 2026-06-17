@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 const { useCallback, useState, useEffect, useRef } = React;
 
@@ -79,7 +80,7 @@ function collectFocusable(
 
 const SidebarIcon: React.FC<{ icon?: string }> = ({ icon }) => {
   if (!icon) return null;
-  return <i className={'tlSidebar__icon ' + icon} aria-hidden="true" />;
+  return <ThemeIcon encoded={icon} className="tlSidebar__icon" />;
 };
 
 const SidebarNavItem: React.FC<{

@@ -1,9 +1,11 @@
 import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { ThemeIcon } from './icon/ThemeIcon';
 
 interface TabInfo {
   id: string;
   label: string;
+  icon?: string;
 }
 
 const { useCallback } = React;
@@ -31,6 +33,7 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
             className={'tlReactTabBar__tab' + (tab.id === activeTabId ? ' tlReactTabBar__tab--active' : '')}
             onClick={() => handleTabClick(tab.id)}
           >
+            {tab.icon && <ThemeIcon encoded={tab.icon} className="tlReactTabBar__tabIcon" />}
             {tab.label}
           </button>
         ))}

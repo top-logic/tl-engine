@@ -30,6 +30,8 @@ public class TabDefinition {
 
 	private String _route;
 
+	private String _icon;
+
 	/**
 	 * Creates a new {@link TabDefinition}.
 	 *
@@ -93,6 +95,26 @@ public class TabDefinition {
 	 */
 	public TabDefinition withRoute(String route) {
 		_route = route;
+		return this;
+	}
+
+	/**
+	 * The CSS icon class for this tab (e.g. {@code "fa-solid fa-tags"}), or {@code null} for no
+	 * icon.
+	 */
+	public String getIcon() {
+		return _icon;
+	}
+
+	/**
+	 * Sets the CSS icon class for this tab.
+	 *
+	 * @param icon
+	 *        The CSS icon class, or {@code null} for no icon.
+	 * @return This instance for fluent chaining.
+	 */
+	public TabDefinition withIcon(String icon) {
+		_icon = icon;
 		return this;
 	}
 

@@ -258,6 +258,10 @@ button.tlCounter__button:focus {
 	white-space: nowrap;
 }
 
+.tlReactTabBar__tabIcon {
+	margin-right: var(--spacing-03);
+}
+
 .tlReactTabBar__tab:hover {
 	color: var(--text-primary);
 	border-bottom-color: var(--border-subtle-01);

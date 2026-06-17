@@ -965,21 +965,17 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	justify-content: space-between;
 	/* A panel header is local chrome, not global chrome: it uses a light surface
 	   so it reads as content and does not visually merge with the dark app bar
-	   (which is the single accent-colored bar). Delineated by a bottom border. */
-	background-color: var(--layer-01, #fff);
+	   (which is the single accent-colored bar). A faint tint against the white
+	   content makes it read clearly as a header bar; it is applied uniformly to
+	   every panel header (standalone or split) so identical tables/panels look
+	   the same regardless of the surrounding layout. Delineated by a bottom border. */
+	background-color: var(--layer-02, #f4f4f4);
 	color: var(--text-primary);
 	border-bottom: 1px solid var(--border-subtle);
 	gap: var(--spacing-02);
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
 	flex-shrink: 0;
-}
-
-/* Panel headers nested inside a split (e.g. the table and form sections of a
-   master/detail view) get a faint tint so they read as a level below an outer
-   panel header: dark app bar -> light panel header -> tinted section headers. */
-.tlSplitPanel__child .tlPanel__header {
-	background-color: var(--layer-02, #f4f4f4);
 }
 
 .tlPanel__title {

@@ -434,7 +434,98 @@ reorder, freeze, and tree indent/expand are already present.
 - **`matchCounts` cost under pushdown.** Facet counts as `GROUP BY` per filtered column can
   be expensive; may need a debounce / opt-out per column.
 
-## 12. Next step
+## 12. Implementation status (updated 2026-06-17)
 
-Turn §4 into a compile-only SPI sketch (the actual interfaces + the `LegacyTableView`
-adapter signature) — no behavior change — as the first PR on this branch.
+Branch `CWS/CWS_29108_react_table_config` (from `CWS/CWS_29108_integration`), ~20 commits.
+
+**Where the code lives**
+- `com.top_logic` (tl-core): SPI `com.top_logic.table.*`, impls `com.top_logic.table.impl.*`,
+  filters + editors `com.top_logic.table.filter.*`; unit tests `test.com.top_logic.table.*`.
+- `com.top_logic.layout.react`: `control.table.TableViewControl`, `CellContentReactAdapter`,
+  client `react-src/controls/TLTableView.tsx` (funnel + filter popup), `js.table.*` i18n.
+- `com.top_logic.layout.view`: `element.TableViewElement` (the `<table-view>` element).
+- `com.top_logic.demo`: `react.DemoTableViewComponent` (legacy-compat `.layout.xml` demo) +
+  `views/demo/table-view-demo.view.xml` (new view-layer demo).
+
+**Done and unit-tested** (≈38 POJO tests, no service startup):
+- Full SPI (interfaces + value types).
+- `ListRowSource` — flat sort + filter, single-level grouping with subtotals, facet counts.
+- `TreeRowSource` — expansion, sibling sort, ancestor-keeping filter (flat/tree unified).
+- `DefaultColumn` builder, `DefaultTableView` binding, shared `ColumnLogic`.
+- Filter library (text / comparable-range / options / boolean) + `FilterEditor` SPI,
+  per-kind editors, `FilterEditors` dispatcher.
+
+**Done and verified live** (Playwright, new view layer at `/tl-demo/view/table-view`):
+- Render, multi-column sort, selection → channel → detail form.
+- Localized column labels (resolved from model attributes).
+- Column-filter popup: funnel → FieldModel mini-form (localized) → apply → rows filter →
+  reopen seeded from current state → clear → restore; active-funnel indicator.
+- Cell-tooltip 404 fixed.
+
+**Decisions locked:** generics; neutral `CellRenderer`/`CellContent` (no casts forced so
+far); grouping first-class (single-level); pushdown backend = TL search expressions
+(not yet built); filter UI = Option B (server-composed `FieldModel` mini-form).
+
+## 13. Open tasks / issues / bugs
+
+### A. Not yet implemented (model tier)
+- **`QueryRowSource` (pushdown).** Backend chosen (TL search expressions) but not built;
+  `QuerySink`/`OrderPushdown`/`FilterPushdown` are inert stubs — every source is in-memory.
+- **Multi-column grouping** — `ListRowSource.withGrouping` throws for >1 column.
+- **Tree + grouping** — `TreeRowSource.withGrouping` throws for any grouping.
+- **`LegacyTableView` adapter** (migration step 2) — skipped; existing legacy `TableModel`
+  tables are *not* routed through the new control yet.
+- **`ViewStateStore` + JSON (de)serialization** of `TableViewState`/`FilterState` —
+  personalization is modeled but not persisted.
+- **Export** over `Column` + `RowSource` — not built.
+- **Inline editing** — `CellEditor` SPI exists, but `CellContentReactAdapter` renders
+  `CellContent.Editable` read-only (value as text); `TableView.commitEdit` end-to-end
+  (incl. transaction ownership) is unimplemented.
+
+### B. View-layer `<table-view>` (`TableViewElement`) gaps
+- Assigns a **text** filter to *every* attribute. TODO: attribute-type-aware filter
+  selection (enum → options, number → range, boolean → boolean, date → range).
+- Sorts by **label string** for every column (no type-aware comparator) — numbers/dates
+  sort lexically.
+- **Static rows only** — no refresh on model change (legacy `TableElement` re-runs the rows
+  query on create/update/delete via `ObservableTableModel`; not replicated).
+- Requires explicit `<column>`s (no type-derived default column set).
+
+### C. React control gaps / polish
+- **Facet counts** (`ListRowSource.matchCounts`) count over *all* backing rows, ignoring
+  other active filters; proper facets exclude the column's own filter and reflect the rest.
+- **No `TableViewListener` registration** in `TableViewControl` → external model changes
+  don't refresh the control (only command-driven rebuilds). OK for static demos, not live data.
+- **Numeric range** only via `ComparableColumnFilter.integers()` (`Integer::valueOf`); no
+  float/long/**date** editors (a date column would need `ReactDatePickerControl`, not wired).
+- **Filter popup positioning** is naive (fixed at the funnel's bottom-left; no viewport-edge
+  flipping / scroll handling).
+- **Selection** not persisted; no `ChannelVetoException`/veto handling like the legacy
+  `ReactTableControl`.
+
+### D. Verification gaps
+- **Options / range / boolean** filter kinds are unit-tested and wired into the legacy-compat
+  employees demo tab, but **not clicked through live** in Playwright (only text was).
+- No scripted/integration test for `TableViewControl` or `TableViewElement` (model tier has
+  POJO unit tests only).
+
+### E. Known environment issue (not this work)
+- Workspace hit a stale-jar `IncompatibleClassChangeError`
+  (`SearchExpression.asString` non-static → static) in `tl-service-openapi-server`, blocking
+  app start. Fix: `mvn clean install -pl com.top_logic.service.openapi.server`.
+  `rebuild-stale.sh` does **not** catch cross-module API drift (only a module's own sources).
+
+### F. Naming / structure (still-open §11 forks)
+- Package `com.top_logic.table` is provisional (module-vs-package undecided); **no ArchUnit
+  boundary test** yet enforcing the dependency rule in §8.
+- `Row<R>` per-window allocation cost not benchmarked.
+- `i18n` for the client `js.table.*` keys is in `react` `I18NConstants`; German "apply" was
+  hand-corrected to "Übernehmen" (DeepL gave "Bewerben").
+
+## 14. Suggested next steps (priority order)
+1. Attribute-type-aware filter + comparator selection in `TableViewElement` (unlocks
+   options/range/boolean in the view layer) and live-verify those kinds.
+2. `LegacyTableView` adapter — route existing `TableModel` tables through the new control.
+3. `QueryRowSource` over TL search expressions (the lazy/pushdown win).
+4. `ViewStateStore` + serialization (personalization).
+5. Inline editing end-to-end; live-data refresh (`TableViewListener` + observable rows).

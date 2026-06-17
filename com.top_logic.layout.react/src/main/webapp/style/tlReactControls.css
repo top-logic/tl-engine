@@ -137,31 +137,8 @@ button.tlReactButton--icon:disabled {
 	color: var(--icon-disabled, var(--text-disabled));
 }
 
-/* --- TLButton inside toolbar (inverse colors for dark header) ---------- */
-
-.tlPanel__toolbar .tlReactButton {
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
-	color: var(--layer-accent-icon, var(--text-inverse));
-}
-
-.tlPanel__toolbar button.tlReactButton:not(:disabled):hover {
-	background: var(--layer-accent-hover);
-}
-
-.tlPanel__toolbar button.tlReactButton:not(:disabled):active {
-	background: var(--layer-accent-active, var(--layer-accent-hover));
-	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
-	color: var(--layer-accent-icon, var(--text-inverse));
-}
-
-.tlPanel__toolbar .tlReactButton--icon {
-	box-shadow: none;
-	color: var(--layer-accent-icon, var(--text-inverse));
-}
-
-.tlPanel__toolbar button.tlReactButton--icon:not(:disabled):hover {
-	color: var(--layer-accent-icon, var(--text-inverse));
-}
+/* The panel-toolbar buttons inherit the default (secondary) button styling:
+   the panel header is now a light surface, so no on-accent inversion is needed. */
 
 /* --- TLToggleButton (active state) -------------------------------------- */
 
@@ -986,13 +963,23 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+	/* A panel header is local chrome, not global chrome: it uses a light surface
+	   so it reads as content and does not visually merge with the dark app bar
+	   (which is the single accent-colored bar). Delineated by a bottom border. */
+	background-color: var(--layer-01, #fff);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
 	gap: var(--spacing-02);
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
 	flex-shrink: 0;
+}
+
+/* Panel headers nested inside a split (e.g. the table and form sections of a
+   master/detail view) get a faint tint so they read as a level below an outer
+   panel header: dark app bar -> light panel header -> tinted section headers. */
+.tlSplitPanel__child .tlPanel__header {
+	background-color: var(--layer-02, #f4f4f4);
 }
 
 .tlPanel__title {
@@ -1000,7 +987,7 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
-	color: var(--text-inverse);
+	color: var(--text-primary);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -1023,14 +1010,14 @@ button.tlPhotoCapture__overlayCaptureBtn:active .tlPhotoCapture__overlayCaptureI
 	border: none;
 	border-radius: var(--corner-radius);
 	background: transparent;
-	color: var(--layer-accent-icon, var(--text-inverse));
+	color: var(--icon-primary, var(--text-primary));
 	cursor: pointer;
 	padding: 0;
 	flex-shrink: 0;
 }
 
 button.tlPanel__actionButton:hover {
-	background: rgba(255, 255, 255, 0.15);
+	background: var(--layer-hover);
 }
 
 button.tlPanel__actionButton:focus-visible {
@@ -3100,29 +3087,25 @@ button.tlToolbar__menuTrigger:focus-visible {
 	line-height: 1;
 }
 
-/* The menu trigger visually mirrors a secondary button, so on an accent toolbar
-   surface (panel header or primary app bar) it needs the same on-accent
-   foreground the sibling buttons get - otherwise its accent-blue text/outline is
-   unreadable on the accent background. */
-.tlPanel__toolbar .tlToolbar__menuTrigger,
+/* The menu trigger visually mirrors a secondary button, so on the accent-colored
+   primary app bar it needs the same on-accent foreground the sibling buttons get -
+   otherwise its accent-blue text/outline is unreadable on the accent background.
+   (Panel toolbars are now light surfaces and use the default secondary styling.) */
 .tlAppBar--primary .tlToolbar__menuTrigger {
 	color: var(--layer-accent-icon, var(--text-inverse));
 	box-shadow: inset 0px 0px 0px 2px var(--layer-accent-icon, var(--text-inverse));
 }
 
-.tlPanel__toolbar button.tlToolbar__menuTrigger:not(:disabled):hover,
 .tlAppBar--primary button.tlToolbar__menuTrigger:not(:disabled):hover {
 	background: var(--layer-accent-hover);
 }
 
-.tlPanel__toolbar button.tlToolbar__menuTrigger[aria-expanded="true"],
 .tlAppBar--primary button.tlToolbar__menuTrigger[aria-expanded="true"] {
 	background: var(--layer-accent-active, var(--layer-accent-hover));
 }
 
 /* The icon-only burger is a plain icon button: no outline box, on any surface. */
 .tlToolbar__menuTrigger--icon,
-.tlPanel__toolbar .tlToolbar__menuTrigger--icon,
 .tlAppBar--primary .tlToolbar__menuTrigger--icon {
 	box-shadow: none;
 }

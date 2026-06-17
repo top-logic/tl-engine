@@ -14,8 +14,8 @@ import com.top_logic.layout.form.model.FieldModel;
  * {@link RowSource} and a {@link TableViewState} into a windowed, command-driven view.
  *
  * <p>
- * It answers exactly what a viewport needs &mdash; column descriptors, a row count, a row
- * window and per-cell content &mdash; and accepts the small set of commands a UI issues,
+ * It answers exactly what a viewport needs - column descriptors, a row count, a row
+ * window and per-cell content - and accepts the small set of commands a UI issues,
  * which it implements by mutating the {@link TableViewState} and re-deriving the
  * {@link RowSource}. Incremental changes are reported through {@link TableViewListener}.
  * The {@link #state()} is both persisted and used to seed the client.

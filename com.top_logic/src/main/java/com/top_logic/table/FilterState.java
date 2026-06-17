@@ -9,7 +9,7 @@ package com.top_logic.table;
  * The serializable, user-chosen criteria of a single column filter.
  *
  * <p>
- * A {@link FilterState} is pure data &mdash; it holds <em>what</em> the user selected (a
+ * A {@link FilterState} is pure data - it holds <em>what</em> the user selected (a
  * text pattern, a range, a set of option values, ...) with no dependency on any form or
  * control. A {@link ColumnFilter} turns a {@link FilterState} into a {@code Predicate} (or
  * a query pushdown), and a UI tier renders/edits it based on the column's

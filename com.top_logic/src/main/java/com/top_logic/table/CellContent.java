@@ -21,6 +21,9 @@ public sealed interface CellContent {
 
 	/**
 	 * Plain text content.
+	 *
+	 * @param text
+	 *        The text to display.
 	 */
 	record Text(String text) implements CellContent {
 		// Pure value type.
@@ -44,6 +47,9 @@ public sealed interface CellContent {
 
 	/**
 	 * An editable cell backed by a {@link FieldModel} (inline editing).
+	 *
+	 * @param field
+	 *        The field model holding the editable value.
 	 */
 	record Editable(FieldModel field) implements CellContent {
 		// Pure value type.
@@ -58,6 +64,9 @@ public sealed interface CellContent {
 
 	/**
 	 * Escape hatch carrying a UI-tier-specific payload for bespoke rendering.
+	 *
+	 * @param payload
+	 *        The UI-tier-specific rendering payload.
 	 */
 	record Raw(Object payload) implements CellContent {
 		// Pure value type.

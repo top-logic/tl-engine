@@ -19,11 +19,11 @@
  * object {@link com.top_logic.table.TableView}:
  * </p>
  * <ul>
- * <li>{@link com.top_logic.table.Column} &mdash; declarative, type-safe column
+ * <li>{@link com.top_logic.table.Column} - declarative, type-safe column
  * definitions,</li>
- * <li>{@link com.top_logic.table.RowSource} &mdash; a windowed (lazy/pushdown-capable) row
+ * <li>{@link com.top_logic.table.RowSource} - a windowed (lazy/pushdown-capable) row
  * sequence that unifies flat, tree and grouped tables,</li>
- * <li>{@link com.top_logic.table.TableViewState} &mdash; the serializable view state
+ * <li>{@link com.top_logic.table.TableViewState} - the serializable view state
  * (sort/filter/order/width/frozen/expansion/selection/paging).</li>
  * </ul>
  *

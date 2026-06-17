@@ -15,10 +15,10 @@ package com.top_logic.table;
  */
 public enum RowKind {
 
-	/** A regular data row backed by a business object ({@link Row#data()}). */
+	/** A regular data row backed by a business object. */
 	DATA,
 
-	/** A synthetic group header row introduced by grouping ({@link Row#group()}). */
+	/** A synthetic group header row introduced by grouping. */
 	GROUP_HEADER,
 
 	/** A synthetic aggregation/footer row computed over a {@link Group}. */

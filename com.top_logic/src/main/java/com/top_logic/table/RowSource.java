@@ -8,7 +8,7 @@ package com.top_logic.table;
 import java.util.List;
 
 /**
- * A windowed sequence of displayed {@link Row}s &mdash; the green-field replacement for
+ * A windowed sequence of displayed {@link Row}s - the green-field replacement for
  * {@code TableModel} / {@code ObjectTableModel} / {@code TreeTableModel}.
  *
  * <p>

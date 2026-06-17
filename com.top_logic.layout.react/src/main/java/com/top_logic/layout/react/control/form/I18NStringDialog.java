@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.layout.DisplayDimension;
@@ -19,7 +21,9 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.MessageButtons;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
@@ -29,6 +33,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -61,7 +66,11 @@ public class I18NStringDialog {
 		Locale displayLocale = TLContext.getLocale();
 		ResKey current = mainModel.getValue() instanceof ResKey ? (ResKey) mainModel.getValue() : null;
 
-		// One field model + text-input row per supported language.
+		// One field model + text-input row per supported language. When a translation service is
+		// active, each (supported) row also gets a "Translate" link that fills the other rows from
+		// it - the clicked row is the explicit translation source.
+		boolean canTranslate = TranslationService.isActive();
+		Translator translator = canTranslate ? TranslationService.getInstance() : null;
 		Map<Locale, FieldModel> perLocale = new LinkedHashMap<>();
 		List<ReactControl> rows = new ArrayList<>();
 		for (Locale locale : resources.getSupportedLocalesInDisplayOrder()) {
@@ -70,7 +79,21 @@ public class I18NStringDialog {
 			perLocale.put(locale, model);
 
 			ReactControl input = new ReactTextInputControl(context, model);
-			rows.add(new ReactFormFieldChromeControl(context, locale.getDisplayLanguage(displayLocale), input));
+			ReactControl row =
+				new ReactFormFieldChromeControl(context, locale.getDisplayLanguage(displayLocale), input);
+			if (canTranslate && translator.isSupported(locale)) {
+				Locale source = locale;
+				ReactButtonControl translateButton = new ReactButtonControl(context,
+					resources.getString(I18NConstants.I18N_STRING_TRANSLATE_BUTTON),
+					ctx -> {
+						translateFrom(perLocale, source);
+						return HandlerResult.DEFAULT_RESULT;
+					});
+				translateButton.setAppearance(ButtonAppearance.LINK);
+				row = new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.END, false,
+					List.of(row, translateButton));
+			}
+			rows.add(row);
 		}
 		ReactStackControl body =
 			new ReactStackControl(context, StackDirection.COLUMN, StackGap.DEFAULT, StackAlign.STRETCH, false, rows);
@@ -107,6 +130,36 @@ public class I18NStringDialog {
 		dialogManager.openDialog(false, window, result -> {
 			// Nothing to do on close: OK already applied the value, Cancel discards.
 		});
+	}
+
+	/**
+	 * Translates the {@code source} row's text into every other supported row, overwriting their
+	 * values. A target left unsupported or a service failure leaves that row unchanged.
+	 */
+	private static void translateFrom(Map<Locale, FieldModel> perLocale, Locale source) {
+		if (!TranslationService.isActive()) {
+			return;
+		}
+		Translator translator = TranslationService.getInstance();
+		if (!translator.isSupported(source)) {
+			return;
+		}
+		Object sourceValue = perLocale.get(source).getValue();
+		String sourceText = sourceValue == null ? null : sourceValue.toString();
+		if (sourceText == null || sourceText.isEmpty()) {
+			return;
+		}
+		for (Map.Entry<Locale, FieldModel> entry : perLocale.entrySet()) {
+			Locale target = entry.getKey();
+			if (target.getLanguage().equals(source.getLanguage()) || !translator.isSupported(target)) {
+				continue;
+			}
+			try {
+				entry.getValue().setValue(translator.translate(sourceText, source, target));
+			} catch (I18NRuntimeException ex) {
+				// Leave this target unchanged on a service failure.
+			}
+		}
 	}
 
 }

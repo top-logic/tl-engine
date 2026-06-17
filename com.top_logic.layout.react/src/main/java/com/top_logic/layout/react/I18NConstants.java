@@ -371,6 +371,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey I18N_STRING_ALL_LANGUAGES_TITLE;
 
 	/**
+	 * @en Translate
+	 */
+	public static ResKey I18N_STRING_TRANSLATE_BUTTON;
+
+	/**
 	 * @en Form group collapse toggled.
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;

@@ -359,8 +359,6 @@ com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing do
 com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing documentation: com.top_logic.element.knowledge.search.ElementExpressionFactory.metaAttribute
 com.top_logic.element.knowledge.search.ElementExpressionFactory.java: Missing documentation: com.top_logic.element.knowledge.search.ElementExpressionFactory.metaElement
 com.top_logic.element.layout.TypeInstanceListModelBuilder.java: Documentation starts with an uppercase letter: com.top_logic.element.layout.TypeInstanceListModelBuilder
-com.top_logic.element.layout.admin.StructureDomainMapper.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.element.layout.admin.StructureDomainMapper
-com.top_logic.element.layout.admin.StructureDomainMapper.java: Invalid camel case word 'StructureDomainMapper', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.admin.component.SecurityRowAccessor.java: Missing documentation: com.top_logic.element.layout.admin.component.SecurityRowAccessor
 com.top_logic.element.layout.formeditor.ContentDefinitionUtil.java: Invalid camel case word 'propertyTest', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.layout.formeditor.FormEditorUtil.java: Invalid camel case word 'FormConstraints', this may only be used within JavaDoc links or HTML code tags.

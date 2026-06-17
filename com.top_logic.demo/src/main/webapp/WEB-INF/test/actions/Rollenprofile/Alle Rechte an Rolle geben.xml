@@ -45,7 +45,7 @@
 					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent$ExpandAllCommandHandler"
+					command-implementation-comment="com.top_logic.tool.boundsec.gui.profile.ExpandAllCommandHandler"
 					command-label="Rollenprofile aufklappen"
 					command-name="expandRoleProfileTree"
 					component-implementation-comment="com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent"

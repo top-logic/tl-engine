@@ -264,12 +264,6 @@
 			</registrations>
 		</config>
 
-		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
-			<layout>
-				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
-			</layout>
-		</config>
-		
 		<config config:interface="com.top_logic.layout.tree.renderer.LogoutTimerControl$Config"
 			counting-seconds="-10"
 		>

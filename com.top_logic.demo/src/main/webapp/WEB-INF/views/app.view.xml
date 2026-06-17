@@ -85,6 +85,15 @@
 							<de>PDF-Viewer</de>
 						</label>
 					</nav-item>
+					<nav-item id="table-view"
+						icon="css:bi bi-table"
+					>
+						<view-ref view="demo/table-view-demo.view.xml"/>
+						<label>
+							<en>Table (green-field)</en>
+							<de>Tabelle (Green-Field)</de>
+						</label>
+					</nav-item>
 					<nav-item id="charts"
 						icon="css:bi bi-bar-chart-line"
 					>

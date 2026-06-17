@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selectedAccount"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="55"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Accounts (green-field table)</en>
+						<de>Konten (Green-Field-Tabelle)</de>
+					</title>
+					<table-view selection="selectedAccount">
+						<columns>
+							<column attribute="name"/>
+							<column attribute="firstName"/>
+							<column attribute="lastName"/>
+						</columns>
+						<rows>all(`tl.accounts:Person`)</rows>
+					</table-view>
+				</panel>
+			</pane>
+			<pane
+				size="45"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Account</en>
+						<de>Konto</de>
+					</title>
+					<form input="selectedAccount">
+						<field attribute="name"/>
+						<field attribute="firstName"/>
+						<field attribute="lastName"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

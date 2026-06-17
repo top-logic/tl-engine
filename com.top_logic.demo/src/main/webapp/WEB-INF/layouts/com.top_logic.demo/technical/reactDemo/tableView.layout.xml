@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments>
+		<tabLabel key="dynamic.reactDemo.tableView.tab">
+			<en>Table (green-field)</en>
+			<de>Tabelle (Green-Field)</de>
+		</tabLabel>
+		<components>
+			<component class="com.top_logic.demo.react.DemoTableViewComponent"
+				name="reactTableViewDemo"
+			>
+				<titleKey key="dynamic.reactDemo.tableView.component">
+					<en>Table (green-field)</en>
+					<de>Tabelle (Green-Field)</de>
+				</titleKey>
+			</component>
+		</components>
+	</arguments>
+</config:template-call>

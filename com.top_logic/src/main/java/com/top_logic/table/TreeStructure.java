@@ -20,8 +20,10 @@ import java.util.List;
  *
  * @param <N>
  *        The tree node type.
+ * @param <R>
+ *        The business object type exposed as the row data for cell value extraction.
  */
-public interface TreeStructure<N> {
+public interface TreeStructure<N, R> {
 
 	/**
 	 * The root nodes of the tree.
@@ -49,6 +51,6 @@ public interface TreeStructure<N> {
 	/**
 	 * The business object wrapped by the given node, used for cell value extraction.
 	 */
-	Object businessObject(N node);
+	R businessObject(N node);
 
 }

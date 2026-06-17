@@ -18,14 +18,12 @@ import java.util.function.Predicate;
 
 import com.top_logic.table.Column;
 import com.top_logic.table.FilterSpec;
-import com.top_logic.table.FilterState;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
-import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 
 /**
@@ -55,7 +53,7 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	private final List<? extends R> _elements;
 
-	private final List<Column<R, ?>> _columns;
+	private final Map<String, Column<R, ?>> _byName = new LinkedHashMap<>();
 
 	private final Function<? super R, ?> _keyOf;
 
@@ -96,7 +94,9 @@ public class ListRowSource<R> implements RowSource<R> {
 	public ListRowSource(List<? extends R> elements, List<Column<R, ?>> columns,
 			Function<? super R, ?> keyOf) {
 		_elements = elements;
-		_columns = List.copyOf(columns);
+		for (Column<R, ?> column : columns) {
+			_byName.put(column.name(), column);
+		}
 		_keyOf = keyOf;
 		recompute();
 	}
@@ -169,14 +169,14 @@ public class ListRowSource<R> implements RowSource<R> {
 	 * Recomputes the displayed rows by filtering then sorting the backing elements.
 	 */
 	private void recompute() {
+		Predicate<R> predicate = ColumnLogic.predicate(_filter, _byName);
 		List<R> rows = new ArrayList<>();
-		Predicate<R> predicate = rowPredicate();
 		for (R element : _elements) {
-			if (predicate.test(element)) {
+			if (predicate == null || predicate.test(element)) {
 				rows.add(element);
 			}
 		}
-		Comparator<R> order = rowComparator();
+		Comparator<R> order = ColumnLogic.comparator(_sort, _byName);
 		if (order != null) {
 			rows.sort(order);
 		}
@@ -197,7 +197,7 @@ public class ListRowSource<R> implements RowSource<R> {
 	 * by its data rows when expanded.
 	 */
 	private List<Row<R>> groupedRows(List<R> rows) {
-		Column<R, ?> groupColumn = column(_grouping.columns().get(0));
+		Column<R, ?> groupColumn = _byName.get(_grouping.columns().get(0));
 		Map<Object, List<R>> buckets = new LinkedHashMap<>();
 		for (R row : rows) {
 			buckets.computeIfAbsent(groupColumn.value(row), key -> new ArrayList<>()).add(row);
@@ -216,60 +216,6 @@ public class ListRowSource<R> implements RowSource<R> {
 			}
 		}
 		return displayed;
-	}
-
-	/**
-	 * The combined AND predicate over all active column filters, or an accept-all
-	 * predicate.
-	 */
-	private Predicate<R> rowPredicate() {
-		Predicate<R> result = null;
-		for (var entry : _filter.byColumn().entrySet()) {
-			FilterState state = entry.getValue();
-			if (state == null || state.isEmpty()) {
-				continue;
-			}
-			Predicate<R> columnPredicate = columnPredicate(column(entry.getKey()), state);
-			result = result == null ? columnPredicate : result.and(columnPredicate);
-		}
-		return result == null ? row -> true : result;
-	}
-
-	private <V> Predicate<R> columnPredicate(Column<R, V> column, FilterState state) {
-		Predicate<V> valuePredicate = column.filter()
-			.orElseThrow(() -> new IllegalStateException("Column '" + column.name() + "' is not filterable."))
-			.predicate(state);
-		return row -> valuePredicate.test(column.value(row));
-	}
-
-	/**
-	 * The chained comparator for the active sort order, or {@code null} for no ordering.
-	 */
-	private Comparator<R> rowComparator() {
-		Comparator<R> result = null;
-		for (SortColumn sortColumn : _sort.columns()) {
-			Comparator<R> step = columnComparator(column(sortColumn.column()), sortColumn.ascending());
-			result = result == null ? step : result.thenComparing(step);
-		}
-		return result;
-	}
-
-	private <V> Comparator<R> columnComparator(Column<R, V> column, boolean ascending) {
-		Comparator<V> valueComparator = column.sort()
-			.orElseThrow(() -> new IllegalStateException("Column '" + column.name() + "' is not sortable."))
-			.comparator();
-		Comparator<R> rowComparator =
-			Comparator.comparing(column::value, Comparator.nullsLast(valueComparator));
-		return ascending ? rowComparator : rowComparator.reversed();
-	}
-
-	private Column<R, ?> column(String name) {
-		for (Column<R, ?> column : _columns) {
-			if (column.name().equals(name)) {
-				return column;
-			}
-		}
-		throw new IllegalArgumentException("No such column: " + name);
 	}
 
 	private void fireInvalidated() {

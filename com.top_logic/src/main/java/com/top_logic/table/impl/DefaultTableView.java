@@ -13,8 +13,10 @@ import java.util.Map;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.Group;
+import com.top_logic.table.MatchCounts;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
@@ -189,6 +191,17 @@ public class DefaultTableView<R> implements TableView<R> {
 	private String groupLabel(Group<R> group) {
 		List<Object> values = group.key().values();
 		return values.isEmpty() ? "" : String.valueOf(values.get(values.size() - 1));
+	}
+
+	@Override
+	public ColumnFilter<?> columnFilter(String column) {
+		Column<R, ?> definition = _columns.get(column);
+		return definition == null ? null : definition.filter().orElse(null);
+	}
+
+	@Override
+	public MatchCounts columnMatchCounts(String column) {
+		return _source.matchCounts(column);
 	}
 
 	private boolean isFirstColumn(String column) {

@@ -56,6 +56,18 @@ public interface TableView<R> {
 	CellContent cell(Row<R> row, String column);
 
 	/**
+	 * The filter of the named column, or {@code null} if the column is not filterable. Used
+	 * by a UI tier (together with {@link #columnMatchCounts} and the current
+	 * {@link #state()}) to build a filter editor.
+	 */
+	ColumnFilter<?> columnFilter(String column);
+
+	/**
+	 * Facet counts for the named column, or {@link MatchCounts#NONE} if unavailable.
+	 */
+	MatchCounts columnMatchCounts(String column);
+
+	/**
 	 * The editable field model for the given cell, or {@code null} if the cell is not
 	 * editable.
 	 */

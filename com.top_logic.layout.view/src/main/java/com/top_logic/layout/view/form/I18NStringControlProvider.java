@@ -7,11 +7,12 @@ package com.top_logic.layout.view.form;
 
 import java.util.List;
 
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.button.ButtonAppearance;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.I18NStringDialog;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
@@ -44,10 +45,13 @@ public class I18NStringControlProvider implements ReactFieldControlProvider {
 				I18NStringDialog.openEditor(ctx, model);
 				return HandlerResult.DEFAULT_RESULT;
 			});
-		editAll.setAppearance(ButtonAppearance.LINK);
+		editAll.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
+		editAll.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
-		return new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.CENTER, false,
-			List.of(inline, editAll));
+		ReactStackControl row = new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT,
+			StackAlign.CENTER, false, List.of(inline, editAll));
+		row.setGrowFirst(true);
+		return row;
 	}
 
 }

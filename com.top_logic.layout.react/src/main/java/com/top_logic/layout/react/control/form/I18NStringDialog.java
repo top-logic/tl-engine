@@ -16,12 +16,13 @@ import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.button.ButtonAppearance;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
@@ -89,9 +90,12 @@ public class I18NStringDialog {
 						translateFrom(perLocale, source);
 						return HandlerResult.DEFAULT_RESULT;
 					});
-				translateButton.setAppearance(ButtonAppearance.LINK);
-				row = new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT, StackAlign.END, false,
-					List.of(row, translateButton));
+				translateButton.setImage(ThemeImage.icon("css:fa-solid fa-language"));
+				translateButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				ReactStackControl rowStack = new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT,
+					StackAlign.END, false, List.of(row, translateButton));
+				rowStack.setGrowFirst(true);
+				row = rowStack;
 			}
 			rows.add(row);
 		}

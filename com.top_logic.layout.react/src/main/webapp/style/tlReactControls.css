@@ -1526,6 +1526,10 @@ button.tlDrawerToggle:focus-visible {
 
 .tlStack--wrap { flex-wrap: wrap; }
 
+/* First child fills the remaining main-axis space (input-with-adornment row). */
+.tlStack--grow-first.tlStack--row > *:first-child { flex: 1 1 auto; min-width: 0; }
+.tlStack--grow-first.tlStack--column > *:first-child { flex: 1 1 auto; min-height: 0; }
+
 /* --- TLGrid ---------------------------------------------------------------- */
 
 .tlGrid {

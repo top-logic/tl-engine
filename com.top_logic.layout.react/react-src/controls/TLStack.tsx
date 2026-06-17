@@ -9,6 +9,7 @@ import type { TLCellProps } from 'tl-react-bridge';
  * - gap: "compact" | "default" | "loose"  (default: "default")
  * - align: "start" | "center" | "end" | "stretch"  (default: "stretch")
  * - wrap: boolean  (default: false)
+ * - growFirst: boolean  (default: false) — first child fills the main axis
  * - children: ChildDescriptor[]
  */
 const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
@@ -18,6 +19,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const gap = (state.gap as string) ?? 'default';
   const align = (state.align as string) ?? 'stretch';
   const wrap = state.wrap === true;
+  const growFirst = state.growFirst === true;
   const children = (state.children as unknown[]) ?? [];
 
   const className = [
@@ -26,6 +28,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
     `tlStack--gap-${gap}`,
     `tlStack--align-${align}`,
     wrap ? 'tlStack--wrap' : '',
+    growFirst ? 'tlStack--grow-first' : '',
   ].filter(Boolean).join(' ');
 
   return (

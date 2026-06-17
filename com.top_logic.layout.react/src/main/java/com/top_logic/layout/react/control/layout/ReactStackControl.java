@@ -27,6 +27,8 @@ public class ReactStackControl extends ReactControl {
 
 	private static final String WRAP = "wrap";
 
+	private static final String GROW_FIRST = "growFirst";
+
 	private static final String CHILDREN = "children";
 
 	/**
@@ -142,6 +144,19 @@ public class ReactStackControl extends ReactControl {
 		putState(ALIGN, align.getExternalName());
 		putState(WRAP, Boolean.valueOf(wrap));
 		putState(CHILDREN, _children);
+	}
+
+	/**
+	 * Lets the first child grow to fill the main axis while trailing children keep their natural
+	 * size.
+	 *
+	 * <p>
+	 * Use for an input-with-adornment row (e.g. a full-width text input followed by a fixed-size
+	 * icon button), where the leading control should consume the remaining space.
+	 * </p>
+	 */
+	public void setGrowFirst(boolean growFirst) {
+		putState(GROW_FIRST, Boolean.valueOf(growFirst));
 	}
 
 	@Override

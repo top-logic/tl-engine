@@ -5,6 +5,8 @@
  */
 package com.top_logic.table;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,9 +25,14 @@ public record GroupKey(List<Object> values) {
 
 	/**
 	 * Creates a {@link GroupKey} with a defensive, immutable copy of the values.
+	 *
+	 * <p>
+	 * Null grouping values are permitted (e.g. a "no value" group), so a null-tolerant
+	 * unmodifiable copy is used rather than {@link List#copyOf}.
+	 * </p>
 	 */
 	public GroupKey {
-		values = List.copyOf(values);
+		values = Collections.unmodifiableList(new ArrayList<>(values));
 	}
 
 }

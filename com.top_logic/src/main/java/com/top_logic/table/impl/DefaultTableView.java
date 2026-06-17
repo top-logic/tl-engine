@@ -14,6 +14,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnView;
+import com.top_logic.table.Group;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
@@ -165,10 +166,13 @@ public class DefaultTableView<R> implements TableView<R> {
 			case DATA:
 				return renderData(definition, row.data());
 			case GROUP_HEADER:
-				return isFirstColumn(column) ? CellContent.label(String.valueOf(row.group())) : CellContent.empty();
+				// The header doubles as the subtotal row: label in the first column,
+				// per-column aggregates in the rest.
+				return isFirstColumn(column)
+					? CellContent.label(groupLabel(row.group()))
+					: aggregate(definition, row.group());
 			case AGGREGATE:
-				// Aggregate cell rendering requires the materialized Group; wired with grouping.
-				return CellContent.empty();
+				return aggregate(definition, row.group());
 			default:
 				return CellContent.empty();
 		}
@@ -176,6 +180,15 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	private <V> CellContent renderData(Column<R, V> column, R data) {
 		return column.renderer().render(column.value(data));
+	}
+
+	private <V> CellContent aggregate(Column<R, V> column, Group<R> group) {
+		return column.aggregate().map(aggregator -> aggregator.over(group)).orElse(CellContent.empty());
+	}
+
+	private String groupLabel(Group<R> group) {
+		List<Object> values = group.key().values();
+		return values.isEmpty() ? "" : String.valueOf(values.get(values.size() - 1));
 	}
 
 	private boolean isFirstColumn(String column) {

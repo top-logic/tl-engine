@@ -6,14 +6,21 @@
 package com.top_logic.table.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.table.Column;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.Group;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
@@ -35,8 +42,10 @@ import com.top_logic.table.SortSpec;
  * </p>
  *
  * <p>
- * Grouping is not yet implemented and is added in a follow-up step; passing a non-empty
- * {@link GroupSpec} currently throws.
+ * Single-level grouping is supported: a non-empty {@link GroupSpec} buckets the
+ * filtered/sorted rows by the first grouping column's value and emits an expandable
+ * {@link GroupRow group header} per bucket (which doubles as the subtotal row) followed by
+ * the group's data rows. Multi-column grouping is a follow-up step.
  * </p>
  *
  * @param <R>
@@ -51,6 +60,8 @@ public class ListRowSource<R> implements RowSource<R> {
 	private final Function<? super R, ?> _keyOf;
 
 	private final List<RowSourceListener> _listeners = new ArrayList<>();
+
+	private final Set<Object> _collapsed = new HashSet<>();
 
 	private SortSpec _sort = SortSpec.NONE;
 
@@ -123,16 +134,25 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	@Override
 	public RowSource<R> withGrouping(GroupSpec grouping) {
-		if (!grouping.columns().isEmpty()) {
-			throw new UnsupportedOperationException("Grouping is not yet implemented in ListRowSource.");
+		if (grouping.columns().size() > 1) {
+			throw new UnsupportedOperationException("Multi-column grouping is not yet implemented in ListRowSource.");
 		}
 		_grouping = grouping;
+		recompute();
+		fireInvalidated();
 		return this;
 	}
 
 	@Override
 	public void setExpanded(Object rowKey, boolean expanded) {
-		// Flat source: no expandable rows.
+		if (_grouping.columns().isEmpty()) {
+			return;
+		}
+		boolean changed = expanded ? _collapsed.remove(rowKey) : _collapsed.add(rowKey);
+		if (changed) {
+			recompute();
+			fireInvalidated();
+		}
 	}
 
 	@Override
@@ -160,11 +180,42 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (order != null) {
 			rows.sort(order);
 		}
+		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows);
+	}
+
+	private List<Row<R>> flatRows(List<R> rows) {
 		List<Row<R>> displayed = new ArrayList<>(rows.size());
 		for (R row : rows) {
 			displayed.add(new DataRow<>(_keyOf.apply(row), row));
 		}
-		_displayed = displayed;
+		return displayed;
+	}
+
+	/**
+	 * Buckets the (already filtered and sorted) rows by the first grouping column's value,
+	 * in first-appearance order, and emits an expandable group header per bucket followed
+	 * by its data rows when expanded.
+	 */
+	private List<Row<R>> groupedRows(List<R> rows) {
+		Column<R, ?> groupColumn = column(_grouping.columns().get(0));
+		Map<Object, List<R>> buckets = new LinkedHashMap<>();
+		for (R row : rows) {
+			buckets.computeIfAbsent(groupColumn.value(row), key -> new ArrayList<>()).add(row);
+		}
+		List<Row<R>> displayed = new ArrayList<>();
+		for (Map.Entry<Object, List<R>> bucket : buckets.entrySet()) {
+			GroupKey key = new GroupKey(Collections.singletonList(bucket.getKey()));
+			List<R> members = bucket.getValue();
+			Group<R> group = new SimpleGroup<>(key, members);
+			boolean expanded = !_collapsed.contains(key);
+			displayed.add(new GroupRow<>(group, 0, expanded));
+			if (expanded) {
+				for (R member : members) {
+					displayed.add(new DataRow<>(_keyOf.apply(member), member, 1));
+				}
+			}
+		}
+		return displayed;
 	}
 
 	/**

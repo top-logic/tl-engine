@@ -39,10 +39,11 @@ public interface Row<R> {
 	R data();
 
 	/**
-	 * The group descriptor for a {@link RowKind#GROUP_HEADER} or {@link RowKind#AGGREGATE}
-	 * row, or {@code null} for a {@link RowKind#DATA} row.
+	 * The materialized group for a {@link RowKind#GROUP_HEADER} or {@link RowKind#AGGREGATE}
+	 * row (its {@link Group#key() key} plus members), or {@code null} for a
+	 * {@link RowKind#DATA} row.
 	 */
-	GroupKey group();
+	Group<R> group();
 
 	/**
 	 * Nesting depth in a tree or grouping hierarchy. Top-level flat data rows are at depth

@@ -10,65 +10,55 @@ import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 
 /**
- * A plain {@link RowKind#DATA data} {@link Row} backed by a business object.
+ * A synthetic {@link RowKind#GROUP_HEADER group header} {@link Row} carrying its
+ * materialized {@link Group}. The header doubles as the group's subtotal row: a view
+ * renders the group label in the first column and per-column aggregates in the rest.
  *
  * @param <R>
  *        The row business object type.
  */
-public final class DataRow<R> implements Row<R> {
+public final class GroupRow<R> implements Row<R> {
 
-	private final Object _key;
-
-	private final R _data;
+	private final Group<R> _group;
 
 	private final int _depth;
 
-	/**
-	 * Creates a top-level {@link DataRow}.
-	 *
-	 * @param key
-	 *        The stable row {@link Row#key() key}.
-	 * @param data
-	 *        The business object.
-	 */
-	public DataRow(Object key, R data) {
-		this(key, data, 0);
-	}
+	private final boolean _expanded;
 
 	/**
-	 * Creates a {@link DataRow} at the given tree/group depth.
+	 * Creates a {@link GroupRow}.
 	 *
-	 * @param key
-	 *        The stable row {@link Row#key() key}.
-	 * @param data
-	 *        The business object.
+	 * @param group
+	 *        The materialized group.
 	 * @param depth
 	 *        The nesting depth.
+	 * @param expanded
+	 *        Whether the group is currently expanded.
 	 */
-	public DataRow(Object key, R data, int depth) {
-		_key = key;
-		_data = data;
+	public GroupRow(Group<R> group, int depth, boolean expanded) {
+		_group = group;
 		_depth = depth;
+		_expanded = expanded;
 	}
 
 	@Override
 	public RowKind kind() {
-		return RowKind.DATA;
+		return RowKind.GROUP_HEADER;
 	}
 
 	@Override
 	public Object key() {
-		return _key;
+		return _group.key();
 	}
 
 	@Override
 	public R data() {
-		return _data;
+		return null;
 	}
 
 	@Override
 	public Group<R> group() {
-		return null;
+		return _group;
 	}
 
 	@Override
@@ -78,12 +68,12 @@ public final class DataRow<R> implements Row<R> {
 
 	@Override
 	public boolean expandable() {
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean expanded() {
-		return false;
+		return _expanded;
 	}
 
 }

@@ -12,9 +12,14 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -61,10 +66,43 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Registers an adornment control (e.g. the all-languages button) that is only shown while the
-	 * field is editable.
+	 * Creates a ready-to-use editor for an {@code I18NString} field: the inline current-locale input
+	 * together with the all-languages button that opens the {@link I18NStringDialog}.
+	 *
+	 * <p>
+	 * Editing all languages is an intrinsic part of a multi-locale value, so the dialog wiring (and
+	 * hiding the button outside edit mode) is encapsulated here - callers need no further assembly.
+	 * The all-languages button is laid out as an inline adornment so the input keeps the full field
+	 * width.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model (value is a {@link ResKey} or {@code null}).
+	 * @return The composed editor control.
 	 */
-	public void setAdornment(ReactControl adornment) {
+	public static ReactControl createEditor(ReactContext context, FieldModel model) {
+		ReactI18NStringInputControl inline = new ReactI18NStringInputControl(context, model);
+
+		ReactButtonControl editAll = new ReactButtonControl(context,
+			Resources.getInstance().getString(I18NConstants.I18N_STRING_ALL_LANGUAGES_BUTTON),
+			ctx -> {
+				I18NStringDialog.openEditor(ctx, model);
+				return HandlerResult.DEFAULT_RESULT;
+			});
+		editAll.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
+		editAll.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		inline.setAdornment(editAll);
+
+		return ReactFormBuilder.inputWithAdornment(context, inline, editAll);
+	}
+
+	/**
+	 * Registers an adornment control (the all-languages button) that is only shown while the field
+	 * is editable.
+	 */
+	private void setAdornment(ReactControl adornment) {
 		_adornment = adornment;
 		adornment.setHidden(!_editable);
 	}

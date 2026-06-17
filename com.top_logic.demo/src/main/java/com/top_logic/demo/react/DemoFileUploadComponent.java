@@ -70,6 +70,10 @@ public class DemoFileUploadComponent extends LayoutComponent {
 			ReactContext ctx = ReactContext.fromDisplayContext(displayContext);
 			FormContext formContext = new FormContext(this);
 			_fileField = FormFactory.newDataField("file");
+			// The visible label is provided by the surrounding chrome (the "Uploaded File" heading);
+			// suppress the field-level label lookup, which would otherwise log a missing-resource
+			// error (the component has no resource prefix).
+			_fileField.setLabel("");
 			formContext.addMember(_fileField);
 
 			_fileFieldControl = new DataItemControl(_fileField);

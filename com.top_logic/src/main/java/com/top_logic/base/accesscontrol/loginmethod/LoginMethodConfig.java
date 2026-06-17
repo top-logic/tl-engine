@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.base.accesscontrol.login;
+package com.top_logic.base.accesscontrol.loginmethod;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ import com.top_logic.basic.config.annotation.Name;
  * </p>
  *
  * <pre>
- * &lt;config config:interface="com.top_logic.base.accesscontrol.login.LoginMethodConfig"&gt;
+ * &lt;config config:interface="com.top_logic.base.accesscontrol.loginmethod.LoginMethodConfig"&gt;
  *     &lt;providers&gt;
  *         &lt;provider class="com.top_logic.security.auth.pac4j...Pac4jLoginMethodProvider"/&gt;
  *     &lt;/providers&gt;

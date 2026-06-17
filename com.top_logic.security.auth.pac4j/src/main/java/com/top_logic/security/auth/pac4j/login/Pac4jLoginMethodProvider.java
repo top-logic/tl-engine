@@ -10,8 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.base.accesscontrol.login.LoginMethod;
-import com.top_logic.base.accesscontrol.login.LoginMethodProvider;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethodProvider;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;

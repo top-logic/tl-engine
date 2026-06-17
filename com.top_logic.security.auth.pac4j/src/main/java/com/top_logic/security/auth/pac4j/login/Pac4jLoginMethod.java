@@ -8,7 +8,7 @@ package com.top_logic.security.auth.pac4j.login;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import com.top_logic.base.accesscontrol.login.LoginMethod;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;

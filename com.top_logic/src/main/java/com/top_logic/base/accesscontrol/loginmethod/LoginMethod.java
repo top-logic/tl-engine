@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.base.accesscontrol.login;
+package com.top_logic.base.accesscontrol.loginmethod;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;

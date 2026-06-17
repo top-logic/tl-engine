@@ -8,8 +8,8 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.base.accesscontrol.login.LoginMethod;
-import com.top_logic.base.accesscontrol.login.LoginMethods;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethods;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;

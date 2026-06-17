@@ -95,30 +95,35 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		FormField nameField = FormFactory.newStringField("name", "John Doe", false);
 		formContext.addMember(nameField);
+		suppressFieldLabel(nameField);
 		ReactTextInputControl nameInput = new ReactTextInputControl(ctx, new FormFieldAdapter(nameField));
 		ReactFormFieldChromeControl nameChrome = new ReactFormFieldChromeControl(ctx,
 			"Full Name", true, false, null, "Enter your full legal name", null, false, true, nameInput);
 
 		FormField emailField = FormFactory.newStringField("email", "john@example.com", false);
 		formContext.addMember(emailField);
+		suppressFieldLabel(emailField);
 		ReactTextInputControl emailInput = new ReactTextInputControl(ctx, new FormFieldAdapter(emailField));
 		ReactFormFieldChromeControl emailChrome = new ReactFormFieldChromeControl(ctx,
 			"Email", true, true, null, null, null, false, true, emailInput);
 
 		FormField phoneField = FormFactory.newStringField("phone", "", false);
 		formContext.addMember(phoneField);
+		suppressFieldLabel(phoneField);
 		ReactTextInputControl phoneInput = new ReactTextInputControl(ctx, new FormFieldAdapter(phoneField));
 		ReactFormFieldChromeControl phoneChrome = new ReactFormFieldChromeControl(ctx,
 			"Phone", false, false, "Please enter a valid phone number", null, null, false, true, phoneInput);
 
 		FormField dobField = FormFactory.newStringField("dob", "1990-06-15", false);
 		formContext.addMember(dobField);
+		suppressFieldLabel(dobField);
 		ReactDatePickerControl dobInput = new ReactDatePickerControl(ctx, new FormFieldAdapter(dobField));
 		ReactFormFieldChromeControl dobChrome = new ReactFormFieldChromeControl(ctx,
 			"Date of Birth", false, false, null, null, null, false, true, dobInput);
 
 		FormField bioField = FormFactory.newStringField("bio", "Software developer with 10 years experience...", false);
 		formContext.addMember(bioField);
+		suppressFieldLabel(bioField);
 		ReactTextInputControl bioInput = new ReactTextInputControl(ctx, new FormFieldAdapter(bioField));
 		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(ctx,
 			"Biography", false, false, null, "A short description of yourself",
@@ -126,6 +131,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		FormField activeField = FormFactory.newBooleanField("active", Boolean.TRUE, false);
 		formContext.addMember(activeField);
+		suppressFieldLabel(activeField);
 		ReactCheckboxControl activeInput = new ReactCheckboxControl(ctx, new FormFieldAdapter(activeField));
 		ReactFormFieldChromeControl activeChrome = new ReactFormFieldChromeControl(ctx,
 			"Active", false, false, null, null, null, false, true, activeInput);
@@ -157,6 +163,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		langSelectField.setOptionLabelProvider(langLabelProvider);
 		langSelectField.setAsSelection(Collections.singletonList("en"));
 		formContext.addMember(langSelectField);
+		suppressFieldLabel(langSelectField);
 		ReactSelectFormFieldControl langInput = new ReactSelectFormFieldControl(ctx,
 			new SelectFieldAdapter(langSelectField), langLabelProvider);
 		ReactFormFieldChromeControl langChrome = new ReactFormFieldChromeControl(ctx,
@@ -164,6 +171,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		FormField notifField = FormFactory.newIntField("notificationLimit", Integer.valueOf(5), false);
 		formContext.addMember(notifField);
+		suppressFieldLabel(notifField);
 		ReactNumberInputControl notifInput = new ReactNumberInputControl(ctx, new FormFieldAdapter(notifField), 0);
 		ReactFormFieldChromeControl notifChrome = new ReactFormFieldChromeControl(ctx,
 			"Notification Limit", false, false, null, "Maximum notifications per day", null, false, true, notifInput);
@@ -185,6 +193,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		themeSelectField.setOptionLabelProvider(themeLabelProvider);
 		themeSelectField.setAsSelection(Collections.singletonList("light"));
 		formContext.addMember(themeSelectField);
+		suppressFieldLabel(themeSelectField);
 		ReactSelectFormFieldControl themeInput = new ReactSelectFormFieldControl(ctx,
 			new SelectFieldAdapter(themeSelectField), themeLabelProvider);
 		ReactFormFieldChromeControl themeChrome = new ReactFormFieldChromeControl(ctx,
@@ -207,6 +216,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		SelectField countrySingle = FormFactory.newSelectField("country", countryOptions, false, false);
 		formContext.addMember(countrySingle);
+			suppressFieldLabel(countrySingle);
 		ReactDropdownSelectControl countrySingleInput = new ReactDropdownSelectControl(ctx,
 			new SelectFieldAdapter(countrySingle), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countrySingleChrome = new ReactFormFieldChromeControl(ctx,
@@ -215,6 +225,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		SelectField countryMulti = FormFactory.newSelectField("countries", countryOptions, true, false);
 		countryMulti.setAsSelection(Arrays.asList("Germany", "France"));
 		formContext.addMember(countryMulti);
+			suppressFieldLabel(countryMulti);
 		ReactDropdownSelectControl countryMultiInput = new ReactDropdownSelectControl(ctx,
 			new SelectFieldAdapter(countryMulti), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryMultiChrome = new ReactFormFieldChromeControl(ctx,
@@ -223,6 +234,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		SelectField countryMandatory = FormFactory.newSelectField("mandatoryCountry", countryOptions, false, true, false, null);
 		countryMandatory.setAsSelection(Collections.singletonList("Italy"));
 		formContext.addMember(countryMandatory);
+			suppressFieldLabel(countryMandatory);
 		ReactDropdownSelectControl countryMandatoryInput = new ReactDropdownSelectControl(ctx,
 			new SelectFieldAdapter(countryMandatory), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryMandatoryChrome = new ReactFormFieldChromeControl(ctx,
@@ -232,6 +244,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		countryDisabled.setAsSelection(Collections.singletonList("Spain"));
 		countryDisabled.setDisabled(true);
 		formContext.addMember(countryDisabled);
+			suppressFieldLabel(countryDisabled);
 		ReactDropdownSelectControl countryDisabledInput = new ReactDropdownSelectControl(ctx,
 			new SelectFieldAdapter(countryDisabled), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryDisabledChrome = new ReactFormFieldChromeControl(ctx,
@@ -240,6 +253,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		SelectField countryImmutable = FormFactory.newSelectField("immutableCountry", countryOptions, false, true);
 		countryImmutable.setAsSelection(Collections.singletonList("Switzerland"));
 		formContext.addMember(countryImmutable);
+			suppressFieldLabel(countryImmutable);
 		ReactDropdownSelectControl countryImmutableInput = new ReactDropdownSelectControl(ctx,
 			new SelectFieldAdapter(countryImmutable), countryResourceProvider, null, false);
 		ReactFormFieldChromeControl countryImmutableChrome = new ReactFormFieldChromeControl(ctx,
@@ -249,6 +263,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		countryCustomOrder.setCustomOrder(true);
 		countryCustomOrder.setAsSelection(Arrays.asList("Germany", "France", "Italy"));
 		formContext.addMember(countryCustomOrder);
+			suppressFieldLabel(countryCustomOrder);
 		ReactDropdownSelectControl countryCustomOrderInput = new ReactDropdownSelectControl(ctx,
 			new SelectFieldAdapter(countryCustomOrder), countryResourceProvider, null, true);
 		ReactFormFieldChromeControl countryCustomOrderChrome = new ReactFormFieldChromeControl(ctx,
@@ -263,6 +278,19 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		return new ReactFormLayoutControl(ctx, 3, "auto", false,
 			List.of(personalGroup, prefsGroup, dropdownGroup));
+	}
+
+	/**
+	 * Suppresses the field's own label so that the React field control does not look up a
+	 * (non-existent) label resource for this transient demo field.
+	 *
+	 * <p>
+	 * The visible label is rendered by the surrounding {@link ReactFormFieldChromeControl}, so the
+	 * field itself needs no label.
+	 * </p>
+	 */
+	private static void suppressFieldLabel(FormField field) {
+		field.setLabel("");
 	}
 
 	/**

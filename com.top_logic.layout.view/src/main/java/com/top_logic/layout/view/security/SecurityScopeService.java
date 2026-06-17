@@ -16,6 +16,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -69,9 +70,16 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 
 		/**
 		 * The top-level nodes of the security scope catalog.
+		 *
+		 * <p>
+		 * Keyed by {@link ScopeConfig#getId() id} so that an application including this module can
+		 * <em>override or adjust</em> an inherited scope (e.g. the framework's {@code administration}
+		 * scope) by re-declaring an entry with the same id, in addition to appending its own scopes.
+		 * </p>
 		 */
 		@Name(SCOPES)
 		@EntryTag("scope")
+		@Key(ScopeConfig.ID)
 		List<ScopeConfig> getScopes();
 	}
 
@@ -139,9 +147,15 @@ public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeServi
 
 		/**
 		 * Nested scope nodes (sub-groups or sub-scopes).
+		 *
+		 * <p>
+		 * Keyed by {@link #getId() id} so a nested scope can likewise be overridden by id from an
+		 * including application's configuration.
+		 * </p>
 		 */
 		@Name(SCOPES)
 		@EntryTag("scope")
+		@Key(ID)
 		List<ScopeConfig> getScopes();
 	}
 

@@ -41,6 +41,10 @@
 		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
 			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
 				<scopes>
+					<!--
+						App-specific extension scope. The "administration" scope is now provided
+						by the framework (com.top_logic.layout.view) and inherited automatically.
+					-->
 					<scope id="demo-restricted">
 						<label>
 							<en>Restricted demo area</en>
@@ -49,12 +53,6 @@
 						<groups>
 							<group name="Write"/>
 						</groups>
-					</scope>
-					<scope id="administration">
-						<label>
-							<en>Administration</en>
-							<de>Administration</de>
-						</label>
 					</scope>
 				</scopes>
 			</instance>

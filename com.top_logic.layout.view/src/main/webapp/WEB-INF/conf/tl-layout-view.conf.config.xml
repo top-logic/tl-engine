@@ -44,6 +44,28 @@
 				</providers>
 			</instance>
 		</config>
+
+		<!--
+			Security scope for the reusable account / group / role administration views
+			(WEB-INF/views/admin/admin.view.xml). Defined here in the framework so any app
+			that includes this module inherits it and can gate an Administration entry with
+			<access-control scope="administration"/> out of the box. With no roles assigned,
+			the scope is visible only to the technical super user (root); other users are
+			granted via the security administration UI. Apps may add further scopes by
+			extending this service's <scopes> list.
+		-->
+		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
+			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
+				<scopes>
+					<scope id="administration">
+						<label>
+							<en>Administration</en>
+							<de>Administration</de>
+						</label>
+					</scope>
+				</scopes>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

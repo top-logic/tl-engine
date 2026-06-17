@@ -34,7 +34,7 @@ public class TestGrouping extends TestCase {
 		Column<Sale, Integer> amount = DefaultColumn.<Sale, Integer> builder("amount", Sale::amount)
 			.aggregate(group -> {
 				int sum = group.members().stream().mapToInt(Sale::amount).sum();
-				return CellContent.text("Σ " + sum);
+				return CellContent.text("Sum: " + sum);
 			})
 			.build();
 		return List.of(region, amount);
@@ -85,7 +85,7 @@ public class TestGrouping extends TestCase {
 		// Amount column shows the aggregate (10 + 5 + 2 = 17).
 		CellContent subtotal = view.cell(northHeader, "amount");
 		assertTrue(subtotal instanceof CellContent.Text);
-		assertEquals("Σ 17", ((CellContent.Text) subtotal).text());
+		assertEquals("Sum: 17", ((CellContent.Text) subtotal).text());
 	}
 
 	public void testCollapseAndExpand() {

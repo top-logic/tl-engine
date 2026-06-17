@@ -5069,9 +5069,6 @@ com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.RolesProfileHandler.
 com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.RolesProfileHandler.java: Missing documentation: com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.RolesProfileHandler.exportProfile
 com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.RolesProfileHandler.java: Missing documentation: com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.RolesProfileHandler.getProfileAsFile
 com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.java: Documentation contains at least one '.' character (normally at the end of the description): com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.CommandGroupConfig
-com.top_logic.tool.boundsec.gui.BoundCheckerRoleProfileTreeModel.java: Invalid camel case word 'BoundChecker', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.gui.BoundCheckerRoleProfileTreeModel.java: Invalid camel case word 'BoundCheckerTreeModel', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.tool.boundsec.gui.BoundCheckerRoleProfileTreeModel.java: Missing documentation: com.top_logic.tool.boundsec.gui.BoundCheckerRoleProfileTreeModel.getChildren
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Invalid camel case word 'DeleteHandler', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.ApplyRoleCommand.COMMAND_ID
 com.top_logic.tool.boundsec.gui.EditRoleComponent.java: Missing documentation: com.top_logic.tool.boundsec.gui.EditRoleComponent.DeleteRoleCommand.COMMAND_ID

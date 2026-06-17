@@ -18,6 +18,7 @@ const { useCallback: xt } = e, Lt = ({ controlId: l, state: t }) => {
     {
       type: "text",
       value: n ?? "",
+      placeholder: t.placeholder ?? void 0,
       onChange: i,
       disabled: t.disabled === !0,
       className: o,

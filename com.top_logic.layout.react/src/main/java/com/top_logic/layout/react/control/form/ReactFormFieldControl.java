@@ -34,6 +34,9 @@ public class ReactFormFieldControl extends ReactControl {
 	/** State key for the field value. */
 	protected static final String VALUE = "value";
 
+	/** State key for the placeholder shown while the field is empty (edit mode). */
+	protected static final String PLACEHOLDER = "placeholder";
+
 	/** State key for whether the field is editable. */
 	protected static final String EDITABLE = "editable";
 
@@ -175,6 +178,13 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	protected void setEditable(boolean editable) {
 		putState(EDITABLE, editable);
+	}
+
+	/**
+	 * Updates the placeholder shown while the field is empty (edit mode).
+	 */
+	protected void setPlaceholder(String placeholder) {
+		putState(PLACEHOLDER, placeholder);
 	}
 
 	/**

@@ -38,6 +38,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId, state }) => {
       <input
         type="text"
         value={(value as string) ?? ''}
+        placeholder={(state.placeholder as string) ?? undefined}
         onChange={handleChange}
         disabled={state.disabled === true}
         className={cls}

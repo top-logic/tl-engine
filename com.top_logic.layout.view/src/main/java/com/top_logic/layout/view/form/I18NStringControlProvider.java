@@ -32,7 +32,7 @@ public class I18NStringControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		ReactControl inline = new ReactI18NStringInputControl(context, model);
+		ReactI18NStringInputControl inline = new ReactI18NStringInputControl(context, model);
 
 		ReactButtonControl editAll = new ReactButtonControl(context,
 			Resources.getInstance().getString(I18NConstants.I18N_STRING_ALL_LANGUAGES_BUTTON),
@@ -42,6 +42,9 @@ public class I18NStringControlProvider implements ReactFieldControlProvider {
 			});
 		editAll.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
 		editAll.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+
+		// The all-languages button is an edit affordance - shown only while the field is editable.
+		inline.setAdornment(editAll);
 
 		return ReactFormBuilder.inputWithAdornment(context, inline, editAll);
 	}

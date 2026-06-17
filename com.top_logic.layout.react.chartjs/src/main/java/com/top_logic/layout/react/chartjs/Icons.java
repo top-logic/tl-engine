@@ -84,11 +84,11 @@ public class Icons extends IconsBase {
 	 * <p>
 	 * The returned map contains:
 	 * <ul>
-	 * <li>{@code palette} &#8212; a {@link List} of ten color strings</li>
-	 * <li>{@code gridColor} &#8212; the grid line color</li>
-	 * <li>{@code textColor} &#8212; the text/tick color</li>
-	 * <li>{@code backgroundColor} &#8212; the chart background color</li>
-	 * <li>{@code borderColor} &#8212; the chart element border color</li>
+	 * <li>{@code palette} — a {@link List} of ten color strings</li>
+	 * <li>{@code gridColor} — the grid line color</li>
+	 * <li>{@code textColor} — the text/tick color</li>
+	 * <li>{@code backgroundColor} — the chart background color</li>
+	 * <li>{@code borderColor} — the chart element border color</li>
 	 * </ul>
 	 * </p>
 	 */

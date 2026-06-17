@@ -193,7 +193,7 @@ public class ChartConfigExtractor {
 		return _cleanConfig;
 	}
 
-	/** Metadata lookup: metadata[datasetIndex][dataIndex]. */
+	/** Metadata lookup: {@code metadata[datasetIndex][dataIndex]}. */
 	public List<List<Object>> getMetadata() {
 		return _metadata;
 	}

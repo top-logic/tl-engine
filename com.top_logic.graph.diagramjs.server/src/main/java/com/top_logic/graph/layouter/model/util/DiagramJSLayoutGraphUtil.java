@@ -62,8 +62,8 @@ public class DiagramJSLayoutGraphUtil implements LayoutGraphUtilConstants {
 	}
 
 	/**
-	 * Label of this {@link TLTypePart}. Property representation in form of "name :
-	 *         typeName".
+	 * Label of this {@link TLTypePart}. Property representation in form of
+	 *         {@code "name : typeName"}.
 	 */
 	public static String getLabel(LabelProvider labelProvider, TLTypePart part) {
 		if (part instanceof TLClassProperty) {

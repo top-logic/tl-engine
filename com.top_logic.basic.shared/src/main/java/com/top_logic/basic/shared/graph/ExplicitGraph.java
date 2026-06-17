@@ -285,8 +285,14 @@ public abstract class ExplicitGraph<V extends ExplicitGraph<V, E>.Node, E extend
 	 */
 	public class Edge {
 
+		/**
+		 * The source node of this edge.
+		 */
 		protected final V _source;
 
+		/**
+		 * The target node of this edge.
+		 */
 		protected final V _target;
 
 		/**
@@ -544,8 +550,19 @@ public abstract class ExplicitGraph<V extends ExplicitGraph<V, E>.Node, E extend
 		return newEdge(source, target);
 	}
 
+	/**
+	 * Creates a new {@link Edge} instance connecting the given source and target nodes.
+	 *
+	 * @param source
+	 *        The source node of the new edge.
+	 * @param target
+	 *        The target node of the new edge.
+	 */
 	protected abstract E newEdge(V source, V target);
 
+	/**
+	 * Creates a new node instance for this graph.
+	 */
 	public abstract V newNode();
 
 	final boolean ownNode(V source) {

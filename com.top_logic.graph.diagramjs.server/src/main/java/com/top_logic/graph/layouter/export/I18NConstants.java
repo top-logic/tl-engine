@@ -8,7 +8,7 @@ package com.top_logic.graph.layouter.export;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
- * * Internationalization constants for this package.
+ * Internationalization constants for this package.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

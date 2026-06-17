@@ -37,7 +37,7 @@ import com.top_logic.util.error.TopLogicException;
  * React WYSIWYG editor control for {@code tl.model.wysiwyg:Html} attributes.
  *
  * <p>
- * Renders the {@code TLWysiwygEditor} React component backed by TipTap. Converts between
+ * Renders the {@code TLWysiwygEditor} React component backed by {@code TipTap}. Converts between
  * {@link StructuredText} (server model) and HTML strings (client). Serves embedded images via
  * {@link DataProvider} and accepts image uploads via {@link UploadHandler}.
  * </p>

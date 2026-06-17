@@ -31,6 +31,13 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 		_options = List.copyOf(options);
 	}
 
+	/**
+	 * The options offered by this filter.
+	 */
+	public List<Option> options() {
+		return _options;
+	}
+
 	@Override
 	public FilterInput input() {
 		return new FilterInput.Options(_options);

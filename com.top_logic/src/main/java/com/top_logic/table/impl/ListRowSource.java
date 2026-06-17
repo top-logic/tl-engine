@@ -8,6 +8,7 @@ package com.top_logic.table.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import com.top_logic.table.FilterSpec;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.MatchCounts;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
@@ -141,6 +143,30 @@ public class ListRowSource<R> implements RowSource<R> {
 		recompute();
 		fireInvalidated();
 		return this;
+	}
+
+	@Override
+	public MatchCounts matchCounts(String column) {
+		Column<R, ?> definition = _byName.get(column);
+		if (definition == null) {
+			return MatchCounts.NONE;
+		}
+		Map<Object, Integer> counts = new HashMap<>();
+		for (R element : _elements) {
+			counts.merge(definition.value(element), Integer.valueOf(1), Integer::sum);
+		}
+		return new MatchCounts() {
+			@Override
+			public int count(Object optionValue) {
+				Integer count = counts.get(optionValue);
+				return count == null ? 0 : count.intValue();
+			}
+
+			@Override
+			public boolean isAvailable() {
+				return true;
+			}
+		};
 	}
 
 	@Override

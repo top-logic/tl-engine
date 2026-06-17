@@ -6,6 +6,7 @@
 package com.top_logic.table.filter;
 
 import java.util.Comparator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.table.ColumnFilter;
@@ -23,11 +24,34 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 
 	private final Comparator<? super V> _comparator;
 
+	private final Function<String, ? extends V> _parser;
+
+	private final FilterFieldKind _valueKind;
+
 	/**
-	 * Creates a {@link ComparableColumnFilter} with the given comparator.
+	 * Creates a {@link ComparableColumnFilter} with the given comparator and no editor
+	 * support.
 	 */
 	public ComparableColumnFilter(Comparator<? super V> comparator) {
+		this(comparator, null, FilterFieldKind.TEXT);
+	}
+
+	/**
+	 * Creates a {@link ComparableColumnFilter} that can build a filter editor.
+	 *
+	 * @param comparator
+	 *        The value ordering.
+	 * @param parser
+	 *        Parses user input into a bound value (enables a filter editor), or
+	 *        {@code null}.
+	 * @param valueKind
+	 *        The input kind for the bound value fields.
+	 */
+	public ComparableColumnFilter(Comparator<? super V> comparator, Function<String, ? extends V> parser,
+			FilterFieldKind valueKind) {
 		_comparator = comparator;
+		_parser = parser;
+		_valueKind = valueKind;
 	}
 
 	/**
@@ -35,6 +59,28 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	 */
 	public static <V extends Comparable<? super V>> ComparableColumnFilter<V> natural() {
 		return new ComparableColumnFilter<>(Comparator.naturalOrder());
+	}
+
+	/**
+	 * A {@link ComparableColumnFilter} for {@link Integer}-valued columns, with a numeric
+	 * editor.
+	 */
+	public static ComparableColumnFilter<Integer> integers() {
+		return new ComparableColumnFilter<>(Comparator.naturalOrder(), Integer::valueOf, FilterFieldKind.NUMBER);
+	}
+
+	/**
+	 * Parses user input into a bound value, or {@code null} if no editor is supported.
+	 */
+	public Function<String, ? extends V> parser() {
+		return _parser;
+	}
+
+	/**
+	 * The input kind for the bound value fields.
+	 */
+	public FilterFieldKind valueKind() {
+		return _valueKind;
 	}
 
 	@Override

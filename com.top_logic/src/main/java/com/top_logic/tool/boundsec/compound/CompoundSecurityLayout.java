@@ -17,11 +17,9 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.core.log.Log;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
@@ -30,7 +28,6 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.BoundLayout;
 import com.top_logic.tool.boundsec.SecurityConfiguration;
-import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
@@ -67,16 +64,10 @@ public class CompoundSecurityLayout extends BoundLayout {
 		// TODO: DELETE
 		boolean getUseDefaultChecker();
 
-		@Name(ATT_SECURITY_DOMAIN)
-		@Nullable
-		String getSecurityDomain();
-
 		@Override
 		@Mandatory
 		ComponentName getName();
 	}
-
-	private static final String ATT_SECURITY_DOMAIN = "securityDomain";
 
 	private static final String ATT_USE_DEFAULT_CHECKER = "useDefaultChecker";
 
@@ -92,23 +83,6 @@ public class CompoundSecurityLayout extends BoundLayout {
     public CompoundSecurityLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
         this.useDefaultChecker = atts.getUseDefaultChecker();
-
-		checkValidSecurityDomain(context, atts);
-
-	}
-
-	private void checkValidSecurityDomain(InstantiationContext context, Config atts) {
-		String securityDomain = atts.getSecurityDomain();
-		if (securityDomain == null) {
-			return;
-		}
-		Collection<String> knownStructures = AccessManager.getInstance().getStructureNames();
-		if (!knownStructures.contains(securityDomain)) {
-			context.info(
-				"Configured security-domain '" + securityDomain + "' in '" + this
-						+ "' is not a known security structure: " + knownStructures,
-				Log.WARN);
-		}
 	}
 
 	@Override
@@ -128,10 +102,6 @@ public class CompoundSecurityLayout extends BoundLayout {
         } else {
             return this.commandGroups;
         }
-    }
-
-	public final String getSecurityDomain() {
-		return getConfig().getSecurityDomain();
     }
 
 	@Override

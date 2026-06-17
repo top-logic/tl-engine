@@ -14,13 +14,21 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactCheckboxControl;
+import com.top_logic.layout.react.control.form.ReactNumberInputControl;
+import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.table.CellContent;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnView;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.Selection;
@@ -29,6 +37,9 @@ import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableView;
+import com.top_logic.table.filter.FilterEditor;
+import com.top_logic.table.filter.FilterEditors;
+import com.top_logic.table.filter.FilterField;
 import com.top_logic.util.Resources;
 
 /**
@@ -92,6 +103,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String TREE_EXPANDED = "expanded";
 
+	private static final String FILTER_POPUP = "filterPopup";
+
 	private static final int PREFETCH_ROWS = 20;
 
 	private static final int MIN_WIDTH = 50;
@@ -114,6 +127,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/** Cell controls for currently buffered rows, keyed by row key then column name. */
 	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
+
+	/** The column whose filter popup is currently open, or {@code null}. */
+	private String _filterColumn;
+
+	/** The editor backing the open filter popup, or {@code null}. */
+	private FilterEditor _filterEditor;
+
+	/** Child controls of the open filter popup. */
+	private final List<ReactControl> _filterControls = new ArrayList<>();
 
 	/**
 	 * Creates a {@link TableViewControl}.
@@ -166,10 +188,18 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				def.setSortDirection("desc");
 			}
 			def.setSortPriority(column.sortPriority());
-			columns.add(def.toStateMap());
+			Map<String, Object> columnState = def.toStateMap();
+			columnState.put("filterable", Boolean.valueOf(column.filterable()));
+			columnState.put("filterActive", Boolean.valueOf(isFilterActive(column.name())));
+			columns.add(columnState);
 		}
 		putState(COLUMNS, columns);
 		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
+	}
+
+	private boolean isFilterActive(String column) {
+		FilterState state = _view.state().getFilters().get(column);
+		return state != null && !state.isEmpty();
 	}
 
 	private static String label(Resources resources, ResKey key) {
@@ -242,6 +272,108 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			cells.values().forEach(ReactControl::cleanupTree);
 		}
 		_cellCache.clear();
+		cleanupFilterControls();
+	}
+
+	// -- Filter popup --
+
+	/**
+	 * Opens the filter popup for a column: builds the column's {@link FilterEditor}, hosts
+	 * its fields as child form controls, and pushes the popup state.
+	 */
+	@ReactCommand("openFilter")
+	void handleOpenFilter(Map<String, Object> arguments) {
+		String column = (String) arguments.get("column");
+		ColumnFilter<?> filter = _view.columnFilter(column);
+		if (filter == null) {
+			return;
+		}
+		cleanupFilterControls();
+		_filterColumn = column;
+		_filterEditor = FilterEditors.create(filter, _view.state().getFilters().get(column),
+			_view.columnMatchCounts(column));
+
+		Resources resources = Resources.getInstance();
+		List<Map<String, Object>> fieldStates = new ArrayList<>();
+		for (FilterField field : _filterEditor.fields()) {
+			ReactControl control = createFieldControl(field);
+			registerChildControl(control);
+			_filterControls.add(control);
+			Map<String, Object> fieldState = new LinkedHashMap<>();
+			fieldState.put("label", label(resources, field.label()));
+			fieldState.put("control", control);
+			fieldStates.add(fieldState);
+		}
+		Map<String, Object> popup = new LinkedHashMap<>();
+		popup.put("column", column);
+		popup.put("fields", fieldStates);
+		putState(FILTER_POPUP, popup);
+	}
+
+	/**
+	 * Applies the current filter popup's editor to the column.
+	 */
+	@ReactCommand("applyFilter")
+	void handleApplyFilter(Map<String, Object> arguments) {
+		if (_filterEditor == null) {
+			return;
+		}
+		_view.filter(_filterColumn, _filterEditor.read());
+		closeFilter();
+		rebuildAfterRowChange();
+	}
+
+	/**
+	 * Clears the filter of a column.
+	 */
+	@ReactCommand("clearFilter")
+	void handleClearFilter(Map<String, Object> arguments) {
+		String column = arguments.get("column") != null ? (String) arguments.get("column") : _filterColumn;
+		if (column != null) {
+			_view.filter(column, null);
+		}
+		closeFilter();
+		rebuildAfterRowChange();
+	}
+
+	/**
+	 * Closes the filter popup without applying.
+	 */
+	@ReactCommand("closeFilter")
+	void handleCloseFilter(Map<String, Object> arguments) {
+		closeFilter();
+	}
+
+	private ReactControl createFieldControl(FilterField field) {
+		ReactContext context = getReactContext();
+		switch (field.kind()) {
+			case CHECKBOX:
+				return new ReactCheckboxControl(context, field.model());
+			case NUMBER:
+				return new ReactNumberInputControl(context, field.model(), 0);
+			case SELECT:
+				return new ReactSelectFormFieldControl(context, (SelectFieldModel) field.model(),
+					optionLabels(field.optionLabels()));
+			case TEXT:
+			default:
+				return new ReactTextInputControl(context, field.model());
+		}
+	}
+
+	private static LabelProvider optionLabels(LabelProvider provider) {
+		return provider != null ? provider : String::valueOf;
+	}
+
+	private void closeFilter() {
+		cleanupFilterControls();
+		_filterColumn = null;
+		_filterEditor = null;
+		putState(FILTER_POPUP, null);
+	}
+
+	private void cleanupFilterControls() {
+		_filterControls.forEach(ReactControl::cleanupTree);
+		_filterControls.clear();
 	}
 
 	private void rebuildAfterRowChange() {

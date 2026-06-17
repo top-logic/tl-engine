@@ -4,6 +4,10 @@ import type { TLCellProps } from 'tl-react-bridge';
 const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
+  'js.table.filter': 'Filter',
+  'js.table.apply': 'Apply',
+  'js.table.clear': 'Clear',
+  'js.table.cancel': 'Cancel',
 };
 
 interface ColumnState {
@@ -13,6 +17,13 @@ interface ColumnState {
   sortable: boolean;
   sortDirection?: 'asc' | 'desc';
   sortPriority?: number;
+  filterable?: boolean;
+  filterActive?: boolean;
+}
+
+interface FilterPopupState {
+  column: string;
+  fields: { label: string; control: unknown }[];
 }
 
 interface RowState {
@@ -70,6 +81,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const selectedCount = (state.selectedCount as number) ?? 0;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
+  const filterPopup = (state.filterPopup as FilterPopupState | null) ?? null;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -97,6 +109,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     x: number; y: number; colIdx: number;
   } | null>(null);
+
+  // -- Filter popup anchor (screen position of the funnel that opened it) --
+  const [filterAnchor, setFilterAnchor] = React.useState<{ x: number; y: number } | null>(null);
 
   // Clear overrides when server pushes updated columns (resize confirmed).
   React.useEffect(() => {
@@ -339,6 +354,43 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     };
   }, [contextMenu]);
 
+  // -- Filter popup handlers --
+  const handleOpenFilter = React.useCallback((columnName: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setFilterAnchor({ x: rect.left, y: rect.bottom });
+    sendCommand('openFilter', { column: columnName });
+  }, [sendCommand]);
+
+  const handleApplyFilter = React.useCallback(() => {
+    sendCommand('applyFilter', {});
+    setFilterAnchor(null);
+  }, [sendCommand]);
+
+  const handleClearFilter = React.useCallback((columnName: string) => {
+    sendCommand('clearFilter', { column: columnName });
+    setFilterAnchor(null);
+  }, [sendCommand]);
+
+  const handleCloseFilter = React.useCallback(() => {
+    sendCommand('closeFilter', {});
+    setFilterAnchor(null);
+  }, [sendCommand]);
+
+  // Close filter popup on outside click or Escape.
+  React.useEffect(() => {
+    if (!filterAnchor) return;
+    const onDown = () => handleCloseFilter();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleCloseFilter(); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [filterAnchor, handleCloseFilter]);
+
   // -- Computed values --
   const tableWidth = columns.reduce((sum, col) => sum + getColWidth(col), 0)
     + (isMulti ? checkboxWidth : 0);
@@ -431,6 +483,22 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onDragEnd={handleDragEnd}
               >
                 <span className="tlTableView__headerLabel">{col.label}</span>
+                {col.filterable && (
+                  <button
+                    type="button"
+                    className={'tlTableView__filterButton'
+                      + (col.filterActive ? ' tlTableView__filterButton--active' : '')}
+                    title={i18n['js.table.filter']}
+                    style={{
+                      border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 4px',
+                      color: col.filterActive ? '#1565c0' : 'inherit',
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => handleOpenFilter(col.name, e)}
+                  >
+                    <i className={col.filterActive ? 'bi bi-funnel-fill' : 'bi bi-funnel'} />
+                  </button>
+                )}
                 {col.sortDirection && (
                   <span className="tlTableView__sortIndicator">
                     {col.sortDirection === 'asc' ? '\u25B2' : '\u25BC'}
@@ -572,6 +640,43 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <span className="tlMenu__label">{i18n['js.table.unfreezeAll']}</span>
             </button>
           )}
+        </div>
+      )}
+
+      {/* Column filter popup */}
+      {filterPopup && filterAnchor && (
+        <div
+          className="tlTableView__filterPopup"
+          style={{
+            position: 'fixed', top: filterAnchor.y, left: filterAnchor.x, zIndex: 10000,
+            background: '#fff', border: '1px solid #ccc', borderRadius: 4, padding: 10,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)', minWidth: 220,
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {filterPopup.fields.map((field, idx) => (
+            <div key={idx} className="tlTableView__filterField"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <label className="tlTableView__filterLabel" style={{ flex: '0 0 90px', fontSize: '0.85em' }}>
+                {field.label}
+              </label>
+              <div style={{ flex: '1 1 auto' }}>
+                <TLChild control={field.control} />
+              </div>
+            </div>
+          ))}
+          <div className="tlTableView__filterActions"
+            style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 8 }}>
+            <button type="button" className="tlButton" onClick={() => handleClearFilter(filterPopup.column)}>
+              {i18n['js.table.clear']}
+            </button>
+            <button type="button" className="tlButton" onClick={handleCloseFilter}>
+              {i18n['js.table.cancel']}
+            </button>
+            <button type="button" className="tlButton tlButton--primary" onClick={handleApplyFilter}>
+              {i18n['js.table.apply']}
+            </button>
+          </div>
         </div>
       )}
     </div>

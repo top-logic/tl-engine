@@ -8,9 +8,11 @@ package test.com.top_logic.layout.configedit;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -18,6 +20,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
@@ -83,8 +86,13 @@ public class TestConfigEditorControl extends TestCase {
 		void setInner(InnerConfig value);
 	}
 
+	/** Common instance type for the polymorphic handler implementations. */
+	public interface Handler {
+		// Marker interface.
+	}
+
 	/** Base polymorphic configuration for testing. */
-	public interface HandlerConfig extends PolymorphicConfiguration<Object> {
+	public interface HandlerConfig extends PolymorphicConfiguration<Handler> {
 		// Marker interface.
 	}
 
@@ -110,6 +118,30 @@ public class TestConfigEditorControl extends TestCase {
 		int getValueB();
 
 		void setValueB(int value);
+	}
+
+	/**
+	 * Concrete {@link Handler} implementation selected through {@link HandlerAConfig}.
+	 *
+	 * <p>
+	 * The polymorphic options of a {@link PolymorphicConfiguration} property are its instantiable
+	 * implementation classes (here {@link HandlerA} and {@link HandlerB}), discovered via the
+	 * {@link com.top_logic.basic.reflect.TypeIndex}.
+	 * </p>
+	 */
+	public static class HandlerA implements Handler {
+		/** Creates a {@link HandlerA} from configuration. */
+		public HandlerA(InstantiationContext context, HandlerAConfig config) {
+			// No state required for the test.
+		}
+	}
+
+	/** Concrete {@link Handler} implementation selected through {@link HandlerBConfig}. */
+	public static class HandlerB implements Handler {
+		/** Creates a {@link HandlerB} from configuration. */
+		public HandlerB(InstantiationContext context, HandlerBConfig config) {
+			// No state required for the test.
+		}
 	}
 
 	/** Test config with a polymorphic ITEM property. */
@@ -312,8 +344,15 @@ public class TestConfigEditorControl extends TestCase {
 		assertNotNull("Should have PolymorphicItemControl", polyControl);
 		assertNotNull("Should have nested editor for HandlerAConfig", polyControl.getNestedEditor());
 
-		// Change type to HandlerBConfig.
-		polyControl.getTypeModel().setValue(HandlerBConfig.class.getName());
+		// Change type to the HandlerB implementation. The type selector uses index-based option
+		// keys, so resolve HandlerB's key from the computed options.
+		PropertyDescriptor handlerProp = config.descriptor().getProperty(PolymorphicTestConfig.HANDLER);
+		java.util.List<Object> options =
+			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, handlerProp).options();
+		int handlerBIndex = options.indexOf(HandlerB.class);
+		assertTrue("HandlerB must be an available option", handlerBIndex >= 0);
+		polyControl.getTypeModel()
+			.setValue(com.top_logic.layout.configedit.PolymorphicOptions.keyFor(handlerBIndex));
 
 		// Verify the config was updated.
 		assertNotNull("Handler should be set", config.getHandler());
@@ -346,8 +385,8 @@ public class TestConfigEditorControl extends TestCase {
 		java.util.List<Object> options =
 			com.top_logic.layout.configedit.PolymorphicOptions.compute(config, handlerProp).options();
 
-		assertTrue("Options should contain HandlerAConfig", options.contains(HandlerAConfig.class));
-		assertTrue("Options should contain HandlerBConfig", options.contains(HandlerBConfig.class));
+		assertTrue("Options should contain HandlerA", options.contains(HandlerA.class));
+		assertTrue("Options should contain HandlerB", options.contains(HandlerB.class));
 	}
 
 	private PolymorphicItemControl findPolymorphicControl(TestableConfigEditorControl editor) {
@@ -360,9 +399,12 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Suite requiring TypeIndex for TypedConfiguration.
+	 * Suite requiring {@link TypeIndex} for {@link TypedConfiguration} and
+	 * {@link ThreadContextManager} for the polymorphic type selector's class-label resolution.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestConfigEditorControl.class, TypeIndex.Module.INSTANCE);
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestConfigEditorControl.class,
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE));
 	}
 }

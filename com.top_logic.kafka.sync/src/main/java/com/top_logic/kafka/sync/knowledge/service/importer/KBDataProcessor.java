@@ -100,11 +100,18 @@ public class KBDataProcessor implements ConsumerProcessor<String, TLSyncRecord<C
 				EventWriter out = StackedEventWriter.createWriter(0, writer, _rewriters)) {
 			for (ConsumerRecord<String, TLSyncRecord<ChangeSet>> record : records) {
 				String id = KafkaLogUtil.toStringTLMessageId(record.headers());
-				long revision = record.value().getRecord().getRevision();
-				long systemId = record.value().getSystemId();
-				/* Don't log all the details here. They have already been logged by the ConsumerDispatcher. */
-				String message = " Processing record" + id + " with changeset " + revision + " from system " + systemId + ".";
-				LogUtil.withBeginEndLogging(KBDataProcessor.class, message, () -> process(writer, out, record));
+				if (record.value() == null) {
+					String message = "Record " + id + " without value.";
+					LogUtil.withBeginEndLogging(KBDataProcessor.class, message, () -> null);
+				} else {
+					long revision = record.value().getRecord().getRevision();
+					long systemId = record.value().getSystemId();
+					/* Don't log all the details here. They have already been logged by the
+					 * ConsumerDispatcher. */
+					String message =
+						"Processing record " + id + " with changeset " + revision + " from system " + systemId + ".";
+					LogUtil.withBeginEndLogging(KBDataProcessor.class, message, () -> process(writer, out, record));
+				}
 			}
 			logInfo("End: Processing.");
 		} catch (Throwable exception) {

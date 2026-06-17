@@ -5,6 +5,7 @@
  */
 package com.top_logic.kafka.log;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.xml.TagWriter;
@@ -36,6 +37,9 @@ public class KafkaStringLogWriter implements KafkaLogWriter<String> {
 
 	@Override
 	public void writeMetaData(TagWriter output, String message) {
+		// Identify null with empty string
+		message = StringServices.nonNull(message);
+
 		output.beginTag(STRING);
 		{
 			KafkaLogUtil.writeTextTag(output, SIZE, message.length());
@@ -46,6 +50,9 @@ public class KafkaStringLogWriter implements KafkaLogWriter<String> {
 
 	@Override
 	public void writeAllData(TagWriter output, String message) {
+		// Identify null with empty string
+		message = StringServices.nonNull(message);
+
 		output.beginTag(STRING);
 		{
 			KafkaLogUtil.writeTextTag(output, SIZE, message.length());

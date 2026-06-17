@@ -19,7 +19,6 @@
 		name="${componentName}"
 		primaryChecker="${structure}Tree"
 		secondaryChecker="${structure}EditLayout"
-		securityDomain="${structure}"
 		titleKey="${resPrefix}tabber"
 	>
 		<components>
@@ -42,7 +41,6 @@
 				<components>
 					<securityLayout name="${structure}EditLayout"
 						helpID="structureDetail.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.EditLayout.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityTypes.tab"/>
@@ -131,7 +129,6 @@
 					</securityLayout>
 					<securityLayout name="${structure}SecurityAEdit"
 						helpID="displayTypeA.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityAEdit.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityA.tab"/>
@@ -151,7 +148,6 @@
 					</securityLayout>
 					<securityLayout name="${structure}SecurityBEdit"
 						helpID="displayTypeB.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityBEdit.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityB.tab"/>
@@ -171,7 +167,6 @@
 					</securityLayout>
 					<securityLayout name="${structure}SecurityParentEdit"
 						helpID="displayParent.helpID"
-						securityDomain="${structure}"
 						titleKey="layouts.demo.editSecurityStructureWithExport.SecurityParentEdit.tabber"
 					>
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityParent.tab"/>

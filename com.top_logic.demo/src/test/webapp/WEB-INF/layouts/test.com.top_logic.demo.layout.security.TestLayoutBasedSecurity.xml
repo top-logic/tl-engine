@@ -15,7 +15,6 @@
 					name="testPLD"
 					primaryChecker="testDTree"
 					secondaryChecker="testDBar"
-					securityDomain="SecurityStructure"
 					titleKey="pos.report.tabber"
 				>
 					<tabInfo label="testMainDBarInfo1"/>

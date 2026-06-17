@@ -14,7 +14,7 @@
 					<property name="document"/>
 					<property name="previewIcon"/>
 					<property name="documentDescription"/>
-					<property name="securityDomain"/>
+
 					<property name="securityObject"/>
 					<property name="helpID"/>
 				</value>
@@ -53,7 +53,6 @@
 
 	<securityLayout name="TileLayout"
 		helpID="${helpID}"
-		securityDomain="${securityDomain}"
 		titleKey="${name}"
 	>
 		<tile-info name="${tileName}"

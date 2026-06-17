@@ -9,7 +9,6 @@
 		fixedColumns="0"
 		helpID="ID_6f0f4817_2a51_4c18_a4ea_5524cad065a5"
 		model="selection(com.top_logic.demo/technical/components/tiles/productsTileLayout.layout.xml#List)"
-		securityDomain="SecurityStructure"
 		securityObject="securityRoot"
 		type="test.tiles:Release"
 	>

@@ -25,7 +25,6 @@
 			</buttons>
 			<dialogs>
 				<securityLayout name="enterMaintenanceWindowDialog"
-					securityDomain=""
 					titleKey="main.admin.maintenanceWindow.enterDialog.tabber"
 				>
 					<dialogInfo
@@ -48,7 +47,6 @@
 					</components>
 				</securityLayout>
 				<securityLayout name="exitMaintenanceWindowDialog"
-					securityDomain=""
 					titleKey="main.admin.maintenanceWindow.exitDialog.tabber"
 				>
 					<dialogInfo

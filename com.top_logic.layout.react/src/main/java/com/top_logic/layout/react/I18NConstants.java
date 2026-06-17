@@ -361,6 +361,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_INVALID_DATE__VALUE;
 
 	/**
+	 * @en Languages…
+	 */
+	public static ResKey I18N_STRING_ALL_LANGUAGES_BUTTON;
+
+	/**
+	 * @en Edit all languages
+	 */
+	public static ResKey I18N_STRING_ALL_LANGUAGES_TITLE;
+
+	/**
 	 * @en Form group collapse toggled.
 	 */
 	public static ResKey REACT_FORM_GROUP_TOGGLE_COLLAPSE;

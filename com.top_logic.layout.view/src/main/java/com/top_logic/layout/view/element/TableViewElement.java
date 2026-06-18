@@ -40,6 +40,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -205,14 +206,26 @@ public class TableViewElement implements UIElement {
 
 	private List<Column<Object, ?>> buildColumns(TLStructuredType rowType) {
 		TableElement.ColumnsConfig columnsConfig = _config.getColumns();
-		if (columnsConfig == null || columnsConfig.getColumns().isEmpty()) {
-			throw new IllegalStateException("A <table-view> requires at least one <column>.");
-		}
 		List<Column<Object, ?>> columns = new ArrayList<>();
-		for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
-			String attribute = columnConfig.getAttribute();
-			TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-			columns.add(buildColumn(attribute, columnLabel(part, attribute), part));
+		if (columnsConfig != null && !columnsConfig.getColumns().isEmpty()) {
+			for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
+				String attribute = columnConfig.getAttribute();
+				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
+				columns.add(buildColumn(attribute, columnLabel(part, attribute), part));
+			}
+		} else if (rowType != null) {
+			// No explicit columns configured: derive a default set from the row type's
+			// non-hidden attributes, in declaration order.
+			for (TLStructuredTypePart part : rowType.getAllParts()) {
+				if (DisplayAnnotations.isHidden(part)) {
+					continue;
+				}
+				columns.add(buildColumn(part.getName(), columnLabel(part, part.getName()), part));
+			}
+		}
+		if (columns.isEmpty()) {
+			throw new IllegalStateException(
+				"A <table-view> requires either explicit <column>s or a resolvable row type to derive them from.");
 		}
 		return columns;
 	}

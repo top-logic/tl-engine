@@ -1971,6 +1971,11 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							tool-class="com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool"
 						/>
 					</factory>
+					<factory name="framework-wiring">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringTool"
+						/>
+					</factory>
 					<factory name="custom">
 						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
 							<tools/>

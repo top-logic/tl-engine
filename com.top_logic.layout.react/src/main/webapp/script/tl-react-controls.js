@@ -1981,7 +1981,7 @@ const Te = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement("i", { className
     readOnly: i,
     resolvedLabelPosition: o
   }), [i, o]), b = {
-    gridTemplateColumns: `repeat(auto-fit, minmax(${`${Math.max(16, Math.floor(64 / n))}rem`}, 1fr))`
+    gridTemplateColumns: `repeat(auto-fit, minmax(min(${`${Math.max(16, Math.floor(64 / n))}rem`}, 100%), 1fr))`
   }, E = [
     "tlFormLayout",
     i ? "tlFormLayout--readonly" : ""

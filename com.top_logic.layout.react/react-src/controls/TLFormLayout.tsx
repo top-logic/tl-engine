@@ -61,8 +61,13 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   // This ensures columns don't go below a reasonable width before wrapping.
   const minColWidth = `${Math.max(16, Math.floor(64 / maxColumns))}rem`;
 
+  // Clamp the track minimum to the container width via min(minColWidth, 100%): a bare
+  // minmax(minColWidth, 1fr) gives the track a hard minColWidth floor, so in a container
+  // narrower than minColWidth (e.g. a single-column form in a slim dialog) the column cannot
+  // shrink and the form overflows horizontally. min(..., 100%) caps the floor at the available
+  // width, so the column always fits while still wrapping multi-column layouts at minColWidth.
   const style: React.CSSProperties = {
-    gridTemplateColumns: `repeat(auto-fit, minmax(${minColWidth}, 1fr))`,
+    gridTemplateColumns: `repeat(auto-fit, minmax(min(${minColWidth}, 100%), 1fr))`,
   };
 
   const className = [

@@ -33,8 +33,8 @@ public final class FilterEditors {
 		if (filter instanceof TextColumnFilter) {
 			return new TextFilterEditor((TextFilterState) current);
 		}
-		if (filter instanceof BooleanColumnFilter) {
-			return new BooleanFilterEditor((BooleanFilterState) current);
+		if (filter instanceof BooleanColumnFilter bool) {
+			return new BooleanFilterEditor((BooleanFilterState) current, bool.trueLabel(), bool.falseLabel());
 		}
 		if (filter instanceof OptionsColumnFilter<?> options) {
 			return new OptionsFilterEditor(options.options(), (OptionsFilterState) current, counts);

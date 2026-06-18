@@ -246,8 +246,10 @@ public class TableViewElement implements UIElement {
 				switch (primitive.getKind()) {
 					case BOOLEAN:
 					case TRISTATE:
+						// Label the filter's true/false options exactly as the cells render them.
 						return typedColumn(attribute, label, Boolean.class,
-							Comparator.<Boolean> naturalOrder(), BooleanColumnFilter.INSTANCE);
+							Comparator.<Boolean> naturalOrder(),
+							new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)), ResKey.text(label(Boolean.FALSE))));
 					case INT:
 					case FLOAT:
 						return typedColumn(attribute, label, Number.class,

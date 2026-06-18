@@ -135,20 +135,20 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 
 		String create = tool.createScriptTool("greet", "Greet", "Greets by name.",
 			List.of(new ScriptToolStore.ParamSpec("name", "tl.core:String", "who", true, false, null)),
-			"\"Hello \" + $name", "READ", Boolean.TRUE);
+			"\"Hello \" + $name", "READ", Boolean.TRUE, null);
 		assertTrue("create should succeed: " + create, create.contains("\"success\":true"));
 		assertTrue("create should mention activation: " + create, create.toLowerCase().contains("activated"));
 
-		String get = tool.getScriptTool("greet");
+		String get = tool.getScriptTool("greet", null);
 		assertTrue("get should expose the script body: " + get, get.contains("Hello"));
 		assertTrue("get should report existence: " + get, get.contains("\"exists\":true"));
 
-		String list = tool.listScriptTools();
+		String list = tool.listScriptTools(null);
 		assertTrue("list should include the tool: " + list, list.contains("greet"));
 
-		String delete = tool.deleteScriptTool("greet");
+		String delete = tool.deleteScriptTool("greet", null);
 		assertTrue("delete should succeed: " + delete, delete.contains("\"success\":true"));
-		assertTrue("tool gone after delete", tool.getScriptTool("greet").contains("\"exists\":false"));
+		assertTrue("tool gone after delete", tool.getScriptTool("greet", null).contains("\"exists\":false"));
 	}
 
 	public void testUpdateMissingListsExistingNames() {

@@ -63,6 +63,8 @@
         			<handler id="displaySearchResultDetails"
 						class="com.top_logic.reporting.flex.search.handler.DisplayDetailsCommand"
 						clique="internal"
+						dialog-name="reporting/flex/chart/chartDetailsDialog.layout.xml#ChartDetailsTableDialog"
+						group="Read"
 					/>
 		        	<handler id="selectChartType"
 						class="com.top_logic.reporting.flex.chart.component.CockpitChartComponent$SelectChartTypeCommandHandler"

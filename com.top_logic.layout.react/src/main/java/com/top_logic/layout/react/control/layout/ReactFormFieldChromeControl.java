@@ -24,7 +24,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * <li>{@code error} - error message, or {@code null}</li>
  * <li>{@code helpText} - help/description text, or {@code null}</li>
  * <li>{@code dirty} - whether the field has been modified</li>
- * <li>{@code labelPosition} - "side", "top", or {@code null} (inherit from layout)</li>
+ * <li>{@code labelPosition} - a {@link LabelPosition}, or {@code null} (inherit from layout)</li>
  * <li>{@code fullLine} - whether the field spans the full grid row</li>
  * <li>{@code visible} - whether the field is visible</li>
  * <li>{@code field} - the child field control descriptor</li>
@@ -93,7 +93,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 * @param helpText
 	 *        Help text, or {@code null}.
 	 * @param labelPosition
-	 *        "side", "top", or {@code null} to inherit from layout.
+	 *        The {@link LabelPosition}, or {@code null} to inherit from the layout.
 	 * @param fullLine
 	 *        Whether the field spans the full grid row.
 	 * @param visible
@@ -102,7 +102,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 *        The child field control.
 	 */
 	public ReactFormFieldChromeControl(ReactContext context, String label, boolean required, boolean dirty,
-			String error, String helpText, String labelPosition,
+			String error, String helpText, LabelPosition labelPosition,
 			boolean fullLine, boolean visible, ReactControl field) {
 		super(context, null, REACT_MODULE);
 		_field = field;
@@ -112,7 +112,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		setError(error);
 		setHelpText(helpText);
 		if (labelPosition != null) {
-			putState(LABEL_POSITION, labelPosition);
+			putState(LABEL_POSITION, labelPosition.protocolName());
 		}
 		putState(FULL_LINE, fullLine);
 		setVisible(visible);

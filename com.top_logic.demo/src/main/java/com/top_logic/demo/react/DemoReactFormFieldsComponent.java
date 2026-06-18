@@ -37,6 +37,7 @@ import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
@@ -127,7 +128,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 		ReactTextInputControl bioInput = new ReactTextInputControl(ctx, new FormFieldAdapter(bioField));
 		ReactFormFieldChromeControl bioChrome = new ReactFormFieldChromeControl(ctx,
 			"Biography", false, false, null, "A short description of yourself",
-			"top", true, true, bioInput);
+			LabelPosition.TOP, true, true, bioInput);
 
 		FormField activeField = FormFactory.newBooleanField("active", Boolean.TRUE, false);
 		formContext.addMember(activeField);
@@ -276,7 +277,7 @@ public class DemoReactFormFieldsComponent extends LayoutComponent {
 
 		// -- Top-level form layout: 3 columns, auto label position --
 
-		return new ReactFormLayoutControl(ctx, 3, "auto", false,
+		return new ReactFormLayoutControl(ctx, 3, LabelPosition.AUTO, false,
 			List.of(personalGroup, prefsGroup, dropdownGroup));
 	}
 

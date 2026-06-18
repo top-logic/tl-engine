@@ -26,7 +26,8 @@ import com.top_logic.layout.react.control.ReactControl;
  * </p>
  * <ul>
  * <li>{@code maxColumns} - maximum number of columns</li>
- * <li>{@code labelPosition} - "side", "top", or "auto"</li>
+ * <li>{@code labelPosition} - {@link LabelPosition#SIDE}, {@link LabelPosition#TOP}, or
+ * {@link LabelPosition#AUTO}</li>
  * <li>{@code readOnly} - whether the form is read-only</li>
  * <li>{@code children} - child controls (TLFormGroup or TLFormField)</li>
  * </ul>
@@ -47,17 +48,17 @@ public class ReactFormLayoutControl extends ReactCompositeControl {
 	 * @param maxColumns
 	 *        Maximum number of columns (e.g. 3).
 	 * @param labelPosition
-	 *        "side", "top", or "auto".
+	 *        {@link LabelPosition#SIDE}, {@link LabelPosition#TOP}, or {@link LabelPosition#AUTO}.
 	 * @param readOnly
 	 *        Whether the form is read-only.
 	 * @param children
 	 *        The child controls ({@code TLFormGroup} or {@code TLFormField}).
 	 */
-	public ReactFormLayoutControl(ReactContext context, int maxColumns, String labelPosition, boolean readOnly,
+	public ReactFormLayoutControl(ReactContext context, int maxColumns, LabelPosition labelPosition, boolean readOnly,
 			List<? extends ReactControl> children) {
 		super(context, null, REACT_MODULE, children);
 		putState(MAX_COLUMNS, Integer.valueOf(maxColumns));
-		putState(LABEL_POSITION, labelPosition);
+		putState(LABEL_POSITION, labelPosition.protocolName());
 		putState(READ_ONLY, readOnly);
 	}
 
@@ -68,7 +69,7 @@ public class ReactFormLayoutControl extends ReactCompositeControl {
 	 *        The child controls.
 	 */
 	public ReactFormLayoutControl(ReactContext context, List<? extends ReactControl> children) {
-		this(context, 3, "auto", false, children);
+		this(context, 3, LabelPosition.AUTO, false, children);
 	}
 
 	/**
@@ -79,7 +80,7 @@ public class ReactFormLayoutControl extends ReactCompositeControl {
 	 * </p>
 	 */
 	public ReactFormLayoutControl(ReactContext context) {
-		this(context, 3, "auto", false, List.of());
+		this(context, 3, LabelPosition.AUTO, false, List.of());
 	}
 
 	/**

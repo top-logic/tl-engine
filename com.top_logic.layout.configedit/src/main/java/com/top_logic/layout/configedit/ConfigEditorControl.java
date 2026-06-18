@@ -21,6 +21,7 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
@@ -139,8 +140,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			String label = resolveLabel(property);
 			String tooltip = resolveTooltip(property);
-			String labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
-				? "after" : null;
+			LabelPosition labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
+				? LabelPosition.AFTER : null;
 
 			ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(
 				context, label, model.isMandatory(), false, null, null, labelPosition,

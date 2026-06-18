@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
@@ -43,7 +44,7 @@ public final class ReactFormBuilder {
 
 	private int _maxColumns = 3;
 
-	private String _labelPosition = "auto";
+	private LabelPosition _labelPosition = LabelPosition.AUTO;
 
 	private boolean _readOnly = false;
 
@@ -63,10 +64,9 @@ public final class ReactFormBuilder {
 	}
 
 	/**
-	 * Sets the label position: {@code "side"}, {@code "top"} or {@code "auto"} (default
-	 * {@code "auto"}).
+	 * Sets the label position (default {@link LabelPosition#AUTO}).
 	 */
-	public ReactFormBuilder labelPosition(String labelPosition) {
+	public ReactFormBuilder labelPosition(LabelPosition labelPosition) {
 		_labelPosition = labelPosition;
 		return this;
 	}

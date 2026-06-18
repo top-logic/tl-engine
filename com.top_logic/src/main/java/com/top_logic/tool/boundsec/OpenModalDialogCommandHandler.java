@@ -391,7 +391,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
     /**
      * the dialog name this handler can open.
      */
-    public ComponentName getOpenToDialogName() {
+	public final ComponentName getOpenToDialogName() {
 		return this._dialogName;
     }
 

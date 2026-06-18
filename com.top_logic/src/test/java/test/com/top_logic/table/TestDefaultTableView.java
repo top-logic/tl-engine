@@ -18,13 +18,18 @@ import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.Row;
+import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
+import com.top_logic.table.TableId;
 import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewListener;
+import com.top_logic.table.TableViewState;
+import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.TableViewStateCodec;
 
 /**
  * Test for {@link DefaultTableView}: column descriptors, cell rendering and the command
@@ -43,7 +48,28 @@ public class TestDefaultTableView extends TestCase {
 		}
 	}
 
-	private TableView<Person> newView() {
+	/** An in-memory {@link ViewStateStore} routing through the JSON codec, like the real store. */
+	private static final class MapViewStateStore implements ViewStateStore {
+		private final java.util.Map<String, java.util.Map<String, Object>> _data = new java.util.HashMap<>();
+
+		@Override
+		public TableViewState load(TableId id) {
+			java.util.Map<String, Object> json = _data.get(id.value());
+			if (json == null) {
+				return null;
+			}
+			TableViewState state = new TableViewState();
+			TableViewStateCodec.readInto(state, json);
+			return state;
+		}
+
+		@Override
+		public void save(TableId id, TableViewState state) {
+			_data.put(id.value(), TableViewStateCodec.toJson(state));
+		}
+	}
+
+	private List<Column<Person, ?>> personColumns() {
 		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
 			.sort(() -> Comparator.naturalOrder())
 			.filter(new ColumnFilter<>() {
@@ -62,14 +88,24 @@ public class TestDefaultTableView extends TestCase {
 		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
 			.sort(() -> Comparator.naturalOrder())
 			.build();
+		return List.of(name, age);
+	}
 
-		List<Column<Person, ?>> columns = List.of(name, age);
-		List<Person> people = List.of(
+	private List<Person> people() {
+		return List.of(
 			new Person("Charlie", 30),
 			new Person("alice", 25),
 			new Person("Bob", 40));
-		ListRowSource<Person> source = new ListRowSource<>(people, columns);
-		return DefaultTableView.create(columns, source);
+	}
+
+	private TableView<Person> newView() {
+		List<Column<Person, ?>> columns = personColumns();
+		return DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+	}
+
+	private TableView<Person> newView(ViewStateStore store, TableId id) {
+		List<Column<Person, ?>> columns = personColumns();
+		return DefaultTableView.create(columns, new ListRowSource<>(people(), columns), store, id);
 	}
 
 	private List<String> names(TableView<Person> view) {
@@ -152,6 +188,58 @@ public class TestDefaultTableView extends TestCase {
 
 		assertTrue("columnsChanged fired", columnsChanged[0] >= 2);
 		assertTrue("rowsChanged fired via row source", rowsChanged[0] >= 2);
+	}
+
+	public void testPersistsAndRestoresPersonalization() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t1");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.sort(SortSpec.ascending("name"));
+		view1.resizeColumn("name", 222);
+		view1.moveColumn("age", 0);
+		view1.setFrozenColumnCount(1);
+
+		// A fresh view over the same store restores the personalization and re-applies the sort.
+		TableView<Person> view2 = newView(store, id);
+		assertEquals(List.of("age", "name"), view2.columns().stream().map(ColumnView::name).toList());
+		assertEquals(222, view2.columns().stream().filter(c -> c.name().equals("name")).findFirst().get().width());
+		assertEquals(1, view2.state().getFrozenCount());
+		assertEquals(List.of(new SortColumn("name", true)), view2.state().getSort());
+		assertEquals("restored sort re-applied to rows", List.of("Bob", "Charlie", "alice"), names(view2));
+	}
+
+	public void testRestoreDropsStaleAndAppendsNewColumns() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t2");
+
+		// Persist an order that references a removed column ("ghost") and omits "age".
+		TableViewState stored = new TableViewState();
+		stored.setColumnOrder(List.of("ghost", "name"));
+		store.save(id, stored);
+
+		TableView<Person> view = newView(store, id);
+		// "ghost" dropped (no such column), "name" kept, "age" appended.
+		assertEquals(List.of("name", "age"), view.columns().stream().map(ColumnView::name).toList());
+	}
+
+	public void testRestoreClampsFrozenCount() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t3");
+
+		TableViewState stored = new TableViewState();
+		stored.setFrozenCount(9);
+		store.save(id, stored);
+
+		TableView<Person> view = newView(store, id);
+		assertEquals("frozen count clamped to the available column count", 2, view.state().getFrozenCount());
+	}
+
+	public void testNoStoreLeavesDefaults() {
+		// The non-persisting view keeps declaration order and zero frozen columns.
+		TableView<Person> view = newView();
+		assertEquals(List.of("name", "age"), view.columns().stream().map(ColumnView::name).toList());
+		assertEquals(0, view.state().getFrozenCount());
 	}
 
 	public void testStateReflectsCommands() {

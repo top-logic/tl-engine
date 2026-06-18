@@ -273,15 +273,26 @@ public class TableViewElement implements UIElement {
 	/**
 	 * A column reading a typed attribute value, with a value comparator and a matching column
 	 * filter. The cell renders the value's localized display label.
+	 *
+	 * <p>
+	 * The accessor is defensive: a value that is not an instance of the expected type (a data /
+	 * model-kind mismatch) yields {@code null} rather than a {@link ClassCastException}, so one
+	 * stray cell cannot break the whole table render.
+	 * </p>
 	 */
 	private static <V> Column<Object, V> typedColumn(String attribute, ResKey label, Class<V> valueType,
 			Comparator<V> comparator, ColumnFilter<V> filter) {
-		return DefaultColumn.<Object, V> builder(attribute, row -> valueType.cast(attributeValue(row, attribute)))
+		return DefaultColumn.<Object, V> builder(attribute, row -> typedValue(row, attribute, valueType))
 			.label(label)
 			.renderer(value -> CellContent.text(label(value)))
 			.sort(() -> comparator)
 			.filter(filter)
 			.build();
+	}
+
+	private static <V> V typedValue(Object row, String attribute, Class<V> valueType) {
+		Object value = attributeValue(row, attribute);
+		return valueType.isInstance(value) ? valueType.cast(value) : null;
 	}
 
 	/**

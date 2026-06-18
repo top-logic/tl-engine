@@ -40,6 +40,15 @@
 							<de>Tabs-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="scroll-repro"
+						icon="css:bi bi-arrows-vertical"
+					>
+						<view-ref view="demo/scroll-repro.view.xml"/>
+						<label>
+							<en>Scroll Repro</en>
+							<de>Scroll-Repro</de>
+						</label>
+					</nav-item>
 					<nav-item id="split"
 						icon="css:bi bi-layout-split"
 					>

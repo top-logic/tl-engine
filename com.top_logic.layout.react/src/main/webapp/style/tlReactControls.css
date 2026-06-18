@@ -237,6 +237,11 @@ button.tlCounter__button:focus {
 	display: flex;
 	flex-direction: column;
 	font-family: var(--font-family);
+	/* Fill the available slot instead of growing with the content, so the tab
+	   strip stays pinned and only the tab content scrolls (min-height: 0 lets
+	   this shrink below its content height inside a flex parent). */
+	flex: 1;
+	min-height: 0;
 }
 
 .tlReactTabBar__tabs {
@@ -244,6 +249,8 @@ button.tlCounter__button:focus {
 	gap: var(--spacing-02);
 	border-bottom: 1px solid var(--border-subtle-01);
 	padding: 0 var(--spacing-03);
+	/* Keep the tab strip pinned while the content scrolls. */
+	flex-shrink: 0;
 }
 
 .tlReactTabBar__tab {
@@ -310,6 +317,12 @@ button.tlCounter__button:focus {
 
 .tlReactTabBar__content {
 	/* Flush: content owns its inset (see spacing model above). */
+	/* Own scroll region: fill the space left by the tab strip and scroll the
+	   tab content here, rather than letting it push the whole tab bar (and an
+	   ancestor scroller, e.g. the sidebar) past the viewport. */
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
 }
 
 /* --- TLAudioRecorder --------------------------------------------------- */

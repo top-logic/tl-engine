@@ -156,10 +156,10 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 					BasicTypes.REV_MAX_DB_NAME,
 					BasicTypes.REV_MIN_DB_NAME,
 					BasicTypes.REV_CREATE_DB_NAME,
-					_util.refID(PersistentModuleSingletons.SOURCE_ATTR),
+					Util.refID(PersistentModuleSingletons.SOURCE_ATTR),
 					SQLH.mangleDBName(PersistentModuleSingletons.NAME_ATTR),
-					_util.refType(PersistentModuleSingletons.DEST_ATTR),
-					_util.refID(PersistentModuleSingletons.DEST_ATTR)),
+					Util.refType(PersistentModuleSingletons.DEST_ATTR),
+					Util.refID(PersistentModuleSingletons.DEST_ATTR)),
 				Util.listWithoutNull(
 					_util.branchParamOrNull(),
 					parameter(DBType.ID, "identifier"),

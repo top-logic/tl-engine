@@ -791,6 +791,9 @@ public class AgentFactory {
 		com.top_logic.model.TLModel model = ModelService.getApplicationModel();
 		String digest = ModelDigestGenerator.generate(model, false);
 
+		Logger.info("Model digest injected (" + digest.length() + " chars):\n" + digest,
+			AgentFactory.class);
+
 		return base.replace(MODEL_PLACEHOLDER, digest);
 	}
 }

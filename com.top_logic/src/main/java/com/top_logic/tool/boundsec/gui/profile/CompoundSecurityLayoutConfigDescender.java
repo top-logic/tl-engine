@@ -21,14 +21,21 @@ public abstract class CompoundSecurityLayoutConfigDescender {
 	 * Starts descending with the given {@link LayoutConfigTreeNode}.
 	 */
 	public void descend(LayoutConfigTreeNode node) {
-		addCommandGroupsRecursive(node, node);
+		if (!isSecurityLayout(node)) {
+			// Only command groups for security layouts are relevant.
+			return;
+		}
+		addCommandGroupsRecursive(node);
 	}
 
-	private void addCommandGroupsRecursive(LayoutConfigTreeNode rootNode, LayoutConfigTreeNode configNode) {
-		if (rootNode != configNode && rootNode.equals(findCompoundSecurityNode(configNode.getParent()))) {
-			visit(configNode);
-		}
-		configNode.getChildren().forEach(child -> addCommandGroupsRecursive(rootNode, child));
+	private void addCommandGroupsRecursive(LayoutConfigTreeNode configNode) {
+		visit(configNode);
+		configNode.getChildren()
+			.stream()
+			/* Do not collect command groups from child security layouts. For these nodes there are
+			 * own nodes. */
+			.filter(child -> !isSecurityLayout(child))
+			.forEach(child -> addCommandGroupsRecursive(child));
 	}
 
 	/**
@@ -57,11 +64,15 @@ public abstract class CompoundSecurityLayoutConfigDescender {
 			if (node == null) {
 				return null;
 			}
-			if (node.getConfig() instanceof CompoundSecurityLayout.Config) {
+			if (isSecurityLayout(node)) {
 				return node;
 			}
 			node = node.getParent();
 		} while (true);
+	}
+
+	private static boolean isSecurityLayout(LayoutConfigTreeNode node) {
+		return node.getConfig() instanceof CompoundSecurityLayout.Config;
 	}
 
 }

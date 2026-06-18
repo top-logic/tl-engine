@@ -483,10 +483,14 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
   (incl. transaction ownership) is unimplemented.
 
 ### B. View-layer `<table-view>` (`TableViewElement`) gaps
-- Assigns a **text** filter to *every* attribute. TODO: attribute-type-aware filter
-  selection (enum → options, number → range, boolean → boolean, date → range).
-- Sorts by **label string** for every column (no type-aware comparator) — numbers/dates
-  sort lexically.
+- ~~Assigns a **text** filter to every attribute~~ / ~~sorts by **label string**~~ — **DONE
+  (2026-06-18).** `TableViewElement.buildColumn` now derives filter + comparator from the model
+  attribute type: enumeration → options, `INT`/`FLOAT` → numeric range, `DATE` → date range,
+  `BOOLEAN`/`TRISTATE` → boolean, `STRING` → text; references / multi-valued / unresolved parts
+  fall back to a display-label text filter. Live-verified: boolean filter on `Person#admin`
+  (real data, filters to the matching row); all six typed columns of `DemoTypes:A` render their
+  funnels without error. Numeric/date/options *click-through* not yet exercised live (no
+  populated demo type combines those attributes with rows — see §13.D).
 - **Static rows only** — no refresh on model change (legacy `TableElement` re-runs the rows
   query on create/update/delete via `ObservableTableModel`; not replicated).
 - Requires explicit `<column>`s (no type-derived default column set).
@@ -534,8 +538,9 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
   hand-corrected to "Übernehmen" (DeepL gave "Bewerben").
 
 ## 14. Suggested next steps (priority order)
-1. Attribute-type-aware filter + comparator selection in `TableViewElement` (unlocks
-   options/range/boolean in the view layer) and live-verify those kinds.
+1. ~~Attribute-type-aware filter + comparator selection in `TableViewElement`~~ — **DONE
+   2026-06-18** (§13.B). Remaining sub-task: live click-through of options/range/date once a
+   demo type with those attributes *and* populated rows exists (or a seeded dataset is added).
 2. `LegacyTableView` adapter — route existing `TableModel` tables through the new control.
 3. `QueryRowSource` over TL search expressions (the lazy/pushdown win).
 4. `ViewStateStore` + serialization (personalization).

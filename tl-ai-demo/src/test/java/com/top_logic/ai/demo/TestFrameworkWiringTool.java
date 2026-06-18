@@ -168,7 +168,7 @@ public class TestFrameworkWiringTool extends BasicTestCase {
 
 		java.io.File tmp = java.io.File.createTempFile("fw-wiring-overlay", ".config.xml");
 		tmp.deleteOnExit();
-		FrameworkWiringPersistence.persistOverlayTo(tmp, overlay);
+		FrameworkWiringPersistence.persistTo(tmp, overlay);
 
 		String content = java.nio.file.Files.readString(tmp.toPath());
 		assertTrue("should contain agent name", content.contains("TL_TestAgent"));

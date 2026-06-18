@@ -248,9 +248,9 @@ public class FrameworkWiringTool {
 	}
 
 	private static void livePersist(Consumer<TopLogicAgentDefinitions.Config<?>> mutation) {
-		TopLogicAgentDefinitions.Config<?> overlay = FrameworkWiringPersistence.readOverlay();
-		mutation.accept(overlay);
-		FrameworkWiringPersistence.persistOverlay(overlay);
+		TopLogicAgentDefinitions.Config<?> config = FrameworkWiringPersistence.copyOfLiveConfig();
+		mutation.accept(config);
+		FrameworkWiringPersistence.persist(config);
 	}
 
 	private static TopLogicAgentDefinitions service() {

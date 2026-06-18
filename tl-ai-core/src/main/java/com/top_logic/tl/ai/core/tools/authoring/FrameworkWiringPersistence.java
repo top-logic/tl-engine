@@ -8,12 +8,14 @@ package com.top_logic.tl.ai.core.tools.authoring;
 import java.io.File;
 import java.io.IOError;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -21,8 +23,10 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
+import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
+import com.top_logic.layout.admin.component.OverrideConfigurationWriter;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.tl.ai.core.agent.DelegationRef;
 import com.top_logic.tl.ai.core.agent.SkillRef;
@@ -32,22 +36,31 @@ import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.AgentConfig;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.SkillConfig;
 
 /**
- * Reads and writes an additive overlay file for {@link TopLogicAgentDefinitions}, then restarts
- * the service so changes take effect immediately.
+ * Persists a modified {@link TopLogicAgentDefinitions} configuration as an autoconf overlay file,
+ * then reloads {@link ApplicationConfig} and restarts the service so that the changed definitions
+ * become immediately active.
  *
  * <p>
- * The overlay uses keyed-list merging: only entries explicitly declared are added or removed; the
- * base configuration flows through unchanged. This avoids freezing framework definitions.
+ * Follows the same full-replacement pattern as {@link ScriptToolConfigPersistence}: the complete
+ * live configuration is copied, modified in memory, and written as a full overlay. This ensures
+ * the reload picks up the change immediately.
  * </p>
  */
 public class FrameworkWiringPersistence {
 
 	/**
-	 * Reads the current overlay config, creating an empty one if the file does not exist.
+	 * Returns a deep copy of the current live {@link TopLogicAgentDefinitions} configuration.
 	 */
-	public static TopLogicAgentDefinitions.Config<?> readOverlay() {
-		// Always start from an empty config — the overlay only contains deltas.
-		return TypedConfiguration.newConfigItem(TopLogicAgentDefinitions.Config.class);
+	@SuppressWarnings("unchecked")
+	public static TopLogicAgentDefinitions.Config<?> copyOfLiveConfig() {
+		try {
+			return TypedConfiguration.copy(
+				(TopLogicAgentDefinitions.Config<?>) ApplicationConfig.getInstance()
+					.getServiceConfiguration(TopLogicAgentDefinitions.class));
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException(
+				"Failed to read TopLogicAgentDefinitions configuration: " + ex.getMessage(), ex);
+		}
 	}
 
 	/**
@@ -149,16 +162,20 @@ public class FrameworkWiringPersistence {
 	}
 
 	/**
-	 * Writes the overlay config to the autoconf file and restarts the service.
+	 * Writes the given configuration to the autoconf overlay file and restarts the service.
+	 *
+	 * @param config
+	 *        The complete {@link TopLogicAgentDefinitions} configuration; it fully replaces the
+	 *        existing overlay entry for this service.
 	 */
-	public static void persistOverlay(TopLogicAgentDefinitions.Config<?> overlay) {
+	public static void persist(TopLogicAgentDefinitions.Config<?> config) {
 		try {
-			persistOverlayTo(overlayFile(), overlay);
+			persistTo(overlayFile(), config);
 			TLServiceUtils.reloadConfigurations();
 			restartService();
 		} catch (Exception ex) {
 			throw new RuntimeException(
-				"Failed to persist framework wiring overlay: " + ex.getMessage(), ex);
+				"Failed to persist framework wiring configuration: " + ex.getMessage(), ex);
 		} catch (IOError err) {
 			throw new RuntimeException(
 				"Failed to reload configuration after framework wiring: " + err.getMessage(), err);
@@ -166,21 +183,28 @@ public class FrameworkWiringPersistence {
 	}
 
 	/**
-	 * Writes the overlay config to the given file without reloading or restarting.
+	 * Serializes the given configuration as a pretty-printed XML overlay file.
+	 *
+	 * <p>
+	 * This method handles only the file write; the caller is responsible for reloading the
+	 * configuration afterwards. Prefer {@link #persist(TopLogicAgentDefinitions.Config)} for
+	 * normal use; call this method directly only when reload must be suppressed (e.g. in tests).
+	 * </p>
 	 */
-	public static void persistOverlayTo(File file, TopLogicAgentDefinitions.Config<?> overlay)
+	public static void persistTo(File file, TopLogicAgentDefinitions.Config<?> config)
 			throws Exception {
 		FileUtilities.enforceDirectory(file.getParentFile());
 
 		ApplicationConfig.Config app = TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
 		ModuleConfiguration module = TypedConfiguration.newConfigItem(ModuleConfiguration.class);
 		module.setServiceClass(TopLogicAgentDefinitions.class);
-		module.setInstance((ServiceConfiguration<?>) overlay);
+		module.setInstance((ServiceConfiguration<?>) config);
 		app.getServices().put(TopLogicAgentDefinitions.class, module);
 
 		String xml;
 		try (StringWriter out = new StringWriter()) {
-			try (ConfigurationWriter writer = new ConfigurationWriter(out)) {
+			try (ConfigurationWriter writer = new OverrideConfigurationWriter(out,
+					Collections.singleton(TypedRuntimeModule.ModuleConfiguration.class))) {
 				TypedConfiguration.serialize("application", app, writer);
 			}
 			xml = out.toString();

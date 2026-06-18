@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.tools.authoring;
 import java.io.File;
 import java.io.IOError;
 import java.io.StringWriter;
-import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
@@ -22,10 +21,8 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
-import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
-import com.top_logic.layout.admin.component.OverrideConfigurationWriter;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.tl.ai.core.agent.DelegationRef;
 import com.top_logic.tl.ai.core.agent.SkillRef;
@@ -183,8 +180,7 @@ public class FrameworkWiringPersistence {
 
 		String xml;
 		try (StringWriter out = new StringWriter()) {
-			try (ConfigurationWriter writer = new OverrideConfigurationWriter(out,
-					Collections.singleton(TypedRuntimeModule.ModuleConfiguration.class))) {
+			try (ConfigurationWriter writer = new ConfigurationWriter(out)) {
 				TypedConfiguration.serialize("application", app, writer);
 			}
 			xml = out.toString();

@@ -471,6 +471,9 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
 ### A. Not yet implemented (model tier)
 - **`QueryRowSource` (pushdown).** Backend chosen (TL search expressions) but not built;
   `QuerySink`/`OrderPushdown`/`FilterPushdown` are inert stubs — every source is in-memory.
+  **Split out to its own issue #29341** (feature + design options spectrum); deliberately deferred
+  from the React transition and to be designed after a spike confirming what TL search actually
+  pushes to SQL.
 - **Multi-column grouping** — `ListRowSource.withGrouping` throws for >1 column.
 - **Tree + grouping** — `TreeRowSource.withGrouping` throws for any grouping.
 - **`LegacyTableView` adapter** (migration step 2) — skipped; existing legacy `TableModel`
@@ -562,8 +565,9 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
 **Done since (correctness, no new decisions, 2026-06-18):** facet counts that exclude a column's
 own filter (§13.C) ✓; type-derived default columns (§13.B) ✓.
 
-Remaining big items (each a scope/architecture decision before starting): `LegacyTableView` adapter
-(§14.2, re-introduces legacy coupling), `QueryRowSource` pushdown (§14.3), inline editing +
-live-data refresh (§14.5). Smaller remaining: live refresh on model change (§13.B), typed value
-widgets via `FieldControlService` (§13.C), selection persistence + veto (§13.C), filter/expansion
-persistence (§13.A follow-up), multi-column & tree grouping (§13.A).
+Remaining big items: `QueryRowSource` pushdown — **moved to its own issue #29341** (TL apps deal
+with large datasets, but pushdown is a separate concern from the React transition); `LegacyTableView`
+adapter (§14.2, re-introduces legacy coupling, parked); inline editing + live-data refresh (§14.5).
+Smaller remaining: live refresh on model change (§13.B), typed value widgets via
+`FieldControlService` (§13.C), selection persistence + veto (§13.C), filter/expansion persistence
+(§13.A follow-up), multi-column & tree grouping (§13.A).

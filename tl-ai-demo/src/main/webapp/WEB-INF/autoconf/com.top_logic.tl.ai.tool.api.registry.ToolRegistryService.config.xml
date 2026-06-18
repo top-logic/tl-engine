@@ -3,19 +3,165 @@
 <application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
-	<!--
-		Materialised override so that the ToolRegistryService autoconf file always exists at boot.
-		Without this seed, the first user-created tool factory triggers a brand-new autoconf file
-		that the in-memory config tree only sees after a full application restart; subsequent
-		edits to that file then work via the normal service-restart path.
-
-		Contract: any new default factory added in tl-ai-tool-api or tl-ai-vector-index must be
-		mirrored here, otherwise the override hides it.
-	-->
 	<services>
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService"
+			config:override="true"
+		>
 			<instance class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
 				<tool-factories>
+					<factory name="script-doc">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.script.TLScriptReferenceTool"
+						/>
+					</factory>
+					<factory name="script-exec">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.script.TLScriptTool"
+						/>
+					</factory>
+					<factory name="model-annotation-definitions">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.AnnotationDefinitionExplorerTool"
+						/>
+					</factory>
+					<factory name="model-instances">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool"
+						/>
+					</factory>
+					<factory name="model-annotation-browser">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelAnnotationBrowserTool"
+						/>
+					</factory>
+					<factory name="model-annotation-editor">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelAnnotationEditorTool"
+						/>
+					</factory>
+					<factory name="annotation-search">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.SearchAnnotationTool"
+						/>
+					</factory>
+					<factory name="model-browser">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelBrowserTool"
+						/>
+					</factory>
+					<factory name="model-search">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelSearchTool"
+						/>
+					</factory>
+					<factory name="model-analysis">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.TypeAnalysisTool"
+						/>
+					</factory>
+					<factory name="config-schema">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.config.ConfigSchemaTool"
+						/>
+					</factory>
+					<factory name="layout-templates">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.config.LayoutTemplateTool"
+						/>
+					</factory>
+					<factory name="lock">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.LockTool"
+						/>
+					</factory>
+					<factory name="model-modification">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.model.ModelEditorTool"
+						/>
+					</factory>
+					<factory name="agent-authoring">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.authoring.AgentAuthoringTool"
+						/>
+					</factory>
+					<factory name="script-tool-authoring">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool"
+						/>
+					</factory>
+					<factory name="custom">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+							<tools>
+								<tool name="echo"
+									concurrency-safe="true"
+									implementation="$message"
+									label="/sEcho"
+									mode="READ"
+								>
+									<description key="/sGibt die übergebene Nachricht unverändert zurück. Nützlich zum Testen von Tool-Aufrufen."/>
+									<parameters>
+										<parameter name="message"
+											description="/sDie Nachricht, die zurückgegeben werden soll."
+											mandatory="true"
+											multiple="false"
+											type="tl.core:String"
+										/>
+									</parameters>
+								</tool>
+								<tool name="echo2"
+									concurrency-safe="true"
+									implementation="$message"
+									label="/sEcho 2"
+									mode="READ"
+								>
+									<description key="/sReturns the input message unchanged. Use to verify tool round-trips or test agent wiring."/>
+									<parameters>
+										<parameter name="message"
+											description="/sThe text to echo back"
+											mandatory="true"
+											multiple="false"
+											type="tl.core:String"
+										/>
+									</parameters>
+								</tool>
+							</tools>
+						</implementation>
+					</factory>
+					<factory name="task">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.interaction.TaskTool"
+						/>
+					</factory>
+					<factory name="user-interaction">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"
+						/>
+					</factory>
+					<factory name="gitea">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"
+						/>
+					</factory>
+					<factory name="html-pages">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool"
+						/>
+					</factory>
+					<factory name="web-search">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.web.WebSearchTool"
+						/>
+					</factory>
+					<factory name="web-fetch">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.web.WebFetchTool"
+						/>
+					</factory>
+					<factory name="framework-wiring">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringTool"
+						/>
+					</factory>
 				</tool-factories>
 			</instance>
 		</config>

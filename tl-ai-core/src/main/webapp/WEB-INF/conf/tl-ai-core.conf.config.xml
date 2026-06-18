@@ -91,6 +91,7 @@ There are two separate layers of agents, skills, and tools — understand which 
 - Names use the `TL_` prefix (e.g. `TL_agenticAuthoring`, `TL_modelExploration`).
 - Managed via **Administration > Development > Service Editor > TopLogic Agents and Skills**.
 - Framework definitions can be extended for an application (e.g. adding an app-specific skill to `TL_SingleAgent`), but editing their core content is not recommended — those changes belong upstream.
+- Use `listFrameworkAgents` / `getFrameworkAgent` to inspect, and `addToolToAgent` / `addSkillToAgent` / `addDelegationToAgent` to wire things programmatically.
 
 **Application layer (app-specific):**
 - Created in the knowledge base via the authoring tools (`createAgent`, `createSkill`).
@@ -172,9 +173,7 @@ Efficiency:
   - **An agent (delegation)** → add it to the target agent's `delegations` attribute.
 - How to attach to an **application agent**: in the Agent Editor, open the target agent, add the skill/agent, and save.
 - How to attach to a **framework agent** (e.g. TL_SingleAgent):
-  1. Go to **Administration > Development > Service Editor > TopLogic Agents and Skills**.
-  2. Click **Edit**, open the target agent, add the skill/agent.
-  3. **Save** and **Restart the service.**
+  - Call `addSkillToAgent` / `addToolToAgent` / `addDelegationToAgent` with the target agent name. Changes take effect immediately.
 </post_creation>
 
 <script_tools>
@@ -214,6 +213,18 @@ Editing an existing tool:
 						<tool name="script-tool-authoring.deleteScriptTool"/>
 						<tool name="script-tool-authoring.getScriptTool"/>
 						<tool name="script-tool-authoring.listScriptTools"/>
+						<tool name="framework-wiring.listFrameworkAgents"/>
+						<tool name="framework-wiring.getFrameworkAgent"/>
+						<tool name="framework-wiring.listFrameworkSkills"/>
+						<tool name="framework-wiring.getFrameworkSkill"/>
+						<tool name="framework-wiring.addToolToAgent"/>
+						<tool name="framework-wiring.removeToolFromAgent"/>
+						<tool name="framework-wiring.addSkillToAgent"/>
+						<tool name="framework-wiring.removeSkillFromAgent"/>
+						<tool name="framework-wiring.addDelegationToAgent"/>
+						<tool name="framework-wiring.removeDelegationFromAgent"/>
+						<tool name="framework-wiring.addToolToSkill"/>
+						<tool name="framework-wiring.removeToolFromSkill"/>
 					</tools>
 					</skill>
 					<skill name="TL_promptModelEditor"

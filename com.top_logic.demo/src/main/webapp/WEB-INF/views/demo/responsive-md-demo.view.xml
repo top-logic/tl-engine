@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Responsive master-detail demo exercising a multi-step (nested) selection path.
+
+	A single <adaptive-detail> configuration renders differently per display class:
+	- REGULAR (wide): cascading columns - project scopes | milestones | milestone detail.
+	- COMPACT (narrow): step-by-step drill-in - scopes -> milestones -> detail, with a back bar.
+
+	The level-2 selector lists the milestones of the scope selected in level 1 (its <rows>
+	expression takes the selectedScope channel as input). The model builder / columns / form are
+	each authored exactly once and shared by both presentations.
+-->
+<view>
+	<channels>
+		<channel name="selectedScope"/>
+		<channel name="selectedMilestone"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Responsive Master-Detail Demo</en>
+			<de>Responsive Master-Detail-Demo</de>
+		</title>
+
+		<adaptive-detail selection="selectedScope">
+			<selector>
+				<table
+					selection="selectedScope"
+					types="tl.demo.projectManagement:ProjectScope"
+				>
+					<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
+				</table>
+			</selector>
+			<detail>
+				<adaptive-detail selection="selectedMilestone">
+					<selector>
+						<table
+							selection="selectedMilestone"
+							types="tl.demo.projectManagement:Milestone"
+						>
+							<inputs>
+								<input channel="selectedScope"/>
+							</inputs>
+							<rows>scope -> if($scope == null, list(), $scope.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+						</table>
+					</selector>
+					<detail>
+						<form input="selectedMilestone">
+							<field attribute="name"/>
+							<field attribute="dueDate"/>
+						</form>
+					</detail>
+				</adaptive-detail>
+			</detail>
+		</adaptive-detail>
+	</panel>
+</view>

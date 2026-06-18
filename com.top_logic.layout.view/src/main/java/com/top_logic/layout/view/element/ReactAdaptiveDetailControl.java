@@ -73,6 +73,8 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 
 	private ReactControl _currentChild;
 
+	private boolean _disposed;
+
 	/**
 	 * Creates a new {@link ReactAdaptiveDetailControl}.
 	 *
@@ -114,6 +116,11 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	}
 
 	private void renderPresentation(boolean initial) {
+		if (_disposed) {
+			// A nested control may still receive a display-class event from the stack-copy of
+			// listeners after its parent rebuilt and tore it down; ignore it.
+			return;
+		}
 		boolean compact = _displayModel.getDisplayClass() == DisplayClass.COMPACT;
 		boolean hasSelection = _selectionChannel.get() != null;
 
@@ -175,6 +182,12 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	@ReactCommand("back")
 	void handleBack() {
 		_selectionChannel.set(null);
+	}
+
+	@Override
+	protected void onCleanup() {
+		_disposed = true;
+		super.onCleanup();
 	}
 
 	@Override

@@ -209,6 +209,15 @@
 							<de>Tiles Mehr-Tab-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="responsive-md-demo"
+						icon="css:bi bi-layout-sidebar-inset"
+					>
+						<view-ref view="demo/responsive-md-demo.view.xml"/>
+						<label>
+							<en>Responsive Master-Detail Demo</en>
+							<de>Responsive Master-Detail-Demo</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<!-- Intentionally NOT routed: demonstrates that items
 					     with route="" do not produce URL segments and are

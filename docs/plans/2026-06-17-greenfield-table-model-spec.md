@@ -500,11 +500,16 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
   populated demo type combines those attributes with rows — see §13.D).
 - **Static rows only** — no refresh on model change (legacy `TableElement` re-runs the rows
   query on create/update/delete via `ObservableTableModel`; not replicated).
-- Requires explicit `<column>`s (no type-derived default column set).
+- ~~Requires explicit `<column>`s~~ — **DONE (2026-06-18).** When `<columns>` is omitted and the
+  row type resolves, the default column set is derived from the type's non-hidden
+  `getAllParts()` (each via the type-aware `buildColumn`). Live-verified: a no-`<columns>`
+  `Person` table renders 16 derived, filterable, localized columns (hidden `mfaSecret` excluded).
 
 ### C. React control gaps / polish
-- **Facet counts** (`ListRowSource.matchCounts`) count over *all* backing rows, ignoring
-  other active filters; proper facets exclude the column's own filter and reflect the rest.
+- ~~**Facet counts** count over all backing rows~~ — **DONE (2026-06-18).** `ListRowSource.matchCounts`
+  now counts over rows passing every *other* active filter, excluding the column's own
+  (`ColumnLogic.predicate(filter, byName, excludeColumn)`); unit-tested. (Tree sources still use the
+  `MatchCounts.NONE` default — no facets for trees yet.)
 - **No `TableViewListener` registration** in `TableViewControl` → external model changes
   don't refresh the control (only command-driven rebuilds). OK for static demos, not live data.
 - **Typed value inputs**: the filter value field is a generic text input + the filter's
@@ -554,5 +559,11 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
    subset persisted; filter/expansion/selection persistence is the follow-up.
 5. Inline editing end-to-end; live-data refresh (`TableViewListener` + observable rows).
 
-**Picked up next (correctness, no new decisions):** facet counts that exclude a column's own
-filter (§13.C), then type-derived default columns (§13.B).
+**Done since (correctness, no new decisions, 2026-06-18):** facet counts that exclude a column's
+own filter (§13.C) ✓; type-derived default columns (§13.B) ✓.
+
+Remaining big items (each a scope/architecture decision before starting): `LegacyTableView` adapter
+(§14.2, re-introduces legacy coupling), `QueryRowSource` pushdown (§14.3), inline editing +
+live-data refresh (§14.5). Smaller remaining: live refresh on model change (§13.B), typed value
+widgets via `FieldControlService` (§13.C), selection persistence + veto (§13.C), filter/expansion
+persistence (§13.A follow-up), multi-column & tree grouping (§13.A).

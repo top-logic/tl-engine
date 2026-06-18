@@ -104,15 +104,24 @@ The filter's *value input* widget (number spinner, date picker — §13.C) can l
 - Live-verify every filter kind: text, options (enum facets), range (number), date range, boolean —
   the coverage we couldn't reach with `Person`.
 
-## 6. Migration steps (once decisions are confirmed)
+## 6. Migration steps
 
-1. Seed `DemoTypes:A` data + switch the demo view; wipe `tmp/`; restart; confirm rows render.
-2. Introduce `ColumnProvider` (built-in providers = the current kind logic, incl. boolean labels +
-   enum options + numeric/date ranges) and its TypedConfiguration `Config`.
+1. ~~Seed `DemoTypes:A` data + switch the demo view~~ — **DONE (2026-06-18), via in-app
+   create/delete/generate instead of seeded data (no `tmp/` wipe).** The demo now targets
+   `DemoTypes:A` with `observed-types` auto-refresh and "Generate samples" / New / Delete commands;
+   live-verified: generate → 8 rows; options filter (Grün 3 / Gelb 3 / Rot 2) → Grün → 3 rows;
+   numeric-range editor; boolean filter labelled Ja/Nein.
+2. **NEXT:** Introduce `ColumnProvider` (built-in providers = the current kind logic, incl. boolean
+   labels + enum options + numeric/date ranges) and its TypedConfiguration `Config`.
 3. Replace `TableViewElement`'s cascade with a `ColumnProvider` call.
 4. Live-verify all filter kinds on the `DemoTypes:A` demo; add unit coverage for the registry
-   resolution (annotation → type-config → fallback).
+   resolution (type-config → fallback).
 5. *(Follow-up)* `@TLColumnFilter` annotation; filter value widgets via `FieldControlService`.
+
+**Decisions confirmed (2026-06-18):** A = provider yields filter + comparator; B = registry +
+built-in fallback first, annotation later; D = extensible registry with kind-switch as overridable
+default. Per-attribute create handles mandatory fields (name, booleanMandatory, booleanRadioMandatory,
+booleanSelectMandatory).
 
 ## 7. Out of scope
 Query pushdown (#29341); legacy `TableModel` adapter; inline editing; live-data refresh.

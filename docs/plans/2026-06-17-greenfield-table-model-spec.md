@@ -501,8 +501,12 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
   (real data, filters to the matching row); all six typed columns of `DemoTypes:A` render their
   funnels without error. Numeric/date/options *click-through* not yet exercised live (no
   populated demo type combines those attributes with rows — see §13.D).
-- **Static rows only** — no refresh on model change (legacy `TableElement` re-runs the rows
-  query on create/update/delete via `ObservableTableModel`; not replicated).
+- ~~**Static rows only** — no refresh on model change~~ — **DONE (2026-06-18).** `TableViewElement`
+  now takes `observed-types`; a `RowSourceObserver` (green-field analog of `ObservableTableModel`)
+  listens to model + input-channel changes and re-runs the rows query into the
+  `ListRowSource` (`setElements`), then calls `TableViewControl.refreshData()`. Live-verified on the
+  `DemoTypes:A` demo: a "Generate samples" command creates rows and the table auto-refreshes; a
+  Delete command removes them.
 - ~~Requires explicit `<column>`s~~ — **DONE (2026-06-18).** When `<columns>` is omitted and the
   row type resolves, the default column set is derived from the type's non-hidden
   `getAllParts()` (each via the type-aware `buildColumn`). Live-verified: a no-`<columns>`

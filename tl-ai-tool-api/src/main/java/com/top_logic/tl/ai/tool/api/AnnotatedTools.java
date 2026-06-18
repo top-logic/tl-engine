@@ -338,7 +338,12 @@ public final class AnnotatedTools {
 		for (int i = 0; i < components.length; i++) {
 			RecordComponent rc = components[i];
 			Object raw = map.get(rc.getName());
-			args[i] = coerceArg(raw, rc.getType(), rc.getGenericType(), rc.getName());
+			if (raw == null && !map.containsKey(rc.getName())) {
+				// Field omitted by the LLM — use a sensible default instead of failing.
+				args[i] = primitiveDefault(rc.getType());
+			} else {
+				args[i] = coerceArg(raw, rc.getType(), rc.getGenericType(), rc.getName());
+			}
 		}
 		try {
 			Class<?>[] paramTypes = new Class<?>[components.length];
@@ -350,6 +355,15 @@ public final class AnnotatedTools {
 			throw new IllegalArgumentException(
 				"Failed to construct record " + recordType.getSimpleName() + " from " + map, e);
 		}
+	}
+
+	private static Object primitiveDefault(Class<?> type) {
+		if (type == boolean.class) return Boolean.FALSE;
+		if (type == int.class) return Integer.valueOf(0);
+		if (type == long.class) return Long.valueOf(0L);
+		if (type == double.class) return Double.valueOf(0.0);
+		if (type == float.class) return Float.valueOf(0.0f);
+		return null;
 	}
 
 	// --- msgbuf-based JSON string → Map/List tree ---

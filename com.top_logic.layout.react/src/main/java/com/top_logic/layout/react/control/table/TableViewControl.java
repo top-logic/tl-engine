@@ -301,7 +301,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		FilterEditor editor = FilterEditors.create(filter,
 			_view.state().getFilters().get(column), _view.columnMatchCounts(column));
 
-		ReactFormBuilder form = new ReactFormBuilder(context).columns(1).labelPosition("side");
+		// Build through the shared form pipeline with the same defaults as a model-bound form
+		// (responsive columns + automatic label position), so the dialog form renders and reflows
+		// exactly like every other form.
+		ReactFormBuilder form = new ReactFormBuilder(context);
 		for (FilterField field : editor.fields()) {
 			form.addField(label(resources, field.label()), fieldControl(context, field));
 		}

@@ -28,9 +28,11 @@ import com.top_logic.table.Selection;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
+import com.top_logic.table.TableId;
 import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewListener;
 import com.top_logic.table.TableViewState;
+import com.top_logic.table.ViewStateStore;
 
 /**
  * Default {@link TableView}: composes a column model, a {@link RowSource} and a
@@ -53,8 +55,12 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	private final RowSourceListener _sourceListener = this::onRowsInvalidated;
 
+	private final ViewStateStore _store;
+
+	private final TableId _id;
+
 	/**
-	 * Creates a {@link DefaultTableView}.
+	 * Creates a {@link DefaultTableView} without personalization persistence.
 	 *
 	 * @param columns
 	 *        All column definitions (visibility/order is taken from {@code state}).
@@ -64,12 +70,38 @@ public class DefaultTableView<R> implements TableView<R> {
 	 *        The (mutable) view state.
 	 */
 	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state) {
+		this(columns, source, state, null, null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView}, optionally restoring and persisting personalization.
+	 *
+	 * @param columns
+	 *        All column definitions (visibility/order is taken from {@code state}).
+	 * @param source
+	 *        The row source.
+	 * @param state
+	 *        The (mutable) view state.
+	 * @param store
+	 *        Where personalization (column order/widths/frozen/sort/grouping) is persisted, or
+	 *        {@code null} to disable persistence.
+	 * @param id
+	 *        The stable identity under which the personalization is stored (required when
+	 *        {@code store} is given).
+	 */
+	public DefaultTableView(List<Column<R, ?>> columns, RowSource<R> source, TableViewState state,
+			ViewStateStore store, TableId id) {
 		for (Column<R, ?> column : columns) {
 			_columns.put(column.name(), column);
 		}
 		_source = source;
 		_state = state;
+		_store = store;
+		_id = id;
 		_source.addListener(_sourceListener);
+		if (_store != null && _id != null) {
+			restore();
+		}
 	}
 
 	/**
@@ -82,6 +114,24 @@ public class DefaultTableView<R> implements TableView<R> {
 	 *        The row source.
 	 */
 	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source) {
+		return create(columns, source, null, null);
+	}
+
+	/**
+	 * Creates a {@link DefaultTableView} with an initial state showing all columns in
+	 * declaration order, restoring and persisting personalization through the given store.
+	 *
+	 * @param columns
+	 *        All column definitions, in initial display order.
+	 * @param source
+	 *        The row source.
+	 * @param store
+	 *        Where personalization is persisted, or {@code null} to disable persistence.
+	 * @param id
+	 *        The stable identity under which the personalization is stored.
+	 */
+	public static <R> DefaultTableView<R> create(List<Column<R, ?>> columns, RowSource<R> source,
+			ViewStateStore store, TableId id) {
 		TableViewState state = new TableViewState();
 		List<String> order = new ArrayList<>(columns.size());
 		Map<String, Integer> widths = new LinkedHashMap<>();
@@ -91,7 +141,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		state.setColumnOrder(order);
 		state.setWidths(widths);
-		return new DefaultTableView<>(columns, source, state);
+		return new DefaultTableView<>(columns, source, state, store, id);
 	}
 
 	// ---- structure ----
@@ -241,6 +291,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	public void sort(SortSpec spec) {
 		_state.setSort(new ArrayList<>(spec.columns()));
 		_source.withOrder(spec);
+		persist();
 		fireColumnsChanged();
 	}
 
@@ -259,6 +310,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	public void group(GroupSpec spec) {
 		_state.setGrouping(spec);
 		_source.withGrouping(spec);
+		persist();
 		fireColumnsChanged();
 	}
 
@@ -271,12 +323,14 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		order.remove(from);
 		order.add(Math.min(toIndex, order.size()), column);
+		persist();
 		fireColumnsChanged();
 	}
 
 	@Override
 	public void resizeColumn(String column, int width) {
 		_state.getWidths().put(column, width);
+		persist();
 		fireColumnsChanged();
 	}
 
@@ -291,12 +345,14 @@ public class DefaultTableView<R> implements TableView<R> {
 		} else {
 			return;
 		}
+		persist();
 		fireColumnsChanged();
 	}
 
 	@Override
 	public void setFrozenColumnCount(int count) {
 		_state.setFrozenCount(count);
+		persist();
 		fireColumnsChanged();
 	}
 
@@ -357,6 +413,74 @@ public class DefaultTableView<R> implements TableView<R> {
 	@Override
 	public TableViewState state() {
 		return _state;
+	}
+
+	/**
+	 * Loads persisted personalization and merges it onto the current state: column order, widths
+	 * and sort are reconciled against the columns that actually exist (stale columns dropped, new
+	 * columns appended), and the persisted sort/grouping are re-applied to the row source.
+	 */
+	private void restore() {
+		TableViewState persisted = _store.load(_id);
+		if (persisted == null) {
+			return;
+		}
+
+		List<String> order = new ArrayList<>();
+		for (String name : persisted.getColumnOrder()) {
+			if (_columns.containsKey(name) && !order.contains(name)) {
+				order.add(name);
+			}
+		}
+		for (String name : _columns.keySet()) {
+			if (!order.contains(name)) {
+				order.add(name);
+			}
+		}
+		if (!order.isEmpty()) {
+			_state.setColumnOrder(order);
+		}
+
+		for (Map.Entry<String, Integer> entry : persisted.getWidths().entrySet()) {
+			if (_columns.containsKey(entry.getKey())) {
+				_state.getWidths().put(entry.getKey(), entry.getValue());
+			}
+		}
+
+		_state.setFrozenCount(Math.min(persisted.getFrozenCount(), _state.getColumnOrder().size()));
+
+		List<SortColumn> sort = new ArrayList<>();
+		for (SortColumn sortColumn : persisted.getSort()) {
+			Column<R, ?> column = _columns.get(sortColumn.column());
+			if (column != null && column.sort().isPresent()) {
+				sort.add(sortColumn);
+			}
+		}
+		_state.setSort(sort);
+		if (!sort.isEmpty()) {
+			_source.withOrder(new SortSpec(sort));
+		}
+
+		List<String> groupColumns = new ArrayList<>();
+		for (String name : persisted.getGrouping().columns()) {
+			if (_columns.containsKey(name)) {
+				groupColumns.add(name);
+			}
+		}
+		if (!groupColumns.isEmpty()) {
+			GroupSpec grouping = new GroupSpec(groupColumns);
+			_state.setGrouping(grouping);
+			_source.withGrouping(grouping);
+		}
+	}
+
+	/**
+	 * Persists the current personalization, if a store is configured.
+	 */
+	private void persist() {
+		if (_store != null && _id != null) {
+			_store.save(_id, _state);
+		}
 	}
 
 	private void onRowsInvalidated(int from, int to) {

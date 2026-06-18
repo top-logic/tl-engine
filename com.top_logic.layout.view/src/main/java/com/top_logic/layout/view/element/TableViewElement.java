@@ -48,6 +48,7 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Option;
+import com.top_logic.table.TableId;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.OptionsColumnFilter;
@@ -55,6 +56,7 @@ import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.PersonalConfigViewStateStore;
 
 /**
  * Declarative {@link UIElement} that renders the green-field table model
@@ -156,7 +158,8 @@ public class TableViewElement implements UIElement {
 
 		List<Column<Object, ?>> columns = buildColumns(resolveRowType(rows));
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		DefaultTableView<Object> view = DefaultTableView.create(columns, source);
+		DefaultTableView<Object> view =
+			DefaultTableView.create(columns, source, PersonalConfigViewStateStore.INSTANCE, tableId());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 
@@ -175,6 +178,29 @@ public class TableViewElement implements UIElement {
 		}
 
 		return control;
+	}
+
+	/**
+	 * A stable personalization key for this table, derived from its structural signature (row
+	 * types plus column attributes), so the same configured table restores its personalization
+	 * across sessions.
+	 */
+	private TableId tableId() {
+		StringBuilder key = new StringBuilder();
+		List<TLModelPartRef> types = _config.getTypes();
+		if (types != null) {
+			for (TLModelPartRef type : types) {
+				key.append(type.qualifiedName()).append(',');
+			}
+		}
+		key.append('|');
+		TableElement.ColumnsConfig columnsConfig = _config.getColumns();
+		if (columnsConfig != null) {
+			for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
+				key.append(columnConfig.getAttribute()).append(',');
+			}
+		}
+		return new TableId(key.toString());
 	}
 
 	private List<Column<Object, ?>> buildColumns(TLStructuredType rowType) {

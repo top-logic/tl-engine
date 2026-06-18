@@ -43,12 +43,12 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
- * Tool for creating, inspecting, updating, and deleting knowledge-base Agents and Skills.
+ * Tool for creating, inspecting, updating, and deleting application Agents and Skills.
  *
  * <p>
  * Mutating methods inherit the default {@link ToolMode#STRUCTURAL} mode, so they require human
  * approval and are blocked in production. Query methods are {@link ToolMode#READ}. This tool only
- * sees knowledge-base agents/skills; configuration-defined ones are not visible or editable here.
+ * sees application agents/skills; framework (TopLogic-provided) ones are not visible or editable here.
  * </p>
  */
 public class AgentAuthoringTool {
@@ -79,7 +79,7 @@ public class AgentAuthoringTool {
 	// ---- Skill mutations -------------------------------------------------
 
 	/**
-	 * Creates a new knowledge-base skill (reusable instruction text).
+	 * Creates a new application skill (reusable instruction text).
 	 *
 	 * @param name
 	 *        Unique skill name.
@@ -89,7 +89,7 @@ public class AgentAuthoringTool {
 	 *        The skill's instruction content (markdown).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the knowledge base")
+	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application")
 	public String createSkill(
 			@P("Unique skill name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description that tells the agent WHEN to load this skill, not what it does internally") String description,
@@ -126,7 +126,7 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * Updates an existing knowledge-base skill. Omitted fields are left unchanged.
+	 * Updates an existing application skill. Omitted fields are left unchanged.
 	 *
 	 * @param name
 	 *        Name of the skill to update.
@@ -136,7 +136,7 @@ public class AgentAuthoringTool {
 	 *        New content, or {@code null} to leave unchanged.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing knowledge-base skill. Omitted fields are left unchanged.")
+	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.")
 	public String updateSkill(
 			@P("Name of the skill to update") String name,
 			@P(value = "New description — tells the agent WHEN to load (omit to leave unchanged)", required = false) String description,
@@ -157,7 +157,7 @@ public class AgentAuthoringTool {
 			List<String> tools) {
 		Skill skill = findSkill(name);
 		if (skill == null) {
-			throw new IllegalArgumentException("No knowledge-base skill named '" + name + "'.");
+			throw new IllegalArgumentException("No application skill named '" + name + "'.");
 		}
 		if (tools != null) {
 			validateSkillTools(tools);
@@ -179,13 +179,13 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * Deletes a knowledge-base skill by name.
+	 * Deletes a application skill by name.
 	 *
 	 * @param name
 	 *        Name of the skill to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a knowledge-base skill by name")
+	@ToolMethod(description = "Delete a application skill by name")
 	public String deleteSkill(@P("Name of the skill to delete") String name) {
 		try {
 			OperationResult result = doDeleteSkill(name);
@@ -200,7 +200,7 @@ public class AgentAuthoringTool {
 	private OperationResult doDeleteSkill(String name) {
 		Skill skill = findSkill(name);
 		if (skill == null) {
-			throw new IllegalArgumentException("No knowledge-base skill named '" + name + "'.");
+			throw new IllegalArgumentException("No application skill named '" + name + "'.");
 		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Delete skill: " + name))) {
@@ -213,11 +213,11 @@ public class AgentAuthoringTool {
 	// ---- Skill queries ---------------------------------------------------
 
 	/**
-	 * Lists all knowledge-base skills.
+	 * Lists all application skills.
 	 *
 	 * @return JSON-serialized {@link SkillListResult} with one summary per skill.
 	 */
-	@ToolMethod(description = "List all knowledge-base skills", mode = ToolMode.READ)
+	@ToolMethod(description = "List all application skills", mode = ToolMode.READ)
 	public String listSkills() {
 		SkillListResult result = SkillListResult.create();
 		for (Skill skill : allKBSkills()) {
@@ -231,13 +231,13 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * Gets the full definition of a knowledge-base skill.
+	 * Gets the full definition of a application skill.
 	 *
 	 * @param name
 	 *        Skill name.
 	 * @return JSON-serialized {@link SkillDetail}; {@code exists} is {@code false} if no such skill.
 	 */
-	@ToolMethod(description = "Get the full definition of a knowledge-base skill", mode = ToolMode.READ)
+	@ToolMethod(description = "Get the full definition of a application skill", mode = ToolMode.READ)
 	public String getSkill(@P("Skill name") String name) {
 		SkillDetail detail = SkillDetail.create();
 		detail.setName(name);
@@ -256,7 +256,7 @@ public class AgentAuthoringTool {
 	// ---- Agent mutations -------------------------------------------------
 
 	/**
-	 * Creates a new agent in the knowledge base.
+	 * Creates a new agent in the application.
 	 *
 	 * @param name
 	 *        Unique agent name.
@@ -274,7 +274,7 @@ public class AgentAuthoringTool {
 	 *        Names of agents this agent may delegate to, or {@code null} for none.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new agent in the knowledge base")
+	@ToolMethod(description = "Create a new agent in the application")
 	public String createAgent(
 			@P("Unique agent name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description of the agent") String description,
@@ -319,7 +319,7 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * Updates an existing knowledge-base agent. Omitted fields are left unchanged.
+	 * Updates an existing application agent. Omitted fields are left unchanged.
 	 *
 	 * @param name
 	 *        Name of the agent to update.
@@ -337,7 +337,7 @@ public class AgentAuthoringTool {
 	 *        New delegation list, or {@code null} to leave unchanged (an empty list replaces with none).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing knowledge-base agent. Omitted fields are left unchanged.")
+	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.")
 	public String updateAgent(
 			@P("Name of the agent to update") String name,
 			@P(value = "New description (omit to leave unchanged)", required = false) String description,
@@ -365,7 +365,7 @@ public class AgentAuthoringTool {
 			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations) {
 		Agent agent = findAgent(name);
 		if (agent == null) {
-			throw new IllegalArgumentException("No knowledge-base agent named '" + name + "'.");
+			throw new IllegalArgumentException("No application agent named '" + name + "'.");
 		}
 		List<String> warnings = validateReferences(tools, skills, delegations);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
@@ -394,13 +394,13 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * Deletes a knowledge-base agent by name.
+	 * Deletes a application agent by name.
 	 *
 	 * @param name
 	 *        Name of the agent to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a knowledge-base agent by name")
+	@ToolMethod(description = "Delete a application agent by name")
 	public String deleteAgent(@P("Name of the agent to delete") String name) {
 		try {
 			OperationResult result = doDeleteAgent(name);
@@ -415,7 +415,7 @@ public class AgentAuthoringTool {
 	private OperationResult doDeleteAgent(String name) {
 		Agent agent = findAgent(name);
 		if (agent == null) {
-			throw new IllegalArgumentException("No knowledge-base agent named '" + name + "'.");
+			throw new IllegalArgumentException("No application agent named '" + name + "'.");
 		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Delete agent: " + name))) {
@@ -428,11 +428,11 @@ public class AgentAuthoringTool {
 	// ---- Agent queries ---------------------------------------------------
 
 	/**
-	 * Lists all knowledge-base agents.
+	 * Lists all application agents.
 	 *
 	 * @return JSON-serialized {@link AgentListResult} with one summary per agent.
 	 */
-	@ToolMethod(description = "List all knowledge-base agents", mode = ToolMode.READ)
+	@ToolMethod(description = "List all application agents", mode = ToolMode.READ)
 	public String listAgents() {
 		AgentListResult result = AgentListResult.create();
 		for (Agent agent : allKBAgents()) {
@@ -445,13 +445,13 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * Gets the full definition of a knowledge-base agent.
+	 * Gets the full definition of a application agent.
 	 *
 	 * @param name
 	 *        Agent name.
 	 * @return JSON-serialized {@link AgentDetail}; {@code exists} is {@code false} if no such agent.
 	 */
-	@ToolMethod(description = "Get the full definition of a knowledge-base agent", mode = ToolMode.READ)
+	@ToolMethod(description = "Get the full definition of a application agent", mode = ToolMode.READ)
 	public String getAgent(@P("Agent name") String name) {
 		AgentDetail detail = AgentDetail.create();
 		detail.setName(name);

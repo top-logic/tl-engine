@@ -131,3 +131,77 @@ message ToolListResult {
 	/** The available tools. */
 	repeated ToolSummary tools;
 }
+
+/**
+ * One declared parameter of a TL-Script tool.
+ */
+message ScriptToolParamInfo {
+	/** Parameter name (the binding name used as $name in the script body). */
+	string name;
+
+	/** Qualified TL type, e.g. tl.core:String. */
+	string type;
+
+	/** Parameter description. */
+	string description;
+
+	/** Whether the parameter must be supplied. */
+	bool mandatory;
+
+	/** Whether the parameter accepts a list of values. */
+	bool multiple;
+
+	/** Optional TL-Script default expression used when an optional parameter is omitted. */
+	string defaultValue;
+}
+
+/**
+ * Short TL-Script tool entry for listings.
+ */
+message ScriptToolSummary {
+	/** Tool name (unqualified; referenced as custom.{name}). */
+	string name;
+
+	/** Tool description. */
+	string description;
+
+	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, or STRUCTURAL. */
+	string mode;
+}
+
+/**
+ * Result of listing the agent-created TL-Script tools.
+ */
+message ScriptToolListResult {
+	/** The TL-Script tools in the 'custom' factory. */
+	repeated ScriptToolSummary tools;
+}
+
+/**
+ * Full detail of a single TL-Script tool.
+ */
+message ScriptToolDetail {
+	/** Whether a tool with this name exists in the 'custom' factory. */
+	bool exists;
+
+	/** Tool name. */
+	string name;
+
+	/** Human-readable label. */
+	string label;
+
+	/** Tool description. */
+	string description;
+
+	/** TL-Script implementation source. */
+	string implementation;
+
+	/** Tool mode. */
+	string mode;
+
+	/** Whether the tool may run in parallel with other concurrency-safe tools. */
+	bool concurrencySafe;
+
+	/** Declared parameters. */
+	repeated ScriptToolParamInfo parameters;
+}

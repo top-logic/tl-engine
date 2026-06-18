@@ -39,19 +39,25 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  */
 public class FrameworkWiringTool {
 
-	/** */
+	/**
+	 * Configuration for {@link FrameworkWiringTool}.
+	 */
 	public interface Config extends PolymorphicConfiguration<FrameworkWiringTool> {
 		// no additional properties
 	}
 
 	private final Consumer<Consumer<TopLogicAgentDefinitions.Config<?>>> _wireThenPersist;
 
-	/** */
+	/**
+	 * Creates a {@link FrameworkWiringTool} wired to the live application configuration.
+	 */
 	public FrameworkWiringTool() {
 		_wireThenPersist = FrameworkWiringTool::livePersist;
 	}
 
-	/** */
+	/**
+	 * Creates a {@link FrameworkWiringTool} from configuration.
+	 */
 	@SuppressWarnings("unused")
 	@CalledByReflection
 	public FrameworkWiringTool(InstantiationContext context, Config config) {
@@ -67,7 +73,9 @@ public class FrameworkWiringTool {
 
 	// ---- Query methods (READ) ------------------------------------------------
 
-	/** */
+	/**
+	 * Lists all framework agents.
+	 */
 	@ToolMethod(description = "List all framework (TopLogic-provided) agents", mode = ToolMode.READ)
 	public String listFrameworkAgents() {
 		AgentListResult result = AgentListResult.create();
@@ -80,7 +88,9 @@ public class FrameworkWiringTool {
 		return DataClassSerializer.toJson(result, FrameworkWiringTool.class, "listFrameworkAgents()");
 	}
 
-	/** */
+	/**
+	 * Gets a framework agent's tools, skills, and delegations.
+	 */
 	@ToolMethod(description = "Get a framework agent's tools, skills, and delegations",
 		mode = ToolMode.READ)
 	public String getFrameworkAgent(@P("Framework agent name") String name) {
@@ -101,7 +111,9 @@ public class FrameworkWiringTool {
 		return DataClassSerializer.toJson(detail, FrameworkWiringTool.class, "getFrameworkAgent()");
 	}
 
-	/** */
+	/**
+	 * Lists all framework skills.
+	 */
 	@ToolMethod(description = "List all framework (TopLogic-provided) skills", mode = ToolMode.READ)
 	public String listFrameworkSkills() {
 		SkillListResult result = SkillListResult.create();
@@ -115,7 +127,9 @@ public class FrameworkWiringTool {
 		return DataClassSerializer.toJson(result, FrameworkWiringTool.class, "listFrameworkSkills()");
 	}
 
-	/** */
+	/**
+	 * Gets a framework skill's tools.
+	 */
 	@ToolMethod(description = "Get a framework skill's tools", mode = ToolMode.READ)
 	public String getFrameworkSkill(@P("Framework skill name") String name) {
 		SkillDetail detail = SkillDetail.create();
@@ -134,7 +148,9 @@ public class FrameworkWiringTool {
 
 	// ---- Agent wiring (STRUCTURAL) -------------------------------------------
 
-	/** */
+	/**
+	 * Adds a tool to a framework agent.
+	 */
 	@ToolMethod(description = "Add a tool to a framework agent. Takes effect immediately.")
 	public String addToolToAgent(
 			@P("Framework agent name") String agentName,
@@ -144,7 +160,9 @@ public class FrameworkWiringTool {
 			"Tool '" + toolName + "' added to agent '" + agentName + "'.");
 	}
 
-	/** */
+	/**
+	 * Removes a tool from a framework agent.
+	 */
 	@ToolMethod(description = "Remove a tool from a framework agent. Takes effect immediately.")
 	public String removeToolFromAgent(
 			@P("Framework agent name") String agentName,
@@ -154,7 +172,9 @@ public class FrameworkWiringTool {
 			"Tool '" + toolName + "' removed from agent '" + agentName + "'.");
 	}
 
-	/** */
+	/**
+	 * Adds a skill to a framework agent.
+	 */
 	@ToolMethod(description = "Add a skill to a framework agent. Takes effect immediately.")
 	public String addSkillToAgent(
 			@P("Framework agent name") String agentName,
@@ -164,7 +184,9 @@ public class FrameworkWiringTool {
 			"Skill '" + skillName + "' added to agent '" + agentName + "'.");
 	}
 
-	/** */
+	/**
+	 * Removes a skill from a framework agent.
+	 */
 	@ToolMethod(description = "Remove a skill from a framework agent. Takes effect immediately.")
 	public String removeSkillFromAgent(
 			@P("Framework agent name") String agentName,
@@ -174,7 +196,9 @@ public class FrameworkWiringTool {
 			"Skill '" + skillName + "' removed from agent '" + agentName + "'.");
 	}
 
-	/** */
+	/**
+	 * Adds a delegation target to a framework agent.
+	 */
 	@ToolMethod(description = "Add a delegation target to a framework agent. Takes effect immediately.")
 	public String addDelegationToAgent(
 			@P("Framework agent name") String agentName,
@@ -184,7 +208,9 @@ public class FrameworkWiringTool {
 			"Delegation '" + delegationName + "' added to agent '" + agentName + "'.");
 	}
 
-	/** */
+	/**
+	 * Removes a delegation target from a framework agent.
+	 */
 	@ToolMethod(description = "Remove a delegation target from a framework agent. Takes effect immediately.")
 	public String removeDelegationFromAgent(
 			@P("Framework agent name") String agentName,
@@ -196,7 +222,9 @@ public class FrameworkWiringTool {
 
 	// ---- Skill wiring (STRUCTURAL) -------------------------------------------
 
-	/** */
+	/**
+	 * Adds a tool to a framework skill.
+	 */
 	@ToolMethod(description = "Add a tool to a framework skill. Takes effect immediately.")
 	public String addToolToSkill(
 			@P("Framework skill name") String skillName,
@@ -206,7 +234,9 @@ public class FrameworkWiringTool {
 			"Tool '" + toolName + "' added to skill '" + skillName + "'.");
 	}
 
-	/** */
+	/**
+	 * Removes a tool from a framework skill.
+	 */
 	@ToolMethod(description = "Remove a tool from a framework skill. Takes effect immediately.")
 	public String removeToolFromSkill(
 			@P("Framework skill name") String skillName,

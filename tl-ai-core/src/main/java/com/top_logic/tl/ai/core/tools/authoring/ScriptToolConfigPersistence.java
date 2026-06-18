@@ -47,7 +47,7 @@ public class ScriptToolConfigPersistence {
 	 *
 	 * @param fullConfig
 	 *        The complete {@link ToolRegistryService} configuration (from
-	 *        {@code ApplicationConfig}); only ScriptToolFactory entries are extracted for the
+	 *        {@code ApplicationConfig}); only {@link ScriptToolFactory} entries are extracted for the
 	 *        overlay.
 	 */
 	public static void persist(ToolRegistryService.Config<?> fullConfig) {

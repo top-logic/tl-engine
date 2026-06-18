@@ -18,8 +18,6 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
-import com.top_logic.tl.ai.core.agent.DelegationRef;
-import com.top_logic.tl.ai.core.agent.SkillRef;
 import com.top_logic.tl.ai.core.agent.ToolRef;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.AgentConfig;

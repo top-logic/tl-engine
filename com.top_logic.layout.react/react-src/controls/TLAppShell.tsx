@@ -1,5 +1,13 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+/**
+ * Viewport width (px) at or below which the UI is treated as COMPACT.
+ *
+ * Must stay in sync with the `@media (max-width: 768px)` breakpoint in tlReactControls.css
+ * (drawer/sidebar swap). TODO: promote both to a shared theme token.
+ */
+const COMPACT_MAX_WIDTH = 768;
 
 /**
  * Application shell with header / content / footer layout and built-in snackbar.
@@ -14,6 +22,20 @@ import type { TLCellProps } from 'tl-react-bridge';
  */
 const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const sendCommand = useTLCommand();
+
+  // Report the viewport "display class" to the server once on mount and whenever the
+  // responsive breakpoint is crossed, so adaptive controls can switch presentation.
+  React.useEffect(() => {
+    const query = window.matchMedia(`(max-width: ${COMPACT_MAX_WIDTH}px)`);
+    const report = (compact: boolean) => {
+      sendCommand('reportDisplayClass', { displayClass: compact ? 'COMPACT' : 'REGULAR' });
+    };
+    report(query.matches);
+    const onChange = (e: MediaQueryListEvent) => report(e.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, [sendCommand]);
 
   const header = state.header as unknown;
   const content = state.content as unknown;

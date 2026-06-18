@@ -5,13 +5,19 @@
  */
 package com.top_logic.layout.react.control.nav;
 
+import java.util.Map;
+
+import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
+import com.top_logic.layout.responsive.DisplayClass;
+import com.top_logic.layout.responsive.DisplayClassModel;
 
 /**
  * Application shell that provides the standard page layout (header, content, footer) and a built-in
@@ -140,6 +146,33 @@ public class ReactAppShellControl extends ReactControl {
 	 */
 	public void showSnackbar(String htmlContent, ReactSnackbarControl.Variant variant) {
 		_snackbar.showHtml(htmlContent, variant);
+	}
+
+	/**
+	 * Records the {@link DisplayClass} reported by the client for the current browser tab.
+	 *
+	 * <p>
+	 * Fired by the shell's React component whenever the viewport crosses the responsive breakpoint
+	 * (and once on mount). The value is stored on the subsession's {@link DisplayClassModel}, from
+	 * where adaptive controls observe it.
+	 * </p>
+	 *
+	 * @param arguments
+	 *        Command arguments; {@code "displayClass"} carries the reported {@link DisplayClass}
+	 *        name.
+	 */
+	@ReactCommand("reportDisplayClass")
+	void handleReportDisplayClass(Map<String, Object> arguments) {
+		Object reported = arguments.get("displayClass");
+		DisplayClass displayClass = DisplayClass.DEFAULT;
+		if (reported != null) {
+			try {
+				displayClass = DisplayClass.valueOf(reported.toString());
+			} catch (IllegalArgumentException ex) {
+				Logger.warn("Ignoring unknown display class '" + reported + "'.", ReactAppShellControl.class);
+			}
+		}
+		DisplayClassModel.forCurrentSubSession().setDisplayClass(displayClass);
 	}
 
 	@Override

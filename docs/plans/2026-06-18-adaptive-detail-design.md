@@ -164,8 +164,17 @@ nesting-aware, not purely self-contained per level.
 2. **Phase 1 — `<adaptive-detail>` element.** Delegates to split (REGULAR) and selection-driven
    context-toggle (COMPACT), sharing `<selector>`/`<detail>`; outermost instance coordinates the
    unified breadcrumb.
-3. **Phase 2 — demo + verification.** Wire a nested example into `com.top_logic.demo`;
-   Playwright-verify at both widths and across a resize flip (selection preserved).
+3. **Phase 2 — demo + verification.** Wire a working example into `com.top_logic.demo`, reachable
+   in the browser, that exercises a **multi-step selection path** (at least two nested levels, e.g.
+   project → sprint → detail) so both the cascading-column (wide) and multi-step drill (compact)
+   behaviours are covered by one shared config. Validate manually with Playwright:
+   - **Wide (REGULAR):** the nested levels render as cascading columns; selecting upstream
+     populates the downstream selector and ultimately the detail form.
+   - **Compact (COMPACT):** the same view drills step-by-step (selector → nested selector → detail)
+     with the unified breadcrumb spanning all levels; tapping a crumb / back nulls the deeper
+     selections.
+   - **Resize flip:** with a selection at depth ≥ 1, flip the viewport across the breakpoint and
+     confirm the selection is preserved and the presentation switches losslessly.
 
 ## Relevant existing code
 

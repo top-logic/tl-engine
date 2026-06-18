@@ -23,8 +23,11 @@
 
 						<treeView name="testDTree">
 							<layoutInfo size="150"/>
-							<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
-								structureName="SecurityStructure"
+							<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+								children="node->[]"
+								nodePredicate="node->$node.instanceOf(`SecurityStructure:SecurityStructure.Root`)"
+								parents="node->[]"
+								rootNode="`SecurityStructure#ROOT`"
 							/>
 						</treeView>
 

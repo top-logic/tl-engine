@@ -17,9 +17,12 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId, state }) => {
   );
 
   if (state.editable === false) {
+    // View mode: show the localized date (e.g. "01.06.2026") supplied by the server, falling
+    // back to the ISO value if no localized form was emitted.
+    const display = (state.displayValue as string) ?? (value as string) ?? '';
     return (
       <span id={controlId} className="tlReactDatePicker tlReactDatePicker--immutable">
-        {(value as string) ?? ''}
+        {display}
       </span>
     );
   }

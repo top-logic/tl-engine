@@ -17,6 +17,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.mig.html.HTMLFormatter;
 
 /**
  * A {@link ReactFormFieldControl} for date picker fields.
@@ -29,11 +30,22 @@ import com.top_logic.layout.react.control.ReactCommand;
  * value populates the input. Without this translation the model would receive a {@link String} and
  * storing it fails (the date storage mapping cannot convert a {@link String} to a {@link Date}).
  * </p>
+ *
+ * <p>
+ * In addition to the ISO {@link #VALUE} (consumed by the edit-mode HTML input), the control emits a
+ * {@link #DISPLAY_VALUE} holding the date formatted in the current user's locale and time zone (via
+ * {@link HTMLFormatter}). The React component shows this localized string in view (read-only) mode,
+ * so a date reads as e.g. {@code 01.06.2026} (German) rather than the locale-independent ISO form or
+ * the raw Java {@link Date#toString()}.
+ * </p>
  */
 public class ReactDatePickerControl extends ReactFormFieldControl {
 
 	/** ISO date pattern used by the HTML {@code <input type="date">} (locale-independent). */
 	private static final String ISO_DATE = "yyyy-MM-dd";
+
+	/** State key for the localized, view-mode display string of the date. */
+	private static final String DISPLAY_VALUE = "displayValue";
 
 	/**
 	 * Creates a new {@link ReactDatePickerControl}.
@@ -46,8 +58,10 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 	public ReactDatePickerControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLDatePicker");
 		// The base constructor seeded the raw Date into the value state; re-emit it as an ISO
-		// string so the date input can display the initial value.
+		// string so the date input can display the initial value, plus a localized string for
+		// the read-only (view-mode) display.
 		putState(VALUE, formatIso(model.getValue()));
+		putState(DISPLAY_VALUE, formatLocalized(model.getValue()));
 	}
 
 	@Override
@@ -94,13 +108,22 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
-		// Emit an ISO string so the <input type="date"> can display the value.
+		// Emit an ISO string so the <input type="date"> can display the value, plus a localized
+		// string for the read-only (view-mode) display.
 		putState(VALUE, formatIso(newValue));
+		putState(DISPLAY_VALUE, formatLocalized(newValue));
 	}
 
 	private static String formatIso(Object value) {
 		if (value instanceof Date) {
 			return CalendarUtil.newSimpleDateFormat(ISO_DATE, Locale.ROOT).format((Date) value);
+		}
+		return null;
+	}
+
+	private static String formatLocalized(Object value) {
+		if (value instanceof Date) {
+			return HTMLFormatter.getInstance().getDateFormat().format((Date) value);
 		}
 		return null;
 	}

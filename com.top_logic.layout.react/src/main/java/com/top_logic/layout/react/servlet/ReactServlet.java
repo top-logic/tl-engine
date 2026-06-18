@@ -168,15 +168,17 @@ public class ReactServlet extends TopLogicServlet {
 		}
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (!(control instanceof TooltipProvider)) {
-			sendError(response, HttpServletResponse.SC_NOT_FOUND,
-				"Control does not provide tooltips: " + controlId);
+			// A control without tooltips (e.g. a table whose cells probe for an optional tooltip) is
+			// a normal case, not an error: answer "no tooltip" rather than a 404 (which the browser
+			// logs as a failed request).
+			sendNoTooltip(response);
 			return;
 		}
 
 		String key = request.getParameter("key");
 		TooltipContent content = ((TooltipProvider) control).getTooltipContent(key);
 		if (content == null) {
-			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			sendNoTooltip(response);
 			return;
 		}
 
@@ -193,6 +195,19 @@ public class ReactServlet extends TopLogicServlet {
 				out.write(",\"interactive\":true");
 			}
 			out.write('}');
+		}
+	}
+
+	/**
+	 * Answers a tooltip request for which no tooltip is available with a normal {@code 200} response
+	 * carrying a JSON {@code null} body. The client treats {@code null} as "no tooltip", so this
+	 * avoids logging a spurious error for the common case of a control that simply has no tooltip.
+	 */
+	private static void sendNoTooltip(HttpServletResponse response) throws IOException {
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentType("application/json; charset=UTF-8");
+		try (PrintWriter out = response.getWriter()) {
+			out.write("null");
 		}
 	}
 

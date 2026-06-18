@@ -13,13 +13,14 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import com.top_logic.basic.LongID;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
+import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.dob.meta.IdentifiedObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
@@ -30,12 +31,16 @@ import com.top_logic.knowledge.search.RevisionQuery.LoadStrategy;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.db2.expr.transform.ExpressionCopy;
 import com.top_logic.knowledge.service.db2.expr.visit.LiteralValue;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.util.TLContext;
 
 /**
  * Factory for {@link Expression}s.
@@ -195,8 +200,21 @@ public class ExpressionFactory {
 			// null-Literals are not allowed #9479
 			throw new IllegalArgumentException("Literals with value 'null' are not allowed.");
 		}
-		if (value instanceof IdentifiedObject ki) {
+		if (value instanceof KnowledgeItem ki) {
 			return ki.tId();
+		}
+		if (value instanceof TLObject object) {
+			if (object.tTransient()) {
+				/* There is no ID for an transient object. Use replacement instead. The approach is,
+				 * that this element can be passed to the database but comparison always fails for
+				 * any persistent object in the database. */
+				MetaObject genericObjectType = PersistencyLayer.getKnowledgeBase().getMORepository()
+					.getMetaObject(TLAnnotations.getTable(object.tType()));
+				return new DefaultObjectKey(TLContext.TRUNK_ID, Revision.CURRENT_REV, genericObjectType,
+					LongID.TRANSIENT_OBJECT_ID_REPLACEMENT);
+			} else {
+				return object.tId();
+			}
 		}
 		if (value instanceof Collection col) {
 			return replaceKIsByObjectKeys(col);
@@ -227,11 +245,11 @@ public class ExpressionFactory {
 			}
 			boolean changes = false;
 			for (Object entry : col) {
-				if (entry instanceof IdentifiedObject ki) {
-					entry = ki.tId();
+				Object entryCopy = replaceKIbyObjectKey(entry);
+				if (entryCopy != entry) {
 					changes = true;
 				}
-				copy.add(entry);
+				copy.add(entryCopy);
 
 			}
 			if (changes) {

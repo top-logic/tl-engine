@@ -11,7 +11,7 @@
 		<panes>
 			<pane
 				min-size="200"
-				size="55"
+				size="60"
 				unit="%"
 			>
 				<panel>
@@ -27,13 +27,15 @@
 							<column attribute="name"/>
 							<column attribute="firstName"/>
 							<column attribute="lastName"/>
+							<column attribute="admin"/>
+							<column attribute="restrictedUser"/>
 						</columns>
 						<rows>all(`tl.accounts:Person`)</rows>
 					</table-view>
 				</panel>
 			</pane>
 			<pane
-				size="45"
+				size="40"
 				unit="%"
 			>
 				<panel>
@@ -45,6 +47,7 @@
 						<field attribute="name"/>
 						<field attribute="firstName"/>
 						<field attribute="lastName"/>
+						<field attribute="admin"/>
 					</form>
 				</panel>
 			</pane>

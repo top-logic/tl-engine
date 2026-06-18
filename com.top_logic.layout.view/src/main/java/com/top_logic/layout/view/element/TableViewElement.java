@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -30,15 +32,25 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.Option;
+import com.top_logic.table.filter.BooleanColumnFilter;
+import com.top_logic.table.filter.ComparableColumnFilter;
+import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -172,32 +184,110 @@ public class TableViewElement implements UIElement {
 		}
 		List<Column<Object, ?>> columns = new ArrayList<>();
 		for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
-			columns.add(buildColumn(columnConfig.getAttribute(), rowType));
+			String attribute = columnConfig.getAttribute();
+			TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
+			columns.add(buildColumn(attribute, columnLabel(part, attribute), part));
 		}
 		return columns;
 	}
 
-	private static Column<Object, Object> buildColumn(String attribute, TLStructuredType rowType) {
+	/**
+	 * Builds a column whose sort comparator and filter are derived from the model attribute's
+	 * type: enumerations get an options filter, numbers and dates a comparison/range filter,
+	 * booleans a boolean filter, strings a text filter. Anything else (references, multi-valued
+	 * attributes, unresolved parts) falls back to a display-label text filter.
+	 */
+	private static Column<Object, ?> buildColumn(String attribute, ResKey label, TLStructuredTypePart part) {
+		if (part != null && !part.isMultiple()) {
+			TLType type = part.getType();
+			if (type instanceof TLEnumeration enumeration) {
+				return optionsColumn(attribute, label, enumeration);
+			}
+			if (type instanceof TLPrimitive primitive) {
+				switch (primitive.getKind()) {
+					case BOOLEAN:
+					case TRISTATE:
+						return typedColumn(attribute, label, Boolean.class,
+							Comparator.<Boolean> naturalOrder(), BooleanColumnFilter.INSTANCE);
+					case INT:
+					case FLOAT:
+						return typedColumn(attribute, label, Number.class,
+							Comparator.comparingDouble(Number::doubleValue),
+							new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
+								Double::valueOf));
+					case DATE:
+						return typedColumn(attribute, label, Date.class,
+							Comparator.naturalOrder(),
+							new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
+								TableViewElement::parseDate));
+					case STRING:
+						return typedColumn(attribute, label, String.class,
+							Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
+					default:
+						break;
+				}
+			}
+		}
+		return labelColumn(attribute, label);
+	}
+
+	/**
+	 * A column reading a typed attribute value, with a value comparator and a matching column
+	 * filter. The cell renders the value's localized display label.
+	 */
+	private static <V> Column<Object, V> typedColumn(String attribute, ResKey label, Class<V> valueType,
+			Comparator<V> comparator, ColumnFilter<V> filter) {
+		return DefaultColumn.<Object, V> builder(attribute, row -> valueType.cast(attributeValue(row, attribute)))
+			.label(label)
+			.renderer(value -> CellContent.text(label(value)))
+			.sort(() -> comparator)
+			.filter(filter)
+			.build();
+	}
+
+	/**
+	 * A column over an enumeration attribute: an options filter offering the enumeration's
+	 * classifiers, sorted and rendered by their display labels.
+	 */
+	private static Column<Object, Object> optionsColumn(String attribute, ResKey label, TLEnumeration enumeration) {
+		List<Option> options = new ArrayList<>();
+		for (TLClassifier classifier : enumeration.getClassifiers()) {
+			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
+		}
 		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
-			.label(columnLabel(attribute, rowType))
+			.label(label)
+			.renderer(value -> CellContent.text(label(value)))
+			.sort(() -> Comparator.comparing(TableViewElement::label))
+			.filter(new OptionsColumnFilter<>(options))
+			.build();
+	}
+
+	/**
+	 * The fallback column: sorts and text-filters by the cell's display label.
+	 */
+	private static Column<Object, Object> labelColumn(String attribute, ResKey label) {
+		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
+			.label(label)
 			.renderer(value -> CellContent.text(label(value)))
 			.sort(() -> Comparator.comparing(TableViewElement::label))
 			.filter(new TextColumnFilter<>(TableViewElement::label))
 			.build();
 	}
 
+	private static Date parseDate(String text) {
+		try {
+			return HTMLFormatter.getInstance().getDateFormat().parse(text.trim());
+		} catch (ParseException ex) {
+			return null;
+		}
+	}
+
 	/**
-	 * The display label for a column: the model attribute's label if it can be resolved,
+	 * The display label for a column: the model attribute's label if the part can be resolved,
 	 * otherwise the attribute name.
 	 */
-	private static ResKey columnLabel(String attribute, TLStructuredType rowType) {
-		if (rowType != null) {
-			TLStructuredTypePart part = rowType.getPart(attribute);
-			if (part != null) {
-				return TLModelNamingConvention.resourceKey(part);
-			}
-		}
-		return ResKey.text(attribute);
+	private static ResKey columnLabel(TLStructuredTypePart part, String attribute) {
+		return part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(attribute);
 	}
 
 	/**

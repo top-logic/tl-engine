@@ -96,6 +96,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 	private final ReactFieldControlProvider _selectProvider = new SelectControlProvider();
 
+	private final ReactFieldControlProvider _binaryProvider = new BinaryControlProvider();
+
 	/**
 	 * Creates a {@link FieldControlService} from configuration.
 	 */
@@ -251,9 +253,10 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 					return _numberProvider.createControl(context, part, model);
 				case DATE:
 					return _dateProvider.createControl(context, part, model);
+				case BINARY:
+					return _binaryProvider.createControl(context, part, model);
 				case STRING:
 				case TRISTATE:
-				case BINARY:
 				case CUSTOM:
 				default:
 					return _textProvider.createControl(context, part, model);

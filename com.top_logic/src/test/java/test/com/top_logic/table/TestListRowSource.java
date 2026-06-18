@@ -39,6 +39,14 @@ public class TestListRowSource extends TestCase {
 		}
 	}
 
+	/** Filter state accepting ages greater than or equal to a bound. */
+	private record AtLeast(int min) implements FilterState {
+		@Override
+		public boolean isEmpty() {
+			return false;
+		}
+	}
+
 	private final Column<Person, String> _name =
 		DefaultColumn.<Person, String> builder("name", Person::name)
 			.sort(() -> Comparator.naturalOrder())
@@ -59,6 +67,18 @@ public class TestListRowSource extends TestCase {
 	private final Column<Person, Integer> _age =
 		DefaultColumn.<Person, Integer> builder("age", Person::age)
 			.sort(() -> Comparator.naturalOrder())
+			.filter(new ColumnFilter<>() {
+				@Override
+				public FilterInput input() {
+					return new FilterInput.Range();
+				}
+
+				@Override
+				public Predicate<Integer> predicate(FilterState state) {
+					int min = ((AtLeast) state).min();
+					return value -> value != null && value.intValue() >= min;
+				}
+			})
 			.build();
 
 	private List<Column<Person, ?>> columns() {
@@ -97,6 +117,22 @@ public class TestListRowSource extends TestCase {
 			new com.top_logic.table.SortColumn("name", true))));
 		// age desc: 40 (Bob), then 30 (Charlie), then 25 (alice, alma) by name asc.
 		assertEquals(List.of("Bob", "Charlie", "alice", "alma"), names(source));
+	}
+
+	public void testFacetCountsReflectOtherFiltersButNotOwn() {
+		ListRowSource<Person> source = new ListRowSource<>(people(), columns());
+		// Two active filters: name contains "li" (Charlie, alice) and age >= 30 (Charlie, Bob).
+		source.withFilter(new FilterSpec(java.util.Map.of("name", new Contains("li"), "age", new AtLeast(30))));
+		// Displayed = intersection = Charlie only.
+		assertEquals(List.of("Charlie"), names(source));
+
+		// Facets on age exclude age's own filter but keep the name filter, so they count over
+		// {Charlie(30), alice(25)} — age 25 still counted, ages outside the name match excluded.
+		com.top_logic.table.MatchCounts ageFacets = source.matchCounts("age");
+		assertTrue(ageFacets.isAvailable());
+		assertEquals(1, ageFacets.count(Integer.valueOf(30)));
+		assertEquals(1, ageFacets.count(Integer.valueOf(25)));
+		assertEquals("Bob (age 40) is excluded by the name filter.", 0, ageFacets.count(Integer.valueOf(40)));
 	}
 
 	public void testFilterContains() {

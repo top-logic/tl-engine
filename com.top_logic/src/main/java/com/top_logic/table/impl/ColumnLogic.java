@@ -31,8 +31,28 @@ final class ColumnLogic {
 	 * filter is active (accept all).
 	 */
 	static <R> Predicate<R> predicate(FilterSpec filter, Map<String, Column<R, ?>> byName) {
+		return predicate(filter, byName, null);
+	}
+
+	/**
+	 * The combined AND predicate over all active column filters except the one for
+	 * {@code excludeColumn}, or {@code null} if none remains (accept all).
+	 *
+	 * <p>
+	 * Excluding a column's own filter is what makes correct facet counts: each option's count
+	 * reflects how many rows it would yield <em>given the other active filters</em>, independent of
+	 * the current selection in this very column.
+	 * </p>
+	 *
+	 * @param excludeColumn
+	 *        The column whose own filter is left out, or {@code null} to include all.
+	 */
+	static <R> Predicate<R> predicate(FilterSpec filter, Map<String, Column<R, ?>> byName, String excludeColumn) {
 		Predicate<R> result = null;
 		for (Map.Entry<String, FilterState> entry : filter.byColumn().entrySet()) {
+			if (entry.getKey().equals(excludeColumn)) {
+				continue;
+			}
 			FilterState state = entry.getValue();
 			if (state == null || state.isEmpty()) {
 				continue;

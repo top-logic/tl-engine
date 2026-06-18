@@ -151,9 +151,14 @@ public class ListRowSource<R> implements RowSource<R> {
 		if (definition == null) {
 			return MatchCounts.NONE;
 		}
+		// Facet counts reflect every other active filter, but not this column's own filter, so an
+		// option's count tells how many rows it would yield given the rest of the current criteria.
+		Predicate<R> others = ColumnLogic.predicate(_filter, _byName, column);
 		Map<Object, Integer> counts = new HashMap<>();
 		for (R element : _elements) {
-			counts.merge(definition.value(element), Integer.valueOf(1), Integer::sum);
+			if (others == null || others.test(element)) {
+				counts.merge(definition.value(element), Integer.valueOf(1), Integer::sum);
+			}
 		}
 		return new MatchCounts() {
 			@Override

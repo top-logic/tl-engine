@@ -8,7 +8,7 @@ package com.top_logic.tl.ai.core.tools.authoring;
 import java.io.File;
 import java.io.IOError;
 import java.io.StringWriter;
-import java.util.Collections;
+import java.util.Map;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -20,37 +20,40 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
-import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
-import com.top_logic.layout.admin.component.OverrideConfigurationWriter;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
+import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.ToolFactoryConfig;
 
 /**
- * Persists a modified {@link ToolRegistryService} configuration as an autoconf overlay file,
- * exactly as the Service Editor's save handler does, then reloads {@link ApplicationConfig} and
- * restarts the {@link ToolRegistryService} so that the new tool definitions become immediately
- * active.
+ * Persists an additive overlay containing only {@link ScriptToolFactory} entries, then reloads
+ * {@link ApplicationConfig} and restarts the {@link ToolRegistryService} so that the changed tool
+ * definitions become immediately active.
+ *
+ * <p>
+ * Only agent-authored factories (those backed by {@link ScriptToolFactory}) are written to the
+ * overlay. All other factories flow through unchanged from the base configuration. A seed overlay
+ * file must exist at boot so the path is registered in the webapp resource resolver.
+ * </p>
  */
 public class ScriptToolConfigPersistence {
 
-	private static final String APPLICATION_ROOT_TAG = "application";
-
 	/**
-	 * Writes the given registry configuration to
-	 * {@code WEB-INF/autoconf/com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.config.xml},
-	 * reloads the application configuration, and restarts the {@link ToolRegistryService} so that
-	 * the changed tool definitions become immediately active.
+	 * Extracts only the {@link ScriptToolFactory} entries from the given full configuration,
+	 * writes them as an additive overlay, and restarts the service.
 	 *
-	 * @param serviceConfig
-	 *        The complete {@link ToolRegistryService} configuration; it fully replaces the
-	 *        existing overlay entry for this service.
+	 * @param fullConfig
+	 *        The complete {@link ToolRegistryService} configuration (from
+	 *        {@code ApplicationConfig}); only ScriptToolFactory entries are extracted for the
+	 *        overlay.
 	 */
-	public static void persist(ToolRegistryService.Config<?> serviceConfig) {
+	public static void persist(ToolRegistryService.Config<?> fullConfig) {
 		try {
-			persistTo(overlayFile(), serviceConfig);
+			ToolRegistryService.Config<?> overlay = extractScriptToolFactories(fullConfig);
+			persistTo(overlayFile(), overlay);
 			TLServiceUtils.reloadConfigurations();
 			restartToolRegistry();
 			ToolRegistryReloadFlag.request();
@@ -60,6 +63,21 @@ public class ScriptToolConfigPersistence {
 			throw new RuntimeException(
 				"Failed to reload application configuration after persisting tool config: " + err.getMessage(), err);
 		}
+	}
+
+	/**
+	 * Extracts only the ScriptToolFactory entries from a full service config into a fresh overlay.
+	 */
+	private static ToolRegistryService.Config<?> extractScriptToolFactories(
+			ToolRegistryService.Config<?> fullConfig) {
+		ToolRegistryService.Config<?> overlay =
+			TypedConfiguration.newConfigItem(ToolRegistryService.Config.class);
+		for (Map.Entry<String, ToolFactoryConfig> entry : fullConfig.getToolFactories().entrySet()) {
+			if (entry.getValue().getImplementation() instanceof ScriptToolFactory.Config) {
+				overlay.getToolFactories().put(entry.getKey(), entry.getValue());
+			}
+		}
+		return overlay;
 	}
 
 	private static void restartToolRegistry() {
@@ -72,34 +90,26 @@ public class ScriptToolConfigPersistence {
 	}
 
 	/**
-	 * Serializes the given registry configuration as a pretty-printed XML overlay file.
+	 * Serializes the overlay as a pretty-printed XML file without reloading or restarting.
 	 *
 	 * <p>
-	 * This method handles only the file write; the caller is responsible for reloading the
-	 * application configuration afterwards. Prefer {@link #persist(ToolRegistryService.Config)}
-	 * for normal use; call this method directly only when reload must be suppressed (e.g. in
-	 * tests).
+	 * Prefer {@link #persist(ToolRegistryService.Config)} for normal use; call this method
+	 * directly only when reload must be suppressed (e.g. in tests).
 	 * </p>
-	 *
-	 * @param file
-	 *        Target file to write the overlay to.
-	 * @param serviceConfig
-	 *        The complete {@link ToolRegistryService} configuration to serialize.
 	 */
-	public static void persistTo(File file, ToolRegistryService.Config<?> serviceConfig) throws Exception {
+	public static void persistTo(File file, ToolRegistryService.Config<?> overlay) throws Exception {
 		FileUtilities.enforceDirectory(file.getParentFile());
 
 		ApplicationConfig.Config app = TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
 		ModuleConfiguration module = TypedConfiguration.newConfigItem(ModuleConfiguration.class);
 		module.setServiceClass(ToolRegistryService.class);
-		module.setInstance((ServiceConfiguration<?>) serviceConfig);
+		module.setInstance((ServiceConfiguration<?>) overlay);
 		app.getServices().put(ToolRegistryService.class, module);
 
 		String xml;
 		try (StringWriter out = new StringWriter()) {
-			try (ConfigurationWriter writer =
-				new OverrideConfigurationWriter(out, Collections.singleton(TypedRuntimeModule.ModuleConfiguration.class))) {
-				TypedConfiguration.serialize(APPLICATION_ROOT_TAG, app, writer);
+			try (ConfigurationWriter writer = new ConfigurationWriter(out)) {
+				TypedConfiguration.serialize("application", app, writer);
 			}
 			xml = out.toString();
 		}

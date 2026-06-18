@@ -27,7 +27,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
- * Read/mutate access to the TL-Script tools held by the {@code custom} {@link ScriptToolFactory}
+ * Read/mutate access to TL-Script tools held by a named {@link ScriptToolFactory}
  * inside a {@link com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.Config}.
  *
  * <p>
@@ -38,9 +38,9 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 public class ScriptToolStore {
 
 	/**
-	 * Name of the {@link ScriptToolFactory} entry that holds agent-created TL-Script tools.
+	 * Default factory name for agent-created TL-Script tools.
 	 */
-	public static final String CUSTOM_FACTORY = "custom";
+	public static final String DEFAULT_FACTORY = "custom";
 
 	/**
 	 * Declaration of one TL-Script tool parameter as supplied by the caller.
@@ -66,15 +66,25 @@ public class ScriptToolStore {
 
 	private final ToolRegistryService.Config<?> _config;
 
+	private final String _factoryName;
+
 	/**
-	 * Creates a {@link ScriptToolStore} over the given registry configuration.
+	 * Creates a {@link ScriptToolStore} targeting the {@link #DEFAULT_FACTORY}.
 	 */
 	public ScriptToolStore(ToolRegistryService.Config<?> config) {
-		_config = config;
+		this(config, DEFAULT_FACTORY);
 	}
 
 	/**
-	 * Creates a new TL-Script tool in the {@code custom} factory.
+	 * Creates a {@link ScriptToolStore} targeting the given factory name.
+	 */
+	public ScriptToolStore(ToolRegistryService.Config<?> config, String factoryName) {
+		_config = config;
+		_factoryName = factoryName;
+	}
+
+	/**
+	 * Creates a new TL-Script tool in the target factory.
 	 *
 	 * @throws IllegalArgumentException
 	 *         If the name is blank or already used, a parameter type does not resolve, or the
@@ -83,7 +93,7 @@ public class ScriptToolStore {
 	public void create(String name, String label, String description, List<ParamSpec> parameters,
 			String implementation, String mode, boolean concurrencySafe) {
 		requireName(name);
-		Map<String, ScriptToolConfig> tools = customTools();
+		Map<String, ScriptToolConfig> tools = factoryTools();
 		if (tools.containsKey(name)) {
 			throw new IllegalArgumentException("A script tool named '" + name + "' already exists.");
 		}
@@ -94,14 +104,14 @@ public class ScriptToolStore {
 	 * Returns the named tool config, or {@code null} if absent.
 	 */
 	public ScriptToolConfig get(String name) {
-		return customTools().get(name);
+		return factoryTools().get(name);
 	}
 
 	/**
 	 * Returns all TL-Script tools in the {@code custom} factory.
 	 */
 	public List<ScriptToolConfig> list() {
-		return new ArrayList<>(customTools().values());
+		return new ArrayList<>(factoryTools().values());
 	}
 
 	private ScriptToolConfig buildConfig(String name, String label, String description,
@@ -191,7 +201,7 @@ public class ScriptToolStore {
 	public void update(String name, String label, String description, List<ParamSpec> parameters,
 			String implementation, String mode, Boolean concurrencySafe) {
 		requireName(name);
-		Map<String, ScriptToolConfig> tools = customTools();
+		Map<String, ScriptToolConfig> tools = factoryTools();
 		ScriptToolConfig existing = tools.get(name);
 		if (existing == null) {
 			throw new IllegalArgumentException("No script tool named '" + name + "'. Existing: "
@@ -217,10 +227,10 @@ public class ScriptToolStore {
 	 */
 	public void delete(String name) {
 		requireName(name);
-		Map<String, ScriptToolConfig> tools = customTools();
+		Map<String, ScriptToolConfig> tools = factoryTools();
 		if (tools.remove(name) == null) {
 			throw new IllegalArgumentException("No script tool named '" + name + "'. Existing: "
-				+ customTools().keySet() + ".");
+				+ factoryTools().keySet() + ".");
 		}
 	}
 
@@ -267,18 +277,18 @@ public class ScriptToolStore {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Map<String, ScriptToolConfig> customTools() {
+	private Map<String, ScriptToolConfig> factoryTools() {
 		ToolRegistryService.ToolFactoryConfig factoryConfig =
-			_config.getToolFactories().get(CUSTOM_FACTORY);
+			_config.getToolFactories().get(_factoryName);
 		if (factoryConfig == null) {
 			factoryConfig = TypedConfiguration.newConfigItem(ToolRegistryService.ToolFactoryConfig.class);
-			factoryConfig.setName(CUSTOM_FACTORY);
+			factoryConfig.setName(_factoryName);
 			factoryConfig.setImplementation(TypedConfiguration.newConfigItem(ScriptToolFactory.Config.class));
-			_config.getToolFactories().put(CUSTOM_FACTORY, factoryConfig);
+			_config.getToolFactories().put(_factoryName, factoryConfig);
 		}
 		PolymorphicConfiguration<? extends ToolFactory> impl = factoryConfig.getImplementation();
 		if (!(impl instanceof ScriptToolFactory.Config scriptConfig)) {
-			throw new IllegalStateException("The '" + CUSTOM_FACTORY
+			throw new IllegalStateException("The '" + _factoryName
 				+ "' tool factory is not a ScriptToolFactory; cannot author TL-Script tools there.");
 		}
 		return scriptConfig.getTools();

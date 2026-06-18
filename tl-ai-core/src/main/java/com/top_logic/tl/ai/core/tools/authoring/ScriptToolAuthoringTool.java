@@ -87,9 +87,10 @@ public class ScriptToolAuthoringTool {
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
 	@ToolMethod(description = "Create a TL-Script tool (a tool whose body is a TL-Script expression). "
-		+ "Persists to the 'custom' factory and restarts the tool registry; the tool is immediately usable as custom.{name}.")
+		+ "Persists to the named factory (default 'custom') and restarts the tool registry; "
+		+ "the tool is immediately usable as {factory}.{name}.")
 	public String createScriptTool(
-			@P("Unique tool name (referenced as custom.{name}); letters, digits, _ and -") String name,
+			@P("Unique tool name; letters, digits, _ and -") String name,
 			@P(value = "Human-readable label", required = false) String label,
 			@P("Description telling the model when and how to call the tool") String description,
 			@P(value = "Declared parameters. Each parameter object has: name; type (a qualified TL type, e.g. tl.core:String, tl.core:Integer, or myModule:MyType); description; mandatory (boolean); multiple (boolean, accepts a list); and defaultValue (optional TL-Script expression used when an optional parameter is omitted).",
@@ -98,15 +99,18 @@ public class ScriptToolAuthoringTool {
 			@P(value = "Tool mode: READ, USER_SCOPED, DATA_WRITE (default), or STRUCTURAL",
 				required = false) String mode,
 			@P(value = "Whether the tool may run in parallel with other concurrency-safe tools (default true)",
-				required = false) Boolean concurrencySafe) {
+				required = false) Boolean concurrencySafe,
+			@P(value = "Factory name to group the tool under (default 'custom'); the tool is referenced as {factory}.{name}",
+				required = false) String factory) {
+		String factoryName = resolveFactory(factory);
 		try {
 			ToolRegistryService.Config<?> config = copyOfSource();
-			ScriptToolStore store = new ScriptToolStore(config);
+			ScriptToolStore store = new ScriptToolStore(config, factoryName);
 			store.create(name, label, description, parameters, implementation, mode,
 				concurrencySafe == null || concurrencySafe.booleanValue());
 			_persister.accept(config);
-			return ok("Script tool '" + name + "' created and activated. "
-				+ "Assign 'custom." + name + "' to an agent or skill to use it.", "createScriptTool()");
+			return ok("Script tool '" + factoryName + "." + name + "' created and activated.",
+				"createScriptTool()");
 		} catch (Exception ex) {
 			return error("Failed to create script tool: " + ex.getMessage(), "createScriptTool()", ex);
 		}
@@ -117,7 +121,7 @@ public class ScriptToolAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
-	@ToolMethod(description = "Update an existing TL-Script tool in the 'custom' factory. "
+	@ToolMethod(description = "Update an existing TL-Script tool. "
 		+ "Omitted fields are left unchanged. Changes take effect immediately.")
 	public String updateScriptTool(
 			@P("Name of the tool to update") String name,
@@ -128,13 +132,15 @@ public class ScriptToolAuthoringTool {
 			@P(value = "New TL-Script body (omit to leave unchanged)", required = false) String implementation,
 			@P(value = "New mode (omit to leave unchanged)", required = false) String mode,
 			@P(value = "New concurrency-safe flag (omit to leave unchanged)",
-				required = false) Boolean concurrencySafe) {
+				required = false) Boolean concurrencySafe,
+			@P(value = "Factory name (default 'custom')", required = false) String factory) {
+		String factoryName = resolveFactory(factory);
 		try {
 			ToolRegistryService.Config<?> config = copyOfSource();
-			ScriptToolStore store = new ScriptToolStore(config);
+			ScriptToolStore store = new ScriptToolStore(config, factoryName);
 			store.update(name, label, description, parameters, implementation, mode, concurrencySafe);
 			_persister.accept(config);
-			return ok("Script tool '" + name + "' updated and activated.",
+			return ok("Script tool '" + factoryName + "." + name + "' updated and activated.",
 				"updateScriptTool()");
 		} catch (Exception ex) {
 			return error("Failed to update script tool: " + ex.getMessage(), "updateScriptTool()", ex);
@@ -146,14 +152,17 @@ public class ScriptToolAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
-	@ToolMethod(description = "Delete a TL-Script tool from the 'custom' factory. Takes effect immediately.")
-	public String deleteScriptTool(@P("Name of the tool to delete") String name) {
+	@ToolMethod(description = "Delete a TL-Script tool. Takes effect immediately.")
+	public String deleteScriptTool(
+			@P("Name of the tool to delete") String name,
+			@P(value = "Factory name (default 'custom')", required = false) String factory) {
+		String factoryName = resolveFactory(factory);
 		try {
 			ToolRegistryService.Config<?> config = copyOfSource();
-			ScriptToolStore store = new ScriptToolStore(config);
+			ScriptToolStore store = new ScriptToolStore(config, factoryName);
 			store.delete(name);
 			_persister.accept(config);
-			return ok("Script tool '" + name + "' deleted.",
+			return ok("Script tool '" + factoryName + "." + name + "' deleted.",
 				"deleteScriptTool()");
 		} catch (Exception ex) {
 			return error("Failed to delete script tool: " + ex.getMessage(), "deleteScriptTool()", ex);
@@ -165,13 +174,16 @@ public class ScriptToolAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link ScriptToolDetail}; {@code exists} is {@code false} if absent.
 	 */
-	@ToolMethod(description = "Get the full definition of a TL-Script tool in the 'custom' factory",
+	@ToolMethod(description = "Get the full definition of a TL-Script tool",
 		mode = ToolMode.READ)
-	public String getScriptTool(@P("Tool name") String name) {
+	public String getScriptTool(
+			@P("Tool name") String name,
+			@P(value = "Factory name (default 'custom')", required = false) String factory) {
+		String factoryName = resolveFactory(factory);
 		ScriptToolDetail detail = ScriptToolDetail.create();
 		detail.setName(name);
 		try {
-			ScriptToolConfig cfg = new ScriptToolStore(copyOfSource()).get(name);
+			ScriptToolConfig cfg = new ScriptToolStore(copyOfSource(), factoryName).get(name);
 			if (cfg == null) {
 				detail.setExists(false);
 			} else {
@@ -202,15 +214,17 @@ public class ScriptToolAuthoringTool {
 	}
 
 	/**
-	 * Lists all TL-Script tools in the {@code custom} factory.
+	 * Lists all TL-Script tools in the given factory.
 	 *
 	 * @return JSON-serialized {@link ScriptToolListResult}.
 	 */
-	@ToolMethod(description = "List all TL-Script tools in the 'custom' factory", mode = ToolMode.READ)
-	public String listScriptTools() {
+	@ToolMethod(description = "List all TL-Script tools in a factory", mode = ToolMode.READ)
+	public String listScriptTools(
+			@P(value = "Factory name (default 'custom')", required = false) String factory) {
+		String factoryName = resolveFactory(factory);
 		try {
 			ScriptToolListResult result = ScriptToolListResult.create();
-			for (ScriptToolConfig cfg : new ScriptToolStore(copyOfSource()).list()) {
+			for (ScriptToolConfig cfg : new ScriptToolStore(copyOfSource(), factoryName).list()) {
 				ScriptToolSummary summary = ScriptToolSummary.create();
 				summary.setName(cfg.getName());
 				summary.setDescription(cfg.getDescription() == null ? ""
@@ -236,6 +250,10 @@ public class ScriptToolAuthoringTool {
 		} catch (ConfigurationException ex) {
 			throw new RuntimeException("Failed to read ToolRegistryService configuration: " + ex.getMessage(), ex);
 		}
+	}
+
+	private static String resolveFactory(String factory) {
+		return (factory == null || factory.isBlank()) ? ScriptToolStore.DEFAULT_FACTORY : factory.trim();
 	}
 
 	private static String ok(String message, String operation) {

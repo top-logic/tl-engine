@@ -36,9 +36,10 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * factory of the {@link ToolRegistryService} configuration.
  *
  * <p>
- * Mutating methods persist a configuration overlay and require an application restart to take
- * effect; they inherit {@link ToolMode#STRUCTURAL} (approval required, blocked in production).
- * Query methods are {@link ToolMode#READ} and read the persisted configuration.
+ * Mutating methods persist a configuration overlay and restart the {@link ToolRegistryService}
+ * so that changes take effect immediately; they inherit {@link ToolMode#STRUCTURAL} (approval
+ * required, blocked in production). Query methods are {@link ToolMode#READ} and read the
+ * persisted configuration.
  * </p>
  */
 public class ScriptToolAuthoringTool {
@@ -86,7 +87,7 @@ public class ScriptToolAuthoringTool {
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
 	@ToolMethod(description = "Create a TL-Script tool (a tool whose body is a TL-Script expression). "
-		+ "Persists to the 'custom' factory; the tool becomes usable as custom.{name} after an application restart.")
+		+ "Persists to the 'custom' factory and restarts the tool registry; the tool is immediately usable as custom.{name}.")
 	public String createScriptTool(
 			@P("Unique tool name (referenced as custom.{name}); letters, digits, _ and -") String name,
 			@P(value = "Human-readable label", required = false) String label,
@@ -104,8 +105,8 @@ public class ScriptToolAuthoringTool {
 			store.create(name, label, description, parameters, implementation, mode,
 				concurrencySafe == null || concurrencySafe.booleanValue());
 			_persister.accept(config);
-			return ok("Script tool '" + name + "' created. Restart the application to activate it, "
-				+ "then assign 'custom." + name + "' to an agent or skill.", "createScriptTool()");
+			return ok("Script tool '" + name + "' created and activated. "
+				+ "Assign 'custom." + name + "' to an agent or skill to use it.", "createScriptTool()");
 		} catch (Exception ex) {
 			return error("Failed to create script tool: " + ex.getMessage(), "createScriptTool()", ex);
 		}
@@ -117,7 +118,7 @@ public class ScriptToolAuthoringTool {
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
 	@ToolMethod(description = "Update an existing TL-Script tool in the 'custom' factory. "
-		+ "Omitted fields are left unchanged. Requires a restart to activate.")
+		+ "Omitted fields are left unchanged. Changes take effect immediately.")
 	public String updateScriptTool(
 			@P("Name of the tool to update") String name,
 			@P(value = "New label (omit to leave unchanged)", required = false) String label,
@@ -133,7 +134,7 @@ public class ScriptToolAuthoringTool {
 			ScriptToolStore store = new ScriptToolStore(config);
 			store.update(name, label, description, parameters, implementation, mode, concurrencySafe);
 			_persister.accept(config);
-			return ok("Script tool '" + name + "' updated. Restart the application to activate the change.",
+			return ok("Script tool '" + name + "' updated and activated.",
 				"updateScriptTool()");
 		} catch (Exception ex) {
 			return error("Failed to update script tool: " + ex.getMessage(), "updateScriptTool()", ex);
@@ -145,14 +146,14 @@ public class ScriptToolAuthoringTool {
 	 *
 	 * @return JSON-serialized {@link OperationResult}.
 	 */
-	@ToolMethod(description = "Delete a TL-Script tool from the 'custom' factory. Requires a restart to take effect.")
+	@ToolMethod(description = "Delete a TL-Script tool from the 'custom' factory. Takes effect immediately.")
 	public String deleteScriptTool(@P("Name of the tool to delete") String name) {
 		try {
 			ToolRegistryService.Config<?> config = copyOfSource();
 			ScriptToolStore store = new ScriptToolStore(config);
 			store.delete(name);
 			_persister.accept(config);
-			return ok("Script tool '" + name + "' deleted. Restart the application to remove it.",
+			return ok("Script tool '" + name + "' deleted.",
 				"deleteScriptTool()");
 		} catch (Exception ex) {
 			return error("Failed to delete script tool: " + ex.getMessage(), "deleteScriptTool()", ex);

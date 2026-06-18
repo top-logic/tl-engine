@@ -10,6 +10,7 @@ import java.io.IOError;
 import java.io.StringWriter;
 import java.util.Collections;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -17,6 +18,8 @@ import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
+import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
@@ -26,13 +29,9 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Persists a modified {@link ToolRegistryService} configuration as an autoconf overlay file,
- * exactly as the Service Editor's save handler does, then reloads {@link ApplicationConfig}.
- *
- * <p>
- * The overlay activates the change only after the next application restart, because
- * {@link ToolRegistryService} builds its tool map once at startup and is not restarted by the
- * reload.
- * </p>
+ * exactly as the Service Editor's save handler does, then reloads {@link ApplicationConfig} and
+ * restarts the {@link ToolRegistryService} so that the new tool definitions become immediately
+ * active.
  */
 public class ScriptToolConfigPersistence {
 
@@ -40,22 +39,33 @@ public class ScriptToolConfigPersistence {
 
 	/**
 	 * Writes the given registry configuration to
-	 * {@code WEB-INF/autoconf/com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.config.xml}
-	 * and reloads the application configuration.
+	 * {@code WEB-INF/autoconf/com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.config.xml},
+	 * reloads the application configuration, and restarts the {@link ToolRegistryService} so that
+	 * the changed tool definitions become immediately active.
 	 *
 	 * @param serviceConfig
-	 *        The complete {@link ToolRegistryService} configuration; it fully replaces any
-	 *        existing overlay entry for this service on the next restart.
+	 *        The complete {@link ToolRegistryService} configuration; it fully replaces the
+	 *        existing overlay entry for this service.
 	 */
 	public static void persist(ToolRegistryService.Config<?> serviceConfig) {
 		try {
 			persistTo(overlayFile(), serviceConfig);
 			TLServiceUtils.reloadConfigurations();
+			restartToolRegistry();
 		} catch (Exception ex) {
 			throw new RuntimeException("Failed to persist TL-Script tool configuration: " + ex.getMessage(), ex);
 		} catch (IOError err) {
 			throw new RuntimeException(
 				"Failed to reload application configuration after persisting tool config: " + err.getMessage(), err);
+		}
+	}
+
+	private static void restartToolRegistry() {
+		try {
+			ModuleUtil.INSTANCE.restart(ToolRegistryService.Module.INSTANCE, null);
+		} catch (RestartException ex) {
+			Logger.error("Failed to restart ToolRegistryService: " + ex.getMessage(), ex,
+				ScriptToolConfigPersistence.class);
 		}
 	}
 

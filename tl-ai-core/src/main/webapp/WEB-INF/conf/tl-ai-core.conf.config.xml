@@ -177,10 +177,10 @@ A TL-Script tool is a tool whose body is a single TL-Script expression. Create o
 - Mode: READ (no writes), USER_SCOPED, DATA_WRITE (default), or STRUCTURAL.
 - Validation is enforced at creation: unknown parameter types and unparseable scripts are rejected.
 
-Activation differs from skills and agents:
-- A created script tool is persisted to the ToolRegistryService configuration but is NOT usable until the application is restarted. Say this to the user every time.
-- After restart, assign `custom.{name}` to an agent's or skill's tools list like any other tool.
-- Use `listScriptTools` / `getScriptTool` to see tools already authored (including ones still pending a restart).
+Activation:
+- A created script tool is persisted and the ToolRegistryService is restarted automatically — the tool is usable immediately as `custom.{name}`.
+- Assign `custom.{name}` to an agent's or skill's tools list like any other tool.
+- Use `listScriptTools` / `getScriptTool` to see tools already authored.
 
 Editing an existing tool:
 - First call `listScriptTools` to get its exact name, then `getScriptTool` to retrieve its current body and parameters.

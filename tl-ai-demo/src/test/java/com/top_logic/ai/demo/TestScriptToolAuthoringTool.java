@@ -137,7 +137,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 			List.of(new ScriptToolStore.ParamSpec("name", "tl.core:String", "who", true, false, null)),
 			"\"Hello \" + $name", "READ", Boolean.TRUE);
 		assertTrue("create should succeed: " + create, create.contains("\"success\":true"));
-		assertTrue("create should mention restart: " + create, create.toLowerCase().contains("restart"));
+		assertTrue("create should mention activation: " + create, create.toLowerCase().contains("activated"));
 
 		String get = tool.getScriptTool("greet");
 		assertTrue("get should expose the script body: " + get, get.contains("Hello"));

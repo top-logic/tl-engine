@@ -1,0 +1,11 @@
+<objects>
+	<object id="a0" type="TestSearchExpression:A">
+		<attribute name="name" value="A0"/>
+	</object>
+	<object id="a1" type="TestSearchExpression:A">
+		<attribute name="name" value="A1"/>
+	</object>
+	<object id="a2" type="TestSearchExpression:A">
+		<attribute name="name" value="A1"/>
+	</object>
+</objects>

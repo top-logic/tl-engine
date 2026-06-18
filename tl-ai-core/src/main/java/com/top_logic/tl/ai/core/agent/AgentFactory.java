@@ -78,8 +78,8 @@ public class AgentFactory {
 
 	/**
 	 * Placeholder marker in system prompts for the application model digest. When present, a compact
-	 * TypeScript-style model overview replaces this marker. The digest gives agents structural
-	 * knowledge without requiring exploration tool calls.
+	 * model overview replaces this marker. The digest gives agents structural knowledge without
+	 * requiring exploration tool calls.
 	 *
 	 * @see ModelDigestGenerator
 	 */

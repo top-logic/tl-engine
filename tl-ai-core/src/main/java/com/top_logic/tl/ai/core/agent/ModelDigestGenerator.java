@@ -22,13 +22,11 @@ import com.top_logic.model.annotate.TLModuleDisplayGroup;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Generates a compact, TypeScript-style text digest of a {@link TLModel} for injection into agent
- * system prompts.
+ * Generates a compact text digest of a {@link TLModel} for injection into agent system prompts.
  *
  * <p>
  * The digest gives agents structural knowledge of the application model without requiring
- * exploration tool calls. It uses a notation chosen for token efficiency — roughly 60% fewer tokens
- * than equivalent JSON Schema.
+ * exploration tool calls. It uses a notation chosen for token efficiency.
  * </p>
  *
  * @see AgentFactory#MODEL_PLACEHOLDER

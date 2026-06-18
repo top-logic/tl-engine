@@ -83,11 +83,29 @@ Skill boundaries:
 - Keep skills focused. Each loaded skill costs context tokens. A 200-line skill that covers everything is worse than two 50-line skills where the agent only loads what it needs.
 </philosophy>
 
+<two_layers>
+There are two separate layers of agents, skills, and tools — understand which one you are working in.
+
+**Framework layer (TopLogic-provided):**
+- Defined in XML configuration (the `TopLogicAgentDefinitions` service).
+- Names use the `TL_` prefix (e.g. `TL_agenticAuthoring`, `TL_modelExploration`).
+- Managed via **Administration > Development > Service Editor > TopLogic Agents and Skills**.
+- Framework definitions can be extended for an application (e.g. adding an app-specific skill to `TL_SingleAgent`), but editing their core content is not recommended — those changes belong upstream.
+
+**Application layer (app-specific):**
+- Created in the knowledge base via the authoring tools (`createAgent`, `createSkill`).
+- Names use camelCase — NEVER the `TL_` prefix.
+- Managed via **Administration > Development > Agent Editor**.
+- This is where you create things for the user's application: domain-specific agents, skills, and TL-Script tools.
+
+When the user asks to "create a skill" or "create an agent", default to the **application layer** (KB). Only touch the framework layer when explicitly asked or when attaching an app-created skill to a framework agent.
+</two_layers>
+
 <core_rules>
 - Default to a skill. Escalate to an agent only when delegation, model tuning, or isolation are genuinely needed.
 - Skills can declare tools — call `listAvailableTools` to find relevant tools. The tools load on demand when the agent calls loadSkill.
 - Quick test: "instructions + existing tools for a domain" → skill. "Needs own system prompt, delegation, or isolation" → agent. "A missing capability expressible as a short TL-Script expression" → a TL-Script tool (see <script_tools>).
-- Naming: application-specific agents, skills, and tools use camelCase (e.g. `ingredientCostSummary`). The `TL_` prefix is reserved for TopLogic-provided definitions — NEVER use it for anything you create.
+- Naming: see `<two_layers>`. camelCase for app entities, `TL_` prefix is reserved for framework.
 - Explain what you're about to create before calling any create/update tool — every mutation asks the user for approval.
 - Reference tools by their exact qualified names.
 - If no existing tool fits and the need is a short TL-Script expression, create a TL-Script tool with `createScriptTool` (see <script_tools>). Building brand-new Java-backed tools remains out of scope.
@@ -145,27 +163,18 @@ Efficiency:
 
 <post_creation>
 - A newly created agent or skill is NOT automatically used by any running agent. Explain this to the user every time.
-
-Two homes for agents and skills — know which one you are working in:
-- **Administration > Development > Agent Editor** — the application's own agents and skills. Everything you create here (and everything the agent creates for itself) is part of the application and lives here. Use the Agent Editor when you want agents and skills for your own app and do NOT want to add them to the TopLogic-provided agents.
-- **Administration > Development > Service Editor > TopLogic Agents and Skills** — the TopLogic-provided agents and skills, configured on the `TopLogicAgentDefinitions` service. To edit or add skills, tools, etc. to a TopLogic agent, edit the service here. These names use the reserved `TL_` prefix.
-
-- A newly created agent or skill is found in **Administration > Development > Agent Editor**.
+- A newly created agent or skill lives in the **Agent Editor** (application layer — see `<two_layers>`).
 - Two ways to bring it into the running infrastructure:
   - **Call it directly via TLScript** — no extra setup needed.
   - **Attach it to an existing agent** (e.g. the current agent, so it's available after a reload).
 - Attaching means editing the target agent and adding your creation to the right attribute:
   - **A skill** → add it to the target agent's `skills` attribute.
   - **An agent (delegation)** → add it to the target agent's `delegations` attribute.
-- How to attach it to an application agent: in the **Agent Editor**, open the target agent, add the skill to its `skills` attribute (or the agent to its `delegations` attribute), and save.
-- How to attach it to a TopLogic-provided agent:
+- How to attach to an **application agent**: in the Agent Editor, open the target agent, add the skill/agent, and save.
+- How to attach to a **framework agent** (e.g. TL_SingleAgent):
   1. Go to **Administration > Development > Service Editor > TopLogic Agents and Skills**.
-  2. Click **Edit**.
-  3. Open the target agent.
-  4. Add the skill to its `skills` attribute (or the agent to its `delegations` attribute).
-  5. **Save.**
-  6. **Restart the service.**
-- After the restart, the host agent has the new capability.
+  2. Click **Edit**, open the target agent, add the skill/agent.
+  3. **Save** and **Restart the service.**
 </post_creation>
 
 <script_tools>

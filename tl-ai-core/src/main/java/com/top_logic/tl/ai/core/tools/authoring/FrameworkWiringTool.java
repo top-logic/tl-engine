@@ -93,10 +93,10 @@ public class FrameworkWiringTool {
 	 */
 	@ToolMethod(description = "Get a framework agent's tools, skills, and delegations",
 		mode = ToolMode.READ)
-	public String getFrameworkAgent(@P("Framework agent name") String name) {
+	public String getFrameworkAgent(@P("Framework agent name") String agentName) {
 		AgentDetail detail = AgentDetail.create();
-		detail.setName(name);
-		AgentDefinition ad = service().getConfigAgent(name);
+		detail.setName(agentName);
+		AgentDefinition ad = service().getConfigAgent(agentName);
 		if (ad == null) {
 			detail.setExists(false);
 		} else {
@@ -131,10 +131,10 @@ public class FrameworkWiringTool {
 	 * Gets a framework skill's tools.
 	 */
 	@ToolMethod(description = "Get a framework skill's tools", mode = ToolMode.READ)
-	public String getFrameworkSkill(@P("Framework skill name") String name) {
+	public String getFrameworkSkill(@P("Framework skill name") String skillName) {
 		SkillDetail detail = SkillDetail.create();
-		detail.setName(name);
-		SkillDefinition sd = service().getConfigSkill(name);
+		detail.setName(skillName);
+		SkillDefinition sd = service().getConfigSkill(skillName);
 		if (sd == null) {
 			detail.setExists(false);
 		} else {

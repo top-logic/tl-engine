@@ -87,8 +87,10 @@ const { useCallback: xt } = e, Lt = ({ controlId: l, state: t }) => {
     },
     [r]
   );
-  if (t.editable === !1)
-    return /* @__PURE__ */ e.createElement("span", { id: l, className: "tlReactDatePicker tlReactDatePicker--immutable" }, n ?? "");
+  if (t.editable === !1) {
+    const o = t.displayValue ?? n ?? "";
+    return /* @__PURE__ */ e.createElement("span", { id: l, className: "tlReactDatePicker tlReactDatePicker--immutable" }, o);
+  }
   const s = t.hasError === !0, c = t.hasWarnings === !0, u = [
     "tlReactDatePicker",
     s ? "tlReactDatePicker--error" : "",

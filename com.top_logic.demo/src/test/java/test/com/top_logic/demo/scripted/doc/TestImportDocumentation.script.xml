@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Hilfe Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Hilfe Editor > Inhaltsverzeichnis"
+						/>
+						<path>
+							<named-member name="language"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+								label="Deutsch"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.doc.command.ImportDocumentationAsZipCommand"
+					command-label="Exportiertes ZIP importieren"
+					command-name="importDocumentationAsZip"
+					component-implementation-comment="com.top_logic.doc.component.DocumentationTreeComponent"
+					component-name="com.top_logic.doc/tl.doc.layout.xml#Tree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Zu importierende Datei"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+								content-type="application/zip"
+								name="testImportHelpParent.zip"
+								url="file:./src/test/java/test/com/top_logic/demo/scripted/doc/TestImportDocumentation.import.zip"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Test Import Hilfe Parent"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Hilfe Editor > Inhaltsverzeichnis"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Test Import Hilfe Parent > Test Import Hilfe Inhalt"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Hilfe Editor > Inhaltsverzeichnis"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Hilfe Editor > Seite bearbeiten"
+							/>
+							<path>
+								<labeled-member label="Inhalt"/>
+								<labeled-member label="Deutsch"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+						<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Hilfe Editor > Seite bearbeiten"
+							/>
+							<path>
+								<labeled-member label="Inhalt"/>
+								<labeled-member label="Deutsch"/>
+							</path>
+						</context-name>
+						<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
+							<text>
+								<source-code><![CDATA[<p>Initialer Inhalt</p>]]></source-code>
+							</text>
+						</local-name>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.doc/tl.doc.layout.xml#Detailtl.docEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Hilfe Editor > Seite bearbeiten"
+						/>
+						<path>
+							<labeled-member label="Inhalt"/>
+							<labeled-member label="Deutsch"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
+						<text>
+							<source-code><![CDATA[<p>Geänderter Inhalt</p>
+]]></source-code>
+						</text>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.doc/tl.doc.layout.xml#Detailtl.docEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.doc.command.ImportDocumentationAsZipCommand"
+					command-label="Exportiertes ZIP importieren"
+					command-name="importDocumentationAsZip"
+					component-implementation-comment="com.top_logic.doc.component.DocumentationTreeComponent"
+					component-name="com.top_logic.doc/tl.doc.layout.xml#Tree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Zu importierende Datei"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ExternalDataValue"
+								content-type="application/zip"
+								name="testImportHelpParent.zip"
+								url="file:./src/test/java/test/com/top_logic/demo/scripted/doc/TestImportDocumentation.import.zip"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Hilfe Editor > Seite bearbeiten"
+							/>
+							<path>
+								<labeled-member label="Inhalt"/>
+								<labeled-member label="Deutsch"/>
+							</path>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
+						<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Hilfe Editor > Seite bearbeiten"
+							/>
+							<path>
+								<labeled-member label="Inhalt"/>
+								<labeled-member label="Deutsch"/>
+							</path>
+						</context-name>
+						<local-name config:interface="com.top_logic.layout.wysiwyg.ui.scripting.StructuredTextNamingScheme$Name">
+							<text>
+								<source-code><![CDATA[<p>Initialer Inhalt</p>]]></source-code>
+							</text>
+						</local-name>
+					</expected-value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Teardown"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Test Import Hilfe Parent"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Hilfe Editor > Inhaltsverzeichnis"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.doc/tl.doc.layout.xml#Detailtl.docEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

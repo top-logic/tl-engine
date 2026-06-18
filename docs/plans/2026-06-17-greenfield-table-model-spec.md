@@ -475,8 +475,15 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
 - **Tree + grouping** — `TreeRowSource.withGrouping` throws for any grouping.
 - **`LegacyTableView` adapter** (migration step 2) — skipped; existing legacy `TableModel`
   tables are *not* routed through the new control yet.
-- **`ViewStateStore` + JSON (de)serialization** of `TableViewState`/`FilterState` —
-  personalization is modeled but not persisted.
+- ~~**`ViewStateStore` + JSON (de)serialization**~~ — **DONE (2026-06-18).** `TableViewStateCodec`
+  serializes the value-only subset (column order, widths, frozen count, sort, grouping) to a JSON
+  value model; `PersonalConfigViewStateStore` persists it under a per-table key through
+  `PersonalConfiguration`. `DefaultTableView` restores on construction (reconciling stale/new
+  columns) and saves after each layout command; `TableViewElement` supplies a stable `TableId` from
+  the table's structural signature. Live-verified: sort survives page reload (asc→desc round-trips
+  through `PersonalConfiguration`); 4 codec round-trip unit tests. **Not** persisted: filters,
+  expansion, selection (their state carries arbitrary business-object values needing an identity
+  serialization strategy — follow-up).
 - **Export** over `Column` + `RowSource` — not built.
 - **Inline editing** — `CellEditor` SPI exists, but `CellContentReactAdapter` renders
   `CellContent.Editable` read-only (value as text); `TableView.commitEdit` end-to-end
@@ -543,5 +550,9 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
    demo type with those attributes *and* populated rows exists (or a seeded dataset is added).
 2. `LegacyTableView` adapter — route existing `TableModel` tables through the new control.
 3. `QueryRowSource` over TL search expressions (the lazy/pushdown win).
-4. `ViewStateStore` + serialization (personalization).
+4. ~~`ViewStateStore` + serialization (personalization).~~ — **DONE 2026-06-18** (§13.A). Layout
+   subset persisted; filter/expansion/selection persistence is the follow-up.
 5. Inline editing end-to-end; live-data refresh (`TableViewListener` + observable rows).
+
+**Picked up next (correctness, no new decisions):** facet counts that exclude a column's own
+filter (§13.C), then type-derived default columns (§13.B).

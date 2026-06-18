@@ -53,7 +53,7 @@ import com.top_logic.table.SortSpec;
  */
 public class ListRowSource<R> implements RowSource<R> {
 
-	private final List<? extends R> _elements;
+	private List<? extends R> _elements;
 
 	private final Map<String, Column<R, ?>> _byName = new LinkedHashMap<>();
 
@@ -101,6 +101,24 @@ public class ListRowSource<R> implements RowSource<R> {
 		}
 		_keyOf = keyOf;
 		recompute();
+	}
+
+	/**
+	 * Replaces the backing business objects, recomputes the displayed rows and notifies
+	 * listeners. Used to refresh the table when the underlying data changes (create / delete /
+	 * external update).
+	 */
+	public void setElements(List<? extends R> elements) {
+		_elements = elements;
+		recompute();
+		fireInvalidated();
+	}
+
+	/**
+	 * The current backing business objects (unfiltered), in their source order.
+	 */
+	public List<? extends R> elements() {
+		return _elements;
 	}
 
 	@Override

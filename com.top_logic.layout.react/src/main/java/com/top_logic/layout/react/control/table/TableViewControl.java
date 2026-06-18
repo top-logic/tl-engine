@@ -351,6 +351,24 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		return new ReactTextInputControl(context, model);
 	}
 
+	/**
+	 * Rebuilds the row count and viewport after the backing data changed externally (e.g. an
+	 * object was created or deleted and the row source was refreshed). Stale selected keys that no
+	 * longer match a row are dropped.
+	 */
+	public void refreshData() {
+		_selectedKeys.retainAll(currentRowKeys());
+		rebuildAfterRowChange();
+	}
+
+	private Set<Object> currentRowKeys() {
+		Set<Object> keys = new LinkedHashSet<>();
+		for (Row<R> row : _view.rows(0, _view.rowCount())) {
+			keys.add(row.key());
+		}
+		return keys;
+	}
+
 	private void rebuildAfterRowChange() {
 		clearCells();
 		buildFullState();

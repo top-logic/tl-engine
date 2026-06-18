@@ -2,7 +2,8 @@
 
 <view>
 	<channels>
-		<channel name="selectedAccount"/>
+		<channel name="model"/>
+		<channel name="selectedDemoType"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -11,43 +12,81 @@
 		<panes>
 			<pane
 				min-size="200"
-				size="60"
+				size="65"
 				unit="%"
 			>
 				<panel>
 					<title>
-						<en>Accounts (green-field table)</en>
-						<de>Konten (Green-Field-Tabelle)</de>
+						<en>DemoType A (green-field table)</en>
+						<de>DemoType A (Green-Field-Tabelle)</de>
 					</title>
+					<commands>
+						<generic-command placement="TOOLBAR">
+							<label>
+								<en>Generate samples</en>
+								<de>Beispiele erzeugen</de>
+							</label>
+							<with-transaction>
+								<execute-script function="x -> count(8).foreach(i -> { o = new(`DemoTypes:A`, transient: false); $o.set(`DemoTypes:DemoTypes.A#name`, 'Sample ' + ($i + 1)); $o.set(`DemoTypes:DemoTypes.A#booleanMandatory`, $i % 2 == 0); $o.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, true); $o.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, false); $o.set(`DemoTypes:DemoTypes.A#boolean`, $i % 2 == 0); $o.set(`DemoTypes:DemoTypes.A#long`, ($i + 1) * 100); $o.set(`DemoTypes:DemoTypes.A#float`, ($i + 1) * 1.5); $o.set(`DemoTypes:DemoTypes.A#date`, date(2024, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`DemoTypes:DemoTypes.A#classificationSingle`, if($i % 3 == 0, `tl5.enum:tl.beacon.three#tl.beacon.three.green`, if($i % 3 == 1, `tl5.enum:tl.beacon.three#tl.beacon.three.yellow`, `tl5.enum:tl.beacon.three#tl.beacon.three.red`))); $o; })"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command placement="TOOLBAR">
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="x -> { obj = new(`DemoTypes:A`, transient: true); $obj.set(`DemoTypes:DemoTypes.A#booleanMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, true); $obj.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, false); $obj; }"/>
+							<open-dialog
+								dialog-view="demo/create-demo-type-a.view.xml"
+								bind-input-to="model"
+							>
+								<bind channel="selection" to="selectedDemoType"/>
+							</open-dialog>
+						</generic-command>
+						<generic-command placement="TOOLBAR" input="selectedDemoType">
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<with-transaction>
+								<execute-script function="obj -> { if($obj != null, $obj.delete(), null); null; }"/>
+							</with-transaction>
+							<write-channel name="selectedDemoType"/>
+						</generic-command>
+					</commands>
 					<table-view
-						selection="selectedAccount"
-						types="tl.accounts:Person"
+						selection="selectedDemoType"
+						types="DemoTypes:A"
+						observed-types="DemoTypes:A"
 					>
 						<columns>
 							<column attribute="name"/>
-							<column attribute="firstName"/>
-							<column attribute="lastName"/>
-							<column attribute="admin"/>
-							<column attribute="restrictedUser"/>
+							<column attribute="classificationSingle"/>
+							<column attribute="boolean"/>
+							<column attribute="long"/>
+							<column attribute="date"/>
+							<column attribute="float"/>
 						</columns>
-						<rows>all(`tl.accounts:Person`)</rows>
+						<rows>all(`DemoTypes:A`)</rows>
 					</table-view>
 				</panel>
 			</pane>
 			<pane
-				size="40"
+				size="35"
 				unit="%"
 			>
 				<panel>
 					<title>
-						<en>Account</en>
-						<de>Konto</de>
+						<en>Details</en>
+						<de>Details</de>
 					</title>
-					<form input="selectedAccount">
+					<form input="selectedDemoType">
 						<field attribute="name"/>
-						<field attribute="firstName"/>
-						<field attribute="lastName"/>
-						<field attribute="admin"/>
+						<field attribute="classificationSingle"/>
+						<field attribute="boolean"/>
+						<field attribute="long"/>
+						<field attribute="date"/>
+						<field attribute="float"/>
 					</form>
 				</panel>
 			</pane>

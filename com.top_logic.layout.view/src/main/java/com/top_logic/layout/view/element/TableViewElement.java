@@ -11,7 +11,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -32,6 +34,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -97,6 +100,9 @@ public class TableViewElement implements UIElement {
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
+
 		/**
 		 * Optional qualified TL type name(s) of the row objects, used to resolve column
 		 * labels from the model attributes. When unset, the type is derived from the first
@@ -134,6 +140,15 @@ public class TableViewElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
+		 * {@link #getRows() rows}, so the table refreshes automatically. Empty (default) keeps the
+		 * table static.
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 	}
 
 	private final Config _config;
@@ -178,7 +193,34 @@ public class TableViewElement implements UIElement {
 			});
 		}
 
+		// Refresh the rows when observed objects change or an input channel changes.
+		QueryExecutor rowsExecutor = _rowsExecutor;
+		RowSourceObserver<Object> observer = new RowSourceObserver<>(
+			source,
+			args -> new ArrayList<>(executeRowsQuery(rowsExecutor, args)),
+			resolveObservedTypes(),
+			inputChannels,
+			control::refreshData);
+		control.addBeforeWriteAction(() -> observer.attach(context.getModelScope()));
+		control.addCleanupAction(observer::detach);
+
 		return control;
+	}
+
+	private Set<TLStructuredType> resolveObservedTypes() {
+		List<TLModelPartRef> refs = _config.getObservedTypes();
+		if (refs == null || refs.isEmpty()) {
+			return Set.of();
+		}
+		Set<TLStructuredType> types = new HashSet<>();
+		for (TLModelPartRef ref : refs) {
+			TLStructuredType type = (TLStructuredType) ref.resolveType();
+			if (type == null) {
+				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
+			}
+			types.add(type);
+		}
+		return types;
 	}
 
 	/**

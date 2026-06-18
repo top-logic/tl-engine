@@ -56,6 +56,7 @@ import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
+import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
@@ -185,7 +186,14 @@ public class ChatProcessor {
 			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
 			AgentFactory.RunResult runResult = agentFactory.runAgent(entryPointAgent, conversation, conversationMemory,
 				toolContext, listener, sessionRegistry);
-			taskTracker.setActiveToolRegistry(runResult.registry());
+			if (ToolRegistryReloadFlag.consume()) {
+				// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
+				// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
+				// rebuilds it from the updated service configuration.
+				taskTracker.setActiveToolRegistry(null);
+			} else {
+				taskTracker.setActiveToolRegistry(runResult.registry());
+			}
 			for (String skillId : loadedSkills) {
 				taskTracker.addLoadedSkill(skillId);
 			}

@@ -24,6 +24,7 @@ import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.layout.admin.component.TLServiceUtils;
+import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.agent.DelegationRef;
 import com.top_logic.tl.ai.core.agent.SkillRef;
 import com.top_logic.tl.ai.core.agent.ToolRef;
@@ -160,6 +161,7 @@ public class FrameworkWiringPersistence {
 			persistTo(overlayFile(), overlay);
 			TLServiceUtils.reloadConfigurations();
 			restartService();
+			ToolRegistryReloadFlag.request();
 		} catch (Exception ex) {
 			throw new RuntimeException(
 				"Failed to persist framework wiring configuration: " + ex.getMessage(), ex);

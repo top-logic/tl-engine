@@ -25,6 +25,7 @@ import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.layout.admin.component.OverrideConfigurationWriter;
 import com.top_logic.layout.admin.component.TLServiceUtils;
+import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -52,6 +53,7 @@ public class ScriptToolConfigPersistence {
 			persistTo(overlayFile(), serviceConfig);
 			TLServiceUtils.reloadConfigurations();
 			restartToolRegistry();
+			ToolRegistryReloadFlag.request();
 		} catch (Exception ex) {
 			throw new RuntimeException("Failed to persist TL-Script tool configuration: " + ex.getMessage(), ex);
 		} catch (IOError err) {

@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.react.ReactContext;
 
 /**
  * Default {@link ViewCommandConfirmation} that produces a generic "Do you really want to execute
@@ -37,7 +38,7 @@ public class DefaultViewConfirmation implements ViewCommandConfirmation {
 	}
 
 	@Override
-	public ResKey getConfirmation(ResKey commandLabel, Object input) {
+	public ResKey getConfirmation(ReactContext context, ResKey commandLabel, Object input) {
 		return I18NConstants.CONFIRM_EXECUTE__LABEL.fill(commandLabel);
 	}
 }

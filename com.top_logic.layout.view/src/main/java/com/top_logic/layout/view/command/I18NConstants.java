@@ -15,6 +15,11 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
+	 * @en Confirmation
+	 */
+	public static ResKey CONFIRM_TITLE;
+
+	/**
 	 * @en Do you really want to execute ''{0}''?
 	 */
 	public static ResKey1 CONFIRM_EXECUTE__LABEL;

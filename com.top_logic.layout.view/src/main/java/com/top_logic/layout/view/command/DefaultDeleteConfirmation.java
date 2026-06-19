@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.react.ReactContext;
 
 /**
  * {@link ViewCommandConfirmation} for delete operations.
@@ -43,7 +44,7 @@ public class DefaultDeleteConfirmation implements ViewCommandConfirmation {
 	}
 
 	@Override
-	public ResKey getConfirmation(ResKey commandLabel, Object input) {
+	public ResKey getConfirmation(ReactContext context, ResKey commandLabel, Object input) {
 		if (input instanceof Collection<?> collection) {
 			return I18NConstants.CONFIRM_DELETE_MULTI__COUNT.fill(collection.size());
 		}

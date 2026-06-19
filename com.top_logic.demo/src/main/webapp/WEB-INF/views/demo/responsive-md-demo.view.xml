@@ -54,6 +54,9 @@
 						types="tl.demo.projectManagement:ProjectScope"
 						observed-types="tl.demo.projectManagement:ProjectScope"
 					>
+						<columns>
+							<column attribute="name"/>
+						</columns>
 						<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
 					</table>
 				</panel>
@@ -90,6 +93,9 @@
 								types="tl.demo.projectManagement:Milestone"
 								observed-types="tl.demo.projectManagement:Milestone"
 							>
+								<columns>
+									<column attribute="name"/>
+								</columns>
 								<inputs>
 									<input channel="selectedScope"/>
 								</inputs>

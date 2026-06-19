@@ -24,6 +24,10 @@
 		</title>
 
 		<adaptive-detail selection="selectedScope">
+			<home-label>
+				<en>Project Scopes</en>
+				<de>Projekt-Scopes</de>
+			</home-label>
 			<selector>
 				<panel>
 					<title>

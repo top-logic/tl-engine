@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.layout.DisplayUnit;
@@ -36,14 +38,14 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * <ul>
  * <li>{@link DisplayClass#REGULAR} - a horizontal {@link ReactSplitPanelControl split} with the
  * selector and the detail side by side.</li>
- * <li>{@link DisplayClass#COMPACT} - the selector full-bleed, replaced by the detail (with a back
- * affordance) while the selection channel holds a value.</li>
+ * <li>{@link DisplayClass#COMPACT} - the selector full-bleed, replaced by the detail while the
+ * selection channel holds a value.</li>
  * </ul>
  *
  * <p>
- * The control rebuilds its presentation when the display class changes (always) or when the
- * selection changes (only while {@code COMPACT}; in {@code REGULAR} the detail reacts to the channel
- * itself). The selection lives in the channel, so a display-class flip preserves it.
+ * In compact mode the <em>outermost</em> (coordinator) control renders a single breadcrumb spanning
+ * all nested levels (home + one crumb per selected object down the chain); tapping a crumb clears
+ * the selections from that level down. Nested controls render no breadcrumb of their own.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -54,9 +56,9 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 
 	private static final String CONTENT = "content";
 
-	private static final String SHOW_BACK = "showBack";
+	private static final String BREADCRUMB = "breadcrumb";
 
-	private static final String BAR_LABEL = "barLabel";
+	private static final String DEFAULT_HOME_LABEL = "‹";
 
 	private final ViewContext _context;
 
@@ -72,25 +74,23 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 
 	private final ChannelListener _selectionListener;
 
+	/** Whether this is the outermost element (renders the unified breadcrumb). */
+	private final boolean _coordinator;
+
+	/** The chain of selection channels (this level first, then nested), only set for a coordinator. */
+	private final List<ViewChannel> _chain;
+
+	private final String _homeLabel;
+
 	private ReactControl _currentChild;
 
 	private boolean _disposed;
 
 	/**
-	 * While {@code true}, the old presentation is not torn down synchronously but collected in
-	 * {@link #_deferredDisposal} and disposed once the triggering channel notification has unwound.
-	 *
-	 * <p>
-	 * Needed because the old presentation's children (the detail's form, the dependent selector
-	 * table) are themselves listeners of the very channel whose {@code set()} triggered the rebuild.
-	 * The channel notifies a snapshot of its listeners, so those children are still pending in the
-	 * current notification; disposing them mid-notification would let them run on a control whose
-	 * SSE queue / model scope is already gone.
-	 * </p>
+	 * Subsession-shared coordinator that defers disposal of replaced presentations until the
+	 * triggering channel notification has unwound (see {@link AdaptiveDetailDisposal}).
 	 */
-	private boolean _deferDisposal;
-
-	private final List<ReactControl> _deferredDisposal = new ArrayList<>();
+	private final AdaptiveDetailDisposal _disposal;
 
 	/**
 	 * Creates a new {@link ReactAdaptiveDetailControl}.
@@ -106,15 +106,27 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	 * @param resetOn
 	 *        Channels whose change resets {@code selectionChannel} to {@code null} (an upstream
 	 *        master selection this selection depends on); may be empty.
+	 * @param coordinator
+	 *        Whether this is the outermost element that renders the unified breadcrumb.
+	 * @param chain
+	 *        The ordered chain of selection channels (this level first, then nested); only relevant
+	 *        for a coordinator, otherwise {@code null}.
+	 * @param homeLabel
+	 *        Label of the breadcrumb's home crumb, or {@code null} for a default.
 	 */
 	public ReactAdaptiveDetailControl(ViewContext context, List<UIElement> selector, List<UIElement> detail,
-			ViewChannel selectionChannel, List<ViewChannel> resetOn) {
+			ViewChannel selectionChannel, List<ViewChannel> resetOn, boolean coordinator, List<ViewChannel> chain,
+			String homeLabel) {
 		super(context, null, REACT_MODULE);
 		_context = context;
 		_selector = selector;
 		_detail = detail;
 		_selectionChannel = selectionChannel;
+		_coordinator = coordinator;
+		_chain = chain;
+		_homeLabel = homeLabel;
 		_displayModel = DisplayClassModel.forCurrentSubSession();
+		_disposal = AdaptiveDetailDisposal.forCurrentSubSession();
 
 		_displayListener = (sender, oldValue, newValue) -> renderPresentation(false);
 		_displayModel.addListener(DisplayClassModel.DISPLAY_CLASS, _displayListener);
@@ -131,6 +143,18 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		for (ViewChannel master : resetOn) {
 			master.addListener(resetListener);
 			addCleanupAction(() -> master.removeListener(resetListener));
+		}
+
+		// Keep the breadcrumb in sync when a deeper selection changes (the own selection is handled
+		// by the selection listener via renderPresentation). The coordinator control is stable, so
+		// these listeners never fire on a torn-down control.
+		if (coordinator && chain != null) {
+			ChannelListener breadcrumbListener = (sender, oldValue, newValue) -> updateBreadcrumb(false);
+			for (int i = 1; i < chain.size(); i++) {
+				ViewChannel deeper = chain.get(i);
+				deeper.addListener(breadcrumbListener);
+				addCleanupAction(() -> deeper.removeListener(breadcrumbListener));
+			}
 		}
 
 		renderPresentation(true);
@@ -154,42 +178,73 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		boolean hasSelection = _selectionChannel.get() != null;
 
 		ReactControl built;
-		boolean showBack;
-		String barLabel;
 		if (compact && hasSelection) {
 			built = buildContent(_detail);
-			showBack = true;
-			barLabel = MetaLabelProvider.INSTANCE.getLabel(_selectionChannel.get());
 		} else if (compact) {
 			built = buildContent(_selector);
-			showBack = false;
-			barLabel = null;
 		} else {
 			built = buildRegularSplit();
-			showBack = false;
-			barLabel = null;
 		}
 
 		ReactControl old = _currentChild;
 		_currentChild = built;
 		if (initial) {
 			putStateSilent(CONTENT, built);
-			putStateSilent(SHOW_BACK, Boolean.valueOf(showBack));
-			putStateSilent(BAR_LABEL, barLabel);
+			putStateSilent(BREADCRUMB, buildBreadcrumb());
 		} else {
 			Object token = beginUpdate();
 			putState(CONTENT, built);
-			putState(SHOW_BACK, Boolean.valueOf(showBack));
-			putState(BAR_LABEL, barLabel);
+			putState(BREADCRUMB, buildBreadcrumb());
 			commitUpdate(token);
 			if (old != null && old != built) {
-				if (_deferDisposal) {
-					_deferredDisposal.add(old);
+				if (_disposal.isDeferring()) {
+					_disposal.defer(old);
 				} else {
 					old.cleanupTree();
 				}
 			}
 		}
+	}
+
+	private void updateBreadcrumb(boolean initial) {
+		Object items = buildBreadcrumb();
+		if (initial) {
+			putStateSilent(BREADCRUMB, items);
+		} else {
+			putState(BREADCRUMB, items);
+		}
+	}
+
+	/**
+	 * Builds the breadcrumb items for the coordinator in compact mode: a home crumb plus one crumb
+	 * per selected object down the chain. Returns {@code null} when no breadcrumb should be shown
+	 * (not a coordinator, not compact, or nothing selected yet).
+	 */
+	private List<Map<String, Object>> buildBreadcrumb() {
+		if (!_coordinator || _chain == null || _displayModel.getDisplayClass() != DisplayClass.COMPACT) {
+			return null;
+		}
+		List<Map<String, Object>> items = new ArrayList<>();
+		for (int i = 0; i < _chain.size(); i++) {
+			Object value = _chain.get(i).get();
+			if (value == null) {
+				break;
+			}
+			items.add(crumb(i + 1, MetaLabelProvider.INSTANCE.getLabel(value)));
+		}
+		if (items.isEmpty()) {
+			// Nothing selected: showing the selector full-bleed, no breadcrumb needed.
+			return null;
+		}
+		items.add(0, crumb(0, _homeLabel != null ? _homeLabel : DEFAULT_HOME_LABEL));
+		return items;
+	}
+
+	private static Map<String, Object> crumb(int depth, String label) {
+		Map<String, Object> entry = new HashMap<>(2);
+		entry.put("depth", Integer.valueOf(depth));
+		entry.put("label", label);
+		return entry;
 	}
 
 	private ReactControl buildRegularSplit() {
@@ -210,26 +265,36 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	}
 
 	/**
-	 * Clears the selection, returning the compact presentation to the selector.
+	 * Navigates to a breadcrumb crumb: clears the chain selections from the crumb's depth down,
+	 * returning the drill-in to that level.
 	 *
 	 * <p>
-	 * The rebuild runs (re-entrantly) inside {@link com.top_logic.layout.view.channel.ViewChannel#set}
-	 * while the channel is still notifying its listener snapshot, so disposal of the old presentation
-	 * is deferred until the notification has fully unwound (see {@link #_deferDisposal}).
+	 * Clearing runs (re-entrantly) inside {@link ViewChannel#set} while channels notify their
+	 * listener snapshots, so disposal of the replaced presentation is deferred until the
+	 * notifications have unwound (see {@link #_deferDisposal}).
 	 * </p>
+	 *
+	 * @param arguments
+	 *        Command arguments; {@code "depth"} is the target chain depth to clear from.
 	 */
-	@ReactCommand("back")
-	void handleBack() {
-		_deferDisposal = true;
-		try {
-			_selectionChannel.set(null);
-		} finally {
-			_deferDisposal = false;
-			for (ReactControl old : _deferredDisposal) {
-				old.cleanupTree();
-			}
-			_deferredDisposal.clear();
+	@ReactCommand("navigate")
+	void handleNavigate(Map<String, Object> arguments) {
+		if (_chain == null) {
+			return;
 		}
+		Object depthArg = arguments.get("depth");
+		if (!(depthArg instanceof Number)) {
+			return;
+		}
+		int depth = ((Number) depthArg).intValue();
+		if (depth < 0 || depth >= _chain.size()) {
+			return;
+		}
+		_disposal.run(() -> {
+			for (int j = depth; j < _chain.size(); j++) {
+				_chain.get(j).set(null);
+			}
+		});
 	}
 
 	@Override

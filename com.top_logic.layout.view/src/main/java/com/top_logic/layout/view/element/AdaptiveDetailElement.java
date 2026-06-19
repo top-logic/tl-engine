@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -24,6 +26,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.util.Resources;
 
 /**
  * Responsive master-detail element that presents the same configuration differently depending on
@@ -64,6 +67,9 @@ public class AdaptiveDetailElement implements UIElement {
 
 		/** Configuration name for {@link #getResetOn()}. */
 		String RESET_ON = "reset-on";
+
+		/** Configuration name for {@link #getHomeLabel()}. */
+		String HOME_LABEL = "home-label";
 
 		@Override
 		@ClassDefault(AdaptiveDetailElement.class)
@@ -109,6 +115,20 @@ public class AdaptiveDetailElement implements UIElement {
 		@Name(RESET_ON)
 		@Format(CommaSeparatedChannelRefs.class)
 		List<ChannelRef> getResetOn();
+
+		/**
+		 * Label of the breadcrumb's home crumb (the one that returns to the empty selector).
+		 *
+		 * <p>
+		 * Only meaningful on the outermost {@code <adaptive-detail>}: in compact mode it renders a
+		 * single breadcrumb spanning all nested levels ({@code home > selected-master >
+		 * selected-detail ...}); tapping a crumb clears the selections from that level down. Nested
+		 * elements contribute their selected object's label and do not render a breadcrumb of their
+		 * own.
+		 * </p>
+		 */
+		@Name(HOME_LABEL)
+		ResKey getHomeLabel();
 	}
 
 	private final ChannelRef _selectionRef;
@@ -119,6 +139,15 @@ public class AdaptiveDetailElement implements UIElement {
 
 	private final List<ChannelRef> _resetOnRefs;
 
+	private final ResKey _homeLabel;
+
+	/**
+	 * Whether this element is nested inside another {@code <adaptive-detail>}'s detail. Set by the
+	 * enclosing element; a nested element suppresses its own breadcrumb (the outermost element
+	 * renders one spanning all levels).
+	 */
+	private boolean _nested;
+
 	/**
 	 * Creates a new {@link AdaptiveDetailElement} from configuration.
 	 */
@@ -128,13 +157,48 @@ public class AdaptiveDetailElement implements UIElement {
 		_selector = config.getSelector().stream().map(context::getInstance).collect(Collectors.toList());
 		_detail = config.getDetail().stream().map(context::getInstance).collect(Collectors.toList());
 		_resetOnRefs = config.getResetOn();
+		_homeLabel = config.getHomeLabel();
+
+		AdaptiveDetailElement nested = firstNestedAdaptiveDetail();
+		if (nested != null) {
+			nested._nested = true;
+		}
+	}
+
+	/**
+	 * The nearest nested {@link AdaptiveDetailElement} directly within this element's detail, or
+	 * {@code null}.
+	 */
+	private AdaptiveDetailElement firstNestedAdaptiveDetail() {
+		for (UIElement element : _detail) {
+			if (element instanceof AdaptiveDetailElement nested) {
+				return nested;
+			}
+		}
+		return null;
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel selectionChannel = context.resolveChannel(_selectionRef);
 		List<ViewChannel> resetOn = _resetOnRefs.stream().map(context::resolveChannel).collect(Collectors.toList());
-		return new ReactAdaptiveDetailControl(context, _selector, _detail, selectionChannel, resetOn);
+
+		boolean coordinator = !_nested;
+		List<ViewChannel> chain;
+		String homeLabel;
+		if (coordinator) {
+			chain = new ArrayList<>();
+			for (AdaptiveDetailElement level = this; level != null; level = level.firstNestedAdaptiveDetail()) {
+				chain.add(context.resolveChannel(level._selectionRef));
+			}
+			homeLabel = _homeLabel == null ? null : Resources.getInstance().getString(_homeLabel);
+		} else {
+			chain = null;
+			homeLabel = null;
+		}
+
+		return new ReactAdaptiveDetailControl(context, _selector, _detail, selectionChannel, resetOn,
+			coordinator, chain, homeLabel);
 	}
 
 }

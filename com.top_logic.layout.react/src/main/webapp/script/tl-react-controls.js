@@ -3943,17 +3943,19 @@ const cr = ({ controlId: l }) => {
   const t = q();
   return /* @__PURE__ */ e.createElement("div", { id: l, className: "tlTileStack", style: { width: "100%", height: "100%" } }, t.frame && /* @__PURE__ */ e.createElement(V, { control: t.frame }));
 }, hr = ({ controlId: l }) => {
-  const t = q(), n = ne(), r = t.content, i = t.showBack, s = t.barLabel;
-  return /* @__PURE__ */ e.createElement("div", { id: l, className: "tlAdaptiveDetail" }, i && /* @__PURE__ */ e.createElement("div", { className: "tlAdaptiveDetail__bar" }, /* @__PURE__ */ e.createElement(
-    "button",
-    {
-      type: "button",
-      className: "tlAdaptiveDetail__back",
-      onClick: () => n("back", {}),
-      "aria-label": "Back"
-    },
-    "‹"
-  ), s && /* @__PURE__ */ e.createElement("span", { className: "tlAdaptiveDetail__title" }, s)), /* @__PURE__ */ e.createElement("div", { className: "tlAdaptiveDetail__content" }, r && /* @__PURE__ */ e.createElement(V, { control: r })));
+  const t = q(), n = ne(), r = t.content, i = t.breadcrumb ?? null;
+  return /* @__PURE__ */ e.createElement("div", { id: l, className: "tlAdaptiveDetail" }, i && i.length > 0 && /* @__PURE__ */ e.createElement("nav", { className: "tlAdaptiveDetail__breadcrumb", "aria-label": "Breadcrumb" }, i.map((s, c) => {
+    const u = c === i.length - 1;
+    return /* @__PURE__ */ e.createElement(e.Fragment, { key: s.depth }, c > 0 && /* @__PURE__ */ e.createElement("span", { className: "tlAdaptiveDetail__sep" }, "›"), u ? /* @__PURE__ */ e.createElement("span", { className: "tlAdaptiveDetail__crumb tlAdaptiveDetail__crumb--current" }, s.label) : /* @__PURE__ */ e.createElement(
+      "button",
+      {
+        type: "button",
+        className: "tlAdaptiveDetail__crumb",
+        onClick: () => n("navigate", { depth: s.depth })
+      },
+      s.label
+    ));
+  })), /* @__PURE__ */ e.createElement("div", { className: "tlAdaptiveDetail__content" }, r && /* @__PURE__ */ e.createElement(V, { control: r })));
 }, br = ({ controlId: l }) => {
   const n = q().children ?? [];
   return /* @__PURE__ */ e.createElement("div", { id: l, className: "tlSlot" }, n.map((r, i) => /* @__PURE__ */ e.createElement(V, { key: i, control: r })));

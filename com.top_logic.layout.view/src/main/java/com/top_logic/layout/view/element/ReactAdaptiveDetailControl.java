@@ -103,9 +103,12 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	 *        The detail content elements (bound to the selection channel).
 	 * @param selectionChannel
 	 *        The shared selection channel.
+	 * @param resetOn
+	 *        Channels whose change resets {@code selectionChannel} to {@code null} (an upstream
+	 *        master selection this selection depends on); may be empty.
 	 */
 	public ReactAdaptiveDetailControl(ViewContext context, List<UIElement> selector, List<UIElement> detail,
-			ViewChannel selectionChannel) {
+			ViewChannel selectionChannel, List<ViewChannel> resetOn) {
 		super(context, null, REACT_MODULE);
 		_context = context;
 		_selector = selector;
@@ -120,6 +123,15 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		_selectionListener = (sender, oldValue, newValue) -> onSelectionChanged();
 		_selectionChannel.addListener(_selectionListener);
 		addCleanupAction(() -> _selectionChannel.removeListener(_selectionListener));
+
+		// Reset this selection whenever a master selection it depends on changes, so a stale value
+		// cannot resurface under a different master (the selector that would prune it may not be
+		// rendered in compact mode).
+		ChannelListener resetListener = (sender, oldValue, newValue) -> _selectionChannel.set(null);
+		for (ViewChannel master : resetOn) {
+			master.addListener(resetListener);
+			addCleanupAction(() -> master.removeListener(resetListener));
+		}
 
 		renderPresentation(true);
 	}

@@ -22,6 +22,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
 import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
@@ -61,6 +62,9 @@ public class AdaptiveDetailElement implements UIElement {
 		/** Configuration name for {@link #getDetail()}. */
 		String DETAIL = "detail";
 
+		/** Configuration name for {@link #getResetOn()}. */
+		String RESET_ON = "reset-on";
+
 		@Override
 		@ClassDefault(AdaptiveDetailElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -88,6 +92,23 @@ public class AdaptiveDetailElement implements UIElement {
 		@Name(DETAIL)
 		@TreeProperty
 		List<PolymorphicConfiguration<? extends UIElement>> getDetail();
+
+		/**
+		 * Channels on which this element's {@link #getSelection() selection} depends; whenever one of
+		 * them changes, the selection is reset to {@code null}.
+		 *
+		 * <p>
+		 * Use this when the selectable rows derive from an upstream selection (the typical nested,
+		 * cascading master-detail): e.g. a milestone selection is only meaningful within a project
+		 * scope, so {@code reset-on="selectedScope"} clears the milestone when the scope changes -
+		 * regardless of whether the milestone selector is currently displayed (in compact mode it is
+		 * disposed once drilled past, so a value left in the channel would otherwise resurface under
+		 * the new scope).
+		 * </p>
+		 */
+		@Name(RESET_ON)
+		@Format(CommaSeparatedChannelRefs.class)
+		List<ChannelRef> getResetOn();
 	}
 
 	private final ChannelRef _selectionRef;
@@ -95,6 +116,8 @@ public class AdaptiveDetailElement implements UIElement {
 	private final List<UIElement> _selector;
 
 	private final List<UIElement> _detail;
+
+	private final List<ChannelRef> _resetOnRefs;
 
 	/**
 	 * Creates a new {@link AdaptiveDetailElement} from configuration.
@@ -104,12 +127,14 @@ public class AdaptiveDetailElement implements UIElement {
 		_selectionRef = config.getSelection();
 		_selector = config.getSelector().stream().map(context::getInstance).collect(Collectors.toList());
 		_detail = config.getDetail().stream().map(context::getInstance).collect(Collectors.toList());
+		_resetOnRefs = config.getResetOn();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel selectionChannel = context.resolveChannel(_selectionRef);
-		return new ReactAdaptiveDetailControl(context, _selector, _detail, selectionChannel);
+		List<ViewChannel> resetOn = _resetOnRefs.stream().map(context::resolveChannel).collect(Collectors.toList());
+		return new ReactAdaptiveDetailControl(context, _selector, _detail, selectionChannel, resetOn);
 	}
 
 }

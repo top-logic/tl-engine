@@ -178,4 +178,16 @@ Tell the user:
 - **Fast-forward only.** If the target cannot fast-forward to your rebased tip,
   the rebase used the wrong base — re-examine the fork point; do not create a
   merge commit to paper over it.
+- **Never reword/amend/reset a commit already published on the integration
+  branch.** Once your commit has fast-forwarded onto the integration branch, its
+  SHA is shared: a sibling worktree may have rebased onto the integration branch
+  and now carry that exact commit. Rewriting it in place (to fix a message,
+  ticket number, etc.) orphans the old SHA and leaves every sibling branch
+  holding a stale duplicate with the old content/message — a mess that surfaces
+  at *their* next reintegration. If a fix is genuinely needed, do it **before**
+  the fast-forward (on your own branch only), or coordinate with the sibling
+  worktrees. To redo a botched integration cleanly, roll the integration branch
+  back to the pre-commit base, re-rebase your branch, and fast-forward again —
+  but understand that is itself another rewrite and only safe because nothing is
+  pushed.
 - **Don't push.** Reintegration is local; pushing is a separate explicit request.

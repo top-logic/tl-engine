@@ -7,11 +7,17 @@ const I18N_KEYS = {
 };
 
 /**
- * Displays a PDF document inline using the browser's native PDF viewer.
+ * Displays a PDF document inline using the bundled Mozilla PDF.js viewer.
  *
- * The PDF bytes are fetched from the {@code /react-api/data} endpoint (served by
- * {@code ReactPdfViewerControl}) as a {@code Blob} and shown in an {@code <iframe>}. The fetch is
- * repeated whenever the server increments {@code dataRevision}, mirroring {@code TLPhotoViewer}.
+ * The PDF bytes are served by {@code ReactPdfViewerControl} from the {@code /react-api/data}
+ * endpoint. Rather than relying on the browser's native PDF handling (which many browsers are
+ * configured to download instead of render), the document is shown through {@code
+ * html/pdfjs/web/viewer.html}, which renders to a canvas regardless of browser settings - the same
+ * approach as the legacy {@code DisplayPDFControl}.
+ *
+ * The viewer's {@code file} parameter points back at the (same-origin, session-authenticated) data
+ * endpoint; a {@code rev} parameter carries {@code dataRevision} so a replaced document is re-fetched
+ * rather than served from cache.
  */
 const TLPdfViewer: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -20,64 +26,19 @@ const TLPdfViewer: React.FC<TLCellProps> = ({ controlId }) => {
   const hasPdf = !!state.hasPdf;
   const dataRevision: number = (state.dataRevision as number) ?? 0;
 
-  const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
-  const prevRevisionRef = React.useRef<number>(dataRevision);
-
-  // Fetch the PDF when it becomes available or its revision changes.
-  React.useEffect(() => {
-    if (!hasPdf) {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        setObjectUrl(null);
-      }
-      return;
-    }
-
-    if (dataRevision === prevRevisionRef.current && objectUrl) {
-      // Same revision, already have the document.
-      return;
-    }
-    prevRevisionRef.current = dataRevision;
-
-    if (objectUrl) {
-      URL.revokeObjectURL(objectUrl);
-      setObjectUrl(null);
-    }
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const resp = await fetch(dataUrl);
-        if (!resp.ok) {
-          console.error('[TLPdfViewer] Failed to fetch PDF:', resp.status);
-          return;
-        }
-        const blob = await resp.blob();
-        if (!cancelled) {
-          setObjectUrl(URL.createObjectURL(blob));
-        }
-      } catch (e) {
-        console.error('[TLPdfViewer] Fetch error:', e);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hasPdf, dataRevision, dataUrl]);
-
-  // Release the object URL on unmount.
-  React.useEffect(() => {
-    return () => {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
-    };
-  }, []);
-
   const t = useI18N(I18N_KEYS);
 
-  if (!hasPdf || !objectUrl) {
+  // The data URL has the form "<contextPath>/react-api/data?controlId=...&windowName=...".
+  // Derive the context path from it so the PDF.js viewer can be addressed without extra config.
+  const apiMarker = 'react-api/';
+  const markerIndex = dataUrl.indexOf(apiMarker);
+  const contextBase = markerIndex >= 0 ? dataUrl.slice(0, markerIndex) : dataUrl;
+
+  // Bust caches when the document is replaced so PDF.js loads the current revision.
+  const fileUrl = dataUrl + '&rev=' + dataRevision;
+  const viewerUrl = contextBase + 'html/pdfjs/web/viewer.html?file=' + encodeURIComponent(fileUrl);
+
+  if (!hasPdf) {
     return (
       <div id={controlId} className="tlPdfViewer">
         <div className="tlPdfViewer__placeholder">{t['js.pdfViewer.noDocument']}</div>
@@ -89,7 +50,7 @@ const TLPdfViewer: React.FC<TLCellProps> = ({ controlId }) => {
     <div id={controlId} className="tlPdfViewer">
       <iframe
         className="tlPdfViewer__frame"
-        src={objectUrl}
+        src={viewerUrl}
         title={t['js.pdfViewer.title']}
       />
     </div>

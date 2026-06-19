@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,6 +75,22 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	private ReactControl _currentChild;
 
 	private boolean _disposed;
+
+	/**
+	 * While {@code true}, the old presentation is not torn down synchronously but collected in
+	 * {@link #_deferredDisposal} and disposed once the triggering channel notification has unwound.
+	 *
+	 * <p>
+	 * Needed because the old presentation's children (the detail's form, the dependent selector
+	 * table) are themselves listeners of the very channel whose {@code set()} triggered the rebuild.
+	 * The channel notifies a snapshot of its listeners, so those children are still pending in the
+	 * current notification; disposing them mid-notification would let them run on a control whose
+	 * SSE queue / model scope is already gone.
+	 * </p>
+	 */
+	private boolean _deferDisposal;
+
+	private final List<ReactControl> _deferredDisposal = new ArrayList<>();
 
 	/**
 	 * Creates a new {@link ReactAdaptiveDetailControl}.
@@ -154,7 +171,11 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 			putState(BAR_LABEL, barLabel);
 			commitUpdate(token);
 			if (old != null && old != built) {
-				old.cleanupTree();
+				if (_deferDisposal) {
+					_deferredDisposal.add(old);
+				} else {
+					old.cleanupTree();
+				}
 			}
 		}
 	}
@@ -178,10 +199,25 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 
 	/**
 	 * Clears the selection, returning the compact presentation to the selector.
+	 *
+	 * <p>
+	 * The rebuild runs (re-entrantly) inside {@link com.top_logic.layout.view.channel.ViewChannel#set}
+	 * while the channel is still notifying its listener snapshot, so disposal of the old presentation
+	 * is deferred until the notification has fully unwound (see {@link #_deferDisposal}).
+	 * </p>
 	 */
 	@ReactCommand("back")
 	void handleBack() {
-		_selectionChannel.set(null);
+		_deferDisposal = true;
+		try {
+			_selectionChannel.set(null);
+		} finally {
+			_deferDisposal = false;
+			for (ReactControl old : _deferredDisposal) {
+				old.cleanupTree();
+			}
+			_deferredDisposal.clear();
+		}
 	}
 
 	@Override

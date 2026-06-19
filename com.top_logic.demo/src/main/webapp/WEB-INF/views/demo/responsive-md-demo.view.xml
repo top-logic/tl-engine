@@ -25,25 +25,73 @@
 
 		<adaptive-detail selection="selectedScope">
 			<selector>
-				<table
-					selection="selectedScope"
-					types="tl.demo.projectManagement:ProjectScope"
-				>
-					<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
-				</table>
+				<panel>
+					<title>
+						<en>Project Scopes</en>
+						<de>Projekt-Scopes</de>
+					</title>
+					<commands>
+						<generic-command placement="TOOLBAR" image="css:bi bi-plus-lg">
+							<label>
+								<en>New Project Scope</en>
+								<de>Neuer Projekt-Scope</de>
+							</label>
+							<execute-script function="x -> new(`tl.demo.projectManagement:ProjectScope`, transient: true)"/>
+							<open-dialog
+								dialog-view="demo/create-project-scope.view.xml"
+								bind-input-to="model"
+							>
+								<bind channel="selection" to="selectedScope"/>
+							</open-dialog>
+						</generic-command>
+					</commands>
+					<table
+						selection="selectedScope"
+						types="tl.demo.projectManagement:ProjectScope"
+						observed-types="tl.demo.projectManagement:ProjectScope"
+					>
+						<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
+					</table>
+				</panel>
 			</selector>
 			<detail>
-				<adaptive-detail selection="selectedMilestone">
+				<adaptive-detail selection="selectedMilestone" reset-on="selectedScope">
 					<selector>
-						<table
-							selection="selectedMilestone"
-							types="tl.demo.projectManagement:Milestone"
-						>
-							<inputs>
-								<input channel="selectedScope"/>
-							</inputs>
-							<rows>scope -> if($scope == null, list(), $scope.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
-						</table>
+						<panel>
+							<title>
+								<en>Milestones</en>
+								<de>Meilensteine</de>
+							</title>
+							<commands>
+								<generic-command placement="TOOLBAR" input="selectedScope" image="css:bi bi-plus-lg">
+									<label>
+										<en>New Milestone</en>
+										<de>Neuer Meilenstein</de>
+									</label>
+									<executability>
+										<null-input-disabled/>
+									</executability>
+									<execute-script function="x -> new(`tl.demo.projectManagement:Milestone`, transient: true)"/>
+									<open-dialog
+										dialog-view="demo/create-milestone.view.xml"
+										bind-input-to="model"
+									>
+										<bind channel="container" to="selectedScope"/>
+										<bind channel="selection" to="selectedMilestone"/>
+									</open-dialog>
+								</generic-command>
+							</commands>
+							<table
+								selection="selectedMilestone"
+								types="tl.demo.projectManagement:Milestone"
+								observed-types="tl.demo.projectManagement:Milestone"
+							>
+								<inputs>
+									<input channel="selectedScope"/>
+								</inputs>
+								<rows>scope -> if($scope == null, list(), $scope.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+							</table>
+						</panel>
 					</selector>
 					<detail>
 						<form input="selectedMilestone">

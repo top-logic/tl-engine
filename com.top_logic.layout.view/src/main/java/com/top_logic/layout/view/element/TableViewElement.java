@@ -34,9 +34,8 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.RowSourceObserver;
-import com.top_logic.layout.view.table.ColumnProviderService;
-import com.top_logic.layout.view.table.ScriptedFilter;
-import com.top_logic.layout.view.table.ScriptedFilterUI;
+import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -145,8 +144,8 @@ public class TableViewElement implements UIElement {
 
 	private final QueryExecutor _rowsExecutor;
 
-	/** Application-defined per-column filters, keyed by attribute name. */
-	private final Map<String, ColumnFilter<?>> _customFilters = new HashMap<>();
+	/** The column-integration strategy per configured column, keyed by attribute name. */
+	private final Map<String, ColumnBinding> _bindings = new HashMap<>();
 
 	/**
 	 * Creates a {@link TableViewElement} from configuration.
@@ -159,18 +158,28 @@ public class TableViewElement implements UIElement {
 		TableElement.ColumnsConfig columnsConfig = config.getColumns();
 		if (columnsConfig != null) {
 			for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
-				PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig = columnConfig.getFilter();
-				if (filterConfig != null) {
-					ColumnFilter<?> filter = context.getInstance(filterConfig);
-					if (filter != null) {
-						if (filter instanceof ScriptedFilter scripted) {
-							scripted.setAttribute(columnConfig.getAttribute());
-						}
-						_customFilters.put(columnConfig.getAttribute(), filter);
-					}
-				}
+				_bindings.put(columnConfig.getAttribute(), resolveBinding(context, columnConfig));
 			}
 		}
+	}
+
+	/**
+	 * The column integration for a configured column: derived from the attribute's type when no
+	 * filter is configured, the filter's own integration when it provides one, or a value-text filter
+	 * otherwise. This single capability check ({@link ColumnBinding}) is the only place filter kinds
+	 * are distinguished.
+	 */
+	private static ColumnBinding resolveBinding(InstantiationContext context,
+			TableElement.ColumnConfig columnConfig) {
+		PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig = columnConfig.getFilter();
+		if (filterConfig == null) {
+			return ColumnBinding.TYPE_DERIVED;
+		}
+		ColumnFilter<?> filter = context.getInstance(filterConfig);
+		if (filter == null) {
+			return ColumnBinding.TYPE_DERIVED;
+		}
+		return filter instanceof ColumnBinding binding ? binding : ColumnBinding.forValueFilter(filter);
 	}
 
 	@Override
@@ -181,22 +190,20 @@ public class TableViewElement implements UIElement {
 		}
 		Collection<?> rows = executeRowsQuery(_rowsExecutor, readChannelValues(inputChannels));
 
-		List<Column<Object, ?>> columns = buildColumns(resolveRowType(rows));
+		List<ColumnSetup> setups = columnSetups(resolveRowType(rows), context);
+		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
+		for (ColumnSetup setup : setups) {
+			columns.add(setup.binding().createColumn(setup));
+		}
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
 		DefaultTableView<Object> view =
 			DefaultTableView.create(columns, source, PersonalConfigViewStateStore.INSTANCE, tableId());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
 
-		// Register the custom dialog UI for each scripted (model-form) filter column.
-		for (Map.Entry<String, ColumnFilter<?>> entry : _customFilters.entrySet()) {
-			if (entry.getValue() instanceof ScriptedFilter scripted) {
-				List<ViewChannel> scriptInputs = new ArrayList<>();
-				for (ChannelRef ref : scripted.inputs()) {
-					scriptInputs.add(context.resolveChannel(ref));
-				}
-				control.setFilterUI(entry.getKey(), new ScriptedFilterUI(scripted, scriptInputs));
-			}
+		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
+		for (ColumnSetup setup : setups) {
+			setup.binding().installUI(setup, control);
 		}
 
 		ChannelRef selectionRef = _config.getSelection();
@@ -266,25 +273,20 @@ public class TableViewElement implements UIElement {
 		return new TableId(key.toString());
 	}
 
-	private List<Column<Object, ?>> buildColumns(TLStructuredType rowType) {
-		ColumnProviderService columns0 = ColumnProviderService.getInstance();
+	/**
+	 * The resolved column descriptors: one per configured {@code <column>} (using its
+	 * {@link #resolveBinding resolved binding}), or - when no columns are configured - one per
+	 * non-hidden attribute of the row type, each type-derived.
+	 */
+	private List<ColumnSetup> columnSetups(TLStructuredType rowType, ViewContext context) {
+		List<ColumnSetup> setups = new ArrayList<>();
 		TableElement.ColumnsConfig columnsConfig = _config.getColumns();
-		List<Column<Object, ?>> columns = new ArrayList<>();
 		if (columnsConfig != null && !columnsConfig.getColumns().isEmpty()) {
 			for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
 				String attribute = columnConfig.getAttribute();
 				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-				ResKey label = columnLabel(part, attribute);
-				ColumnFilter<?> customFilter = _customFilters.get(attribute);
-				if (customFilter instanceof ScriptedFilter scripted) {
-					columns.add(columns0.createScriptedColumn(attribute, label, scripted));
-				} else if (customFilter != null) {
-					@SuppressWarnings("unchecked")
-					ColumnFilter<String> stringFilter = (ColumnFilter<String>) customFilter;
-					columns.add(columns0.createColumn(attribute, label, stringFilter));
-				} else {
-					columns.add(columns0.createColumn(attribute, label, part));
-				}
+				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
+					_bindings.get(attribute)));
 			}
 		} else if (rowType != null) {
 			// No explicit columns configured: derive a default set from the row type's
@@ -293,14 +295,16 @@ public class TableViewElement implements UIElement {
 				if (DisplayAnnotations.isHidden(part)) {
 					continue;
 				}
-				columns.add(columns0.createColumn(part.getName(), columnLabel(part, part.getName()), part));
+				String attribute = part.getName();
+				setups.add(new ColumnSetup(attribute, columnLabel(part, attribute), part, context,
+					ColumnBinding.TYPE_DERIVED));
 			}
 		}
-		if (columns.isEmpty()) {
+		if (setups.isEmpty()) {
 			throw new IllegalStateException(
 				"A <table-view> requires either explicit <column>s or a resolvable row type to derive them from.");
 		}
-		return columns;
+		return setups;
 	}
 
 	/**

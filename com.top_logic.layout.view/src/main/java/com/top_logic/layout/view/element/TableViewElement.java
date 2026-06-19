@@ -35,6 +35,8 @@ import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.layout.view.table.ScriptedFilter;
+import com.top_logic.layout.view.table.ScriptedFilterUI;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -144,7 +146,7 @@ public class TableViewElement implements UIElement {
 	private final QueryExecutor _rowsExecutor;
 
 	/** Application-defined per-column filters, keyed by attribute name. */
-	private final Map<String, ColumnFilter<String>> _customFilters = new HashMap<>();
+	private final Map<String, ColumnFilter<?>> _customFilters = new HashMap<>();
 
 	/**
 	 * Creates a {@link TableViewElement} from configuration.
@@ -159,9 +161,11 @@ public class TableViewElement implements UIElement {
 			for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
 				PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig = columnConfig.getFilter();
 				if (filterConfig != null) {
-					@SuppressWarnings("unchecked")
-					ColumnFilter<String> filter = (ColumnFilter<String>) context.getInstance(filterConfig);
+					ColumnFilter<?> filter = context.getInstance(filterConfig);
 					if (filter != null) {
+						if (filter instanceof ScriptedFilter scripted) {
+							scripted.setAttribute(columnConfig.getAttribute());
+						}
 						_customFilters.put(columnConfig.getAttribute(), filter);
 					}
 				}
@@ -183,6 +187,17 @@ public class TableViewElement implements UIElement {
 			DefaultTableView.create(columns, source, PersonalConfigViewStateStore.INSTANCE, tableId());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, false);
+
+		// Register the custom dialog UI for each scripted (model-form) filter column.
+		for (Map.Entry<String, ColumnFilter<?>> entry : _customFilters.entrySet()) {
+			if (entry.getValue() instanceof ScriptedFilter scripted) {
+				List<ViewChannel> scriptInputs = new ArrayList<>();
+				for (ChannelRef ref : scripted.inputs()) {
+					scriptInputs.add(context.resolveChannel(ref));
+				}
+				control.setFilterUI(entry.getKey(), new ScriptedFilterUI(scripted, scriptInputs));
+			}
+		}
 
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
@@ -260,10 +275,16 @@ public class TableViewElement implements UIElement {
 				String attribute = columnConfig.getAttribute();
 				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
 				ResKey label = columnLabel(part, attribute);
-				ColumnFilter<String> customFilter = _customFilters.get(attribute);
-				columns.add(customFilter != null
-					? columns0.createColumn(attribute, label, customFilter)
-					: columns0.createColumn(attribute, label, part));
+				ColumnFilter<?> customFilter = _customFilters.get(attribute);
+				if (customFilter instanceof ScriptedFilter scripted) {
+					columns.add(columns0.createScriptedColumn(attribute, label, scripted));
+				} else if (customFilter != null) {
+					@SuppressWarnings("unchecked")
+					ColumnFilter<String> stringFilter = (ColumnFilter<String>) customFilter;
+					columns.add(columns0.createColumn(attribute, label, stringFilter));
+				} else {
+					columns.add(columns0.createColumn(attribute, label, part));
+				}
 			}
 		} else if (rowType != null) {
 			// No explicit columns configured: derive a default set from the row type's

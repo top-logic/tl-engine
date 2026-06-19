@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.table;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.function.Supplier;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -136,6 +137,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/** Cell controls for currently buffered rows, keyed by row key then column name. */
 	private final Map<Object, Map<String, ReactControl>> _cellCache = new LinkedHashMap<>();
 
+	/** View-supplied custom filter UIs, keyed by column name. */
+	private final Map<String, ColumnFilterUI> _filterUIs = new LinkedHashMap<>();
+
 	/**
 	 * Creates a {@link TableViewControl}.
 	 *
@@ -164,6 +168,14 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	public void setSelectionListener(SelectionListener listener) {
 		_selectionListener = listener;
+	}
+
+	/**
+	 * Registers a view-supplied custom filter UI for a column, used instead of the built-in filter
+	 * editor when the column's funnel is opened.
+	 */
+	public void setFilterUI(String column, ColumnFilterUI ui) {
+		_filterUIs.put(column, ui);
 	}
 
 	// -- State building --
@@ -299,24 +311,35 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			return;
 		}
 		Resources resources = Resources.getInstance();
-		// Facet counts are value-based, so only meaningful for filters that opt in (e.g. options);
-		// a predicate-based options filter (regexp) declines them to avoid misleading "(0)" labels.
-		MatchCounts counts = filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
-		FilterEditor editor = FilterEditors.create(filter,
-			_view.state().getFilters().get(column), counts);
 
-		// Build through the shared form pipeline with the same defaults as a model-bound form
-		// (responsive columns + automatic label position), so the dialog form renders and reflows
-		// exactly like every other form.
-		ReactFormBuilder form = new ReactFormBuilder(context);
-		for (FilterField field : editor.fields()) {
-			form.addField(label(resources, field.label()), fieldControl(context, field));
+		// A view-registered custom filter UI (e.g. a model-form, script-evaluated filter) builds its
+		// own dialog body; otherwise the built-in editor pipeline derives one from the filter input.
+		ReactControl body;
+		Supplier<FilterState> readState;
+		ColumnFilterUI customUI = _filterUIs.get(column);
+		if (customUI != null) {
+			body = customUI.buildForm(context);
+			readState = customUI::read;
+		} else {
+			// Facet counts are value-based, so only meaningful for filters that opt in (e.g. options);
+			// a predicate-based options filter (regexp) declines them to avoid misleading "(0)" labels.
+			MatchCounts counts = filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
+			FilterEditor editor = FilterEditors.create(filter, _view.state().getFilters().get(column), counts);
+			// Build through the shared form pipeline with the same defaults as a model-bound form
+			// (responsive columns + automatic label position), so the dialog form renders and reflows
+			// exactly like every other form.
+			ReactFormBuilder form = new ReactFormBuilder(context);
+			for (FilterField field : editor.fields()) {
+				form.addField(label(resources, field.label()), fieldControl(context, field));
+			}
+			body = form.build();
+			readState = editor::read;
 		}
 
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_FILTER), DisplayDimension.px(380),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
-		window.setChild(form.build());
+		window.setChild(body);
 		window.setActions(List.of(
 			new ReactButtonControl(context, resources.getString(I18NConstants.JS_TABLE_CLEAR), ctx -> {
 				_view.filter(column, null);
@@ -329,7 +352,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				return HandlerResult.DEFAULT_RESULT;
 			}),
 			MessageButtons.ok(context, ctx -> {
-				_view.filter(column, editor.read());
+				_view.filter(column, readState.get());
 				rebuildAfterRowChange();
 				dialogs.closeTopDialog(DialogResult.ok(null));
 				return HandlerResult.DEFAULT_RESULT;

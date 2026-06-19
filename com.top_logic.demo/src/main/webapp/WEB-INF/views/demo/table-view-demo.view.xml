@@ -85,7 +85,26 @@
 							</column>
 							<column attribute="classificationSingle"/>
 							<column attribute="boolean"/>
-							<column attribute="long"/>
+							<column attribute="long">
+								<!-- Fully model- and script-defined filter: the form is a transient
+								     demo.filter:LongRange instance; the match function builds a per-row
+								     predicate closure from it. -->
+								<filter class="com.top_logic.layout.view.table.ScriptedFilter"
+									model="demo.filter:LongRange"
+								>
+									<label>
+										<en>Long range (scripted)</en>
+										<de>Long-Bereich (per Skript)</de>
+									</label>
+									<match><![CDATA[
+										params -> value -> row -> {
+											min = $params.get(`demo.filter:LongRange#min`);
+											max = $params.get(`demo.filter:LongRange#max`);
+											($min == null || $value >= $min) && ($max == null || $value <= $max)
+										}
+									]]></match>
+								</filter>
+							</column>
 							<column attribute="date"/>
 							<column attribute="float"/>
 						</columns>

@@ -167,6 +167,20 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
+	 * Builds a column whose cell <em>value is the whole row object</em>, so a custom filter (e.g. a
+	 * {@code ScriptedFilter}) receives the full row as context. The cell still displays the
+	 * attribute's localized label.
+	 */
+	public Column<Object, ?> createScriptedColumn(String attribute, ResKey label, ColumnFilter<Object> filter) {
+		return DefaultColumn.<Object, Object> builder(attribute, row -> row)
+			.label(label)
+			.renderer(value -> CellContent.text(label(attributeValue(value, attribute))))
+			.sort(() -> Comparator.comparing(value -> label(attributeValue(value, attribute))))
+			.filter(filter)
+			.build();
+	}
+
+	/**
 	 * The built-in column whose filter and comparator are derived from the attribute's type.
 	 */
 	private static Column<Object, ?> defaultColumn(String attribute, ResKey label, TLStructuredTypePart part) {

@@ -58,4 +58,13 @@ public sealed interface FilterInput {
 		// Descriptor; no payload.
 	}
 
+	/**
+	 * A filter whose editor is a whole form, supplied by the UI tier (not derived from a simple
+	 * input shape). The model tier carries no form details; the view layer registers a custom
+	 * filter UI for the column (e.g. a model-class-defined, script-evaluated filter).
+	 */
+	record Form() implements FilterInput {
+		// Descriptor; the UI is provided out-of-band by the view tier.
+	}
+
 }

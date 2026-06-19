@@ -190,11 +190,19 @@ Phases 0–2 are implemented and **verified in the browser** (`com.top_logic.dem
   across the breakpoint preserves it (wide→narrow drills to the deepest selection; narrow→wide
   restores the columns with downstream selectors still populated).
 
-**Not yet implemented — the unified breadcrumb (the agreed compact-nav design).** The compact
-presentation currently shows a *per-level* back bar, so nested levels stack two bars (`‹ P1`,
-`‹ M1`). The agreed design is a single coordinated trail (`Scopes › P1 › M1`) where the outermost
-element walks the nested chain and tapping a crumb nulls all deeper selections. Open sub-decision:
-what the **root/home crumb** shows (a selector has no intrinsic title).
+**Unified breadcrumb (implemented & verified).** In compact mode the outermost `<adaptive-detail>`
+renders a single breadcrumb spanning all nested levels (`Projekt-Scopes › P1 › M1`); tapping a crumb
+clears the selections from that level down. The outermost element discovers the nested chain from
+its own config (the `<detail>` contains the next `<adaptive-detail>`) and marks nested elements to
+suppress their own bar — no view-context scope plumbing. The root/home crumb is configured via
+`home-label` on the outermost element. Replaced-presentation disposal during crumb navigation is
+coordinated per-subsession (`AdaptiveDetailDisposal`): navigation clears deeper levels' channels
+whose rebuilds run in a different control than the initiator, so all levels defer to one shared
+queue flushed after the navigation unwinds (a per-control defer flag was insufficient).
+
+**Also added since:** `reset-on` (dependent-selection reset when a master changes), create dialogs
+for both demo types (free `ProjectScope` + composite `Milestone` via the new `<execute-script>`
+`<inputs>` support), and table selection synced from its bound channel (lossless flip highlight).
 
 ## Relevant existing code
 

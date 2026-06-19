@@ -76,6 +76,15 @@
 							<de>Eingabesteuerungen</de>
 						</label>
 					</nav-item>
+					<nav-item id="pdf"
+						icon="css:bi bi-file-earmark-pdf"
+					>
+						<view-ref view="demo/pdf-demo.view.xml"/>
+						<label>
+							<en>PDF Viewer</en>
+							<de>PDF-Viewer</de>
+						</label>
+					</nav-item>
 					<nav-item id="charts"
 						icon="css:bi bi-bar-chart-line"
 					>

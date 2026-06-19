@@ -297,6 +297,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_PHOTO_VIEWER_ALT;
 
 	/**
+	 * @en PDF document
+	 */
+	@CustomKey("js.pdfViewer.title")
+	public static ResKey JS_PDF_VIEWER_TITLE;
+
+	/**
+	 * @en No document available
+	 */
+	@CustomKey("js.pdfViewer.noDocument")
+	public static ResKey JS_PDF_VIEWER_NO_DOCUMENT;
+
+	/**
 	 * @en Camera requires a secure connection (HTTPS).
 	 */
 	@CustomKey("js.photoCapture.error.insecure")

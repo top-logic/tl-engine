@@ -176,6 +176,26 @@ nesting-aware, not purely self-contained per level.
    - **Resize flip:** with a selection at depth ≥ 1, flip the viewport across the breakpoint and
      confirm the selection is preserved and the presentation switches losslessly.
 
+## Implementation status (2026-06-19)
+
+Phases 0–2 are implemented and **verified in the browser** (`com.top_logic.demo`, view
+`demo/responsive-md-demo.view.xml`, nested ProjectScope → Milestone → detail):
+
+- **REGULAR (wide):** the nested config renders as three cascading columns (scopes │ milestones │
+  detail) with draggable splitters; selecting a scope populates the milestone selector, selecting a
+  milestone populates the detail form.
+- **COMPACT (narrow):** the same config drills step-by-step (scopes → milestones → detail); a back
+  bar per level clears that level's selection.
+- **Resize flip (both directions):** lossless — the selection lives in the channels, so flipping
+  across the breakpoint preserves it (wide→narrow drills to the deepest selection; narrow→wide
+  restores the columns with downstream selectors still populated).
+
+**Not yet implemented — the unified breadcrumb (the agreed compact-nav design).** The compact
+presentation currently shows a *per-level* back bar, so nested levels stack two bars (`‹ P1`,
+`‹ M1`). The agreed design is a single coordinated trail (`Scopes › P1 › M1`) where the outermost
+element walks the nested chain and tapping a crumb nulls all deeper selections. Open sub-decision:
+what the **root/home crumb** shows (a selector has no intrinsic title).
+
 ## Relevant existing code
 
 - Split / slider: `com.top_logic/.../layout.template.xml`, `FlexibleFlowLayoutControl`,

@@ -39,10 +39,17 @@ public class ConfirmDialogControl {
 	 * @param message
 	 *        The confirmation question shown in the dialog body.
 	 * @param onConfirm
-	 *        The action to run when the user confirms (presses Yes).
+	 *        Runs when the user confirms (presses Yes).
+	 * @param onCancel
+	 *        Runs when the user declines through any path (No button, the window's close button,
+	 *        Escape, or backdrop). May be {@code null}.
 	 */
 	public static void openDialog(ReactContext context, DialogManager dialogManager, String title, String message,
-			Runnable onConfirm) {
+			Runnable onConfirm, Runnable onCancel) {
+		// One-shot guard so a given cancel-or-confirm outcome fires exactly once, regardless of how
+		// the dialog is dismissed (button, X, Escape, backdrop all funnel through the result handler).
+		boolean[] confirmed = { false };
+
 		Runnable closeHandler = () -> dialogManager.closeTopDialog(DialogResult.cancelled());
 
 		ReactWindowControl window = new ReactWindowControl(context, title, DisplayDimension.px(450), closeHandler);
@@ -54,6 +61,7 @@ public class ConfirmDialogControl {
 			return HandlerResult.DEFAULT_RESULT;
 		}));
 		actions.add(MessageButtons.yes(context, ctx -> {
+			confirmed[0] = true;
 			dialogManager.closeTopDialog(DialogResult.ok(null));
 			onConfirm.run();
 			return HandlerResult.DEFAULT_RESULT;
@@ -61,7 +69,10 @@ public class ConfirmDialogControl {
 		window.setActions(actions);
 
 		dialogManager.openDialog(false, window, result -> {
-			// No-op: confirmation side effect runs from the Yes button only.
+			// Any dismissal that is not the confirmed path counts as cancel.
+			if (!confirmed[0] && onCancel != null) {
+				onCancel.run();
+			}
 		});
 	}
 }

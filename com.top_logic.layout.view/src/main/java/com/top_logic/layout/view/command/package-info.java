@@ -16,6 +16,6 @@
  *
  * @see com.top_logic.layout.view.command.ViewCommand
  * @see com.top_logic.layout.view.command.ViewExecutabilityRule
- * @see com.top_logic.layout.view.command.ViewCommandConfirmation
+ * @see com.top_logic.layout.view.command.ConfirmAction
  */
 package com.top_logic.layout.view.command;

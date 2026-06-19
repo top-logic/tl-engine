@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
@@ -25,7 +24,6 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
@@ -102,21 +100,11 @@ public abstract class CommandCarrierElement extends ContainerElement {
 			ViewChannel inputChannel = inputRef != null ? context.resolveChannel(inputRef) : null;
 
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
 
-			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
+			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule);
 			models.add(model);
 		}
 		return models;
-	}
-
-	private ViewCommandConfirmation buildConfirmation(ViewCommand.Config cmdConfig) {
-		PolymorphicConfiguration<? extends ViewCommandConfirmation> confirmConfig = cmdConfig.getConfirmation();
-		if (confirmConfig == null) {
-			return null;
-		}
-		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(CommandCarrierElement.class);
-		return instantiation.getInstance(confirmConfig);
 	}
 
 	/**

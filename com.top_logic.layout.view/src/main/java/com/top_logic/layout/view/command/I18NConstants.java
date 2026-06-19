@@ -20,19 +20,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONFIRM_TITLE;
 
 	/**
-	 * @en Do you really want to execute ''{0}''?
+	 * @en Action ''{0}'' may not suspend inside a transaction. Place the guard (e.g. a confirmation)
+	 *     before the surrounding &lt;with-transaction&gt;.
 	 */
-	public static ResKey1 CONFIRM_EXECUTE__LABEL;
-
-	/**
-	 * @en Do you really want to delete ''{0}''?
-	 */
-	public static ResKey1 CONFIRM_DELETE__LABEL;
-
-	/**
-	 * @en Do you really want to delete {0} elements?
-	 */
-	public static ResKey1 CONFIRM_DELETE_MULTI__COUNT;
+	public static ResKey1 ERROR_SUSPEND_NOT_ALLOWED_IN_TRANSACTION__ACTION;
 
 	/**
 	 * @en Unknown command reference: ''{0}''

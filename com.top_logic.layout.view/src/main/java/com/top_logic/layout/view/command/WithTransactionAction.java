@@ -17,6 +17,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ViewAction} that wraps inner actions in a KB transaction.
@@ -24,6 +25,13 @@ import com.top_logic.layout.react.ReactContext;
  * <p>
  * All inner actions execute within the same transaction. If any action throws, the transaction is
  * rolled back. The result of the last inner action is returned.
+ * </p>
+ *
+ * <p>
+ * Inner actions must complete synchronously: an action may not suspend (e.g. a
+ * {@link ConfirmAction}) inside a transaction, since that would hold the transaction open across an
+ * asynchronous wait. Such a configuration fails fast with a clear error - place the guard
+ * <em>before</em> the {@code <with-transaction>} instead.
  * </p>
  *
  * <p>
@@ -74,12 +82,61 @@ public class WithTransactionAction implements ViewAction {
 		try {
 			Object current = input;
 			for (ViewAction action : _actions) {
-				current = action.execute(context, current);
+				RequireSyncContinuation continuation = new RequireSyncContinuation(action);
+				action.execute(context, current, continuation);
+				current = continuation.resumedValue();
 			}
 			tx.commit();
 			return current;
 		} finally {
 			tx.rollback();
+		}
+	}
+
+	/**
+	 * {@link Continuation} for the non-interruptible transaction context: an inner action must
+	 * {@link #resume(Object) resume} synchronously. Suspending or aborting inside a transaction is
+	 * rejected so the transaction is never held open across an asynchronous wait.
+	 */
+	private static final class RequireSyncContinuation implements Continuation {
+
+		private final ViewAction _action;
+
+		private boolean _resumed;
+
+		private Object _value;
+
+		RequireSyncContinuation(ViewAction action) {
+			_action = action;
+		}
+
+		@Override
+		public void resume(Object value) {
+			_resumed = true;
+			_value = value;
+		}
+
+		@Override
+		public void abort() {
+			throw suspendNotAllowed();
+		}
+
+		@Override
+		public void onAbort(Runnable compensation) {
+			// Inside a transaction, the KB rollback is the compensation; nothing to register.
+		}
+
+		Object resumedValue() {
+			if (!_resumed) {
+				throw suspendNotAllowed();
+			}
+			return _value;
+		}
+
+		private TopLogicException suspendNotAllowed() {
+			return new TopLogicException(
+				I18NConstants.ERROR_SUSPEND_NOT_ALLOWED_IN_TRANSACTION__ACTION.fill(
+					_action.getClass().getSimpleName()));
 		}
 	}
 }

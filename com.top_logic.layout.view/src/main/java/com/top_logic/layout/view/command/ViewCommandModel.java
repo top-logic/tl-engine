@@ -14,8 +14,6 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
-import com.top_logic.layout.react.control.overlay.ConfirmDialogControl;
-import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -38,8 +36,6 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 
 	private final ViewExecutabilityRule _rule;
 
-	private final ViewCommandConfirmation _confirmation;
-
 	private ExecutableState _executableState;
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
@@ -55,16 +51,13 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	 *        The resolved input channel (may be {@code null} if no input configured).
 	 * @param rule
 	 *        The combined executability rule.
-	 * @param confirmation
-	 *        The confirmation strategy (may be {@code null} if no confirmation needed).
 	 */
 	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
-			ViewExecutabilityRule rule, ViewCommandConfirmation confirmation) {
+			ViewExecutabilityRule rule) {
 		_command = command;
 		_config = config;
 		_inputChannel = inputChannel;
 		_rule = rule;
-		_confirmation = confirmation;
 		_executableState = ExecutableState.EXECUTABLE;
 	}
 
@@ -159,22 +152,9 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 
 		// TODO: dirty check (DirtyCheckScope from config)
 
-		if (_confirmation != null) {
-			ResKey confirmKey = _confirmation.getConfirmation(context, _config.getLabel(), input);
-			if (confirmKey != null) {
-				DialogManager dialogManager = context.getDialogManager();
-				if (dialogManager != null) {
-					Resources resources = Resources.getInstance();
-					String title = resources.getString(I18NConstants.CONFIRM_TITLE);
-					String message = resources.getString(confirmKey);
-					ConfirmDialogControl.openDialog(context, dialogManager, title, message,
-						() -> _command.execute(context, input));
-					return HandlerResult.DEFAULT_RESULT;
-				}
-				// No dialog manager available: fall through and execute without confirmation.
-			}
-		}
-
+		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
+		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
+		// state - rather than gating the whole command here.
 		return _command.execute(context, input);
 	}
 

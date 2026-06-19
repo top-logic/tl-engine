@@ -63,9 +63,6 @@ public interface ViewCommand {
 		/** Configuration name for {@link #getExecutability()}. */
 		String EXECUTABILITY = "executability";
 
-		/** Configuration name for {@link #getConfirmation()}. */
-		String CONFIRMATION = "confirmation";
-
 		/** Configuration name for {@link #getCheckDirty()}. */
 		String CHECK_DIRTY = "check-dirty";
 
@@ -138,17 +135,6 @@ public interface ViewCommand {
 		@Name(EXECUTABILITY)
 		@EntryTag("rule")
 		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getExecutability();
-
-		/**
-		 * Strategy for producing a confirmation dialog before execution.
-		 *
-		 * <p>
-		 * If {@code null}, no confirmation is shown.
-		 * </p>
-		 */
-		@Name(CONFIRMATION)
-		@Nullable
-		PolymorphicConfiguration<? extends ViewCommandConfirmation> getConfirmation();
 
 		/**
 		 * Scope of the dirty check to perform before executing this command.

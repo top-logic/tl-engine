@@ -16,11 +16,19 @@ import com.top_logic.layout.react.ReactContext;
  * an output. Actions are chained in a {@link GenericViewCommand} where each action's return value
  * becomes the next action's input.
  * </p>
+ *
+ * <p>
+ * The chain always drives actions through {@link #execute(ReactContext, Object, Continuation)}. A
+ * regular action only implements the synchronous {@link #execute(ReactContext, Object)} and is
+ * adapted automatically. An action that needs to <em>suspend</em> the chain (e.g. to await a
+ * confirmation dialog) extends {@link InterruptibleViewAction} and implements the
+ * {@link Continuation}-based form instead.
+ * </p>
  */
 public interface ViewAction {
 
 	/**
-	 * Executes this action.
+	 * Executes this action synchronously.
 	 *
 	 * @param context
 	 *        The React context.
@@ -30,4 +38,25 @@ public interface ViewAction {
 	 * @return The result to pass to the next action, or the final result of the chain.
 	 */
 	Object execute(ReactContext context, Object input);
+
+	/**
+	 * Executes this action within the chain, continuing via the given {@link Continuation}.
+	 *
+	 * <p>
+	 * The default adapts the synchronous {@link #execute(ReactContext, Object)} - compute a value
+	 * and {@link Continuation#resume(Object) resume} immediately. Actions that may suspend or abort
+	 * the chain override this (see {@link InterruptibleViewAction}) and call
+	 * {@link Continuation#resume(Object)} / {@link Continuation#abort()} themselves, possibly later.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param input
+	 *        The input value (output of the previous action, or {@code null} for the first).
+	 * @param continuation
+	 *        Used to continue (or cancel) the chain.
+	 */
+	default void execute(ReactContext context, Object input, Continuation continuation) {
+		continuation.resume(execute(context, input));
+	}
 }

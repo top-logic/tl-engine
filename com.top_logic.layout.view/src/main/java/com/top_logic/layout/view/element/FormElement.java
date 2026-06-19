@@ -14,7 +14,6 @@ import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -47,7 +46,6 @@ import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.layout.view.command.ViewCommandConfirmation;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormCommandModel;
@@ -419,10 +417,9 @@ public class FormElement extends ContainerElement {
 			ViewChannel inputChannel = inputRef != null ? formContext.resolveChannel(inputRef) : null;
 
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
-			ViewCommandConfirmation confirmation = buildConfirmation(cmdConfig);
 
 			ViewCommandModel inner =
-				new ViewCommandModel(cmd, cmdConfig, inputChannel, rule, confirmation);
+				new ViewCommandModel(cmd, cmdConfig, inputChannel, rule);
 
 			// Wrap the model so that executeCommand uses the form context (which has the
 			// FormModel) instead of the window context passed by the toolbar button.
@@ -449,16 +446,6 @@ public class FormElement extends ContainerElement {
 		});
 	}
 
-	private ViewCommandConfirmation buildConfirmation(ViewCommand.Config cmdConfig) {
-		PolymorphicConfiguration<? extends ViewCommandConfirmation> confirmConfig =
-			cmdConfig.getConfirmation();
-		if (confirmConfig == null) {
-			return null;
-		}
-		DefaultInstantiationContext instantiation =
-			new DefaultInstantiationContext(FormElement.class);
-		return instantiation.getInstance(confirmConfig);
-	}
 
 	/**
 	 * Delegating {@link CommandModel} that overrides the {@link ReactContext} passed to

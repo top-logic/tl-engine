@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -70,10 +72,74 @@ public class GenericViewCommand implements ViewCommand {
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
-		Object current = input;
-		for (ViewAction action : _actions) {
-			current = action.execute(context, current);
-		}
+		runFrom(context, 0, input, new ArrayDeque<>());
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Runs the action at {@code index} and, via its {@link Continuation}, the remaining actions.
+	 *
+	 * <p>
+	 * Synchronous actions resume inline, so the chain completes within this call. An interruptible
+	 * action may resume later (the chain continues then) or abort (the remaining actions are skipped
+	 * and the {@code compensations} registered so far run, newest first). A thrown failure triggers
+	 * the same compensation unwind before propagating.
+	 * </p>
+	 *
+	 * @param compensations
+	 *        Shared rollback stack accumulated by {@link Continuation#onAbort(Runnable)} across the
+	 *        whole chain.
+	 */
+	private void runFrom(ReactContext context, int index, Object input, Deque<Runnable> compensations) {
+		if (index >= _actions.size()) {
+			return;
+		}
+		ViewAction action = _actions.get(index);
+		Continuation continuation = new Continuation() {
+			private boolean _spent;
+
+			@Override
+			public void resume(Object value) {
+				spend();
+				runFrom(context, index + 1, value, compensations);
+			}
+
+			@Override
+			public void abort() {
+				spend();
+				runCompensations(compensations);
+			}
+
+			@Override
+			public void onAbort(Runnable compensation) {
+				if (_spent) {
+					throw new IllegalStateException("onAbort() after the action already continued.");
+				}
+				compensations.push(compensation);
+			}
+
+			private void spend() {
+				if (_spent) {
+					throw new IllegalStateException("Continuation already used (resume/abort called twice).");
+				}
+				_spent = true;
+			}
+		};
+		try {
+			action.execute(context, input, continuation);
+		} catch (RuntimeException failure) {
+			runCompensations(compensations);
+			throw failure;
+		}
+	}
+
+	/**
+	 * Runs (and removes) all registered compensations, newest first. Draining makes this safe to
+	 * invoke from nested {@code catch} blocks during exception unwinding.
+	 */
+	private static void runCompensations(Deque<Runnable> compensations) {
+		while (!compensations.isEmpty()) {
+			compensations.pop().run();
+		}
 	}
 }

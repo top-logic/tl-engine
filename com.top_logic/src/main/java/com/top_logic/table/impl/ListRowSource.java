@@ -13,11 +13,13 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
@@ -175,7 +177,7 @@ public class ListRowSource<R> implements RowSource<R> {
 		Map<Object, Integer> counts = new HashMap<>();
 		for (R element : _elements) {
 			if (others == null || others.test(element)) {
-				counts.merge(definition.value(element), Integer.valueOf(1), Integer::sum);
+				addFacetCounts(definition, element, counts);
 			}
 		}
 		return new MatchCounts() {
@@ -190,6 +192,18 @@ public class ListRowSource<R> implements RowSource<R> {
 				return true;
 			}
 		};
+	}
+
+	private static <R, V> void addFacetCounts(Column<R, V> column, R element, Map<Object, Integer> counts) {
+		V value = column.value(element);
+		Optional<ColumnFilter<V>> filter = column.filter();
+		if (filter.isPresent()) {
+			for (Object key : filter.get().facetKeys(value)) {
+				counts.merge(key, Integer.valueOf(1), Integer::sum);
+			}
+		} else if (value != null) {
+			counts.merge(value, Integer.valueOf(1), Integer::sum);
+		}
 	}
 
 	@Override

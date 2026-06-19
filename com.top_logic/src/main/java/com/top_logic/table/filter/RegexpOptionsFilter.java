@@ -6,6 +6,7 @@
 package com.top_logic.table.filter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +130,25 @@ public class RegexpOptionsFilter implements ColumnFilter<String> {
 			}
 			return false;
 		};
+	}
+
+	@Override
+	public boolean countsMatches() {
+		return true;
+	}
+
+	@Override
+	public Collection<Object> facetKeys(String value) {
+		if (value == null) {
+			return List.of();
+		}
+		List<Object> keys = new ArrayList<>();
+		for (Map.Entry<Object, Pattern> entry : _patterns.entrySet()) {
+			if (entry.getValue().matcher(value).find()) {
+				keys.add(entry.getKey());
+			}
+		}
+		return keys;
 	}
 
 }

@@ -63,9 +63,24 @@
 							<column attribute="name">
 								<!-- Application-defined filter: predefined regexp facets as checkboxes. -->
 								<filter class="com.top_logic.table.filter.RegexpOptionsFilter">
-									<pattern regexp="^Part"/>
-									<pattern regexp="^Tool"/>
-									<pattern regexp="^Usage"/>
+									<pattern regexp="^Part">
+										<label>
+											<en>Parts</en>
+											<de>Teile</de>
+										</label>
+									</pattern>
+									<pattern regexp="^Tool">
+										<label>
+											<en>Tools</en>
+											<de>Werkzeuge</de>
+										</label>
+									</pattern>
+									<pattern regexp="^Usage">
+										<label>
+											<en>Usage entries</en>
+											<de>Verwendungen</de>
+										</label>
+									</pattern>
 								</filter>
 							</column>
 							<column attribute="classificationSingle"/>

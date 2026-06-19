@@ -5,6 +5,8 @@
  */
 package com.top_logic.table;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -48,6 +50,19 @@ public interface ColumnFilter<V> {
 	 */
 	default boolean countsMatches() {
 		return false;
+	}
+
+	/**
+	 * The facet buckets a single cell value contributes to, used to compute {@link MatchCounts}.
+	 *
+	 * <p>
+	 * For a value-equality options filter this is the value itself (one bucket). A predicate-based
+	 * options filter (e.g. regular-expression facets) overrides this to return every option key the
+	 * value matches - so one cell can count toward several facets.
+	 * </p>
+	 */
+	default Collection<Object> facetKeys(V value) {
+		return value == null ? List.of() : List.of(value);
 	}
 
 }

@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.table;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -117,6 +118,43 @@ public class TestListRowSource extends TestCase {
 			new com.top_logic.table.SortColumn("name", true))));
 		// age desc: 40 (Bob), then 30 (Charlie), then 25 (alice, alma) by name asc.
 		assertEquals(List.of("Bob", "Charlie", "alice", "alma"), names(source));
+	}
+
+	public void testFacetCountsUsePerOptionFacetKeys() {
+		// A predicate-based facet filter that buckets a name by its first letter: the bucket key is
+		// not the cell value itself, exercising the generalized facet counting (one value can fall
+		// into a bucket shared by several values).
+		Column<Person, String> bucketed = DefaultColumn.<Person, String> builder("name", Person::name)
+			.filter(new ColumnFilter<>() {
+				@Override
+				public FilterInput input() {
+					return new FilterInput.Options(List.of());
+				}
+
+				@Override
+				public Predicate<String> predicate(FilterState state) {
+					return value -> true;
+				}
+
+				@Override
+				public boolean countsMatches() {
+					return true;
+				}
+
+				@Override
+				public Collection<Object> facetKeys(String value) {
+					return value == null ? List.of() : List.of("initial:" + value.substring(0, 1).toLowerCase());
+				}
+			})
+			.build();
+
+		ListRowSource<Person> source = new ListRowSource<>(people(), List.of(bucketed));
+		com.top_logic.table.MatchCounts counts = source.matchCounts("name");
+		// people(): Charlie, alice, Bob, alma -> initials a=2 (alice, alma), b=1, c=1.
+		assertEquals(2, counts.count("initial:a"));
+		assertEquals(1, counts.count("initial:b"));
+		assertEquals(1, counts.count("initial:c"));
+		assertEquals(0, counts.count("initial:z"));
 	}
 
 	public void testFacetCountsReflectOtherFiltersButNotOwn() {

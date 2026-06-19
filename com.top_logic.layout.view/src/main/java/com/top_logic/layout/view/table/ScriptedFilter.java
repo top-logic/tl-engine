@@ -37,8 +37,8 @@ import com.top_logic.table.impl.DefaultColumn;
 
 /**
  * A fully model- and script-defined column filter: the filter UI is a form over a transient
- * instance of a configured {@link #getModel() parameter type}, and the filter logic is a TL-Script
- * {@link #getMatch() match function}.
+ * instance of a configured {@link Config#getModel() parameter type}, and the filter logic is a
+ * TL-Script {@link Config#getMatch() match function}.
  *
  * <p>
  * The match function is a <em>closure builder</em>:
@@ -50,7 +50,7 @@ import com.top_logic.table.impl.DefaultColumn;
  *
  * <p>
  * It is evaluated <em>once</em> per filter application (binding the form's parameter object and any
- * configured {@link #getInputs() extra inputs}) to produce a predicate closure, which is then
+ * configured {@link Config#getInputs() extra inputs}) to produce a predicate closure, which is then
  * applied per row with the column's cell {@code value} and the whole {@code row} as context - so
  * expensive parameter-derived setup happens once, not per row.
  * </p>

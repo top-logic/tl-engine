@@ -16,8 +16,9 @@ import com.top_logic.table.MatchCounts;
  *
  * <p>
  * The editor is chosen from the filter's {@link FilterInput} <em>descriptor</em>, not from its
- * concrete class - so any filter declaring an {@link FilterInput.Options options input} reuses the
- * checkbox editor, a custom {@link FilterInput.Bool boolean} filter the boolean editor, and so on.
+ * concrete class - so any filter declaring an {@link com.top_logic.table.FilterInput.Options options
+ * input} reuses the checkbox editor, a custom {@link com.top_logic.table.FilterInput.Bool boolean}
+ * filter the boolean editor, and so on.
  * A new filter plugs into the dialog by describing its input shape, without a new editor or a
  * change here. Two inputs still need a filter-specific detail: the boolean editor takes the option
  * labels from a {@link BooleanColumnFilter}, and the range editor the value parser from a

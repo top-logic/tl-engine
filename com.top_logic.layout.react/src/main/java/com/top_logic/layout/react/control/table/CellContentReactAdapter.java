@@ -17,7 +17,8 @@ import com.top_logic.table.CellContent;
  * <p>
  * This is the React tier's half of the rendering seam: the model tier describes
  * <em>what</em> to show via {@link CellContent}, and this adapter decides <em>how</em> to
- * render it. Inline editing ({@link CellContent.Editable}) currently renders the field
+ * render it. Inline editing ({@link com.top_logic.table.CellContent.Editable}) currently renders the
+ * field
  * value read-only; an editable control is wired in a later step.
  * </p>
  */

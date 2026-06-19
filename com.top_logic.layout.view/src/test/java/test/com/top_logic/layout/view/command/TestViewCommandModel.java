@@ -33,7 +33,7 @@ public class TestViewCommandModel extends TestCase {
 
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
-			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach();
 
 		// Initially null input -> disabled
@@ -59,7 +59,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
 			createMinimalConfig(), null,
-			ViewExecutabilityRule.ALWAYS_EXECUTABLE, null);
+			ViewExecutabilityRule.ALWAYS_EXECUTABLE);
 		model.attach();
 
 		assertNull("Should resolve null without channel", model.resolveInput());
@@ -75,7 +75,7 @@ public class TestViewCommandModel extends TestCase {
 
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
-			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.addStateChangeListener(() -> callCount[0]++);
 		model.attach();
 
@@ -103,7 +103,7 @@ public class TestViewCommandModel extends TestCase {
 
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> HandlerResult.DEFAULT_RESULT,
-			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach();
 
 		// Set value -> enabled
@@ -131,7 +131,7 @@ public class TestViewCommandModel extends TestCase {
 				commandCalled[0] = true;
 				return HandlerResult.DEFAULT_RESULT;
 			},
-			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach();
 
 		// Channel is null -> not executable -> command should not be called
@@ -153,7 +153,7 @@ public class TestViewCommandModel extends TestCase {
 				receivedInput[0] = input;
 				return HandlerResult.DEFAULT_RESULT;
 			},
-			createMinimalConfig(), channel, NullInputDisabled.INSTANCE, null);
+			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach();
 
 		// Channel has value -> executable -> command should be called

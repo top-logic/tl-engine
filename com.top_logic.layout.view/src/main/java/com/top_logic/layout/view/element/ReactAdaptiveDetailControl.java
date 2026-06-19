@@ -271,7 +271,7 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	 * <p>
 	 * Clearing runs (re-entrantly) inside {@link ViewChannel#set} while channels notify their
 	 * listener snapshots, so disposal of the replaced presentation is deferred until the
-	 * notifications have unwound (see {@link #_deferDisposal}).
+	 * notifications have unwound (see {@link #_disposal}).
 	 * </p>
 	 *
 	 * @param arguments

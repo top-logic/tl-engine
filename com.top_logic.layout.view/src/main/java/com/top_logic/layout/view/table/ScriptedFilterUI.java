@@ -16,7 +16,6 @@ import com.top_logic.layout.view.form.AttributeFieldModel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.impl.TransientModelFactory;

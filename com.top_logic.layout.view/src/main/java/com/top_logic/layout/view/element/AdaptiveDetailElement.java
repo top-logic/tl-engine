@@ -34,7 +34,7 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The element holds a {@code <selector>} (the master, e.g. a table or tree that writes the
- * {@link #SELECTION selection} channel) and a {@code <detail>} (bound to the same channel) exactly
+ * {@link Config#SELECTION selection} channel) and a {@code <detail>} (bound to the same channel) exactly
  * once. On a wide ({@code REGULAR}) viewport it renders both side by side in a draggable split; on a
  * narrow ({@code COMPACT}) viewport it shows the selector full-bleed and replaces it with the detail
  * once something is selected (with a back affordance to clear the selection).

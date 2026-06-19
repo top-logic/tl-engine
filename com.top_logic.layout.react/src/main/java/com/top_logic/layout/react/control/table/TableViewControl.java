@@ -39,6 +39,7 @@ import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
+import com.top_logic.table.MatchCounts;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortColumn;
@@ -298,8 +299,11 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			return;
 		}
 		Resources resources = Resources.getInstance();
+		// Facet counts are value-based, so only meaningful for filters that opt in (e.g. options);
+		// a predicate-based options filter (regexp) declines them to avoid misleading "(0)" labels.
+		MatchCounts counts = filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
 		FilterEditor editor = FilterEditors.create(filter,
-			_view.state().getFilters().get(column), _view.columnMatchCounts(column));
+			_view.state().getFilters().get(column), counts);
 
 		// Build through the shared form pipeline with the same defaults as a model-bound form
 		// (responsive columns + automatic label position), so the dialog form renders and reflows

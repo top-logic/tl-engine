@@ -8,13 +8,16 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -41,6 +44,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.TableId;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -139,6 +143,9 @@ public class TableViewElement implements UIElement {
 
 	private final QueryExecutor _rowsExecutor;
 
+	/** Application-defined per-column filters, keyed by attribute name. */
+	private final Map<String, ColumnFilter<String>> _customFilters = new HashMap<>();
+
 	/**
 	 * Creates a {@link TableViewElement} from configuration.
 	 */
@@ -146,6 +153,20 @@ public class TableViewElement implements UIElement {
 	public TableViewElement(InstantiationContext context, Config config) {
 		_config = config;
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
+
+		TableElement.ColumnsConfig columnsConfig = config.getColumns();
+		if (columnsConfig != null) {
+			for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
+				PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig = columnConfig.getFilter();
+				if (filterConfig != null) {
+					@SuppressWarnings("unchecked")
+					ColumnFilter<String> filter = (ColumnFilter<String>) context.getInstance(filterConfig);
+					if (filter != null) {
+						_customFilters.put(columnConfig.getAttribute(), filter);
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -238,7 +259,11 @@ public class TableViewElement implements UIElement {
 			for (TableElement.ColumnConfig columnConfig : columnsConfig.getColumns()) {
 				String attribute = columnConfig.getAttribute();
 				TLStructuredTypePart part = rowType == null ? null : rowType.getPart(attribute);
-				columns.add(columns0.createColumn(attribute, columnLabel(part, attribute), part));
+				ResKey label = columnLabel(part, attribute);
+				ColumnFilter<String> customFilter = _customFilters.get(attribute);
+				columns.add(customFilter != null
+					? columns0.createColumn(attribute, label, customFilter)
+					: columns0.createColumn(attribute, label, part));
 			}
 		} else if (rowType != null) {
 			// No explicit columns configured: derive a default set from the row type's

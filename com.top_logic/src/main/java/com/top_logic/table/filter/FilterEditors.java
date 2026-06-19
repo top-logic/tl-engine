@@ -6,12 +6,23 @@
 package com.top_logic.table.filter;
 
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
 
 /**
- * Builds the {@link FilterEditor} for a concrete {@link ColumnFilter}, seeded from the
- * column's current {@link FilterState}.
+ * Builds the {@link FilterEditor} for a {@link ColumnFilter}, seeded from the column's current
+ * {@link FilterState}.
+ *
+ * <p>
+ * The editor is chosen from the filter's {@link FilterInput} <em>descriptor</em>, not from its
+ * concrete class - so any filter declaring an {@link FilterInput.Options options input} reuses the
+ * checkbox editor, a custom {@link FilterInput.Bool boolean} filter the boolean editor, and so on.
+ * A new filter plugs into the dialog by describing its input shape, without a new editor or a
+ * change here. Two inputs still need a filter-specific detail: the boolean editor takes the option
+ * labels from a {@link BooleanColumnFilter}, and the range editor the value parser from a
+ * {@link ComparableColumnFilter}.
+ * </p>
  */
 public final class FilterEditors {
 
@@ -30,19 +41,35 @@ public final class FilterEditors {
 	 *        Facet counts for option filters, or {@link MatchCounts#NONE}.
 	 */
 	public static FilterEditor create(ColumnFilter<?> filter, FilterState current, MatchCounts counts) {
-		if (filter instanceof TextColumnFilter) {
+		FilterInput input = filter.input();
+		if (input instanceof FilterInput.Options options) {
+			return new OptionsFilterEditor(options.values(), (OptionsFilterState) current, counts);
+		}
+		if (input instanceof FilterInput.Bool) {
+			return booleanEditor(filter, (BooleanFilterState) current);
+		}
+		if (input instanceof FilterInput.Range) {
+			return rangeEditor(filter, current);
+		}
+		if (input instanceof FilterInput.Text) {
 			return new TextFilterEditor((TextFilterState) current);
 		}
+		throw new IllegalArgumentException("No filter editor for input: " + input);
+	}
+
+	private static FilterEditor booleanEditor(ColumnFilter<?> filter, BooleanFilterState current) {
 		if (filter instanceof BooleanColumnFilter bool) {
-			return new BooleanFilterEditor((BooleanFilterState) current, bool.trueLabel(), bool.falseLabel());
+			return new BooleanFilterEditor(current, bool.trueLabel(), bool.falseLabel());
 		}
-		if (filter instanceof OptionsColumnFilter<?> options) {
-			return new OptionsFilterEditor(options.options(), (OptionsFilterState) current, counts);
-		}
+		return new BooleanFilterEditor(current, I18NConstants.VALUE_TRUE, I18NConstants.VALUE_FALSE);
+	}
+
+	private static FilterEditor rangeEditor(ColumnFilter<?> filter, FilterState current) {
 		if (filter instanceof ComparableColumnFilter<?> comparable) {
 			return comparableEditor(comparable, current);
 		}
-		throw new IllegalArgumentException("No filter editor for: " + filter.getClass().getName());
+		throw new IllegalArgumentException(
+			"A range-input filter must be a ComparableColumnFilter: " + filter.getClass().getName());
 	}
 
 	private static <V> FilterEditor comparableEditor(ComparableColumnFilter<V> filter, FilterState current) {

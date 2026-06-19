@@ -27,7 +27,7 @@
 								<de>Beispiele erzeugen</de>
 							</label>
 							<with-transaction>
-								<execute-script function="x -> count(8).foreach(i -> { o = new(`DemoTypes:A`, transient: false); $o.set(`DemoTypes:DemoTypes.A#name`, 'Sample ' + ($i + 1)); $o.set(`DemoTypes:DemoTypes.A#booleanMandatory`, $i % 2 == 0); $o.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, true); $o.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, false); $o.set(`DemoTypes:DemoTypes.A#boolean`, $i % 2 == 0); $o.set(`DemoTypes:DemoTypes.A#long`, ($i + 1) * 100); $o.set(`DemoTypes:DemoTypes.A#float`, ($i + 1) * 1.5); $o.set(`DemoTypes:DemoTypes.A#date`, date(2024, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`DemoTypes:DemoTypes.A#classificationSingle`, if($i % 3 == 0, `tl5.enum:tl.beacon.three#tl.beacon.three.green`, if($i % 3 == 1, `tl5.enum:tl.beacon.three#tl.beacon.three.yellow`, `tl5.enum:tl.beacon.three#tl.beacon.three.red`))); $o; })"/>
+								<execute-script function="x -> count(8).foreach(i -> { o = new(`DemoTypes:A`, transient: false); $o.set(`DemoTypes:DemoTypes.A#name`, if($i % 3 == 0, 'Part ', if($i % 3 == 1, 'Tool ', 'Usage ')) + ($i + 1)); $o.set(`DemoTypes:DemoTypes.A#booleanMandatory`, $i % 2 == 0); $o.set(`DemoTypes:DemoTypes.A#booleanRadioMandatory`, true); $o.set(`DemoTypes:DemoTypes.A#booleanSelectMandatory`, false); $o.set(`DemoTypes:DemoTypes.A#boolean`, $i % 2 == 0); $o.set(`DemoTypes:DemoTypes.A#long`, ($i + 1) * 100); $o.set(`DemoTypes:DemoTypes.A#float`, ($i + 1) * 1.5); $o.set(`DemoTypes:DemoTypes.A#date`, date(2024, ($i % 12) + 1, ($i % 28) + 1)); $o.set(`DemoTypes:DemoTypes.A#classificationSingle`, if($i % 3 == 0, `tl5.enum:tl.beacon.three#tl.beacon.three.green`, if($i % 3 == 1, `tl5.enum:tl.beacon.three#tl.beacon.three.yellow`, `tl5.enum:tl.beacon.three#tl.beacon.three.red`))); $o; })"/>
 							</with-transaction>
 						</generic-command>
 						<generic-command placement="TOOLBAR">
@@ -60,7 +60,14 @@
 						observed-types="DemoTypes:A"
 					>
 						<columns>
-							<column attribute="name"/>
+							<column attribute="name">
+								<!-- Application-defined filter: predefined regexp facets as checkboxes. -->
+								<filter class="com.top_logic.table.filter.RegexpOptionsFilter">
+									<pattern regexp="^Part"/>
+									<pattern regexp="^Tool"/>
+									<pattern regexp="^Usage"/>
+								</filter>
+							</column>
 							<column attribute="classificationSingle"/>
 							<column attribute="boolean"/>
 							<column attribute="long"/>

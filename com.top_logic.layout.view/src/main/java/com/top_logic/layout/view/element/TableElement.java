@@ -15,6 +15,8 @@ import java.util.Set;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
@@ -201,12 +203,23 @@ public class TableElement implements UIElement {
 		/** Configuration name for {@link #getAttribute()}. */
 		String ATTRIBUTE = "attribute";
 
+		/** Configuration name for {@link #getFilter()}. */
+		String FILTER = "filter";
+
 		/**
 		 * The name of the attribute (column) to display.
 		 */
 		@Name(ATTRIBUTE)
 		@Mandatory
 		String getAttribute();
+
+		/**
+		 * An optional application-defined filter for this column, overriding the type-derived
+		 * default. The filter matches against the cell's display text. Used by the green-field
+		 * {@code <table-view>}; ignored by the legacy {@code <table>}.
+		 */
+		@Name(FILTER)
+		PolymorphicConfiguration<? extends ColumnFilter<?>> getFilter();
 	}
 
 	private final Config _config;

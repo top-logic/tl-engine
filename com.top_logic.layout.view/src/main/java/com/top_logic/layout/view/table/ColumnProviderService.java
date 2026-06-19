@@ -152,6 +152,21 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
+	 * Builds a column whose filter is an application-defined override matching against the cell's
+	 * display text, used when a {@code <column>} configures its own filter. The accessor, renderer
+	 * and sort are the display-label defaults; only the filter differs from
+	 * {@link #createColumn(String, ResKey, TLStructuredTypePart)}.
+	 */
+	public Column<Object, ?> createColumn(String attribute, ResKey label, ColumnFilter<String> customFilter) {
+		return DefaultColumn.<Object, String> builder(attribute, row -> label(attributeValue(row, attribute)))
+			.label(label)
+			.renderer(value -> CellContent.text(value))
+			.sort(() -> Comparator.<String> naturalOrder())
+			.filter(customFilter)
+			.build();
+	}
+
+	/**
 	 * The built-in column whose filter and comparator are derived from the attribute's type.
 	 */
 	private static Column<Object, ?> defaultColumn(String attribute, ResKey label, TLStructuredTypePart part) {

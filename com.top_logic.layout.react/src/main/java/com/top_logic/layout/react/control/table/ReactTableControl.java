@@ -278,6 +278,28 @@ public class ReactTableControl extends ReactControl implements TooltipProvider {
 	}
 
 	/**
+	 * Sets the selected rows programmatically and repaints the affected rows.
+	 *
+	 * <p>
+	 * Use this to reflect an external selection source (e.g. a bound selection channel) in the
+	 * table's visual selection. Unlike a client-initiated selection, this does <b>not</b> notify the
+	 * {@link SelectionListener}, so it is safe to call from that channel's listener without causing a
+	 * write-back loop.
+	 * </p>
+	 *
+	 * @param rows
+	 *        The row business objects to mark as selected; {@code null} clears the selection.
+	 */
+	public void setSelectedRows(Set<Object> rows) {
+		Set<Object> newSelection = (rows == null) ? new HashSet<>() : new HashSet<>(rows);
+		if (newSelection.equals(_selectedRows)) {
+			return;
+		}
+		_selectedRows = newSelection;
+		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
 	 * The underlying table model.
 	 */
 	protected TableModel getTableModel() {

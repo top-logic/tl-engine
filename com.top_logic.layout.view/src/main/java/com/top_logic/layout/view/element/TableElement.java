@@ -304,6 +304,17 @@ public class TableElement implements UIElement {
 					}
 				}
 			});
+
+			// Reflect the channel value in the table's visual selection: seed the initial selection
+			// and keep it in sync when the channel changes from elsewhere (e.g. a sibling component,
+			// or this table being rebuilt while the channel still holds a value - a responsive
+			// master-detail flipping between split and drill presentations). setSelectedRows does not
+			// fire the selection listener, so there is no write-back loop.
+			ViewChannel.ChannelListener selectionToTable =
+				(sender, oldValue, newValue) -> tableControl.setSelectedRows(toRowSet(newValue));
+			selectionChannel.addListener(selectionToTable);
+			tableControl.addCleanupAction(() -> selectionChannel.removeListener(selectionToTable));
+			tableControl.setSelectedRows(toRowSet(selectionChannel.get()));
 		}
 
 		// 10. Lazy attach on render, cleanup on dispose.
@@ -313,6 +324,20 @@ public class TableElement implements UIElement {
 		tableControl.addCleanupAction(observableModel::detach);
 
 		return tableControl;
+	}
+
+	/**
+	 * Converts a selection channel value (a single object, a collection, or {@code null}) into the
+	 * set of selected row objects expected by {@link ReactTableControl#setSelectedRows(Set)}.
+	 */
+	private static Set<Object> toRowSet(Object value) {
+		if (value == null) {
+			return Collections.emptySet();
+		}
+		if (value instanceof Collection<?>) {
+			return new HashSet<>((Collection<?>) value);
+		}
+		return Collections.singleton(value);
 	}
 
 	private static Object[] readChannelValues(List<ViewChannel> channels) {

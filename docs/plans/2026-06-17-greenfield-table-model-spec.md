@@ -493,6 +493,11 @@ far); grouping first-class (single-level); pushdown backend = TL search expressi
   (incl. transaction ownership) is unimplemented.
 
 ### B. View-layer `<table-view>` (`TableViewElement`) gaps
+- **Type→column dispatch is now an extensible registry (2026-06-19).** The former
+  `instanceof`/`switch(Kind)` cascade was replaced by `ColumnProviderService` (a
+  `FieldControlService`-style `TLType`→`ColumnProvider` registry; built-in kind logic is the
+  overridable default). `TableViewElement` holds no type logic. See
+  [`2026-06-18-extensible-column-providers.md`](./2026-06-18-extensible-column-providers.md).
 - ~~Assigns a **text** filter to every attribute~~ / ~~sorts by **label string**~~ — **DONE
   (2026-06-18).** `TableViewElement.buildColumn` now derives filter + comparator from the model
   attribute type: enumeration → options, `INT`/`FLOAT` → numeric range, `DATE` → date range,

@@ -111,12 +111,18 @@ The filter's *value input* widget (number spinner, date picker — §13.C) can l
    `DemoTypes:A` with `observed-types` auto-refresh and "Generate samples" / New / Delete commands;
    live-verified: generate → 8 rows; options filter (Grün 3 / Gelb 3 / Rot 2) → Grün → 3 rows;
    numeric-range editor; boolean filter labelled Ja/Nein.
-2. **NEXT:** Introduce `ColumnProvider` (built-in providers = the current kind logic, incl. boolean
-   labels + enum options + numeric/date ranges) and its TypedConfiguration `Config`.
-3. Replace `TableViewElement`'s cascade with a `ColumnProvider` call.
-4. Live-verify all filter kinds on the `DemoTypes:A` demo; add unit coverage for the registry
-   resolution (type-config → fallback).
-5. *(Follow-up)* `@TLColumnFilter` annotation; filter value widgets via `FieldControlService`.
+2. ~~Introduce `ColumnProvider` + `Config`~~ — **DONE (2026-06-19).** `ColumnProvider` interface +
+   `ColumnProviderService` (`ConfiguredManagedClass` with `Module`, registered in
+   `tl-layout-view.conf.config.xml`), mirroring `FieldControlService`: a `@Key` registry of
+   `TLModelPartRef → ColumnProvider`, with the type-derived kind logic (enum options, numeric/date
+   range, boolean-with-matching-labels, text, label fallback) as the single built-in default.
+3. ~~Replace `TableViewElement`'s cascade~~ — **DONE.** `TableViewElement.buildColumns` now delegates
+   to `ColumnProviderService.getInstance().createColumn(...)` and holds **no type logic** (lost the
+   `instanceof`/`switch` and 17 imports). Live-verified on `DemoTypes:A`: identical render (6 typed
+   columns, 8 rows) and options filter (Grün 3 / Gelb 3 / Rot 2) through the registry; service starts
+   cleanly.
+4. *(Follow-up)* `@TLColumnFilter` per-attribute annotation (tier-1 override); registry-resolution
+   unit coverage; filter value widgets via `FieldControlService`.
 
 **Decisions confirmed (2026-06-18):** A = provider yields filter + comparator; B = registry +
 built-in fallback first, annotation later; D = extensible registry with kind-switch as overridable

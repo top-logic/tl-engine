@@ -19,6 +19,11 @@
       <artifactId>tl-core</artifactId>
     </dependency>
     <dependency>
+      <!-- Provides html/pdfjs/web/viewer.html used by the TLPdfViewer control. -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-org-mozilla-pdfjs</artifactId>
+    </dependency>
+    <dependency>
       <groupId>de.haumacher.msgbuf</groupId>
       <artifactId>msgbuf-api</artifactId>
     </dependency>

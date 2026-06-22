@@ -22,6 +22,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.ModelSpec;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.securityObjectProvider.ConfiguredModelSecurityProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.ModelSecurityObjectProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider;
@@ -70,6 +72,22 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 
 		static final String MODEL = "model";
 
+		/**
+		 * Regular expression source matching a qualified type reference (<code>module:Type</code>).
+		 *
+		 * <p>
+		 * Used to recognize the compact serialization <code>model(module:Type)</code> of a
+		 * {@link ModelSecurityObjectProvider} that restricts the model to a certain
+		 * {@link com.top_logic.tool.boundsec.securityObjectProvider.ModelSecurityObjectProvider.Config#getModelType()
+		 * type}. The mandatory {@link TLModelUtil#QUALIFIED_NAME_SEPARATOR colon} distinguishes a
+		 * type reference from a {@link com.top_logic.mig.html.layout.ComponentName component name},
+		 * which never contains a colon. A bare <code>model(component)</code> therefore keeps its
+		 * meaning of "the model channel of the given component".
+		 * </p>
+		 */
+		static final String MODEL_TYPE_SRC = TLModelUtil.MODULE_NAME_PATTERN_SRC
+			+ TLModelUtil.QUALIFIED_NAME_SEPARATOR + TLModelUtil.QNAME_PATTERN_SRC;
+
 		private static final String REFERENCE_PREFIX = "ref:";
 
 		/** {@link Pattern} for allowed values. */
@@ -85,6 +103,7 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 		private static Pattern pattern() {
 			return Pattern
 				.compile("(?:"
+					+ MODEL + "\\(" + group(MODEL_TYPE_SRC) + "\\)" + "|"
 					+ group(MODEL) + "|"
 					+ group(SECURITY_ROOT) + "|"
 					+ group(SecurityObjectProviderManager.PATH_SECURITY_OBJECT_PROVIDER + ".*") + "|"
@@ -103,21 +122,26 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 			Matcher matcher = PATTERN.matcher(propertyValue);
 			if (matcher.matches()) {
 				if (matcher.group(1) != null) {
-					return TypedConfiguration.createConfigItemForImplementationClass(ModelSecurityObjectProvider.class);
+					ModelSecurityObjectProvider.Config result =
+						TypedConfiguration.newConfigItem(ModelSecurityObjectProvider.Config.class);
+					result.setModelType(TLModelPartRef.ref(matcher.group(1)));
+					return result;
 				} else if (matcher.group(2) != null) {
-					return TypedConfiguration.createConfigItemForImplementationClass(SecurityRootObjectProvider.class);
+					return TypedConfiguration.createConfigItemForImplementationClass(ModelSecurityObjectProvider.class);
 				} else if (matcher.group(3) != null) {
-					return SecurityObjectProviderFormat.INSTANCE.getValue(propertyName, matcher.group(3));
+					return TypedConfiguration.createConfigItemForImplementationClass(SecurityRootObjectProvider.class);
 				} else if (matcher.group(4) != null) {
+					return SecurityObjectProviderFormat.INSTANCE.getValue(propertyName, matcher.group(4));
+				} else if (matcher.group(5) != null) {
 					ReferencedSecurityObjectProvider.Config result =
 						TypedConfiguration.newConfigItem(ReferencedSecurityObjectProvider.Config.class);
-					result.setReference(matcher.group(4));
+					result.setReference(matcher.group(5));
 					return result;
-				} else if (matcher.group(5) != null) {
+				} else if (matcher.group(6) != null) {
 					ConfiguredModelSecurityProvider.Config result =
 						TypedConfiguration.newConfigItem(ConfiguredModelSecurityProvider.Config.class);
 					ModelSpec modelSpec = ModelSpec.Format.INSTANCE
-						.getValue(ConfiguredModelSecurityProvider.Config.MODEL, matcher.group(5));
+						.getValue(ConfiguredModelSecurityProvider.Config.MODEL, matcher.group(6));
 					result.setModel(modelSpec);
 					return result;
 				} else {
@@ -132,7 +156,11 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 		@Override
 		protected String getSpecificationNonNull(
 				PolymorphicConfiguration<? extends SecurityObjectProvider> configValue) {
-			if (isModelSecurityObjectProvider(configValue)) {
+			if (configValue instanceof ModelSecurityObjectProvider.Config modelProvider) {
+				TLModelPartRef modelType = modelProvider.getModelType();
+				if (modelType != null) {
+					return MODEL + "(" + modelType.qualifiedName() + ")";
+				}
 				return MODEL;
 			}
 			if (isSecurityRootObjectProvider(configValue)) {
@@ -163,15 +191,11 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 				|| value instanceof PathSecurityObjectProvider.Config
 				|| value instanceof ReferencedSecurityObjectProvider.Config
 				|| isSecurityRootObjectProvider((PolymorphicConfiguration<?>) value)
-				|| isModelSecurityObjectProvider((PolymorphicConfiguration<?>) value);
+				|| value instanceof ModelSecurityObjectProvider.Config;
 		}
 
 		private boolean isSecurityRootObjectProvider(PolymorphicConfiguration<?> value) {
 			return SecurityRootObjectProvider.class.isAssignableFrom(value.getImplementationClass());
-		}
-
-		private boolean isModelSecurityObjectProvider(PolymorphicConfiguration<?> value) {
-			return ModelSecurityObjectProvider.class.isAssignableFrom(value.getImplementationClass());
 		}
 
 	}

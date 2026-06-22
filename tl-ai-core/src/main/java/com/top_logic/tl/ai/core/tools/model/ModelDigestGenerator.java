@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.agent;
+package com.top_logic.tl.ai.core.tools.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ import com.top_logic.model.util.TLModelUtil;
  * exploration tool calls. It uses a notation chosen for token efficiency.
  * </p>
  *
- * @see AgentFactory#MODEL_PLACEHOLDER
+ * @see ModelBrowserTool#outlineModel(Boolean)
  */
 public class ModelDigestGenerator {
 

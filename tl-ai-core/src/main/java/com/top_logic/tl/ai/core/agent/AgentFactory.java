@@ -39,7 +39,6 @@ import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.model.ModelService;
 
 /**
  * Builds {@link AgentLoop} instances from agent definitions stored in the knowledge base.
@@ -75,15 +74,6 @@ public class AgentFactory {
 	 * this marker. Otherwise, the catalog is appended at the end.
 	 */
 	static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";
-
-	/**
-	 * Placeholder marker in system prompts for the application model digest. When present, a compact
-	 * model overview replaces this marker. The digest gives agents structural knowledge without
-	 * requiring exploration tool calls.
-	 *
-	 * @see ModelDigestGenerator
-	 */
-	public static final String MODEL_PLACEHOLDER = "<<APPLICATION_MODEL>>";
 
 	/** Singleton accessor. */
 	public static AgentFactory getInstance() {
@@ -321,7 +311,6 @@ public class AgentFactory {
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt);
-		systemPrompt = injectModelDigest(systemPrompt);
 
 		// maxOutputTokens: assignment override > catalog
 		Integer assignedMaxTokens = assignment.maxTokens();
@@ -774,23 +763,5 @@ public class AgentFactory {
 		}
 
 		return replacePlaceholderOrAppend(base, DELEGATES_PLACEHOLDER, section.toString());
-	}
-
-	/**
-	 * Generates a compact model digest and injects it into the system prompt at the
-	 * {@link #MODEL_PLACEHOLDER} position. If the placeholder is absent, the digest is not
-	 * injected (opt-in per agent).
-	 */
-	private String injectModelDigest(String systemPrompt) {
-		String base = systemPrompt != null ? systemPrompt : "";
-
-		if (!base.contains(MODEL_PLACEHOLDER)) {
-			return base;
-		}
-
-		com.top_logic.model.TLModel model = ModelService.getApplicationModel();
-		String digest = ModelDigestGenerator.generate(model, false);
-
-		return base.replace(MODEL_PLACEHOLDER, digest);
 	}
 }

@@ -13,7 +13,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.model.TLModel;
-import com.top_logic.tl.ai.core.agent.ModelDigestGenerator;
+import com.top_logic.tl.ai.core.tools.model.ModelDigestGenerator;
 import com.top_logic.util.model.ModelService;
 
 /**

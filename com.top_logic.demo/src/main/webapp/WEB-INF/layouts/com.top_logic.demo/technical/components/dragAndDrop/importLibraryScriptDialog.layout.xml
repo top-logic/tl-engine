@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/transaction.template.xml"
+>
+	<arguments
+		formType="tl.demo.forms:ImportXmlInput"
+		height="320px"
+		width="450px"
+	>
+		<title class="com.top_logic.layout.component.title.ConstantTitle">
+			<title key="dynamic.import-library-script-title">
+				<en>Import library (TL-Script)</en>
+				<de>Bibliothek importieren (TL-Script)</de>
+			</title>
+		</title>
+		<open-handler id="importLibraryScriptOpener"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-file-import"
+			target="model(self())"
+			targetComponent="com.top_logic.demo/technical/components/dragAndDrop/importLibraryScriptDialog.layout.xml#Form"
+		>
+			<resourceKey key="dynamic.import-library-script-button">
+				<en>Import library (TL-Script)</en>
+				<de>Bibliothek importieren (TL-Script)</de>
+			</resourceKey>
+		</open-handler>
+		<transactionHandler id="performImportLibraryScript"
+			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+			clique="default"
+			closeDialog="true"
+			group="Write"
+			image="css:fas fa-check"
+		>
+			<resourceKey key="dynamic.import-library-script-perform">
+				<en>Import</en>
+				<de>Importieren</de>
+			</resourceKey>
+			<operation><![CDATA[form -> model -> parseLibrary(
+  $form.get(`tl.demo.forms:ImportXmlInput#data`),
+  context: `test.dnd#LIBRARY`,
+  transient: false)]]></operation>
+		</transactionHandler>
+	</arguments>
+</config:template-call>

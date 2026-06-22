@@ -180,8 +180,10 @@ public final class XmlImporter {
 	 *        The XML input to interpret.
 	 * @param context
 	 *        An optional context object that is assigned to the top-level
-	 *        {@link ImportContext#SCOPE_VAR scope} variable of the import. May be <code>null</code>
-	 *        to start the import without an outer scope.
+	 *        {@link ImportContext#THIS_VAR this} variable of the import. Top-level object imports
+	 *        use this value as their {@link ImportContext#SCOPE_VAR scope} (just like the inner
+	 *        handlers of an {@code in-scope} declaration). May be <code>null</code> to start the
+	 *        import without an outer context.
 	 * @return The (top-level) model element that was built by the import.
 	 */
 	public Object importModel(ModelBinding binding, Source source, Object context) throws XMLStreamException {
@@ -192,13 +194,13 @@ public final class XmlImporter {
 		}
 	}
 
-	private Object readModel(Source source, ImportContext context, Object scope) throws XMLStreamException {
+	private Object readModel(Source source, ImportContext context, Object outerContext) throws XMLStreamException {
 		XMLStreamReader in = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(source);
 		try {
-			if (scope == null) {
+			if (outerContext == null) {
 				return context.importXml(_handler, in);
 			}
-			return context.withVar(ImportContext.SCOPE_VAR, scope, in,
+			return context.withVar(ImportContext.THIS_VAR, outerContext, in,
 				(ctx, reader) -> ctx.importXml(_handler, reader));
 		} finally {
 			in.close();

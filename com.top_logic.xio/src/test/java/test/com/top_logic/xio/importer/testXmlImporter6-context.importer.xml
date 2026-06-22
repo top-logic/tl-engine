@@ -1,0 +1,15 @@
+<handler>
+	<tag name="items">
+		<dispatch>
+			<tag name="item">
+				<object model-type="test.com.top_logic.xio.importer.context:Item">
+					<property name="name" xml-attribute="name"/>
+					<linking>
+						<list-linking name="test.com.top_logic.xio.importer.context:Container#elements"/>
+					</linking>
+					<dispatch/>
+				</object>
+			</tag>
+		</dispatch>
+	</tag>
+</handler>

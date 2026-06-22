@@ -58,8 +58,10 @@ import com.top_logic.table.impl.DefaultColumn;
  * <p>
  * The filter integrates its own column and dialog by implementing {@link ColumnBinding}: the column
  * cell carries a {@link ScriptedCell} (value + row), so the filter sees both without knowing the
- * column attribute, and {@link #installUI} registers the {@link ScriptedFilterUI} form.
+ * column attribute, and the filter registers its own {@link ScriptedFilterUI} form.
  * </p>
+ *
+ * @implNote The {@link ScriptedFilterUI} form is registered in {@link #installUI}.
  */
 public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding {
 

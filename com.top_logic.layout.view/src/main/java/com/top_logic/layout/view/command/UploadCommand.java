@@ -34,8 +34,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * The per-file orchestration lives in {@link ViewUploadCommandModel}; the click itself does not
- * dispatch a server command, so {@link #execute(ReactContext, Object)} is a no-op.
+ * dispatch a server command.
  * </p>
+ *
+ * @implNote {@link #execute(ReactContext, Object)} is a no-op, since the click does not dispatch a
+ *           server command.
  */
 public class UploadCommand implements ViewCommand {
 

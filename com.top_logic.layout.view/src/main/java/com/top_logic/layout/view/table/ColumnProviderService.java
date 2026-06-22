@@ -53,10 +53,10 @@ import com.top_logic.table.impl.DefaultColumn;
  * </p>
  * <ol>
  * <li>A provider configured in this service for the attribute's {@link TLType} (app-extensible).</li>
- * <li>A built-in default derived from the type's structure: enumeration &rarr; options filter,
- * {@code INT}/{@code FLOAT} &rarr; numeric range, {@code DATE} &rarr; date range,
- * {@code BOOLEAN}/{@code TRISTATE} &rarr; boolean, {@code STRING} &rarr; text; anything else (custom
- * primitives, references, multi-valued or unresolved parts) &rarr; a display-label text filter.</li>
+ * <li>A built-in default derived from the type's structure: enumeration → options filter,
+ * {@code INT}/{@code FLOAT} → numeric range, {@code DATE} → date range,
+ * {@code BOOLEAN}/{@code TRISTATE} → boolean, {@code STRING} → text; anything else (custom
+ * primitives, references, multi-valued or unresolved parts) → a display-label text filter.</li>
  * </ol>
  *
  * <p>

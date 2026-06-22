@@ -69,7 +69,9 @@ public class RegexpOptionsFilter implements ColumnFilter<String> {
 		String LABEL = "label";
 
 		/**
-		 * The regular expression matched against the cell text (via {@link java.util.regex.Matcher#find()}).
+		 * The regular expression matched against the cell text.
+		 *
+		 * @implNote Matched via {@link java.util.regex.Matcher#find()}.
 		 */
 		@Name(REGEXP)
 		@Mandatory

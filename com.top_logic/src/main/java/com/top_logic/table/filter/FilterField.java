@@ -16,7 +16,7 @@ import com.top_logic.layout.form.model.FieldModel;
  * Toolkit-neutral and control-agnostic: the UI tier picks the input control from the
  * {@link #model() field model} itself (a {@code SelectFieldModel} renders a dropdown, a
  * boolean-valued model a checkbox, anything else a text input) using its standard form
- * controls &mdash; there is no per-datatype mapping here. For a dropdown,
+ * controls — there is no per-datatype mapping here. For a dropdown,
  * {@link #optionLabels()} supplies the option display labels.
  * </p>
  */

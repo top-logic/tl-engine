@@ -53,7 +53,22 @@ import com.top_logic.table.impl.TreeRowSource;
  */
 public class DemoTableViewComponent extends LayoutComponent {
 
-	/** A demo employee row. */
+	/**
+	 * A demo employee row.
+	 *
+	 * @param id
+	 *        The employee identifier.
+	 * @param name
+	 *        The employee name.
+	 * @param department
+	 *        The department the employee belongs to.
+	 * @param status
+	 *        The employment status.
+	 * @param salary
+	 *        The employee salary.
+	 * @param active
+	 *        Whether the employee is currently active.
+	 */
 	public record Emp(int id, String name, String department, String status, int salary, boolean active) {
 		// Demo fixture.
 	}
@@ -63,7 +78,16 @@ public class DemoTableViewComponent extends LayoutComponent {
 
 	private static final String[] STATUSES = { "Active", "Inactive", "On Leave" };
 
-	/** A demo file-system row. */
+	/**
+	 * A demo file-system row.
+	 *
+	 * @param name
+	 *        The file or folder name.
+	 * @param type
+	 *        The entry type (e.g. file or folder).
+	 * @param size
+	 *        The human-readable size.
+	 */
 	public record FileRow(String name, String type, String size) {
 		// Demo fixture.
 	}

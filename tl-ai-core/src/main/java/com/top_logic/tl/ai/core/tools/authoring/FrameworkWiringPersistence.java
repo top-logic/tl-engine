@@ -8,16 +8,23 @@ package com.top_logic.tl.ai.core.tools.authoring;
 import java.io.File;
 import java.io.IOError;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
@@ -53,6 +60,49 @@ public class FrameworkWiringPersistence {
 	}
 
 	/**
+	 * Loads the currently persisted overlay (the delta from {@link #overlayFile()}), or a fresh
+	 * empty overlay if none has been written yet.
+	 *
+	 * <p>
+	 * Wiring operations read this, apply their mutation, and write it back, so deltas from earlier
+	 * operations accumulate rather than being overwritten.
+	 * </p>
+	 */
+	public static TopLogicAgentDefinitions.Config<?> loadOverlay() {
+		return load(overlayFile());
+	}
+
+	/**
+	 * Loads the persisted overlay from the given file, or a fresh empty overlay if the file does
+	 * not exist.
+	 */
+	public static TopLogicAgentDefinitions.Config<?> load(File file) {
+		if (!file.exists()) {
+			return newOverlay();
+		}
+		try {
+			ConfigurationDescriptor descriptor =
+				TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class);
+			Map<String, ConfigurationDescriptor> descriptors =
+				Collections.singletonMap("application", descriptor);
+
+			ConfigurationReader reader = new ConfigurationReader(
+				SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, descriptors);
+			reader.setSource(BinaryDataFactory.createBinaryData(file));
+			ApplicationConfig.Config app = (ApplicationConfig.Config) reader.read();
+
+			ModuleConfiguration module = app.getServices().get(TopLogicAgentDefinitions.class);
+			if (module == null || module.getInstance() == null) {
+				return newOverlay();
+			}
+			return (TopLogicAgentDefinitions.Config<?>) module.getInstance();
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException(
+				"Failed to read framework wiring overlay '" + file + "': " + ex.getMessage(), ex);
+		}
+	}
+
+	/**
 	 * Ensures an {@link AgentConfig} entry exists in the overlay for the given agent name.
 	 */
 	public static AgentConfig ensureAgent(TopLogicAgentDefinitions.Config<?> overlay, String agentName) {
@@ -85,6 +135,7 @@ public class FrameworkWiringPersistence {
 			String agentName, String toolName) {
 		AgentConfig agent = ensureAgent(overlay, agentName);
 		addNameRef(agent.getTools(), toolName, ToolRef.class);
+		removeByName(agent.getRemovedTools(), toolName);
 	}
 
 	/**
@@ -94,6 +145,7 @@ public class FrameworkWiringPersistence {
 			String agentName, String toolName) {
 		AgentConfig agent = ensureAgent(overlay, agentName);
 		removeByName(agent.getTools(), toolName);
+		addNameRef(agent.getRemovedTools(), toolName, ToolRef.class);
 	}
 
 	/**
@@ -103,6 +155,7 @@ public class FrameworkWiringPersistence {
 			String agentName, String skillName) {
 		AgentConfig agent = ensureAgent(overlay, agentName);
 		addNameRef(agent.getSkills(), skillName, SkillRef.class);
+		removeByName(agent.getRemovedSkills(), skillName);
 	}
 
 	/**
@@ -112,6 +165,7 @@ public class FrameworkWiringPersistence {
 			String agentName, String skillName) {
 		AgentConfig agent = ensureAgent(overlay, agentName);
 		removeByName(agent.getSkills(), skillName);
+		addNameRef(agent.getRemovedSkills(), skillName, SkillRef.class);
 	}
 
 	/**
@@ -121,6 +175,7 @@ public class FrameworkWiringPersistence {
 			String agentName, String delegationName) {
 		AgentConfig agent = ensureAgent(overlay, agentName);
 		addNameRef(agent.getDelegations(), delegationName, DelegationRef.class);
+		removeByName(agent.getRemovedDelegations(), delegationName);
 	}
 
 	/**
@@ -130,6 +185,7 @@ public class FrameworkWiringPersistence {
 			String agentName, String delegationName) {
 		AgentConfig agent = ensureAgent(overlay, agentName);
 		removeByName(agent.getDelegations(), delegationName);
+		addNameRef(agent.getRemovedDelegations(), delegationName, DelegationRef.class);
 	}
 
 	/**
@@ -139,6 +195,7 @@ public class FrameworkWiringPersistence {
 			String skillName, String toolName) {
 		SkillConfig skill = ensureSkill(overlay, skillName);
 		addNameRef(skill.getTools(), toolName, ToolRef.class);
+		removeByName(skill.getRemovedTools(), toolName);
 	}
 
 	/**
@@ -148,6 +205,7 @@ public class FrameworkWiringPersistence {
 			String skillName, String toolName) {
 		SkillConfig skill = ensureSkill(overlay, skillName);
 		removeByName(skill.getTools(), toolName);
+		addNameRef(skill.getRemovedTools(), toolName, ToolRef.class);
 	}
 
 	/**

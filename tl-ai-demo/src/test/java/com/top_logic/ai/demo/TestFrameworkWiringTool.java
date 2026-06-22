@@ -74,6 +74,10 @@ public class TestFrameworkWiringTool extends BasicTestCase {
 		return skill.getTools().stream().map(NamedConfigMandatory::getName).toList();
 	}
 
+	private static List<String> removedToolNames(AgentConfig agent) {
+		return agent.getRemovedTools().stream().map(NamedConfigMandatory::getName).toList();
+	}
+
 	/** */
 	public void testAddToolToAgent() {
 		TopLogicAgentDefinitions.Config<?> overlay =
@@ -173,6 +177,68 @@ public class TestFrameworkWiringTool extends BasicTestCase {
 		assertTrue("should contain tool ref", content.contains("custom.echo"));
 		assertTrue("should contain skill ref", content.contains("mySkill"));
 		assertTrue("should be multi-line (pretty-printed)", content.split("\n").length > 3);
+	}
+
+	/**
+	 * Regression: adding a skill and then removing a tool across separate persist/load cycles must
+	 * preserve the earlier skill addition. Previously the second operation rebuilt an empty overlay
+	 * and overwrote the file, discarding the skill.
+	 */
+	public void testPersistLoadAccumulatesDeltas() throws Exception {
+		java.io.File tmp = java.io.File.createTempFile("fw-wiring-accumulate", ".config.xml");
+		tmp.deleteOnExit();
+
+		TopLogicAgentDefinitions.Config<?> first = FrameworkWiringPersistence.newOverlay();
+		FrameworkWiringPersistence.addSkillToAgent(first, "TL_TestAgent", "mySkill");
+		FrameworkWiringPersistence.persistTo(tmp, first);
+
+		TopLogicAgentDefinitions.Config<?> second = FrameworkWiringPersistence.load(tmp);
+		FrameworkWiringPersistence.removeToolFromAgent(second, "TL_TestAgent", "custom.echo");
+		FrameworkWiringPersistence.persistTo(tmp, second);
+
+		TopLogicAgentDefinitions.Config<?> reloaded = FrameworkWiringPersistence.load(tmp);
+		AgentConfig agent = reloaded.getAgents().get("TL_TestAgent");
+		assertNotNull("agent entry survived", agent);
+		assertTrue("earlier skill add survived later remove", skillNames(agent).contains("mySkill"));
+		assertTrue("removal recorded", removedToolNames(agent).contains("custom.echo"));
+	}
+
+	/** A removal is recorded as an additive marker; re-adding the same name clears the marker. */
+	public void testRemoveThenAddClearsMarker() {
+		TopLogicAgentDefinitions.Config<?> overlay = FrameworkWiringPersistence.newOverlay();
+
+		FrameworkWiringPersistence.removeToolFromAgent(overlay, "TL_TestAgent", "custom.echo");
+		AgentConfig agent = overlay.getAgents().get("TL_TestAgent");
+		assertTrue("removal marker recorded", removedToolNames(agent).contains("custom.echo"));
+
+		FrameworkWiringPersistence.addToolToAgent(overlay, "TL_TestAgent", "custom.echo");
+		assertFalse("re-add clears removal marker", removedToolNames(agent).contains("custom.echo"));
+		assertTrue("re-add restores the tool", toolNames(agent).contains("custom.echo"));
+	}
+
+	/** {@link FrameworkWiringPersistence#load} of a missing file yields an empty overlay. */
+	public void testLoadMissingFile() throws Exception {
+		java.io.File missing = java.io.File.createTempFile("fw-wiring-missing", ".config.xml");
+		assertTrue("delete to simulate absence", missing.delete());
+
+		TopLogicAgentDefinitions.Config<?> overlay = FrameworkWiringPersistence.load(missing);
+		assertTrue("empty overlay for missing file", overlay.getAgents().isEmpty());
+	}
+
+	/** {@link TopLogicAgentDefinitions#effectiveNames} subtracts removed names, keeping order. */
+	public void testEffectiveNamesSubtractsRemoved() {
+		AgentConfig present = TypedConfiguration.newConfigItem(AgentConfig.class);
+		for (String name : new String[] {"a", "b", "c"}) {
+			ToolRef ref = TypedConfiguration.newConfigItem(ToolRef.class);
+			ref.setName(name);
+			present.getTools().add(ref);
+		}
+		ToolRef removed = TypedConfiguration.newConfigItem(ToolRef.class);
+		removed.setName("b");
+		present.getRemovedTools().add(removed);
+
+		assertEquals(List.of("a", "c"),
+			TopLogicAgentDefinitions.effectiveNames(present.getTools(), present.getRemovedTools()));
 	}
 
 	/** */

@@ -215,7 +215,7 @@ const { useCallback: zt } = e, Ut = ({ controlId: l, command: t, label: n, image
       onClick: x,
       disabled: p,
       style: S,
-      className: "tlReactButton" + (D ? " tlReactButton--iconOnly" : "") + (y === "link" ? " tlReactButton--link" : "") + (C === "small" ? " tlReactButton--small" : "") + (C === "large" ? " tlReactButton--large" : ""),
+      className: "tlReactButton" + (D ? " tlReactButton--iconOnly" : "") + (y === "link" ? " tlReactButton--link" : "") + (y === "primary" ? " tlReactButton--primary" : "") + (C === "small" ? " tlReactButton--small" : "") + (C === "large" ? " tlReactButton--large" : ""),
       "data-tooltip": H,
       "aria-label": D ? o : void 0
     },

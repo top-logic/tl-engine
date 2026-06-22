@@ -16,6 +16,9 @@ public enum ButtonAppearance implements ExternallyNamed {
 	/** The standard button appearance. */
 	DEFAULT("default"),
 
+	/** Emphasized appearance for the primary action of a dialog (filled, on-color text). */
+	PRIMARY("primary"),
+
 	/** Renders as an inline text link rather than a button. */
 	LINK("link");
 

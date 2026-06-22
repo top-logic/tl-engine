@@ -82,11 +82,47 @@ public class ConfirmAction extends InterruptibleViewAction {
 		@Name(INPUTS)
 		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
 		List<ChannelRef> getInputs();
+
+		/**
+		 * The confirmation dialog title.
+		 *
+		 * <p>
+		 * Defaults to a generic confirmation title when not set.
+		 * </p>
+		 */
+		@Name("title")
+		ResKey getTitle();
+
+		/**
+		 * The label of the affirmative (confirm) button.
+		 *
+		 * <p>
+		 * Defaults to the standard "Yes" label when not set.
+		 * </p>
+		 */
+		@Name("confirm-label")
+		ResKey getConfirmLabel();
+
+		/**
+		 * The label of the declining (cancel) button.
+		 *
+		 * <p>
+		 * Defaults to the standard "No" label when not set.
+		 * </p>
+		 */
+		@Name("cancel-label")
+		ResKey getCancelLabel();
 	}
 
 	private final QueryExecutor _expr;
 
 	private final List<ChannelRef> _inputRefs;
+
+	private final ResKey _title;
+
+	private final ResKey _confirmLabel;
+
+	private final ResKey _cancelLabel;
 
 	/**
 	 * Creates a new {@link ConfirmAction} from configuration.
@@ -95,6 +131,9 @@ public class ConfirmAction extends InterruptibleViewAction {
 	public ConfirmAction(InstantiationContext context, Config config) {
 		_expr = QueryExecutor.compile(config.getExpr());
 		_inputRefs = config.getInputs();
+		_title = config.getTitle();
+		_confirmLabel = config.getConfirmLabel();
+		_cancelLabel = config.getCancelLabel();
 	}
 
 	@Override
@@ -113,9 +152,14 @@ public class ConfirmAction extends InterruptibleViewAction {
 		}
 
 		Resources resources = Resources.getInstance();
+		String title = resources.getString(_title != null ? _title : I18NConstants.CONFIRM_TITLE);
+		String confirmLabel = _confirmLabel == null ? null : resources.getString(_confirmLabel);
+		String cancelLabel = _cancelLabel == null ? null : resources.getString(_cancelLabel);
 		ConfirmDialogControl.openDialog(context, dialogManager,
-			resources.getString(I18NConstants.CONFIRM_TITLE),
+			title,
 			resources.getString(message),
+			confirmLabel,
+			cancelLabel,
 			() -> continuation.resume(input),
 			() -> continuation.abort());
 	}

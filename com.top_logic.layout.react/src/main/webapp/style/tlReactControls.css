@@ -93,6 +93,33 @@ button.tlReactButton--link:not(:disabled):active {
 	color: var(--link-primary-hover, #0043ce);
 }
 
+/* --- TLButton primary variant: emphasized (filled) dialog action -------- */
+
+.tlReactButton--primary,
+button.tlReactButton--primary {
+	background: var(--button-primary);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton--primary:not(:disabled):hover {
+	background: var(--button-primary-hover);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-hover);
+	color: var(--text-on-color);
+}
+
+button.tlReactButton--primary:focus-visible {
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary), 0 0 0 2px var(--focus-inset);
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+button.tlReactButton--primary:not(:disabled):active {
+	background: var(--button-primary-active);
+	box-shadow: inset 0px 0px 0px 2px var(--button-primary-active);
+	color: var(--text-on-color);
+}
+
 /* --- TLButton small size (independent of appearance) -------------------- */
 
 .tlReactButton--small,

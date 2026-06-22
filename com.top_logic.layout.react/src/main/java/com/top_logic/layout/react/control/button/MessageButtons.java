@@ -35,8 +35,27 @@ public class MessageButtons {
 	 * @return A new button control with label and icon set.
 	 */
 	public static ReactButtonControl button(ReactContext context, ButtonType type, ButtonAction action) {
-		String label = Resources.getInstance().getString(type.getButtonLabelKey());
-		ReactButtonControl button = new ReactButtonControl(context, label, action);
+		return button(context, type, null, action);
+	}
+
+	/**
+	 * Creates a {@link ReactButtonControl} with the given {@link ButtonType}'s icon but a custom
+	 * label.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param type
+	 *        The button type defining the icon and (when {@code label} is {@code null}) the label.
+	 * @param label
+	 *        The button label, or {@code null} to use the {@code type}'s standard label.
+	 * @param action
+	 *        The action to execute on click.
+	 * @return A new button control with label and icon set.
+	 */
+	public static ReactButtonControl button(ReactContext context, ButtonType type, String label,
+			ButtonAction action) {
+		String resolvedLabel = label != null ? label : Resources.getInstance().getString(type.getButtonLabelKey());
+		ReactButtonControl button = new ReactButtonControl(context, resolvedLabel, action);
 		button.setImage(type.getButtonImage());
 		return button;
 	}

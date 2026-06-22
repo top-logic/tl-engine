@@ -82,6 +82,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       style={hiddenStyle}
       className={'tlReactButton' + (iconOnly ? ' tlReactButton--iconOnly' : '')
         + (appearance === 'link' ? ' tlReactButton--link' : '')
+        + (appearance === 'primary' ? ' tlReactButton--primary' : '')
         + (size === 'small' ? ' tlReactButton--small' : '')
         + (size === 'large' ? ' tlReactButton--large' : '')}
       data-tooltip={tooltipAttr}

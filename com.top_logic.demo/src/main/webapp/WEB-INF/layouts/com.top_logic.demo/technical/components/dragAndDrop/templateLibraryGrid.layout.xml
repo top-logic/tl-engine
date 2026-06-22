@@ -170,6 +170,7 @@
 		</buttons>
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/dragAndDrop/newLibraryElement/newLibraryElementDialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/dragAndDrop/importLibraryScriptDialog.layout.xml"/>
 		</dialogs>
 	</arguments>
 </config:template-call>

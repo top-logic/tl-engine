@@ -102,7 +102,7 @@
 							<named-member name="content"/>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="25"
+									value="26"
 								/>
 							</object>
 							<labeled-member label="Rollenregel für ein Singleton"/>
@@ -133,7 +133,7 @@
 							<named-member name="content"/>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="25"
+									value="26"
 								/>
 							</object>
 							<labeled-member label="Rollenregel für ein Singleton"/>
@@ -168,7 +168,7 @@
 							<named-member name="content"/>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="25"
+									value="26"
 								/>
 							</object>
 							<labeled-member label="Rollenregel für ein Singleton"/>
@@ -204,7 +204,7 @@
 							<named-member name="content"/>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="25"
+									value="26"
 								/>
 							</object>
 							<labeled-member label="Rollenregel für ein Singleton"/>

@@ -278,7 +278,7 @@ public class FrameworkWiringTool {
 	}
 
 	private static void livePersist(Consumer<TopLogicAgentDefinitions.Config<?>> mutation) {
-		TopLogicAgentDefinitions.Config<?> overlay = FrameworkWiringPersistence.newOverlay();
+		TopLogicAgentDefinitions.Config<?> overlay = FrameworkWiringPersistence.loadOverlay();
 		mutation.accept(overlay);
 		FrameworkWiringPersistence.persist(overlay);
 	}

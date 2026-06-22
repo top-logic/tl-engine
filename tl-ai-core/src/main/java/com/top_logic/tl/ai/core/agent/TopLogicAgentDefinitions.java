@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,6 +93,15 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		/** Configuration property name for {@link #getDelegations()}. */
 		String DELEGATIONS = "delegations";
 
+		/** Configuration property name for {@link #getRemovedTools()}. */
+		String REMOVED_TOOLS = "removed-tools";
+
+		/** Configuration property name for {@link #getRemovedSkills()}. */
+		String REMOVED_SKILLS = "removed-skills";
+
+		/** Configuration property name for {@link #getRemovedDelegations()}. */
+		String REMOVED_DELEGATIONS = "removed-delegations";
+
 		/**
 		 * Human-readable description of the agent.
 		 */
@@ -162,6 +172,39 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@EntryTag("delegation")
 		List<DelegationRef> getDelegations();
 
+		/**
+		 * Tools to suppress from the effective set, even if a lower config layer (the platform
+		 * base) declares them.
+		 *
+		 * <p>
+		 * A merge overlay cannot persist a {@code config:operation="remove"} marker on
+		 * {@link #getTools()}: such markers are consumed when the overlay file is read back, so
+		 * they would not survive the next read-modify-write cycle. Removals are therefore modeled
+		 * as plain additive entries here and subtracted from {@link #getTools()} when the running
+		 * definitions are computed.
+		 * </p>
+		 */
+		@Name(REMOVED_TOOLS)
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("removed-tool")
+		List<ToolRef> getRemovedTools();
+
+		/**
+		 * Skills to suppress from the effective set. See {@link #getRemovedTools()}.
+		 */
+		@Name(REMOVED_SKILLS)
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("removed-skill")
+		List<SkillRef> getRemovedSkills();
+
+		/**
+		 * Delegations to suppress from the effective set. See {@link #getRemovedTools()}.
+		 */
+		@Name(REMOVED_DELEGATIONS)
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("removed-delegation")
+		List<DelegationRef> getRemovedDelegations();
+
 	}
 
 	/**
@@ -182,6 +225,9 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 
 		/** Configuration property name for {@link #getTools()}. */
 		String TOOLS = "tools";
+
+		/** Configuration property name for {@link #getRemovedTools()}. */
+		String REMOVED_TOOLS = "removed-tools";
 
 		/**
 		 * Human-readable description shown in the skill catalog.
@@ -215,6 +261,15 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
 		@EntryTag("tool")
 		List<ToolRef> getTools();
+
+		/**
+		 * Tools to suppress from this skill's effective set. See
+		 * {@link AgentConfig#getRemovedTools()}.
+		 */
+		@Name(REMOVED_TOOLS)
+		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
+		@EntryTag("removed-tool")
+		List<ToolRef> getRemovedTools();
 	}
 
 	/**
@@ -269,10 +324,10 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 				name,
 				cfg.getDescription(),
 				cfg.getSystemPrompt(),
-				toNames(cfg.getTools()),
+				effectiveNames(cfg.getTools(), cfg.getRemovedTools()),
 				toNames(cfg.getMcpServers()),
-				toNames(cfg.getSkills()),
-				toNames(cfg.getDelegations()),
+				effectiveNames(cfg.getSkills(), cfg.getRemovedSkills()),
+				effectiveNames(cfg.getDelegations(), cfg.getRemovedDelegations()),
 				AgentSource.CONFIG));
 		}
 		_agents = Collections.unmodifiableMap(agents);
@@ -285,7 +340,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 				name,
 				cfg.getDescription(),
 				cfg.getContent(),
-				toNames(cfg.getTools()),
+				effectiveNames(cfg.getTools(), cfg.getRemovedTools()),
 				AgentSource.CONFIG));
 		}
 		_skills = Collections.unmodifiableMap(skills);
@@ -310,6 +365,23 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 			return List.of();
 		}
 		return refs.stream().map(NamedConfigMandatory::getName).toList();
+	}
+
+	/**
+	 * The names present in {@code present} minus the names listed in {@code removed}, preserving
+	 * the order of {@code present}.
+	 *
+	 * <p>
+	 * Removals are persisted as additive entries (see {@link AgentConfig#getRemovedTools()}) and
+	 * applied here, since the configuration overlay cannot carry a {@code config:operation=remove}
+	 * marker that survives a read-modify-write cycle.
+	 * </p>
+	 */
+	public static List<String> effectiveNames(List<? extends NameRef> present,
+			List<? extends NameRef> removed) {
+		List<String> result = new ArrayList<>(toNames(present));
+		result.removeAll(toNames(removed));
+		return List.copyOf(result);
 	}
 
 	/**

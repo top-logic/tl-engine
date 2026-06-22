@@ -150,6 +150,13 @@
 							<script-step expr="`DemoTypes#ROOT`"/>
 						</inheritance-rule>
 
+						<rule
+							inherit="true"
+							meta-element="DemoPlain:DemoPlain.All"
+							role="DemoTypes.Administrator"
+						>
+							<group-with-name name="demoTypeAdministrators"/>
+						</rule>
 						<singleton-rule
 							role="DemoTypes.Administrator"
 							target="DemoTypes#ROOT"

@@ -463,28 +463,6 @@
 						>
 							<parameters>
 								<parameter name="Rollenregelnummer"
-									value="25"
-								/>
-								<parameter name="Typ"
-									value="DemoTypes:A"
-								/>
-								<parameter name="Gruppe"
-									value="testGroup"
-								/>
-								<parameter name="Objektname"
-									value="TestFilterPermission_A0"
-								/>
-								<parameter name="Rolle"
-									value="BAdministrator"
-								/>
-							</parameters>
-						</action>
-						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-							template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
-							template-name-comment="Rolle Rolle an Gruppe zuweisen"
-						>
-							<parameters>
-								<parameter name="Rollenregelnummer"
 									value="26"
 								/>
 								<parameter name="Typ"
@@ -494,7 +472,7 @@
 									value="testGroup"
 								/>
 								<parameter name="Objektname"
-									value="TestFilterPermission_A1"
+									value="TestFilterPermission_A0"
 								/>
 								<parameter name="Rolle"
 									value="BAdministrator"
@@ -516,7 +494,7 @@
 									value="testGroup"
 								/>
 								<parameter name="Objektname"
-									value="TestFilterPermission_A4"
+									value="TestFilterPermission_A1"
 								/>
 								<parameter name="Rolle"
 									value="BAdministrator"
@@ -538,7 +516,7 @@
 									value="testGroup"
 								/>
 								<parameter name="Objektname"
-									value="TestFilterPermission_A5"
+									value="TestFilterPermission_A4"
 								/>
 								<parameter name="Rolle"
 									value="BAdministrator"
@@ -560,10 +538,10 @@
 									value="testGroup"
 								/>
 								<parameter name="Objektname"
-									value="TestFilterPermission_A0"
+									value="TestFilterPermission_A5"
 								/>
 								<parameter name="Rolle"
-									value="Administrator"
+									value="BAdministrator"
 								/>
 							</parameters>
 						</action>
@@ -582,7 +560,7 @@
 									value="testGroup"
 								/>
 								<parameter name="Objektname"
-									value="TestFilterPermission_A1"
+									value="TestFilterPermission_A0"
 								/>
 								<parameter name="Rolle"
 									value="Administrator"
@@ -604,7 +582,7 @@
 									value="testGroup"
 								/>
 								<parameter name="Objektname"
-									value="TestFilterPermission_A2"
+									value="TestFilterPermission_A1"
 								/>
 								<parameter name="Rolle"
 									value="Administrator"
@@ -618,6 +596,28 @@
 							<parameters>
 								<parameter name="Rollenregelnummer"
 									value="32"
+								/>
+								<parameter name="Typ"
+									value="DemoTypes:A"
+								/>
+								<parameter name="Gruppe"
+									value="testGroup"
+								/>
+								<parameter name="Objektname"
+									value="TestFilterPermission_A2"
+								/>
+								<parameter name="Rolle"
+									value="Administrator"
+								/>
+							</parameters>
+						</action>
+						<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+							template="script:Rolle/Action-Rolle-An Gruppe zuweisen.xml"
+							template-name-comment="Rolle Rolle an Gruppe zuweisen"
+						>
+							<parameters>
+								<parameter name="Rollenregelnummer"
+									value="33"
 								/>
 								<parameter name="Typ"
 									value="DemoTypes:A"

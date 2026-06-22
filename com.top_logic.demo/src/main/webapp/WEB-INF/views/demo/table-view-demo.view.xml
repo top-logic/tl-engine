@@ -54,7 +54,7 @@
 							<write-channel name="selectedDemoType"/>
 						</generic-command>
 					</commands>
-					<table-view
+					<table
 						selection="selectedDemoType"
 						types="DemoTypes:A"
 						observed-types="DemoTypes:A"
@@ -109,7 +109,7 @@
 							<column attribute="float"/>
 						</columns>
 						<rows>all(`DemoTypes:A`)</rows>
-					</table-view>
+					</table>
 				</panel>
 			</pane>
 			<pane

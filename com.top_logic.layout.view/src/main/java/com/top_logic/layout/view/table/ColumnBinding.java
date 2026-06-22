@@ -15,7 +15,7 @@ import com.top_logic.table.ColumnFilter;
  *
  * <p>
  * This is the single extension point for column integration:
- * {@link com.top_logic.layout.view.element.TableViewElement} treats every
+ * {@link com.top_logic.layout.view.element.TableElement} treats every
  * column uniformly through this interface, with no knowledge of concrete filter kinds. The variation
  * that used to be a type switch lives in the bindings themselves:
  * </p>

@@ -462,15 +462,16 @@ function useStandaloneKeyboardScope(active: boolean, bindings: Record<string, Ge
  *        Whether the trap is engaged (typically the surface's open state).
  * @param ref
  *        The container element to confine focus within.
- * @param fieldsFirst
- *        When true, initial focus prefers the first form field, falling back to the container
- *        (so a form dialog focuses its first input while a button-only dialog does not focus a
- *        button). When false, focus moves to the container itself.
+ * @param mode
+ *        Where to place initial focus: {@code 'field'} = the first form field (form dialogs),
+ *        {@code 'first'} = the first focusable element (item menus), {@code 'container'} = the
+ *        container itself (default; e.g. a menu that manages its own roving focus). In every mode
+ *        the fallback is the container - never an incidental title-bar button.
  */
 function useFocusTrap(
   active: boolean,
   ref: { current: HTMLElement | null },
-  fieldsFirst = false
+  mode: 'field' | 'first' | 'container' = 'container'
 ): void {
   React.useEffect(() => {
     if (!active) {
@@ -481,16 +482,29 @@ function useFocusTrap(
       return;
     }
     const previous = document.activeElement as HTMLElement | null;
-    const unpush = pushTrap(() => ref.current);
 
-    if (!el.contains(document.activeElement)) {
-      let target: HTMLElement | null = fieldsFirst ? firstFocusable(el, true) : null;
-      if (!target) {
-        if (!el.hasAttribute('tabindex')) {
-          el.setAttribute('tabindex', '-1');
-        }
-        target = el;
+    // Preferred focus target, shared by the initial move-in and the escape pull-back so focus
+    // never lands on an incidental control (e.g. the title-bar close button).
+    const preferredTarget = (): HTMLElement | null => {
+      const cur = ref.current;
+      if (!cur) {
+        return null;
       }
+      const pick = mode === 'field' ? firstFocusable(cur, true)
+        : mode === 'first' ? firstFocusable(cur, false)
+        : null;
+      if (pick) {
+        return pick;
+      }
+      if (!cur.hasAttribute('tabindex')) {
+        cur.setAttribute('tabindex', '-1');
+      }
+      return cur;
+    };
+    const unpush = pushTrap(() => ref.current, preferredTarget);
+
+    const target = preferredTarget();
+    if (target && target !== document.activeElement) {
       target.focus();
     }
 

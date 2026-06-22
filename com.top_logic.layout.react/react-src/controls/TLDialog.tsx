@@ -1,7 +1,7 @@
 import { React, useTLState, useTLCommand, TLChild, KeyboardScopeProvider, useKeyboardBinding } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
-const { useCallback, useEffect, useRef } = React;
+const { useCallback, useRef } = React;
 
 /**
  * Registers Escape -> close in the enclosing dialog scope. When the dialog's child is a
@@ -43,13 +43,6 @@ const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
       handleClose();
     }
   }, [closeOnBackdrop, handleClose]);
-
-  // Focus trap: focus the backdrop when the dialog opens.
-  useEffect(() => {
-    if (open && backdropRef.current) {
-      backdropRef.current.focus();
-    }
-  }, [open]);
 
   if (!open) return null;
 

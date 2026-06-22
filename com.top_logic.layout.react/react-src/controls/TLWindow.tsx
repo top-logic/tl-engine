@@ -86,7 +86,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Trap focus within the dialog while open (default focus on its first field) and restore focus
   // to the opener (e.g. a table) when it closes.
-  useFocusTrap(true, windowRef, true);
+  useFocusTrap(true, windowRef, 'field');
 
   const handleMouseDown = useCallback((dir: ResizeDir, e: React.MouseEvent) => {
     e.preventDefault();

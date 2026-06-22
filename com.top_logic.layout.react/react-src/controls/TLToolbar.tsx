@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useStandaloneKeyboardScope, useFocusTrap } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -87,6 +87,10 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
 
   // Close on Escape (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(open, { ESCAPE: () => setOpen(false) });
+
+  // While open, trap focus in the dropdown (initial focus on the first item) and restore it to
+  // the trigger when it closes, so keystrokes can't leak to the background.
+  useFocusTrap(open, menuRef, 'first');
 
   const visibleItems = group.items.filter(item => item != null);
   if (visibleItems.length === 0) return null;

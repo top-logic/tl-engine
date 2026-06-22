@@ -28,8 +28,8 @@ import com.top_logic.table.impl.ListRowSource;
  * change re-runs the row function and pushes the fresh rows into the source.
  *
  * <p>
- * The green-field analog of {@link ObservableTableModel} (which targets the legacy
- * {@code ObjectTableModel}). Listeners are registered only for the observed types (to catch
+ * The green-field analog of the legacy observable {@code ObjectTableModel} wrapper. Listeners are
+ * registered only for the observed types (to catch
  * creates), the currently displayed objects (to catch their updates / deletes) and the input
  * channels, so any received notification simply means "re-evaluate".
  * </p>

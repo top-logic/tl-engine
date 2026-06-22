@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useFocusTrap } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef, useState } = React;
@@ -83,6 +83,10 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const handleClose = useCallback(() => {
     sendCommand('close');
   }, [sendCommand]);
+
+  // Trap focus within the dialog while open (default focus on its first field) and restore focus
+  // to the opener (e.g. a table) when it closes.
+  useFocusTrap(true, windowRef, true);
 
   const handleMouseDown = useCallback((dir: ResizeDir, e: React.MouseEvent) => {
     e.preventDefault();
@@ -269,7 +273,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const titleId = controlId + '-title';
 
   return (
-    <KeyboardScopeProvider>
+    <KeyboardScopeProvider modal>
       <EscapeToClose onClose={handleClose} />
       <div
       id={controlId}

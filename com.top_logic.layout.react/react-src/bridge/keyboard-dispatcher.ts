@@ -21,6 +21,8 @@ export interface KeyboardScope {
   isActive(): boolean;
   /** Canonical-gesture -&gt; stack of handlers (last registered wins within a scope). */
   readonly bindings: Map<string, GestureHandler[]>;
+  /** When true, the scope traps all gestures: unbound keys do not fall through to scopes below. */
+  readonly modal: boolean;
 }
 
 const _scopes: KeyboardScope[] = [];
@@ -28,8 +30,8 @@ let _nextScopeId = 1;
 let _installed = false;
 
 /** Allocates a new, not-yet-registered scope. Called during render so ids track tree depth. */
-export function createScope(isActive: () => boolean): KeyboardScope {
-  return { id: _nextScopeId++, isActive, bindings: new Map() };
+export function createScope(isActive: () => boolean, modal = false): KeyboardScope {
+  return { id: _nextScopeId++, isActive, bindings: new Map(), modal };
 }
 
 /** Pushes a scope onto the dispatcher stack; returns an unregister function. */
@@ -198,6 +200,10 @@ function handleKeydown(e: KeyboardEvent): void {
         e.stopPropagation();
         return;
       }
+    }
+    if (scope.modal) {
+      // A modal surface traps all gestures; do not let unbound keys reach the background.
+      return;
     }
   }
 }

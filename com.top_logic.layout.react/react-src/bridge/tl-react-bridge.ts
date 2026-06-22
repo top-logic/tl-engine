@@ -6,6 +6,7 @@ import { getComponent } from './registry';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
+import { pushTrap, firstFocusable } from './focus-trap';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -376,14 +377,17 @@ const KeyboardScopeContext = createContext<KeyboardScope | null>(null);
  *        Optional predicate; when it returns {@code false} the dispatcher skips this
  *        scope. Use it for focus-gated scopes (e.g. a table that only handles arrow
  *        keys while focused). Defaults to always active (modal dialogs/windows).
+ * @param modal
+ *        When true, the scope traps all gestures: keys it does not bind do not fall through to
+ *        scopes below (the page behind a dialog). Defaults to false.
  */
-const KeyboardScopeProvider: React.FC<{ active?: () => boolean; children?: React.ReactNode }> =
-  ({ active, children }) => {
+const KeyboardScopeProvider: React.FC<{ active?: () => boolean; modal?: boolean; children?: React.ReactNode }> =
+  ({ active, modal, children }) => {
     // Keep the latest predicate without recreating the scope on every render.
     const activeRef = React.useRef(active);
     activeRef.current = active;
     const scope = React.useMemo(
-      () => createScope(() => (activeRef.current ? activeRef.current() : true)),
+      () => createScope(() => (activeRef.current ? activeRef.current() : true), modal === true),
       []
     );
     React.useEffect(() => registerScope(scope), [scope]);
@@ -446,7 +450,66 @@ function useStandaloneKeyboardScope(active: boolean, bindings: Record<string, Ge
   }, [active]);
 }
 
-export { KeyboardScopeContext, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope };
+/**
+ * Confines keyboard focus to {@code ref}'s element while {@code active}, moving focus into it on
+ * activation and restoring focus to the previously focused element on deactivation.
+ *
+ * <p>Use on modal surfaces (dialogs/windows, popup menus) so the default focus is inside the
+ * surface (its primary action can be triggered with Enter) rather than left in the background, and
+ * so focus returns to its origin (e.g. a table) once the surface closes.</p>
+ *
+ * @param active
+ *        Whether the trap is engaged (typically the surface's open state).
+ * @param ref
+ *        The container element to confine focus within.
+ * @param fieldsFirst
+ *        When true, initial focus prefers the first form field, falling back to the container
+ *        (so a form dialog focuses its first input while a button-only dialog does not focus a
+ *        button). When false, focus moves to the container itself.
+ */
+function useFocusTrap(
+  active: boolean,
+  ref: { current: HTMLElement | null },
+  fieldsFirst = false
+): void {
+  React.useEffect(() => {
+    if (!active) {
+      return;
+    }
+    const el = ref.current;
+    if (!el) {
+      return;
+    }
+    const previous = document.activeElement as HTMLElement | null;
+    const unpush = pushTrap(() => ref.current);
+
+    if (!el.contains(document.activeElement)) {
+      let target: HTMLElement | null = fieldsFirst ? firstFocusable(el, true) : null;
+      if (!target) {
+        if (!el.hasAttribute('tabindex')) {
+          el.setAttribute('tabindex', '-1');
+        }
+        target = el;
+      }
+      target.focus();
+    }
+
+    return () => {
+      unpush();
+      if (previous && previous.isConnected && typeof previous.focus === 'function') {
+        previous.focus();
+      }
+    };
+  }, [active]);
+}
+
+export {
+  KeyboardScopeContext,
+  KeyboardScopeProvider,
+  useKeyboardBinding,
+  useStandaloneKeyboardScope,
+  useFocusTrap,
+};
 
 // --- MutationObserver for auto-mount and auto-unmount ---
 

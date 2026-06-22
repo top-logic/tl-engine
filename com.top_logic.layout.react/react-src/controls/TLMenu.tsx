@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useFocusTrap } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
@@ -113,12 +113,8 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [handleClose, handleSelect, focusableItems, focusedIndex]);
 
-  // Focus menu on open.
-  useEffect(() => {
-    if (open && menuRef.current) {
-      menuRef.current.focus();
-    }
-  }, [open]);
+  // Trap focus within the menu while open and restore it to the trigger when it closes.
+  useFocusTrap(open, menuRef);
 
   if (!open) return null;
 

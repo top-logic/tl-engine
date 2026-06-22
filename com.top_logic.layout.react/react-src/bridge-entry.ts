@@ -17,6 +17,7 @@ export {
   KeyboardScopeProvider,
   useKeyboardBinding,
   useStandaloneKeyboardScope,
+  useFocusTrap,
 } from './bridge/tl-react-bridge';
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
@@ -62,3 +63,7 @@ if (document.readyState === 'loading') {
 // Install the single document-level keyboard-gesture dispatcher.
 import { initKeyboardDispatcher } from './bridge/keyboard-dispatcher';
 initKeyboardDispatcher();
+
+// Install the single document-level focus-trap listener (confines focus to modal surfaces).
+import { initFocusTrap } from './bridge/focus-trap';
+initFocusTrap();

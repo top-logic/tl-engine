@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.admin;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,24 +15,23 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
-import com.top_logic.layout.react.control.form.ReactCheckboxControl;
-import com.top_logic.layout.react.control.table.ReactCellControlProvider;
-import com.top_logic.layout.react.control.table.ReactTableControl;
-import com.top_logic.layout.table.model.ColumnConfiguration;
-import com.top_logic.layout.table.model.ObjectTableModel;
-import com.top_logic.layout.table.model.TableConfiguration;
-import com.top_logic.layout.table.model.TableConfigurationFactory;
+import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.SecurityScope;
 import com.top_logic.layout.view.security.SecurityScopeService;
+import com.top_logic.table.CellContent;
+import com.top_logic.table.Column;
+import com.top_logic.table.TableId;
+import com.top_logic.table.filter.TextColumnFilter;
+import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.PersonalConfigViewStateStore;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
@@ -45,7 +45,10 @@ import com.top_logic.util.Resources;
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
  * Rows and role columns come from the {@link SecurityScopeService} catalog and the persisted role
  * assignments rather than from a model query, and the cells edit those assignments directly, so this
- * is a distinct element rather than a configuration of the generic data table.
+ * is a distinct element rather than a configuration of the generic data table. It renders through the
+ * green-field {@link TableViewControl} (like the {@code <table>} element), so the two leading label
+ * columns are sortable and text-filterable, the role checkbox cells are editable, and column
+ * width / order are personalized per user.
  * </p>
  */
 public class SecurityMatrixElement implements UIElement {
@@ -56,18 +59,8 @@ public class SecurityMatrixElement implements UIElement {
 	/** Column id for the leading "command group" label column. */
 	private static final String GROUP_COLUMN = "group";
 
-	/** Accessor used for all columns; cell content is produced by the cell control provider instead. */
-	private static final Accessor<Object> NULL_ACCESSOR = new Accessor<>() {
-		@Override
-		public Object getValue(Object object, String property) {
-			return null;
-		}
-
-		@Override
-		public void setValue(Object object, String property, Object value) {
-			// Read-only via accessor; edits happen through the checkbox cell controls.
-		}
-	};
+	/** Stable personalization key for the matrix. */
+	private static final TableId TABLE_ID = new TableId("admin.security-matrix");
 
 	/**
 	 * Configuration for {@link SecurityMatrixElement}.
@@ -96,42 +89,49 @@ public class SecurityMatrixElement implements UIElement {
 			}
 		}
 
-		List<BoundedRole> roles = BoundedRole.getAll();
-		Map<String, BoundedRole> roleByColumn = new LinkedHashMap<>();
-		for (BoundedRole role : roles) {
-			roleByColumn.put("role_" + role.getName(), role);
+		List<Column<Row, ?>> columns = new ArrayList<>();
+
+		// Leading label columns: sortable and text-filterable.
+		columns.add(DefaultColumn.<Row, String> builder(SCOPE_COLUMN, Row::scopeLabel)
+			.label(I18NConstants.MATRIX_SCOPE_COLUMN)
+			.renderer(CellContent::text)
+			.sort(() -> Comparator.<String> naturalOrder())
+			.filter(new TextColumnFilter<>(text -> text))
+			.width(220)
+			.build());
+		columns.add(DefaultColumn.<Row, String> builder(GROUP_COLUMN, row -> row._group.getID())
+			.label(I18NConstants.MATRIX_GROUP_COLUMN)
+			.renderer(CellContent::text)
+			.sort(() -> Comparator.<String> naturalOrder())
+			.filter(new TextColumnFilter<>(text -> text))
+			.width(180)
+			.build());
+
+		// One checkbox column per role; each cell is an editable boolean field writing the grant.
+		for (BoundedRole role : BoundedRole.getAll()) {
+			Map<Row, FieldModel> fields = new LinkedHashMap<>();
+			for (Row row : rows) {
+				fields.put(row, grantField(row, role));
+			}
+			columns.add(DefaultColumn.<Row, FieldModel> builder("role_" + role.getName(), fields::get)
+				.label(ResKey.text(role.getName()))
+				.renderer(field -> field == null ? CellContent.EMPTY : new CellContent.Editable(field))
+				.width(90)
+				.build());
 		}
 
-		TableConfiguration tableConfig = TableConfigurationFactory.table();
-		declareColumn(tableConfig, SCOPE_COLUMN, Resources.getInstance().getString(I18NConstants.MATRIX_SCOPE_COLUMN));
-		declareColumn(tableConfig, GROUP_COLUMN, Resources.getInstance().getString(I18NConstants.MATRIX_GROUP_COLUMN));
-		for (Map.Entry<String, BoundedRole> entry : roleByColumn.entrySet()) {
-			declareColumn(tableConfig, entry.getKey(), entry.getValue().getName());
-		}
+		ListRowSource<Row> source = new ListRowSource<>(rows, columns);
+		DefaultTableView<Row> view =
+			DefaultTableView.create(columns, source, PersonalConfigViewStateStore.INSTANCE, TABLE_ID);
 
-		List<String> columnNames = new ArrayList<>();
-		columnNames.add(SCOPE_COLUMN);
-		columnNames.add(GROUP_COLUMN);
-		columnNames.addAll(roleByColumn.keySet());
-
-		ObjectTableModel tableModel = new ObjectTableModel(columnNames, tableConfig, new ArrayList<>(rows));
-
-		ReactCellControlProvider cellProvider = (ctx, rowObject, columnName, cellValue) -> {
-			Row row = (Row) rowObject;
-			if (SCOPE_COLUMN.equals(columnName)) {
-				return new ReactTextControl(ctx, row.scopeLabel());
-			}
-			if (GROUP_COLUMN.equals(columnName)) {
-				return new ReactTextControl(ctx, row._group.getID());
-			}
-			BoundedRole role = roleByColumn.get(columnName);
-			return roleCheckbox(ctx, row, role);
-		};
-
-		return new ReactTableControl(context, tableModel, cellProvider);
+		return new TableViewControl<>(context, view, false);
 	}
 
-	private static ReactControl roleCheckbox(com.top_logic.layout.react.ReactContext ctx, Row row, BoundedRole role) {
+	/**
+	 * The editable boolean field for one (scope/command-group, role) grant; its value listener
+	 * writes the grant change straight through to the {@link SecurityScope}.
+	 */
+	private static FieldModel grantField(Row row, BoundedRole role) {
 		AbstractFieldModel field = new AbstractFieldModel(Boolean.valueOf(row._scope.isGranted(row._group, role)));
 		field.addListener(new FieldModelListener() {
 			@Override
@@ -149,13 +149,7 @@ public class SecurityMatrixElement implements UIElement {
 				// No validation.
 			}
 		});
-		return new ReactCheckboxControl(ctx, field);
-	}
-
-	private static void declareColumn(TableConfiguration tableConfig, String name, String label) {
-		ColumnConfiguration column = tableConfig.declareColumn(name);
-		column.setColumnLabel(label);
-		column.setAccessor(NULL_ACCESSOR);
+		return field;
 	}
 
 	/**

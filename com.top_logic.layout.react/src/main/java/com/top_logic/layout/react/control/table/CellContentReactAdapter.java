@@ -5,9 +5,11 @@
  */
 package com.top_logic.layout.react.control.table;
 
+import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.table.CellContent;
 
 /**
@@ -17,9 +19,9 @@ import com.top_logic.table.CellContent;
  * <p>
  * This is the React tier's half of the rendering seam: the model tier describes
  * <em>what</em> to show via {@link CellContent}, and this adapter decides <em>how</em> to
- * render it. Inline editing ({@link com.top_logic.table.CellContent.Editable}) currently renders the
- * field
- * value read-only; an editable control is wired in a later step.
+ * render it. An {@link com.top_logic.table.CellContent.Editable} cell backed by a boolean
+ * {@link FieldModel} renders as an interactive {@link ReactCheckboxControl}; other field types
+ * currently render their value read-only.
  * </p>
  */
 public final class CellContentReactAdapter {
@@ -39,7 +41,12 @@ public final class CellContentReactAdapter {
 			return new ReactTextControl(context, labeled.text(), labeled.cssClass());
 		}
 		if (content instanceof CellContent.Editable editable) {
-			Object value = editable.field().getValue();
+			FieldModel field = editable.field();
+			if (field.getValue() instanceof Boolean) {
+				return new ReactCheckboxControl(context, field);
+			}
+			// Non-boolean inline editors are not wired yet; show the value read-only.
+			Object value = field.getValue();
 			return new ReactTextControl(context, value == null ? "" : String.valueOf(value));
 		}
 		if (content instanceof CellContent.Raw raw) {

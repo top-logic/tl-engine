@@ -419,7 +419,7 @@ public class FormElement extends ContainerElement {
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
 
 			ViewCommandModel inner =
-				new ViewCommandModel(cmd, cmdConfig, inputChannel, rule);
+				ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
 
 			// Wrap the model so that executeCommand uses the form context (which has the
 			// FormModel) instead of the window context passed by the toolbar button.

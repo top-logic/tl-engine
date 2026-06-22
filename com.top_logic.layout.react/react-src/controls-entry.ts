@@ -17,6 +17,7 @@ import TLSelect from './controls/TLSelect';
 import TLCheckbox from './controls/TLCheckbox';
 import TLTable from './controls/TLTable';
 import TLButton from './controls/TLButton';
+import TLUploadButton from './controls/TLUploadButton';
 import TLToggleButton from './controls/TLToggleButton';
 import TLCounter from './controls/TLCounter';
 import TLTabBar from './controls/TLTabBar';
@@ -69,6 +70,7 @@ import TLDrawerToggle from './controls/TLDrawerToggle';
 
 
 register('TLButton', TLButton);
+register('TLUploadButton', TLUploadButton);
 register('TLToggleButton', TLToggleButton);
 register('TLTextInput', TLTextInput);
 register('TLPasswordInput', TLPasswordInput);

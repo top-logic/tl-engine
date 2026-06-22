@@ -62,6 +62,20 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	/**
+	 * Creates the {@link ViewCommandModel} matching the given command, choosing a specialized model
+	 * for commands that need one (e.g. a {@link ViewUploadCommandModel} for an {@link UploadCommand},
+	 * whose button uploads files instead of dispatching a click command).
+	 */
+	public static ViewCommandModel create(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
+			ViewExecutabilityRule rule) {
+		if (config instanceof UploadCommand.Config) {
+			return new ViewUploadCommandModel((UploadCommand) command, (UploadCommand.Config) config, inputChannel,
+				rule);
+		}
+		return new ViewCommandModel(command, config, inputChannel, rule);
+	}
+
+	/**
 	 * Resolves the current input value from the channel.
 	 */
 	public Object resolveInput() {

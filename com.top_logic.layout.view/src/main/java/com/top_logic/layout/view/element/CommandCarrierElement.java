@@ -101,7 +101,7 @@ public abstract class CommandCarrierElement extends ContainerElement {
 
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
 
-			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule);
+			ViewCommandModel model = ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
 			models.add(model);
 		}
 		return models;

@@ -117,7 +117,7 @@ public class ButtonElement implements UIElement {
 		ViewExecutabilityRule rule = ViewExecutabilityRules.build(_commandConfig.getExecutability(), context);
 
 		// Create model and button. The button reads label/disabled from the model internally.
-		ViewCommandModel model = new ViewCommandModel(_command, _commandConfig, inputChannel, rule);
+		ViewCommandModel model = ViewCommandModel.create(_command, _commandConfig, inputChannel, rule);
 
 		ReactButtonControl control = new ReactButtonControl(context, model);
 		if (_commandConfig.getImage() != null) {

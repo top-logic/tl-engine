@@ -84,7 +84,19 @@ public class ReactButtonControl extends ReactControl {
 	 *        The command model providing label, executability, and execution.
 	 */
 	public ReactButtonControl(ReactContext context, CommandModel model) {
-		super(context, null, "TLButton");
+		this(context, model, "TLButton");
+	}
+
+	/**
+	 * Creates a {@link ReactButtonControl} backed by a {@link CommandModel} but rendered by the given
+	 * React component, for subclasses that need a specialized client component (e.g. an upload
+	 * button).
+	 *
+	 * @param reactModule
+	 *        The name of the React component to render this control.
+	 */
+	protected ReactButtonControl(ReactContext context, CommandModel model, String reactModule) {
+		super(context, null, reactModule);
 		_model = model;
 		_action = model::executeCommand;
 		_modelChangeHandler = this::handleModelChange;

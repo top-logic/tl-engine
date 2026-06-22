@@ -12,7 +12,6 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.DataFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -77,7 +76,7 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 		putState(STATUS, "received");
 		try {
 			Part filePart = parts.stream()
-				.filter(p -> "file".equals(p.getName()))
+				.filter(p -> UploadSupport.FILE_PART.equals(p.getName()))
 				.findFirst()
 				.orElse(null);
 
@@ -87,18 +86,7 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 				return HandlerResult.DEFAULT_RESULT;
 			}
 
-			byte[] fileData = filePart.getInputStream().readAllBytes();
-			String contentType = filePart.getContentType();
-			if (contentType == null) {
-				contentType = "application/octet-stream";
-			}
-
-			String fileName = filePart.getSubmittedFileName();
-			if (fileName == null) {
-				fileName = "upload.bin";
-			}
-
-			BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
+			BinaryData data = UploadSupport.toBinaryData(filePart);
 			getFieldModel().setValue(data);
 
 			putState(ERROR, null);

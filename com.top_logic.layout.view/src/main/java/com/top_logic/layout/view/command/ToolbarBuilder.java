@@ -16,6 +16,8 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.button.ReactUploadButtonControl;
+import com.top_logic.layout.react.control.button.UploadCommandModel;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.view.command.CliqueRegistry.CliqueInfo;
 
@@ -120,7 +122,9 @@ public class ToolbarBuilder {
 	private static ReactButtonControl createButton(ReactContext context, CommandModel model) {
 		// The CommandModel constructor wires label, executability, image, tooltip and the state
 		// change listener.
-		ReactButtonControl button = new ReactButtonControl(context, model);
+		ReactButtonControl button = model instanceof UploadCommandModel
+			? new ReactUploadButtonControl(context, (UploadCommandModel) model)
+			: new ReactButtonControl(context, model);
 		if (model.getImage() != null) {
 			button.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
 		}

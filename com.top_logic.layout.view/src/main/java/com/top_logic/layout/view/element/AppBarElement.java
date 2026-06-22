@@ -257,7 +257,7 @@ public class AppBarElement implements UIElement {
 
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
 
-			ViewCommandModel model = new ViewCommandModel(cmd, cmdConfig, inputChannel, rule);
+			ViewCommandModel model = ViewCommandModel.create(cmd, cmdConfig, inputChannel, rule);
 			model.attach();
 			models.add(model);
 		}

@@ -55,6 +55,10 @@ public class ModelDigestGenerator {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("# Application Model\n");
+		sb.append(
+			"// Notation: `name: Type` value · `name: -> Type` reference · `Type[]` collection · `(...)` modifiers: mandatory, derived, composite, override\n");
+		sb.append(
+			"// Type names: unqualified within the same module, else fully qualified. interface = abstract (no direct instances), class = instantiable.\n");
 
 		for (TLModule module : modules) {
 			appendModule(sb, module);

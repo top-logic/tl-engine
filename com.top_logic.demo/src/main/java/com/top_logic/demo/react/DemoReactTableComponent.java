@@ -7,7 +7,7 @@ package com.top_logic.demo.react;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,34 +17,32 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.MapAccessor;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.react.control.table.ReactCellControlProvider;
-import com.top_logic.layout.react.control.table.ReactTableControl;
-import com.top_logic.layout.react.control.common.ReactTextControl;
-import com.top_logic.layout.table.model.ColumnConfiguration;
-import com.top_logic.layout.table.model.ObjectTableModel;
-import com.top_logic.layout.table.model.TableConfiguration;
-import com.top_logic.layout.tree.model.DefaultTreeTableModel;
-import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableBuilder;
-import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.table.CellContent;
+import com.top_logic.table.Column;
+import com.top_logic.table.TreeStructure;
+import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.table.impl.TreeRowSource;
 
 /**
- * Demo {@link LayoutComponent} that showcases the React table control.
+ * Demo {@link LayoutComponent} that showcases the green-field React table control
+ * ({@link TableViewControl}).
  *
  * <p>
- * Creates a {@link ReactTableControl} with 1000 synthetic rows and 5 columns to demonstrate virtual
- * scrolling, sorting, and row selection.
+ * Builds a flat table with 1000 synthetic rows (virtual scrolling, sorting) and a tree table with
+ * expandable nodes, both on the green-field {@link com.top_logic.table.TableView} stack.
  * </p>
  */
 public class DemoReactTableComponent extends LayoutComponent {
@@ -58,9 +56,9 @@ public class DemoReactTableComponent extends LayoutComponent {
 
 	private ReactContext _context;
 
-	private ReactTableControl _tableControl;
+	private TableViewControl<Map<String, Object>> _tableControl;
 
-	private ReactTableControl _treeTableControl;
+	private TableViewControl<Map<String, Object>> _treeTableControl;
 
 	/**
 	 * Creates a new {@link DemoReactTableComponent}.
@@ -113,18 +111,13 @@ public class DemoReactTableComponent extends LayoutComponent {
 		out.endTag(HTMLConstants.DIV);
 	}
 
-	private ReactTableControl createDemoTable() {
-		List<String> columnNames = Arrays.asList("id", "name", "department", "email", "status");
-
-		TableConfiguration tableConfig = TableConfiguration.table();
-		tableConfig.getDefaultColumn().setAccessor(MapAccessor.INSTANCE);
-		tableConfig.getDefaultColumn().setComparator(ComparableComparator.INSTANCE);
-
-		declareColumn(tableConfig, "id", "ID", "80px");
-		declareColumn(tableConfig, "name", "Name", "200px");
-		declareColumn(tableConfig, "department", "Department", "150px");
-		declareColumn(tableConfig, "email", "Email", "250px");
-		declareColumn(tableConfig, "status", "Status", "120px");
+	private TableViewControl<Map<String, Object>> createDemoTable() {
+		List<Column<Map<String, Object>, ?>> columns = new ArrayList<>();
+		columns.add(dataColumn("id", "ID", 80));
+		columns.add(dataColumn("name", "Name", 200));
+		columns.add(dataColumn("department", "Department", 150));
+		columns.add(dataColumn("email", "Email", 250));
+		columns.add(dataColumn("status", "Status", 120));
 
 		String[] departments = { "Engineering", "Marketing", "Sales", "HR", "Finance", "Support" };
 		String[] statuses = { "Active", "Inactive", "On Leave" };
@@ -140,80 +133,91 @@ public class DemoReactTableComponent extends LayoutComponent {
 			rows.add(row);
 		}
 
-		ObjectTableModel model = new ObjectTableModel(columnNames, tableConfig, rows);
-
-		LabelProvider labels = MetaLabelProvider.INSTANCE;
-		ReactCellControlProvider cellProvider = (ctx, rowObject, columnName, cellValue) -> {
-			return new ReactTextControl(ctx, labels.getLabel(cellValue));
-		};
-
-		ReactTableControl table = new ReactTableControl(_context, model, cellProvider);
-		table.setSelectionMode("multi");
-		table.setFrozenColumnCount(2);
-		return table;
+		ListRowSource<Map<String, Object>> source = new ListRowSource<>(rows, columns);
+		DefaultTableView<Map<String, Object>> view = DefaultTableView.create(columns, source);
+		return new TableViewControl<>(_context, view, false);
 	}
 
-	private ReactTableControl createDemoTreeTable() {
-		List<String> columnNames = Arrays.asList("name", "type", "size");
+	private TableViewControl<Map<String, Object>> createDemoTreeTable() {
+		List<Column<Map<String, Object>, ?>> columns = new ArrayList<>();
+		columns.add(dataColumn("name", "Name", 300));
+		columns.add(dataColumn("type", "Type", 150));
+		columns.add(dataColumn("size", "Size", 100));
 
-		TableConfiguration tableConfig = TableConfiguration.table();
-		tableConfig.getDefaultColumn().setAccessor(MapAccessor.INSTANCE);
-		tableConfig.getDefaultColumn().setComparator(ComparableComparator.INSTANCE);
-
-		declareColumn(tableConfig, "name", "Name", "300px");
-		declareColumn(tableConfig, "type", "Type", "150px");
-		declareColumn(tableConfig, "size", "Size", "100px");
-
-		Map<String, Object> rootData = new LinkedHashMap<>();
-		rootData.put("name", "Root");
-		rootData.put("type", "Root");
-		rootData.put("size", "");
-
-		DefaultTreeTableModel model = new DefaultTreeTableModel(
-			new DefaultTreeTableBuilder(), rootData, columnNames, tableConfig);
-
-		DefaultTreeTableNode root = model.getRoot();
+		List<Node> roots = new ArrayList<>();
 		String[] folders = { "Documents", "Pictures", "Source Code", "Music" };
-
-		for (int f = 0; f < folders.length; f++) {
-			Map<String, Object> folderData = new LinkedHashMap<>();
-			folderData.put("name", folders[f]);
-			folderData.put("type", "Folder");
-			folderData.put("size", "");
-			DefaultTreeTableNode folder = root.createChild(folderData);
-
+		for (String folderName : folders) {
+			Node folder = new Node(data(folderName, "Folder", ""));
+			roots.add(folder);
 			for (int i = 0; i < 5; i++) {
-				Map<String, Object> fileData = new LinkedHashMap<>();
-				fileData.put("name", "File " + (i + 1) + " in " + folders[f]);
-				fileData.put("type", "File");
-				fileData.put("size", String.valueOf((i + 1) * 128) + " KB");
-				DefaultTreeTableNode file = folder.createChild(fileData);
-
+				Node file = new Node(data("File " + (i + 1) + " in " + folderName, "File", ((i + 1) * 128) + " KB"));
+				folder._children.add(file);
 				if (i == 0) {
 					for (int j = 0; j < 3; j++) {
-						Map<String, Object> subData = new LinkedHashMap<>();
-						subData.put("name", "Version " + (j + 1));
-						subData.put("type", "Version");
-						subData.put("size", String.valueOf((j + 1) * 64) + " KB");
-						file.createChild(subData);
+						file._children.add(new Node(data("Version " + (j + 1), "Version", ((j + 1) * 64) + " KB")));
 					}
 				}
 			}
 		}
 
-		LabelProvider labels = MetaLabelProvider.INSTANCE;
-		ReactCellControlProvider cellProvider = (ctx, rowObject, columnName, cellValue) -> {
-			return new ReactTextControl(ctx, labels.getLabel(cellValue));
+		TreeStructure<Node, Map<String, Object>> structure = new TreeStructure<>() {
+			@Override
+			public List<Node> roots() {
+				return roots;
+			}
+
+			@Override
+			public List<Node> children(Node node) {
+				return node._children;
+			}
+
+			@Override
+			public boolean isLeaf(Node node) {
+				return node._children.isEmpty();
+			}
+
+			@Override
+			public Map<String, Object> businessObject(Node node) {
+				return node._data;
+			}
 		};
 
-		ReactTableControl table = new ReactTableControl(_context, model.getTable(), cellProvider);
-		table.setSelectionMode("multi");
-		return table;
+		TreeRowSource<Node, Map<String, Object>> source = new TreeRowSource<>(structure, columns);
+		DefaultTableView<Map<String, Object>> view = DefaultTableView.create(columns, source);
+		return new TableViewControl<>(_context, view, true);
 	}
 
-	private static void declareColumn(TableConfiguration tableConfig, String name, String label, String width) {
-		ColumnConfiguration col = tableConfig.declareColumn(name);
-		col.setColumnLabel(label);
-		col.setDefaultColumnWidth(width);
+	private static Map<String, Object> data(String name, String type, String size) {
+		Map<String, Object> row = new LinkedHashMap<>();
+		row.put("name", name);
+		row.put("type", type);
+		row.put("size", size);
+		return row;
+	}
+
+	/**
+	 * A text column reading one entry of the row map, sorted by its display label.
+	 */
+	private static Column<Map<String, Object>, Object> dataColumn(String name, String label, int width) {
+		return DefaultColumn.<Map<String, Object>, Object> builder(name, row -> row.get(name))
+			.label(ResKey.text(label))
+			.renderer(value -> CellContent.text(MetaLabelProvider.INSTANCE.getLabel(value)))
+			.sort(() -> Comparator.comparing(MetaLabelProvider.INSTANCE::getLabel))
+			.width(width)
+			.build();
+	}
+
+	/**
+	 * A tree node carrying a row data map and its children.
+	 */
+	private static final class Node {
+
+		final Map<String, Object> _data;
+
+		final List<Node> _children = new ArrayList<>();
+
+		Node(Map<String, Object> data) {
+			_data = data;
+		}
 	}
 }

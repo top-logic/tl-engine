@@ -21,7 +21,9 @@ import com.top_logic.table.CellContent;
  * <em>what</em> to show via {@link CellContent}, and this adapter decides <em>how</em> to
  * render it. An {@link com.top_logic.table.CellContent.Editable} cell backed by a boolean
  * {@link FieldModel} renders as an interactive {@link ReactCheckboxControl}; other field types
- * currently render their value read-only.
+ * currently render their value read-only. A {@link com.top_logic.table.CellContent.Raw} cell whose
+ * payload is a {@link CellControlFactory} renders whatever control the factory builds (the escape
+ * hatch for bespoke cells such as typed field inputs or action buttons).
  * </p>
  */
 public final class CellContentReactAdapter {
@@ -51,6 +53,9 @@ public final class CellContentReactAdapter {
 		}
 		if (content instanceof CellContent.Raw raw) {
 			Object payload = raw.payload();
+			if (payload instanceof CellControlFactory factory) {
+				return factory.create(context);
+			}
 			return new ReactTextControl(context, payload == null ? "" : String.valueOf(payload));
 		}
 		return new ReactTextControl(context, "");

@@ -9,9 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
@@ -28,15 +26,19 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactToolbarControl;
+import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.react.control.table.ReactCellControlProvider;
-import com.top_logic.layout.react.control.table.ReactTableControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
-import com.top_logic.layout.table.model.ColumnConfiguration;
-import com.top_logic.layout.table.model.ObjectTableModel;
-import com.top_logic.layout.table.model.TableConfiguration;
-import com.top_logic.layout.table.model.TableConfigurationFactory;
-import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.table.CellContent;
+import com.top_logic.table.Column;
+import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
@@ -56,7 +58,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Orchestrator for inline composition table editing within a form.
  *
  * <p>
- * Manages the lifecycle of a {@link ReactTableControl} that displays and edits composed child
+ * Manages the lifecycle of a {@link TableViewControl} that displays and edits composed child
  * objects. Implements {@link FormModelListener} to react to form state changes (enter/exit edit
  * mode, object switch) and {@link FormParticipant} for validation, apply, cancel, and dirty
  * tracking.
@@ -138,9 +140,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	/** The persistent objects at edit-mode entry, for orphan detection on save. */
 	private List<TLObject> _originalPersistentObjects;
 
-	private ReactTableControl _tableControl;
+	private TableViewControl<TLObject> _tableControl;
 
-	private ObjectTableModel _tableModel;
+	private ListRowSource<TLObject> _rowSource;
 
 	/** Validation listeners registered per cell, for cleanup on exit edit mode. */
 	private final List<ConstraintValidationListener> _cellValidationListeners = new ArrayList<>();
@@ -150,6 +152,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 
 	/** The Add button in the toolbar, or {@code null} if not in edit mode. */
 	private ReactButtonControl _addButton;
+
+	/** The panel toolbar holding the Add button, or {@code null} if not in edit mode. */
+	private ReactToolbarControl _toolbar;
 
 	/**
 	 * Creates a new {@link CompositionTableControl}.
@@ -217,9 +222,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	/**
-	 * The inner {@link ReactTableControl}, or {@code null} if not yet initialized.
+	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
-	public ReactTableControl getTableControl() {
+	public TableViewControl<TLObject> getTableControl() {
 		return _tableControl;
 	}
 
@@ -444,46 +449,6 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	/**
-	 * Removes a row from the composition table.
-	 */
-	@ReactCommand("deleteRow")
-	void handleDeleteRow(Map<String, Object> arguments) {
-		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
-		if (_fieldModel == null) {
-			return;
-		}
-		List<TLObject> currentList = _fieldModel.getCurrentList();
-		if (rowIndex < 0 || rowIndex >= currentList.size()) {
-			return;
-		}
-		TLObject rowObject = currentList.get(rowIndex);
-		deleteRow(rowObject, rowIndex);
-	}
-
-	/**
-	 * Opens the detail dialog for a row.
-	 *
-	 * <p>
-	 * Loads the configured dialog view, creates a fresh {@link ViewContext} with channels for the
-	 * row object and edit mode, and opens the dialog via {@link DialogManager}.
-	 * </p>
-	 */
-	@ReactCommand("openDetail")
-	void handleOpenDetail(Map<String, Object> arguments) {
-		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
-		if (_tableModel == null) {
-			return;
-		}
-		Collection<?> allRows = _tableModel.getAllRows();
-		List<?> rows = new ArrayList<>(allRows);
-		if (rowIndex < 0 || rowIndex >= rows.size()) {
-			return;
-		}
-		Object rowObject = rows.get(rowIndex);
-		openDetailDialog(rowObject);
-	}
-
-	/**
 	 * Adds a new transient row to the table.
 	 */
 	public void addRow() {
@@ -583,37 +548,47 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	// -- Table Building --
 
 	private void buildTable(List<? extends TLObject> rowObjects, boolean editMode) {
-		// Build column names: detail first, then data columns, then delete last.
-		List<String> columnNames = new ArrayList<>();
+		List<Column<TLObject, ?>> columns = new ArrayList<>();
 
-		// Detail column is always first.
-		columnNames.add(COLUMN_DETAIL);
+		// Detail action column (always first).
+		columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DETAIL, row -> row)
+			.label(I18NConstants.COMPOSITION_TABLE_DETAIL)
+			.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
+			.width(48)
+			.frozenEligible(false)
+			.build());
 
 		// Data columns from configuration.
+		TLClass targetType = resolveTargetType();
 		for (ColumnConfig col : _columnConfigs) {
-			columnNames.add(col.getAttributeName());
+			String attribute = col.getAttributeName();
+			boolean readonly = col.isReadonly();
+			columns.add(DefaultColumn.<TLObject, TLObject> builder(attribute, row -> row)
+				.label(columnLabel(targetType, attribute))
+				.renderer(row -> new CellContent.Raw(
+					(CellControlFactory) (ctx -> buildDataControl(ctx, row, attribute, editMode, readonly))))
+				.build());
 		}
 
-		// Delete column is last (only in edit mode).
+		// Delete action column (edit mode only, last).
 		if (editMode) {
-			columnNames.add(COLUMN_DELETE);
+			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DELETE, row -> row)
+				.label(I18NConstants.COMPOSITION_TABLE_DELETE)
+				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
+				.width(48)
+				.frozenEligible(false)
+				.build());
 		}
 
-		// Build table configuration from the target type.
-		TableConfiguration tableConfig = buildTableConfiguration(editMode);
+		// Create or replace the row source and table control (column set may change between
+		// edit/view mode).
+		_rowSource = new ListRowSource<>(new ArrayList<>(rowObjects), columns);
+		DefaultTableView<TLObject> view = DefaultTableView.create(columns, _rowSource);
 
-		// Create or replace the table model (column set may change between edit/view mode).
-		List<Object> rows = new ArrayList<>(rowObjects);
-		_tableModel = new ObjectTableModel(columnNames, tableConfig, rows);
-
-		// Create cell provider.
-		ReactCellControlProvider cellProvider = createCellProvider(editMode);
-
-		// Create or replace the table control.
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 		}
-		_tableControl = new ReactTableControl(_context, _tableModel, cellProvider);
+		_tableControl = new TableViewControl<>(_context, view, false);
 		registerChildControl(_tableControl);
 
 		// Set panel child to the table.
@@ -624,8 +599,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	}
 
 	private void updateToolbar(boolean editMode) {
-		if (_addButton != null) {
-			_addButton.cleanupTree();
+		if (_toolbar != null) {
+			_toolbar.cleanupTree();
+			_toolbar = null;
 			_addButton = null;
 		}
 
@@ -636,109 +612,76 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 				return HandlerResult.DEFAULT_RESULT;
 			});
 			_addButton.setImage(Icons.COMPOSITION_TABLE_ADD);
-			registerChildControl(_addButton);
-			putState("toolbarButtons", Collections.singletonList(_addButton));
+
+			// TLPanel renders a single `toolbar` child control (a TLToolbar), so wrap the Add
+			// button in a toolbar rather than pushing a bare button list.
+			_toolbar = new ReactToolbarControl(_context);
+			_toolbar.addGroup("add", ToolbarGroupDisplay.INLINE, null, null, List.of(_addButton));
+			putState("toolbar", _toolbar);
 		} else {
-			putState("toolbarButtons", Collections.emptyList());
+			putState("toolbar", null);
 		}
 	}
 
 	private void rebuildTableRows() {
-		if (_tableModel == null || _fieldModel == null) {
+		if (_rowSource == null || _fieldModel == null) {
 			return;
 		}
 		List<TLObject> currentList = _fieldModel.getCurrentList();
-		_tableModel.setRowObjects(new ArrayList<>(currentList));
+		_rowSource.setElements(new ArrayList<>(currentList));
+		if (_tableControl != null) {
+			_tableControl.refreshData();
+		}
 	}
 
-	private TableConfiguration buildTableConfiguration(boolean editMode) {
-		TableConfiguration tableConfig;
-		if (_compositionPart instanceof TLReference) {
-			TLClass targetType = resolveTargetType();
-			if (targetType != null) {
-				Set<TLClass> types = new HashSet<>();
-				types.add(targetType);
-				tableConfig = TableConfigurationFactory.build(new GenericTableConfigurationProvider(types));
-			} else {
-				tableConfig = TableConfigurationFactory.table();
+	/**
+	 * The header label for a data column: the model attribute's label if the target type and part
+	 * resolve, else the attribute name.
+	 */
+	private static ResKey columnLabel(TLClass targetType, String attribute) {
+		if (targetType != null) {
+			TLStructuredTypePart part = targetType.getPart(attribute);
+			if (part != null) {
+				return TLModelNamingConvention.resourceKey(part);
 			}
-		} else {
-			tableConfig = TableConfigurationFactory.table();
 		}
-
-		// Configure action columns.
-		Resources res = Resources.getInstance();
-		ColumnConfiguration detailCol = tableConfig.declareColumn(COLUMN_DETAIL);
-		detailCol.setColumnLabel(res.getString(I18NConstants.COMPOSITION_TABLE_DETAIL));
-		detailCol.setSortable(false);
-
-		if (editMode) {
-			ColumnConfiguration deleteCol = tableConfig.declareColumn(COLUMN_DELETE);
-			deleteCol.setColumnLabel(res.getString(I18NConstants.COMPOSITION_TABLE_DELETE));
-			deleteCol.setSortable(false);
-		}
-
-		return tableConfig;
+		return ResKey.text(attribute);
 	}
 
-	private ReactCellControlProvider createCellProvider(boolean editMode) {
-		// Build a lookup map from column configs.
-		Map<String, ColumnConfig> configByName = new LinkedHashMap<>();
-		for (ColumnConfig col : _columnConfigs) {
-			configByName.put(col.getAttributeName(), col);
+	/**
+	 * Builds the control for a data cell: a read-only label in view mode or for read-only columns,
+	 * otherwise the attribute's editable field control. The cell's {@link AttributeFieldModel} is
+	 * created once per row/column and wired for validation and dirty tracking.
+	 */
+	private ReactControl buildDataControl(ReactContext ctx, TLObject row, String columnName, boolean editMode,
+			boolean readonly) {
+		if (!editMode || readonly) {
+			return new ReactTextControl(ctx, MetaLabelProvider.INSTANCE.getLabel(row.tValueByName(columnName)));
 		}
 
-		return (ctx, rowObject, columnName, cellValue) -> {
-			// Handle action columns.
-			if (COLUMN_DETAIL.equals(columnName)) {
-				return createDetailButton(ctx, rowObject);
-			}
-			if (COLUMN_DELETE.equals(columnName)) {
-				return createDeleteButton(ctx, rowObject);
-			}
+		TLStructuredType type = row.tType();
+		TLStructuredTypePart part = type.getPart(columnName);
+		if (part != null) {
+			CompositionRowModel rowModel = findRowModel(row);
+			if (rowModel != null) {
+				AttributeFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
+				if (cellFieldModel == null) {
+					cellFieldModel = new AttributeFieldModel(row, part);
+					cellFieldModel.setEditable(true);
+					rowModel.putColumnModel(columnName, cellFieldModel);
 
-			ColumnConfig colConfig = configByName.get(columnName);
+					// Wire validation from FormValidationModel to this cell.
+					wireCellValidation(cellFieldModel, row, part);
 
-			if (!editMode || (colConfig != null && colConfig.isReadonly())) {
-				// View mode or read-only column: just show formatted text.
-				String text = MetaLabelProvider.INSTANCE.getLabel(cellValue);
-				return new ReactTextControl(ctx, text);
-			}
-
-			// Edit mode: create an editable field control for this cell.
-			if (rowObject instanceof TLObject) {
-				TLObject tlObject = (TLObject) rowObject;
-				TLStructuredType type = tlObject.tType();
-				TLStructuredTypePart part = type.getPart(columnName);
-
-				if (part != null) {
-					// Find the row model for this row object.
-					CompositionRowModel rowModel = findRowModel(tlObject);
-					if (rowModel != null) {
-						// Create or retrieve an AttributeFieldModel for this cell.
-						AttributeFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
-						if (cellFieldModel == null) {
-							cellFieldModel = new AttributeFieldModel(tlObject, part);
-							cellFieldModel.setEditable(true);
-							rowModel.putColumnModel(columnName, cellFieldModel);
-
-							// Wire validation from FormValidationModel to this cell.
-							wireCellValidation(cellFieldModel, tlObject, part);
-
-							// Add dirty propagation and live validation trigger.
-							addCellListener(cellFieldModel, tlObject);
-						}
-
-						// Create the field input control.
-						return FieldControlService.getInstance().createFieldControl(ctx, part, cellFieldModel);
-					}
+					// Add dirty propagation and live validation trigger.
+					addCellListener(cellFieldModel, row);
 				}
+				return FieldControlService.getInstance().createFieldControl(ctx, part, cellFieldModel);
 			}
+		}
 
-			// Fallback: text display.
-			String text = MetaLabelProvider.INSTANCE.getLabel(cellValue);
-			return new ReactTextControl(ctx, text);
-		};
+		// Fallback: text display.
+		return new ReactTextControl(ctx, MetaLabelProvider.INSTANCE.getLabel(row.tValueByName(columnName)));
 	}
 
 	private ReactButtonControl createDetailButton(ReactContext ctx, Object rowObject) {
@@ -975,8 +918,9 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	protected void cleanupChildren() {
 		_formControl.removeFormModelListener(this);
 		cleanupEditState();
-		if (_addButton != null) {
-			_addButton.cleanupTree();
+		if (_toolbar != null) {
+			_toolbar.cleanupTree();
+			_toolbar = null;
 			_addButton = null;
 		}
 		if (_tableControl != null) {

@@ -119,6 +119,10 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
         ref={triggerRef}
         type="button"
         className={'tlToolbar__menuTrigger' + (iconOnly ? ' tlToolbar__menuTrigger--icon' : '')}
+        // Don't steal focus from the content (e.g. a table) on mouse-open: the menu acts on the
+        // current selection, so focus should return there after a command's dialog closes. The
+        // menu's own focus trap still moves focus into the dropdown while it is open.
+        onMouseDown={(e) => e.preventDefault()}
         onClick={handleToggle}
         aria-expanded={open}
         aria-haspopup="true"

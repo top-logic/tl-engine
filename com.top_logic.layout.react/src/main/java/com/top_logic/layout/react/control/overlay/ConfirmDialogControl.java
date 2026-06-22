@@ -77,8 +77,9 @@ public class ConfirmDialogControl {
 			onConfirm.run();
 			return HandlerResult.DEFAULT_RESULT;
 		});
-		// Emphasize the affirmative action as the dialog's primary button.
+		// Emphasize the affirmative action as the dialog's primary button and make Enter trigger it.
 		confirmButton.setAppearance(ButtonAppearance.PRIMARY);
+		confirmButton.setKeyGesture("ENTER");
 		actions.add(confirmButton);
 		window.setActions(actions);
 

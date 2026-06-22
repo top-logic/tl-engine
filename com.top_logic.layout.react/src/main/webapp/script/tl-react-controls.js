@@ -4055,6 +4055,7 @@ const Cr = ({ controlId: l }) => {
       ref: s,
       type: "button",
       className: "tlToolbar__menuTrigger" + (m ? " tlToolbar__menuTrigger--icon" : ""),
+      onMouseDown: (v) => v.preventDefault(),
       onClick: u,
       "aria-expanded": t,
       "aria-haspopup": "true",

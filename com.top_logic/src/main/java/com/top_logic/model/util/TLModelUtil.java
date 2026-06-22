@@ -107,10 +107,13 @@ public class TLModelUtil {
 
 	private static final char SCOPE_ID_PART_SEPARATOR = '/';
 
-	/** Separator of of type and the part of its type in a qualified name. */
+	/**
+	 * Separator between model element and part in a qualified name, e.g. between type name and
+	 * attribute name, or module name and singleton name.
+	 */
 	public static final char QUALIFIED_NAME_PART_SEPARATOR = '#';
 
-	/** Separator of module and type in the qualified name of {@link TLType}. */
+	/** Separator between module and type in the qualified name of {@link TLType}. */
 	public static final char QUALIFIED_NAME_SEPARATOR = ':';
 
 	/** {@link Pattern} for splitting a qualified type name into its parts. */

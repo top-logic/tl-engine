@@ -21,16 +21,17 @@ import com.top_logic.tool.boundsec.SecurityObjectProvider;
  * The {@link SecurityRootObjectProvider} uses the root of the security structure as security
  * object.
  * 
- * @see BoundHelper#getDefaultObject()
- *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
+ *
+ * @see ModuleSingletonSecurityProvider
+ * @see BoundHelper#getDefaultObject()
  */
 @InApp
 @Label("Security root object")
 public class SecurityRootObjectProvider implements SecurityObjectProvider {
 
 	/** Alias for {@link SecurityRootObjectProvider}. */
-    public static String ALIAS_NAME = "securityRoot";
+	public static final String ALIAS_NAME = "securityRoot";
 
     /** Saves an instance of this class. */
     public static final SecurityRootObjectProvider INSTANCE = new SecurityRootObjectProvider();

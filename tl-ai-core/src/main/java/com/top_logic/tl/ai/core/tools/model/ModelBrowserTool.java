@@ -564,6 +564,42 @@ public class ModelBrowserTool {
 	}
 
 	/**
+	 * Returns a compact structural overview of the entire application model in one response.
+	 *
+	 * <p>
+	 * Lists all application modules with their types (classes, interfaces, enums) and, for each
+	 * type, its parts with target types, multiplicity, inheritance, and derived/composite/mandatory
+	 * markers. Generated fresh from the live model on every call. The result is the compact digest
+	 * text itself, not JSON — its terseness is the point.
+	 * </p>
+	 *
+	 * @param includeFramework
+	 *        Whether to include framework/platform modules (tl.*, tl5.*). Default: {@code false}.
+	 * @return The compact model overview, or a short note if no application modules exist.
+	 */
+	@ToolMethod(description = "Returns a compact structural overview of the entire application model in a "
+		+ "single call: all application modules, their types (classes, interfaces, enums), and for each "
+		+ "type its parts with target types, multiplicity, inheritance, and derived/composite/mandatory "
+		+ "markers. Use this FIRST for any question about model structure — it replaces enumerating with "
+		+ "listModules + listTypes + listTypeParts. Framework modules and runtime instance data are "
+		+ "excluded; for annotations, instances, or usages use the dedicated tools.", mode = ToolMode.READ)
+	public String outlineModel(
+			@P("Set to true to include framework/platform modules (tl.*, tl5.*). Default: false.")
+			Boolean includeFramework) {
+		try {
+			TLModel model = ModelService.getApplicationModel();
+			String overview = ModelDigestGenerator.generate(model, Boolean.TRUE.equals(includeFramework));
+			if (overview.isEmpty()) {
+				return "No application modules found in the model.";
+			}
+			return overview;
+		} catch (Exception ex) {
+			Logger.error("outlineModel() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
+			return "Error generating model overview: " + ex.getMessage();
+		}
+	}
+
+	/**
 	 * Determines if a module is a framework/platform module.
 	 * 
 	 * <p>

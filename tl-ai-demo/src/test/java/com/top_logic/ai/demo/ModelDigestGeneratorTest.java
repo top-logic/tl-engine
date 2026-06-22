@@ -13,6 +13,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.model.TLModel;
+import com.top_logic.tl.ai.core.tools.model.ModelBrowserTool;
 import com.top_logic.tl.ai.core.tools.model.ModelDigestGenerator;
 import com.top_logic.util.model.ModelService;
 
@@ -127,6 +128,22 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 
 		assertTrue("Digest should use -> arrow for references",
 			digest.contains("-> "));
+	}
+
+	/**
+	 * Tests that the outlineModel tool returns the application model digest as plain text.
+	 */
+	public void testOutlineModelToolReturnsDigest() {
+		ModelBrowserTool tool = new ModelBrowserTool();
+		String overview = tool.outlineModel(Boolean.FALSE);
+
+		assertNotNull("Overview should not be null", overview);
+		assertTrue("Overview should contain pizzashop module",
+			overview.contains("## luigis.pizzashop"));
+		assertTrue("Overview should contain Product class",
+			overview.contains("class Product"));
+		assertFalse("Overview should exclude framework modules by default",
+			overview.contains("## tl.core"));
 	}
 
 	/** */

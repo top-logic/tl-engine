@@ -1,4 +1,4 @@
-import { React, useI18N } from 'tl-react-bridge';
+import { React, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
 
 const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
 
@@ -94,14 +94,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
     }
   }, [iconsLoaded]);
 
-  // Close on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onCancel]);
+  // Close on Escape (via the shared keyboard dispatcher).
+  useStandaloneKeyboardScope(true, { ESCAPE: onCancel });
 
   // Close on click outside
   useEffect(() => {

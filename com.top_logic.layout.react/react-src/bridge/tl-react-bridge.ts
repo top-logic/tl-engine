@@ -5,6 +5,7 @@ import type { TLCellProps } from './types';
 import { getComponent } from './registry';
 import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
+import { createScope, registerScope, addBinding, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -352,6 +353,100 @@ export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {
 
   return [state.value, setValue];
 }
+
+// --- Keyboard scopes & gesture bindings ---
+
+/**
+ * The nearest enclosing keyboard scope. Provided by {@link KeyboardScopeProvider}
+ * (a dialog/window/table/app-root) and consumed by {@link useKeyboardBinding}.
+ */
+const KeyboardScopeContext = createContext<KeyboardScope | null>(null);
+
+/**
+ * Provides a keyboard scope to its descendants and registers it on the global
+ * keyboard dispatcher stack while mounted.
+ *
+ * <p>Gesture bindings contributed by descendant controls (via
+ * {@link useKeyboardBinding}) land in this scope. The dispatcher walks scopes from
+ * the innermost (deepest in the tree / most recently opened) outward, so a dialog's
+ * scope sits above the page, and a table's scope nested in a dialog sits above the
+ * dialog.</p>
+ *
+ * @param active
+ *        Optional predicate; when it returns {@code false} the dispatcher skips this
+ *        scope. Use it for focus-gated scopes (e.g. a table that only handles arrow
+ *        keys while focused). Defaults to always active (modal dialogs/windows).
+ */
+const KeyboardScopeProvider: React.FC<{ active?: () => boolean; children?: React.ReactNode }> =
+  ({ active, children }) => {
+    // Keep the latest predicate without recreating the scope on every render.
+    const activeRef = React.useRef(active);
+    activeRef.current = active;
+    const scope = React.useMemo(
+      () => createScope(() => (activeRef.current ? activeRef.current() : true)),
+      []
+    );
+    React.useEffect(() => registerScope(scope), [scope]);
+    return React.createElement(KeyboardScopeContext.Provider, { value: scope }, children);
+  };
+
+/**
+ * Registers a gesture-&gt;handler binding into the nearest enclosing keyboard scope.
+ *
+ * <p>The handler runs when the gesture is pressed and this scope is the innermost
+ * active scope binding it. Returning {@code false} from the handler declines, letting
+ * the dispatcher continue to outer scopes (e.g. a disabled button declining Enter).
+ * When several bindings in one scope share a gesture, the most recently mounted wins
+ * (so a dialog's explicit Cancel action overrides the window's built-in Escape).</p>
+ *
+ * @param gesture
+ *        A gesture spec ("ENTER", "ESCAPE", "Ctrl+S", "Shift+ArrowDown") or array
+ *        thereof; {@code null}/empty disables the binding.
+ * @param handler
+ *        Invoked on the gesture. Need not be stable; the latest closure is always used.
+ */
+function useKeyboardBinding(gesture: string | string[] | null | undefined, handler: GestureHandler): void {
+  const scope = useContext(KeyboardScopeContext);
+  const handlerRef = React.useRef(handler);
+  handlerRef.current = handler;
+  const gestures = gesture == null ? [] : (Array.isArray(gesture) ? gesture : [gesture]);
+  const key = gestures.join('|');
+  React.useEffect(() => {
+    if (!scope || gestures.length === 0) {
+      return;
+    }
+    const stable: GestureHandler = () => handlerRef.current();
+    const removers = gestures.map(g => addBinding(scope, g, stable));
+    return () => removers.forEach(r => r());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope, key]);
+}
+
+/**
+ * Registers a self-contained keyboard scope (no enclosing {@link KeyboardScopeProvider} needed)
+ * while {@code active} is true, binding the given gesture-&gt;handler map.
+ *
+ * <p>Convenience for overlays (drawers, popups, context menus) that previously installed their own
+ * {@code document.addEventListener('keydown', ...)} Escape handler. Registering on open gives the
+ * scope a high stack position, so the innermost open overlay wins. Handlers are read live, so the
+ * map's closures may change between renders.</p>
+ */
+function useStandaloneKeyboardScope(active: boolean, bindings: Record<string, GestureHandler>): void {
+  const bindingsRef = React.useRef(bindings);
+  bindingsRef.current = bindings;
+  React.useEffect(() => {
+    if (!active) {
+      return;
+    }
+    const scope = createScope(() => true);
+    for (const gesture of Object.keys(bindingsRef.current)) {
+      addBinding(scope, gesture, () => bindingsRef.current[gesture]?.());
+    }
+    return registerScope(scope);
+  }, [active]);
+}
+
+export { KeyboardScopeContext, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope };
 
 // --- MutationObserver for auto-mount and auto-unmount ---
 

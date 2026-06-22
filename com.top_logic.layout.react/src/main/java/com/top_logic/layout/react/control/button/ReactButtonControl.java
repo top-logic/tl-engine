@@ -51,6 +51,9 @@ public class ReactButtonControl extends ReactControl {
 	/** State key for a direct client-side navigation target (bypasses the server command). */
 	private static final String NAVIGATE_URL = "navigateUrl";
 
+	/** State key for the keyboard gesture that triggers this button (e.g. "ENTER", "Ctrl+S"). */
+	private static final String KEY_GESTURE = "keyGesture";
+
 	private final ButtonAction _action;
 
 	private CommandModel _model;
@@ -106,6 +109,7 @@ public class ReactButtonControl extends ReactControl {
 		setHidden(!model.isVisible());
 		setImage(model.getImage());
 		setTooltip(model.getTooltip());
+		setKeyGesture(model.getKeyGesture());
 		model.addStateChangeListener(_modelChangeHandler);
 	}
 
@@ -144,6 +148,14 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setTooltip(String tooltip) {
 		putState(TOOLTIP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+	}
+
+	/**
+	 * Sets the keyboard gesture that triggers this button (e.g. {@code "ENTER"}, {@code "ESCAPE"},
+	 * {@code "Ctrl+S"}). {@code null} or empty removes the binding.
+	 */
+	public void setKeyGesture(String keyGesture) {
+		putState(KEY_GESTURE, (keyGesture == null || keyGesture.isEmpty()) ? null : keyGesture);
 	}
 
 	/**

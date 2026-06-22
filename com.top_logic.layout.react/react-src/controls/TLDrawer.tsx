@@ -1,7 +1,7 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
-const { useCallback, useEffect } = React;
+const { useCallback } = React;
 
 const I18N_KEYS = {
   'js.drawer.close': 'Close',
@@ -32,17 +32,8 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('close');
   }, [sendCommand]);
 
-  // Escape key closes the drawer.
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, handleClose]);
+  // Escape key closes the drawer (via the shared keyboard dispatcher).
+  useStandaloneKeyboardScope(open, { ESCAPE: handleClose });
 
   const className = [
     'tlDrawer',

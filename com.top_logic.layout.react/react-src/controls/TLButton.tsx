@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useKeyboardBinding } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -61,6 +61,17 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
     }
     sendCommand(resolvedCommand);
   }, [sendCommand, resolvedCommand, navigateUrl]);
+
+  // Trigger this button when its declared keyboard gesture fires within the enclosing scope.
+  // A hidden or disabled button declines (returns false) so the gesture falls through.
+  const keyGesture = state.keyGesture as string | undefined;
+  useKeyboardBinding(keyGesture, () => {
+    if (resolvedDisabled || resolvedHidden) {
+      return false;
+    }
+    handleClick();
+    return true;
+  });
 
   const iconOnly = resolvedMode === 'icon-only';
   const showIcon = resolvedMode === 'icon-only' || resolvedMode === 'icon-label';

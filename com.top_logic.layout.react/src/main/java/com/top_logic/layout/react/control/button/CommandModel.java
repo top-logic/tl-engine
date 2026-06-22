@@ -102,6 +102,19 @@ public interface CommandModel {
 	}
 
 	/**
+	 * The keyboard gesture that triggers this command, e.g. {@code "ENTER"}, {@code "ESCAPE"} or an
+	 * accelerator like {@code "Ctrl+S"}.
+	 *
+	 * <p>
+	 * Serialized to the client where the keyboard dispatcher binds it to the command's button.
+	 * Returns {@code null} by default (no gesture).
+	 * </p>
+	 */
+	default String getKeyGesture() {
+		return null;
+	}
+
+	/**
 	 * Registers a listener that is notified when any visible state (label, executability) changes.
 	 *
 	 * @param listener

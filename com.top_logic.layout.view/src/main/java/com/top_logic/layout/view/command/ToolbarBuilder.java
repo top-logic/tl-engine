@@ -82,6 +82,15 @@ public class ToolbarBuilder {
 			return null;
 		}
 
+		// Convention default: the sole button-bar command (with no explicit gesture) is the
+		// dialog's Enter default. Ambiguous multi-button bars get no Enter default - authors
+		// disambiguate with an explicit key="ENTER".
+		CommandModel enterDefault = null;
+		if (placement == CommandPlacement.BUTTON_BAR && filtered.size() == 1
+				&& filtered.get(0).getKeyGesture() == null) {
+			enterDefault = filtered.get(0);
+		}
+
 		// Group by clique, preserving declaration order within each group.
 		Map<String, List<CommandModel>> grouped = new LinkedHashMap<>();
 		for (CommandModel model : filtered) {
@@ -110,7 +119,7 @@ public class ToolbarBuilder {
 
 			List<ReactControl> controls = new ArrayList<>();
 			for (CommandModel model : models) {
-				controls.add(createButton(context, model));
+				controls.add(createButton(context, model, model == enterDefault ? "ENTER" : null));
 			}
 
 			toolbar.addGroup(cliqueName, info.display(), info.label(), info.icon(), controls);
@@ -119,14 +128,19 @@ public class ToolbarBuilder {
 		return toolbar;
 	}
 
-	private static ReactButtonControl createButton(ReactContext context, CommandModel model) {
-		// The CommandModel constructor wires label, executability, image, tooltip and the state
-		// change listener.
+	private static ReactButtonControl createButton(ReactContext context, CommandModel model,
+			String defaultGesture) {
+		// The CommandModel constructor wires label, executability, image, tooltip, the model's own
+		// key gesture and the state change listener.
 		ReactButtonControl button = model instanceof UploadCommandModel
 			? new ReactUploadButtonControl(context, (UploadCommandModel) model)
 			: new ReactButtonControl(context, model);
 		if (model.getImage() != null) {
 			button.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
+		}
+		// Apply the conventional gesture only when the command did not declare one explicitly.
+		if (defaultGesture != null && model.getKeyGesture() == null) {
+			button.setKeyGesture(defaultGesture);
 		}
 		return button;
 	}

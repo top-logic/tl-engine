@@ -66,6 +66,9 @@ public interface ViewCommand {
 		/** Configuration name for {@link #getCheckDirty()}. */
 		String CHECK_DIRTY = "check-dirty";
 
+		/** Configuration name for {@link #getKey()}. */
+		String KEY = "key";
+
 		/**
 		 * The programmatic name of this command.
 		 *
@@ -141,6 +144,21 @@ public interface ViewCommand {
 		 */
 		@Name(CHECK_DIRTY)
 		DirtyCheckScope getCheckDirty();
+
+		/**
+		 * The keyboard gesture that triggers this command, e.g. {@code "ENTER"},
+		 * {@code "ESCAPE"} or an accelerator such as {@code "Ctrl+S"}.
+		 *
+		 * <p>
+		 * When unset, dialogs derive conventional defaults: the sole or
+		 * {@link com.top_logic.layout.react.control.button.ButtonAppearance#PRIMARY primary}
+		 * button-bar command answers {@code ENTER}, and the dialog's cancel action answers
+		 * {@code ESCAPE}.
+		 * </p>
+		 */
+		@Name(KEY)
+		@Nullable
+		String getKey();
 	}
 
 	/**

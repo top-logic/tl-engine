@@ -1,5 +1,40 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, useStandaloneKeyboardScope } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+
+/**
+ * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
+ * Rendered inside the table's {@link KeyboardScopeProvider} so the bindings only fire while the
+ * table has focus. Navigation is resolved on the server (see {@code moveSelection}); the client
+ * only sends the direction plus the Shift (extend) / Ctrl (move-cursor-only) modifiers.
+ */
+const TableKeyBindings: React.FC<{
+  isMulti: boolean;
+  cursorIndex: number;
+  onMove: (direction: string, extend: boolean, move: boolean) => void;
+  onToggle: () => void;
+  onSelectAll: () => void;
+}> = ({ isMulti, cursorIndex, onMove, onToggle, onSelectAll }) => {
+  useKeyboardBinding('ArrowUp', () => { onMove('up', false, false); return true; });
+  useKeyboardBinding('ArrowDown', () => { onMove('down', false, false); return true; });
+  useKeyboardBinding('Home', () => { onMove('home', false, false); return true; });
+  useKeyboardBinding('End', () => { onMove('end', false, false); return true; });
+  useKeyboardBinding('PageUp', () => { onMove('pageUp', false, false); return true; });
+  useKeyboardBinding('PageDown', () => { onMove('pageDown', false, false); return true; });
+  // Shift extends the range (multi only); in single selection it behaves like a plain move.
+  useKeyboardBinding('Shift+ArrowUp', () => { onMove('up', isMulti, false); return true; });
+  useKeyboardBinding('Shift+ArrowDown', () => { onMove('down', isMulti, false); return true; });
+  useKeyboardBinding('Shift+Home', () => { onMove('home', isMulti, false); return true; });
+  useKeyboardBinding('Shift+End', () => { onMove('end', isMulti, false); return true; });
+  useKeyboardBinding('Shift+PageUp', () => { onMove('pageUp', isMulti, false); return true; });
+  useKeyboardBinding('Shift+PageDown', () => { onMove('pageDown', isMulti, false); return true; });
+  // Ctrl moves the focus cursor without changing the selection (multi only).
+  useKeyboardBinding('Ctrl+ArrowUp', () => { onMove('up', false, isMulti); return true; });
+  useKeyboardBinding('Ctrl+ArrowDown', () => { onMove('down', false, isMulti); return true; });
+  // Space toggles the cursor row; Ctrl+A selects all (multi only).
+  useKeyboardBinding('Space', () => { if (cursorIndex < 0) { return false; } onToggle(); return true; });
+  useKeyboardBinding('Ctrl+A', () => { if (!isMulti) { return false; } onSelectAll(); return true; });
+  return null;
+};
 
 const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
@@ -71,6 +106,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const rowHeight = (state.rowHeight as number) ?? 36;
   const selectionMode = (state.selectionMode as string) ?? 'single';
   const selectedCount = (state.selectedCount as number) ?? 0;
+  const cursorIndex = (state.cursorIndex as number) ?? -1;
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
 
@@ -288,12 +324,54 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (event.shiftKey) {
       event.preventDefault();
     }
+    // Give the body keyboard focus so the table's keyboard scope becomes active.
+    scrollContainerRef.current?.focus({ preventScroll: true });
     sendCommand('select', {
       rowIndex,
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
   }, [sendCommand]);
+
+  // -- Keyboard navigation (server-resolved; see moveSelection) --
+  const handleMove = React.useCallback((direction: string, extend: boolean, move: boolean) => {
+    sendCommand('moveSelection', { direction, extend, move });
+  }, [sendCommand]);
+
+  const handleToggleCursor = React.useCallback(() => {
+    if (cursorIndex < 0) {
+      return;
+    }
+    sendCommand('select', { rowIndex: cursorIndex, ctrlKey: isMulti, shiftKey: false });
+  }, [sendCommand, cursorIndex, isMulti]);
+
+  const handleSelectAllRows = React.useCallback(() => {
+    sendCommand('selectAll', { selected: true });
+  }, [sendCommand]);
+
+  // Predicate for the focus-gated table scope: active only while focus is within this table.
+  const isTableFocused = React.useCallback(
+    () => !!rootRef.current && rootRef.current.contains(document.activeElement),
+    []
+  );
+
+  // Keep the keyboard cursor row visible as it moves through the virtualized body.
+  React.useEffect(() => {
+    if (cursorIndex < 0) {
+      return;
+    }
+    const el = scrollContainerRef.current;
+    if (!el) {
+      return;
+    }
+    const rowTop = cursorIndex * rowHeight;
+    const rowBottom = rowTop + rowHeight;
+    if (rowTop < el.scrollTop) {
+      el.scrollTop = rowTop;
+    } else if (rowBottom > el.scrollTop + el.clientHeight) {
+      el.scrollTop = rowBottom - el.clientHeight;
+    }
+  }, [cursorIndex, rowHeight]);
 
   const handleCheckboxClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -328,20 +406,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu(null);
   }, [sendCommand]);
 
-  // Close context menu on outside click or Escape.
+  // Close context menu on outside click; Escape is handled by the shared keyboard dispatcher.
   React.useEffect(() => {
     if (!contextMenu) return;
     const handleMouseDown = () => setContextMenu(null);
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setContextMenu(null);
-    };
     document.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [contextMenu]);
+  useStandaloneKeyboardScope(!!contextMenu, { ESCAPE: () => setContextMenu(null) });
 
   // -- Filter handler: open the server-side filter dialog for a column. --
   const handleOpenFilter = React.useCallback((columnName: string, event: React.MouseEvent) => {
@@ -364,6 +436,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [someSelected]);
 
   return (
+    <KeyboardScopeProvider active={isTableFocused}>
+    <TableKeyBindings
+      isMulti={isMulti}
+      cursorIndex={cursorIndex}
+      onMove={handleMove}
+      onToggle={handleToggleCursor}
+      onSelectAll={handleSelectAllRows}
+    />
     <div ref={rootRef} id={controlId} className="tlTableView" data-tooltip="dynamic"
       onDragOver={(e) => {
         if (!dragColumnRef.current) return;
@@ -492,11 +572,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       </div>
 
-      {/* Scrollable body */}
+      {/* Scrollable body (focusable so keyboard row navigation can target it) */}
       <div
         ref={scrollContainerRef}
         className="tlTableView__body"
         onScroll={handleScroll}
+        tabIndex={0}
       >
         {/* Spacer for virtual scrolling */}
         <div style={{ height: totalHeight, position: 'relative', width: tableWidth }}>
@@ -505,13 +586,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               key={row.id}
               className={
                 'tlTableView__row' +
-                (row.selected ? ' tlTableView__row--selected' : '')
+                (row.selected ? ' tlTableView__row--selected' : '') +
+                (row.index === cursorIndex ? ' tlTableView__row--cursor' : '')
               }
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,
                 height: rowHeight,
                 width: tableWidth,
+                ...(row.index === cursorIndex
+                  ? { outline: '2px solid var(--color-primary, #1a73e8)', outlineOffset: '-2px' }
+                  : {}),
               }}
               onClick={(e) => handleRowClick(row.index, e)}
             >
@@ -602,6 +687,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
     </div>
+    </KeyboardScopeProvider>
   );
 };
 

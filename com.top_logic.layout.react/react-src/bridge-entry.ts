@@ -14,6 +14,9 @@ export {
   useTLFieldValue,
   createChildContext,
   TLControlContext,
+  KeyboardScopeProvider,
+  useKeyboardBinding,
+  useStandaloneKeyboardScope,
 } from './bridge/tl-react-bridge';
 export type { TLCellProps } from './bridge/types';
 export { useI18N } from './bridge/i18n';
@@ -55,3 +58,7 @@ if (document.readyState === 'loading') {
 } else {
   initTooltipHost();
 }
+
+// Install the single document-level keyboard-gesture dispatcher.
+import { initKeyboardDispatcher } from './bridge/keyboard-dispatcher';
+initKeyboardDispatcher();

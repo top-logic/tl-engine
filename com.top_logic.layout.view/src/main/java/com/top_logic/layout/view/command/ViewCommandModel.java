@@ -138,6 +138,11 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 		return _config.getName();
 	}
 
+	@Override
+	public String getKeyGesture() {
+		return _config.getKey();
+	}
+
 	/**
 	 * The current executability state.
 	 */

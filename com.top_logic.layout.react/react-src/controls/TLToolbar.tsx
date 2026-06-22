@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useStandaloneKeyboardScope } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import { ThemeIcon } from './icon/ThemeIcon';
@@ -85,15 +85,8 @@ const MenuGroup: React.FC<{ group: CliqueGroup }> = ({ group }) => {
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [open]);
 
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open]);
+  // Close on Escape (via the shared keyboard dispatcher).
+  useStandaloneKeyboardScope(open, { ESCAPE: () => setOpen(false) });
 
   const visibleItems = group.items.filter(item => item != null);
   if (visibleItems.length === 0) return null;

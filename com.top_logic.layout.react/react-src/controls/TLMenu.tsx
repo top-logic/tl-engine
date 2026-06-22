@@ -99,7 +99,7 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Keyboard navigation.
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { handleClose(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); handleClose(); return; }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setFocusedIndex(i => (i + 1) % focusableItems.length);

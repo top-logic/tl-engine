@@ -1,7 +1,20 @@
-import { React, useTLState, useTLCommand, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, KeyboardScopeProvider, useKeyboardBinding } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef } = React;
+
+/**
+ * Registers Escape -> close in the enclosing dialog scope. When the dialog's child is a
+ * {@code TLWindow} (its own, inner scope), that inner scope handles Escape first; this binding
+ * only fires for plain-content dialogs.
+ */
+const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  useKeyboardBinding('ESCAPE', () => {
+    onClose();
+    return true;
+  });
+  return null;
+};
 
 /**
  * Pure overlay: backdrop + child.
@@ -31,18 +44,6 @@ const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [closeOnBackdrop, handleClose]);
 
-  // Escape key.
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, handleClose]);
-
   // Focus trap: focus the backdrop when the dialog opens.
   useEffect(() => {
     if (open && backdropRef.current) {
@@ -53,15 +54,18 @@ const TLDialog: React.FC<TLCellProps> = ({ controlId }) => {
   if (!open) return null;
 
   return (
-    <div
-      id={controlId}
-      className="tlDialog__backdrop"
-      onClick={handleBackdropClick}
-      ref={backdropRef}
-      tabIndex={-1}
-    >
-      <TLChild control={child} />
-    </div>
+    <KeyboardScopeProvider>
+      <EscapeToClose onClose={handleClose} />
+      <div
+        id={controlId}
+        className="tlDialog__backdrop"
+        onClick={handleBackdropClick}
+        ref={backdropRef}
+        tabIndex={-1}
+      >
+        <TLChild control={child} />
+      </div>
+    </KeyboardScopeProvider>
   );
 };
 

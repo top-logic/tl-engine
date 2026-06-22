@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { ThemeIcon } from './icon/ThemeIcon';
 
@@ -175,16 +175,8 @@ const SidebarGroupFlyout: React.FC<{
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [onClose]);
 
-  // Close on Escape.
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  // Close on Escape (via the shared keyboard dispatcher).
+  useStandaloneKeyboardScope(true, { ESCAPE: onClose });
 
   const handleChildClick = useCallback((child: SidebarItemData) => {
     if (child.type === 'nav') {

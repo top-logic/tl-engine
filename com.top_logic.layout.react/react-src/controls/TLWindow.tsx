@@ -1,7 +1,19 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef, useState } = React;
+
+/**
+ * Registers Escape -> close in the enclosing window scope as a fallback. Rendered as the first
+ * child of the scope so an explicit action's {@code key="ESCAPE"} (mounted later) overrides it.
+ */
+const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  useKeyboardBinding('ESCAPE', () => {
+    onClose();
+    return true;
+  });
+  return null;
+};
 
 const I18N_KEYS = {
   'js.window.close': 'Close',
@@ -257,7 +269,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const titleId = controlId + '-title';
 
   return (
-    <div
+    <KeyboardScopeProvider>
+      <EscapeToClose onClose={handleClose} />
+      <div
       id={controlId}
       className="tlWindow"
       style={style}
@@ -331,7 +345,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           onMouseDown={(e) => handleMouseDown(dir, e)}
         />
       ))}
-    </div>
+      </div>
+    </KeyboardScopeProvider>
   );
 };
 

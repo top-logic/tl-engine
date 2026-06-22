@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -142,18 +142,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
     };
   }, [localStatus]);
 
-  // Escape key closes overlay.
-  React.useEffect(() => {
-    if (localStatus !== 'overlayOpen') return;
-
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        closeOverlay();
-      }
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [localStatus, closeOverlay]);
+  // Escape key closes overlay (via the shared keyboard dispatcher).
+  useStandaloneKeyboardScope(localStatus === 'overlayOpen', { ESCAPE: closeOverlay });
 
   // Cleanup on unmount.
   React.useEffect(() => {

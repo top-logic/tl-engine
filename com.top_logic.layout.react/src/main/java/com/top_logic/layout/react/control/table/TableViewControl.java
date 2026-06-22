@@ -96,6 +96,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String SELECTED_COUNT = "selectedCount";
 
+	/** State key for the keyboard focus/lead row index ({@code -1} when none). */
+	private static final String CURSOR_INDEX = "cursorIndex";
+
 	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
 
 	private static final String TREE_MODE = "treeMode";
@@ -131,6 +134,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private final Set<Object> _selectedKeys = new LinkedHashSet<>();
 
 	private int _selectionAnchor = -1;
+
+	/** The keyboard focus/lead row index; {@code -1} when no row has keyboard focus. */
+	private int _cursorIndex = -1;
 
 	private SelectionListener _selectionListener;
 
@@ -265,6 +271,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		putState(VIEWPORT_START, Integer.valueOf(bufferedStart));
 		putState(ROWS, rowStates);
 		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
+		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
 	}
 
 	private Map<String, ReactControl> createCells(Row<R> row) {
@@ -458,6 +465,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
 		boolean shiftKey = Boolean.TRUE.equals(arguments.get("shiftKey"));
 		Object key = keyAt(rowIndex);
+		_cursorIndex = rowIndex;
 
 		if ("multi".equals(_selectionMode)) {
 			if (shiftKey && _selectionAnchor >= 0) {
@@ -486,6 +494,76 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 		pushSelection();
 		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
+	 * Handles keyboard row navigation (arrow keys, Home/End, PageUp/PageDown) with a unified
+	 * cursor/lead model.
+	 *
+	 * <p>
+	 * Arguments: {@code direction} ({@code "up"}, {@code "down"}, {@code "home"}, {@code "end"},
+	 * {@code "pageUp"}, {@code "pageDown"}); {@code extend} (Shift: extend the range from the
+	 * anchor); {@code move} (Ctrl: move the focus cursor without changing the selection, multi
+	 * only). The target index is resolved against the full row list, so it is correct even when the
+	 * target row is outside the rendered window; the window is then scrolled to include it.
+	 * </p>
+	 */
+	@ReactCommand("moveSelection")
+	void handleMoveSelection(Map<String, Object> arguments) {
+		int total = _view.rowCount();
+		if (total == 0) {
+			return;
+		}
+		String direction = String.valueOf(arguments.get("direction"));
+		boolean extend = Boolean.TRUE.equals(arguments.get("extend"));
+		boolean move = Boolean.TRUE.equals(arguments.get("move"));
+		int page = Math.max(1, _viewportCount);
+
+		int from = _cursorIndex;
+		int target;
+		if (from < 0) {
+			// First navigation lands on the edge rather than stepping from an implicit position.
+			target = "end".equals(direction) ? total - 1 : 0;
+		} else {
+			switch (direction) {
+				case "up": target = from - 1; break;
+				case "down": target = from + 1; break;
+				case "home": target = 0; break;
+				case "end": target = total - 1; break;
+				case "pageUp": target = from - page; break;
+				case "pageDown": target = from + page; break;
+				default: return;
+			}
+		}
+		target = Math.max(0, Math.min(total - 1, target));
+		_cursorIndex = target;
+		Object key = keyAt(target);
+
+		if ("multi".equals(_selectionMode) && move) {
+			// Ctrl: move the focus cursor only; leave the selection untouched.
+		} else if ("multi".equals(_selectionMode) && extend) {
+			if (_selectionAnchor < 0) {
+				_selectionAnchor = from < 0 ? target : from;
+			}
+			_selectedKeys.clear();
+			int lo = Math.min(_selectionAnchor, target);
+			int hi = Math.max(_selectionAnchor, target);
+			for (Row<R> row : _view.rows(lo, hi + 1)) {
+				if (row.kind() == RowKind.DATA) {
+					_selectedKeys.add(row.key());
+				}
+			}
+		} else {
+			// Plain move (and the single-selection case): selection follows the cursor.
+			_selectedKeys.clear();
+			if (key != null) {
+				_selectedKeys.add(key);
+			}
+			_selectionAnchor = target;
+		}
+
+		pushSelection();
+		scrollIntoView(target);
 	}
 
 	/**
@@ -555,6 +633,19 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	private Object keyAt(int rowIndex) {
 		List<Row<R>> single = _view.rows(rowIndex, rowIndex + 1);
 		return single.isEmpty() ? null : single.get(0).key();
+	}
+
+	/**
+	 * Re-buffers the viewport so the given row is within the rendered window, then re-renders.
+	 */
+	private void scrollIntoView(int target) {
+		int start = _viewportStart;
+		if (target < start) {
+			start = target;
+		} else if (target >= start + _viewportCount) {
+			start = target - _viewportCount + 1;
+		}
+		updateViewport(Math.max(0, start), _viewportCount);
 	}
 
 	@Override

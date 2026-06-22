@@ -154,7 +154,18 @@ const NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Ho
 
 // -- Dispatch -------------------------------------------------------------------
 
+function isButtonLike(el: Element | null): boolean {
+  if (!el) {
+    return false;
+  }
+  const node = el as HTMLElement;
+  return node.tagName === 'BUTTON' || node.getAttribute('role') === 'button';
+}
+
 function handleKeydown(e: KeyboardEvent): void {
+  // The dispatcher is a FALLBACK: it runs in the bubble phase, so a focused widget's own
+  // key handler (e.g. a menu/dropdown's arrow + Enter navigation) gets first dibs and, by
+  // calling preventDefault(), tells the dispatcher to stand down.
   if (e.defaultPrevented) {
     return;
   }
@@ -162,6 +173,10 @@ function handleKeydown(e: KeyboardEvent): void {
 
   // Enter inside a multi-line editor inserts a newline; never treat it as a submit gesture.
   if (e.key === 'Enter' && isMultilineEntry(active)) {
+    return;
+  }
+  // Enter on a focused button activates that button natively; don't also fire a scope default.
+  if (e.key === 'Enter' && isButtonLike(active)) {
     return;
   }
   // Navigation keys / Space inside a caret editor move the caret or type; leave them alone.
@@ -193,5 +208,6 @@ export function initKeyboardDispatcher(): void {
     return;
   }
   _installed = true;
-  document.addEventListener('keydown', handleKeydown, true);
+  // Bubble phase: focused widgets handle their own keys first; we are the fallback.
+  document.addEventListener('keydown', handleKeydown, false);
 }

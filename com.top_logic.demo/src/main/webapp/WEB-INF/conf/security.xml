@@ -62,17 +62,6 @@
 		<profile name="DemoTypes.BAdministrator"/>
 		<profile name="DemoTypes.BooleanAdministrator"/>
 		<profile name="DemoTypes.DateAdministrator"/>
-		<profile name="navigation">
-			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
-				<commandGroup name="Read"/>
-			</view>
-			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#demoPlainView">
-				<commandGroup name="Read"/>
-			</view>
-			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesView">
-				<commandGroup name="Read"/>
-			</view>
-		</profile>
 		<profile name="DemoTypes.Responsible">
 			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
 				<commandGroup name="Create"/>
@@ -120,7 +109,6 @@
 				<commandGroup name="Write"/>
 			</view>
 		</profile>
-		<profile name="selection"/>
 		<profile name="DemoTypes.StringAdministrator"/>
 		<profile name="SecurityStructure.OwnerRole">
 			<view name="com.top_logic.demo/search/searchChart.layout.xml#searchChart">
@@ -225,6 +213,12 @@
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
 				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.contact/admin/orgUnits/orgUnit.layout.xml#orgUnit">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -446,6 +440,7 @@
 			<view name="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/tileLayout.layout.xml#TileLayout">
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
+				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -703,6 +698,36 @@
 				<commandGroup name="Create"/>
 				<commandGroup name="Delete"/>
 				<commandGroup name="Export"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/milestonesTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/notesTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/peopleTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
+				<commandGroup name="Read"/>
+				<commandGroup name="Write"/>
+			</view>
+			<view name="com.top_logic.demo/technical/components/undoRedo/ticketsTab.layout.xml#TabLayout">
+				<commandGroup name="Create"/>
+				<commandGroup name="Delete"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>
@@ -1245,5 +1270,17 @@
 				<commandGroup name="Write"/>
 			</view>
 		</profile>
+		<profile name="navigation">
+			<view name="com.top_logic.demo/structure/aspectInheritance/tabLayout.layout.xml#TabLayout">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoPlain/demoPlainView.layout.xml#demoPlainView">
+				<commandGroup name="Read"/>
+			</view>
+			<view name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#demoTypesView">
+				<commandGroup name="Read"/>
+			</view>
+		</profile>
+		<profile name="selection"/>
 	</profiles>
 </security>

@@ -919,7 +919,7 @@ Report part names exactly as returned by tools.
 </strategy>
 
 <patterns>
-Top-down discovery: listModules → listTypes (per module) → listTypeParts (per type).
+Overview first: call `model-browser.outlineModel` for a compact whole-model structure (modules, types, parts, inheritance) in one call. Drill down with `listTypeParts` / `searchModel` only for targeted detail or inherited parts.
 
 Resolve before inspect: when a type is referenced by name without a module, search for it first, then inspect.
 
@@ -936,6 +936,7 @@ Framework type suitability: when assessing framework types for potential inherit
 </patterns>
 
 Available tools:
+- `model-browser.outlineModel` — compact overview of the entire model in one call (use first).
 - `model-browser.listModules` — list modules.
 - `model-browser.listTypes` — list types in a module.
 - `model-browser.listTypeParts` — list properties/references of a type.
@@ -948,6 +949,7 @@ Available tools:
 - `model-annotation-definitions.describeAnnotation` — look up an annotation type's schema.
 ]]></content>
 					<tools>
+						<tool name="model-browser.outlineModel"/>
 						<tool name="model-browser.listClassifiers"/>
 						<tool name="model-browser.listModules"/>
 						<tool name="model-browser.listTypeParts"/>
@@ -1243,8 +1245,8 @@ You start with minimal tools. Full capabilities live in skills — load them on 
 <workflow>
 Before calling any tool, briefly tell the user what you're about to do. Never leave the user in silence.
 
-1. **Understand:** If clear enough, start working. If ambiguous, ask ONE question. Never ask for information you can look up with tools — explore the model yourself.
-2. **Discover:** Load the relevant skill and gather facts before making changes. Explore only what the task requires.
+1. **Understand:** If clear enough, start working. If ambiguous, ask ONE question. Never ask for information you can look up yourself.
+2. **Discover:** For anything about model structure, call `model-browser.outlineModel` once for a compact overview of all modules and types. Load skills and call other tools only for information beyond structure (annotations, instances, usages, TLScript).
 3. **Plan:** For model modifications, present a plan via askUser(type="choice", options=["Approve", "Revise"]) listing every element to create/modify. The plan is your checklist — nothing silently dropped.
 4. **Execute:** Follow creation order: Modules → Enumerations → Classes → Properties → Forward refs → Backward refs. Never create an element before its dependencies exist.
 5. **Verify:** Confirm results with tools. NEVER assume success. For TLScript: always validate AND execute before presenting.
@@ -1252,7 +1254,7 @@ Before calling any tool, briefly tell the user what you're about to do. Never le
 </workflow>
 
 <core_rules>
-- Answer domain questions with tools, NEVER from your own knowledge
+- For model structure, call `model-browser.outlineModel` first for a compact overview; use other tools for annotations, instances, usages, and TLScript.
 - If a tool returns a result, USE it — never repeat the same call with identical arguments
 - Never ask the user for model information you can look up yourself
 - Never silently drop failed operations or planned elements
@@ -1278,6 +1280,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 </recovery>]]></system-prompt>
 						<tools>
 							<tool name="user-interaction.askUser"/>
+							<tool name="model-browser.outlineModel"/>
 						</tools>
 						<skills>
 							<skill name="TL_annotationEditing"/>

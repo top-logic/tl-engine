@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.function.Function;
 
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -40,8 +42,43 @@ public final class AgentTreeProjector {
 	 */
 	public static final String SEPARATOR = "/";
 
+	/**
+	 * State keys consulted, in order, to derive a node name from presentation state.
+	 */
+	private static final String[] LABEL_KEYS = { "name", "label", "title", "text" };
+
+	/**
+	 * Strategy for deriving a node name from a control's bound model (e.g. a table row's business
+	 * object). Defaults to the application {@link MetaLabelProvider}; hosts or tests may override it
+	 * via {@link #setModelNaming(Function)}.
+	 */
+	private static volatile Function<Object, String> MODEL_NAMING = AgentTreeProjector::defaultModelLabel;
+
 	private AgentTreeProjector() {
 		// Static utility.
+	}
+
+	/**
+	 * Overrides the strategy used to derive a node name from a control's bound model.
+	 *
+	 * <p>
+	 * The default resolves the model's application label via {@link MetaLabelProvider}; this hook lets
+	 * an embedding (or a test running without application services) supply its own mapping. A strategy
+	 * may return {@code null} to decline naming a given model.
+	 * </p>
+	 *
+	 * @param naming
+	 *        The new strategy, never {@code null}.
+	 */
+	public static void setModelNaming(Function<Object, String> naming) {
+		MODEL_NAMING = naming;
+	}
+
+	/**
+	 * Restores the default model-naming strategy ({@link MetaLabelProvider}).
+	 */
+	public static void resetModelNaming() {
+		MODEL_NAMING = AgentTreeProjector::defaultModelLabel;
 	}
 
 	/**
@@ -150,8 +187,11 @@ public final class AgentTreeProjector {
 	}
 
 	/**
-	 * The semantic name of a control: its {@link AgentNode#agentName()} if it provides one, otherwise
-	 * a name derived from common label-like state keys, or {@code null} if none applies.
+	 * The semantic name of a control. Resolved in order of decreasing specificity: the control's
+	 * explicit {@link AgentNode#agentName()}, then a common label-like state key, then the application
+	 * label of its bound {@link ReactControl#getModel() model} (so a control showing a business
+	 * object — a table row, a list item, a selection — is addressed by that object's label). Returns
+	 * {@code null} if none applies.
 	 *
 	 * @param control
 	 *        The control.
@@ -165,13 +205,33 @@ public final class AgentTreeProjector {
 			}
 		}
 		Map<String, Object> state = control.agentScalarState();
-		for (String key : new String[] { "name", "label", "title", "text" }) {
+		for (String key : LABEL_KEYS) {
 			Object value = state.get(key);
 			if (value instanceof String str && !str.isEmpty()) {
 				return str;
 			}
 		}
+		String modelName = MODEL_NAMING.apply(control.getModel());
+		if (modelName != null && !modelName.isEmpty()) {
+			return modelName;
+		}
 		return null;
+	}
+
+	/**
+	 * Default model-naming strategy: the model's application label, or {@code null} if it has none or
+	 * cannot be resolved (e.g. no running application services).
+	 */
+	private static String defaultModelLabel(Object model) {
+		if (model == null) {
+			return null;
+		}
+		try {
+			return MetaLabelProvider.INSTANCE.getLabel(model);
+		} catch (Throwable ex) {
+			// No label service available (e.g. headless unit test) or model not labelable.
+			return null;
+		}
 	}
 
 	private static Map<String, Object> stateOf(ReactControl control) {

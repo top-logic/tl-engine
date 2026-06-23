@@ -19,6 +19,7 @@ import com.top_logic.layout.react.headless.AgentNode;
 import com.top_logic.layout.react.headless.AgentNodeView;
 import com.top_logic.layout.react.headless.AgentParam;
 import com.top_logic.layout.react.headless.AgentSession;
+import com.top_logic.layout.react.headless.AgentTreeProjector;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.listen.ModelScope;
@@ -57,6 +58,11 @@ public class TestAgentSession extends TestCase {
 		_form = new DemoFormControl(context, List.of(_username), _submit);
 
 		_session = AgentSession.over(_queue);
+	}
+
+	@Override
+	protected void tearDown() {
+		AgentTreeProjector.resetModelNaming();
 	}
 
 	/**
@@ -147,6 +153,29 @@ public class TestAgentSession extends TestCase {
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("button[Cancel]"));
 		}
+	}
+
+	/**
+	 * Model-derived addressing: a control bound to a business object (no {@link AgentNode}, no label
+	 * state) is addressed by that object's label — the mechanism that gives table rows and list items
+	 * stable, meaningful addresses.
+	 */
+	public void testModelDerivedAddressing() {
+		Object rowModel = new Object();
+		AgentTreeProjector.setModelNaming(model -> model == rowModel ? "Project Apollo" : null);
+
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		DemoModelControl row = new DemoModelControl(new TestReactContext(queue), rowModel);
+		AgentSession session = AgentSession.over(queue);
+
+		AgentNodeView rowView = single(session.observe().children());
+		assertEquals("cell", rowView.role());
+		assertEquals("Project Apollo", rowView.name());
+		assertEquals("/cell[Project_Apollo]", rowView.address());
+
+		// The model-derived address resolves and drives the control.
+		session.act(rowView.address(), "open", Map.of());
+		assertTrue(row.opened());
 	}
 
 	private static AgentNodeView childByAddress(AgentNodeView parent, String address) {
@@ -255,6 +284,28 @@ public class TestAgentSession extends TestCase {
 
 		int clicks() {
 			return _clicks;
+		}
+	}
+
+	/**
+	 * A control bound to a business-object model, carrying neither {@link AgentNode} metadata nor
+	 * label state, so its name must come from the model.
+	 */
+	private static final class DemoModelControl extends ReactControl {
+
+		private boolean _opened;
+
+		DemoModelControl(ReactContext context, Object model) {
+			super(context, model, "TLCell");
+		}
+
+		@ReactCommand("open")
+		void open() {
+			_opened = true;
+		}
+
+		boolean opened() {
+			return _opened;
 		}
 	}
 

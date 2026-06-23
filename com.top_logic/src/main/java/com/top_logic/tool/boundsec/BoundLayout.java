@@ -61,6 +61,15 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	}
 
 	@Override
+	public BoundObject getSecurityObject(BoundCommandGroup commandGroup, Object potentialModel) {
+		BoundCheckerComponent securityMaster = securityMaster();
+		if (securityMaster != null) {
+			return securityMaster.getSecurityObject(commandGroup, potentialModel);
+		}
+		return LayoutContainerBoundChecker.super.getSecurityObject(commandGroup, potentialModel);
+	}
+
+	@Override
 	public ResKey hideReason() {
 		BoundCheckerComponent securityMaster = securityMaster();
 		if (securityMaster != null) {

@@ -26,5 +26,14 @@
  * IDs. A control may implement {@link com.top_logic.layout.react.headless.AgentNode} to refine its
  * advertised role, name, state and action schema.
  * </p>
+ *
+ * <p>
+ * {@link com.top_logic.layout.react.headless.AgentServlet} exposes the interface over HTTP
+ * ({@code /agent-api/windows}, {@code /agent-api/observe}, {@code /agent-api/act}) for an out-of-process
+ * consumer. The three verbs map directly onto MCP tools — {@code observe} / {@code list_actions}
+ * (read from the projected tree) and {@code act} — so a thin MCP wrapper can let an external agent
+ * drive a live, authenticated application session. Each {@code act} returns a quiesced observation,
+ * which doubles as the {@code wait_for_settled} signal.
+ * </p>
  */
 package com.top_logic.layout.react.headless;

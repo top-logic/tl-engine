@@ -88,6 +88,18 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * The IDs of all windows that currently have an {@link SSEUpdateQueue} in this session.
+	 *
+	 * <p>
+	 * Used by the headless agent interface to let a non-browser consumer discover the windows it can
+	 * observe and drive.
+	 * </p>
+	 */
+	public java.util.Set<String> windowNames() {
+		return java.util.Collections.unmodifiableSet(_windowQueues.keySet());
+	}
+
+	/**
 	 * Gets or creates the {@link ModelScope} for the given window.
 	 *
 	 * <p>

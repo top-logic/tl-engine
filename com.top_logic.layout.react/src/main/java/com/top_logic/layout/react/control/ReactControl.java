@@ -8,8 +8,10 @@ package com.top_logic.layout.react.control;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -198,6 +200,110 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 				"No @ReactCommand(\"" + commandName + "\") on " + getClass().getName());
 		}
 		return invoker.invoke(this, _reactContext, arguments);
+	}
+
+	// -- Headless agent-interface introspection --
+	//
+	// These methods expose the control tree, its data state and its action space without
+	// rendering or invoking anything, so that a headless consumer (the script recorder or an
+	// AI agent driving the session) can observe the control and address it semantically. They
+	// reuse the very same state map and command dispatch that the browser client uses, so there
+	// is a single source of truth for what a control looks like and what it can do.
+
+	/**
+	 * The set of command IDs this control accepts via {@link #executeCommand(String, Map)}.
+	 *
+	 * <p>
+	 * Derived from the {@link ReactCommand @ReactCommand}-annotated methods of this control's class.
+	 * This is the raw action space; the headless layer may enrich it with argument schemas (see
+	 * {@link com.top_logic.layout.react.headless.AgentNode}).
+	 * </p>
+	 */
+	public Set<String> commandNames() {
+		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).commandIds();
+	}
+
+	/**
+	 * The direct child controls embedded in this control's state.
+	 *
+	 * <p>
+	 * In the view system the state tree <em>is</em> the control tree: a child control is simply a
+	 * {@link ReactControl}-valued entry in the state map (possibly nested inside maps or lists, as
+	 * with {@link ReactCompositeControl}'s {@code children} list or a panel's {@code toolbar}). This
+	 * method walks the state the same way {@link #writeJsonValue} serializes it, but stops at each
+	 * embedded control rather than descending into it, yielding exactly the direct children.
+	 * </p>
+	 *
+	 * <p>
+	 * Entries are visited in state-key order so that the resulting child order is stable across
+	 * calls (the backing state map is unordered), which keeps semantic addresses reproducible.
+	 * </p>
+	 */
+	public List<ReactControl> agentChildren() {
+		List<ReactControl> result = new ArrayList<>();
+		_reactState.entrySet().stream()
+			.sorted(Map.Entry.comparingByKey())
+			.forEach(entry -> collectChildControls(entry.getValue(), result));
+		return result;
+	}
+
+	private static void collectChildControls(Object value, List<ReactControl> out) {
+		if (value instanceof ReactControl child) {
+			out.add(child);
+		} else if (value instanceof Map<?, ?> map) {
+			for (Object element : map.values()) {
+				collectChildControls(element, out);
+			}
+		} else if (value instanceof List<?> list) {
+			for (Object element : list) {
+				collectChildControls(element, out);
+			}
+		}
+	}
+
+	/**
+	 * A copy of this control's own data state, with all entries that (transitively) hold child
+	 * controls removed.
+	 *
+	 * <p>
+	 * The result is the control's semantic, scalar/structural payload (labels, values, flags) as a
+	 * headless consumer should see it; embedded child controls are not included here because they
+	 * are represented as separate addressable nodes via {@link #agentChildren()}.
+	 * </p>
+	 */
+	public Map<String, Object> agentScalarState() {
+		Map<String, Object> result = new LinkedHashMap<>();
+		_reactState.entrySet().stream()
+			.sorted(Map.Entry.comparingByKey())
+			.forEach(entry -> {
+				if (!containsControl(entry.getValue())) {
+					result.put(entry.getKey(), entry.getValue());
+				}
+			});
+		return result;
+	}
+
+	private static boolean containsControl(Object value) {
+		if (value instanceof ReactControl) {
+			return true;
+		}
+		if (value instanceof Map<?, ?> map) {
+			for (Object element : map.values()) {
+				if (containsControl(element)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		if (value instanceof List<?> list) {
+			for (Object element : list) {
+				if (containsControl(element)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return false;
 	}
 
 	@Override

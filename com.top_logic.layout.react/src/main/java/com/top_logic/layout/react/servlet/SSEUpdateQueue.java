@@ -7,7 +7,13 @@ package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
@@ -178,6 +184,58 @@ public class SSEUpdateQueue {
 				+ ") NOT FOUND. Registered IDs: " + _controls.keySet(), SSEUpdateQueue.class);
 		}
 		return control;
+	}
+
+	/**
+	 * The root {@link ReactControl}s registered in this window, i.e. those that are not a child of
+	 * any other registered control.
+	 *
+	 * <p>
+	 * The registry itself is flat (every control is registered by ID for command dispatch); this
+	 * method reconstructs the forest of control trees by subtracting all controls that appear as a
+	 * {@link ReactControl#agentChildren() direct child} of some other control. It is the entry point
+	 * for the headless agent interface, which projects these roots into an addressable state tree.
+	 * </p>
+	 *
+	 * <p>
+	 * Roots are returned in ID-allocation order so the projection is reproducible.
+	 * </p>
+	 */
+	public List<ReactControl> getRootControls() {
+		List<ReactControl> all = new ArrayList<>();
+		for (ReactCommandTarget target : _controls.values()) {
+			if (target instanceof ReactControl control) {
+				all.add(control);
+			}
+		}
+		Set<ReactControl> children = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (ReactControl control : all) {
+			children.addAll(control.agentChildren());
+		}
+		List<ReactControl> roots = new ArrayList<>();
+		for (ReactControl control : all) {
+			if (!children.contains(control)) {
+				roots.add(control);
+			}
+		}
+		roots.sort(Comparator.comparingInt(SSEUpdateQueue::idOrder));
+		return roots;
+	}
+
+	/**
+	 * Numeric ordering key derived from a control's allocated ID ({@code "v" + n}); used to make
+	 * the root forest reproducible. Non-numeric IDs sort last.
+	 */
+	private static int idOrder(ReactControl control) {
+		String id = control.getID();
+		if (id != null && id.length() > 1 && id.charAt(0) == 'v') {
+			try {
+				return Integer.parseInt(id.substring(1));
+			} catch (NumberFormatException ex) {
+				// Fall through.
+			}
+		}
+		return Integer.MAX_VALUE;
 	}
 
 	/**

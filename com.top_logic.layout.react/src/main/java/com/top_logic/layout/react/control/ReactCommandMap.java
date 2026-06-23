@@ -8,8 +8,10 @@ package com.top_logic.layout.react.control;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -39,6 +41,18 @@ class ReactCommandMap {
 	 */
 	ReactCommandInvoker get(String commandId) {
 		return _invokers.get(commandId);
+	}
+
+	/**
+	 * The set of all command IDs handled by this control class.
+	 *
+	 * <p>
+	 * Used by the headless agent interface to advertise the action space of a control without
+	 * actually invoking any command.
+	 * </p>
+	 */
+	Set<String> commandIds() {
+		return Collections.unmodifiableSet(_invokers.keySet());
 	}
 
 	/**

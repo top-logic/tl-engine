@@ -8,16 +8,28 @@
 					<module key="com.top_logic.layout.react.ReactComponentRegistry$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.react.resource.ClientResources$Module"
+						value="true"
+					/>
 				</modules>
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.gui.JSFileCompiler">
-			<instance>
-				<additional-files>
-					<file resource="tl-react-bridge.js" type="module" as="tl-react-bridge" />
-					<file resource="tl-react-controls.js" type="module" />
-				</additional-files>
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<module-script name="tl-react-bridge"
+						resource="/script/tl-react-bridge.js"
+						specifier="tl-react-bridge"
+					/>
+					<module-script name="tl-react-controls"
+						resource="/script/tl-react-controls.js"
+						requires="tl-react-bridge"
+					/>
+					<stylesheet name="tl-react-controls-css"
+						resource="/style/tlReactControls.css"
+					/>
+				</resources>
 			</instance>
 		</config>
 	</services>

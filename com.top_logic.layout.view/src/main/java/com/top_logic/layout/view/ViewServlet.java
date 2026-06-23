@@ -21,7 +21,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.JSFileCompiler;
+import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -400,10 +402,17 @@ public class ViewServlet extends TopLogicServlet {
 		out.endTag(HTMLConstants.TITLE);
 		// Load BAL (Browser Abstraction Layer) required by React control mount scripts.
 		HTMLUtil.writeJavascriptRef(out, contextPath, "/script/tl/bal.js");
-		// Load all configured scripts (compiled TL bundle, React bridge as ES6 module, etc.).
+		Theme theme = ThemeFactory.getTheme();
+		ClientResources clientResources = ClientResources.getInstance();
+		// Emit the import map and React module scripts first: the import map must precede every
+		// module script on the page, including the additional module scripts emitted below.
+		clientResources.writeScriptRefs(out, contextPath, theme);
+		// Load the compiled legacy TL bundle and additional module scripts.
 		JSFileCompiler.getInstance().writeJavascriptRef(out, contextPath);
-		// Load the theme stylesheet.
-		ThemeFactory.getTheme().writeStyles(contextPath, out);
+		// Load the base theme stylesheet (design tokens, theme variables).
+		theme.writeStyles(contextPath, out);
+		// Append the React stylesheets as the overriding cascade layer.
+		clientResources.writeStyleRefs(out, contextPath, theme);
 		out.endTag(HTMLConstants.HEAD);
 
 		out.beginBeginTag(HTMLConstants.BODY);

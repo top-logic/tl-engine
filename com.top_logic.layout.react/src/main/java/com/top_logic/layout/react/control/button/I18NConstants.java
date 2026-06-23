@@ -23,6 +23,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey BUTTON_DISCARD;
 
+	/**
+	 * @en Invalid key gesture. Use a key optionally prefixed with modifiers, e.g. "Enter",
+	 *     "Escape", "Ctrl+S" or "Shift+ArrowDown".
+	 */
+	public static ResKey ERROR_INVALID_KEY_GESTURE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

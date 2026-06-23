@@ -14,6 +14,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -139,7 +140,7 @@ public class ViewCommandModel implements ViewChannel.ChannelListener, CommandMod
 	}
 
 	@Override
-	public String getKeyGesture() {
+	public KeyStroke getKeyGesture() {
 		return _config.getKey();
 	}
 

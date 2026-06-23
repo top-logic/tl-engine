@@ -15,6 +15,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.button.ReactUploadButtonControl;
 import com.top_logic.layout.react.control.button.UploadCommandModel;
@@ -119,7 +120,7 @@ public class ToolbarBuilder {
 
 			List<ReactControl> controls = new ArrayList<>();
 			for (CommandModel model : models) {
-				controls.add(createButton(context, model, model == enterDefault ? "ENTER" : null));
+				controls.add(createButton(context, model, model == enterDefault ? KeyStroke.ENTER : null));
 			}
 
 			toolbar.addGroup(cliqueName, info.display(), info.label(), info.icon(), controls);
@@ -129,7 +130,7 @@ public class ToolbarBuilder {
 	}
 
 	private static ReactButtonControl createButton(ReactContext context, CommandModel model,
-			String defaultGesture) {
+			KeyStroke defaultGesture) {
 		// The CommandModel constructor wires label, executability, image, tooltip, the model's own
 		// key gesture and the state change listener.
 		ReactButtonControl button = model instanceof UploadCommandModel

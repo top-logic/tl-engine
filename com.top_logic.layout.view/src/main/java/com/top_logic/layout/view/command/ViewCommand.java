@@ -16,6 +16,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.control.button.KeyStrokeFormat;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -146,19 +148,21 @@ public interface ViewCommand {
 		DirtyCheckScope getCheckDirty();
 
 		/**
-		 * The keyboard gesture that triggers this command, e.g. {@code "ENTER"},
-		 * {@code "ESCAPE"} or an accelerator such as {@code "Ctrl+S"}.
+		 * The keyboard gesture that triggers this command, written as a key optionally prefixed
+		 * with modifiers, e.g. {@code "Enter"}, {@code "Escape"}, {@code "Ctrl+S"} or
+		 * {@code "Shift+ArrowDown"}.
 		 *
 		 * <p>
 		 * When unset, dialogs derive conventional defaults: the sole or
 		 * {@link com.top_logic.layout.react.control.button.ButtonAppearance#PRIMARY primary}
-		 * button-bar command answers {@code ENTER}, and the dialog's cancel action answers
-		 * {@code ESCAPE}.
+		 * button-bar command answers {@code Enter}, and the dialog's cancel action answers
+		 * {@code Escape}.
 		 * </p>
 		 */
 		@Name(KEY)
 		@Nullable
-		String getKey();
+		@Format(KeyStrokeFormat.class)
+		KeyStroke getKey();
 	}
 
 	/**

@@ -102,15 +102,15 @@ public interface CommandModel {
 	}
 
 	/**
-	 * The keyboard gesture that triggers this command, e.g. {@code "ENTER"}, {@code "ESCAPE"} or an
-	 * accelerator like {@code "Ctrl+S"}.
+	 * The keyboard gesture that triggers this command, e.g. {@link KeyStroke#ENTER} or
+	 * {@code KeyStroke.of(Key.S).ctrl()}.
 	 *
 	 * <p>
 	 * Serialized to the client where the keyboard dispatcher binds it to the command's button.
 	 * Returns {@code null} by default (no gesture).
 	 * </p>
 	 */
-	default String getKeyGesture() {
+	default KeyStroke getKeyGesture() {
 		return null;
 	}
 

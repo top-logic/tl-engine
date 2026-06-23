@@ -13,6 +13,7 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
+import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -79,7 +80,7 @@ public class ConfirmDialogControl {
 		});
 		// Emphasize the affirmative action as the dialog's primary button and make Enter trigger it.
 		confirmButton.setAppearance(ButtonAppearance.PRIMARY);
-		confirmButton.setKeyGesture("ENTER");
+		confirmButton.setKeyGesture(KeyStroke.ENTER);
 		actions.add(confirmButton);
 		window.setActions(actions);
 

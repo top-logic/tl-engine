@@ -151,11 +151,11 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the keyboard gesture that triggers this button (e.g. {@code "ENTER"}, {@code "ESCAPE"},
-	 * {@code "Ctrl+S"}). {@code null} or empty removes the binding.
+	 * Sets the keyboard gesture that triggers this button (e.g. {@link KeyStroke#ENTER},
+	 * {@code KeyStroke.of(Key.S).ctrl()}). {@code null} removes the binding.
 	 */
-	public void setKeyGesture(String keyGesture) {
-		putState(KEY_GESTURE, (keyGesture == null || keyGesture.isEmpty()) ? null : keyGesture);
+	public void setKeyGesture(KeyStroke keyGesture) {
+		putState(KEY_GESTURE, keyGesture == null ? null : keyGesture.toString());
 	}
 
 	/**

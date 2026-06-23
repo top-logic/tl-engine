@@ -7,6 +7,7 @@
 	<arguments
 		buttonbar="true"
 		edit-group="System"
+		isSecurityMaster="true"
 		resetInvisible="true"
 		showNoModel="false"
 		type="Contacts:PersonContact"
@@ -259,5 +260,6 @@
 				</formDefinition>
 			</form>
 		</forms>
+		<securityObject class="com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProvider"/>
 	</arguments>
 </config:template-call>

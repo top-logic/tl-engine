@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,13 +74,14 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 		static final String MODEL = "model";
 
 		/**
-		 * Regular expression source matching a qualified type reference (<code>module:Type</code>).
+		 * Regular expression source matching a single qualified type reference
+		 * (<code>module:Type</code>).
 		 *
 		 * <p>
-		 * Used to recognize the compact serialization <code>model(module:Type)</code> of a
-		 * {@link ModelSecurityObjectProvider} that restricts the model to a certain
-		 * {@link com.top_logic.tool.boundsec.securityObjectProvider.ModelSecurityObjectProvider.Config#getModelType()
-		 * type}. The mandatory {@link TLModelUtil#QUALIFIED_NAME_SEPARATOR colon} distinguishes a
+		 * Used to recognize the compact serialization <code>model(module:Type, ...)</code> of a
+		 * {@link ModelSecurityObjectProvider} that restricts the model to certain
+		 * {@link com.top_logic.tool.boundsec.securityObjectProvider.ModelSecurityObjectProvider.Config#getModelTypes()
+		 * types}. The mandatory {@link TLModelUtil#QUALIFIED_NAME_SEPARATOR colon} distinguishes a
 		 * type reference from a {@link com.top_logic.mig.html.layout.ComponentName component name},
 		 * which never contains a colon. A bare <code>model(component)</code> therefore keeps its
 		 * meaning of "the model channel of the given component".
@@ -87,6 +89,16 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 		 */
 		static final String MODEL_TYPE_SRC = TLModelUtil.MODULE_NAME_PATTERN_SRC
 			+ TLModelUtil.QUALIFIED_NAME_SEPARATOR + TLModelUtil.QNAME_PATTERN_SRC;
+
+		/**
+		 * Regular expression source matching a non-empty comma-separated list of
+		 * {@link #MODEL_TYPE_SRC type references}.
+		 */
+		static final String MODEL_TYPES_SRC = MODEL_TYPE_SRC + "(?:\\s*,\\s*" + MODEL_TYPE_SRC + ")*";
+
+		/** Format for the comma-separated type list in the <code>model(...)</code> serialization. */
+		private static final TLModelPartRef.CommaSeparatedTLModelPartRefs MODEL_TYPES_FORMAT =
+			new TLModelPartRef.CommaSeparatedTLModelPartRefs();
 
 		private static final String REFERENCE_PREFIX = "ref:";
 
@@ -103,7 +115,7 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 		private static Pattern pattern() {
 			return Pattern
 				.compile("(?:"
-					+ MODEL + "\\(" + group(MODEL_TYPE_SRC) + "\\)" + "|"
+					+ MODEL + "\\(" + group(MODEL_TYPES_SRC) + "\\)" + "|"
 					+ group(MODEL) + "|"
 					+ group(SECURITY_ROOT) + "|"
 					+ group(SecurityObjectProviderManager.PATH_SECURITY_OBJECT_PROVIDER + ".*") + "|"
@@ -124,7 +136,7 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 				if (matcher.group(1) != null) {
 					ModelSecurityObjectProvider.Config result =
 						TypedConfiguration.newConfigItem(ModelSecurityObjectProvider.Config.class);
-					result.setModelType(TLModelPartRef.ref(matcher.group(1)));
+					result.setModelTypes(MODEL_TYPES_FORMAT.getValue(propertyName, matcher.group(1)));
 					return result;
 				} else if (matcher.group(2) != null) {
 					return TypedConfiguration.createConfigItemForImplementationClass(ModelSecurityObjectProvider.class);
@@ -157,9 +169,9 @@ public interface SecurityObjectProviderConfig extends ConfigurationItem {
 		protected String getSpecificationNonNull(
 				PolymorphicConfiguration<? extends SecurityObjectProvider> configValue) {
 			if (configValue instanceof ModelSecurityObjectProvider.Config modelProvider) {
-				TLModelPartRef modelType = modelProvider.getModelType();
-				if (modelType != null) {
-					return MODEL + "(" + modelType.qualifiedName() + ")";
+				List<TLModelPartRef> modelTypes = modelProvider.getModelTypes();
+				if (!modelTypes.isEmpty()) {
+					return MODEL + "(" + MODEL_TYPES_FORMAT.getSpecification(modelTypes) + ")";
 				}
 				return MODEL;
 			}

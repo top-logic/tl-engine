@@ -5,7 +5,8 @@
  */
 package com.top_logic.tool.boundsec.securityObjectProvider;
 
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.ConfigurationError;
@@ -14,10 +15,12 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelPartRef.CommaSeparatedTLModelPartRefs;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -38,23 +41,24 @@ public class ModelSecurityObjectProvider extends AbstractConfiguredInstance<Mode
 	 */
 	public static interface Config extends PolymorphicConfiguration<ModelSecurityObjectProvider> {
 
-		/** Configuration name for {@link #getModelType()}. */
-		String MODEL_TYPE = "model-type";
+		/** Configuration name for {@link #getModelTypes()}. */
+		String MODEL_TYPES = "model-types";
 
 		/**
-		 * The type that the model may have.
+		 * The types that the model may have.
 		 *
 		 * <p>
-		 * If the value is <code>null</code> then the model can have each type.
+		 * If the list is empty, the model can have any type.
 		 * </p>
 		 */
-		@Name(MODEL_TYPE)
-		TLModelPartRef getModelType();
+		@Name(MODEL_TYPES)
+		@Format(CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getModelTypes();
 
 		/**
-		 * Setter for {@link #getModelType()}.
+		 * Setter for {@link #getModelTypes()}.
 		 */
-		void setModelType(TLModelPartRef value);
+		void setModelTypes(List<TLModelPartRef> value);
 
 	}
 
@@ -68,8 +72,7 @@ public class ModelSecurityObjectProvider extends AbstractConfiguredInstance<Mode
 	 */
 	public ModelSecurityObjectProvider(InstantiationContext context, Config config) {
 		super(context, config);
-		TLModelPartRef modelType = getConfig().getModelType();
-		if (modelType != null) {
+		for (TLModelPartRef modelType : getConfig().getModelTypes()) {
 			// Try resolving model type. fails if impossible.
 			try {
 				modelType.resolveClass();
@@ -89,15 +92,19 @@ public class ModelSecurityObjectProvider extends AbstractConfiguredInstance<Mode
 
 	@Override
 	public Set<TLClass> getPossibleSecurityObjectTypes() {
-		TLModelPartRef modelType = getConfig().getModelType();
-		if (modelType == null) {
+		List<TLModelPartRef> modelTypes = getConfig().getModelTypes();
+		if (modelTypes.isEmpty()) {
 			return SecurityObjectProvider.super.getPossibleSecurityObjectTypes();
 		}
-		try {
-			return Collections.singleton(modelType.resolveClass());
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
+		Set<TLClass> result = new HashSet<>();
+		for (TLModelPartRef modelType : modelTypes) {
+			try {
+				result.add(modelType.resolveClass());
+			} catch (ConfigurationException ex) {
+				throw new ConfigurationError(ex);
+			}
 		}
+		return result;
 	}
 
 }

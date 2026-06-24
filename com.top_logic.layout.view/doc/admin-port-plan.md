@@ -99,13 +99,30 @@ into the demo so it's reachable, (5) Playwright-verify against a running app,
 Ordering is chosen to establish patterns on read-mostly views first, then
 stateful command-driven ones, then the larger model editor.
 
-### Batch 1 — Monitoring, read-only  ▢
-Establishes the "Monitoring" admin section.
+### Batch 1 — Monitoring, read-only  ✅ DONE
+Establishes the "Monitoring" admin section. A shared `SectionedTable` base renders the key/value
+tables; views are hosted in the chrome-less `<full-page>` element (added this batch).
 - [x] Add `monitoring` section tab to `admin.view.xml` with an inner tab-bar.
-- [x] System environment (read-only property table) — `SystemEnvironmentElement`.
-- [ ] Application monitor (JVM memory / threads / classpath / libs panels).
-- [ ] Thread monitor (master table + detail with stack trace).
-- [ ] Memory monitor (current heap/GC figures; chart deferred).
+- [x] System environment (system properties / VM args / configuration variables) — `SystemEnvironmentTable`.
+- [x] Application monitor (status, memory snapshot, Java VM, system) — `ApplicationMonitorTable`.
+- [x] Thread monitor (thread table + live stack-trace detail via selection channel) — `ThreadTable` + `ThreadStackTable`.
+- [n/a] Standalone memory snapshot folded into the Application monitor's Memory section; the
+      historical memory **chart / GC** monitor stays **deferred** (needs redesign).
+
+**Reusable infra added this batch:**
+- `<full-page>` — chrome-less fill container for a view's single main content; the tab/nav labels
+  it, so no title is rendered and **no local toolbar** (commands project to a slot up the tree).
+- `<panel fill="true">` + the green-field table fill fix (tab-content flex column, split-panel
+  fill, `.tlPanel--fill`) so virtualized tables bound their scroll viewport; documented on
+  `TableViewControl`.
+- `SectionedTable` base for (section, name, value) tables with stable per-row selection keys.
+
+**Prerequisite for the command-bearing batches below:** Batches 2–4 (SQL start/stop/clear,
+scheduler, services, maintenance, locks, logs) all need **commands**. Per the `<full-page>` design,
+a full page renders no local toolbar — commands are expected to **project to a slot up the tree
+(app bar)**. That projection path is not yet wired for admin views, so it must be designed/built
+before those command actions can land. (Read-only tables in those batches — revision/audit monitor,
+user-session monitor — do not need it and can proceed first.)
 
 ### Batch 2 — Monitoring, stateful / historical  ▢
 - [ ] SQL/DB monitor with start / stop / clear commands.

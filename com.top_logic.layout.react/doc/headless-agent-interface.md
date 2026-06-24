@@ -122,8 +122,17 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       `selectByKey {keys:["…ReactOptionByLabelNaming$Name…{label:securityOwner}"]}`, and
       replaying that recorded script against a fresh (empty) form set the members to
       `securityOwner` — session-independent identity, not an option id.
-- [ ] Assertions/observation steps (record "expected state at this point").
+- [x] **Assertions/observation steps.** `POST /agent-api/record/assert {address, expect?}`
+      appends an assertion step (capturing the node's current state, or an explicit `expect`).
+      On replay it is *verified* not dispatched: a reserved `assertState` pseudo-command
+      compares the expected entries against the live node state (subset match, canonical-JSON
+      so numeric representation is irrelevant) and reports per-key `mismatches`. Verified live
+      on the group form: `select user` + `assertState {value:"user"}` passes; the same with
+      `{value:"superuser"}` fails with `mismatches:[{key:value,expected:superuser,actual:user}]`.
+      The compare logic (`RecordedStep.mismatchingKeys`) is unit-tested.
 - [ ] Migration story / coexistence with legacy `ScriptingRecorder`.
+- [ ] Broaden `recordCommand` coverage (e.g. table select → row business key) and
+      label-based assertion for session-id-bearing state (dropdown value).
 
 ### Phase 3 — Action space & affordances 🚧
 
@@ -358,6 +367,15 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — **Phase 2 assertion/observation steps**, verified live. A recording can
+  now embed assertions, turning replay into a self-checking regression run.
+  `POST /agent-api/record/assert {address, expect?}` appends an `assertState` step; on
+  replay it verifies (not dispatches) the node's state against the expectation — subset
+  match by canonical JSON, per-key `mismatches` on failure. Live proof on the group form:
+  `assertState {value:"user"}` passes after selecting `user`; `{value:"superuser"}` fails
+  reporting `expected:superuser, actual:user`. Compare logic factored to
+  `RecordedStep.mismatchingKeys` and unit-tested. Reserved pseudo-command keeps the step
+  format and `ScriptRecorder` unchanged.
 - **2026-06-24** — **Phase 2 replay-stable arguments**, verified live. New
   `ReactControl.recordCommand(command, args)` hook (default verbatim) lets a control emit
   a replay-stable form at record time; `ReactDropdownSelectControl` overrides it to turn

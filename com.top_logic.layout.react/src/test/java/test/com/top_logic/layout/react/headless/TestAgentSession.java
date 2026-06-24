@@ -20,6 +20,7 @@ import com.top_logic.layout.react.headless.AgentNode;
 import com.top_logic.layout.react.headless.AgentNodeView;
 import com.top_logic.layout.react.headless.AgentParam;
 import com.top_logic.layout.react.headless.AgentSession;
+import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.AgentTreeProjector;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -160,6 +161,30 @@ public class TestAgentSession extends TestCase {
 
 		DemoButtonControl orphan = new DemoButtonControl(new TestReactContext(_queue), "Orphan");
 		assertNull("A control not in the tree must have no address.", _session.addressOf(orphan));
+	}
+
+	/**
+	 * An assertion step verifies a subset of a node's state: expected entries must match the live state
+	 * (by value, ignoring numeric representation), extra live keys are ignored, and any divergence is
+	 * reported by key. This is the check a replay performs for an {@link RecordedStep#assertion}.
+	 */
+	public void testAssertionSubsetMatch() {
+		Map<String, Object> actual = Map.of("count", 4, "label", "Aufgaben", "hidden", false);
+
+		// Subset match: only the keys in the expectation are checked; representation-normalized.
+		assertTrue(RecordedStep.mismatchingKeys(Map.of("count", 4L), actual).isEmpty());
+		assertTrue(RecordedStep.mismatchingKeys(Map.of("label", "Aufgaben"), actual).isEmpty());
+		assertTrue(RecordedStep.mismatchingKeys(Map.of("count", 4, "label", "Aufgaben"), actual).isEmpty());
+
+		// Mismatches are reported by key.
+		assertEquals(List.of("count"), RecordedStep.mismatchingKeys(Map.of("count", 5), actual));
+		assertEquals(List.of("missing"), RecordedStep.mismatchingKeys(Map.of("missing", "x"), actual));
+
+		// The assertion factory marks the step and carries the expectation.
+		RecordedStep step = RecordedStep.assertion("/a/counter[X]", Map.of("count", 4));
+		assertTrue(step.isAssertion());
+		assertEquals(RecordedStep.ASSERT_COMMAND, step.command());
+		assertEquals(Map.of("count", 4), step.arguments().get(RecordedStep.ASSERT_STATE_ARG));
 	}
 
 	/**

@@ -295,6 +295,18 @@ public final class AgentTreeProjector {
 		return true;
 	}
 
+	/**
+	 * The semantic state a node exposes to the agent interface — the same map {@link #project} places
+	 * on the node, without recursing into children. Used to capture and verify assertion steps.
+	 *
+	 * @param control
+	 *        The control whose state to read.
+	 * @return The node's semantic state map.
+	 */
+	public static Map<String, Object> nodeState(ReactControl control) {
+		return stateOf(control);
+	}
+
 	private static Map<String, Object> stateOf(ReactControl control) {
 		if (control instanceof AgentNode node) {
 			Map<String, Object> state = node.agentState();

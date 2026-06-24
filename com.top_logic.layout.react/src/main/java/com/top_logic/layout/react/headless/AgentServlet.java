@@ -63,9 +63,12 @@ import com.top_logic.util.TopLogicServlet;
  * {@code {"recording":b,"steps":[…]}}. While recording, the browser command path captures each
  * dispatched command as an {@code {address,command,arguments}} step.</li>
  * <li>{@code GET /agent-api/record/steps?windowName=W} &rarr; the current recorder state and steps.</li>
+ * <li>{@code POST /agent-api/record/assert} with body {@code {"windowName":W,"address":A,"expect":{…}?}}
+ * &rarr; append an assertion step — the expected state given as {@code expect}, or the node's current
+ * state captured if omitted. On replay it is verified, not dispatched.</li>
  * <li>{@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[…]}} &rarr; replays a
- * recorded (or hand-written) script through the same {@code act} path, returning a per-step
- * {@code results} list and the final {@code observation}.</li>
+ * recorded (or hand-written) script through the same {@code act} path (assertion steps are verified
+ * against live state), returning a per-step {@code results} list and the final {@code observation}.</li>
  * </ul>
  *
  * <p>
@@ -136,6 +139,8 @@ public class AgentServlet extends TopLogicServlet {
 				handleRecordStartStop(request, response, session, true);
 			} else if ("/record/stop".equals(pathInfo)) {
 				handleRecordStartStop(request, response, session, false);
+			} else if ("/record/assert".equals(pathInfo)) {
+				handleRecordAssert(request, response, session);
 			} else if ("/replay".equals(pathInfo)) {
 				handleReplay(request, response, session);
 			} else {
@@ -326,6 +331,41 @@ public class AgentServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * {@code POST /agent-api/record/assert} with body {@code {"windowName":W,"address":A,"expect":{…}?}}
+	 * &rarr; appends an assertion step. With {@code expect} it records exactly those expected state
+	 * entries; without it, it captures the node's current state — so a recorder can mark "the state
+	 * here is the expected state". On replay the step is verified rather than dispatched.
+	 */
+	@SuppressWarnings("unchecked")
+	private void handleRecordAssert(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		Map<String, Object> body = parseObjectBody(request);
+		String windowName = (String) body.get("windowName");
+		String address = (String) body.get("address");
+		if (address == null) {
+			throw new IllegalArgumentException("Missing 'address'.");
+		}
+		SSEUpdateQueue queue = requireQueue(session, windowName);
+		AgentSession agentSession = agentSession(queue);
+
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		installSubSession(displayContext, windowName);
+
+		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
+		requestLock.lock();
+		try {
+			Map<String, Object> expected = (Map<String, Object>) body.get("expect");
+			if (expected == null) {
+				expected = AgentTreeProjector.nodeState(agentSession.resolve(address));
+			}
+			queue.getRecorder().record(RecordedStep.assertion(address, expected));
+			writeRecorderState(response, queue.getRecorder());
+		} finally {
+			requestLock.unlock();
+		}
+	}
+
+	/**
 	 * {@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[{address,command,arguments},…]}}
 	 * &rarr; replays each step through {@link AgentSession#act} in order, settling derived state between
 	 * steps so each address resolves against the state its predecessors produced. Returns a per-step
@@ -382,11 +422,46 @@ public class AgentServlet extends TopLogicServlet {
 			result.put("error", "Step has no address or command.");
 			return result;
 		}
+		if (RecordedStep.ASSERT_COMMAND.equals(command)) {
+			return verifyAssertion(queue, address, result, arguments);
+		}
 		try {
 			HandlerResult handlerResult = agentSession(queue).act(address, command, arguments);
 			result.put("success", handlerResult.isSuccess());
 			// Settle derived state so the next step's address resolves against the produced state.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
+		} catch (RuntimeException ex) {
+			result.put("success", false);
+			result.put("error", ex.getMessage());
+		}
+		return result;
+	}
+
+	/**
+	 * Verifies an assertion step: the node at {@code address} must have, for each expected key, a state
+	 * value equal to the recorded one (subset match). Comparison is by canonical JSON so numeric and
+	 * representation differences do not cause false mismatches.
+	 */
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> verifyAssertion(SSEUpdateQueue queue, String address, Map<String, Object> result,
+			Map<String, Object> arguments) {
+		Map<String, Object> expected = arguments == null
+			? Map.of() : (Map<String, Object>) arguments.getOrDefault(RecordedStep.ASSERT_STATE_ARG, Map.of());
+		try {
+			Map<String, Object> actual = AgentTreeProjector.nodeState(agentSession(queue).resolve(address));
+			List<String> mismatchKeys = RecordedStep.mismatchingKeys(expected, actual);
+			result.put("success", mismatchKeys.isEmpty());
+			if (!mismatchKeys.isEmpty()) {
+				List<Map<String, Object>> mismatches = new ArrayList<>();
+				for (String key : mismatchKeys) {
+					Map<String, Object> mismatch = new LinkedHashMap<>();
+					mismatch.put("key", key);
+					mismatch.put("expected", expected.get(key));
+					mismatch.put("actual", actual.get(key));
+					mismatches.add(mismatch);
+				}
+				result.put("mismatches", mismatches);
+			}
 		} catch (RuntimeException ex) {
 			result.put("success", false);
 			result.put("error", ex.getMessage());

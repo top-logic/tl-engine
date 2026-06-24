@@ -16,7 +16,17 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Section
 	 */
-	public static ResKey SYSTEM_ENVIRONMENT_SECTION_COLUMN;
+	public static ResKey COLUMN_SECTION;
+
+	/**
+	 * @en Name
+	 */
+	public static ResKey COLUMN_NAME;
+
+	/**
+	 * @en Value
+	 */
+	public static ResKey COLUMN_VALUE;
 
 	/**
 	 * @en System properties
@@ -34,14 +44,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SYSTEM_ENVIRONMENT_SECTION_CONFIGURATION_VARIABLES;
 
 	/**
-	 * @en Name
+	 * @en Status
 	 */
-	public static ResKey SYSTEM_ENVIRONMENT_NAME_COLUMN;
+	public static ResKey APPLICATION_MONITOR_SECTION_STATUS;
 
 	/**
-	 * @en Value
+	 * @en Memory
 	 */
-	public static ResKey SYSTEM_ENVIRONMENT_VALUE_COLUMN;
+	public static ResKey APPLICATION_MONITOR_SECTION_MEMORY;
+
+	/**
+	 * @en Java VM
+	 */
+	public static ResKey APPLICATION_MONITOR_SECTION_JAVA;
+
+	/**
+	 * @en System
+	 */
+	public static ResKey APPLICATION_MONITOR_SECTION_SYSTEM;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -59,6 +59,13 @@
 							</label>
 							<view-ref view="admin/system-environment.view.xml"/>
 						</tab>
+						<tab id="application-monitor">
+							<label>
+								<en>Application</en>
+								<de>Anwendung</de>
+							</label>
+							<view-ref view="admin/application-monitor.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

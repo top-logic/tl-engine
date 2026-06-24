@@ -8,8 +8,6 @@ package com.top_logic.layout.view.admin.monitor;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -23,43 +21,23 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.react.control.IReactControl;
-import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
-import com.top_logic.layout.view.ViewContext;
-import com.top_logic.table.CellContent;
-import com.top_logic.table.Column;
-import com.top_logic.table.filter.TextColumnFilter;
-import com.top_logic.table.impl.DefaultColumn;
-import com.top_logic.table.impl.DefaultTableView;
-import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.util.Resources;
 import com.top_logic.util.monitor.SystemEnvironmentBuilder;
 
 /**
  * Read-only table of the runtime environment: Java system properties, JVM startup arguments and the
- * application's configuration aliases, one row per entry with the originating section, the entry name
- * and its value.
+ * application's configuration variables, one row per entry with the originating section, the entry
+ * name and its value.
  *
  * <p>
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
  * Values whose key matches a configured protected-alias pattern (see
  * {@link SystemEnvironmentBuilder.GlobalConfig}) are masked, so passwords and secrets carried in
- * properties, VM arguments or aliases are not exposed. It renders through the green-field
- * {@link TableViewControl}, so all three columns are sortable and text-filterable.
+ * properties, VM arguments or configuration variables are not exposed.
  * </p>
  */
-public class SystemEnvironmentTable implements UIElement {
-
-	/** Column id for the originating section. */
-	private static final String SECTION_COLUMN = "section";
-
-	/** Column id for the entry name. */
-	private static final String NAME_COLUMN = "name";
-
-	/** Column id for the entry value. */
-	private static final String VALUE_COLUMN = "value";
+public class SystemEnvironmentTable extends SectionedTable {
 
 	/** Matches a {@code -Dkey=value} JVM property argument. */
 	private static final Pattern SYS_PROP_ARG_PATTERN = Pattern.compile("-D([^=]+)=(.*)");
@@ -67,7 +45,7 @@ public class SystemEnvironmentTable implements UIElement {
 	/**
 	 * Configuration for {@link SystemEnvironmentTable}.
 	 */
-	public interface Config extends UIElement.Config {
+	public interface Config extends SectionedTable.Config {
 
 		@Override
 		@ClassDefault(SystemEnvironmentTable.class)
@@ -79,35 +57,11 @@ public class SystemEnvironmentTable implements UIElement {
 	 */
 	@CalledByReflection
 	public SystemEnvironmentTable(InstantiationContext context, Config config) {
-		// No configuration needed.
+		super(context, config);
 	}
 
 	@Override
-	public IReactControl createControl(ViewContext context) {
-		List<Row> rows = collectRows();
-
-		List<Column<Row, ?>> columns = new ArrayList<>();
-		columns.add(textColumn(SECTION_COLUMN, I18NConstants.SYSTEM_ENVIRONMENT_SECTION_COLUMN, Row::section, 200));
-		columns.add(textColumn(NAME_COLUMN, I18NConstants.SYSTEM_ENVIRONMENT_NAME_COLUMN, Row::name, 320));
-		columns.add(textColumn(VALUE_COLUMN, I18NConstants.SYSTEM_ENVIRONMENT_VALUE_COLUMN, Row::value, 480));
-
-		// Stable per-row key by source position. Row is a value record, so the default identity
-		// key (Function.identity()) would treat value-equal rows as one selection key and select
-		// them together; the source position keeps every row individually selectable.
-		IdentityHashMap<Row, Integer> keyByRow = new IdentityHashMap<>();
-		for (int i = 0; i < rows.size(); i++) {
-			keyByRow.put(rows.get(i), Integer.valueOf(i));
-		}
-
-		ListRowSource<Row> source = new ListRowSource<>(rows, columns, keyByRow::get);
-		DefaultTableView<Row> view = DefaultTableView.create(columns, source);
-		return new TableViewControl<>(context, view, false);
-	}
-
-	/**
-	 * Builds the table rows from the system properties, VM arguments and application aliases.
-	 */
-	private List<Row> collectRows() {
+	protected List<Row> rows() {
 		Resources resources = Resources.getInstance();
 		String systemProperties =
 			resources.getString(I18NConstants.SYSTEM_ENVIRONMENT_SECTION_SYSTEM_PROPERTIES);
@@ -162,33 +116,5 @@ public class SystemEnvironmentTable implements UIElement {
 	private static String mask(List<Pattern> protectedKeys, String key, String value, String blocked) {
 		boolean isProtected = protectedKeys.stream().anyMatch(pattern -> pattern.matcher(key).find());
 		return isProtected ? blocked : value;
-	}
-
-	/**
-	 * A sortable, text-filterable column reading one {@link String} property of a {@link Row}.
-	 */
-	private static Column<Row, String> textColumn(String id, ResKey label,
-			java.util.function.Function<? super Row, String> value, int width) {
-		return DefaultColumn.<Row, String> builder(id, value)
-			.label(label)
-			.renderer(CellContent::text)
-			.sort(() -> Comparator.<String> naturalOrder())
-			.filter(new TextColumnFilter<>(text -> text))
-			.width(width)
-			.build();
-	}
-
-	/**
-	 * One environment entry: its originating section, name and (possibly masked) value.
-	 *
-	 * @param section
-	 *        The originating section (system properties, VM arguments or application aliases).
-	 * @param name
-	 *        The entry name.
-	 * @param value
-	 *        The entry value, or the masked replacement when the key is protected.
-	 */
-	private record Row(String section, String name, String value) {
-		// Accessors section()/name()/value() are generated.
 	}
 }

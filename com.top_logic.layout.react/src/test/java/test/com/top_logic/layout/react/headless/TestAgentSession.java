@@ -223,6 +223,28 @@ public class TestAgentSession extends TestCase {
 			view.actions().stream().map(AgentAction::command).toList());
 	}
 
+	/**
+	 * The affordance-first view: a flat list of only the actionable nodes (field + button), excluding
+	 * the non-actionable form container and the synthetic root, and with no nested children.
+	 */
+	public void testActionsViewIsFlatAndActionableOnly() {
+		List<AgentNodeView> nodes = _session.observe().actionableNodes();
+
+		List<String> addresses = nodes.stream().map(AgentNodeView::address).sorted().toList();
+		assertEquals(List.of("/form/button[Submit]", "/form/field[username]"), addresses);
+
+		// Flat: serialized entries carry no children.
+		for (AgentNodeView node : nodes) {
+			assertFalse(node.toMap(false).containsKey("children"));
+		}
+
+		// The actions JSON wraps the flat entries and is acceptable to act() by the same addresses.
+		System.out.println("=== Headless actions view ===");
+		System.out.println(_session.observeActionsJson());
+		_session.act("/form/button[Submit]", "click", Map.of());
+		assertEquals(1, _submit.clicks());
+	}
+
 	private static AgentNodeView childByAddress(AgentNodeView parent, String address) {
 		for (AgentNodeView child : parent.children()) {
 			if (child.address().equals(address)) {

@@ -125,10 +125,18 @@ We built `act`; we have **not** built capture.
       `toggleDrawer`, `toggleGroup`, `reportDisplayClass`). Live: payload
       ~20 KB → ~17.7 KB (~35% off the original 27 KB); sidebar actions reduced to
       `[executeCommand, selectItem]`; button state to `[disabled, hidden, label]`.
-- [ ] **Affordance-first `mode=actions` view.** Optional: a flat list of just the
-      interactive nodes with `{address, role, name, state-summary, actions}` for an
-      even more compact agent loop. (`executeCommand` on the sidebar is a remaining
-      chrome-command candidate to assess.)
+- [x] **Affordance-first `mode=actions` view.** `GET …/observe?mode=actions` returns
+      a flat list of only the actionable nodes (`{address, role, name, state, actions}`,
+      no children). Live: 16 nodes, ~10.95 KB vs 17.7 KB tree (~60% off the original
+      27 KB); the read→act→read loop works by the same addresses.
+- [ ] **Remaining size hotspot → D5.** The flat view is now dominated by one node:
+      the sidebar's `items` array (24 nav entries, each with a presentation `icon`).
+      Per-key stripping can't reach fields nested inside a state array; the right fix
+      is to express navigation as a parameterized action
+      (`selectItem(id ∈ {dashboard, administration, …})`) — the **D5** action-schema
+      work — rather than shipping the raw items array.
+- [ ] `executeCommand` on the sidebar is a remaining chrome-command candidate to
+      assess (one-line `agentHiddenCommands` entry if internal).
 - [ ] Optional argument schema on `@ReactCommand` (names/types/required) so the
       action space is introspectable without each control implementing
       `AgentNode` by hand.
@@ -272,6 +280,10 @@ Also decide whether `observe` should ever block user commands at all.
   session-wide request lock, stalling the UI and producing flaky partial reads.
   Recorded under Phase 4 + decision **D6**. Fix direction:
   snapshot-under-lock / project-off-lock.
+- **2026-06-24** — Added the affordance-first `mode=actions` view (flat list of
+  actionable nodes, no hierarchy): 16 nodes, ~10.95 KB vs 17.7 KB tree. Read→act→read
+  loop validated live. Next size lever is expressing the sidebar nav as a
+  parameterized action (D5), since its `items` array now dominates the payload.
 - **2026-06-24** — Stripped rendering-only state (`null` generically;
   per-control `agentPresentationKeys()`) and chrome commands
   (`agentHiddenCommands()`), same modular seam. Live payload ~20 KB → ~17.7 KB;

@@ -44,7 +44,8 @@ import com.top_logic.util.TopLogicServlet;
  * <li>{@code GET  /agent-api/windows} &rarr; {@code {"windows":[...]}} — the windows that can be
  * observed.</li>
  * <li>{@code GET  /agent-api/observe?windowName=W} &rarr; the addressable state tree of window
- * {@code W} (an {@link AgentNodeView} as JSON).</li>
+ * {@code W} (an {@link AgentNodeView} as JSON). Add {@code &mode=actions} for the compact
+ * affordance-first view: a flat list of just the actionable nodes.</li>
  * <li>{@code POST /agent-api/act} with body {@code {"windowName":W,"address":A,"command":C,"arguments":{…}}}
  * &rarr; resolves {@code A}, invokes {@code C}, and returns {@code {"success":b,"observation":{…}}}
  * with the resulting state tree.</li>
@@ -134,10 +135,13 @@ public class AgentServlet extends TopLogicServlet {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		installSubSession(displayContext, windowName);
 
+		boolean actionsMode = "actions".equals(request.getParameter("mode"));
+
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
 		try {
-			write(response, agentSession(queue).observeJson());
+			AgentSession agentSession = agentSession(queue);
+			write(response, actionsMode ? agentSession.observeActionsJson() : agentSession.observeJson());
 		} finally {
 			requestLock.unlock();
 		}

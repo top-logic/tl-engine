@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.headless;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -101,6 +102,25 @@ public final class AgentSession {
 	 */
 	public String observeJson() {
 		return observe().toJson();
+	}
+
+	/**
+	 * The affordance-first view: a flat list of the actionable nodes (each with its address, role,
+	 * name, semantic state and actions, but no children), rendered as JSON.
+	 *
+	 * <p>
+	 * This is the compact view for an agent loop — it answers "what can I do right now and where"
+	 * without the surrounding container hierarchy. Addresses are the same ones {@link #act} accepts.
+	 * </p>
+	 */
+	public String observeActionsJson() {
+		List<Object> entries = new ArrayList<>();
+		for (AgentNodeView node : observe().actionableNodes()) {
+			entries.add(node.toMap(false));
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put("actions", entries);
+		return AgentNodeView.toJson(result);
 	}
 
 	/**

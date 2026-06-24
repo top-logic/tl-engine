@@ -123,6 +123,17 @@ public final class AgentNodeView {
 	 * for JSON serialization.
 	 */
 	public Map<String, Object> toMap() {
+		return toMap(true);
+	}
+
+	/**
+	 * Converts this view into a plain {@link Map}/{@link List} structure.
+	 *
+	 * @param withChildren
+	 *        Whether to include the {@code children} subtree. The flat {@code actions} view passes
+	 *        {@code false} to emit each node without its descendants.
+	 */
+	public Map<String, Object> toMap(boolean withChildren) {
 		Map<String, Object> result = new LinkedHashMap<>();
 		result.put("address", _address);
 		result.put("role", _role);
@@ -142,7 +153,7 @@ public final class AgentNodeView {
 			}
 			result.put("actions", actions);
 		}
-		if (_children != null && !_children.isEmpty()) {
+		if (withChildren && _children != null && !_children.isEmpty()) {
 			List<Object> children = new ArrayList<>();
 			for (AgentNodeView child : _children) {
 				children.add(child.toMap());
@@ -150,6 +161,28 @@ public final class AgentNodeView {
 			result.put("children", children);
 		}
 		return result;
+	}
+
+	/**
+	 * Collects this node and its descendants that expose at least one action, as a flat list (in
+	 * document order). This is the basis of the affordance-first {@code actions} view: the nodes an
+	 * agent can act on, without the surrounding container hierarchy.
+	 */
+	public List<AgentNodeView> actionableNodes() {
+		List<AgentNodeView> result = new ArrayList<>();
+		collectActionable(result);
+		return result;
+	}
+
+	private void collectActionable(List<AgentNodeView> out) {
+		if (_actions != null && !_actions.isEmpty()) {
+			out.add(this);
+		}
+		if (_children != null) {
+			for (AgentNodeView child : _children) {
+				child.collectActionable(out);
+			}
+		}
 	}
 
 	private static Map<String, Object> actionToMap(AgentAction action) {
@@ -180,8 +213,20 @@ public final class AgentNodeView {
 	 * </p>
 	 */
 	public String toJson() {
+		return toJson(toMap());
+	}
+
+	/**
+	 * Renders an arbitrary {@link Map}/{@link List}/scalar structure as indented JSON, using the same
+	 * formatting as {@link #toJson()}. Used to serialize the flat {@code actions} view.
+	 *
+	 * @param value
+	 *        The value to render.
+	 * @return The indented JSON.
+	 */
+	public static String toJson(Object value) {
 		StringBuilder out = new StringBuilder();
-		writeJson(out, toMap(), 0);
+		writeJson(out, value, 0);
 		return out.toString();
 	}
 

@@ -154,6 +154,7 @@
 
 		<!-- Demos -->
 		<module>../com.top_logic.demo</module>
+		<module>../com.top_logic.demo.react</module>
 		<module>../com.top_logic.kafka.demo</module>
 		<module>../test.com.top_logic.kafka.demo</module>
 	</modules>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<!-- The currently active session user, for display in the app bar. -->
+		<derived-channel name="currentPerson"
+			expr="currentUser()"
+		/>
+	</channels>
+	<app-shell>
+		<content>
+			<sidebar active-item="attributes">
+				<items>
+					<nav-item id="attributes"
+						icon="css:bi bi-card-list"
+					>
+						<view-ref view="attributes.view.xml"/>
+						<label>
+							<en>Attributes</en>
+							<de>Attribute</de>
+						</label>
+					</nav-item>
+					<separator/>
+					<nav-item id="administration"
+						icon="css:bi bi-shield-lock"
+						route="none"
+					>
+						<access-control scope="administration"/>
+						<view-ref view="admin/admin.view.xml"/>
+						<label>
+							<en>Administration</en>
+							<de>Administration</de>
+						</label>
+					</nav-item>
+				</items>
+			</sidebar>
+		</content>
+		<header>
+			<app-bar variant="flat">
+				<commands>
+					<!-- Login: shown only for the anonymous user; opens the login dialog. -->
+					<generic-command
+						image="css:bi bi-box-arrow-in-right"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Login</en>
+							<de>Anmeldung</de>
+						</label>
+						<executability>
+							<anonymous-only/>
+						</executability>
+						<execute-script function="x -> new(`tl.login:Credentials`, transient: true)"/>
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="false"
+							dialog-view="login.view.xml"
+						/>
+					</generic-command>
+
+					<!-- Logout: shown only for an authenticated user. -->
+					<logout-command
+						image="css:bi bi-box-arrow-right"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Logout</en>
+							<de>Abmeldung</de>
+						</label>
+						<executability>
+							<authenticated-only/>
+						</executability>
+					</logout-command>
+				</commands>
+				<title>
+					<en>TopLogic React Demo</en>
+					<de>TopLogic React Demo</de>
+				</title>
+				<children>
+					<text
+						css-class="tlAppBarUser"
+						input="currentPerson"
+						overflow="ellipsis"
+					/>
+				</children>
+			</app-bar>
+		</header>
+	</app-shell>
+</view>

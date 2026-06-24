@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file of the React-only demo application. -->
+<root>
+	<alias>
+		<entry name="%STORAGE_PATH%" value="${env:storage_path:./tmp/app-data}" />
+	</alias>
+</root>

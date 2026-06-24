@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+	<window width="640px">
+		<title>
+			<en>Edit demo object</en>
+			<de>Demo-Objekt bearbeiten</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="string"/>
+			<field attribute="multiLine"/>
+			<field attribute="i18n"/>
+			<field attribute="password"/>
+			<field attribute="count"/>
+			<field attribute="size"/>
+			<field attribute="amount"/>
+			<field attribute="price"/>
+			<field attribute="ratio"/>
+			<field attribute="active"/>
+			<field attribute="tri"/>
+			<field attribute="activeRadio"/>
+			<field attribute="activeSelect"/>
+			<field attribute="date"/>
+			<field attribute="dateTime"/>
+			<field attribute="time"/>
+			<field attribute="duration"/>
+			<field attribute="icon"/>
+			<field attribute="color"/>
+			<field attribute="country"/>
+			<field attribute="language"/>
+			<field attribute="timeZone"/>
+			<field attribute="url"/>
+			<field attribute="json"/>
+			<field attribute="image"/>
+			<field attribute="priority"/>
+			<field attribute="tags"/>
+			<field attribute="owner"/>
+			<field attribute="watchers"/>
+			<field attribute="related"/>
+			<commands>
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Save</en>
+						<de>Speichern</de>
+					</label>
+					<with-transaction>
+						<store-form-state/>
+					</with-transaction>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

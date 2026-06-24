@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SQL monitor: start / refresh / stop capturing of SQL statement statistics on the default
+	connection pool. The toolbar commands run a SqlMonitorAction and write the resulting statistics
+	to the sqlStats channel; the SqlStatisticsTable renders them. A titled <panel> is used (rather
+	than the chrome-less <full-page>) because the view carries toolbar commands.
+-->
+<view>
+	<channels>
+		<channel name="sqlStats"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>SQL monitor</en>
+			<de>SQL-Monitor</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-play"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Start</en>
+					<de>Starten</de>
+				</label>
+				<sql-monitor mode="START"/>
+				<write-channel name="sqlStats"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<sql-monitor mode="REFRESH"/>
+				<write-channel name="sqlStats"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-stop"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Stop</en>
+					<de>Stoppen</de>
+				</label>
+				<sql-monitor mode="STOP"/>
+				<write-channel name="sqlStats"/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.admin.monitor.SqlStatisticsTable"
+			input="sqlStats"
+		/>
+	</panel>
+</view>

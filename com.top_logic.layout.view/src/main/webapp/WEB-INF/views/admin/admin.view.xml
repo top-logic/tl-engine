@@ -87,6 +87,13 @@
 							</label>
 							<view-ref view="admin/failed-logins.view.xml"/>
 						</tab>
+						<tab id="sql-monitor">
+							<label>
+								<en>SQL</en>
+								<de>SQL</de>
+							</label>
+							<view-ref view="admin/sql-monitor.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

@@ -158,6 +158,41 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey FAILED_LOGIN_COLUMN_REASON;
 
+	/**
+	 * @en Statement
+	 */
+	public static ResKey SQL_COLUMN_STATEMENT;
+
+	/**
+	 * @en Calls
+	 */
+	public static ResKey SQL_COLUMN_CALLS;
+
+	/**
+	 * @en Total time (ms)
+	 */
+	public static ResKey SQL_COLUMN_TIME_TOTAL;
+
+	/**
+	 * @en Avg. time (ms)
+	 */
+	public static ResKey SQL_COLUMN_TIME_AVG;
+
+	/**
+	 * @en Max. time (ms)
+	 */
+	public static ResKey SQL_COLUMN_TIME_MAX;
+
+	/**
+	 * @en Rows
+	 */
+	public static ResKey SQL_COLUMN_ROWS;
+
+	/**
+	 * @en SQL monitoring is not available: the configured data source is not a logging proxy.
+	 */
+	public static ResKey SQL_MONITORING_UNAVAILABLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

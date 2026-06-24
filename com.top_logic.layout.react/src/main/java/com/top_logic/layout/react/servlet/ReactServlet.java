@@ -58,6 +58,9 @@ import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.headless.AgentSession;
+import com.top_logic.layout.react.headless.RecordedStep;
+import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.protocol.Property;
@@ -405,6 +408,10 @@ public class ReactServlet extends TopLogicServlet {
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
 		try {
+			// Capture the interaction for the script recorder before it runs: the address is computed
+			// against the current (pre-command) tree — exactly the state a replay resolves it against.
+			recordCommand(queue, control, commandName, arguments);
+
 			HandlerResult result;
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
@@ -432,6 +439,25 @@ public class ReactServlet extends TopLogicServlet {
 		} finally {
 			requestLock.unlock();
 		}
+	}
+
+	/**
+	 * Captures the command as a {@link RecordedStep} if the window's {@link ScriptRecorder} is active.
+	 *
+	 * <p>
+	 * The target control is translated to its stable semantic {@link AgentSession#addressOf(ReactControl)
+	 * address}; a control that is not in the visible projection (e.g. a table cell sub-control) records
+	 * with a {@code null} address rather than failing the command.
+	 * </p>
+	 */
+	private void recordCommand(SSEUpdateQueue queue, ReactCommandTarget control, String commandName,
+			Map<String, Object> arguments) {
+		ScriptRecorder recorder = queue.getRecorder();
+		if (!recorder.isRecording() || !(control instanceof ReactControl reactControl)) {
+			return;
+		}
+		String address = AgentSession.forRoot(queue.getRootControl()).addressOf(reactControl);
+		recorder.record(new RecordedStep(address, commandName, arguments));
 	}
 
 	/**

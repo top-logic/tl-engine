@@ -184,6 +184,44 @@ public final class AgentSession {
 		return control.executeCommand(command, arguments == null ? Map.of() : arguments);
 	}
 
+	/**
+	 * The semantic address of the given live control — the reverse of {@link #resolve(String)}.
+	 *
+	 * <p>
+	 * Used by the script recorder to turn the control a browser command targets (by its session
+	 * control id) into the stable address a recorded step carries. It walks the visible tree with the
+	 * same segment algorithm {@link #resolve(String)} uses, so the returned address is guaranteed to
+	 * resolve back to {@code target}.
+	 * </p>
+	 *
+	 * @param target
+	 *        The control to address.
+	 * @return The address, or {@code null} if {@code target} is not in the visible projection (e.g. a
+	 *         cell sub-control, or a control under an elided wrapper).
+	 */
+	public String addressOf(ReactControl target) {
+		if (target == null) {
+			return null;
+		}
+		return searchAddress(ROOT, roots(), target);
+	}
+
+	private static String searchAddress(String prefix, List<ReactControl> candidates, ReactControl target) {
+		List<String> segments = AgentTreeProjector.segmentsFor(candidates);
+		for (int i = 0; i < candidates.size(); i++) {
+			ReactControl control = candidates.get(i);
+			String address = AgentTreeProjector.join(prefix, segments.get(i));
+			if (control == target) {
+				return address;
+			}
+			String found = searchAddress(address, AgentTreeProjector.visibleChildren(control), target);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
+	}
+
 	private static List<String> splitAddress(String address) {
 		List<String> result = new ArrayList<>();
 		if (address == null) {

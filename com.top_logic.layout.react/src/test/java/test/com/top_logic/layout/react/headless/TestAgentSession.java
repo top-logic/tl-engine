@@ -144,6 +144,25 @@ public class TestAgentSession extends TestCase {
 	}
 
 	/**
+	 * {@link AgentSession#addressOf(ReactControl)} is the inverse of {@link
+	 * AgentSession#resolve(String)}: the address it computes for a live control resolves back to that
+	 * same control — the property the script recorder relies on to turn a command's target into a
+	 * stable recorded address. A control outside the projected tree has no address.
+	 */
+	public void testAddressOfRoundTrips() {
+		String usernameAddress = _session.addressOf(_username);
+		assertNotNull(usernameAddress);
+		assertSame(_username, _session.resolve(usernameAddress));
+
+		String submitAddress = _session.addressOf(_submit);
+		assertNotNull(submitAddress);
+		assertSame(_submit, _session.resolve(submitAddress));
+
+		DemoButtonControl orphan = new DemoButtonControl(new TestReactContext(_queue), "Orphan");
+		assertNull("A control not in the tree must have no address.", _session.addressOf(orphan));
+	}
+
+	/**
 	 * Addressing an unknown node fails loudly with a helpful message rather than silently
 	 * mis-targeting.
 	 */

@@ -96,16 +96,29 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       round-trip unit-tested (`TestReactOptionByLabelNaming`); a cross-session
       end-to-end automated test still to write.
 
-### Phase 2 — Recorder side ⬜
+### Phase 2 — Recorder side 🚧
 
-We built `act`; we have **not** built capture.
-
-- [ ] Intercept the browser command stream (`/react-api/command`) and translate
-      each into an `(address, command, arguments)` step using the live control's
-      semantic address.
-- [ ] Define the recording file format (and whether it is also the agent's
-      action log — see **D3**).
-- [ ] Replay a recorded file through `AgentSession` headlessly.
+- [x] **Intercept the browser command stream and translate to `(address, command,
+      arguments)`.** `ReactServlet.handleCommand` feeds each dispatched command into the
+      window's `ScriptRecorder` while recording, turning the target control into its
+      stable semantic address via `AgentSession.addressOf` (the inverse of `resolve`,
+      same segment algorithm → guaranteed to resolve back). Verified live: two browser
+      clicks on the dashboard counter captured as
+      `/appShell/sidebar/grid/card[Aktive_Aufgaben]/counter[Aufgaben] :: increment` —
+      no session ids.
+- [x] **Recording format + endpoints.** `POST /agent-api/record/{start,stop}` and
+      `GET /agent-api/record/steps` return `{recording, steps:[{address,command,
+      arguments}]}`. The same shape feeds replay. (D3 — whether this is also the agent's
+      action log — still open; the format is deliberately the `act` triple so they can
+      converge.)
+- [x] **Replay a recorded script headlessly.** `POST /agent-api/replay {steps}` runs
+      each step through `AgentSession.act`, settling derived state between steps, and
+      returns per-step `results` + final `observation`. Verified live end-to-end: counter
+      0 →(2 recorded clicks)→ 2 →(replay)→ 4.
+- [ ] **Replay-stable arguments.** Session-id arguments (e.g. a dropdown's
+      `valueChanged {value:[ids]}`) replay only in the same session. Translate them to
+      business keys at record time (record as `selectByKey {keys:[…]}`) — builds directly
+      on the resolve path already in place. *Next.*
 - [ ] Assertions/observation steps (record "expected state at this point").
 - [ ] Migration story / coexistence with legacy `ScriptingRecorder`.
 
@@ -342,6 +355,16 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — **Phase 2 recorder/capture first slice** (capture + replay), verified
+  live. `ScriptRecorder` (per window, on `SSEUpdateQueue`) captures each browser command
+  as a `RecordedStep(address, command, arguments)`; the address is the control's stable
+  semantic path via the new `AgentSession.addressOf` (inverse of `resolve`,
+  unit-tested to round-trip). `/agent-api/record/{start,stop,steps}` drive it;
+  `/agent-api/replay` runs a step list back through `act`. Live proof: 2 recorded counter
+  clicks (`…/counter[Aufgaben] :: increment`) → replayed → counter 0→2→4. The agent `act`
+  path is intentionally *not* captured (it bypasses `ReactServlet`); the recorder captures
+  genuine user interaction. Open next: replay-stable arguments (translate session-id args
+  like dropdown `valueChanged {value:[ids]}` to `selectByKey {keys}` at record time).
 - **2026-06-24** — `selectByKey` hardened for **replay** and verified live: it now
   resolves against the model's authoritative option list (`SelectFieldModel.getOptions`)
   rather than only the options already streamed to the client, so a recorded

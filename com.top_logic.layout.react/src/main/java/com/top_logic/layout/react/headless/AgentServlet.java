@@ -8,6 +8,7 @@ package com.top_logic.layout.react.headless;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -57,6 +58,14 @@ import com.top_logic.util.TopLogicServlet;
  * success} is {@code true} only if the router actually reached the requested URL; a route into an
  * area whose participants are not registered yet is reported as {@code false} with a {@code message},
  * not a silent no-op.</li>
+ * <li>{@code POST /agent-api/record/start} / {@code /record/stop} with body {@code {"windowName":W}}
+ * &rarr; begin a fresh recording of the user's interactions, or stop it; both return
+ * {@code {"recording":b,"steps":[…]}}. While recording, the browser command path captures each
+ * dispatched command as an {@code {address,command,arguments}} step.</li>
+ * <li>{@code GET /agent-api/record/steps?windowName=W} &rarr; the current recorder state and steps.</li>
+ * <li>{@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[…]}} &rarr; replays a
+ * recorded (or hand-written) script through the same {@code act} path, returning a per-step
+ * {@code results} list and the final {@code observation}.</li>
  * </ul>
  *
  * <p>
@@ -93,6 +102,8 @@ public class AgentServlet extends TopLogicServlet {
 				handleWindows(response, session);
 			} else if ("/observe".equals(pathInfo)) {
 				handleObserve(request, response, session);
+			} else if ("/record/steps".equals(pathInfo)) {
+				handleRecordSteps(request, response, session);
 			} else {
 				sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
 			}
@@ -121,6 +132,12 @@ public class AgentServlet extends TopLogicServlet {
 				handleAct(request, response, session);
 			} else if ("/navigate".equals(pathInfo)) {
 				handleNavigate(request, response, session);
+			} else if ("/record/start".equals(pathInfo)) {
+				handleRecordStartStop(request, response, session, true);
+			} else if ("/record/stop".equals(pathInfo)) {
+				handleRecordStartStop(request, response, session, false);
+			} else if ("/replay".equals(pathInfo)) {
+				handleReplay(request, response, session);
 			} else {
 				sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
 			}
@@ -271,6 +288,124 @@ public class AgentServlet extends TopLogicServlet {
 		} finally {
 			requestLock.unlock();
 		}
+	}
+
+	/**
+	 * {@code GET /agent-api/record/steps} — the current recorder state and captured steps.
+	 */
+	private void handleRecordSteps(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		SSEUpdateQueue queue = requireQueue(session, request.getParameter("windowName"));
+		writeRecorderState(response, queue.getRecorder());
+	}
+
+	/**
+	 * {@code POST /agent-api/record/start|stop} — begin a fresh recording or stop the current one,
+	 * returning the recorder state and (for stop) the captured steps.
+	 */
+	private void handleRecordStartStop(HttpServletRequest request, HttpServletResponse response,
+			HttpSession session, boolean start) throws IOException {
+		Map<String, Object> body = parseObjectBody(request);
+		SSEUpdateQueue queue = requireQueue(session, (String) body.get("windowName"));
+		ScriptRecorder recorder = queue.getRecorder();
+		if (start) {
+			recorder.start();
+		} else {
+			recorder.stop();
+		}
+		writeRecorderState(response, recorder);
+	}
+
+	private static void writeRecorderState(HttpServletResponse response, ScriptRecorder recorder) throws IOException {
+		List<Map<String, Object>> steps = new ArrayList<>();
+		for (RecordedStep step : recorder.steps()) {
+			steps.add(step.toMap());
+		}
+		write(response, "{\"recording\":" + recorder.isRecording()
+			+ ",\"steps\":" + JSON.toString(steps) + "}");
+	}
+
+	/**
+	 * {@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[{address,command,arguments},…]}}
+	 * &rarr; replays each step through {@link AgentSession#act} in order, settling derived state between
+	 * steps so each address resolves against the state its predecessors produced. Returns a per-step
+	 * {@code results} list and the final quiesced {@code observation}.
+	 */
+	@SuppressWarnings("unchecked")
+	private void handleReplay(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		Map<String, Object> body = parseObjectBody(request);
+		String windowName = (String) body.get("windowName");
+		Object stepsValue = body.get("steps");
+		if (!(stepsValue instanceof List)) {
+			throw new IllegalArgumentException("Missing 'steps' list.");
+		}
+		List<Object> steps = (List<Object>) stepsValue;
+
+		SSEUpdateQueue queue = requireQueue(session, windowName);
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
+
+		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
+		requestLock.lock();
+		try {
+			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+			List<Map<String, Object>> results = new ArrayList<>();
+			try {
+				for (Object stepObj : steps) {
+					results.add(replayStep(session, queue, windowName, (Map<String, Object>) stepObj));
+				}
+			} finally {
+				if (rootHandler != null) {
+					rootHandler.enableUpdate(updateBefore);
+				}
+			}
+			String observation = agentSession(queue).observeJson();
+			write(response, "{\"results\":" + JSON.toString(results) + ",\"observation\":" + observation + "}");
+		} finally {
+			requestLock.unlock();
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> replayStep(HttpSession session, SSEUpdateQueue queue, String windowName,
+			Map<String, Object> step) {
+		String address = (String) step.get("address");
+		String command = (String) step.get("command");
+		Map<String, Object> arguments = (Map<String, Object>) step.get("arguments");
+
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put("address", address);
+		result.put("command", command);
+		if (address == null || command == null) {
+			result.put("success", false);
+			result.put("error", "Step has no address or command.");
+			return result;
+		}
+		try {
+			HandlerResult handlerResult = agentSession(queue).act(address, command, arguments);
+			result.put("success", handlerResult.isSuccess());
+			// Settle derived state so the next step's address resolves against the produced state.
+			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
+		} catch (RuntimeException ex) {
+			result.put("success", false);
+			result.put("error", ex.getMessage());
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, Object> parseObjectBody(HttpServletRequest request) throws IOException {
+		Object parsed;
+		try {
+			parsed = JSON.fromString(new String(request.getInputStream().readAllBytes(), "UTF-8"));
+		} catch (JSON.ParseException ex) {
+			throw new IllegalArgumentException("Invalid JSON: " + ex.getMessage());
+		}
+		if (!(parsed instanceof Map)) {
+			throw new IllegalArgumentException("Expected a JSON object body.");
+		}
+		return (Map<String, Object>) parsed;
 	}
 
 	/**

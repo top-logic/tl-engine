@@ -26,6 +26,7 @@ import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -49,6 +50,9 @@ import com.top_logic.util.TopLogicServlet;
  * <li>{@code POST /agent-api/act} with body {@code {"windowName":W,"address":A,"command":C,"arguments":{…}}}
  * &rarr; resolves {@code A}, invokes {@code C}, and returns {@code {"success":b,"observation":{…}}}
  * with the resulting state tree.</li>
+ * <li>{@code POST /agent-api/navigate} with body {@code {"windowName":W,"url":"access-control/groups"}}
+ * &rarr; navigates the window's router to a route URL (for areas loaded by routing rather than an
+ * in-place {@code selectItem}), returning {@code {"success":b,"url":…,"observation":{…}}}.</li>
  * </ul>
  *
  * <p>
@@ -111,6 +115,8 @@ public class AgentServlet extends TopLogicServlet {
 		try {
 			if ("/act".equals(pathInfo)) {
 				handleAct(request, response, session);
+			} else if ("/navigate".equals(pathInfo)) {
+				handleNavigate(request, response, session);
 			} else {
 				sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
 			}
@@ -192,6 +198,62 @@ public class AgentServlet extends TopLogicServlet {
 
 			String observation = agentSession.observeJson();
 			write(response, "{\"success\":" + result.isSuccess() + ",\"observation\":" + observation + "}");
+		} finally {
+			requestLock.unlock();
+		}
+	}
+
+	/**
+	 * Navigates the window to a route URL (e.g. {@code "access-control/groups"}), the way a
+	 * route-based sidebar item does when clicked. This lets an agent reach areas whose content is
+	 * loaded by the router rather than by an in-place {@code selectItem} content swap.
+	 */
+	@SuppressWarnings("unchecked")
+	private void handleNavigate(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws IOException {
+		Object parsed;
+		try {
+			parsed = JSON.fromString(new String(request.getInputStream().readAllBytes(), "UTF-8"));
+		} catch (JSON.ParseException ex) {
+			throw new IllegalArgumentException("Invalid JSON: " + ex.getMessage());
+		}
+		if (!(parsed instanceof Map)) {
+			throw new IllegalArgumentException("Expected a JSON object body.");
+		}
+		Map<String, Object> body = (Map<String, Object>) parsed;
+		String windowName = (String) body.get("windowName");
+		String url = (String) body.get("url");
+		if (url == null) {
+			throw new IllegalArgumentException("Missing 'url'.");
+		}
+
+		SSEUpdateQueue queue = requireQueue(session, windowName);
+		RouteManager routeManager = queue.getRouteManager();
+		if (routeManager == null) {
+			throw new IllegalArgumentException("Window '" + windowName + "' has no router.");
+		}
+
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
+		installSubSession(displayContext, windowName);
+
+		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
+		requestLock.lock();
+		try {
+			boolean ok = true;
+			String message = null;
+			try {
+				routeManager.navigateToRoute(url);
+			} catch (Exception ex) {
+				// e.g. a dirty-form veto refuses navigation.
+				ok = false;
+				message = ex.getMessage();
+			}
+			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
+			String observation = agentSession(queue).observeJson();
+			write(response, "{\"success\":" + ok
+				+ ",\"url\":" + JSON.toString(routeManager.currentUrl())
+				+ (message != null ? ",\"message\":" + JSON.toString(message) : "")
+				+ ",\"observation\":" + observation + "}");
 		} finally {
 			requestLock.unlock();
 		}

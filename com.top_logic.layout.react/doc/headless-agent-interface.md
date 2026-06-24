@@ -239,10 +239,16 @@ semantic projection? Prototype exposes the raw tree with opt-in `AgentNode`
 refinement. Decide whether controls should contribute semantic descriptors at
 source.
 
-### D5 — Action-space exposure `OPEN`
+### D5 — Action-space exposure `OPEN` — now the top priority
 
-Untyped command names (current default) vs. mandatory argument schemas. Affects
-how reliably an agent can construct valid `arguments`.
+Untyped command names (current default) vs. advertised argument schemas. Affects
+how reliably an agent can construct valid `arguments`. **Strongly reinforced in
+practice:** while driving real views I repeatedly had to guess/read source for
+argument shapes — `selectItem {itemId}` (guessed `{id}` and failed), `valueChanged
+{value:[ids]}`, `select {rowIndex}`, `selectTab {tabId}`. Each is a one-line schema
+the control could advertise. Next concrete step: let `@ReactCommand` (or a per-control
+`agentActions()`) carry parameter name/type/required, and surface it in the projected
+`actions`.
 
 ### D6 — Read concurrency model `OPEN` (gates Phase 4)
 
@@ -278,10 +284,14 @@ Also decide whether `observe` should ever block user commands at all.
       technical name in both states. Verified live: `formField[members]` in
       placeholder and loaded-edit; `…/formField[members]/dropdownSelect` resolves and
       `loadOptions` returns 9 options.
-- [ ] **Routed nav items aren't drivable.** `selectItem` is a no-op on a sidebar
-      item with `route="none"` (e.g. `administration`, navigated by route). The agent
-      needs a route-navigation action (or sidebar `selectItem` should honor routed
-      items) — otherwise whole areas are unreachable headlessly.
+- [x] **Routed nav items — NOT a bug (resolved).** `selectItem` *does* drive routed
+      items; the earlier "no-op" was my own wrong argument key (`{id}` instead of the
+      real `{itemId}`). Confirmed live: `selectItem {itemId:"administration"}` →
+      lands on the access-control area. The actual lesson is **D5**: the command's
+      argument is not advertised, so a consumer must guess it. Separately added a
+      route primitive `POST /agent-api/navigate {url}` (validated navigating
+      access-control accounts↔groups) for areas addressed by URL/back-forward — a
+      bonus, not required for routed sidebar items.
 - [x] **Table rows projected — FIXED.** The table's real `rows` state holds cell
       *controls* (stripped from the agent projection). `TableViewControl` now also
       projects a text `rows` list — `{rowIndex, selected, cells:{column→text}}` for
@@ -291,6 +301,14 @@ Also decide whether `observe` should ever block user commands at all.
       it — choosing by content, not a blind index.
 
 ## Progress log
+
+- **2026-06-24** — Worked the three live-found findings. (1) Field-name stability:
+  FIXED (technical attribute name in both view/edit). (2) Table rows: FIXED (text
+  `rows` projection; agent selects by content). (3) Routed nav: **not a bug** — my
+  wrong arg key (`id` vs `itemId`); `selectItem {itemId}` drives it. Added a
+  `/agent-api/navigate {url}` route primitive (works for registered routes). The
+  recurring theme — guessing argument shapes — elevates **D5** (advertise action
+  arg schemas) to the top priority.
 
 - **2026-06-24** — Drove a real multi-step task entirely through `/agent-api`
   (login → `selectTab` Gruppen → `select {rowIndex:0}` → edit → `loadOptions {}` →

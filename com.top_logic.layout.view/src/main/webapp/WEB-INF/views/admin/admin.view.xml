@@ -66,6 +66,13 @@
 							</label>
 							<view-ref view="admin/application-monitor.view.xml"/>
 						</tab>
+						<tab id="thread-monitor">
+							<label>
+								<en>Threads</en>
+								<de>Threads</de>
+							</label>
+							<view-ref view="admin/thread-monitor.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

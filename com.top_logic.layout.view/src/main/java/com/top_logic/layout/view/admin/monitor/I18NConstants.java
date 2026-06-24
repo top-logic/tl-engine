@@ -63,6 +63,51 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey APPLICATION_MONITOR_SECTION_SYSTEM;
 
+	/**
+	 * @en Name
+	 */
+	public static ResKey THREAD_COLUMN_NAME;
+
+	/**
+	 * @en State
+	 */
+	public static ResKey THREAD_COLUMN_STATE;
+
+	/**
+	 * @en Priority
+	 */
+	public static ResKey THREAD_COLUMN_PRIORITY;
+
+	/**
+	 * @en Kind
+	 */
+	public static ResKey THREAD_COLUMN_KIND;
+
+	/**
+	 * @en Group
+	 */
+	public static ResKey THREAD_COLUMN_GROUP;
+
+	/**
+	 * @en Daemon
+	 */
+	public static ResKey THREAD_KIND_DAEMON;
+
+	/**
+	 * @en Normal
+	 */
+	public static ResKey THREAD_KIND_NORMAL;
+
+	/**
+	 * @en Stack frame
+	 */
+	public static ResKey THREAD_COLUMN_STACK_FRAME;
+
+	/**
+	 * @en Select a thread to show its current stack trace.
+	 */
+	public static ResKey THREAD_STACK_EMPTY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

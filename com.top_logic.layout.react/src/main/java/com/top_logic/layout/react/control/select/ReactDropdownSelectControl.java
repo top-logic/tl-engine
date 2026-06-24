@@ -16,19 +16,26 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.AgentModelKey;
+import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
+import com.top_logic.layout.scripting.recorder.ref.ModelName;
+import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -251,6 +258,72 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			}
 		}
 		return resolved;
+	}
+
+	/**
+	 * Handles the {@code selectByKey} command: sets the selection to the options designated by their
+	 * stable business {@link AgentModelKey key}s — the round-trip inverse of the {@code key} that
+	 * {@link #agentScalarState()} projects onto each option.
+	 *
+	 * <p>
+	 * This lets a headless agent select members by business object identity (e.g. the group labeled
+	 * {@code "securityOwner"} within this control) instead of session-allocated option ids that do not
+	 * survive a reload or replay. Each key is parsed back to a {@link ModelName} and resolved against
+	 * this control's {@link ReactOptionScope option scope} (for context-relative names) or globally.
+	 * Keys that do not resolve are skipped.
+	 * </p>
+	 *
+	 * @param arguments
+	 *        Must contain a {@code "keys"} key with a list of key JSON strings.
+	 */
+	@SuppressWarnings("unchecked")
+	@ReactCommand(value = "selectByKey", params = @ReactParam(name = "keys", type = "string[]",
+		required = true,
+		description = "List of option business keys (the 'key' projected onto each option)."))
+	HandlerResult handleSelectByKey(Map<String, Object> arguments) {
+		List<String> keys = (List<String>) arguments.get("keys");
+		if (keys == null) {
+			keys = Collections.emptyList();
+		}
+
+		List<Object> newSelection = resolveByKeys(keys);
+		_updatingFromClient = true;
+		try {
+			_selectModel.setValue(newSelection);
+		} finally {
+			_updatingFromClient = false;
+		}
+		updateValueState();
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private List<Object> resolveByKeys(List<String> keys) {
+		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
+		ActionContext actionContext = newActionContext();
+		List<Object> resolved = new ArrayList<>(keys.size());
+		for (String key : keys) {
+			ModelName name = AgentModelKey.fromJson(key);
+			if (name == null) {
+				continue;
+			}
+			// Context-relative names (ContextDependent) resolve within this control's option scope;
+			// globally-named options (e.g. a person) resolve without a value context.
+			Object valueContext = name instanceof ContextDependent ? scope : null;
+			try {
+				Object option = ModelResolver.locateModel(actionContext, valueContext, name);
+				if (option != null) {
+					resolved.add(option);
+				}
+			} catch (RuntimeException ex) {
+				Logger.warn("Cannot resolve option for key: " + key, ex, this);
+			}
+		}
+		return resolved;
+	}
+
+	private static ActionContext newActionContext() {
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
 	}
 
 	/**

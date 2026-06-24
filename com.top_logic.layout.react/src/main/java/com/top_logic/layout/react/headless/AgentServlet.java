@@ -49,7 +49,8 @@ import com.top_logic.util.TopLogicServlet;
  * affordance-first view: a flat list of just the actionable nodes.</li>
  * <li>{@code POST /agent-api/act} with body {@code {"windowName":W,"address":A,"command":C,"arguments":{…}}}
  * &rarr; resolves {@code A}, invokes {@code C}, and returns {@code {"success":b,"observation":{…}}}
- * with the resulting state tree.</li>
+ * with the resulting state tree. The command arguments may be given as either {@code "arguments"} or
+ * {@code "args"}.</li>
  * <li>{@code POST /agent-api/navigate} with body {@code {"windowName":W,"url":"access-control/groups"}}
  * &rarr; navigates the window's router to a route URL (for areas loaded by routing rather than an
  * in-place {@code selectItem}), returning {@code {"success":b,"url":…,"observation":{…}}}.</li>
@@ -169,7 +170,8 @@ public class AgentServlet extends TopLogicServlet {
 		String windowName = (String) body.get("windowName");
 		String address = (String) body.get("address");
 		String command = (String) body.get("command");
-		Map<String, Object> arguments = (Map<String, Object>) body.get("arguments");
+		Object argumentsValue = body.containsKey("arguments") ? body.get("arguments") : body.get("args");
+		Map<String, Object> arguments = (Map<String, Object>) argumentsValue;
 		if (address == null || command == null) {
 			throw new IllegalArgumentException("Missing 'address' or 'command'.");
 		}

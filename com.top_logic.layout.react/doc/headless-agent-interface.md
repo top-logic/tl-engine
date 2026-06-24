@@ -337,22 +337,29 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
-- **2026-06-24** — D1 context-relative keys **verified live** end-to-end through
-  `/agent-api` (login → groups tab → select group `user` → edit → `loadOptions`):
-  the dropdown emits `ReactOptionByLabelName` (`{"label":…}`) for uniquely-labeled
-  options and degrades to the global key only on label collisions. See the detailed
-  entry below; the build direction of the context-relative scheme is now proven.
-  - **Act-path gap found while dogfooding** (separate from naming): `click` and
-    `loadOptions` apply correctly through `/agent-api/act` (`success:true`), but
-    `selectTab` on the *routed* nested tab bar and `select` on the access-control
-    groups `tableView` both returned `success:false` and had **no effect** (tab did
-    not switch; no row got selected). The same flow had to be driven by browser
-    clicks to reach the dropdown. Routed navigation evidently needs the route to be
-    pushed (the tab switch changes the URL: `…/access-control/groups`), and the
-    security-model table's selection likely routes too — the headless `act` path
-    dispatches the command but does not drive the routing/selection side effect.
-    Worth a focused slice: make `selectTab`/table `select` honor the same route or
-    selection channel the client uses, and make `act` report the real outcome.
+- **2026-06-24** — D1 **round-trip resolve verified live** end-to-end through
+  `/agent-api`, closing the build↔resolve loop. New `selectByKey` command on the
+  dropdown takes the same business `key`s the projection emits and sets the selection
+  by object identity. Driven headless (group `user` members): `selectByKey` with a
+  group key `["…ReactOptionByLabelNaming$Name",{"label":"securityOwner"}]` (context-
+  relative) **and** a person key (`IndexedObjectNaming`, global) in one call changed
+  the value from `[anonymous,anonymous,root,root]` to exactly `[root,securityOwner]`.
+  Both resolution paths proven: `AgentModelKey.fromJson` → `ModelResolver.locateModel`,
+  routed by the `ContextDependent` marker (scope for context-relative names, global
+  otherwise) through a new `ReactActionContext` (`AbstractActionContext` carrying only
+  the `DisplayContext` + `HttpSession`; `getMainLayout()` throws — the resolution-context
+  abstraction the React layer owns, with no `MainLayout`). Keys are now serialized
+  polymorphically (`write(ModelName.class, …)` → `["ConcreteName$Type",{…}]`) so they
+  are self-describing and the reader can pick the scheme.
+  - The earlier-suspected "routed-act gap" was **a test-harness bug, not a code
+    defect**: the harness sent `args` while the servlet reads `arguments`, so
+    argument-bearing commands silently no-op'd (`success:false`). With the correct key,
+    `selectTab` (routed nested tab bar) and table `select` both apply (`success:true`).
+    Hardened `/agent-api/act` to accept `args` as an alias for `arguments` so the trap
+    cannot recur.
+- **2026-06-24** — D1 context-relative keys **verified live** (build direction):
+  the dropdown emits `ReactOptionByLabelName` for uniquely-labeled options and degrades
+  to the global key only on label collisions. See the detailed entry below.
 - **2026-06-24** — D1 context-relative keys (first slice): the React layer defines its
   own naming scheme `ReactOptionByLabelNaming` (context type `ReactOptionScope`), so a
   select option is named/resolved by label *relative to its control* — no global

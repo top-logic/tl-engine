@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -180,6 +179,10 @@ public class RoleRulesImporter {
 				addProblem(I18NConstants.INVALID_SINGLETON__NAME.fill(singletonRuleConf.getTarget()));
 				return;
 			}
+			if (singleton == null) {
+				addProblem(I18NConstants.INVALID_SINGLETON__NAME.fill(singletonRuleConf.getTarget()));
+				return;
+			}
 			for (BoundedRole role : roles) {
 				addRule(new SingletonRule(singleton, role, path, _resKey));
 			}
@@ -204,7 +207,6 @@ public class RoleRulesImporter {
 		for (String roleName : roleNames) {
 			BoundedRole role = _roleProvider.apply(roleName);
 
-			Set<String> availableRoles = Collections.emptySet();
 			if (role == null) {
 				role = BoundedRole.getRoleByName(_kb, roleName);
 			}
@@ -214,7 +216,6 @@ public class RoleRulesImporter {
 			} else {
 				addProblem(I18NConstants.ROLE_RULES_PROBLEM_UNKNOWN_ROLE
 					.fill(roleName,
-						availableRoles.stream().collect(Collectors.joining(", ")),
 						BoundedRole.getAll().stream().map(x -> x.getName()).collect(Collectors.joining(", "))));
 			}
 

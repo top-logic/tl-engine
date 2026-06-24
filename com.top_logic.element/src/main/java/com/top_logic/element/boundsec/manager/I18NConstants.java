@@ -59,10 +59,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey NO_META_ELEMENT_DECLARED;
 
 	/**
-	 * @en The role {0} does not exist. Available application roles are {1}, available global roles
-	 *     are {2}. The corresponding rule is ignored.
+	 * @en The role {0} does not exist. Available roles are {1}. The corresponding rule is ignored.
 	 */
-	public static ResKey3 ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
+	public static ResKey2 ROLE_RULES_PROBLEM_UNKNOWN_ROLE;
 
 	/**
 	 * @en The part {0} is not a reference.

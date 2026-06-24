@@ -89,7 +89,7 @@ public class TestRoleRulesImporter extends BasicTestCase {
     public void testInvalidRoleRules() throws Exception {
 		this.multiProblemTest(
                 ROLE_RULES_INVALID_ROLE,
-			I18NConstants.ROLE_RULES_PROBLEM_UNKNOWN_ROLE.fill("unknown", "",
+			I18NConstants.ROLE_RULES_PROBLEM_UNKNOWN_ROLE.fill("unknown",
 				BoundedRole.getAll()
 					.stream()
 					.map(x -> x.getName())

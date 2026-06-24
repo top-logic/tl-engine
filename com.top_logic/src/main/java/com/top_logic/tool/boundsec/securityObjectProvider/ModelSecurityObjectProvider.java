@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
@@ -62,9 +61,11 @@ public class ModelSecurityObjectProvider extends AbstractConfiguredInstance<Mode
 
 	}
 
+	private final Set<TLClass> _securityObjectTypes = new HashSet<>();
+
 	/**
 	 * Create a {@link ModelSecurityObjectProvider}.
-	 * 
+	 *
 	 * @param context
 	 *        the {@link InstantiationContext} to create the new object in
 	 * @param config
@@ -73,9 +74,8 @@ public class ModelSecurityObjectProvider extends AbstractConfiguredInstance<Mode
 	public ModelSecurityObjectProvider(InstantiationContext context, Config config) {
 		super(context, config);
 		for (TLModelPartRef modelType : getConfig().getModelTypes()) {
-			// Try resolving model type. fails if impossible.
 			try {
-				modelType.resolveClass();
+				_securityObjectTypes.add(modelType.resolveClass());
 			} catch (ConfigurationException ex) {
 				context.error("Unable to resolve '" + modelType + "' to TLClass.", ex);
 			}
@@ -92,19 +92,10 @@ public class ModelSecurityObjectProvider extends AbstractConfiguredInstance<Mode
 
 	@Override
 	public Set<TLClass> getPossibleSecurityObjectTypes() {
-		List<TLModelPartRef> modelTypes = getConfig().getModelTypes();
-		if (modelTypes.isEmpty()) {
+		if (_securityObjectTypes.isEmpty()) {
 			return SecurityObjectProvider.super.getPossibleSecurityObjectTypes();
 		}
-		Set<TLClass> result = new HashSet<>();
-		for (TLModelPartRef modelType : modelTypes) {
-			try {
-				result.add(modelType.resolveClass());
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError(ex);
-			}
-		}
-		return result;
+		return _securityObjectTypes;
 	}
 
 }

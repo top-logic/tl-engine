@@ -76,7 +76,7 @@ public class ConfiguredModelSecurityProvider extends AbstractConfiguredInstance<
 		 * The collection of types that a security object may have.
 		 */
 		@Name(SECURITY_OBJECT_TYPES)
-		@Options(fun = AllClasses.class)
+		@Options(fun = AllClasses.class, mapping = TLModelPartRef.PartMapping.class)
 		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getSecurityObjectTypes();
 	}

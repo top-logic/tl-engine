@@ -8,6 +8,7 @@ package com.top_logic.model.search.expr;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.knowledge.search.Expression;
@@ -88,6 +89,7 @@ public class KBQuery extends SearchExpression {
 		}
 
 		List<TLObject> result = new ArrayList<>();
+		Predicate<TLObject> securityFilter = securityFilter(definitions);
 		try (CloseableIterator<TLObject> dbResult =
 			kb.searchStream(ExpressionFactory.queryResolved(query, TLObject.class))) {
 			dbResult:
@@ -98,11 +100,24 @@ public class KBQuery extends SearchExpression {
 						continue dbResult;
 					}
 				}
+				if (!securityFilter.test(match)) {
+					continue;
+				}
 				result.add(match);
 			}
 		}
 
 		return result;
+	}
+
+	private static Predicate<TLObject> securityFilter(EvalContext definitions) {
+		Predicate<TLObject> securityFilter;
+		if (definitions.usesSecurity()) {
+			securityFilter = securityFilter();
+		} else {
+			securityFilter = input -> true;
+		}
+		return securityFilter;
 	}
 
 	@Override

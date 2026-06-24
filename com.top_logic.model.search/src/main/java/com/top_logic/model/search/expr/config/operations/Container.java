@@ -44,7 +44,12 @@ public class Container extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
-			return object.tContainer();
+			TLObject container = object.tContainer();
+			if (definitions.usesSecurity()) {
+				return filterSecurity(container);
+			} else {
+				return container;
+			}
 		} else {
 			return null;
 		}

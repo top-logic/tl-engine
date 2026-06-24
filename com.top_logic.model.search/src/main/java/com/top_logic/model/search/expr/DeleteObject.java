@@ -5,18 +5,25 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.SingleArgMethodBuilder;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link SearchExpression} creating a new object of a given {@link TLClass} type.
@@ -54,8 +61,34 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 
 	@Override
 	public Object evalFlatMap(EvalContext definitions, Collection<?> base, Void param) {
-		PersistencyLayer.getKnowledgeBase().deleteAll(base.stream().filter(x -> x instanceof TLObject)
-			.map(x -> ((TLObject) x).tHandle()).collect(Collectors.toList()));
+		List<TLObject> forbidden;
+		Consumer<TLObject> collectForbidden;
+		if (definitions.usesSecurity()) {
+			ModelAccessRights accessRights = ModelAccessRights.getInstance();
+			Person user = TLContext.currentUser();
+			forbidden = new ArrayList<>();
+			collectForbidden = object -> {
+				if (!accessRights.isAllowed(user, object, SimpleBoundCommandGroup.DELETE)) {
+					forbidden.add(object);
+				}
+			};
+		} else {
+			forbidden = Collections.emptyList();
+			collectForbidden = object -> {
+				// ignore
+			};
+		}
+		List<TLObject> objects = base.stream()
+			.filter(TLObject.class::isInstance)
+			.map(TLObject.class::cast)
+			.peek(collectForbidden)
+			.toList();
+		
+		if (!forbidden.isEmpty()) {
+			throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(forbidden.get(0)));
+		}
+
+		KBUtils.deleteAll(objects);
 		return null;
 	}
 
@@ -63,6 +96,11 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLObject obj = asTLObject(singletonValue);
 		if (obj != null) {
+			if (definitions.usesSecurity()) {
+				if (!ModelAccessRights.getInstance().isAllowed(obj, SimpleBoundCommandGroup.DELETE)) {
+					throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
+				}
+			}
 			obj.tDelete();
 		}
 		return null;

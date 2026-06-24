@@ -36,6 +36,9 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 
 	private Boolean _transientCopy;
 
+	// TODO #29088: Use security.
+	private Boolean _useSecurity;
+
 	@Override
 	public CopyOperationImpl setFilter(CopyFilter filter) {
 		_filter = filter;
@@ -45,6 +48,12 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	@Override
 	public CopyOperationImpl setTransient(Boolean transientCopy) {
 		_transientCopy = transientCopy;
+		return this;
+	}
+
+	@Override
+	public CopyOperation withSecurity(Boolean useSecurity) {
+		_useSecurity = useSecurity;
 		return this;
 	}
 

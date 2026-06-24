@@ -113,6 +113,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<CopyOper
 			}
 
 			operation.setTransient(transientCopy);
+			operation.withSecurity(definitions.usesSecurity());
 
 			Object result = evalPotentialFlatMap(definitions, arguments[0], operation);
 

@@ -9,6 +9,10 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Updating the value of a model property as side-effect.
@@ -76,8 +80,21 @@ public class Update extends SearchExpression {
 	public Object internalEval(EvalContext definitions, Args args) {
 		TLObject self = asTLObjectNonNull(getSelf().evalWith(definitions, args));
 		Object value = getValue().evalWith(definitions, args);
-		self.tUpdate(getPart(), value);
+		TLStructuredTypePart part = getPart();
+
+		checkWritePermission(definitions, self, part);
+
+		self.tUpdate(part, value);
 		return null;
+	}
+
+	static void checkWritePermission(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
+		if (definitions.usesSecurity()) {
+			ModelAccessRights accessRights = ModelAccessRights.getInstance();
+			if (!accessRights.isAllowed(TLContext.currentUser(), self, part, SimpleBoundCommandGroup.WRITE)) {
+				throw new TopLogicException(I18NConstants.WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(self, part));
+			}
+		}
 	}
 
 	@Override

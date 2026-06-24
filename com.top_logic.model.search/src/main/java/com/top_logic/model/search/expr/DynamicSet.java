@@ -52,6 +52,9 @@ public class DynamicSet extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 		Object value = arguments[2];
+
+		Update.checkWritePermission(definitions, obj, part);
+
 		obj.tUpdate(part, value);
 		return null;
 	}

@@ -14,6 +14,9 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -21,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.RandomAccess;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
@@ -31,6 +35,7 @@ import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -45,6 +50,7 @@ import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.ToString;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -236,6 +242,168 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 			return Arrays.asList((Object[]) value);
 		} else {
 			return Collections.singletonList(value);
+		}
+	}
+
+	/**
+	 * Creates a {@link Predicate} that accepts only {@link TLObject} that the current user is
+	 * allowed to see (if security requested).
+	 */
+	public static Predicate<TLObject> securityFilter() {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		Person user = TLContext.currentUser();
+		return input -> accessRights.isReadAllowed(user, input);
+	}
+
+	/**
+	 * Filters the given value such that the result contains only elements that the current user is
+	 * allowed to see.
+	 * 
+	 * @see #filterSecurity(Person, Object)
+	 */
+	public static Object filterSecurity(Object value) {
+		return filterSecurity(TLContext.currentUser(), value);
+	}
+
+	/**
+	 * Filters the given value such that the result contains only elements that the given user is
+	 * allowed to see.
+	 * 
+	 * @param value
+	 *        The value to filter for security. May be null;
+	 * 
+	 * @return A value containing only allowed elements. When the value is (recursively) allowed,
+	 *         the given value is returned.
+	 */
+	public static Object filterSecurity(Person user, Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof TLObject object) {
+			return filterSecurityTLObject(user, object);
+		}
+		if (value instanceof Collection collectionValue) {
+			return filterSecurityCollection(user, collectionValue);
+		}
+		if (value instanceof Map<?, ?> mapValue) {
+			return filterSecurityMap(user, mapValue);
+		}
+		return value;
+	}
+
+	private static Object filterSecurityTLObject(Person user, TLObject value) {
+		if (ModelAccessRights.getInstance().isReadAllowed(user, value)) {
+			return value;
+		} else {
+			return null;
+		}
+	}
+
+	private static Object filterSecurityCollection(Person user, Collection<?> value) {
+		if (value.isEmpty()) {
+			return value;
+		}
+		Collection<Object> filtered;
+		boolean anyChanges = false;
+		if (value instanceof RandomAccess) {
+			List<?> list = (List<?>) value;
+			filtered = new ArrayList<>();
+			for (int i = 0, size = list.size(); i < size; i++) {
+				Object elt = list.get(i);
+				Object filteredValue = filterSecurity(user, elt);
+				if (filteredValue == elt) {
+					// elt (recursively) allowed
+					filtered.add(elt);
+				} else {
+					if (filteredValue != null) {
+						// Some content in elt not allowed.
+						filtered.add(filteredValue);
+					} else {
+						// Skip null value. Original was not null.
+					}
+					anyChanges = true;
+				}
+			}
+		} else {
+			if (value instanceof LinkedHashSet) {
+				filtered = new LinkedHashSet<>();
+			} else if (value instanceof Set) {
+				filtered = new HashSet<>();
+			} else {
+				filtered = new ArrayList<>();
+			}
+			for (Object elt : value) {
+				Object filteredValue = filterSecurity(user, elt);
+				if (filteredValue == elt) {
+					// elt (recursively) allowed
+					filtered.add(elt);
+				} else {
+					if (filteredValue != null) {
+						// Some content in elt not allowed.
+						filtered.add(filteredValue);
+					} else {
+						// Skip null value. Original was not null.
+					}
+					anyChanges = true;
+				}
+			}
+		}
+		if (anyChanges) {
+			return filtered;
+		} else {
+			// Return original value to indicate that no elements had to be filtered.
+			return value;
+		}
+	}
+
+	private static Object filterSecurityMap(Person user, Map<?, ?> value) {
+		if (value.isEmpty()) {
+			return value;
+		}
+		Map<Object, Object> filtered;
+		boolean anyChanges = false;
+		if (value instanceof LinkedHashMap) {
+			filtered = new LinkedHashMap<>();
+		} else {
+			filtered = new HashMap<>();
+		}
+		for (Entry<?, ?> entry : value.entrySet()) {
+			Object key = entry.getKey();
+			Object filteredKey = filterSecurity(user, key);
+			Object elt = entry.getValue();
+			Object filteredValue = filterSecurity(user, elt);
+			if (filteredKey == key) {
+				if (filteredValue == elt) {
+					// key and elt (recursively) allowed
+					filtered.put(key, elt);
+				} else {
+					if (filteredValue != null) {
+						// Some content in elt not allowed.
+						filtered.put(key, filteredValue);
+					} else {
+						// Skip null value. Original was not null.
+					}
+					anyChanges = true;
+				}
+			} else {
+				if (filteredKey != null) {
+					// Some content in key not allowed.
+					if (elt == null || filteredValue != null) {
+						filtered.put(filteredKey, filteredValue);
+					} else {
+						// elt is not allowed. Skip entry.
+					}
+				} else {
+					// key is not allowed. Skip entry.
+				}
+				anyChanges = true;
+			}
+		}
+		if (anyChanges) {
+			return filtered;
+		} else {
+			// Return original value to indicate that no elements had to be filtered.
+			return value;
 		}
 	}
 
@@ -1040,4 +1208,5 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		}
 		NUMBER_CACHE = numbers;
 	}
+
 }

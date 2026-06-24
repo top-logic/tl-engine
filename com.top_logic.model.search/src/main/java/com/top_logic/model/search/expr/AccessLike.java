@@ -5,9 +5,12 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.Collections;
+
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * Mix-in interface with common implementations for expressions accessing a model value.
@@ -42,6 +45,42 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart> {
 	 * @return The value of the given attribute.
 	 */
 	default Object lookupValue(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
+		return lookupValue(self, part, definitions.usesSecurity());
+	}
+
+	/**
+	 * Looks up the given attribute from the given object.
+	 * 
+	 * <p>
+	 * When <code>withSecurity</code> is requested, then only those elements which the user is
+	 * allowed to see are returned.
+	 * </p>
+	 * 
+	 * @param self
+	 *        The object to access.
+	 * @param part
+	 *        The attribute to look up.
+	 * @param withSecurity
+	 *        Whether only those elements must be returned that the user is allowed to see.
+	 * 
+	 * @return The value of the given attribute.
+	 */
+	static Object lookupValue(TLObject self, TLStructuredTypePart part, boolean withSecurity) {
+		if (withSecurity) {
+			boolean hasReadRights = ModelAccessRights.getInstance().isReadAllowed(self, part);
+			if (!hasReadRights) {
+				if (part.isMultiple()) {
+					if (part.isOrdered() || part.isBag()) {
+						return Collections.emptyList();
+					} else {
+						return Collections.emptySet();
+					}
+				} else {
+					return null;
+				}
+			}
+		}
+
 		Object value;
 		if (part.isAbstract()) {
 			// The concrete reference must be used to ensure that the correct storage implementation
@@ -50,7 +89,11 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart> {
 		} else {
 			value = self.tValue(part);
 		}
-		return SearchExpression.normalizeValue(value);
+		Object returnValue = SearchExpression.normalizeValue(value);
+		if (withSecurity) {
+			returnValue = SearchExpression.filterSecurity(returnValue);
+		}
+		return returnValue;
 	}
 
 }

@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.util.Set;
+
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLClass;
@@ -13,6 +15,10 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -39,6 +45,17 @@ public class CreateObject extends AbstractObjectCreation {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLClass type = (TLClass) asStructuredTypeNonNull(arguments[0], getArguments()[0]);
+		if (definitions.usesSecurity()) {
+			// TODO #29088: It must be checked whether the user is allowed to create instances for
+			// type.
+			if (false) {
+				Set<TLClass> accessibleTypes = ModelAccessRights.getInstance()
+					.getAccessibleTypes(TLContext.currentUser(), SimpleBoundCommandGroup.CREATE);
+				if (!accessibleTypes.contains(type)) {
+					throw new TopLogicException(I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(type));
+				}
+			}
+		}
 		TLObject context = asTLObject(arguments[1]);
 		boolean transientObject = asBoolean(arguments[2]);
 		if (transientObject) {

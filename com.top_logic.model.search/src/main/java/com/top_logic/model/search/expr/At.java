@@ -75,56 +75,70 @@ public class At extends SearchExpression {
 
 		if (self == null) {
 			return null;
-		} else if (self instanceof Map<?, ?>) {
-			Map<?, ?> map = (Map<?, ?>) self;
-			return SearchExpression.normalizeValue(map.get(indexArg));
-		} else if (self instanceof Collection<?>) {
-			Collection<?> col = (Collection<?>) self;
-			int index = asInt(indexArg);
-			try {
-				return SearchExpression.normalizeValue(CollectionUtil.getElementAt(col, index));
-			} catch (IndexOutOfBoundsException ex) {
-				throw new TopLogicException(
-					I18NConstants.ERROR_INVALID_LIST_INDEX__LIST_INDEX_EXPR.fill(col, index, this));
-			}
-		} else if (self instanceof TLObject) {
-			TLObject obj = (TLObject) self;
-			if (indexArg instanceof TLStructuredTypePart) {
-				return SearchExpression.normalizeValue(obj.tValue((TLStructuredTypePart) indexArg));
-			} else {
-				String propertyName = asString(indexArg);
-				TLStructuredTypePart property = obj.tType().getPart(propertyName);
-				if (property == null) {
-					throw new TopLogicException(
-						I18NConstants.ERROR_NO_SUCH_PROPERTY__OBJ_NAME_EXPR.fill(obj, propertyName, this));
-				}
-				return SearchExpression.normalizeValue(obj.tValueByName(propertyName));
-			}
-		} else if (self instanceof ConfigurationItem) {
-			ConfigurationItem config = (ConfigurationItem) self;
-			String propertyName = asString(indexArg);
-			switch (propertyName) {
-				case "$tag":
-					TagName annotation = config.descriptor().getConfigurationInterface().getAnnotation(TagName.class);
-					return annotation == null ? null : annotation.value();
-				case "$intf":
-					return config.descriptor().getConfigurationInterface().getName();
-				case "$class":
-					return (config instanceof PolymorphicConfiguration<?>)
-						? ((PolymorphicConfiguration<?>) config).getImplementationClass().getName()
-						: null;
-				default:
-					PropertyDescriptor property = config.descriptor().getProperty(propertyName);
-					if (property == null) {
-						throw new TopLogicException(
-							I18NConstants.ERROR_NO_SUCH_PROPERTY__OBJ_NAME_EXPR.fill(
-								"Config<" + config.descriptor().getConfigurationInterface().getName() + ">",
-								propertyName, this));
-					}
-					return config.value(property);
-			}
+		} else if (self instanceof Map<?, ?> map) {
+			return evalForMap(map, indexArg);
+		} else if (self instanceof Collection<?> col) {
+			return evalForCollection(col, indexArg);
+		} else if (self instanceof TLObject obj) {
+			return evalForTLObject(definitions, obj, indexArg);
+		} else if (self instanceof ConfigurationItem config) {
+			return evalForConfiguration(config, indexArg);
 		} else {
 			throw new TopLogicException(I18NConstants.ERROR_LIST_MAP_OR_OBJECT_REQUIRED__VALUE_EXPR.fill(self, this));
+		}
+	}
+
+	private Object evalForConfiguration(ConfigurationItem config, Object indexArg) {
+		String propertyName = asString(indexArg);
+		switch (propertyName) {
+			case "$tag":
+				TagName annotation = config.descriptor().getConfigurationInterface().getAnnotation(TagName.class);
+				return annotation == null ? null : annotation.value();
+			case "$intf":
+				return config.descriptor().getConfigurationInterface().getName();
+			case "$class":
+				return (config instanceof PolymorphicConfiguration<?>)
+					? ((PolymorphicConfiguration<?>) config).getImplementationClass().getName()
+					: null;
+			default:
+				PropertyDescriptor property = config.descriptor().getProperty(propertyName);
+				if (property == null) {
+					throw new TopLogicException(
+						I18NConstants.ERROR_NO_SUCH_PROPERTY__OBJ_NAME_EXPR.fill(
+							"Config<" + config.descriptor().getConfigurationInterface().getName() + ">",
+							propertyName, this));
+				}
+				return config.value(property);
+		}
+	}
+
+	private Object evalForMap(Map<?, ?> map, Object indexArg) {
+		return SearchExpression.normalizeValue(map.get(indexArg));
+	}
+
+	private Object evalForTLObject(EvalContext definitions, TLObject obj, Object indexArg) {
+		TLStructuredTypePart property;
+		if (indexArg instanceof TLStructuredTypePart) {
+			property = (TLStructuredTypePart) indexArg;
+		} else {
+			String propertyName = asString(indexArg);
+			property = obj.tType().getPart(propertyName);
+			if (property == null) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_NO_SUCH_PROPERTY__OBJ_NAME_EXPR.fill(obj, propertyName, this));
+			}
+		}
+
+		return AccessLike.lookupValue(obj, property, definitions.usesSecurity());
+	}
+
+	private Object evalForCollection(Collection<?> col, Object indexArg) {
+		int index = asInt(indexArg);
+		try {
+			return SearchExpression.normalizeValue(CollectionUtil.getElementAt(col, index));
+		} catch (IndexOutOfBoundsException ex) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_INVALID_LIST_INDEX__LIST_INDEX_EXPR.fill(col, index, this));
 		}
 	}
 

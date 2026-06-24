@@ -53,7 +53,7 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getArguments()[0]);
 
-		return All.all(this, type);
+		return All.all(this, type, definitions.usesSecurity());
 	}
 
 	/**

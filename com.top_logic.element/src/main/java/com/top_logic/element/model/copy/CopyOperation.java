@@ -65,6 +65,15 @@ public abstract class CopyOperation {
 	public abstract CopyOperation setTransient(Boolean transientCopy);
 
 	/**
+	 * Whether security must be considered during copy operation.
+	 * 
+	 * <p>
+	 * Ticket #29088: describe what is checked.
+	 * </p>
+	 */
+	public abstract CopyOperation withSecurity(Boolean useSecurity);
+
+	/**
 	 * Final step of the copy that ensures that all inner fields of all
 	 * {@link #copyReference(TLObject) copied} objects and nested compositions are filled.
 	 */

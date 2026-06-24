@@ -479,17 +479,21 @@ public class ElementAccessManager extends AccessManager {
 				.map(RoleRule::getRole)
 				.map(BoundedRole.class::cast)
 				.collect(Collectors.toSet());
-			addRolesRecursive(result, e.getKey(), roles);
+			addRolesRecursive(result, e.getKey(), roles, new HashSet<>());
 		}
 		return result;
 	}
 
-	private void addRolesRecursive(Map<TLClass, Set<BoundedRole>> result, TLClass key, Set<BoundedRole> roles) {
+	private void addRolesRecursive(Map<TLClass, Set<BoundedRole>> result, TLClass key, Set<BoundedRole> roles,
+			Set<TLClass> seen) {
+		if (!seen.add(key)) {
+			// Already visited along this propagation; guard against diamond hierarchies and cycles.
+			return;
+		}
 		result.computeIfAbsent(key, unused -> new HashSet<>()).addAll(roles);
 		for (TLClass generalization : key.getGeneralizations()) {
-			addRolesRecursive(result, generalization, roles);
+			addRolesRecursive(result, generalization, roles, seen);
 		}
-
 	}
 
 	private Map<TLClass, Collection<RoleProvider>> resolveRules(Map<TLClass, Collection<RoleProvider>> someRules) {

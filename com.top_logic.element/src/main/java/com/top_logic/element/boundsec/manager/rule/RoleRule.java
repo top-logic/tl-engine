@@ -244,9 +244,9 @@ public abstract class RoleRule implements RoleProvider {
 	private void getContent(TLObject aNode, List<PathElement> aPath, int aPosition, Set<TLObject> aResult) {
     	if (aNode == null || !aNode.tValid()) return;
 
-		PathElement thePE = path.get(aPosition);
+		PathElement thePE = aPath.get(aPosition);
 		Collection<? extends TLObject> theNodeElements = thePE.getValues(aNode);
-        if (path.size() == aPosition + 1) {
+        if (aPath.size() == aPosition + 1) {
         	aResult.addAll(theNodeElements);
         } else {
             int theChildPosition = aPosition + 1;

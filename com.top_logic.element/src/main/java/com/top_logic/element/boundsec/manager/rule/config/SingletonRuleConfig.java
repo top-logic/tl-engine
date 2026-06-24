@@ -26,8 +26,8 @@ public interface SingletonRuleConfig extends RoleRuleConfig {
 
 	/**
 	 * The singleton to which the rule must be applied.
-	 * 
-	 * @see TLModelUtil#resolveModelPart(String)
+	 *
+	 * @see TLModelUtil#resolveQualifiedName(String)
 	 */
 	@Mandatory
 	String getTarget();

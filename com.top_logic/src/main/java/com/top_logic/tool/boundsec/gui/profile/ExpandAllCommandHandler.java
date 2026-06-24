@@ -10,10 +10,6 @@ import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.component.FormComponent;
-import com.top_logic.layout.form.model.FormTree;
-import com.top_logic.layout.form.model.TreeTableField;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.model.TreeUIModelUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -48,16 +44,11 @@ public class ExpandAllCommandHandler extends AbstractCommandHandler {
     @Override
 	public HandlerResult handleCommand(DisplayContext aContext,
 			LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
-		FormMember treeField = ((FormComponent) aComponent).getFormContext()
-			.getFirstMemberRecursively(((Config) getConfig()).getTreeName());
-		TreeUIModel theModel;
-		if (treeField instanceof TreeTableField) {
-			theModel = ((TreeTableField) treeField).getTree();
-		} else {
-			FormTree theTree = (FormTree) treeField;
-			theModel = theTree.getTreeModel();
+		TreeUIModel theModel =
+			CollapseAllCommandHandler.resolveTreeModel(aComponent, ((Config) getConfig()).getTreeName());
+		if (theModel != null) {
+			TreeUIModelUtil.setExpandedAll(theModel, theModel.getRoot(), true);
 		}
-		TreeUIModelUtil.setExpandedAll(theModel, theModel.getRoot(), true);
 		return DefaultHandlerResult.DEFAULT_RESULT;
     }
 }

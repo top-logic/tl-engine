@@ -61,17 +61,28 @@ public class CollapseAllCommandHandler extends AbstractCommandHandler {
     @Override
 	public HandlerResult handleCommand(DisplayContext aContext,
             LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
-		FormMember treeField =
-			((FormComponent) aComponent).getFormContext()
-				.getFirstMemberRecursively(((Config) getConfig()).getTreeName());
-		TreeUIModel theModel;
-		if (treeField instanceof TreeTableField) {
-			theModel = ((TreeTableField) treeField).getTree();
-		} else {
-			FormTree theTree = (FormTree) treeField;
-			theModel = theTree.getTreeModel();
+		TreeUIModel theModel = resolveTreeModel(aComponent, ((Config) getConfig()).getTreeName());
+		if (theModel != null) {
+			TreeUIModelUtil.setExpandedAll(theModel, theModel.getRoot(), false);
 		}
-        TreeUIModelUtil.setExpandedAll(theModel, theModel.getRoot(), false);
         return DefaultHandlerResult.DEFAULT_RESULT;
     }
+
+	/**
+	 * Resolves the {@link TreeUIModel} of the form member with the given name in the given
+	 * component.
+	 *
+	 * @return The resolved tree model, or <code>null</code> if no matching tree-valued form member
+	 *         exists.
+	 */
+	static TreeUIModel resolveTreeModel(LayoutComponent component, String treeName) {
+		FormMember treeField = ((FormComponent) component).getFormContext().getFirstMemberRecursively(treeName);
+		if (treeField instanceof TreeTableField) {
+			return ((TreeTableField) treeField).getTree();
+		}
+		if (treeField instanceof FormTree) {
+			return ((FormTree) treeField).getTreeModel();
+		}
+		return null;
+	}
 }

@@ -268,7 +268,30 @@ Also decide whether `observe` should ever block user commands at all.
 
 ---
 
+## Findings to fix (surfaced 2026-06-24 driving a real form end-to-end)
+
+- [ ] **Field-name instability across view/edit.** A form field is named by its
+      technical attribute name in view mode (`formField[members]`) but by its
+      localized label in edit mode (`formField[Mitglieder]`) — the address breaks on
+      a mode switch. Field naming should be stable (prefer the technical attribute
+      name in both modes). Real bug, advances **D1**.
+- [ ] **Routed nav items aren't drivable.** `selectItem` is a no-op on a sidebar
+      item with `route="none"` (e.g. `administration`, navigated by route). The agent
+      needs a route-navigation action (or sidebar `selectItem` should honor routed
+      items) — otherwise whole areas are unreachable headlessly.
+- [ ] **Table rows are not projected.** `TableViewControl.select` takes a
+      `{rowIndex}`, but the projected table state exposes only columns/counts, not
+      row contents — so an agent cannot see which row is which to choose one. Project
+      (a window of) rows with their key + cell text. Part of the table/**D5** work.
+
 ## Progress log
+
+- **2026-06-24** — Drove a real multi-step task entirely through `/agent-api`
+  (login → `selectTab` Gruppen → `select {rowIndex:0}` → edit → `loadOptions {}` →
+  `valueChanged {value:[ids]}`): set a group's members from the headless interface,
+  options loaded (9) and selection applied. Confirms the interface is agent-operable
+  for non-trivial forms. Surfaced three gaps (see *Findings to fix*): view/edit
+  field-name instability, routed nav items not drivable, table rows not projected.
 
 - **2026-06-24** — Address-quality fixes (advances **D1**): (1) reject default
   `Object.toString()` model labels (`Class@hashcode`) as names — they were unstable

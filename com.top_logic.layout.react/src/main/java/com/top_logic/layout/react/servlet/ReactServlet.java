@@ -58,6 +58,7 @@ import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.headless.AgentSession;
 import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.ScriptRecorder;
@@ -457,7 +458,10 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 		String address = AgentSession.forRoot(queue.getRootControl()).addressOf(reactControl);
-		recorder.record(new RecordedStep(address, commandName, arguments));
+		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
+		// replay-stable form before capture.
+		RecordedCommand recorded = reactControl.recordCommand(commandName, arguments);
+		recorder.record(new RecordedStep(address, recorded.command(), recorded.arguments()));
 	}
 
 	/**

@@ -115,10 +115,13 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       each step through `AgentSession.act`, settling derived state between steps, and
       returns per-step `results` + final `observation`. Verified live end-to-end: counter
       0 →(2 recorded clicks)→ 2 →(replay)→ 4.
-- [ ] **Replay-stable arguments.** Session-id arguments (e.g. a dropdown's
-      `valueChanged {value:[ids]}`) replay only in the same session. Translate them to
-      business keys at record time (record as `selectByKey {keys:[…]}`) — builds directly
-      on the resolve path already in place. *Next.*
+- [x] **Replay-stable arguments.** A control rewrites session-bound arguments at record
+      time via `ReactControl.recordCommand` (default: verbatim). The dropdown overrides it
+      to translate `valueChanged {value:[ids]}` → `selectByKey {keys:[businessKeys]}`.
+      Verified live: a real browser option click on the members dropdown was captured as
+      `selectByKey {keys:["…ReactOptionByLabelNaming$Name…{label:securityOwner}"]}`, and
+      replaying that recorded script against a fresh (empty) form set the members to
+      `securityOwner` — session-independent identity, not an option id.
 - [ ] Assertions/observation steps (record "expected state at this point").
 - [ ] Migration story / coexistence with legacy `ScriptingRecorder`.
 
@@ -355,6 +358,15 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — **Phase 2 replay-stable arguments**, verified live. New
+  `ReactControl.recordCommand(command, args)` hook (default verbatim) lets a control emit
+  a replay-stable form at record time; `ReactDropdownSelectControl` overrides it to turn
+  `valueChanged {value:[session ids]}` into `selectByKey {keys:[business keys]}` via the
+  option scope + `AgentModelKey`. Proof: a real browser option click recorded as
+  `selectByKey {keys:[…{label:securityOwner}]}` (not an id), and replaying that script
+  against a fresh empty form reproduced the `securityOwner` selection. This unifies the
+  recorder with the business-key/`selectByKey` resolve path — recordings are now
+  session-independent for select fields.
 - **2026-06-24** — **Phase 2 recorder/capture first slice** (capture + replay), verified
   live. `ScriptRecorder` (per window, on `SSEUpdateQueue`) captures each browser command
   as a `RecordedStep(address, command, arguments)`; the address is the control's stable

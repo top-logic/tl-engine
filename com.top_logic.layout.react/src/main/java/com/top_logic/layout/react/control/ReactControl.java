@@ -402,6 +402,26 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).paramsFor(command);
 	}
 
+	/**
+	 * Translates a just-dispatched command into the form the script recorder should capture.
+	 *
+	 * <p>
+	 * The default records the command and arguments verbatim. A control whose live arguments are
+	 * session-bound — e.g. a select that sends allocated option ids — overrides this to emit a
+	 * replay-stable form (business keys instead of ids, possibly a different command), so a recorded
+	 * step resolves in a later session. Called before the command runs, with the same arguments.
+	 * </p>
+	 *
+	 * @param command
+	 *        The dispatched command id.
+	 * @param arguments
+	 *        The dispatched arguments.
+	 * @return The command to record.
+	 */
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		return new RecordedCommand(command, arguments == null ? Map.of() : arguments);
+	}
+
 	private static boolean containsControl(Object value) {
 		if (value instanceof ReactControl) {
 			return true;

@@ -31,6 +31,7 @@ import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -295,6 +296,33 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		}
 		updateValueState();
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Records a value change in replay-stable form: the live {@code valueChanged} carries
+	 * session-allocated option ids, so it is recorded as a {@code selectByKey} of the selected
+	 * options' business keys, which resolve again in a later session.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if ("valueChanged".equals(command) && arguments != null) {
+			List<String> ids = (List<String>) arguments.get(VALUE);
+			if (ids != null) {
+				ReactOptionScope scope =
+					new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
+				List<String> keys = new ArrayList<>(ids.size());
+				for (String id : ids) {
+					Object option = _optionIndex.get(id);
+					String key = option == null ? null : AgentModelKey.toJson(scope, option);
+					if (key != null) {
+						keys.add(key);
+					}
+				}
+				return new RecordedCommand("selectByKey", Map.of("keys", keys));
+			}
+		}
+		return super.recordCommand(command, arguments);
 	}
 
 	private List<Object> resolveByKeys(List<String> keys) {

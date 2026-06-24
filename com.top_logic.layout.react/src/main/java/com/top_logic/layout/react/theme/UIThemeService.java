@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
@@ -166,15 +165,15 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		return themeId.equals(_defaultTheme) ? ":root, " + scoped : scoped;
 	}
 
-	private static Map<String, UITheme> resolve(Log log, Map<String, UITheme.Config> configs) {
+	private static Map<String, UITheme> resolve(InstantiationContext context, Map<String, UITheme.Config> configs) {
 		Map<String, UITheme> result = new LinkedHashMap<>();
 		for (String id : configs.keySet()) {
-			resolveTheme(log, id, configs, result, new HashSet<>());
+			resolveTheme(context, id, configs, result, new HashSet<>());
 		}
 		return result;
 	}
 
-	private static UITheme resolveTheme(Log log, String id, Map<String, UITheme.Config> configs,
+	private static UITheme resolveTheme(InstantiationContext context, String id, Map<String, UITheme.Config> configs,
 			Map<String, UITheme> result, Set<String> active) {
 		UITheme resolved = result.get(id);
 		if (resolved != null) {
@@ -182,24 +181,27 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		}
 		UITheme.Config config = configs.get(id);
 		if (config == null) {
-			log.error("Unknown theme '" + id + "' referenced by 'extends'.");
+			context.error("Unknown theme '" + id + "' referenced by 'extends'.");
 			return null;
 		}
 		if (!active.add(id)) {
-			log.error("Cyclic theme inheritance at '" + id + "'.");
+			context.error("Cyclic theme inheritance at '" + id + "'.");
 			return null;
 		}
 
 		Map<String, String> tokens = new LinkedHashMap<>();
 		String parent = config.getExtends();
 		if (!StringServices.isEmpty(parent)) {
-			UITheme parentTheme = resolveTheme(log, parent, configs, result, active);
+			UITheme parentTheme = resolveTheme(context, parent, configs, result, active);
 			if (parentTheme != null) {
 				tokens.putAll(parentTheme.getTokens());
 			}
 		}
-		for (TokenDef token : config.getTokens().values()) {
-			tokens.put(token.getName(), token.getValue());
+		for (Map.Entry<String, ThemeToken.Config<?>> entry : config.getTokens().entrySet()) {
+			ThemeToken<?> token = context.getInstance(entry.getValue());
+			if (token != null) {
+				tokens.put(entry.getKey(), token.cssValue());
+			}
 		}
 
 		active.remove(id);

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.NamedConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
@@ -34,9 +35,6 @@ public final class UITheme {
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
 
-		/** Configuration name for {@link #getTokens()}. */
-		String TOKENS = "tokens";
-
 		/**
 		 * Id of the parent theme whose tokens this theme inherits, or empty for a root theme.
 		 */
@@ -50,11 +48,11 @@ public final class UITheme {
 		ResKey getLabel();
 
 		/**
-		 * This theme's token values, overriding the inherited ones, keyed by token name.
+		 * This theme's tokens, overriding the inherited ones, keyed by token name.
 		 */
-		@Name(TOKENS)
+		@DefaultContainer
 		@Key(NamedConfiguration.NAME_ATTRIBUTE)
-		Map<String, TokenDef> getTokens();
+		Map<String, ThemeToken.Config<?>> getTokens();
 
 	}
 

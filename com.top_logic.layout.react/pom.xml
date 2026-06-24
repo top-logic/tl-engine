@@ -23,6 +23,28 @@
       <groupId>com.top-logic</groupId>
       <artifactId>ext-org-mozilla-pdfjs</artifactId>
     </dependency>
+    <!-- Icon and font stylesheets served via ClientResources (see tl-layout-react.conf.config.xml). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-inter-fonts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-fontawesome</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>ext-com-bootstrap-icons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-icons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.webjars.npm</groupId>
+      <artifactId>remixicon</artifactId>
+      <version>4.7.0</version>
+    </dependency>
     <dependency>
       <groupId>de.haumacher.msgbuf</groupId>
       <artifactId>msgbuf-api</artifactId>

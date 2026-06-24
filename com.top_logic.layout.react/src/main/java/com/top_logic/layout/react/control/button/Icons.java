@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.button;
 
+import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
 
@@ -18,11 +19,13 @@ public class Icons extends IconsBase {
 	/**
 	 * Save button image (floppy disk).
 	 */
+	@DefaultValue("css:fa-solid fa-floppy-disk")
 	public static ThemeImage BUTTON_SAVE;
 
 	/**
 	 * Discard button image (trash).
 	 */
+	@DefaultValue("css:fa-solid fa-trash")
 	public static ThemeImage BUTTON_DISCARD;
 
 }

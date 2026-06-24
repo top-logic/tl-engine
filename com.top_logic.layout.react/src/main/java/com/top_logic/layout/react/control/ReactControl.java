@@ -224,6 +224,25 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
+	 * Whether this control is a purely structural wrapper that the headless agent projection should
+	 * elide, lifting its children into its parent.
+	 *
+	 * <p>
+	 * Layout-only containers (stacks, insets, slots, reload boundaries) carry no task-level meaning
+	 * for an agent; emitting them only deepens addresses and bloats the observation. Such controls
+	 * override this to return {@code true}. The projection logic stays generic — it asks each control
+	 * via this method and never switches on concrete control types — so a new structural container is
+	 * handled by overriding this one method, with no change to the projector.
+	 * </p>
+	 *
+	 * @return {@code true} if this control should be elided from the agent projection; {@code false}
+	 *         (the default) to appear as an addressable node.
+	 */
+	public boolean agentTransparent() {
+		return false;
+	}
+
+	/**
 	 * The direct child controls embedded in this control's state.
 	 *
 	 * <p>

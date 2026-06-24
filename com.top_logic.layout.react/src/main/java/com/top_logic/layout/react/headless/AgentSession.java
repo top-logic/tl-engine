@@ -71,10 +71,11 @@ public final class AgentSession {
 	}
 
 	/**
-	 * The window root as a 0-or-1 element list.
+	 * The visible top-level controls: the window root, or its visible children if the root itself is
+	 * a structural wrapper.
 	 */
 	private List<ReactControl> roots() {
-		return _root == null ? List.of() : List.of(_root);
+		return _root == null ? List.of() : AgentTreeProjector.visibleRoots(_root);
 	}
 
 	/**
@@ -129,7 +130,7 @@ public final class AgentSession {
 					+ "'. Available: " + available);
 			}
 			current = candidates.get(index);
-			candidates = current.agentChildren();
+			candidates = AgentTreeProjector.visibleChildren(current);
 			walked.append(AgentTreeProjector.SEPARATOR).append(segment);
 		}
 		return current;

@@ -82,4 +82,12 @@ public class ReloadableControl extends ReactCompositeControl implements ViewRelo
 		ReactControl newChild = (ReactControl) freshView.createControl(_viewContext);
 		replaceChildren(List.of(newChild));
 	}
+
+	/**
+	 * Structural: this control is an invisible view-reload boundary and is elided from the headless agent projection.
+	 */
+	@Override
+	public boolean agentTransparent() {
+		return true;
+	}
 }

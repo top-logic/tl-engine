@@ -54,4 +54,12 @@ public class ReactInsetControl extends ReactControl {
 	protected void propagateDetach() {
 		_child.detach();
 	}
+
+	/**
+	 * Structural: this control is a padding/inset wrapper and is elided from the headless agent projection.
+	 */
+	@Override
+	public boolean agentTransparent() {
+		return true;
+	}
 }

@@ -91,7 +91,7 @@ public final class AgentTreeProjector {
 	 * @return The projected node view.
 	 */
 	public static AgentNodeView project(ReactControl control, String address) {
-		List<ReactControl> kids = control.agentChildren();
+		List<ReactControl> kids = visibleChildren(control);
 		List<String> segments = segmentsFor(kids);
 
 		List<AgentNodeView> childViews = new ArrayList<>(kids.size());
@@ -118,6 +118,46 @@ public final class AgentTreeProjector {
 			return parent + segment;
 		}
 		return parent + SEPARATOR + segment;
+	}
+
+	/**
+	 * The semantic children of a control: its direct children with
+	 * {@link ReactControl#agentTransparent() structural} ones elided and their own visible children
+	 * lifted in their place.
+	 *
+	 * <p>
+	 * This is the single place pruning happens. It is fully generic — it asks each child whether it
+	 * is transparent and never inspects concrete control types — so the projection and resolution
+	 * stay free of any type cascade.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control whose semantic children to compute.
+	 * @return The visible (non-transparent) descendants that act as this control's children.
+	 */
+	public static List<ReactControl> visibleChildren(ReactControl control) {
+		List<ReactControl> result = new ArrayList<>();
+		for (ReactControl child : control.agentChildren()) {
+			if (child.agentTransparent()) {
+				result.addAll(visibleChildren(child));
+			} else {
+				result.add(child);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Expands a control to the visible nodes that should represent it at the top level: the control
+	 * itself, or — if it is {@link ReactControl#agentTransparent() structural} — its visible
+	 * children.
+	 *
+	 * @param control
+	 *        The candidate root control.
+	 * @return The visible top-level node(s).
+	 */
+	public static List<ReactControl> visibleRoots(ReactControl control) {
+		return control.agentTransparent() ? visibleChildren(control) : List.of(control);
 	}
 
 	/**

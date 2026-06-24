@@ -178,6 +178,32 @@ public class TestAgentSession extends TestCase {
 		assertTrue(row.opened());
 	}
 
+	/**
+	 * Structural pruning: a control that declares itself {@link ReactControl#agentTransparent()
+	 * transparent} is elided from the projection and its children are lifted in its place — so the
+	 * address skips layout scaffolding. The decision is polymorphic (per control), with no type
+	 * switch in the projector.
+	 */
+	public void testStructuralWrapperIsElided() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		TestReactContext context = new TestReactContext(queue);
+		DemoButtonControl button = new DemoButtonControl(context, "Go");
+		// Two nested transparent wrappers around the button.
+		DemoWrapperControl wrapper = new DemoWrapperControl(context,
+			new DemoWrapperControl(context, button));
+		AgentSession session = AgentSession.forRoot(wrapper);
+
+		AgentNodeView root = session.observe();
+		AgentNodeView buttonView = single(root.children());
+		assertEquals("button", buttonView.role());
+		// Both wrappers elided: no "/stack/stack" prefix.
+		assertEquals("/button[Go]", buttonView.address());
+
+		// The address resolves and acts through the elided wrappers.
+		session.act("/button[Go]", "click", Map.of());
+		assertEquals(1, button.clicks());
+	}
+
 	private static AgentNodeView childByAddress(AgentNodeView parent, String address) {
 		for (AgentNodeView child : parent.children()) {
 			if (child.address().equals(address)) {
@@ -306,6 +332,21 @@ public class TestAgentSession extends TestCase {
 
 		boolean opened() {
 			return _opened;
+		}
+	}
+
+	/**
+	 * A structural-only wrapper (like a layout stack) that elides itself from the agent projection.
+	 */
+	private static final class DemoWrapperControl extends ReactCompositeControl {
+
+		DemoWrapperControl(ReactContext context, ReactControl child) {
+			super(context, null, "TLStack", List.of(child));
+		}
+
+		@Override
+		public boolean agentTransparent() {
+			return true;
 		}
 	}
 

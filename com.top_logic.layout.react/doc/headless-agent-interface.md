@@ -105,8 +105,22 @@ We built `act`; we have **not** built capture.
 - [ ] Assertions/observation steps (record "expected state at this point").
 - [ ] Migration story / coexistence with legacy `ScriptingRecorder`.
 
-### Phase 3 — Action space & affordances ⬜
+### Phase 3 — Action space & affordances 🚧
 
+- [x] **Structural pruning (modular).** Layout-only wrappers elide themselves from
+      the projection via a single polymorphic `ReactControl.agentTransparent()`
+      override (ReactStackControl, ReactInsetControl, ReloadableControl,
+      SlotPlaceholderControl) — the projector asks each control and never switches
+      on concrete types (no `instanceof` cascade). Result (live): addresses dropped
+      from `/stack/appShell/sidebar/stack/inset/stack/grid/card[…]/counter[Aufgaben]`
+      to `/appShell/sidebar/grid/card[Aktive_Aufgaben]/counter[Aufgaben]`; payload
+      ~27 KB → ~20 KB. Shorter addresses are also more stable against layout
+      refactors (advances **D1**).
+- [ ] **Affordance-first view (the bigger size lever).** Pruning shortened
+      addresses but the payload is still dominated by raw state (e.g. the sidebar's
+      24-entry `items` array, null-filled button state). Add a compact
+      `mode=actions` projection: a flat list of interactive nodes with
+      `{address, role, name, state-summary, actions}` and trimmed state.
 - [ ] Optional argument schema on `@ReactCommand` (names/types/required) so the
       action space is introspectable without each control implementing
       `AgentNode` by hand.
@@ -250,6 +264,12 @@ Also decide whether `observe` should ever block user commands at all.
   session-wide request lock, stalling the UI and producing flaky partial reads.
   Recorded under Phase 4 + decision **D6**. Fix direction:
   snapshot-under-lock / project-off-lock.
+- **2026-06-24** — Structural pruning landed, modularly (one polymorphic
+  `agentTransparent()` per control, no type cascade). Live: addresses lose the
+  stack/inset/slot scaffolding, payload ~27 KB → ~20 KB; act through the pruned
+  address drives the real UI (counter 0→1 via SSE in a clean tab). Next size lever
+  is the affordance-first `mode=actions` view (payload still dominated by raw
+  state).
 - **2026-06-24** — Could **not** reproduce "controls don't react" via automation
   (view tab + observe tab + sidebar switching + 2nd tab); server log clean. The
   lock theory was wrong (a completed request releases it). Removed the

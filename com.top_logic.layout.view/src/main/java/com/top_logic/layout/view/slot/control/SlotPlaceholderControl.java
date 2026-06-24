@@ -106,4 +106,12 @@ public class SlotPlaceholderControl extends ReactControl implements SlotPlacehol
 	// Note: propagateAttach/propagateDetach/cleanupChildren are deliberately not overridden.
 	// The routed controls are owned by their <slot-content> contributions, which manage their
 	// attach/detach/cleanup lifecycle. The placeholder only borrows them for rendering.
+
+	/**
+	 * Structural: this control is a slot placeholder and is elided from the headless agent projection.
+	 */
+	@Override
+	public boolean agentTransparent() {
+		return true;
+	}
 }

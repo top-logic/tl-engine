@@ -61,16 +61,57 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * Checks whether the current person can read the given instance.
+	 * 
+	 * @implSpec Just calls {@link #isAllowed(TLObject, BoundCommandGroup)} with
+	 *           {@link SimpleBoundCommandGroup#READ}.
+	 */
+	default boolean isReadAllowed(TLObject instance) {
+		return isAllowed(instance, SimpleBoundCommandGroup.READ);
+	}
+
+	/**
 	 * Checks whether the given person can perform the given command group on the given instance.
 	 * Works for both built-in and custom operations.
 	 */
 	boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup);
 
 	/**
+	 * Checks whether the given person can read the given instance.
+	 * 
+	 * @implSpec Just calls {@link #isAllowed(Person, TLObject, BoundCommandGroup)} with
+	 *           {@link SimpleBoundCommandGroup#READ}.
+	 */
+	default boolean isReadAllowed(Person person, TLObject instance) {
+		return isAllowed(person, instance, SimpleBoundCommandGroup.READ);
+	}
+
+	/**
 	 * Checks whether the given person can perform the given command group on the given attribute of
 	 * the given instance.
 	 */
 	boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Checks whether the given person can read the given attribute of the given instance.
+	 * 
+	 * @implSpec Just calls
+	 *           {@link #isAllowed(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)} with
+	 *           {@link SimpleBoundCommandGroup#READ}.
+	 */
+	default boolean isReadAllowed(Person person, TLObject instance, TLStructuredTypePart attribute) {
+		return isAllowed(person, instance, attribute, SimpleBoundCommandGroup.READ);
+	}
+
+	/**
+	 * Checks whether the current person can read the given attribute of the given instance.
+	 * 
+	 * @implSpec Just calls {@link #isReadAllowed(TLObject, TLStructuredTypePart)} with
+	 *           {@link TLContext#currentUser()}.
+	 */
+	default boolean isReadAllowed(TLObject instance, TLStructuredTypePart attribute) {
+		return isReadAllowed(TLContext.currentUser(), instance, attribute);
+	}
 
 	/**
 	 * Checks whether the given person can create a new child object in the given composition

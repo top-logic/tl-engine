@@ -536,11 +536,17 @@ with hard coded popup window dimension
   	bottom: 100%;
 }
 
+.tlDropdownContent button {
+	border: unset;
+	width: 100%;
+}
+
+.tlDropdownContent button,
 .tlDropdownContent a {
-  	display: flex;
-  	flex-direction: row-reverse;
-  	justify-content: flex-end;
-  	align-items: center;
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: flex-end;
+	align-items: center;
 	padding: 0.2em var(--spacing-03);
 }
 
@@ -552,7 +558,7 @@ with hard coded popup window dimension
 	cursor: default;
 }
 
-.tlDropdownContent a .tlButtonLabel {
+.tlDropdownContent .tlButtonLabel {
 	font-family: var(--font-family);
 	font-size: .875rem;
 	font-weight: normal;
@@ -562,7 +568,7 @@ with hard coded popup window dimension
 	line-height: 2em;
 }
 
-.tlDropdownContent a .cmdImg {
+.tlDropdownContent .cmdImg {
 	color: var(--icon-secondary);
 	padding-right: var(--spacing-02);
 }
@@ -571,20 +577,24 @@ with hard coded popup window dimension
 	border-top: 1px solid var(--border-subtle);
 }
 
+.tlDropdownContent button:hover,
 .tlDropdownContent a:hover {
 	background: var(--layer-hover);
 	text-decoration: none;
 }
 
+.tlDropdownContent button:hover:not(.cmdButtonDisabled) .tlButtonLabel,
 .tlDropdownContent a:hover:not(.cmdButtonDisabled) .tlButtonLabel {
 	color: var(--text-primary);
 }
 
+.tlDropdownContent button:hover:not(.cmdButtonDisabled) .cmdImg,
 .tlDropdownContent a:hover:not(.cmdButtonDisabled) .cmdImg {
 	color: var(--button-fg, var(--icon-primary));
 	text-decoration: none;
 }
 
+.tlDropdownContent button:focus:not(.cmdButtonDisabled),
 .tlDropdownContent a:focus:not(.cmdButtonDisabled) {
 	box-shadow: inset 0px 0px 0px 2px var(--focus);
 	outline: none !important;

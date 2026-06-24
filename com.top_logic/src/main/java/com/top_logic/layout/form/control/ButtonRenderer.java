@@ -108,8 +108,7 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 				}
 				out.endTag(SPAN);
 			} else {
-				out.beginBeginTag(ANCHOR);
-				out.writeAttribute(HREF_ATTR, HREF_EMPTY_LINK);
+				out.beginBeginTag(BUTTON);
 
 				ButtonUIModel model = button.getModel();
 				writeAccessKeyAttribute(out, model);
@@ -123,7 +122,7 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 				{
 					out.writeText(theLabel);
 				}
-				out.endTag(ANCHOR);
+				out.endTag(BUTTON);
 			}
         }
     }

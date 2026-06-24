@@ -109,6 +109,7 @@ public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkBut
 			out.append(FormConstants.DISABLED_CSS_CLASS);
 		}
 		out.endCssClasses();
+		out.writeAttribute(DISABLED_ATTR, isDisabled);
 		out.writeAttribute(ID_ATTR, getButtonId(button));
 		out.writeAttribute(NAME_ATTR, button.getID());
 

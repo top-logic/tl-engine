@@ -884,7 +884,7 @@ services.viewport = {
 					additionalClass = " cmdButton";
 				} else if (currButton.classList.contains("cmdButtonDisabled")) {
 					additionalClass = " cmdButtonDisabled";
-					currButton.removeAttribute("href");
+					currButton.disabled = true;
 				}
 	      		currButton.classList = "tlInDropdown" + additionalClass;
 	      		dropdownHtml += currButton.outerHTML;
@@ -907,7 +907,7 @@ services.viewport = {
 	    	// because normally an element grows in the right direction but this dropdown menu has 
 	    	// to grow in the left direction.
 	    	let maxWidth = 0;
-	    	const labels = dropdownContent.querySelectorAll('a .tlButtonLabel');
+	    	const labels = dropdownContent.querySelectorAll('button .tlButtonLabel');
 			for (let i = 0; i < labels.length; i++) {
 				const label = labels[i];
 			  	let width = label.getBoundingClientRect().width;
@@ -918,8 +918,8 @@ services.viewport = {
   			  	}
 			  	maxWidth = Math.max(maxWidth, width);
 			}
-			const anchors = dropdownContent.querySelectorAll('a');
-			const buttonPadding = getComputedStyle(anchors[0]);
+			const buttons = dropdownContent.querySelectorAll('button');
+			const buttonPadding = getComputedStyle(buttons[0]);
 			const paddingLeft = parseFloat(buttonPadding.getPropertyValue('padding-left'));
 			const paddingRight = parseFloat(buttonPadding.getPropertyValue('padding-right'));
 			const ancestorWithLcHidden = this.findAncestorWithClass(dropdownButton, 'lcHidden', 5);

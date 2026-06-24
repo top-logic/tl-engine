@@ -300,9 +300,22 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		writeControlClassesContent(out);
 	}
 
+	/**
+	 * Writes the disabled attribute intrinsic to this control.
+	 */
+	@TemplateVariable(DISABLED_VAR)
+	public final void writeDisabledAttribute(Appendable out) throws IOException {
+//		out.writeAttribute(DISABLED_ATTR, isDisabled());
+		out.append("");
+		if (isDisabled()) {
+			out.append("disabled");
+		}
+	}
+
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
 		if (isVisible()) {
+			System.out.println("Disabled: " + isDisabled());
 			view.write(context, out, this);
 		} else {
 			out.beginBeginTag(SPAN);

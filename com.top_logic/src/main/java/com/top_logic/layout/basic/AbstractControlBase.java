@@ -84,6 +84,11 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	protected static final String CSS_CLASS = "cssClass";
 
 	/**
+	 * Name of the template variable defining disabled state.
+	 */
+	protected static final String DISABLED_VAR = "disabled";
+
+	/**
 	 * The {@link #isAttached()} property observable through
 	 * {@link #addListener(EventType, PropertyListener)}.
 	 * 
@@ -403,6 +408,7 @@ public abstract class AbstractControlBase extends PropertyObservableBase impleme
 	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
 		writeIdAttribute(out);
 		writeControlClasses(out);
+//		writeDisabledAttribute(out);
 	}
 
 	/**

@@ -7,11 +7,9 @@ package com.top_logic.layout.react.resource;
 
 import java.util.List;
 
-import com.top_logic.gui.Theme;
-
 /**
  * Resolves a {@link ResourceConfig} declaration to the concrete {@link ResourceRef references} that
- * are emitted for a given theme.
+ * are emitted.
  *
  * <p>
  * This is the single point of resource resolution shared by the runtime emission ({@link
@@ -22,14 +20,12 @@ import com.top_logic.gui.Theme;
 public interface ResourceResolver {
 
 	/**
-	 * Resolves the given resource declaration for the given theme.
+	 * Resolves the given resource declaration.
 	 *
 	 * @param resource
 	 *        The declared resource.
-	 * @param theme
-	 *        The theme used for overlay resolution of theme-scoped resources.
 	 * @return The references to emit, in order; empty when the resource resolves to nothing.
 	 */
-	List<ResourceRef> resolve(ResourceConfig resource, Theme theme);
+	List<ResourceRef> resolve(ResourceConfig resource);
 
 }

@@ -13,7 +13,6 @@ import java.util.Map;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.json.gstream.JsonWriter;
-import com.top_logic.gui.Theme;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 
@@ -52,22 +51,22 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 	}
 
 	@Override
-	public void writeScriptRefs(TagWriter out, String contextPath, Theme theme) throws IOException {
+	public void writeScriptRefs(TagWriter out, String contextPath) throws IOException {
 		// Classic (non-module) scripts first: they do not use the import map and may bootstrap
 		// globals that module scripts rely on.
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof ScriptConfig) {
-				for (ResourceRef ref : _resolver.resolve(resource, theme)) {
+				for (ResourceRef ref : _resolver.resolve(resource)) {
 					HTMLUtil.writeJavaScriptRef(out, contextPath, ref.url(), ref.version());
 				}
 			}
 		}
 
-		writeImportMap(out, contextPath, theme);
+		writeImportMap(out, contextPath);
 
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof ModuleScriptConfig script && !script.isExternal()) {
-				for (ResourceRef ref : _resolver.resolve(resource, theme)) {
+				for (ResourceRef ref : _resolver.resolve(resource)) {
 					HTMLUtil.writeJavaScriptRef(out, contextPath, ref.url(), ref.version(), MODULE_TYPE);
 				}
 			}
@@ -75,23 +74,23 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 	}
 
 	@Override
-	public void writeStyleRefs(TagWriter out, String contextPath, Theme theme) throws IOException {
+	public void writeStyleRefs(TagWriter out, String contextPath) throws IOException {
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof StyleSheetConfig) {
-				for (ResourceRef ref : _resolver.resolve(resource, theme)) {
+				for (ResourceRef ref : _resolver.resolve(resource)) {
 					HTMLUtil.writeStylesheetRef(out, contextPath, ref.full());
 				}
 			}
 		}
 	}
 
-	private void writeImportMap(TagWriter out, String contextPath, Theme theme) throws IOException {
+	private void writeImportMap(TagWriter out, String contextPath) throws IOException {
 		Map<String, String> imports = new LinkedHashMap<>();
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof ModuleScriptConfig script) {
 				String specifier = script.getSpecifier();
 				if (!StringServices.isEmpty(specifier)) {
-					List<ResourceRef> refs = _resolver.resolve(resource, theme);
+					List<ResourceRef> refs = _resolver.resolve(resource);
 					if (!refs.isEmpty()) {
 						imports.put(specifier, contextPath + refs.get(0).full());
 					}

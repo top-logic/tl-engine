@@ -22,7 +22,6 @@ import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.gui.Theme;
 
 /**
  * Registry of all client-side resources of the new React UI.
@@ -84,34 +83,30 @@ public class ClientResources extends ConfiguredManagedClass<ClientResources.Conf
 	 *        The writer of the HTML {@code <head>}.
 	 * @param contextPath
 	 *        The web application context path.
-	 * @param theme
-	 *        The active theme.
 	 * @throws IOException
 	 *         If writing fails.
 	 */
-	public void writeScriptRefs(TagWriter out, String contextPath, Theme theme) throws IOException {
-		provider().writeScriptRefs(out, contextPath, theme);
+	public void writeScriptRefs(TagWriter out, String contextPath) throws IOException {
+		provider().writeScriptRefs(out, contextPath);
 	}
 
 	/**
 	 * Emits the stylesheet references.
 	 *
 	 * <p>
-	 * Must be placed after the base theme stylesheet so that registered stylesheets form the
-	 * overriding cascade layer.
+	 * Must be placed after the design-token block so that the registered stylesheets, which
+	 * reference the tokens, form the overriding cascade layer.
 	 * </p>
 	 *
 	 * @param out
 	 *        The writer of the HTML {@code <head>}.
 	 * @param contextPath
 	 *        The web application context path.
-	 * @param theme
-	 *        The active theme.
 	 * @throws IOException
 	 *         If writing fails.
 	 */
-	public void writeStyleRefs(TagWriter out, String contextPath, Theme theme) throws IOException {
-		provider().writeStyleRefs(out, contextPath, theme);
+	public void writeStyleRefs(TagWriter out, String contextPath) throws IOException {
+		provider().writeStyleRefs(out, contextPath);
 	}
 
 	private ClientResourceProvider provider() {

@@ -89,24 +89,6 @@ public class CSSBuffer {
 		_buffer = expandedUrls(theme, _buffer);
     }
 
-	/**
-	 * The CSS custom-property definitions for the given theme as a <code>:root { ... }</code> block,
-	 * generated from its CSS-relevant {@link ThemeSetting theme settings}.
-	 *
-	 * <p>
-	 * In contrast to the full compiled theme stylesheet, this contains only the design tokens (no
-	 * component styles), so it can be served as the token layer of a UI that brings its own
-	 * component CSS.
-	 * </p>
-	 *
-	 * @param theme
-	 *        The theme whose settings to render.
-	 * @return The <code>:root { ... }</code> block.
-	 */
-	public static CharSequence themeVariables(Theme theme) {
-		return appendVariables(theme, new StringBuilder());
-	}
-
 	private static StringBuilder appendVariables(Theme theme, StringBuilder buffer) {
 		buffer.append(NEWLINE);
 		buffer.append(SELECTOR_FOR_VARIABLE_DEFINITIONS + " {");

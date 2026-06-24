@@ -11,11 +11,10 @@ import java.util.List;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.io.FileCompiler;
-import com.top_logic.gui.Theme;
 
 /**
- * Default {@link ResourceResolver}: resolves stylesheets through the theme overlay and module
- * scripts verbatim. A {@code webjar:} resource is resolved to its versioned served path.
+ * Default {@link ResourceResolver}: resources are used verbatim, except a {@code webjar:} reference,
+ * which is resolved to its versioned served path.
  */
 public class DefaultResourceResolver implements ResourceResolver {
 
@@ -24,27 +23,27 @@ public class DefaultResourceResolver implements ResourceResolver {
 	private static final String WEBJAR_PREFIX = "webjar:";
 
 	@Override
-	public List<ResourceRef> resolve(ResourceConfig resource, Theme theme) {
+	public List<ResourceRef> resolve(ResourceConfig resource) {
 		if (resource instanceof StyleSheetConfig css) {
-			String path = resolvePath(css.getResource(), css.isThemeScoped(), theme);
+			String path = resolvePath(css.getResource());
 			return Collections.singletonList(new ResourceRef(path, version(path)));
 		}
 		if (resource instanceof ModuleScriptConfig script) {
-			String path = resolvePath(script.getResource(), false, theme);
+			String path = resolvePath(script.getResource());
 			return Collections.singletonList(new ResourceRef(path, version(path)));
 		}
 		if (resource instanceof ScriptConfig script) {
-			String path = resolvePath(script.getResource(), false, theme);
+			String path = resolvePath(script.getResource());
 			return Collections.singletonList(new ResourceRef(path, version(path)));
 		}
 		return Collections.emptyList();
 	}
 
-	private static String resolvePath(String resource, boolean themeScoped, Theme theme) {
+	private static String resolvePath(String resource) {
 		if (resource.startsWith(WEBJAR_PREFIX)) {
 			return FileCompiler.resolveResourcePath(LOG, resource);
 		}
-		return themeScoped ? theme.getFileLink(resource) : resource;
+		return resource;
 	}
 
 	/**

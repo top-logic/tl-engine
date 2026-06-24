@@ -8,7 +8,6 @@ package com.top_logic.layout.react.resource;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.gui.Theme;
 
 /**
  * Emits the page-head references (stylesheet links, import map, module scripts) for all registered
@@ -34,12 +33,10 @@ public interface ClientResourceProvider {
 	 *        The writer of the HTML {@code <head>}.
 	 * @param contextPath
 	 *        The web application context path prefixed to every resource URL.
-	 * @param theme
-	 *        The active theme used for overlay resolution.
 	 * @throws IOException
 	 *         If writing fails.
 	 */
-	void writeScriptRefs(TagWriter out, String contextPath, Theme theme) throws IOException;
+	void writeScriptRefs(TagWriter out, String contextPath) throws IOException;
 
 	/**
 	 * Writes the stylesheet references.
@@ -48,11 +45,9 @@ public interface ClientResourceProvider {
 	 *        The writer of the HTML {@code <head>}.
 	 * @param contextPath
 	 *        The web application context path prefixed to every resource URL.
-	 * @param theme
-	 *        The active theme used for overlay resolution.
 	 * @throws IOException
 	 *         If writing fails.
 	 */
-	void writeStyleRefs(TagWriter out, String contextPath, Theme theme) throws IOException;
+	void writeStyleRefs(TagWriter out, String contextPath) throws IOException;
 
 }

@@ -20,10 +20,8 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.gui.CSSBuffer;
-import com.top_logic.gui.Theme;
-import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.react.resource.ClientResources;
+import com.top_logic.layout.react.theme.ThemeTokens;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -399,19 +397,14 @@ public class ViewServlet extends TopLogicServlet {
 		out.endBeginTag();
 		out.writeText("TopLogic View");
 		out.endTag(HTMLConstants.TITLE);
-		Theme theme = ThemeFactory.getTheme();
 		ClientResources clientResources = ClientResources.getInstance();
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
-		clientResources.writeScriptRefs(out, contextPath, theme);
-		// Emit only the theme's design tokens (CSS custom properties) - not the legacy component
-		// styles. The new UI brings its own component CSS via the registered stylesheets below.
-		out.beginBeginTag(HTMLConstants.STYLE_ELEMENT);
-		out.writeAttribute(HTMLConstants.TYPE_ATTR, "text/css");
-		out.endBeginTag();
-		out.writeContent(CSSBuffer.themeVariables(theme).toString());
-		out.endTag(HTMLConstants.STYLE_ELEMENT);
+		clientResources.writeScriptRefs(out, contextPath);
+		// Emit the active theme's design tokens (CSS custom properties) - the only thing the new UI
+		// consumes from the theme system. No legacy component styles, no file overlay.
+		ThemeTokens.writeRoot(out);
 		// Append the React stylesheets (fonts, icons, component CSS).
-		clientResources.writeStyleRefs(out, contextPath, theme);
+		clientResources.writeStyleRefs(out, contextPath);
 		out.endTag(HTMLConstants.HEAD);
 
 		out.beginBeginTag(HTMLConstants.BODY);

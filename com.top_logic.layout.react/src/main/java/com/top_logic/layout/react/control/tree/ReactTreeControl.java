@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
@@ -491,7 +492,8 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Expands a tree node, loading children and prefetching grandchildren.
 	 */
-	@ReactCommand("expand")
+	@ReactCommand(value = "expand", params = @ReactParam(name = "nodeId", required = true,
+		description = "The id of the tree node to expand."))
 	void handleExpand(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		Object node = findNodeById(nodeId);
@@ -513,7 +515,8 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Collapses a tree node, removing its children from the visible list.
 	 */
-	@ReactCommand("collapse")
+	@ReactCommand(value = "collapse", params = @ReactParam(name = "nodeId", required = true,
+		description = "The id of the tree node to collapse."))
 	void handleCollapse(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		Object node = findNodeById(nodeId);
@@ -527,7 +530,10 @@ public class ReactTreeControl extends ReactControl {
 	 * Selects a tree node. Supports single, toggle (Ctrl), and range (Shift) selection.
 	 */
 	@SuppressWarnings("unchecked")
-	@ReactCommand("select")
+	@ReactCommand(value = "select", params = {
+		@ReactParam(name = "nodeId", required = true, description = "The id of the tree node to select."),
+		@ReactParam(name = "ctrlKey", type = "boolean", description = "Toggle selection (multi-select)."),
+		@ReactParam(name = "shiftKey", type = "boolean", description = "Range selection (multi-select).") })
 	void handleSelect(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		boolean ctrlKey = Boolean.TRUE.equals(arguments.get("ctrlKey"));
@@ -580,7 +586,10 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Opens a context menu at the given coordinates for a tree node.
 	 */
-	@ReactCommand("contextMenu")
+	@ReactCommand(value = "contextMenu", params = {
+		@ReactParam(name = "nodeId", required = true, description = "The id of the tree node the context menu targets."),
+		@ReactParam(name = "x", type = "int", required = true, description = "The horizontal pixel position to open the menu at."),
+		@ReactParam(name = "y", type = "int", required = true, description = "The vertical pixel position to open the menu at.") })
 	void handleContextMenu(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		Object node = findNodeById(nodeId);
@@ -595,7 +604,9 @@ public class ReactTreeControl extends ReactControl {
 	 * Evaluates whether a drop is allowed at the given position and updates the drop indicator
 	 * state.
 	 */
-	@ReactCommand("dragOver")
+	@ReactCommand(value = "dragOver", params = {
+		@ReactParam(name = "nodeId", required = true, description = "The id of the tree node being dragged over."),
+		@ReactParam(name = "position", description = "The drop position relative to the node (e.g. before/on/after).") })
 	void handleDragOver(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		String position = (String) arguments.get("position");
@@ -611,7 +622,9 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Handles a drop event on a tree node. Clears drop indicators and processes the drop.
 	 */
-	@ReactCommand("drop")
+	@ReactCommand(value = "drop", params = {
+		@ReactParam(name = "nodeId", required = true, description = "The id of the tree node the drop targets."),
+		@ReactParam(name = "position", description = "The drop position relative to the node (e.g. before/on/after).") })
 	void handleDrop(Map<String, Object> arguments) {
 		String nodeId = (String) arguments.get("nodeId");
 		String position = (String) arguments.get("position");
@@ -644,7 +657,8 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Handles the selection of a context menu item.
 	 */
-	@ReactCommand("contextMenuAction")
+	@ReactCommand(value = "contextMenuAction", params = @ReactParam(name = "itemId", required = true,
+		description = "The id of the selected context-menu item."))
 	void handleContextMenuAction(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get("itemId");
 		Consumer<String> handler = _contextMenuActionHandler;

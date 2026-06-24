@@ -18,13 +18,13 @@ import com.top_logic.mig.html.HTMLUtil;
 
 /**
  * {@link ClientResourceProvider} that emits an individual head reference for every registered
- * resource (no runtime bundling).
+ * resource.
  *
  * <p>
  * Emission order is: all stylesheets (cascade order), then the aggregated import map, then all
  * module scripts (evaluation order). The import map precedes the module scripts as required by the
- * browser. The same {@link ResourceRef} is used for a module's script tag and its import map entry,
- * so both reference an identical URL and the module is instantiated only once.
+ * browser. A module's script tag and its import map entry reference an identical URL, so the module
+ * is instantiated only once.
  * </p>
  */
 public class UnbundledResourceProvider implements ClientResourceProvider {
@@ -43,7 +43,7 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 	 * @param ordered
 	 *        The registered resources in topologically sorted emission order.
 	 * @param resolver
-	 *        The resolver mapping a declaration to concrete references.
+	 *        The resolver mapping a declaration to concrete URLs.
 	 */
 	public UnbundledResourceProvider(List<? extends ResourceConfig> ordered, ResourceResolver resolver) {
 		_ordered = ordered;
@@ -56,8 +56,8 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 		// globals that module scripts rely on.
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof ScriptConfig) {
-				for (ResourceRef ref : _resolver.resolve(resource)) {
-					HTMLUtil.writeJavaScriptRef(out, contextPath, ref.url(), ref.version());
+				for (String url : _resolver.resolve(resource)) {
+					HTMLUtil.writeJavascriptRef(out, contextPath, url);
 				}
 			}
 		}
@@ -66,8 +66,8 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof ModuleScriptConfig script && !script.isExternal()) {
-				for (ResourceRef ref : _resolver.resolve(resource)) {
-					HTMLUtil.writeJavaScriptRef(out, contextPath, ref.url(), ref.version(), MODULE_TYPE);
+				for (String url : _resolver.resolve(resource)) {
+					HTMLUtil.writeJavaScriptRef(out, contextPath, url, "", MODULE_TYPE);
 				}
 			}
 		}
@@ -77,8 +77,8 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 	public void writeStyleRefs(TagWriter out, String contextPath) throws IOException {
 		for (ResourceConfig resource : _ordered) {
 			if (resource instanceof StyleSheetConfig) {
-				for (ResourceRef ref : _resolver.resolve(resource)) {
-					HTMLUtil.writeStylesheetRef(out, contextPath, ref.full());
+				for (String url : _resolver.resolve(resource)) {
+					HTMLUtil.writeStylesheetRef(out, contextPath, url);
 				}
 			}
 		}
@@ -90,9 +90,9 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 			if (resource instanceof ModuleScriptConfig script) {
 				String specifier = script.getSpecifier();
 				if (!StringServices.isEmpty(specifier)) {
-					List<ResourceRef> refs = _resolver.resolve(resource);
-					if (!refs.isEmpty()) {
-						imports.put(specifier, contextPath + refs.get(0).full());
+					List<String> urls = _resolver.resolve(resource);
+					if (!urls.isEmpty()) {
+						imports.put(specifier, contextPath + urls.get(0));
 					}
 				}
 			}

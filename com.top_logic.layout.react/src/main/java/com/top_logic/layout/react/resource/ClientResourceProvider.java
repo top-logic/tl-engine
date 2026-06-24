@@ -15,13 +15,8 @@ import com.top_logic.basic.xml.TagWriter;
  *
  * <p>
  * Script and stylesheet emission are separate so that the caller can place the import map (which
- * must precede every module script on the page, including those emitted by other mechanisms) and the
- * stylesheets (which must follow the base theme stylesheet) at the correct positions in the head.
- * </p>
- *
- * <p>
- * The unbundled implementation emits an individual reference per resource. A bundled implementation
- * backed by a production manifest is added by the bundle tooling.
+ * must precede every module script on the page) and the stylesheets (which must follow the
+ * design-token block) at the correct positions in the head.
  * </p>
  */
 public interface ClientResourceProvider {

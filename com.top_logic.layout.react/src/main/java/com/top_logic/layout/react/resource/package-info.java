@@ -15,9 +15,7 @@
  * </p>
  *
  * <p>
- * The registry only resolves and references resources; it never aggregates them at runtime.
- * Optional bundling and minification for a production deployment is performed by a separate deploy
- * step that re-uses the same {@link com.top_logic.layout.react.resource.ResourceResolver}.
+ * The registry resolves and references resources; it does not aggregate them.
  * </p>
  */
 package com.top_logic.layout.react.resource;

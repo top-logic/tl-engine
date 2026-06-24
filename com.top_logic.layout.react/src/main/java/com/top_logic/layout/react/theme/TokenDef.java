@@ -43,7 +43,7 @@ public interface TokenDef extends NamedConfigMandatory {
 	String getValue();
 
 	/**
-	 * Optional grouping label for organizing tokens in a theme editor.
+	 * Optional grouping label for related tokens.
 	 */
 	@Name(GROUP)
 	String getGroup();

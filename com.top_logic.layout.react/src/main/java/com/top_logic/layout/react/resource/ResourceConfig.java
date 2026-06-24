@@ -28,9 +28,6 @@ public interface ResourceConfig extends NamedConfigMandatory {
 	/** Configuration name for {@link #getRequires()}. */
 	String REQUIRES = "requires";
 
-	/** Configuration name for {@link #getBundle()}. */
-	String BUNDLE = "bundle";
-
 	/**
 	 * {@link #getName() Names} of other resources that must be emitted before this resource.
 	 *
@@ -43,17 +40,5 @@ public interface ResourceConfig extends NamedConfigMandatory {
 	@Name(REQUIRES)
 	@Format(CommaSeparatedStrings.class)
 	List<String> getRequires();
-
-	/**
-	 * Logical identifier of the bundle this resource is merged into when a production deployment is
-	 * built.
-	 *
-	 * <p>
-	 * Unused at runtime in the unbundled (development) mode. Consumed only by the optional
-	 * production bundle tooling.
-	 * </p>
-	 */
-	@Name(BUNDLE)
-	String getBundle();
 
 }

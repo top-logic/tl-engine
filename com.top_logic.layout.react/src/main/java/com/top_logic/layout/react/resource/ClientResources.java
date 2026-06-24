@@ -110,8 +110,6 @@ public class ClientResources extends ConfiguredManagedClass<ClientResources.Conf
 	}
 
 	private ClientResourceProvider provider() {
-		// A bundled provider backed by a production manifest is added by the bundle tooling; until
-		// then resources are always emitted individually.
 		return new UnbundledResourceProvider(_ordered, _resolver);
 	}
 

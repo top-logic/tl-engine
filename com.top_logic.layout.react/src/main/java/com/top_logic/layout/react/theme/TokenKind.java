@@ -9,8 +9,8 @@ package com.top_logic.layout.react.theme;
  * The kind of value a design {@link TokenDef token} holds.
  *
  * <p>
- * Used for validation and to choose the editing widget in a theme editor. It does not affect how the
- * token is emitted: every token becomes a CSS custom property regardless of kind.
+ * Used for validation. It does not affect how the token is emitted: every token becomes a CSS
+ * custom property regardless of kind.
  * </p>
  */
 public enum TokenKind {

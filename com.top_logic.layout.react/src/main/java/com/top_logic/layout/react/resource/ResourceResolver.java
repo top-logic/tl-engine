@@ -8,14 +8,7 @@ package com.top_logic.layout.react.resource;
 import java.util.List;
 
 /**
- * Resolves a {@link ResourceConfig} declaration to the concrete {@link ResourceRef references} that
- * are emitted.
- *
- * <p>
- * This is the single point of resource resolution shared by the runtime emission ({@link
- * ClientResourceProvider}) and the optional production bundle tooling, so that bundled and unbundled
- * deployments reference identical URLs in identical order.
- * </p>
+ * Resolves a {@link ResourceConfig} declaration to the concrete context-relative URL(s) to emit.
  */
 public interface ResourceResolver {
 
@@ -24,8 +17,9 @@ public interface ResourceResolver {
 	 *
 	 * @param resource
 	 *        The declared resource.
-	 * @return The references to emit, in order; empty when the resource resolves to nothing.
+	 * @return The context-relative URLs to emit, in order; empty when the resource resolves to
+	 *         nothing.
 	 */
-	List<ResourceRef> resolve(ResourceConfig resource);
+	List<String> resolve(ResourceConfig resource);
 
 }

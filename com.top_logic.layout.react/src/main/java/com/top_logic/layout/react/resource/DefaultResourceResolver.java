@@ -23,18 +23,15 @@ public class DefaultResourceResolver implements ResourceResolver {
 	private static final String WEBJAR_PREFIX = "webjar:";
 
 	@Override
-	public List<ResourceRef> resolve(ResourceConfig resource) {
+	public List<String> resolve(ResourceConfig resource) {
 		if (resource instanceof StyleSheetConfig css) {
-			String path = resolvePath(css.getResource());
-			return Collections.singletonList(new ResourceRef(path, version(path)));
+			return Collections.singletonList(resolvePath(css.getResource()));
 		}
 		if (resource instanceof ModuleScriptConfig script) {
-			String path = resolvePath(script.getResource());
-			return Collections.singletonList(new ResourceRef(path, version(path)));
+			return Collections.singletonList(resolvePath(script.getResource()));
 		}
 		if (resource instanceof ScriptConfig script) {
-			String path = resolvePath(script.getResource());
-			return Collections.singletonList(new ResourceRef(path, version(path)));
+			return Collections.singletonList(resolvePath(script.getResource()));
 		}
 		return Collections.emptyList();
 	}
@@ -44,23 +41,6 @@ public class DefaultResourceResolver implements ResourceResolver {
 			return FileCompiler.resolveResourcePath(LOG, resource);
 		}
 		return resource;
-	}
-
-	/**
-	 * Cache-busting query suffix for the given resolved path.
-	 *
-	 * <p>
-	 * This skeleton returns the empty string (no versioning). Content-hash based cache-busting is
-	 * deferred to the production bundle tooling. Any override must produce identical suffixes for a
-	 * module script and its import map entry, otherwise the module would be loaded twice.
-	 * </p>
-	 *
-	 * @param resolvedPath
-	 *        The context-relative path the resource resolved to.
-	 * @return The query suffix starting with {@code "?"}, or the empty string.
-	 */
-	protected String version(String resolvedPath) {
-		return "";
 	}
 
 }

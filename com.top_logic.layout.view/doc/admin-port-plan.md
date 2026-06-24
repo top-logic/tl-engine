@@ -122,7 +122,9 @@ maintenance, locks, logs) need **commands**. The clean app-bar **command project
 **postponed**. Until then, a command-bearing view uses a titled `<panel fill="true">` and places
 its commands in the panel's `<commands>` toolbar (rendered in the panel header). This duplicates
 the label (tab + panel title) — **accepted as a temporary tradeoff**. Read-only single-table views
-keep using the chrome-less `<full-page>`.
+keep using the chrome-less `<full-page>`. The reusable `<visible-if expr="…">` executability rule
+(added with the SQL monitor) shows a command only while a TL-Script predicate over its `input`
+channel holds — used to make Start vs. Refresh/Stop mutually exclusive.
 
 ### Batch 2 — Monitoring, stateful / historical  ▢
 - [x] User-session monitor — `UserSessionTable` (Sessions tab) + `FailedLoginTable` (Failed logins tab), read-only, 30-day window.

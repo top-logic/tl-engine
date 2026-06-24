@@ -17,4 +17,15 @@
 			</instance>
 		</config>
 	</services>
+
+	<configs>
+		<!--
+			This is a React-only application: its entry point is the React view shell at /view/.
+			The framework's start page is a singleton setting that the legacy core defaults to the
+			layout servlet; the application authoritatively declares its own entry here.
+		-->
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+		</config>
+	</configs>
 </application>

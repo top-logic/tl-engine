@@ -2,13 +2,16 @@
 
 <!--
 	SQL monitor: start / refresh / stop capturing of SQL statement statistics on the default
-	connection pool. The toolbar commands run a SqlMonitorAction and write the resulting statistics
-	to the sqlStats channel; the SqlStatisticsTable renders them. A titled <panel> is used (rather
-	than the chrome-less <full-page>) because the view carries toolbar commands.
+	connection pool. Each command runs the SqlMonitorAction (referenced by class=, app-specific) and
+	writes the resulting statistics to the sqlStats channel; SqlStatisticsTable renders them. The
+	boolean monitoring channel tracks whether capturing is running so the reusable <visible-if> rule
+	can show Start while stopped and Refresh / Stop while running (they are mutually exclusive). A
+	titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar commands.
 -->
 <view>
 	<channels>
 		<channel name="sqlStats"/>
+		<channel name="monitoring"/>
 	</channels>
 	<panel fill="true">
 		<title>
@@ -18,36 +21,58 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-play"
+				input="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
 					<en>Start</en>
 					<de>Starten</de>
 				</label>
-				<sql-monitor mode="START"/>
+				<executability>
+					<visible-if expr="running -> $running != true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
+					mode="START"
+				/>
 				<write-channel name="sqlStats"/>
+				<execute-script function="x -> true"/>
+				<write-channel name="monitoring"/>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
+				input="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
 					<en>Refresh</en>
 					<de>Aktualisieren</de>
 				</label>
-				<sql-monitor mode="REFRESH"/>
+				<executability>
+					<visible-if expr="running -> $running == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
+					mode="REFRESH"
+				/>
 				<write-channel name="sqlStats"/>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-stop"
+				input="monitoring"
 				placement="TOOLBAR"
 			>
 				<label>
 					<en>Stop</en>
 					<de>Stoppen</de>
 				</label>
-				<sql-monitor mode="STOP"/>
+				<executability>
+					<visible-if expr="running -> $running == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
+					mode="STOP"
+				/>
 				<write-channel name="sqlStats"/>
+				<execute-script function="x -> false"/>
+				<write-channel name="monitoring"/>
 			</generic-command>
 		</commands>
 		<child class="com.top_logic.layout.view.admin.monitor.SqlStatisticsTable"

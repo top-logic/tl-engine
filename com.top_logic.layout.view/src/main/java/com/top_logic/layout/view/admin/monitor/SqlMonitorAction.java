@@ -16,7 +16,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
@@ -57,8 +56,12 @@ public class SqlMonitorAction implements ViewAction {
 
 	/**
 	 * Configuration for {@link SqlMonitorAction}.
+	 *
+	 * <p>
+	 * App-specific action, referenced by {@code class=} in the SQL monitor view rather than claiming
+	 * a global {@code @TagName}.
+	 * </p>
 	 */
-	@TagName("sql-monitor")
 	public interface Config extends PolymorphicConfiguration<SqlMonitorAction> {
 
 		/** Configuration name for {@link #getMode()}. */

@@ -337,15 +337,40 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — D1 context-relative keys **verified live** end-to-end through
+  `/agent-api` (login → groups tab → select group `user` → edit → `loadOptions`):
+  the dropdown emits `ReactOptionByLabelName` (`{"label":…}`) for uniquely-labeled
+  options and degrades to the global key only on label collisions. See the detailed
+  entry below; the build direction of the context-relative scheme is now proven.
+  - **Act-path gap found while dogfooding** (separate from naming): `click` and
+    `loadOptions` apply correctly through `/agent-api/act` (`success:true`), but
+    `selectTab` on the *routed* nested tab bar and `select` on the access-control
+    groups `tableView` both returned `success:false` and had **no effect** (tab did
+    not switch; no row got selected). The same flow had to be driven by browser
+    clicks to reach the dropdown. Routed navigation evidently needs the route to be
+    pushed (the tab switch changes the URL: `…/access-control/groups`), and the
+    security-model table's selection likely routes too — the headless `act` path
+    dispatches the command but does not drive the routing/selection side effect.
+    Worth a focused slice: make `selectTab`/table `select` honor the same route or
+    selection channel the client uses, and make `act` report the real outcome.
 - **2026-06-24** — D1 context-relative keys (first slice): the React layer defines its
   own naming scheme `ReactOptionByLabelNaming` (context type `ReactOptionScope`), so a
   select option is named/resolved by label *relative to its control* — no global
   uniqueness, no `MainLayout`. Confirms the design: React registers schemes keyed on
   React context types; the framework auto-selects by `C`; legacy schemes (bound to
   legacy `C` types) never fire here. Scheme registered (verified in boot log), dropdown
-  wired to build option keys via the scope. **Not yet verified live:** that the dropdown
-  emits a context-relative `ReactOptionByLabelName` (priority vs the global by-label
-  scheme) and the round-trip resolve back to the option object.
+  wired to build option keys via the scope. **Verified live** (group `user` members
+  dropdown, driven via `/agent-api`): the 7 uniquely-labeled options key as bare
+  `{"label":…}` (the React context-relative `ReactOptionByLabelName`), while the 2
+  options whose label collides between a Person *and* a Group of the same name
+  (`anonymous`, `root`) fall back to the global `TLModelPartNaming` key — because
+  `buildName` declines on a non-unique label, so identity is never lost. Same object,
+  context-sensitive: group `securityAdministrators` keys as a global `StringNaming`/`Group`
+  name in the *table* but as `{"label":"securityAdministrators"}` in the *dropdown*. No
+  `priority` tuning needed — the global scheme only wins where the context-relative one
+  declines. Still open: round-trip resolve (`locateModel`) is unit-level only; it is not
+  yet wired into a live act command (e.g. selecting an option by its `{"label":…}` key),
+  which is the next slice.
 - **2026-06-24** — D1 business keys: `AgentModelKey` projects a stable `ModelName`
   (JSON) key onto table rows and dropdown options. Verified live — real KB-resolvable
   global names. Hit two decision walls: how to provide an `ActionContext` for *replay*

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance class="com.top_logic.basic.module.ModuleSystem">
+				<modules>
+					<module key="com.top_logic.layout.react.theme.UIThemeService$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.react.theme.UIThemeService">
+			<instance class="com.top_logic.layout.react.theme.UIThemeService"
+				default-theme="default"
+			>
+				<themes>
+					<theme name="default" label="Default">
+						<tokens>
+							<token name="background" kind="COLOR" value="#FFFFFF"/>
+							<token name="background-inverse" kind="COLOR" value="#393C40"/>
+							<token name="background-selected" kind="COLOR" value="#F0F1F2"/>
+							<token name="body-02-font-size" kind="LENGTH" value=".875rem"/>
+							<token name="body-02-line-height" kind="LENGTH" value="1.125rem"/>
+							<token name="body-compact-01-font-size" kind="LENGTH" value=".875rem"/>
+							<token name="body-compact-01-line-height" kind="LENGTH" value="1.125rem"/>
+							<token name="border-color" kind="COLOR" value="#C4C7CC"/>
+							<token name="border-interactive" kind="COLOR" value="#2968C8"/>
+							<token name="border-radius-02" kind="LENGTH" value=".5rem"/>
+							<token name="border-strong" kind="COLOR" value="#878D96"/>
+							<token name="border-subtle" kind="COLOR" value="#C4C7CC"/>
+							<token name="border-subtle-01" kind="COLOR" value="#C4C7CC"/>
+							<token name="button-danger" kind="COLOR" value="#D3181B"/>
+							<token name="button-danger-hover" kind="COLOR" value="#BC1518"/>
+							<token name="button-disabled" kind="COLOR" value="#E1E2E5"/>
+							<token name="button-primary" kind="COLOR" value="#2968C8"/>
+							<token name="button-primary-active" kind="COLOR" value="#09387E"/>
+							<token name="button-primary-hover" kind="COLOR" value="#245DB2"/>
+							<token name="button-secondary" kind="COLOR" value="#2968C8"/>
+							<token name="button-secondary-active" kind="COLOR" value="#09387E"/>
+							<token name="button-secondary-hover" kind="COLOR" value="#245DB2"/>
+							<token name="color-border" kind="COLOR" value="#C4C7CC"/>
+							<token name="color-drop-zone" kind="COLOR" value="rgba(41,104,200,0.08)"/>
+							<token name="color-surface" kind="COLOR" value="#FFFFFF"/>
+							<token name="corner-radius" kind="LENGTH" value="0.25rem"/>
+							<token name="field" kind="COLOR" value="#F0F1F2"/>
+							<token name="field-disabled" kind="COLOR" value="#F0F1F2"/>
+							<token name="focus" kind="COLOR" value="#2968C8"/>
+							<token name="focus-inset" kind="COLOR" value="#FFFFFF"/>
+							<token name="font-family" kind="FONT_FAMILY" value="'Inter'"/>
+							<token name="heading-compact-02-font-size" kind="LENGTH" value=".875rem"/>
+							<token name="heading-compact-02-letter-spacing" kind="LENGTH" value=".15px"/>
+							<token name="heading-compact-02-line-height" kind="LENGTH" value="1.125rem"/>
+							<token name="heading-compact-03-font-size" kind="LENGTH" value="1rem"/>
+							<token name="icon-disabled" kind="COLOR" value="#878D96"/>
+							<token name="icon-on-color" kind="COLOR" value="#FFFFFF"/>
+							<token name="icon-primary" kind="COLOR" value="#101113"/>
+							<token name="interactive" kind="COLOR" value="#2968C8"/>
+							<token name="label-01-font-size" kind="LENGTH" value=".75rem"/>
+							<token name="layer" kind="COLOR" value="#F0F1F2"/>
+							<token name="layer-01" kind="COLOR" value="#FFFFFF"/>
+							<token name="layer-02" kind="COLOR" value="#FFFFFF"/>
+							<token name="layer-accent" kind="COLOR" value="#6A6A6A"/>
+							<token name="layer-accent-active" kind="COLOR" value="#3B3B3B"/>
+							<token name="layer-accent-hover" kind="COLOR" value="#525252"/>
+							<token name="layer-accent-icon" kind="COLOR" value="#FFFFFF"/>
+							<token name="layer-accent-text" kind="COLOR" value="#FFFFFF"/>
+							<token name="layer-active" kind="COLOR" value="#C4C7CC"/>
+							<token name="layer-hover" kind="COLOR" value="#E5E5E6"/>
+							<token name="layer-selected" kind="COLOR" value="#E1E2E5"/>
+							<token name="layer-selected-hover" kind="COLOR" value="#D3D5D9"/>
+							<token name="link-color" kind="COLOR" value="#2968C8"/>
+							<token name="link-primary" kind="COLOR" value="#2968C8"/>
+							<token name="link-primary-hover" kind="COLOR" value="#245DB2"/>
+							<token name="script-editor-text-highlight" kind="COLOR" value="#D6E3F7"/>
+							<token name="shadow-menu" kind="SHADOW" value="0 2px 6px 0 rgba(0,0,0,0.32)"/>
+							<token name="spacing-01" kind="LENGTH" value=".25rem"/>
+							<token name="spacing-02" kind="LENGTH" value=".5rem"/>
+							<token name="spacing-03" kind="LENGTH" value="1rem"/>
+							<token name="spacing-04" kind="LENGTH" value="1.5rem"/>
+							<token name="spacing-05" kind="LENGTH" value="2rem"/>
+							<token name="spacing-06" kind="LENGTH" value="3rem"/>
+							<token name="support-error" kind="COLOR" value="#D3181B"/>
+							<token name="support-success" kind="COLOR" value="#04A38D"/>
+							<token name="support-warning" kind="COLOR" value="#D3A118"/>
+							<token name="text-disabled" kind="COLOR" value="#C4C7CC"/>
+							<token name="text-error" kind="COLOR" value="#D3181B"/>
+							<token name="text-helper" kind="COLOR" value="#676B72"/>
+							<token name="text-inverse" kind="COLOR" value="#FFFFFF"/>
+							<token name="text-muted" kind="COLOR" value="#676B72"/>
+							<token name="text-on-color" kind="COLOR" value="#FFFFFF"/>
+							<token name="text-on-color-disabled" kind="COLOR" value="#878D96"/>
+							<token name="text-placeholder" kind="COLOR" value="#A7ABB2"/>
+							<token name="text-primary" kind="COLOR" value="#101113"/>
+							<token name="text-secondary" kind="COLOR" value="#676B72"/>
+						</tokens>
+					</theme>
+					<theme name="dark"
+						extends="default"
+						label="Dark"
+					>
+						<tokens>
+							<token name="background" kind="COLOR" value="#1A1C1E"/>
+							<token name="background-inverse" kind="COLOR" value="#F0F1F2"/>
+							<token name="background-selected" kind="COLOR" value="#2A2D30"/>
+							<token name="border-color" kind="COLOR" value="#3A4045"/>
+							<token name="border-interactive" kind="COLOR" value="#5B9BF0"/>
+							<token name="border-strong" kind="COLOR" value="#6F7378"/>
+							<token name="border-subtle" kind="COLOR" value="#3A4045"/>
+							<token name="border-subtle-01" kind="COLOR" value="#3A4045"/>
+							<token name="button-disabled" kind="COLOR" value="#3A4045"/>
+							<token name="button-primary" kind="COLOR" value="#5B9BF0"/>
+							<token name="button-primary-active" kind="COLOR" value="#3F86E6"/>
+							<token name="button-primary-hover" kind="COLOR" value="#7AAEF3"/>
+							<token name="button-secondary" kind="COLOR" value="#5B9BF0"/>
+							<token name="button-secondary-active" kind="COLOR" value="#3F86E6"/>
+							<token name="button-secondary-hover" kind="COLOR" value="#7AAEF3"/>
+							<token name="color-border" kind="COLOR" value="#3A4045"/>
+							<token name="color-drop-zone" kind="COLOR" value="rgba(91,155,240,0.12)"/>
+							<token name="color-surface" kind="COLOR" value="#1A1C1E"/>
+							<token name="field" kind="COLOR" value="#262A2E"/>
+							<token name="field-disabled" kind="COLOR" value="#2A2D30"/>
+							<token name="focus" kind="COLOR" value="#5B9BF0"/>
+							<token name="focus-inset" kind="COLOR" value="#1A1C1E"/>
+							<token name="icon-disabled" kind="COLOR" value="#6F7378"/>
+							<token name="icon-primary" kind="COLOR" value="#F2F4F8"/>
+							<token name="interactive" kind="COLOR" value="#5B9BF0"/>
+							<token name="layer" kind="COLOR" value="#262A2E"/>
+							<token name="layer-01" kind="COLOR" value="#1F2327"/>
+							<token name="layer-02" kind="COLOR" value="#262A2E"/>
+							<token name="layer-active" kind="COLOR" value="#3A4045"/>
+							<token name="layer-hover" kind="COLOR" value="#2F3438"/>
+							<token name="layer-selected" kind="COLOR" value="#343A3F"/>
+							<token name="layer-selected-hover" kind="COLOR" value="#3D444A"/>
+							<token name="link-color" kind="COLOR" value="#7AAEF3"/>
+							<token name="link-primary" kind="COLOR" value="#7AAEF3"/>
+							<token name="link-primary-hover" kind="COLOR" value="#97C0F6"/>
+							<token name="script-editor-text-highlight" kind="COLOR" value="#2A3A55"/>
+							<token name="support-error" kind="COLOR" value="#FF6B6E"/>
+							<token name="text-disabled" kind="COLOR" value="#6F7378"/>
+							<token name="text-error" kind="COLOR" value="#FF6B6E"/>
+							<token name="text-helper" kind="COLOR" value="#A7ABB2"/>
+							<token name="text-muted" kind="COLOR" value="#A7ABB2"/>
+							<token name="text-placeholder" kind="COLOR" value="#6F7378"/>
+							<token name="text-primary" kind="COLOR" value="#F2F4F8"/>
+							<token name="text-secondary" kind="COLOR" value="#A7ABB2"/>
+						</tokens>
+					</theme>
+				</themes>
+			</instance>
+		</config>
+	</services>
+</application>

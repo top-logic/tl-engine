@@ -21,7 +21,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.resource.ClientResources;
-import com.top_logic.layout.react.theme.ThemeTokens;
+import com.top_logic.layout.react.theme.UIThemeService;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -379,9 +379,12 @@ public class ViewServlet extends TopLogicServlet {
 
 		TagWriter out = new TagWriter(response.getWriter());
 
+		UIThemeService themes = UIThemeService.getInstance();
+
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
 		out.beginBeginTag(HTMLConstants.HTML);
 		out.writeAttribute("lang", "en");
+		out.writeAttribute("data-theme", themes.getActiveThemeId());
 		out.endBeginTag();
 
 		out.beginBeginTag(HTMLConstants.HEAD);
@@ -400,9 +403,9 @@ public class ViewServlet extends TopLogicServlet {
 		ClientResources clientResources = ClientResources.getInstance();
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);
-		// Emit the active theme's design tokens (CSS custom properties) - the only thing the new UI
-		// consumes from the theme system. No legacy component styles, no file overlay.
-		ThemeTokens.writeRoot(out);
+		// Emit the design tokens of every registered theme as data-theme scoped CSS custom
+		// properties. The active theme is selected via the data-theme attribute on <html>.
+		themes.writeThemeStyles(out);
 		// Append the React stylesheets (fonts, icons, component CSS).
 		clientResources.writeStyleRefs(out, contextPath);
 		out.endTag(HTMLConstants.HEAD);

@@ -1,1 +1,2 @@
 tl-layout-react.conf.config.xml
+tl-react-theme.config.xml

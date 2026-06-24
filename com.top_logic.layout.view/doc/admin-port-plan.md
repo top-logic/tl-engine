@@ -125,9 +125,12 @@ the label (tab + panel title) — **accepted as a temporary tradeoff**. Read-onl
 keep using the chrome-less `<full-page>`.
 
 ### Batch 2 — Monitoring, stateful / historical  ▢
-- [ ] SQL/DB monitor with start / stop / clear commands.
-- [ ] Revision / audit monitor (change history table + detail).
-- [ ] User-session monitor (active sessions + failed-login tracking).
+- [x] User-session monitor — `UserSessionTable` (Sessions tab) + `FailedLoginTable` (Failed logins tab), read-only, 30-day window.
+- [x] SQL/DB monitor — `SqlMonitorAction` (start / refresh / stop) + `SqlStatisticsTable`, in a titled
+      fill panel; **validates the titled-panel command pattern** for Batches 3–4.
+- [ ] Revision / audit monitor — change history. Heaviest UI (a tree-table: ChangeSet → ItemEvent →
+      ChangeEntry, with a date-range filter and a revert command). A flat recent-revisions table is a
+      tractable v1; the object-level drill-down + revert are a follow-up.
 
 ### Batch 3 — System / technical  ▢
 Establishes the "System" admin section.

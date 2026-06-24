@@ -117,12 +117,12 @@ tables; views are hosted in the chrome-less `<full-page>` element (added this ba
   `TableViewControl`.
 - `SectionedTable` base for (section, name, value) tables with stable per-row selection keys.
 
-**Prerequisite for the command-bearing batches below:** Batches 2–4 (SQL start/stop/clear,
-scheduler, services, maintenance, locks, logs) all need **commands**. Per the `<full-page>` design,
-a full page renders no local toolbar — commands are expected to **project to a slot up the tree
-(app bar)**. That projection path is not yet wired for admin views, so it must be designed/built
-before those command actions can land. (Read-only tables in those batches — revision/audit monitor,
-user-session monitor — do not need it and can proceed first.)
+**Command-bearing views (decided):** Batches 2–4 (SQL start/stop/clear, scheduler, services,
+maintenance, locks, logs) need **commands**. The clean app-bar **command projection** is
+**postponed**. Until then, a command-bearing view uses a titled `<panel fill="true">` and places
+its commands in the panel's `<commands>` toolbar (rendered in the panel header). This duplicates
+the label (tab + panel title) — **accepted as a temporary tradeoff**. Read-only single-table views
+keep using the chrome-less `<full-page>`.
 
 ### Batch 2 — Monitoring, stateful / historical  ▢
 - [ ] SQL/DB monitor with start / stop / clear commands.

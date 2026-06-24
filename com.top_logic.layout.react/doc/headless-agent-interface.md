@@ -83,14 +83,18 @@ schemas.
 The load-bearing phase. Index-disambiguated labels are fine for a demo but
 fragile for recorded scripts (labels duplicate, reorder, localize, change).
 
-- [ ] Decide the addressing scheme (see **D1**).
-- [ ] Introduce a stable identity for **data** nodes (rows, list items) — a
-      model/business-key reference, the `ModelName`/`SelectionRef` analogue, not
-      a positional index.
-- [ ] Keep structural paths for **chrome** (buttons, tabs, panels).
+- [ ] Decide the addressing scheme (see **D1**) — resolution-context wall DECIDED
+      (`ReactActionContext`); naming-scheme-stability wall (D1 #2) still open.
+- [x] Introduce a stable identity for **data** nodes (rows, list items) — a
+      model/business-key reference (`AgentModelKey` = JSON `ModelName`), not a
+      positional index. Keys on table rows and dropdown options; build **and**
+      resolve (`selectByKey`) verified live.
+- [x] Keep structural paths for **chrome** (buttons, tabs, panels).
 - [ ] Define behavior when an address no longer resolves (drift): hard-fail for
       replay vs. best-match/re-plan for an agent.
-- [ ] Round-trip tests across re-render and across a fresh session.
+- [ ] Round-trip tests across re-render and across a fresh session — scheme-level
+      round-trip unit-tested (`TestReactOptionByLabelNaming`); a cross-session
+      end-to-end automated test still to write.
 
 ### Phase 2 — Recorder side ⬜
 
@@ -230,15 +234,16 @@ JSON `ModelName` of the row/option business object. Verified live on the green-f
 table: e.g. `{"model-name":["…TLObjectByLabelNaming…",{"class-name":"DemoTypes:A","object-label":"Part 1"}]}`
 — a real, KB-resolvable global name independent of index/sort/session.
 
-**Two walls hit — decisions needed:**
-1. **Resolution context.** `ModelResolver.locateModel` needs an `ActionContext`; the
-   only impl, `LiveActionContext`, is built on the legacy `LayoutComponent`/`MainLayout`,
-   which the React view layer has no equivalent of. Options: (a) a thin view-layer
-   `ActionContext` adapter backed by the `ViewContext`/`DisplayContext` with no component
-   (works for *global* naming schemes — what we use — but not component-relative ones);
-   (b) restrict to global names + resolve directly against the KB; (c) route replay
-   through the legacy scripting runtime (max continuity, couples to it). *Build (key
-   production) works today without this; only replay/round-trip needs it.*
+**Walls:**
+1. **Resolution context. `DECIDED` — option (a): `ReactActionContext`.** A thin
+   `AbstractActionContext` subclass carrying only the `DisplayContext` + `HttpSession`
+   the React view layer actually has; `getMainLayout()` throws. It drives
+   `ModelResolver.locateModel` for both global schemes (KB-backed, context-light) and
+   the React layer's own context-relative schemes. Verified live round-trip (a group by
+   its context-relative `{"label":…}` key **and** a person by its global key, resolved
+   in one `selectByKey` call). Component-relative *legacy* schemes (which need a
+   `MainLayout`) remain out of scope — correctly, since the React layer defines its own
+   context-relative schemes instead (see `ReactOptionByLabelNaming`).
 2. **Naming-scheme stability.** The default scheme picked here is *by label*
    (`TLObjectByLabelName`) — human-readable but mutable and potentially non-unique,
    i.e. the very instability we're trying to avoid. Decide whether keys should prefer

@@ -6,6 +6,7 @@
 package com.top_logic.bpe.execution.script;
 
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -22,7 +23,11 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -79,7 +84,7 @@ public class CreateProcessInstance extends GenericMethod {
 		}
 
 		// Create process instance
-		ProcessExecution processExecution = createProcessModel(startEvent);
+		ProcessExecution processExecution = createProcessModel(startEvent, definitions);
 		processExecution.setProcess(startEvent.getProcess());
 		processExecution.setCollaboration(processExecution.getProcess().getCollaboration());
 
@@ -97,12 +102,27 @@ public class CreateProcessInstance extends GenericMethod {
 	 * 
 	 * @param startEvent
 	 *        event containing process and participant configuration
+	 * @param definitions
+	 *        context in which creation occurs.
 	 * @return new process execution instance
 	 */
-	private ProcessExecution createProcessModel(StartEvent startEvent) {
+	private ProcessExecution createProcessModel(StartEvent startEvent, EvalContext definitions) {
 		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
 		if (modelType == null) {
 			modelType = TlBpeExecutionFactory.getProcessExecutionType();
+		}
+
+		if (definitions.usesSecurity()) {
+			// TODO #29088: It must be checked whether the user is allowed to create instances for
+			// type.
+			if (false) {
+				Set<TLClass> accessibleTypes = ModelAccessRights.getInstance()
+					.getAccessibleTypes(TLContext.currentUser(), SimpleBoundCommandGroup.CREATE);
+				if (!accessibleTypes.contains(modelType)) {
+					throw new TopLogicException(
+						com.top_logic.model.search.expr.I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(modelType));
+				}
+			}
 		}
 		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(modelType);
 	}

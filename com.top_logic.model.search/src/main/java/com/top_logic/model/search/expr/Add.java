@@ -48,6 +48,8 @@ public class Add extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
+		Update.checkWritePermission(definitions, obj, part);
+
 		Object rawValue = obj.tValue(part);
 		List<?> oldValue = asList(rawValue);
 		int oldSize = oldValue.size();

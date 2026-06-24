@@ -368,7 +368,8 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				return HandlerResult.DEFAULT_RESULT;
 			}),
 			applyButton));
-		dialogs.openDialog(false, window, result -> {
+		// A backdrop click dismisses the dialog, discarding edits just like Cancel / Escape.
+		dialogs.openDialog(true, window, result -> {
 			// Reset / Apply already acted; Cancel discards.
 		});
 	}

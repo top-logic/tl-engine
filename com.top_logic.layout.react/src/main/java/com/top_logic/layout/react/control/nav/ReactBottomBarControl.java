@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -133,7 +134,8 @@ public class ReactBottomBarControl extends ReactControl {
 	/**
 	 * Handles item selection from the client.
 	 */
-	@ReactCommand("selectItem")
+	@ReactCommand(value = "selectItem", params = @ReactParam(name = "itemId", required = true,
+		description = "The id of the bottom-bar item to select."))
 	void handleSelectItem(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		_selectHandler.accept(itemId);

@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -89,7 +90,8 @@ public class ReactBreadcrumbControl extends ReactControl {
 	/**
 	 * Handles breadcrumb navigation from the client.
 	 */
-	@ReactCommand("navigate")
+	@ReactCommand(value = "navigate", params = @ReactParam(name = "itemId", required = true,
+		description = "The id of the breadcrumb item to navigate to."))
 	void handleNavigate(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		_navigateHandler.accept(itemId);

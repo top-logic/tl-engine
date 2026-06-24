@@ -11,6 +11,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
@@ -161,7 +162,8 @@ public class ReactAppShellControl extends ReactControl {
 	 *        Command arguments; {@code "displayClass"} carries the reported {@link DisplayClass}
 	 *        name.
 	 */
-	@ReactCommand("reportDisplayClass")
+	@ReactCommand(value = "reportDisplayClass", params = @ReactParam(name = "displayClass",
+		description = "The reported responsive display class name (e.g. a DisplayClass enum constant)."))
 	void handleReportDisplayClass(Map<String, Object> arguments) {
 		Object reported = arguments.get("displayClass");
 		DisplayClass displayClass = DisplayClass.DEFAULT;

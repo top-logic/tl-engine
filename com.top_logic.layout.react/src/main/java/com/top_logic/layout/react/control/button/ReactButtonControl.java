@@ -159,6 +159,21 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
+	 * Marks this button as the dialog's default action.
+	 *
+	 * <p>
+	 * The default action is both styled as the {@link ButtonAppearance#PRIMARY primary} button and
+	 * bound to {@link KeyStroke#ENTER}, so pressing Enter anywhere in the dialog triggers it. Pairing
+	 * the two here keeps them from drifting apart: a button that reacts to Enter is always also
+	 * visually marked as the primary action (and vice versa).
+	 * </p>
+	 */
+	public void markAsDefault() {
+		setAppearance(ButtonAppearance.PRIMARY);
+		setKeyGesture(KeyStroke.ENTER);
+	}
+
+	/**
 	 * Sets the display mode.
 	 *
 	 * @param displayMode

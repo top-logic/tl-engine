@@ -139,8 +139,12 @@ public class ToolbarBuilder {
 		if (model.getImage() != null) {
 			button.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
 		}
-		// Apply the conventional gesture only when the command did not declare one explicitly.
-		if (defaultGesture != null && model.getKeyGesture() == null) {
+		// The button's effective gesture is its own explicit one, else the conventional default.
+		KeyStroke gesture = model.getKeyGesture() != null ? model.getKeyGesture() : defaultGesture;
+		if (KeyStroke.ENTER.equals(gesture)) {
+			// The Enter-default action is also styled as the dialog's primary button.
+			button.markAsDefault();
+		} else if (defaultGesture != null && model.getKeyGesture() == null) {
 			button.setKeyGesture(defaultGesture);
 		}
 		return button;

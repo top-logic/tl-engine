@@ -347,6 +347,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			resources.getString(I18NConstants.JS_TABLE_FILTER), DisplayDimension.px(380),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
 		window.setChild(body);
+		// Apply is the dialog's default action: primary-styled and Enter-bound, matching the legacy
+		// filter popup (Enter applies from anywhere in the form).
+		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
+			_view.filter(column, readState.get());
+			rebuildAfterRowChange();
+			dialogs.closeTopDialog(DialogResult.ok(null));
+			return HandlerResult.DEFAULT_RESULT;
+		});
+		applyButton.markAsDefault();
 		window.setActions(List.of(
 			new ReactButtonControl(context, resources.getString(I18NConstants.JS_TABLE_CLEAR), ctx -> {
 				_view.filter(column, null);
@@ -358,12 +367,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				dialogs.closeTopDialog(DialogResult.cancelled());
 				return HandlerResult.DEFAULT_RESULT;
 			}),
-			MessageButtons.ok(context, ctx -> {
-				_view.filter(column, readState.get());
-				rebuildAfterRowChange();
-				dialogs.closeTopDialog(DialogResult.ok(null));
-				return HandlerResult.DEFAULT_RESULT;
-			})));
+			applyButton));
 		dialogs.openDialog(false, window, result -> {
 			// Reset / Apply already acted; Cancel discards.
 		});

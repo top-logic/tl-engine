@@ -19,6 +19,9 @@
             resource="/script/tl-react-wysiwyg.js"
             requires="tl-react-bridge"
           />
+          <stylesheet name="tl-react-wysiwyg-css"
+            resource="/script/tl-react-wysiwyg.css"
+          />
         </resources>
       </instance>
     </config>

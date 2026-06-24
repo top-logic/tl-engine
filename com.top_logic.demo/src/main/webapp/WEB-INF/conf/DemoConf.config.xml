@@ -109,6 +109,9 @@
 						resource="/script/tl-demo-controls.js"
 						requires="tl-react-bridge"
 					/>
+					<stylesheet name="demo-styles-css"
+						resource="/style/demoStylesCoreTheme.css"
+					/>
 				</resources>
 			</instance>
 		</config>

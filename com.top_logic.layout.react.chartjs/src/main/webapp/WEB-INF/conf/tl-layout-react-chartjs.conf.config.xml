@@ -9,6 +9,9 @@
             resource="/script/tl-react-chartjs.js"
             requires="tl-react-bridge"
           />
+          <stylesheet name="tl-react-chartjs-css"
+            resource="/style/tl-react-chartjs.css"
+          />
         </resources>
       </instance>
     </config>

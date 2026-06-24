@@ -9,6 +9,9 @@
 						resource="/script/tl-script-editor.js"
 						requires="tl-react-bridge"
 					/>
+					<stylesheet name="tl-script-editor-css"
+						resource="/style/tlScriptEditor.css"
+					/>
 				</resources>
 			</instance>
 		</config>

@@ -38,6 +38,9 @@
 					<stylesheet name="tl-react-icons-tl"
 						resource="/style/tl_iconFont.css"
 					/>
+					<stylesheet name="tl-react-icons-remixicon"
+						resource="webjar:org.webjars.npm/remixicon:/webjars/remixicon:fonts/remixicon.css"
+					/>
 					<stylesheet name="tl-react-base"
 						resource="/style/tlReactBase.css"
 						requires="tl-react-fonts-inter"

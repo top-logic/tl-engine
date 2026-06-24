@@ -44,12 +44,35 @@ public final class AgentModelKey {
 	 * @return The key JSON, or {@code null}.
 	 */
 	public static String toJson(Object model) {
+		return toJson(null, model);
+	}
+
+	/**
+	 * The JSON-serialized {@link ModelName} of the given model object built relative to a value
+	 * context, or {@code null} if it cannot be named.
+	 *
+	 * <p>
+	 * The value context selects a context-relative naming scheme (e.g. naming a select option by its
+	 * label within the control's {@link com.top_logic.layout.react.scripting.ReactOptionScope option
+	 * scope}), giving an identity that need only be unique within that context. Pass {@code null} for
+	 * a global name.
+	 * </p>
+	 *
+	 * @param valueContext
+	 *        The context object the name is built relative to, or {@code null} for a global name.
+	 * @param model
+	 *        The business object to identify.
+	 * @return The key JSON, or {@code null}.
+	 */
+	public static String toJson(Object valueContext, Object model) {
 		if (model == null) {
 			return null;
 		}
 		Maybe<? extends ModelName> name;
 		try {
-			name = ModelResolver.buildModelNameIfAvailable(model);
+			name = valueContext == null
+				? ModelResolver.buildModelNameIfAvailable(model)
+				: ModelResolver.buildModelNameIfAvailable(valueContext, model);
 		} catch (Throwable ex) {
 			return null;
 		}

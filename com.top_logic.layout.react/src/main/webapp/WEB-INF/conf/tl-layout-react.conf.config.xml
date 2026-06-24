@@ -52,5 +52,13 @@
 				</resources>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+				<schemes>
+					<scheme class="com.top_logic.layout.react.scripting.ReactOptionByLabelNaming" />
+				</schemes>
+			</instance>
+		</config>
 	</services>
 </application>

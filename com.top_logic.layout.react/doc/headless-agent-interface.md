@@ -337,6 +337,15 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — D1 context-relative keys (first slice): the React layer defines its
+  own naming scheme `ReactOptionByLabelNaming` (context type `ReactOptionScope`), so a
+  select option is named/resolved by label *relative to its control* — no global
+  uniqueness, no `MainLayout`. Confirms the design: React registers schemes keyed on
+  React context types; the framework auto-selects by `C`; legacy schemes (bound to
+  legacy `C` types) never fire here. Scheme registered (verified in boot log), dropdown
+  wired to build option keys via the scope. **Not yet verified live:** that the dropdown
+  emits a context-relative `ReactOptionByLabelName` (priority vs the global by-label
+  scheme) and the round-trip resolve back to the option object.
 - **2026-06-24** — D1 business keys: `AgentModelKey` projects a stable `ModelName`
   (JSON) key onto table rows and dropdown options. Verified live — real KB-resolvable
   global names. Hit two decision walls: how to provide an `ActionContext` for *replay*

@@ -25,6 +25,7 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.AgentModelKey;
+import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -145,11 +146,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		Map<String, Object> result = super.agentScalarState();
 		Object options = result.get(OPTIONS);
 		if (options instanceof List<?> list && !list.isEmpty()) {
+			ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
 			List<Object> withKeys = new ArrayList<>(list.size());
 			for (Object entry : list) {
 				if (entry instanceof Map<?, ?> descriptor) {
 					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
-					String key = AgentModelKey.toJson(_optionIndex.get(descriptor.get(OPT_VALUE)));
+					String key = AgentModelKey.toJson(scope, _optionIndex.get(descriptor.get(OPT_VALUE)));
 					if (key != null) {
 						augmented.put("key", key);
 					}

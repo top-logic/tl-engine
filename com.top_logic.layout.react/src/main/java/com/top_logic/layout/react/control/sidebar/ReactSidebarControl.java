@@ -551,7 +551,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles command item execution from the client.
 	 */
-	@ReactCommand("executeCommand")
+	@ReactCommand(value = "executeCommand", params = @ReactParam(name = "itemId", required = true,
+		description = "The id of the sidebar command item to execute."))
 	HandlerResult handleExecuteCommand(ReactContext context, Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		CommandItem cmdItem = findCommandItem(itemId, _items);
@@ -628,7 +629,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles group expand/collapse toggle from the client.
 	 */
-	@ReactCommand("toggleGroup")
+	@ReactCommand(value = "toggleGroup", params = {
+		@ReactParam(name = "itemId", required = true, description = "The id of the sidebar group to toggle."),
+		@ReactParam(name = "expanded", type = "boolean", description = "True to expand the group, false to collapse it.") })
 	void handleToggleGroup(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		Object expandedObj = arguments.get(EXPANDED_ARG);

@@ -287,4 +287,14 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		selectTab(tabId);
 	}
 
+	/**
+	 * Names this tab bar by its currently active tab, so nested tab bars are distinguishable in agent
+	 * addresses (e.g. {@code tabBar[Members]} rather than a bare {@code tabBar}).
+	 */
+	@Override
+	public String agentName() {
+		TabDefinition active = findTab(_activeTabId);
+		return active != null ? active.getLabel() : null;
+	}
+
 }

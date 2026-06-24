@@ -244,6 +244,33 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
+	 * A stable, semantic name for this control, used as the discriminator in its agent address (e.g.
+	 * a bound field name, a tab label, a business-object key).
+	 *
+	 * <p>
+	 * Declared here (not on a headless-package interface) so that controls can name themselves
+	 * without depending on the headless layer, consistently with {@link #agentTransparent()}.
+	 * {@code null} (the default) lets the projection derive a name from label state or the bound
+	 * model.
+	 * </p>
+	 *
+	 * @return The name, or {@code null} to fall back to generic derivation.
+	 */
+	public String agentName() {
+		return null;
+	}
+
+	/**
+	 * An explicit semantic role for this control (e.g. {@code "field"}, {@code "table"}), overriding
+	 * the role the projection otherwise derives from the React module identifier.
+	 *
+	 * @return The role, or {@code null} for the default derivation.
+	 */
+	public String agentRole() {
+		return null;
+	}
+
+	/**
 	 * The direct child controls embedded in this control's state.
 	 *
 	 * <p>

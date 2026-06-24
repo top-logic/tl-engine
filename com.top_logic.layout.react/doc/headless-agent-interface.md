@@ -270,6 +270,18 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — Address-quality fixes (advances **D1**): (1) reject default
+  `Object.toString()` model labels (`Class@hashcode`) as names — they were unstable
+  (hashcode per run) and ugly (`dropdownSelect[comtop_logic…@2c24205d]`); now such a
+  node falls back to a role-only address. (2) Tab bars name themselves by their
+  active tab, so nested tab bars read `tabBar[Outer]/tabBar[Inner]` instead of
+  `tabBar/tabBar` (the doubling was legitimate nested tabs, not a bug — a tab's
+  content is itself a tab bar). Also consolidated the naming seam: `agentName()` /
+  `agentRole()` moved from the headless `AgentNode` interface onto `ReactControl`
+  (alongside `agentTransparent()`), so controls name themselves without depending on
+  the headless package. Verified live: `tabBar[Übersicht]`; a 958-node form view has
+  no `Class@hash` names.
+
 - **2026-06-23** — Phase 0 core landed (commit `90400a4561`): addressing +
   `AgentSession` + introspection hooks + demonstration test.
 - **2026-06-23** — Model-derived naming (commit `c94f211b86`).

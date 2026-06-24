@@ -245,6 +245,30 @@ public class TestAgentSession extends TestCase {
 		assertEquals(1, _submit.clicks());
 	}
 
+	/**
+	 * A model whose label is only a default {@code toString()} ({@code Class@hashcode}) must not
+	 * become a name: it is unstable (the hashcode varies per run) and meaningless as an address. The
+	 * node falls back to a role-only address.
+	 */
+	public void testDefaultToStringModelLabelRejected() {
+		Object model = new Object();
+		AgentTreeProjector.setModelNaming(
+			m -> m == model ? "com.top_logic.layout.view.form.AttributeSelectFieldModel@2c24205d" : null);
+
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		DemoPlainControl node = new DemoPlainControl(new TestReactContext(queue), model);
+
+		AgentNodeView view = single(AgentSession.forRoot(node).observe().children());
+		assertNull("Default toString must not be used as a name.", view.name());
+		assertEquals("/select", view.address());
+
+		// A genuine label containing '@' (e.g. an email) is still accepted.
+		AgentTreeProjector.setModelNaming(m -> "user@example.com");
+		AgentNodeView view2 = single(AgentSession.forRoot(
+			new DemoPlainControl(new TestReactContext(new SSEUpdateQueue()), model)).observe().children());
+		assertEquals("user@example.com", view2.name());
+	}
+
 	private static AgentNodeView childByAddress(AgentNodeView parent, String address) {
 		for (AgentNodeView child : parent.children()) {
 			if (child.address().equals(address)) {
@@ -391,6 +415,17 @@ public class TestAgentSession extends TestCase {
 
 		boolean opened() {
 			return _opened;
+		}
+	}
+
+	/**
+	 * A plain control bound to a model, with no {@link AgentNode} metadata and no label state, so its
+	 * name (if any) comes solely from the model-naming strategy.
+	 */
+	private static final class DemoPlainControl extends ReactControl {
+
+		DemoPlainControl(ReactContext context, Object model) {
+			super(context, model, "TLSelect");
 		}
 	}
 

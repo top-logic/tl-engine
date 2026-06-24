@@ -217,11 +217,9 @@ public final class AgentTreeProjector {
 	 * @return The role, never {@code null}.
 	 */
 	public static String roleOf(ReactControl control) {
-		if (control instanceof AgentNode node) {
-			String role = node.agentRole();
-			if (role != null) {
-				return role;
-			}
+		String role = control.agentRole();
+		if (role != null) {
+			return role;
 		}
 		return moduleToRole(control.getReactModule());
 	}
@@ -238,11 +236,9 @@ public final class AgentTreeProjector {
 	 * @return The name, or {@code null}.
 	 */
 	public static String nameOf(ReactControl control) {
-		if (control instanceof AgentNode node) {
-			String name = node.agentName();
-			if (name != null) {
-				return name;
-			}
+		String explicit = control.agentName();
+		if (explicit != null) {
+			return explicit;
 		}
 		Map<String, Object> state = control.agentScalarState();
 		for (String key : LABEL_KEYS) {
@@ -252,7 +248,7 @@ public final class AgentTreeProjector {
 			}
 		}
 		String modelName = MODEL_NAMING.apply(control.getModel());
-		if (modelName != null && !modelName.isEmpty()) {
+		if (modelName != null && !modelName.isEmpty() && !isDefaultToString(modelName)) {
 			return modelName;
 		}
 		return null;
@@ -260,7 +256,8 @@ public final class AgentTreeProjector {
 
 	/**
 	 * Default model-naming strategy: the model's application label, or {@code null} if it has none or
-	 * cannot be resolved (e.g. no running application services).
+	 * cannot be resolved (e.g. no running application services). A default {@link Object#toString()}
+	 * label is filtered out centrally by {@link #nameOf(ReactControl)}.
 	 */
 	private static String defaultModelLabel(Object model) {
 		if (model == null) {
@@ -272,6 +269,29 @@ public final class AgentTreeProjector {
 			// No label service available (e.g. headless unit test) or model not labelable.
 			return null;
 		}
+	}
+
+	/**
+	 * Whether a label is a default {@link Object#toString()} of the form {@code Something@1a2b3c} —
+	 * a class identity plus an identity hashcode. Such a value is unstable (the hashcode varies per
+	 * run) and meaningless as an address, so it is rejected as a name.
+	 *
+	 * <p>
+	 * The check requires the suffix after the last {@code @} to be a non-empty run of hex digits, so
+	 * genuine labels containing {@code @} (e.g. an email address {@code user@example.com}) are kept.
+	 * </p>
+	 */
+	private static boolean isDefaultToString(String label) {
+		int at = label.lastIndexOf('@');
+		if (at <= 0 || at == label.length() - 1) {
+			return false;
+		}
+		for (int i = at + 1; i < label.length(); i++) {
+			if (Character.digit(label.charAt(i), 16) < 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static Map<String, Object> stateOf(ReactControl control) {

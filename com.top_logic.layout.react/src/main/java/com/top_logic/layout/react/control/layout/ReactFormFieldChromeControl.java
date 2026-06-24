@@ -61,6 +61,8 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 
 	private ReactControl _field;
 
+	private String _agentName;
+
 	private String _tooltipHtml;
 
 	private String _tooltipCaption;
@@ -77,6 +79,28 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 */
 	public ReactFormFieldChromeControl(ReactContext context, String label, ReactControl field) {
 		this(context, label, false, false, null, null, null, false, true, field);
+	}
+
+	/**
+	 * Sets a stable, locale-independent name for this field (its technical attribute name) used as
+	 * the headless agent address discriminator.
+	 *
+	 * <p>
+	 * The display {@code label} varies by locale and by whether an object is loaded (the placeholder
+	 * form uses the attribute name, a loaded form uses the localized label), which would make the
+	 * agent address unstable. The agent name pins the address to the technical field name regardless.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        The technical field name, or {@code null} to fall back to label-based naming.
+	 */
+	public void setAgentName(String agentName) {
+		_agentName = agentName;
+	}
+
+	@Override
+	public String agentName() {
+		return _agentName;
 	}
 
 	/**

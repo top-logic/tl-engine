@@ -119,6 +119,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				});
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
 				false, false, null, null, null, false, true, _innerControl);
+			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
 
@@ -131,6 +132,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 				});
 			_chrome = new ReactFormFieldChromeControl(_context, _attributeName,
 				false, false, null, null, null, false, false, _innerControl);
+			_chrome.setAgentName(_attributeName);
 			return _chrome;
 		}
 
@@ -148,6 +150,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		_chrome = new ReactFormFieldChromeControl(_context, label, part.isMandatory(),
 			dirty, null, helpText, null, fullLine, true, _innerControl);
+		_chrome.setAgentName(_attributeName);
 
 		setupMode(part);
 		applyMode(_formModel.isEditMode());

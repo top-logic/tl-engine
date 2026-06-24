@@ -270,11 +270,14 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Findings to fix (surfaced 2026-06-24 driving a real form end-to-end)
 
-- [ ] **Field-name instability across view/edit.** A form field is named by its
-      technical attribute name in view mode (`formField[members]`) but by its
-      localized label in edit mode (`formField[Mitglieder]`) — the address breaks on
-      a mode switch. Field naming should be stable (prefer the technical attribute
-      name in both modes). Real bug, advances **D1**.
+- [x] **Field-name instability across view/edit — FIXED.** Root cause: the chrome
+      control was named from its display `label`, which is the technical attribute
+      name in the placeholder form but the localized label once an object is loaded.
+      `ReactFormFieldChromeControl` now carries a stable `agentName` (the technical
+      attribute name, set by `AttributeFieldControl`), so the field address is the
+      technical name in both states. Verified live: `formField[members]` in
+      placeholder and loaded-edit; `…/formField[members]/dropdownSelect` resolves and
+      `loadOptions` returns 9 options.
 - [ ] **Routed nav items aren't drivable.** `selectItem` is a no-op on a sidebar
       item with `route="none"` (e.g. `administration`, navigated by route). The agent
       needs a route-navigation action (or sidebar `selectItem` should honor routed

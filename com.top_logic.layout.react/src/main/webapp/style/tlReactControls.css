@@ -1130,7 +1130,12 @@ button.tlPanel__actionButton:focus-visible {
 	min-height: 0;
 }
 
-.tlStack:has(> .tlPanel--fill) {
+/* The view-content stack fills its container when it hosts a fill panel or a split
+   panel, so the panel/split-panel height:100% resolves against a definite height.
+   A split panel always fills (its panes are sized proportionally and its divider
+   must span the available height); a plain panel only fills when it opts in. */
+.tlStack:has(> .tlPanel--fill),
+.tlStack:has(> .tlSplitPanel) {
 	flex: 1;
 	min-height: 0;
 }

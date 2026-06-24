@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Runtime environment: Java system properties, JVM startup arguments and application aliases as a
+	single sortable, filterable table. The table is an app-specific admin widget, so it is referenced
+	by class= rather than a reusable <tag>.
+-->
+<view>
+	<panel>
+		<title>
+			<en>System environment</en>
+			<de>Systemumgebung</de>
+		</title>
+		<child class="com.top_logic.layout.view.admin.monitor.SystemEnvironmentElement"/>
+	</panel>
+</view>

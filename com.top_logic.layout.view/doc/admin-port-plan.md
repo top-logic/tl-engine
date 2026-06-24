@@ -101,8 +101,8 @@ stateful command-driven ones, then the larger model editor.
 
 ### Batch 1 — Monitoring, read-only  ▢
 Establishes the "Monitoring" admin section.
-- [ ] Add `monitoring` section tab to `admin.view.xml` with an inner tab-bar.
-- [ ] System environment (read-only property table).
+- [x] Add `monitoring` section tab to `admin.view.xml` with an inner tab-bar.
+- [x] System environment (read-only property table) — `SystemEnvironmentElement`.
 - [ ] Application monitor (JVM memory / threads / classpath / libs panels).
 - [ ] Thread monitor (master table + detail with stack trace).
 - [ ] Memory monitor (current heap/GC figures; chart deferred).

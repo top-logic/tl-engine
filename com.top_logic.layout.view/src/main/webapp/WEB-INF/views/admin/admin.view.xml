@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Minimal administration area for the React view UI. The outer tab-bar groups admin sections
-	(currently only "Access control"); the inner tab-bar holds the access-control entities. Add
-	further admin sections as sibling tabs of "access-control".
+	Administration area for the React view UI. The outer tab-bar groups admin sections; each inner
+	tab-bar holds that section's views. Add further admin sections as sibling tabs.
 -->
 <view>
 	<tab-bar active-tab="access-control">
@@ -42,6 +41,23 @@
 								<de>Berechtigungen</de>
 							</label>
 							<view-ref view="admin/permissions.view.xml"/>
+						</tab>
+					</tabs>
+				</tab-bar>
+			</tab>
+			<tab id="monitoring">
+				<label>
+					<en>Monitoring</en>
+					<de>Überwachung</de>
+				</label>
+				<tab-bar active-tab="system-environment">
+					<tabs>
+						<tab id="system-environment">
+							<label>
+								<en>System environment</en>
+								<de>Systemumgebung</de>
+							</label>
+							<view-ref view="admin/system-environment.view.xml"/>
 						</tab>
 					</tabs>
 				</tab-bar>

@@ -87,19 +87,4 @@ public interface ReactContext {
 	default RouteManager getRouteManager() {
 		return null;
 	}
-
-	/**
-	 * Creates a {@link ReactContext} adapter from an old-world
-	 * {@link com.top_logic.layout.DisplayContext}.
-	 *
-	 * <p>
-	 * Extracts values from the richer {@link com.top_logic.layout.DisplayContext}: context path
-	 * from the request, window name from
-	 * {@link com.top_logic.layout.LayoutContext#getWindowId()}, ID allocation from
-	 * {@link com.top_logic.layout.FrameScope#createNewID()}, and SSE queue from the HTTP session.
-	 * </p>
-	 */
-	static ReactContext fromDisplayContext(com.top_logic.layout.DisplayContext context) {
-		return new DisplayContextAdapter(context);
-	}
 }

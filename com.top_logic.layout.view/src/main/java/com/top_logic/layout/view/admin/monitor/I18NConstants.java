@@ -99,7 +99,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey THREAD_KIND_NORMAL;
 
 	/**
-	 * @en Stack frame
+	 * @en Stack trace
 	 */
 	public static ResKey THREAD_COLUMN_STACK_FRAME;
 

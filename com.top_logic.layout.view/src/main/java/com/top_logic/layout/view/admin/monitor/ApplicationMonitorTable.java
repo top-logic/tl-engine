@@ -20,6 +20,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.util.AbstractStartStopListener;
 import com.top_logic.util.Resources;
 import com.top_logic.util.monitor.ApplicationMonitor;
+import com.top_logic.util.monitor.MonitorComponent;
 import com.top_logic.util.monitor.MonitorMessage;
 
 /**
@@ -65,7 +66,9 @@ public class ApplicationMonitorTable extends SectionedTable {
 		List<Row> rows = new ArrayList<>();
 
 		for (MonitorMessage message : ApplicationMonitor.getInstance().checkApplication().getMessages()) {
-			rows.add(new Row(status, message.getType().toString(), message.getMessage()));
+			Object component = message.getComponent();
+			String monitor = component instanceof MonitorComponent self ? self.getName() : String.valueOf(component);
+			rows.add(new Row(status, monitor, message.getMessage()));
 		}
 
 		Runtime runtime = Runtime.getRuntime();

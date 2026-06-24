@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.AgentModelKey;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -130,6 +132,35 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	private void updateValueState() {
 		putState(VALUE, toOptionDescriptors(getSelectionSorted()));
+	}
+
+	/**
+	 * Augments the agent projection of the loaded options with a stable {@code key} (the option
+	 * object's {@link AgentModelKey ModelName}), so an agent can select a member by business object
+	 * rather than by the session-allocated option id.
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Map<String, Object> agentScalarState() {
+		Map<String, Object> result = super.agentScalarState();
+		Object options = result.get(OPTIONS);
+		if (options instanceof List<?> list && !list.isEmpty()) {
+			List<Object> withKeys = new ArrayList<>(list.size());
+			for (Object entry : list) {
+				if (entry instanceof Map<?, ?> descriptor) {
+					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
+					String key = AgentModelKey.toJson(_optionIndex.get(descriptor.get(OPT_VALUE)));
+					if (key != null) {
+						augmented.put("key", key);
+					}
+					withKeys.add(augmented);
+				} else {
+					withKeys.add(entry);
+				}
+			}
+			result.put(OPTIONS, withKeys);
+		}
+		return result;
 	}
 
 	private void setOptionsLoaded(boolean loaded) {

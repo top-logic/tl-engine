@@ -23,6 +23,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.control.AgentModelKey;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
@@ -321,6 +322,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put("rowIndex", Integer.valueOf(index));
 			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
+			String key = AgentModelKey.toJson(row.data());
+			if (key != null) {
+				rowState.put("key", key);
+			}
 			Map<String, Object> cells = new LinkedHashMap<>();
 			for (ColumnView column : _view.columns()) {
 				cells.put(column.name(), cellText(_view.cell(row, column.name())));

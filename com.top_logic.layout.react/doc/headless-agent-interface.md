@@ -216,7 +216,37 @@ We built `act`; we have **not** built capture.
 
 ## Open design decisions (decision log)
 
-### D1 — Addressing scheme `OPEN` (gates Phase 1)
+### D1 — Addressing scheme `IN PROGRESS`
+
+Decided so far (with the user): two consumers with different needs — the live agent
+re-observes each step (cheap path is fine), the recorder needs identity that survives
+data/locale/layout/session. Direction: **path stays the human handle; the recorded
+identity is a locator (semantic criteria + stable keys)**; data nodes carry a stable
+**business key = a `ModelName` serialized as JSON** (reusing the script recorder's
+object naming + `ModelResolver`, via `JsonConfigurationWriter`).
+
+Done (`AgentModelKey`): table rows and dropdown options now carry a `key` — the
+JSON `ModelName` of the row/option business object. Verified live on the green-field
+table: e.g. `{"model-name":["…TLObjectByLabelNaming…",{"class-name":"DemoTypes:A","object-label":"Part 1"}]}`
+— a real, KB-resolvable global name independent of index/sort/session.
+
+**Two walls hit — decisions needed:**
+1. **Resolution context.** `ModelResolver.locateModel` needs an `ActionContext`; the
+   only impl, `LiveActionContext`, is built on the legacy `LayoutComponent`/`MainLayout`,
+   which the React view layer has no equivalent of. Options: (a) a thin view-layer
+   `ActionContext` adapter backed by the `ViewContext`/`DisplayContext` with no component
+   (works for *global* naming schemes — what we use — but not component-relative ones);
+   (b) restrict to global names + resolve directly against the KB; (c) route replay
+   through the legacy scripting runtime (max continuity, couples to it). *Build (key
+   production) works today without this; only replay/round-trip needs it.*
+2. **Naming-scheme stability.** The default scheme picked here is *by label*
+   (`TLObjectByLabelName`) — human-readable but mutable and potentially non-unique,
+   i.e. the very instability we're trying to avoid. Decide whether keys should prefer
+   a stable identity scheme (KB id / business key) over by-label, or record both
+   (stable id for resolution + label for readability). `ModelResolver` has a scheme
+   priority system to drive this.
+
+### (superseded) D1 — Addressing scheme `OPEN` (gates Phase 1)
 
 How does a node get a stable, replayable address?
 - (a) Purely structural paths (current prototype) — simplest, fragile for data.
@@ -307,6 +337,12 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — D1 business keys: `AgentModelKey` projects a stable `ModelName`
+  (JSON) key onto table rows and dropdown options. Verified live — real KB-resolvable
+  global names. Hit two decision walls: how to provide an `ActionContext` for *replay*
+  resolution in the React view layer (no `LayoutComponent`), and whether to prefer a
+  stable id naming scheme over the default by-label. Build side complete; replay
+  blocked on decision 1.
 - **2026-06-24** — D5 first step: commands now advertise argument schemas via
   `@ReactParam` on `@ReactCommand`, surfaced in the projection. Annotated
   selectItem/valueChanged/select/selectTab; verified live (sidebar advertises

@@ -74,4 +74,12 @@ public class ReactGridControl extends ReactControl {
 		}
 	}
 
+
+	/**
+	 * Rendering-only state keys, omitted from the headless agent projection.
+	 */
+	@Override
+	protected java.util.Set<String> agentPresentationKeys() {
+		return java.util.Set.of("gap", "minColumnWidth");
+	}
 }

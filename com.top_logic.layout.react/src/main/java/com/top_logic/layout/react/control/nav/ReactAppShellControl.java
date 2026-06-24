@@ -219,4 +219,12 @@ public class ReactAppShellControl extends ReactControl {
 		}
 	}
 
+
+	/**
+	 * UI-chrome commands, omitted from the headless agent action space.
+	 */
+	@Override
+	protected java.util.Set<String> agentHiddenCommands() {
+		return java.util.Set.of("reportDisplayClass");
+	}
 }

@@ -176,4 +176,12 @@ public class ReactAppBarControl extends ToolbarControl {
 		return removed;
 	}
 
+
+	/**
+	 * Rendering-only state keys, omitted from the headless agent projection.
+	 */
+	@Override
+	protected java.util.Set<String> agentPresentationKeys() {
+		return java.util.Set.of("variant");
+	}
 }

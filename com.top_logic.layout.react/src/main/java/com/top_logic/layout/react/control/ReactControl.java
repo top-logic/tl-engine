@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -291,14 +292,73 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * </p>
 	 */
 	public Map<String, Object> agentScalarState() {
+		Set<String> presentation = agentPresentationKeys();
 		Map<String, Object> result = new LinkedHashMap<>();
 		_reactState.entrySet().stream()
 			.sorted(Map.Entry.comparingByKey())
 			.forEach(entry -> {
-				if (!containsControl(entry.getValue())) {
-					result.put(entry.getKey(), entry.getValue());
+				Object value = entry.getValue();
+				if (value == null) {
+					// No information for an agent.
+					return;
 				}
+				if (presentation.contains(entry.getKey())) {
+					// Rendering-only (e.g. padding, variant, css class).
+					return;
+				}
+				if (containsControl(value)) {
+					// Child controls are projected as separate addressable nodes.
+					return;
+				}
+				result.put(entry.getKey(), value);
 			});
+		return result;
+	}
+
+	/**
+	 * The names of state keys this control sets for rendering only, which the headless agent
+	 * projection omits from {@link #agentScalarState()}.
+	 *
+	 * <p>
+	 * Presentation properties (padding, variant, size, css class, …) carry no task-level meaning for
+	 * an agent and only bloat the observation. A control declares its own such keys here; the
+	 * projection stays generic and never enumerates keys per control type. {@code null}-valued entries
+	 * are dropped automatically and need not be listed.
+	 * </p>
+	 *
+	 * @return The rendering-only state keys; empty by default.
+	 */
+	protected Set<String> agentPresentationKeys() {
+		return Set.of();
+	}
+
+	/**
+	 * The names of commands this control handles that are UI chrome rather than meaningful agent
+	 * actions (e.g. {@code toggleCollapse}, {@code reportDisplayClass}), and which the headless
+	 * projection omits from a node's advertised actions.
+	 *
+	 * <p>
+	 * Like {@link #agentPresentationKeys()}, each control declares its own; the projector subtracts
+	 * these from the {@link #commandNames() command set} without switching on control types.
+	 * </p>
+	 *
+	 * @return The chrome command names; empty by default.
+	 */
+	protected Set<String> agentHiddenCommands() {
+		return Set.of();
+	}
+
+	/**
+	 * The commands this control advertises to a headless agent: its {@link #commandNames()} minus the
+	 * {@link #agentHiddenCommands() chrome commands}.
+	 */
+	public Set<String> agentCommands() {
+		Set<String> hidden = agentHiddenCommands();
+		if (hidden.isEmpty()) {
+			return commandNames();
+		}
+		Set<String> result = new LinkedHashSet<>(commandNames());
+		result.removeAll(hidden);
 		return result;
 	}
 

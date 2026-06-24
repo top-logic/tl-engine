@@ -204,6 +204,25 @@ public class TestAgentSession extends TestCase {
 		assertEquals(1, button.clicks());
 	}
 
+	/**
+	 * Noise stripping: rendering-only state ({@code variant}), {@code null} state, and chrome
+	 * commands ({@code toggleStyle}) are omitted from the projection, leaving only what an agent acts
+	 * on. The control declares its own presentation keys / chrome commands; the projector is generic.
+	 */
+	public void testNoiseStripping() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		DemoModelControl row = new DemoModelControl(new TestReactContext(queue), new Object());
+
+		AgentNodeView view = single(AgentSession.forRoot(row).observe().children());
+
+		// "variant" (presentation) and "note" (null) stripped; "value" (semantic) kept.
+		assertEquals(java.util.Set.of("value"), view.state().keySet());
+
+		// "toggleStyle" (chrome) hidden; "open" (semantic) advertised.
+		assertEquals(List.of("open"),
+			view.actions().stream().map(AgentAction::command).toList());
+	}
+
 	private static AgentNodeView childByAddress(AgentNodeView parent, String address) {
 		for (AgentNodeView child : parent.children()) {
 			if (child.address().equals(address)) {
@@ -323,11 +342,29 @@ public class TestAgentSession extends TestCase {
 
 		DemoModelControl(ReactContext context, Object model) {
 			super(context, model, "TLCell");
+			putStateSilent("value", "v1");
+			putStateSilent("variant", "outlined");
+			putStateSilent("note", null);
 		}
 
 		@ReactCommand("open")
 		void open() {
 			_opened = true;
+		}
+
+		@ReactCommand("toggleStyle")
+		void toggleStyle() {
+			// Chrome-only command.
+		}
+
+		@Override
+		protected java.util.Set<String> agentPresentationKeys() {
+			return java.util.Set.of("variant");
+		}
+
+		@Override
+		protected java.util.Set<String> agentHiddenCommands() {
+			return java.util.Set.of("toggleStyle");
 		}
 
 		boolean opened() {

@@ -105,4 +105,12 @@ public class ReactTextControl extends ReactControl implements TooltipProvider {
 		}
 		return new TooltipContent(_tooltipHtml, _tooltipCaption, _tooltipInteractive);
 	}
+
+	/**
+	 * Rendering-only state keys, omitted from the headless agent projection.
+	 */
+	@Override
+	protected java.util.Set<String> agentPresentationKeys() {
+		return java.util.Set.of("cssClass");
+	}
 }

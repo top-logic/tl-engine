@@ -237,4 +237,12 @@ public class ReactButtonControl extends ReactControl {
 		setTooltip(_model.getTooltip());
 	}
 
+
+	/**
+	 * Rendering-only state keys, omitted from the headless agent projection.
+	 */
+	@Override
+	protected java.util.Set<String> agentPresentationKeys() {
+		return java.util.Set.of("appearance", "size", "keyGesture", "image");
+	}
 }

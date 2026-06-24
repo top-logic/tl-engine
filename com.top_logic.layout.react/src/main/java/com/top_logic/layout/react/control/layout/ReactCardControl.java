@@ -158,4 +158,12 @@ public class ReactCardControl extends ReactControl {
 		}
 	}
 
+
+	/**
+	 * Rendering-only state keys, omitted from the headless agent projection.
+	 */
+	@Override
+	protected java.util.Set<String> agentPresentationKeys() {
+		return java.util.Set.of("padding", "variant");
+	}
 }

@@ -292,7 +292,7 @@ public final class AgentTreeProjector {
 			}
 		}
 		List<AgentAction> result = new ArrayList<>();
-		for (String command : new TreeSet<>(control.commandNames())) {
+		for (String command : new TreeSet<>(control.agentCommands())) {
 			result.add(AgentAction.of(command));
 		}
 		return result;

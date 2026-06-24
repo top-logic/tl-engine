@@ -116,11 +116,19 @@ We built `act`; we have **not** built capture.
       to `/appShell/sidebar/grid/card[Aktive_Aufgaben]/counter[Aufgaben]`; payload
       ~27 KB → ~20 KB. Shorter addresses are also more stable against layout
       refactors (advances **D1**).
-- [ ] **Affordance-first view (the bigger size lever).** Pruning shortened
-      addresses but the payload is still dominated by raw state (e.g. the sidebar's
-      24-entry `items` array, null-filled button state). Add a compact
-      `mode=actions` projection: a flat list of interactive nodes with
-      `{address, role, name, state-summary, actions}` and trimmed state.
+- [x] **Strip rendering-only state and chrome commands (modular).** `agentScalarState`
+      drops `null` values generically; each control declares its own presentation
+      state keys (`agentPresentationKeys()`) and chrome commands
+      (`agentHiddenCommands()`) — same polymorphic seam as `agentTransparent()`, no
+      central list. Applied to button/card/grid/appBar/text/snackbar (padding,
+      variant, css class, size, …) and sidebar/appShell (`toggleCollapse`,
+      `toggleDrawer`, `toggleGroup`, `reportDisplayClass`). Live: payload
+      ~20 KB → ~17.7 KB (~35% off the original 27 KB); sidebar actions reduced to
+      `[executeCommand, selectItem]`; button state to `[disabled, hidden, label]`.
+- [ ] **Affordance-first `mode=actions` view.** Optional: a flat list of just the
+      interactive nodes with `{address, role, name, state-summary, actions}` for an
+      even more compact agent loop. (`executeCommand` on the sidebar is a remaining
+      chrome-command candidate to assess.)
 - [ ] Optional argument schema on `@ReactCommand` (names/types/required) so the
       action space is introspectable without each control implementing
       `AgentNode` by hand.
@@ -264,6 +272,11 @@ Also decide whether `observe` should ever block user commands at all.
   session-wide request lock, stalling the UI and producing flaky partial reads.
   Recorded under Phase 4 + decision **D6**. Fix direction:
   snapshot-under-lock / project-off-lock.
+- **2026-06-24** — Stripped rendering-only state (`null` generically;
+  per-control `agentPresentationKeys()`) and chrome commands
+  (`agentHiddenCommands()`), same modular seam. Live payload ~20 KB → ~17.7 KB;
+  sidebar actions `[executeCommand, selectItem]`, button state
+  `[disabled, hidden, label]`; act through addressing still drives the UI.
 - **2026-06-24** — Structural pruning landed, modularly (one polymorphic
   `agentTransparent()` per control, no type cascade). Live: addresses lose the
   stack/inset/slot scaffolding, payload ~27 KB → ~20 KB; act through the pruned

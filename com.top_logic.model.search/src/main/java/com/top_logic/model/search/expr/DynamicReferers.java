@@ -67,11 +67,7 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, TLReference reference) {
-		if (!(singletonValue instanceof TLObject)) {
-			return null;
-		}
-		TLObject self = (TLObject) singletonValue;
-		return self.tReferers(reference);
+		return Referers.lookupReferrers(definitions, singletonValue, reference);
 	}
 
 	/**

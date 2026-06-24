@@ -249,7 +249,20 @@ public abstract class QueryExecutor {
 	 *        See {@link EvalContext#isInteractive()}.
 	 */
 	public EvalContext context(boolean interactive, DisplayContext displayContext, TagWriter out) {
-		return new EvalContext(interactive, getKnowledgeBase(), getTLModel(), displayContext, out);
+		return context(interactive, true, displayContext, out);
+	}
+
+	/**
+	 * Creates a default rendering {@link EvalContext}.
+	 * 
+	 * @param interactive
+	 *        See {@link EvalContext#isInteractive()}.
+	 * @param withSecurity
+	 *        See {@link EvalContext#usesSecurity()}.
+	 */
+	public EvalContext context(boolean interactive, boolean withSecurity, DisplayContext displayContext,
+			TagWriter out) {
+		return new EvalContext(interactive, withSecurity, getKnowledgeBase(), getTLModel(), displayContext, out);
 	}
 
 	/** The default {@link TLModel}. */

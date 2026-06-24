@@ -61,6 +61,7 @@ import com.top_logic.model.search.expr.Union;
 import com.top_logic.model.search.expr.Var;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.visit.DefaultDescendingVisitor;
 import com.top_logic.model.search.expr.visit.GenericDescendingVisitor;
@@ -294,7 +295,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			EvalContext evalContext = null;
 			for (TLObject obj : objects) {
 				if (evalContext == null) {
-					evalContext = new EvalContext(false, obj.tKnowledgeBase(), obj.tType().getModel(), null, null);
+					evalContext = newEvalContext();
 				}
 				if (SearchExpression.isTrue(filterLambda.eval(evalContext, obj))) {
 					result.add(obj);
@@ -746,8 +747,11 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 	}
 
+	/** TODO #29088: Is this correct? */
+	private static final boolean QUERY_USES_SECURITY = false;
+
 	/** The compiled expression used by {@link #getValues(TLObject)} for forward navigation. */
-	private QueryExecutor _expression;
+	private SearchExpression _expression;
 
 	/**
 	 * All {@link TLStructuredTypePart}s referenced anywhere in {@link #_expression}. Returned by
@@ -774,14 +778,11 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 */
 	public PathByExpression(InstantiationContext context, Config config) {
 		super(context, config);
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		TLModel model = ModelService.getApplicationModel();
-		_expression = QueryExecutor.compile(kb, model, config.getExpression());
+		_expression = compileAndResolve(config.getExpression());
 
-		/* Do not use QueryExecutor#getSearch(), because access to attributes may have been removed
-		 * to create KBQuery expressions. */
-		SearchExpression search = SearchBuilder.toSearchExpression(model, config.getExpression());
-		search = QueryExecutor.resolve(model, search);
+		/* Do not use _expression, because access to attributes may have been removed to create
+		 * KBQuery expressions during compilation. */
+		SearchExpression search = resolve(config.getExpression());
 		_relevantParts = extractPartsAddOverrides(search);
 		for (TLStructuredTypePart part : _relevantParts) {
 			if (part.isDerived()) {
@@ -792,6 +793,20 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 			}
 		}
 		_chain = extractChain(search);
+	}
+
+	private static SearchExpression resolve(Expr expression) {
+		TLModel model = ModelService.getApplicationModel();
+		SearchExpression search = SearchBuilder.toSearchExpression(model, expression);
+		return QueryExecutor.resolve(model, search);
+	}
+
+	private static SearchExpression compileAndResolve(Expr expression) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		TLModel model = ModelService.getApplicationModel();
+		SearchExpression search = SearchBuilder.toSearchExpression(model, expression);
+		QueryExecutor.compileExpr(kb, model, search);
+		return QueryExecutor.resolve(model, search);
 	}
 
 	private static boolean hasParts(SearchExpression expression) {
@@ -1247,7 +1262,15 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 	@Override
 	public Collection<? extends TLObject> getValues(TLObject base) {
-		return asObjects(_expression.execute(base));
+		Args args = Args.some(SearchExpression.normalizeValue(base));
+		EvalContext evalContext = newEvalContext();
+		return asObjects(_expression.evalWith(evalContext, args));
+	}
+
+	private static EvalContext newEvalContext() {
+		return new EvalContext(false, QUERY_USES_SECURITY,
+			PersistencyLayer.getKnowledgeBase(),
+			ModelService.getApplicationModel(), null, null);
 	}
 
 	@Override
@@ -1333,9 +1356,8 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	}
 
 	private StringBuilder searchAsString() {
-		SearchExpression search = _expression.getSearch();
 		StringBuilder builder = new StringBuilder();
-		search.visit(ToString.INSTANCE, builder);
+		_expression.visit(ToString.INSTANCE, builder);
 		return builder;
 	}
 

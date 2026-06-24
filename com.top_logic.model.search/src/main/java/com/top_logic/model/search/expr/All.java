@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.model.TLClass;
@@ -58,21 +59,44 @@ public class All extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		return all(this, _type);
+		return all(this, _type, definitions.usesSecurity());
+	}
+
+	/**
+	 * Retrieves all instances of the given type that the current user is allowed to see.
+	 */
+	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type) {
+		return all(self, type, true);
 	}
 
 	/**
 	 * Retrieves all instances of the given type.
+	 * 
+	 * @param checkSecurity
+	 *        Whether only the objects must be returned that the user is allowed to see.
 	 */
-	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type) {
+	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type, boolean checkSecurity) {
 		switch (type.getModelKind()) {
 			case CLASS: {
 				ArrayList<TLObject> result = new ArrayList<>();
 				try (CloseableIterator<TLObject> instances =
 					type.getModel().getQuery(TLInstanceAccess.class).getAllInstances((TLClass) type)) {
-					while (instances.hasNext()) {
-						TLObject instance = instances.next();
-						result.add(instance);
+					if (checkSecurity) {
+						if (instances.hasNext()) {
+							Predicate<TLObject> securityFilter = securityFilter();
+							do {
+								TLObject instance = instances.next();
+								if (securityFilter.test(instance)) {
+									result.add(instance);
+								}
+							}
+							while (instances.hasNext());
+						}
+					} else {
+						while (instances.hasNext()) {
+							TLObject instance = instances.next();
+							result.add(instance);
+						}
 					}
 				}
 				return result;

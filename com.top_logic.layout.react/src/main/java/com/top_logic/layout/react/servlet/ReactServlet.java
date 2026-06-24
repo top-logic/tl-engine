@@ -457,6 +457,10 @@ public class ReactServlet extends TopLogicServlet {
 		if (!recorder.isRecording() || !(control instanceof ReactControl reactControl)) {
 			return;
 		}
+		if (!reactControl.isRecordable(commandName)) {
+			// Incidental view adjustments (scroll, column resize) and chrome are not user intent.
+			return;
+		}
 		String address = AgentSession.forRoot(queue.getRootControl()).addressOf(reactControl);
 		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
 		// replay-stable form before capture.

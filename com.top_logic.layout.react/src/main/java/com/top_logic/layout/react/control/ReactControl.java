@@ -376,6 +376,33 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	}
 
 	/**
+	 * Commands the script recorder must not capture because they are incidental UI adjustments
+	 * (scrolling, column resizing) or chrome, not meaningful user intent worth replaying.
+	 *
+	 * <p>
+	 * Defaults to the {@link #agentHiddenCommands() chrome commands} — what is not advertised to an
+	 * agent is also not recorded. A control with transient view-only commands adds them (typically
+	 * unioning with {@code super.nonRecordableCommands()}).
+	 * </p>
+	 *
+	 * @return The non-recordable command names.
+	 */
+	public Set<String> nonRecordableCommands() {
+		return agentHiddenCommands();
+	}
+
+	/**
+	 * Whether the script recorder should capture the given command on this control.
+	 *
+	 * @param command
+	 *        The dispatched command id.
+	 * @return {@code false} for {@link #nonRecordableCommands() view-only/chrome} commands.
+	 */
+	public boolean isRecordable(String command) {
+		return !nonRecordableCommands().contains(command);
+	}
+
+	/**
 	 * The commands this control advertises to a headless agent: its {@link #commandNames()} minus the
 	 * {@link #agentHiddenCommands() chrome commands}.
 	 */

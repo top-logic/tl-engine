@@ -72,6 +72,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	private static final String OPT_IMAGE = "image";
 
+	// Command names.
+	private static final String CMD_LOAD_OPTIONS = "loadOptions";
+
+	private static final String CMD_VALUE_CHANGED = "valueChanged";
+
+	private static final String CMD_SELECT_BY_KEY = "selectByKey";
+
+	/** Command argument carrying the list of option business keys for {@link #CMD_SELECT_BY_KEY}. */
+	private static final String ARG_KEYS = "keys";
+
 	private final SelectFieldModel _selectModel;
 
 	private final LabelProvider _labelProvider;
@@ -198,7 +208,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * allocated IDs to model objects for later resolution.
 	 * </p>
 	 */
-	@ReactCommand("loadOptions")
+	@ReactCommand(CMD_LOAD_OPTIONS)
 	HandlerResult handleLoadOptions() {
 		try {
 			List<?> options = sortedOptions();
@@ -222,13 +232,13 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Handles the {@code valueChanged} command from the React client.
+	 * Handles the {@link #CMD_VALUE_CHANGED} command from the React client.
 	 *
 	 * @param arguments
-	 *        Must contain a {@code "value"} key with a list of option value IDs.
+	 *        Must contain a {@link #VALUE} entry with a list of option value IDs.
 	 */
 	@SuppressWarnings("unchecked")
-	@ReactCommand(value = "valueChanged", params = @ReactParam(name = "value", type = "string[]",
+	@ReactCommand(value = CMD_VALUE_CHANGED, params = @ReactParam(name = VALUE, type = "string[]",
 		required = true, description = "List of selected option value ids (from the options descriptors)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
 		List<String> selectedIds = (List<String>) arguments.get(VALUE);
@@ -262,27 +272,27 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Handles the {@code selectByKey} command: sets the selection to the options designated by their
-	 * stable business {@link AgentModelKey key}s — the round-trip inverse of the {@code key} that
+	 * Handles the {@link #CMD_SELECT_BY_KEY} command: sets the selection to the options designated by
+	 * their stable business {@link AgentModelKey key}s — the round-trip inverse of the {@code key} that
 	 * {@link #agentScalarState()} projects onto each option.
 	 *
 	 * <p>
 	 * This lets a headless agent select members by business object identity (e.g. the group labeled
-	 * {@code "securityOwner"} within this control) instead of session-allocated option ids that do not
+	 * {@code securityOwner} within this control) instead of session-allocated option ids that do not
 	 * survive a reload or replay. Each key is parsed back to a {@link ModelName} and resolved against
 	 * this control's {@link ReactOptionScope option scope} (for context-relative names) or globally.
 	 * Keys that do not resolve are skipped.
 	 * </p>
 	 *
 	 * @param arguments
-	 *        Must contain a {@code "keys"} key with a list of key JSON strings.
+	 *        Must contain a {@link #ARG_KEYS} entry with a list of key JSON strings.
 	 */
 	@SuppressWarnings("unchecked")
-	@ReactCommand(value = "selectByKey", params = @ReactParam(name = "keys", type = "string[]",
+	@ReactCommand(value = CMD_SELECT_BY_KEY, params = @ReactParam(name = ARG_KEYS, type = "string[]",
 		required = true,
 		description = "List of option business keys (the 'key' projected onto each option)."))
 	HandlerResult handleSelectByKey(Map<String, Object> arguments) {
-		List<String> keys = (List<String>) arguments.get("keys");
+		List<String> keys = (List<String>) arguments.get(ARG_KEYS);
 		if (keys == null) {
 			keys = Collections.emptyList();
 		}
@@ -299,14 +309,14 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Records a value change in replay-stable form: the live {@code valueChanged} carries
-	 * session-allocated option ids, so it is recorded as a {@code selectByKey} of the selected
+	 * Records a value change in replay-stable form: the live {@link #CMD_VALUE_CHANGED} carries
+	 * session-allocated option ids, so it is recorded as a {@link #CMD_SELECT_BY_KEY} of the selected
 	 * options' business keys, which resolve again in a later session.
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if ("valueChanged".equals(command) && arguments != null) {
+		if (CMD_VALUE_CHANGED.equals(command) && arguments != null) {
 			List<String> ids = (List<String>) arguments.get(VALUE);
 			if (ids != null) {
 				ReactOptionScope scope =
@@ -319,7 +329,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 						keys.add(key);
 					}
 				}
-				return new RecordedCommand("selectByKey", Map.of("keys", keys));
+				return new RecordedCommand(CMD_SELECT_BY_KEY, Map.of(ARG_KEYS, keys));
 			}
 		}
 		return super.recordCommand(command, arguments);

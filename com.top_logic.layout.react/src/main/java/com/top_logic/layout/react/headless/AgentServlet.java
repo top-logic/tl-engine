@@ -50,8 +50,7 @@ import com.top_logic.util.TopLogicServlet;
  * affordance-first view: a flat list of just the actionable nodes.</li>
  * <li>{@code POST /agent-api/act} with body {@code {"windowName":W,"address":A,"command":C,"arguments":{…}}}
  * &rarr; resolves {@code A}, invokes {@code C}, and returns {@code {"success":b,"observation":{…}}}
- * with the resulting state tree. The command arguments may be given as either {@code "arguments"} or
- * {@code "args"}.</li>
+ * with the resulting state tree. The command arguments may be given as either {@link #FIELD_ARGUMENTS} or {@link #FIELD_ARGS}.</li>
  * <li>{@code POST /agent-api/navigate} with body {@code {"windowName":W,"url":"access-control/groups"}}
  * &rarr; navigates the window's router to a route URL (for areas loaded by routing rather than an
  * in-place {@code selectItem}), returning {@code {"success":b,"url":…,"observation":{…}}}. {@code
@@ -87,6 +86,49 @@ import com.top_logic.util.TopLogicServlet;
  * </p>
  */
 public class AgentServlet extends TopLogicServlet {
+
+	// Request/response JSON field names and the request parameter names.
+	private static final String FIELD_WINDOWS = "windows";
+
+	private static final String FIELD_WINDOW_NAME = "windowName";
+
+	private static final String FIELD_ADDRESS = "address";
+
+	private static final String FIELD_COMMAND = "command";
+
+	private static final String FIELD_ARGUMENTS = "arguments";
+
+	private static final String FIELD_ARGS = "args";
+
+	private static final String FIELD_MODE = "mode";
+
+	private static final String MODE_ACTIONS = "actions";
+
+	private static final String FIELD_SUCCESS = "success";
+
+	private static final String FIELD_OBSERVATION = "observation";
+
+	private static final String FIELD_URL = "url";
+
+	private static final String FIELD_MESSAGE = "message";
+
+	private static final String FIELD_RECORDING = "recording";
+
+	private static final String FIELD_STEPS = "steps";
+
+	private static final String FIELD_EXPECT = "expect";
+
+	private static final String FIELD_RESULTS = "results";
+
+	private static final String FIELD_ERROR = "error";
+
+	private static final String FIELD_KEY = "key";
+
+	private static final String FIELD_EXPECTED = "expected";
+
+	private static final String FIELD_ACTUAL = "actual";
+
+	private static final String FIELD_MISMATCHES = "mismatches";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -156,18 +198,18 @@ public class AgentServlet extends TopLogicServlet {
 
 	private void handleWindows(HttpServletResponse response, HttpSession session) throws IOException {
 		List<String> windows = new ArrayList<>(ReactWindowRegistry.forSession(session).windowNames());
-		write(response, "{\"windows\":" + JSON.toString(windows) + "}");
+		write(response, "{\"" + FIELD_WINDOWS + "\":" + JSON.toString(windows) + "}");
 	}
 
 	private void handleObserve(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
-		String windowName = request.getParameter("windowName");
+		String windowName = request.getParameter(FIELD_WINDOW_NAME);
 		SSEUpdateQueue queue = requireQueue(session, windowName);
 
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		installSubSession(displayContext, windowName);
 
-		boolean actionsMode = "actions".equals(request.getParameter("mode"));
+		boolean actionsMode = MODE_ACTIONS.equals(request.getParameter(FIELD_MODE));
 
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
@@ -192,10 +234,10 @@ public class AgentServlet extends TopLogicServlet {
 			throw new IllegalArgumentException("Expected a JSON object body.");
 		}
 		Map<String, Object> body = (Map<String, Object>) parsed;
-		String windowName = (String) body.get("windowName");
-		String address = (String) body.get("address");
-		String command = (String) body.get("command");
-		Object argumentsValue = body.containsKey("arguments") ? body.get("arguments") : body.get("args");
+		String windowName = (String) body.get(FIELD_WINDOW_NAME);
+		String address = (String) body.get(FIELD_ADDRESS);
+		String command = (String) body.get(FIELD_COMMAND);
+		Object argumentsValue = body.containsKey(FIELD_ARGUMENTS) ? body.get(FIELD_ARGUMENTS) : body.get(FIELD_ARGS);
 		Map<String, Object> arguments = (Map<String, Object>) argumentsValue;
 		if (address == null || command == null) {
 			throw new IllegalArgumentException("Missing 'address' or 'command'.");
@@ -224,7 +266,7 @@ public class AgentServlet extends TopLogicServlet {
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
 			String observation = agentSession.observeJson();
-			write(response, "{\"success\":" + result.isSuccess() + ",\"observation\":" + observation + "}");
+			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		} finally {
 			requestLock.unlock();
 		}
@@ -248,8 +290,8 @@ public class AgentServlet extends TopLogicServlet {
 			throw new IllegalArgumentException("Expected a JSON object body.");
 		}
 		Map<String, Object> body = (Map<String, Object>) parsed;
-		String windowName = (String) body.get("windowName");
-		String url = (String) body.get("url");
+		String windowName = (String) body.get(FIELD_WINDOW_NAME);
+		String url = (String) body.get(FIELD_URL);
 		if (url == null) {
 			throw new IllegalArgumentException("Missing 'url'.");
 		}
@@ -286,10 +328,10 @@ public class AgentServlet extends TopLogicServlet {
 					+ "'). The target area may not be loaded; activate it first (e.g. sidebar 'selectItem').";
 			}
 			String observation = agentSession(queue).observeJson();
-			write(response, "{\"success\":" + ok
-				+ ",\"url\":" + JSON.toString(reachedUrl)
-				+ (message != null ? ",\"message\":" + JSON.toString(message) : "")
-				+ ",\"observation\":" + observation + "}");
+			write(response, "{\"" + FIELD_SUCCESS + "\":" + ok
+				+ ",\"" + FIELD_URL + "\":" + JSON.toString(reachedUrl)
+				+ (message != null ? ",\"" + FIELD_MESSAGE + "\":" + JSON.toString(message) : "")
+				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		} finally {
 			requestLock.unlock();
 		}
@@ -300,7 +342,7 @@ public class AgentServlet extends TopLogicServlet {
 	 */
 	private void handleRecordSteps(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
-		SSEUpdateQueue queue = requireQueue(session, request.getParameter("windowName"));
+		SSEUpdateQueue queue = requireQueue(session, request.getParameter(FIELD_WINDOW_NAME));
 		writeRecorderState(response, queue.getRecorder());
 	}
 
@@ -311,7 +353,7 @@ public class AgentServlet extends TopLogicServlet {
 	private void handleRecordStartStop(HttpServletRequest request, HttpServletResponse response,
 			HttpSession session, boolean start) throws IOException {
 		Map<String, Object> body = parseObjectBody(request);
-		SSEUpdateQueue queue = requireQueue(session, (String) body.get("windowName"));
+		SSEUpdateQueue queue = requireQueue(session, (String) body.get(FIELD_WINDOW_NAME));
 		ScriptRecorder recorder = queue.getRecorder();
 		if (start) {
 			recorder.start();
@@ -326,8 +368,8 @@ public class AgentServlet extends TopLogicServlet {
 		for (RecordedStep step : recorder.steps()) {
 			steps.add(step.toMap());
 		}
-		write(response, "{\"recording\":" + recorder.isRecording()
-			+ ",\"steps\":" + JSON.toString(steps) + "}");
+		write(response, "{\"" + FIELD_RECORDING + "\":" + recorder.isRecording()
+			+ ",\"" + FIELD_STEPS + "\":" + JSON.toString(steps) + "}");
 	}
 
 	/**
@@ -340,8 +382,8 @@ public class AgentServlet extends TopLogicServlet {
 	private void handleRecordAssert(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
 		Map<String, Object> body = parseObjectBody(request);
-		String windowName = (String) body.get("windowName");
-		String address = (String) body.get("address");
+		String windowName = (String) body.get(FIELD_WINDOW_NAME);
+		String address = (String) body.get(FIELD_ADDRESS);
 		if (address == null) {
 			throw new IllegalArgumentException("Missing 'address'.");
 		}
@@ -354,7 +396,7 @@ public class AgentServlet extends TopLogicServlet {
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
 		try {
-			Map<String, Object> expected = (Map<String, Object>) body.get("expect");
+			Map<String, Object> expected = (Map<String, Object>) body.get(FIELD_EXPECT);
 			if (expected == null) {
 				expected = AgentTreeProjector.nodeState(agentSession.resolve(address));
 			}
@@ -375,8 +417,8 @@ public class AgentServlet extends TopLogicServlet {
 	private void handleReplay(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
 		Map<String, Object> body = parseObjectBody(request);
-		String windowName = (String) body.get("windowName");
-		Object stepsValue = body.get("steps");
+		String windowName = (String) body.get(FIELD_WINDOW_NAME);
+		Object stepsValue = body.get(FIELD_STEPS);
 		if (!(stepsValue instanceof List)) {
 			throw new IllegalArgumentException("Missing 'steps' list.");
 		}
@@ -401,7 +443,7 @@ public class AgentServlet extends TopLogicServlet {
 				}
 			}
 			String observation = agentSession(queue).observeJson();
-			write(response, "{\"results\":" + JSON.toString(results) + ",\"observation\":" + observation + "}");
+			write(response, "{\"" + FIELD_RESULTS + "\":" + JSON.toString(results) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		} finally {
 			requestLock.unlock();
 		}
@@ -410,16 +452,16 @@ public class AgentServlet extends TopLogicServlet {
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> replayStep(HttpSession session, SSEUpdateQueue queue, String windowName,
 			Map<String, Object> step) {
-		String address = (String) step.get("address");
-		String command = (String) step.get("command");
-		Map<String, Object> arguments = (Map<String, Object>) step.get("arguments");
+		String address = (String) step.get(FIELD_ADDRESS);
+		String command = (String) step.get(FIELD_COMMAND);
+		Map<String, Object> arguments = (Map<String, Object>) step.get(FIELD_ARGUMENTS);
 
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put("address", address);
-		result.put("command", command);
+		result.put(FIELD_ADDRESS, address);
+		result.put(FIELD_COMMAND, command);
 		if (address == null || command == null) {
-			result.put("success", false);
-			result.put("error", "Step has no address or command.");
+			result.put(FIELD_SUCCESS, false);
+			result.put(FIELD_ERROR, "Step has no address or command.");
 			return result;
 		}
 		if (RecordedStep.ASSERT_COMMAND.equals(command)) {
@@ -427,12 +469,12 @@ public class AgentServlet extends TopLogicServlet {
 		}
 		try {
 			HandlerResult handlerResult = agentSession(queue).act(address, command, arguments);
-			result.put("success", handlerResult.isSuccess());
+			result.put(FIELD_SUCCESS, handlerResult.isSuccess());
 			// Settle derived state so the next step's address resolves against the produced state.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 		} catch (RuntimeException ex) {
-			result.put("success", false);
-			result.put("error", ex.getMessage());
+			result.put(FIELD_SUCCESS, false);
+			result.put(FIELD_ERROR, ex.getMessage());
 		}
 		return result;
 	}
@@ -450,21 +492,21 @@ public class AgentServlet extends TopLogicServlet {
 		try {
 			Map<String, Object> actual = AgentTreeProjector.nodeState(agentSession(queue).resolve(address));
 			List<String> mismatchKeys = RecordedStep.mismatchingKeys(expected, actual);
-			result.put("success", mismatchKeys.isEmpty());
+			result.put(FIELD_SUCCESS, mismatchKeys.isEmpty());
 			if (!mismatchKeys.isEmpty()) {
 				List<Map<String, Object>> mismatches = new ArrayList<>();
 				for (String key : mismatchKeys) {
 					Map<String, Object> mismatch = new LinkedHashMap<>();
-					mismatch.put("key", key);
-					mismatch.put("expected", expected.get(key));
-					mismatch.put("actual", actual.get(key));
+					mismatch.put(FIELD_KEY, key);
+					mismatch.put(FIELD_EXPECTED, expected.get(key));
+					mismatch.put(FIELD_ACTUAL, actual.get(key));
 					mismatches.add(mismatch);
 				}
-				result.put("mismatches", mismatches);
+				result.put(FIELD_MISMATCHES, mismatches);
 			}
 		} catch (RuntimeException ex) {
-			result.put("success", false);
-			result.put("error", ex.getMessage());
+			result.put(FIELD_SUCCESS, false);
+			result.put(FIELD_ERROR, ex.getMessage());
 		}
 		return result;
 	}
@@ -540,6 +582,6 @@ public class AgentServlet extends TopLogicServlet {
 	private static void sendError(HttpServletResponse response, int status, String message)
 			throws IOException {
 		response.setStatus(status);
-		write(response, "{\"error\":" + JSON.toString(message == null ? "" : message) + "}");
+		write(response, "{\"" + FIELD_ERROR + "\":" + JSON.toString(message == null ? "" : message) + "}");
 	}
 }

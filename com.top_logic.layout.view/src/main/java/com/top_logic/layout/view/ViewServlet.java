@@ -20,6 +20,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.gui.CSSBuffer;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.react.resource.ClientResources;
@@ -402,9 +403,14 @@ public class ViewServlet extends TopLogicServlet {
 		ClientResources clientResources = ClientResources.getInstance();
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath, theme);
-		// Load the base theme stylesheet (design tokens, theme variables).
-		theme.writeStyles(contextPath, out);
-		// Append the React stylesheets as the overriding cascade layer.
+		// Emit only the theme's design tokens (CSS custom properties) - not the legacy component
+		// styles. The new UI brings its own component CSS via the registered stylesheets below.
+		out.beginBeginTag(HTMLConstants.STYLE_ELEMENT);
+		out.writeAttribute(HTMLConstants.TYPE_ATTR, "text/css");
+		out.endBeginTag();
+		out.writeContent(CSSBuffer.themeVariables(theme).toString());
+		out.endTag(HTMLConstants.STYLE_ELEMENT);
+		// Append the React stylesheets (fonts, icons, component CSS).
 		clientResources.writeStyleRefs(out, contextPath, theme);
 		out.endTag(HTMLConstants.HEAD);
 

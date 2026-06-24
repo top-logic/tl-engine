@@ -26,8 +26,25 @@
 						resource="/script/tl-react-controls.js"
 						requires="tl-react-bridge"
 					/>
+					<stylesheet name="tl-react-fonts-inter"
+						resource="/style/interFonts.css"
+					/>
+					<stylesheet name="tl-react-icons-fontawesome"
+						resource="/style/fontawesome/css/all.css"
+					/>
+					<stylesheet name="tl-react-icons-bootstrap"
+						resource="/style/bootstrap-icons.css"
+					/>
+					<stylesheet name="tl-react-icons-tl"
+						resource="/style/tl_iconFont.css"
+					/>
+					<stylesheet name="tl-react-base"
+						resource="/style/tlReactBase.css"
+						requires="tl-react-fonts-inter"
+					/>
 					<stylesheet name="tl-react-controls-css"
 						resource="/style/tlReactControls.css"
+						requires="tl-react-base,tl-react-icons-fontawesome,tl-react-icons-bootstrap,tl-react-icons-tl"
 					/>
 				</resources>
 			</instance>

@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import com.top_logic.table.Column;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 
@@ -64,10 +65,18 @@ final class ColumnLogic {
 	}
 
 	private static <R, V> Predicate<R> columnPredicate(Column<R, V> column, FilterState state) {
+		// Inversion is generic: unwrap it here so every concrete filter sees only its own state,
+		// and negate the resulting value predicate.
+		boolean inverted = false;
+		if (state instanceof NegatedFilterState negated) {
+			inverted = true;
+			state = negated.inner();
+		}
 		Predicate<V> valuePredicate = column.filter()
 			.orElseThrow(() -> new IllegalStateException("Column '" + column.name() + "' is not filterable."))
 			.predicate(state);
-		return row -> valuePredicate.test(column.value(row));
+		Predicate<V> effective = inverted ? valuePredicate.negate() : valuePredicate;
+		return row -> effective.test(column.value(row));
 	}
 
 	/**

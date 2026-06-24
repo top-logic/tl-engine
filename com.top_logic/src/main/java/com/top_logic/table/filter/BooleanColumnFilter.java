@@ -5,6 +5,8 @@
  */
 package com.top_logic.table.filter;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
@@ -66,6 +68,29 @@ public class BooleanColumnFilter implements ColumnFilter<Boolean> {
 			}
 			return value ? bool.acceptTrue() : bool.acceptFalse();
 		};
+	}
+
+	@Override
+	public Object toJson(FilterState state) {
+		BooleanFilterState bool = (BooleanFilterState) state;
+		Map<String, Object> json = new LinkedHashMap<>();
+		json.put("acceptTrue", Boolean.valueOf(bool.acceptTrue()));
+		json.put("acceptFalse", Boolean.valueOf(bool.acceptFalse()));
+		json.put("acceptNull", Boolean.valueOf(bool.acceptNull()));
+		return json;
+	}
+
+	@Override
+	public FilterState fromJson(Object json) {
+		if (!(json instanceof Map<?, ?> map)) {
+			return null;
+		}
+		return new BooleanFilterState(bool(map.get("acceptTrue")), bool(map.get("acceptFalse")),
+			bool(map.get("acceptNull")));
+	}
+
+	private static boolean bool(Object value) {
+		return Boolean.TRUE.equals(value) || "true".equals(value);
 	}
 
 }

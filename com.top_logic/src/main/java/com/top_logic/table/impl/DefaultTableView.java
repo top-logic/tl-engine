@@ -15,11 +15,13 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnView;
+import com.top_logic.table.FilterCodec;
 import com.top_logic.table.Group;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
+import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.RowSource;
@@ -303,6 +305,7 @@ public class DefaultTableView<R> implements TableView<R> {
 			_state.getFilters().put(column, state);
 		}
 		_source.withFilter(new FilterSpec(_state.getFilters()));
+		persist();
 		fireColumnsChanged();
 	}
 
@@ -421,7 +424,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * columns appended), and the persisted sort/grouping are re-applied to the row source.
 	 */
 	private void restore() {
-		TableViewState persisted = _store.load(_id);
+		TableViewState persisted = _store.load(_id, filterCodec());
 		if (persisted == null) {
 			return;
 		}
@@ -472,6 +475,16 @@ public class DefaultTableView<R> implements TableView<R> {
 			_state.setGrouping(grouping);
 			_source.withGrouping(grouping);
 		}
+
+		for (Map.Entry<String, FilterState> entry : persisted.getFilters().entrySet()) {
+			Column<R, ?> column = _columns.get(entry.getKey());
+			if (column != null && column.filter().isPresent()) {
+				_state.getFilters().put(entry.getKey(), entry.getValue());
+			}
+		}
+		if (!_state.getFilters().isEmpty()) {
+			_source.withFilter(new FilterSpec(_state.getFilters()));
+		}
 	}
 
 	/**
@@ -479,8 +492,50 @@ public class DefaultTableView<R> implements TableView<R> {
 	 */
 	private void persist() {
 		if (_store != null && _id != null) {
-			_store.save(_id, _state);
+			_store.save(_id, _state, filterCodec());
 		}
+	}
+
+	/**
+	 * A {@link FilterCodec} bridging this view's columns: it delegates a column's inner state to its
+	 * {@link ColumnFilter#toJson(FilterState) filter} and handles {@link NegatedFilterState
+	 * inversion} generically.
+	 */
+	private FilterCodec filterCodec() {
+		return new FilterCodec() {
+			@Override
+			public Object toJson(String column, FilterState state) {
+				ColumnFilter<?> filter = columnFilter(column);
+				if (filter == null) {
+					return null;
+				}
+				boolean inverted = state instanceof NegatedFilterState;
+				FilterState inner = inverted ? ((NegatedFilterState) state).inner() : state;
+				Object innerJson = filter.toJson(inner);
+				if (innerJson == null) {
+					return null;
+				}
+				Map<String, Object> result = new LinkedHashMap<>();
+				result.put("state", innerJson);
+				if (inverted) {
+					result.put("inverted", Boolean.TRUE);
+				}
+				return result;
+			}
+
+			@Override
+			public FilterState fromJson(String column, Object json) {
+				ColumnFilter<?> filter = columnFilter(column);
+				if (filter == null || !(json instanceof Map<?, ?> map)) {
+					return null;
+				}
+				FilterState inner = filter.fromJson(map.get("state"));
+				if (inner == null) {
+					return null;
+				}
+				return Boolean.TRUE.equals(map.get("inverted")) ? new NegatedFilterState(inner) : inner;
+			}
+		};
 	}
 
 	private void onRowsInvalidated(int from, int to) {

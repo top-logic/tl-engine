@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.table.FilterCodec;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.TableViewState;
@@ -20,10 +22,11 @@ import com.top_logic.table.TableViewState;
  *
  * <p>
  * Persisted are the parts of the view state that are pure value data: column order, per-column
- * widths, the frozen column count, the multi-column sort, and the grouping. Filters, expansion
- * and selection are <em>not</em> persisted here - their state can carry arbitrary business-object
- * values ({@code TLObject} classifiers, row keys) whose stable cross-session serialization needs a
- * separate identity strategy.
+ * widths, the frozen column count, the multi-column sort, and the grouping. Column filters are
+ * persisted too, but only through a caller-supplied {@link FilterCodec}: their state can carry
+ * arbitrary business-object values ({@code TLObject} classifiers, row keys) whose stable
+ * cross-session serialization is the owning column's responsibility. Without a codec
+ * ({@link FilterCodec#NONE}) filters are skipped. Expansion and selection are not persisted.
  * </p>
  *
  * <p>
@@ -47,14 +50,24 @@ public final class TableViewStateCodec {
 
 	private static final String GROUPING = "grouping";
 
+	private static final String FILTERS = "filters";
+
 	private TableViewStateCodec() {
 		// Utility class.
 	}
 
 	/**
-	 * Serializes the persistable subset of the given state into a JSON value map.
+	 * Serializes the persistable subset of the given state into a JSON value map, without filters.
 	 */
 	public static Map<String, Object> toJson(TableViewState state) {
+		return toJson(state, FilterCodec.NONE);
+	}
+
+	/**
+	 * Serializes the persistable subset of the given state into a JSON value map, persisting each
+	 * column filter the given {@link FilterCodec} can serialize.
+	 */
+	public static Map<String, Object> toJson(TableViewState state, FilterCodec filters) {
 		Map<String, Object> json = new LinkedHashMap<>();
 		json.put(COLUMN_ORDER, new ArrayList<>(state.getColumnOrder()));
 
@@ -76,15 +89,35 @@ public final class TableViewStateCodec {
 		json.put(SORT, sort);
 
 		json.put(GROUPING, new ArrayList<>(state.getGrouping().columns()));
+
+		Map<String, Object> filterJson = new LinkedHashMap<>();
+		for (Map.Entry<String, FilterState> entry : state.getFilters().entrySet()) {
+			Object serialized = filters.toJson(entry.getKey(), entry.getValue());
+			if (serialized != null) {
+				filterJson.put(entry.getKey(), serialized);
+			}
+		}
+		if (!filterJson.isEmpty()) {
+			json.put(FILTERS, filterJson);
+		}
 		return json;
 	}
 
 	/**
 	 * Applies a previously {@link #toJson(TableViewState) serialized} JSON value map onto the given
-	 * state. Unknown or malformed entries are ignored, so a stored state from an older column set
-	 * loads without error.
+	 * state, without restoring filters.
 	 */
 	public static void readInto(TableViewState target, Map<?, ?> json) {
+		readInto(target, json, FilterCodec.NONE);
+	}
+
+	/**
+	 * Applies a previously {@link #toJson(TableViewState, FilterCodec) serialized} JSON value map
+	 * onto the given state, restoring each column filter the given {@link FilterCodec} can read.
+	 * Unknown or malformed entries are ignored, so a stored state from an older column set loads
+	 * without error.
+	 */
+	public static void readInto(TableViewState target, Map<?, ?> json, FilterCodec filters) {
 		Object order = json.get(COLUMN_ORDER);
 		if (order instanceof List<?> list) {
 			target.setColumnOrder(strings(list));
@@ -124,6 +157,16 @@ public final class TableViewStateCodec {
 		Object grouping = json.get(GROUPING);
 		if (grouping instanceof List<?> list) {
 			target.setGrouping(new GroupSpec(strings(list)));
+		}
+
+		Object filterJson = json.get(FILTERS);
+		if (filterJson instanceof Map<?, ?> map) {
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				FilterState state = filters.fromJson(String.valueOf(entry.getKey()), entry.getValue());
+				if (state != null && !state.isEmpty()) {
+					target.getFilters().put(String.valueOf(entry.getKey()), state);
+				}
+			}
 		}
 	}
 

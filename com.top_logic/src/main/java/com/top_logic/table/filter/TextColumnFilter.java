@@ -5,6 +5,8 @@
  */
 package com.top_logic.table.filter;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -42,6 +44,39 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 	@Override
 	public FilterInput input() {
 		return new FilterInput.Text();
+	}
+
+	@Override
+	public boolean supportsInversion() {
+		return true;
+	}
+
+	@Override
+	public Object toJson(FilterState state) {
+		TextFilterState text = (TextFilterState) state;
+		Map<String, Object> json = new LinkedHashMap<>();
+		json.put("pattern", text.pattern());
+		json.put("caseSensitive", Boolean.valueOf(text.caseSensitive()));
+		json.put("regexp", Boolean.valueOf(text.regexp()));
+		json.put("wholeField", Boolean.valueOf(text.wholeField()));
+		return json;
+	}
+
+	@Override
+	public FilterState fromJson(Object json) {
+		if (!(json instanceof Map<?, ?> map)) {
+			return null;
+		}
+		Object pattern = map.get("pattern");
+		if (pattern == null) {
+			return null;
+		}
+		return new TextFilterState(String.valueOf(pattern), bool(map.get("caseSensitive")), bool(map.get("regexp")),
+			bool(map.get("wholeField")));
+	}
+
+	private static boolean bool(Object value) {
+		return Boolean.TRUE.equals(value) || "true".equals(value);
 	}
 
 	@Override

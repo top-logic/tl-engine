@@ -11,7 +11,9 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
@@ -73,12 +75,41 @@ public class TestFilterEditors extends TestCase {
 			new Option("blue", ResKey.text("Blue")),
 			new Option("green", ResKey.text("Green"))));
 		FilterEditor editor = FilterEditors.create(filter, null, MatchCounts.NONE);
-		assertEquals(3, editor.fields().size());
+		// Three options plus the appended invert checkbox.
+		assertEquals(4, editor.fields().size());
 
 		field(editor, 0).setValue(Boolean.TRUE);    // red
 		field(editor, 2).setValue(Boolean.TRUE);    // green
 		OptionsFilterState state = (OptionsFilterState) editor.read();
 		assertEquals(java.util.Set.of("red", "green"), state.selected());
+	}
+
+	public void testInvertCheckboxWrapsStateOnRead() {
+		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(), null, MatchCounts.NONE);
+		List<?> fields = editor.fields();
+		// Pattern + 3 text options + the invert checkbox last.
+		assertEquals(5, fields.size());
+
+		field(editor, 0).setValue("abc");        // pattern
+		field(editor, 4).setValue(Boolean.TRUE); // invert
+		FilterState state = editor.read();
+		assertTrue(state instanceof NegatedFilterState);
+		assertEquals("abc", ((TextFilterState) ((NegatedFilterState) state).inner()).pattern());
+	}
+
+	public void testInvertEditorSeededFromNegatedState() {
+		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(),
+			new NegatedFilterState(TextFilterState.contains("x")), MatchCounts.NONE);
+		assertEquals("x", field(editor, 0).getValue());
+		assertEquals("Invert checkbox reflects the persisted inversion.", Boolean.TRUE, field(editor, 4).getValue());
+	}
+
+	public void testInvertCheckboxIgnoredWhenSelectionEmpty() {
+		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(), null, MatchCounts.NONE);
+		field(editor, 4).setValue(Boolean.TRUE); // invert, but no pattern
+		FilterState state = editor.read();
+		assertFalse("Inverting an empty selection stays inactive.", state instanceof NegatedFilterState);
+		assertTrue(state.isEmpty());
 	}
 
 	public void testComparableEditorReadBack() {

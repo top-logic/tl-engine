@@ -17,6 +17,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
@@ -26,6 +27,8 @@ import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewListener;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
+import com.top_logic.table.filter.TextColumnFilter;
+import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -53,19 +56,19 @@ public class TestDefaultTableView extends TestCase {
 		private final java.util.Map<String, java.util.Map<String, Object>> _data = new java.util.HashMap<>();
 
 		@Override
-		public TableViewState load(TableId id) {
+		public TableViewState load(TableId id, com.top_logic.table.FilterCodec filters) {
 			java.util.Map<String, Object> json = _data.get(id.value());
 			if (json == null) {
 				return null;
 			}
 			TableViewState state = new TableViewState();
-			TableViewStateCodec.readInto(state, json);
+			TableViewStateCodec.readInto(state, json, filters);
 			return state;
 		}
 
 		@Override
-		public void save(TableId id, TableViewState state) {
-			_data.put(id.value(), TableViewStateCodec.toJson(state));
+		public void save(TableId id, TableViewState state, com.top_logic.table.FilterCodec filters) {
+			_data.put(id.value(), TableViewStateCodec.toJson(state, filters));
 		}
 	}
 
@@ -153,6 +156,39 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(3, view.rowCount());
 	}
 
+	public void testInvertedFilterAcceptsNonMatching() {
+		TableView<Person> view = newView();
+		// "Charlie" and "alice" contain "li"; inverting keeps exactly the rest.
+		view.filter("name", new NegatedFilterState(new Contains("li")));
+		assertEquals(List.of("Bob"), names(view));
+	}
+
+	public void testFilterPersistedAndRestored() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-filter");
+
+		List<Column<Person, ?>> columns1 = textFilterColumns();
+		TableView<Person> view1 =
+			DefaultTableView.create(columns1, new ListRowSource<>(people(), columns1), store, id);
+		view1.filter("name", TextFilterState.contains("li"));
+		assertEquals(List.of("Charlie", "alice"), names(view1));
+
+		// A fresh view over the same store restores the persisted filter (and re-applies it).
+		List<Column<Person, ?>> columns2 = textFilterColumns();
+		TableView<Person> view2 =
+			DefaultTableView.create(columns2, new ListRowSource<>(people(), columns2), store, id);
+		assertEquals(List.of("Charlie", "alice"), names(view2));
+	}
+
+	private List<Column<Person, ?>> textFilterColumns() {
+		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
+			.filter(TextColumnFilter.forStrings())
+			.width(200)
+			.build();
+		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age).build();
+		return List.of(name, age);
+	}
+
 	public void testMoveColumn() {
 		TableView<Person> view = newView();
 		view.moveColumn("age", 0);
@@ -216,7 +252,7 @@ public class TestDefaultTableView extends TestCase {
 		// Persist an order that references a removed column ("ghost") and omits "age".
 		TableViewState stored = new TableViewState();
 		stored.setColumnOrder(List.of("ghost", "name"));
-		store.save(id, stored);
+		store.save(id, stored, com.top_logic.table.FilterCodec.NONE);
 
 		TableView<Person> view = newView(store, id);
 		// "ghost" dropped (no such column), "name" kept, "age" appended.
@@ -229,7 +265,7 @@ public class TestDefaultTableView extends TestCase {
 
 		TableViewState stored = new TableViewState();
 		stored.setFrozenCount(9);
-		store.save(id, stored);
+		store.save(id, stored, com.top_logic.table.FilterCodec.NONE);
 
 		TableView<Person> view = newView(store, id);
 		assertEquals("frozen count clamped to the available column count", 2, view.state().getFrozenCount());

@@ -9,6 +9,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.NegatedFilterState;
 
 /**
  * Builds the {@link FilterEditor} for a {@link ColumnFilter}, seeded from the column's current
@@ -42,6 +43,18 @@ public final class FilterEditors {
 	 *        Facet counts for option filters, or {@link MatchCounts#NONE}.
 	 */
 	public static FilterEditor create(ColumnFilter<?> filter, FilterState current, MatchCounts counts) {
+		// Inversion is a generic wrapper around any inner state; unwrap it to seed the inner editor
+		// and re-offer the invert checkbox in its previous state.
+		boolean inverted = current instanceof NegatedFilterState;
+		FilterState inner = inverted ? ((NegatedFilterState) current).inner() : current;
+		FilterEditor editor = innerEditor(filter, inner, counts);
+		if (filter.supportsInversion()) {
+			return new InvertingFilterEditor(editor, inverted);
+		}
+		return editor;
+	}
+
+	private static FilterEditor innerEditor(ColumnFilter<?> filter, FilterState current, MatchCounts counts) {
 		FilterInput input = filter.input();
 		if (input instanceof FilterInput.Options options) {
 			return new OptionsFilterEditor(options.values(), (OptionsFilterState) current, counts);

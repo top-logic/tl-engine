@@ -8,6 +8,7 @@ package com.top_logic.table.impl;
 import java.util.Map;
 
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
+import com.top_logic.table.FilterCodec;
 import com.top_logic.table.TableId;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
@@ -30,7 +31,7 @@ public class PersonalConfigViewStateStore implements ViewStateStore {
 	private static final String KEY_PREFIX = "tableView.";
 
 	@Override
-	public TableViewState load(TableId id) {
+	public TableViewState load(TableId id, FilterCodec filters) {
 		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
 		if (config == null) {
 			return null;
@@ -38,19 +39,19 @@ public class PersonalConfigViewStateStore implements ViewStateStore {
 		Object json = config.getJSONValue(key(id));
 		if (json instanceof Map<?, ?> map) {
 			TableViewState state = new TableViewState();
-			TableViewStateCodec.readInto(state, map);
+			TableViewStateCodec.readInto(state, map, filters);
 			return state;
 		}
 		return null;
 	}
 
 	@Override
-	public void save(TableId id, TableViewState state) {
+	public void save(TableId id, TableViewState state, FilterCodec filters) {
 		PersonalConfiguration config = PersonalConfiguration.getPersonalConfiguration();
 		if (config == null) {
 			return;
 		}
-		config.setJSONValue(key(id), TableViewStateCodec.toJson(state));
+		config.setJSONValue(key(id), TableViewStateCodec.toJson(state, filters));
 	}
 
 	private static String key(TableId id) {

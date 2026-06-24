@@ -53,6 +53,46 @@ public interface ColumnFilter<V> {
 	}
 
 	/**
+	 * Whether a UI should offer to invert this filter (accept exactly the non-matching rows).
+	 *
+	 * <p>
+	 * Inversion is applied generically via {@link NegatedFilterState}; a filter only opts into
+	 * the inversion checkbox by returning {@code true}. Filters for which inversion is redundant
+	 * (e.g. a boolean filter, where picking the other value already inverts) leave this
+	 * {@code false}.
+	 * </p>
+	 */
+	default boolean supportsInversion() {
+		return false;
+	}
+
+	/**
+	 * Serializes the given state of this filter into a JSON value model (nested
+	 * {@link java.util.Map}/{@link java.util.List}/{@link String}/{@link Number}/{@link Boolean}),
+	 * for cross-session personalization.
+	 *
+	 * <p>
+	 * Returns {@code null} when this filter's state cannot be stably serialized (the default), so
+	 * the column's filter is simply not personalized. {@link NegatedFilterState inversion} is
+	 * handled by the caller - implementations (de)serialize only their own inner state.
+	 * </p>
+	 *
+	 * @param state
+	 *        The state to serialize (never a {@link NegatedFilterState}).
+	 */
+	default Object toJson(FilterState state) {
+		return null;
+	}
+
+	/**
+	 * Reconstructs a filter state from a value previously produced by {@link #toJson(FilterState)},
+	 * or {@code null} if it cannot be restored (e.g. stale or malformed).
+	 */
+	default FilterState fromJson(Object json) {
+		return null;
+	}
+
+	/**
 	 * The facet buckets a single cell value contributes to, used to compute {@link MatchCounts}.
 	 *
 	 * <p>

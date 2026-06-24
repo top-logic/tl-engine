@@ -5,7 +5,10 @@
  */
 package com.top_logic.table.filter;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import com.top_logic.table.ColumnFilter;
@@ -52,6 +55,45 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	@Override
 	public boolean countsMatches() {
 		return true;
+	}
+
+	@Override
+	public boolean supportsInversion() {
+		return true;
+	}
+
+	/**
+	 * Serializes the selection as the indices of the selected options. Option values can be
+	 * arbitrary business objects (classifiers, enums); their position in the stable option list is a
+	 * type-agnostic identity that round-trips without an object-serialization strategy.
+	 */
+	@Override
+	public Object toJson(FilterState state) {
+		Set<Object> selected = ((OptionsFilterState) state).selected();
+		List<Object> indices = new ArrayList<>();
+		for (int n = 0; n < _options.size(); n++) {
+			if (selected.contains(_options.get(n).value())) {
+				indices.add(Integer.valueOf(n));
+			}
+		}
+		return indices;
+	}
+
+	@Override
+	public FilterState fromJson(Object json) {
+		if (!(json instanceof List<?> indices)) {
+			return null;
+		}
+		Set<Object> selected = new LinkedHashSet<>();
+		for (Object index : indices) {
+			if (index instanceof Number number) {
+				int n = number.intValue();
+				if (n >= 0 && n < _options.size()) {
+					selected.add(_options.get(n).value());
+				}
+			}
+		}
+		return new OptionsFilterState(selected);
 	}
 
 }

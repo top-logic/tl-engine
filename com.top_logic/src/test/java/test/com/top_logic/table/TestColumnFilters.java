@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import junit.framework.TestCase;
 
+import com.top_logic.table.FilterState;
 import com.top_logic.table.Option;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.filter.BooleanColumnFilter;
@@ -113,6 +114,45 @@ public class TestColumnFilters extends TestCase {
 		assertTrue(new BooleanFilterState(false, false, false).isEmpty());
 		assertTrue(new BooleanFilterState(true, true, true).isEmpty());
 		assertFalse(new BooleanFilterState(true, false, false).isEmpty());
+	}
+
+	public void testTextSerialization() {
+		TextColumnFilter<String> filter = TextColumnFilter.forStrings();
+		TextFilterState original = new TextFilterState("ab", true, false, true);
+		assertEquals(original, filter.fromJson(filter.toJson(original)));
+		assertNull("Malformed JSON yields no state.", filter.fromJson("not-a-map"));
+	}
+
+	public void testComparableSerialization() {
+		ComparableColumnFilter<Integer> filter = ComparableColumnFilter.integers();
+		RangeFilterState<Integer> original = RangeFilterState.between(5, 10);
+		assertEquals(original, filter.fromJson(filter.toJson(original)));
+
+		// A parser-less filter cannot restore typed bounds and so declines persistence.
+		assertNull(ComparableColumnFilter.<Integer> natural().toJson(RangeFilterState.of(ComparisonOperator.EQ, 1)));
+	}
+
+	public void testOptionsSerializationByIndex() {
+		OptionsColumnFilter<String> filter = new OptionsColumnFilter<>(List.of(
+			new Option("red", ResKey.text("Red")),
+			new Option("blue", ResKey.text("Blue")),
+			new Option("green", ResKey.text("Green"))));
+		OptionsFilterState original = new OptionsFilterState(Set.of("red", "green"));
+		FilterState restored = filter.fromJson(filter.toJson(original));
+		assertEquals(Set.of("red", "green"), ((OptionsFilterState) restored).selected());
+	}
+
+	public void testBooleanSerialization() {
+		BooleanFilterState original = new BooleanFilterState(true, false, true);
+		assertEquals(original, BooleanColumnFilter.INSTANCE.fromJson(BooleanColumnFilter.INSTANCE.toJson(original)));
+	}
+
+	public void testInversionOptIn() {
+		// Only filters for which inversion is meaningful offer it.
+		assertTrue(TextColumnFilter.forStrings().supportsInversion());
+		assertTrue(ComparableColumnFilter.integers().supportsInversion());
+		assertTrue(new OptionsColumnFilter<>(List.of()).supportsInversion());
+		assertFalse(BooleanColumnFilter.INSTANCE.supportsInversion());
 	}
 
 }

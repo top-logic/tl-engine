@@ -19,12 +19,18 @@ public interface ViewStateStore {
 	/**
 	 * Loads the persisted view state for the given table, or {@code null} if none is
 	 * stored.
+	 *
+	 * @param filters
+	 *        The column-aware codec used to restore persisted column filters.
 	 */
-	TableViewState load(TableId id);
+	TableViewState load(TableId id, FilterCodec filters);
 
 	/**
 	 * Persists the given view state for the given table.
+	 *
+	 * @param filters
+	 *        The column-aware codec used to serialize the state's column filters.
 	 */
-	void save(TableId id, TableViewState state);
+	void save(TableId id, TableViewState state, FilterCodec filters);
 
 }

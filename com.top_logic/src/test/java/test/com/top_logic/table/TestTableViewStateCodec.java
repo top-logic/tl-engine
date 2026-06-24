@@ -11,6 +11,8 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.table.FilterCodec;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.TableViewState;
@@ -70,16 +72,41 @@ public class TestTableViewStateCodec extends TestCase {
 		assertTrue(restored.getSort().isEmpty());
 	}
 
-	/** Filters are deliberately outside the persisted subset. */
-	public void testFiltersNotPersisted() {
+	/** Without a {@link FilterCodec}, filters stay outside the persisted subset. */
+	public void testFiltersNotPersistedWithoutCodec() {
 		TableViewState original = new TableViewState();
 		original.getFilters().put("name", TextFilterState.contains("x"));
 
-		assertFalse("Codec must not serialize filters.", TableViewStateCodec.toJson(original).containsKey("filters"));
+		assertFalse("No codec must not serialize filters.", TableViewStateCodec.toJson(original).containsKey("filters"));
 
 		TableViewState restored = new TableViewState();
 		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
 		assertTrue(restored.getFilters().isEmpty());
+	}
+
+	/** With a {@link FilterCodec}, filters round-trip through the JSON model. */
+	public void testFiltersRoundTripWithCodec() {
+		FilterCodec codec = new FilterCodec() {
+			@Override
+			public Object toJson(String column, FilterState state) {
+				return ((TextFilterState) state).pattern();
+			}
+
+			@Override
+			public FilterState fromJson(String column, Object json) {
+				return TextFilterState.contains(String.valueOf(json));
+			}
+		};
+
+		TableViewState original = new TableViewState();
+		original.getFilters().put("name", TextFilterState.contains("abc"));
+
+		Map<String, Object> json = TableViewStateCodec.toJson(original, codec);
+		assertTrue("Codec persists filters.", json.containsKey("filters"));
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, json, codec);
+		assertEquals("abc", ((TextFilterState) restored.getFilters().get("name")).pattern());
 	}
 
 }

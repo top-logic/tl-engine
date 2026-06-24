@@ -6,6 +6,8 @@
 package com.top_logic.table.filter;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -72,6 +74,68 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	@Override
 	public FilterInput input() {
 		return new FilterInput.Range();
+	}
+
+	@Override
+	public boolean supportsInversion() {
+		return true;
+	}
+
+	/**
+	 * Serializes the range as the operator name plus the textual form of the bounds. Only filters
+	 * with a {@link #parser() parser} can be restored, so a parser-less filter declines persistence.
+	 */
+	@Override
+	public Object toJson(FilterState state) {
+		if (_parser == null) {
+			return null;
+		}
+		RangeFilterState<?> range = (RangeFilterState<?>) state;
+		if (range.operator() == null) {
+			return null;
+		}
+		Map<String, Object> json = new LinkedHashMap<>();
+		json.put("operator", range.operator().name());
+		json.put("primary", text(range.primary()));
+		json.put("secondary", text(range.secondary()));
+		return json;
+	}
+
+	@Override
+	public FilterState fromJson(Object json) {
+		if (_parser == null || !(json instanceof Map<?, ?> map)) {
+			return null;
+		}
+		Object operatorName = map.get("operator");
+		if (operatorName == null) {
+			return null;
+		}
+		ComparisonOperator operator;
+		try {
+			operator = ComparisonOperator.valueOf(String.valueOf(operatorName));
+		} catch (IllegalArgumentException ex) {
+			return null;
+		}
+		return new RangeFilterState<>(operator, parse(map.get("primary")), parse(map.get("secondary")));
+	}
+
+	private static String text(Object value) {
+		return value == null ? null : String.valueOf(value);
+	}
+
+	private V parse(Object value) {
+		if (value == null) {
+			return null;
+		}
+		String text = String.valueOf(value).trim();
+		if (text.isEmpty()) {
+			return null;
+		}
+		try {
+			return _parser.apply(text);
+		} catch (RuntimeException ex) {
+			return null;
+		}
 	}
 
 	@Override

@@ -19,6 +19,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SYSTEM_ENVIRONMENT_SECTION_COLUMN;
 
 	/**
+	 * @en System properties
+	 */
+	public static ResKey SYSTEM_ENVIRONMENT_SECTION_SYSTEM_PROPERTIES;
+
+	/**
+	 * @en VM arguments
+	 */
+	public static ResKey SYSTEM_ENVIRONMENT_SECTION_VM_ARGUMENTS;
+
+	/**
+	 * @en Configuration variables
+	 */
+	public static ResKey SYSTEM_ENVIRONMENT_SECTION_CONFIGURATION_VARIABLES;
+
+	/**
 	 * @en Name
 	 */
 	public static ResKey SYSTEM_ENVIRONMENT_NAME_COLUMN;

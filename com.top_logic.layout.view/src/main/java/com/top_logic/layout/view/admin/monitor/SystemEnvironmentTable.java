@@ -9,6 +9,7 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -49,7 +50,7 @@ import com.top_logic.util.monitor.SystemEnvironmentBuilder;
  * {@link TableViewControl}, so all three columns are sortable and text-filterable.
  * </p>
  */
-public class SystemEnvironmentElement implements UIElement {
+public class SystemEnvironmentTable implements UIElement {
 
 	/** Column id for the originating section. */
 	private static final String SECTION_COLUMN = "section";
@@ -64,20 +65,20 @@ public class SystemEnvironmentElement implements UIElement {
 	private static final Pattern SYS_PROP_ARG_PATTERN = Pattern.compile("-D([^=]+)=(.*)");
 
 	/**
-	 * Configuration for {@link SystemEnvironmentElement}.
+	 * Configuration for {@link SystemEnvironmentTable}.
 	 */
 	public interface Config extends UIElement.Config {
 
 		@Override
-		@ClassDefault(SystemEnvironmentElement.class)
+		@ClassDefault(SystemEnvironmentTable.class)
 		Class<? extends UIElement> getImplementationClass();
 	}
 
 	/**
-	 * Creates a new {@link SystemEnvironmentElement} from configuration.
+	 * Creates a new {@link SystemEnvironmentTable} from configuration.
 	 */
 	@CalledByReflection
-	public SystemEnvironmentElement(InstantiationContext context, Config config) {
+	public SystemEnvironmentTable(InstantiationContext context, Config config) {
 		// No configuration needed.
 	}
 
@@ -90,7 +91,15 @@ public class SystemEnvironmentElement implements UIElement {
 		columns.add(textColumn(NAME_COLUMN, I18NConstants.SYSTEM_ENVIRONMENT_NAME_COLUMN, Row::name, 320));
 		columns.add(textColumn(VALUE_COLUMN, I18NConstants.SYSTEM_ENVIRONMENT_VALUE_COLUMN, Row::value, 480));
 
-		ListRowSource<Row> source = new ListRowSource<>(rows, columns);
+		// Stable per-row key by source position. Row is a value record, so the default identity
+		// key (Function.identity()) would treat value-equal rows as one selection key and select
+		// them together; the source position keeps every row individually selectable.
+		IdentityHashMap<Row, Integer> keyByRow = new IdentityHashMap<>();
+		for (int i = 0; i < rows.size(); i++) {
+			keyByRow.put(rows.get(i), Integer.valueOf(i));
+		}
+
+		ListRowSource<Row> source = new ListRowSource<>(rows, columns, keyByRow::get);
 		DefaultTableView<Row> view = DefaultTableView.create(columns, source);
 		return new TableViewControl<>(context, view, false);
 	}
@@ -101,11 +110,11 @@ public class SystemEnvironmentElement implements UIElement {
 	private List<Row> collectRows() {
 		Resources resources = Resources.getInstance();
 		String systemProperties =
-			resources.getString(com.top_logic.util.monitor.I18NConstants.SYSTEM_ENVIRONMENT_SYSTEM_PROPERTIES);
+			resources.getString(I18NConstants.SYSTEM_ENVIRONMENT_SECTION_SYSTEM_PROPERTIES);
 		String vmArguments =
-			resources.getString(com.top_logic.util.monitor.I18NConstants.SYSTEM_ENVIRONMENT_VM_ARGUMENTS);
-		String applicationProperties =
-			resources.getString(com.top_logic.util.monitor.I18NConstants.SYSTEM_ENVIRONMENT_APPLICATION_PROPERTIES);
+			resources.getString(I18NConstants.SYSTEM_ENVIRONMENT_SECTION_VM_ARGUMENTS);
+		String configurationVariables =
+			resources.getString(I18NConstants.SYSTEM_ENVIRONMENT_SECTION_CONFIGURATION_VARIABLES);
 		String blocked = resources.getString(com.top_logic.layout.form.I18NConstants.BLOCKED_VALUE_TEXT);
 
 		List<Pattern> protectedKeys = ApplicationConfig.getInstance()
@@ -121,8 +130,11 @@ public class SystemEnvironmentElement implements UIElement {
 		for (String name : props.stringPropertyNames()) {
 			rows.add(new Row(systemProperties, name, mask(protectedKeys, name, props.getProperty(name), blocked)));
 		}
-		for (Path path : FileManager.getInstance().getPaths()) {
-			rows.add(new Row(systemProperties, "tl.resource.path", path.toString()));
+		List<Path> paths = FileManager.getInstance().getPaths();
+		if (!paths.isEmpty()) {
+			// A single row holding all (distinct) resource paths, rather than one row per path.
+			String joined = paths.stream().map(Path::toString).distinct().collect(Collectors.joining(", "));
+			rows.add(new Row(systemProperties, "tl.resource.path", joined));
 		}
 
 		for (String arg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
@@ -136,7 +148,7 @@ public class SystemEnvironmentElement implements UIElement {
 		}
 
 		for (Map.Entry<String, String> alias : AliasManager.getInstance().getDefinedAliases().entrySet()) {
-			rows.add(new Row(applicationProperties, alias.getKey(),
+			rows.add(new Row(configurationVariables, alias.getKey(),
 				mask(protectedKeys, alias.getKey(), alias.getValue(), blocked)));
 		}
 

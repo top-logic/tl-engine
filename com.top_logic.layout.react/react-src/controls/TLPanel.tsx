@@ -98,12 +98,20 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     ? { position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column' }
     : { display: 'flex', flexDirection: 'column', width: '100%', height: '100%' };
 
+  // Render the header only when it carries something: a title, a toolbar, or an action button.
+  // A chrome-less panel (e.g. a fill panel whose tab already labels it) then shows just its
+  // content, without an empty header bar wasting space.
+  const hasActionButtons =
+    (showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut;
+  const hasHeader = (!!title && title.trim() !== '') || !!state.toolbar || hasActionButtons;
+
   return (
     <div
       id={controlId}
       className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}`}
       style={panelStyle}
     >
+      {hasHeader && (
       <div className="tlPanel__header">
         <span className="tlPanel__title">{title}</span>
         <div className="tlPanel__toolbar">
@@ -140,6 +148,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
           )}
         </div>
       </div>
+      )}
       {!isMinimized && (
         <div className="tlPanel__content">
           <TLChild control={state.child} />

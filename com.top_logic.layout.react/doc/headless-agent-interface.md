@@ -282,10 +282,13 @@ Also decide whether `observe` should ever block user commands at all.
       item with `route="none"` (e.g. `administration`, navigated by route). The agent
       needs a route-navigation action (or sidebar `selectItem` should honor routed
       items) — otherwise whole areas are unreachable headlessly.
-- [ ] **Table rows are not projected.** `TableViewControl.select` takes a
-      `{rowIndex}`, but the projected table state exposes only columns/counts, not
-      row contents — so an agent cannot see which row is which to choose one. Project
-      (a window of) rows with their key + cell text. Part of the table/**D5** work.
+- [x] **Table rows projected — FIXED.** The table's real `rows` state holds cell
+      *controls* (stripped from the agent projection). `TableViewControl` now also
+      projects a text `rows` list — `{rowIndex, selected, cells:{column→text}}` for
+      the current viewport (capped at 100; `totalRowCount` signals more, reachable via
+      `scroll`). Verified live: an agent read the green-field table, found the row
+      whose `name` cell is "Tool 2" (rowIndex 3), and `select {rowIndex:3}` selected
+      it — choosing by content, not a blind index.
 
 ## Progress log
 

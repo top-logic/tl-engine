@@ -286,6 +286,71 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
 	}
 
+	/**
+	 * Adds an agent-facing {@code rows} projection to the headless state.
+	 *
+	 * <p>
+	 * The regular {@code rows} state holds cell <em>controls</em> (so it is stripped from the agent
+	 * projection, which omits control-bearing state). Here each visible row is projected as plain
+	 * text — {@code rowIndex}, {@code selected} and the per-column cell text — so an agent can read
+	 * the table and choose a {@code rowIndex} for {@code select}. Bounded to the current viewport
+	 * (capped), with {@code totalRowCount} already in the scalar state indicating how many more exist
+	 * (reachable via {@code scroll}).
+	 * </p>
+	 */
+	@Override
+	public Map<String, Object> agentScalarState() {
+		Map<String, Object> result = super.agentScalarState();
+		result.put("rows", agentRows());
+		return result;
+	}
+
+	private List<Map<String, Object>> agentRows() {
+		int maxRows = 100;
+		int total = _view.rowCount();
+		int start = Math.max(0, Math.min(_viewportStart, total));
+		int count = _viewportCount > 0 ? _viewportCount : 50;
+		int end = Math.min(total, start + Math.min(count, maxRows));
+		List<Map<String, Object>> out = new ArrayList<>();
+		if (start >= end) {
+			return out;
+		}
+		int index = start;
+		for (Row<R> row : _view.rows(start, end)) {
+			Map<String, Object> rowState = new LinkedHashMap<>();
+			rowState.put("rowIndex", Integer.valueOf(index));
+			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
+			Map<String, Object> cells = new LinkedHashMap<>();
+			for (ColumnView column : _view.columns()) {
+				cells.put(column.name(), cellText(_view.cell(row, column.name())));
+			}
+			rowState.put("cells", cells);
+			out.add(rowState);
+			index++;
+		}
+		return out;
+	}
+
+	private static String cellText(CellContent content) {
+		if (content instanceof CellContent.Text text) {
+			return text.text();
+		}
+		if (content instanceof CellContent.Labeled labeled) {
+			return labeled.text();
+		}
+		if (content instanceof CellContent.Editable editable) {
+			Object value = editable.field().getValue();
+			return value == null ? "" : String.valueOf(value);
+		}
+		if (content instanceof CellContent.Raw raw) {
+			Object payload = raw.payload();
+			if (payload instanceof String || payload instanceof Number || payload instanceof Boolean) {
+				return String.valueOf(payload);
+			}
+		}
+		return "";
+	}
+
 	private Map<String, ReactControl> createCells(Row<R> row) {
 		Map<String, ReactControl> cells = new LinkedHashMap<>();
 		for (ColumnView column : _view.columns()) {

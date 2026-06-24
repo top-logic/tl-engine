@@ -40,6 +40,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
 
+	/**
+	 * @en Recording started. Interact with the main window, then stop.
+	 */
+	public static ResKey RECORDER_STARTED;
+
+	/**
+	 * @en Recording stopped. Captured {0} step(s).
+	 */
+	public static ResKey1 RECORDER_STOPPED__COUNT;
+
+	/**
+	 * @en No window to record.
+	 */
+	public static ResKey ERROR_NO_RECORDER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -311,6 +311,32 @@
 						</tooltip>
 					</open-designer>
 
+					<!-- Pops out the script-recorder side-window: a generic open-window command configured
+					     with the recorder view. -->
+					<open-window placement="TOOLBAR"
+						image="css:bi bi-record-circle"
+						view="script-recorder.view.xml"
+						width="420"
+						height="320"
+						singleton-key="script-recorder"
+					>
+						<title>
+							<en>Script Recorder</en>
+							<de>Skript-Rekorder</de>
+						</title>
+						<label>
+							<en>Record</en>
+							<de>Aufzeichnen</de>
+						</label>
+						<tooltip>
+							<en>Open the script recorder to capture interactions as a replayable script.</en>
+							<de>Oeffnet den Skript-Rekorder, um Interaktionen als abspielbares Skript aufzuzeichnen.</de>
+						</tooltip>
+						<executability>
+							<authenticated-only/>
+						</executability>
+					</open-window>
+
 					<!-- Login: shown only for the anonymous user; opens the login dialog. -->
 					<generic-command placement="TOOLBAR" image="css:bi bi-box-arrow-in-right">
 						<label>

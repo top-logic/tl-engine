@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<app-shell>
+		<content>
+			<panel>
+				<title>
+					<en>Script Recorder</en>
+					<de>Skript-Rekorder</de>
+				</title>
+				<inset>
+					<card variant="elevated">
+						<title>
+							<en>Record the interactions performed in the main window. Start, switch to the main window and act, then Stop.</en>
+							<de>Zeichnet die im Hauptfenster ausgef&#xFC;hrten Interaktionen auf. Starten, zum Hauptfenster wechseln und agieren, dann Stoppen.</de>
+						</title>
+						<button>
+							<action class="com.top_logic.layout.view.command.StartRecordingCommand" image="css:bi bi-record-circle">
+								<label>
+									<en>Start recording</en>
+									<de>Aufzeichnung starten</de>
+								</label>
+							</action>
+						</button>
+						<button>
+							<action class="com.top_logic.layout.view.command.StopRecordingCommand" image="css:bi bi-stop-circle">
+								<label>
+									<en>Stop recording</en>
+									<de>Aufzeichnung stoppen</de>
+								</label>
+							</action>
+						</button>
+					</card>
+				</inset>
+			</panel>
+		</content>
+	</app-shell>
+</view>

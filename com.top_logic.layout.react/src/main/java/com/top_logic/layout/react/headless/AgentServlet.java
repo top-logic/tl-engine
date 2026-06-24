@@ -53,7 +53,10 @@ import com.top_logic.util.TopLogicServlet;
  * {@code "args"}.</li>
  * <li>{@code POST /agent-api/navigate} with body {@code {"windowName":W,"url":"access-control/groups"}}
  * &rarr; navigates the window's router to a route URL (for areas loaded by routing rather than an
- * in-place {@code selectItem}), returning {@code {"success":b,"url":…,"observation":{…}}}.</li>
+ * in-place {@code selectItem}), returning {@code {"success":b,"url":…,"observation":{…}}}. {@code
+ * success} is {@code true} only if the router actually reached the requested URL; a route into an
+ * area whose participants are not registered yet is reported as {@code false} with a {@code message},
+ * not a silent no-op.</li>
  * </ul>
  *
  * <p>
@@ -251,9 +254,18 @@ public class AgentServlet extends TopLogicServlet {
 				message = ex.getMessage();
 			}
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
+			String reachedUrl = routeManager.currentUrl();
+			if (ok && !stripLeadingSlash(url).equals(reachedUrl)) {
+				// navigateToRoute resolves only against already-registered routing participants. A route
+				// into an area that is not loaded yet (no participant declares its leading segment) leaves
+				// the URL unconsumed and the view unchanged — report that honestly instead of a false OK.
+				ok = false;
+				message = "Did not reach '" + url + "' (stopped at '" + reachedUrl
+					+ "'). The target area may not be loaded; activate it first (e.g. sidebar 'selectItem').";
+			}
 			String observation = agentSession(queue).observeJson();
 			write(response, "{\"success\":" + ok
-				+ ",\"url\":" + JSON.toString(routeManager.currentUrl())
+				+ ",\"url\":" + JSON.toString(reachedUrl)
 				+ (message != null ? ",\"message\":" + JSON.toString(message) : "")
 				+ ",\"observation\":" + observation + "}");
 		} finally {
@@ -303,6 +315,10 @@ public class AgentServlet extends TopLogicServlet {
 		}
 		ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
 		return handlersRegistry.getContentHandler(windowName);
+	}
+
+	private static String stripLeadingSlash(String url) {
+		return url.startsWith("/") ? url.substring(1) : url;
 	}
 
 	private static void write(HttpServletResponse response, String json) throws IOException {

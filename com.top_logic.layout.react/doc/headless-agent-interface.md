@@ -350,11 +350,15 @@ Also decide whether `observe` should ever block user commands at all.
   set the value to `securityOwner` directly. Also unit-tested the scheme round-trip
   (`TestReactOptionByLabelNaming`, 4 cases: unique→resolve, ambiguous→decline,
   foreign→decline, unknown→fail-loud).
-  - **`/agent-api/navigate` quirk found:** navigating to `access-control/groups`
-    returned `success:true` but `currentUrl` stayed `dashboard` — the route did not move.
-    The UI sidebar click navigates correctly (and remembers the last sub-route). The
-    `navigateToRoute` headless path needs a look (it silently reports success without
-    moving); tracked under Phase 4.
+  - **`/agent-api/navigate` characterized + made honest.** In-area route navigation
+    works (`access-control/accounts` → `access-control/roles` returns `success:true`,
+    reached). The limitation is deep-linking into an area whose routing participants are
+    not registered yet: `navigateToRoute` resolves only against already-registered
+    participants, and an unloaded area's leading segment is loaded by a sidebar
+    `selectItem`, not by route matching — so the route can't trigger the load. That is a
+    routing-architecture question (route ≠ loader), deferred rather than guessed. The
+    servlet no longer lies about it: `navigate` reports `success:false` with a message
+    when it does not reach the requested URL (verified live), instead of a false OK.
 - **2026-06-24** — D1 **round-trip resolve verified live** end-to-end through
   `/agent-api`, closing the build↔resolve loop. New `selectByKey` command on the
   dropdown takes the same business `key`s the projection emits and sets the selection

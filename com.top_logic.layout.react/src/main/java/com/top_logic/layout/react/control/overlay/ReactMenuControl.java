@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -207,7 +208,8 @@ public class ReactMenuControl extends ReactControl {
 	/**
 	 * Handles the selectItem command sent when a menu item is selected.
 	 */
-	@ReactCommand("selectItem")
+	@ReactCommand(value = "selectItem", params = @ReactParam(name = "itemId", required = true,
+		description = "The id of the menu item to select."))
 	void handleSelectItem(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 		close();

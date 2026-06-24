@@ -10,6 +10,7 @@ import java.util.Map;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -182,7 +183,8 @@ public class ReactSnackbarControl extends ReactControl {
 	 * from hiding a newly shown snackbar.
 	 * </p>
 	 */
-	@ReactCommand("dismiss")
+	@ReactCommand(value = "dismiss", params = @ReactParam(name = "generation", type = "int",
+		description = "The snackbar generation being dismissed; a stale generation is ignored."))
 	void handleDismiss(Map<String, Object> arguments) {
 		int dismissGeneration = ((Number) arguments.getOrDefault(GENERATION, -1)).intValue();
 		if (dismissGeneration != _generation) {

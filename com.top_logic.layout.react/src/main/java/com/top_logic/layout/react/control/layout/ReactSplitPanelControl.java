@@ -452,4 +452,13 @@ public class ReactSplitPanelControl extends ReactControl {
 			}
 		}
 	}
+
+	/**
+	 * Structural: a split-pane layout container, elided from the headless agent projection (its panels
+	 * remain as addressable nodes).
+	 */
+	@Override
+	public boolean agentTransparent() {
+		return true;
+	}
 }

@@ -109,8 +109,9 @@ We built `act`; we have **not** built capture.
 
 - [x] **Structural pruning (modular).** Layout-only wrappers elide themselves from
       the projection via a single polymorphic `ReactControl.agentTransparent()`
-      override (ReactStackControl, ReactInsetControl, ReloadableControl,
-      SlotPlaceholderControl) — the projector asks each control and never switches
+      override (ReactStackControl, ReactInsetControl, ReactSplitPanelControl,
+      ReloadableControl, SlotPlaceholderControl) — the projector asks each control
+      and never switches
       on concrete types (no `instanceof` cascade). Result (live): addresses dropped
       from `/stack/appShell/sidebar/stack/inset/stack/grid/card[…]/counter[Aufgaben]`
       to `/appShell/sidebar/grid/card[Aktive_Aufgaben]/counter[Aufgaben]`; payload

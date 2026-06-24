@@ -27,5 +27,33 @@
 			</action>
 		</button>
 	</card>
+	<card
+		variant="elevated"
+	>
+		<title>
+			<en>Theme</en>
+			<de>Design</de>
+		</title>
+		<button>
+			<action class="com.top_logic.layout.view.command.SetThemeCommand"
+				theme="default"
+			>
+				<label>
+					<en>Light</en>
+					<de>Hell</de>
+				</label>
+			</action>
+		</button>
+		<button>
+			<action class="com.top_logic.layout.view.command.SetThemeCommand"
+				theme="dark"
+			>
+				<label>
+					<en>Dark</en>
+					<de>Dunkel</de>
+				</label>
+			</action>
+		</button>
+	</card>
 	</inset>
 </view>

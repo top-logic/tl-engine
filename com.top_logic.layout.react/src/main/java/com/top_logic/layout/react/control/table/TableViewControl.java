@@ -14,9 +14,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.scripting.recorder.ref.ModelName;
+import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -27,6 +33,8 @@ import com.top_logic.layout.react.control.AgentModelKey;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
@@ -592,6 +600,78 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 		pushSelection();
 		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
+	 * Selects the single row whose business object is named by the given {@link AgentModelKey key} —
+	 * the replay-stable counterpart of {@link #handleSelect} by {@code rowIndex}, which a recorded
+	 * selection is captured as so it survives sorting, filtering and a fresh session.
+	 *
+	 * @param arguments
+	 *        Must contain a {@code "key"} with a row business key (the {@code key} the agent projection
+	 *        puts on each row).
+	 */
+	@ReactCommand(value = "selectByKey", params = @ReactParam(name = "key", required = true,
+		description = "Business key of the row to select (the 'key' projected onto each row)."))
+	void handleSelectByKey(Map<String, Object> arguments) {
+		String key = (String) arguments.get("key");
+		if (key == null) {
+			return;
+		}
+		ModelName name = AgentModelKey.fromJson(key);
+		if (name == null) {
+			return;
+		}
+		Object target;
+		try {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+			ActionContext actionContext =
+				new ReactActionContext(displayContext, displayContext.asRequest().getSession());
+			target = ModelResolver.locateModel(actionContext, null, name);
+		} catch (RuntimeException ex) {
+			Logger.warn("Cannot resolve row for key: " + key, ex, this);
+			return;
+		}
+		if (target == null) {
+			return;
+		}
+		int total = _view.rowCount();
+		List<Row<R>> rows = _view.rows(0, total);
+		for (int i = 0; i < rows.size(); i++) {
+			Row<R> row = rows.get(i);
+			if (target.equals(row.data())) {
+				_selectedKeys.clear();
+				_selectedKeys.add(row.key());
+				_cursorIndex = i;
+				_selectionAnchor = i;
+				pushSelection();
+				updateViewport(_viewportStart, _viewportCount);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Records a plain (unmodified) row selection in replay-stable form: a {@code select {rowIndex}}
+	 * becomes a {@code selectByKey} of the row's business key, so the recording survives sorting and a
+	 * fresh session. Modifier selections (ctrl/shift range/toggle) are recorded verbatim — their
+	 * semantics are index/anchor based.
+	 */
+	@Override
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if ("select".equals(command) && arguments != null
+				&& arguments.get("rowIndex") instanceof Number rowIndex
+				&& !Boolean.TRUE.equals(arguments.get("ctrlKey"))
+				&& !Boolean.TRUE.equals(arguments.get("shiftKey"))) {
+			List<Row<R>> single = _view.rows(rowIndex.intValue(), rowIndex.intValue() + 1);
+			if (!single.isEmpty()) {
+				String key = AgentModelKey.toJson(single.get(0).data());
+				if (key != null) {
+					return new RecordedCommand("selectByKey", Map.of("key", key));
+				}
+			}
+		}
+		return super.recordCommand(command, arguments);
 	}
 
 	/**

@@ -130,9 +130,16 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       on the group form: `select user` + `assertState {value:"user"}` passes; the same with
       `{value:"superuser"}` fails with `mismatches:[{key:value,expected:superuser,actual:user}]`.
       The compare logic (`RecordedStep.mismatchingKeys`) is unit-tested.
+- [x] **Replay-stable table selection.** `TableViewControl` gains a `selectByKey {key}`
+      command (resolves the row's business object globally via `ReactActionContext` and
+      selects it) and a `recordCommand` override translating a plain `select {rowIndex}`
+      into `selectByKey {key}` (modifier/range selections stay index-based). Verified live:
+      a recorded group-row click captured as `selectByKey`, and replaying it **after
+      re-sorting the table** still selected the right group (`securityOwner`) — index-
+      independent. Both major interactive controls (select + table) now record stably.
 - [ ] Migration story / coexistence with legacy `ScriptingRecorder`.
-- [ ] Broaden `recordCommand` coverage (e.g. table select → row business key) and
-      label-based assertion for session-id-bearing state (dropdown value).
+- [ ] Label-based assertion for session-id-bearing state (e.g. a dropdown's `value`
+      descriptors carry option ids); assert by label/key instead.
 
 ### Phase 3 — Action space & affordances 🚧
 
@@ -367,6 +374,12 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — **Phase 2 replay-stable table selection**, verified live. `TableViewControl`
+  now has a `selectByKey {key}` command (resolves the row business object globally through
+  `ReactActionContext`, selects it) and a `recordCommand` override turning a plain
+  `select {rowIndex}` into `selectByKey {key}`. Proof: a recorded group-row click captured as
+  `selectByKey`, and replaying it *after re-sorting the table* still selected `securityOwner` —
+  the row index changed but identity held. Select + table are now both replay-stable.
 - **2026-06-24** — **Phase 2 assertion/observation steps**, verified live. A recording can
   now embed assertions, turning replay into a self-checking regression run.
   `POST /agent-api/record/assert {address, expect?}` appends an `assertState` step; on

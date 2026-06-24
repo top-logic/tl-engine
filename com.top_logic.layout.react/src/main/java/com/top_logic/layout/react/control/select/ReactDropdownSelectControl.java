@@ -298,7 +298,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	private List<Object> resolveByKeys(List<String> keys) {
-		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
+		// Resolve against the model's authoritative option list, not only the options already streamed
+		// to the client (_optionIndex). This lets a recorded selectByKey replay without first opening
+		// the dropdown (loadOptions), and matches the full set the keys were built against.
+		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
 		ActionContext actionContext = newActionContext();
 		List<Object> resolved = new ArrayList<>(keys.size());
 		for (String key : keys) {

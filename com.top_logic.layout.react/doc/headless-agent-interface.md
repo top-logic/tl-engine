@@ -342,6 +342,19 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — `selectByKey` hardened for **replay** and verified live: it now
+  resolves against the model's authoritative option list (`SelectFieldModel.getOptions`)
+  rather than only the options already streamed to the client, so a recorded
+  `selectByKey` replays without first opening the dropdown (`loadOptions`). Proven live
+  on group `superuser` (no members, `optionsLoaded=false`): a hardcoded recorded key
+  set the value to `securityOwner` directly. Also unit-tested the scheme round-trip
+  (`TestReactOptionByLabelNaming`, 4 cases: unique→resolve, ambiguous→decline,
+  foreign→decline, unknown→fail-loud).
+  - **`/agent-api/navigate` quirk found:** navigating to `access-control/groups`
+    returned `success:true` but `currentUrl` stayed `dashboard` — the route did not move.
+    The UI sidebar click navigates correctly (and remembers the last sub-route). The
+    `navigateToRoute` headless path needs a look (it silently reports success without
+    moving); tracked under Phase 4.
 - **2026-06-24** — D1 **round-trip resolve verified live** end-to-end through
   `/agent-api`, closing the build↔resolve loop. New `selectByKey` command on the
   dropdown takes the same business `key`s the projection emits and sets the selection

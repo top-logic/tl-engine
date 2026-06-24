@@ -35,7 +35,7 @@
 					mode="START"
 				/>
 				<write-channel name="sqlStats"/>
-				<execute-script function="x -> true"/>
+				<execute-script function="true"/>
 				<write-channel name="monitoring"/>
 			</generic-command>
 			<generic-command
@@ -71,7 +71,7 @@
 					mode="STOP"
 				/>
 				<write-channel name="sqlStats"/>
-				<execute-script function="x -> false"/>
+				<execute-script function="false"/>
 				<write-channel name="monitoring"/>
 			</generic-command>
 		</commands>

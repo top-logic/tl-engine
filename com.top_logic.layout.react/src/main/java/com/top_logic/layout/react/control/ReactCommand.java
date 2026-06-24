@@ -45,4 +45,10 @@ public @interface ReactCommand {
 	 * {@code "select"}).
 	 */
 	String value();
+
+	/**
+	 * The arguments this command accepts, advertised to the headless agent interface so a consumer
+	 * need not guess the shape of the {@code arguments} map. Empty for argument-less commands.
+	 */
+	ReactParam[] params() default {};
 }

@@ -24,6 +24,7 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -186,7 +187,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 *        Must contain a {@code "value"} key with a list of option value IDs.
 	 */
 	@SuppressWarnings("unchecked")
-	@ReactCommand("valueChanged")
+	@ReactCommand(value = "valueChanged", params = @ReactParam(name = "value", type = "string[]",
+		required = true, description = "List of selected option value ids (from the options descriptors)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
 		List<String> selectedIds = (List<String>) arguments.get(VALUE);
 		if (selectedIds == null) {

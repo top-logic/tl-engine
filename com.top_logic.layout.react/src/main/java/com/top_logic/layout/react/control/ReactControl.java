@@ -389,6 +389,19 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		return result;
 	}
 
+	/**
+	 * The declared argument schema of the given command (from its
+	 * {@link ReactCommand#params() @ReactCommand params}), so the headless projection can advertise
+	 * what a command expects instead of leaving a consumer to guess.
+	 *
+	 * @param command
+	 *        The command ID.
+	 * @return The parameter declarations; empty if the command declares none.
+	 */
+	public ReactParam[] agentCommandParams(String command) {
+		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).paramsFor(command);
+	}
+
 	private static boolean containsControl(Object value) {
 		if (value instanceof ReactControl) {
 			return true;

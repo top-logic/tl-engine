@@ -138,9 +138,15 @@ We built `act`; we have **not** built capture.
       work — rather than shipping the raw items array.
 - [ ] `executeCommand` on the sidebar is a remaining chrome-command candidate to
       assess (one-line `agentHiddenCommands` entry if internal).
-- [ ] Optional argument schema on `@ReactCommand` (names/types/required) so the
-      action space is introspectable without each control implementing
-      `AgentNode` by hand.
+- [x] **Argument schemas on `@ReactCommand` (D5 first step) — DONE.** New
+      `@ReactParam` (name/type/required/description) declared in `@ReactCommand.params()`,
+      captured by `ReactCommandMap`, exposed via `ReactControl.agentCommandParams`, and
+      surfaced by the projector in each action's `params`. Annotated the commands I had
+      to guess: `selectItem {itemId}`, `valueChanged {value:string[]}`,
+      `select {rowIndex,ctrlKey,shiftKey}`, `selectTab {tabId}`. Verified live: the
+      sidebar advertises `selectItem(itemId, required)` — the exact key I'd guessed
+      wrong. The schema lives next to the handler (can't drift) and needs no headless
+      dependency on the control.
 - [ ] Surface enabled/disabled and visibility per action (don't advertise
       actions that would be rejected).
 - [ ] Decide the default projection of state: raw control state vs. a curated
@@ -239,16 +245,15 @@ semantic projection? Prototype exposes the raw tree with opt-in `AgentNode`
 refinement. Decide whether controls should contribute semantic descriptors at
 source.
 
-### D5 — Action-space exposure `OPEN` — now the top priority
+### D5 — Action-space exposure `IN PROGRESS`
 
-Untyped command names (current default) vs. advertised argument schemas. Affects
-how reliably an agent can construct valid `arguments`. **Strongly reinforced in
-practice:** while driving real views I repeatedly had to guess/read source for
-argument shapes — `selectItem {itemId}` (guessed `{id}` and failed), `valueChanged
-{value:[ids]}`, `select {rowIndex}`, `selectTab {tabId}`. Each is a one-line schema
-the control could advertise. Next concrete step: let `@ReactCommand` (or a per-control
-`agentActions()`) carry parameter name/type/required, and surface it in the projected
-`actions`.
+Untyped command names vs. advertised argument schemas. **First step shipped:**
+`@ReactCommand.params()` + `@ReactParam` now let a command declare its arguments,
+surfaced in the projected `actions` (see Phase 3). The four commands I had to guess
+are annotated. Remaining: annotate the rest of the interactive commands across the
+control library (sort/filter/scroll/expand, button gestures, form-field inputs, …)
+so the action space is fully self-describing; consider a conformance check that every
+`@ReactCommand` taking a `Map` declares its params.
 
 ### D6 — Read concurrency model `OPEN` (gates Phase 4)
 
@@ -302,6 +307,10 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-24** — D5 first step: commands now advertise argument schemas via
+  `@ReactParam` on `@ReactCommand`, surfaced in the projection. Annotated
+  selectItem/valueChanged/select/selectTab; verified live (sidebar advertises
+  `selectItem(itemId)`). An agent no longer has to guess argument keys.
 - **2026-06-24** — Worked the three live-found findings. (1) Field-name stability:
   FIXED (technical attribute name in both view/edit). (2) Table rows: FIXED (text
   `rows` projection; agent selects by content). (3) Routed nav: **not a bug** — my

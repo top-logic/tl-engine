@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
@@ -530,7 +531,8 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles navigation item selection from the client.
 	 */
-	@ReactCommand("selectItem")
+	@ReactCommand(value = "selectItem", params = @ReactParam(name = "itemId", required = true,
+		description = "The id of the navigation item to select (from the sidebar items)."))
 	void handleSelectItem(Map<String, Object> arguments) {
 		String itemId = (String) arguments.get(ITEM_ID_ARG);
 

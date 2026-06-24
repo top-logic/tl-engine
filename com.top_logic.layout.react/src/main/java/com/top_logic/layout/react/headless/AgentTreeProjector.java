@@ -14,6 +14,7 @@ import java.util.function.Function;
 
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactParam;
 
 /**
  * Projects a {@link ReactControl} subtree into an addressable {@link AgentNodeView} tree, assigning
@@ -313,7 +314,11 @@ public final class AgentTreeProjector {
 		}
 		List<AgentAction> result = new ArrayList<>();
 		for (String command : new TreeSet<>(control.agentCommands())) {
-			result.add(AgentAction.of(command));
+			List<AgentParam> params = new ArrayList<>();
+			for (ReactParam param : control.agentCommandParams(command)) {
+				params.add(new AgentParam(param.name(), param.type(), param.required(), param.description()));
+			}
+			result.add(new AgentAction(command, command, params));
 		}
 		return result;
 	}

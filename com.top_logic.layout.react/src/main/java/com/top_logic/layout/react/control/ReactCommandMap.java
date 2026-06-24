@@ -30,8 +30,11 @@ class ReactCommandMap {
 
 	private final Map<String, ReactCommandInvoker> _invokers;
 
-	private ReactCommandMap(Map<String, ReactCommandInvoker> invokers) {
+	private final Map<String, ReactParam[]> _params;
+
+	private ReactCommandMap(Map<String, ReactCommandInvoker> invokers, Map<String, ReactParam[]> params) {
 		_invokers = invokers;
+		_params = params;
 	}
 
 	/**
@@ -56,6 +59,15 @@ class ReactCommandMap {
 	}
 
 	/**
+	 * The declared {@link ReactParam argument schema} of the given command, or an empty array if the
+	 * command declares none.
+	 */
+	ReactParam[] paramsFor(String commandId) {
+		ReactParam[] params = _params.get(commandId);
+		return params != null ? params : new ReactParam[0];
+	}
+
+	/**
 	 * Scans the given class hierarchy for {@link ReactCommand}-annotated methods and builds a
 	 * {@link ReactCommandMap}.
 	 *
@@ -64,6 +76,7 @@ class ReactCommandMap {
 	 */
 	static ReactCommandMap forClass(Class<?> controlClass) {
 		Map<String, ReactCommandInvoker> invokers = new HashMap<>();
+		Map<String, ReactParam[]> params = new HashMap<>();
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 
 		for (Class<?> clazz = controlClass; clazz != null && clazz != Object.class;
@@ -98,13 +111,14 @@ class ReactCommandMap {
 					MethodHandle handle = lookup.unreflect(method);
 					invokers.put(commandId,
 						new ReactCommandInvoker(handle, needsContext, needsArgs, returnsVoid));
+					params.put(commandId, annotation.params());
 				} catch (IllegalAccessException ex) {
 					throw new IllegalStateException(
 						"Cannot access @ReactCommand method " + method + " on " + controlClass.getName(), ex);
 				}
 			}
 		}
-		return new ReactCommandMap(invokers);
+		return new ReactCommandMap(invokers, params);
 	}
 
 	private static void validate(Method method) {

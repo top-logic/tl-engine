@@ -12,6 +12,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.headless.AgentAction;
@@ -221,6 +222,12 @@ public class TestAgentSession extends TestCase {
 		// "toggleStyle" (chrome) hidden; "open" (semantic) advertised.
 		assertEquals(List.of("open"),
 			view.actions().stream().map(AgentAction::command).toList());
+
+		// The advertised action carries its declared @ReactParam schema.
+		AgentAction open = view.actions().get(0);
+		AgentParam param = single(open.params());
+		assertEquals("tab", param.name());
+		assertTrue(param.required());
 	}
 
 	/**
@@ -393,7 +400,8 @@ public class TestAgentSession extends TestCase {
 			putStateSilent("note", null);
 		}
 
-		@ReactCommand("open")
+		@ReactCommand(value = "open", params = @ReactParam(name = "tab", required = true,
+			description = "Which tab to open."))
 		void open() {
 			_opened = true;
 		}

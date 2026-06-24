@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
@@ -273,7 +274,8 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	/**
 	 * Handles tab selection from the client.
 	 */
-	@ReactCommand("selectTab")
+	@ReactCommand(value = "selectTab", params = @ReactParam(name = "tabId", required = true,
+		description = "The id of the tab to activate (from the tabs list)."))
 	void handleSelectTab(Map<String, Object> arguments) {
 		String tabId = (String) arguments.get(TAB_ID_ARG);
 

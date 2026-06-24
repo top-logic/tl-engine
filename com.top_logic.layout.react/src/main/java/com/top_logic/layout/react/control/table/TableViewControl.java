@@ -24,6 +24,7 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -537,7 +538,11 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a row selection (single / ctrl-toggle / shift-range).
 	 */
-	@ReactCommand("select")
+	@ReactCommand(value = "select", params = {
+		@ReactParam(name = "rowIndex", type = "int", required = true,
+			description = "Zero-based index of the row to select (see the projected rows)."),
+		@ReactParam(name = "ctrlKey", type = "boolean", description = "Toggle selection (multi-select)."),
+		@ReactParam(name = "shiftKey", type = "boolean", description = "Range selection (multi-select).") })
 	void handleSelect(Map<String, Object> arguments) {
 		int rowIndex = ((Number) arguments.get("rowIndex")).intValue();
 		int total = _view.rowCount();

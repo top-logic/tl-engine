@@ -88,6 +88,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 PERMISSION_DENIED__NAME;
 
+	/**
+	 * @en The user is not allowed to modify attribute {1} of object {0}.
+	 */
+	public static ResKey2 WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE;
+
+	/**
+	 * @en The user is not allowed to create elements of type {0}.
+	 */
+	public static ResKey1 CREATE_PERMISSION_DENIED__TYPE;
+
+	/**
+	 * @en The user is not allowed to delete object {0}.
+	 */
+	public static ResKey1 DELETE_PERMISSION_DENIED__OBJECT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

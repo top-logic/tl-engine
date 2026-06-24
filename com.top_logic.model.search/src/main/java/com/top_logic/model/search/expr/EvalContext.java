@@ -43,11 +43,15 @@ public final class EvalContext {
 
 	private boolean _interactive;
 
+	private boolean _withSecurity;
+
 	/**
 	 * Creates a {@link EvalContext}.
 	 * 
 	 * @param interactive
 	 *        See {@link #isInteractive()}
+	 * @param withSecurity
+	 *        See {@link #usesSecurity()}
 	 * @param kb
 	 *        See {@link #getKnowledgeBase()}.
 	 * @param displayContext
@@ -55,8 +59,9 @@ public final class EvalContext {
 	 * @param out
 	 *        See {@link #getOut()}.
 	 */
-	public EvalContext(boolean interactive, KnowledgeBase kb, TLModel model, DisplayContext displayContext, TagWriter out) {
+	public EvalContext(boolean interactive, boolean withSecurity, KnowledgeBase kb, TLModel model, DisplayContext displayContext, TagWriter out) {
 		_interactive = interactive;
+		_withSecurity = withSecurity;
 		_kb = kb;
 		_model = model;
 		_displayContext = displayContext;
@@ -74,6 +79,14 @@ public final class EvalContext {
 	 */
 	public boolean isInteractive() {
 		return _interactive;
+	}
+
+	/**
+	 * Whether security is applied, i.e. when a user is not allowed to see an element, it is removed
+	 * from the result and each intermediate result.
+	 */
+	public boolean usesSecurity() {
+		return _withSecurity;
 	}
 
 	/**
@@ -214,7 +227,7 @@ public final class EvalContext {
 	 */
 	@FrameworkInternal
 	public final EvalContext snapshot() {
-		EvalContext result = new EvalContext(_interactive, _kb, _model, null, null);
+		EvalContext result = new EvalContext(_interactive, _withSecurity, _kb, _model, null, null);
 		result._vars.putAll(_vars);
 		result._renderer = _renderer;
 		return result;

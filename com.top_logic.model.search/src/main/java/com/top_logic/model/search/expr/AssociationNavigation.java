@@ -7,6 +7,9 @@ package com.top_logic.model.search.expr;
 
 import static com.top_logic.knowledge.search.ExpressionFactory.*;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.search.RevisionQuery;
@@ -17,8 +20,10 @@ import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * Navigate a {@link TLAssociation}.
@@ -100,10 +105,30 @@ public class AssociationNavigation extends SearchExpression {
 		if (source == null) {
 			return null;
 		}
-		return evalInternal(source);
+		boolean withSecurity = definitions.usesSecurity();
+		if (withSecurity) {
+			ModelAccessRights accessRights = ModelAccessRights.getInstance();
+			TLReference reference = getSourceEnd().getReference();
+			if (reference != null) {
+				if (!accessRights.isReadAllowed(source, reference)) {
+					return Collections.emptyList();
+				}
+			} else {
+				// No implementation for the end, therefore no attribute check
+				if (!accessRights.isReadAllowed(source)) {
+					return Collections.emptyList();
+				}
+			}
+		}
+		List<TLObject> navigationResult = evalInternal(source);
+		if (withSecurity) {
+			return filterSecurity(navigationResult);
+		} else {
+			return navigationResult;
+		}
 	}
 
-	private Object evalInternal(TLObject source) {
+	private List<TLObject> evalInternal(TLObject source) {
 		KnowledgeBase knowledgeBase = WrapperUtil.getKnowledgeBase(source);
 		RevisionQuery<TLObject> query = createQuery(source);
 		return knowledgeBase.search(query);

@@ -47,6 +47,8 @@ public class Remove extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
+		Update.checkWritePermission(definitions, obj, part);
+
 		List<?> oldValue = asList(obj.tValue(part));
 		Set<?> removeSet = asSet(arguments[2]);
 

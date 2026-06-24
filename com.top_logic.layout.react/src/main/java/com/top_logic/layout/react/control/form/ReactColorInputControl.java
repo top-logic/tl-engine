@@ -18,6 +18,7 @@ import com.top_logic.layout.form.control.ColorChooserSelectionControl;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 
 /**
  * React color input control with palette management.
@@ -83,7 +84,8 @@ public class ReactColorInputControl extends ReactFormFieldControl {
 	/**
 	 * Handles palette change events from the client (drag-drop swap, reset).
 	 */
-	@ReactCommand("paletteChanged")
+	@ReactCommand(value = "paletteChanged", params = @ReactParam(name = "palette", type = "string[]",
+		description = "The new ordered list of hex color strings forming the personal palette."))
 	void handlePaletteChanged(Map<String, Object> arguments) {
 		@SuppressWarnings("unchecked")
 		List<String> newPalette = (List<String>) arguments.get(PALETTE);

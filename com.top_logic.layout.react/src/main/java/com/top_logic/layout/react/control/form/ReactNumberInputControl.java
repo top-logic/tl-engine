@@ -12,6 +12,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 
 /**
  * A {@link ReactFormFieldControl} for number input fields.
@@ -45,7 +46,8 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	}
 
 	@Override
-	@ReactCommand("valueChanged")
+	@ReactCommand(value = "valueChanged", params = @ReactParam(name = "value", type = "number",
+		description = "The new numeric value (empty to clear)."))
 	void handleValueChanged(Map<String, Object> arguments) {
 		Object rawValue = arguments.get(VALUE);
 		FieldModel model = getFieldModel();

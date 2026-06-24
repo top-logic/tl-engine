@@ -381,6 +381,12 @@ public class ReactServlet extends TopLogicServlet {
 
 		SSEUpdateQueue queue = getWindowQueue(session, windowName);
 		if (queue == null) {
+			// Diagnostic for "controls don't react": the client posts a command for a window that
+			// has no queue in this session (e.g. a stale tab after the window was discarded, or a
+			// window-name mismatch). Log the known windows to compare against the requested one.
+			Logger.warn("Command '" + commandName + "' for control '" + controlId
+				+ "' targets unknown window '" + windowName + "'. Known windows: "
+				+ ReactWindowRegistry.forSession(session).windowNames(), ReactServlet.class);
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
 			return;
 		}

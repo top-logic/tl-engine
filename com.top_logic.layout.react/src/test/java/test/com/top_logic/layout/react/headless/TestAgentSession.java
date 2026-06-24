@@ -57,7 +57,7 @@ public class TestAgentSession extends TestCase {
 		_submit = new DemoButtonControl(context, "Submit");
 		_form = new DemoFormControl(context, List.of(_username), _submit);
 
-		_session = AgentSession.over(_queue);
+		_session = AgentSession.forRoot(_form);
 	}
 
 	@Override
@@ -166,7 +166,7 @@ public class TestAgentSession extends TestCase {
 
 		SSEUpdateQueue queue = new SSEUpdateQueue();
 		DemoModelControl row = new DemoModelControl(new TestReactContext(queue), rowModel);
-		AgentSession session = AgentSession.over(queue);
+		AgentSession session = AgentSession.forRoot(row);
 
 		AgentNodeView rowView = single(session.observe().children());
 		assertEquals("cell", rowView.role());

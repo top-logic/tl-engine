@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -35,9 +34,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </p>
  *
  * <p>
- * The tree is rooted at a synthetic {@code "/"} node (role {@code app}) whose children are the
- * window's {@link SSEUpdateQueue#getRootControls() root controls}. A {@link AgentSession} is a thin,
- * stateless view over the queue; create one per interaction.
+ * The observation is rooted at a synthetic {@code "/"} node (role {@code app}) whose single child is
+ * the window's displayed root control (see {@link #forRoot(ReactControl)}). A {@link AgentSession} is
+ * a thin, stateless view; create one per interaction.
  * </p>
  */
 public final class AgentSession {
@@ -47,21 +46,35 @@ public final class AgentSession {
 	 */
 	public static final String ROOT = AgentTreeProjector.SEPARATOR;
 
-	private final SSEUpdateQueue _queue;
+	private final ReactControl _root;
 
-	private AgentSession(SSEUpdateQueue queue) {
-		_queue = queue;
+	private AgentSession(ReactControl root) {
+		_root = root;
 	}
 
 	/**
-	 * Creates a headless session over the given window queue.
+	 * Creates a headless session rooted at the window's displayed root control.
 	 *
-	 * @param queue
-	 *        The window's update queue (the control registry).
+	 * <p>
+	 * The projection is exactly the subtree reachable from this root, so controls that are still
+	 * registered in the window's queue but no longer reachable (orphaned navigation content) are not
+	 * included. A {@code null} root yields an empty observation — the window simply has no rendered
+	 * tree.
+	 * </p>
+	 *
+	 * @param root
+	 *        The window's root control, or {@code null} if none is set.
 	 * @return A new session.
 	 */
-	public static AgentSession over(SSEUpdateQueue queue) {
-		return new AgentSession(queue);
+	public static AgentSession forRoot(ReactControl root) {
+		return new AgentSession(root);
+	}
+
+	/**
+	 * The window root as a 0-or-1 element list.
+	 */
+	private List<ReactControl> roots() {
+		return _root == null ? List.of() : List.of(_root);
 	}
 
 	/**
@@ -72,7 +85,7 @@ public final class AgentSession {
 	 *         window's root controls.
 	 */
 	public AgentNodeView observe() {
-		List<ReactControl> roots = _queue.getRootControls();
+		List<ReactControl> roots = roots();
 		List<String> segments = AgentTreeProjector.segmentsFor(roots);
 		List<AgentNodeView> rootViews = new ArrayList<>(roots.size());
 		for (int i = 0; i < roots.size(); i++) {
@@ -104,7 +117,7 @@ public final class AgentSession {
 			return null;
 		}
 
-		List<ReactControl> candidates = _queue.getRootControls();
+		List<ReactControl> candidates = roots();
 		ReactControl current = null;
 		StringBuilder walked = new StringBuilder();
 		for (String segment : segments) {

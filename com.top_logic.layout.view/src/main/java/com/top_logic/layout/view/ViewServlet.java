@@ -123,6 +123,7 @@ public class ViewServlet extends TopLogicServlet {
 				ReactControl rootControl = controlProvider.createControl(
 					displayContext, windowEntry.getModel());
 				windowEntry.setRootControl(rootControl);
+				sseQueue.setRootControl(rootControl);
 				renderPage(request, response, rootControl, displayContext);
 				return;
 			}
@@ -147,6 +148,9 @@ public class ViewServlet extends TopLogicServlet {
 
 		IReactControl rootControl = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
+		if (rootControl instanceof ReactControl rc) {
+			sseQueue.setRootControl(rc);
+		}
 
 		renderPage(request, response, rootControl, displayContext);
 	}

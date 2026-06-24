@@ -137,7 +137,7 @@ public class AgentServlet extends TopLogicServlet {
 		ReentrantLock requestLock = ReactWindowRegistry.forSession(session).getRequestLock();
 		requestLock.lock();
 		try {
-			write(response, AgentSession.over(queue).observeJson());
+			write(response, agentSession(queue).observeJson());
 		} finally {
 			requestLock.unlock();
 		}
@@ -165,7 +165,7 @@ public class AgentServlet extends TopLogicServlet {
 		}
 
 		SSEUpdateQueue queue = requireQueue(session, windowName);
-		AgentSession agentSession = AgentSession.over(queue);
+		AgentSession agentSession = agentSession(queue);
 
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
@@ -191,6 +191,13 @@ public class AgentServlet extends TopLogicServlet {
 		} finally {
 			requestLock.unlock();
 		}
+	}
+
+	/**
+	 * Builds a session rooted at the window's displayed root control.
+	 */
+	private static AgentSession agentSession(SSEUpdateQueue queue) {
+		return AgentSession.forRoot(queue.getRootControl());
 	}
 
 	private SSEUpdateQueue requireQueue(HttpSession session, String windowName) {

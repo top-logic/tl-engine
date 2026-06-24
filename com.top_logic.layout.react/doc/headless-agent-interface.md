@@ -130,11 +130,24 @@ We built `act`; we have **not** built capture.
 >    request lock, and control register-then-embed has a race window, so
 >    `getRootControls()`/`agentChildren()` can see a partial tree.
 
-- [ ] **Snapshot-under-lock, project-off-lock.** Capture an immutable structural
-      snapshot (ids, module, copied state, child-id lists, model refs) inside a
-      *tiny* critical section, then build the `AgentNodeView` (roles, labels)
-      after releasing the lock. Fixes both defects above.
-- [ ] Remove `MetaLabelProvider` (and any KB access) from the critical section.
+- [x] **Project from the window's authoritative root**, not the registration
+      heuristic. `SSEUpdateQueue.setRootControl` is set by `ViewServlet`; the
+      heuristic (`getRootControls`) is **removed** — no silent fallback. Fixed the
+      orphan over-reporting (was 5 `TLStack` roots after visiting 5 views; now a
+      stable single `/stack` reflecting the current view). Verified live.
+- [x] **Diagnostic logging** (window-named): command-target-not-found now logs
+      window + registered count + attached count + IDs; SSE connection
+      *replacement* logs at WARN; unknown-window commands log the known windows.
+      `SSEUpdateQueue` window name populated at creation so logs identify it.
+- [ ] **Investigate queue recreation (likely the real "dead controls" cause).**
+      The new logging already shows one window (`vd6…`) with **two different
+      `SSEUpdateQueue` identities** — the per-window queue is being recreated.
+      A recreated (empty) queue would receive commands while the controls live in
+      the old queue → `NOT FOUND, 0 registered`, i.e. clicks do nothing. Find what
+      evicts/recreates the queue and why.
+- [ ] **Snapshot-under-lock, project-off-lock.** Still open: `observe` holds the
+      session-wide request lock across the projection incl. `MetaLabelProvider`.
+      Capture a tiny structural snapshot under the lock, build the view off-lock.
 - [ ] Flag/fix the latent React-layer issue: heartbeat `synthesizeModelEvents`
       mutates the control tree without the request lock.
 - [ ] Real quiescence signal beyond the synchronous case (await pending model
@@ -237,3 +250,11 @@ Also decide whether `observe` should ever block user commands at all.
   session-wide request lock, stalling the UI and producing flaky partial reads.
   Recorded under Phase 4 + decision **D6**. Fix direction:
   snapshot-under-lock / project-off-lock.
+- **2026-06-24** — Could **not** reproduce "controls don't react" via automation
+  (view tab + observe tab + sidebar switching + 2nd tab); server log clean. The
+  lock theory was wrong (a completed request releases it). Removed the
+  `getRootControls` heuristic and switched `observe` to project from the window's
+  authoritative root (`SSEUpdateQueue.setRootControl`); verified the tree is now a
+  single root reflecting the current view. Added window-named diagnostic logging,
+  which immediately surfaced a new lead: the per-window queue is being **recreated**
+  (same window, two queue identities) — the probable real cause to chase next.

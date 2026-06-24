@@ -7,13 +7,7 @@ package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
@@ -80,6 +74,8 @@ public class SSEUpdateQueue {
 	private volatile ScheduledFuture<?> _heartbeatTask;
 
 	private volatile String _windowName;
+
+	private volatile ReactControl _rootControl;
 
 	private volatile TLSessionContext _sessionContext;
 
@@ -180,62 +176,57 @@ public class SSEUpdateQueue {
 	public ReactCommandTarget getControl(String controlId) {
 		ReactCommandTarget control = _controls.get(controlId);
 		if (control == null) {
-			Logger.warn("SSEUpdateQueue@" + System.identityHashCode(this) + " getControl(" + controlId
-				+ ") NOT FOUND. Registered IDs: " + _controls.keySet(), SSEUpdateQueue.class);
+			int total = _controls.size();
+			int attached = 0;
+			for (ReactCommandTarget target : _controls.values()) {
+				if (target instanceof ReactControl rc && rc.isAttached()) {
+					attached++;
+				}
+			}
+			// Diagnostic for "controls don't react": the browser is targeting a control the
+			// window's queue does not (or no longer) holds. An empty queue (total == 0) means the
+			// window's control tree was never built here or was torn down; a non-empty queue means
+			// the client is referencing a stale/disposed control ID.
+			Logger.warn("Command target '" + controlId + "' NOT FOUND in window '" + _windowName
+				+ "' (queue@" + System.identityHashCode(this) + "): " + total + " controls registered, "
+				+ attached + " attached. Registered IDs: " + _controls.keySet(), SSEUpdateQueue.class);
 		}
 		return control;
 	}
 
 	/**
-	 * The root {@link ReactControl}s registered in this window, i.e. those that are not a child of
-	 * any other registered control.
+	 * Records the authoritative root control of this window's displayed tree.
 	 *
 	 * <p>
-	 * The registry itself is flat (every control is registered by ID for command dispatch); this
-	 * method reconstructs the forest of control trees by subtracting all controls that appear as a
-	 * {@link ReactControl#agentChildren() direct child} of some other control. It is the entry point
-	 * for the headless agent interface, which projects these roots into an addressable state tree.
+	 * Set when the window's page is rendered. This is the single root the headless interface projects
+	 * from, so that controls still registered (for command dispatch) but no longer reachable from the
+	 * displayed tree (orphaned navigation content) are excluded.
 	 * </p>
 	 *
-	 * <p>
-	 * Roots are returned in ID-allocation order so the projection is reproducible.
-	 * </p>
+	 * @param rootControl
+	 *        The window's root control.
 	 */
-	public List<ReactControl> getRootControls() {
-		List<ReactControl> all = new ArrayList<>();
-		for (ReactCommandTarget target : _controls.values()) {
-			if (target instanceof ReactControl control) {
-				all.add(control);
-			}
-		}
-		Set<ReactControl> children = Collections.newSetFromMap(new IdentityHashMap<>());
-		for (ReactControl control : all) {
-			children.addAll(control.agentChildren());
-		}
-		List<ReactControl> roots = new ArrayList<>();
-		for (ReactControl control : all) {
-			if (!children.contains(control)) {
-				roots.add(control);
-			}
-		}
-		roots.sort(Comparator.comparingInt(SSEUpdateQueue::idOrder));
-		return roots;
+	public void setRootControl(ReactControl rootControl) {
+		_rootControl = rootControl;
 	}
 
 	/**
-	 * Numeric ordering key derived from a control's allocated ID ({@code "v" + n}); used to make
-	 * the root forest reproducible. Non-numeric IDs sort last.
+	 * Records the window name this queue serves, so diagnostics can identify the window.
+	 *
+	 * @param windowName
+	 *        The window name.
 	 */
-	private static int idOrder(ReactControl control) {
-		String id = control.getID();
-		if (id != null && id.length() > 1 && id.charAt(0) == 'v') {
-			try {
-				return Integer.parseInt(id.substring(1));
-			} catch (NumberFormatException ex) {
-				// Fall through.
-			}
-		}
-		return Integer.MAX_VALUE;
+	public void setWindowName(String windowName) {
+		_windowName = windowName;
+	}
+
+	/**
+	 * The authoritative root control of this window's displayed tree, or {@code null} if not set.
+	 *
+	 * @see #setRootControl(ReactControl)
+	 */
+	public ReactControl getRootControl() {
+		return _rootControl;
 	}
 
 	/**
@@ -245,14 +236,22 @@ public class SSEUpdateQueue {
 		SSEConnection old = _connection;
 		SSEConnection newConn = new SSEConnection(asyncContext);
 		_connection = newConn;
-		Logger.info("SSE connection set for queue@" + System.identityHashCode(this)
-			+ ", replacing=" + (old != null), SSEUpdateQueue.class);
 		if (old != null) {
+			// Diagnostic for "controls don't react": a second event stream for the SAME window
+			// replaces the first, so the previously connected browser tab stops receiving state
+			// patches (its clicks still POST, but updates never arrive). Expected on reconnect of a
+			// single tab; suspicious if two live tabs share a window.
+			Logger.warn("SSE connection REPLACED for window '" + _windowName + "' (queue@"
+				+ System.identityHashCode(this) + "); the previous browser event stream is now closed.",
+				SSEUpdateQueue.class);
 			try {
 				old.getContext().complete();
 			} catch (Exception ex) {
 				// Old connection already closed, ignore.
 			}
+		} else {
+			Logger.info("SSE connection set for window '" + _windowName + "' (queue@"
+				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
 		sendFullState(newConn);
 		// Flush any events that were enqueued before the SSE connection was

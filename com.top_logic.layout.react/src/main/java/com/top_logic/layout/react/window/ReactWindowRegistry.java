@@ -77,7 +77,11 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * Gets or creates the {@link SSEUpdateQueue} for the given window.
 	 */
 	public SSEUpdateQueue getOrCreateQueue(String windowId) {
-		return _windowQueues.computeIfAbsent(windowId, id -> new SSEUpdateQueue());
+		return _windowQueues.computeIfAbsent(windowId, id -> {
+			SSEUpdateQueue queue = new SSEUpdateQueue();
+			queue.setWindowName(id);
+			return queue;
+		});
 	}
 
 	/**

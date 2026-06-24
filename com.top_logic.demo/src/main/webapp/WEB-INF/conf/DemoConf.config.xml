@@ -102,11 +102,14 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.gui.JSFileCompiler">
-			<instance>
-				<additional-files>
-					<file resource="tl-demo-controls.js" type="module" />
-				</additional-files>
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<module-script name="tl-demo-controls"
+						resource="/script/tl-demo-controls.js"
+						requires="tl-react-bridge"
+					/>
+				</resources>
 			</instance>
 		</config>
 

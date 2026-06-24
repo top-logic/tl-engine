@@ -12,11 +12,14 @@
       </instance>
     </config>
 
-    <config service-class="com.top_logic.gui.JSFileCompiler">
-      <instance>
-        <additional-files>
-          <file resource="tl-react-wysiwyg.js" type="module" />
-        </additional-files>
+    <config service-class="com.top_logic.layout.react.resource.ClientResources">
+      <instance class="com.top_logic.layout.react.resource.ClientResources">
+        <resources>
+          <module-script name="tl-react-wysiwyg"
+            resource="/script/tl-react-wysiwyg.js"
+            requires="tl-react-bridge"
+          />
+        </resources>
       </instance>
     </config>
   </services>

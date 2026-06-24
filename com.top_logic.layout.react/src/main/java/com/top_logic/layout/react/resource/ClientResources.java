@@ -46,6 +46,7 @@ public class ClientResources extends ConfiguredManagedClass<ClientResources.Conf
 		@Name("resources")
 		@Subtypes({
 			@Subtype(tag = ModuleScriptConfig.TAG_NAME, type = ModuleScriptConfig.class),
+			@Subtype(tag = ScriptConfig.TAG_NAME, type = ScriptConfig.class),
 			@Subtype(tag = StyleSheetConfig.TAG_NAME, type = StyleSheetConfig.class),
 		})
 		List<ResourceConfig> getResources();

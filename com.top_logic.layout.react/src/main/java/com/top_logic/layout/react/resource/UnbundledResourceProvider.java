@@ -53,6 +53,16 @@ public class UnbundledResourceProvider implements ClientResourceProvider {
 
 	@Override
 	public void writeScriptRefs(TagWriter out, String contextPath, Theme theme) throws IOException {
+		// Classic (non-module) scripts first: they do not use the import map and may bootstrap
+		// globals that module scripts rely on.
+		for (ResourceConfig resource : _ordered) {
+			if (resource instanceof ScriptConfig) {
+				for (ResourceRef ref : _resolver.resolve(resource, theme)) {
+					HTMLUtil.writeJavaScriptRef(out, contextPath, ref.url(), ref.version());
+				}
+			}
+		}
+
 		writeImportMap(out, contextPath, theme);
 
 		for (ResourceConfig resource : _ordered) {

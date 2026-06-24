@@ -26,6 +26,10 @@ public class DefaultResourceResolver implements ResourceResolver {
 			String path = script.getResource();
 			return Collections.singletonList(new ResourceRef(path, version(path)));
 		}
+		if (resource instanceof ScriptConfig script) {
+			String path = script.getResource();
+			return Collections.singletonList(new ResourceRef(path, version(path)));
+		}
 		return Collections.emptyList();
 	}
 

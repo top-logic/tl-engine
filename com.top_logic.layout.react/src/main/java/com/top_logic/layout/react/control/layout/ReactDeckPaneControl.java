@@ -13,6 +13,7 @@ import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -191,7 +192,8 @@ public class ReactDeckPaneControl extends ReactControl {
 	/**
 	 * Handles child selection from the client.
 	 */
-	@ReactCommand("selectChild")
+	@ReactCommand(value = "selectChild", params = @ReactParam(name = "index", type = "int", required = true,
+		description = "Zero-based index of the child pane to show."))
 	void handleSelectChild(Map<String, Object> arguments) {
 		Object indexObj = arguments.get(INDEX_ARG);
 		if (indexObj instanceof Number) {

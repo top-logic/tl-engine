@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -184,7 +185,8 @@ public class ReactDashboardControl extends ReactControl {
 	 * drag-and-drop reorder.
 	 */
 	@SuppressWarnings("unchecked")
-	@ReactCommand("reorder")
+	@ReactCommand(value = "reorder", params = @ReactParam(name = "order", type = "string[]", required = true,
+		description = "The tile ids in their new display order."))
 	@FrameworkInternal
 	void handleReorder(Map<String, Object> arguments) {
 		Object raw = arguments.get(ORDER_ARG);

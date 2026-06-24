@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Failed login attempts of the last 30 days as a sortable, filterable table. The table is an
+	app-specific admin widget, so it is referenced by class= rather than a reusable <tag>. A
+	<full-page> hosts it: the enclosing tab labels the view, so the table fills the whole area.
+-->
+<view>
+	<full-page>
+		<child class="com.top_logic.layout.view.admin.monitor.FailedLoginTable"/>
+	</full-page>
+</view>

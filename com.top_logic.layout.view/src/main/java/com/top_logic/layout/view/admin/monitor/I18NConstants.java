@@ -108,6 +108,56 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey THREAD_STACK_EMPTY;
 
+	/**
+	 * @en User
+	 */
+	public static ResKey SESSION_COLUMN_USER;
+
+	/**
+	 * @en Login
+	 */
+	public static ResKey SESSION_COLUMN_LOGIN;
+
+	/**
+	 * @en Logout
+	 */
+	public static ResKey SESSION_COLUMN_LOGOUT;
+
+	/**
+	 * @en Client
+	 */
+	public static ResKey SESSION_COLUMN_CLIENT;
+
+	/**
+	 * @en Server
+	 */
+	public static ResKey SESSION_COLUMN_SERVER;
+
+	/**
+	 * @en Time
+	 */
+	public static ResKey FAILED_LOGIN_COLUMN_TIME;
+
+	/**
+	 * @en User
+	 */
+	public static ResKey FAILED_LOGIN_COLUMN_USER;
+
+	/**
+	 * @en Client IP
+	 */
+	public static ResKey FAILED_LOGIN_COLUMN_IP;
+
+	/**
+	 * @en Server
+	 */
+	public static ResKey FAILED_LOGIN_COLUMN_SERVER;
+
+	/**
+	 * @en Reason
+	 */
+	public static ResKey FAILED_LOGIN_COLUMN_REASON;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

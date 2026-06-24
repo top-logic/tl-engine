@@ -115,8 +115,28 @@ We built `act`; we have **not** built capture.
 - [ ] Decide the default projection of state: raw control state vs. a curated
       semantic view (see **D4**).
 
-### Phase 4 — Quiescence, security, projection ⬜
+### Phase 4 — Quiescence, security, projection 🚧
 
+> **Known bug found 2026-06-24 (live):** `observe`/`act` reuse the **same** live
+> per-window control tree as the browser session (by design), but share it
+> naively. Two concrete defects:
+> 1. **UI stalls / clicks rejected while inspecting.** The request lock is
+>    *session-wide*, and `observe` holds it across the **whole** projection,
+>    including `MetaLabelProvider.getLabel` on every node. Real clicks
+>    (`/react-api/command`) queue behind it; slow/blocking label resolution stalls
+>    the session. Cross-tab inspection serializes the whole session.
+> 2. **Flaky reads (only the root node).** The tree is read while it is being
+>    rebuilt: the SSE heartbeat runs `synthesizeModelEvents` **without** the
+>    request lock, and control register-then-embed has a race window, so
+>    `getRootControls()`/`agentChildren()` can see a partial tree.
+
+- [ ] **Snapshot-under-lock, project-off-lock.** Capture an immutable structural
+      snapshot (ids, module, copied state, child-id lists, model refs) inside a
+      *tiny* critical section, then build the `AgentNodeView` (roles, labels)
+      after releasing the lock. Fixes both defects above.
+- [ ] Remove `MetaLabelProvider` (and any KB access) from the critical section.
+- [ ] Flag/fix the latent React-layer issue: heartbeat `synthesizeModelEvents`
+      mutates the control tree without the request lock.
 - [ ] Real quiescence signal beyond the synchronous case (await pending model
       events / async work before returning an observation).
 - [ ] Security: confirm the endpoint enforces the same permission checks as the
@@ -180,6 +200,16 @@ source.
 Untyped command names (current default) vs. mandatory argument schemas. Affects
 how reliably an agent can construct valid `arguments`.
 
+### D6 — Read concurrency model `OPEN` (gates Phase 4)
+
+The headless read shares one live, concurrently-mutating tree with the browser.
+How is a consistent, non-disruptive observation produced? Options:
+- (a) **Snapshot-under-lock, project-off-lock** (recommended) — tiny critical
+      section captures structure+state; labels/roles derived after unlock.
+- (b) Lock-free best-effort read with retry-on-inconsistency.
+- (c) Maintain the projection incrementally as part of the render pipeline.
+Also decide whether `observe` should ever block user commands at all.
+
 ---
 
 ## Risks & caveats
@@ -202,3 +232,8 @@ how reliably an agent can construct valid `arguments`.
 - **2026-06-24** — HTTP endpoint `AgentServlet` (commit `8a6b44f12c`);
   live-verified against the demo dashboard (observe real tree; act counter 0→2;
   browser updated via SSE).
+- **2026-06-24** — Found concurrency bug while inspecting a live session: the
+  headless interface shares the real control tree and projects it under the
+  session-wide request lock, stalling the UI and producing flaky partial reads.
+  Recorded under Phase 4 + decision **D6**. Fix direction:
+  snapshot-under-lock / project-off-lock.

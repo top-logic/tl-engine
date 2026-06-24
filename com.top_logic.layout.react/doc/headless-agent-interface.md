@@ -137,6 +137,31 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       a recorded group-row click captured as `selectByKey`, and replaying it **after
       re-sorting the table** still selected the right group (`securityOwner`) — index-
       independent. Both major interactive controls (select + table) now record stably.
+- [x] **User-facing recorder side-window (first cut).** An app-bar `<open-window>` button
+      (the new reusable `OpenViewWindowCommand`) pops out a recorder window with Start/Stop
+      (`StartRecordingCommand`/`StopRecordingCommand` + `RecorderAccess`, all in the view
+      layer; demo only wires the button). The recorder lives on the recorded (main) window's
+      queue; the side-window drives it through its opener, so the side-window's own clicks
+      are not captured. Verified live: Start → 3 main-window clicks → Stop reports "3 steps".
+- [ ] **Recorder side-window — reach legacy parity (it still looks demo-only).** Concrete
+      gaps from review:
+  - [ ] **Buttons are oversized** ("monster-buttons") — use compact toolbar buttons /
+        proper styling, not full-width content buttons.
+  - [ ] **Start/Stop not mutually exclusive** — gate by recording state (Start disabled
+        while recording, Stop disabled while idle) via a `ViewExecutabilityRule` reading the
+        opener recorder's `isRecording()`; show a recording indicator.
+  - [ ] **No actions shown** — display the captured steps live (a `TableViewControl` over
+        the recorder's `steps()`: address, command, arguments), updating as they are
+        captured.
+  - [ ] **No replay from the UI** — a Replay button driving the existing `/replay` path;
+        plus export/copy of the step script and clear.
+- [ ] **Explore the legacy `ScriptingRecorder` capabilities** and map them to this design —
+      to define what "parity" means concretely. At least: action types recorded (clicks,
+      field edits, selections, expand/collapse, tab/route switches), assertion/observation
+      actions, global variables / parameterization, action grouping & comments, the
+      pause/resume + insert-assertion UX, the persisted script format (`ApplicationAction`
+      XML) and its naming/`ModelName` references, and the replay runner & failure reporting.
+      Output: a gap list (have / missing / N/A) driving the parity backlog.
 - [ ] Migration story / coexistence with legacy `ScriptingRecorder`.
 - [ ] Label-based assertion for session-id-bearing state (e.g. a dropdown's `value`
       descriptors carry option ids); assert by label/key instead.

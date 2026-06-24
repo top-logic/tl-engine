@@ -27,13 +27,12 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * Registry of the new UI's themes and the source of its design tokens.
+ * Registry of the available UI themes and the source of the active theme's design tokens.
  *
  * <p>
  * A theme is a named set of {@link TokenDef design tokens} (CSS custom properties) with optional
  * inheritance. This service resolves the inheritance, emits every theme as a {@code data-theme}
- * scoped CSS block, and tracks the per-user active theme. It has no dependency on the legacy theme
- * system.
+ * scoped CSS block, and tracks the per-user active theme.
  * </p>
  */
 public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config> {

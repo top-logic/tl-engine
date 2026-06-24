@@ -5,7 +5,7 @@
  */
 
 /**
- * Consolidated client-resource registry for the new React-based UI layer.
+ * Consolidated client-resource registry for the React-based UI layer.
  *
  * <p>
  * Feature modules contribute their client resources (ES module scripts, stylesheets) to the single

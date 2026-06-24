@@ -10,7 +10,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * A single design token: a named value that is emitted as a CSS custom property of the new UI.
+ * A single design token: a named value that is emitted as a CSS custom property.
  *
  * <p>
  * The {@link #getName() name} is the custom-property name without the leading {@code --} (e.g.

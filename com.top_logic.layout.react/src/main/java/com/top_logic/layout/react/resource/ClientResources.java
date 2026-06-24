@@ -24,7 +24,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.xml.TagWriter;
 
 /**
- * Registry of all client-side resources of the new React UI.
+ * Registry of all client-side resources of the React UI.
  *
  * <p>
  * Feature modules contribute {@link ResourceConfig} entries. At page rendering time the registry

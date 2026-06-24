@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * Common configuration of a single client-side resource of the new React UI.
+ * Common configuration of a single client-side resource of the React UI.
  *
  * <p>
  * Concrete kinds are {@link ModuleScriptConfig} and {@link StyleSheetConfig}. Every resource is

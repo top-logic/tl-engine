@@ -13,9 +13,9 @@ import com.top_logic.basic.config.annotation.Name;
  * {@code <script type="text/javascript">}.
  *
  * <p>
- * Used for legacy or generated scripts that a React control depends on but that are not ECMAScript
- * modules, e.g. a GWT {@code *.nocache.js} bootstrap. Such a dependency is wired with
- * {@link #getRequires()} from the module script that needs it.
+ * Used for non-module scripts that a React control depends on, e.g. a GWT {@code *.nocache.js}
+ * bootstrap. Such a dependency is wired with {@link #getRequires()} from the module script that
+ * needs it.
  * </p>
  */
 public interface ScriptConfig extends ResourceConfig {

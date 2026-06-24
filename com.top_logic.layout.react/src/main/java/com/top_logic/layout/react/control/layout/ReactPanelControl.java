@@ -26,6 +26,8 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * <li>{@code showMinimize} - whether the minimize button is shown</li>
  * <li>{@code showMaximize} - whether the maximize button is shown</li>
  * <li>{@code showPopOut} - whether the pop-out button is shown</li>
+ * <li>{@code fill} - whether the panel fills its container's bounded height instead of growing
+ * with its content</li>
  * <li>{@code toolbar} - child control descriptor for the toolbar (optional)</li>
  * <li>{@code buttonBar} - child control descriptor for the button bar (optional)</li>
  * <li>{@code child} - the content child control descriptor</li>
@@ -58,6 +60,9 @@ public class ReactPanelControl extends ToolbarControl {
 
 	/** @see #ReactPanelControl(ReactContext, String, ReactControl, ReactToolbarControl, ReactToolbarControl, boolean, boolean, boolean) */
 	private static final String CHILD = "child";
+
+	/** @see #setFill(boolean) */
+	private static final String FILL = "fill";
 
 	/** Default collapsed size in pixels (toolbar header height). */
 	private static final float COLLAPSED_SIZE = 36f;
@@ -129,6 +134,20 @@ public class ReactPanelControl extends ToolbarControl {
 	 */
 	public void setTitle(String title) {
 		putState(TITLE, title);
+	}
+
+	/**
+	 * Whether the panel fills the bounded height of its container instead of growing with its
+	 * content.
+	 *
+	 * <p>
+	 * Set this for a panel whose content scrolls internally - in particular a virtualized
+	 * {@link com.top_logic.layout.react.control.table.TableViewControl}, which only bounds its
+	 * scroll viewport when its container has a definite height.
+	 * </p>
+	 */
+	public void setFill(boolean fill) {
+		putState(FILL, Boolean.valueOf(fill));
 	}
 
 	/**

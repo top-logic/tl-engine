@@ -6,7 +6,7 @@
 	by class= rather than a reusable <tag>.
 -->
 <view>
-	<panel>
+	<panel fill="true">
 		<title>
 			<en>System environment</en>
 			<de>Systemumgebung</de>

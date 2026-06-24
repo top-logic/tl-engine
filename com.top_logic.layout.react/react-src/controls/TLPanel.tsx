@@ -56,6 +56,7 @@ const IconPopOut = () => (
  * - showMinimize: boolean
  * - showMaximize: boolean
  * - showPopOut: boolean
+ * - fill: boolean (fill the container's bounded height instead of growing with content)
  * - toolbar: ChildDescriptor (a TLToolbar control, may be absent)
  * - buttonBar: ChildDescriptor (a TLToolbar control, may be absent)
  * - child: ChildDescriptor
@@ -71,6 +72,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const showMaximize = state.showMaximize === true;
   const showPopOut = state.showPopOut === true;
   const fullLine = state.fullLine === true;
+  const fill = state.fill === true;
 
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
@@ -99,7 +101,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   return (
     <div
       id={controlId}
-      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}`}
+      className={`tlPanel tlPanel--${expansionState.toLowerCase()}${fullLine ? ' tlPanel--fullLine' : ''}${fill ? ' tlPanel--fill' : ''}`}
       style={panelStyle}
     >
       <div className="tlPanel__header">

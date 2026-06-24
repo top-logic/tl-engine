@@ -65,6 +65,18 @@ import com.top_logic.util.Resources;
  * the green-field model, not on the legacy {@code TableModel}.
  * </p>
  *
+ * <p>
+ * <b>Placement requirement:</b> this control virtualizes - it renders only the row window that
+ * fits its scroll viewport and scrolls internally - so it must be given a container with a
+ * <em>definite (bounded) height</em>. Its root fills its parent ({@code height: 100%}); if every
+ * ancestor up to a bounded box is content-sized, there is no viewport to bound against, so the
+ * control expands to its full natural height and the <em>surrounding</em> scroller (e.g. the tab
+ * content) scrolls instead - showing a large scrollbar while the table never pages in new rows.
+ * Inside the {@code com.top_logic.layout.view} layer, place it in a {@code <split-panel>}/
+ * {@code <pane>} or a fill panel ({@code <panel fill="true">}); standalone (e.g. in a JSP-rendered
+ * component) wrap it in a fixed- or flex-bounded container as the React-table demo does.
+ * </p>
+ *
  * @param <R>
  *        The row business object type.
  */

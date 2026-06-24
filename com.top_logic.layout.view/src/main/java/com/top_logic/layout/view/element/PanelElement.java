@@ -44,15 +44,35 @@ public class PanelElement extends CommandScopeElement {
 		/** Configuration name for {@link #getTitle()}. */
 		String TITLE = "title";
 
+		/** Configuration name for {@link #getFill()}. */
+		String FILL = "fill";
+
 		/**
 		 * The panel title displayed in the toolbar header.
 		 */
 		@Name(TITLE)
 		@Nullable
 		ResKey getTitle();
+
+		/**
+		 * Whether the panel fills the bounded height of its container instead of growing with its
+		 * content.
+		 *
+		 * <p>
+		 * Enable this for a panel whose single child scrolls internally - in particular a table
+		 * ({@link com.top_logic.layout.react.control.table.TableViewControl}), which only bounds its
+		 * scroll viewport (and virtualizes) when its container has a definite height. A plain
+		 * (non-filling) panel grows with its content, so a large table would overflow and scroll the
+		 * surrounding tab rather than itself.
+		 * </p>
+		 */
+		@Name(FILL)
+		boolean getFill();
 	}
 
 	private final ResKey _title;
+
+	private final boolean _fill;
 
 	/**
 	 * Creates a new {@link PanelElement} from configuration.
@@ -61,12 +81,15 @@ public class PanelElement extends CommandScopeElement {
 	public PanelElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_title = config.getTitle();
+		_fill = config.getFill();
 	}
 
 	@Override
 	protected ToolbarControl createChromeControl(ViewContext context, ReactControl content,
 			ReactToolbarControl toolbar, ReactToolbarControl buttonBar) {
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
-		return new ReactPanelControl(context, title, content, toolbar, buttonBar, false, false, false);
+		ReactPanelControl panel = new ReactPanelControl(context, title, content, toolbar, buttonBar, false, false, false);
+		panel.setFill(_fill);
+		return panel;
 	}
 }

@@ -350,6 +350,14 @@ button.tlCounter__button:focus {
 	flex: 1;
 	min-height: 0;
 	overflow: auto;
+	/* Lay the active content out as a bounded flex column. Children that opt to
+	   fill (a nested tab-bar, a fill panel) then resolve their height against this
+	   box; content-sized children keep their natural height and overflow-scroll
+	   here exactly as before. Without this, block flow lets a fill-ready child
+	   grow to its content height and a virtualized table never bounds its
+	   viewport (see TableViewControl). */
+	display: flex;
+	flex-direction: column;
 }
 
 /* --- TLAudioRecorder --------------------------------------------------- */
@@ -1109,6 +1117,22 @@ button.tlPanel__actionButton:focus-visible {
 
 .tlPanel--fullLine {
 	grid-column: 1 / -1;
+}
+
+/* A fill panel fills the bounded height of its container instead of growing with
+   its content, so a virtualized child (e.g. a TableViewControl) bounds its
+   viewport and scrolls internally rather than overflowing an outer scroller.
+   This is the opt-in counterpart to the flex-column tab content above: the panel
+   already lays itself out at height:100%, and the :has() rule lets the wrapping
+   view-content stack fill too, so the chain down to the table is height-bounded. */
+.tlPanel--fill {
+	flex: 1;
+	min-height: 0;
+}
+
+.tlStack:has(> .tlPanel--fill) {
+	flex: 1;
+	min-height: 0;
 }
 
 .tlPanel--maximized {

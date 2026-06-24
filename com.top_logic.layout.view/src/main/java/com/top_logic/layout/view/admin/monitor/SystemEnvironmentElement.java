@@ -168,31 +168,15 @@ public class SystemEnvironmentElement implements UIElement {
 
 	/**
 	 * One environment entry: its originating section, name and (possibly masked) value.
+	 *
+	 * @param section
+	 *        The originating section (system properties, VM arguments or application aliases).
+	 * @param name
+	 *        The entry name.
+	 * @param value
+	 *        The entry value, or the masked replacement when the key is protected.
 	 */
-	private static final class Row {
-
-		private final String _section;
-
-		private final String _name;
-
-		private final String _value;
-
-		Row(String section, String name, String value) {
-			_section = section;
-			_name = name;
-			_value = value;
-		}
-
-		String section() {
-			return _section;
-		}
-
-		String name() {
-			return _name;
-		}
-
-		String value() {
-			return _value;
-		}
+	private record Row(String section, String name, String value) {
+		// Accessors section()/name()/value() are generated.
 	}
 }

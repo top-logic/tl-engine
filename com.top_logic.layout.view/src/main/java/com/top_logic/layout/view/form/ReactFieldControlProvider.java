@@ -9,6 +9,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ui.MultiLine;
 
 /**
  * Creates a {@link ReactControl} for editing a model attribute.
@@ -33,5 +34,18 @@ public interface ReactFieldControlProvider {
 	 * @return A React control for the field input widget.
 	 */
 	ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model);
+
+	/**
+	 * The number of text-area rows requested by the attribute's {@link MultiLine} annotation, or
+	 * {@code 0} if the attribute is not annotated for multi-line display.
+	 *
+	 * @param part
+	 *        The model attribute to inspect.
+	 * @return The requested row count ({@code > 0}), or {@code 0} for single-line display.
+	 */
+	static int multilineRows(TLStructuredTypePart part) {
+		MultiLine annotation = part.getAnnotation(MultiLine.class);
+		return annotation != null && annotation.getValue() ? annotation.getRows() : 0;
+	}
 
 }

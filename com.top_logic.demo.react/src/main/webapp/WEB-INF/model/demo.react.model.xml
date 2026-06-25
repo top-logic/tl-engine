@@ -23,13 +23,24 @@
 					/>
 					<property name="multiLine"
 						type="tl.core:Text"
-					/>
+					>
+						<annotations>
+							<multi-line rows="4"/>
+						</annotations>
+					</property>
 					<property name="html"
 						type="tl.model.wysiwyg:Html"
 					/>
 					<property name="i18n"
 						type="tl.model.i18n:I18NString"
 					/>
+					<property name="i18nMultiline"
+						type="tl.model.i18n:I18NString"
+					>
+						<annotations>
+							<multi-line rows="4"/>
+						</annotations>
+					</property>
 					<property name="password"
 						type="tl.core:String"
 					>

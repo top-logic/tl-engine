@@ -80,10 +80,16 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 *        The React context for ID allocation and SSE registration.
 	 * @param model
 	 *        The field model (value is a {@link ResKey} or {@code null}).
+	 * @param rows
+	 *        The number of visible rows for a multi-line text area, or {@code 0} to render the
+	 *        current-locale input as a single line.
 	 * @return The composed editor control.
 	 */
-	public static ReactControl createEditor(ReactContext context, FieldModel model) {
+	public static ReactControl createEditor(ReactContext context, FieldModel model, int rows) {
 		ReactI18NStringInputControl inline = new ReactI18NStringInputControl(context, model);
+		if (rows > 0) {
+			inline.setMultiline(rows);
+		}
 
 		ReactButtonControl editAll = new ReactButtonControl(context,
 			Resources.getInstance().getString(I18NConstants.I18N_STRING_ALL_LANGUAGES_BUTTON),

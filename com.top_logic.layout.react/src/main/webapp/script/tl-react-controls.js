@@ -1,19 +1,42 @@
 import { React as e, useTLFieldValue as je, useTLState as q, useTLCommand as le, useKeyboardBinding as ue, useTLUpload as Be, TLChild as z, useI18N as ce, useTLDataUrl as Oe, useStandaloneKeyboardScope as Se, KeyboardScopeProvider as st, useFocusTrap as ct, register as H } from "tl-react-bridge";
 const { useCallback: At } = e, Bt = ({ controlId: l, state: t }) => {
   const [n, a] = je(), i = At(
-    (o) => {
-      a(o.target.value);
+    (m) => {
+      a(m.target.value);
     },
     [a]
-  );
-  if (t.editable === !1)
-    return /* @__PURE__ */ e.createElement("span", { id: l, className: "tlReactTextInput tlReactTextInput--immutable" }, n ?? "");
-  const s = t.hasError === !0, c = t.hasWarnings === !0, u = t.errorMessage, r = [
+  ), s = t.multiline === !0;
+  if (t.editable === !1) {
+    const m = "tlReactTextInput tlReactTextInput--immutable" + (s ? " tlReactTextInput--multiline" : "");
+    return /* @__PURE__ */ e.createElement(
+      "span",
+      {
+        id: l,
+        className: m,
+        style: s ? { whiteSpace: "pre-wrap" } : void 0
+      },
+      n ?? ""
+    );
+  }
+  const c = t.hasError === !0, u = t.hasWarnings === !0, r = t.errorMessage, o = [
     "tlReactTextInput",
-    s ? "tlReactTextInput--error" : "",
-    !s && c ? "tlReactTextInput--warning" : ""
+    s ? "tlReactTextInput--multiline" : "",
+    c ? "tlReactTextInput--error" : "",
+    !c && u ? "tlReactTextInput--warning" : ""
   ].filter(Boolean).join(" ");
-  return /* @__PURE__ */ e.createElement("span", { id: l }, /* @__PURE__ */ e.createElement(
+  return /* @__PURE__ */ e.createElement("span", { id: l }, s ? /* @__PURE__ */ e.createElement(
+    "textarea",
+    {
+      rows: t.rows ?? 3,
+      value: n ?? "",
+      placeholder: t.placeholder ?? void 0,
+      onChange: i,
+      disabled: t.disabled === !0,
+      className: o,
+      "aria-invalid": c || void 0,
+      title: c && r ? r : void 0
+    }
+  ) : /* @__PURE__ */ e.createElement(
     "input",
     {
       type: "text",
@@ -21,9 +44,9 @@ const { useCallback: At } = e, Bt = ({ controlId: l, state: t }) => {
       placeholder: t.placeholder ?? void 0,
       onChange: i,
       disabled: t.disabled === !0,
-      className: r,
-      "aria-invalid": s || void 0,
-      title: s && u ? u : void 0
+      className: o,
+      "aria-invalid": c || void 0,
+      title: c && r ? r : void 0
     }
   ));
 }, { useCallback: Ot } = e, $t = ({ controlId: l, state: t }) => {

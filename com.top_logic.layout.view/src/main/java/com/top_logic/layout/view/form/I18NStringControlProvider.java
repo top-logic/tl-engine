@@ -23,7 +23,8 @@ public class I18NStringControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		return ReactI18NStringInputControl.createEditor(context, model);
+		return ReactI18NStringInputControl.createEditor(context, model,
+			ReactFieldControlProvider.multilineRows(part));
 	}
 
 }

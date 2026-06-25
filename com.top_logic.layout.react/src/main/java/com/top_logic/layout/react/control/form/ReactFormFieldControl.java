@@ -38,6 +38,12 @@ public class ReactFormFieldControl extends ReactControl {
 	/** State key for the placeholder shown while the field is empty (edit mode). */
 	protected static final String PLACEHOLDER = "placeholder";
 
+	/** State key for whether the text field renders as a multi-line text area. */
+	protected static final String MULTILINE = "multiline";
+
+	/** State key for the number of visible rows of a multi-line text area. */
+	protected static final String ROWS = "rows";
+
 	/** State key for whether the field is editable. */
 	protected static final String EDITABLE = "editable";
 
@@ -186,6 +192,17 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	protected void setPlaceholder(String placeholder) {
 		putState(PLACEHOLDER, placeholder);
+	}
+
+	/**
+	 * Renders the field as a multi-line text area with the given number of visible rows.
+	 *
+	 * @param rows
+	 *        The number of visible text rows.
+	 */
+	public void setMultiline(int rows) {
+		putState(MULTILINE, Boolean.TRUE);
+		putState(ROWS, Integer.valueOf(rows));
 	}
 
 	/**

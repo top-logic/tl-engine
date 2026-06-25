@@ -23,7 +23,12 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, TLStructuredTypePart part, FieldModel model) {
-		return new ReactTextInputControl(context, model);
+		ReactTextInputControl control = new ReactTextInputControl(context, model);
+		int rows = ReactFieldControlProvider.multilineRows(part);
+		if (rows > 0) {
+			control.setMultiline(rows);
+		}
+		return control;
 	}
 
 }

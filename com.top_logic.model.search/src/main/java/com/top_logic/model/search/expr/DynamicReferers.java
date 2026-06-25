@@ -24,7 +24,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DynamicReferers extends GenericMethod implements WithFlatMapSemantics<TLReference> {
+public class DynamicReferers extends GenericMethodWithSecurity implements WithFlatMapSemantics<TLReference> {
 
 	/**
 	 * Creates a new {@link DynamicReferers}.
@@ -67,7 +67,7 @@ public class DynamicReferers extends GenericMethod implements WithFlatMapSemanti
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, TLReference reference) {
-		return Referers.lookupReferrers(definitions, singletonValue, reference);
+		return Referers.lookupReferrers(usesSecurity(), singletonValue, reference);
 	}
 
 	/**

@@ -24,7 +24,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Add extends GenericMethod {
+public class Add extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link Add}.
@@ -48,7 +48,9 @@ public class Add extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
-		Update.checkWritePermission(definitions, obj, part);
+		if (usesSecurity()) {
+			Update.checkWritePermission(obj, part);
+		}
 
 		Object rawValue = obj.tValue(part);
 		List<?> oldValue = asList(rawValue);

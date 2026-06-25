@@ -13,7 +13,7 @@ import com.top_logic.model.TLType;
 /**
  * Base class for TL-Script constructor functions.
  */
-public abstract class AbstractObjectCreation extends GenericMethod {
+public abstract class AbstractObjectCreation extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link AbstractObjectCreation}.

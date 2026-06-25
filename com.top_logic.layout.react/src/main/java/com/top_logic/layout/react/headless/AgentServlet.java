@@ -22,7 +22,9 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -31,6 +33,7 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
@@ -266,10 +269,40 @@ public class AgentServlet extends TopLogicServlet {
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
 			String observation = agentSession.observeJson();
-			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + errorField(result)
+				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		} finally {
 			requestLock.unlock();
 		}
+	}
+
+	/**
+	 * The {@code ,"error":"…"} JSON fragment carrying a failed {@link HandlerResult}'s message, or the
+	 * empty string when the result succeeded or carries no message.
+	 */
+	private static String errorField(HandlerResult result) {
+		if (result.isSuccess()) {
+			return "";
+		}
+		String text = errorText(result);
+		return text == null ? "" : ",\"" + FIELD_ERROR + "\":" + JSON.toString(text);
+	}
+
+	/**
+	 * The human-readable message of a failed {@link HandlerResult} — its encoded error keys and any
+	 * carried exception, resolved to the request locale — or {@code null} if there is none.
+	 */
+	private static String errorText(HandlerResult result) {
+		Resources resources = Resources.getInstance();
+		List<String> messages = new ArrayList<>();
+		for (ResKey error : result.getEncodedErrors()) {
+			messages.add(resources.getString(error));
+		}
+		I18NRuntimeException exception = result.getException();
+		if (exception != null) {
+			messages.add(resources.getString(exception.getErrorKey()));
+		}
+		return messages.isEmpty() ? null : String.join("; ", messages);
 	}
 
 	/**
@@ -410,8 +443,9 @@ public class AgentServlet extends TopLogicServlet {
 	/**
 	 * {@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[{address,command,arguments},…]}}
 	 * &rarr; replays each step through {@link AgentSession#act} in order, settling derived state between
-	 * steps so each address resolves against the state its predecessors produced. Returns a per-step
-	 * {@code results} list and the final quiesced {@code observation}.
+	 * steps so each address resolves against the state its predecessors produced. Returns a top-level
+	 * {@code success} (true only when every step succeeded — the replay-as-regression verdict), a
+	 * per-step {@code results} list, and the final quiesced {@code observation}.
 	 */
 	@SuppressWarnings("unchecked")
 	private void handleReplay(HttpServletRequest request, HttpServletResponse response, HttpSession session)
@@ -442,8 +476,17 @@ public class AgentServlet extends TopLogicServlet {
 					rootHandler.enableUpdate(updateBefore);
 				}
 			}
+			boolean allOk = true;
+			for (Map<String, Object> stepResult : results) {
+				if (!Boolean.TRUE.equals(stepResult.get(FIELD_SUCCESS))) {
+					allOk = false;
+					break;
+				}
+			}
 			String observation = agentSession(queue).observeJson();
-			write(response, "{\"" + FIELD_RESULTS + "\":" + JSON.toString(results) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+			write(response, "{\"" + FIELD_SUCCESS + "\":" + allOk
+				+ ",\"" + FIELD_RESULTS + "\":" + JSON.toString(results)
+				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		} finally {
 			requestLock.unlock();
 		}
@@ -470,6 +513,9 @@ public class AgentServlet extends TopLogicServlet {
 		try {
 			HandlerResult handlerResult = agentSession(queue).act(address, command, arguments);
 			result.put(FIELD_SUCCESS, handlerResult.isSuccess());
+			if (!handlerResult.isSuccess()) {
+				result.put(FIELD_ERROR, errorText(handlerResult));
+			}
 			// Settle derived state so the next step's address resolves against the produced state.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 		} catch (RuntimeException ex) {

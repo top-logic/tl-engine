@@ -692,42 +692,39 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 */
 	@ReactCommand(value = CMD_SELECT_BY_KEY, params = @ReactParam(name = ARG_KEY, required = true,
 		description = "Business key of the row to select (the 'key' projected onto each row)."))
-	void handleSelectByKey(Map<String, Object> arguments) {
+	HandlerResult handleSelectByKey(Map<String, Object> arguments) {
 		String key = (String) arguments.get(ARG_KEY);
-		if (key == null) {
-			return;
-		}
-		ModelName name = AgentModelKey.fromJson(key);
-		if (name == null) {
-			return;
-		}
-		Object target;
-		try {
-			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-			ActionContext actionContext =
-				new ReactActionContext(displayContext, displayContext.asRequest().getSession());
-			target = ModelResolver.locateModel(actionContext, null, name);
-		} catch (RuntimeException ex) {
-			Logger.warn("Cannot resolve row for key: " + key, ex, this);
-			return;
-		}
-		if (target == null) {
-			return;
-		}
-		int total = _view.rowCount();
-		List<Row<R>> rows = _view.rows(0, total);
-		for (int i = 0; i < rows.size(); i++) {
-			Row<R> row = rows.get(i);
-			if (target.equals(row.data())) {
-				_selectedKeys.clear();
-				_selectedKeys.add(row.key());
-				_cursorIndex = i;
-				_selectionAnchor = i;
-				pushSelection();
-				updateViewport(_viewportStart, _viewportCount);
-				return;
+		ModelName name = key == null ? null : AgentModelKey.fromJson(key);
+		Object target = null;
+		if (name != null) {
+			try {
+				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+				ActionContext actionContext =
+					new ReactActionContext(displayContext, displayContext.asRequest().getSession());
+				target = ModelResolver.locateModel(actionContext, null, name);
+			} catch (RuntimeException ex) {
+				Logger.warn("Cannot resolve row for key: " + key, ex, this);
 			}
 		}
+		if (target != null) {
+			int total = _view.rowCount();
+			List<Row<R>> rows = _view.rows(0, total);
+			for (int i = 0; i < rows.size(); i++) {
+				Row<R> row = rows.get(i);
+				if (target.equals(row.data())) {
+					_selectedKeys.clear();
+					_selectedKeys.add(row.key());
+					_cursorIndex = i;
+					_selectionAnchor = i;
+					pushSelection();
+					updateViewport(_viewportStart, _viewportCount);
+					return HandlerResult.DEFAULT_RESULT;
+				}
+			}
+		}
+		// Drift contract: a recorded row key that no longer designates a present row is an explicit
+		// failure (replay reports success:false), never a silent no-op selection.
+		return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(key));
 	}
 
 	/**

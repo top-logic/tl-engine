@@ -297,7 +297,14 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			keys = Collections.emptyList();
 		}
 
-		List<Object> newSelection = resolveByKeys(keys);
+		List<String> unresolved = new ArrayList<>();
+		List<Object> newSelection = resolveByKeys(keys, unresolved);
+		if (!unresolved.isEmpty()) {
+			// Drift contract: a recorded key that no longer designates an option in this session is an
+			// explicit failure, never a silent partial/empty selection. Replay then reports
+			// success:false (a real regression); an agent, which re-observes each step, re-plans.
+			return HandlerResult.error(I18NConstants.ERROR_OPTION_KEYS_UNRESOLVED__KEYS.fill(unresolved));
+		}
 		_updatingFromClient = true;
 		try {
 			_selectModel.setValue(newSelection);
@@ -335,28 +342,39 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		return super.recordCommand(command, arguments);
 	}
 
-	private List<Object> resolveByKeys(List<String> keys) {
-		// Resolve against the model's authoritative option list, not only the options already streamed
-		// to the client (_optionIndex). This lets a recorded selectByKey replay without first opening
-		// the dropdown (loadOptions), and matches the full set the keys were built against.
+	/**
+	 * Resolves each key to its option, collecting the keys that no longer resolve in
+	 * {@code unresolvedOut}.
+	 *
+	 * <p>
+	 * Resolution is against the model's authoritative option list, not only the options already
+	 * streamed to the client ({@code _optionIndex}). This lets a recorded {@link #CMD_SELECT_BY_KEY}
+	 * replay without first opening the dropdown ({@link #CMD_LOAD_OPTIONS}), and matches the full set
+	 * the keys were built against. A key that fails to parse, throws, or resolves to nothing is
+	 * reported as unresolved rather than skipped.
+	 * </p>
+	 */
+	private List<Object> resolveByKeys(List<String> keys, List<String> unresolvedOut) {
 		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
 		ActionContext actionContext = newActionContext();
 		List<Object> resolved = new ArrayList<>(keys.size());
 		for (String key : keys) {
 			ModelName name = AgentModelKey.fromJson(key);
-			if (name == null) {
-				continue;
-			}
-			// Context-relative names (ContextDependent) resolve within this control's option scope;
-			// globally-named options (e.g. a person) resolve without a value context.
-			Object valueContext = name instanceof ContextDependent ? scope : null;
-			try {
-				Object option = ModelResolver.locateModel(actionContext, valueContext, name);
-				if (option != null) {
-					resolved.add(option);
+			Object option = null;
+			if (name != null) {
+				// Context-relative names (ContextDependent) resolve within this control's option scope;
+				// globally-named options (e.g. a person) resolve without a value context.
+				Object valueContext = name instanceof ContextDependent ? scope : null;
+				try {
+					option = ModelResolver.locateModel(actionContext, valueContext, name);
+				} catch (RuntimeException ex) {
+					Logger.warn("Cannot resolve option for key: " + key, ex, this);
 				}
-			} catch (RuntimeException ex) {
-				Logger.warn("Cannot resolve option for key: " + key, ex, this);
+			}
+			if (option != null) {
+				resolved.add(option);
+			} else {
+				unresolvedOut.add(key);
 			}
 		}
 		return resolved;

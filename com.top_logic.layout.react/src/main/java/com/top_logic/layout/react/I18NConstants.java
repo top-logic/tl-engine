@@ -659,6 +659,17 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.window.restore")
 	public static ResKey JS_WINDOW_RESTORE;
 
+	/**
+	 * @en Cannot select option(s): the business key(s) no longer resolve to an option in this session:
+	 *     {0}
+	 */
+	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
+
+	/**
+	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}
+	 */
+	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

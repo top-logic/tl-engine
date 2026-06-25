@@ -8,7 +8,7 @@
 - **Branch:** `CWS/CWS_29108_headless_agent_interface` (off `CWS/CWS_29108_integration`)
 - **Code:** `com.top_logic.layout.react.headless` (package), `AgentServlet` (HTTP)
 - **Owner:** bhu
-- **Last updated:** 2026-06-24
+- **Last updated:** 2026-06-25
 
 ## How to use this document
 
@@ -78,20 +78,32 @@ schemas.
 - [x] **Live verification** against the demo dashboard: observed the real tree,
       acted on a counter (0→2), browser UI updated via SSE.
 
-### Phase 1 — Addressing hardening ⛔ (blocked on decision D1)
+### Phase 1 — Addressing hardening 🚧 (D1 decided; cross-session test remains)
 
 The load-bearing phase. Index-disambiguated labels are fine for a demo but
 fragile for recorded scripts (labels duplicate, reorder, localize, change).
 
-- [ ] Decide the addressing scheme (see **D1**) — resolution-context wall DECIDED
-      (`ReactActionContext`); naming-scheme-stability wall (D1 #2) still open.
+- [x] Decide the addressing scheme (see **D1**) — **DECIDED**. Both walls closed:
+      resolution context is `ReactActionContext`; naming-scheme stability resolved in
+      favour of the *by-label* default (the label typically **is** the business
+      identifier; KB ids are worse — unstable across DB reset and broken in tests).
 - [x] Introduce a stable identity for **data** nodes (rows, list items) — a
       model/business-key reference (`AgentModelKey` = JSON `ModelName`), not a
       positional index. Keys on table rows and dropdown options; build **and**
       resolve (`selectByKey`) verified live.
 - [x] Keep structural paths for **chrome** (buttons, tabs, panels).
-- [ ] Define behavior when an address no longer resolves (drift): hard-fail for
-      replay vs. best-match/re-plan for an agent.
+- [x] Define behavior when an address no longer resolves (drift): **DECIDED + done**.
+      A control that resolves recorded business keys never silently substitutes or
+      drops. Structural address drift already hard-fails (`AgentSession.resolve`
+      throws → `act`/`replay` report `success:false`). Key-level drift now does too:
+      `selectByKey` on the dropdown (any unresolved key) and the table (no matching
+      row) returns `HandlerResult.error` instead of a silent partial/empty selection,
+      surfaced as `success:false` + a localized `error` message. `/replay` adds a
+      top-level `success` (the all-steps-passed regression verdict). No fuzzy
+      best-match in the control — re-planning is an agent-side strategy on top of the
+      loud failure. Verified live: a valid row key selects (`success:true`); a bogus
+      key fails (`success:false`, "…Geschäftsschlüssel lässt sich nicht mehr einer
+      Zeile … zuordnen…") — the same call silently succeeded on the pre-fix build.
 - [ ] Round-trip tests across re-render and across a fresh session — scheme-level
       round-trip unit-tested (`TestReactOptionByLabelNaming`); a cross-session
       end-to-end automated test still to write.
@@ -277,7 +289,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
 
 ## Open design decisions (decision log)
 
-### D1 — Addressing scheme `IN PROGRESS`
+### D1 — Addressing scheme `DECIDED`
 
 Decided so far (with the user): two consumers with different needs — the live agent
 re-observes each step (cheap path is fine), the recorder needs identity that survives
@@ -301,12 +313,16 @@ table: e.g. `{"model-name":["…TLObjectByLabelNaming…",{"class-name":"DemoTyp
    in one `selectByKey` call). Component-relative *legacy* schemes (which need a
    `MainLayout`) remain out of scope — correctly, since the React layer defines its own
    context-relative schemes instead (see `ReactOptionByLabelNaming`).
-2. **Naming-scheme stability.** The default scheme picked here is *by label*
-   (`TLObjectByLabelName`) — human-readable but mutable and potentially non-unique,
-   i.e. the very instability we're trying to avoid. Decide whether keys should prefer
-   a stable identity scheme (KB id / business key) over by-label, or record both
-   (stable id for resolution + label for readability). `ModelResolver` has a scheme
-   priority system to drive this.
+2. **Naming-scheme stability. `DECIDED` — keep the by-label default.** The default
+   scheme is *by label* (`TLObjectByLabelName`), and that is the right choice: in this
+   model the label typically **is** the business identifier, so a by-label key is both
+   stable and human-readable. The tempting alternative — a KB id / internal business
+   key — is actually *worse*: internal ids are not stable across a DB reset and break
+   in test cases (a recorded script keyed on an id would not replay against a freshly
+   initialized database). The `buildName`-declines-on-collision behavior already
+   prevents identity loss when a label is non-unique (it falls back to the global
+   scheme), so by-label does not sacrifice correctness. No scheme-priority tuning
+   needed.
 
 ### (superseded) D1 — Addressing scheme `OPEN` (gates Phase 1)
 
@@ -399,6 +415,22 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-25** — **D1 fully DECIDED + Phase 1 drift contract done**, verified live.
+  Naming-scheme stability resolved (with the user) in favour of the **by-label**
+  default: the label typically *is* the business identifier, and KB ids are worse
+  (unstable across DB reset, broken in tests). With D1 closed, implemented the
+  remaining Phase 1 drift behavior: a control resolving recorded business keys now
+  **fails loudly** instead of silently substituting. `ReactDropdownSelectControl`
+  collects unresolved keys and returns `ERROR_OPTION_KEYS_UNRESOLVED__KEYS`; the
+  table's `selectByKey` (was `void` → always success) now returns `HandlerResult`,
+  failing with `ERROR_ROW_KEY_UNRESOLVED__KEY` when no row matches. `/agent-api/act`
+  and `/replay` surface the failed `HandlerResult`'s localized message as an `error`
+  field; `/replay` gained a top-level `success` (all-steps-passed verdict). Verified
+  live on the accounts table: a valid row key selects (`success:true`), a bogus key
+  fails (`success:false` + German message) — the *identical* call returned
+  `success:true` on the pre-fix build (clean before/after across an app restart).
+  Remaining Phase 1 item: an automated cross-session round-trip test (record in one
+  session, replay in a fresh one) asserting this contract.
 - **2026-06-24** — **Phase 2 replay-stable table selection**, verified live. `TableViewControl`
   now has a `selectByKey {key}` command (resolves the row business object globally through
   `ReactActionContext`, selects it) and a `recordCommand` override turning a plain

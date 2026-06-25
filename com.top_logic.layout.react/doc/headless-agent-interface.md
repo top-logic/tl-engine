@@ -167,13 +167,14 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
         captured.
   - [ ] **No replay from the UI** — a Replay button driving the existing `/replay` path;
         plus export/copy of the step script and clear.
-- [ ] **Explore the legacy `ScriptingRecorder` capabilities** and map them to this design —
-      to define what "parity" means concretely. At least: action types recorded (clicks,
-      field edits, selections, expand/collapse, tab/route switches), assertion/observation
-      actions, global variables / parameterization, action grouping & comments, the
-      pause/resume + insert-assertion UX, the persisted script format (`ApplicationAction`
-      XML) and its naming/`ModelName` references, and the replay runner & failure reporting.
-      Output: a gap list (have / missing / N/A) driving the parity backlog.
+- [x] **Explore the legacy `ScriptingRecorder` capabilities** and map them to this design.
+      Done 2026-06-25 — see **[Legacy parity gap analysis](#legacy-scriptingrecorder--parity-gap-analysis-2026-06-25)**
+      below. Headline: the new stack already reuses the legacy `ModelName`/`ModelResolver`
+      object-naming infrastructure (strongest parity point), has the observe/act/record/
+      replay loop and a generic value assertion, but is MISSING the breadth of legacy
+      capabilities — typed assertion library, global variables/parameterization, script
+      control-flow (chain/conditional/include), an on-disk script format, and the
+      inspector-driven assertion-recording UX. The parity backlog below is driven from it.
 - [ ] Migration story / coexistence with legacy `ScriptingRecorder`.
 - [ ] Label-based assertion for session-id-bearing state (e.g. a dropdown's `value`
       descriptors carry option ids); assert by label/key instead.
@@ -286,6 +287,55 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
 - [ ] Decide final package/module placement and public API surface.
 
 ---
+
+## Legacy ScriptingRecorder — parity gap analysis (2026-06-25)
+
+Survey of `com.top_logic.layout.scripting` (the `ScriptingRecorder` / `ApplicationAction`
+stack) mapped against the React headless interface. Legend: ✅ have · 🟡 partial ·
+❌ missing · ⚪ N/A (legacy mechanism not applicable; the React layer solves it
+differently). The point is to scope **what a "real test scenario" needs** before
+building recorder-side parity.
+
+| # | Capability | Legacy (key class) | React headless | State |
+|---|------------|--------------------|----------------|-------|
+| 1 | **Object/model references** | `ModelName` + `ModelNamingScheme`/`ModelResolver` (150+ schemes) | **Same infra reused** — `AgentModelKey` = JSON `ModelName`; `ReactActionContext` drives `ModelResolver.locateModel`; React-context schemes (`ReactOptionByLabelNaming`) | ✅ |
+| 2 | **Component/field addressing** | Fuzzy label/name/path (`FuzzyComponentNaming`, `*FieldRef`) | Semantic `role[name]` path (`AgentTreeProjector`) — different mechanism, same intent | ⚪→✅ |
+| 3 | **Command/button execution** | `CommandAction` (by id / fuzzy label) | Browser command captured at the control's semantic address | ✅ |
+| 4 | **Tab/route navigation** | `FuzzyGotoActionOp` (tab-path), `TabSwitch` | `selectTab` recorded; `tabBar[active]` addressing; `/navigate` route primitive | ✅ |
+| 5 | **Form field input** | `FormInput` (CANONICAL/INTERACTIVE/RAW modes), typed `*FieldRef` | Browser field command via `recordCommand`; dropdown→`selectByKey`. Generic typed inputs (text/number/date) recorded verbatim — replay-stability not yet proven per field type | 🟡 |
+| 6 | **Selection (single)** | `SelectAction` (ABSOLUTE) + `SelectionRef` | Table `selectByKey` (index→business key), replay-stable across sort | ✅ |
+| 7 | **Selection (multi / range / tree subtree)** | `SelectAction` INCREMENTAL/SUBTREE | Modifier/range selections stay **index-based** (not key-stable); tree selection unproven | ❌ |
+| 8 | **Value assertions** | `ValueAssertion`/`CheckAction` + `ValueCheck` family | Generic `assertState` pseudo-command, subset compare, per-key `mismatches` | 🟡 |
+| 9 | **Typed assertion library** | 40+ plugins: field error/mode/validity/label, `ModelNotExists`, table-contents, visibility | Only the one generic state-subset assert | ❌ |
+| 10 | **Global variables / parameterization** | `GlobalVariableStore`, `SetGlobalVariableAction`, `GlobalVariableRef` | none — cannot capture a created object's identity and reuse it downstream | ❌ |
+| 11 | **Script control flow** | `ActionChain`, `ConditionalAction`/`IfAction`, `IncludeScriptAction`, `DynamicAction` | flat ordered step list only | ❌ |
+| 12 | **Persisted script format** | Polymorphic-config XML via `ActionWriter`/`ActionReader` (`.script.xml`) | in-memory `RecordedStep` + JSON over HTTP — no on-disk format, no reader/writer | ❌ |
+| 13 | **Replay runner & failure report** | `ScriptedTest`/`ApplicationSession.process`, stop-on-first `ApplicationAssertion` | `/replay`: per-step `success`+`error`, top-level verdict; continues through steps | ✅ (differs: no stop-on-first) |
+| 14 | **Recording on/off + noise filter** | `setRecordingActive`, `annotateAsDontRecord`/`mustNotRecord` | `ScriptRecorder` start/stop; per-control `nonRecordableCommands()` | 🟡 (no pause/resume) |
+| 15 | **Insert-assertion UX (inspector)** | `GuiInspectorControl` + `AssertionPlugin` (right-click → pick check) | `/record/assert` endpoint only — no in-UI element inspector | ❌ |
+| 16 | **Comments / metadata on steps** | `getComment`/`getFailureMessage`/`getUserID` per action | none | ❌ |
+
+**What "real test scenarios" minimally need (parity backlog, priority order):**
+
+1. **Global variables (#10)** — capture an object's `ModelName` into a named var and
+   reference it later. Without it a create→use→assert scenario can't be recorded. Reuses
+   `GlobalVariableStore` (already used by `ReactActionContext.getGlobalVariableStore`).
+2. **Typed assertions beyond value (#9)** — at least field-error, field-mode/validity,
+   visibility, and object-not-exists; these are what regression scripts actually check.
+3. **On-disk script format + reader/writer (#12)** — a persisted artifact (decide:
+   reuse `ApplicationAction` XML vs. the flat JSON step list) so scripts live as test
+   resources, not just a session buffer.
+4. **Stable multi/range/tree selection (#7)** — extend the key-based selection to
+   modifier/range and tree rows.
+5. **Insert-assertion inspector UX (#15)** and **recorder side-window parity** (the
+   existing Phase 2 UI gaps) — the authoring surface.
+6. **Script control flow + comments (#11, #16)** — chain/conditional/include and
+   per-step comments, once the linear case is solid.
+
+Items #1–#6 (addressing, navigation, command, single-select) are already at parity by
+reusing the legacy naming infrastructure — the gap is concentrated in **authoring
+breadth** (assertions, variables, control flow, format, inspector), not in the
+core observe/act/resolve substrate.
 
 ## Open design decisions (decision log)
 
@@ -415,6 +465,17 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-25** — **Legacy `ScriptingRecorder` parity survey done.** Mapped the
+  `com.top_logic.layout.scripting` stack (action types, assertions, `ModelName` refs,
+  variables, control flow, script XML format, replay runner, inspector UX) against the
+  React headless design — see the [parity gap analysis](#legacy-scriptingrecorder--parity-gap-analysis-2026-06-25).
+  Finding: the core substrate (addressing, navigation, command, single-select, replay)
+  is already at parity because it **reuses the same `ModelName`/`ModelResolver`
+  infrastructure**; the gap is concentrated in *authoring breadth* — global variables,
+  the typed assertion library, an on-disk script format, stable multi/tree selection,
+  and the inspector-driven assertion-recording UX. Defined a 6-item parity backlog in
+  priority order (global variables first — without them a create→use→assert scenario
+  can't be recorded).
 - **2026-06-25** — **D1 fully DECIDED + Phase 1 drift contract done**, verified live.
   Naming-scheme stability resolved (with the user) in favour of the **by-label**
   default: the label typically *is* the business identifier, and KB ids are worse

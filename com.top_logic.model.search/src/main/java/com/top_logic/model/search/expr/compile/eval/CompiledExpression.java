@@ -57,17 +57,15 @@ public abstract class CompiledExpression extends CompiledValue {
 			MOStructure tableType = (MOStructure) _type;
 
 			StorageImplementation storageImplementation = AttributeOperations.getStorageImplementation(part);
-			if (!storageImplementation.isReadOnly()) {
-				if (storageImplementation instanceof ColumnStorage columnStorage) {
-					MOAttribute attr = tableType.getAttributeOrNull(columnStorage.getStorageAttribute());
-					if (attr != null) {
-						switch (part.getModelKind()) {
-							case PROPERTY:
-							case REFERENCE:
-								return new CompiledAttributeAccess(part, attr, this);
-							default:
-								break;
-						}
+			if (storageImplementation instanceof ColumnStorage columnStorage) {
+				MOAttribute attr = tableType.getAttributeOrNull(columnStorage.getStorageAttribute());
+				if (attr != null) {
+					switch (part.getModelKind()) {
+						case PROPERTY:
+						case REFERENCE:
+							return new CompiledAttributeAccess(part, attr, this);
+						default:
+							break;
 					}
 				}
 			}

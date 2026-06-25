@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.admin.system;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -42,6 +43,36 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Cluster node
 	 */
 	public static ResKey LOCK_COLUMN_NODE;
+
+	/**
+	 * @en Status
+	 */
+	public static ResKey SERVICE_COLUMN_STATUS;
+
+	/**
+	 * @en Service
+	 */
+	public static ResKey SERVICE_COLUMN_NAME;
+
+	/**
+	 * @en Implementation
+	 */
+	public static ResKey SERVICE_COLUMN_TECHNICAL_NAME;
+
+	/**
+	 * @en Running
+	 */
+	public static ResKey SERVICE_STATE_ACTIVE;
+
+	/**
+	 * @en Stopped
+	 */
+	public static ResKey SERVICE_STATE_INACTIVE;
+
+	/**
+	 * @en Lifecycle operation on service ''{0}'' failed.
+	 */
+	public static ResKey1 ERROR_SERVICE_LIFECYCLE__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -143,7 +143,14 @@ Establishes the "System" admin section (added with the locks view as a sibling t
       (Release shown only while a lock is selected). The table self-loads a live
       `TokenService.getAllLocks()` snapshot on open and rebuilds from the `locks` channel after a
       command. The legacy tree-table (LockInfo → Token) is flattened to one row per lock for v1.
-- [ ] Services management (list + start/stop/restart + config editor).
+- [x] Services management (v1: list + start/stop/restart) — `ServiceTable` (one row per
+      `BasicRuntimeModule`: status, label, implementation class) + `ServiceLifecycleAction`
+      (start / stop / restart / refresh). The table writes the selected module to a `selection`
+      channel and its running status (`ACTIVE`/`INACTIVE`) to a `state` channel; the commands gate on
+      `state` via `<visible-if>` so Start (stopped) and Stop / Restart (running) are mutually exclusive
+      and stay fresh after each op (the command rewrites `state`). The action reads the module from the
+      `selection` channel itself (a `ViewAction` can resolve channels via `ViewContext`), decoupling the
+      gating input from the action's data. The **per-service config editor is deferred** (a follow-up).
 - [ ] Scheduler / tasks (task tree, run history, block/unblock, trigger).
 - [ ] Maintenance mode (schedule window, disconnect users).
 

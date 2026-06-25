@@ -102,8 +102,15 @@
 					<en>System</en>
 					<de>System</de>
 				</label>
-				<tab-bar active-tab="locks">
+				<tab-bar active-tab="services">
 					<tabs>
+						<tab id="services">
+							<label>
+								<en>Services</en>
+								<de>Dienste</de>
+							</label>
+							<view-ref view="admin/services.view.xml"/>
+						</tab>
 						<tab id="locks">
 							<label>
 								<en>Locks</en>

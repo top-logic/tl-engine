@@ -107,10 +107,7 @@ public class ScriptTracer {
 
 	private static EvalContext tracingContext(KnowledgeBase kb, TLModel model, Sink<Pointer> trace,
 			OverlayLookup overlays) {
-		boolean interactive = false;
-		// TODO Ticket #29088: Use security here?
-		boolean withSecurity = false;
-		EvalContext context = new EvalContext(interactive, withSecurity, kb, model, null, null);
+		EvalContext context = new EvalContext(false, kb, model, null, null);
 		context.defineVar(TracingAccessRewriter.TRACE, trace);
 		context.defineVar(TracingAccessRewriter.UPDATE_CONTAINER, overlays);
 		return context;

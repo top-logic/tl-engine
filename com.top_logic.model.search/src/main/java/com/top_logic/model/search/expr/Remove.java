@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  *
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */
-public class Remove extends GenericMethod {
+public class Remove extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link Remove}.
@@ -47,7 +47,9 @@ public class Remove extends GenericMethod {
 		TLObject obj = asTLObjectNonNull(arguments[0]);
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 
-		Update.checkWritePermission(definitions, obj, part);
+		if (usesSecurity()) {
+			Update.checkWritePermission(obj, part);
+		}
 
 		List<?> oldValue = asList(obj.tValue(part));
 		Set<?> removeSet = asSet(arguments[2]);

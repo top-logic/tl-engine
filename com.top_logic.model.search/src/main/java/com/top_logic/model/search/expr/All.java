@@ -24,7 +24,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class All extends SearchExpression {
+public class All extends SearchExpressionWithSecurity {
 
 	private TLStructuredType _type;
 
@@ -59,7 +59,7 @@ public class All extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		return all(this, _type, definitions.usesSecurity());
+		return all(this, _type, usesSecurity());
 	}
 
 	/**

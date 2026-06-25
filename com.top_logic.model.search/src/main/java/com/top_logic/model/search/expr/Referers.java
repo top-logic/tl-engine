@@ -26,7 +26,7 @@ import com.top_logic.util.TLContext;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Referers extends SearchExpression implements WithFlatMapSemantics<TLReference> {
+public class Referers extends SearchExpressionWithSecurity implements WithFlatMapSemantics<TLReference> {
 
 	private TLReference _reference;
 
@@ -73,17 +73,17 @@ public class Referers extends SearchExpression implements WithFlatMapSemantics<T
 
 	@Override
 	public Object evalDirect(EvalContext definitions, Object targetValue, TLReference reference) {
-		return lookupReferrers(definitions, targetValue, reference);
+		return lookupReferrers(usesSecurity(), targetValue, reference);
 
 	}
 
-	static Set<? extends TLObject> lookupReferrers(EvalContext definitions, Object targetValue, TLReference reference) {
+	static Set<? extends TLObject> lookupReferrers(boolean usesSecurity, Object targetValue, TLReference reference) {
 		if (!(targetValue instanceof TLObject)) {
 			return null;
 		}
 		TLObject self = (TLObject) targetValue;
 		Set<? extends TLObject> referrers = self.tReferers(reference);
-		if (definitions.usesSecurity()) {
+		if (usesSecurity) {
 			// Check whether user is allowed to access the reference on the referrer.
 			ModelAccessRights accessRights = ModelAccessRights.getInstance();
 			switch (referrers.size()) {

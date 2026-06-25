@@ -7,6 +7,9 @@ package com.top_logic.layout.react.headless;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.top_logic.basic.Logger;
 
 /**
  * Captures a sequence of user interactions on one window as replayable {@link RecordedStep}s.
@@ -24,26 +27,55 @@ import java.util.List;
  * request lock, so capture is single-threaded per window; the methods are nonetheless synchronized so
  * that the agent endpoint may start/stop/read concurrently with command dispatch.
  * </p>
+ *
+ * <p>
+ * The recorder is observable: a {@link #addListener(Listener) registered} {@link Listener} is notified
+ * after each {@link #start()}, {@link #stop()} and {@link #record(RecordedStep)}, so a view in another
+ * window (a recorder side-window) can reflect the captured steps live. Listeners are notified outside
+ * the recorder's monitor.
+ * </p>
  */
 public final class ScriptRecorder {
+
+	/**
+	 * Notified after the recorder's state changes (start, stop or a captured step).
+	 */
+	@FunctionalInterface
+	public interface Listener {
+		/**
+		 * Called after a {@link ScriptRecorder} state change.
+		 *
+		 * @param recorder
+		 *        The recorder that changed.
+		 */
+		void recorderChanged(ScriptRecorder recorder);
+	}
 
 	private boolean _recording;
 
 	private final List<RecordedStep> _steps = new ArrayList<>();
 
+	private final List<Listener> _listeners = new CopyOnWriteArrayList<>();
+
 	/**
 	 * Begins a fresh recording, discarding any previously captured steps.
 	 */
-	public synchronized void start() {
-		_steps.clear();
-		_recording = true;
+	public void start() {
+		synchronized (this) {
+			_steps.clear();
+			_recording = true;
+		}
+		fireChanged();
 	}
 
 	/**
 	 * Stops recording. The captured {@link #steps()} remain available until the next {@link #start()}.
 	 */
-	public synchronized void stop() {
-		_recording = false;
+	public void stop() {
+		synchronized (this) {
+			_recording = false;
+		}
+		fireChanged();
 	}
 
 	/**
@@ -59,9 +91,16 @@ public final class ScriptRecorder {
 	 * @param step
 	 *        The step to capture.
 	 */
-	public synchronized void record(RecordedStep step) {
-		if (_recording) {
-			_steps.add(step);
+	public void record(RecordedStep step) {
+		boolean captured;
+		synchronized (this) {
+			captured = _recording;
+			if (captured) {
+				_steps.add(step);
+			}
+		}
+		if (captured) {
+			fireChanged();
 		}
 	}
 
@@ -70,5 +109,36 @@ public final class ScriptRecorder {
 	 */
 	public synchronized List<RecordedStep> steps() {
 		return new ArrayList<>(_steps);
+	}
+
+	/**
+	 * Registers a {@link Listener} notified after each state change, until {@link
+	 * #removeListener(Listener) removed}.
+	 *
+	 * @param listener
+	 *        The listener to add.
+	 */
+	public void addListener(Listener listener) {
+		_listeners.add(listener);
+	}
+
+	/**
+	 * Unregisters a {@link #addListener(Listener) listener}.
+	 *
+	 * @param listener
+	 *        The listener to remove.
+	 */
+	public void removeListener(Listener listener) {
+		_listeners.remove(listener);
+	}
+
+	private void fireChanged() {
+		for (Listener listener : _listeners) {
+			try {
+				listener.recorderChanged(this);
+			} catch (RuntimeException ex) {
+				Logger.error("Recorder listener failed.", ex, ScriptRecorder.class);
+			}
+		}
 	}
 }

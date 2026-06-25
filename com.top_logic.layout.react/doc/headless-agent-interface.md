@@ -169,10 +169,15 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
   - [x] **Actions shown** — `RecordedStepsTable` lists captured steps (#, address, command,
         arguments). Verified live: two main-window counter clicks show as two `increment`
         rows with their semantic address.
-  - [ ] **Live pop-in (push, not pull)** — steps currently appear on Start/Refresh/Stop
-        (the SQL-monitor pull model). To make them appear *as captured* without Refresh,
-        make `ScriptRecorder` observable and push to the side-window's `steps` channel on
-        each capture (next slice).
+  - [x] **Live pop-in (push, not pull)** — done. `ScriptRecorder` is now observable
+        (`addListener`, fired on start/stop/record); the recorder window's `RecordedStepsTable`
+        subscribes to the **opener's** recorder (reached via the opener-tracks-children
+        registry, `RecorderAccess`) and refreshes on each event. The capture happens on the
+        main window's request thread, but `SSEUpdateQueue.enqueue()`+`flush()` is synchronized,
+        so the refresh pushes straight to the recorder window's own SSE connection — no
+        cross-window subsession machinery, no Refresh button (removed). Verified live: three
+        main-window counter clicks (increment, increment, decrement) appeared in the recorder
+        window as they happened, in order, zero console errors.
   - [ ] **Replay / step-debugger from the UI** — select a step and replay it on the opener
         window (effect shown in the main UI), advancing the selection; plus export/clear.
 - [x] **Explore the legacy `ScriptingRecorder` capabilities** and map them to this design.
@@ -473,6 +478,17 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-25** — **Recorder live pop-in via SSE**, verified live. Made `ScriptRecorder`
+  observable; the recorder window's `RecordedStepsTable` listens to the **opener's** recorder
+  and refreshes on each capture. Because the per-window `SSEUpdateQueue.enqueue()`/`flush()`
+  is synchronized, the refresh (run on the main window's recording thread) pushes straight to
+  the recorder window's own SSE connection — steps appear *as captured* with no Refresh
+  button (removed) and no cross-window subsession machinery. Confirmed the design premise by
+  measurement first: a recorder side-window is a distinct browser tab and therefore has its
+  own `window.name` → own subsession → own `SSEUpdateQueue` (ViewServlet: "each tab gets its
+  own independent subsession"; `/agent-api/windows` went 1→2 on opening the recorder). The
+  windows are not shared, but the opener *tracks* the windows it opened (`WindowEntry`
+  `openerWindowId` + reachable `getQueue`), which is exactly the push path.
 - **2026-06-25** — **Legacy `ScriptingRecorder` parity survey done.** Mapped the
   `com.top_logic.layout.scripting` stack (action types, assertions, `ModelName` refs,
   variables, control flow, script XML format, replay runner, inspector UX) against the

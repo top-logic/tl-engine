@@ -7,7 +7,7 @@
 				<resources>
 					<module-script name="tl-script-editor"
 						resource="/script/tl-script-editor.js"
-						requires="tl-react-bridge"
+						requires="tl-react-bridge,tl-code-editor"
 					/>
 					<stylesheet name="tl-script-editor-css"
 						resource="/style/tlScriptEditor.css"

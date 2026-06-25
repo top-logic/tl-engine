@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.control.form;
 
 import java.util.Locale;
-import java.util.Objects;
+import java.util.Map;
 
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.TranslationService;
@@ -16,6 +16,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -33,8 +34,9 @@ import com.top_logic.util.TLContext;
  * <b>current user's locale</b>. On input the typed string is folded into a {@link ResKey}, so the
  * model receives a typed {@link ResKey} (a plain {@link String} would be rejected by the I18N
  * storage mapping). When the user-locale value is edited and a {@link TranslationService} is active,
- * the other locales are <b>auto-translated</b> from it (overwriting their previous values);
- * otherwise they are preserved.
+ * the other locales are <b>auto-translated</b> from it when the field is committed (loses focus),
+ * overwriting their previous values; otherwise they are preserved. Translation runs on commit
+ * rather than per keystroke, since it is a blocking remote call.
  * </p>
  *
  * <p>
@@ -47,6 +49,12 @@ import com.top_logic.util.TLContext;
  *           controls (dialog / form / fields / buttons), not built into this control.
  */
 public class ReactI18NStringInputControl extends ReactFormFieldControl {
+
+	/** Command sent by the client when an edited field is committed (loses focus). */
+	private static final String COMMIT_COMMAND = "commit";
+
+	/** State key telling the client to send {@link #COMMIT_COMMAND} when the field loses focus. */
+	private static final String COMMIT_ON_BLUR = "commitOnBlur";
 
 	private boolean _editable;
 
@@ -63,6 +71,10 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	public ReactI18NStringInputControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLTextInput");
 		refresh();
+		if (TranslationService.isActive()) {
+			// Defer auto-translation to field commit (blur); see #handleCommit.
+			putState(COMMIT_ON_BLUR, Boolean.TRUE);
+		}
 	}
 
 	/**
@@ -148,20 +160,54 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 
 	@Override
 	protected Object parseClientValue(Object rawValue) {
+		// Fold the typed current-locale text into the ResKey, preserving the other locales. This runs
+		// on every keystroke and must stay cheap; translation into the other locales is deferred to
+		// the field commit (see #handleCommit), since it is a blocking remote call.
 		String text = rawValue == null ? null : rawValue.toString();
 		Locale userLocale = TLContext.getLocale();
 		ResKey current = asResKey(getFieldModel().getValue());
-		String previousText = current == null ? null : ResKeyUtil.translateWithoutFallback(userLocale, current);
 
-		// On a real edit of the user-locale value, auto-translate it into the other locales,
-		// overwriting their previous (now potentially stale) values. A stale auto-translation is
-		// worse than a fresh one. When the translation service is inactive (or a target language is
-		// unsupported), the other locales are left unchanged. Explicit, source-language-aware
-		// translation is offered by the all-languages editor ({@link I18NStringDialog}).
-		boolean edited = !Objects.equals(emptyToNull(text), emptyToNull(previousText));
-		boolean autoTranslate = edited && !isEmpty(text) && TranslationService.isActive();
-		Translator translator = autoTranslate ? TranslationService.getInstance() : null;
-		boolean sourceSupported = translator != null && translator.isSupported(userLocale);
+		ResKey.Builder builder = ResKey.builder();
+		boolean any = false;
+		for (Locale locale : Resources.getInstance().getSupportedLocalesInDisplayOrder()) {
+			String value = locale.getLanguage().equals(userLocale.getLanguage())
+				? text
+				: (current == null ? null : ResKeyUtil.translateWithoutFallback(locale, current));
+			if (!isEmpty(value)) {
+				builder.add(locale, value);
+				any = true;
+			}
+		}
+		return any ? builder.build() : null;
+	}
+
+	/**
+	 * Translates the current-locale value into the other locales, overwriting their previous values.
+	 *
+	 * <p>
+	 * Sent by the client when an edited field is committed (loses focus), so the blocking
+	 * translation runs once per edit rather than on every keystroke. The client only sends this
+	 * after an actual edit, so merely focusing and leaving the field translates nothing.
+	 * </p>
+	 *
+	 * @param arguments
+	 *        The (empty) command arguments.
+	 */
+	@ReactCommand(value = COMMIT_COMMAND)
+	void handleCommit(Map<String, Object> arguments) {
+		if (!TranslationService.isActive()) {
+			return;
+		}
+		ResKey current = asResKey(getFieldModel().getValue());
+		Locale userLocale = TLContext.getLocale();
+		String text = current == null ? null : ResKeyUtil.translateWithoutFallback(userLocale, current);
+		if (isEmpty(text)) {
+			return;
+		}
+		Translator translator = TranslationService.getInstance();
+		if (!translator.isSupported(userLocale)) {
+			return;
+		}
 
 		ResKey.Builder builder = ResKey.builder();
 		boolean any = false;
@@ -169,17 +215,19 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 			String value;
 			if (locale.getLanguage().equals(userLocale.getLanguage())) {
 				value = text;
-			} else if (sourceSupported && translator.isSupported(locale)) {
+			} else if (translator.isSupported(locale)) {
 				value = translate(translator, text, userLocale, locale, current);
 			} else {
-				value = current == null ? null : ResKeyUtil.translateWithoutFallback(locale, current);
+				value = ResKeyUtil.translateWithoutFallback(locale, current);
 			}
 			if (!isEmpty(value)) {
 				builder.add(locale, value);
 				any = true;
 			}
 		}
-		return any ? builder.build() : null;
+		if (any) {
+			getFieldModel().setValue(builder.build());
+		}
 	}
 
 	/**

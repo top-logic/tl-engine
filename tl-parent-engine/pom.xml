@@ -90,6 +90,7 @@
 		<module>../com.top_logic.layout.view</module>
 		<module>../com.top_logic.layout.view.selfservice</module>
 		<module>../com.top_logic.layout.react.chartjs</module>
+		<module>../com.top_logic.layout.react.codeedit</module>
 		<module>../com.top_logic.layout.react.wysiwyg</module>
 		<module>../com.top_logic.layout.scripting.template</module>
 		<module>../com.top_logic.layout.themeedit</module>

@@ -30,7 +30,7 @@
 						resource="/style/interFonts.css"
 					/>
 					<stylesheet name="tl-react-icons-fontawesome"
-						resource="/style/fontawesome/css/all.css"
+						resource="/style/fontawesome.css"
 					/>
 					<stylesheet name="tl-react-icons-bootstrap"
 						resource="/style/bootstrap-icons.css"

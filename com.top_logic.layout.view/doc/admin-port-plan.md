@@ -54,7 +54,6 @@ the template to follow.
 | Monitoring | Revision / audit monitor | `monitoring/.../monitor/history/revisionMonitor.layout.xml` |
 | Monitoring | User-session monitor (incl. failed logins) | `monitoring/.../monitor/session/userMonitorWithFailedLogin.layout.xml` |
 | System | Services management (start/stop/restart/configure) | `admin/technical/services/servicesView.layout.xml` (`TLServiceConfigListModelBuilder`, `ServiceConfigEditor`) |
-| System | Scheduler / tasks (history, block/unblock, run) | `admin/technical/scheduler/schedulerView.layout.xml` (`TaskTreeComponent`, `TaskResultTreeComponent`) |
 | System | Maintenance mode | `admin/technical/maintenanceMode/maintenanceWindow.layout.xml` (`MaintenanceWindowManager`) |
 | System | Lock management (view / force-release) | `admin/technical/locks/locksView.layout.xml` (`ReleaseLockCommand`) |
 | System | Logs (view + logger-level config) | `admin/technical/logs/logView.layout.xml` (`LoggerAdminBean`) — **redesign freely, don't port the old structure** |
@@ -64,6 +63,7 @@ the template to follow.
 
 | Item | Why deferred |
 |---|---|
+| Scheduler / tasks | Will be **completely redesigned** (execution engine + management UI), tracked under its own ticket — not a 1:1 port. |
 | Memory monitor chart (trend over time) | Needs a redesign before porting; revisit after the table-based monitors land. |
 | Maintenance pages (downtime page editor) | A new approach is required; not a 1:1 port. |
 | DB schema admin (model→table mapping editor) | Large; its own effort. |
@@ -130,9 +130,14 @@ channel holds — used to make Start vs. Refresh/Stop mutually exclusive.
 - [x] User-session monitor — `UserSessionTable` (Sessions tab) + `FailedLoginTable` (Failed logins tab), read-only, 30-day window.
 - [x] SQL/DB monitor — `SqlMonitorAction` (start / refresh / stop) + `SqlStatisticsTable`, in a titled
       fill panel; **validates the titled-panel command pattern** for Batches 3–4.
-- [ ] Revision / audit monitor — change history. Heaviest UI (a tree-table: ChangeSet → ItemEvent →
-      ChangeEntry, with a date-range filter and a revert command). A flat recent-revisions table is a
-      tractable v1; the object-level drill-down + revert are a follow-up.
+- [ ] Revision / audit monitor — change history. **Based on the "Meine letzten Änderungen" personal-
+      history dialog, not the old technical revision admin.** That dialog uses new-style model types:
+      `tl.changelog:ChangeSet` (author / date / message / revision / composite `changes`) produced by
+      the reusable `com.top_logic.element.changelog.ChangeLogBuilder` (`ChangeLogListModelBuilder`),
+      built on `HistoryManager`/`Revision`. v1 = a flat table of recent `ChangeSet` entries (author,
+      date, message); the per-object change drill-down (`Change`/`Modification`) and revert are a
+      follow-up. Entries are transient TLObjects, so the Java builder feeds the table (not a TL-Script
+      query).
 
 ### Batch 3 — System / technical  ▢
 Establishes the "System" admin section (added with the locks view as a sibling tab of
@@ -151,7 +156,8 @@ Establishes the "System" admin section (added with the locks view as a sibling t
       and stay fresh after each op (the command rewrites `state`). The action reads the module from the
       `selection` channel itself (a `ViewAction` can resolve channels via `ViewContext`), decoupling the
       gating input from the action's data. The **per-service config editor is deferred** (a follow-up).
-- [ ] Scheduler / tasks (task tree, run history, block/unblock, trigger).
+- [~] Scheduler / tasks — **dropped from this plan.** The scheduler will be completely redesigned
+      (execution engine + management UI), tracked under its own ticket; not a 1:1 port.
 - [ ] Maintenance mode (schedule window, disconnect users).
 
 ### Batch 4 — Logs (redesign)  ▢

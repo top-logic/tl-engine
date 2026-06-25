@@ -26,7 +26,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class At extends SearchExpression {
+public class At extends SearchExpressionWithSecurity {
 
 	private SearchExpression _self;
 
@@ -80,7 +80,7 @@ public class At extends SearchExpression {
 		} else if (self instanceof Collection<?> col) {
 			return evalForCollection(col, indexArg);
 		} else if (self instanceof TLObject obj) {
-			return evalForTLObject(definitions, obj, indexArg);
+			return evalForTLObject(obj, indexArg);
 		} else if (self instanceof ConfigurationItem config) {
 			return evalForConfiguration(config, indexArg);
 		} else {
@@ -116,7 +116,7 @@ public class At extends SearchExpression {
 		return SearchExpression.normalizeValue(map.get(indexArg));
 	}
 
-	private Object evalForTLObject(EvalContext definitions, TLObject obj, Object indexArg) {
+	private Object evalForTLObject(TLObject obj, Object indexArg) {
 		TLStructuredTypePart property;
 		if (indexArg instanceof TLStructuredTypePart) {
 			property = (TLStructuredTypePart) indexArg;
@@ -129,7 +129,7 @@ public class At extends SearchExpression {
 			}
 		}
 
-		return AccessLike.lookupValue(obj, property, definitions.usesSecurity());
+		return AccessLike.lookupValue(obj, property, usesSecurity());
 	}
 
 	private Object evalForCollection(Collection<?> col, Object indexArg) {

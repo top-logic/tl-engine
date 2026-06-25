@@ -21,7 +21,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Void> {
+public class DynamicAll extends GenericMethodWithSecurity implements WithFlatMapSemantics<Void> {
 
 	/**
 	 * Creates a {@link DynamicAll}.
@@ -53,7 +53,7 @@ public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Vo
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getArguments()[0]);
 
-		return All.all(this, type, definitions.usesSecurity());
+		return All.all(this, type, usesSecurity());
 	}
 
 	/**

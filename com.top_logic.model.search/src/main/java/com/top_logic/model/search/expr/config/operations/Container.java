@@ -13,6 +13,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
@@ -21,7 +22,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Container extends GenericMethod {
+public class Container extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link Container}.
@@ -45,7 +46,7 @@ public class Container extends GenericMethod {
 		TLObject object = asTLObject(arguments[0]);
 		if (object != null) {
 			TLObject container = object.tContainer();
-			if (definitions.usesSecurity()) {
+			if (usesSecurity()) {
 				return filterSecurity(container);
 			} else {
 				return container;

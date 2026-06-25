@@ -30,7 +30,7 @@ import com.top_logic.model.security.ModelAccessRights;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class AssociationNavigation extends SearchExpression {
+public class AssociationNavigation extends SearchExpressionWithSecurity {
 
 	private SearchExpression _source;
 
@@ -105,7 +105,7 @@ public class AssociationNavigation extends SearchExpression {
 		if (source == null) {
 			return null;
 		}
-		boolean withSecurity = definitions.usesSecurity();
+		boolean withSecurity = usesSecurity();
 		if (withSecurity) {
 			ModelAccessRights accessRights = ModelAccessRights.getInstance();
 			TLReference reference = getSourceEnd().getReference();

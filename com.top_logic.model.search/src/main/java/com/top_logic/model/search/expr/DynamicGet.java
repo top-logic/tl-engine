@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DynamicGet extends GenericMethod implements AccessLike {
+public class DynamicGet extends GenericMethodWithSecurity implements AccessLike {
 
 	/**
 	 * Creates a new {@link DynamicGet}.

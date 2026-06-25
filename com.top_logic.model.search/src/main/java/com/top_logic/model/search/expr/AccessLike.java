@@ -10,6 +10,7 @@ import java.util.Collections;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.WithSecurityCheck;
 import com.top_logic.model.security.ModelAccessRights;
 
 /**
@@ -17,7 +18,7 @@ import com.top_logic.model.security.ModelAccessRights;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart> {
+public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, WithSecurityCheck {
 
 	@Override
 	default Object evalDirect(EvalContext definitions, Object base, TLStructuredTypePart part) {
@@ -45,7 +46,7 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart> {
 	 * @return The value of the given attribute.
 	 */
 	default Object lookupValue(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-		return lookupValue(self, part, definitions.usesSecurity());
+		return lookupValue(self, part, usesSecurity());
 	}
 
 	/**

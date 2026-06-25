@@ -45,7 +45,7 @@ public class CreateObject extends AbstractObjectCreation {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLClass type = (TLClass) asStructuredTypeNonNull(arguments[0], getArguments()[0]);
-		if (definitions.usesSecurity()) {
+		if (usesSecurity()) {
 			// TODO #29088: It must be checked whether the user is allowed to create instances for
 			// type.
 			if (false) {

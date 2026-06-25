@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.view.command;
+package com.top_logic.layout.view.recorder;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.headless.ScriptRecorder;
@@ -21,7 +21,7 @@ import com.top_logic.layout.react.window.WindowEntry;
  * side-window reaches the main window through its {@link WindowEntry#getOpenerWindowId() opener}.
  * </p>
  */
-final class RecorderAccess {
+public final class RecorderAccess {
 
 	private RecorderAccess() {
 		// Static utility.
@@ -35,7 +35,7 @@ final class RecorderAccess {
 	 *        The side-window's context.
 	 * @return The opener window's recorder, or {@code null}.
 	 */
-	static ScriptRecorder openerRecorder(ReactContext context) {
+	public static ScriptRecorder openerRecorder(ReactContext context) {
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		if (registry == null) {
 			return null;

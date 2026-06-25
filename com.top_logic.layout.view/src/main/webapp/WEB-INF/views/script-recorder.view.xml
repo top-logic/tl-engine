@@ -1,38 +1,81 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	Script recorder side-window: start / refresh / stop capturing the interactions performed in the
+	main (opener) window. Each command runs the RecorderAction (referenced by class=, app-specific)
+	and writes the captured steps to the steps channel; RecordedStepsTable renders them. The boolean
+	recording channel tracks whether capturing is running so the reusable <visible-if> rule shows
+	Start while stopped and Refresh / Stop while running (they are mutually exclusive).
+-->
 <view>
-	<app-shell>
-		<content>
-			<panel>
-				<title>
-					<en>Script Recorder</en>
-					<de>Skript-Rekorder</de>
-				</title>
-				<inset>
-					<card variant="elevated">
-						<title>
-							<en>Record the interactions performed in the main window. Start, switch to the main window and act, then Stop.</en>
-							<de>Zeichnet die im Hauptfenster ausgef&#xFC;hrten Interaktionen auf. Starten, zum Hauptfenster wechseln und agieren, dann Stoppen.</de>
-						</title>
-						<button>
-							<action class="com.top_logic.layout.view.command.StartRecordingCommand" image="css:bi bi-record-circle">
-								<label>
-									<en>Start recording</en>
-									<de>Aufzeichnung starten</de>
-								</label>
-							</action>
-						</button>
-						<button>
-							<action class="com.top_logic.layout.view.command.StopRecordingCommand" image="css:bi bi-stop-circle">
-								<label>
-									<en>Stop recording</en>
-									<de>Aufzeichnung stoppen</de>
-								</label>
-							</action>
-						</button>
-					</card>
-				</inset>
-			</panel>
-		</content>
-	</app-shell>
+	<channels>
+		<channel name="steps"/>
+		<channel name="recording"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Script recorder</en>
+			<de>Skript-Rekorder</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-record-circle"
+				input="recording"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Start</en>
+					<de>Starten</de>
+				</label>
+				<executability>
+					<visible-if expr="running -> $running != true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.recorder.RecorderAction"
+					mode="START"
+				/>
+				<write-channel name="steps"/>
+				<execute-script function="true"/>
+				<write-channel name="recording"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				input="recording"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<executability>
+					<visible-if expr="running -> $running == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.recorder.RecorderAction"
+					mode="REFRESH"
+				/>
+				<write-channel name="steps"/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-stop-circle"
+				input="recording"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Stop</en>
+					<de>Stoppen</de>
+				</label>
+				<executability>
+					<visible-if expr="running -> $running == true"/>
+				</executability>
+				<action class="com.top_logic.layout.view.recorder.RecorderAction"
+					mode="STOP"
+				/>
+				<write-channel name="steps"/>
+				<execute-script function="false"/>
+				<write-channel name="recording"/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.recorder.RecordedStepsTable"
+			input="steps"
+		/>
+	</panel>
 </view>

@@ -151,22 +151,30 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       independent. Both major interactive controls (select + table) now record stably.
 - [x] **User-facing recorder side-window (first cut).** An app-bar `<open-window>` button
       (the new reusable `OpenViewWindowCommand`) pops out a recorder window with Start/Stop
-      (`StartRecordingCommand`/`StopRecordingCommand` + `RecorderAccess`, all in the view
-      layer; demo only wires the button). The recorder lives on the recorded (main) window's
-      queue; the side-window drives it through its opener, so the side-window's own clicks
-      are not captured. Verified live: Start → 3 main-window clicks → Stop reports "3 steps".
-- [ ] **Recorder side-window — reach legacy parity (it still looks demo-only).** Concrete
-      gaps from review:
-  - [ ] **Buttons are oversized** ("monster-buttons") — use compact toolbar buttons /
-        proper styling, not full-width content buttons.
-  - [ ] **Start/Stop not mutually exclusive** — gate by recording state (Start disabled
-        while recording, Stop disabled while idle) via a `ViewExecutabilityRule` reading the
-        opener recorder's `isRecording()`; show a recording indicator.
-  - [ ] **No actions shown** — display the captured steps live (a `TableViewControl` over
-        the recorder's `steps()`: address, command, arguments), updating as they are
-        captured.
-  - [ ] **No replay from the UI** — a Replay button driving the existing `/replay` path;
-        plus export/copy of the step script and clear.
+      and a steps table (`com.top_logic.layout.view.recorder`, all in the view layer; demo
+      only wires the button). The recorder lives on the recorded (main) window's queue; the
+      side-window drives it through its opener, so the side-window's own clicks are not
+      captured.
+- [ ] **Recorder side-window — reach legacy parity.** Built as a faithful analog of the
+      reusable SQL-monitor view (dual `recording`/`steps` channels, one `RecorderAction`
+      with `Mode {START, REFRESH, STOP}` returning `recorder.steps()`, a `RecordedStepsTable`
+      `UIElement`). Reuses the generic `VisibleIf` rule and `<execute-script>`+`<write-channel>`
+      — no bespoke executability rule. Status of the review gaps:
+  - [x] **Buttons sized properly** — compact `placement="TOOLBAR"` icon buttons (Start /
+        Refresh / Stop), not full-width content buttons.
+  - [x] **Start/Stop mutually exclusive** — driven by the boolean `recording` channel +
+        `<visible-if expr="running -> $running == true|!= true">`; Start shows while idle,
+        Refresh/Stop while recording. Verified live: clicking Start flips the toolbar; Stop
+        flips it back. (Replaced the would-be bespoke `RecordingStateRule` with this reuse.)
+  - [x] **Actions shown** — `RecordedStepsTable` lists captured steps (#, address, command,
+        arguments). Verified live: two main-window counter clicks show as two `increment`
+        rows with their semantic address.
+  - [ ] **Live pop-in (push, not pull)** — steps currently appear on Start/Refresh/Stop
+        (the SQL-monitor pull model). To make them appear *as captured* without Refresh,
+        make `ScriptRecorder` observable and push to the side-window's `steps` channel on
+        each capture (next slice).
+  - [ ] **Replay / step-debugger from the UI** — select a step and replay it on the opener
+        window (effect shown in the main UI), advancing the selection; plus export/clear.
 - [x] **Explore the legacy `ScriptingRecorder` capabilities** and map them to this design.
       Done 2026-06-25 — see **[Legacy parity gap analysis](#legacy-scriptingrecorder--parity-gap-analysis-2026-06-25)**
       below. Headline: the new stack already reuses the legacy `ModelName`/`ModelResolver`

@@ -36,16 +36,28 @@ public final class RecorderAccess {
 	 * @return The opener window's recorder, or {@code null}.
 	 */
 	public static ScriptRecorder openerRecorder(ReactContext context) {
+		String openerWindowId = openerWindowId(context);
+		if (openerWindowId == null) {
+			return null;
+		}
+		SSEUpdateQueue openerQueue = context.getWindowRegistry().getQueue(openerWindowId);
+		return openerQueue == null ? null : openerQueue.getRecorder();
+	}
+
+	/**
+	 * The id of the window that opened the given context's window — the recorded (main) window a
+	 * recorder side-window drives — or {@code null} if there is no opener.
+	 *
+	 * @param context
+	 *        The side-window's context.
+	 * @return The opener window id, or {@code null}.
+	 */
+	public static String openerWindowId(ReactContext context) {
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		if (registry == null) {
 			return null;
 		}
 		WindowEntry entry = registry.getWindow(context.getWindowName());
-		String openerWindowId = entry == null ? null : entry.getOpenerWindowId();
-		if (openerWindowId == null) {
-			return null;
-		}
-		SSEUpdateQueue openerQueue = registry.getQueue(openerWindowId);
-		return openerQueue == null ? null : openerQueue.getRecorder();
+		return entry == null ? null : entry.getOpenerWindowId();
 	}
 }

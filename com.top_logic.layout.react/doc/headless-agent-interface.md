@@ -178,8 +178,19 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
         cross-window subsession machinery, no Refresh button (removed). Verified live: three
         main-window counter clicks (increment, increment, decrement) appeared in the recorder
         window as they happened, in order, zero console errors.
-  - [ ] **Replay / step-debugger from the UI** — select a step and replay it on the opener
-        window (effect shown in the main UI), advancing the selection; plus export/clear.
+  - [x] **Step-debugger from the UI** — done. Selecting a step and pressing **Step**
+        (`StepReplayAction`) replays that single step on the opener window and advances the
+        selection to the next step. Cross-window replay is the reusable `ReactWindowReplay.act`
+        (installs the opener's subsession, runs under the shared request lock, settles, restores
+        the caller's subsession — the same wrapping `AgentServlet` uses, now extracted and shared;
+        both servlets' duplicated `installSubSession` delegate to it). Selection is the reused
+        `TableElement` pattern (table selection ↔ a `selection` channel, guarded against feedback)
+        plus a new programmatic `TableViewControl.selectRow(key)`. Replay goes through
+        `AgentSession.act`, not `ReactServlet`, so a replayed step is **not** itself recorded.
+        Verified live: two recorded increments stepped one at a time drove the main-window counter
+        2→3→4, selection advancing 1→2, effect shown in the main UI, zero console errors.
+  - [ ] **Export / clear from the UI** — copy the step script out and a clear button (the
+        remaining recorder-UI conveniences).
 - [x] **Explore the legacy `ScriptingRecorder` capabilities** and map them to this design.
       Done 2026-06-25 — see **[Legacy parity gap analysis](#legacy-scriptingrecorder--parity-gap-analysis-2026-06-25)**
       below. Headline: the new stack already reuses the legacy `ModelName`/`ModelResolver`
@@ -478,6 +489,16 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-25** — **Recorder step-debugger**, verified live. Selecting a captured step in the
+  recorder side-window and pressing Step replays that one step on the recorded (opener) window —
+  the effect appears in the main browser window — and advances the selection to the next step.
+  New reusable `ReactWindowReplay.act` runs a headless `AgentSession.act` against a sibling window
+  (installs that window's subsession, runs under the session request lock, settles derived state,
+  restores the caller's subsession); the duplicated `installSubSession` in `AgentServlet`/
+  `ReactServlet` now delegates to it. Selection ↔ a `selection` channel reuses the `TableElement`
+  pattern (guarded against feedback) plus a new `TableViewControl.selectRow(key)`. Replay bypasses
+  `ReactServlet`, so it is not re-recorded. Live: two recorded increments stepped one at a time
+  drove the counter 2→3→4, selection 1→2, no console errors.
 - **2026-06-25** — **Recorder live pop-in via SSE**, verified live. Made `ScriptRecorder`
   observable; the recorder window's `RecordedStepsTable` listens to the **opener's** recorder
   and refreshes on each capture. Because the per-window `SSEUpdateQueue.enqueue()`/`flush()`

@@ -11,6 +11,9 @@ import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
@@ -20,6 +23,10 @@ import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
@@ -61,17 +68,32 @@ public class RecordedStepsTable implements UIElement {
 	 */
 	public interface Config extends UIElement.Config {
 
+		/** Configuration name for {@link #getSelection()}. */
+		String SELECTION = "selection";
+
 		@Override
 		@ClassDefault(RecordedStepsTable.class)
 		Class<? extends UIElement> getImplementationClass();
+
+		/**
+		 * Optional channel synchronised with the selected step's 1-based row key: the table writes it
+		 * when the user selects a row, and selects the row named by it when it changes (so a step
+		 * action can advance the selection).
+		 */
+		@Name(SELECTION)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelection();
 	}
+
+	private final ChannelRef _selectionRef;
 
 	/**
 	 * Creates a new {@link RecordedStepsTable} from configuration.
 	 */
 	@CalledByReflection
 	public RecordedStepsTable(InstantiationContext context, Config config) {
-		// No configuration: the table reflects the opener window's recorder.
+		_selectionRef = config.getSelection();
 	}
 
 	@Override
@@ -97,7 +119,46 @@ public class RecordedStepsTable implements UIElement {
 			control.addCleanupAction(() -> recorder.removeListener(listener));
 		}
 
+		bindSelection(context, control);
+
 		return control;
+	}
+
+	/**
+	 * Synchronises the table's single-row selection with the {@link Config#getSelection() selection}
+	 * channel in both directions, guarded against the resulting feedback so a user click and a
+	 * channel-driven advance do not loop.
+	 */
+	private void bindSelection(ViewContext context, TableViewControl<NumberedStep> control) {
+		if (_selectionRef == null) {
+			return;
+		}
+		ViewChannel selection = context.resolveChannel(_selectionRef);
+		boolean[] updating = { false };
+		control.setSelectionListener(selectedKeys -> {
+			if (updating[0]) {
+				return;
+			}
+			updating[0] = true;
+			try {
+				selection.set(selectedKeys.size() == 1 ? selectedKeys.iterator().next() : null);
+			} finally {
+				updating[0] = false;
+			}
+		});
+		ChannelListener selectionListener = (sender, oldValue, newValue) -> {
+			if (updating[0]) {
+				return;
+			}
+			updating[0] = true;
+			try {
+				control.selectRow(newValue);
+			} finally {
+				updating[0] = false;
+			}
+		};
+		selection.addListener(selectionListener);
+		control.addCleanupAction(() -> selection.removeListener(selectionListener));
 	}
 
 	/**

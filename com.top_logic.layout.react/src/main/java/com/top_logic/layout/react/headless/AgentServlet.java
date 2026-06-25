@@ -18,14 +18,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import com.top_logic.base.context.TLSessionContext;
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
@@ -597,22 +594,7 @@ public class AgentServlet extends TopLogicServlet {
 	 *         {@code null}.
 	 */
 	private SubsessionHandler installSubSession(DisplayContext displayContext, String windowName) {
-		if (StringServices.isEmpty(windowName)) {
-			return null;
-		}
-		TLSessionContext sessionContext = TLContextManager.getSession();
-		if (sessionContext == null) {
-			return null;
-		}
-		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
-		if (subSession != null) {
-			displayContext.installSubSessionContext(subSession);
-		} else {
-			Logger.warn("No SubSession found for window '" + windowName
-				+ "'. The view page may not have been loaded yet.", AgentServlet.class);
-		}
-		ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
-		return handlersRegistry.getContentHandler(windowName);
+		return ReactWindowReplay.installSubSession(displayContext, windowName);
 	}
 
 	private static String stripLeadingSlash(String url) {

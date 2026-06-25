@@ -36,7 +36,6 @@ import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.base.services.simpleajax.RangeReplacement;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
@@ -44,7 +43,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.DefaultInfoServiceItem;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
-import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
@@ -60,6 +58,7 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.headless.AgentSession;
+import com.top_logic.layout.react.headless.ReactWindowReplay;
 import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
@@ -611,26 +610,7 @@ public class ReactServlet extends TopLogicServlet {
 	 *         for windows that use the traditional layout engine.
 	 */
 	private SubsessionHandler installSubSession(DisplayContext displayContext, String windowName) {
-		if (StringServices.isEmpty(windowName)) {
-			return null;
-		}
-		TLSessionContext sessionContext = TLContextManager.getSession();
-		if (sessionContext == null) {
-			return null;
-		}
-
-		// Install SubSession on the current interaction (created by ViewServlet at page load).
-		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
-		if (subSession != null) {
-			displayContext.installSubSessionContext(subSession);
-		} else {
-			Logger.warn("No SubSession found for window '" + windowName
-				+ "'. The view page may not have been loaded yet.", ReactServlet.class);
-		}
-
-		// SubsessionHandler is only present for windows with traditional layout.
-		ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
-		return handlersRegistry.getContentHandler(windowName);
+		return ReactWindowReplay.installSubSession(displayContext, windowName);
 	}
 
 	/**

@@ -30,6 +30,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_RECORDER;
 
 	/**
+	 * @en Select a step to replay first.
+	 */
+	public static ResKey SELECT_STEP_TO_REPLAY;
+
+	/**
+	 * @en Replaying step failed: {0}
+	 */
+	public static ResKey1 ERROR_REPLAY_FAILED__MSG;
+
+	/**
 	 * @en Step
 	 */
 	public static ResKey COLUMN_INDEX;

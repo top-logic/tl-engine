@@ -278,6 +278,34 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	}
 
 	/**
+	 * Selects exactly the row with the given {@link Row#key() row key} (clearing any other selection),
+	 * or clears the selection when {@code key} is {@code null} or matches no current row. Pushes the
+	 * change to the client, scrolls the row into view and notifies the {@link #setSelectionListener
+	 * selection listener}.
+	 *
+	 * @param key
+	 *        The row key to select, or {@code null} to clear.
+	 */
+	public void selectRow(Object key) {
+		_selectedKeys.clear();
+		_cursorIndex = -1;
+		_selectionAnchor = -1;
+		if (key != null) {
+			List<Row<R>> rows = _view.rows(0, _view.rowCount());
+			for (int i = 0; i < rows.size(); i++) {
+				if (rows.get(i).key().equals(key)) {
+					_selectedKeys.add(rows.get(i).key());
+					_cursorIndex = i;
+					_selectionAnchor = i;
+					break;
+				}
+			}
+		}
+		pushSelection();
+		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
 	 * Registers a view-supplied custom filter UI for a column, used instead of the built-in filter
 	 * editor when the column's funnel is opened.
 	 */

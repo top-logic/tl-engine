@@ -569,7 +569,8 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 	public SearchExpression visit(Cmp expr, TLModel arg) throws ConfigurationException {
 		List<Expr> operands = expr.getOperands();
 		if (operands.size() != 2) {
-			throw error("Expecting exactly two operands in the compare operation: " + expr);
+			throw error(I18NConstants.ERROR_WRONG_OPERANDS_COUNT__NUMBER_EXPR.fill(operands.size(),
+				ExprPrinter.toString(expr)));
 		}
 		return compareOp(expr.getKind(), descend(operands.get(0), arg), descend(operands.get(1), arg));
 	}
@@ -607,7 +608,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		return builder.build(method, args);
 	}
 
-	private ConfigurationException error(String message) throws ConfigurationException {
+	private ConfigurationException error(ResKey message) throws ConfigurationException {
 		throw new ConfigurationException(message);
 	}
 
@@ -615,7 +616,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		String methodName = expr.getName();
 		MethodBuilder<?> builder = getBuilder(methodName);
 		if (builder == null) {
-			throw error("Unknown method '" + methodName + "' in " + ExprPrinter.toString(expr));
+			throw error(I18NConstants.ERROR_UNKNOWN_METHOD__NAME_EXPR.fill(methodName, ExprPrinter.toString(expr)));
 		}
 		return builder;
 	}
@@ -669,11 +670,11 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		return literal(Boolean.FALSE);
 	}
 
-	private Object resolveModule(ModuleLiteral expr, TLModel arg) throws ConfigurationException {
+	private Object resolveModule(ModuleLiteral expr, TLModel arg) {
 		return TLModelUtil.findModule(arg, expr.getName());
 	}
 
-	private Object resolveSingleton(SingletonLiteral expr, TLModel arg) throws ConfigurationException {
+	private Object resolveSingleton(SingletonLiteral expr, TLModel arg) {
 		return TLModelUtil.findSingleton(TLModelUtil.findModule(arg, expr.getModule()), expr.getName());
 	}
 
@@ -682,7 +683,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 			TypeLiteral literal = (TypeLiteral) expr;
 			return TLModelUtil.findType(arg, literal.getModule() + ":" + literal.getName());
 		}
-		throw error("Expecting a type literal, found: " + expr);
+		throw error(I18NConstants.ERROR_TYPE_LITERAL_EXPECTED__EXPR.fill(ExprPrinter.toString(expr)));
 	}
 
 	private <T extends TLTypePart> T resolvePart(Expr expr, TLModel arg) throws ConfigurationException {
@@ -693,7 +694,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 			String partName = literal.getName();
 			return TLModelUtil.findPart(arg, moduleName, typeName, partName);
 		}
-		throw error("Expecting a type part literal, found: " + expr);
+		throw error(I18NConstants.ERROR_PART_LITERAL_EXPECTED__EXPR.fill(ExprPrinter.toString(expr)));
 	}
 
 	private SearchExpression descend(Expr expr, TLModel arg) throws ConfigurationException {
@@ -717,15 +718,6 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 		Argument[] result = new Argument[args.size()];
 		for (int n = 0, cnt = args.size(); n < cnt; n++) {
 			result[n] = descend(args.get(n), arg);
-		}
-		return result;
-	}
-
-	private Argument[] descendExceptFirst(List<Arg> exprs, TLModel arg) throws ConfigurationException {
-		int cnt = exprs.size();
-		Argument[] result = new Argument[cnt - 1];
-		for (int n = 1; n < cnt; n++) {
-			result[n - 1] = descend(exprs.get(n), arg);
 		}
 		return result;
 	}

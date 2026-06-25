@@ -22,5 +22,15 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-view</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-wysiwyg</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-wysiwyg</artifactId>
+    </dependency>
   </dependencies>
 </project>

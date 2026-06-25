@@ -18,6 +18,7 @@
 			<field attribute="name"/>
 			<field attribute="string"/>
 			<field attribute="multiLine"/>
+			<field attribute="html"/>
 			<field attribute="i18n"/>
 			<field attribute="password"/>
 			<field attribute="count"/>

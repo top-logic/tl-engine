@@ -18,6 +18,7 @@ implemented in the current deliverable.
 | `DemoTypes` attribute kinds | **Migrate now** | Folded into one flat, non-polymorphic, non-structured `demo.react:Demo` class. Shown in two presentation forms (wide table + detail dialog; selector table + form) under the **Attributes** entry, with real persistent CRUD. |
 | Account / group / role administration | **Migrate now** | Reuses the shipped `admin/admin.view.xml` from `com.top_logic.layout.view`, gated by the `administration` security scope. |
 | React login / logout | **Migrate now** | Reuses the shipped `login.view.xml` + `tl.login:Credentials`. |
+| WYSIWYG HTML attribute (`tl.model.wysiwyg:Html`) | **Migrate now** | `html` attribute on `Demo`, edited by the React WYSIWYG control. Depends on `tl-model-wysiwyg` (the type) + `tl-layout-react-wysiwyg` (the control, which registers a `FieldControlService` provider for the type). |
 
 ## Folded out (deliberately not reproduced as standalone demos)
 
@@ -31,7 +32,6 @@ implemented in the current deliverable.
 
 | Area | Verdict | Needs |
 |------|---------|-------|
-| WYSIWYG HTML attribute (`tl.model.wysiwyg:Html`) | **Defer** | `tl-layout-wysiwyg*` module; add as a dependency, then add an `html` attribute to `Demo`. |
 | Green-field `TableViewControl` filtering/scripted filters | **Defer** | Already partly exercised by the Attributes table; expand with per-column filters. |
 | `composition-table` (in-form child editing) | **Defer** | Needs a child type — reintroduce once a second type is justified. |
 | Security permission matrix (`SecurityMatrixElement`) | **Defer** | Reusable from `com.top_logic.layout.view/views/admin/permissions.view.xml`. |

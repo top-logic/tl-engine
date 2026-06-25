@@ -32,5 +32,10 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-react-wysiwyg</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-codeedit</artifactId>
+    </dependency>
   </dependencies>
 </project>

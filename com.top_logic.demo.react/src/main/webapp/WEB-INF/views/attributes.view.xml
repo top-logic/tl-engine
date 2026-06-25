@@ -191,6 +191,9 @@
 									<field attribute="string"/>
 									<field attribute="multiLine"/>
 									<field attribute="html"/>
+									<field attribute="xmlSource"/>
+									<field attribute="jsonSource"/>
+									<field attribute="cssSource"/>
 									<field attribute="i18n"/>
 									<field attribute="i18nMultiline"/>
 									<field attribute="password"/>

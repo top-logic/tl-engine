@@ -51,6 +51,41 @@
 						</annotations>
 					</property>
 
+					<!-- Source code -->
+					<property name="xmlSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="XML"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="jsonSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="JSON"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="cssSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="CSS"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+
 					<!-- Numbers -->
 					<property name="count"
 						type="tl.core:Integer"

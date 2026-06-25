@@ -135,11 +135,17 @@ channel holds — used to make Start vs. Refresh/Stop mutually exclusive.
       tractable v1; the object-level drill-down + revert are a follow-up.
 
 ### Batch 3 — System / technical  ▢
-Establishes the "System" admin section.
+Establishes the "System" admin section (added with the locks view as a sibling tab of
+`access-control` / `monitoring`).
+- [x] Lock management — `LockTable` (one row per `LockInfo`: owner, operation, locked objects,
+      aspects, timeout, cluster node) + `LockListAction` (refresh / force-release the selected lock),
+      in a titled fill panel. Reuses the titled-panel command pattern and the `<visible-if>` rule
+      (Release shown only while a lock is selected). The table self-loads a live
+      `TokenService.getAllLocks()` snapshot on open and rebuilds from the `locks` channel after a
+      command. The legacy tree-table (LockInfo → Token) is flattened to one row per lock for v1.
 - [ ] Services management (list + start/stop/restart + config editor).
 - [ ] Scheduler / tasks (task tree, run history, block/unblock, trigger).
 - [ ] Maintenance mode (schedule window, disconnect users).
-- [ ] Lock management (held locks table, force-release).
 
 ### Batch 4 — Logs (redesign)  ▢
 - [ ] Log viewer + logger-level configuration, designed fresh for the React

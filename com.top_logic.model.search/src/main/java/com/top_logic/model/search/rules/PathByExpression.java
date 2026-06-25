@@ -61,6 +61,7 @@ import com.top_logic.model.search.expr.Union;
 import com.top_logic.model.search.expr.Var;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.visit.DefaultDescendingVisitor;
@@ -747,9 +748,6 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 
 	}
 
-	/** TODO #29088: Is this correct? */
-	private static final boolean QUERY_USES_SECURITY = false;
-
 	/** The compiled expression used by {@link #getValues(TLObject)} for forward navigation. */
 	private SearchExpression _expression;
 
@@ -798,7 +796,9 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	private static SearchExpression resolve(Expr expression) {
 		TLModel model = ModelService.getApplicationModel();
 		SearchExpression search = SearchBuilder.toSearchExpression(model, expression);
-		return QueryExecutor.resolve(model, search);
+		SearchExpression resolved = QueryExecutor.resolve(model, search);
+		UpdateSecurityVisitor.disableSecurity(resolved);
+		return resolved;
 	}
 
 	private static SearchExpression compileAndResolve(Expr expression) {
@@ -806,7 +806,9 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 		TLModel model = ModelService.getApplicationModel();
 		SearchExpression search = SearchBuilder.toSearchExpression(model, expression);
 		QueryExecutor.compileExpr(kb, model, search);
-		return QueryExecutor.resolve(model, search);
+		SearchExpression resolved = QueryExecutor.resolve(model, search);
+		UpdateSecurityVisitor.disableSecurity(resolved);
+		return resolved;
 	}
 
 	private static boolean hasParts(SearchExpression expression) {
@@ -1268,7 +1270,7 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	}
 
 	private static EvalContext newEvalContext() {
-		return new EvalContext(false, QUERY_USES_SECURITY,
+		return new EvalContext(false,
 			PersistencyLayer.getKnowledgeBase(),
 			ModelService.getApplicationModel(), null, null);
 	}

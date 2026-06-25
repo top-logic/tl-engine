@@ -19,6 +19,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
@@ -36,7 +37,7 @@ import com.top_logic.util.model.ModelService;
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
-public class CreateProcessInstance extends GenericMethod {
+public class CreateProcessInstance extends GenericMethodWithSecurity {
 
 	/** Fallback name when no explicit name provided */
 	private static final String DEFAULT_PROCESS_NAME = "newProcessInstance";
@@ -112,7 +113,7 @@ public class CreateProcessInstance extends GenericMethod {
 			modelType = TlBpeExecutionFactory.getProcessExecutionType();
 		}
 
-		if (definitions.usesSecurity()) {
+		if (usesSecurity()) {
 			// TODO #29088: It must be checked whether the user is allowed to create instances for
 			// type.
 			if (false) {

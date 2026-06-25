@@ -23,7 +23,7 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DynamicSet extends GenericMethod {
+public class DynamicSet extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a new {@link DynamicSet}.
@@ -53,7 +53,9 @@ public class DynamicSet extends GenericMethod {
 		TLStructuredTypePart part = asTypePart(getArguments()[1], arguments[1]);
 		Object value = arguments[2];
 
-		Update.checkWritePermission(definitions, obj, part);
+		if (usesSecurity()) {
+			Update.checkWritePermission(obj, part);
+		}
 
 		obj.tUpdate(part, value);
 		return null;

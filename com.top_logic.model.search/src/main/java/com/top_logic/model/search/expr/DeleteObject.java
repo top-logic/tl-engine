@@ -30,7 +30,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<Void> {
+public class DeleteObject extends GenericMethodWithSecurity implements WithFlatMapSemantics<Void> {
 
 	/**
 	 * Creates a {@link DeleteObject}.
@@ -63,7 +63,7 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	public Object evalFlatMap(EvalContext definitions, Collection<?> base, Void param) {
 		List<TLObject> forbidden;
 		Consumer<TLObject> collectForbidden;
-		if (definitions.usesSecurity()) {
+		if (usesSecurity()) {
 			ModelAccessRights accessRights = ModelAccessRights.getInstance();
 			Person user = TLContext.currentUser();
 			forbidden = new ArrayList<>();
@@ -96,7 +96,7 @@ public class DeleteObject extends GenericMethod implements WithFlatMapSemantics<
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLObject obj = asTLObject(singletonValue);
 		if (obj != null) {
-			if (definitions.usesSecurity()) {
+			if (usesSecurity()) {
 				if (!ModelAccessRights.getInstance().isAllowed(obj, SimpleBoundCommandGroup.DELETE)) {
 					throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
 				}

@@ -32,7 +32,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class KBQuery extends SearchExpression {
+public class KBQuery extends SearchExpressionWithSecurity {
 
 	private final TLClass _classType;
 
@@ -89,7 +89,7 @@ public class KBQuery extends SearchExpression {
 		}
 
 		List<TLObject> result = new ArrayList<>();
-		Predicate<TLObject> securityFilter = securityFilter(definitions);
+		Predicate<TLObject> securityFilter = getSecurityFilter();
 		try (CloseableIterator<TLObject> dbResult =
 			kb.searchStream(ExpressionFactory.queryResolved(query, TLObject.class))) {
 			dbResult:
@@ -110,9 +110,9 @@ public class KBQuery extends SearchExpression {
 		return result;
 	}
 
-	private static Predicate<TLObject> securityFilter(EvalContext definitions) {
+	private Predicate<TLObject> getSecurityFilter() {
 		Predicate<TLObject> securityFilter;
-		if (definitions.usesSecurity()) {
+		if (usesSecurity()) {
 			securityFilter = securityFilter();
 		} else {
 			securityFilter = input -> true;

@@ -19,7 +19,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class Update extends SearchExpression {
+public class Update extends SearchExpressionWithSecurity {
 
 	private SearchExpression _self;
 
@@ -82,18 +82,18 @@ public class Update extends SearchExpression {
 		Object value = getValue().evalWith(definitions, args);
 		TLStructuredTypePart part = getPart();
 
-		checkWritePermission(definitions, self, part);
+		if (usesSecurity()) {
+			checkWritePermission(self, part);
+		}
 
 		self.tUpdate(part, value);
 		return null;
 	}
 
-	static void checkWritePermission(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
-		if (definitions.usesSecurity()) {
-			ModelAccessRights accessRights = ModelAccessRights.getInstance();
-			if (!accessRights.isAllowed(TLContext.currentUser(), self, part, SimpleBoundCommandGroup.WRITE)) {
-				throw new TopLogicException(I18NConstants.WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(self, part));
-			}
+	static void checkWritePermission(TLObject self, TLStructuredTypePart part) {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		if (!accessRights.isAllowed(TLContext.currentUser(), self, part, SimpleBoundCommandGroup.WRITE)) {
+			throw new TopLogicException(I18NConstants.WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(self, part));
 		}
 	}
 

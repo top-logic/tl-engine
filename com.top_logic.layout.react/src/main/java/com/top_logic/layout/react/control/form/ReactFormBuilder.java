@@ -90,11 +90,25 @@ public final class ReactFormBuilder {
 	/**
 	 * Combines an input control with a trailing fixed-size adornment (e.g. an icon button) into a
 	 * single row in which the input fills the remaining width and the adornment stays inline at its
-	 * natural size.
+	 * natural size, vertically centered against the input.
 	 */
 	public static ReactControl inputWithAdornment(ReactContext context, ReactControl input, ReactControl adornment) {
+		return inputWithAdornment(context, input, adornment, StackAlign.CENTER);
+	}
+
+	/**
+	 * Combines an input control with a trailing fixed-size adornment, aligning the adornment to the
+	 * given cross-axis position.
+	 *
+	 * <p>
+	 * Use {@link StackAlign#START} for a multi-line input so the adornment sits at the top edge of
+	 * the tall field rather than floating in its vertical middle.
+	 * </p>
+	 */
+	public static ReactControl inputWithAdornment(ReactContext context, ReactControl input, ReactControl adornment,
+			StackAlign align) {
 		ReactStackControl row = new ReactStackControl(context, StackDirection.ROW, StackGap.COMPACT,
-			StackAlign.CENTER, false, List.of(input, adornment));
+			align, false, List.of(input, adornment));
 		row.setGrowFirst(true);
 		return row;
 	}

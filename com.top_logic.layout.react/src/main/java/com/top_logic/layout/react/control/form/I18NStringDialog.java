@@ -25,6 +25,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
@@ -55,8 +56,11 @@ public class I18NStringDialog {
 	 *        The current React context (must provide a {@link DialogManager}).
 	 * @param mainModel
 	 *        The field model whose value is the edited {@link ResKey}.
+	 * @param rows
+	 *        The number of visible rows for a multi-line text area per language, or {@code 0} to
+	 *        render each language as a single line.
 	 */
-	public static void openEditor(ReactContext context, FieldModel mainModel) {
+	public static void openEditor(ReactContext context, FieldModel mainModel, int rows) {
 		DialogManager dialogManager = context.getDialogManager();
 		if (dialogManager == null) {
 			return;
@@ -64,6 +68,7 @@ public class I18NStringDialog {
 		Resources resources = Resources.getInstance();
 		Locale displayLocale = TLContext.getLocale();
 		ResKey current = mainModel.getValue() instanceof ResKey ? (ResKey) mainModel.getValue() : null;
+		boolean multiline = rows > 0;
 
 		// One field per supported language, built through the shared form pipeline so labels,
 		// chrome and wrapping match a model-bound form. When a translation service is active, each
@@ -78,7 +83,11 @@ public class I18NStringDialog {
 			AbstractFieldModel model = new AbstractFieldModel(value);
 			perLocale.put(locale, model);
 
-			ReactControl input = new ReactTextInputControl(context, model);
+			ReactTextInputControl textInput = new ReactTextInputControl(context, model);
+			if (multiline) {
+				textInput.setMultiline(rows);
+			}
+			ReactControl input = textInput;
 			if (canTranslate && translator.isSupported(locale)) {
 				Locale source = locale;
 				ReactButtonControl translateButton = new ReactButtonControl(context,
@@ -89,7 +98,9 @@ public class I18NStringDialog {
 					});
 				translateButton.setImage(ThemeImage.icon("css:fa-solid fa-language"));
 				translateButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
-				input = ReactFormBuilder.inputWithAdornment(context, input, translateButton);
+				// Top-align the translate button next to a tall multi-line field.
+				input = ReactFormBuilder.inputWithAdornment(context, input, translateButton,
+					multiline ? StackAlign.START : StackAlign.CENTER);
 			}
 			form.addField(locale.getDisplayLanguage(displayLocale), input);
 		}
@@ -106,7 +117,7 @@ public class I18NStringDialog {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
 			return HandlerResult.DEFAULT_RESULT;
 		}));
-		actions.add(MessageButtons.ok(context, ctx -> {
+		ReactButtonControl okButton = MessageButtons.ok(context, ctx -> {
 			ResKey.Builder builder = ResKey.builder();
 			boolean any = false;
 			for (Map.Entry<Locale, FieldModel> entry : perLocale.entrySet()) {
@@ -121,7 +132,13 @@ public class I18NStringDialog {
 			mainModel.setValue(any ? builder.build() : null);
 			dialogManager.closeTopDialog(DialogResult.ok(null));
 			return HandlerResult.DEFAULT_RESULT;
-		}));
+		});
+		if (!multiline) {
+			// Make OK the Enter-default. Only for single-line fields: in a multi-line text area Enter
+			// inserts a newline, so it must not also submit the dialog.
+			okButton.markAsDefault();
+		}
+		actions.add(okButton);
 		window.setActions(actions);
 
 		dialogManager.openDialog(false, window, result -> {

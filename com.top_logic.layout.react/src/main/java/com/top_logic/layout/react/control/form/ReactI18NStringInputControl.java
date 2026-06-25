@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
@@ -98,22 +99,25 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 * @return The composed editor control.
 	 */
 	public static ReactControl createEditor(ReactContext context, FieldModel model, int rows) {
+		boolean multiline = rows > 0;
 		ReactI18NStringInputControl inline = new ReactI18NStringInputControl(context, model);
-		if (rows > 0) {
+		if (multiline) {
 			inline.setMultiline(rows);
 		}
 
 		ReactButtonControl editAll = new ReactButtonControl(context,
 			Resources.getInstance().getString(I18NConstants.I18N_STRING_ALL_LANGUAGES_BUTTON),
 			ctx -> {
-				I18NStringDialog.openEditor(ctx, model);
+				I18NStringDialog.openEditor(ctx, model, rows);
 				return HandlerResult.DEFAULT_RESULT;
 			});
 		editAll.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
 		editAll.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		inline.setAdornment(editAll);
 
-		return ReactFormBuilder.inputWithAdornment(context, inline, editAll);
+		// Top-align the all-languages button next to a tall multi-line field rather than centering it.
+		return ReactFormBuilder.inputWithAdornment(context, inline, editAll,
+			multiline ? StackAlign.START : StackAlign.CENTER);
 	}
 
 	/**

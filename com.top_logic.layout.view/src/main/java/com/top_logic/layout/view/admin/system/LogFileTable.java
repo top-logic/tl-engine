@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.admin.system;
 
 import java.io.File;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -36,6 +37,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -94,12 +96,14 @@ public class LogFileTable implements UIElement {
 			.label(I18NConstants.LOG_COLUMN_SIZE)
 			.renderer(size -> CellContent.text(formatSize(size)))
 			.sort(() -> Comparator.<Long> naturalOrder())
+			.filter(new ComparableColumnFilter<>(Comparator.<Long> naturalOrder(), LogFileTable::parseLong))
 			.width(120)
 			.build());
-		columns.add(DefaultColumn.<File, Long> builder("modified", File::lastModified)
+		columns.add(DefaultColumn.<File, Date> builder("modified", file -> new Date(file.lastModified()))
 			.label(I18NConstants.LOG_COLUMN_MODIFIED)
-			.renderer(time -> CellContent.text(HTMLFormatter.getInstance().formatDateTime(new Date(time))))
-			.sort(() -> Comparator.<Long> naturalOrder())
+			.renderer(modified -> CellContent.text(HTMLFormatter.getInstance().formatDateTime(modified)))
+			.sort(() -> Comparator.<Date> naturalOrder())
+			.filter(new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(), LogFileTable::parseDate))
 			.width(200)
 			.build());
 		columns.add(DefaultColumn.<File, File> builder("download", Function.identity())
@@ -149,6 +153,29 @@ public class LogFileTable implements UIElement {
 		}
 		result.sort(Comparator.comparing(File::getName));
 		return result;
+	}
+
+	/**
+	 * Parses a byte count typed into the size-column range filter, or {@code null} when unparseable.
+	 */
+	private static Long parseLong(String text) {
+		try {
+			return Long.valueOf(text.trim());
+		} catch (NumberFormatException ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * Parses a date-time bound typed into the modified-column range filter, or {@code null} when
+	 * unparseable.
+	 */
+	private static Date parseDate(String text) {
+		try {
+			return HTMLFormatter.getInstance().getDateTimeFormat().parse(text.trim());
+		} catch (ParseException ex) {
+			return null;
+		}
 	}
 
 	/**

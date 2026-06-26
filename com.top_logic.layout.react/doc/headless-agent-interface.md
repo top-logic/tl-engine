@@ -268,10 +268,17 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
         parity item #12; per-step `comment` rides along, parity #16).
   - [x] Lean React-side action-config **base** — `ReactCommandArguments` (plain
         `ConfigurationItem`). **Not** legacy `ApplicationAction`.
-  - [ ] Migrate the remaining recordable/interactive commands to typed args (so far:
-        sidebar `selectItem` → `SelectItemArguments`); chrome commands keep the raw `Map`.
-        Consider a conformance check that every recordable `@ReactCommand` declares a
-        config arg type.
+  - [x] Migrate the structural-navigation commands — **done, verified live**: sidebar
+        `selectItem` → `SelectItemArguments`, tab bar `selectTab` → `SelectTabArguments`,
+        table `select` → `SelectRowArguments`. Live `/agent-api/observe` advertises each
+        with its derived schema; `select` confirms non-string types
+        (`rowIndex:"integer"` required, `ctrlKey`/`shiftKey:"boolean"` optional) and a
+        table-row click still selects (detail panel populated). `@ReactParam` removed from
+        all three; arg-key literals unified onto the typed interfaces.
+  - [ ] Migrate the value-bearing commands (`valueChanged`/`selectByKey`). Entangled with
+        the value→label-resolution decision below (their values are option/business keys),
+        so deferred with the rendering work. Consider a conformance check that every
+        recordable `@ReactCommand` declares a config arg type.
 - [ ] **Sidebar size hotspot via the enum schema** — once `selectItem` carries a typed
       arg, advertise `itemId` as a constrained enum (`∈ {dashboard, administration, …}`)
       from the schema instead of shipping the raw 24-entry `items` array (folds the
@@ -544,6 +551,15 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-26** — **Typed arguments extended to `selectTab` + table `select`**, verified
+  live. Same pattern as `selectItem`: `SelectTabArguments` (`tabId`) and `SelectRowArguments`
+  (`rowIndex` `@Mandatory` `int`, `ctrlKey`/`shiftKey` `boolean`); `@ReactParam` removed,
+  arg-key literals unified onto the typed interfaces, the table's `recordCommand` translation
+  still reads the same keys. Live on the demo: `/agent-api/observe` advertises `selectTab`
+  (`required:["tabId"]`) and `select` with correct JSON-schema *types* — `rowIndex:"integer"`
+  (required), `ctrlKey`/`shiftKey:"boolean"` (optional) plus generated titles/descriptions —
+  and clicking table row "Part 7" selected it (detail panel populated), confirming the typed
+  `int`/`boolean` binding dispatches. `TestAgentSession` still 12 green.
 - **2026-06-26** — **Typed command arguments — first slice** (D5 core), unit-verified,
   live pending. A `@ReactCommand` handler may now declare a `ConfigurationItem` argument
   instead of a raw `Map`: `ReactCommandMap` captures the argument descriptor and

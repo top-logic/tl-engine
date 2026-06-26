@@ -30,7 +30,6 @@ import com.top_logic.layout.react.control.AgentModelKey;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
@@ -78,7 +77,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
 
 	/** Command argument carrying the list of option business keys for {@link #CMD_SELECT_BY_KEY}. */
-	private static final String ARG_KEYS = "keys";
+	private static final String ARG_KEYS = SelectByKeysArguments.KEYS;
 
 	private final SelectFieldModel _selectModel;
 
@@ -235,11 +234,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * @param arguments
 	 *        Must contain a {@link #VALUE} entry with a list of option value IDs.
 	 */
-	@SuppressWarnings("unchecked")
-	@ReactCommand(value = CMD_VALUE_CHANGED, params = @ReactParam(name = VALUE, type = "string[]",
-		required = true, description = "List of selected option value ids (from the options descriptors)."))
-	HandlerResult handleValueChanged(Map<String, Object> arguments) {
-		List<String> selectedIds = (List<String>) arguments.get(VALUE);
+	@ReactCommand(CMD_VALUE_CHANGED)
+	HandlerResult handleValueChanged(OptionsChangedArguments args) {
+		List<String> selectedIds = args.getValue();
 		if (selectedIds == null) {
 			selectedIds = Collections.emptyList();
 		}
@@ -285,12 +282,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * @param arguments
 	 *        Must contain a {@link #ARG_KEYS} entry with a list of key JSON strings.
 	 */
-	@SuppressWarnings("unchecked")
-	@ReactCommand(value = CMD_SELECT_BY_KEY, params = @ReactParam(name = ARG_KEYS, type = "string[]",
-		required = true,
-		description = "List of option business keys (the 'key' projected onto each option)."))
-	HandlerResult handleSelectByKey(Map<String, Object> arguments) {
-		List<String> keys = (List<String>) arguments.get(ARG_KEYS);
+	@ReactCommand(CMD_SELECT_BY_KEY)
+	HandlerResult handleSelectByKey(SelectByKeysArguments args) {
+		List<String> keys = args.getKeys();
 		if (keys == null) {
 			keys = Collections.emptyList();
 		}

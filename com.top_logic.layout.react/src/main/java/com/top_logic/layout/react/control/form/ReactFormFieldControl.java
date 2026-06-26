@@ -13,7 +13,6 @@ import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.FormFieldAdapter;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.util.Resources;
@@ -257,10 +256,9 @@ public class ReactFormFieldControl extends ReactControl {
 	/**
 	 * Handles value changes from the React client.
 	 */
-	@ReactCommand(value = CMD_VALUE_CHANGED, params = @ReactParam(name = "value",
-		description = "The new field value entered in the client."))
-	void handleValueChanged(Map<String, Object> arguments) {
-		Object parsed = parseClientValue(arguments.get(VALUE));
+	@ReactCommand(CMD_VALUE_CHANGED)
+	void handleValueChanged(FieldValueArguments args) {
+		Object parsed = parseClientValue(args.getValue());
 		_clientValue = parsed;
 		_applyingClientValue = true;
 		try {

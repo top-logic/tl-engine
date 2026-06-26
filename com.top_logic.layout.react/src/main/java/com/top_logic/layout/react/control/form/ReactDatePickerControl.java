@@ -17,7 +17,6 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
@@ -66,10 +65,9 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 	}
 
 	@Override
-	@ReactCommand(value = "valueChanged", params = @ReactParam(name = "value",
-		description = "The new date value as an ISO date string (empty to clear)."))
-	void handleValueChanged(Map<String, Object> arguments) {
-		Object rawValue = arguments.get(VALUE);
+	@ReactCommand(CMD_VALUE_CHANGED)
+	void handleValueChanged(FieldValueArguments args) {
+		Object rawValue = args.getValue();
 		FieldModel model = getFieldModel();
 
 		AbstractFieldModel abstractModel =

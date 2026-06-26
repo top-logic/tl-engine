@@ -6,7 +6,6 @@
 package com.top_logic.layout.react.control.form;
 
 import java.util.Locale;
-import java.util.Map;
 
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.TranslationService;
@@ -193,12 +192,9 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 * translation runs once per edit rather than on every keystroke. The client only sends this
 	 * after an actual edit, so merely focusing and leaving the field translates nothing.
 	 * </p>
-	 *
-	 * @param arguments
-	 *        The (empty) command arguments.
 	 */
-	@ReactCommand(value = COMMIT_COMMAND)
-	void handleCommit(Map<String, Object> arguments) {
+	@ReactCommand(COMMIT_COMMAND)
+	void handleCommit() {
 		if (!TranslationService.isActive()) {
 			return;
 		}

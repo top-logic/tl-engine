@@ -89,6 +89,18 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	private Map<String, QueryExecutor> _executors = Collections.emptyMap();
 
 	/**
+	 * Lazily filled map holding the security-disabled variant of the configured scripts.
+	 *
+	 * <p>
+	 * A separate {@link QueryExecutor} is needed (instead of switching security off on the shared
+	 * {@link #_executors secured executor}) because the compiled expression tree is shared by all
+	 * callers and threads and its {@link com.top_logic.model.search.WithSecurityCheck security flag}
+	 * must therefore not be mutated per call.
+	 * </p>
+	 */
+	private final ConcurrentHashMap<String, QueryExecutor> _executorsNoSecurity = new ConcurrentHashMap<>();
+
+	/**
 	 * Map holding the tracing {@link SearchExpression} for the configured scripts.
 	 * 
 	 * <p>
@@ -114,16 +126,16 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		initFactoriesFromMethodBuilders();
 		Map<String, QueryExecutor> executors = new HashMap<>();
 		for (Entry<String, ConfiguredScript> builder : _builders.entrySet()) {
-			executors.put(builder.getKey(), createExecutor(builder));
+			executors.put(builder.getKey(), createExecutor(builder.getKey(), builder.getValue()));
 		}
 		_executors = executors;
 	}
 
-	private QueryExecutor createExecutor(Entry<String, ConfiguredScript> builder) {
+	private QueryExecutor createExecutor(String scriptName, ConfiguredScript script) {
 		try {
-			return builder.getValue().createExecutor();
+			return script.createExecutor();
 		} catch (RuntimeException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_RESOLVING_SCRIPT__NAME.fill(builder.getKey()), ex);
+			throw new TopLogicException(I18NConstants.ERROR_RESOLVING_SCRIPT__NAME.fill(scriptName), ex);
 		}
 	}
 
@@ -156,6 +168,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		_builders.clear();
 		_factories.clear();
 		_executors.clear();
+		_executorsNoSecurity.clear();
 		_tracingSearches.clear();
 		super.shutDown();
 	}
@@ -197,15 +210,37 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	/**
 	 * Determines the {@link QueryExecutor} for the configured function.
 	 *
+	 * @param usesSecurity
+	 *        Whether the executor must apply the current user's access rights. The unsecured variant
+	 *        is created lazily.
 	 * @throws TopLogicException
 	 *         iff there is no executor for the given name.
 	 */
-	QueryExecutor getExecutor(String scriptName) {
-		QueryExecutor queryExecutor = _executors.get(scriptName);
-		if (queryExecutor == null) {
+	QueryExecutor getExecutor(String scriptName, boolean usesSecurity) {
+		if (usesSecurity) {
+			QueryExecutor queryExecutor = _executors.get(scriptName);
+			if (queryExecutor == null) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
+			}
+			return queryExecutor;
+		}
+		return getExecutorWithoutSecurity(scriptName);
+	}
+
+	private QueryExecutor getExecutorWithoutSecurity(String scriptName) {
+		QueryExecutor existing = _executorsNoSecurity.get(scriptName);
+		if (existing != null) {
+			return existing;
+		}
+		ConfiguredScript script = _builders.get(scriptName);
+		if (script == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
 		}
-		return queryExecutor;
+		/* Compile a separate executor and switch security off on it. The shared secured executor
+		 * must not be modified, since its expression tree is used concurrently. */
+		QueryExecutor executor = createExecutor(scriptName, script);
+		executor.disableSecurity();
+		return MapUtil.putIfAbsent(_executorsNoSecurity, scriptName, executor);
 	}
 
 	/**

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.table;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommandArguments;
@@ -12,7 +13,13 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
 /**
  * Typed arguments of the {@link TableViewControl} {@code select} command: which row to select and
  * the modifier keys that turn the gesture into a toggle or range selection.
+ *
+ * <p>
+ * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
+ * template that renders a recorded step for humans.
+ * </p>
  */
+@Label("Select row {rowIndex}")
 public interface SelectRowArguments extends ReactCommandArguments {
 
 	/** @see #getRowIndex() */

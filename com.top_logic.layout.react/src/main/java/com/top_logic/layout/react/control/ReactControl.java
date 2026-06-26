@@ -17,8 +17,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.json.JsonConfigurationReader;
+import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.form.values.edit.ConfigLabelProvider;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
@@ -445,6 +453,57 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 */
 	public ConfigurationDescriptor agentCommandArgsType(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).argTypeFor(command);
+	}
+
+	/**
+	 * A human-readable, localized description of the given command applied to the given arguments, or
+	 * {@code null} if the command takes no {@link #agentCommandArgsType(String) typed argument}.
+	 *
+	 * <p>
+	 * The arguments bind into the typed interface and render through {@link ConfigLabelProvider},
+	 * whose template (the interface's label) interleaves descriptive text with the argument values —
+	 * so a recorded step reads as e.g. <em>Navigate to 'input-controls'</em> rather than the raw
+	 * command and JSON. Used by the recorder side-window's step list.
+	 *
+	 * @param command
+	 *        The command ID.
+	 * @param arguments
+	 *        The recorded command arguments.
+	 */
+	public String describeCommand(String command, Map<String, Object> arguments) {
+		ConfigurationDescriptor argType = agentCommandArgsType(command);
+		if (argType == null) {
+			return null;
+		}
+		try {
+			return new ConfigLabelProvider().getLabel(bindArguments(argType, arguments));
+		} catch (Exception ex) {
+			Logger.error("Failed to render recorded step for command '" + command + "' on "
+				+ getClass().getName(), ex, ReactControl.class);
+			return null;
+		}
+	}
+
+	/**
+	 * Binds the (client JSON) command arguments into a {@link ConfigurationItem} of the given
+	 * descriptor, by re-serializing the map and reading it through {@link JsonConfigurationReader} so
+	 * binding is by the JSON property names the schema advertises.
+	 *
+	 * @param descriptor
+	 *        The target argument descriptor.
+	 * @param arguments
+	 *        The raw client arguments (may be {@code null}).
+	 * @return The bound configuration item.
+	 */
+	static ConfigurationItem bindArguments(ConfigurationDescriptor descriptor, Map<String, Object> arguments)
+			throws ConfigurationException {
+		String json = JSON.toString(arguments != null ? arguments : Map.of());
+		DefaultInstantiationContext context = new DefaultInstantiationContext(ReactControl.class);
+		JsonConfigurationReader reader = new JsonConfigurationReader(context, descriptor);
+		reader.setSource(CharacterContents.newContent(json));
+		ConfigurationItem result = reader.read();
+		context.checkErrors();
+		return result;
 	}
 
 	/**

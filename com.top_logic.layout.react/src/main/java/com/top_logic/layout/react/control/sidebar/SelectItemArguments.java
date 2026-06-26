@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.sidebar;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommandArguments;
@@ -12,7 +13,14 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
 /**
  * Typed arguments of the {@link ReactSidebarControl#SELECT_ITEM_COMMAND} command: which navigation
  * item to select.
+ *
+ * <p>
+ * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
+ * template that renders a recorded step for humans (the {@code {itemId}} reference expands to the
+ * selected item).
+ * </p>
  */
+@Label("Navigate to '{itemId}'")
 public interface SelectItemArguments extends ReactCommandArguments {
 
 	/** @see #getItemId() */

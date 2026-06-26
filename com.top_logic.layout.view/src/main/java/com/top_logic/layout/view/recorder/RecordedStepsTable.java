@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.headless.AgentSession;
 import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.view.UIElement;
@@ -98,11 +100,15 @@ public class RecordedStepsTable implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
+		ReactControl openerRoot = RecorderAccess.openerRoot(context);
+
 		List<Column<NumberedStep, ?>> columns = new ArrayList<>();
 		columns.add(textColumn("index", I18NConstants.COLUMN_INDEX, r -> Integer.toString(r.number()), 60));
-		columns.add(textColumn("address", I18NConstants.COLUMN_ADDRESS, r -> nullSafe(r.step().address()), 460));
-		columns.add(textColumn("command", I18NConstants.COLUMN_COMMAND, r -> r.step().command(), 160));
-		columns.add(textColumn("arguments", I18NConstants.COLUMN_ARGUMENTS, r -> JSON.toString(r.step().arguments()), 320));
+		columns.add(textColumn("description", I18NConstants.COLUMN_DESCRIPTION,
+			r -> describe(openerRoot, r.step()), 360));
+		columns.add(textColumn("address", I18NConstants.COLUMN_ADDRESS, r -> nullSafe(r.step().address()), 360));
+		columns.add(textColumn("command", I18NConstants.COLUMN_COMMAND, r -> r.step().command(), 140));
+		columns.add(textColumn("arguments", I18NConstants.COLUMN_ARGUMENTS, r -> JSON.toString(r.step().arguments()), 260));
 
 		ScriptRecorder recorder = RecorderAccess.openerRecorder(context);
 		ListRowSource<NumberedStep> source =
@@ -186,6 +192,28 @@ public class RecordedStepsTable implements UIElement {
 			.renderer(CellContent::text)
 			.width(width)
 			.build();
+	}
+
+	/**
+	 * A human-readable description of the step: the target control's
+	 * {@link ReactControl#describeCommand(String, java.util.Map) rendering} of the command (e.g.
+	 * <em>Navigate to 'input-controls'</em>), resolved against the opener window. Falls back to the
+	 * raw command and arguments for assertion steps, untyped commands, or an address that no longer
+	 * resolves.
+	 */
+	private static String describe(ReactControl openerRoot, RecordedStep step) {
+		if (!step.isAssertion() && openerRoot != null && step.address() != null) {
+			try {
+				ReactControl target = AgentSession.forRoot(openerRoot).resolve(step.address());
+				String label = target.describeCommand(step.command(), step.arguments());
+				if (label != null) {
+					return label;
+				}
+			} catch (RuntimeException ex) {
+				// Address drift or render failure: fall through to the raw form below.
+			}
+		}
+		return step.command() + " " + JSON.toString(step.arguments());
 	}
 
 	/**

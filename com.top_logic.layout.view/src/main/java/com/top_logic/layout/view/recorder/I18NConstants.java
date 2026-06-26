@@ -45,6 +45,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COLUMN_INDEX;
 
 	/**
+	 * @en Description
+	 */
+	public static ResKey COLUMN_DESCRIPTION;
+
+	/**
 	 * @en Address
 	 */
 	public static ResKey COLUMN_ADDRESS;

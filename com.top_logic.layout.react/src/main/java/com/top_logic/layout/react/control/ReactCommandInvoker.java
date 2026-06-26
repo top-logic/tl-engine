@@ -6,17 +6,12 @@
 package com.top_logic.layout.react.control;
 
 import java.lang.invoke.MethodHandle;
-import java.util.Collections;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.exception.I18NFailure;
-import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
@@ -127,13 +122,7 @@ class ReactCommandInvoker {
 	 * </p>
 	 */
 	private ConfigurationItem bind(Map<String, Object> arguments) throws Exception {
-		String json = JSON.toString(arguments != null ? arguments : Collections.emptyMap());
-		DefaultInstantiationContext context = new DefaultInstantiationContext(ReactCommandInvoker.class);
-		JsonConfigurationReader reader = new JsonConfigurationReader(context, _argType);
-		reader.setSource(CharacterContents.newContent(json));
-		ConfigurationItem result = reader.read();
-		context.checkErrors();
-		return result;
+		return ReactControl.bindArguments(_argType, arguments);
 	}
 
 	/**

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useSyncExternalStore, useCallback, useLayoutEffect } from 'react';
+import React, { createContext, useContext, useSyncExternalStore, useCallback, useLayoutEffect, useRef, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import type { TLCellProps } from './types';
@@ -335,24 +335,84 @@ export function useTLDataUrl(): string {
 }
 
 /**
- * Convenience hook for form field value + setter.
+ * Options for {@link useTLFieldValue}.
  */
-export function useTLFieldValue(): [unknown, (newValue: unknown) => void] {
+export interface TLFieldValueOptions {
+  /**
+   * When > 0, the server `valueChanged` is debounced by this many milliseconds instead of being
+   * sent on every {@link setValue}. The local store is still updated immediately on every call, so
+   * the controlled input stays responsive; only the round-trip is coalesced. Use the returned
+   * `flush` (e.g. on blur) to send any pending value immediately. Leave 0/undefined for discrete
+   * controls (checkbox, select, date picker) that should commit on every change.
+   */
+  debounceMs?: number;
+}
+
+/**
+ * Convenience hook for a form field value, returning `[value, setValue, flush]`.
+ *
+ * <p>`setValue` always updates the local store immediately (optimistic, so a controlled input
+ * reflects typing without a round-trip). With {@link TLFieldValueOptions.debounceMs} set, the
+ * server `valueChanged` is debounced and `flush` sends any pending value at once (call it on
+ * blur).</p>
+ */
+export function useTLFieldValue(
+  options?: TLFieldValueOptions
+): [unknown, (newValue: unknown) => void, () => Promise<void>] {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const ctx = useContext(TLControlContext);
 
-  const setValue = useCallback(
-    (newValue: unknown) => {
-      // Optimistically update the local store so the controlled input reflects the
-      // new value immediately, without waiting for a server round-trip.
-      ctx?.store.applyPatch({ value: newValue });
-      sendCommand('valueChanged', { value: newValue });
-    },
-    [sendCommand, ctx]
+  const debounceMs = options?.debounceMs ?? 0;
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRef = useRef<{ value: unknown } | null>(null);
+
+  const send = useCallback(
+    (value: unknown) => sendCommand('valueChanged', { value }),
+    [sendCommand]
   );
 
-  return [state.value, setValue];
+  const flush = useCallback((): Promise<void> => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    const pending = pendingRef.current;
+    if (pending !== null) {
+      pendingRef.current = null;
+      return send(pending.value);
+    }
+    return Promise.resolve();
+  }, [send]);
+
+  const setValue = useCallback(
+    (newValue: unknown) => {
+      // Optimistically update the local store so the controlled input reflects the new value
+      // immediately, without waiting for a server round-trip.
+      ctx?.store.applyPatch({ value: newValue });
+      if (debounceMs > 0) {
+        pendingRef.current = { value: newValue };
+        if (timerRef.current !== null) {
+          clearTimeout(timerRef.current);
+        }
+        timerRef.current = setTimeout(() => {
+          timerRef.current = null;
+          pendingRef.current = null;
+          send(newValue);
+        }, debounceMs);
+      } else {
+        send(newValue);
+      }
+    },
+    [send, ctx, debounceMs]
+  );
+
+  // Flush a pending value if the field is unmounted mid-edit (e.g. a dialog closes before blur).
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+  useEffect(() => () => { void flushRef.current(); }, []);
+
+  return [state.value, setValue, flush];
 }
 
 // --- Keyboard scopes & gesture bindings ---

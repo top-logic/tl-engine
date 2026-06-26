@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.control.form;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -76,6 +77,15 @@ public class ReactFormFieldControl extends ReactControl {
 	private FieldModelListener _modelListener;
 
 	/**
+	 * While handling a client {@code valueChanged}, the value the client sent — so the model
+	 * listener can recognize (and skip) the redundant echo of exactly that value back to the client
+	 * that already holds it optimistically. {@code null} when not applying a client value.
+	 */
+	private Object _clientValue;
+
+	private boolean _applyingClientValue;
+
+	/**
 	 * Creates a new {@link ReactFormFieldControl}.
 	 *
 	 * @param context
@@ -135,6 +145,13 @@ public class ReactFormFieldControl extends ReactControl {
 		_modelListener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				if (_applyingClientValue && Objects.equals(newValue, _clientValue)) {
+					// The client already holds exactly this value (it updated optimistically before
+					// sending). Echoing it back races with continued typing and corrupts the input
+					// (a late echo of an earlier keystroke overwrites newer characters). A server
+					// coercion or a dependent change (newValue != the sent value) is still echoed.
+					return;
+				}
 				handleModelValueChanged(source, oldValue, newValue);
 			}
 
@@ -239,8 +256,15 @@ public class ReactFormFieldControl extends ReactControl {
 	@ReactCommand(value = "valueChanged", params = @ReactParam(name = "value",
 		description = "The new field value entered in the client."))
 	void handleValueChanged(Map<String, Object> arguments) {
-		Object newValue = arguments.get(VALUE);
-		_fieldModel.setValue(parseClientValue(newValue));
+		Object parsed = parseClientValue(arguments.get(VALUE));
+		_clientValue = parsed;
+		_applyingClientValue = true;
+		try {
+			_fieldModel.setValue(parsed);
+		} finally {
+			_applyingClientValue = false;
+			_clientValue = null;
+		}
 	}
 
 	/**

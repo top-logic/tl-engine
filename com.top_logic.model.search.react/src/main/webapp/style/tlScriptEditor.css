@@ -1,4 +1,10 @@
 .tlScriptEditor {
+	/*
+	 * Fill the available height when placed in a height-bounding container (e.g. a <full-page> pane
+	 * of the script console), so the editor spans the pane instead of staying at its min-height. In
+	 * an auto-height container this resolves to the min-height floor.
+	 */
+	height: 100%;
 	min-height: 200px;
 	display: flex;
 	flex-direction: column;

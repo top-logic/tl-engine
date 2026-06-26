@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Script console: enter a TL-Script expression in the editor and evaluate it. The tlscript-editor
+	publishes its text to the script channel; Evaluate runs the EvaluateScriptAction on that text and
+	writes the result to the result channel, which the ScriptResultTable renders as a single-column
+	table (one row per result element, a single row for a scalar). Evaluation is read-only - the script
+	runs without a transaction, so changes are not committed. A vertical split-panel stacks the editor
+	above the result table; a titled <panel> carries the Evaluate toolbar command.
+-->
+<view>
+	<channels>
+		<channel name="script"/>
+		<channel name="result"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Script console</en>
+			<de>Skript-Konsole</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-play-fill"
+				input="script"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Evaluate</en>
+					<de>Auswerten</de>
+				</label>
+				<action class="com.top_logic.model.search.react.EvaluateScriptAction"/>
+				<write-channel name="result"/>
+			</generic-command>
+		</commands>
+		<split-panel
+			orientation="vertical"
+			resizable="true"
+		>
+			<panes>
+				<pane
+					min-size="120"
+					size="35"
+					unit="%"
+				>
+					<tlscript-editor value-channel="script"/>
+				</pane>
+				<pane
+					min-size="120"
+					size="65"
+					unit="%"
+				>
+					<child class="com.top_logic.model.search.react.ScriptResultTable"
+						input="result"
+					/>
+				</pane>
+			</panes>
+		</split-panel>
+	</panel>
+</view>

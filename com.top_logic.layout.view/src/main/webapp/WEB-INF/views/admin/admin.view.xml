@@ -149,6 +149,23 @@
 					</tabs>
 				</tab-bar>
 			</tab>
+			<tab id="development">
+				<label>
+					<en>Development</en>
+					<de>Entwicklung</de>
+				</label>
+				<tab-bar active-tab="script-console">
+					<tabs>
+						<tab id="script-console">
+							<label>
+								<en>Script console</en>
+								<de>Skript-Konsole</de>
+							</label>
+							<view-ref view="admin/script-console.view.xml"/>
+						</tab>
+					</tabs>
+				</tab-bar>
+			</tab>
 		</tabs>
 	</tab-bar>
 </view>

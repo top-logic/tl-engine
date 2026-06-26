@@ -555,6 +555,34 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-26** — **Typed arguments rolled out to (almost) all commands.** Migrated every
+  scalar-argument `@ReactCommand` handler across the control library to a typed
+  `ConfigurationItem` (table: sort/scroll/select/columnResize/columnReorder/expand/openFilter/
+  moveSelection/selectAll/setFrozenColumnCount/selectByKey; tree: expand/collapse/select/
+  contextMenu/dragOver/drop/contextMenuAction; nav/layout/overlay/sidebar: navigate/selectItem/
+  executeCommand/toggleGroup/selectChild/resize/dismiss/reportDisplayClass; form fields:
+  valueChanged for text/number/date via a shared `FieldValueArguments`). Each carries a `@Label`
+  recorder template; `@ReactParam` is gone from these. Parallelized the mechanical bulk across
+  three subagents (table / tree / structural), kept the entangled form-field family by hand, and
+  integrated centrally. Verified live: every migrated command projects its JSON schema, and
+  `sort`/`scroll`/`setFrozenColumnCount` dispatch via `/agent-api/act` (`success:true`, table
+  re-sorts).
+  - **Two documented exceptions stay on `Map`** (a flat typed config can't model them):
+    1. **List-of-primitive arguments** — `valueChanged`/`selectByKey` (dropdown, `string[]`),
+       `paletteChanged` (color), `reorder` (dashboard). The config-JSON layer does **not** support a
+       `List<String>` property: `JsonConfigurationReader.nextElement` reads every list element as a
+       config *item* (object), and `JsonConfigSchemaBuilder.buildListPropertySchema` throws — so a
+       typed `List<String>` arg fails to bind (caught live: *"Error when reading the content"*).
+       These keep a raw `Map` + a lightweight `@ReactParam(type = "string[]")` schema. Fixing it
+       properly means teaching the shared config reader/schema-builder to handle primitive-element
+       lists — a core-config change for a separate, carefully-tested task.
+    2. **Dynamically-keyed map** — split-panel `updateSizes` (`controlId → pixel`): arbitrary runtime
+       keys, not named properties; stays a `Map`.
+  - **Follow-up noted:** the browser-typing echo-suppression also suppresses the value-state echo on
+    the **headless** `act(valueChanged)` path, so a re-`observe` of a base field shows the prior
+    value (the field *model* is correct; only the projected `value` state is stale). The agent has
+    no optimistic client copy, so for the headless path the value should still be pushed — a small
+    targeted fix worth doing before agents drive form input heavily.
 - **2026-06-26** — **Field input fixed + recorded as one step** (recorder quality / parity #5),
   verified live. Two coupled fixes to text-like field input:
   1. *No more mangled typing / per-keystroke round-trips.* The client (`useTLFieldValue`) kept

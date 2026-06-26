@@ -80,9 +80,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey MAINTENANCE_STATUS_NORMAL;
 
 	/**
-	 * @en Maintenance mode is about to be activated.
+	 * @en Maintenance mode will be activated at {0}.
 	 */
-	public static ResKey MAINTENANCE_STATUS_PENDING;
+	public static ResKey1 MAINTENANCE_STATUS_PENDING__TIME;
 
 	/**
 	 * @en The system is in maintenance mode.

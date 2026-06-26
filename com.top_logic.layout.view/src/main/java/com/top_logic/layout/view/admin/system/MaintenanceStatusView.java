@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.admin.system;
 
+import java.util.Date;
+
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -12,7 +14,6 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.view.UIElement;
@@ -21,6 +22,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.Resources;
 
 /**
@@ -84,17 +86,19 @@ public class MaintenanceStatusView implements UIElement {
 	}
 
 	/**
-	 * The localized one-line status for the current maintenance state, including the user message while a
-	 * window is scheduled or active.
+	 * The localized one-line status for the current maintenance state, including the scheduled activation
+	 * time while a window is pending and the user message while a window is scheduled or active.
 	 */
 	private static String statusText() {
 		MaintenanceWindowManager manager = MaintenanceWindowManager.getInstance();
 		Resources resources = Resources.getInstance();
 		switch (manager.getMaintenanceModeState()) {
 			case MaintenanceWindowManager.IN_MAINTENANCE_MODE:
-				return withMessage(resources, I18NConstants.MAINTENANCE_STATUS_ACTIVE, manager.getMessage());
+				return withMessage(resources.getString(I18NConstants.MAINTENANCE_STATUS_ACTIVE), manager.getMessage());
 			case MaintenanceWindowManager.ABOUT_TO_ENTER_MAINTENANCE_MODE:
-				return withMessage(resources, I18NConstants.MAINTENANCE_STATUS_PENDING, manager.getMessage());
+				String when = HTMLFormatter.getInstance().formatShortDateTime(new Date(manager.getFinishedTime()));
+				return withMessage(resources.getString(I18NConstants.MAINTENANCE_STATUS_PENDING__TIME.fill(when)),
+					manager.getMessage());
 			default:
 				return resources.getString(I18NConstants.MAINTENANCE_STATUS_NORMAL);
 		}
@@ -103,8 +107,7 @@ public class MaintenanceStatusView implements UIElement {
 	/**
 	 * The given status text, with the user message appended in parentheses when it is non-empty.
 	 */
-	private static String withMessage(Resources resources, ResKey status, String message) {
-		String text = resources.getString(status);
+	private static String withMessage(String text, String message) {
 		if (message == null || message.isBlank()) {
 			return text;
 		}

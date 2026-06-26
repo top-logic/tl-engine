@@ -280,7 +280,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			}
 		}
 		pushSelection();
-		updateViewport(_viewportStart, _viewportCount);
+		// Scroll the selected row into view when it lies outside the current viewport (e.g. a row
+		// selected programmatically after a create), centering it; keep the viewport otherwise.
+		int start = _viewportStart;
+		if (_cursorIndex >= 0 && (_cursorIndex < _viewportStart || _cursorIndex >= _viewportStart + _viewportCount)) {
+			start = Math.max(0, _cursorIndex - _viewportCount / 2);
+		}
+		updateViewport(start, _viewportCount);
 	}
 
 	/**

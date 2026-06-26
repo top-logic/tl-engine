@@ -17,7 +17,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLClassifier;
-import com.top_logic.model.TLNamed;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
@@ -76,8 +76,8 @@ public class ModelEditAction implements ViewAction {
 		/** Add a new property described by the input to the container type. */
 		CREATE_ATTRIBUTE,
 
-		/** Rename the container module or part to the name given by the input. */
-		RENAME,
+		/** Add a new classifier named by the input to the container enumeration. */
+		CREATE_CLASSIFIER,
 
 		/** Delete the model part passed as the action input. */
 		DELETE;
@@ -142,8 +142,8 @@ public class ModelEditAction implements ViewAction {
 				return createType(context, input);
 			case CREATE_ATTRIBUTE:
 				return createAttribute(context, input);
-			case RENAME:
-				return rename(context, input);
+			case CREATE_CLASSIFIER:
+				return createClassifier(context, input);
 			case DELETE:
 				return delete(input);
 		}
@@ -194,16 +194,20 @@ public class ModelEditAction implements ViewAction {
 	}
 
 	/**
-	 * Renames the container module or part to the name given by the input.
+	 * Adds a new classifier named by the input to the container enumeration.
 	 */
-	private Object rename(ReactContext context, Object input) {
-		String name = requireName(input);
+	private TLClassifier createClassifier(ReactContext context, Object input) {
+		String name = requireName(asTransient(input));
 		Object container = container(context);
-		if (!(container instanceof TLNamed named)) {
+		TLEnumeration enumeration;
+		if (container instanceof TLEnumeration e) {
+			enumeration = e;
+		} else if (container instanceof TLClassifier classifier) {
+			enumeration = classifier.getOwner();
+		} else {
 			throw new TopLogicException(I18NConstants.ERROR_NO_TARGET);
 		}
-		named.setName(name);
-		return container;
+		return TLModelUtil.addClassifier(enumeration, name);
 	}
 
 	/**

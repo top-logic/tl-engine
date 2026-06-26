@@ -54,12 +54,12 @@
 		</class>
 
 		<!--
-			Transient-only type holding the input of the "rename" dialog: the new name of the selected
-			module or model part. Instances are created with new(`tl.devtools:RenameModel`, transient: true),
-			pre-filled with the current name, and are never persisted (the action renames the element
-			directly), so no table is declared.
+			Transient-only type holding the input of the "new classifier" dialog: the name of the
+			classifier to add to the selected enumeration. Instances are created with
+			new(`tl.devtools:NewClassifier`, transient: true) and are never persisted (the action adds the
+			classifier directly), so no table is declared.
 		-->
-		<class name="RenameModel">
+		<class name="NewClassifier">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>

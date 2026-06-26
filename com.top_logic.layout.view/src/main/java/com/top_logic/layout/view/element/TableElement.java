@@ -245,10 +245,23 @@ public class TableElement implements UIElement {
 			setup.binding().installUI(setup, control);
 		}
 
+		// Reflects the selection channel's current value as the table's selection (highlighted and
+		// scrolled into view). Set when a selection channel is configured; reused after data refreshes
+		// so a row that appears only on refresh (e.g. the just-created object) still gets selected.
+		Runnable[] reapplySelection = {null};
+
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
+			// Two-way binding: the table writes its selection to the channel, and a value written to
+			// the channel from elsewhere (e.g. a create command selecting the new object) is reflected
+			// as the table's selection. The guard breaks the notification cycle between the two
+			// directions.
+			boolean[] applyingFromChannel = {false};
 			control.setSelectionListener(selectedKeys -> {
+				if (applyingFromChannel[0]) {
+					return;
+				}
 				if (selectedKeys.size() == 1) {
 					selectionChannel.set(selectedKeys.iterator().next());
 				} else if (selectedKeys.isEmpty()) {
@@ -257,16 +270,34 @@ public class TableElement implements UIElement {
 					selectionChannel.set(selectedKeys);
 				}
 			});
+			reapplySelection[0] = () -> {
+				Object value = selectionChannel.get();
+				applyingFromChannel[0] = true;
+				try {
+					control.selectRow(value instanceof Collection ? null : value);
+				} finally {
+					applyingFromChannel[0] = false;
+				}
+			};
+			selectionChannel.addListener((sender, oldValue, newValue) -> reapplySelection[0].run());
 		}
 
-		// Refresh the rows when observed objects change or an input channel changes.
+		// Refresh the rows when observed objects change or an input channel changes. After a refresh,
+		// re-apply the selection so a newly appeared row (e.g. the just-created object the selection
+		// channel already points to) is selected and scrolled into view.
 		QueryExecutor rowsExecutor = _rowsExecutor;
+		Runnable refresh = () -> {
+			control.refreshData();
+			if (reapplySelection[0] != null) {
+				reapplySelection[0].run();
+			}
+		};
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			source,
 			args -> new ArrayList<>(executeRowsQuery(rowsExecutor, args)),
 			resolveObservedTypes(),
 			inputChannels,
-			control::refreshData);
+			refresh);
 		control.addBeforeWriteAction(() -> observer.attach(context.getModelScope()));
 		control.addCleanupAction(observer::detach);
 

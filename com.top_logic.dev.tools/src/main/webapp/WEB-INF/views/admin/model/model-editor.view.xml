@@ -59,38 +59,6 @@
 									</generic-command>
 									<generic-command
 										clique="more"
-										image="css:bi bi-pencil"
-										input="selectedModule"
-										placement="TOOLBAR"
-									>
-										<label>
-											<en>Rename module</en>
-											<de>Modul umbenennen</de>
-										</label>
-										<executability>
-											<null-input-disabled/>
-										</executability>
-										<execute-script function="x -> { n = new(`tl.devtools:RenameModel`, transient: true); $n.set(`tl.devtools:RenameModel#name`, $x.get(`tl.model:TLNamedPart#name`)); $n }"/>
-										<open-dialog
-											bind-input-to="model"
-											dialog-view="admin/model/rename-element.view.xml"
-										>
-											<bind
-												channel="selection"
-												to="selectedModule"
-											/>
-											<bind
-												channel="container"
-												to="selectedModule"
-											/>
-											<bind
-												channel="reload"
-												to="reload"
-											/>
-										</open-dialog>
-									</generic-command>
-									<generic-command
-										clique="more"
 										image="css:bi bi-trash"
 										input="selectedModule"
 										placement="TOOLBAR"
@@ -134,7 +102,7 @@
 								</title>
 								<form
 									input="selectedModule"
-									mode-switch="false"
+									withEditMode="true"
 								>
 									<field attribute="name"/>
 								</form>
@@ -203,7 +171,7 @@
 											<de>Neues Attribut</de>
 										</label>
 										<executability>
-											<null-input-disabled/>
+											<visible-if expr="part -> $part != null &amp;&amp; !$part.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$part.instanceOf(`tl.model:TLClassifier`)"/>
 										</executability>
 										<execute-script function="x -> new(`tl.devtools:NewAttribute`, transient: true)"/>
 										<open-dialog
@@ -225,22 +193,21 @@
 										</open-dialog>
 									</generic-command>
 									<generic-command
-										clique="more"
-										image="css:bi bi-pencil"
+										image="css:bi bi-tag"
 										input="selectedPart"
 										placement="TOOLBAR"
 									>
 										<label>
-											<en>Rename</en>
-											<de>Umbenennen</de>
+											<en>New classifier</en>
+											<de>Neuer Klassifikator</de>
 										</label>
 										<executability>
-											<null-input-disabled/>
+											<visible-if expr="part -> $part != null &amp;&amp; ($part.instanceOf(`tl.model:TLEnumeration`) || $part.instanceOf(`tl.model:TLClassifier`))"/>
 										</executability>
-										<execute-script function="x -> { n = new(`tl.devtools:RenameModel`, transient: true); $n.set(`tl.devtools:RenameModel#name`, $x.get(`tl.model:TLNamedPart#name`)); $n }"/>
+										<execute-script function="x -> new(`tl.devtools:NewClassifier`, transient: true)"/>
 										<open-dialog
 											bind-input-to="model"
-											dialog-view="admin/model/rename-element.view.xml"
+											dialog-view="admin/model/create-classifier.view.xml"
 										>
 											<bind
 												channel="selection"
@@ -442,7 +409,7 @@
 								</title>
 								<form
 									input="selectedPart"
-									mode-switch="false"
+									withEditMode="true"
 								>
 									<field attribute="name"/>
 								</form>

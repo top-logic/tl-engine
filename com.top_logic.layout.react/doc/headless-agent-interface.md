@@ -555,6 +555,27 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-26** — **Recorder fidelity: technical-command classification, control-derived
+  descriptions, and a checkbox-binding fix**, verified live.
+  - **Checkbox bug fixed.** A checkbox's `valueChanged` sends a JSON `boolean`, which failed to bind
+    into the base field's `String` value (*"Error when reading the content"*). The field value is
+    polymorphic, so — rather than fall back to a schema-less `Map` — the checkbox declares its own
+    `CheckboxValueArguments` (`boolean`); the echo-suppressed apply was factored to a shared
+    `applyClientValue` the subclass reuses. Verified: toggling records `{value:false}`, no error.
+  - **Technical/chrome commands are no longer recorded.** New co-located `@ReactCommand(technical =
+    true)` flag (captured by `ReactCommandMap`, unioned into `nonRecordableCommands()`/the agent
+    action space) replaces the drift-prone per-control `agentHiddenCommands()` sets (migrated
+    sidebar/appShell; marked snackbar `dismiss`, panel toggle/popOut, drawer/menu `close`, form-group
+    collapse). Verified: a snackbar dismiss no longer appears as a step.
+  - **Button/field steps read for humans.** A button click and a field value need the *control's*
+    identity, not its args — and a table-cell field has no chrome parent, so the identity comes from
+    the step **address** (its last `[name]` segment), passed into `describeCommand(command, args,
+    targetName)`. The button renders *"Button 'Neu' pressed"* (its label state), the field *"Set
+    'name' to 'value'"*. Verified live: *Button 'Bearbeiten' gedrückt*, *'boolean' auf 'false'
+    setzen*, *'name' auf '…' setzen*.
+  - *Follow-up noted:* the table `selectByKey` step still renders the raw `ModelName` JSON business
+    key (*Zeile '…huge json…' auswählen*) — the same value→label resolution deferred earlier; a
+    `selectByKey` should describe the row by its label, not its key.
 - **2026-06-26** — **Typed arguments rolled out to (almost) all commands.** Migrated every
   scalar-argument `@ReactCommand` handler across the control library to a typed
   `ConfigurationItem` (table: sort/scroll/select/columnResize/columnReorder/expand/openFilter/

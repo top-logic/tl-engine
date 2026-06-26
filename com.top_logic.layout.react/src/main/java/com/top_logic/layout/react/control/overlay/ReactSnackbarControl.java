@@ -183,7 +183,7 @@ public class ReactSnackbarControl extends ReactControl {
 	 * from hiding a newly shown snackbar.
 	 * </p>
 	 */
-	@ReactCommand(DISMISS_COMMAND)
+	@ReactCommand(value = DISMISS_COMMAND, technical = true)
 	void handleDismiss(DismissArguments args) {
 		Integer reported = args.getGeneration();
 		int dismissGeneration = reported != null ? reported.intValue() : -1;

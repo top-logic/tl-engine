@@ -601,7 +601,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles collapse toggle from the client.
 	 */
-	@ReactCommand("toggleCollapse")
+	@ReactCommand(value = "toggleCollapse", technical = true)
 	void handleToggleCollapse() {
 		toggleCollapse();
 	}
@@ -623,7 +623,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles mobile drawer toggle from the client.
 	 */
-	@ReactCommand("toggleDrawer")
+	@ReactCommand(value = "toggleDrawer", technical = true)
 	void handleToggleDrawer() {
 		toggleDrawer();
 	}
@@ -631,7 +631,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles group expand/collapse toggle from the client.
 	 */
-	@ReactCommand(TOGGLE_GROUP_COMMAND)
+	@ReactCommand(value = TOGGLE_GROUP_COMMAND, technical = true)
 	void handleToggleGroup(ToggleGroupArguments args) {
 		String itemId = args.getItemId();
 		boolean expanded = args.isExpanded();
@@ -641,12 +641,4 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		}
 	}
 
-
-	/**
-	 * UI-chrome commands, omitted from the headless agent action space.
-	 */
-	@Override
-	protected java.util.Set<String> agentHiddenCommands() {
-		return java.util.Set.of("toggleCollapse", "toggleDrawer", TOGGLE_GROUP_COMMAND);
-	}
 }

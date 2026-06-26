@@ -53,4 +53,17 @@ public @interface ReactCommand {
 	 * need not guess the shape of the {@code arguments} map. Empty for argument-less commands.
 	 */
 	ReactParam[] params() default {};
+
+	/**
+	 * Whether this is a technical/chrome command — a UI-incidental gesture (closing a transient
+	 * notification, toggling collapse/maximize, popping out a panel) rather than meaningful user
+	 * intent.
+	 *
+	 * <p>
+	 * A technical command is omitted from the headless agent's advertised actions <em>and</em> never
+	 * captured by the script recorder. Declaring it here, on the command, keeps the classification
+	 * co-located with the handler so it cannot drift out of a separately-maintained set.
+	 * </p>
+	 */
+	boolean technical() default false;
 }

@@ -213,7 +213,7 @@ public class ReactPanelControl extends ToolbarControl {
 	 * Handles the toggleMinimize command sent by the React client when the minimize button is
 	 * clicked.
 	 */
-	@ReactCommand("toggleMinimize")
+	@ReactCommand(value = "toggleMinimize", technical = true)
 	void handleToggleMinimize() {
 		boolean wasMinimized = _expansionState == ExpansionState.MINIMIZED;
 		boolean collapsed = !wasMinimized;
@@ -234,7 +234,7 @@ public class ReactPanelControl extends ToolbarControl {
 	 * Handles the toggleMaximize command sent by the React client when the maximize button is
 	 * clicked.
 	 */
-	@ReactCommand("toggleMaximize")
+	@ReactCommand(value = "toggleMaximize", technical = true)
 	void handleToggleMaximize() {
 		if (_expansionState == ExpansionState.MAXIMIZED) {
 			setExpansionState(ExpansionState.NORMALIZED);
@@ -252,7 +252,7 @@ public class ReactPanelControl extends ToolbarControl {
 	/**
 	 * Handles the popOut command sent by the React client when the pop-out button is clicked.
 	 */
-	@ReactCommand("popOut")
+	@ReactCommand(value = "popOut", technical = true)
 	void handlePopOut() {
 		setExpansionState(ExpansionState.HIDDEN);
 	}

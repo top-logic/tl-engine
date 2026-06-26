@@ -37,11 +37,14 @@ class ReactCommandMap {
 
 	private final Map<String, ConfigurationDescriptor> _argTypes;
 
+	private final Set<String> _technicalCommands;
+
 	private ReactCommandMap(Map<String, ReactCommandInvoker> invokers, Map<String, ReactParam[]> params,
-			Map<String, ConfigurationDescriptor> argTypes) {
+			Map<String, ConfigurationDescriptor> argTypes, Set<String> technicalCommands) {
 		_invokers = invokers;
 		_params = params;
 		_argTypes = argTypes;
+		_technicalCommands = technicalCommands;
 	}
 
 	/**
@@ -88,6 +91,14 @@ class ReactCommandMap {
 	}
 
 	/**
+	 * The ids of commands marked {@link ReactCommand#technical() technical} — omitted from the agent
+	 * action space and never recorded.
+	 */
+	Set<String> technicalCommands() {
+		return _technicalCommands;
+	}
+
+	/**
 	 * Scans the given class hierarchy for {@link ReactCommand}-annotated methods and builds a
 	 * {@link ReactCommandMap}.
 	 *
@@ -98,6 +109,7 @@ class ReactCommandMap {
 		Map<String, ReactCommandInvoker> invokers = new HashMap<>();
 		Map<String, ReactParam[]> params = new HashMap<>();
 		Map<String, ConfigurationDescriptor> argTypes = new HashMap<>();
+		Set<String> technicalCommands = new java.util.HashSet<>();
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 
 		for (Class<?> clazz = controlClass; clazz != null && clazz != Object.class;
@@ -139,13 +151,16 @@ class ReactCommandMap {
 					if (argType != null) {
 						argTypes.put(commandId, argType);
 					}
+					if (annotation.technical()) {
+						technicalCommands.add(commandId);
+					}
 				} catch (IllegalAccessException ex) {
 					throw new IllegalStateException(
 						"Cannot access @ReactCommand method " + method + " on " + controlClass.getName(), ex);
 				}
 			}
 		}
-		return new ReactCommandMap(invokers, params, argTypes);
+		return new ReactCommandMap(invokers, params, argTypes, technicalCommands);
 	}
 
 	private static void validate(Method method) {

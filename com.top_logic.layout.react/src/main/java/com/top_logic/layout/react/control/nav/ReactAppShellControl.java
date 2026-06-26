@@ -161,7 +161,7 @@ public class ReactAppShellControl extends ReactControl {
 	 * @param args
 	 *        The reported {@link DisplayClass} name.
 	 */
-	@ReactCommand(REPORT_DISPLAY_CLASS_COMMAND)
+	@ReactCommand(value = REPORT_DISPLAY_CLASS_COMMAND, technical = true)
 	void handleReportDisplayClass(ReportDisplayClassArguments args) {
 		String reported = args.getDisplayClass();
 		DisplayClass displayClass = DisplayClass.DEFAULT;
@@ -219,12 +219,4 @@ public class ReactAppShellControl extends ReactControl {
 		}
 	}
 
-
-	/**
-	 * UI-chrome commands, omitted from the headless agent action space.
-	 */
-	@Override
-	protected java.util.Set<String> agentHiddenCommands() {
-		return java.util.Set.of(REPORT_DISPLAY_CLASS_COMMAND);
-	}
 }

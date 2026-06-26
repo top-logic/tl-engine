@@ -216,7 +216,7 @@ public class ReactMenuControl extends ReactControl {
 	/**
 	 * Handles the close command sent when the menu is closed without selection.
 	 */
-	@ReactCommand("close")
+	@ReactCommand(value = "close", technical = true)
 	void handleClose() {
 		close();
 		_closeHandler.run();

@@ -151,7 +151,7 @@ public class ReactDrawerControl extends ReactControl {
 	/**
 	 * Handles the close command sent when the drawer is closed.
 	 */
-	@ReactCommand("close")
+	@ReactCommand(value = "close", technical = true)
 	void handleClose() {
 		close();
 		_closeHandler.run();

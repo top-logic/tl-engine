@@ -397,7 +397,26 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * @return The non-recordable command names.
 	 */
 	public Set<String> nonRecordableCommands() {
-		return agentHiddenCommands();
+		return effectiveChromeCommands();
+	}
+
+	/**
+	 * The commands omitted from the agent action space and never recorded: the union of the
+	 * {@link ReactCommand#technical() technical}-flagged commands (co-located on the handler) and the
+	 * manually declared {@link #agentHiddenCommands() chrome commands}.
+	 */
+	private Set<String> effectiveChromeCommands() {
+		Set<String> technical = COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).technicalCommands();
+		Set<String> manual = agentHiddenCommands();
+		if (technical.isEmpty()) {
+			return manual;
+		}
+		if (manual.isEmpty()) {
+			return technical;
+		}
+		Set<String> result = new LinkedHashSet<>(technical);
+		result.addAll(manual);
+		return result;
 	}
 
 	/**
@@ -416,7 +435,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * {@link #agentHiddenCommands() chrome commands}.
 	 */
 	public Set<String> agentCommands() {
-		Set<String> hidden = agentHiddenCommands();
+		Set<String> hidden = effectiveChromeCommands();
 		if (hidden.isEmpty()) {
 			return commandNames();
 		}
@@ -465,12 +484,22 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * so a recorded step reads as e.g. <em>Navigate to 'input-controls'</em> rather than the raw
 	 * command and JSON. Used by the recorder side-window's step list.
 	 *
+	 * <p>
+	 * A control whose action is identified by <em>where</em> it sits rather than by its arguments (a
+	 * button by its label, a field by its name) overrides this and uses {@code targetName} — the
+	 * control's semantic name from its recorded address — since that identity comes from the
+	 * container (a form field name, a table column), not from the control itself.
+	 * </p>
+	 *
 	 * @param command
 	 *        The command ID.
 	 * @param arguments
 	 *        The recorded command arguments.
+	 * @param targetName
+	 *        The semantic name of the addressed control (the last {@code [name]} segment of its
+	 *        recorded address), or {@code null} if it has none.
 	 */
-	public String describeCommand(String command, Map<String, Object> arguments) {
+	public String describeCommand(String command, Map<String, Object> arguments, String targetName) {
 		ConfigurationDescriptor argType = agentCommandArgsType(command);
 		if (argType == null) {
 			return null;

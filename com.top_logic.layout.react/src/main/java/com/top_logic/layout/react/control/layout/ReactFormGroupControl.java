@@ -155,7 +155,7 @@ public class ReactFormGroupControl extends ReactCompositeControl {
 	/**
 	 * Handles the toggleCollapse command sent when the user toggles the collapse state.
 	 */
-	@ReactCommand("toggleCollapse")
+	@ReactCommand(value = "toggleCollapse", technical = true)
 	void handleToggleCollapse() {
 		toggleCollapsed();
 	}

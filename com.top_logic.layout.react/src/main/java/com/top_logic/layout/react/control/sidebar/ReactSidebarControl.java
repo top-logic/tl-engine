@@ -85,7 +85,10 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	private static final String DRAWER_TOGGLE_CONTRIBUTION = "drawerToggleContribution";
 
-	private static final String ITEM_ID_ARG = "itemId";
+	/** The {@link ReactCommand} that selects a navigation item. */
+	public static final String SELECT_ITEM_COMMAND = "selectItem";
+
+	private static final String ITEM_ID_ARG = SelectItemArguments.ITEM_ID;
 
 	private static final String EXPANDED_ARG = "expanded";
 
@@ -531,10 +534,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles navigation item selection from the client.
 	 */
-	@ReactCommand(value = "selectItem", params = @ReactParam(name = "itemId", required = true,
-		description = "The id of the navigation item to select (from the sidebar items)."))
-	void handleSelectItem(Map<String, Object> arguments) {
-		String itemId = (String) arguments.get(ITEM_ID_ARG);
+	@ReactCommand(SELECT_ITEM_COMMAND)
+	void handleSelectItem(SelectItemArguments args) {
+		String itemId = args.getItemId();
 
 		// Check for dirty forms in the current sidebar item before switching.
 		NavigationItem currentItem = findNavItem(_activeItemId, _items);

@@ -6,10 +6,17 @@
 package com.top_logic.layout.react.control;
 
 import java.lang.invoke.MethodHandle;
+import java.util.Collections;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.exception.I18NFailure;
+import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
@@ -33,6 +40,8 @@ class ReactCommandInvoker {
 
 	private final boolean _needsArgs;
 
+	private final ConfigurationDescriptor _argType;
+
 	private final boolean _returnsVoid;
 
 	/**
@@ -44,15 +53,20 @@ class ReactCommandInvoker {
 	 * @param needsContext
 	 *        Whether the method declares a {@link ReactContext} parameter.
 	 * @param needsArgs
-	 *        Whether the method declares a {@code Map<String, Object>} parameter.
+	 *        Whether the method declares a raw {@code Map<String, Object>} argument parameter.
+	 * @param argType
+	 *        The {@link ConfigurationDescriptor} of the method's typed argument parameter, or
+	 *        {@code null} if it takes the raw {@code Map} (or no argument). When set, the client
+	 *        arguments bind into a {@link ConfigurationItem} of this descriptor before dispatch.
 	 * @param returnsVoid
 	 *        Whether the method returns {@code void} (as opposed to {@link HandlerResult}).
 	 */
 	ReactCommandInvoker(MethodHandle handle, boolean needsContext, boolean needsArgs,
-			boolean returnsVoid) {
+			ConfigurationDescriptor argType, boolean returnsVoid) {
 		_handle = handle;
 		_needsContext = needsContext;
 		_needsArgs = needsArgs;
+		_argType = argType;
 		_returnsVoid = returnsVoid;
 	}
 
@@ -71,12 +85,14 @@ class ReactCommandInvoker {
 	HandlerResult invoke(ReactControl control, ReactContext context,
 			Map<String, Object> arguments) {
 		try {
-			if (_needsContext && _needsArgs) {
-				return castResult(_handle.invoke(control, context, arguments));
+			boolean hasArg = _needsArgs || _argType != null;
+			Object arg = _argType != null ? bind(arguments) : arguments;
+			if (_needsContext && hasArg) {
+				return castResult(_handle.invoke(control, context, arg));
 			} else if (_needsContext) {
 				return castResult(_handle.invoke(control, context));
-			} else if (_needsArgs) {
-				return castResult(_handle.invoke(control, arguments));
+			} else if (hasArg) {
+				return castResult(_handle.invoke(control, arg));
 			} else {
 				return castResult(_handle.invoke(control));
 			}
@@ -98,6 +114,26 @@ class ReactCommandInvoker {
 			}
 			return HandlerResult.error(ResKey.text(ex.getMessage()), ex);
 		}
+	}
+
+	/**
+	 * Binds the raw client arguments into a {@link ConfigurationItem} of the declared
+	 * {@link #_argType argument descriptor}.
+	 *
+	 * <p>
+	 * The {@code arguments} map already holds the parsed client JSON; it is re-serialized and read
+	 * through {@link JsonConfigurationReader} so the typed argument binds by exactly the JSON
+	 * property names the schema advertises.
+	 * </p>
+	 */
+	private ConfigurationItem bind(Map<String, Object> arguments) throws Exception {
+		String json = JSON.toString(arguments != null ? arguments : Collections.emptyMap());
+		DefaultInstantiationContext context = new DefaultInstantiationContext(ReactCommandInvoker.class);
+		JsonConfigurationReader reader = new JsonConfigurationReader(context, _argType);
+		reader.setSource(CharacterContents.newContent(json));
+		ConfigurationItem result = reader.read();
+		context.checkErrors();
+		return result;
 	}
 
 	/**

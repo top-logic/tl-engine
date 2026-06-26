@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
@@ -427,6 +428,23 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 */
 	public ReactParam[] agentCommandParams(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).paramsFor(command);
+	}
+
+	/**
+	 * The {@link ConfigurationDescriptor} of the typed argument the given command declares, or
+	 * {@code null} if it takes a raw {@code Map} (or no arguments).
+	 *
+	 * <p>
+	 * When present, the headless projection advertises the command's argument schema and renders a
+	 * recorded step from this one interface, rather than from the (superseded)
+	 * {@link #agentCommandParams(String) hand-declared params}.
+	 * </p>
+	 *
+	 * @param command
+	 *        The command ID.
+	 */
+	public ConfigurationDescriptor agentCommandArgsType(String command) {
+		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).argTypeFor(command);
 	}
 
 	/**

@@ -201,6 +201,9 @@ public final class AgentNodeView {
 			}
 			result.put("params", params);
 		}
+		if (action.argsSchema() != null) {
+			result.put("argsSchema", action.argsSchema());
+		}
 		return result;
 	}
 

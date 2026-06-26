@@ -10,8 +10,11 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandArguments;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -263,11 +266,11 @@ public class TestAgentSession extends TestCase {
 		// "variant" (presentation) and "note" (null) stripped; "value" (semantic) kept.
 		assertEquals(java.util.Set.of("value"), view.state().keySet());
 
-		// "toggleStyle" (chrome) hidden; "open" (semantic) advertised.
-		assertEquals(List.of("open"),
+		// "toggleStyle" (chrome) hidden; "open" and "setNote" (semantic) advertised.
+		assertEquals(List.of("open", "setNote"),
 			view.actions().stream().map(AgentAction::command).toList());
 
-		// The advertised action carries its declared @ReactParam schema.
+		// The Map-based action carries its declared @ReactParam schema.
 		AgentAction open = view.actions().get(0);
 		AgentParam param = single(open.params());
 		assertEquals("tab", param.name());
@@ -294,6 +297,27 @@ public class TestAgentSession extends TestCase {
 		System.out.println(_session.observeActionsJson());
 		_session.act("/form/button[Submit]", "click", Map.of());
 		assertEquals(1, _submit.clicks());
+	}
+
+	/**
+	 * A command declaring a {@link ReactCommandArguments} parameter receives the client arguments
+	 * bound into the typed instance (read via its JSON serialization) before dispatch, and exposes
+	 * its argument descriptor — the basis of the advertised JSON schema — whereas a {@code Map}-based
+	 * command does not. (The serialized schema itself is exercised live, since it resolves I18N
+	 * descriptions through the resources module.)
+	 */
+	public void testTypedConfigArgsBindBeforeDispatch() {
+		DemoModelControl control = new DemoModelControl(new TestReactContext(new SSEUpdateQueue()), "m");
+
+		// A raw client-style argument map binds into the typed NoteArgs before dispatch.
+		control.executeCommand("setNote", Map.of("note", "hello"));
+		assertEquals("hello", control.agentScalarState().get("note"));
+
+		// The typed command exposes its argument descriptor; the Map-based "open" command does not.
+		ConfigurationDescriptor argType = control.agentCommandArgsType("setNote");
+		assertNotNull("Typed command should expose its argument descriptor.", argType);
+		assertEquals(NoteArgs.class, argType.getConfigurationInterface());
+		assertNull(control.agentCommandArgsType("open"));
 	}
 
 	/**
@@ -374,7 +398,7 @@ public class TestAgentSession extends TestCase {
 		@Override
 		public List<AgentAction> agentActions() {
 			return List.of(new AgentAction("change", "Set the field value",
-				List.of(AgentParam.requiredString("value", "The new text value."))));
+				List.of(AgentParam.requiredString("value", "The new text value.")), null));
 		}
 
 		@ReactCommand("change")
@@ -433,6 +457,13 @@ public class TestAgentSession extends TestCase {
 	 * A control bound to a business-object model, carrying neither {@link AgentNode} metadata nor
 	 * label state, so its name must come from the model.
 	 */
+	/** Typed arguments of {@link DemoModelControl#setNote(NoteArgs)}. */
+	public interface NoteArgs extends ReactCommandArguments {
+		/** The note text to store. */
+		@Name("note")
+		String getNote();
+	}
+
 	private static final class DemoModelControl extends ReactControl {
 
 		private boolean _opened;
@@ -453,6 +484,11 @@ public class TestAgentSession extends TestCase {
 		@ReactCommand("toggleStyle")
 		void toggleStyle() {
 			// Chrome-only command.
+		}
+
+		@ReactCommand("setNote")
+		void setNote(NoteArgs args) {
+			putStateSilent("note", args.getNote());
 		}
 
 		@Override

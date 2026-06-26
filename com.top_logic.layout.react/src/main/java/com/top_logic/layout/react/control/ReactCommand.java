@@ -21,7 +21,9 @@ import com.top_logic.layout.react.ReactContext;
  * </p>
  * <ol>
  * <li>{@link ReactContext} - the control's stored view context</li>
- * <li>{@code Map<String, Object>} - the raw arguments from the client</li>
+ * <li>the command arguments, as <em>either</em> a raw {@code Map<String, Object>} from the client,
+ * <em>or</em> a {@link ReactCommandArguments} subtype the client JSON binds into (typed getters,
+ * an advertised JSON schema, and a recorded-step rendering all derived from the one interface)</li>
  * </ol>
  *
  * <p>

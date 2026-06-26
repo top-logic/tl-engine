@@ -15,9 +15,9 @@ import java.util.List;
  * {@link com.top_logic.layout.react.control.ReactCommand @ReactCommand} of the underlying control:
  * {@link #command()} is the command ID passed to
  * {@link com.top_logic.layout.react.control.ReactControl#executeCommand(String, java.util.Map)}, and
- * {@link #params()} describes the {@code arguments} map that command expects. This is the same
- * dispatch path the browser client uses, so an agent invoking an advertised action exercises the
- * real application behavior rather than a parallel mock.
+ * {@link #params()} or {@link #argsSchema()} describes the {@code arguments} the command expects.
+ * This is the same dispatch path the browser client uses, so an agent invoking an advertised action
+ * exercises the real application behavior rather than a parallel mock.
  * </p>
  *
  * @param command
@@ -25,9 +25,14 @@ import java.util.List;
  * @param label
  *        A human/agent readable label for the action.
  * @param params
- *        The argument schema; an empty list for argument-less actions.
+ *        The hand-declared argument list (from {@code @ReactParam}); an empty list for
+ *        argument-less actions or for commands that advertise a typed {@link #argsSchema()} instead.
+ * @param argsSchema
+ *        The JSON Schema of the command's typed argument interface, as a parsed JSON value
+ *        ({@code Map}/{@code List}/scalar), or {@code null} if the command has no typed argument.
+ *        When present, this is the self-describing replacement for {@link #params()}.
  */
-public record AgentAction(String command, String label, List<AgentParam> params) {
+public record AgentAction(String command, String label, List<AgentParam> params, Object argsSchema) {
 
 	/**
 	 * Creates an argument-less action whose label equals its command ID.
@@ -37,6 +42,6 @@ public record AgentAction(String command, String label, List<AgentParam> params)
 	 * @return An action with no parameters.
 	 */
 	public static AgentAction of(String command) {
-		return new AgentAction(command, command, List.of());
+		return new AgentAction(command, command, List.of(), null);
 	}
 }

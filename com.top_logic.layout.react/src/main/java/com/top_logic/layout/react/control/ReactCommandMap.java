@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -32,9 +35,13 @@ class ReactCommandMap {
 
 	private final Map<String, ReactParam[]> _params;
 
-	private ReactCommandMap(Map<String, ReactCommandInvoker> invokers, Map<String, ReactParam[]> params) {
+	private final Map<String, ConfigurationDescriptor> _argTypes;
+
+	private ReactCommandMap(Map<String, ReactCommandInvoker> invokers, Map<String, ReactParam[]> params,
+			Map<String, ConfigurationDescriptor> argTypes) {
 		_invokers = invokers;
 		_params = params;
+		_argTypes = argTypes;
 	}
 
 	/**
@@ -68,6 +75,19 @@ class ReactCommandMap {
 	}
 
 	/**
+	 * The {@link ConfigurationDescriptor} of the typed argument the given command declares, or
+	 * {@code null} if the command takes a raw {@code Map} (or no arguments).
+	 *
+	 * <p>
+	 * Used by the headless agent interface to advertise a command's argument schema and to render a
+	 * recorded step, both derived from the one argument interface.
+	 * </p>
+	 */
+	ConfigurationDescriptor argTypeFor(String commandId) {
+		return _argTypes.get(commandId);
+	}
+
+	/**
 	 * Scans the given class hierarchy for {@link ReactCommand}-annotated methods and builds a
 	 * {@link ReactCommandMap}.
 	 *
@@ -77,6 +97,7 @@ class ReactCommandMap {
 	static ReactCommandMap forClass(Class<?> controlClass) {
 		Map<String, ReactCommandInvoker> invokers = new HashMap<>();
 		Map<String, ReactParam[]> params = new HashMap<>();
+		Map<String, ConfigurationDescriptor> argTypes = new HashMap<>();
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 
 		for (Class<?> clazz = controlClass; clazz != null && clazz != Object.class;
@@ -97,9 +118,12 @@ class ReactCommandMap {
 
 				boolean needsContext = false;
 				boolean needsArgs = false;
+				ConfigurationDescriptor argType = null;
 				for (Class<?> paramType : method.getParameterTypes()) {
 					if (ReactContext.class.isAssignableFrom(paramType)) {
 						needsContext = true;
+					} else if (ConfigurationItem.class.isAssignableFrom(paramType)) {
+						argType = TypedConfiguration.getConfigurationDescriptor(paramType);
 					} else if (Map.class.isAssignableFrom(paramType)) {
 						needsArgs = true;
 					}
@@ -110,15 +134,18 @@ class ReactCommandMap {
 				try {
 					MethodHandle handle = lookup.unreflect(method);
 					invokers.put(commandId,
-						new ReactCommandInvoker(handle, needsContext, needsArgs, returnsVoid));
+						new ReactCommandInvoker(handle, needsContext, needsArgs, argType, returnsVoid));
 					params.put(commandId, annotation.params());
+					if (argType != null) {
+						argTypes.put(commandId, argType);
+					}
 				} catch (IllegalAccessException ex) {
 					throw new IllegalStateException(
 						"Cannot access @ReactCommand method " + method + " on " + controlClass.getName(), ex);
 				}
 			}
 		}
-		return new ReactCommandMap(invokers, params);
+		return new ReactCommandMap(invokers, params, argTypes);
 	}
 
 	private static void validate(Method method) {
@@ -134,7 +161,7 @@ class ReactCommandMap {
 			throw new IllegalStateException(
 				"@ReactCommand method " + method.getName() + " declares " + paramTypes.length
 					+ " parameters, but at most 2 are allowed: "
-					+ "(ViewDisplayContext, Map<String, Object>).");
+					+ "(ReactContext, Map<String, Object> | ConfigurationItem).");
 		}
 		boolean contextSeen = false;
 		boolean argsSeen = false;
@@ -143,27 +170,29 @@ class ReactCommandMap {
 				if (contextSeen) {
 					throw new IllegalStateException(
 						"@ReactCommand method " + method.getName()
-							+ " declares ViewDisplayContext more than once.");
+							+ " declares ReactContext more than once.");
 				}
 				if (argsSeen) {
 					throw new IllegalStateException(
 						"@ReactCommand method " + method.getName()
-							+ " declares ViewDisplayContext after Map. "
-							+ "Required order: (ViewDisplayContext, Map<String, Object>).");
+							+ " declares ReactContext after the argument. "
+							+ "Required order: (ReactContext, Map<String, Object> | ConfigurationItem).");
 				}
 				contextSeen = true;
-			} else if (Map.class.isAssignableFrom(paramType)) {
+			} else if (ConfigurationItem.class.isAssignableFrom(paramType)
+					|| Map.class.isAssignableFrom(paramType)) {
 				if (argsSeen) {
 					throw new IllegalStateException(
 						"@ReactCommand method " + method.getName()
-							+ " declares Map more than once.");
+							+ " declares more than one argument parameter. Use either a raw Map or a "
+							+ "single ConfigurationItem argument type.");
 				}
 				argsSeen = true;
 			} else {
 				throw new IllegalStateException(
 					"@ReactCommand method " + method.getName() + " has unsupported parameter type: "
 						+ paramType.getName()
-						+ ". Allowed: ViewDisplayContext, Map<String, Object>.");
+						+ ". Allowed: ReactContext, Map<String, Object>, or a ConfigurationItem argument type.");
 			}
 		}
 	}

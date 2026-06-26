@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.headless;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,12 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
+import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.json.schema.JsonSchemaWriter;
+import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
@@ -326,13 +333,35 @@ public final class AgentTreeProjector {
 		}
 		List<AgentAction> result = new ArrayList<>();
 		for (String command : new TreeSet<>(control.agentCommands())) {
+			Object argsSchema = argsSchemaOf(control, command);
 			List<AgentParam> params = new ArrayList<>();
-			for (ReactParam param : control.agentCommandParams(command)) {
-				params.add(new AgentParam(param.name(), param.type(), param.required(), param.description()));
+			if (argsSchema == null) {
+				for (ReactParam param : control.agentCommandParams(command)) {
+					params.add(new AgentParam(param.name(), param.type(), param.required(), param.description()));
+				}
 			}
-			result.add(new AgentAction(command, command, params));
+			result.add(new AgentAction(command, command, params, argsSchema));
 		}
 		return result;
+	}
+
+	/**
+	 * The JSON Schema of the command's typed argument interface, as a parsed JSON value, or
+	 * {@code null} if the command takes a raw {@code Map} (or no arguments).
+	 */
+	private static Object argsSchemaOf(ReactControl control, String command) {
+		ConfigurationDescriptor argType = control.agentCommandArgsType(command);
+		if (argType == null) {
+			return null;
+		}
+		try {
+			Schema schema = new JsonConfigSchemaBuilder().buildConfigSchema(argType);
+			return JSON.read(new StringReader(JsonSchemaWriter.toJson(schema)));
+		} catch (Exception ex) {
+			Logger.error("Failed to project argument schema for command '" + command + "' on "
+				+ control.getClass().getName(), ex, AgentTreeProjector.class);
+			return null;
+		}
 	}
 
 	/**

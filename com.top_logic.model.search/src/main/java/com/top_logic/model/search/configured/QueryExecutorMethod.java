@@ -7,38 +7,50 @@ package com.top_logic.model.search.configured;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
  * {@link GenericMethod} delegating execution to a given {@link QueryExecutor}.
- * 
+ *
+ * <p>
+ * The configured function is compiled into a separate {@link QueryExecutor} that is shared by all
+ * callers. The caller's {@link #usesSecurity() security setting} can therefore not be applied by
+ * mutating that shared tree; instead the executor is resolved separately for the secured and the
+ * unsecured variant, see {@link #getExecutor()}.
+ * </p>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class QueryExecutorMethod extends GenericMethod {
+public class QueryExecutorMethod extends GenericMethodWithSecurity {
 
-	private final Function<String, QueryExecutor> _executor;
+	private final BiFunction<String, Boolean, QueryExecutor> _executor;
 
 	private Function<List<TLType>, TLType> _typeComputation = argumentTypes -> null;
 
-	
 	/**
 	 * Creates a {@link QueryExecutorMethod}.
 	 *
 	 * @param executor
-	 *        The {@link QueryExecutor} that is executed during evaluation.
+	 *        Resolves the {@link QueryExecutor} that is executed during evaluation by function name
+	 *        and {@link #usesSecurity() security setting}.
 	 * @param name
 	 *        See {@link #getName()}.
 	 * @param arguments
 	 *        See {@link #getArguments()}.
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	QueryExecutorMethod(Function<String, QueryExecutor> executor, String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	QueryExecutorMethod(BiFunction<String, Boolean, QueryExecutor> executor, String name, SearchExpression[] arguments,
+			boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 		_executor = executor;
 	}
 
@@ -61,7 +73,8 @@ public class QueryExecutorMethod extends GenericMethod {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		QueryExecutorMethod configuredMethod = new QueryExecutorMethod(_executor, getName(), arguments);
+		QueryExecutorMethod configuredMethod =
+			new QueryExecutorMethod(_executor, getName(), arguments, usesSecurity());
 		configuredMethod.setTypeComputation(getTypeComputation());
 		return configuredMethod;
 	}
@@ -78,9 +91,15 @@ public class QueryExecutorMethod extends GenericMethod {
 
 	/**
 	 * The {@link QueryExecutor} to delegate evaluation to.
+	 *
+	 * <p>
+	 * Depending on {@link #usesSecurity()}, this resolves either the secured or the unsecured
+	 * variant of the configured function, so that a caller that has switched off security executes
+	 * the called function without security as well.
+	 * </p>
 	 */
 	public QueryExecutor getExecutor() {
-		return _executor.apply(getName());
+		return _executor.apply(getName(), usesSecurity());
 	}
 
 	@Override

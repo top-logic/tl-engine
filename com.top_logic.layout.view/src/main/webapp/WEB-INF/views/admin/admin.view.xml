@@ -2,10 +2,15 @@
 
 <!--
 	Administration area for the React view UI. The outer tab-bar groups admin sections; each inner
-	tab-bar holds that section's views. Add further admin sections as sibling tabs.
+	tab-bar holds that section's views. Add further admin sections as sibling tabs, or contribute a
+	section from a depending module via the "admin.sections" extension point (see the
+	29108-view-contributions spec).
 -->
 <view>
-	<tab-bar active-tab="access-control">
+	<tab-bar
+		active-tab="access-control"
+		extension-id="admin.sections"
+	>
 		<tabs>
 			<tab id="access-control">
 				<label>
@@ -145,23 +150,6 @@
 								<de>Protokollebenen</de>
 							</label>
 							<view-ref view="admin/system/logger-levels.view.xml"/>
-						</tab>
-					</tabs>
-				</tab-bar>
-			</tab>
-			<tab id="development">
-				<label>
-					<en>Development</en>
-					<de>Entwicklung</de>
-				</label>
-				<tab-bar active-tab="script-console">
-					<tabs>
-						<tab id="script-console">
-							<label>
-								<en>Script console</en>
-								<de>Skript-Konsole</de>
-							</label>
-							<view-ref view="admin/development/script-console.view.xml"/>
 						</tab>
 					</tabs>
 				</tab-bar>

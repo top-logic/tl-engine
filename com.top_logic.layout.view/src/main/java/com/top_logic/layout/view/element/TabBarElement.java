@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -23,8 +24,11 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
+import com.top_logic.layout.view.ReferenceElement;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.contribution.Contribution;
+import com.top_logic.layout.view.contribution.ViewContributionService;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
@@ -59,6 +63,9 @@ public class TabBarElement implements UIElement {
 		/** Configuration name for {@link #getActiveTab()}. */
 		String ACTIVE_TAB = "active-tab";
 
+		/** Configuration name for {@link #getExtensionId()}. */
+		String EXTENSION_ID = "extension-id";
+
 		/**
 		 * The tab definitions.
 		 */
@@ -71,6 +78,20 @@ public class TabBarElement implements UIElement {
 		 */
 		@Name(ACTIVE_TAB)
 		String getActiveTab();
+
+		/**
+		 * Optional extension-point id that lets depending modules contribute additional tabs into
+		 * this tab bar.
+		 *
+		 * <p>
+		 * When set, the contributions registered for this id with the {@link ViewContributionService}
+		 * are appended after the static {@link #getTabs() tabs}, ordered by their
+		 * {@link Contribution#getRank() rank}. This lets a downstream module add a tab to a tab bar
+		 * declared upstream without the upstream module depending on it.
+		 * </p>
+		 */
+		@Name(EXTENSION_ID)
+		String getExtensionId();
 	}
 
 	/**
@@ -154,7 +175,40 @@ public class TabBarElement implements UIElement {
 			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getIcon(),
 				tabConfig.getAccessControl(), children));
 		}
+		appendContributedTabs(context, config.getExtensionId());
 		_activeTab = config.getActiveTab();
+	}
+
+	/**
+	 * Appends the tabs contributed by depending modules to the extension point identified by the
+	 * given id (if any), ordered by {@link Contribution#getRank() rank}.
+	 */
+	private void appendContributedTabs(InstantiationContext context, String extensionId) {
+		if (extensionId == null || extensionId.isEmpty()) {
+			return;
+		}
+		for (Contribution contribution : ViewContributionService.getInstance().getContributions(extensionId)) {
+			_tabs.add(toTabEntry(context, contribution));
+		}
+	}
+
+	/**
+	 * Builds a {@link TabEntry} for a contributed tab: a {@code <view-ref>} to the contributed view,
+	 * presented with the contribution's label, icon and route.
+	 */
+	private static TabEntry toTabEntry(InstantiationContext context, Contribution contribution) {
+		ReferenceElement.Config refConfig = TypedConfiguration.newConfigItem(ReferenceElement.Config.class);
+		refConfig.update(refConfig.descriptor().getProperty(ReferenceElement.Config.VIEW), contribution.getView());
+		UIElement ref = context.getInstance(refConfig);
+
+		ResKey labelKey = contribution.getLabel();
+		String label =
+			labelKey != null ? Resources.getInstance().getString(labelKey) : contribution.getId();
+		// No access control of its own: a contributed section's visibility is governed by the
+		// extension point's host (e.g. the Administration nav item) and the contributed view's own
+		// command security.
+		return new TabEntry(contribution.getId(), label, contribution.getRoute(),
+			contribution.getIcon(), null, List.of(ref));
 	}
 
 	@Override

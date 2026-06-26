@@ -13,8 +13,21 @@
 					<module key="com.top_logic.layout.view.security.SecurityScopeService$Module"
 						value="true"
 					/>
+					<module key="com.top_logic.layout.view.contribution.ViewContributionService$Module"
+						value="true"
+					/>
 				</modules>
 			</instance>
+		</config>
+
+		<!--
+			Registry of cross-module view contributions. A view declares a named extension point
+			(e.g. <tab-bar extension-id="admin.sections">); depending modules append <contribution>
+			entries here that target it, so a view can be extended without its module depending on
+			the contributors. The base configuration is empty; see the 29108-view-contributions spec.
+		-->
+		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
+			<instance class="com.top_logic.layout.view.contribution.ViewContributionService"/>
 		</config>
 
 		<config service-class="com.top_logic.layout.view.table.ColumnProviderService">

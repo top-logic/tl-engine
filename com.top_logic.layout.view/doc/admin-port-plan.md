@@ -130,14 +130,14 @@ channel holds — used to make Start vs. Refresh/Stop mutually exclusive.
 - [x] User-session monitor — `UserSessionTable` (Sessions tab) + `FailedLoginTable` (Failed logins tab), read-only, 30-day window.
 - [x] SQL/DB monitor — `SqlMonitorAction` (start / refresh / stop) + `SqlStatisticsTable`, in a titled
       fill panel; **validates the titled-panel command pattern** for Batches 3–4.
-- [ ] Revision / audit monitor — change history. **Based on the "Meine letzten Änderungen" personal-
-      history dialog, not the old technical revision admin.** That dialog uses new-style model types:
-      `tl.changelog:ChangeSet` (author / date / message / revision / composite `changes`) produced by
-      the reusable `com.top_logic.element.changelog.ChangeLogBuilder` (`ChangeLogListModelBuilder`),
-      built on `HistoryManager`/`Revision`. v1 = a flat table of recent `ChangeSet` entries (author,
-      date, message); the per-object change drill-down (`Change`/`Modification`) and revert are a
-      follow-up. Entries are transient TLObjects, so the Java builder feeds the table (not a TL-Script
-      query).
+- [x] Revision / audit monitor (v1) — `revision-monitor.view.xml` (Monitoring › Änderungen): a flat,
+      read-only `<full-page>` `<table>` of recent commits. Rows come from the existing `changeLog()`
+      TL-Script function (`changeLog(null, 50)` = global, newest 50); the row type is
+      `tl.changelog:ChangeSet`, so columns (revision, date, author, message, changes) and their labels
+      derive from the model attributes — no hand-written table or column I18N. **Based on the "Meine
+      letzten Änderungen" personal-history dialog, not the old technical revision admin** (same
+      new-style `tl.changelog:ChangeSet` model type). The per-object change drill-down
+      (`Change`/`Modification`) and revert remain a follow-up.
 
 ### Batch 3 — System / technical  ▢
 Establishes the "System" admin section (added with the locks view as a sibling tab of

@@ -94,6 +94,13 @@
 							</label>
 							<view-ref view="admin/sql-monitor.view.xml"/>
 						</tab>
+						<tab id="revision-monitor">
+							<label>
+								<en>Changes</en>
+								<de>Änderungen</de>
+							</label>
+							<view-ref view="admin/revision-monitor.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

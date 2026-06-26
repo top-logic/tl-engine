@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Development admin section, contributed into the admin view's "admin.sections" extension point by
+	this module (see tl-model-search-react.conf.config.xml). Mirrors the structure of the built-in
+	admin sections: an inner tab-bar holding the section's pages - here, the TL-Script console.
+-->
+<view>
+	<tab-bar active-tab="script-console">
+		<tabs>
+			<tab id="script-console">
+				<label>
+					<en>Script console</en>
+					<de>Skript-Konsole</de>
+				</label>
+				<view-ref view="admin/development/script-console.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

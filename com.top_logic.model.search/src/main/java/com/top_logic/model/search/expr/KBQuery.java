@@ -28,7 +28,7 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * {@link KBQuery} expressions are created internally during the query optimization process.
  * </p>
  * 
- * @see SearchExpressionFactory#query(TLClass, SetExpression, List)
+ * @see SearchExpressionFactory#query(TLClass, SetExpression, List, boolean)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -40,7 +40,8 @@ public class KBQuery extends SearchExpressionWithSecurity {
 
 	private final List<CompiledValue> _dynamic;
 
-	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters) {
+	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters, boolean usesSecurity) {
+		super(usesSecurity);
 		_classType = classType;
 		_query = query;
 		_dynamic = dynamicFilters;

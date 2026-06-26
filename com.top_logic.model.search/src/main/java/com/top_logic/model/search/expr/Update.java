@@ -27,7 +27,8 @@ public class Update extends SearchExpressionWithSecurity {
 
 	private SearchExpression _value;
 
-	Update(SearchExpression self, TLStructuredTypePart part, SearchExpression value) {
+	Update(SearchExpression self, TLStructuredTypePart part, SearchExpression value, boolean usesSecurity) {
+		super(usesSecurity);
 		_self = self;
 		_part = part;
 		_value = value;

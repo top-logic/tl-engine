@@ -35,13 +35,13 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 	/**
 	 * Creates a {@link DeleteObject}.
 	 */
-	DeleteObject(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	DeleteObject(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DeleteObject(getName(), arguments);
+		return new DeleteObject(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 		@Override
 		protected DeleteObject internalBuild(Expr expr, SearchExpression argument, SearchExpression[] allArgs)
 				throws ConfigurationException {
-			return new DeleteObject(getName(), allArgs);
+			return new DeleteObject(getName(), allArgs, true);
 		}
 	}
 

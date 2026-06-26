@@ -28,13 +28,13 @@ public class DynamicGet extends GenericMethodWithSecurity implements AccessLike 
 	/**
 	 * Creates a new {@link DynamicGet}.
 	 */
-	public DynamicGet(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicGet(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicGet(getName(), arguments);
+		return new DynamicGet(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public class DynamicGet extends GenericMethodWithSecurity implements AccessLike 
 		public DynamicGet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new DynamicGet(getConfig().getName(), args);
+			return new DynamicGet(getConfig().getName(), args, true);
 		}
 
 	}

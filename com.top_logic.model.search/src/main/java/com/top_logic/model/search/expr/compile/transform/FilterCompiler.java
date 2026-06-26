@@ -154,7 +154,7 @@ public class FilterCompiler extends Rewriter<Void> {
 				newDynamicFilters = extendedDynamicFilters;
 			}
 
-			return SearchExpressionFactory.query(expr.getClassType(), newQuery, newDynamicFilters);
+			return SearchExpressionFactory.query(expr.getClassType(), newQuery, newDynamicFilters, expr.usesSecurity());
 		}
 
 		/**

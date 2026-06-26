@@ -5,6 +5,11 @@
  */
 package com.top_logic.basic.treexf;
 
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.*;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -21,6 +26,16 @@ import java.util.Map;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class TreeMaterializer {
+
+	/**
+	 * Annotation for methods in a factory method class to allow additional definition of service
+	 * methods.
+	 */
+	@Target(METHOD)
+	@Retention(RUNTIME)
+	public @interface NoFactory {
+		// Marker annotation
+	}
 
 	/**
 	 * Factory for creating typed expressions from the result of a transformation of a generic
@@ -77,6 +92,9 @@ public class TreeMaterializer {
 		Map<Object, Factory> factories = new HashMap<>();
 		for (Method method : factoryType.getMethods()) {
 			if (!Modifier.isStatic(method.getModifiers())) {
+				continue;
+			}
+			if (method.getAnnotation(NoFactory.class) != null) {
 				continue;
 			}
 			Class<?> type = method.getReturnType();

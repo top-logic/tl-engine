@@ -29,13 +29,13 @@ public class Add extends GenericMethodWithSecurity {
 	/**
 	 * Creates a {@link Add}.
 	 */
-	protected Add(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Add(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Add(getName(), arguments);
+		return new Add(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -128,7 +128,7 @@ public class Add extends GenericMethodWithSecurity {
 		public Add build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkArgs(expr, args, 3, 4);
-			return new Add(getConfig().getName(), args);
+			return new Add(getConfig().getName(), args, true);
 		}
 
 	}

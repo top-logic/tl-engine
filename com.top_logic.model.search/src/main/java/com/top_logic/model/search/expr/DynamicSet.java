@@ -28,13 +28,13 @@ public class DynamicSet extends GenericMethodWithSecurity {
 	/**
 	 * Creates a new {@link DynamicSet}.
 	 */
-	public DynamicSet(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicSet(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicSet(getName(), arguments);
+		return new DynamicSet(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class DynamicSet extends GenericMethodWithSecurity {
 		public DynamicSet build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkThreeArgs(expr, args);
-			return new DynamicSet(getConfig().getName(), args);
+			return new DynamicSet(getConfig().getName(), args, true);
 		}
 
 	}

@@ -49,13 +49,13 @@ public class Copy extends GenericMethodWithSecurity implements WithFlatMapSemant
 	/**
 	 * Creates a {@link Copy} operation.
 	 */
-	protected Copy(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Copy(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Copy(getName(), arguments);
+		return new Copy(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -165,7 +165,7 @@ public class Copy extends GenericMethodWithSecurity implements WithFlatMapSemant
 
 		@Override
 		public Copy build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new Copy(getConfig().getName(), args);
+			return new Copy(getConfig().getName(), args, true);
 		}
 
 		@Override

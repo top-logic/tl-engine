@@ -26,13 +26,13 @@ public class DynamicAll extends GenericMethodWithSecurity implements WithFlatMap
 	/**
 	 * Creates a {@link DynamicAll}.
 	 */
-	public DynamicAll(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicAll(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicAll(getName(), arguments);
+		return new DynamicAll(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -92,7 +92,7 @@ public class DynamicAll extends GenericMethodWithSecurity implements WithFlatMap
 		public DynamicAll build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new DynamicAll(getConfig().getName(), args);
+			return new DynamicAll(getConfig().getName(), args, true);
 		}
 
 	}

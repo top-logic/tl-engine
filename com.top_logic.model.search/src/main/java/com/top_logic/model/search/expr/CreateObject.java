@@ -33,13 +33,13 @@ public class CreateObject extends AbstractObjectCreation {
 	 * @param args
 	 *        The optional create context (at most a single argument).
 	 */
-	CreateObject(String name, SearchExpression[] args) {
-		super(name, args);
+	CreateObject(String name, SearchExpression[] args, boolean usesSecurity) {
+		super(name, args, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new CreateObject(getName(), arguments);
+		return new CreateObject(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -85,7 +85,7 @@ public class CreateObject extends AbstractObjectCreation {
 		@Override
 		public CreateObject build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new CreateObject(getName(), args);
+			return new CreateObject(getName(), args, true);
 		}
 
 		@Override

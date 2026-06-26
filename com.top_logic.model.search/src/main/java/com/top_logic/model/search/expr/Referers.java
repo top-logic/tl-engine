@@ -32,7 +32,8 @@ public class Referers extends SearchExpressionWithSecurity implements WithFlatMa
 
 	private SearchExpression _target;
 
-	Referers(SearchExpression target, TLReference reference) {
+	Referers(SearchExpression target, TLReference reference, boolean usesSecurity) {
+		super(usesSecurity);
 		_reference = reference;
 		_target = target;
 	}

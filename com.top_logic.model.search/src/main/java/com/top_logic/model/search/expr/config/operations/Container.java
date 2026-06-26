@@ -27,13 +27,13 @@ public class Container extends GenericMethodWithSecurity {
 	/**
 	 * Creates a {@link Container}.
 	 */
-	protected Container(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Container(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Container(getName(), arguments);
+		return new Container(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public class Container extends GenericMethodWithSecurity {
 		public Container build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new Container(getConfig().getName(), args);
+			return new Container(getConfig().getName(), args, true);
 		}
 
 	}

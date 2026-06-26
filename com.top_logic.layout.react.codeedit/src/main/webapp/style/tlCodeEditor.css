@@ -28,10 +28,25 @@
 
 .tlCodeEditor .cm-scroller {
 	overflow: auto;
+
+	/*
+	 * Grow the scroller to fill the editor. CodeMirror sizes it to its content (flex: 0 1 auto),
+	 * which would leave the area below a short document as a dead zone that does not focus on click;
+	 * filling the editor lets the content area below stretch over the whole box.
+	 */
+	flex-grow: 1;
 }
 
 .tlCodeEditor .cm-content {
 	font-family: var(--font-family-mono, monospace);
+
+	/*
+	 * Fill the editor height so a click anywhere in the box focuses the editable area. CodeMirror's
+	 * default theme lays out the scroller with align-items: flex-start, leaving the contenteditable
+	 * at text height; stretching it over the full (grown) scroller height makes clicks below the
+	 * last line land on it and focus.
+	 */
+	align-self: stretch;
 }
 
 .tlCodeEditor .cm-gutters {

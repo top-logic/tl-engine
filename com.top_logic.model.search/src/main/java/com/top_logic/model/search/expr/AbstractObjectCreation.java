@@ -18,8 +18,8 @@ public abstract class AbstractObjectCreation extends GenericMethodWithSecurity {
 	/**
 	 * Creates a {@link AbstractObjectCreation}.
 	 */
-	protected AbstractObjectCreation(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected AbstractObjectCreation(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override

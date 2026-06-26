@@ -33,10 +33,11 @@ public class ReferersBuilder extends TwoArgsMethodBuilder<SearchExpression> {
 	@Override
 	protected SearchExpression internalBuild(Expr expr, SearchExpression arg0, SearchExpression arg1, SearchExpression[] allArgs)
 			throws ConfigurationException {
+		boolean useSecurity = true;
 		if (arg1 instanceof Literal) {
-			return SearchExpressionFactory.referers(arg0, resolveReference(expr, arg1));
+			return SearchExpressionFactory.referers(arg0, resolveReference(expr, arg1), useSecurity);
 		} else {
-			return new DynamicReferers(getName(), allArgs);
+			return new DynamicReferers(getName(), allArgs, useSecurity);
 		}
 	}
 

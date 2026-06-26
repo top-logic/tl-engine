@@ -34,7 +34,8 @@ public class All extends SearchExpressionWithSecurity {
 	 * @param type
 	 *        See {@link #getInstanceType()}
 	 */
-	All(TLStructuredType type) {
+	All(TLStructuredType type, boolean usesSecurity) {
+		super(usesSecurity);
 		_type = type;
 	}
 

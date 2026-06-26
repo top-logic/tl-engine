@@ -12,9 +12,12 @@ import com.top_logic.model.search.WithSecurityCheck;
  * Base class for a {@link GenericMethod} that is a {@link WithSecurityCheck}.
  *
  * <p>
- * Holds the {@link #usesSecurity() security flag} (enabled by default) so that subclasses only have
- * to guard their actual security check - filtering read results by the user's read rights, or
- * verifying write permissions - with {@link #usesSecurity()}.
+ * The {@link #usesSecurity() security flag} is a mandatory constructor argument so that it cannot be
+ * lost when an expression is reconstructed (e.g. during {@link #copy(SearchExpression[]) copying} or
+ * by a rewriter that replaces a node). Subclasses must forward the flag through their constructor
+ * and reproduce it in their {@link #copy(SearchExpression[])} implementation. A fresh expression
+ * (created by a {@link com.top_logic.model.search.expr.config.operations.MethodBuilder}) is normally
+ * constructed with security enabled.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -24,13 +27,17 @@ import com.top_logic.model.search.WithSecurityCheck;
  */
 public abstract class GenericMethodWithSecurity extends GenericMethod implements WithSecurityCheck {
 
-	private boolean _usesSecurity = true;
+	private boolean _usesSecurity;
 
 	/**
 	 * Creates a new {@link GenericMethodWithSecurity}.
+	 *
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	protected GenericMethodWithSecurity(String name, SearchExpression[] arguments) {
+	protected GenericMethodWithSecurity(String name, SearchExpression[] arguments, boolean usesSecurity) {
 		super(name, arguments);
+		_usesSecurity = usesSecurity;
 	}
 
 	@Override

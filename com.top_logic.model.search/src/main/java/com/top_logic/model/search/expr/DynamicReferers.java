@@ -29,13 +29,13 @@ public class DynamicReferers extends GenericMethodWithSecurity implements WithFl
 	/**
 	 * Creates a new {@link DynamicReferers}.
 	 */
-	public DynamicReferers(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public DynamicReferers(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicReferers(getName(), arguments);
+		return new DynamicReferers(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class DynamicReferers extends GenericMethodWithSecurity implements WithFl
 		public DynamicReferers build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkTwoArgs(expr, args);
-			return new DynamicReferers(getConfig().getName(), args);
+			return new DynamicReferers(getConfig().getName(), args, true);
 		}
 
 	}

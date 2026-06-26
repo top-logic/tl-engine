@@ -80,7 +80,7 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitAll(All expr, A arg) {
-		return compose(expr, arg, wrap(expr.getInstanceType()));
+		return compose(expr, arg, wrap(expr.getInstanceType()), wrap(expr.usesSecurity()));
 	}
 
 	@Override
@@ -107,7 +107,8 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitKBQuery(KBQuery expr, A arg) {
-		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()), wrap(expr.getDynamicFilters()));
+		return compose(expr, arg, wrap(expr.getClassType()), wrap(expr.getQuery()), wrap(expr.getDynamicFilters()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override
@@ -117,18 +118,20 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitAccess(Access expr, A arg) {
-		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), wrap(expr.getPart()));
+		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), wrap(expr.getPart()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override
 	public R visitAt(At expr, A arg) {
-		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), descendPart(expr, arg, expr.getIndex()));
+		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), descendPart(expr, arg, expr.getIndex()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override
 	public R visitUpdate(Update expr, A arg) {
 		return compose(expr, arg, descendPart(expr, arg, expr.getSelf()), wrap(expr.getPart()),
-			descendPart(expr, arg, expr.getValue()));
+			descendPart(expr, arg, expr.getValue()), wrap(expr.usesSecurity()));
 	}
 
 	@Override
@@ -138,13 +141,14 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 
 	@Override
 	public R visitReferers(Referers expr, A arg) {
-		return compose(expr, arg, descendPart(expr, arg, expr.getTarget()), wrap(expr.getReference()));
+		return compose(expr, arg, descendPart(expr, arg, expr.getTarget()), wrap(expr.getReference()),
+			wrap(expr.usesSecurity()));
 	}
 
 	@Override
 	public R visitAssociationNavigation(AssociationNavigation expr, A arg) {
 		return compose(expr, arg, descendPart(expr, arg, expr.getSource()), wrap(expr.getSourceEnd()),
-			wrap(expr.getDestinationEnd()));
+			wrap(expr.getDestinationEnd()), wrap(expr.usesSecurity()));
 	}
 
 	@Override

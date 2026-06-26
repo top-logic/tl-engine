@@ -35,7 +35,8 @@ public class At extends SearchExpressionWithSecurity {
 	/**
 	 * Creates an {@link At} expression.
 	 */
-	At(SearchExpression self, SearchExpression index) {
+	At(SearchExpression self, SearchExpression index, boolean usesSecurity) {
+		super(usesSecurity);
 		_self = self;
 		_index = index;
 	}

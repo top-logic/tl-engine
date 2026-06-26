@@ -27,7 +27,8 @@ public class Access extends SearchExpressionWithSecurity implements AccessLike {
 	 * @param part
 	 *        See {@link #getPart()}.
 	 */
-	protected Access(SearchExpression self, TLStructuredTypePart part) {
+	protected Access(SearchExpression self, TLStructuredTypePart part, boolean usesSecurity) {
+		super(usesSecurity);
 		_self = self;
 		_part = part;
 	}

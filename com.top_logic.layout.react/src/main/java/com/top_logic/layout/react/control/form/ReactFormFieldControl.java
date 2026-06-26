@@ -15,6 +15,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.util.Resources;
 
 /**
@@ -32,6 +33,9 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class ReactFormFieldControl extends ReactControl {
+
+	/** Command sent by the client when the field value changes. */
+	protected static final String CMD_VALUE_CHANGED = "valueChanged";
 
 	/** State key for the field value. */
 	protected static final String VALUE = "value";
@@ -253,7 +257,7 @@ public class ReactFormFieldControl extends ReactControl {
 	/**
 	 * Handles value changes from the React client.
 	 */
-	@ReactCommand(value = "valueChanged", params = @ReactParam(name = "value",
+	@ReactCommand(value = CMD_VALUE_CHANGED, params = @ReactParam(name = "value",
 		description = "The new field value entered in the client."))
 	void handleValueChanged(Map<String, Object> arguments) {
 		Object parsed = parseClientValue(arguments.get(VALUE));
@@ -265,6 +269,19 @@ public class ReactFormFieldControl extends ReactControl {
 			_applyingClientValue = false;
 			_clientValue = null;
 		}
+	}
+
+	/**
+	 * Records consecutive {@link #CMD_VALUE_CHANGED} edits of this field as a single coalescing step
+	 * (the latest value supersedes the prior ones), so an uninterrupted edit is one recorded value —
+	 * the successor to the legacy {@code FormInput} — rather than one step per keystroke.
+	 */
+	@Override
+	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
+		if (CMD_VALUE_CHANGED.equals(command)) {
+			return new RecordedCommand(command, arguments == null ? Map.of() : arguments, true);
+		}
+		return super.recordCommand(command, arguments);
 	}
 
 	/**

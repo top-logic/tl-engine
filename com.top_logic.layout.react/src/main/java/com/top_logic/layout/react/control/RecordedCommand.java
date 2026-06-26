@@ -21,7 +21,24 @@ import java.util.Map;
  *        The command id to record.
  * @param arguments
  *        The arguments to record (never {@code null}).
+ * @param coalescing
+ *        Whether a run of consecutive recordings of this same command on the same target should
+ *        collapse to a single step holding the latest arguments (e.g. per-keystroke field input is
+ *        recorded as one value, like the legacy {@code FormInput}). The recorder merges purely by the
+ *        step's {@link com.top_logic.layout.react.headless.RecordedStep#address() address} and
+ *        command, so no control-type knowledge leaks into the recording loop.
  */
-public record RecordedCommand(String command, Map<String, Object> arguments) {
-	// Value holder.
+public record RecordedCommand(String command, Map<String, Object> arguments, boolean coalescing) {
+
+	/**
+	 * A non-coalescing recorded command — each occurrence is a distinct step.
+	 *
+	 * @param command
+	 *        The command id to record.
+	 * @param arguments
+	 *        The arguments to record (never {@code null}).
+	 */
+	public RecordedCommand(String command, Map<String, Object> arguments) {
+		this(command, arguments, false);
+	}
 }

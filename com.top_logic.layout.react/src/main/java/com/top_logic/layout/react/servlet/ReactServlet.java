@@ -464,7 +464,8 @@ public class ReactServlet extends TopLogicServlet {
 		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
 		// replay-stable form before capture.
 		RecordedCommand recorded = reactControl.recordCommand(commandName, arguments);
-		recorder.record(new RecordedStep(address, recorded.command(), recorded.arguments()));
+		recorder.record(new RecordedStep(address, recorded.command(), recorded.arguments()),
+			recorded.coalescing());
 	}
 
 	/**

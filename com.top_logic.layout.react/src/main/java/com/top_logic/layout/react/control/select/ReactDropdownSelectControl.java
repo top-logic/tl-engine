@@ -75,8 +75,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	// Command names.
 	private static final String CMD_LOAD_OPTIONS = "loadOptions";
 
-	private static final String CMD_VALUE_CHANGED = "valueChanged";
-
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
 
 	/** Command argument carrying the list of option business keys for {@link #CMD_SELECT_BY_KEY}. */

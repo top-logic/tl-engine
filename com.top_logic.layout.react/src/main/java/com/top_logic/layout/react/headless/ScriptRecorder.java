@@ -92,16 +92,52 @@ public final class ScriptRecorder {
 	 *        The step to capture.
 	 */
 	public void record(RecordedStep step) {
+		record(step, false);
+	}
+
+	/**
+	 * Captures a step if {@link #isRecording() recording}; a no-op otherwise.
+	 *
+	 * @param step
+	 *        The step to capture.
+	 * @param coalescing
+	 *        When {@code true} and the previous step targets the same
+	 *        {@link RecordedStep#address() address} with the same {@link RecordedStep#command()
+	 *        command}, the previous step is <em>superseded</em> by this one rather than a new step
+	 *        appended — so an uninterrupted run of edits (e.g. per-keystroke field input) collapses to
+	 *        a single step holding the latest arguments. The decision is the caller's; the recorder
+	 *        merges purely by address and command equality and never inspects the target control.
+	 */
+	public void record(RecordedStep step, boolean coalescing) {
 		boolean captured;
 		synchronized (this) {
 			captured = _recording;
 			if (captured) {
-				_steps.add(step);
+				if (coalescing && supersedesLast(step)) {
+					_steps.set(_steps.size() - 1, step);
+				} else {
+					_steps.add(step);
+				}
 			}
 		}
 		if (captured) {
 			fireChanged();
 		}
+	}
+
+	/**
+	 * Whether the last captured step targets the same addressed control with the same command as the
+	 * given step (so a coalescing capture should replace it). A {@code null} address never matches:
+	 * unaddressable steps stay distinct.
+	 */
+	private boolean supersedesLast(RecordedStep step) {
+		if (_steps.isEmpty()) {
+			return false;
+		}
+		RecordedStep last = _steps.get(_steps.size() - 1);
+		return last.address() != null
+			&& last.address().equals(step.address())
+			&& last.command().equals(step.command());
 	}
 
 	/**

@@ -105,6 +105,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOG_COLUMN_MODIFIED;
 
 	/**
+	 * @en Download
+	 */
+	public static ResKey LOG_COLUMN_DOWNLOAD;
+
+	/**
 	 * @en Time
 	 */
 	public static ResKey LOG_COLUMN_TIME;

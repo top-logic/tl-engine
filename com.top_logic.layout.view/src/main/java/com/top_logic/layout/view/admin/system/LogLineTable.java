@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -39,6 +40,9 @@ import com.top_logic.monitoring.log.LogLineSeverity;
 import com.top_logic.monitoring.log.LogParser;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.Option;
+import com.top_logic.table.filter.ComparableColumnFilter;
+import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
@@ -115,13 +119,14 @@ public class LogLineTable implements UIElement {
 			.label(I18NConstants.LOG_COLUMN_TIME)
 			.renderer(time -> CellContent.text(time == null ? "" : HTMLFormatter.getInstance().formatDateTime(time)))
 			.sort(() -> Comparator.nullsFirst(Comparator.naturalOrder()))
+			.filter(new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(), LogLineTable::parseTime))
 			.width(160)
 			.build());
 		columns.add(DefaultColumn.<LogLine, LogLineSeverity> builder("severity", LogLine::getSeverity)
 			.label(I18NConstants.LOG_COLUMN_SEVERITY)
 			.renderer(severity -> CellContent.text(severity == null ? "" : severity.getName()))
 			.sort(() -> Comparator.nullsFirst(Comparator.comparingInt(LogLineSeverity::getSortOrder)))
-			.filter(new TextColumnFilter<>(severity -> severity == null ? "" : severity.getName()))
+			.filter(new OptionsColumnFilter<>(severityOptions()))
 			.width(90)
 			.build());
 		columns.add(textColumn("category", I18NConstants.LOG_COLUMN_CATEGORY, LogLine::getCategory, 300));
@@ -170,6 +175,30 @@ public class LogLineTable implements UIElement {
 		} catch (IOException | RuntimeException ex) {
 			Logger.warn("Failed to read log file '" + file.getName() + "'.", ex, LogLineTable.class);
 			return new ArrayList<>();
+		}
+	}
+
+	/**
+	 * The severity filter options, strongest severity first.
+	 */
+	private static List<Option> severityOptions() {
+		List<LogLineSeverity> severities = new ArrayList<>(LogLineSeverity.STANDARD_SEVERITIES.values());
+		severities.sort(Comparator.comparingInt(LogLineSeverity::getSortOrder).reversed());
+		List<Option> options = new ArrayList<>();
+		for (LogLineSeverity severity : severities) {
+			options.add(new Option(severity, ResKey.text(severity.getName())));
+		}
+		return options;
+	}
+
+	/**
+	 * Parses a date-time bound typed into the time-column range filter, or {@code null} when unparseable.
+	 */
+	private static Date parseTime(String text) {
+		try {
+			return HTMLFormatter.getInstance().getDateTimeFormat().parse(text.trim());
+		} catch (ParseException ex) {
+			return null;
 		}
 	}
 

@@ -175,9 +175,12 @@ Establishes the "System" admin section (added with the locks view as a sibling t
       channel and shows the file's **parsed** entries — one row per entry — in a sortable, per-column
       filterable/searchable table (time, severity, category, thread, message, details), newest first.
       Parsing **reuses the legacy `com.top_logic.monitoring` `LogParser`/`LogLine`/`LogFile`** (added a
-      `tl-monitoring` dependency); only the last 4 MB are parsed. Refresh ticks a `reload` channel so the
-      current file is re-parsed (newly appended entries appear) without changing the selection. Per-file
-      selection only — the legacy single combined cross-file table is deliberately **not** carried over.
+      `tl-monitoring` dependency); only the last 4 MB are parsed. The time column filters by **date-time
+      range** (`ComparableColumnFilter`), severity by **value checkboxes** (`OptionsColumnFilter` over the
+      standard severities), the rest by text. Each file row carries a **download button** (a read-only
+      `ReactBinaryFieldControl` serving the file). Refresh ticks a `reload` channel so the current file is
+      re-parsed (newly appended entries appear) without changing the selection. Per-file selection only —
+      the legacy single combined cross-file table is deliberately **not** carried over.
 - [x] Logger-level configuration — `logger-levels.view.xml` (System › Protokollebenen): a titled fill
       panel whose `LoggerLevelTable` lists one row per configured logger (name + an **inline level
       dropdown**) read from the extended `LogConfigurator` facade. Choosing a level applies it immediately

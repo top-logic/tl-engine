@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 
 import com.top_logic.base.administration.LoggerAdminBean;
 import com.top_logic.basic.CalledByReflection;
@@ -18,8 +19,14 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -95,6 +102,11 @@ public class LogFileTable implements UIElement {
 			.sort(() -> Comparator.<Long> naturalOrder())
 			.width(200)
 			.build());
+		columns.add(DefaultColumn.<File, File> builder("download", Function.identity())
+			.label(I18NConstants.LOG_COLUMN_DOWNLOAD)
+			.renderer(file -> new CellContent.Raw((CellControlFactory) ctx -> downloadControl(ctx, file)))
+			.width(110)
+			.build());
 
 		// Files keep their identity across rebuilds, so the default identity row key is stable.
 		ListRowSource<File> source = new ListRowSource<>(logFiles(), columns);
@@ -110,6 +122,16 @@ public class LogFileTable implements UIElement {
 		}
 
 		return control;
+	}
+
+	/**
+	 * A read-only binary field serving the given log file as a download link.
+	 */
+	private static ReactControl downloadControl(ReactContext context, File file) {
+		AbstractFieldModel model =
+			new AbstractFieldModel(BinaryDataFactory.createBinaryData(file, "text/plain", file.getName()));
+		model.setEditable(false);
+		return new ReactBinaryFieldControl(context, model);
 	}
 
 	/**

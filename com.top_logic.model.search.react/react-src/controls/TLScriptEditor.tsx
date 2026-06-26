@@ -8,6 +8,7 @@ import type { TLCellProps } from 'tl-react-bridge';
 import { CodeEditor } from 'tl-code-editor';
 import type { CodeEditorDiagnostic } from 'tl-code-editor';
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import type { EditorView } from '@codemirror/view';
 import { tlscript } from '../lang/tlscript-lang';
 
 const { useRef, useEffect, useCallback, useMemo } = React;
@@ -19,6 +20,8 @@ interface CompletionItem {
   name: string;
   value: string;
   replacement?: string;
+  /** Offset within the inserted text where the cursor should land (e.g. inside "all(|)"). */
+  cursorOffset?: number;
   score?: number;
   docHTML?: string;
 }
@@ -104,19 +107,34 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
     }
     pending.resolve({
       from: pending.from,
-      options: items.map((c) => ({
-        label: c.name,
-        apply: c.replacement ?? c.name,
-        detail: c.value !== c.name ? c.value : undefined,
-        info: c.docHTML
-          ? () => {
-              const div = document.createElement('div');
-              div.innerHTML = c.docHTML!;
-              return div;
-            }
-          : undefined,
-        boost: c.score ?? 0,
-      })),
+      options: items.map((c) => {
+        const text = c.replacement ?? c.name;
+        const cursorOffset = c.cursorOffset;
+        // With a cursor offset, insert the text and place the cursor at the offset (e.g. inside the
+        // parentheses of "all()") instead of letting CodeMirror drop it after the inserted text.
+        const apply =
+          cursorOffset == null
+            ? text
+            : (view: EditorView, _completion: unknown, from: number, to: number) => {
+                view.dispatch({
+                  changes: { from, to, insert: text },
+                  selection: { anchor: from + cursorOffset },
+                });
+              };
+        return {
+          label: c.name,
+          apply,
+          detail: c.value !== c.name ? c.value : undefined,
+          info: c.docHTML
+            ? () => {
+                const div = document.createElement('div');
+                div.innerHTML = c.docHTML!;
+                return div;
+              }
+            : undefined,
+          boost: c.score ?? 0,
+        };
+      }),
     });
   }, [completionResponse]);
 

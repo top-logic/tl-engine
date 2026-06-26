@@ -122,6 +122,12 @@ public class TLScriptEditorReactControl extends ReactControl {
 			entry.put("score", Integer.valueOf(c.getScore()));
 			String snippet = c.getSnippet();
 			if (snippet != null) {
+				Matcher tabStop = ACE_TAB_STOP_PATTERN.matcher(snippet);
+				if (tabStop.find()) {
+					// Where the first ACE tab stop ($1) sits in the inserted text, so the client can
+					// place the cursor there (e.g. inside the parentheses of "all()").
+					entry.put("cursorOffset", Integer.valueOf(tabStop.start()));
+				}
 				entry.put("replacement", ACE_TAB_STOP_PATTERN.matcher(snippet).replaceAll(""));
 			}
 			String docHTML = c.getDocHTML();

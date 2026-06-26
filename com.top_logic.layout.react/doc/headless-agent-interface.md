@@ -241,29 +241,35 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       dependency on the control. **`@ReactParam` is a hand-rolled restatement of what a
       `ConfigurationItem` descriptor already knows; the typed-argument work below replaces
       it (see D5).**
-- [ ] **Typed command arguments as `ConfigurationItem` (the D5 core).** Let a
-      `@ReactCommand` handler declare a `ConfigurationItem` subtype as its argument
-      parameter (third allowed param type alongside `ReactContext` and the legacy raw
-      `Map`). At dispatch the incoming client JSON args bind into that config via
-      `JsonConfigurationReader`; the handler reads typed getters. One interface then
-      drives all three downstream needs — no second representation, no drift:
-  - [ ] **JSON schema for free** — `JsonConfigSchemaBuilder` (already exists in
-        `com.top_logic.basic.config.json`) projects the arg interface to a JSON Schema
-        (types, `@Mandatory`, constraints, enums, nested/polymorphic). Replaces the
-        `@ReactParam` array in the projected action space.
-  - [ ] **Human-readable step rendering** — a per-arg-type `ResKey` interpolates the
-        action's own values, *label-resolved* through the existing `MetaLabelProvider` /
-        `ModelResolver` substrate (technical values like a `ModelName` business key or an
-        address render as the object/element label). This is the recorder side-window's
-        human-compatible display, modelled on the legacy `ApplicationAction` I18N.
+- [x] **Typed command arguments as `ConfigurationItem` (the D5 core) — first slice done
+      (unit-verified; live pending).** A `@ReactCommand` handler may declare a
+      `ConfigurationItem` subtype as its argument parameter (third allowed param type
+      alongside `ReactContext` and the legacy raw `Map`). `ReactCommandMap` captures the
+      argument `ConfigurationDescriptor`; at dispatch `ReactCommandInvoker` re-serializes
+      the client argument `Map` and binds it through `JsonConfigurationReader`, so the
+      handler receives the typed instance and reads getters. Un-migrated commands keep the
+      raw `Map` path untouched. `TestAgentSession` (12 green) proves the binding and the
+      descriptor capture; a control's `setNote(NoteArgs)` receives `{note:"hello"}` typed.
+  - [x] **JSON schema for free** — `JsonConfigSchemaBuilder.buildConfigSchema` projects the
+        arg descriptor to a JSON Schema, serialized via `JsonSchemaWriter` and emitted as
+        the action's `argsSchema` (replacing `params` for typed commands). Fault-tolerant:
+        if the schema can't build (e.g. no `ResourcesModule`), the action still projects
+        with a `null` schema. Schema *content* resolves I18N descriptions, so it is
+        exercised live, not in the service-free unit test.
+  - [ ] **Human-readable step rendering** — render the bound config via the existing
+        `ConfigLabelProvider` (template keyed by the interface name, values label-resolved
+        through `MetaLabelProvider`); no annotation needed. This is the recorder
+        side-window's human-compatible display. *Next slice* — it is a recorder-side
+        consumer (`RecordedStep` must carry/rebuild the typed config), so the template
+        lands with that wiring, not before (no dead scaffolding).
   - [ ] **Persisted step format** — write the bound config instance as JSON/XML (feeds
         parity item #12; per-step `comment` rides along, parity #16).
-  - [ ] Lean React-side action-config **base** — reuses only `ModelName`/value-labeling
-        + `ResKey` rendering + `JsonConfigSchemaBuilder`. **Not** legacy `ApplicationAction`
-        (which drags in `ComponentName`/`WindowScope`/`MainLayout` the React layer dropped).
-  - [ ] Migrate the recordable/interactive commands to typed args; chrome commands keep
-        the raw `Map`. Consider a conformance check that every recordable `@ReactCommand`
-        declares a config arg type.
+  - [x] Lean React-side action-config **base** — `ReactCommandArguments` (plain
+        `ConfigurationItem`). **Not** legacy `ApplicationAction`.
+  - [ ] Migrate the remaining recordable/interactive commands to typed args (so far:
+        sidebar `selectItem` → `SelectItemArguments`); chrome commands keep the raw `Map`.
+        Consider a conformance check that every recordable `@ReactCommand` declares a
+        config arg type.
 - [ ] **Sidebar size hotspot via the enum schema** — once `selectItem` carries a typed
       arg, advertise `itemId` as a constrained enum (`∈ {dashboard, administration, …}`)
       from the schema instead of shipping the raw 24-entry `items` array (folds the
@@ -536,6 +542,21 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-26** — **Typed command arguments — first slice** (D5 core), unit-verified,
+  live pending. A `@ReactCommand` handler may now declare a `ConfigurationItem` argument
+  instead of a raw `Map`: `ReactCommandMap` captures the argument descriptor and
+  `ReactCommandInvoker` binds the client argument `Map` into the typed instance through
+  `JsonConfigurationReader` (re-serialized JSON → config), exactly as the user framed it
+  ("read via its JSON serialization instead of a plain map"). The projector emits the
+  command's JSON schema (`JsonConfigSchemaBuilder` → `JsonSchemaWriter`) as `argsSchema`,
+  replacing the hand-rolled `@ReactParam` for typed commands; schema-building is
+  fault-tolerant (no `ResourcesModule` → `null` schema, projection proceeds). New lean
+  base `ReactCommandArguments` (plain `ConfigurationItem`); sidebar `selectItem` migrated
+  to `SelectItemArguments`. `TestAgentSession` grew to 12 (binding + descriptor capture);
+  generated EN labels feed both the schema and the planned `ConfigLabelProvider` rendering,
+  DE hand-corrected (`Element-ID`). Remaining: live verification (sidebar advertises the
+  typed `selectItem` schema; click still navigates), then the recorder-side human-readable
+  rendering via `ConfigLabelProvider`.
 - **2026-06-25** — **Recorder step-debugger**, verified live. Selecting a captured step in the
   recorder side-window and pressing Step replays that one step on the recorded (opener) window —
   the effect appears in the main browser window — and advances the selection to the next step.

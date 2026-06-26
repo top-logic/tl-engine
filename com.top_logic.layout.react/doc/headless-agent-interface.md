@@ -555,6 +555,24 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-26** — **Field input fixed + recorded as one step** (recorder quality / parity #5),
+  verified live. Two coupled fixes to text-like field input:
+  1. *No more mangled typing / per-keystroke round-trips.* The client (`useTLFieldValue`) kept
+     transmitting `valueChanged` on every keystroke while the server echoed the value back
+     (`putState(VALUE)`); a late echo of an earlier keystroke clobbered the newer optimistic local
+     value (dropped characters), and recording widened the latency that exposed it. Fix:
+     `ReactFormFieldControl` suppresses only the *redundant* self-echo (a coercion or dependent
+     change still echoes), and the client debounces the send (300 ms) and flushes on blur
+     (`TLTextInput`/`TLNumberInput`/`TLPasswordInput`). Verified live: char-by-char input stays
+     intact, ~3 requests for 10 keystrokes, login (text+password) still authenticates (flush-on-blur).
+  2. *Consecutive field edits coalesce into one recorded step* (the legacy `FormInput` semantics).
+     `RecordedCommand` gained a `coalescing` flag; `ReactFormFieldControl.recordCommand` marks its
+     `valueChanged` coalescing; `ScriptRecorder.record(step, coalescing)` supersedes the previous
+     step when it shares the same `address` + `command`. **No control-type knowledge in the recorder
+     loop** — it merges by data equality; the control declares intent through the `recordCommand`
+     seam it already owns. `TestScriptRecorder` (6 cases) covers the merge semantics; verified live:
+     typing three characters into a table-row Name field recorded a *single* `valueChanged` step with
+     the final value, not three.
 - **2026-06-26** — **Human-readable recorded-step rendering**, verified live — the headline of
   the typed-argument work. `ReactControl.describeCommand(command, args)` binds the arguments to
   the typed config and renders via `ConfigLabelProvider`; each arg interface's `@Label` doubles

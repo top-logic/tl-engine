@@ -8,12 +8,20 @@ package com.top_logic.layout.react;
 import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
  * I18N constants for the React integration module.
  */
 public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * Recorder-step description of a field value change: which field (by name) was set to which value.
+	 *
+	 * @en Set ''{0}'' to ''{1}''
+	 */
+	public static ResKey2 RECORD_FIELD_VALUE__FIELD_VALUE;
 
 	/**
 	 * @en React control value changed.

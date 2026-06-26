@@ -6,12 +6,18 @@
 package com.top_logic.layout.react.control.button;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
  * I18N constants for {@link MessageButtons}.
  */
 public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en Button ''{0}'' pressed
+	 */
+	public static ResKey1 RECORD_BUTTON_CLICK__LABEL;
 
 	/**
 	 * @en Save

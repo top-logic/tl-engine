@@ -196,7 +196,7 @@ public class RecordedStepsTable implements UIElement {
 
 	/**
 	 * A human-readable description of the step: the target control's
-	 * {@link ReactControl#describeCommand(String, java.util.Map) rendering} of the command (e.g.
+	 * {@link ReactControl#describeCommand(String, java.util.Map, String) rendering} of the command (e.g.
 	 * <em>Navigate to 'input-controls'</em>), resolved against the opener window. Falls back to the
 	 * raw command and arguments for assertion steps, untyped commands, or an address that no longer
 	 * resolves.
@@ -205,7 +205,7 @@ public class RecordedStepsTable implements UIElement {
 		if (!step.isAssertion() && openerRoot != null && step.address() != null) {
 			try {
 				ReactControl target = AgentSession.forRoot(openerRoot).resolve(step.address());
-				String label = target.describeCommand(step.command(), step.arguments());
+				String label = target.describeCommand(step.command(), step.arguments(), targetName(step.address()));
 				if (label != null) {
 					return label;
 				}
@@ -214,6 +214,21 @@ public class RecordedStepsTable implements UIElement {
 			}
 		}
 		return step.command() + " " + JSON.toString(step.arguments());
+	}
+
+	/**
+	 * The semantic name of the addressed control: the last {@code [name]} segment of the address —
+	 * the container-supplied identity (a form field name, a table column, a button label) that the
+	 * control itself may not know. E.g. {@code …/formField[members]/textInput} yields {@code members}
+	 * and {@code …/button[Neu]} yields {@code Neu}. {@code null} if the address carries no name.
+	 */
+	private static String targetName(String address) {
+		int close = address.lastIndexOf(']');
+		if (close < 0) {
+			return null;
+		}
+		int open = address.lastIndexOf('[', close);
+		return open < 0 ? null : address.substring(open + 1, close);
 	}
 
 	/**

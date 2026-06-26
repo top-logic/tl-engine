@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.control.button;
 
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.util.Resources;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
@@ -215,12 +216,35 @@ public class ReactButtonControl extends ReactControl {
 		}
 	}
 
+	/** The {@link ReactCommand} sent when the button is clicked. */
+	private static final String CMD_CLICK = "click";
+
 	/**
 	 * Handles the click command from the React client.
 	 */
-	@ReactCommand("click")
+	@ReactCommand(CMD_CLICK)
 	HandlerResult handleClick(ReactContext context) {
 		return _action.execute(context);
+	}
+
+	/**
+	 * Renders a recorded click as <em>Button 'Label' pressed</em>, identifying the button by its
+	 * {@code targetName} (its label, from the recorded address) or, failing that, its label state.
+	 */
+	@Override
+	public String describeCommand(String command, java.util.Map<String, Object> arguments, String targetName) {
+		if (CMD_CLICK.equals(command)) {
+			// Prefer the button's own label state (the real, spaced label) over the address-derived
+			// name (whose spaces are sanitized to underscores).
+			Object label = getState(LABEL);
+			if (label == null) {
+				label = targetName;
+			}
+			if (label != null) {
+				return Resources.getInstance().getString(I18NConstants.RECORD_BUTTON_CLICK__LABEL.fill(label));
+			}
+		}
+		return super.describeCommand(command, arguments, targetName);
 	}
 
 	@Override

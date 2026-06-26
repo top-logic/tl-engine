@@ -8,6 +8,7 @@ import type { TLCellProps } from 'tl-react-bridge';
 import type { Extension } from '@codemirror/state';
 import { LanguageSupport } from '@codemirror/language';
 import { linter } from '@codemirror/lint';
+import type { Diagnostic } from '@codemirror/lint';
 import { xml } from '@codemirror/lang-xml';
 import { json, jsonParseLinter } from '@codemirror/lang-json';
 import { css } from '@codemirror/lang-css';
@@ -24,11 +25,44 @@ interface LanguageBinding {
   extras: Extension[];
 }
 
+/**
+ * Linter checking XML well-formedness through the browser's {@code DOMParser}. Reports the first
+ * parse error (bare {@code &}, mismatched/unclosed tags, multiple roots, ...) at its reported
+ * line/column when the parser exposes one, otherwise at the document start.
+ */
+function xmlLinter(): Extension {
+  return linter((view): Diagnostic[] => {
+    const text = view.state.doc.toString();
+    if (text.trim() === '') {
+      return [];
+    }
+    const parsed = new DOMParser().parseFromString(text, 'application/xml');
+    const error = parsed.querySelector('parsererror');
+    if (!error) {
+      return [];
+    }
+    // Chrome nests the "error on line N at column M: <reason>" text in a child element and wraps
+    // the parsererror itself in boilerplate; prefer the child, falling back to the full text (e.g.
+    // Firefox, whose parsererror text is already the bare message).
+    const detail = error.querySelector('div')?.textContent ?? error.textContent ?? 'Invalid XML.';
+    const message = detail.replace(/\s+/g, ' ').trim() || 'Invalid XML.';
+    const doc = view.state.doc;
+    const match = /line (\d+)[^\d]+column (\d+)/i.exec(message);
+    if (match) {
+      const lineNo = Math.max(1, Math.min(parseInt(match[1], 10), doc.lines));
+      const line = doc.line(lineNo);
+      const from = line.from + Math.max(0, Math.min(parseInt(match[2], 10) - 1, line.length));
+      return [{ from, to: Math.min(from + 1, line.to), severity: 'error', message }];
+    }
+    return [{ from: 0, to: Math.min(text.length, doc.line(1).to), severity: 'error', message }];
+  });
+}
+
 /** Resolves a server language id (see {@code CodeEditorLanguage}) to its CodeMirror support. */
 function bindingFor(language: string): LanguageBinding {
   switch (language) {
     case 'xml':
-      return { support: xml(), extras: [] };
+      return { support: xml(), extras: [xmlLinter()] };
     case 'json':
       return { support: json(), extras: [linter(jsonParseLinter())] };
     case 'css':

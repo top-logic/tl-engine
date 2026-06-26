@@ -8,7 +8,7 @@
 3 * (5 + 9 / 3)</code></pre>
 <p>Die obigen beiden "Skripte" liefern <code class="hljs inlineCode">3</code> bzw. <code class="hljs inlineCode">24</code> als Ergebnis. Siehe auch <a class="tlObject" data-custom="false" href="?page=ArithmeticOperations&amp;uuid=4cea9b35-54a8-47fe-aed3-b0637cf4c040">Arithmetische Operationen</a>.</p>
 <h2>Rechnen mit Text</h2>
-<p>Texte bzw. Zeichenketten sind neben Zahlen ein wichiger Datentyp in Anwendungen. TL-Script bietet eine Vielzahl von Möglichkeiten für die Manipulation von Zeichenketten.</p>
+<p>Texte bzw. Zeichenketten sind neben Zahlen ein wichtiger Datentyp in Anwendungen. TL-Script bietet eine Vielzahl von Möglichkeiten für die Manipulation von Zeichenketten.</p>
 <pre><code>toUpperCase("Hello world!")
 
 toString("Hello", " ", "world", "!")</code></pre>
@@ -30,7 +30,7 @@ toString("Hello", " ", "world", "!")</code></pre>
 <p>Die wichtigsten Operationen auf Listen ist die Filterung und die Abbildung. In beiden Fällen wird eine Funktion auf jedes Element der Liste angewendet. Bei der Filterung entscheidet die Filterfunktion, ob das jeweilige Listenelement Teil des Ergebnisses ist oder nicht.</p>
 <pre><code>list(3, 1, 5, 11, 7, 2, 8).filter(x -&gt; $x &gt; 4) </code></pre>
 <p>Obiger Ausdruck liefert die Liste <code class="hljs inlineCode">5, 11, 7, 8</code> als Ergebnis. Die Filterfunktion <code class="hljs inlineCode">x -&gt; $x &gt; 4</code> bildet jedes Listenelement <code class="hljs inlineCode">x</code> auf den Wahrheitswert <code class="hljs inlineCode">$x &gt; 4</code> ab, prüft also, ob das Listenelement größer als 5 ist. Eine solche Funktion deklariert einen Parameter (hier <code class="hljs inlineCode">x</code>, der Name kann frei gewählt werden) und führt eine Berechnung mit diesem so benannten Wert aus. Im Rumpf der Funktion nimmt man Bezug auf den Parameter, indem man ein $-Zeichen vor den Parameternamen stellt.</p>
-<p>Obiger Filter-Ausdruck belegt also nacheinander die Variable <code class="hljs inlineCode">x</code> mit den Werten <code class="hljs inlineCode">3, 1, 5,...</code> der Eingabeliste und berechnet den Wahrheitswert <code class="hljs inlineCode">$x &gt; 4</code>. Immer wenn dieser Wert "wahr" ist, wird das Listenelement in das Ergebnis aufgenommen. Ist der Wert "falsch", wird das Listenelement verworfen und nicht in das Ergbnis übernommen.</p>
+<p>Obiger Filter-Ausdruck belegt also nacheinander die Variable <code class="hljs inlineCode">x</code> mit den Werten <code class="hljs inlineCode">3, 1, 5,...</code> der Eingabeliste und berechnet den Wahrheitswert <code class="hljs inlineCode">$x &gt; 4</code>. Immer wenn dieser Wert "wahr" ist, wird das Listenelement in das Ergebnis aufgenommen. Ist der Wert "falsch", wird das Listenelement verworfen und nicht in das Ergebnis übernommen.</p>
 <p>Bei der Abbildung wird eine Berechnung auf jedem Listenelement ausgeführt und das Ergebnis dieser Berechnung in das Ergebnis übernommen.</p>
 <pre><code>list(5, 11, 7, 8).map(x -&gt; $x + 2)</code></pre>
 <p>Hier ist das Ergebnis die Liste <code class="hljs inlineCode">7, 13, 9, 10</code>. Die Abbildungsfunktion <code class="hljs inlineCode">x -&gt; $x + 2</code> erhöht ihre Eingabe jeweils um 2. Sie wird auf jedes Listenelement angewendet und alle so berechneten Ergebnisse werden im Ergebnis gesammelt.</p>

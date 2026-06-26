@@ -6,23 +6,30 @@
 package com.top_logic.model.search.react;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.resources.TLTypePartResourceProvider;
+import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
@@ -32,16 +39,17 @@ import com.top_logic.table.impl.ListRowSource;
  * rebuilt on every evaluation.
  *
  * <p>
- * The result is split into rows (one per element of a collection/array, a single row for a scalar,
- * none for {@code null}). The columns depend on the row values:
+ * The result is split into elements (one per element of a collection/array, a single element for a
+ * scalar, none for {@code null}). The columns depend on the element values:
  * </p>
  * <ul>
- * <li>For {@link TLObject} rows, one column per attribute - the union of all attributes across the
- * (possibly different) object types present, each cell showing that object's value for the
- * attribute (empty when the object's type lacks it).</li>
- * <li>A leading {@code result} column showing the element label is added whenever a non-object
- * (primitive) value is present, or when there are no object attributes at all (the all-primitive
- * case).</li>
+ * <li>When <em>all</em> elements are {@link TLObject model objects}, the table reuses the platform
+ * column auto-configuration ({@link ColumnProviderService}): one column per attribute - the union
+ * of the non-hidden attributes across all object types present - with type-appropriate sorting,
+ * filtering and cell rendering. The objects are the rows directly.</li>
+ * <li>Otherwise (a primitive value is present, or no object attributes exist) a {@code result}
+ * column shows each element's label, followed by text columns for any object attributes. These
+ * columns are sortable and text-filterable.</li>
  * </ul>
  *
  * <p>
@@ -66,8 +74,8 @@ public class ScriptResultControl extends ReactControl {
 	private static final String RESULT_COLUMN = "result";
 
 	/**
-	 * One result row, wrapping a result element with its position so duplicate values keep distinct
-	 * row keys.
+	 * One result row of the generic (mixed/primitive) table, wrapping a result element with its
+	 * position so duplicate values keep distinct row keys.
 	 *
 	 * @param index
 	 *        The zero-based position of the element in the result, used as the row key.
@@ -121,8 +129,54 @@ public class ScriptResultControl extends ReactControl {
 	}
 
 	private ReactControl buildTable(Object value) {
-		List<ScriptResultRow> rows = rows(value);
-		List<Column<ScriptResultRow, ?>> columns = columns(rows);
+		List<Object> elements = elements(value);
+		if (!elements.isEmpty() && elements.stream().allMatch(ScriptResultControl::isModelObject)) {
+			ReactControl objectTable = buildObjectTable(elements);
+			if (objectTable != null) {
+				return objectTable;
+			}
+		}
+		return buildGenericTable(elements);
+	}
+
+	/**
+	 * Builds a table for an all-object result, reusing {@link ColumnProviderService} for type-aware
+	 * sortable/filterable columns (the union of non-hidden attributes across all types present).
+	 * Returns {@code null} when no columns could be derived, so the caller falls back to the generic
+	 * table.
+	 */
+	private ReactControl buildObjectTable(List<Object> elements) {
+		Map<String, TLStructuredTypePart> parts = attributeUnion(elements);
+		if (parts.isEmpty()) {
+			return null;
+		}
+		ColumnProviderService columnService = ColumnProviderService.getInstance();
+		List<Column<Object, ?>> columns = new ArrayList<>(parts.size());
+		for (TLStructuredTypePart part : parts.values()) {
+			columns.add(columnService.createColumn(part.getName(), TLModelNamingConvention.resourceKey(part), part));
+		}
+		ListRowSource<Object> source = new ListRowSource<>(elements, columns);
+		DefaultTableView<Object> view = DefaultTableView.create(columns, source);
+		return new TableViewControl<>(_context, view, false);
+	}
+
+	/**
+	 * Builds the fallback table for a result containing primitive values: a label {@code result}
+	 * column followed by text columns for any object attributes, all sortable and text-filterable.
+	 */
+	private ReactControl buildGenericTable(List<Object> elements) {
+		List<ScriptResultRow> rows = new ArrayList<>(elements.size());
+		for (int i = 0; i < elements.size(); i++) {
+			rows.add(new ScriptResultRow(i, elements.get(i)));
+		}
+
+		List<Column<ScriptResultRow, ?>> columns = new ArrayList<>();
+		columns.add(textColumn(RESULT_COLUMN, I18NConstants.SCRIPT_RESULT_COLUMN, row -> label(row.value())));
+		for (TLStructuredTypePart part : attributeUnion(elements).values()) {
+			String name = part.getName();
+			columns.add(textColumn(name, TLModelNamingConvention.resourceKey(part), row -> attribute(row.value(), name)));
+		}
+
 		ListRowSource<ScriptResultRow> source =
 			new ListRowSource<>(rows, columns, row -> Integer.valueOf(row.index()));
 		DefaultTableView<ScriptResultRow> view = DefaultTableView.create(columns, source);
@@ -130,63 +184,55 @@ public class ScriptResultControl extends ReactControl {
 	}
 
 	/**
-	 * The columns for the given rows: one per object attribute (union across all object types
-	 * present), plus a leading label column when a non-object value is present or no object
-	 * attributes exist.
+	 * The union of the non-hidden attributes across the types of all object elements, in
+	 * first-seen order and deduplicated by attribute name.
 	 */
-	private static List<Column<ScriptResultRow, ?>> columns(List<ScriptResultRow> rows) {
+	private static Map<String, TLStructuredTypePart> attributeUnion(List<Object> elements) {
 		Map<String, TLStructuredTypePart> parts = new LinkedHashMap<>();
-		boolean hasNonObject = false;
-		for (ScriptResultRow row : rows) {
-			Object value = row.value();
-			if (value instanceof TLObject obj && obj.tType() != null) {
-				for (TLStructuredTypePart part : obj.tType().getAllParts()) {
-					parts.putIfAbsent(part.getName(), part);
+		for (Object element : elements) {
+			if (isModelObject(element)) {
+				for (TLStructuredTypePart part : ((TLObject) element).tType().getAllParts()) {
+					if (!DisplayAnnotations.isHidden(part)) {
+						parts.putIfAbsent(part.getName(), part);
+					}
 				}
-			} else {
-				hasNonObject = true;
 			}
 		}
-
-		List<Column<ScriptResultRow, ?>> columns = new ArrayList<>();
-		if (hasNonObject || parts.isEmpty()) {
-			columns.add(DefaultColumn.<ScriptResultRow, String> builder(RESULT_COLUMN, row -> label(row.value()))
-				.label(I18NConstants.SCRIPT_RESULT_COLUMN)
-				.renderer(CellContent::text)
-				.build());
-		}
-		for (TLStructuredTypePart part : parts.values()) {
-			String name = part.getName();
-			columns.add(DefaultColumn.<ScriptResultRow, String> builder(name, row -> attribute(row.value(), name))
-				.label(TLTypePartResourceProvider.labelKey(part))
-				.renderer(CellContent::text)
-				.build());
-		}
-		return columns;
+		return parts;
 	}
 
 	/**
-	 * The result value split into table rows: one row per element of a {@link Collection} or array,
-	 * a single row for any other non-{@code null} value, and no rows for {@code null}.
+	 * The result value flattened into elements: the members of a {@link Collection} or array, the
+	 * single value for any other non-{@code null} value, and none for {@code null}.
 	 */
-	private static List<ScriptResultRow> rows(Object value) {
-		List<ScriptResultRow> rows = new ArrayList<>();
+	private static List<Object> elements(Object value) {
+		List<Object> elements = new ArrayList<>();
 		if (value == null) {
-			return rows;
+			return elements;
 		}
 		if (value instanceof Collection<?> collection) {
-			int index = 0;
-			for (Object element : collection) {
-				rows.add(new ScriptResultRow(index++, element));
-			}
+			elements.addAll(collection);
 		} else if (value instanceof Object[] array) {
-			for (int i = 0; i < array.length; i++) {
-				rows.add(new ScriptResultRow(i, array[i]));
-			}
+			elements.addAll(Arrays.asList(array));
 		} else {
-			rows.add(new ScriptResultRow(0, value));
+			elements.add(value);
 		}
-		return rows;
+		return elements;
+	}
+
+	private static boolean isModelObject(Object value) {
+		return value instanceof TLObject object && object.tType() != null;
+	}
+
+	/** A sortable, text-filterable column rendering a {@link String} value of a row. */
+	private static Column<ScriptResultRow, String> textColumn(String id, ResKey label,
+			Function<? super ScriptResultRow, String> value) {
+		return DefaultColumn.<ScriptResultRow, String> builder(id, value)
+			.label(label)
+			.renderer(CellContent::text)
+			.sort(() -> Comparator.<String> naturalOrder())
+			.filter(new TextColumnFilter<>(text -> text))
+			.build();
 	}
 
 	/**

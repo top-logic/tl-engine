@@ -21617,12 +21617,16 @@ function Ay() {
     return [{ from: 0, to: Math.min(e.length, o.line(1).to), severity: "error", message: s }];
   });
 }
-function Ry(n) {
+function Ry() {
+  const n = p0();
+  return yf((e) => e.state.doc.toString().trim() === "" ? [] : n(e));
+}
+function My(n) {
   switch (n) {
     case "xml":
       return { support: f0(), extras: [Ay()] };
     case "json":
-      return { support: S0(), extras: [yf(p0())] };
+      return { support: S0(), extras: [Ry()] };
     case "css":
       return { support: If(), extras: [] };
     case "javascript":
@@ -21635,8 +21639,8 @@ function Ry(n) {
       return { support: void 0, extras: [] };
   }
 }
-const My = ({ controlId: n, state: e }) => {
-  const [t, i] = VO(), r = e.language ?? "plain", s = e.editable === !1, o = Xy(() => Ry(r), [r]), l = [
+const jy = ({ controlId: n, state: e }) => {
+  const [t, i] = VO(), r = e.language ?? "plain", s = e.editable === !1, o = Xy(() => My(r), [r]), l = [
     "tlCodeEditor",
     e.hasError === !0 ? "tlCodeEditor--error" : ""
   ].filter(Boolean).join(" ");
@@ -21653,7 +21657,7 @@ const My = ({ controlId: n, state: e }) => {
     }
   );
 };
-zO("TLCodeEditor", My);
+zO("TLCodeEditor", jy);
 export {
   Zy as CodeEditor,
   Zt as LRLanguage,

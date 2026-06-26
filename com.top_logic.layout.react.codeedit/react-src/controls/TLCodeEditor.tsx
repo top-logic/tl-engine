@@ -58,13 +58,23 @@ function xmlLinter(): Extension {
   });
 }
 
+/**
+ * JSON validation that treats an empty (or whitespace-only) document as valid. The bare
+ * {@code jsonParseLinter} reports "Unexpected end of JSON input" for an empty field, which is
+ * noise for an optional value.
+ */
+function jsonLinter(): Extension {
+  const parse = jsonParseLinter();
+  return linter((view) => (view.state.doc.toString().trim() === '' ? [] : parse(view)));
+}
+
 /** Resolves a server language id (see {@code CodeEditorLanguage}) to its CodeMirror support. */
 function bindingFor(language: string): LanguageBinding {
   switch (language) {
     case 'xml':
       return { support: xml(), extras: [xmlLinter()] };
     case 'json':
-      return { support: json(), extras: [linter(jsonParseLinter())] };
+      return { support: json(), extras: [jsonLinter()] };
     case 'css':
       return { support: css(), extras: [] };
     case 'javascript':

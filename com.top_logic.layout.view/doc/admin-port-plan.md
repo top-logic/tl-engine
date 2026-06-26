@@ -190,11 +190,29 @@ Establishes the "System" admin section (added with the locks view as a sibling t
       cell reuses `SimpleSelectFieldModel` + `ReactDropdownSelectControl` (a `CellContent.Raw` factory
       cell); a `FieldModelListener` applies the chosen level.
 
-### Batch 5 — Model editor (move + polish)  ▢
-- [ ] Move `module-graph-demo.view.xml` out of the demo nav into the admin hub
-      as a `model` section.
-- [ ] Polish from a read-only module/class-diagram browser into an editor:
-      edit type/attribute/module properties, create/delete via dialogs.
+### Batch 5 — Model editor  ✅ DONE
+The model editor cannot live in `com.top_logic.layout.view`: it reuses the
+`<flow-diagram>` element (and `reactFlow*` script functions), which are defined in
+`com.top_logic.react.flow.server` — a module that itself depends on the view layer, so
+the view layer cannot depend back on it. The editor therefore lives in a new
+**`com.top_logic.dev.tools`** (`tl-dev-tools`) module for in-app developer tools, which
+sits above the flow module. The admin hub holds a **forward reference**
+(`<view-ref view="admin/model/model-editor.view.xml"/>`) into that module; an app that
+surfaces the hub and wants the Model section adds a `tl-dev-tools` dependency (the demo
+does). A general modular view plug-in mechanism is left for later.
+- [x] `model-editor.view.xml` (admin hub, Model section): master/detail editor over the
+      application model. A `<table>` of `tl.model:TLModule` (left) selects a module; the reused
+      class `<flow-diagram>` (center) shows and selects the module's types and their attributes;
+      read-only detail forms show the selected module / part.
+- [x] Create / delete / rename via dialogs and a confirm, driven by one reusable
+      `ModelEditAction` (modes CREATE_MODULE / CREATE_TYPE / CREATE_ATTRIBUTE / RENAME / DELETE)
+      over the `TLModelUtil` primitives (`addModule` / `addClass` / `addEnumeration` /
+      `addProperty` / `deleteRecursive`) inside `<with-transaction>`. New type picks class vs.
+      enumeration via a `tl.devtools:TypeKind` enum; new attribute picks the value type and
+      cardinality (mandatory / multiple). Rename pre-fills the current name and uses `setName`.
+      A `reload` trigger input is bumped (`now()`) after a diagram-affecting mutation so the
+      diagram re-reads its (unchanged) module input. Model-part names are read-only through the
+      generic form, so renaming goes through the action rather than live form binding.
 
 ## Conventions & verification checklist (every batch)
 

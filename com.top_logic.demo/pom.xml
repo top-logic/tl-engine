@@ -84,6 +84,10 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-dev-tools</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-monitoring</artifactId>
     </dependency>
     <dependency>

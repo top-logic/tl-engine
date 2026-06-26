@@ -166,6 +166,18 @@
 					</tabs>
 				</tab-bar>
 			</tab>
+			<tab id="model">
+				<label>
+					<en>Model</en>
+					<de>Modell</de>
+				</label>
+				<!--
+					The model editor lives in the tl-dev-tools module (it uses the flow diagram, which the
+					view layer must not depend on). This is a forward reference: an app that surfaces this
+					admin hub and wants the Model section must add a dependency on tl-dev-tools.
+				-->
+				<view-ref view="admin/model/model-editor.view.xml"/>
+			</tab>
 		</tabs>
 	</tab-bar>
 </view>

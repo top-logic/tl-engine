@@ -77,6 +77,7 @@
 		<module>../com.top_logic.graphic.blocks.server</module>
 		<module>../com.top_logic.react.flow.common</module>
 		<module>../com.top_logic.react.flow.server</module>
+		<module>../com.top_logic.dev.tools</module>
 		<module>../com.top_logic.ide.jetty</module>
 		<module>../com.top_logic.importer</module>
 		<module>../com.top_logic.kafka</module>

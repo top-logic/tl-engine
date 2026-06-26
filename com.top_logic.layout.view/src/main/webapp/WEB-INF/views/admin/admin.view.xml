@@ -161,7 +161,7 @@
 								<en>Script console</en>
 								<de>Skript-Konsole</de>
 							</label>
-							<view-ref view="admin/script-console.view.xml"/>
+							<view-ref view="admin/development/script-console.view.xml"/>
 						</tab>
 					</tabs>
 				</tab-bar>

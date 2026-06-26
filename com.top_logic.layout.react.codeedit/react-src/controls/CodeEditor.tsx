@@ -167,7 +167,15 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
     view.dispatch(setDiagnostics(view.state, cmDiags));
   }, [diagnostics]);
 
-  return <div ref={editorRef} id={controlId} className={className ?? 'tlCodeEditor'} />;
+  // The root always carries `tlCodeEditorSurface` (structural styling shared by every editor built
+  // on this base, e.g. the TL-Script editor) plus the consumer's cosmetic class.
+  return (
+    <div
+      ref={editorRef}
+      id={controlId}
+      className={['tlCodeEditorSurface', className ?? 'tlCodeEditor'].join(' ')}
+    />
+  );
 };
 
 export default CodeEditor;

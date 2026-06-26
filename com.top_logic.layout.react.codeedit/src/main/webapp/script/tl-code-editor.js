@@ -21598,7 +21598,14 @@ const Zy = (n) => {
     if (!p) return;
     const g = (l ?? []).map((S) => Cy(p, S)).filter((S) => S.from <= p.state.doc.length && S.to <= p.state.doc.length);
     p.dispatch(Sf(p.state, g));
-  }, [l]), /* @__PURE__ */ Cr.createElement("div", { ref: c, id: e, className: h ?? "tlCodeEditor" });
+  }, [l]), /* @__PURE__ */ Cr.createElement(
+    "div",
+    {
+      ref: c,
+      id: e,
+      className: ["tlCodeEditorSurface", h ?? "tlCodeEditor"].join(" ")
+    }
+  );
 }, { useMemo: Xy } = Cr;
 function Ay() {
   return yf((n) => {

@@ -18,8 +18,8 @@ class TracingDynamicGet extends DynamicGet {
 	/**
 	 * Creates a {@link TracingDynamicGet}.
 	 */
-	public TracingDynamicGet(String name, SearchExpression self, SearchExpression[] arguments) {
-		super(name, arguments);
+	public TracingDynamicGet(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override

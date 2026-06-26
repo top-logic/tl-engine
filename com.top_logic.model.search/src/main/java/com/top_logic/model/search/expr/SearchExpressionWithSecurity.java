@@ -12,9 +12,10 @@ import com.top_logic.model.search.WithSecurityCheck;
  * Base class for a {@link SearchExpression} that is a {@link WithSecurityCheck}.
  *
  * <p>
- * Holds the {@link #usesSecurity() security flag} (enabled by default) so that subclasses only have
- * to guard their actual security check - filtering read results by the user's read rights, or
- * verifying write permissions - with {@link #usesSecurity()}.
+ * The {@link #usesSecurity() security flag} is a mandatory constructor argument so that it cannot be
+ * lost when an expression is reconstructed (e.g. during a {@link com.top_logic.model.search.expr.visit.Copy copy}
+ * or by a rewriter that replaces a node). A fresh expression is normally constructed with security
+ * enabled.
  * </p>
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -24,13 +25,17 @@ import com.top_logic.model.search.WithSecurityCheck;
  */
 public abstract class SearchExpressionWithSecurity extends SearchExpression implements WithSecurityCheck {
 
-	private boolean _usesSecurity = true;
+	private boolean _usesSecurity;
 
 	/**
 	 * Creates a {@link SearchExpressionWithSecurity}.
+	 *
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	protected SearchExpressionWithSecurity() {
+	protected SearchExpressionWithSecurity(boolean usesSecurity) {
 		super();
+		_usesSecurity = usesSecurity;
 	}
 
 	@Override

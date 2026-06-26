@@ -46,13 +46,13 @@ public class CreateProcessInstance extends GenericMethodWithSecurity {
 	 * Creates a new {@link CreateProcessInstance}.
 	 *
 	 */
-	protected CreateProcessInstance(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected CreateProcessInstance(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new CreateProcessInstance(getName(), arguments);
+		return new CreateProcessInstance(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -154,7 +154,7 @@ public class CreateProcessInstance extends GenericMethodWithSecurity {
 		@Override
 		public CreateProcessInstance build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new CreateProcessInstance(getConfig().getName(), args);
+			return new CreateProcessInstance(getConfig().getName(), args, true);
 		}
 
 	}

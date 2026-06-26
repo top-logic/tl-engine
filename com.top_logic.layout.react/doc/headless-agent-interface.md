@@ -241,8 +241,8 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       dependency on the control. **`@ReactParam` is a hand-rolled restatement of what a
       `ConfigurationItem` descriptor already knows; the typed-argument work below replaces
       it (see D5).**
-- [x] **Typed command arguments as `ConfigurationItem` (the D5 core) — first slice done
-      (unit-verified; live pending).** A `@ReactCommand` handler may declare a
+- [x] **Typed command arguments as `ConfigurationItem` (the D5 core) — first slice done,
+      verified live.** A `@ReactCommand` handler may declare a
       `ConfigurationItem` subtype as its argument parameter (third allowed param type
       alongside `ReactContext` and the legacy raw `Map`). `ReactCommandMap` captures the
       argument `ConfigurationDescriptor`; at dispatch `ReactCommandInvoker` re-serializes
@@ -250,12 +250,14 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       handler receives the typed instance and reads getters. Un-migrated commands keep the
       raw `Map` path untouched. `TestAgentSession` (12 green) proves the binding and the
       descriptor capture; a control's `setNote(NoteArgs)` receives `{note:"hello"}` typed.
-  - [x] **JSON schema for free** — `JsonConfigSchemaBuilder.buildConfigSchema` projects the
-        arg descriptor to a JSON Schema, serialized via `JsonSchemaWriter` and emitted as
-        the action's `argsSchema` (replacing `params` for typed commands). Fault-tolerant:
-        if the schema can't build (e.g. no `ResourcesModule`), the action still projects
-        with a `null` schema. Schema *content* resolves I18N descriptions, so it is
-        exercised live, not in the service-free unit test.
+  - [x] **JSON schema for free — verified live.** `JsonConfigSchemaBuilder.buildConfigSchema`
+        projects the arg descriptor to a JSON Schema, serialized via `JsonSchemaWriter` and
+        emitted as the action's `argsSchema` (replacing `params` for typed commands).
+        Fault-tolerant: if the schema can't build (e.g. no `ResourcesModule`), the action
+        still projects with a `null` schema. Live on the demo: `/agent-api/observe?mode=actions`
+        advertises `selectItem` with `argsSchema` carrying `required:["itemId"]` and the
+        property's generated `title:"Item ID"` + description — `@Mandatory` and the I18N label
+        flowing into the schema with no hand-written `@ReactParam`.
   - [ ] **Human-readable step rendering** — render the bound config via the existing
         `ConfigLabelProvider` (template keyed by the interface name, values label-resolved
         through `MetaLabelProvider`); no annotation needed. This is the recorder
@@ -554,9 +556,11 @@ Also decide whether `observe` should ever block user commands at all.
   base `ReactCommandArguments` (plain `ConfigurationItem`); sidebar `selectItem` migrated
   to `SelectItemArguments`. `TestAgentSession` grew to 12 (binding + descriptor capture);
   generated EN labels feed both the schema and the planned `ConfigLabelProvider` rendering,
-  DE hand-corrected (`Element-ID`). Remaining: live verification (sidebar advertises the
-  typed `selectItem` schema; click still navigates), then the recorder-side human-readable
-  rendering via `ConfigLabelProvider`.
+  DE hand-corrected (`Element-ID`). **Verified live:** clicking a sidebar item navigated
+  (`/view/input-controls`, SSE `activeItemId` patch, no errors), and
+  `/agent-api/observe?mode=actions` advertises `selectItem` with a derived JSON schema
+  (`required:["itemId"]`, `title:"Item ID"`). Remaining: recorder-side human-readable
+  rendering via `ConfigLabelProvider`, and migrating the other interactive commands.
 - **2026-06-25** — **Recorder step-debugger**, verified live. Selecting a captured step in the
   recorder side-window and pressing Step replays that one step on the recorded (opener) window —
   the effect appears in the main browser window — and advances the selection to the next step.

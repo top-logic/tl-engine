@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Logger levels: the configured loggers and their levels, each editable inline. The LoggerLevelTable
+	lists one row per logger (name plus a level dropdown) read from the LogConfigurator facade; choosing a
+	level applies it at runtime immediately. Refresh re-reads the loggers by ticking the reload channel
+	(picking up loggers configured meanwhile). A titled <panel> is used (not the chrome-less <full-page>)
+	because the view carries a toolbar command.
+-->
+<view>
+	<channels>
+		<channel name="reload"/>
+	</channels>
+	<panel fill="true">
+		<title>
+			<en>Log levels</en>
+			<de>Protokollebenen</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				input="reload"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<execute-script function="tick -> ($tick == null) ? 1 : $tick + 1"/>
+				<write-channel name="reload"/>
+			</generic-command>
+		</commands>
+		<child class="com.top_logic.layout.view.admin.system.LoggerLevelTable"
+			reload="reload"
+		/>
+	</panel>
+</view>

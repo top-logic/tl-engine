@@ -11,13 +11,17 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
+import java.util.TreeMap;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.AbstractConfiguration;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationFactory;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.config.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,6 +154,27 @@ public class Log4JConfigurator extends LogConfigurator {
 	@Override
 	public void removeLogMark(String key) {
 		ThreadContext.remove(key);
+	}
+
+	@Override
+	public Map<String, String> getLoggerLevels() {
+		Configuration config = LoggerContext.getContext(false).getConfiguration();
+		Map<String, String> result = new TreeMap<>();
+		for (Map.Entry<String, LoggerConfig> entry : config.getLoggers().entrySet()) {
+			Level level = entry.getValue().getLevel();
+			result.put(entry.getKey(), level == null ? null : level.name());
+		}
+		return result;
+	}
+
+	@Override
+	public void setLoggerLevel(String loggerName, String level) {
+		Level value = Level.toLevel(level);
+		if (loggerName == null || loggerName.isEmpty()) {
+			Configurator.setRootLevel(value);
+		} else {
+			Configurator.setLevel(loggerName, value);
+		}
 	}
 
 }

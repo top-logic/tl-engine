@@ -134,6 +134,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey LOG_COLUMN_DETAILS;
 
+	/**
+	 * @en Logger
+	 */
+	public static ResKey LOGGER_COLUMN_NAME;
+
+	/**
+	 * @en Level
+	 */
+	public static ResKey LOGGER_COLUMN_LEVEL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -139,6 +139,13 @@
 							</label>
 							<view-ref view="admin/logs.view.xml"/>
 						</tab>
+						<tab id="logger-levels">
+							<label>
+								<en>Log levels</en>
+								<de>Protokollebenen</de>
+							</label>
+							<view-ref view="admin/logger-levels.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

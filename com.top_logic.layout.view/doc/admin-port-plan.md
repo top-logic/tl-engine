@@ -178,7 +178,14 @@ Establishes the "System" admin section (added with the locks view as a sibling t
       `tl-monitoring` dependency); only the last 4 MB are parsed. Refresh ticks a `reload` channel so the
       current file is re-parsed (newly appended entries appear) without changing the selection. Per-file
       selection only — the legacy single combined cross-file table is deliberately **not** carried over.
-- [ ] Logger-level configuration — runtime table of loggers + per-logger level (Log4j2). Next step.
+- [x] Logger-level configuration — `logger-levels.view.xml` (System › Protokollebenen): a titled fill
+      panel whose `LoggerLevelTable` lists one row per configured logger (name + an **inline level
+      dropdown**) read from the extended `LogConfigurator` facade. Choosing a level applies it immediately
+      at runtime (`LogConfigurator.setLoggerLevel`); Refresh re-reads the live config. The facade gained
+      `getLoggerLevels` / `setLoggerLevel` / `getLevelNames` (no-op defaults; implemented in
+      `Log4JConfigurator` via the Log4j2 `Configurator`), so the view stays backend-agnostic. The inline
+      cell reuses `SimpleSelectFieldModel` + `ReactDropdownSelectControl` (a `CellContent.Raw` factory
+      cell); a `FieldModelListener` applies the chosen level.
 
 ### Batch 5 — Model editor (move + polish)  ▢
 - [ ] Move `module-graph-demo.view.xml` out of the demo nav into the admin hub

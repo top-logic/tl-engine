@@ -89,6 +89,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey MAINTENANCE_STATUS_ACTIVE;
 
+	/**
+	 * @en File
+	 */
+	public static ResKey LOG_COLUMN_NAME;
+
+	/**
+	 * @en Size
+	 */
+	public static ResKey LOG_COLUMN_SIZE;
+
+	/**
+	 * @en Last modified
+	 */
+	public static ResKey LOG_COLUMN_MODIFIED;
+
+	/**
+	 * @en Select a log file to view its content.
+	 */
+	public static ResKey LOG_NO_SELECTION;
+
+	/**
+	 * @en The log file ''{0}'' could not be read.
+	 */
+	public static ResKey1 LOG_READ_FAILED__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

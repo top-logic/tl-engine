@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Log viewer: the files in the application log directory on the left, the tail of the selected file on
+	the right. The LogFileTable shows a live snapshot (name, size, last modified) when opened and writes
+	the selected file to the selectedFile channel; the LogFileView reads that channel and renders the
+	last part of the file as scrollable monospace text. Refresh re-reads the current file by ticking the
+	reload channel (without changing the selection), so newly appended lines become visible.
+-->
+<view>
+	<channels>
+		<channel name="selectedFile"/>
+		<channel name="reload"/>
+	</channels>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="240"
+				size="40"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Log files</en>
+						<de>Protokolldateien</de>
+					</title>
+					<child class="com.top_logic.layout.view.admin.system.LogFileTable"
+						selection="selectedFile"
+					/>
+				</panel>
+			</pane>
+			<pane
+				size="60"
+				unit="%"
+			>
+				<panel fill="true">
+					<title>
+						<en>Content</en>
+						<de>Inhalt</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-arrow-clockwise"
+							input="reload"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Refresh</en>
+								<de>Aktualisieren</de>
+							</label>
+							<execute-script function="tick -> ($tick == null) ? 1 : $tick + 1"/>
+							<write-channel name="reload"/>
+						</generic-command>
+					</commands>
+					<child class="com.top_logic.layout.view.admin.system.LogFileView"
+						input="selectedFile"
+						reload="reload"
+					/>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

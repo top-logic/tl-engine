@@ -132,6 +132,13 @@
 							</label>
 							<view-ref view="admin/maintenance.view.xml"/>
 						</tab>
+						<tab id="logs">
+							<label>
+								<en>Logs</en>
+								<de>Protokolle</de>
+							</label>
+							<view-ref view="admin/logs.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

@@ -3,6 +3,9 @@ import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
 
+/** Debounce for transmitting a typed value to the server (see TLTextInput). */
+const VALUE_DEBOUNCE_MS = 300;
+
 /**
  * A number input field rendered via React.
  *
@@ -10,9 +13,12 @@ const { useCallback } = React;
  * invalid input (e.g. "foo") is actually sent to the server for validation.
  * With type="number", browsers silently discard non-numeric input and return
  * an empty string, making server-side error reporting impossible.
+ *
+ * Typing updates the local value immediately but the server `valueChanged` is debounced and
+ * flushed on blur, so the field is not round-tripped on every keystroke.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
-  const [value, setValue] = useTLFieldValue();
+  const [value, setValue, flushValue] = useTLFieldValue({ debounceMs: VALUE_DEBOUNCE_MS });
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,6 +27,8 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
     },
     [setValue]
   );
+
+  const handleBlur = useCallback(() => { void flushValue(); }, [flushValue]);
 
   if (state.editable === false) {
     return (
@@ -46,6 +54,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId, state, config }) => {
         inputMode={config?.decimal ? 'decimal' : 'numeric'}
         value={value != null ? String(value) : ''}
         onChange={handleChange}
+        onBlur={handleBlur}
         disabled={state.disabled === true}
         className={cls}
         aria-invalid={hasError || undefined}

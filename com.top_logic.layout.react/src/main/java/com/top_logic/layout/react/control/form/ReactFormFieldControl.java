@@ -255,18 +255,52 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/**
 	 * Handles value changes from the React client.
+	 *
+	 * <p>
+	 * The value is typed as {@link String} here, which fits text-like fields. A field whose value is
+	 * a different JSON type (e.g. a checkbox's {@code boolean}) overrides this with its own typed
+	 * arguments, since the field value is polymorphic and cannot be one shared type.
+	 * </p>
 	 */
 	@ReactCommand(CMD_VALUE_CHANGED)
 	void handleValueChanged(FieldValueArguments args) {
-		Object parsed = parseClientValue(args.getValue());
-		_clientValue = parsed;
+		applyClientValue(parseClientValue(args.getValue()));
+	}
+
+	/**
+	 * Applies a client-originated value to the field model, suppressing the redundant echo of exactly
+	 * this value back to the client that already holds it (see the model listener in
+	 * {@link #registerModelListeners()}). Subclasses that handle {@code valueChanged} with their own
+	 * typed arguments call this so they share the same anti-echo behavior.
+	 *
+	 * @param value
+	 *        The parsed value to set.
+	 */
+	protected void applyClientValue(Object value) {
+		_clientValue = value;
 		_applyingClientValue = true;
 		try {
-			_fieldModel.setValue(parsed);
+			_fieldModel.setValue(value);
 		} finally {
 			_applyingClientValue = false;
 			_clientValue = null;
 		}
+	}
+
+	/**
+	 * Renders a recorded value change as <em>Set 'Field' to 'value'</em>. The field's identity
+	 * ({@code targetName}) comes from its recorded address, since a field gets its name from its
+	 * container (a form field, a table column), not from itself.
+	 */
+	@Override
+	public String describeCommand(String command, Map<String, Object> arguments, String targetName) {
+		if (CMD_VALUE_CHANGED.equals(command) && targetName != null) {
+			Object value = arguments == null ? null : arguments.get(VALUE);
+			return Resources.getInstance()
+				.getString(com.top_logic.layout.react.I18NConstants.RECORD_FIELD_VALUE__FIELD_VALUE
+					.fill(targetName, String.valueOf(value)));
+		}
+		return super.describeCommand(command, arguments, targetName);
 	}
 
 	/**

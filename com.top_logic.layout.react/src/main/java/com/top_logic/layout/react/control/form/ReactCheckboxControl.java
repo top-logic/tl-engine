@@ -7,6 +7,7 @@ package com.top_logic.layout.react.control.form;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * A {@link ReactFormFieldControl} for checkbox fields.
@@ -23,6 +24,15 @@ public class ReactCheckboxControl extends ReactFormFieldControl {
 	 */
 	public ReactCheckboxControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLCheckbox");
+	}
+
+	/**
+	 * Handles a checkbox toggle: its value is a {@code boolean}, so it has its own typed arguments
+	 * rather than the base field's text value.
+	 */
+	@ReactCommand(CMD_VALUE_CHANGED)
+	void handleChecked(CheckboxValueArguments args) {
+		applyClientValue(parseClientValue(args.isChecked()));
 	}
 
 	@Override

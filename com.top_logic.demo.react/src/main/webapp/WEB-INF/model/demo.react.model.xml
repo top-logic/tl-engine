@@ -85,6 +85,50 @@
 							</input-control>
 						</annotations>
 					</property>
+					<property name="javascriptSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="JAVASCRIPT"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="htmlSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="HTML"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="markdownSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="MARKDOWN"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<property name="plainSource"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.react.codeedit.CodeEditorControlProvider"
+									language="PLAIN"
+								/>
+							</input-control>
+						</annotations>
+					</property>
 
 					<!-- Numbers -->
 					<property name="count"

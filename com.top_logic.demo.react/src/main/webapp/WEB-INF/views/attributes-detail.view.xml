@@ -21,6 +21,10 @@
 			<field attribute="xmlSource"/>
 			<field attribute="jsonSource"/>
 			<field attribute="cssSource"/>
+			<field attribute="javascriptSource"/>
+			<field attribute="htmlSource"/>
+			<field attribute="markdownSource"/>
+			<field attribute="plainSource"/>
 			<field attribute="i18n"/>
 			<field attribute="i18nMultiline"/>
 			<field attribute="password"/>

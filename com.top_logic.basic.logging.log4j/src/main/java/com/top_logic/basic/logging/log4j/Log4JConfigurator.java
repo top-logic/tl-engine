@@ -177,4 +177,15 @@ public class Log4JConfigurator extends LogConfigurator {
 		}
 	}
 
+	@Override
+	public void removeLoggerLevel(String loggerName) {
+		if (loggerName == null || loggerName.isEmpty()) {
+			// The root logger always has a level and cannot be removed.
+			return;
+		}
+		LoggerContext context = LoggerContext.getContext(false);
+		context.getConfiguration().removeLogger(loggerName);
+		context.updateLoggers();
+	}
+
 }

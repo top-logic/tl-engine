@@ -82,5 +82,21 @@
 				/>
 			</attributes>
 		</class>
+
+		<!--
+			Transient-only type holding the input of the "add logger" dialog: the name of the logger to
+			configure. Instances are created with new(`tl.admin:NewLogger`, transient: true) and are never
+			persisted (the action configures the logger level directly), so no table is declared.
+		-->
+		<class name="NewLogger">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

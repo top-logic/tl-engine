@@ -44,13 +44,15 @@ import com.top_logic.table.impl.ListRowSource;
 
 /**
  * Table of the configured loggers, one row per logger with its name and an inline level selector that
- * changes the logger's level at runtime.
+ * changes the logger's level at runtime; the selected logger name is written to the configured
+ * {@link Config#getSelection() selection channel} so it can be removed.
  *
  * <p>
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element). The
  * loggers and their current levels come from the {@link LogConfigurator} facade; changing a row's level
  * applies immediately via {@link LogConfigurator#setLoggerLevel(String, String)}. A live snapshot is taken
- * when the view opens and rebuilt when the configured {@link Config#getReload() reload channel} ticks.
+ * when the view opens and rebuilt from the configured {@link Config#getInput() input channel} after an
+ * add / remove command.
  * </p>
  */
 public class LoggerLevelTable implements UIElement {
@@ -63,30 +65,45 @@ public class LoggerLevelTable implements UIElement {
 	 */
 	public interface Config extends UIElement.Config {
 
-		/** Configuration name for {@link #getReload()}. */
-		String RELOAD = "reload";
+		/** Configuration name for {@link #getInput()}. */
+		String INPUT = "input";
+
+		/** Configuration name for {@link #getSelection()}. */
+		String SELECTION = "selection";
 
 		@Override
 		@ClassDefault(LoggerLevelTable.class)
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * Channel whose change (a refresh tick) re-reads the configured loggers and their levels.
+		 * Channel holding the logger list ({@code List<Map.Entry<String, String>>}) to display; when unset
+		 * or holding a non-list, a live snapshot is taken at render time.
 		 */
-		@Name(RELOAD)
+		@Name(INPUT)
 		@Nullable
 		@Format(ChannelRefFormat.class)
-		ChannelRef getReload();
+		ChannelRef getInput();
+
+		/**
+		 * Channel the selected logger name is written to (or {@code null} when the selection is cleared).
+		 */
+		@Name(SELECTION)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelection();
 	}
 
-	private final ChannelRef _reloadRef;
+	private final ChannelRef _inputRef;
+
+	private final ChannelRef _selectionRef;
 
 	/**
 	 * Creates a new {@link LoggerLevelTable} from configuration.
 	 */
 	@CalledByReflection
 	public LoggerLevelTable(InstantiationContext context, Config config) {
-		_reloadRef = config.getReload();
+		_inputRef = config.getInput();
+		_selectionRef = config.getSelection();
 	}
 
 	@Override
@@ -101,35 +118,50 @@ public class LoggerLevelTable implements UIElement {
 			.width(160)
 			.build());
 
-		ListRowSource<Map.Entry<String, String>> source = new ListRowSource<>(rows(), columns);
+		ViewChannel dataChannel = _inputRef != null ? context.resolveChannel(_inputRef) : null;
+		ListRowSource<Map.Entry<String, String>> source =
+			new ListRowSource<>(rows(dataChannel == null ? null : dataChannel.get()), columns);
 		DefaultTableView<Map.Entry<String, String>> view = DefaultTableView.create(columns, source);
 		TableViewControl<Map.Entry<String, String>> control = new TableViewControl<>(context, view, false);
 
-		if (_reloadRef != null) {
-			ViewChannel reload = context.resolveChannel(_reloadRef);
+		if (dataChannel != null) {
 			ChannelListener listener = (sender, oldValue, newValue) -> {
-				source.setElements(rows());
+				source.setElements(rows(newValue));
 				control.refreshData();
 			};
-			reload.addListener(listener);
-			control.addCleanupAction(() -> reload.removeListener(listener));
+			dataChannel.addListener(listener);
+			control.addCleanupAction(() -> dataChannel.removeListener(listener));
+		}
+
+		ViewChannel selection = _selectionRef != null ? context.resolveChannel(_selectionRef) : null;
+		if (selection != null) {
+			control.setSelectionListener(keys -> {
+				Object key = keys.size() == 1 ? keys.iterator().next() : null;
+				selection.set(key instanceof Map.Entry<?, ?> entry ? entry.getKey() : null);
+			});
 		}
 		return control;
 	}
 
 	/**
-	 * A snapshot of the configured loggers (name to level), sorted by logger name.
+	 * The logger list held by the channel value, or a live snapshot when the channel is unset or empty.
 	 */
-	private static List<Map.Entry<String, String>> rows() {
+	@SuppressWarnings("unchecked")
+	private static List<Map.Entry<String, String>> rows(Object value) {
+		if (value instanceof List<?> list) {
+			return (List<Map.Entry<String, String>>) list;
+		}
 		return new ArrayList<>(LogConfigurator.getInstance().getLoggerLevels().entrySet());
 	}
 
 	/**
-	 * Builds the inline level selector for the given logger row, applying a chosen level immediately.
+	 * Builds the inline level selector for the given logger row, applying a chosen level immediately. The
+	 * selector is not clearable - a logger always has a level.
 	 */
 	private static ReactControl levelControl(ReactContext context, Map.Entry<String, String> row) {
 		List<String> levels = LogConfigurator.getInstance().getLevelNames();
 		SimpleSelectFieldModel model = new SimpleSelectFieldModel(row.getValue(), levels, false);
+		model.setMandatory(true);
 		model.addListener(new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {

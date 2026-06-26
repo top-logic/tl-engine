@@ -158,6 +158,22 @@ public abstract class LogConfigurator {
 	}
 
 	/**
+	 * Removes the explicit level configuration of the given logger, so that it inherits its level from
+	 * its parent again.
+	 *
+	 * <p>
+	 * Does nothing for the root logger or when the logging subsystem does not support changing logger
+	 * levels.
+	 * </p>
+	 *
+	 * @param loggerName
+	 *        The name of the logger whose explicit level is removed.
+	 */
+	public void removeLoggerLevel(String loggerName) {
+		// Not supported by the default logging subsystem.
+	}
+
+	/**
 	 * The selectable level names, strongest first.
 	 */
 	public List<String> getLevelNames() {

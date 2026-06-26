@@ -8,7 +8,7 @@
 - **Branch:** `CWS/CWS_29108_headless_agent_interface` (off `CWS/CWS_29108_integration`)
 - **Code:** `com.top_logic.layout.react.headless` (package), `AgentServlet` (HTTP)
 - **Owner:** bhu
-- **Last updated:** 2026-06-25
+- **Last updated:** 2026-06-26
 
 ## How to use this document
 
@@ -228,15 +228,9 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       a flat list of only the actionable nodes (`{address, role, name, state, actions}`,
       no children). Live: 16 nodes, ~10.95 KB vs 17.7 KB tree (~60% off the original
       27 KB); the read→act→read loop works by the same addresses.
-- [ ] **Remaining size hotspot → D5.** The flat view is now dominated by one node:
-      the sidebar's `items` array (24 nav entries, each with a presentation `icon`).
-      Per-key stripping can't reach fields nested inside a state array; the right fix
-      is to express navigation as a parameterized action
-      (`selectItem(id ∈ {dashboard, administration, …})`) — the **D5** action-schema
-      work — rather than shipping the raw items array.
 - [ ] `executeCommand` on the sidebar is a remaining chrome-command candidate to
       assess (one-line `agentHiddenCommands` entry if internal).
-- [x] **Argument schemas on `@ReactCommand` (D5 first step) — DONE.** New
+- [x] **Argument schemas on `@ReactCommand` (D5 first step) — DONE, now superseded.** New
       `@ReactParam` (name/type/required/description) declared in `@ReactCommand.params()`,
       captured by `ReactCommandMap`, exposed via `ReactControl.agentCommandParams`, and
       surfaced by the projector in each action's `params`. Annotated the commands I had
@@ -244,7 +238,36 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       `select {rowIndex,ctrlKey,shiftKey}`, `selectTab {tabId}`. Verified live: the
       sidebar advertises `selectItem(itemId, required)` — the exact key I'd guessed
       wrong. The schema lives next to the handler (can't drift) and needs no headless
-      dependency on the control.
+      dependency on the control. **`@ReactParam` is a hand-rolled restatement of what a
+      `ConfigurationItem` descriptor already knows; the typed-argument work below replaces
+      it (see D5).**
+- [ ] **Typed command arguments as `ConfigurationItem` (the D5 core).** Let a
+      `@ReactCommand` handler declare a `ConfigurationItem` subtype as its argument
+      parameter (third allowed param type alongside `ReactContext` and the legacy raw
+      `Map`). At dispatch the incoming client JSON args bind into that config via
+      `JsonConfigurationReader`; the handler reads typed getters. One interface then
+      drives all three downstream needs — no second representation, no drift:
+  - [ ] **JSON schema for free** — `JsonConfigSchemaBuilder` (already exists in
+        `com.top_logic.basic.config.json`) projects the arg interface to a JSON Schema
+        (types, `@Mandatory`, constraints, enums, nested/polymorphic). Replaces the
+        `@ReactParam` array in the projected action space.
+  - [ ] **Human-readable step rendering** — a per-arg-type `ResKey` interpolates the
+        action's own values, *label-resolved* through the existing `MetaLabelProvider` /
+        `ModelResolver` substrate (technical values like a `ModelName` business key or an
+        address render as the object/element label). This is the recorder side-window's
+        human-compatible display, modelled on the legacy `ApplicationAction` I18N.
+  - [ ] **Persisted step format** — write the bound config instance as JSON/XML (feeds
+        parity item #12; per-step `comment` rides along, parity #16).
+  - [ ] Lean React-side action-config **base** — reuses only `ModelName`/value-labeling
+        + `ResKey` rendering + `JsonConfigSchemaBuilder`. **Not** legacy `ApplicationAction`
+        (which drags in `ComponentName`/`WindowScope`/`MainLayout` the React layer dropped).
+  - [ ] Migrate the recordable/interactive commands to typed args; chrome commands keep
+        the raw `Map`. Consider a conformance check that every recordable `@ReactCommand`
+        declares a config arg type.
+- [ ] **Sidebar size hotspot via the enum schema** — once `selectItem` carries a typed
+      arg, advertise `itemId` as a constrained enum (`∈ {dashboard, administration, …}`)
+      from the schema instead of shipping the raw 24-entry `items` array (folds the
+      former "remaining size hotspot" item into the typed-argument work).
 - [ ] Surface enabled/disabled and visibility per action (don't advertise
       actions that would be rejected).
 - [ ] Decide the default projection of state: raw control state vs. a curated
@@ -427,15 +450,39 @@ semantic projection? Prototype exposes the raw tree with opt-in `AgentNode`
 refinement. Decide whether controls should contribute semantic descriptors at
 source.
 
-### D5 — Action-space exposure `IN PROGRESS`
+### D5 — Action-space exposure `DECIDED` (typed config args; build in progress)
 
 Untyped command names vs. advertised argument schemas. **First step shipped:**
-`@ReactCommand.params()` + `@ReactParam` now let a command declare its arguments,
-surfaced in the projected `actions` (see Phase 3). The four commands I had to guess
-are annotated. Remaining: annotate the rest of the interactive commands across the
-control library (sort/filter/scroll/expand, button gestures, form-field inputs, …)
-so the action space is fully self-describing; consider a conformance check that every
-`@ReactCommand` taking a `Map` declares its params.
+`@ReactCommand.params()` + `@ReactParam`. **Now decided** (2026-06-26, with the user):
+a command's arguments are modelled as a **`ConfigurationItem` that is also the actual
+argument carrier** — the handler receives the typed config (bound from the client JSON
+via `JsonConfigurationReader`), not a raw `Map`. One interface is the single source for
+the call arguments, the advertised schema, the human-readable rendering, and the
+persisted form — no parallel descriptor, so nothing can drift.
+
+This **supersedes `@ReactParam`** (a hand-rolled restatement of a config descriptor) and
+keeps `executeCommand` the single behavior path (only the *type* the handler receives
+changes). Rationale for choosing this over the two alternatives considered:
+- *Descriptor beside the raw triple* — rejected: two representations of the same
+  arguments that can disagree.
+- *Full legacy `ApplicationAction` model* (typed action replayed via an
+  `ApplicationActionOp.process()`) — rejected: reintroduces a second behavior
+  implementation per action, the very thing this stack avoids.
+
+Three capabilities fall out of the one interface, all by reuse:
+- **Schema** — `JsonConfigSchemaBuilder` (`com.top_logic.basic.config.json`) → JSON Schema
+  with types/`@Mandatory`/constraints/enums; also yields the `selectItem(itemId ∈ {…})`
+  enum that retires the sidebar `items` size hotspot.
+- **Human-readable display** — a per-arg-type `ResKey` interpolating the action's own
+  values, *label-resolved* via `MetaLabelProvider`/`ModelResolver` (modelled on legacy
+  `ApplicationAction` I18N). This is the recorder side-window's human-compatible step text.
+- **Persistence** — the config instance written as JSON/XML (parity #12), `comment`
+  riding along (parity #16).
+
+Base type: a **lean React-side action-config base**, not legacy `ApplicationAction`
+(avoids its `ComponentName`/`WindowScope`/`MainLayout` baggage). Remaining work tracked
+under Phase 3; migrate recordable commands, leave chrome commands on the raw `Map`,
+consider a conformance check that recordable `@ReactCommand`s declare a config arg type.
 
 ### D6 — Read concurrency model `OPEN` (gates Phase 4)
 

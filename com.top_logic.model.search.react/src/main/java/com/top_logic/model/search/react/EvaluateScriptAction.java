@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -19,6 +20,7 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.parser.TokenMgrError;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.WithTransaction;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -28,14 +30,20 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The script is parsed and executed without an argument (a global expression such as {@code 1 + 2}
  * or <code>all(`my.module:MyType`)</code>); the evaluation result becomes the action's output and is
- * typically written to a channel feeding a {@link ScriptResultTable}. Evaluation runs without an
- * ambient transaction, so a script that modifies persistent state has no committed effect.
+ * typically written to a channel feeding a {@link ScriptResultTable}.
+ * </p>
+ *
+ * <p>
+ * Whether modifications are committed is controlled by {@link WithTransaction.Config#isInTransaction()}:
+ * when set, the evaluation runs inside a committed transaction, so a script that creates, modifies or
+ * deletes persistent objects has a lasting effect; otherwise it runs without an ambient transaction
+ * and any modification is discarded.
  * </p>
  *
  * @implNote Compilation uses {@link SearchExpressionParser} and {@link QueryExecutor#compile(Expr)};
  *           parse and evaluation failures are surfaced as a {@link TopLogicException}.
  */
-public class EvaluateScriptAction implements ViewAction {
+public class EvaluateScriptAction implements ViewAction, WithTransaction {
 
 	/**
 	 * Configuration for {@link EvaluateScriptAction}.
@@ -45,19 +53,21 @@ public class EvaluateScriptAction implements ViewAction {
 	 * {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<EvaluateScriptAction> {
+	public interface Config extends PolymorphicConfiguration<EvaluateScriptAction>, WithTransaction.Config {
 
 		@Override
 		@ClassDefault(EvaluateScriptAction.class)
 		Class<? extends EvaluateScriptAction> getImplementationClass();
 	}
 
+	private final boolean _inTransaction;
+
 	/**
 	 * Creates a new {@link EvaluateScriptAction} from configuration.
 	 */
 	@CalledByReflection
 	public EvaluateScriptAction(InstantiationContext context, Config config) {
-		// No configuration options.
+		_inTransaction = config.isInTransaction();
 	}
 
 	@Override
@@ -74,8 +84,10 @@ public class EvaluateScriptAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.ERROR_SCRIPT_PARSE__MSG.fill(ex.getMessage()), ex);
 		}
 
-		try {
-			return QueryExecutor.compile(expr).execute((Object) null);
+		try (Transaction tx = beginTransaction(_inTransaction)) {
+			Object result = QueryExecutor.compile(expr).execute((Object) null);
+			tx.commit();
+			return result;
 		} catch (RuntimeException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_SCRIPT_EVALUATION__MSG.fill(ex.getMessage()), ex);
 		}

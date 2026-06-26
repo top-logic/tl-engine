@@ -31,7 +31,6 @@ import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.AgentModelKey;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.scripting.ReactActionContext;
@@ -174,29 +173,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String ARG_SHIFT_KEY = SelectRowArguments.SHIFT_KEY;
 
-	private static final String ARG_KEY = "key";
-
-	private static final String ARG_START = "start";
-
-	private static final String ARG_COUNT = "count";
-
-	private static final String ARG_COLUMN = "column";
-
-	private static final String ARG_DIRECTION = "direction";
-
-	private static final String ARG_MODE = "mode";
-
-	private static final String ARG_EXTEND = "extend";
-
-	private static final String ARG_MOVE = "move";
-
-	private static final String ARG_WIDTH = "width";
-
-	private static final String ARG_TARGET_INDEX = "targetIndex";
-
-	private static final String ARG_EXPANDED = "expanded";
-
-	private static final String ARG_SELECTED = "selected";
+	private static final String ARG_KEY = SelectByKeyArguments.KEY;
 
 	// Navigation direction argument values.
 	private static final String DIR_UP = "up";
@@ -504,10 +481,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * per field is chosen from the field model itself ({@link #fieldControl}).
 	 * </p>
 	 */
-	@ReactCommand(value = CMD_OPEN_FILTER, params = @ReactParam(name = ARG_COLUMN, required = true,
-		description = "The name of the column whose filter dialog to open."))
-	void handleOpenFilter(Map<String, Object> arguments) {
-		String column = (String) arguments.get(ARG_COLUMN);
+	@ReactCommand(CMD_OPEN_FILTER)
+	void handleOpenFilter(OpenFilterArguments args) {
+		String column = args.getColumn();
 		ColumnFilter<?> filter = _view.columnFilter(column);
 		if (filter == null) {
 			return;
@@ -625,26 +601,19 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a viewport scroll request.
 	 */
-	@ReactCommand(value = CMD_SCROLL, params = {
-		@ReactParam(name = ARG_START, type = "int", required = true, description = "Zero-based index of the first visible row."),
-		@ReactParam(name = ARG_COUNT, type = "int", required = true, description = "Number of rows in the viewport.") })
-	void handleScroll(Map<String, Object> arguments) {
-		int start = ((Number) arguments.get(ARG_START)).intValue();
-		int count = ((Number) arguments.get(ARG_COUNT)).intValue();
-		updateViewport(start, count);
+	@ReactCommand(CMD_SCROLL)
+	void handleScroll(ScrollArguments args) {
+		updateViewport(args.getStart(), args.getCount());
 	}
 
 	/**
 	 * Handles a sort request (single click replaces, shift-click adds/toggles).
 	 */
-	@ReactCommand(value = CMD_SORT, params = {
-		@ReactParam(name = ARG_COLUMN, required = true, description = "The name of the column to sort by."),
-		@ReactParam(name = ARG_DIRECTION, description = "Sort direction; \"desc\" for descending, otherwise ascending."),
-		@ReactParam(name = ARG_MODE, description = "\"add\" to append to the current multi-sort, otherwise replace.") })
-	void handleSort(Map<String, Object> arguments) {
-		String column = (String) arguments.get(ARG_COLUMN);
-		boolean ascending = !SORT_DESC.equals(arguments.get(ARG_DIRECTION));
-		boolean add = SORT_MODE_ADD.equals(arguments.get(ARG_MODE));
+	@ReactCommand(CMD_SORT)
+	void handleSort(SortArguments args) {
+		String column = args.getColumn();
+		boolean ascending = !SORT_DESC.equals(args.getDirection());
+		boolean add = SORT_MODE_ADD.equals(args.getMode());
 
 		List<SortColumn> sort = new ArrayList<>(add ? _view.state().getSort() : List.of());
 		boolean found = false;
@@ -711,14 +680,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * the replay-stable counterpart of {@link #handleSelect} by {@link #ARG_ROW_INDEX}, which a
 	 * recorded selection is captured as so it survives sorting, filtering and a fresh session.
 	 *
-	 * @param arguments
-	 *        Must contain a {@link #ARG_KEY} with a row business key (the same key the agent projection
-	 *        puts on each row).
+	 * @param args
+	 *        Carries a {@link SelectByKeyArguments#getKey() key} with a row business key (the same key
+	 *        the agent projection puts on each row).
 	 */
-	@ReactCommand(value = CMD_SELECT_BY_KEY, params = @ReactParam(name = ARG_KEY, required = true,
-		description = "Business key of the row to select (the 'key' projected onto each row)."))
-	HandlerResult handleSelectByKey(Map<String, Object> arguments) {
-		String key = (String) arguments.get(ARG_KEY);
+	@ReactCommand(CMD_SELECT_BY_KEY)
+	HandlerResult handleSelectByKey(SelectByKeyArguments args) {
+		String key = args.getKey();
 		ModelName name = key == null ? null : AgentModelKey.fromJson(key);
 		Object target = null;
 		if (name != null) {
@@ -795,27 +763,24 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * cursor/lead model.
 	 *
 	 * <p>
-	 * Arguments: {@link #ARG_DIRECTION} ({@link #DIR_UP}, {@link #DIR_DOWN}, {@link #DIR_HOME},
-	 * {@link #DIR_END}, {@link #DIR_PAGE_UP}, {@link #DIR_PAGE_DOWN}); {@link #ARG_EXTEND} (Shift:
-	 * extend the range from the anchor); {@link #ARG_MOVE} (Ctrl: move the focus cursor without
-	 * changing the selection, multi only). The target index is resolved against the full row list, so
-	 * it is correct even when the
-	 * target row is outside the rendered window; the window is then scrolled to include it.
+	 * Arguments: {@link MoveSelectionArguments#getDirection()} ({@link #DIR_UP}, {@link #DIR_DOWN},
+	 * {@link #DIR_HOME}, {@link #DIR_END}, {@link #DIR_PAGE_UP}, {@link #DIR_PAGE_DOWN});
+	 * {@link MoveSelectionArguments#isExtend()} (Shift: extend the range from the anchor);
+	 * {@link MoveSelectionArguments#isMove()} (Ctrl: move the focus cursor without changing the
+	 * selection, multi only). The target index is resolved against the full row list, so it is correct
+	 * even when the target row is outside the rendered window; the window is then scrolled to include
+	 * it.
 	 * </p>
 	 */
-	@ReactCommand(value = CMD_MOVE_SELECTION, params = {
-		@ReactParam(name = ARG_DIRECTION, required = true,
-			description = "Navigation direction: up, down, home, end, pageUp or pageDown."),
-		@ReactParam(name = ARG_EXTEND, type = "boolean", description = "Extend the selection range from the anchor (Shift)."),
-		@ReactParam(name = ARG_MOVE, type = "boolean", description = "Move the focus cursor without changing the selection (Ctrl, multi-select).") })
-	void handleMoveSelection(Map<String, Object> arguments) {
+	@ReactCommand(CMD_MOVE_SELECTION)
+	void handleMoveSelection(MoveSelectionArguments args) {
 		int total = _view.rowCount();
 		if (total == 0) {
 			return;
 		}
-		String direction = String.valueOf(arguments.get(ARG_DIRECTION));
-		boolean extend = Boolean.TRUE.equals(arguments.get(ARG_EXTEND));
-		boolean move = Boolean.TRUE.equals(arguments.get(ARG_MOVE));
+		String direction = args.getDirection();
+		boolean extend = args.isExtend();
+		boolean move = args.isMove();
 		int page = Math.max(1, _viewportCount);
 
 		int from = _cursorIndex;
@@ -868,10 +833,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles the header select-all / deselect-all checkbox.
 	 */
-	@ReactCommand(value = CMD_SELECT_ALL, params = @ReactParam(name = ARG_SELECTED, type = "boolean",
-		description = "True to select all data rows, false to clear the selection."))
-	void handleSelectAll(Map<String, Object> arguments) {
-		boolean selected = Boolean.TRUE.equals(arguments.get(ARG_SELECTED));
+	@ReactCommand(CMD_SELECT_ALL)
+	void handleSelectAll(SelectAllArguments args) {
+		boolean selected = args.isSelected();
 		_selectedKeys.clear();
 		if (selected) {
 			for (Row<R> row : _view.rows(0, _view.rowCount())) {
@@ -887,12 +851,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a column resize.
 	 */
-	@ReactCommand(value = CMD_COLUMN_RESIZE, params = {
-		@ReactParam(name = ARG_COLUMN, required = true, description = "The name of the column to resize."),
-		@ReactParam(name = ARG_WIDTH, type = "int", required = true, description = "The new column width in pixels.") })
-	void handleColumnResize(Map<String, Object> arguments) {
-		String column = (String) arguments.get(ARG_COLUMN);
-		int width = Math.max(MIN_WIDTH, ((Number) arguments.get(ARG_WIDTH)).intValue());
+	@ReactCommand(CMD_COLUMN_RESIZE)
+	void handleColumnResize(ColumnResizeArguments args) {
+		String column = args.getColumn();
+		int width = Math.max(MIN_WIDTH, args.getWidth());
 		_view.resizeColumn(column, width);
 		refreshColumns();
 	}
@@ -900,12 +862,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a column reorder.
 	 */
-	@ReactCommand(value = CMD_COLUMN_REORDER, params = {
-		@ReactParam(name = ARG_COLUMN, required = true, description = "The name of the column to move."),
-		@ReactParam(name = ARG_TARGET_INDEX, type = "int", required = true, description = "Zero-based index to move the column to.") })
-	void handleColumnReorder(Map<String, Object> arguments) {
-		String column = (String) arguments.get(ARG_COLUMN);
-		int targetIndex = ((Number) arguments.get(ARG_TARGET_INDEX)).intValue();
+	@ReactCommand(CMD_COLUMN_REORDER)
+	void handleColumnReorder(ColumnReorderArguments args) {
+		String column = args.getColumn();
+		int targetIndex = args.getTargetIndex();
 		_view.moveColumn(column, targetIndex);
 		rebuildAfterRowChange();
 	}
@@ -913,14 +873,10 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a tree/group expand or collapse.
 	 */
-	@ReactCommand(value = CMD_EXPAND, params = {
-		@ReactParam(name = ARG_ROW_INDEX, type = "int", required = true,
-			description = "Zero-based index of the tree/group row to expand or collapse."),
-		@ReactParam(name = ARG_EXPANDED, type = "boolean", required = true,
-			description = "True to expand the row, false to collapse it.") })
-	void handleExpand(Map<String, Object> arguments) {
-		int rowIndex = ((Number) arguments.get(ARG_ROW_INDEX)).intValue();
-		boolean expanded = Boolean.TRUE.equals(arguments.get(ARG_EXPANDED));
+	@ReactCommand(CMD_EXPAND)
+	void handleExpand(ExpandArguments args) {
+		int rowIndex = args.getRowIndex();
+		boolean expanded = args.isExpanded();
 		if (rowIndex < 0 || rowIndex >= _view.rowCount()) {
 			return;
 		}
@@ -931,10 +887,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a change of the frozen column count.
 	 */
-	@ReactCommand(value = CMD_SET_FROZEN_COLUMN_COUNT, params = @ReactParam(name = ARG_COUNT, type = "int", required = true,
-		description = "Number of leading columns to keep frozen (clamped to at least zero)."))
-	void handleSetFrozenColumnCount(Map<String, Object> arguments) {
-		int count = ((Number) arguments.get(ARG_COUNT)).intValue();
+	@ReactCommand(CMD_SET_FROZEN_COLUMN_COUNT)
+	void handleSetFrozenColumnCount(SetFrozenColumnCountArguments args) {
+		int count = args.getCount();
 		_view.setFrozenColumnCount(Math.max(0, count));
 		refreshColumns();
 	}

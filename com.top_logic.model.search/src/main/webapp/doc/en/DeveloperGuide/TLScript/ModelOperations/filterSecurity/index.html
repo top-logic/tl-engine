@@ -1,0 +1,75 @@
+<h2>Syntax</h2>
+
+<pre><code>$base.filterSecurity()
+
+filterSecurity($base)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Applies the read permissions of the logged-in user to a value and removes all business objects that the user is not allowed to see.</p>
+
+<p>When accessing model elements, referenced objects are returned <strong>unfiltered</strong> in TL-Script &ndash; consistent with the user interface, which always shows a referenced object by its label and only secures the navigation into the object. Only access to the <em>attributes</em> of an object is denied if the user must not read the object. With <code class="hljs inlineCode">filterSecurity</code>, the final result of a script (or an intermediate result) can be explicitly secured so that it only contains objects the user may read.</p>
+
+<p>The check is applied recursively:</p>
+
+<ul>
+	<li>A single business object that the user must not read becomes <code class="hljs inlineCode">null</code>.</li>
+	<li>From a collection, the elements that must not be read are removed; the kind of collection (list or set) is preserved.</li>
+	<li>Values that are not business objects (e.g. numbers or strings) remain unchanged.</li>
+</ul>
+
+<h2>Usage</h2>
+
+<p>Because accesses in TL-Script return their results unfiltered, the result of a script is not secured automatically. A script whose result is shown to a user or passed on to another context should therefore wrap its <strong>overall result</strong> at the <strong>outermost level</strong> with <code class="hljs inlineCode">filterSecurity</code>. This guarantees that the returned result only contains objects that the logged-in user is allowed to see.</p>
+
+<p>Only the <em>final result</em> should be secured, not every intermediate step: if used too early in an evaluation, subsequent steps may lose objects that are needed for the computation (e.g. for a filter), even though the final result itself would be readable.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>base</td>
+			<td>Any value</td>
+			<td>The value to secure: a business object, a collection of business objects or a primitive value.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Same type as the argument</p>
+
+<p>The given value, containing only the business objects that the logged-in user is allowed to read.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>all(`myModule:Contract`).map(c -&gt; $c.get(`owner`)).filterSecurity()</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> The owners of all contracts, restricted to the persons that the logged-in user is allowed to read.</p>
+
+<h3>Example 2</h3>
+
+<pre><code>$contract.get(`owner`).filterSecurity()</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> The owner of the contract if the logged-in user is allowed to read it, otherwise <code class="hljs inlineCode">null</code>.</p>
+
+<h3>Example 3</h3>
+
+<pre><code>all(`myModule:Contract`).filter(c -&gt; $c.get(`owner`) != null).filterSecurity()</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> All contracts that have an owner set &ndash; the filter evaluates the (unfiltered) owner, and the trailing <code class="hljs inlineCode">filterSecurity</code> then restricts the result to the contracts that the logged-in user is allowed to see.</p>

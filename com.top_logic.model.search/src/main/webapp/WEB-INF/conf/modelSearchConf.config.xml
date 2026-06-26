@@ -669,6 +669,7 @@
 					<method name="revertChanges" class="com.top_logic.model.search.expr.config.operations.changelog.RevertChanges$Builder"/>
 					<method name="enumName" class="com.top_logic.model.search.expr.config.operations.EnumName$Builder"/>
 					<method name="resolveEnum" class="com.top_logic.model.search.expr.config.operations.ResolveEnum$Builder"/>
+					<method name="filterSecurity" class="com.top_logic.model.search.expr.FilterSecurity$Builder"/>
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>

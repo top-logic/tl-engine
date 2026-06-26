@@ -20,23 +20,34 @@
 						<de>Konten</de>
 					</title>
 					<commands>
-						<generic-command placement="TOOLBAR" image="css:bi bi-plus-lg">
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
 							<label>
 								<en>New</en>
 								<de>Neu</de>
 							</label>
 							<execute-script function="x -> new(`tl.admin:NewAccount`, transient: true)"/>
 							<open-dialog
-								dialog-view="admin/create-account.view.xml"
 								bind-input-to="model"
+								dialog-view="admin/access-control/create-account.view.xml"
 							>
-								<bind channel="selection" to="selectedAccount"/>
+								<bind
+									channel="selection"
+									to="selectedAccount"
+								/>
 							</open-dialog>
 						</generic-command>
-						<generic-command placement="TOOLBAR" clique="more" input="selectedAccount" image="css:bi bi-trash">
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
 							<label>
 								<en>Delete</en>
-								<de>L&#xF6;schen</de>
+								<de>Löschen</de>
 							</label>
 							<executability>
 								<null-input-disabled/>
@@ -46,25 +57,35 @@
 							</with-transaction>
 							<write-channel name="selectedAccount"/>
 						</generic-command>
-						<generic-command placement="TOOLBAR" clique="more" input="selectedAccount" image="css:bi bi-key">
+						<generic-command
+							clique="more"
+							image="css:bi bi-key"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
 							<label>
 								<en>Reset password</en>
-								<de>Passwort zur&#xFC;cksetzen</de>
+								<de>Passwort zurücksetzen</de>
 							</label>
 							<executability>
 								<null-input-disabled/>
 							</executability>
 							<execute-script function="acc -> new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $acc)"/>
 							<open-dialog
-								dialog-view="admin/reset-password.view.xml"
 								bind-input-to="model"
+								dialog-view="admin/access-control/reset-password.view.xml"
 							/>
 						</generic-command>
 						<!--
 							Expires the selected account's password, forcing the change-password
 							step on that account's next login.
 						-->
-						<generic-command placement="TOOLBAR" clique="more" input="selectedAccount" image="css:bi bi-hourglass-split">
+						<generic-command
+							clique="more"
+							image="css:bi bi-hourglass-split"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
 							<label>
 								<en>Expire password</en>
 								<de>Passwort ablaufen lassen</de>
@@ -78,7 +99,12 @@
 							Marks the selected account as MFA-required with no secret, forcing the
 							MFA-enrollment step on that account's next login.
 						-->
-						<generic-command placement="TOOLBAR" clique="more" input="selectedAccount" image="css:bi bi-shield-lock">
+						<generic-command
+							clique="more"
+							image="css:bi bi-shield-lock"
+							input="selectedAccount"
+							placement="TOOLBAR"
+						>
 							<label>
 								<en>Require MFA (enroll)</en>
 								<de>MFA verlangen (Einrichtung)</de>
@@ -90,9 +116,9 @@
 						</generic-command>
 					</commands>
 					<table
+						observed-types="tl.accounts:Person"
 						selection="selectedAccount"
 						types="tl.accounts:Person"
-						observed-types="tl.accounts:Person"
 					>
 						<columns>
 							<column attribute="name"/>

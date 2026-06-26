@@ -5,15 +5,14 @@
 		<channel name="model"/>
 		<channel name="selection"/>
 	</channels>
-	<window
-		width="500px"
-	>
+	<window width="500px">
 		<title>
 			<en>New Account</en>
 			<de>Neues Konto</de>
 		</title>
-		<form input="model"
+		<form
 			initial-edit-mode="true"
+			input="model"
 			mode-switch="false"
 		>
 			<field attribute="login"/>
@@ -22,7 +21,10 @@
 			<field attribute="restrictedUser"/>
 			<field attribute="admin"/>
 			<commands>
-				<generic-command placement="BUTTON_BAR" image="css:bi bi-check-lg">
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
 					<label>
 						<en>Create</en>
 						<de>Erstellen</de>
@@ -38,7 +40,9 @@
 		</form>
 		<actions>
 			<button>
-				<action class="com.top_logic.layout.view.command.CancelDialogCommand" image="css:bi bi-x-lg">
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
 					<label>
 						<en>Cancel</en>
 						<de>Abbrechen</de>

@@ -19,28 +19,28 @@
 								<en>Accounts</en>
 								<de>Konten</de>
 							</label>
-							<view-ref view="admin/accounts.view.xml"/>
+							<view-ref view="admin/access-control/accounts.view.xml"/>
 						</tab>
 						<tab id="groups">
 							<label>
 								<en>Groups</en>
 								<de>Gruppen</de>
 							</label>
-							<view-ref view="admin/groups.view.xml"/>
+							<view-ref view="admin/access-control/groups.view.xml"/>
 						</tab>
 						<tab id="roles">
 							<label>
 								<en>Roles</en>
 								<de>Rollen</de>
 							</label>
-							<view-ref view="admin/roles.view.xml"/>
+							<view-ref view="admin/access-control/roles.view.xml"/>
 						</tab>
 						<tab id="permissions">
 							<label>
 								<en>Permissions</en>
 								<de>Berechtigungen</de>
 							</label>
-							<view-ref view="admin/permissions.view.xml"/>
+							<view-ref view="admin/access-control/permissions.view.xml"/>
 						</tab>
 					</tabs>
 				</tab-bar>
@@ -57,49 +57,49 @@
 								<en>System environment</en>
 								<de>Systemumgebung</de>
 							</label>
-							<view-ref view="admin/system-environment.view.xml"/>
+							<view-ref view="admin/monitoring/system-environment.view.xml"/>
 						</tab>
 						<tab id="application-monitor">
 							<label>
 								<en>Application</en>
 								<de>Anwendung</de>
 							</label>
-							<view-ref view="admin/application-monitor.view.xml"/>
+							<view-ref view="admin/monitoring/application-monitor.view.xml"/>
 						</tab>
 						<tab id="thread-monitor">
 							<label>
 								<en>Threads</en>
 								<de>Threads</de>
 							</label>
-							<view-ref view="admin/thread-monitor.view.xml"/>
+							<view-ref view="admin/monitoring/thread-monitor.view.xml"/>
 						</tab>
 						<tab id="user-sessions">
 							<label>
 								<en>Sessions</en>
 								<de>Sitzungen</de>
 							</label>
-							<view-ref view="admin/user-sessions.view.xml"/>
+							<view-ref view="admin/monitoring/user-sessions.view.xml"/>
 						</tab>
 						<tab id="failed-logins">
 							<label>
 								<en>Failed logins</en>
 								<de>Fehlgeschlagene Anmeldungen</de>
 							</label>
-							<view-ref view="admin/failed-logins.view.xml"/>
+							<view-ref view="admin/monitoring/failed-logins.view.xml"/>
 						</tab>
 						<tab id="sql-monitor">
 							<label>
 								<en>SQL</en>
 								<de>SQL</de>
 							</label>
-							<view-ref view="admin/sql-monitor.view.xml"/>
+							<view-ref view="admin/monitoring/sql-monitor.view.xml"/>
 						</tab>
 						<tab id="revision-monitor">
 							<label>
 								<en>Changes</en>
 								<de>Änderungen</de>
 							</label>
-							<view-ref view="admin/revision-monitor.view.xml"/>
+							<view-ref view="admin/monitoring/revision-monitor.view.xml"/>
 						</tab>
 					</tabs>
 				</tab-bar>
@@ -116,35 +116,35 @@
 								<en>Services</en>
 								<de>Dienste</de>
 							</label>
-							<view-ref view="admin/services.view.xml"/>
+							<view-ref view="admin/system/services.view.xml"/>
 						</tab>
 						<tab id="locks">
 							<label>
 								<en>Locks</en>
 								<de>Sperren</de>
 							</label>
-							<view-ref view="admin/locks.view.xml"/>
+							<view-ref view="admin/system/locks.view.xml"/>
 						</tab>
 						<tab id="maintenance">
 							<label>
 								<en>Maintenance mode</en>
 								<de>Wartungsmodus</de>
 							</label>
-							<view-ref view="admin/maintenance.view.xml"/>
+							<view-ref view="admin/system/maintenance.view.xml"/>
 						</tab>
 						<tab id="logs">
 							<label>
 								<en>Logs</en>
 								<de>Protokolle</de>
 							</label>
-							<view-ref view="admin/logs.view.xml"/>
+							<view-ref view="admin/system/logs.view.xml"/>
 						</tab>
 						<tab id="logger-levels">
 							<label>
 								<en>Log levels</en>
 								<de>Protokollebenen</de>
 							</label>
-							<view-ref view="admin/logger-levels.view.xml"/>
+							<view-ref view="admin/system/logger-levels.view.xml"/>
 						</tab>
 					</tabs>
 				</tab-bar>

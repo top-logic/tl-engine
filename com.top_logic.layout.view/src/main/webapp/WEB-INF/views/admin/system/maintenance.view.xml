@@ -36,7 +36,7 @@
 				<execute-script function="x -> new(`tl.admin:MaintenanceMode`, transient: true)"/>
 				<open-dialog
 					bind-input-to="model"
-					dialog-view="admin/enter-maintenance.view.xml"
+					dialog-view="admin/system/enter-maintenance.view.xml"
 				>
 					<bind
 						channel="state"

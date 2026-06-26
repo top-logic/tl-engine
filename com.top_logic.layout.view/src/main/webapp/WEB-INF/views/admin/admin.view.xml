@@ -125,6 +125,13 @@
 							</label>
 							<view-ref view="admin/locks.view.xml"/>
 						</tab>
+						<tab id="maintenance">
+							<label>
+								<en>Maintenance mode</en>
+								<de>Wartungsmodus</de>
+							</label>
+							<view-ref view="admin/maintenance.view.xml"/>
+						</tab>
 					</tabs>
 				</tab-bar>
 			</tab>

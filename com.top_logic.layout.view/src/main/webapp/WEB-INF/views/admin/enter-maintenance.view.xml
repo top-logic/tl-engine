@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog to enter maintenance mode. The form edits a transient MaintenanceMode model (bound to the
+	model channel by the opening command): the delay in minutes before the switch (empty or zero enters
+	immediately) and an optional message shown to logged-in users. The primary command stores the form
+	state, runs the MaintenanceModeAction in ENTER mode (which reads the delay and message and drives the
+	MaintenanceWindowManager), writes the resulting state token back to the state channel bound to the
+	parent view, and closes the dialog.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="state"/>
+	</channels>
+	<window
+		resizable="false"
+		width="440px"
+	>
+		<title>
+			<en>Enter maintenance mode</en>
+			<de>Wartungsmodus aktivieren</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+		>
+			<text>
+				<label>
+					<en>Entering maintenance mode logs out all users that are not in an allowed group. A delay schedules the switch and informs logged-in users first; leave it empty to switch immediately.</en>
+					<de>Beim Aktivieren des Wartungsmodus werden alle Benutzer abgemeldet, die keiner zugelassenen Gruppe angehören. Eine Verzögerung plant den Wechsel und informiert angemeldete Benutzer zuvor; für einen sofortigen Wechsel leer lassen.</de>
+				</label>
+			</text>
+			<field attribute="delayMinutes"/>
+			<field attribute="message"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-cone-striped"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Enter maintenance mode</en>
+						<de>Wartungsmodus aktivieren</de>
+					</label>
+					<store-form-state/>
+					<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
+						mode="ENTER"
+						model="model"
+					/>
+					<write-channel name="state"/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

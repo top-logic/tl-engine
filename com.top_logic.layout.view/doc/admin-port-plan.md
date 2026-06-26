@@ -158,7 +158,15 @@ Establishes the "System" admin section (added with the locks view as a sibling t
       gating input from the action's data. The **per-service config editor is deferred** (a follow-up).
 - [~] Scheduler / tasks — **dropped from this plan.** The scheduler will be completely redesigned
       (execution engine + management UI), tracked under its own ticket; not a 1:1 port.
-- [ ] Maintenance mode (schedule window, disconnect users).
+- [x] Maintenance mode — `maintenance.view.xml` (System › Maintenance mode): a titled fill panel whose
+      `MaintenanceStatusView` shows the live state (normal / about-to-enter / in maintenance, plus the
+      user message) and seeds a `state` token channel (`NORMAL` / `PENDING` / `ACTIVE`). The commands gate
+      on that token via `<visible-if>` so Enter (normal), Abort (scheduled) and Leave (active) are mutually
+      exclusive; Refresh re-reads. Enter opens `enter-maintenance.view.xml`, a dialog bound to a transient
+      `tl.admin:MaintenanceMode` model (delay in minutes — empty/zero enters immediately — and an optional
+      message); the primary command runs `MaintenanceModeAction` (ENTER), which drives the
+      `MaintenanceWindowManager`. Disconnecting non-allowed users is handled by the manager on entering.
+      The legacy JS countdown timer is dropped for v1 (the pending status is shown as text).
 
 ### Batch 4 — Logs (redesign)  ▢
 - [ ] Log viewer + logger-level configuration, designed fresh for the React

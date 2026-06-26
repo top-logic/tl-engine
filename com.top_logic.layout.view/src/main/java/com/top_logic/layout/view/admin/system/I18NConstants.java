@@ -74,6 +74,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_SERVICE_LIFECYCLE__NAME;
 
+	/**
+	 * @en The system is operating normally.
+	 */
+	public static ResKey MAINTENANCE_STATUS_NORMAL;
+
+	/**
+	 * @en Maintenance mode is about to be activated.
+	 */
+	public static ResKey MAINTENANCE_STATUS_PENDING;
+
+	/**
+	 * @en The system is in maintenance mode.
+	 */
+	public static ResKey MAINTENANCE_STATUS_ACTIVE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

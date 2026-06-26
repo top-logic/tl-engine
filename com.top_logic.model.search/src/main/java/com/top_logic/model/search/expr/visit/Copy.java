@@ -84,27 +84,27 @@ public class Copy extends DescendingVisitor<SearchExpression, Void> {
 
 	@Override
 	protected SearchExpression composeAccess(Access expr, Void arg, SearchExpression selfResult) {
-		return access(selfResult, expr.getPart());
+		return access(selfResult, expr.getPart(), expr.usesSecurity());
 	}
 
 	@Override
 	protected SearchExpression composeAt(At expr, Void arg, SearchExpression self, SearchExpression index) {
-		return SearchExpressionFactory.at(self, index);
+		return SearchExpressionFactory.at(self, index, expr.usesSecurity());
 	}
 
 	@Override
 	protected SearchExpression composeReferers(Referers expr, Void arg, SearchExpression targetResult) {
-		return referers(targetResult, expr.getReference());
+		return referers(targetResult, expr.getReference(), expr.usesSecurity());
 	}
 
 	@Override
 	protected SearchExpression composeAssociationNavigation(AssociationNavigation expr, Void arg, SearchExpression sourceResult) {
-		return associationNavigation(sourceResult, expr.getSourceEnd(), expr.getDestinationEnd());
+		return associationNavigation(sourceResult, expr.getSourceEnd(), expr.getDestinationEnd(), expr.usesSecurity());
 	}
 
 	@Override
 	protected SearchExpression composeAll(All expr, Void arg) {
-		return all(expr.getInstanceType());
+		return all(expr.getInstanceType(), expr.usesSecurity());
 	}
 
 	@Override
@@ -127,7 +127,7 @@ public class Copy extends DescendingVisitor<SearchExpression, Void> {
 
 	@Override
 	protected SearchExpression composeSource(KBQuery expr, Void arg) {
-		return query(expr.getClassType(), expr.getQuery(), expr.getDynamicFilters());
+		return query(expr.getClassType(), expr.getQuery(), expr.getDynamicFilters(), expr.usesSecurity());
 	}
 
 	@Override
@@ -211,7 +211,7 @@ public class Copy extends DescendingVisitor<SearchExpression, Void> {
 	@Override
 	protected SearchExpression composeUpdate(Update expr, Void arg, SearchExpression selfResult,
 			SearchExpression valueResult) {
-		return update(selfResult, expr.getPart(), valueResult);
+		return update(selfResult, expr.getPart(), valueResult, expr.usesSecurity());
 	}
 	
 	@Override

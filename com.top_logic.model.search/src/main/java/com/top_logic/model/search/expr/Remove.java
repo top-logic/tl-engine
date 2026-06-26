@@ -28,13 +28,13 @@ public class Remove extends GenericMethodWithSecurity {
 	/**
 	 * Creates a {@link Remove}.
 	 */
-	protected Remove(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected Remove(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new Remove(getName(), arguments);
+		return new Remove(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class Remove extends GenericMethodWithSecurity {
 
 		@Override
 		public Remove build(Expr expr, SearchExpression[] args) {
-			return new Remove(getConfig().getName(), args);
+			return new Remove(getConfig().getName(), args, true);
 		}
 
 	}

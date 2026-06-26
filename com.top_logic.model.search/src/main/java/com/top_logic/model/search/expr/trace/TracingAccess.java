@@ -20,8 +20,8 @@ class TracingAccess extends Access {
 	/**
 	 * Creates a {@link TracingAccess}.
 	 */
-	TracingAccess(SearchExpression self, TLStructuredTypePart part) {
-		super(self, part);
+	TracingAccess(SearchExpression self, TLStructuredTypePart part, boolean usesSecurity) {
+		super(self, part, usesSecurity);
 	}
 
 	@Override

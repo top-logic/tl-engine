@@ -48,7 +48,8 @@ public class AssociationNavigation extends SearchExpressionWithSecurity {
 	 * @param destinationEnd
 	 *        See {@link #getDestinationEnd()}.
 	 */
-	AssociationNavigation(SearchExpression source, TLAssociationEnd sourceEnd, TLAssociationEnd destinationEnd) {
+	AssociationNavigation(SearchExpression source, TLAssociationEnd sourceEnd, TLAssociationEnd destinationEnd, boolean usesSecurity) {
+		super(usesSecurity);
 		_source = source;
 		_sourceEnd = sourceEnd;
 		_destinationEnd = destinationEnd;

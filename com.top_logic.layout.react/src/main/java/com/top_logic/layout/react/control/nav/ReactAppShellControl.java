@@ -5,13 +5,10 @@
  */
 package com.top_logic.layout.react.control.nav;
 
-import java.util.Map;
-
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
@@ -61,6 +58,9 @@ public class ReactAppShellControl extends ReactControl {
 	private static final String DIALOG_MANAGER = "dialogManager";
 
 	private static final String MENU_OVERLAY = "menuOverlay";
+
+	/** The {@link ReactCommand} that records the client's responsive display class. */
+	public static final String REPORT_DISPLAY_CLASS_COMMAND = "reportDisplayClass";
 
 	private final ReactControl _header;
 
@@ -158,18 +158,16 @@ public class ReactAppShellControl extends ReactControl {
 	 * where adaptive controls observe it.
 	 * </p>
 	 *
-	 * @param arguments
-	 *        Command arguments; {@code "displayClass"} carries the reported {@link DisplayClass}
-	 *        name.
+	 * @param args
+	 *        The reported {@link DisplayClass} name.
 	 */
-	@ReactCommand(value = "reportDisplayClass", params = @ReactParam(name = "displayClass",
-		description = "The reported responsive display class name (e.g. a DisplayClass enum constant)."))
-	void handleReportDisplayClass(Map<String, Object> arguments) {
-		Object reported = arguments.get("displayClass");
+	@ReactCommand(REPORT_DISPLAY_CLASS_COMMAND)
+	void handleReportDisplayClass(ReportDisplayClassArguments args) {
+		String reported = args.getDisplayClass();
 		DisplayClass displayClass = DisplayClass.DEFAULT;
 		if (reported != null) {
 			try {
-				displayClass = DisplayClass.valueOf(reported.toString());
+				displayClass = DisplayClass.valueOf(reported);
 			} catch (IllegalArgumentException ex) {
 				Logger.warn("Ignoring unknown display class '" + reported + "'.", ReactAppShellControl.class);
 			}
@@ -227,6 +225,6 @@ public class ReactAppShellControl extends ReactControl {
 	 */
 	@Override
 	protected java.util.Set<String> agentHiddenCommands() {
-		return java.util.Set.of("reportDisplayClass");
+		return java.util.Set.of(REPORT_DISPLAY_CLASS_COMMAND);
 	}
 }

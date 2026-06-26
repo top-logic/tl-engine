@@ -7,13 +7,11 @@ package com.top_logic.layout.react.control.overlay;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
@@ -63,6 +61,9 @@ public class ReactWindowControl extends ToolbarControl {
 	private static final String CONFIG_KEY_SIZE_SUFFIX = "reactDialogSize";
 
 	private static final String MIN_HEIGHT = "minHeight";
+
+	/** The {@link ReactCommand} that records a window resize. */
+	public static final String RESIZE_COMMAND = "resize";
 
 	private ReactControl _child;
 
@@ -245,12 +246,10 @@ public class ReactWindowControl extends ToolbarControl {
 	/**
 	 * Handles a resize event from the client.
 	 */
-	@ReactCommand(value = "resize", params = {
-		@ReactParam(name = "width", type = "number", description = "The new window width in pixels."),
-		@ReactParam(name = "height", type = "number", description = "The new window height in pixels.") })
-	void handleResize(Map<String, Object> args) {
-		Object w = args.get("width");
-		Object h = args.get("height");
+	@ReactCommand(RESIZE_COMMAND)
+	void handleResize(ResizeArguments args) {
+		Integer w = args.getWidth();
+		Integer h = args.getHeight();
 		if (w != null) {
 			putStateSilent(WIDTH, w.toString());
 		}

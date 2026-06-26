@@ -9,11 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -46,7 +44,8 @@ public class ReactDeckPaneControl extends ReactControl {
 
 	private static final String CHILD_COUNT = "childCount";
 
-	private static final String INDEX_ARG = "index";
+	/** The {@link ReactCommand} that activates a child pane. */
+	public static final String SELECT_CHILD_COMMAND = "selectChild";
 
 	/**
 	 * The child definitions. Each entry provides a factory for lazy creation.
@@ -192,12 +191,8 @@ public class ReactDeckPaneControl extends ReactControl {
 	/**
 	 * Handles child selection from the client.
 	 */
-	@ReactCommand(value = "selectChild", params = @ReactParam(name = "index", type = "int", required = true,
-		description = "Zero-based index of the child pane to show."))
-	void handleSelectChild(Map<String, Object> arguments) {
-		Object indexObj = arguments.get(INDEX_ARG);
-		if (indexObj instanceof Number) {
-			selectChild(((Number) indexObj).intValue());
-		}
+	@ReactCommand(SELECT_CHILD_COMMAND)
+	void handleSelectChild(SelectChildArguments args) {
+		selectChild(args.getIndex());
 	}
 }

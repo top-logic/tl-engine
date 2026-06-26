@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -37,8 +36,8 @@ public class ReactBreadcrumbControl extends ReactControl {
 	/** Entry display label. */
 	private static final String ENTRY_LABEL = "label";
 
-	/** Command argument: the navigated item identifier. */
-	private static final String ITEM_ID_ARG = "itemId";
+	/** The {@link ReactCommand} that navigates to a breadcrumb ancestor. */
+	public static final String NAVIGATE_COMMAND = "navigate";
 
 	private final Consumer<String> _navigateHandler;
 
@@ -90,11 +89,9 @@ public class ReactBreadcrumbControl extends ReactControl {
 	/**
 	 * Handles breadcrumb navigation from the client.
 	 */
-	@ReactCommand(value = "navigate", params = @ReactParam(name = "itemId", required = true,
-		description = "The id of the breadcrumb item to navigate to."))
-	void handleNavigate(Map<String, Object> arguments) {
-		String itemId = (String) arguments.get(ITEM_ID_ARG);
-		_navigateHandler.accept(itemId);
+	@ReactCommand(NAVIGATE_COMMAND)
+	void handleNavigate(NavigateArguments args) {
+		_navigateHandler.accept(args.getItemId());
 	}
 
 }

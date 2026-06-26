@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -46,8 +45,8 @@ public class ReactBottomBarControl extends ReactControl {
 	/** Entry badge text. */
 	private static final String ENTRY_BADGE = "badge";
 
-	/** Command argument: the selected item identifier. */
-	private static final String ITEM_ID_ARG = "itemId";
+	/** The {@link ReactCommand} that selects a navigation item. */
+	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
 	private final Consumer<String> _selectHandler;
 
@@ -134,11 +133,9 @@ public class ReactBottomBarControl extends ReactControl {
 	/**
 	 * Handles item selection from the client.
 	 */
-	@ReactCommand(value = "selectItem", params = @ReactParam(name = "itemId", required = true,
-		description = "The id of the bottom-bar item to select."))
-	void handleSelectItem(Map<String, Object> arguments) {
-		String itemId = (String) arguments.get(ITEM_ID_ARG);
-		_selectHandler.accept(itemId);
+	@ReactCommand(SELECT_ITEM_COMMAND)
+	void handleSelectItem(BottomBarSelectItemArguments args) {
+		_selectHandler.accept(args.getItemId());
 	}
 
 }

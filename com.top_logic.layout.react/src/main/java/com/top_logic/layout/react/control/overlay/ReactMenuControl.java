@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -59,8 +58,8 @@ public class ReactMenuControl extends ReactControl {
 	/** Whether the entry is disabled. */
 	private static final String ENTRY_DISABLED = "disabled";
 
-	/** Command argument: the selected item identifier. */
-	private static final String ITEM_ID_ARG = "itemId";
+	/** The {@link ReactCommand} that selects a menu item. */
+	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
 	private Consumer<String> _selectHandler;
 
@@ -208,12 +207,10 @@ public class ReactMenuControl extends ReactControl {
 	/**
 	 * Handles the selectItem command sent when a menu item is selected.
 	 */
-	@ReactCommand(value = "selectItem", params = @ReactParam(name = "itemId", required = true,
-		description = "The id of the menu item to select."))
-	void handleSelectItem(Map<String, Object> arguments) {
-		String itemId = (String) arguments.get(ITEM_ID_ARG);
+	@ReactCommand(SELECT_ITEM_COMMAND)
+	void handleSelectItem(MenuSelectItemArguments args) {
 		close();
-		_selectHandler.accept(itemId);
+		_selectHandler.accept(args.getItemId());
 	}
 
 	/**

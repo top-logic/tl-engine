@@ -16,7 +16,6 @@ import java.util.function.Consumer;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -37,9 +36,10 @@ public class ReactDashboardControl extends ReactControl {
 
 	private static final String CHILDREN = "children";
 
-	private static final String ORDER_ARG = "order";
-
 	private static final String EDIT_MODE = "editMode";
+
+	/** The {@link ReactCommand} that applies a drag-and-drop tile reordering. */
+	public static final String REORDER_COMMAND = "reorder";
 
 	/**
 	 * A single tile of the dashboard.
@@ -184,16 +184,10 @@ public class ReactDashboardControl extends ReactControl {
 	 * Handles the {@code reorder} command sent by the React client after a
 	 * drag-and-drop reorder.
 	 */
-	@SuppressWarnings("unchecked")
-	@ReactCommand(value = "reorder", params = @ReactParam(name = "order", type = "string[]", required = true,
-		description = "The tile ids in their new display order."))
+	@ReactCommand(REORDER_COMMAND)
 	@FrameworkInternal
-	void handleReorder(Map<String, Object> arguments) {
-		Object raw = arguments.get(ORDER_ARG);
-		if (!(raw instanceof List)) {
-			return;
-		}
-		List<String> newOrder = (List<String>) raw;
+	void handleReorder(ReorderArguments args) {
+		List<String> newOrder = args.getOrder();
 		reorderTiles(newOrder);
 		putState(CHILDREN, buildDescriptors());
 		if (_onReorder != null) {

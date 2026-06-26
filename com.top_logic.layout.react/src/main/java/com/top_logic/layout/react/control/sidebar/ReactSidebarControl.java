@@ -17,7 +17,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
@@ -88,9 +87,11 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/** The {@link ReactCommand} that selects a navigation item. */
 	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
-	private static final String ITEM_ID_ARG = SelectItemArguments.ITEM_ID;
+	/** The {@link ReactCommand} that executes a sidebar command item. */
+	public static final String EXECUTE_COMMAND_COMMAND = "executeCommand";
 
-	private static final String EXPANDED_ARG = "expanded";
+	/** The {@link ReactCommand} that expands or collapses a sidebar group. */
+	public static final String TOGGLE_GROUP_COMMAND = "toggleGroup";
 
 	private final Consumer<Boolean> _onCollapseChanged;
 
@@ -553,10 +554,9 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles command item execution from the client.
 	 */
-	@ReactCommand(value = "executeCommand", params = @ReactParam(name = "itemId", required = true,
-		description = "The id of the sidebar command item to execute."))
-	HandlerResult handleExecuteCommand(ReactContext context, Map<String, Object> arguments) {
-		String itemId = (String) arguments.get(ITEM_ID_ARG);
+	@ReactCommand(EXECUTE_COMMAND_COMMAND)
+	HandlerResult handleExecuteCommand(ReactContext context, ExecuteCommandArguments args) {
+		String itemId = args.getItemId();
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {
 			HandlerResult result = cmdItem.getAction().execute(context);
@@ -631,13 +631,10 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles group expand/collapse toggle from the client.
 	 */
-	@ReactCommand(value = "toggleGroup", params = {
-		@ReactParam(name = "itemId", required = true, description = "The id of the sidebar group to toggle."),
-		@ReactParam(name = "expanded", type = "boolean", description = "True to expand the group, false to collapse it.") })
-	void handleToggleGroup(Map<String, Object> arguments) {
-		String itemId = (String) arguments.get(ITEM_ID_ARG);
-		Object expandedObj = arguments.get(EXPANDED_ARG);
-		boolean expanded = expandedObj instanceof Boolean && ((Boolean) expandedObj).booleanValue();
+	@ReactCommand(TOGGLE_GROUP_COMMAND)
+	void handleToggleGroup(ToggleGroupArguments args) {
+		String itemId = args.getItemId();
+		boolean expanded = args.isExpanded();
 		_groupStates.put(itemId, Boolean.valueOf(expanded));
 		if (_onGroupToggled != null) {
 			_onGroupToggled.accept(itemId, Boolean.valueOf(expanded));
@@ -650,6 +647,6 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 */
 	@Override
 	protected java.util.Set<String> agentHiddenCommands() {
-		return java.util.Set.of("toggleCollapse", "toggleDrawer", "toggleGroup");
+		return java.util.Set.of("toggleCollapse", "toggleDrawer", TOGGLE_GROUP_COMMAND);
 	}
 }

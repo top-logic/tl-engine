@@ -5,12 +5,9 @@
  */
 package com.top_logic.layout.react.control.overlay;
 
-import java.util.Map;
-
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -36,6 +33,9 @@ public class ReactSnackbarControl extends ReactControl {
 	private static final String VISIBLE = "visible";
 
 	private static final String GENERATION = "generation";
+
+	/** The {@link ReactCommand} that dismisses a shown snackbar. */
+	public static final String DISMISS_COMMAND = "dismiss";
 
 	/**
 	 * The visual variant of a snackbar notification.
@@ -183,10 +183,10 @@ public class ReactSnackbarControl extends ReactControl {
 	 * from hiding a newly shown snackbar.
 	 * </p>
 	 */
-	@ReactCommand(value = "dismiss", params = @ReactParam(name = "generation", type = "int",
-		description = "The snackbar generation being dismissed; a stale generation is ignored."))
-	void handleDismiss(Map<String, Object> arguments) {
-		int dismissGeneration = ((Number) arguments.getOrDefault(GENERATION, -1)).intValue();
+	@ReactCommand(DISMISS_COMMAND)
+	void handleDismiss(DismissArguments args) {
+		Integer reported = args.getGeneration();
+		int dismissGeneration = reported != null ? reported.intValue() : -1;
 		if (dismissGeneration != _generation) {
 			return;
 		}

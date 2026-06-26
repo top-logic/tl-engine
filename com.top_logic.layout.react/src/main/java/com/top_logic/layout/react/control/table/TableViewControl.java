@@ -166,12 +166,13 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	private static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
 
-	// Command argument names.
-	private static final String ARG_ROW_INDEX = "rowIndex";
+	// Command argument names (shared with the typed SelectRowArguments so dispatch, recording and
+	// projection agree on the wire keys).
+	private static final String ARG_ROW_INDEX = SelectRowArguments.ROW_INDEX;
 
-	private static final String ARG_CTRL_KEY = "ctrlKey";
+	private static final String ARG_CTRL_KEY = SelectRowArguments.CTRL_KEY;
 
-	private static final String ARG_SHIFT_KEY = "shiftKey";
+	private static final String ARG_SHIFT_KEY = SelectRowArguments.SHIFT_KEY;
 
 	private static final String ARG_KEY = "key";
 
@@ -664,19 +665,15 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a row selection (single / ctrl-toggle / shift-range).
 	 */
-	@ReactCommand(value = CMD_SELECT, params = {
-		@ReactParam(name = ARG_ROW_INDEX, type = "int", required = true,
-			description = "Zero-based index of the row to select (see the projected rows)."),
-		@ReactParam(name = ARG_CTRL_KEY, type = "boolean", description = "Toggle selection (multi-select)."),
-		@ReactParam(name = ARG_SHIFT_KEY, type = "boolean", description = "Range selection (multi-select).") })
-	void handleSelect(Map<String, Object> arguments) {
-		int rowIndex = ((Number) arguments.get(ARG_ROW_INDEX)).intValue();
+	@ReactCommand(CMD_SELECT)
+	void handleSelect(SelectRowArguments args) {
+		int rowIndex = args.getRowIndex();
 		int total = _view.rowCount();
 		if (rowIndex < 0 || rowIndex >= total) {
 			return;
 		}
-		boolean ctrlKey = Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY));
-		boolean shiftKey = Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY));
+		boolean ctrlKey = args.isCtrlKey();
+		boolean shiftKey = args.isShiftKey();
 		Object key = keyAt(rowIndex);
 		_cursorIndex = rowIndex;
 

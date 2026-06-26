@@ -14,7 +14,6 @@ import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
@@ -64,7 +63,8 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	private static final String TAB_ICON = "icon";
 
 	/** Command argument key for the selected tab ID. */
-	private static final String TAB_ID_ARG = "tabId";
+	/** The {@link ReactCommand} that activates a tab. */
+	public static final String SELECT_TAB_COMMAND = "selectTab";
 
 	private final List<TabDefinition> _tabDefinitions;
 
@@ -274,10 +274,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	/**
 	 * Handles tab selection from the client.
 	 */
-	@ReactCommand(value = "selectTab", params = @ReactParam(name = "tabId", required = true,
-		description = "The id of the tab to activate (from the tabs list)."))
-	void handleSelectTab(Map<String, Object> arguments) {
-		String tabId = (String) arguments.get(TAB_ID_ARG);
+	@ReactCommand(SELECT_TAB_COMMAND)
+	void handleSelectTab(SelectTabArguments args) {
+		String tabId = args.getTabId();
 
 		// Check for dirty forms in the current tab before switching.
 		TabDefinition currentTab = findTab(_activeTabId);

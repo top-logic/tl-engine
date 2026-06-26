@@ -55,8 +55,9 @@ import com.top_logic.table.impl.ListRowSource;
  * <p>
  * A {@link DefaultTableView}'s columns are fixed at construction, so a changed result rebuilds the
  * whole {@link TableViewControl} and swaps it in. This control is the wrapper that performs the
- * swap: it reuses the {@code TLStack} client container (no bespoke client component) and replaces
- * its single child - the result table - on each evaluation.
+ * swap: it reuses the {@code TLPanel} fill container (the same one {@code <full-page>} uses, so the
+ * table bounds its own scroll viewport and keeps its header pinned) and replaces its single child -
+ * the result table - on each evaluation.
  * </p>
  *
  * @implNote The replaced table is disposed synchronously: its cell controls do not listen to the
@@ -64,11 +65,11 @@ import com.top_logic.table.impl.ListRowSource;
  */
 public class ScriptResultControl extends ReactControl {
 
-	/** {@code TLStack} state key holding the child controls (here a single result table). */
-	private static final String CHILDREN = "children";
+	/** {@code TLPanel} state key holding the panel content (the result table). */
+	private static final String CHILD = "child";
 
-	/** {@code TLStack} state key letting the first (here only) child fill the stack. */
-	private static final String GROW_FIRST = "growFirst";
+	/** {@code TLPanel} state key making the content fill the panel's bounded height. */
+	private static final String FILL = "fill";
 
 	/** Column id of the label column shown for primitive (non-object) results. */
 	private static final String RESULT_COLUMN = "result";
@@ -100,12 +101,12 @@ public class ScriptResultControl extends ReactControl {
 	 *        {@code null} for a static empty table.
 	 */
 	public ScriptResultControl(ViewContext context, ViewChannel dataChannel) {
-		super(context, null, "TLStack");
+		super(context, null, "TLPanel");
 		_context = context;
-		putState(GROW_FIRST, Boolean.TRUE);
+		putState(FILL, Boolean.TRUE);
 
 		_currentTable = buildTable(dataChannel == null ? null : dataChannel.get());
-		putState(CHILDREN, List.of(_currentTable));
+		putState(CHILD, _currentTable);
 
 		if (dataChannel != null) {
 			ChannelListener listener = (sender, oldValue, newValue) -> rebuild(newValue);
@@ -120,7 +121,7 @@ public class ScriptResultControl extends ReactControl {
 		_currentTable = built;
 
 		Object token = beginUpdate();
-		putState(CHILDREN, List.of(built));
+		putState(CHILD, built);
 		commitUpdate(token);
 
 		if (old != null && old != built) {

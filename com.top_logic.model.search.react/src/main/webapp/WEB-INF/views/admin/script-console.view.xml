@@ -51,11 +51,9 @@
 					size="65"
 					unit="%"
 				>
-					<full-page>
-						<child class="com.top_logic.model.search.react.ScriptResultTable"
-							input="result"
-						/>
-					</full-page>
+					<child class="com.top_logic.model.search.react.ScriptResultTable"
+						input="result"
+					/>
 				</pane>
 			</panes>
 		</split-panel>

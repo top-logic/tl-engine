@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Log viewer: the files in the application log directory on the left, the tail of the selected file on
-	the right. The LogFileTable shows a live snapshot (name, size, last modified) when opened and writes
-	the selected file to the selectedFile channel; the LogFileView reads that channel and renders the
-	last part of the file as scrollable monospace text. Refresh re-reads the current file by ticking the
-	reload channel (without changing the selection), so newly appended lines become visible.
+	Log viewer: the files in the application log directory on the left, the parsed entries of the selected
+	file on the right. The LogFileTable shows a live snapshot (name, size, last modified) when opened and
+	writes the selected file to the selectedFile channel; the LogLineTable reads that channel and shows the
+	file's entries (parsed by the reusable LogParser) as a sortable, per-column filterable table of time,
+	severity, category, thread, message and details. Refresh re-parses the current file by ticking the
+	reload channel (without changing the selection), so newly appended entries become visible.
 -->
 <view>
 	<channels>
@@ -55,7 +56,7 @@
 							<write-channel name="reload"/>
 						</generic-command>
 					</commands>
-					<child class="com.top_logic.layout.view.admin.system.LogFileView"
+					<child class="com.top_logic.layout.view.admin.system.LogLineTable"
 						input="selectedFile"
 						reload="reload"
 					/>

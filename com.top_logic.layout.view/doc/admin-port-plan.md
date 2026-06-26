@@ -171,11 +171,13 @@ Establishes the "System" admin section (added with the locks view as a sibling t
 ### Batch 4 — Logs (redesign)  ▢
 - [x] Log viewer — `logs.view.xml` (System › Protokolle): a `<split-panel>` master/detail. The
       `LogFileTable` lists the files in `LoggerAdminBean.getLogDir()` (name, human-readable size, last
-      modified) and writes the selected file to a `selectedFile` channel; the `LogFileView` reads that
-      channel and renders the tail (last 256 KB, leading `…` when truncated) as scrollable monospace text
-      via `ReactTextControl` + the new `.tlLogView` style. Refresh ticks a `reload` channel so the current
-      file is re-read (newly appended lines appear) without changing the selection. Designed fresh — not
-      the legacy log-folder / config-file-editor split.
+      modified) and writes the selected file to a `selectedFile` channel; the `LogLineTable` reads that
+      channel and shows the file's **parsed** entries — one row per entry — in a sortable, per-column
+      filterable/searchable table (time, severity, category, thread, message, details), newest first.
+      Parsing **reuses the legacy `com.top_logic.monitoring` `LogParser`/`LogLine`/`LogFile`** (added a
+      `tl-monitoring` dependency); only the last 4 MB are parsed. Refresh ticks a `reload` channel so the
+      current file is re-parsed (newly appended entries appear) without changing the selection. Per-file
+      selection only — the legacy single combined cross-file table is deliberately **not** carried over.
 - [ ] Logger-level configuration — runtime table of loggers + per-logger level (Log4j2). Next step.
 
 ### Batch 5 — Model editor (move + polish)  ▢

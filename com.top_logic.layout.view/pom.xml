@@ -45,6 +45,11 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-monitoring</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-basic</artifactId>
       <type>test-jar</type>
       <scope>test</scope>

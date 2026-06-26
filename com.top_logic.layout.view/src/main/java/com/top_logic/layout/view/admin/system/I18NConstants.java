@@ -105,14 +105,34 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOG_COLUMN_MODIFIED;
 
 	/**
-	 * @en Select a log file to view its content.
+	 * @en Time
 	 */
-	public static ResKey LOG_NO_SELECTION;
+	public static ResKey LOG_COLUMN_TIME;
 
 	/**
-	 * @en The log file ''{0}'' could not be read.
+	 * @en Severity
 	 */
-	public static ResKey1 LOG_READ_FAILED__NAME;
+	public static ResKey LOG_COLUMN_SEVERITY;
+
+	/**
+	 * @en Category
+	 */
+	public static ResKey LOG_COLUMN_CATEGORY;
+
+	/**
+	 * @en Thread
+	 */
+	public static ResKey LOG_COLUMN_THREAD;
+
+	/**
+	 * @en Message
+	 */
+	public static ResKey LOG_COLUMN_MESSAGE;
+
+	/**
+	 * @en Details
+	 */
+	public static ResKey LOG_COLUMN_DETAILS;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -2552,19 +2552,6 @@ button.tlMenu__item--disabled:hover {
 	white-space: nowrap;
 }
 
-/* Scrollable monospace block for raw text content such as log file tails. */
-.tlLogView {
-	display: block;
-	height: 100%;
-	overflow: auto;
-	padding: var(--spacing-03);
-	font-family: var(--code-01-font-family, monospace);
-	font-size: var(--code-01-font-size, 0.75rem);
-	line-height: 1.4;
-	white-space: pre;
-	tab-size: 4;
-}
-
 .tlTableView__checkboxCell {
 	justify-content: center;
 	flex-shrink: 0;

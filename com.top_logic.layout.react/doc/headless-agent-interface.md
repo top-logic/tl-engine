@@ -258,12 +258,16 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
         advertises `selectItem` with `argsSchema` carrying `required:["itemId"]` and the
         property's generated `title:"Item ID"` + description — `@Mandatory` and the I18N label
         flowing into the schema with no hand-written `@ReactParam`.
-  - [ ] **Human-readable step rendering** — render the bound config via the existing
-        `ConfigLabelProvider` (template keyed by the interface name, values label-resolved
-        through `MetaLabelProvider`); no annotation needed. This is the recorder
-        side-window's human-compatible display. *Next slice* — it is a recorder-side
-        consumer (`RecordedStep` must carry/rebuild the typed config), so the template
-        lands with that wiring, not before (no dead scaffolding).
+  - [x] **Human-readable step rendering — done, verified live.** `ReactControl.describeCommand`
+        binds a step's arguments to the typed config and renders it via `ConfigLabelProvider`;
+        each arg interface's `@Label` *is* the template (e.g. `Navigate to '{itemId}'`, kept in
+        the generated bundle, DE hand-authored). The recorder side-window's `RecordedStepsTable`
+        gained a **Description** column that resolves the step's address against the opener
+        window and calls `describeCommand` (falling back to the raw command + JSON for assertion
+        steps, untyped commands, or drifted addresses). Verified live (German session): captured
+        steps read *"Navigiere zu 'input-controls'"*, *"Navigiere zu 'tabs'"*,
+        *"Tab 'details' aktivieren"* beside the technical address/command/arguments. Values are
+        the raw ids for now; resolving them to friendly labels is the deferred follow-up.
   - [ ] **Persisted step format** — write the bound config instance as JSON/XML (feeds
         parity item #12; per-step `comment` rides along, parity #16).
   - [x] Lean React-side action-config **base** — `ReactCommandArguments` (plain
@@ -551,6 +555,19 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-06-26** — **Human-readable recorded-step rendering**, verified live — the headline of
+  the typed-argument work. `ReactControl.describeCommand(command, args)` binds the arguments to
+  the typed config and renders via `ConfigLabelProvider`; each arg interface's `@Label` doubles
+  as the render template (`Navigate to '{itemId}'`, `Activate tab '{tabId}'`, `Select row
+  {rowIndex}`), staying in the generated EN bundle (DE hand-authored). The bind logic was extracted
+  to a shared `ReactControl.bindArguments` (the dispatch invoker now delegates to it). The recorder
+  side-window's `RecordedStepsTable` gained a **Description** column: it resolves a step's address
+  against the opener window (`RecorderAccess.openerRoot`) and calls `describeCommand`, falling back
+  to the raw command + JSON for assertions / untyped commands / drifted addresses. Verified live in
+  a German session: recording three main-window gestures showed *"Navigiere zu 'input-controls'"*,
+  *"Navigiere zu 'tabs'"*, *"Tab 'details' aktivieren"* — the exact "descriptive text mixed with
+  the action's values" the legacy `ApplicationAction` I18N gave, now from the same interface that
+  yields the JSON schema. Raw values for now; friendly-label resolution deferred.
 - **2026-06-26** — **Typed arguments extended to `selectTab` + table `select`**, verified
   live. Same pattern as `selectItem`: `SelectTabArguments` (`tabId`) and `SelectRowArguments`
   (`rowIndex` `@Mandatory` `int`, `ctrlKey`/`shiftKey` `boolean`); `@ReactParam` removed,

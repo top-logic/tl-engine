@@ -202,11 +202,12 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 			List<SubagentResult> results = registry.awaitBlocking(ids, 30_000);
 			assertEquals("Both results must be returned", 2, results.size());
 
-			for (SubagentResult r : results) {
+			for (int i = 0; i < results.size(); i++) {
+				SubagentResult r = results.get(i);
 				assertEquals("Each job must complete as DONE", SubagentJobStatus.DONE,
-					registry.get(ids.get(results.indexOf(r))).status());
+					registry.get(ids.get(i)).status());
 				assertTrue("Each subagent attributed its own tokens; totalTokens="
-					+ r.tokenUsage().totalTokens(), r.tokenUsage().totalTokens() >= 0);
+					+ r.tokenUsage().totalTokens(), r.tokenUsage().totalTokens() > 0);
 			}
 
 			// Verify each carries its distinct text.

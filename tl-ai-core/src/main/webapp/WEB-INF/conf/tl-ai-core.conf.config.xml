@@ -1225,6 +1225,47 @@ You have tools to search the web and fetch content from URLs.
 							<tool name="web-search.webSearch"/>
 						</tools>
 					</skill>
+					<skill name="TL_spawnSubagents"
+						description="Load when delegating work to other agents — to run one or more predefined agents asynchronously and collect their results. Especially for fanning out independent sub-tasks in parallel."
+					>
+						<content><![CDATA[# Spawning Subagents
+
+<when_to_use>
+Spawn a subagent to hand a self-contained sub-task to a specialized agent — exploration, analysis, drafting — while you keep orchestrating.
+Best when sub-tasks are INDEPENDENT: spawn several at once and let them run in parallel, then collect all results.
+Do NOT spawn for trivial work you can do inline, or when one step depends on the previous one's output (do those yourself, in order).
+A subagent runs READ-ONLY: it cannot create or modify data. Use it to gather and report, not to act.
+</when_to_use>
+
+<workflow>
+**1. Discover** — Call `list_agents` to see which predefined agents exist and what each is for. Pick the one whose description fits the sub-task.
+**2. Spawn** — Call `spawn_subagent(agent, task, context)` for each sub-task. Each call returns immediately with a subagent id; the agent runs in the background. To fan out, issue several `spawn_subagent` calls in the SAME turn — they execute concurrently.
+**3. Collect** — Call `wait_for_subagent` to block until results are ready. Omit `subagentIds` to wait for ALL outstanding subagents at once; pass specific ids to wait for a subset. It returns each subagent's status and final result.
+**4. Synthesize** — Combine the returned results into your own answer. Do not just forward them verbatim.
+</workflow>
+
+<core_rules>
+- Write a precise, self-contained `task`: the subagent does not see your conversation. Put everything it needs in `task` plus the `context` argument.
+- `agent` must be an exact name from `list_agents` — never invent one.
+- Prefer parallel fan-out over a sequential chain: spawn all independent sub-tasks first, then a single `wait_for_subagent` with no ids to gather them.
+- Spawned results may also arrive on their own in a later turn; only call `wait_for_subagent` when you need them before continuing.
+- Delegation depth is bounded — a spawned subagent cannot itself spawn further subagents.
+</core_rules>
+
+<tools_ref>
+`list_agents()` — lists the predefined agents available to spawn, with descriptions. Call first to choose a target.
+
+`spawn_subagent(agent, task, context?)` — starts the named agent asynchronously on the given task. `context` carries relevant background from the conversation. Returns a subagent id; does not block.
+
+`wait_for_subagent(subagentIds?, timeoutMs?)` — blocks until the given subagents finish and returns their results and status; with no `subagentIds`, waits for all outstanding subagents. `timeoutMs` defaults to 300000 (5 min).
+</tools_ref>
+]]></content>
+						<tools>
+							<tool name="subagent.spawn_subagent"/>
+							<tool name="subagent.list_agents"/>
+							<tool name="subagent.wait_for_subagent"/>
+						</tools>
+					</skill>
 				</skills>
 				<agents>
 					<agent name="TL_SingleAgent"
@@ -1296,6 +1337,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<skill name="TL_agenticAuthoring"/>
 							<skill name="TL_webAccess"/>
 							<skill name="TL_tlScriptInstanceCreation"/>
+							<skill name="TL_spawnSubagents"/>
 						</skills>
 					</agent>
 					<agent name="TL_Orchestrator"

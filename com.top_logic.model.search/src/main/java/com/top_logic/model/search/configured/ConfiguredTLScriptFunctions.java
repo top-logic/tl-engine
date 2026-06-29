@@ -36,6 +36,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.trace.TracingAccessRewriter;
 import com.top_logic.model.search.expr.visit.Copy;
@@ -110,6 +111,13 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 */
 	private final ConcurrentHashMap<String, SearchExpression> _tracingSearches = new ConcurrentHashMap<>();
 
+	/**
+	 * Like {@link #_tracingSearches}, but for the security-disabled variant of the scripts.
+	 *
+	 * @see #getTracingExecutor(String, boolean)
+	 */
+	private final ConcurrentHashMap<String, SearchExpression> _tracingSearchesNoSecurity = new ConcurrentHashMap<>();
+
 	private Map<String, Factory> _factories = Collections.emptyMap();
 
 	/**
@@ -170,6 +178,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		_executors.clear();
 		_executorsNoSecurity.clear();
 		_tracingSearches.clear();
+		_tracingSearchesNoSecurity.clear();
 		super.shutDown();
 	}
 
@@ -244,23 +253,34 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	}
 
 	/**
-	 * Determines the tracing {@link QueryExecutor} for the configured function.
+	 * Determines the tracing {@link SearchExpression} for the configured function.
 	 *
+	 * <p>
+	 * Both variants are created lazily from the secured executor. For the security-disabled variant,
+	 * security is switched off on the resolved tracing search afterwards.
+	 * </p>
+	 *
+	 * @param usesSecurity
+	 *        Whether the secured or the security-disabled variant must be traced.
 	 * @throws TopLogicException
 	 *         iff there is no executor for the given name.
 	 */
-	SearchExpression getTracingExecutor(String scriptName) {
-		SearchExpression tracingSearch = _tracingSearches.get(scriptName);
+	SearchExpression getTracingExecutor(String scriptName, boolean usesSecurity) {
+		ConcurrentHashMap<String, SearchExpression> cache =
+			usesSecurity ? _tracingSearches : _tracingSearchesNoSecurity;
+		SearchExpression tracingSearch = cache.get(scriptName);
 		if (tracingSearch != null) {
 			return tracingSearch;
 		}
-		QueryExecutor executor = _executors.get(scriptName);
-		if (executor == null) {
-			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
+		// Build the tracing search from the secured executor. For the unsecured variant, switch
+		// security off explicitly on the resolved tracing search (consistent with the unsecured
+		// executor and PathByExpression) instead of relying on the flag propagating through copy
+		// and resolve.
+		tracingSearch = createTracingExecutor(scriptName, getExecutor(scriptName, true));
+		if (!usesSecurity) {
+			UpdateSecurityVisitor.disableSecurity(tracingSearch);
 		}
-
-		tracingSearch = createTracingExecutor(scriptName, executor);
-		return MapUtil.putIfAbsent(_tracingSearches, scriptName, tracingSearch);
+		return MapUtil.putIfAbsent(cache, scriptName, tracingSearch);
 	}
 
 	/**

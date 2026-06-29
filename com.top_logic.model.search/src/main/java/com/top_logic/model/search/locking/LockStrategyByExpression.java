@@ -69,6 +69,13 @@ public class LockStrategyByExpression<C extends LockStrategyByExpression.Config<
 		super(context, config);
 
 		_objectsFun = QueryExecutor.compile(config.getObjects());
+
+		// The lock scope must cover all affected objects, not just those the current user is allowed
+		// to see. An object that is invisible to the user but part of the edit scope must still be
+		// locked; otherwise it could be modified concurrently (lost update). The computed objects
+		// are only used internally to allocate lock tokens and are never shown to the user, so the
+		// scope is computed without security.
+		_objectsFun.disableSecurity();
 	}
 
 	@Override

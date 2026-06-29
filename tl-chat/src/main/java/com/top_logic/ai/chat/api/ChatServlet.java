@@ -35,6 +35,9 @@ import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -91,6 +94,7 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_INTERACTIONS = "/interactions";
+	private static final String PATH_SUBAGENTS = "/subagents";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
@@ -153,6 +157,10 @@ public class ChatServlet extends TopLogicServlet {
 			handleInteractions(req, resp);
 			return;
 		}
+		if (pathInfo.equals(PATH_SUBAGENTS) || pathInfo.equals(PATH_SUBAGENTS + "/")) {
+			handleListSubagents(req, resp);
+			return;
+		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
 			handleSessionGet(req, resp, pathInfo);
 			return;
@@ -181,6 +189,11 @@ public class ChatServlet extends TopLogicServlet {
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+		if (pathInfo.startsWith(PATH_SUBAGENTS + "/")) {
+			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length());
+			handleCancelSubagent(id, resp);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS + "/")) {
@@ -636,6 +649,46 @@ public class ChatServlet extends TopLogicServlet {
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
+	private void handleListSubagents(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
+		StringBuilder json = new StringBuilder("{\"subagents\":[");
+		if (registry != null) {
+			boolean first = true;
+			for (SubagentJob job : registry.byStatus(SubagentJobStatus.values())) {
+				if (!first) {
+					json.append(",");
+				}
+				first = false;
+				long tokens = job.result() != null ? job.result().tokenUsage().totalTokens() : 0;
+				long durationMs = job.result() != null ? job.result().durationMs() : 0;
+				json.append("{\"subagentId\":\"").append(jsonEscape(job.subagentId()))
+					.append("\",\"targetAgentName\":\"").append(jsonEscape(job.targetAgentName()))
+					.append("\",\"status\":\"").append(job.status().name())
+					.append("\",\"totalTokens\":").append(tokens)
+					.append(",\"durationMs\":").append(durationMs).append("}");
+			}
+		}
+		json.append("]}");
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write(json.toString());
+	}
+
+	private void handleCancelSubagent(String id, HttpServletResponse resp) throws IOException {
+		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
+		boolean cancelled = false;
+		if (registry != null) {
+			SubagentJob job = registry.get(id);
+			if (job != null) {
+				job.cancellationToken().cancel();
+				cancelled = true;
+			}
+		}
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"cancelled\":" + cancelled + "}");
+	}
+
 	private void handleDeleteSession(HttpServletRequest req, HttpServletResponse resp, String pathInfo)
 			throws IOException {
 		Person person = resolveCurrentPerson(req);
@@ -758,6 +811,35 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"error\",\"error\":\"stale_window\"}");
+	}
+
+	/**
+	 * Minimal JSON string escaping for inline JSON values.
+	 */
+	private static String jsonEscape(String s) {
+		if (s == null) {
+			return "";
+		}
+		StringBuilder sb = new StringBuilder(s.length() + 8);
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			switch (c) {
+				case '"': sb.append("\\\""); break;
+				case '\\': sb.append("\\\\"); break;
+				case '\n': sb.append("\\n"); break;
+				case '\r': sb.append("\\r"); break;
+				case '\t': sb.append("\\t"); break;
+				case '\b': sb.append("\\b"); break;
+				case '\f': sb.append("\\f"); break;
+				default:
+					if (c < 0x20) {
+						sb.append(String.format("\\u%04x", (int) c));
+					} else {
+						sb.append(c);
+					}
+			}
+		}
+		return sb.toString();
 	}
 
 	/** Extracts session ID from path like "/sessions/123". */

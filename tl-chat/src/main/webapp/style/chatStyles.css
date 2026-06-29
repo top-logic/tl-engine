@@ -834,6 +834,124 @@
 }
 
 /* ========================================
+ * Background Panel — async subagent jobs
+ * ======================================== */
+
+.chat-background-panel {
+	display: none;
+	flex-direction: column;
+	border-top: 1px solid var(--chat-border);
+	background: var(--chat-bg-secondary, #f9fafb);
+	padding: 6px 12px;
+	flex-shrink: 0;
+	max-height: 200px;
+	overflow-y: auto;
+	gap: 4px;
+}
+
+.chat-bg-pill {
+	display: inline-block;
+	font-size: 0.78em;
+	font-weight: 600;
+	color: var(--chat-accent, #2563eb);
+	background: color-mix(in srgb, var(--chat-accent, #2563eb) 12%, transparent);
+	border-radius: 10px;
+	padding: 1px 8px;
+	margin-bottom: 4px;
+}
+
+.chat-bg-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.85em;
+	padding: 2px 0;
+}
+
+.chat-bg-status {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	background: var(--chat-text-muted);
+}
+
+.chat-bg-status.running {
+	background: var(--chat-accent, #2563eb);
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+.chat-bg-status.queued {
+	background: var(--chat-text-muted);
+}
+
+.chat-bg-status.done {
+	background: #16a34a;
+}
+
+.chat-bg-status.failed {
+	background: #dc2626;
+}
+
+.chat-bg-status.cancelled {
+	background: var(--chat-text-muted);
+}
+
+.chat-bg-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chat-bg-meta {
+	font-size: 0.85em;
+	color: var(--chat-text-muted);
+	white-space: nowrap;
+}
+
+.chat-bg-cancel {
+	background: none;
+	border: 1px solid var(--chat-border);
+	border-radius: 4px;
+	padding: 1px 5px;
+	font-size: 0.8em;
+	cursor: pointer;
+	color: var(--chat-text-muted);
+	line-height: 1.4;
+}
+
+.chat-bg-cancel:hover {
+	color: #dc2626;
+	border-color: #dc2626;
+}
+
+.chat-bg-toast {
+	position: fixed;
+	bottom: 24px;
+	right: 24px;
+	background: var(--chat-bg-secondary, #f9fafb);
+	border: 1px solid var(--chat-border);
+	border-radius: 8px;
+	padding: 10px 16px;
+	font-size: 0.9em;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	z-index: 9999;
+	animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* ========================================
  * Agent Calls - compact activity lines
  * ======================================== */
 

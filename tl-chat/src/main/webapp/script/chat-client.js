@@ -105,6 +105,7 @@
     approvalMode: CTX + "/chat/approval-mode",
     updates: CTX + "/chat/updates",
     interactions: CTX + "/chat/interactions",
+    subagents: CTX + "/chat/subagents",
   };
 
   // Registry key (windowName) of the TopLogic sub-session this chat was rendered in.
@@ -288,6 +289,10 @@
         delegation_event: Handlers.onDelegationEvent,
         approval_mode: Handlers.onApprovalMode,
         task_update: Handlers.onTaskUpdate,
+        subagent_started: Handlers.onSubagentStarted,
+        subagent_completed: Handlers.onSubagentCompleted,
+        subagent_failed: Handlers.onSubagentFailed,
+        subagent_cancelled: Handlers.onSubagentCancelled,
       };
 
       for (const [type, handler] of Object.entries(handlers)) {
@@ -527,7 +532,11 @@
       const del = Store.currentRun
         ? Store.currentRun.delegations.get(delId)
         : null;
-      if (!del) return;
+      if (!del) {
+        // Async subagent whose delegation isn't in the current run: the background panel
+        // (driven by subagent_* events) is authoritative; drop inner streaming here.
+        return;
+      }
 
       const innerType = data.eventType;
       const inner =
@@ -592,6 +601,33 @@
         del.totalUsage = inner.totalUsage;
         Render._updateDelegationHeader(delId);
       }
+    },
+
+    onSubagentStarted(data) {
+      BackgroundPanel.upsert({
+        subagentId: data.subagentId,
+        name: data.targetAgentName,
+        status: "RUNNING",
+        detail: data.detail,
+      });
+    },
+
+    onSubagentCompleted(data) {
+      BackgroundPanel.setStatus(data.subagentId, "DONE", {
+        tokens: data.totalTokens,
+        durationMs: data.durationMs,
+        detail: data.detail,
+      });
+      BackgroundPanel.toast("Subagent finished: " + (data.subagentId || ""));
+    },
+
+    onSubagentFailed(data) {
+      BackgroundPanel.setStatus(data.subagentId, "FAILED", { detail: data.detail });
+      BackgroundPanel.toast("Subagent failed: " + (data.subagentId || ""));
+    },
+
+    onSubagentCancelled(data) {
+      BackgroundPanel.setStatus(data.subagentId, "CANCELLED", {});
     },
   };
 
@@ -764,6 +800,93 @@
       if (this._el) {
         this._el.classList.toggle("collapsed", this._collapsed);
       }
+    },
+  };
+
+  // ========================================================================
+  // BackgroundPanel — running async subagent jobs, keyed by subagentId
+  // ========================================================================
+  const BackgroundPanel = {
+    jobs: new Map(), // subagentId -> {subagentId, name, status, detail, tokens, durationMs}
+
+    _panelEl() {
+      return (Render._root || document).querySelector(".chat-background-panel");
+    },
+
+    upsert(job) {
+      this.jobs.set(job.subagentId, { ...this.jobs.get(job.subagentId), ...job });
+      this.render();
+    },
+
+    setStatus(subagentId, status, extra) {
+      const job = this.jobs.get(subagentId) || { subagentId };
+      Object.assign(job, { status }, extra || {});
+      this.jobs.set(subagentId, job);
+      this.render();
+    },
+
+    runningCount() {
+      let n = 0;
+      this.jobs.forEach((j) => {
+        if (j.status === "RUNNING" || j.status === "QUEUED") n++;
+      });
+      return n;
+    },
+
+    render() {
+      const el = this._panelEl();
+      if (!el) return;
+      if (this.jobs.size === 0) {
+        el.innerHTML = "";
+        el.style.display = "none";
+        return;
+      }
+      el.style.display = "";
+      const running = this.runningCount();
+      const rows = [];
+      this.jobs.forEach((j) => {
+        rows.push(
+          '<div class="chat-bg-row" data-subagent-id="' +
+            Utils.escapeHtml(j.subagentId) +
+            '"><span class="chat-bg-status ' +
+            (j.status || "").toLowerCase() +
+            '"></span><span class="chat-bg-name">' +
+            Utils.escapeHtml(j.name || j.subagentId) +
+            '</span><span class="chat-bg-meta">' +
+            (j.status || "") +
+            (j.tokens ? " · " + j.tokens + " tok" : "") +
+            "</span>" +
+            (j.status === "RUNNING" || j.status === "QUEUED"
+              ? '<button class="chat-bg-cancel" data-subagent-id="' +
+                Utils.escapeHtml(j.subagentId) +
+                '">✕</button>'
+              : "") +
+            "</div>",
+        );
+      });
+      el.innerHTML =
+        '<div class="chat-bg-pill">' +
+        running +
+        " running</div>" +
+        rows.join("");
+      el.querySelectorAll(".chat-bg-cancel").forEach((btn) => {
+        btn.onclick = () =>
+          BackgroundPanel.cancel(btn.getAttribute("data-subagent-id"));
+      });
+    },
+
+    cancel(subagentId) {
+      fetch(URLS.subagents + "/" + encodeURIComponent(subagentId), {
+        method: "DELETE",
+      });
+    },
+
+    toast(message) {
+      const t = document.createElement("div");
+      t.className = "chat-bg-toast";
+      t.textContent = message;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
     },
   };
 

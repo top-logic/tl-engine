@@ -105,6 +105,7 @@ public class ChatControl extends AbstractControlBase {
 				writeWelcomeScreen(out);
 				writeMessages(context, out);
 				writeTaskPanel(out);
+				writeBackgroundPanel(out);
 				writeInputSection(out);
 			}
 			out.endTag(DIV);
@@ -360,6 +361,13 @@ public class ChatControl extends AbstractControlBase {
 	private void writeTaskPanel(TagWriter out) {
 		out.beginBeginTag(DIV);
 		out.writeAttribute(CLASS_ATTR, "chat-task-panel");
+		out.endBeginTag();
+		out.endTag(DIV);
+	}
+
+	private void writeBackgroundPanel(TagWriter out) {
+		out.beginBeginTag(DIV);
+		out.writeAttribute(CLASS_ATTR, "chat-background-panel");
 		out.endBeginTag();
 		out.endTag(DIV);
 	}

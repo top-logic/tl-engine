@@ -291,4 +291,20 @@ public class ToolContext implements ToolExecutionContext {
 		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
 			_delegationDepth + 1, null, _cancellationToken, ProgressReporter.NOOP);
 	}
+
+	/**
+	 * Creates a copy of this context for a detached asynchronous subagent run.
+	 *
+	 * <p>Like {@link #forDelegation(TransactionScope)}, the delegation depth is incremented
+	 * and a fresh {@code childTransaction} is used. Unlike {@code forDelegation}, the child
+	 * gets its <b>own</b> {@code childToken} instead of sharing the parent's, so cancelling
+	 * one background job (or the parent turn ending) does not cancel unrelated subagents.</p>
+	 *
+	 * @param childTransaction the transaction scope for the subagent run
+	 * @param childToken       the subagent's own cancellation token
+	 */
+	public ToolContext forSubagent(TransactionScope childTransaction, CancellationToken childToken) {
+		return new ToolContext(_security, _approval, childTransaction, _sessionApprovedTools,
+			_delegationDepth + 1, null, childToken, ProgressReporter.NOOP);
+	}
 }

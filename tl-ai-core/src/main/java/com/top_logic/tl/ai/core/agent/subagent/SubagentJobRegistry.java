@@ -9,8 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
@@ -30,6 +34,15 @@ public class SubagentJobRegistry {
 	private final Map<String, SubagentJob> _jobs = new ConcurrentHashMap<>();
 
 	private final AtomicInteger _counter = new AtomicInteger();
+
+	private final ExecutorService _executor =
+		Executors.newCachedThreadPool(r -> {
+			Thread t = new Thread(r, "tl-ai-subagent");
+			t.setDaemon(true);
+			return t;
+		});
+
+	private final Object _completionLock = new Object();
 
 	/** */
 	public SubagentJobRegistry() {
@@ -119,5 +132,78 @@ public class SubagentJobRegistry {
 		List<SubagentJob> all = new ArrayList<>(_jobs.values());
 		all.sort((x, y) -> x.subagentId().compareTo(y.subagentId()));
 		return all;
+	}
+
+	/** Work performed for a subagent job on a background thread. */
+	@FunctionalInterface
+	public interface SubagentRun {
+
+		/** Runs the subagent and returns its result envelope. */
+		SubagentResult run(SubagentJob job) throws Exception;
+	}
+
+	/**
+	 * Submits the given job's work to the background executor. The job is marked RUNNING,
+	 * then DONE/FAILED/CANCELLED on completion; waiters in {@link #awaitBlocking} are signaled.
+	 */
+	public void spawn(SubagentJob job, SubagentRun run) {
+		_executor.submit(() -> {
+			job.markRunning();
+			SubagentJobStatus terminal;
+			SubagentResult result;
+			try {
+				result = run.run(job);
+				terminal = SubagentJobStatus.DONE;
+			} catch (java.util.concurrent.CancellationException cancelled) {
+				terminal = SubagentJobStatus.CANCELLED;
+				result = new SubagentResult("Cancelled.", TokenUsage.EMPTY, 0L, 0, StopReason.ABORTED);
+			} catch (Exception e) {
+				terminal = SubagentJobStatus.FAILED;
+				result = new SubagentResult("ERROR: " + e.getMessage(), TokenUsage.EMPTY, 0L, 0, StopReason.ERROR);
+			}
+			job.markTerminal(terminal, result);
+			synchronized (_completionLock) {
+				_completionLock.notifyAll();
+			}
+		});
+	}
+
+	/**
+	 * Blocks until every given job is terminal or the timeout elapses, then returns the
+	 * results of those that completed (marking them delivered). Jobs still running at timeout
+	 * are simply omitted.
+	 */
+	public List<SubagentResult> awaitBlocking(List<String> ids, long timeoutMs) {
+		long deadline = System.currentTimeMillis() + timeoutMs;
+		synchronized (_completionLock) {
+			while (!allTerminal(ids) && System.currentTimeMillis() < deadline) {
+				long wait = deadline - System.currentTimeMillis();
+				if (wait <= 0) {
+					break;
+				}
+				try {
+					_completionLock.wait(wait);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					break;
+				}
+			}
+		}
+		return await(ids);
+	}
+
+	private boolean allTerminal(List<String> ids) {
+		for (String id : ids) {
+			SubagentJob job = get(id);
+			if (job == null || !job.status().isTerminal()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/** Shuts down the background executor (call on session teardown). */
+	public void shutdown() {
+		_executor.shutdownNow();
 	}
 }

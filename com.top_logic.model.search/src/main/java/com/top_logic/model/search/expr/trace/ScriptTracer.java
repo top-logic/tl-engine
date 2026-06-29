@@ -14,6 +14,7 @@ import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.Pointer;
@@ -72,6 +73,24 @@ public class ScriptTracer {
 
 		SearchExpression rawExpr = SearchBuilder.toSearchExpression(_model, expr);
 		_debugExpr = QueryExecutor.resolve(_model, rawExpr.visit(TracingAccessRewriter.INSTANCE, null));
+	}
+
+	/**
+	 * Disables the security check for the traced expression.
+	 *
+	 * <p>
+	 * By default, the traced expression applies security, i.e. it is evaluated with the current
+	 * user's access rights (data of objects the user must not read is not accessible). Calling this
+	 * method permanently switches security off for this {@link ScriptTracer}'s expression, so that
+	 * the traced evaluation operates regardless of the current user's access rights. It must
+	 * therefore only be used for internal scripts that must not be subject to the user's access
+	 * rights.
+	 * </p>
+	 *
+	 * @see QueryExecutor#disableSecurity()
+	 */
+	public void disableSecurity() {
+		UpdateSecurityVisitor.disableSecurity(_debugExpr);
 	}
 
 	/**

@@ -5,27 +5,27 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
+import com.top_logic.tl.ai.core.binding.BindingSnapshot;
+import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+
 /**
- * Thread-local holder for the per-session {@link SubagentJobRegistry}, so worker threads
- * (which do not inherit thread-locals) can re-establish it. Mirrors
- * {@code com.top_logic.tl.ai.core.tools.task.TaskStoreBinding}.
+ * Thread-local binding for the per-session {@link SubagentJobRegistry}.
+ *
+ * <p>Prefer {@link #bind(SubagentJobRegistry)} with try-with-resources. The previous value is
+ * captured at bind time and restored on close, making the binding safe across cached thread
+ * pools. Registered with the binding registry, so {@link BindingSnapshot} carries it onto
+ * parallel tool-execution worker threads.</p>
  */
 public class SubagentRegistryBinding {
 
-	private static final ThreadLocal<SubagentJobRegistry> REGISTRY = new ThreadLocal<>();
+	private static final ThreadLocalBinding<SubagentJobRegistry> REGISTRY = new ThreadLocalBinding<>();
 
 	/**
-	 * Binds the given registry on the current thread; the returned handle restores the
-	 * previous value on {@link AutoCloseable#close()}.
+	 * Binds the given registry on the current thread and returns a handle whose
+	 * {@link AutoCloseable#close() close()} restores the previously bound value.
 	 */
 	public static Binding bind(SubagentJobRegistry registry) {
-		SubagentJobRegistry previous = REGISTRY.get();
-		if (registry == null) {
-			REGISTRY.remove();
-		} else {
-			REGISTRY.set(registry);
-		}
-		return new Binding(previous);
+		return new Binding(REGISTRY.bind(registry));
 	}
 
 	/** The bound registry, or {@code null}. */
@@ -36,25 +36,15 @@ public class SubagentRegistryBinding {
 	/** Handle returned by {@link SubagentRegistryBinding#bind(SubagentJobRegistry)}. */
 	public static final class Binding implements AutoCloseable {
 
-		private final SubagentJobRegistry _previous;
+		private final ThreadLocalBinding<SubagentJobRegistry>.Handle _handle;
 
-		private boolean _closed;
-
-		Binding(SubagentJobRegistry previous) {
-			_previous = previous;
+		Binding(ThreadLocalBinding<SubagentJobRegistry>.Handle handle) {
+			_handle = handle;
 		}
 
 		@Override
 		public void close() {
-			if (_closed) {
-				return;
-			}
-			_closed = true;
-			if (_previous == null) {
-				REGISTRY.remove();
-			} else {
-				REGISTRY.set(_previous);
-			}
+			_handle.close();
 		}
 	}
 }

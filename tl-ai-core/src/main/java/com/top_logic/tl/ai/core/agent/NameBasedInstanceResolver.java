@@ -51,6 +51,12 @@ public class NameBasedInstanceResolver implements InstanceResolver {
 		String[] parts = typeName.split(":");
 		TLClass type = MetaElementUtil.getGlobalType(parts[0], parts[1]);
 		for (TLObject instance : MetaElementUtil.getAllInstancesOf(type, TLObject.class)) {
+			// An earlier resolve() call in the same import transaction may already have deleted an
+			// instance. getAllInstancesOf still returns such locally-deleted objects until commit,
+			// and reading their "name" would throw DeletedObjectAccess — so skip them.
+			if (!instance.tValid()) {
+				continue;
+			}
 			if (globalId.equals(instance.tValueByName("name"))) {
 				instance.tDelete();
 				return null;

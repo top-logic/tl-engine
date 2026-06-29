@@ -190,10 +190,6 @@ public class GUISearchExpressionEditor extends DeclarativeFormComponent implemen
 	}
 
 	private SearchExpression optimizeSearchExpression(SearchExpression expression) {
-		return getSearchConfig().getEnableOptimizations() ? createOptimizedSearchExpression(expression) : expression;
-	}
-
-	private SearchExpression createOptimizedSearchExpression(SearchExpression expression) {
 		return new SearchExpressionCompiler(PersistencyLayer.getKnowledgeBase().getMORepository()).compile(expression);
 	}
 

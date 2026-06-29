@@ -32,11 +32,9 @@ import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.core.tools.interaction.ListAgentsTool;
-import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
+import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
-import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -279,6 +277,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * @throws IllegalArgumentException
 	 *         if no agent with the given name exists
 	 */
+	@Override
 	public AgentLoop buildAgentLoop(String name) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
@@ -587,9 +586,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					String toolName = "delegate_to_" + targetName.replace('-', '_');
 					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
+				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it.
 				registry.register(new WaitForSubagentTool());
-				registry.register(new SpawnSubagentTool(this));
-				registry.register(new ListAgentsTool());
 			}
 		}
 
@@ -654,9 +652,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					baseCatalog.register(
 						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
+				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it.
 				baseCatalog.register(new WaitForSubagentTool());
-				baseCatalog.register(new SpawnSubagentTool(this));
-				baseCatalog.register(new ListAgentsTool());
 			}
 		}
 

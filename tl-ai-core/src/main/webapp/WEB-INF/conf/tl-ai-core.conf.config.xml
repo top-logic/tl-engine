@@ -2004,6 +2004,10 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.TaskTool"
 						/>
 					</factory>
+					<!-- Generic async-subagent orchestration: spawn_subagent, list_agents (independent of delegation) -->
+					<factory name="subagent">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.SubagentToolFactory"/>
+					</factory>
 					<factory name="user-interaction">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"

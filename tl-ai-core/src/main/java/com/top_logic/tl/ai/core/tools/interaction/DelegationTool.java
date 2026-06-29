@@ -258,5 +258,13 @@ public class DelegationTool implements Tool {
 
 		/** Builds an agent loop for the named agent. */
 		AgentLoop buildAgentLoop(String agentName);
+
+		/**
+		 * Builds a read-only, non-spawning agent loop for an asynchronous subagent run.
+		 * Defaults to {@link #buildAgentLoop} for callers that do not distinguish.
+		 */
+		default AgentLoop buildSubagentLoop(String agentName) {
+			return buildAgentLoop(agentName);
+		}
 	}
 }

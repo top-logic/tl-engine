@@ -53,7 +53,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * @see AgentDefinitionQuery
  * @see AgentLoop
  */
-public class AgentFactory {
+public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 	private static final AgentFactory INSTANCE = new AgentFactory();
 
@@ -294,6 +294,37 @@ public class AgentFactory {
 	}
 
 	/**
+	 * Builds an {@link AgentLoop} for an asynchronous subagent: same provider/config as
+	 * {@link #buildAgentLoop}, but with a tool catalog filtered to read-only
+	 * ({@code READ}/{@code USER_SCOPED}) tools and with delegation/wait tools omitted
+	 * (structural depth-1).
+	 */
+	@Override
+	public AgentLoop buildSubagentLoop(String name) {
+		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		if (agentDef == null) {
+			throw new IllegalArgumentException("No agent found with name: " + name);
+		}
+		AgentModelAssignment assignment =
+			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+		AgentParams config = buildConfig(agentDef, assignment);
+		LLMProvider provider = buildProvider(config.model());
+		// Always a static, read-only, non-delegating catalog for subagents (depth-1, no writes).
+		ToolRegistry registry = buildStaticToolCatalog(agentDef, false, true);
+		int maxToolResultChars = resolveMaxToolResultChars(assignment);
+		return new AgentLoop(config, provider, registry, maxToolResultChars);
+	}
+
+	/**
+	 * Returns {@code true} if the tool has a read-only mode ({@code READ} or {@code USER_SCOPED}).
+	 */
+	static boolean isReadOnlyTool(com.top_logic.tl.ai.tool.api.Tool tool) {
+		com.top_logic.tl.ai.tool.api.ToolMode mode = tool.mode();
+		return mode == com.top_logic.tl.ai.tool.api.ToolMode.READ
+			|| mode == com.top_logic.tl.ai.tool.api.ToolMode.USER_SCOPED;
+	}
+
+	/**
 	 * Builds the {@link AgentParams} record from an {@link AgentDefinition} and its
 	 * {@link AgentModelAssignment}.
 	 */
@@ -479,12 +510,12 @@ public class AgentFactory {
 	 */
 	ToolRegistry buildToolCatalog(AgentDefinition agent) {
 		if (!agent.skills().isEmpty()) {
-			return buildDynamicToolCatalog(agent);
+			return buildDynamicToolCatalog(agent, true, false);
 		}
-		return buildStaticToolCatalog(agent);
+		return buildStaticToolCatalog(agent, true, false);
 	}
 
-	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent) {
+	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly) {
 		ToolCatalog registry =
 			new ToolCatalog();
 
@@ -498,12 +529,14 @@ public class AgentFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
-				try {
-					registry.register(tool);
-				} catch (IllegalArgumentException e) {
-					throw new IllegalArgumentException(
-						"Agent '" + agent.name() + "': " + e.getMessage()
-						+ " (qualified source: '" + toolName + "')", e);
+				if (!readOnly || isReadOnlyTool(tool)) {
+					try {
+						registry.register(tool);
+					} catch (IllegalArgumentException e) {
+						throw new IllegalArgumentException(
+							"Agent '" + agent.name() + "': " + e.getMessage()
+							+ " (qualified source: '" + toolName + "')", e);
+					}
 				}
 			}
 		}
@@ -521,7 +554,9 @@ public class AgentFactory {
 					continue;
 				}
 				for (Tool mcpTool : mcpTools) {
-					registry.register(mcpTool);
+					if (!readOnly || isReadOnlyTool(mcpTool)) {
+						registry.register(mcpTool);
+					}
 				}
 			}
 		}
@@ -535,22 +570,25 @@ public class AgentFactory {
 		}
 
 		// Inject delegation tools from the agent's delegations list
-		List<String> delegationNames = agent.delegations();
-		if (!delegationNames.isEmpty()) {
-			String parentName = agent.name();
-			AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-			for (String targetName : delegationNames) {
-				AgentDefinition target = query.findAgentByName(targetName);
-				String targetDesc = target != null ? target.description() : "No description";
-				String toolName = "delegate_to_" + targetName.replace('-', '_');
-				registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this::buildAgentLoop));
+		if (includeDelegation) {
+			List<String> delegationNames = agent.delegations();
+			if (!delegationNames.isEmpty()) {
+				String parentName = agent.name();
+				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+				for (String targetName : delegationNames) {
+					AgentDefinition target = query.findAgentByName(targetName);
+					String targetDesc = target != null ? target.description() : "No description";
+					String toolName = "delegate_to_" + targetName.replace('-', '_');
+					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
+				}
+				registry.register(new com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool());
 			}
 		}
 
 		return registry.freeze();
 	}
 
-	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent) {
+	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly) {
 		ToolCatalog baseCatalog = new ToolCatalog();
 
 		// Register only bootstrap tools from the agent's tools list
@@ -563,12 +601,14 @@ public class AgentFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
-				try {
-					baseCatalog.register(tool);
-				} catch (IllegalArgumentException e) {
-					throw new IllegalArgumentException(
-						"Agent '" + agent.name() + "': " + e.getMessage()
-						+ " (qualified source: '" + toolName + "')", e);
+				if (!readOnly || isReadOnlyTool(tool)) {
+					try {
+						baseCatalog.register(tool);
+					} catch (IllegalArgumentException e) {
+						throw new IllegalArgumentException(
+							"Agent '" + agent.name() + "': " + e.getMessage()
+							+ " (qualified source: '" + toolName + "')", e);
+					}
 				}
 			}
 		}
@@ -586,22 +626,27 @@ public class AgentFactory {
 					continue;
 				}
 				for (Tool mcpTool : mcpTools) {
-					baseCatalog.register(mcpTool);
+					if (!readOnly || isReadOnlyTool(mcpTool)) {
+						baseCatalog.register(mcpTool);
+					}
 				}
 			}
 		}
 
 		// Delegation tools go in the base (architectural)
-		List<String> delegationNames = agent.delegations();
-		if (!delegationNames.isEmpty()) {
-			String parentName = agent.name();
-			AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-			for (String targetName : delegationNames) {
-				AgentDefinition target = query.findAgentByName(targetName);
-				String targetDesc = target != null ? target.description() : "No description";
-				String toolName = "delegate_to_" + targetName.replace('-', '_');
-				baseCatalog.register(
-					new DelegationTool(toolName, targetDesc, targetName, parentName, this::buildAgentLoop));
+		if (includeDelegation) {
+			List<String> delegationNames = agent.delegations();
+			if (!delegationNames.isEmpty()) {
+				String parentName = agent.name();
+				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+				for (String targetName : delegationNames) {
+					AgentDefinition target = query.findAgentByName(targetName);
+					String targetDesc = target != null ? target.description() : "No description";
+					String toolName = "delegate_to_" + targetName.replace('-', '_');
+					baseCatalog.register(
+						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
+				}
+				baseCatalog.register(new com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool());
 			}
 		}
 

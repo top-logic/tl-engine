@@ -267,7 +267,7 @@ public class DelegationTool implements Tool {
 					Conversation conversation = new Conversation();
 					conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 						List.of(new TextContent(userPrompt))));
-					int before = conversation.messages().size() - 1;
+					int before = conversation.messages().size();
 
 					ToolContext childContext = toolContext.forSubagent(new TransactionScope(), j.cancellationToken());
 					AgentEventListener childListener = subagentListener(logListener, j.subagentId());
@@ -294,13 +294,7 @@ public class DelegationTool implements Tool {
 			if (userSession != null) {
 				return ThreadContextManager.inContext(userSession, work);
 			}
-			// Guard: ThreadContextManager module may not be started (e.g. in unit tests).
-			// Fall back to running the work directly on the thread without context wrapping.
-			try {
-				return ThreadContextManager.inSystemInteraction(DelegationTool.class, work);
-			} catch (IllegalStateException ex) {
-				return work.run();
-			}
+			return ThreadContextManager.inSystemInteraction(DelegationTool.class, work);
 		});
 
 		return ToolResult.of("Subagent " + _targetAgentName + " started (id=" + job.subagentId()

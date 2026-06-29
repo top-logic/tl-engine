@@ -8,7 +8,6 @@ package com.top_logic.model.search.expr;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.knowledge.search.Expression;
@@ -28,11 +27,11 @@ import com.top_logic.model.search.expr.visit.Visitor;
  * {@link KBQuery} expressions are created internally during the query optimization process.
  * </p>
  * 
- * @see SearchExpressionFactory#query(TLClass, SetExpression, List, boolean)
+ * @see SearchExpressionFactory#query(TLClass, SetExpression, List)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class KBQuery extends SearchExpressionWithSecurity {
+public class KBQuery extends SearchExpression {
 
 	private final TLClass _classType;
 
@@ -40,8 +39,7 @@ public class KBQuery extends SearchExpressionWithSecurity {
 
 	private final List<CompiledValue> _dynamic;
 
-	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters, boolean usesSecurity) {
-		super(usesSecurity);
+	KBQuery(TLClass classType, SetExpression query, List<CompiledValue> dynamicFilters) {
 		_classType = classType;
 		_query = query;
 		_dynamic = dynamicFilters;
@@ -89,8 +87,10 @@ public class KBQuery extends SearchExpressionWithSecurity {
 			}
 		}
 
+		// The result is not filtered for security: access to the individual objects' data is secured
+		// when their attributes are accessed, and the final result of a script is secured by the
+		// caller. The deferred filter parts below are the query's own (non-security) predicates.
 		List<TLObject> result = new ArrayList<>();
-		Predicate<TLObject> securityFilter = getSecurityFilter();
 		try (CloseableIterator<TLObject> dbResult =
 			kb.searchStream(ExpressionFactory.queryResolved(query, TLObject.class))) {
 			dbResult:
@@ -101,24 +101,11 @@ public class KBQuery extends SearchExpressionWithSecurity {
 						continue dbResult;
 					}
 				}
-				if (!securityFilter.test(match)) {
-					continue;
-				}
 				result.add(match);
 			}
 		}
 
 		return result;
-	}
-
-	private Predicate<TLObject> getSecurityFilter() {
-		Predicate<TLObject> securityFilter;
-		if (usesSecurity()) {
-			securityFilter = securityFilter();
-		} else {
-			securityFilter = input -> true;
-		}
-		return securityFilter;
 	}
 
 	@Override

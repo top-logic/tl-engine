@@ -6,9 +6,11 @@
 package com.top_logic.ai.chat.api;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,6 +41,7 @@ import com.top_logic.ai.chat.api.messages.ToolDeniedEvent;
 import com.top_logic.ai.chat.api.messages.ToolFailedEvent;
 import com.top_logic.ai.chat.api.messages.ToolStartedEvent;
 import com.top_logic.ai.chat.api.messages.TransactionCommittedEvent;
+import com.top_logic.ai.chat.api.messages.SubagentStatusEvent;
 import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
 import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
 import com.top_logic.ai.chat.api.messages.TurnCompletedEvent;
@@ -419,6 +422,24 @@ public class ChatSSEHandler implements AgentEventListener {
 		} else if (event instanceof AgentEvent.TaskUpdated e) {
 			sendEvent("task_update", DtoMapper.toJson(TaskUpdateEvent.create()
 				.setTasksJson(e.tasksJson())));
+		} else if (event instanceof AgentEvent.SubagentStarted e) {
+			sendEvent("subagent_started", DtoMapper.toJson(SubagentStatusEvent.create()
+				.setSubagentId(e.subagentId())
+				.setTargetAgentName(e.targetAgentName())
+				.setDetail(e.taskBrief())));
+		} else if (event instanceof AgentEvent.SubagentCompleted e) {
+			sendEvent("subagent_completed", DtoMapper.toJson(SubagentStatusEvent.create()
+				.setSubagentId(e.subagentId())
+				.setDetail(e.result().finalText())
+				.setTotalTokens(e.result().tokenUsage().totalTokens())
+				.setDurationMs(e.result().durationMs())));
+		} else if (event instanceof AgentEvent.SubagentFailed e) {
+			sendEvent("subagent_failed", DtoMapper.toJson(SubagentStatusEvent.create()
+				.setSubagentId(e.subagentId())
+				.setDetail(e.errorSummary())));
+		} else if (event instanceof AgentEvent.SubagentCancelled e) {
+			sendEvent("subagent_cancelled", DtoMapper.toJson(SubagentStatusEvent.create()
+				.setSubagentId(e.subagentId())));
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())
@@ -498,6 +519,7 @@ public class ChatSSEHandler implements AgentEventListener {
 		}
 
 		sendEvent("delegation_event", DtoMapper.toJson(DelegationEventWrapper.create()
+			.setSubagentId(delegated.subagentId())
 			.setDelegationToolCallId(delegated.delegationToolCallId())
 			.setEventType(innerType)
 			.setEventData(innerData)));
@@ -544,7 +566,7 @@ public class ChatSSEHandler implements AgentEventListener {
 		}
 	}
 
-	private void sendEvent(String eventType, String data) {
+	void sendEvent(String eventType, String data) {
 		if (_closed.get()) {
 			return;
 		}
@@ -580,4 +602,29 @@ public class ChatSSEHandler implements AgentEventListener {
 			.setCacheWriteTokens(usage.cacheWriteTokens());
 	}
 
+	// ---- Test seams (package-visible) ----
+
+	/**
+	 * Creates a handler whose {@link #sendEvent(String, String)} forwards event names to the given
+	 * consumer instead of writing to a real HTTP connection. The tracker and asyncContext are
+	 * unused by the code paths exercised via {@link #onEventForTest(AgentEvent)}.
+	 */
+	static ChatSSEHandler recordingForTest(Consumer<String> eventNameSink) {
+		return new ChatSSEHandler(null, null, new PrintWriter(new StringWriter())) {
+			@Override
+			void sendEvent(String eventType, String data) {
+				eventNameSink.accept(eventType);
+			}
+		};
+	}
+
+	/** Submits an event directly to {@link #emitAgentEvent(AgentEvent)} for testing. */
+	void onEventForTest(AgentEvent event) {
+		emitAgentEvent(event);
+	}
+
+	/** No-op flush seam for test compatibility; real flush goes through the scheduled task. */
+	void flushForTest() {
+		// nothing to flush when using the recording factory
+	}
 }

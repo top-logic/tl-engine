@@ -35,8 +35,10 @@ import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
+import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
@@ -318,10 +320,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	/**
 	 * Returns {@code true} if the tool has a read-only mode ({@code READ} or {@code USER_SCOPED}).
 	 */
-	static boolean isReadOnlyTool(com.top_logic.tl.ai.tool.api.Tool tool) {
-		com.top_logic.tl.ai.tool.api.ToolMode mode = tool.mode();
-		return mode == com.top_logic.tl.ai.tool.api.ToolMode.READ
-			|| mode == com.top_logic.tl.ai.tool.api.ToolMode.USER_SCOPED;
+	static boolean isReadOnlyTool(Tool tool) {
+		ToolMode mode = tool.mode();
+		return mode == ToolMode.READ
+			|| mode == ToolMode.USER_SCOPED;
 	}
 
 	/**
@@ -561,11 +563,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			}
 		}
 
-		// Inject skill tool if the agent has skills
-		SkillTool skillTool = buildSkillTool(agent);
-		if (skillTool != null) {
-			for (Tool tool : AnnotatedTools.from(skillTool)) {
-				registry.register(tool);
+		// Inject skill tool if the agent has skills (but not for read-only subagents to avoid runtime capability escalation)
+		if (!readOnly) {
+			SkillTool skillTool = buildSkillTool(agent);
+			if (skillTool != null) {
+				for (Tool tool : AnnotatedTools.from(skillTool)) {
+					registry.register(tool);
+				}
 			}
 		}
 
@@ -581,7 +585,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					String toolName = "delegate_to_" + targetName.replace('-', '_');
 					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
-				registry.register(new com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool());
+				registry.register(new WaitForSubagentTool());
 			}
 		}
 
@@ -646,7 +650,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					baseCatalog.register(
 						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
-				baseCatalog.register(new com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool());
+				baseCatalog.register(new WaitForSubagentTool());
 			}
 		}
 

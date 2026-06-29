@@ -56,6 +56,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
@@ -89,6 +90,7 @@ import com.top_logic.model.search.expr.supplier.SearchExpressionNow;
 import com.top_logic.model.search.expr.supplier.SearchExpressionToday;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -99,6 +101,12 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestSearchExpression extends AbstractSearchExpressionTest {
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		TLContext.getContext().setCurrentPerson(PersonManager.getManager().getRoot());
+	}
 
 	public void testKBSearchWithTransientObjects() {
 		with("TestSearchExpression-testKBSearchTransient.scenario.xml",
@@ -2856,7 +2864,9 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	public static Test suite() {
-		return suite(TestSearchExpression.class, SafeHTML.Module.INSTANCE);
+		return suite(TestSearchExpression.class,
+			SafeHTML.Module.INSTANCE,
+			PersonManager.Module.INSTANCE);
 	}
 
 }

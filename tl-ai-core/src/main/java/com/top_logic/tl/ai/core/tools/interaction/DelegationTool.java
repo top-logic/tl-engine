@@ -274,6 +274,13 @@ public class DelegationTool implements Tool {
 					try {
 						AgentResult result = targetLoop.run(conversation, childContext, childListener);
 
+						if (j.cancellationToken().isCancelled()) {
+							if (logListener != null) {
+								logListener.recordSubagentCancelled(j.subagentId());
+							}
+							throw new java.util.concurrent.CancellationException("Subagent cancelled.");
+						}
+
 						String finalText = AgentFactory.extractResponseText(conversation, before);
 						long durationMs = Duration.between(start, Instant.now()).toMillis();
 						int toolCalls = countToolCalls(conversation, before);
@@ -283,6 +290,8 @@ public class DelegationTool implements Tool {
 							logListener.recordSubagentCompleted(j.subagentId(), sr);
 						}
 						return sr;
+					} catch (java.util.concurrent.CancellationException ce) {
+						throw ce;
 					} catch (Exception e) {
 						if (logListener != null) {
 							logListener.recordSubagentFailed(j.subagentId(), e.getMessage());

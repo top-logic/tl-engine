@@ -497,6 +497,17 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	/**
+	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCancelled}
+	 * lifecycle event to the parent listener.
+	 */
+	public void recordSubagentCancelled(String subagentId) {
+		AgentEventListener parent = _parentListener;
+		if (parent != null) {
+			parent.onEvent(new AgentEvent.SubagentCancelled("", 0, Instant.now(), subagentId));
+		}
+	}
+
+	/**
 	 * Returns a lightweight forwarding listener that wraps every child event as a
 	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.DelegatedEvent} carrying the
 	 * {@code subagentId} and forwards it to the parent listener.

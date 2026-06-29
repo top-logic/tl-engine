@@ -74,9 +74,6 @@ public class ModelBasedSearch extends ConfiguredManagedClass<ModelBasedSearch.Co
 		/** Property name of {@link #getIncludeSubtypeUsages()}. */
 		String INCLUDE_SUBTYPE_USAGES = "include-subtype-usages";
 
-		/** Property name of {@link #getEnableOptimizations()}. */
-		String DISABLE_OPTIMIZATIONS = "disable-optimizations";
-
 		/** Property name of {@link #getAdditionalPredefinedParameters()}. */
 		String ADDITIONAL_PREDEFINED_PARAMETERS = "additional-predefined-parameters";
 
@@ -108,16 +105,6 @@ public class ModelBasedSearch extends ConfiguredManagedClass<ModelBasedSearch.Co
 		@BooleanDefault(true)
 		@Name(INCLUDE_SUBTYPE_USAGES)
 		boolean getIncludeSubtypeUsages();
-
-		/**
-		 * Enable optimizations.
-		 * <p>
-		 * Disabling the optimizations can be useful for example for debugging.
-		 * </p>
-		 */
-		@BooleanDefault(true)
-		@Name(DISABLE_OPTIMIZATIONS)
-		boolean getEnableOptimizations();
 
 		/**
 		 * {@link SupplierSearchExpressionBuilder} in addition to those registered in

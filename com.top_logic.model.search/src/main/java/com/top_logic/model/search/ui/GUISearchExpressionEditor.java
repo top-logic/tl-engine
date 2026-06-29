@@ -24,7 +24,6 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.exception.ErrorSeverity;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
@@ -36,9 +35,7 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.model.search.ModelBasedSearch;
 import com.top_logic.model.search.ModelBasedSearch.SearchConfig;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.compile.SearchExpressionCompiler;
-import com.top_logic.model.search.expr.interpreter.DefResolver;
-import com.top_logic.model.search.expr.interpreter.TypeResolver;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.persistency.expressions.SearchExpressionImpl;
 import com.top_logic.model.search.ui.model.Search;
 import com.top_logic.model.search.ui.model.exec.ExpressionBuilder;
@@ -47,7 +44,6 @@ import com.top_logic.model.search.ui.selector.SearchAndReportConfig;
 import com.top_logic.model.search.ui.selector.SearchType;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
-import com.top_logic.util.model.ModelService;
 
 /**
  * GUI based editor to create SearchExpressions.
@@ -168,41 +164,12 @@ public class GUISearchExpressionEditor extends DeclarativeFormComponent implemen
 		membersCopy.forEach(parent::removeMember);
 	}
 
-	private SearchExpression resolveSearchExpression(SearchExpression expression) {
-		if (expression == null) {
-			throw new TopLogicException(I18NConstants.ERROR_NO_SEARCH_EXPRESSION).initSeverity(ErrorSeverity.INFO);
-		}
-		expression = getOptimizedVariableResolvedSearchExpression(expression);
-
-		resolveSearchExpressionTypes(expression);
-
-		return expression;
-	}
-
-	private SearchExpression getOptimizedVariableResolvedSearchExpression(SearchExpression expression) {
-		resolveSearchExpressionVariables(expression);
-
-		return optimizeSearchExpression(expression);
-	}
-
-	private void resolveSearchExpressionTypes(SearchExpression expression) {
-		expression.visit(new TypeResolver(ModelService.getApplicationModel()), null);
-	}
-
-	private SearchExpression optimizeSearchExpression(SearchExpression expression) {
-		return new SearchExpressionCompiler(PersistencyLayer.getKnowledgeBase().getMORepository()).compile(expression);
-	}
-
-	private void resolveSearchExpressionVariables(SearchExpression expression) {
-		expression.visit(new DefResolver(), null);
-	}
-
 	private SearchExpression createRawSearchExpression() {
 		return new ExpressionBuilder().toExpression(getFormModel());
 	}
 
 	@Override
-	public HandlerResult search(BiFunction<SearchExpression, Provider<String>, HandlerResult> algorithm) {
+	public HandlerResult search(BiFunction<QueryExecutor, Provider<String>, HandlerResult> algorithm) {
 		FormContext formContext = getFormContext();
 		if (!formContext.checkAll()) {
 			HandlerResult result = new HandlerResult();
@@ -210,8 +177,12 @@ public class GUISearchExpressionEditor extends DeclarativeFormComponent implemen
 			return result;
 		}
 		SearchExpression expr = createRawSearchExpression();
-		SearchExpression search = resolveSearchExpression(expr);
-		return algorithm.apply(search, () -> search.toString());
+		if (expr == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_SEARCH_EXPRESSION).initSeverity(ErrorSeverity.INFO);
+		}
+
+		QueryExecutor executor = QueryExecutor.compile(expr);
+		return algorithm.apply(executor, () -> executor.getSearch().toString());
 	}
 
 	@Override

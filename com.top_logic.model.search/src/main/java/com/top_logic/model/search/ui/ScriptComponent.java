@@ -31,7 +31,6 @@ import com.top_logic.layout.channel.TypedChannelSPI;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
-import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.impl.TransientModelFactory;
@@ -80,7 +79,7 @@ public class ScriptComponent extends BoundLayout {
 	}
 
 	/**
-	 * Executes the given {@link SearchExpression} and propagates the result on the
+	 * Executes the given {@link QueryExecutor} and propagates the result on the
 	 * {@link #getResultChannel() result} channel.
 	 * 
 	 * @param expression
@@ -91,7 +90,7 @@ public class ScriptComponent extends BoundLayout {
 	 * @param src
 	 *        The script source code.
 	 */
-	public HandlerResult execute(SearchExpression expression, boolean withCommit, Provider<String> src) {
+	public HandlerResult execute(QueryExecutor expression, boolean withCommit, Provider<String> src) {
 		Collection<?> results;
 		try {
 			if (withCommit) {
@@ -110,7 +109,7 @@ public class ScriptComponent extends BoundLayout {
 		}
 
 		Predicate<TLObject> securityFilter = securityFilter();
-		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression);
+		Set<TLClass> searchedTypes = SearchUtil.getSearchedTypes(expression.getSearch());
 		if (searchedTypes.isEmpty() && !results.isEmpty()) {
 			// Cannot determine static type of query, use typing by example.
 			searchedTypes = new HashSet<>();
@@ -196,10 +195,7 @@ public class ScriptComponent extends BoundLayout {
 		return result -> accessRights.isAllowed(user, result, cmdGroup);
 	}
 
-	private Collection<?> getResults(SearchExpression expression) {
-		KnowledgeBase defaultKnowledgeBase = kb();
-		TLModel defaultTLModel = ModelService.getApplicationModel();
-		QueryExecutor executor = QueryExecutor.compile(defaultKnowledgeBase, defaultTLModel, expression);
+	private Collection<?> getResults(QueryExecutor executor) {
 		Object result = executor.executeWith(executor.context(true, null, null), Args.none());
 
 		// Note: Do not use SearchExpression.asCollection(result), since this decomposes maps into

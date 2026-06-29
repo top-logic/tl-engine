@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.layout.WindowScope;
@@ -283,6 +284,14 @@ public class TaskProgressTracker {
 	 */
 	public TaskStore getActiveTaskStore() {
 		return _sessionManager.getActiveTaskStore();
+	}
+
+	/**
+	 * Returns the active session's {@link SubagentJobRegistry}, creating one on first use.
+	 * Returns {@code null} if no session is active.
+	 */
+	public SubagentJobRegistry getActiveSubagentRegistry() {
+		return _sessionManager.getActiveSubagentRegistry();
 	}
 
 	/**

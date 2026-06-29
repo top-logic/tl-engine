@@ -22,6 +22,7 @@ import com.top_logic.tl.ai.core.provider.LLMService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -61,7 +62,11 @@ public class ChatSessionManager {
 	private final Map<String, SessionState> _sessions = new LinkedHashMap<>(16, 0.75f, true) {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry<String, SessionState> eldest) {
-			return size() > MAX_CACHED_SESSIONS;
+			boolean evict = size() > MAX_CACHED_SESSIONS;
+			if (evict) {
+				disposeSessionState(eldest.getValue());
+			}
+			return evict;
 		}
 	};
 
@@ -85,6 +90,9 @@ public class ChatSessionManager {
 		 * Persists across agent runs so dynamically loaded tools survive between messages.
 		 */
 		ToolRegistry _toolRegistry;
+
+		/** */
+		SubagentJobRegistry _subagentRegistry;
 
 		/** */
 		SessionState(Chat chat, ConversationMemory conversationMemory) {
@@ -185,6 +193,29 @@ public class ChatSessionManager {
 			if (state != null) {
 				state._toolRegistry = registry;
 			}
+		}
+	}
+
+	/**
+	 * Returns the active session's {@link SubagentJobRegistry}, creating one on first use.
+	 * Returns {@code null} if no session is active.
+	 */
+	public SubagentJobRegistry getActiveSubagentRegistry() {
+		synchronized (_lock) {
+			SessionState state = _activeSessionId != null ? _sessions.get(_activeSessionId) : null;
+			if (state == null) {
+				return null;
+			}
+			if (state._subagentRegistry == null) {
+				state._subagentRegistry = new SubagentJobRegistry();
+			}
+			return state._subagentRegistry;
+		}
+	}
+
+	private static void disposeSessionState(SessionState state) {
+		if (state != null && state._subagentRegistry != null) {
+			state._subagentRegistry.shutdown();
 		}
 	}
 

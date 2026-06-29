@@ -46,6 +46,8 @@ import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -198,44 +200,47 @@ public class ChatProcessor {
 			// Allow sub-agent approval events to bubble up to the SSE handler
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
+			SubagentJobRegistry subagentRegistry = taskTracker.getActiveSubagentRegistry();
 			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
 
 			// Record the run against the session captured at send time (not the currently
 			// active one), so a completed run is never written under the wrong session.
 			AgentSession agentSession = resolveAgentSession(state.getSessionId());
-			AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
-				conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null);
-			if (ToolRegistryReloadFlag.consume()) {
-				// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
-				// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
-				// rebuilds it from the updated service configuration.
-				taskTracker.setActiveToolRegistry(null);
-			} else {
-				taskTracker.setActiveToolRegistry(runResult.registry());
-			}
-			for (String skillId : loadedSkills) {
-				taskTracker.addLoadedSkill(skillId);
-			}
-			String result = runResult.response();
-			state.setLastAgentResponse(result);
+			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry)) {
+				AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
+					conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null);
+				if (ToolRegistryReloadFlag.consume()) {
+					// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
+					// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
+					// rebuilds it from the updated service configuration.
+					taskTracker.setActiveToolRegistry(null);
+				} else {
+					taskTracker.setActiveToolRegistry(runResult.registry());
+				}
+				for (String skillId : loadedSkills) {
+					taskTracker.addLoadedSkill(skillId);
+				}
+				String result = runResult.response();
+				state.setLastAgentResponse(result);
 
-			state.addPendingMessage(new ChatMessage("Agent", result));
+				state.addPendingMessage(new ChatMessage("Agent", result));
 
-			// Flush pending messages (including agent response) into Chat before persisting,
-			// so the persisted data includes the agent's response.
-			Chat chat = state.getChat();
-			if (chat == null) {
-				chat = taskTracker.getChat();
-			}
-			applyPollUpdates(state, chat, taskTracker);
+				// Flush pending messages (including agent response) into Chat before persisting,
+				// so the persisted data includes the agent's response.
+				Chat chat = state.getChat();
+				if (chat == null) {
+					chat = taskTracker.getChat();
+				}
+				applyPollUpdates(state, chat, taskTracker);
 
-			// Persist conversation log, task store, and metadata in a single write
-			String sessionId = state.getSessionId();
-			if (sessionId == null) {
-				sessionId = taskTracker.getActiveSessionId();
-			}
-			if (sessionId != null) {
-				persistMessages(taskTracker, sessionId);
+				// Persist conversation log, task store, and metadata in a single write
+				String sessionId = state.getSessionId();
+				if (sessionId == null) {
+					sessionId = taskTracker.getActiveSessionId();
+				}
+				if (sessionId != null) {
+					persistMessages(taskTracker, sessionId);
+				}
 			}
 
 		} finally {

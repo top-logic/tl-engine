@@ -16,6 +16,7 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * {@link GenericMethod} looking up the {@link TLObject#tContainer()} of an object.
@@ -44,16 +45,16 @@ public class Container extends GenericMethodWithSecurity {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLObject object = asTLObject(arguments[0]);
-		if (object != null) {
-			TLObject container = object.tContainer();
-			if (usesSecurity()) {
-				return filterSecurity(container);
-			} else {
-				return container;
-			}
-		} else {
+		if (object == null) {
 			return null;
 		}
+		if (usesSecurity() && !ModelAccessRights.getInstance().isReadAllowed(object)) {
+			// No read access to the base object - cannot navigate to its container. The container
+			// itself is returned unfiltered; the final result of a script must be secured by the
+			// caller.
+			return null;
+		}
+		return object.tContainer();
 	}
 
 	/**

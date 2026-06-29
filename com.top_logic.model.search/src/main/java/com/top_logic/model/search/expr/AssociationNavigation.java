@@ -121,12 +121,10 @@ public class AssociationNavigation extends SearchExpressionWithSecurity {
 				}
 			}
 		}
-		List<TLObject> navigationResult = evalInternal(source);
-		if (withSecurity) {
-			return filterSecurity(navigationResult);
-		} else {
-			return navigationResult;
-		}
+		// Note: The navigation result is returned unfiltered. Security is enforced on the base
+		// object above (navigation is denied if the user must not read the source reference); the
+		// final result of a script must be secured by the caller.
+		return evalInternal(source);
 	}
 
 	private List<TLObject> evalInternal(TLObject source) {

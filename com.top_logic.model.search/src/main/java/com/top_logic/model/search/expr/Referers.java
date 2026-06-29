@@ -6,16 +6,13 @@
 package com.top_logic.model.search.expr;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
 import com.top_logic.model.security.ModelAccessRights;
-import com.top_logic.util.TLContext;
 
 /**
  * {@link SearchExpression} looking up objects referring to a given target object through a given
@@ -83,42 +80,12 @@ public class Referers extends SearchExpressionWithSecurity implements WithFlatMa
 			return null;
 		}
 		TLObject self = (TLObject) targetValue;
-		Set<? extends TLObject> referrers = self.tReferers(reference);
-		if (usesSecurity) {
-			// Check whether user is allowed to access the reference on the referrer.
-			ModelAccessRights accessRights = ModelAccessRights.getInstance();
-			switch (referrers.size()) {
-				case 0:
-					return referrers;
-				case 1: {
-					TLObject referrer = referrers.iterator().next();
-					if (accessRights.isReadAllowed(referrer, reference)) {
-						return referrers;
-					} else {
-						return Collections.emptySet();
-					}
-				}
-				default: {
-					Set<TLObject> result = new HashSet<>();
-					Person user = TLContext.currentUser();
-					boolean anyChanges = false;
-					for (TLObject referrer : referrers) {
-						if (accessRights.isReadAllowed(user, referrer, reference)) {
-							result.add(referrer);
-						} else {
-							anyChanges = true;
-						}
-					}
-					if (anyChanges) {
-						return result;
-					} else {
-						return referrers;
-					}
-				}
-			}
-		} else {
-			return referrers;
+		if (usesSecurity && !ModelAccessRights.getInstance().isReadAllowed(self)) {
+			// No read access to the base object - cannot look up its referrers. The referrers are
+			// returned unfiltered; the final result of a script must be secured by the caller.
+			return Collections.emptySet();
 		}
+		return self.tReferers(reference);
 	}
 
 	@Override

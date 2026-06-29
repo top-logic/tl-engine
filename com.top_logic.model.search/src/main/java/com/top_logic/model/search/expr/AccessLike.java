@@ -51,19 +51,20 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 
 	/**
 	 * Looks up the given attribute from the given object.
-	 * 
+	 *
 	 * <p>
-	 * When <code>withSecurity</code> is requested, then only those elements which the user is
-	 * allowed to see are returned.
+	 * When <code>withSecurity</code> is requested, the access is denied (an empty value is returned)
+	 * if the user must not read the attribute on the base object {@code self}. The looked-up value
+	 * itself is returned unfiltered; securing the final result is the responsibility of the caller.
 	 * </p>
-	 * 
+	 *
 	 * @param self
 	 *        The object to access.
 	 * @param part
 	 *        The attribute to look up.
 	 * @param withSecurity
-	 *        Whether only those elements must be returned that the user is allowed to see.
-	 * 
+	 *        Whether the read access to {@code self} must be checked.
+	 *
 	 * @return The value of the given attribute.
 	 */
 	static Object lookupValue(TLObject self, TLStructuredTypePart part, boolean withSecurity) {
@@ -90,11 +91,12 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 		} else {
 			value = self.tValue(part);
 		}
-		Object returnValue = SearchExpression.normalizeValue(value);
-		if (withSecurity) {
-			returnValue = SearchExpression.filterSecurity(returnValue);
-		}
-		return returnValue;
+		// Note: The looked-up value is returned unfiltered. Security is enforced on the base object
+		// (the access above is denied if the user must not read the attribute), not on the
+		// referenced value - consistent with the GUI, which always shows a referenced object (its
+		// label) and only gates navigation into it. The final result of a script must be secured by
+		// the caller.
+		return SearchExpression.normalizeValue(value);
 	}
 
 }

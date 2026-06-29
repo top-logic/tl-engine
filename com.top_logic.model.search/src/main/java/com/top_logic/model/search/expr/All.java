@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.model.TLClass;
@@ -24,7 +23,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class All extends SearchExpressionWithSecurity {
+public class All extends SearchExpression {
 
 	private TLStructuredType _type;
 
@@ -34,8 +33,7 @@ public class All extends SearchExpressionWithSecurity {
 	 * @param type
 	 *        See {@link #getInstanceType()}
 	 */
-	All(TLStructuredType type, boolean usesSecurity) {
-		super(usesSecurity);
+	All(TLStructuredType type) {
 		_type = type;
 	}
 
@@ -60,44 +58,26 @@ public class All extends SearchExpressionWithSecurity {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		return all(this, _type, usesSecurity());
-	}
-
-	/**
-	 * Retrieves all instances of the given type that the current user is allowed to see.
-	 */
-	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type) {
-		return all(self, type, true);
+		return all(this, _type);
 	}
 
 	/**
 	 * Retrieves all instances of the given type.
-	 * 
-	 * @param checkSecurity
-	 *        Whether only the objects must be returned that the user is allowed to see.
+	 *
+	 * <p>
+	 * The result is not filtered for security: access to the individual objects' data is secured
+	 * when their attributes are accessed, and the final result of a script is secured by the caller.
+	 * </p>
 	 */
-	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type, boolean checkSecurity) {
+	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type) {
 		switch (type.getModelKind()) {
 			case CLASS: {
 				ArrayList<TLObject> result = new ArrayList<>();
 				try (CloseableIterator<TLObject> instances =
 					type.getModel().getQuery(TLInstanceAccess.class).getAllInstances((TLClass) type)) {
-					if (checkSecurity) {
-						if (instances.hasNext()) {
-							Predicate<TLObject> securityFilter = securityFilter();
-							do {
-								TLObject instance = instances.next();
-								if (securityFilter.test(instance)) {
-									result.add(instance);
-								}
-							}
-							while (instances.hasNext());
-						}
-					} else {
-						while (instances.hasNext()) {
-							TLObject instance = instances.next();
-							result.add(instance);
-						}
+					while (instances.hasNext()) {
+						TLObject instance = instances.next();
+						result.add(instance);
 					}
 				}
 				return result;

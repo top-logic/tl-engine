@@ -845,23 +845,35 @@
       const running = this.runningCount();
       const rows = [];
       this.jobs.forEach((j) => {
+        const hasResult = !!(j.detail && j.detail.trim());
+        const meta =
+          (j.status || "") +
+          (j.tokens ? " · " + j.tokens + " tok" : "") +
+          (j.durationMs ? " · " + Utils.formatDuration(j.durationMs) : "");
         rows.push(
-          '<div class="chat-bg-row" data-subagent-id="' +
+          '<div class="chat-bg-row' +
+            (hasResult ? " has-result" : "") +
+            '" data-subagent-id="' +
             Utils.escapeHtml(j.subagentId) +
             '"><span class="chat-bg-status ' +
             (j.status || "").toLowerCase() +
             '"></span><span class="chat-bg-name">' +
             Utils.escapeHtml(j.name || j.subagentId) +
             '</span><span class="chat-bg-meta">' +
-            (j.status || "") +
-            (j.tokens ? " · " + j.tokens + " tok" : "") +
+            meta +
             "</span>" +
+            (hasResult ? '<span class="chat-bg-chevron">&#9654;</span>' : "") +
             (j.status === "RUNNING" || j.status === "QUEUED"
               ? '<button class="chat-bg-cancel" data-subagent-id="' +
                 Utils.escapeHtml(j.subagentId) +
                 '">✕</button>'
               : "") +
-            "</div>",
+            "</div>" +
+            (hasResult
+              ? '<div class="chat-bg-detail" data-detail-for="' +
+                Utils.escapeHtml(j.subagentId) +
+                '" style="display:none"></div>'
+              : ""),
         );
       });
       el.innerHTML =
@@ -870,8 +882,34 @@
         " running</div>" +
         rows.join("");
       el.querySelectorAll(".chat-bg-cancel").forEach((btn) => {
-        btn.onclick = () =>
+        btn.onclick = (e) => {
+          e.stopPropagation();
           BackgroundPanel.cancel(btn.getAttribute("data-subagent-id"));
+        };
+      });
+      // Clicking a finished row toggles its result detail.
+      el.querySelectorAll(".chat-bg-row.has-result").forEach((row) => {
+        const id = row.getAttribute("data-subagent-id");
+        const detail = el.querySelector(
+          '.chat-bg-detail[data-detail-for="' + CSS.escape(id) + '"]',
+        );
+        if (!detail) return;
+        row.onclick = () => {
+          const open = detail.style.display !== "none";
+          if (open) {
+            detail.style.display = "none";
+            row.classList.remove("expanded");
+            return;
+          }
+          if (!detail.firstChild) {
+            const job = BackgroundPanel.jobs.get(id);
+            detail.appendChild(
+              Tools._buildResultBlock("Result", job ? job.detail : ""),
+            );
+          }
+          detail.style.display = "";
+          row.classList.add("expanded");
+        };
       });
     },
 
@@ -1823,13 +1861,7 @@
       const body = el.querySelector(".tl-chat-tool-body");
       if (body) {
         if (tc.result) {
-          const resultDiv = document.createElement("div");
-          resultDiv.innerHTML =
-            '<div class="tl-chat-tool-label">Result</div>' +
-            "<pre>" +
-            Utils.escapeHtml(this._truncate(tc.result, 2000)) +
-            "</pre>";
-          body.appendChild(resultDiv);
+          body.appendChild(this._buildResultBlock("Result", tc.result));
         }
         if (tc.error) {
           const errorDiv = document.createElement("div");
@@ -1878,6 +1910,53 @@
       return (
         s.substring(0, max) + "\n... (" + (s.length - max) + " more characters)"
       );
+    },
+
+    // Default character budget shown before a result is collapsed behind a toggle.
+    _RESULT_COLLAPSE_AT: 2000,
+
+    // Builds a labelled result/error block. Long text is collapsed to a preview
+    // with a "Show more / Show less" toggle so the full content stays reachable
+    // in the trace instead of being hard-truncated.
+    _buildResultBlock(label, text, opts) {
+      opts = opts || {};
+      const wrap = document.createElement("div");
+
+      const labelDiv = document.createElement("div");
+      labelDiv.className = "tl-chat-tool-label";
+      labelDiv.textContent = label;
+      if (opts.color) labelDiv.style.color = opts.color;
+      wrap.appendChild(labelDiv);
+
+      const pre = document.createElement("pre");
+      if (opts.color) pre.style.color = opts.color;
+      wrap.appendChild(pre);
+
+      const full = text || "";
+      const limit = this._RESULT_COLLAPSE_AT;
+      if (full.length <= limit) {
+        pre.textContent = full;
+        return wrap;
+      }
+
+      let expanded = false;
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "tl-chat-tool-more";
+      const apply = () => {
+        pre.textContent = expanded ? full : full.substring(0, limit) + "\n…";
+        toggle.textContent = expanded
+          ? "Show less"
+          : "Show " + (full.length - limit) + " more characters";
+      };
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        expanded = !expanded;
+        apply();
+      });
+      apply();
+      wrap.appendChild(toggle);
+      return wrap;
     },
   };
 
@@ -2928,21 +3007,9 @@
           "</pre>";
         body.appendChild(deniedDiv);
       } else if (isFailed && tc.errorMessage) {
-        const errorDiv = document.createElement("div");
-        errorDiv.innerHTML =
-          '<div class="tl-chat-tool-label">Error</div>' +
-          "<pre>" +
-          Utils.escapeHtml(tc.errorMessage) +
-          "</pre>";
-        body.appendChild(errorDiv);
+        body.appendChild(Tools._buildResultBlock("Error", tc.errorMessage));
       } else if (tc.result) {
-        const resultDiv = document.createElement("div");
-        resultDiv.innerHTML =
-          '<div class="tl-chat-tool-label">Result</div>' +
-          "<pre>" +
-          Utils.escapeHtml(Tools._truncate(tc.result, 2000)) +
-          "</pre>";
-        body.appendChild(resultDiv);
+        body.appendChild(Tools._buildResultBlock("Result", tc.result));
       }
 
       let expanded = false;

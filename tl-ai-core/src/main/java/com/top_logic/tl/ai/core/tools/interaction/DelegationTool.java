@@ -9,25 +9,41 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -131,11 +147,16 @@ public class DelegationTool implements Tool {
 		}
 		String contextStr = (String) args.get("context");
 
-		StringBuilder userPrompt = new StringBuilder();
-		if (contextStr != null && !contextStr.isBlank()) {
-			userPrompt.append("## Context\n\n").append(contextStr).append("\n\n");
+		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
+		if (registry == null) {
+			// No async session bound (non-chat caller, tests): keep synchronous behavior.
+			return executeSync(toolContext, task, contextStr);
 		}
-		userPrompt.append("## Task\n\n").append(task);
+		return executeAsync(registry, toolContext, task, contextStr);
+	}
+
+	private ToolResult executeSync(ToolContext toolContext, String task, String contextStr) {
+		String userPromptStr = buildUserPrompt(task, contextStr);
 
 		ConversationLogListener logListener = ConversationLogListener.current();
 		String delegationId = null;
@@ -162,7 +183,7 @@ public class DelegationTool implements Tool {
 			UserMessage userMessage = new UserMessage(
 				UUID.randomUUID().toString(),
 				Instant.now(),
-				List.of(new TextContent(userPrompt.toString())));
+				List.of(new TextContent(userPromptStr)));
 			conversation.add(userMessage);
 
 			ToolContext childContext = toolContext.forDelegation(
@@ -209,6 +230,123 @@ public class DelegationTool implements Tool {
 			Logger.error("Delegation to " + _targetAgentName + " failed.", e, DelegationTool.class);
 			return ToolResult.of("ERROR: Delegation to " + _targetAgentName + " failed: " + e.getMessage());
 		}
+	}
+
+	private ToolResult executeAsync(SubagentJobRegistry registry, ToolContext toolContext,
+			String task, String contextStr) {
+		String userPrompt = buildUserPrompt(task, contextStr);
+
+		// Capture caller-thread context so the background thread can re-establish it.
+		ConversationLogListener logListener = ConversationLogListenerBinding.getListener();
+		TaskStore taskStore = TaskStoreBinding.getStore();
+		UserInteractionStore interactionStore = UserInteractionStoreBinding.getStore();
+		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
+		// Guard: ThreadContextManager may not be started in test environments.
+		final SubSessionContext userSession = getSubSessionSafe();
+
+		CancellationToken childToken = new CancellationToken();
+		SubagentJob job = registry.register(_targetAgentName, task, childToken);
+
+		// Lifecycle: SubagentStarted to the parent's listener (for the UI panel).
+		if (logListener != null) {
+			logListener.recordSubagentStarted(job.subagentId(), _targetAgentName, task);
+		}
+
+		registry.spawn(job, j -> {
+			ComputationEx2<SubagentResult, RuntimeException, RuntimeException> work = () -> {
+				try (
+					ConversationLogListenerBinding.Binding b1 =
+						ConversationLogListenerBinding.bind(logListener);
+					TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(taskStore);
+					UserInteractionStoreBinding.Binding b3 =
+						UserInteractionStoreBinding.bind(interactionStore);
+					LoadedSkillsBinding.Binding b4 = LoadedSkillsBinding.bind(loadedSkills)) {
+
+					Instant start = Instant.now();
+					AgentLoop targetLoop = _loopFactory.buildSubagentLoop(_targetAgentName);
+					Conversation conversation = new Conversation();
+					conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
+						List.of(new TextContent(userPrompt))));
+					int before = conversation.messages().size() - 1;
+
+					ToolContext childContext = toolContext.forSubagent(new TransactionScope(), j.cancellationToken());
+					AgentEventListener childListener = subagentListener(logListener, j.subagentId());
+					try {
+						AgentResult result = targetLoop.run(conversation, childContext, childListener);
+
+						String finalText = AgentFactory.extractResponseText(conversation, before);
+						long durationMs = Duration.between(start, Instant.now()).toMillis();
+						int toolCalls = countToolCalls(conversation, before);
+						SubagentResult sr = new SubagentResult(finalText, result.totalUsage(), durationMs,
+							toolCalls, result.stopReason());
+						if (logListener != null) {
+							logListener.recordSubagentCompleted(j.subagentId(), sr);
+						}
+						return sr;
+					} catch (Exception e) {
+						if (logListener != null) {
+							logListener.recordSubagentFailed(j.subagentId(), e.getMessage());
+						}
+						throw e instanceof RuntimeException re ? re : new RuntimeException(e);
+					}
+				}
+			};
+			if (userSession != null) {
+				return ThreadContextManager.inContext(userSession, work);
+			}
+			// Guard: ThreadContextManager module may not be started (e.g. in unit tests).
+			// Fall back to running the work directly on the thread without context wrapping.
+			try {
+				return ThreadContextManager.inSystemInteraction(DelegationTool.class, work);
+			} catch (IllegalStateException ex) {
+				return work.run();
+			}
+		});
+
+		return ToolResult.of("Subagent " + _targetAgentName + " started (id=" + job.subagentId()
+			+ "). It runs in the background; its result will arrive in a later turn or via "
+			+ "wait_for_subagent.");
+	}
+
+	/** Returns the current sub-session or {@code null} when the module is not started (e.g. in tests). */
+	private static SubSessionContext getSubSessionSafe() {
+		try {
+			return ThreadContextManager.getSubSession();
+		} catch (IllegalStateException ex) {
+			return null;
+		}
+	}
+
+	private static String buildUserPrompt(String task, String contextStr) {
+		StringBuilder userPrompt = new StringBuilder();
+		if (contextStr != null && !contextStr.isBlank()) {
+			userPrompt.append("## Context\n\n").append(contextStr).append("\n\n");
+		}
+		userPrompt.append("## Task\n\n").append(task);
+		return userPrompt.toString();
+	}
+
+	private static AgentEventListener subagentListener(ConversationLogListener logListener, String subagentId) {
+		if (logListener == null) {
+			return event -> { /* no-op */ };
+		}
+		// Wrap child events as DelegatedEvent carrying the subagentId for UI routing.
+		return logListener.subagentListener(subagentId);
+	}
+
+	private static int countToolCalls(Conversation conversation, int fromIndex) {
+		int count = 0;
+		List<Message> messages = conversation.messages();
+		for (int i = Math.max(0, fromIndex); i < messages.size(); i++) {
+			if (messages.get(i) instanceof AssistantMessage assistant) {
+				for (ContentPart part : assistant.content()) {
+					if (part instanceof ToolCall) {
+						count++;
+					}
+				}
+			}
+		}
+		return count;
 	}
 
 	private String extractFinalText(Conversation conversation, AgentResult result) {

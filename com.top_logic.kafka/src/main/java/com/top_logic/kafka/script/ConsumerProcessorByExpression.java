@@ -146,6 +146,12 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	public ConsumerProcessorByExpression(InstantiationContext context, Config config) {
 		super(context, config);
 		_processor = QueryExecutor.compile(prefixWithParameters(config.getProcessor()));
+
+		// Messages are processed in a system context (see ConsumerDispatcher) without a logged-in
+		// user. The processing is backend logic that must operate on all data and must not be
+		// subject to a user's access rights; with security enabled it would even be denied, as there
+		// is no current user. Therefore security is switched off.
+		_processor.disableSecurity();
 		_transaction = config.getTransaction();
 	}
 

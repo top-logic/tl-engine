@@ -27,6 +27,9 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  */
 public class WaitForSubagentTool implements Tool {
 
+	/** The tool name as exposed to the model. */
+	public static final String NAME = "wait_for_subagent";
+
 	/** Default wait timeout in milliseconds. */
 	public static final long DEFAULT_TIMEOUT_MS = 300_000L;
 
@@ -49,7 +52,7 @@ public class WaitForSubagentTool implements Tool {
 
 	@Override
 	public String name() {
-		return "wait_for_subagent";
+		return NAME;
 	}
 
 	@Override

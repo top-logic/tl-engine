@@ -14,12 +14,14 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.ListAgentsTool;
 import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
+import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 
 /**
  * A {@link ToolFactory} that provides the generic asynchronous-subagent orchestration tools
- * ({@link SpawnSubagentTool spawn_subagent} and {@link ListAgentsTool list_agents}).
+ * ({@link SpawnSubagentTool spawn_subagent}, {@link ListAgentsTool list_agents} and
+ * {@link WaitForSubagentTool wait_for_subagent}, which also reports each subagent's status).
  *
  * <p>
  * These tools are independent of the pre-wired {@link DelegationTool delegation} flow: any agent
@@ -70,7 +72,8 @@ public class SubagentToolFactory implements ToolFactory {
 	public List<Tool> createTools() {
 		return List.of(
 			new SpawnSubagentTool(LOOP_FACTORY),
-			new ListAgentsTool());
+			new ListAgentsTool(),
+			new WaitForSubagentTool());
 	}
 
 }

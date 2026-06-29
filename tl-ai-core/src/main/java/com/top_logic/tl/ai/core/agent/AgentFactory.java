@@ -586,8 +586,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					String toolName = "delegate_to_" + targetName.replace('-', '_');
 					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
-				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it.
-				registry.register(new WaitForSubagentTool());
+				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
+				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
+				if (registry.getTool(WaitForSubagentTool.NAME) == null) {
+					registry.register(new WaitForSubagentTool());
+				}
 			}
 		}
 
@@ -652,8 +655,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					baseCatalog.register(
 						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
-				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it.
-				baseCatalog.register(new WaitForSubagentTool());
+				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
+				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
+				if (baseCatalog.getTool(WaitForSubagentTool.NAME) == null) {
+					baseCatalog.register(new WaitForSubagentTool());
+				}
 			}
 		}
 

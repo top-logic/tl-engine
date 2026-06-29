@@ -88,7 +88,21 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 
 		_check = QueryExecutor.compile(config.getCheck());
 		_checkAnalyzer = ScriptTracer.compile(model(), config.getCheck());
+		disableSecurity();
 		_type = config.getType();
+	}
+
+	/**
+	 * Disables security for the scripts.
+	 * 
+	 * <p>
+	 * For example, if an object's name must be unique, it must be unique across all objects, not
+	 * just among the objects that user is allowed to see.
+	 * </p>
+	 */
+	private void disableSecurity() {
+		_check.disableSecurity();
+		_checkAnalyzer.disableSecurity();
 	}
 
 	private static TLModel model() {

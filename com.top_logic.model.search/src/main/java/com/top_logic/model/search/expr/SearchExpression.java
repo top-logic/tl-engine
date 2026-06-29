@@ -247,7 +247,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 	/**
 	 * Creates a {@link Predicate} that accepts only {@link TLObject} that the current user is
-	 * allowed to see (if security requested).
+	 * allowed to see.
 	 */
 	public static Predicate<TLObject> securityFilter() {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
@@ -258,7 +258,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	/**
 	 * Filters the given value such that the result contains only elements that the current user is
 	 * allowed to see.
-	 * 
+	 *
 	 * @see #filterSecurity(Person, Object)
 	 */
 	public static Object filterSecurity(Object value) {

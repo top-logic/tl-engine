@@ -21,18 +21,18 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DynamicAll extends GenericMethodWithSecurity implements WithFlatMapSemantics<Void> {
+public class DynamicAll extends GenericMethod implements WithFlatMapSemantics<Void> {
 
 	/**
 	 * Creates a {@link DynamicAll}.
 	 */
-	public DynamicAll(String name, SearchExpression[] arguments, boolean usesSecurity) {
-		super(name, arguments, usesSecurity);
+	public DynamicAll(String name, SearchExpression[] arguments) {
+		super(name, arguments);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new DynamicAll(getName(), arguments, usesSecurity());
+		return new DynamicAll(getName(), arguments);
 	}
 
 	@Override
@@ -53,7 +53,7 @@ public class DynamicAll extends GenericMethodWithSecurity implements WithFlatMap
 	public Object evalDirect(EvalContext definitions, Object singletonValue, Void param) {
 		TLStructuredType type = asStructuredTypeNonNull(singletonValue, getArguments()[0]);
 
-		return All.all(this, type, usesSecurity());
+		return All.all(this, type);
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class DynamicAll extends GenericMethodWithSecurity implements WithFlatMap
 		public DynamicAll build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
 			checkSingleArg(expr, args);
-			return new DynamicAll(getConfig().getName(), args, true);
+			return new DynamicAll(getConfig().getName(), args);
 		}
 
 	}

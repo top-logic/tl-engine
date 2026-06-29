@@ -32,9 +32,11 @@ import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
+import com.top_logic.tl.ai.core.tools.interaction.ListAgentsTool;
 import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
+import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -586,6 +588,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
 				registry.register(new WaitForSubagentTool());
+				registry.register(new SpawnSubagentTool(this));
+				registry.register(new ListAgentsTool());
 			}
 		}
 
@@ -651,6 +655,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
 				}
 				baseCatalog.register(new WaitForSubagentTool());
+				baseCatalog.register(new SpawnSubagentTool(this));
+				baseCatalog.register(new ListAgentsTool());
 			}
 		}
 

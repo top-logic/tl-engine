@@ -346,11 +346,12 @@ public sealed interface AgentEvent {
 	 * @param runId agent run identifier
 	 * @param turnNumber 1-based loop iteration
 	 * @param timestamp when the event occurred
+	 * @param subagentId the async subagent job id, or {@code ""} for synchronous delegation
 	 * @param delegationToolCallId parent tool call identifier
 	 * @param childEvent the delegated child event
 	 */
 	record DelegatedEvent(String runId, int turnNumber, Instant timestamp,
-			String delegationToolCallId, AgentEvent childEvent) implements AgentEvent {}
+			String subagentId, String delegationToolCallId, AgentEvent childEvent) implements AgentEvent {}
 
 	// ---------- Task updates ----------
 
@@ -392,4 +393,55 @@ public sealed interface AgentEvent {
 	 */
 	record ProviderError(String runId, int turnNumber, Instant timestamp,
 			String kind, String message) implements AgentEvent {}
+
+	// ---------- Subagents ----------
+
+	/**
+	 * Emitted when an asynchronous subagent job is registered and dispatched.
+	 *
+	 * @param runId           agent run identifier
+	 * @param turnNumber      1-based loop iteration
+	 * @param timestamp       when the event occurred
+	 * @param subagentId      the job id within the session
+	 * @param targetAgentName the delegated-to agent definition name
+	 * @param taskBrief       the task the subagent was given
+	 */
+	record SubagentStarted(String runId, int turnNumber, Instant timestamp,
+			String subagentId, String targetAgentName, String taskBrief) implements AgentEvent {}
+
+	/**
+	 * Emitted when a subagent job finishes successfully.
+	 *
+	 * @param runId      agent run identifier
+	 * @param turnNumber 1-based loop iteration
+	 * @param timestamp  when the event occurred
+	 * @param subagentId the job id
+	 * @param result     the structured result envelope
+	 */
+	record SubagentCompleted(String runId, int turnNumber, Instant timestamp,
+			String subagentId,
+			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result) implements AgentEvent {}
+
+	/**
+	 * Emitted when a subagent job fails.
+	 *
+	 * @param runId        agent run identifier
+	 * @param turnNumber   1-based loop iteration
+	 * @param timestamp    when the event occurred
+	 * @param subagentId   the job id
+	 * @param errorSummary a short human-readable error summary
+	 */
+	record SubagentFailed(String runId, int turnNumber, Instant timestamp,
+			String subagentId, String errorSummary) implements AgentEvent {}
+
+	/**
+	 * Emitted when a subagent job is cooperatively cancelled.
+	 *
+	 * @param runId      agent run identifier
+	 * @param turnNumber 1-based loop iteration
+	 * @param timestamp  when the event occurred
+	 * @param subagentId the job id
+	 */
+	record SubagentCancelled(String runId, int turnNumber, Instant timestamp,
+			String subagentId) implements AgentEvent {}
 }

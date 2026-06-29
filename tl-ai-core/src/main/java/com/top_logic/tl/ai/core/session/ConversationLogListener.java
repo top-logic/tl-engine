@@ -539,7 +539,7 @@ public class ConversationLogListener implements AgentEventListener {
 			if (parent != null) {
 				parent.onEvent(new AgentEvent.DelegatedEvent(
 					childEvent.runId(), childEvent.turnNumber(), childEvent.timestamp(),
-					_delegationToolCallId, childEvent));
+					"", _delegationToolCallId, childEvent));
 			}
 		}
 

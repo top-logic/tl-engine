@@ -38,7 +38,7 @@ public class AllBuilder extends SingleArgMethodBuilder<SearchExpression> {
 		if (argument instanceof Literal) {
 			return all(resolveStructuredType(expr, argument));
 		} else {
-			return new DynamicAll(getConfig().getName(), allArgs, true);
+			return new DynamicAll(getConfig().getName(), allArgs);
 		}
 	}
 

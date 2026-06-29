@@ -104,7 +104,7 @@ public class Copy extends DescendingVisitor<SearchExpression, Void> {
 
 	@Override
 	protected SearchExpression composeAll(All expr, Void arg) {
-		return all(expr.getInstanceType(), expr.usesSecurity());
+		return all(expr.getInstanceType());
 	}
 
 	@Override
@@ -127,7 +127,7 @@ public class Copy extends DescendingVisitor<SearchExpression, Void> {
 
 	@Override
 	protected SearchExpression composeSource(KBQuery expr, Void arg) {
-		return query(expr.getClassType(), expr.getQuery(), expr.getDynamicFilters(), expr.usesSecurity());
+		return query(expr.getClassType(), expr.getQuery(), expr.getDynamicFilters());
 	}
 
 	@Override

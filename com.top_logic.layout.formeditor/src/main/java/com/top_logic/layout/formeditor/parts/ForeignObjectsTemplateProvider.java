@@ -107,7 +107,9 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
 		QueryExecutor readOnlyExpr = QueryExecutor.compileOptional(getConfig().getReadOnly());
 		TLObject model = context.getModel();
-		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(model));
+		// Secure the displayed objects: only those the current user is allowed to read.
+		Collection<?> objects =
+			SearchExpression.asCollection(SearchExpression.filterSecurity(itemsExpr.execute(model)));
 		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
 		HTMLTemplateFragment[] templates = new HTMLTemplateFragment[objects.size()];
 		FormContainer contentGroup = context.getContentGroup();

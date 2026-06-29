@@ -10,31 +10,34 @@ import java.util.List;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 
 /**
  * {@link GenericMethod} executing the tracing version of the configured script.
- * 
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class TracingScriptMethod extends GenericMethod {
+public class TracingScriptMethod extends GenericMethodWithSecurity {
 
 	/**
 	 * This constructor creates a new {@link TracingScriptMethod}.
-	 * 
+	 *
 	 * @param name
 	 *        See {@link #getName()}.
 	 * @param arguments
 	 *        See {@link #getArguments()}.
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	public TracingScriptMethod(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	public TracingScriptMethod(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new TracingScriptMethod(getName(), arguments);
+		return new TracingScriptMethod(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -48,7 +51,8 @@ public class TracingScriptMethod extends GenericMethod {
 	}
 
 	private SearchExpression tracingSearch() {
-		return ConfiguredTLScriptFunctions.Module.INSTANCE.getImplementationInstance().getTracingExecutor(getName());
+		return ConfiguredTLScriptFunctions.Module.INSTANCE.getImplementationInstance()
+			.getTracingExecutor(getName(), usesSecurity());
 	}
 
 }

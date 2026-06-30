@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.tree.model;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.component.Selectable;
@@ -37,11 +38,38 @@ public interface TreeViewConfig extends Selectable.SelectableConfig {
 	String ADJUST_SELECTION_WHEN_COLLAPSING_ATTRIBUTE = "adjustSelectionWhenCollapsing";
 
 	/**
+	 * The configuration parameter for {@link #getRevealSelection()}.
+	 */
+	String REVEAL_SELECTION_ATTRIBUTE = "revealSelection";
+
+	/**
 	 * Whether the selected node should be expanded when selected.
+	 *
+	 * <p>
+	 * This setting only controls expanding the selected node itself, so that its children become
+	 * visible. Whether the ancestors of a newly selected node are expanded, so that the selection
+	 * itself becomes visible, is controlled by the "make new selection visible" setting.
+	 * </p>
 	 */
 	@Name(EXPAND_SELECTED_ATTRIBUTE)
 	@BooleanDefault(true)
 	boolean getExpandSelected();
+
+	/**
+	 * Whether a newly selected node is made visible by expanding its ancestor nodes.
+	 *
+	 * <p>
+	 * If a selection is set (e.g. from outside, or by creating a new object), the selected node may
+	 * be hidden inside a collapsed subtree. If this setting is active, the ancestors of the selected
+	 * node are expanded, so that the selection becomes visible to the user. In contrast to the
+	 * "expand node on selection" setting, the selected node itself is not expanded, so its children
+	 * stay hidden.
+	 * </p>
+	 */
+	@Name(REVEAL_SELECTION_ATTRIBUTE)
+	@Label("Make new selection visible")
+	@BooleanDefault(true)
+	boolean getRevealSelection();
 
 	/**
 	 * Whether root should be expanded initially.

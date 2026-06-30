@@ -374,6 +374,9 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	/** @see Config#getExpandSelected() */
 	private final boolean _expandSelected;
 
+	/** @see Config#getRevealSelection() */
+	private final boolean _revealSelection;
+
 	/** @see Config#getExpandRoot() */
 	private final boolean _expandRoot;
 
@@ -432,6 +435,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		_selectionFilter = createSelectionFilter(config);
 		_selectionModel = createSelectionModel(config);
 		_expandSelected = config.getExpandSelected();
+		_revealSelection = config.getRevealSelection();
 		_expandRoot = config.getExpandRoot();
 		_rootVisible = config.isRootVisible();
 		_adjustSelectionWhenCollapsing = config.adjustSelectionWhenCollapsing();
@@ -506,7 +510,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 				setSelectionPathToChannel(newSelectedNodes);
 
-				if (isVisible()) {
+				if (_revealSelection && isVisible()) {
 					displaySelection();
 				}
 			}
@@ -732,6 +736,9 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	protected void becomingVisible() {
 		super.becomingVisible();
 		initTreeModel();
+		/* Always reveal the current selection when the component becomes visible. This is the
+		 * initial display of an already existing selection, not the auto-reveal of a selection
+		 * change that the user can switch off via getRevealSelection(). */
 		displaySelection();
 	}
 

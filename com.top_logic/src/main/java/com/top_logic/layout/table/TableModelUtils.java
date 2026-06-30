@@ -197,4 +197,17 @@ public class TableModelUtils {
 			.setRowRange(showRowRange);
 	}
 
+	/**
+	 * Scrolls the given row into the visible area of the table.
+	 *
+	 * @param viewModel
+	 *        The {@link TableViewModel} to scroll.
+	 * @param row
+	 *        The index of the row to make visible.
+	 */
+	public static void scrollToRow(TableViewModel viewModel, int row) {
+		viewModel.getPagingModel().showRow(row);
+		viewModel.getClientDisplayData().getVisiblePaneRequest().setRowRange(IndexRange.singleIndex(row));
+	}
+
 }

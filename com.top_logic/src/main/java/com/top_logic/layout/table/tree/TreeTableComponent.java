@@ -64,6 +64,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -76,6 +77,7 @@ import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
+import com.top_logic.layout.table.TableModelUtils;
 import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.component.ComponentRowSource;
@@ -137,7 +139,7 @@ import com.top_logic.util.model.ModelService;
  */
 public class TreeTableComponent extends BoundComponent
 		implements SelectableWithSelectionModel, InAppSelectable, ControlRepresentable, TreeTableDataOwner,
-		ComponentRowSource, WithSelectionPath {
+		ComponentRowSource, WithSelectionPath, ObjectRevealer {
 
 	/**
 	 * Configuration options for {@link TreeTableComponent}.
@@ -901,6 +903,24 @@ public class TreeTableComponent extends BoundComponent
 			return Maybe.none();
 		}
 		return Maybe.some(rowOfObject);
+	}
+
+	@Override
+	public boolean revealObject(Object businessObject) {
+		List<AbstractTreeTableNode<?>> nodes = findNodes(businessObject);
+		if (nodes.isEmpty()) {
+			return false;
+		}
+		AbstractTreeTableNode<?> node = nodes.get(0);
+		TLTreeModelUtil.expandParents(node);
+
+		TableViewModel viewModel = getTableViewModel();
+		viewModel.validate(DefaultDisplayContext.getDisplayContext());
+		int row = viewModel.getRowOfObject(node);
+		if (row != TableViewModel.NO_ROW) {
+			TableModelUtils.scrollToRow(viewModel, row);
+		}
+		return true;
 	}
 
 	/** Convenience method for finding the node of a business object. */

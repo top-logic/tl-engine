@@ -69,6 +69,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -138,7 +139,7 @@ import com.top_logic.util.Utils;
  */
 public class TreeComponent extends BuilderComponent implements SelectableWithSelectionModel,
 		TreeBuilder<DefaultTreeUINodeModel.DefaultTreeUINode>, TreeModelListener,
-		CompoundSecurityBoundChecker, TreeDataOwner, WithSelectionPath {
+		CompoundSecurityBoundChecker, TreeDataOwner, WithSelectionPath, ObjectRevealer {
 
 	/**
 	 * Default renderer for a {@link TreeComponent}.
@@ -953,6 +954,19 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 			Object selectedNode = selection.iterator().next();
 			getScrollContainer().scrollToRange(new TreeNodeRange(treeControl, selectedNode));
 		}
+	}
+
+	@Override
+	public boolean revealObject(Object businessObject) {
+		DefaultTreeUINode node = createNodeForBusinessNode(businessObject);
+		if (node == null) {
+			return false;
+		}
+		TLTreeModelUtil.expandParents(node);
+		if (isVisible() && isModelValid()) {
+			getScrollContainer().scrollToRange(new TreeNodeRange(getTreeControl(), node));
+		}
+		return true;
 	}
 
 	/**

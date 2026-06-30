@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<!--
+			Personal profile role: lets a user read and edit their own account and contact. The
+			matching contact-side configuration (access and role rule for Contacts:PersonContact)
+			is defined in com.top_logic.contact.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="PersonalProfile"/>
+				</roles>
+			</instance>
+		</config>
+
+		<!-- The personal role may read and write its own account. -->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.accounts:Person">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="PersonalProfile"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="PersonalProfile"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+
+		<!--
+			Grant the personal role to a user on their own account. The rule has no path and is
+			therefore an identity rule: the account itself becomes the role holder, so the logged-in
+			user holds the role on exactly their own account.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule
+							inherit="true"
+							meta-element="tl.accounts:Person"
+							role="PersonalProfile"
+						/>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+	</services>
+</application>

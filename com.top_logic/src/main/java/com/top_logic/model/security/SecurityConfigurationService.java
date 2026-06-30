@@ -25,6 +25,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.template.SelectionControlProvider;
@@ -324,7 +325,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!(instance instanceof BoundObject)) {
 			return true;
 		}
-		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, commandGroup);
+		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
@@ -338,7 +339,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!(instance instanceof BoundObject)) {
 			return true;
 		}
-		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, commandGroup);
+		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
@@ -353,6 +354,19 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return true;
 		}
 		return accessManager().hasRole(person, (BoundObject) instance, requiredPartRoles);
+	}
+
+	private static Boolean isAllowedBypass(Person person, BoundCommandGroup commandGroup) {
+		if (ThreadContext.isSystemContext()) {
+			// The current code deliberately runs in a system context (see
+			// ThreadContext.inSystemContext), i.e. it explicitly opted out of a user identity. Such
+			// code acts on behalf of the system and is granted full access. Note: a system context
+			// is only established when no user interaction is active; code running within a
+			// logged-in user's interaction is unaffected and stays subject to the regular checks.
+			return Boolean.TRUE;
+		}
+
+		return BoundChecker.isAllowedBypass(person, commandGroup);
 	}
 
 	@Override

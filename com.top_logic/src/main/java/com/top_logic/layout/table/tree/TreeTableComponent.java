@@ -301,6 +301,8 @@ public class TreeTableComponent extends BoundComponent
 
 	private boolean _expandSelected;
 
+	private boolean _revealSelection;
+
 	private boolean _expandRoot;
 
 	private boolean _hasDefaultSelection;
@@ -338,6 +340,7 @@ public class TreeTableComponent extends BoundComponent
 		_rootVisible = config.isRootVisible();
 		_treeBuilder = context.getInstance(config.getTreeBuilder());
 		_expandSelected = config.getExpandSelected();
+		_revealSelection = config.getRevealSelection();
 		_expandRoot = config.getExpandRoot();
 		_hasDefaultSelection = config.getDefaultSelection();
 		_selectionModel = initSelectionModel(config);
@@ -1248,7 +1251,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void setSelection(Set<? extends TreeUINode<?>> newSelectedNodes) {
-		if (_expandSelected) {
+		if (_revealSelection) {
 			SelectionUtil.setTreeSelection(_selectionModel, newSelectedNodes);
 		} else {
 			SelectionUtil.setSelection(_selectionModel, newSelectedNodes);

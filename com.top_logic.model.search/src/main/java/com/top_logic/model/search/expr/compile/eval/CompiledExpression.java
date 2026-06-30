@@ -14,6 +14,7 @@ import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
+import com.top_logic.model.search.expr.AccessLike;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.Not;
@@ -57,6 +58,13 @@ public abstract class CompiledExpression extends CompiledValue {
 
 	@Override
 	public Value processAccess(Access orig, TLStructuredTypePart part) {
+		if (orig.usesSecurity() && readCheckBypassedByCompilation(part)) {
+			// Compiling the access into the database query would skip a read check that the
+			// interpreted evaluation (see AccessLike.lookupValue) would apply, allowing the user to
+			// infer data he must not read. Fall back to the interpreted path, where a denied read
+			// yields null so that the affected object drops out of the result.
+			return new InterpretedExpression(orig);
+		}
 		if (_type instanceof MOStructure) {
 			MOStructure tableType = (MOStructure) _type;
 
@@ -75,6 +83,33 @@ public abstract class CompiledExpression extends CompiledValue {
 			}
 		}
 		return new InterpretedExpression(orig);
+	}
+
+	/**
+	 * Whether compiling an access to the given attribute into the database query would bypass a
+	 * read check that the interpreted evaluation would otherwise apply.
+	 *
+	 * <p>
+	 * In general, this value represents a <em>navigated</em> object: in the interpreted path,
+	 * reading an attribute checks read access to the accessed object (see
+	 * {@link AccessLike#lookupValue(com.top_logic.model.TLObject, TLStructuredTypePart, boolean)}).
+	 * A navigated object is not secured otherwise, so pushing the access into SQL would let the
+	 * user infer data of objects he must not read. Hence the default is to report the read check as
+	 * bypassed.
+	 * </p>
+	 *
+	 * <p>
+	 * Only the query root {@link CompiledContext} is exempt, as its object-level visibility is
+	 * enforced on the result by the consumer
+	 * ({@link com.top_logic.model.search.expr.SearchExpression#filterSecurity}); see the override
+	 * there.
+	 * </p>
+	 *
+	 * @param part
+	 *        The attribute that is being accessed on this value.
+	 */
+	protected boolean readCheckBypassedByCompilation(TLStructuredTypePart part) {
+		return true;
 	}
 
 	@Override

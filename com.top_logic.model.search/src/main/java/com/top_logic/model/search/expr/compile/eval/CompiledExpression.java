@@ -13,7 +13,11 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.Access;
+import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Not;
+import com.top_logic.model.search.expr.Or;
 
 /**
  * {@link Value} that represents an expression that can be completely compiled to a database query.
@@ -38,7 +42,7 @@ public abstract class CompiledExpression extends CompiledValue {
 	}
 
 	@Override
-	public Value processEquals(SearchExpression orig, Value other) {
+	public Value processEquals(IsEqual orig, Value other) {
 		if (!other.hasInterpretedPart()) {
 			CompiledValue otherCompiled = other.compiled();
 			if (!otherCompiled.notifyExpectedCompiledType(_type)) {
@@ -52,7 +56,7 @@ public abstract class CompiledExpression extends CompiledValue {
 	}
 
 	@Override
-	public Value processAccess(SearchExpression orig, TLStructuredTypePart part) {
+	public Value processAccess(Access orig, TLStructuredTypePart part) {
 		if (_type instanceof MOStructure) {
 			MOStructure tableType = (MOStructure) _type;
 
@@ -74,7 +78,7 @@ public abstract class CompiledExpression extends CompiledValue {
 	}
 
 	@Override
-	public Value processAnd(SearchExpression orig, Value other) {
+	public Value processAnd(And orig, Value other) {
 		if (_type != MOPrimitive.BOOLEAN) {
 			return new InterpretedExpression(orig);
 		}
@@ -97,7 +101,7 @@ public abstract class CompiledExpression extends CompiledValue {
 	}
 
 	@Override
-	public Value processOr(SearchExpression orig, Value other) {
+	public Value processOr(Or orig, Value other) {
 		if (_type != MOPrimitive.BOOLEAN) {
 			return new InterpretedExpression(orig);
 		}
@@ -112,7 +116,7 @@ public abstract class CompiledExpression extends CompiledValue {
 	}
 
 	@Override
-	public Value processNot(SearchExpression orig) {
+	public Value processNot(Not orig) {
 		return new CompiledNot(this);
 	}
 

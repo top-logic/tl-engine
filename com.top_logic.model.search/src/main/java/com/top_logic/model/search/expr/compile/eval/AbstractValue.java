@@ -6,7 +6,10 @@
 package com.top_logic.model.search.expr.compile.eval;
 
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.Access;
+import com.top_logic.model.search.expr.IsEqual;
+import com.top_logic.model.search.expr.Not;
+import com.top_logic.model.search.expr.Or;
 
 /**
  * Common base of {@link Value} implementations assuming that the result of all operations is an
@@ -17,22 +20,22 @@ import com.top_logic.model.search.expr.SearchExpression;
 public abstract class AbstractValue extends Value {
 
 	@Override
-	public Value processEquals(SearchExpression orig, Value other) {
+	public Value processEquals(IsEqual orig, Value other) {
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
-	public Value processAccess(SearchExpression orig, TLStructuredTypePart part) {
+	public Value processAccess(Access orig, TLStructuredTypePart part) {
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
-	public Value processNot(SearchExpression orig) {
+	public Value processNot(Not orig) {
 		return new InterpretedExpression(orig);
 	}
 
 	@Override
-	public Value processOr(SearchExpression orig, Value other) {
+	public Value processOr(Or orig, Value other) {
 		return new InterpretedExpression(orig);
 	}
 

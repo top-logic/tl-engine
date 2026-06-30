@@ -5,12 +5,15 @@
  */
 package com.top_logic.tool.boundsec.commandhandlers;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.Selectable;
@@ -44,8 +47,15 @@ public class RevealObjectCommand extends AbstractCommandHandler {
 	 */
 	public interface Config extends AbstractCommandHandler.Config {
 
+		/** The default value for {@link #getId()}. */
+		String ID = "revealObject";
+
 		/** @see #getComponent() */
 		String COMPONENT = "component";
+
+		@Override
+		@StringDefault(ID)
+		String getId();
 
 		/**
 		 * The component in which the target object is revealed.
@@ -77,13 +87,42 @@ public class RevealObjectCommand extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> someArguments) {
 		LayoutComponent target = resolveTarget(component);
+		Object object = leafObject(model);
 		target.makeVisible();
 		if (target instanceof ObjectRevealer) {
-			((ObjectRevealer) target).revealObject(model);
+			((ObjectRevealer) target).revealObject(object);
 		} else if (target instanceof Selectable) {
-			((Selectable) target).setSelected(model);
+			((Selectable) target).setSelected(object);
 		}
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The single object to reveal for the command's target model.
+	 *
+	 * <p>
+	 * The selection of a tree component is a path of business objects from the root to the selected
+	 * node, and a multiple selection is a collection of such values. This reduces the target model
+	 * to the leaf object that should be revealed.
+	 * </p>
+	 */
+	private static Object leafObject(Object model) {
+		Object result = model;
+		if (result instanceof Collection<?> && !(result instanceof List<?>)) {
+			Collection<?> selection = (Collection<?>) result;
+			if (selection.isEmpty()) {
+				return null;
+			}
+			result = selection.iterator().next();
+		}
+		if (result instanceof List<?>) {
+			List<?> path = (List<?>) result;
+			if (path.isEmpty()) {
+				return null;
+			}
+			result = path.get(path.size() - 1);
+		}
+		return result;
 	}
 
 	private LayoutComponent resolveTarget(LayoutComponent component) {

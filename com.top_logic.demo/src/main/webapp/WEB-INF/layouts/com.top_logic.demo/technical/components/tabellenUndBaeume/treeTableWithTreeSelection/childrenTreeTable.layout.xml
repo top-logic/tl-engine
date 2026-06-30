@@ -15,6 +15,11 @@
 			<en>Children</en>
 			<de>Kinder</de>
 		</name>
+		<buttons>
+			<button class="com.top_logic.tool.boundsec.commandhandlers.RevealObjectCommand"
+				target="selection(self())"
+			/>
+		</buttons>
 		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
 			<channel name="selection">
 				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/versionSelector.layout.xml#Selector"/>

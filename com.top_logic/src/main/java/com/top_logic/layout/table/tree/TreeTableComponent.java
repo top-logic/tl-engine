@@ -908,10 +908,17 @@ public class TreeTableComponent extends BoundComponent
 	@Override
 	public boolean revealObject(Object businessObject) {
 		List<AbstractTreeTableNode<?>> nodes = findNodes(businessObject);
-		if (nodes.isEmpty()) {
-			return false;
+		AbstractTreeTableNode<?> node;
+		if (!nodes.isEmpty()) {
+			node = nodes.get(0);
+		} else {
+			Maybe<AbstractTreeTableNode<?>> displayed = findNodeOfBusinessObject(businessObject);
+			if (!displayed.hasValue()) {
+				return false;
+			}
+			node = displayed.get();
 		}
-		AbstractTreeTableNode<?> node = nodes.get(0);
+		// Expand the ancestors so that the node is displayed.
 		TLTreeModelUtil.expandParents(node);
 
 		TableViewModel viewModel = getTableViewModel();
@@ -919,6 +926,11 @@ public class TreeTableComponent extends BoundComponent
 		int row = viewModel.getRowOfObject(node);
 		if (row != TableViewModel.NO_ROW) {
 			TableModelUtils.scrollToRow(viewModel, row);
+			if (_control != null) {
+				// Trigger a repaint so that the scroll request is sent to the client, even if the
+				// node was already displayed and no expansion happened above.
+				_control.requestRepaint();
+			}
 		}
 		return true;
 	}

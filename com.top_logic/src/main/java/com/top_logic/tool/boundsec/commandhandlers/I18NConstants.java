@@ -28,6 +28,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey GOTO_TARGET_OBJECT_NOT_FOUND;
 
+	/**
+	 * @en The component "{0}" to show the object in was not found.
+	 */
+	public static ResKey1 ERROR_REVEAL_COMPONENT_NOT_FOUND__NAME;
+
 	public static ResKey2 BOOKMARK_OBJECT_NOT_FOUND__ID__TYPE;
 
 	@CustomKey("tl.command.upload")

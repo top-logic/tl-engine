@@ -86,8 +86,8 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 	 *
 	 * <p>
 	 * Each element in {@code responses} is the content for one
-	 * {@link StreamEvent.MessageComplete}. Calls beyond the configured list throw a
-	 * {@link ProviderException}.
+	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete}. Calls beyond the
+	 * configured list throw a {@link ProviderException}.
 	 * </p>
 	 */
 	@SafeVarargs
@@ -267,27 +267,27 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Creates the test suite with the minimal set of service dependencies required for the
-	 * async delegation path.
+	 * Creates the test suite with the minimal set of service dependencies required for the async
+	 * delegation path.
 	 *
 	 * <p>
 	 * Module selection rationale:
 	 * </p>
 	 * <ul>
-	 *   <li>{@link KBSetup} — provides the KnowledgeBase and its DBContext so that the
-	 *       per-transaction begin/commit/rollback calls in {@link com.top_logic.tl.ai.core.agent.TransactionScope}
-	 *       work correctly.</li>
-	 *   <li>{@link ModelService.Module#INSTANCE} — required by {@link KBSetup} and ensures
-	 *       the TL model is loaded; also needed so {@code ThreadContextManager} can resolve
-	 *       a proper {@link com.top_logic.basic.SubSessionContext} on the background worker
-	 *       threads (the async spawn path calls
-	 *       {@code ThreadContextManager.inSystemInteraction}).</li>
+	 * <li>{@link KBSetup} — provides the KnowledgeBase and its DBContext so that the
+	 * per-transaction begin/commit/rollback calls in
+	 * {@link com.top_logic.tl.ai.core.agent.TransactionScope} work correctly.</li>
+	 * <li>{@link com.top_logic.util.model.ModelService.Module#INSTANCE} — required by
+	 * {@link KBSetup} and ensures the TL model is loaded; also needed so
+	 * {@code ThreadContextManager} can resolve a proper
+	 * {@link com.top_logic.basic.SubSessionContext} on the background worker threads (the async
+	 * spawn path calls {@code ThreadContextManager.inSystemInteraction}).</li>
 	 * </ul>
 	 *
 	 * <p>
-	 * No {@code AgentFactory}, {@code LLMProviderRegistry}, or {@code McpServerRegistry} is
-	 * needed because the tests inject mock {@link AgentLoop} instances directly via the
-	 * {@link DelegationTool.AgentLoopFactory} lambda.
+	 * No {@code AgentFactory}, {@code LLMProviderRegistry}, or {@code McpServerRegistry} is needed
+	 * because the tests inject mock {@link AgentLoop} instances directly via the
+	 * {@link com.top_logic.tl.ai.core.tools.interaction.DelegationTool.AgentLoopFactory} lambda.
 	 * </p>
 	 */
 	public static Test suite() {

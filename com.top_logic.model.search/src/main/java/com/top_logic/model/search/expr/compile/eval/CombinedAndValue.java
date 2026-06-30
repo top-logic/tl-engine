@@ -46,7 +46,7 @@ public class CombinedAndValue extends AbstractValue {
 	}
 
 	@Override
-	public Value processAnd(SearchExpression orig, Value other) {
+	public Value processAnd(And orig, Value other) {
 		SearchExpression interpretedAnd;
 		if (other.hasInterpretedPart()) {
 			interpretedAnd = SearchExpressionFactory.and(interpreted(), other.interpreted());

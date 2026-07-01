@@ -40,6 +40,13 @@ public abstract class CompiledExpression extends CompiledValue {
 		if (type == MOPrimitive.INVALID_TYPE) {
 			throw new IllegalArgumentException();
 		}
+		updateCompiledType(type);
+	}
+
+	/**
+	 * Updates {@link #compiledType()} with the given type.
+	 */
+	protected void updateCompiledType(MetaObject type) {
 		_type = type;
 	}
 

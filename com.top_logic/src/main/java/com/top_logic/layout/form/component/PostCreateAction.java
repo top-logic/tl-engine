@@ -43,6 +43,7 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.NamedComponent;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.edit.EditMode;
@@ -382,6 +383,61 @@ public interface PostCreateAction {
 			 */
 			GotoHandler goTo = (GotoHandler) CommandHandlerFactory.getInstance().getHandler(GotoHandler.COMMAND);
 			goTo.executeGoto(DefaultDisplayContext.getDisplayContext(), component, targetComponent.getName(), newModel);
+		}
+	}
+
+	/**
+	 * Makes the created object visible in a component.
+	 *
+	 * <p>
+	 * In a tree, the ancestors of the object are expanded so that it is displayed; in a tree or
+	 * table, the row of the object is scrolled into the viewport. This is useful e.g. to reveal a
+	 * newly created object in a tree that shows it, without changing which node is expanded on
+	 * selection.
+	 * </p>
+	 */
+	@InApp
+	@Label("Show object in component")
+	class RevealObject extends AbstractConfiguredInstance<RevealObject.Config> implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link RevealObject}.
+		 */
+		@TagName("reveal")
+		public interface Config extends PolymorphicConfiguration<RevealObject> {
+			/**
+			 * The component in which the object is revealed.
+			 *
+			 * <p>
+			 * If not set, the object is revealed in the component the action is executed on.
+			 * </p>
+			 */
+			@Name("target-component")
+			@DefaultContainer
+			ComponentRef getTargetComponent();
+		}
+
+		/**
+		 * Creates a {@link RevealObject}.
+		 */
+		public RevealObject(InstantiationContext context, Config config) {
+			super(context, config);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			LayoutComponent target = component;
+			ComponentRef targetRef = getConfig().getTargetComponent();
+			if (targetRef != null) {
+				target = DefaultRefVisitor.resolveReference(targetRef, component);
+				if (target == null) {
+					Logger.error("Cannot resolve component: " + targetRef, RevealObject.class);
+					return;
+				}
+			}
+			if (target instanceof ObjectRevealer) {
+				((ObjectRevealer) target).revealObject(newModel);
+			}
 		}
 	}
 

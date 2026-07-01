@@ -16,9 +16,20 @@
 			<de>Kinder</de>
 		</name>
 		<buttons>
-			<button class="com.top_logic.tool.boundsec.commandhandlers.RevealObjectCommand"
+			<button id="revealSelectionTest"
+				class="com.top_logic.demo.table.RevealSelectionTestCommand"
+				image="css:fas fa-eye"
 				target="selection(self())"
-			/>
+			>
+				<resourceKey key="dynamic.reveal-selection-test">
+					<en>Reveal selection</en>
+					<de>Selektion sichtbar machen</de>
+					<tooltip>
+						<en>Test for ticket #29009: makes the current selection visible again by expanding its ancestors and scrolling it into view. Select a node, collapse an ancestor so the selection is hidden, then press this button.</en>
+						<de>Test für Ticket #29009: macht die aktuelle Selektion wieder sichtbar, indem die Vorfahren aufgeklappt werden und in den Viewport gescrollt wird. Einen Knoten selektieren, einen Vorfahren zuklappen (Selektion wird unsichtbar), dann diesen Button drücken.</de>
+					</tooltip>
+				</resourceKey>
+			</button>
 		</buttons>
 		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
 			<channel name="selection">

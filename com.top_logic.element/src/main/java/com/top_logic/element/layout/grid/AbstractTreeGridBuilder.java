@@ -579,7 +579,14 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		protected void setSelection(SelectionModel selectionModel, Set<List<?>> selectedPaths) {
 			Set<GridTreeTableNode> selectectedTreeNodes = formGroupsToTreeNodes(selectedPaths);
 
+			// Only expand/reveal nodes that were newly added to the selection, so that a node that
+			// was collapsed while staying selected is not expanded again when the selection changes
+			// elsewhere.
+			Set<?> currentSelection = selectionModel.getSelection();
 			for (GridTreeTableNode selectedNode : selectectedTreeNodes) {
+				if (currentSelection.contains(selectedNode)) {
+					continue;
+				}
 				if (expandSelectedNode()) {
 					TreeUIModelUtil.expandSelfAndParents(getTreeModel(), selectedNode);
 				} else if (revealSelection()) {

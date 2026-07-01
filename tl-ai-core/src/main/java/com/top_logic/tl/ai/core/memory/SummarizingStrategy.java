@@ -32,7 +32,14 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
  *
  * <p>Splits the conversation into a summarize zone (older messages) and a preserve zone
  * (recent messages). The summarize zone is sent to the LLM with a structured prompt,
- * and the resulting summary replaces the original messages.</p>
+ * and the resulting summary replaces the original messages. The summary is emitted as a
+ * {@link UserMessage}: mid-conversation {@link SystemMessage}s are not representable in
+ * the provider APIs (Anthropic and Bedrock only support a top-level system prompt), so a
+ * system-role summary would be invisible to the model.</p>
+ *
+ * <p>The split never separates an {@link AssistantMessage} carrying tool calls from its
+ * {@link ToolResultMessage}s — a preserve zone starting with tool results whose calls
+ * were summarized away is rejected by the provider APIs.</p>
  *
  * <p>Falls back to {@link TruncatingStrategy} if the LLM call fails.</p>
  */
@@ -40,6 +47,10 @@ public class SummarizingStrategy implements CompactionStrategy {
 
 	/** Default minimum messages to preserve. */
 	static final int DEFAULT_MIN_PRESERVE = 4;
+
+	/** Preamble prepended to the summary so the model knows it replaces compacted history. */
+	static final String SUMMARY_PREFIX =
+		"[Summary of the earlier conversation — the original messages were compacted to free context]\n\n";
 
 	/** Maximum characters per tool result sent to the summarizer. */
 	static final int MAX_TOOL_RESULT_CHARS = 2000;
@@ -131,8 +142,9 @@ public class SummarizingStrategy implements CompactionStrategy {
 			UUID.randomUUID().toString(), now,
 			summarizeZone.size(), tokensBefore, "auto"));
 		replacement.addAll(preservedSystemMessages);
-		replacement.add(new SystemMessage(
-			UUID.randomUUID().toString(), now, summaryText));
+		replacement.add(new UserMessage(
+			UUID.randomUUID().toString(), now,
+			List.of(new TextContent(SUMMARY_PREFIX + summaryText))));
 		replacement.addAll(preserveZone);
 
 		int tokensAfter = estimator.estimateTokens(replacement);
@@ -141,7 +153,15 @@ public class SummarizingStrategy implements CompactionStrategy {
 	}
 
 	private int findSplitIndex(List<Message> messages) {
-		return Math.max(0, messages.size() - _minPreserve);
+		int splitIndex = Math.max(0, messages.size() - _minPreserve);
+		// Walk back while the preserve zone would start with a tool result: providers
+		// reject tool results whose originating tool calls are not in the message list.
+		// The walk stops at the assistant message carrying the tool calls, which is
+		// then preserved together with all its results.
+		while (splitIndex > 0 && messages.get(splitIndex) instanceof ToolResultMessage) {
+			splitIndex--;
+		}
+		return splitIndex;
 	}
 
 	private String callSummarizer(List<Message> messagesToSummarize)

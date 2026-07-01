@@ -25,8 +25,8 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
  *
  * <p>Invariants:</p>
  * <ul>
- *   <li>{@link SystemMessage}s are never dropped — they carry the system prompt and
- *       compaction summaries that the LLM needs to stay on track.</li>
+ *   <li>{@link SystemMessage}s are never dropped — they carry context the LLM needs
+ *       to stay on track.</li>
  *   <li>Tool call/result pairing: if an {@link AssistantMessage} containing
  *       {@link ToolCall}s is dropped, the corresponding {@link ToolResultMessage}s
  *       are also dropped (and vice versa).</li>

@@ -98,7 +98,7 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 			.header("Content-Type", "application/json")
 			.header("Accept", acceptHeader())
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-			.timeout(_requestTimeout);
+			.timeout(request.timeout() != null ? request.timeout() : _requestTimeout);
 
 		addAuthHeaders(requestBuilder);
 		addExtraHeaders(requestBuilder);

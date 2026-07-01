@@ -31,15 +31,27 @@ public abstract class RoleComputation {
 
 	private final StorageAccessManager _accessManager;
 
+	private final Person _person;
+
 	/**
 	 * Creates a new {@link RoleComputation}.
-	 * 
+	 *
+	 * @param person
+	 *        The {@link Person} this computation is created for.
 	 * @param accessManager
 	 *        The {@link StorageAccessManager} creating this computation.
 	 */
-	public RoleComputation(StorageAccessManager accessManager) {
+	public RoleComputation(Person person, StorageAccessManager accessManager) {
+		_person = person;
 		_accessManager = accessManager;
 		_storage = accessManager.getSecurityStorage();
+	}
+
+	/**
+	 * The {@link Person} this computation was created for.
+	 */
+	public final Person getPerson() {
+		return _person;
 	}
 
 	/**

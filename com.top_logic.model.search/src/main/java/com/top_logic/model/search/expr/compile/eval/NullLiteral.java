@@ -9,6 +9,7 @@ package com.top_logic.model.search.expr.compile.eval;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.Not;
 import com.top_logic.model.search.expr.Or;
@@ -36,6 +37,12 @@ public class NullLiteral extends Value {
 			return new CompiledIsNull(other.compiled());
 		}
 		return new InterpretedExpression(orig);
+	}
+
+	@Override
+	public Value processCompareOp(CompareOp orig, Value other) {
+		// Comparison with null always leads to null
+		return this;
 	}
 
 	@Override

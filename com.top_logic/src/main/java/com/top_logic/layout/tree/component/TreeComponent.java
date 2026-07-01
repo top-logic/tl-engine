@@ -501,8 +501,16 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			{
 				Set<DefaultTreeUINode> newSelectedNodes = unsafeCast(event.getNewSelection());
+
+				// React only to the nodes that were newly added to the selection, so that a node
+				// that was collapsed while staying selected is not expanded again when the selection
+				// changes elsewhere. On a model rebuild the node instances differ from the old
+				// selection, hence all of them count as added and the selection is fully revealed.
+				Set<DefaultTreeUINode> addedNodes = new HashSet<>(newSelectedNodes);
+				addedNodes.removeAll(event.getOldSelection());
+
 				if (_expandSelected) {
-					for (DefaultTreeUINode selectedNode : newSelectedNodes) {
+					for (DefaultTreeUINode selectedNode : addedNodes) {
 						if (selectedNode != null) {
 							_treeModel.setExpanded(selectedNode, true);
 						}
@@ -512,11 +520,6 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 				setSelectionPathToChannel(newSelectedNodes);
 
 				if (_revealSelection && isVisible()) {
-					// Only reveal the nodes that were newly added to the selection, so that a node
-					// that was collapsed while staying selected is not expanded again when the
-					// selection changes elsewhere.
-					Set<DefaultTreeUINode> addedNodes = new HashSet<>(newSelectedNodes);
-					addedNodes.removeAll(event.getOldSelection());
 					revealNodes(addedNodes);
 				}
 			}

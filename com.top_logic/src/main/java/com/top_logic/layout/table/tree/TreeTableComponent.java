@@ -1284,10 +1284,16 @@ public class TreeTableComponent extends BoundComponent
 
 	private void setSelection(Set<? extends TreeUINode<?>> newSelectedNodes) {
 		if (_revealSelection) {
-			SelectionUtil.setTreeSelection(_selectionModel, newSelectedNodes);
-		} else {
-			SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
+			// Only reveal newly added nodes, so that a node that was collapsed while staying
+			// selected is not expanded again when the selection changes elsewhere.
+			Set<?> currentSelection = _selectionModel.getSelection();
+			for (TreeUINode<?> node : newSelectedNodes) {
+				if (!currentSelection.contains(node)) {
+					TLTreeModelUtil.expandParents(node);
+				}
+			}
 		}
+		SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
 	}
 
 	private AbstractTreeTableNode<?> getDefaultSelection() {

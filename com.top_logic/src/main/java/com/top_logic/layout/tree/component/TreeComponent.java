@@ -512,7 +512,12 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 				setSelectionPathToChannel(newSelectedNodes);
 
 				if (_revealSelection && isVisible()) {
-					displaySelection();
+					// Only reveal the nodes that were newly added to the selection, so that a node
+					// that was collapsed while staying selected is not expanded again when the
+					// selection changes elsewhere.
+					Set<DefaultTreeUINode> addedNodes = new HashSet<>(newSelectedNodes);
+					addedNodes.removeAll(event.getOldSelection());
+					revealNodes(addedNodes);
 				}
 			}
 		}
@@ -744,12 +749,18 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	}
 
 	private void displaySelection() {
-		Collection<DefaultTreeUINode> selection = getSelection();
-		if (CollectionUtils.isEmpty(selection)) {
-			// no selection to display.
+		revealNodes(getSelection());
+	}
+
+	/**
+	 * Expands the ancestors of the given nodes so that they become displayed.
+	 */
+	private void revealNodes(Collection<DefaultTreeUINode> nodes) {
+		if (CollectionUtils.isEmpty(nodes)) {
+			// nothing to display.
 			return;
 		}
-		for (DefaultTreeUINode selectedNode : selection) {
+		for (DefaultTreeUINode selectedNode : nodes) {
 			DefaultTreeUINode node = selectedNode;
 			while (true) {
 				if (node.isDisplayed()) {

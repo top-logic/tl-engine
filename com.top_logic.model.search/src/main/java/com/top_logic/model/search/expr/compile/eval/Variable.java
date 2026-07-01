@@ -17,6 +17,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.Not;
@@ -53,6 +54,23 @@ public class Variable extends CompiledValue {
 				return new InterpretedExpression(orig);
 			}
 			return new CompiledEquals(this, otherCompiled);
+		}
+		return new InterpretedExpression(orig);
+	}
+
+	@Override
+	public Value processCompareOp(CompareOp orig, Value other) {
+		if (!other.hasInterpretedPart()) {
+			CompiledValue otherCompiled = other.compiled();
+			if (!notifyExpectedCompiledType(otherCompiled.compiledType())) {
+				return new InterpretedExpression(orig);
+			}
+			if (!CompiledCompareOp.supportsCompiledCompare(otherCompiled.compiledType())) {
+				// Ordering of non-numeric/temporal types (e.g. strings) would use the database
+				// collation, which may differ from the in-memory comparison. Keep it interpreted.
+				return new InterpretedExpression(orig);
+			}
+			return new CompiledCompareOp(this, otherCompiled, orig.getKind());
 		}
 		return new InterpretedExpression(orig);
 	}

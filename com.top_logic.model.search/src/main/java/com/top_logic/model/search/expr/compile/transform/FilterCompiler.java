@@ -22,6 +22,7 @@ import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.All;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.Call;
+import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.Foreach;
@@ -226,6 +227,11 @@ public class FilterCompiler extends Rewriter<Void> {
 		@Override
 		protected Value composeEquals(IsEqual expr, VarBinding arg, Value leftResult, Value rightResult) {
 			return leftResult.processEquals(expr, rightResult);
+		}
+
+		@Override
+		protected Value composeCompareOp(CompareOp expr, VarBinding arg, Value leftResult, Value rightResult) {
+			return leftResult.processCompareOp(expr, rightResult);
 		}
 
 		@Override

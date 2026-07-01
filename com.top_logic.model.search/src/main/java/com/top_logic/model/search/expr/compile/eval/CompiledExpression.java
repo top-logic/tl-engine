@@ -16,6 +16,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.AccessLike;
 import com.top_logic.model.search.expr.And;
+import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.Not;
 import com.top_logic.model.search.expr.Or;
@@ -52,6 +53,26 @@ public abstract class CompiledExpression extends CompiledValue {
 			return new CompiledEquals(this, otherCompiled);
 		} else if (other instanceof NullLiteral) {
 			return new CompiledIsNull(this);
+		}
+		return new InterpretedExpression(orig);
+	}
+
+	@Override
+	public Value processCompareOp(CompareOp orig, Value other) {
+		if (!other.hasInterpretedPart()) {
+			CompiledValue otherCompiled = other.compiled();
+			if (!otherCompiled.notifyExpectedCompiledType(_type)) {
+				return new InterpretedExpression(orig);
+			}
+			if (!CompiledCompareOp.supportsCompiledCompare(_type)) {
+				// Ordering of non-numeric/temporal types (e.g. strings) would use the database
+				// collation, which may differ from the in-memory comparison. Keep it interpreted.
+				return new InterpretedExpression(orig);
+			}
+			return new CompiledCompareOp(this, otherCompiled, orig.getKind());
+		} else if (other instanceof NullLiteral) {
+			// Comparison with null always leads to null
+			return other;
 		}
 		return new InterpretedExpression(orig);
 	}

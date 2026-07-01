@@ -277,10 +277,24 @@ public class TreeTableComponent extends BoundComponent
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(event.getNewSelection());
 
+			// React only to the nodes that were newly added to the selection, so that a node that
+			// was collapsed while staying selected is not expanded again when the selection changes
+			// elsewhere. On a model rebuild the node instances differ from the old selection, hence
+			// all of them count as added and the selection is fully revealed.
+			Set<AbstractTreeTableNode<?>> addedNodes = new HashSet<>(newSelectedNodes);
+			addedNodes.removeAll(event.getOldSelection());
+
 			if (_expandSelected) {
-				for (AbstractTreeTableNode<?> newSelectedNode : newSelectedNodes) {
+				for (AbstractTreeTableNode<?> newSelectedNode : addedNodes) {
 					if (newSelectedNode != null) {
 						newSelectedNode.setExpanded(true);
+					}
+				}
+			}
+			if (_revealSelection) {
+				for (AbstractTreeTableNode<?> newSelectedNode : addedNodes) {
+					if (newSelectedNode != null) {
+						TLTreeModelUtil.expandParents(newSelectedNode);
 					}
 				}
 			}
@@ -1283,16 +1297,8 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void setSelection(Set<? extends TreeUINode<?>> newSelectedNodes) {
-		if (_revealSelection) {
-			// Only reveal newly added nodes, so that a node that was collapsed while staying
-			// selected is not expanded again when the selection changes elsewhere.
-			Set<?> currentSelection = _selectionModel.getSelection();
-			for (TreeUINode<?> node : newSelectedNodes) {
-				if (!currentSelection.contains(node)) {
-					TLTreeModelUtil.expandParents(node);
-				}
-			}
-		}
+		// Revealing the selection is handled by the selection listener when the model actually
+		// changes; here only the selection is established.
 		SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
 	}
 

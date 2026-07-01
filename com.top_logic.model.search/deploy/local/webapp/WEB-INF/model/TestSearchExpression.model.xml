@@ -199,6 +199,7 @@
 						<property name="name" type="tl.core:String"></property>
 						<property name="int" type="tl.core:Integer"></property>
 						<property name="double" type="tl.core:Double"></property>
+						<property name="long" type="tl.core:Long"></property>
 						<reference name="other" type="WithDatabaseColumns">
 							<annotations>
 								<storage-algorithm>

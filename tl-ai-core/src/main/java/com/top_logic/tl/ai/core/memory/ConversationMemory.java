@@ -5,13 +5,11 @@
  */
 package com.top_logic.tl.ai.core.memory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
@@ -168,67 +166,6 @@ public class ConversationMemory {
 	/** Context window capacity minus reserved tokens. */
 	public int usableTokens() {
 		return _contextWindowTokens - _reservedTokens;
-	}
-
-	/**
-	 * Return messages fitting within the given token budget.
-	 *
-	 * <p>Always includes all {@link SystemMessage}s. Then includes messages from
-	 * newest to oldest until the budget is exhausted. This ensures the LLM always
-	 * sees the system prompt and the most recent context.</p>
-	 *
-	 * @param tokenBudget maximum tokens for the returned messages
-	 * @return messages fitting within the budget, in conversation order
-	 */
-	public List<Message> getMessages(int tokenBudget) {
-		List<Message> all = _conversation.messages();
-		int fullEstimate = _estimator.estimateTokens(all);
-		if (fullEstimate <= tokenBudget) {
-			return all;
-		}
-
-		// Always include system messages
-		List<Message> systemMessages = new ArrayList<>();
-		List<Message> nonSystemMessages = new ArrayList<>();
-		for (Message msg : all) {
-			if (msg instanceof SystemMessage) {
-				systemMessages.add(msg);
-			} else {
-				nonSystemMessages.add(msg);
-			}
-		}
-
-		int systemTokens = _estimator.estimateTokens(systemMessages);
-		int remainingBudget = tokenBudget - systemTokens;
-
-		// Add non-system messages from newest, respecting budget
-		List<Message> selected = new ArrayList<>();
-		for (int i = nonSystemMessages.size() - 1; i >= 0; i--) {
-			Message msg = nonSystemMessages.get(i);
-			int msgTokens = _estimator.estimateTokens(msg);
-			if (msgTokens <= remainingBudget) {
-				selected.add(0, msg);
-				remainingBudget -= msgTokens;
-			} else {
-				break;
-			}
-		}
-
-		// Rebuild in conversation order: system messages at their original positions
-		List<Message> result = new ArrayList<>();
-		int sysIdx = 0;
-		int selIdx = 0;
-		for (Message msg : all) {
-			if (msg instanceof SystemMessage && sysIdx < systemMessages.size()
-					&& msg == systemMessages.get(sysIdx)) {
-				result.add(msg);
-				sysIdx++;
-			} else if (selIdx < selected.size() && msg == selected.get(selIdx)) {
-				result.add(msg);
-				selIdx++;
-			}
-		}
-		return result;
 	}
 
 	/** The underlying conversation. */

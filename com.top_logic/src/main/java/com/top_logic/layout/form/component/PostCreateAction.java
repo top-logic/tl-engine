@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.component;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -436,7 +437,32 @@ public interface PostCreateAction {
 				}
 			}
 			if (target instanceof ObjectRevealer) {
-				((ObjectRevealer) target).revealObject(newModel);
+				reveal((ObjectRevealer) target, newModel);
+			}
+		}
+
+		/**
+		 * Reveals all objects contained in the given model.
+		 *
+		 * <p>
+		 * A model may be a single object, a collection of objects (e.g. a multiple selection) or a
+		 * path of business objects from the root to the selected object (as delivered by the
+		 * selection of a tree component); each of these is handled so that every selected object is
+		 * revealed.
+		 * </p>
+		 */
+		private static void reveal(ObjectRevealer revealer, Object model) {
+			if (model instanceof List<?>) {
+				List<?> path = (List<?>) model;
+				if (!path.isEmpty()) {
+					revealer.revealObject(path.get(path.size() - 1));
+				}
+			} else if (model instanceof Collection<?>) {
+				for (Object element : (Collection<?>) model) {
+					reveal(revealer, element);
+				}
+			} else if (model != null) {
+				revealer.revealObject(model);
 			}
 		}
 	}

@@ -7,9 +7,12 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import junit.framework.TestCase;
 
@@ -38,6 +41,7 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -257,7 +261,7 @@ public class TestAgentLoop extends TestCase {
 		});
 
 		assertEquals(StopReason.ERROR, result.stopReason());
-		assertEquals(0, result.turnsUsed());
+		assertEquals(1, result.turnsUsed());
 	}
 
 	/**
@@ -1133,7 +1137,7 @@ public class TestAgentLoop extends TestCase {
 		AgentResult result = loop.run(ToolContext.EMPTY, capture);
 
 		assertEquals(StopReason.CONTEXT_OVERFLOW, result.stopReason());
-		assertEquals(0, result.turnsUsed());
+		assertEquals(1, result.turnsUsed());
 
 		// Verify reactive compaction was attempted
 		long compactionCount = captured.stream()
@@ -1151,9 +1155,10 @@ public class TestAgentLoop extends TestCase {
 
 	/**
 	 * Provider throws CONTEXT_WINDOW_EXCEEDED in the non-memory run path.
-	 * Without memory, there is no compaction, so this is a genuine ERROR.
+	 * Without memory there is no compaction, but the stop reason still reports
+	 * the overflow so callers can react to it.
 	 */
-	public void testContextWindowExceededWithoutMemoryIsError() {
+	public void testContextWindowExceededWithoutMemoryIsOverflow() {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
@@ -1168,8 +1173,8 @@ public class TestAgentLoop extends TestCase {
 			/** empty listener */
 		});
 
-		assertEquals(StopReason.ERROR, result.stopReason());
-		assertEquals(0, result.turnsUsed());
+		assertEquals(StopReason.CONTEXT_OVERFLOW, result.stopReason());
+		assertEquals(1, result.turnsUsed());
 	}
 
 	private static SecurityContext developmentSecurity() {
@@ -1752,5 +1757,214 @@ public class TestAgentLoop extends TestCase {
 				return ToolResult.of("ok");
 			}
 		};
+	}
+
+	/**
+	 * Creates a {@link ToolRegistry} that executes tools inline, without the
+	 * {@code ThreadContextManager} interaction wrapping of {@link ToolCatalog} —
+	 * usable in plain unit tests without started TopLogic modules.
+	 */
+	private static ToolRegistry stubRegistry(Tool... tools) {
+		Map<String, Tool> byName = new HashMap<>();
+		for (Tool tool : tools) {
+			byName.put(tool.name(), tool);
+		}
+		return new ToolRegistry() {
+			@Override
+			public Tool getTool(String name) {
+				return byName.get(name);
+			}
+
+			@Override
+			public List<ToolSchema> toolSchemas(Predicate<Tool> filter) {
+				return byName.values().stream().filter(filter).map(Tool::schema).toList();
+			}
+
+			@Override
+			public ToolResultMessage execute(ToolCall toolCall, ToolContext context) {
+				Instant start = Instant.now();
+				Tool tool = byName.get(toolCall.name());
+				if (tool == null) {
+					return new ToolResultMessage(UUID.randomUUID().toString(), start,
+						toolCall.id(), toolCall.name(),
+						new ToolState.Failed("Unknown tool: '" + toolCall.name() + "'.", start, start));
+				}
+				try {
+					ToolResult result = tool.execute(Map.of(), context);
+					return new ToolResultMessage(UUID.randomUUID().toString(), Instant.now(),
+						toolCall.id(), toolCall.name(),
+						new ToolState.Completed(result.text(), start, Instant.now(), false));
+				} catch (Exception e) {
+					return new ToolResultMessage(UUID.randomUUID().toString(), Instant.now(),
+						toolCall.id(), toolCall.name(),
+						new ToolState.Failed(String.valueOf(e.getMessage()), start, Instant.now()));
+				}
+			}
+		};
+	}
+
+	/**
+	 * The third consecutive identical tool call is blocked with a synthetic error result.
+	 */
+	public void testConsecutiveDuplicateCallBlocked() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema toolSpec = new ToolSchema("lookup", "Looks up", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc2", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc3", "lookup", "{\"q\":1}")),
+			List.of(new TextContent("Done.")));
+
+		AgentLoop loop = new AgentLoop(config(), provider, stubRegistry(readTool("lookup", toolSpec)));
+		AgentResult result = loop.run(conv, e -> { /* empty listener */ });
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		List<ToolResultMessage> failures = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.filter(tr -> tr.state() instanceof ToolState.Failed)
+			.toList();
+		assertEquals(1, failures.size());
+		assertEquals("tc3", failures.get(0).toolCallId());
+		ToolState.Failed failed = (ToolState.Failed) failures.get(0).state();
+		assertTrue(failed.error().contains("DUPLICATE CALL BLOCKED"));
+	}
+
+	/**
+	 * A different tool call in between resets the duplicate counter, so a later
+	 * legitimate re-read is not blocked.
+	 */
+	public void testDuplicateCounterResetsOnDifferentCall() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema toolSpec = new ToolSchema("lookup", "Looks up", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc2", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc3", "lookup", "{\"q\":2}")),
+			List.of(new ToolCall("tc4", "lookup", "{\"q\":1}")),
+			List.of(new TextContent("Done.")));
+
+		AgentLoop loop = new AgentLoop(config(), provider, stubRegistry(readTool("lookup", toolSpec)));
+		AgentResult result = loop.run(conv, e -> { /* empty listener */ });
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		boolean anyBlocked = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.anyMatch(tr -> tr.state() instanceof ToolState.Failed);
+		assertFalse("Re-read after a different call must not be blocked", anyBlocked);
+	}
+
+	/**
+	 * A synthetic failure (unknown tool) in the same turn as a successful write must not
+	 * roll back the write: the tool never executed, so nothing can be corrupted.
+	 */
+	public void testUnknownToolDoesNotRollBackTurn() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(
+				new ToolCall("tc1", "edit_model", "{}"),
+				new ToolCall("tc2", "no_such_tool", "{}")),
+			List.of(new TextContent("Done.")));
+
+		ToolRegistry registry = stubRegistry(globalTool("edit_model", toolSpec));
+
+		List<String> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.TransactionCommitted) {
+				events.add("tx_commit");
+			} else if (e instanceof AgentEvent.TransactionRolledBack) {
+				events.add("tx_rollback");
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Successful write must be committed", events.contains("tx_commit"));
+		assertFalse("Synthetic failure must not roll back the turn", events.contains("tx_rollback"));
+	}
+
+	/**
+	 * When a tool execution failure rolls back the turn, the model is informed that
+	 * successful writes of the same turn were discarded.
+	 */
+	public void testRollbackNoticeAddedToConversation() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema okSpec = new ToolSchema("edit_model", "Edits", "{}");
+		ToolSchema failSpec = new ToolSchema("failing_tool", "Fails", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(
+				new ToolCall("tc1", "edit_model", "{}"),
+				new ToolCall("tc2", "failing_tool", "{}")),
+			List.of(new TextContent("Done.")));
+
+		ToolRegistry registry = stubRegistry(
+			globalTool("edit_model", okSpec),
+			new Tool() {
+				@Override public String name() { return "failing_tool"; }
+				@Override public String description() { return "Fails"; }
+				@Override public ToolSchema schema() { return failSpec; }
+				@Override public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
+					throw new RuntimeException("boom");
+				}
+				@Override public ToolMode mode() { return ToolMode.STRUCTURAL; }
+			});
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, registry);
+		AgentResult result = loop.run(conv, ctx, e -> { /* empty listener */ });
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		boolean noticePresent = conv.messages().stream()
+			.filter(UserMessage.class::isInstance)
+			.map(UserMessage.class::cast)
+			.flatMap(m -> m.content().stream())
+			.filter(TextContent.class::isInstance)
+			.map(TextContent.class::cast)
+			.anyMatch(t -> t.text().contains("rolled back"));
+		assertTrue("Model must be told about the rollback", noticePresent);
+	}
+
+	/**
+	 * An unexpected runtime failure still emits a terminal {@link AgentEvent.RunCompleted}
+	 * so event consumers are not left waiting, and the exception propagates.
+	 */
+	public void testRunCompletedEmittedOnUnexpectedError() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
+
+		LLMProvider brokenProvider = (request, handler) -> {
+			// Stream ends without MessageComplete → IllegalStateException in the collector.
+		};
+
+		List<AgentEvent> captured = new ArrayList<>();
+		AgentLoop loop = new AgentLoop(config(), brokenProvider, emptyRegistry());
+		try {
+			loop.run(conv, captured::add);
+			fail("Expected the runtime failure to propagate");
+		} catch (IllegalStateException expected) {
+			// expected
+		}
+
+		AgentEvent.RunCompleted runCompleted =
+			AgentEventAssertions.firstOfType(captured, AgentEvent.RunCompleted.class);
+		assertNotNull("Terminal RunCompleted must be emitted", runCompleted);
+		assertEquals(StopReason.ERROR, runCompleted.reason());
 	}
 }

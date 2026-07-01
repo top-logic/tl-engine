@@ -9,16 +9,19 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
@@ -37,10 +40,12 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
+import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -103,13 +108,24 @@ public class AgentLoop {
 	private final Set<String> _turnDeniedCallIds = ConcurrentHashMap.newKeySet();
 
 	/**
-	 * Tracks recent tool calls by signature ({@code name + "\0" + arguments}) to detect
-	 * duplicate calls. Maps signature to consecutive repeat count. Reset when a different
-	 * tool call is made.
+	 * Tool call IDs of the current turn whose {@link ToolState.Failed} result is synthetic —
+	 * the tool never executed (permission denied, approval rejected, duplicate blocked,
+	 * unknown tool). These failures must not trigger the end-of-turn rollback: they cannot
+	 * have corrupted any data, and rolling back would silently discard writes of tools
+	 * that succeeded in the same turn.
 	 */
-	private final Map<String, Integer> _recentToolCallCounts = new LinkedHashMap<>();
+	private final Set<String> _turnBlockedCallIds = ConcurrentHashMap.newKeySet();
 
-	/** Maximum times the same tool+args combination may be called before being blocked. */
+	/**
+	 * Signature ({@code name + "\0" + arguments}) of the most recent tool call, for
+	 * consecutive-duplicate detection. Reset whenever a different tool call is made.
+	 */
+	private String _lastToolCallSignature;
+
+	/** Consecutive repeats of {@link #_lastToolCallSignature}. */
+	private int _lastToolCallRepeats;
+
+	/** Maximum consecutive times the same tool+args combination may be called before being blocked. */
 	private static final int MAX_DUPLICATE_TOOL_CALLS = 2;
 
 	/**
@@ -204,10 +220,23 @@ public class AgentLoop {
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
-		listener = AgentEventListener.serializing(listener);
+		AgentEventListener serialized = AgentEventListener.serializing(listener);
 		String runId = UUID.randomUUID().toString();
-		emit(listener, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
+		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
+		try {
+			return runLoop(conversation, context, serialized, runId);
+		} catch (RuntimeException e) {
+			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
+			// never left waiting for a run that already died.
+			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
+			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY));
+			throw e;
+		}
+	}
+
+	private AgentResult runLoop(Conversation conversation, ToolContext context,
+			AgentEventListener listener, String runId) {
 		TokenUsage totalUsage = TokenUsage.EMPTY;
 		int maxTurns = _config.maxTurns();
 
@@ -226,9 +255,9 @@ public class AgentLoop {
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
-				StopReason stopReason = StopReason.ERROR;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
-				return new AgentResult(stopReason, turn - 1, totalUsage);
+				StopReason stopReason = stopReasonFor(e, context);
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
 			conversation.add(assistantMsg);
@@ -301,21 +330,43 @@ public class AgentLoop {
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
-		listener = AgentEventListener.serializing(listener);
+		AgentEventListener serialized = AgentEventListener.serializing(listener);
 		String runId = UUID.randomUUID().toString();
-		emit(listener, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
+		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
-		return runWithMemory(_memory, context, listener, runId);
+		try {
+			return runWithMemory(_memory, context, serialized, runId);
+		} catch (RuntimeException e) {
+			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
+			// never left waiting for a run that already died.
+			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
+			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY));
+			throw e;
+		}
+	}
+
+	/**
+	 * Classify a provider failure: a run cancelled by the user is {@link StopReason#ABORTED}
+	 * regardless of the provider error that surfaced it, context overflow is
+	 * {@link StopReason#CONTEXT_OVERFLOW}, everything else is {@link StopReason#ERROR}.
+	 */
+	private static StopReason stopReasonFor(ProviderException e, ToolContext context) {
+		if (context.cancellationToken().isCancelled() || Thread.currentThread().isInterrupted()) {
+			return StopReason.ABORTED;
+		}
+		return e.kind() == ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
+			? StopReason.CONTEXT_OVERFLOW
+			: StopReason.ERROR;
 	}
 
 	/** Maximum reactive compaction retries on context_window_exceeded before giving up. */
 	private static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
 
-	/** Maximum automatic retries for transient provider errors (rate limit, overloaded). */
-	private static final int MAX_TRANSIENT_RETRIES = 3;
-
 	/** Base backoff delay in milliseconds for transient retries. Doubles each attempt. */
 	private static final long BASE_BACKOFF_MS = 1000;
+
+	/** Sleep slice for backoff waits, so cancellation is noticed promptly. */
+	private static final long BACKOFF_POLL_MS = 250;
 
 	private AgentResult runWithMemory(ConversationMemory memory, ToolContext context,
 			AgentEventListener listener, String runId) {
@@ -339,11 +390,9 @@ public class AgentLoop {
 			} catch (ProviderException e) {
 				emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
-				StopReason stopReason = e.kind() == ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED
-					? StopReason.CONTEXT_OVERFLOW
-					: StopReason.ERROR;
-				emit(listener, new AgentEvent.RunCompleted(runId, turn - 1, now(), stopReason, totalUsage));
-				return new AgentResult(stopReason, turn - 1, totalUsage);
+				StopReason stopReason = stopReasonFor(e, context);
+				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage));
+				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
 			conversation.add(assistantMsg);
@@ -423,6 +472,7 @@ public class AgentLoop {
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
 		_turnDeniedCallIds.clear();
+		_turnBlockedCallIds.clear();
 
 		List<List<ToolCall>> batches = partitionBatches(toolCalls, context);
 		int messagesBefore = conversation.size();
@@ -441,15 +491,31 @@ public class AgentLoop {
 			}
 		}
 
-		// End-of-turn: check for failures and commit or rollback
-		boolean anyFailed = conversation.messages().subList(messagesBefore, conversation.size())
+		// End-of-turn: commit unless a tool actually executed and failed. Synthetic
+		// failures (denied, duplicate-blocked, unknown tool) never ran, so they cannot
+		// have corrupted data — rolling back for them would discard unrelated writes
+		// that succeeded in the same turn.
+		boolean anyExecutionFailed = conversation.messages().subList(messagesBefore, conversation.size())
 			.stream()
 			.filter(ToolResultMessage.class::isInstance)
 			.map(ToolResultMessage.class::cast)
+			.filter(tr -> !_turnBlockedCallIds.contains(tr.toolCallId()))
 			.anyMatch(tr -> tr.state() instanceof ToolState.Failed);
 
-		if (anyFailed) {
+		if (anyExecutionFailed) {
+			boolean hadTransaction = context.transaction().isActive();
 			rollbackTransaction(context, listener, runId, turn, "Tool execution failed");
+			if (hadTransaction) {
+				// The model was already told (via the individual tool results) that some
+				// tools succeeded. Correct that picture: their writes are gone now.
+				conversation.add(new UserMessage(
+					UUID.randomUUID().toString(), now(),
+					List.of(new TextContent(
+						"[Framework notice] Because a tool call in this turn failed, ALL data"
+						+ " changes made by tools in this turn were rolled back and NOT persisted"
+						+ " — including changes reported as successful. Re-apply any changes"
+						+ " that are still needed."))));
+			}
 		} else {
 			commitTransaction(context, listener, runId, turn);
 		}
@@ -462,29 +528,25 @@ public class AgentLoop {
 	 * Begins a transaction on first write. Locking is handled by individual
 	 * tools via {@link TransactionScope#acquireLock(String, com.top_logic.model.TLObject...)}.
 	 *
-	 * @param toolCall the tool call about to execute
 	 * @param tool     the resolved tool (may be {@code null} for unknown tools)
 	 * @param context  the current execution context
 	 * @param listener receives transaction events
 	 * @param runId    the current run ID
 	 * @param turn     the current turn number
-	 * @return always {@code null}; retained for interface consistency with callers
-	 *         that check the return value
 	 */
-	private ToolResultMessage ensureTransaction(ToolCall toolCall, Tool tool, ToolContext context,
+	private void ensureTransaction(Tool tool, ToolContext context,
 			AgentEventListener listener, String runId, int turn) {
 		TransactionScope scope = context.transaction();
 		if (scope.isNoOp() || scope.isActive()) {
-			return null;
+			return;
 		}
 
 		if (tool == null || tool.mode() == ToolMode.READ) {
-			return null;
+			return;
 		}
 
 		scope.begin();
 		emit(listener, new AgentEvent.TransactionBegan(runId, turn, now()));
-		return null;
 	}
 
 	/** */
@@ -592,22 +654,33 @@ public class AgentLoop {
 	}
 
 	/**
-	 * Checks if this tool call is a duplicate of a recent call with the same name and arguments.
-	 * Returns a synthetic error result if the call has been made too many times, {@code null}
-	 * otherwise.
+	 * Checks if this tool call is a consecutive duplicate of the previous call with the same
+	 * name and arguments. Returns a synthetic error result if the call has been repeated too
+	 * many times in a row, {@code null} otherwise.
 	 *
-	 * <p>Allows each unique tool+args combination up to {@link #MAX_DUPLICATE_TOOL_CALLS} times
-	 * (to account for legitimate retries). Beyond that, the call is blocked with a message
-	 * directing the LLM to use the result it already received.</p>
+	 * <p>Allows up to {@link #MAX_DUPLICATE_TOOL_CALLS} consecutive identical calls (to account
+	 * for legitimate retries). Beyond that, the call is blocked with a message directing the
+	 * LLM to use the result it already received. The counter resets as soon as a different
+	 * tool call is made, so legitimate later re-reads (e.g. verify after an edit) stay
+	 * possible.</p>
+	 *
+	 * <p>Only called from the loop thread — duplicate detection for concurrent batches
+	 * happens before the batch is dispatched to worker threads.</p>
 	 */
 	private ToolResultMessage checkDuplicateToolCall(ToolCall toolCall) {
 		String signature = toolCall.name() + "\0" + toolCall.arguments();
-		int count = _recentToolCallCounts.merge(signature, 1, Integer::sum);
+		if (signature.equals(_lastToolCallSignature)) {
+			_lastToolCallRepeats++;
+		} else {
+			_lastToolCallSignature = signature;
+			_lastToolCallRepeats = 1;
+		}
 
-		if (count > MAX_DUPLICATE_TOOL_CALLS) {
+		if (_lastToolCallRepeats > MAX_DUPLICATE_TOOL_CALLS) {
+			_turnBlockedCallIds.add(toolCall.id());
 			return errorResult(toolCall,
 				"DUPLICATE CALL BLOCKED: You have already called '" + toolCall.name()
-				+ "' with these exact arguments " + (count - 1) + " time(s). "
+				+ "' with these exact arguments " + (_lastToolCallRepeats - 1) + " time(s) in a row. "
 				+ "The result is already in your conversation. "
 				+ "Use the result you already received instead of calling again. "
 				+ "If you need different information, call the tool with DIFFERENT arguments.");
@@ -615,6 +688,16 @@ public class AgentLoop {
 
 		return null;
 	}
+
+	/**
+	 * Shared worker pool for concurrent READ-tool batches. Cached daemon threads are reused
+	 * across batches and runs, and reaped after idling — avoids creating a fresh pool per batch.
+	 */
+	private static final ExecutorService TOOL_WORKERS = Executors.newCachedThreadPool(runnable -> {
+		Thread thread = new Thread(runnable, "agent-tool-worker");
+		thread.setDaemon(true);
+		return thread;
+	});
 
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
@@ -627,50 +710,107 @@ public class AgentLoop {
 		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
 		SubSessionContext userSession = ThreadContextManager.getSubSession();
 
-		ExecutorService executor = Executors.newCachedThreadPool();
-		try {
-			List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
+		List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
 
-			for (ToolCall tc : batch) {
-				ComputationEx2<ToolResultMessage, RuntimeException, RuntimeException> job = () -> {
-					try (
-						ConversationLogListenerBinding.Binding b1 =
-							ConversationLogListenerBinding.bind(logListener);
-						TaskStoreBinding.Binding b2 =
-							TaskStoreBinding.bind(taskStore);
-						UserInteractionStoreBinding.Binding b3 =
-							UserInteractionStoreBinding.bind(interactionStore);
-						LoadedSkillsBinding.Binding b4 =
-							LoadedSkillsBinding.bind(loadedSkills)) {
-						return executeWithSecurityCheck(tc, context, listener, runId, turn);
-					}
-				};
-				// Propagate the caller's sub-session (e.g. the chat user's) onto the worker thread
-				// so parallel tools run in the same context as sequential ones; fall back to a
-				// system interaction only when the caller had no bound context.
-				futures.add(CompletableFuture.supplyAsync(
-					() -> userSession != null
-						? ThreadContextManager.inContext(userSession, job)
-						: ThreadContextManager.inSystemInteraction(AgentLoop.class, job),
-					executor));
+		for (ToolCall tc : batch) {
+			// Duplicate detection runs on the loop thread, in call order, before dispatch —
+			// same behaviour as for serial calls.
+			ToolResultMessage duplicateResult = checkDuplicateToolCall(tc);
+			if (duplicateResult != null) {
+				futures.add(CompletableFuture.completedFuture(duplicateResult));
+				continue;
 			}
 
-			List<ToolResultMessage> results = new ArrayList<>();
-			for (CompletableFuture<ToolResultMessage> future : futures) {
+			ComputationEx2<ToolResultMessage, RuntimeException, RuntimeException> job = () -> {
+				try (
+					ConversationLogListenerBinding.Binding b1 =
+						ConversationLogListenerBinding.bind(logListener);
+					TaskStoreBinding.Binding b2 =
+						TaskStoreBinding.bind(taskStore);
+					UserInteractionStoreBinding.Binding b3 =
+						UserInteractionStoreBinding.bind(interactionStore);
+					LoadedSkillsBinding.Binding b4 =
+						LoadedSkillsBinding.bind(loadedSkills)) {
+					return executeWithSecurityCheck(tc, context, listener, runId, turn);
+				}
+			};
+			// Propagate the caller's sub-session (e.g. the chat user's) onto the worker thread
+			// so parallel tools run in the same context as sequential ones; fall back to a
+			// system interaction only when the caller had no bound context.
+			futures.add(CompletableFuture.supplyAsync(
+				() -> userSession != null
+					? ThreadContextManager.inContext(userSession, job)
+					: ThreadContextManager.inSystemInteraction(AgentLoop.class, job),
+				TOOL_WORKERS));
+		}
+
+		List<ToolResultMessage> results = collectBatchResults(batch, futures, context);
+
+		for (int i = 0; i < batch.size(); i++) {
+			conversation.add(results.get(i));
+			reportResult(batch.get(i), results.get(i), listener, runId, turn, _turnDeniedCallIds);
+		}
+	}
+
+	/**
+	 * Await batch results while staying responsive to interrupts and cancellation.
+	 *
+	 * <p>{@link CompletableFuture#join()} waits uninterruptibly, which would make the run
+	 * un-cancellable while a batch is in flight. Uses timed polling instead; once cancelled
+	 * or interrupted, remaining futures are cancelled and reported as failed, which triggers
+	 * the end-of-turn rollback.</p>
+	 */
+	private static List<ToolResultMessage> collectBatchResults(List<ToolCall> batch,
+			List<CompletableFuture<ToolResultMessage>> futures, ToolContext context) {
+		List<ToolResultMessage> results = new ArrayList<>();
+		boolean abort = false;
+		for (int i = 0; i < futures.size(); i++) {
+			CompletableFuture<ToolResultMessage> future = futures.get(i);
+			if (abort) {
+				future.cancel(true);
+				results.add(errorResult(batch.get(i), "Cancelled."));
+				continue;
+			}
+			while (true) {
+				if (context.cancellationToken().isCancelled()) {
+					abort = true;
+					future.cancel(true);
+					results.add(errorResult(batch.get(i), "Cancelled."));
+					break;
+				}
 				try {
-					results.add(future.join());
-				} catch (Exception e) {
-					results.add(errorResult(batch.get(results.size()), "Concurrent execution failed: " + e.getMessage()));
+					results.add(future.get(200, TimeUnit.MILLISECONDS));
+					break;
+				} catch (TimeoutException e) {
+					// Still running — loop and re-check cancellation.
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					abort = true;
+					future.cancel(true);
+					results.add(errorResult(batch.get(i), "Cancelled."));
+					break;
+				} catch (CancellationException e) {
+					results.add(errorResult(batch.get(i), "Cancelled."));
+					break;
+				} catch (ExecutionException e) {
+					Throwable cause = e.getCause() != null ? e.getCause() : e;
+					results.add(errorResult(batch.get(i),
+						"Concurrent execution failed: " + cause.getMessage()));
+					break;
 				}
 			}
-
-			for (int i = 0; i < batch.size(); i++) {
-				conversation.add(results.get(i));
-				reportResult(batch.get(i), results.get(i), listener, runId, turn, _turnDeniedCallIds);
-			}
-		} finally {
-			executor.shutdown();
 		}
+		return results;
+	}
+
+	/**
+	 * Marks a tool call as denied: its failure result is synthetic (the tool never ran),
+	 * so it is excluded from failure events (a {@link AgentEvent.ToolCallDenied} was already
+	 * emitted) and from the end-of-turn rollback decision.
+	 */
+	private void markDenied(String toolCallId) {
+		_turnDeniedCallIds.add(toolCallId);
+		_turnBlockedCallIds.add(toolCallId);
 	}
 
 	private ToolResultMessage executeWithSecurityCheck(ToolCall toolCall, ToolContext context,
@@ -686,7 +826,7 @@ public class AgentLoop {
 			if (!filter.test(tool)) {
 				String reason = filter.denialReason(tool);
 				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
-				_turnDeniedCallIds.add(toolCall.id());
+				markDenied(toolCall.id());
 				return errorResult(toolCall, reason);
 			}
 		} else {
@@ -694,7 +834,7 @@ public class AgentLoop {
 				String reason = "Permission denied: you do not have access to tool '"
 					+ toolCall.name() + "'.";
 				emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
-				_turnDeniedCallIds.add(toolCall.id());
+				markDenied(toolCall.id());
 				return errorResult(toolCall, reason);
 			}
 		}
@@ -715,7 +855,7 @@ public class AgentLoop {
 				if (decision instanceof PermissionDecision.Denied denied) {
 					String reason = denied.reason();
 					emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), reason));
-					_turnDeniedCallIds.add(toolCall.id());
+					markDenied(toolCall.id());
 					return errorResult(toolCall, reason);
 				} else if (decision instanceof PermissionDecision.NeedsApproval needsApproval) {
 					Map<String, Object> parsedArgs;
@@ -752,14 +892,14 @@ public class AgentLoop {
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.REJECTED));
 						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
-						_turnDeniedCallIds.add(toolCall.id());
+						markDenied(toolCall.id());
 						return errorResult(toolCall, feedback);
 					} else if (approvalResult instanceof ApprovalResult.TimedOut) {
 						String feedback = "Approval timed out for tool '" + toolCall.name() + "'.";
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.TIMED_OUT));
 						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
-						_turnDeniedCallIds.add(toolCall.id());
+						markDenied(toolCall.id());
 						return errorResult(toolCall, feedback);
 					}
 				}
@@ -773,16 +913,19 @@ public class AgentLoop {
 
 		// Ensure transaction is open before executing a write tool.
 		// Done here (after all security gates) so denied tools never open a transaction.
-		ToolResultMessage lockError = ensureTransaction(toolCall, tool, context, listener, runId, turn);
-		if (lockError != null) {
-			return lockError;
-		}
+		ensureTransaction(tool, context, listener, runId, turn);
 
 		ProgressReporter progressReporter = message ->
 			emit(listener, new AgentEvent.ToolProgress(runId, turn, now(),
 				toolCall.id(), toolCall.name(), message));
 		ToolContext execContext = context.withToolCallId(toolCall.id())
 			.withProgressReporter(progressReporter);
+
+		if (tool == null) {
+			// Unknown tool: the registry fails the call without executing anything, so the
+			// failure is synthetic and must not trigger the end-of-turn rollback.
+			_turnBlockedCallIds.add(toolCall.id());
+		}
 
 		ToolResultMessage result = _registry.execute(toolCall, execContext);
 		return truncateIfNeeded(result, listener, runId, turn);
@@ -845,20 +988,23 @@ public class AgentLoop {
 	 * Call the LLM provider with automatic retry for transient errors.
 	 *
 	 * <p>
-	 * Retries on {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#RATE_LIMITED} and
+	 * Retries up to {@link AgentParams#maxRetries()} times on
+	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#RATE_LIMITED} and
 	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind#OVERLOADED} with exponential
-	 * backoff, respecting the {@code retry-after} header when present.
+	 * backoff, respecting the {@code retry-after} header when present. The backoff sleeps in
+	 * small slices so a user cancellation ends the wait promptly.
 	 * </p>
 	 */
 	private AssistantMessage callProvider(Conversation conversation, ToolContext context,
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
-		for (int attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt++) {
+		int maxRetries = Math.max(0, _config.maxRetries());
+		for (int attempt = 0; attempt <= maxRetries; attempt++) {
 			try {
 				return callProviderOnce(conversation, context, listener, runId, turn);
 			} catch (ProviderException e) {
 				boolean retryable = e.kind() == ProviderException.Kind.RATE_LIMITED
 					|| e.kind() == ProviderException.Kind.OVERLOADED;
-				if (!retryable || attempt == MAX_TRANSIENT_RETRIES) {
+				if (!retryable || attempt == maxRetries) {
 					throw e;
 				}
 				long waitMs = e.retryAfter() != null
@@ -870,15 +1016,36 @@ public class AgentLoop {
 				emit(listener, new AgentEvent.RetryScheduled(
 					runId, turn, now(), e.kind().name(), attempt + 1, waitMs));
 
-				try {
-					Thread.sleep(waitMs);
-				} catch (InterruptedException ie) {
-					Thread.currentThread().interrupt();
-					throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Interrupted during retry", ie);
-				}
+				backoff(waitMs, context, e);
 			}
 		}
 		throw new IllegalStateException("Unreachable");
+	}
+
+	/**
+	 * Sleep for the given backoff duration in {@link #BACKOFF_POLL_MS} slices, re-checking
+	 * cancellation between slices. When the run is cancelled or the thread interrupted,
+	 * gives up retrying by rethrowing the pending transient error — the run loop then maps
+	 * it to {@link StopReason#ABORTED} via {@link #stopReasonFor}.
+	 */
+	private static void backoff(long waitMs, ToolContext context, ProviderException pending)
+			throws ProviderException {
+		long deadline = System.nanoTime() + waitMs * 1_000_000L;
+		while (true) {
+			if (context.cancellationToken().isCancelled()) {
+				throw pending;
+			}
+			long remainingMs = (deadline - System.nanoTime()) / 1_000_000L;
+			if (remainingMs <= 0) {
+				return;
+			}
+			try {
+				Thread.sleep(Math.min(BACKOFF_POLL_MS, remainingMs));
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
+				throw pending;
+			}
+		}
 	}
 
 	/**
@@ -908,7 +1075,8 @@ public class AgentLoop {
 			_config.maxOutputTokens(),
 			_config.modelOptions(),
 			null,
-			_config.toolChoice());
+			_config.toolChoice(),
+			Duration.ofSeconds(_config.timeoutSeconds()));
 
 		ResponseCollector collector = new ResponseCollector(listener, runId, turn);
 		_provider.stream(request, collector);

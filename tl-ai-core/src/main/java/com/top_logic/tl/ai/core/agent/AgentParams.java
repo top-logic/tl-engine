@@ -22,8 +22,9 @@ import com.top_logic.tl.ai.core.provider.ToolChoice;
  * @param modelOptions        provider-specific options (temperature, {@code topP},
  *                            {@code thinking_effort}, etc.)
  * @param contextWindowTokens total context window size in tokens (used for memory/compaction)
- * @param maxRetries          maximum retry attempts on transient errors
- * @param timeoutSeconds      request timeout in seconds
+ * @param maxRetries          maximum automatic retry attempts on transient provider errors
+ *                            (rate limited, overloaded); {@code 0} disables retries
+ * @param timeoutSeconds      HTTP request timeout per LLM call in seconds
  * @param toolChoice          tool selection behaviour, or {@code null} for provider default
  * @param responseValidator   predicate tested after each LLM response; returning {@code false}
  *                            stops the loop with {@link StopReason#REJECTED}
@@ -71,6 +72,12 @@ public record AgentParams(
 		}
 		if (contextWindowTokens <= 0) {
 			throw new IllegalArgumentException("contextWindowTokens must be positive.");
+		}
+		if (maxRetries < 0) {
+			throw new IllegalArgumentException("maxRetries must not be negative.");
+		}
+		if (timeoutSeconds <= 0) {
+			throw new IllegalArgumentException("timeoutSeconds must be positive.");
 		}
 	}
 

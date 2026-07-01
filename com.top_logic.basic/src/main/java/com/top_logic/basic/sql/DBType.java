@@ -178,13 +178,13 @@ public enum DBType implements ExternallyNamed {
 		} else if (value instanceof BigDecimal) {
 			return DECIMAL;
 		} else if (value instanceof Float) {
-			return DOUBLE;
+			return FLOAT;
 		} else if (value instanceof Double) {
 			return DOUBLE;
 		} else if (value instanceof TLID) {
 			return ID;
 		} else if (value instanceof Integer) {
-			return LONG;
+			return INT;
 		} else if (value instanceof Long) {
 			return LONG;
 		} else if (value instanceof Short) {

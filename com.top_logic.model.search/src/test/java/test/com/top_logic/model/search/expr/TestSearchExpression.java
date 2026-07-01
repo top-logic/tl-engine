@@ -246,6 +246,67 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 			});
 	}
 
+	/**
+	 * Order comparisons ({@code <}, {@code <=}, {@code >}, {@code >=}) on database columns are
+	 * delegated to the database.
+	 *
+	 * <p>
+	 * TL-Script normalizes numeric literals to {@link Double}; the literal is adapted back to the
+	 * column type (see {@code CompiledLiteral}) so that the comparison can be pushed to SQL. This
+	 * test verifies that the database-delegated comparison yields the same result as the in-memory
+	 * evaluation, including the boundary case and a non-integral literal against an integer column
+	 * (which is not value-preserving and therefore stays interpreted but must still be correct).
+	 * </p>
+	 */
+	public void testKBCompareOp() {
+		with("TestSearchExpression-testFuzzyKBSearch.scenario.xml",
+			scenario -> {
+				TLObject a4 = scenario.getObject("a4"); // int = 15, double = 16
+				TLObject a5 = scenario.getObject("a5"); // int = 16, double = 18
+				assertNotNull(a4);
+				assertNotNull(a5);
+
+				String intAttr = "`TestSearchExpression:WithDatabaseColumns#int`";
+				String longAttr = "`TestSearchExpression:WithDatabaseColumns#long`";
+				String doubleAttr = "`TestSearchExpression:WithDatabaseColumns#double`";
+
+				// Integer column, integral literal: the Double literal is adapted to Integer and the
+				// comparison is delegated to the database. a4.int = 15, a5.int = 16.
+				assertCompareConsistent(set(a5), a4, a5, intAttr, "> 15");
+				assertCompareConsistent(set(a4, a5), a4, a5, intAttr, ">= 15");
+				assertCompareConsistent(set(a4), a4, a5, intAttr, "< 16");
+				assertCompareConsistent(set(a4, a5), a4, a5, intAttr, "<= 16");
+
+				// Long column: the literal is adapted to Long. a4.long = 100, a5.long = 200.
+				assertCompareConsistent(set(a5), a4, a5, longAttr, "> 150");
+				assertCompareConsistent(set(a4, a5), a4, a5, longAttr, ">= 100");
+
+				// Double column (no conversion needed, TL-Script literals are already Double).
+				assertCompareConsistent(set(a5), a4, a5, doubleAttr, "> 16");
+				assertCompareConsistent(set(a4, a5), a4, a5, doubleAttr, ">= 16");
+				assertCompareConsistent(set(a4), a4, a5, doubleAttr, "< 18");
+
+				// Non-integral literal against an integer column: not value-preserving, so it stays
+				// interpreted, but the result must still be correct.
+				assertCompareConsistent(set(a5), a4, a5, intAttr, "> 15.5");
+			});
+	}
+
+	/**
+	 * Asserts that a comparison predicate yields the given result both when delegated to the database
+	 * (rooted in {@code all(...)}) and when evaluated in memory (rooted in a passed-in list).
+	 */
+	private void assertCompareConsistent(Set<?> expected, TLObject a4, TLObject a5, String attr, String op)
+			throws ParseException {
+		Object kbResult = executeAsSet(search(
+			"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(" + attr + ") " + op + ")"));
+		assertEquals("Database-delegated result for '" + attr + " " + op + "'.", expected, kbResult);
+
+		Object inMemoryResult = asSet(execute(search(
+			"all -> $all.filter(x -> $x.get(" + attr + ") " + op + ")"), list(a4, a5)));
+		assertEquals("In-memory result for '" + attr + " " + op + "'.", expected, inMemoryResult);
+	}
+
 	public void testSimpleSearch() {
 		with("TestSearchExpression-testSimpleSearch.scenario.xml",
 			scenario -> {

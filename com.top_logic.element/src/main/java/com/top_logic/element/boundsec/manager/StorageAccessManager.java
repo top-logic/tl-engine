@@ -535,7 +535,11 @@ public class StorageAccessManager extends ElementAccessManager {
 
 			if (Utils.equals(currentPerson, person)) {
 				RoleComputation roleComputation = tlContext.get(PERSON_ROLE_CACHE);
-				if (roleComputation == null) {
+				// The cache is stored per interaction under a person-independent property. If the
+				// current person of the interaction has changed (e.g. the person was switched on the
+				// same context), a cache built for the previous person must not be reused, otherwise
+				// it would report that person's roles.
+				if (roleComputation == null || !Utils.equals(roleComputation.getPerson(), currentPerson)) {
 					roleComputation = this.createRoleComputation(currentPerson, true);
 					tlContext.set(PERSON_ROLE_CACHE, roleComputation);
 				}

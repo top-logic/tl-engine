@@ -25,22 +25,19 @@ import com.top_logic.tool.boundsec.BoundRole;
  */
 public class SimpleRoleComputation extends RoleComputation {
 
-	private final Person _person;
-
 	/**
 	 * Creates a new {@link SimpleRoleComputation}.
 	 */
 	public SimpleRoleComputation(Person person, StorageAccessManager accessManager) {
-		super(accessManager);
-		_person = person;
+		super(person, accessManager);
 	}
 
 	@Override
 	public boolean hasRole(BoundObject boundObject, Collection<? extends BoundRole> someRoles) {
 		try {
-			return hasRole(boundObject, someRoles, getGroupIDs(_person));
+			return hasRole(boundObject, someRoles, getGroupIDs(getPerson()));
 		} catch (StorageException ex) {
-			Logger.error("Unable to determine roles for person '" + _person.getName() + "'.", ex,
+			Logger.error("Unable to determine roles for person '" + getPerson().getName() + "'.", ex,
 				SimpleRoleComputation.class);
 			return false;
 		}
@@ -49,9 +46,9 @@ public class SimpleRoleComputation extends RoleComputation {
 	@Override
 	public Set<BoundRole> getRoles(BoundObject boundObject) {
 		try {
-			return new HashSet<>(findRolesInStorage(boundObject, getGroupIDs(_person)));
+			return new HashSet<>(findRolesInStorage(boundObject, getGroupIDs(getPerson())));
 		} catch (StorageException ex) {
-			Logger.error("Unable to determine roles for person '" + _person.getName()
+			Logger.error("Unable to determine roles for person '" + getPerson().getName()
 				+ "'. No roles will be given to the person.", ex, SimpleRoleComputation.class);
 			return Collections.emptySet();
 		}
@@ -61,9 +58,9 @@ public class SimpleRoleComputation extends RoleComputation {
 	public <T extends BoundObject> Collection<T> getAllowedBusinessObjects(Collection<? extends BoundRole> someRoles,
 			Collection<T> someObjects) {
 		try {
-			return findAllowedBusinessObjects(someRoles, getGroupIDs(_person), someObjects);
+			return findAllowedBusinessObjects(someRoles, getGroupIDs(getPerson()), someObjects);
 		} catch (StorageException ex) {
-			Logger.error("Unable to determine allowed for person '" + _person.getName() + "'.", ex,
+			Logger.error("Unable to determine allowed for person '" + getPerson().getName() + "'.", ex,
 				SimpleRoleComputation.class);
 			return Collections.emptyList();
 		}

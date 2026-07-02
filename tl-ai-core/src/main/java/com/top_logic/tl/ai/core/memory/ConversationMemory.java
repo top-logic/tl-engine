@@ -35,7 +35,7 @@ public class ConversationMemory {
 
 	private final CompactionStrategy _strategy;
 
-	private final int _contextWindowTokens;
+	private int _contextWindowTokens;
 
 	private final int _reservedTokens;
 
@@ -159,13 +159,42 @@ public class ConversationMemory {
 	 */
 	public void updateTokenBaseline(TokenUsage usage) {
 		Objects.requireNonNull(usage, "Usage must not be null.");
-		_apiBaselineTokens = usage.inputTokens();
+		// Full prompt size: with prompt caching, inputTokens alone reports only the
+		// non-cached slice and would reset the baseline to nearly zero on every turn.
+		_apiBaselineTokens = usage.promptTokens();
 		_apiBaselineMessageCount = _conversation.messages().size();
 	}
 
-	/** Context window capacity minus reserved tokens. */
+	/**
+	 * Context window capacity minus reserved tokens.
+	 *
+	 * <p>The reserve is capped at half the context window, so small windows (smaller than
+	 * the configured reserve) still leave a positive compaction budget instead of forcing
+	 * compaction on every turn.</p>
+	 */
 	public int usableTokens() {
-		return _contextWindowTokens - _reservedTokens;
+		int reserved = Math.min(_reservedTokens, _contextWindowTokens / 2);
+		return _contextWindowTokens - reserved;
+	}
+
+	/** The total context window in tokens. */
+	public int contextWindowTokens() {
+		return _contextWindowTokens;
+	}
+
+	/**
+	 * Updates the context window to match the model actually used for the next run.
+	 *
+	 * <p>Session memory is created before the agent (and thus the model) is known; the
+	 * agent runner calls this with the effective per-agent context window before each run.</p>
+	 *
+	 * @param contextWindowTokens total context window of the model, must be positive
+	 */
+	public void setContextWindowTokens(int contextWindowTokens) {
+		if (contextWindowTokens <= 0) {
+			throw new IllegalArgumentException("contextWindowTokens must be positive.");
+		}
+		_contextWindowTokens = contextWindowTokens;
 	}
 
 	/** The underlying conversation. */

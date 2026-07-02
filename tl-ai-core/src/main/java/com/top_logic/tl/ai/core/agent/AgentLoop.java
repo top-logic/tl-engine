@@ -53,9 +53,9 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
-import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
@@ -108,11 +108,11 @@ public class AgentLoop {
 	private final Set<String> _turnDeniedCallIds = ConcurrentHashMap.newKeySet();
 
 	/**
-	 * Tool call IDs of the current turn whose {@link ToolState.Failed} result is synthetic —
-	 * the tool never executed (permission denied, approval rejected, duplicate blocked,
-	 * unknown tool). These failures must not trigger the end-of-turn rollback: they cannot
-	 * have corrupted any data, and rolling back would silently discard writes of tools
-	 * that succeeded in the same turn.
+	 * Tool call IDs of the current turn whose
+	 * {@link com.top_logic.tl.ai.core.message.ToolState.Failed} result is synthetic — the tool
+	 * never executed (permission denied, approval rejected, duplicate blocked, unknown tool). These
+	 * failures must not trigger the end-of-turn rollback: they cannot have corrupted any data, and
+	 * rolling back would silently discard writes of tools that succeeded in the same turn.
 	 */
 	private final Set<String> _turnBlockedCallIds = ConcurrentHashMap.newKeySet();
 
@@ -425,6 +425,14 @@ public class AgentLoop {
 				return new AgentResult(stopReason, turn, totalUsage);
 			}
 
+			// TODO: This check runs once per turn, after every tool result from
+			// executeToolCalls is already appended. A turn with many tool calls can push
+			// the estimate well past the usable budget before this fires (observed:
+			// tokensBefore of 9041/10868 against a 7000-token window). Not a hard failure —
+			// callProviderWithReactiveCompaction still catches an actual provider
+			// CONTEXT_WINDOW_EXCEEDED — but tightening this to check after each tool
+			// result (inside executeToolCalls' batch loop) would bound the overshoot
+			// to one tool result instead of one full turn.
 			if (memory.shouldCompact()) {
 				int tokensBefore = memory.estimateTokens();
 				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "proactive"));
@@ -804,9 +812,10 @@ public class AgentLoop {
 	}
 
 	/**
-	 * Marks a tool call as denied: its failure result is synthetic (the tool never ran),
-	 * so it is excluded from failure events (a {@link AgentEvent.ToolCallDenied} was already
-	 * emitted) and from the end-of-turn rollback decision.
+	 * Marks a tool call as denied: its failure result is synthetic (the tool never ran), so it is
+	 * excluded from failure events (a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ToolCallDenied} was already emitted)
+	 * and from the end-of-turn rollback decision.
 	 */
 	private void markDenied(String toolCallId) {
 		_turnDeniedCallIds.add(toolCallId);

@@ -1942,8 +1942,9 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * An unexpected runtime failure still emits a terminal {@link AgentEvent.RunCompleted}
-	 * so event consumers are not left waiting, and the exception propagates.
+	 * An unexpected runtime failure still emits a terminal
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.RunCompleted} so event consumers are
+	 * not left waiting, and the exception propagates.
 	 */
 	public void testRunCompletedEmittedOnUnexpectedError() {
 		Conversation conv = new Conversation();

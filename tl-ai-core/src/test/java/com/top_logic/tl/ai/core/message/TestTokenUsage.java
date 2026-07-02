@@ -24,6 +24,18 @@ public class TestTokenUsage extends TestCase {
 		assertEquals(350, usage.totalTokens());
 	}
 
+	/** Prompt tokens is the full prompt: non-cached input plus cache read/write. */
+	public void testPromptTokens() {
+		TokenUsage usage = new TokenUsage(100, 50, 0, 4000, 900);
+		assertEquals(5000, usage.promptTokens());
+	}
+
+	/** Total tokens counts the full prompt including cached parts. */
+	public void testTotalIncludesCachedPrompt() {
+		TokenUsage usage = new TokenUsage(100, 50, 200, 4000, 900);
+		assertEquals(5250, usage.totalTokens());
+	}
+
 	/** All fields accessible. */
 	public void testFields() {
 		TokenUsage usage = new TokenUsage(100, 50, 200, 30, 10);

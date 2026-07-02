@@ -279,7 +279,10 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 				if ("[DONE]".equals(data)) {
 					closeOpenBlocks(state, handler);
 					List<ContentPart> content = state._accumulator.buildContentParts();
-					TokenUsage usage = new TokenUsage(inputTokens, outputTokens, 0, cachedTokens, 0);
+					// prompt_tokens includes the cached share; TokenUsage.inputTokens is
+					// defined as the non-cached slice only.
+					TokenUsage usage = new TokenUsage(
+						Math.max(0, inputTokens - cachedTokens), outputTokens, 0, cachedTokens, 0);
 					handler.onEvent(new StreamEvent.MessageComplete(
 						messageId, model,
 						finishReason != null ? finishReason : "end_turn",

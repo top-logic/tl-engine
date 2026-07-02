@@ -10,7 +10,13 @@ package com.top_logic.tl.ai.core.message;
  *
  * <p>Carried on {@link AssistantMessage} for budget tracking and compaction decisions.</p>
  *
- * @param inputTokens      tokens in the request (prompt)
+ * <p><b>Convention:</b> {@code inputTokens} counts only the <em>non-cached</em> part of the
+ * prompt; cached tokens are reported exclusively in {@code cacheReadTokens} /
+ * {@code cacheWriteTokens}. Providers whose API reports a cache-inclusive prompt count
+ * (OpenAI-style {@code prompt_tokens}) must subtract the cached share when constructing
+ * this record. Use {@link #promptTokens()} for the full prompt size.</p>
+ *
+ * @param inputTokens      non-cached tokens in the request (prompt)
  * @param outputTokens     tokens in the response (completion)
  * @param thinkingTokens   tokens used for extended thinking (0 if not supported)
  * @param cacheReadTokens  tokens read from provider cache
@@ -27,10 +33,21 @@ public record TokenUsage(
 	public static final TokenUsage EMPTY = new TokenUsage(0, 0, 0, 0, 0);
 
 	/**
-	 * Total tokens consumed (input + output + thinking).
+	 * Total prompt size in tokens, including cached parts.
+	 *
+	 * <p>This is the number to compare against a model's context window — with prompt
+	 * caching active, {@link #inputTokens()} alone can be a tiny fraction of the real
+	 * prompt.</p>
+	 */
+	public int promptTokens() {
+		return inputTokens + cacheReadTokens + cacheWriteTokens;
+	}
+
+	/**
+	 * Total tokens consumed (full prompt + output + thinking).
 	 */
 	public int totalTokens() {
-		return inputTokens + outputTokens + thinkingTokens;
+		return promptTokens() + outputTokens + thinkingTokens;
 	}
 
 	/**

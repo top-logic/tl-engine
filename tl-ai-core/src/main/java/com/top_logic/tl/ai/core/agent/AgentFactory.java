@@ -184,6 +184,9 @@ public class AgentFactory {
 
 		AgentLoop loop;
 		if (conversationMemory != null) {
+			// Session memory is created before the agent is known; align its compaction
+			// budget with the effective context window (assignment override > catalog).
+			conversationMemory.setContextWindowTokens(coreConfig.contextWindowTokens());
 			loop = new AgentLoop(coreConfig, provider, registry, conversationMemory, maxToolResultChars);
 			loop.run(context, listener);
 		} else {

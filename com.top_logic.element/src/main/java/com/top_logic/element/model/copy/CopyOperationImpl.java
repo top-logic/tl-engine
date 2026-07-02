@@ -20,6 +20,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, CopyConstructor {
@@ -36,7 +38,6 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 
 	private Boolean _transientCopy;
 
-	// TODO #29088: Use security.
 	private Boolean _useSecurity;
 
 	@Override
@@ -55,6 +56,31 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	public CopyOperation withSecurity(Boolean useSecurity) {
 		_useSecurity = useSecurity;
 		return this;
+	}
+
+	/**
+	 * Whether read access to copied attributes is checked (see {@link #withSecurity(Boolean)}).
+	 */
+	protected final boolean useSecurity() {
+		return Boolean.TRUE.equals(_useSecurity);
+	}
+
+	/**
+	 * Reads the value of the given part from the original, applying a read-access check when
+	 * {@link #useSecurity() security is enabled}.
+	 *
+	 * <p>
+	 * This mirrors a TL-Script attribute read ({@code $orig.get(part)}): if the current user must
+	 * not read the part on the original, the empty value (<code>null</code>, or an empty collection
+	 * for multiple parts) is returned, exactly as {@code get} would. This keeps {@code copy()} a pure
+	 * shortcut for {@code new(...).set(part, $orig.get(part))...}.
+	 * </p>
+	 */
+	protected final Object readValue(TLObject orig, TLStructuredTypePart part) {
+		if (useSecurity() && !ModelAccessRights.getInstance().isReadAllowed(orig, part)) {
+			return TLModelUtil.getEmptyValue(part);
+		}
+		return orig.tValue(part);
 	}
 
 	@Override
@@ -144,7 +170,7 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 			return;
 		}
 
-		Object value = orig.tValue(reference);
+		Object value = readValue(orig, reference);
 
 		if (!_filter.accept(reference, value, orig)) {
 			return;

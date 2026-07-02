@@ -524,6 +524,31 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		}
 	}
 
+	/**
+	 * {@code copy()} is a shortcut for {@code new(type)..set(attr, $orig.get(attr))..}. With security,
+	 * reading a copied (stored) attribute is subject to the same read check as {@code get}: a user
+	 * who may not read the original's attributes obtains a copy without those values ({@code null}),
+	 * so the copy cannot be used to escalate read access.
+	 */
+	public void testCopyWithSecurityAppliesReadCheck() throws Exception {
+		// Admin reads everything -> faithful copy.
+		becomeUser(_root);
+		try (Transaction tx = beginTx()) {
+			TLObject adminCopy = (TLObject) execute(search("p -> $p.copy()"), _p1);
+			assertEquals(100, ((Number) adminCopy.tValueByName("budget")).intValue());
+			tx.rollback();
+		}
+
+		// _other may not read the project -> the read-denied attributes are copied as null, exactly
+		// as $p.get(budget) would return null.
+		becomeUser(_other);
+		try (Transaction tx = beginTx()) {
+			TLObject otherCopy = (TLObject) execute(search("p -> $p.copy()"), _p1);
+			assertNull("A read-denied attribute must not be copied.", otherCopy.tValueByName("budget"));
+			tx.rollback();
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	private Collection<? extends TLObject> members(TLObject project) {
 		return (Collection<? extends TLObject>) project.tValueByName("members");

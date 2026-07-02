@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestTLScriptSecurity">
+			<types>
+				<class name="Employee">
+					<annotations>
+						<table name="TLSecEmployee"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestTLScriptSecurity:Employee#account`).get(`tl.accounts:Person#name`)"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="salary"
+							type="tl.core:Integer"
+						/>
+						<reference name="account"
+							type="tl.accounts:Person"
+							mandatory="true"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Project">
+					<annotations>
+						<table name="TLSecProject"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="budget"
+							type="tl.core:Integer"
+						/>
+						<reference name="responsible"
+							type="Employee"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="responsible"
+										storage-type="TLSecProject"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="members"
+							multiple="true"
+							type="Employee"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

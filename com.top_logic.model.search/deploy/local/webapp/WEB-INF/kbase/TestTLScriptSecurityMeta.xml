@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject
+			object_name="TLSecEmployee"
+			super_class="TLObject"
+		>
+			<attributes>
+				<!-- The model attribute 'name' is derived (from account.name), so it has no column. -->
+				<mo_attribute
+					att_name="salary"
+					att_type="Integer"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
+
+		<metaobject
+			object_name="TLSecProject"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="name"
+					att_type="String"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="budget"
+					att_type="Integer"
+					mandatory="false"
+				/>
+				<reference
+					att_name="responsible"
+					mandatory="false"
+					target-type="TLSecEmployee"
+				/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/TestTLScriptSecurity.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="TestTLScriptSecurity.ProjectReader"/>
+					<role name="TestTLScriptSecurity.ProjectResponsible"/>
+				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="TestTLScriptSecurity:Project">
+						<!-- Both roles may read; only the responsible may write and delete. -->
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestTLScriptSecurity.ProjectResponsible, TestTLScriptSecurity.ProjectReader"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule
+							meta-element="TestTLScriptSecurity:Project"
+							role="TestTLScriptSecurity.ProjectResponsible"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Project#responsible"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							meta-element="TestTLScriptSecurity:Project"
+							role="TestTLScriptSecurity.ProjectReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Project#members"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+	</services>
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/TestTLScriptSecurityMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

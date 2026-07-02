@@ -898,6 +898,25 @@ public class TLModelUtil {
 	}
 
 	/**
+	 * The value representing "no value" for the given part, depending on its multiplicity.
+	 *
+	 * <p>
+	 * For a single-valued part this is <code>null</code>. For a multiple part it is an empty
+	 * collection of the same kind that the storage returns for a non-empty value: an empty list for
+	 * an {@link TLStructuredTypePart#isOrdered() ordered} part, an empty set otherwise. The
+	 * collection type is determined by {@link TLStructuredTypePart#isOrdered()} alone; a
+	 * (non-ordered) {@link TLStructuredTypePart#isBag() bag} is returned as a set, just as the
+	 * storage does.
+	 * </p>
+	 */
+	public static Object getEmptyValue(TLStructuredTypePart part) {
+		if (part.isMultiple()) {
+			return part.isOrdered() ? Collections.emptyList() : Collections.emptySet();
+		}
+		return null;
+	}
+
+	/**
 	 * Compute, whether the first class is a generalization of the second one.
 	 * <p>
 	 * Returns true, if c1 and c2 are equal.

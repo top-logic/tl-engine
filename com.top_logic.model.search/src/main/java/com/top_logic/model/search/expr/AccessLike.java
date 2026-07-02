@@ -5,13 +5,13 @@
  */
 package com.top_logic.model.search.expr;
 
-import java.util.Collections;
 
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.WithSecurityCheck;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * Mix-in interface with common implementations for expressions accessing a model value.
@@ -71,15 +71,7 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 		if (withSecurity) {
 			boolean hasReadRights = ModelAccessRights.getInstance().isReadAllowed(self, part);
 			if (!hasReadRights) {
-				if (part.isMultiple()) {
-					if (part.isOrdered() || part.isBag()) {
-						return Collections.emptyList();
-					} else {
-						return Collections.emptySet();
-					}
-				} else {
-					return null;
-				}
+				return TLModelUtil.getEmptyValue(part);
 			}
 		}
 

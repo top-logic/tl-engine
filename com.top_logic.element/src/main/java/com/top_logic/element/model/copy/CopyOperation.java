@@ -65,10 +65,22 @@ public abstract class CopyOperation {
 	public abstract CopyOperation setTransient(Boolean transientCopy);
 
 	/**
-	 * Whether security must be considered during copy operation.
-	 * 
+	 * Whether model security must be considered during the copy operation.
+	 *
 	 * <p>
-	 * Ticket #29088: describe what is checked.
+	 * The copy is meant to be a pure shortcut: with security enabled it behaves like the equivalent
+	 * {@code new(type)..set(attr, $orig.get(attr))..} sequence, where each attribute access is
+	 * subject to the usual TL-Script security. Concretely, reading a copied (stored) attribute of the
+	 * original is subject to a read-access check: attributes the current user must not read yield the
+	 * empty value (<code>null</code>, or an empty collection), exactly as {@code get} would, so the
+	 * copy cannot be used to escalate read access. Derived attributes are never copied (they are
+	 * recomputed on the copy, governed by their own storage-algorithm), so security has no effect on
+	 * them.
+	 * </p>
+	 *
+	 * <p>
+	 * Note: The write side (checking write access on the newly created copy, mirroring {@code set})
+	 * is not yet applied; it is tied to the create-permission handling (Ticket #29088).
 	 * </p>
 	 */
 	public abstract CopyOperation withSecurity(Boolean useSecurity);

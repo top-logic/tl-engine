@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canExecute($operation)
+
+canExecute($object, $operation)
+</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Pr&uuml;ft, ob der aktuell angemeldete Nutzer eine Fachoperation auf dem angegebenen Objekt ausf&uuml;hren darf, und liefert einen Wahrheitswert.</p>
+
+<p>Die Operation wird &uuml;ber ihre Kommandogruppen-Id referenziert (z.&nbsp;B. <code class="hljs inlineCode">"Approve"</code>). Dies ist die generische Pr&uuml;fung hinter Fachoperationen, die &uuml;ber Lesen/Schreiben/L&ouml;schen hinausgehen. Die Funktion schl&auml;gt nie fehl (au&szlig;er wenn die genannte Operation nicht existiert) und filtert nicht.</p>
+
+<p>Die Pr&uuml;fung erfolgt f&uuml;r den aktuell angemeldeten Nutzer und folgt denselben Regeln wie die implizite Berechtigungspr&uuml;fung: standardm&auml;&szlig;ige Verweigerung, Rollenvererbung entlang der Sicherheitshierarchie sowie Vollzugriff f&uuml;r Administratoren oder Ausf&uuml;hrungen im Systemkontext.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Typ</th><th>Typbeschreibung</th><th>Pflicht</th><th>Standardwert</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Fachobjekt</td><td>Das Objekt, auf dem die Operation ausgef&uuml;hrt w&uuml;rde.</td><td>ja</td><td> </td></tr>
+		<tr><td>operation</td><td>Zeichenkette</td><td>Die Id der zu pr&uuml;fenden Kommandogruppe (Operation), z.&nbsp;B. eine eingebaute Gruppe wie <code class="hljs inlineCode">"Delete"</code> oder eine eigene wie <code class="hljs inlineCode">"Approve"</code>.</td><td>ja</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>R&uuml;ckgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+
+<p><code class="hljs inlineCode">true</code>, wenn der aktuelle Nutzer die Operation auf dem Objekt ausf&uuml;hren darf, sonst <code class="hljs inlineCode">false</code>. Schl&auml;gt fehl, wenn keine Kommandogruppe mit der angegebenen Id existiert.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre><code>$order.canExecute("Approve")</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ob der angemeldete Nutzer den Auftrag genehmigen darf.</p>

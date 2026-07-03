@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre><code>$parent.canCreate($reference)
+
+canCreate($parent, $reference)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Checks whether the currently logged-in user is allowed to create a new element in the given composition reference of the given parent object and returns a boolean.</p>
+
+<p>This corresponds to the write access to the composition context (the same check that gates adding an element to the reference). The function never fails and never filters.</p>
+
+<p>The check is evaluated for the currently logged-in user and follows the same rules as the implicit permission enforcement: deny-by-default, role inheritance along the security hierarchy, and full access for administrators or executions in a system context.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Type</th><th>Type Description</th><th>Mandatory</th><th>Default</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>parent</td><td>Business object</td><td>The container object that will hold the new element.</td><td>yes</td><td> </td></tr>
+		<tr><td>reference</td><td>Attribute</td><td>The composition reference (<code class="hljs inlineCode">TLStructuredTypePart</code>) into which the element is created.</td><td>yes</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+
+<p><code class="hljs inlineCode">true</code> if the current user may create an element in the given reference of the parent, <code class="hljs inlineCode">false</code> otherwise.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>$project.canCreate(`my.module:Project#milestones`)</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> Whether the logged-in user may add a milestone to the project.</p>

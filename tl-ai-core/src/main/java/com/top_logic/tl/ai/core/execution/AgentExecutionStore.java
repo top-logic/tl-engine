@@ -368,11 +368,17 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *        <code>null</code>.
 	 * @param transcript
 	 *        The serialized per-run conversation-log transcript; may be <code>null</code>.
+	 *
+	 * <p>
+	 * Interaction requests of this execution still pending at run end (e.g. an approval nobody
+	 * answered before the run was cancelled) are marked {@link InteractionState#CANCELLED}.
+	 * </p>
 	 */
 	public void finishExecution(AgentExecution execution, ExecutionStatus status,
 			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript) {
 		write(() -> {
 		try (Transaction tx = beginTx("Finish agent execution " + execution.getRunId())) {
+			cancelPendingInteractions(execution);
 			execution.setStatus(statusClassifier(status));
 			execution.setStopReason(stopReason != null ? stopReason.name() : null);
 			execution.setErrorMessage(errorMessage);
@@ -665,6 +671,22 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	// ---- Helpers ----
+
+	/**
+	 * Marks all still-pending interaction requests of the given execution as cancelled. Runs
+	 * inside the caller's transaction.
+	 */
+	private void cancelPendingInteractions(AgentExecution execution) {
+		TLClassifier pending = interactionStateClassifier(InteractionState.PENDING);
+		Date now = new Date();
+		for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+			InteractionRequest request = (InteractionRequest) obj;
+			if (execution.equals(request.getExecution()) && pending.equals(request.getState())) {
+				request.setState(interactionStateClassifier(InteractionState.CANCELLED));
+				request.setResolvedAt(now);
+			}
+		}
+	}
 
 	private static Transaction beginTx(String message) {
 		return PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text(message));

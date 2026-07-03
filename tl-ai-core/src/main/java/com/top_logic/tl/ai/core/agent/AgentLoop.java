@@ -37,6 +37,9 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.InteractionRecorder;
+import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -933,13 +936,24 @@ public class AgentLoop {
 					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 						toolCall.id(), approvalRequestId, toolCall.name(),
 						Map.copyOf(request.arguments()), request.displayReason()));
+					// Durable record of the pending approval, carrying the tool call's actual
+					// argument JSON (not the possibly-empty parsed copy shown above).
+					InteractionRequest interactionRow = InteractionRecorder.begin(
+						context.executionHandle().get(),
+						AgentExecutionStore.InteractionType.APPROVAL, approvalRequestId,
+						tool.name(), needsApproval.displayReason(), toolCall.arguments());
 					ApprovalResult approvalResult = context.approval().requestApproval(request);
 					if (approvalResult instanceof ApprovalResult.Approved) {
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.RESOLVED, ApprovalOutcome.APPROVED.name());
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED));
 						// proceed to execution
 					} else if (approvalResult instanceof ApprovalResult.ApprovedForSession) {
 						_sessionApprovedTools.add(tool.name());
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.RESOLVED,
+							ApprovalOutcome.APPROVED_FOR_SESSION.name());
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED_FOR_SESSION));
 						// proceed to execution
@@ -948,6 +962,10 @@ public class AgentLoop {
 							? "User denied tool '" + toolCall.name() + "'."
 							: "User denied tool '" + toolCall.name() + "': "
 								+ rejected.userComment();
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.RESOLVED,
+							rejected.userComment().isBlank() ? ApprovalOutcome.REJECTED.name()
+								: ApprovalOutcome.REJECTED.name() + ": " + rejected.userComment());
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.REJECTED));
 						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
@@ -955,6 +973,8 @@ public class AgentLoop {
 						return errorResult(toolCall, feedback);
 					} else if (approvalResult instanceof ApprovalResult.TimedOut) {
 						String feedback = "Approval timed out for tool '" + toolCall.name() + "'.";
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.TIMED_OUT, null);
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.TIMED_OUT));
 						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));

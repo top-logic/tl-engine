@@ -9,8 +9,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -41,8 +47,11 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * All mutating methods wrap their writes in their own {@link Transaction}; callers don't need to
- * start one. All methods require a TopLogic thread context to be bound on the calling thread.
+ * All mutating methods run on a dedicated writer thread inside a fresh system interaction with
+ * their own {@link Transaction}. Callers therefore need neither a transaction nor a committable
+ * KB context — recording works from any caller context, including read-only ones such as
+ * TL-Script evaluation during rendering (whose {@code ImmutableDBContext} cannot commit).
+ * Queries run on the calling thread and require a bound TopLogic context.
  * </p>
  */
 @ServiceDependencies({
@@ -117,11 +126,81 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		// No configurable properties for v1.
 	}
 
+	private ExecutorService _writer;
+
+	private volatile Thread _writerThread;
+
 	/**
 	 * Creates an {@link AgentExecutionStore}.
 	 */
 	public AgentExecutionStore(InstantiationContext context, Config<?> config) {
 		super(context, config);
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+		_writer = Executors.newSingleThreadExecutor(runnable -> {
+			Thread thread = new Thread(runnable, "agent-execution-store");
+			thread.setDaemon(true);
+			_writerThread = thread;
+			return thread;
+		});
+	}
+
+	@Override
+	protected void shutDown() {
+		if (_writer != null) {
+			_writer.shutdown();
+			try {
+				if (!_writer.awaitTermination(10, TimeUnit.SECONDS)) {
+					_writer.shutdownNow();
+				}
+			} catch (InterruptedException ex) {
+				_writer.shutdownNow();
+				Thread.currentThread().interrupt();
+			}
+			_writer = null;
+			_writerThread = null;
+		}
+		super.shutDown();
+	}
+
+	/**
+	 * Runs the given mutation on the dedicated writer thread inside a fresh system interaction.
+	 *
+	 * <p>
+	 * A fresh interaction always carries a committable KB context, so writes succeed regardless
+	 * of the caller's context — including read-only ones (e.g. TL-Script evaluation during
+	 * rendering) where a transaction begun on the calling thread could never commit. It also
+	 * keeps run recording independent of any business transaction the caller may have open:
+	 * a rolled-back caller transaction cannot take the recording down with it.
+	 * </p>
+	 */
+	private <T> T write(Supplier<T> mutation) {
+		if (Thread.currentThread() == _writerThread) {
+			// Re-entrant call from a mutation (e.g. deleteSession -> executionsOf is a read,
+			// but guard against future nesting): run directly.
+			return mutation.get();
+		}
+		ExecutorService writer = _writer;
+		if (writer == null) {
+			throw new IllegalStateException("AgentExecutionStore is not started.");
+		}
+		try {
+			return writer.submit(
+				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, mutation::get))
+				.get();
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException("Interrupted while writing agent execution data.", ex);
+		} catch (ExecutionException ex) {
+			Throwable cause = ex.getCause();
+			if (cause instanceof RuntimeException runtime) {
+				throw runtime;
+			}
+			throw new RuntimeException("Failed to write agent execution data: " + cause.getMessage(), cause);
+		}
 	}
 
 	/**
@@ -144,6 +223,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *        Display title; may be <code>null</code>.
 	 */
 	public AgentSession createSession(SessionKind kind, Person owner, String title) {
+		return write(() -> {
 		try (Transaction tx = beginTx("Create agent session")) {
 			AgentSession session = TlAiAgentFactory.getInstance().createAgentSession();
 			session.setKind(kindClassifier(kind));
@@ -157,39 +237,49 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			tx.commit();
 			return session;
 		}
+		});
 	}
 
 	/**
 	 * Stores the (compacted) conversation memory snapshot of the session.
 	 */
 	public void saveMemory(AgentSession session, String memoryJson) {
-		try (Transaction tx = beginTx("Save agent session memory")) {
-			session.setMemory(memoryJson);
-			session.setLastUpdated(new Date());
-			tx.commit();
-		}
+		write(() -> {
+			try (Transaction tx = beginTx("Save agent session memory")) {
+				session.setMemory(memoryJson);
+				session.setLastUpdated(new Date());
+				tx.commit();
+			}
+			return null;
+		});
 	}
 
 	/**
 	 * Stores the session metadata bag (approved tools, approval mode, loaded skills, ...).
 	 */
 	public void saveMetadata(AgentSession session, String metadataJson) {
-		try (Transaction tx = beginTx("Save agent session metadata")) {
-			session.setMetadata(metadataJson);
-			session.setLastUpdated(new Date());
-			tx.commit();
-		}
+		write(() -> {
+			try (Transaction tx = beginTx("Save agent session metadata")) {
+				session.setMetadata(metadataJson);
+				session.setLastUpdated(new Date());
+				tx.commit();
+			}
+			return null;
+		});
 	}
 
 	/**
 	 * Updates the session title.
 	 */
 	public void updateTitle(AgentSession session, String title) {
-		try (Transaction tx = beginTx("Update agent session title")) {
-			session.setTitle(title);
-			session.setLastUpdated(new Date());
-			tx.commit();
-		}
+		write(() -> {
+			try (Transaction tx = beginTx("Update agent session title")) {
+				session.setTitle(title);
+				session.setLastUpdated(new Date());
+				tx.commit();
+			}
+			return null;
+		});
 	}
 
 	/**
@@ -244,6 +334,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public AgentExecution beginExecution(AgentSession session, String runId, String agentName,
 			String model, String provider, AgentExecution parent) {
+		return write(() -> {
 		try (Transaction tx = beginTx("Begin agent execution " + runId)) {
 			AgentExecution execution = TlAiAgentFactory.getInstance().createAgentExecution();
 			execution.setSession(session);
@@ -260,6 +351,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			tx.commit();
 			return execution;
 		}
+		});
 	}
 
 	/**
@@ -279,6 +371,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public void finishExecution(AgentExecution execution, ExecutionStatus status,
 			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript) {
+		write(() -> {
 		try (Transaction tx = beginTx("Finish agent execution " + execution.getRunId())) {
 			execution.setStatus(statusClassifier(status));
 			execution.setStopReason(stopReason != null ? stopReason.name() : null);
@@ -296,6 +389,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			session.setLastUpdated(new Date());
 			tx.commit();
 		}
+		return null;
+		});
 	}
 
 	/**
@@ -338,6 +433,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		if (session == null) {
 			return;
 		}
+		write(() -> {
 		try (Transaction tx = beginTx("Delete agent session")) {
 			List<AgentExecution> executions = executionsOf(session);
 			for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
@@ -358,6 +454,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			session.tDelete();
 			tx.commit();
 		}
+		return null;
+		});
 	}
 
 	/**
@@ -412,6 +510,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public InteractionRequest createInteraction(AgentExecution execution, InteractionType type,
 			String requestId, String header, String prompt, String payload, Person responder) {
+		return write(() -> {
 		try (Transaction tx = beginTx("Create interaction request " + requestId)) {
 			InteractionRequest request = TlAiAgentFactory.getInstance().createInteractionRequest();
 			request.setExecution(execution);
@@ -428,6 +527,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			tx.commit();
 			return request;
 		}
+		});
 	}
 
 	/**
@@ -443,12 +543,15 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		if (state == InteractionState.PENDING) {
 			throw new IllegalArgumentException("Resolution state must be terminal, not PENDING.");
 		}
-		try (Transaction tx = beginTx("Resolve interaction request " + request.getRequestId())) {
-			request.setState(interactionStateClassifier(state));
-			request.setResolution(resolution);
-			request.setResolvedAt(new Date());
-			tx.commit();
-		}
+		write(() -> {
+			try (Transaction tx = beginTx("Resolve interaction request " + request.getRequestId())) {
+				request.setState(interactionStateClassifier(state));
+				request.setResolution(resolution);
+				request.setResolvedAt(new Date());
+				tx.commit();
+			}
+			return null;
+		});
 	}
 
 	/**
@@ -483,6 +586,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public AgentTask createTask(AgentSession session, String taskId, String subject, String content,
 			String status, int ordinal, AgentExecution touchedBy) {
+		return write(() -> {
 		try (Transaction tx = beginTx("Create agent task " + taskId)) {
 			AgentTask task = TlAiAgentFactory.getInstance().createAgentTask();
 			task.setSession(session);
@@ -497,6 +601,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			tx.commit();
 			return task;
 		}
+		});
 	}
 
 	/**
@@ -504,6 +609,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public void updateTask(AgentTask task, String subject, String content, String status,
 			Integer ordinal, AgentExecution touchedBy) {
+		write(() -> {
 		try (Transaction tx = beginTx("Update agent task " + task.getTaskId())) {
 			if (subject != null) {
 				task.setSubject(subject);
@@ -522,6 +628,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			}
 			tx.commit();
 		}
+		return null;
+		});
 	}
 
 	/**
@@ -531,10 +639,13 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		if (task == null) {
 			return;
 		}
-		try (Transaction tx = beginTx("Delete agent task " + task.getTaskId())) {
-			task.tDelete();
-			tx.commit();
-		}
+		write(() -> {
+			try (Transaction tx = beginTx("Delete agent task " + task.getTaskId())) {
+				task.tDelete();
+				tx.commit();
+			}
+			return null;
+		});
 	}
 
 	/**

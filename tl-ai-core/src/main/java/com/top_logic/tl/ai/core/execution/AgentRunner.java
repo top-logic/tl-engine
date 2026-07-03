@@ -93,6 +93,9 @@ public final class AgentRunner {
 			recorder = new ExecutionRecorder(session, agentName, parentExecution,
 				context.executionHandle(), listener);
 			effectiveListener = recorder;
+		} else {
+			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
+				AgentRunner.class);
 		}
 
 		// Entry points may start the run's turn before invoking the loop (chat records the

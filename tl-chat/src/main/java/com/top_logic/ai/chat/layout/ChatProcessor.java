@@ -371,11 +371,18 @@ public class ChatProcessor {
 	 */
 	private static AgentSession resolveAgentSession(String sessionId) {
 		if (sessionId == null) {
+			Logger.info("Run will not be recorded: no active session id at send time.",
+				ChatProcessor.class);
 			return null;
 		}
 		try {
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			return session instanceof AgentSession agentSession ? agentSession : null;
+			if (session instanceof AgentSession agentSession) {
+				return agentSession;
+			}
+			Logger.warn("Run will not be recorded: session " + sessionId
+				+ (session == null ? " not found." : " is not an AgentSession."), ChatProcessor.class);
+			return null;
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to resolve agent session " + sessionId + ": " + ex.getMessage(),
 				ChatProcessor.class);

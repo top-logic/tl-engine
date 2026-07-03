@@ -92,6 +92,8 @@ public final class ExecutionRecorder implements AgentEventListener {
 
 	private void beginRecording(AgentEvent.RunStarted e) {
 		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
+			Logger.info("Agent run " + e.runId() + " not recorded: AgentExecutionStore is not active.",
+				ExecutionRecorder.class);
 			return;
 		}
 		try {

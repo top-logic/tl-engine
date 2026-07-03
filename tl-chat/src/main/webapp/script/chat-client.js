@@ -385,6 +385,7 @@
 
     onTextDelta(data) {
       if (Store.currentRun) {
+        Render.ensureStreamingBubble();
         // New text arriving — flush any pending output from a previous turn into the trace
         if (Store.currentRun.pendingOutputText) {
           Tools.renderOutput(Store.currentRun.pendingOutputText);
@@ -398,6 +399,7 @@
 
     onThinkingDelta(data) {
       if (Store.currentRun) {
+        Render.ensureStreamingBubble();
         Store.currentRun.thinkingBuffer += data.text;
         Thinking.updateStreaming();
       }
@@ -409,6 +411,7 @@
         Store.currentRun.pendingOutputText = Store.currentRun.textBuffer;
         Store.currentRun.textBuffer = "";
       }
+      Render.ensureStreamingBubble();
       Store.addToolCall(data.toolCallId, data.toolName, data.argsJson);
       Tools.renderToolCall(data.toolCallId);
     },
@@ -1148,6 +1151,21 @@
       this._currentTextEl = textEl;
       this._currentToolsEl = toolsEl;
       this._currentTraceWrapper = traceWrapper;
+    },
+
+    /**
+     * Ensures a live streaming bubble exists before rendering stream content.
+     *
+     * After reattaching to an in-flight run (SSE reconnect on a session switch), the
+     * client never receives run_started -- the only event that creates the bubble -- and
+     * the session re-render may additionally have detached a previously created bubble
+     * (innerHTML reset leaves _currentTextEl pointing at a dead node). Recreate on
+     * demand; the text buffer is re-rendered in full, so nothing is lost.
+     */
+    ensureStreamingBubble() {
+      if (this._currentTextEl && this._currentTextEl.isConnected) return;
+      if (!this._messagesEl) return;
+      this.appendAssistantBubble();
       this._toolCount = 0;
       this._scrollToBottom();
     },

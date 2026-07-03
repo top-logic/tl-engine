@@ -172,13 +172,21 @@ public class ChatProcessor {
 
 			// SSE handler still receives raw AgentEvents for text_delta streaming.
 			// ConversationLogListener handles structured recording via ConversationLog.
-			AgentEventListener listener;
-			if (sseHandler != null) {
-				listener = new CompositeAgentEventListener(List.of(logListener, sseHandler));
-			} else {
-				Logger.warn("No SSE handler found for tracker — streaming will not reach the browser.", ChatProcessor.class);
-				listener = logListener;
+			// The handler is resolved per event, NOT captured once: the browser reopens the
+			// SSE stream on session switches (replacing the handler), and a handler captured
+			// at run start would go stale — the UI would stop updating for the rest of the run.
+			if (sseHandler == null) {
+				Logger.warn("No SSE handler found for tracker — streaming may not reach the browser.",
+					ChatProcessor.class);
 			}
+			AgentEventListener sseForwarder = event -> {
+				ChatSSEHandler currentHandler = ChatSSEHandler.findHandler(taskTracker);
+				if (currentHandler != null) {
+					currentHandler.onEvent(event);
+				}
+			};
+			AgentEventListener listener =
+				new CompositeAgentEventListener(List.of(logListener, sseForwarder));
 			// Allow sub-agent approval events to bubble up to the SSE handler
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);

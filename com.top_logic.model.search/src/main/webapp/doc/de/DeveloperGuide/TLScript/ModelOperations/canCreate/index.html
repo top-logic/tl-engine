@@ -1,0 +1,40 @@
+<h2>Syntax</h2>
+
+<pre><code>$parent.canCreate($reference)
+
+canCreate($parent, $reference)
+</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Pr&uuml;ft, ob der aktuell angemeldete Nutzer ein neues Element in der angegebenen Kompositionsreferenz des angegebenen &uuml;bergeordneten Objekts anlegen darf, und liefert einen Wahrheitswert.</p>
+
+<p>Dies entspricht dem Schreibzugriff auf den Kompositionskontext (dieselbe Pr&uuml;fung, die das Hinzuf&uuml;gen eines Elements zur Referenz absichert). Die Funktion schl&auml;gt nie fehl und filtert nicht.</p>
+
+<p>Die Pr&uuml;fung erfolgt f&uuml;r den aktuell angemeldeten Nutzer und folgt denselben Regeln wie die implizite Berechtigungspr&uuml;fung: standardm&auml;&szlig;ige Verweigerung, Rollenvererbung entlang der Sicherheitshierarchie sowie Vollzugriff f&uuml;r Administratoren oder Ausf&uuml;hrungen im Systemkontext.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Typ</th><th>Typbeschreibung</th><th>Pflicht</th><th>Standardwert</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>parent</td><td>Fachobjekt</td><td>Das &uuml;bergeordnete Objekt, das das neue Element aufnimmt.</td><td>ja</td><td> </td></tr>
+		<tr><td>reference</td><td>Attribut</td><td>Die Kompositionsreferenz (<code class="hljs inlineCode">TLStructuredTypePart</code>), in die das Element angelegt wird.</td><td>ja</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>R&uuml;ckgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+
+<p><code class="hljs inlineCode">true</code>, wenn der aktuelle Nutzer ein Element in der angegebenen Referenz des &uuml;bergeordneten Objekts anlegen darf, sonst <code class="hljs inlineCode">false</code>.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre><code>$project.canCreate(`my.module:Project#milestones`)</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ob der angemeldete Nutzer dem Projekt einen Meilenstein hinzuf&uuml;gen darf.</p>

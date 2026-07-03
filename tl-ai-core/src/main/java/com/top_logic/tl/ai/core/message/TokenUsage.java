@@ -13,7 +13,7 @@ package com.top_logic.tl.ai.core.message;
  * <p><b>Convention:</b> {@code inputTokens} counts only the <em>non-cached</em> part of the
  * prompt; cached tokens are reported exclusively in {@code cacheReadTokens} /
  * {@code cacheWriteTokens}. Providers whose API reports a cache-inclusive prompt count
- * (OpenAI-style {@code prompt_tokens}) must subtract the cached share when constructing
+ * (<code>OpenAI</code>-style {@code prompt_tokens}) must subtract the cached share when constructing
  * this record. Use {@link #promptTokens()} for the full prompt size.</p>
  *
  * @param inputTokens      non-cached tokens in the request (prompt)
@@ -34,7 +34,7 @@ public record TokenUsage(
 
 	/**
 	 * Creates a {@link TokenUsage} from a provider whose prompt-token count already
-	 * <em>includes</em> the cached share (e.g. OpenAI-style {@code prompt_tokens}).
+	 * <em>includes</em> the cached share (e.g. <code>OpenAI</code>-style {@code prompt_tokens}).
 	 *
 	 * <p>Centralizes the cache-exclusive-{@code inputTokens} convention documented on this
 	 * record, so providers construct usage from the raw API fields without each

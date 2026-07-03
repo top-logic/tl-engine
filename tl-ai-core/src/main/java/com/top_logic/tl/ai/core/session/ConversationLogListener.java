@@ -257,7 +257,7 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn != null) {
 			Part.ApprovalPart part = Part.ApprovalPart.pending(
 				e.approvalRequestId(), e.timestamp(), e.toolCallId(),
-				e.toolName(), argsMapToJson(e.args()), e.displayReason());
+				e.toolName(), e.argsJson(), e.displayReason());
 			turn.addAssistantPart(part);
 		}
 	}
@@ -600,51 +600,6 @@ public class ConversationLogListener implements AgentEventListener {
 				return Part.ApprovalDecision.TIMED_OUT;
 			default:
 				throw new IllegalArgumentException("Unknown outcome: " + outcome);
-		}
-	}
-
-	private static String argsMapToJson(Map<String, Object> map) {
-		if (map == null || map.isEmpty()) {
-			return "{}";
-		}
-		StringBuilder sb = new StringBuilder("{");
-		boolean first = true;
-		for (var entry : map.entrySet()) {
-			if (!first) sb.append(",");
-			sb.append("\"");
-			appendEscaped(sb, entry.getKey());
-			sb.append("\":\"");
-			appendEscaped(sb, String.valueOf(entry.getValue()));
-			sb.append("\"");
-			first = false;
-		}
-		sb.append("}");
-		return sb.toString();
-	}
-
-	private static void appendEscaped(StringBuilder sb, String value) {
-		for (int i = 0; i < value.length(); i++) {
-			char c = value.charAt(i);
-			switch (c) {
-				case '"':
-					sb.append("\\\"");
-					break;
-				case '\\':
-					sb.append("\\\\");
-					break;
-				case '\n':
-					sb.append("\\n");
-					break;
-				case '\r':
-					sb.append("\\r");
-					break;
-				case '\t':
-					sb.append("\\t");
-					break;
-				default:
-					sb.append(c);
-					break;
-			}
 		}
 	}
 }

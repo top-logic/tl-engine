@@ -394,7 +394,7 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setToolCallId(e.toolCallId())
 				.setApprovalRequestId(e.approvalRequestId())
 				.setToolName(e.toolName())
-				.setArgsJson(DtoMapper.mapToJsonString(e.args()))
+				.setArgsJson(e.argsJson())
 				.setDisplayReason(e.displayReason())));
 		} else if (event instanceof AgentEvent.ApprovalResolved e) {
 			sendEvent("approval_resolved", DtoMapper.toJson(ApprovalResolvedEvent.create()
@@ -459,7 +459,7 @@ public class ChatSSEHandler implements AgentEventListener {
 			innerType = "approval_required";
 			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()
 				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
-				.setToolName(e.toolName()).setArgsJson(DtoMapper.mapToJsonString(e.args()))
+				.setToolName(e.toolName()).setArgsJson(e.argsJson())
 				.setDisplayReason(e.displayReason()));
 		} else if (child instanceof AgentEvent.ApprovalResolved e) {
 			innerType = "approval_resolved";

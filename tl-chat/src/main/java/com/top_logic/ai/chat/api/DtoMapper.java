@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
@@ -174,41 +173,6 @@ public final class DtoMapper {
 			throw new RuntimeException("Failed to serialize data object to JSON", ex);
 		}
 		return buffer.toString();
-	}
-
-	/**
-	 * Converts a {@link Map} to a JSON object string for embedding in msgbuf DTOs.
-	 */
-	static String mapToJsonString(Map<String, Object> map) {
-		if (map == null || map.isEmpty()) {
-			return "{}";
-		}
-		StringW buffer = new StringW();
-		try (JsonWriter json = new JsonWriter(buffer)) {
-			json.beginObject();
-			for (Map.Entry<String, Object> entry : map.entrySet()) {
-				json.name(entry.getKey());
-				writeValue(json, entry.getValue());
-			}
-			json.endObject();
-		} catch (IOException ex) {
-			return "{}";
-		}
-		return buffer.toString();
-	}
-
-	private static void writeValue(JsonWriter json, Object value) throws IOException {
-		if (value == null) {
-			json.nullValue();
-		} else if (value instanceof String s) {
-			json.value(s);
-		} else if (value instanceof Number n) {
-			json.value(n.doubleValue());
-		} else if (value instanceof Boolean b) {
-			json.value(b);
-		} else {
-			json.value(String.valueOf(value));
-		}
 	}
 
 	/**

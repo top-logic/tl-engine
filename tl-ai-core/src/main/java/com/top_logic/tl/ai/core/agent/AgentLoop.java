@@ -935,7 +935,7 @@ public class AgentLoop {
 						ApprovalRequest.DEFAULT_TIMEOUT);
 					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 						toolCall.id(), approvalRequestId, toolCall.name(),
-						Map.copyOf(request.arguments()), request.displayReason()));
+						toolCall.arguments(), request.displayReason()));
 					// Durable record of the pending approval, carrying the tool call's actual
 					// argument JSON (not the possibly-empty parsed copy shown above).
 					InteractionRequest interactionRow = InteractionRecorder.begin(

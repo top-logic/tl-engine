@@ -36,6 +36,21 @@
       return Math.round(n / 1000) + "k";
     },
 
+    // Full token count for a usage object: non-cached input + output + thinking +
+    // cache read/write. inputTokens alone excludes cached tokens (see TokenUsage.java),
+    // so cacheReadTokens/cacheWriteTokens must be added back in to avoid under-reporting
+    // whenever prompt caching is active.
+    totalTokens(usage) {
+      if (!usage) return 0;
+      return (
+        (usage.inputTokens || 0) +
+        (usage.outputTokens || 0) +
+        (usage.thinkingTokens || 0) +
+        (usage.cacheReadTokens || 0) +
+        (usage.cacheWriteTokens || 0)
+      );
+    },
+
     formatTime(instant) {
       if (!instant) return "";
       const d = new Date(instant);
@@ -356,10 +371,7 @@
       if (Store.currentRun) {
         Store.currentRun.turnUsage = data.turnUsage;
         if (data.turnUsage) {
-          Store.currentRun.cumulativeTokens +=
-            (data.turnUsage.inputTokens || 0) +
-            (data.turnUsage.outputTokens || 0) +
-            (data.turnUsage.thinkingTokens || 0);
+          Store.currentRun.cumulativeTokens += Utils.totalTokens(data.turnUsage);
           Render._updateTraceSummary();
         }
       }
@@ -547,10 +559,14 @@
             inputTokens: 0,
             outputTokens: 0,
             thinkingTokens: 0,
+            cacheReadTokens: 0,
+            cacheWriteTokens: 0,
           };
         del.tokenUsage.inputTokens += inner.turnUsage.inputTokens || 0;
         del.tokenUsage.outputTokens += inner.turnUsage.outputTokens || 0;
         del.tokenUsage.thinkingTokens += inner.turnUsage.thinkingTokens || 0;
+        del.tokenUsage.cacheReadTokens += inner.turnUsage.cacheReadTokens || 0;
+        del.tokenUsage.cacheWriteTokens += inner.turnUsage.cacheWriteTokens || 0;
         Render._updateDelegationHeader(delId);
       } else if (innerType === "run_completed" && inner.totalUsage) {
         del.totalUsage = inner.totalUsage;
@@ -1206,10 +1222,7 @@
       if (!del) return;
       const usage = del.totalUsage || del.tokenUsage;
       if (usage) {
-        const total =
-          (usage.inputTokens || 0) +
-          (usage.outputTokens || 0) +
-          (usage.thinkingTokens || 0);
+        const total = Utils.totalTokens(usage);
         tokensEl.textContent = Utils.formatTokens(total) + " tokens";
       }
     },
@@ -1229,10 +1242,7 @@
       // Final token count update
       if (Store.currentRun && Store.currentRun.totalUsage) {
         const usage = Store.currentRun.totalUsage;
-        const total =
-          (usage.inputTokens || 0) +
-          (usage.outputTokens || 0) +
-          (usage.thinkingTokens || 0);
+        const total = Utils.totalTokens(usage);
         const traceVisible =
           this._currentTraceWrapper &&
           this._currentTraceWrapper.style.display !== "none";
@@ -1963,10 +1973,7 @@
   const Tokens = {
     createBadge(usage) {
       if (!usage) return document.createTextNode("");
-      const total =
-        (usage.inputTokens || 0) +
-        (usage.outputTokens || 0) +
-        (usage.thinkingTokens || 0);
+      const total = Utils.totalTokens(usage);
       const badge = document.createElement("span");
       badge.className = "tl-chat-token-badge";
       badge.textContent = Utils.formatTokens(total) + " tokens";
@@ -1992,13 +1999,7 @@
         this._row("Thinking", usage.thinkingTokens) +
         this._row("Cache read", usage.cacheReadTokens) +
         this._row("Cache write", usage.cacheWriteTokens) +
-        this._row(
-          "Total",
-          (usage.inputTokens || 0) +
-            (usage.outputTokens || 0) +
-            (usage.thinkingTokens || 0),
-          true,
-        );
+        this._row("Total", Utils.totalTokens(usage), true);
 
       document.body.appendChild(pop);
 
@@ -2553,10 +2554,7 @@
       const traceTokensEl = document.createElement("span");
       traceTokensEl.className = "tl-chat-trace-tokens";
       if (usage) {
-        const total =
-          (usage.inputTokens || 0) +
-          (usage.outputTokens || 0) +
-          (usage.thinkingTokens || 0);
+        const total = Utils.totalTokens(usage);
         if (total > 0) {
           traceTokensEl.textContent = Utils.formatTokens(total) + " tokens";
           traceTokensEl.addEventListener("click", (e) => {
@@ -3009,10 +3007,7 @@
       const traceTokensEl = document.createElement("span");
       traceTokensEl.className = "tl-chat-trace-tokens";
       if (totalUsage) {
-        const total =
-          (totalUsage.inputTokens || 0) +
-          (totalUsage.outputTokens || 0) +
-          (totalUsage.thinkingTokens || 0);
+        const total = Utils.totalTokens(totalUsage);
         if (total > 0) {
           traceTokensEl.textContent = Utils.formatTokens(total) + " tokens";
           traceTokensEl.addEventListener("click", (e) => {

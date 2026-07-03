@@ -21,6 +21,7 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolArgumentCoercionException;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -176,8 +177,9 @@ public class ToolCatalog implements ToolRegistry {
 		try {
 			args = parseJson(toolCall.arguments());
 		} catch (Exception e) {
+			// Never reached the tool body — synthetic, must not trigger a rollback.
 			return failedResult(toolCall, start,
-				"Invalid JSON arguments for tool '" + toolCall.name() + "': " + sanitizeError(e));
+				"Invalid JSON arguments for tool '" + toolCall.name() + "': " + sanitizeError(e), true);
 		}
 
 		try {
@@ -188,7 +190,13 @@ public class ToolCatalog implements ToolRegistry {
 				toolCall.id(), toolCall.name(),
 				new ToolState.Completed(toolResult.text(), start, end, false,
 					toolResult.summary(), toolResult.truncationHint()));
+		} catch (ToolArgumentCoercionException e) {
+			// Thrown while coercing arguments, strictly before the tool method is invoked —
+			// synthetic, must not trigger a rollback.
+			return failedResult(toolCall, start, sanitizeError(e), true);
 		} catch (IllegalArgumentException e) {
+			// May have been thrown by the tool's own body after producing side effects —
+			// a genuine failure, must still trigger a rollback.
 			return failedResult(toolCall, start, sanitizeError(e));
 		} catch (CancellationException e) {
 			return failedResult(toolCall, start, "Tool execution cancelled.");
@@ -207,11 +215,15 @@ public class ToolCatalog implements ToolRegistry {
 	}
 
 	static ToolResultMessage failedResult(ToolCall toolCall, Instant start, String error) {
+		return failedResult(toolCall, start, error, false);
+	}
+
+	static ToolResultMessage failedResult(ToolCall toolCall, Instant start, String error, boolean synthetic) {
 		Instant end = Instant.now();
 		return new ToolResultMessage(
 			UUID.randomUUID().toString(), Instant.now(),
 			toolCall.id(), toolCall.name(),
-			new ToolState.Failed(error, start, end));
+			new ToolState.Failed(error, start, end, synthetic));
 	}
 
 	/**

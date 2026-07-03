@@ -71,4 +71,24 @@ public class TestTokenUsage extends TestCase {
 		TokenUsage a = new TokenUsage(100, 50, 200, 30, 10);
 		assertEquals(a, a.add(TokenUsage.EMPTY));
 	}
+
+	/**
+	 * fromCacheInclusivePrompt subtracts the cached share out of a cache-inclusive prompt
+	 * count (the OpenAI-style convention), so promptTokens() reconstructs the original value.
+	 */
+	public void testFromCacheInclusivePrompt() {
+		TokenUsage usage = TokenUsage.fromCacheInclusivePrompt(4096, 3072, 12, 0);
+		assertEquals(1024, usage.inputTokens());
+		assertEquals(3072, usage.cacheReadTokens());
+		assertEquals(0, usage.cacheWriteTokens());
+		assertEquals(12, usage.outputTokens());
+		assertEquals(4096, usage.promptTokens());
+	}
+
+	/** fromCacheInclusivePrompt never produces a negative inputTokens. */
+	public void testFromCacheInclusivePromptClampsAtZero() {
+		// Defensive: a provider reporting cachedTokens > promptTokens should not underflow.
+		TokenUsage usage = TokenUsage.fromCacheInclusivePrompt(100, 150, 5, 0);
+		assertEquals(0, usage.inputTokens());
+	}
 }

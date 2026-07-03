@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -124,6 +126,17 @@ public class AgentLoop {
 
 	/** Consecutive repeats of {@link #_lastToolCallSignature}. */
 	private int _lastToolCallRepeats;
+
+	/**
+	 * Signature of the tool call before {@link #_lastToolCallSignature}, for period-2
+	 * oscillation detection (e.g. a model stuck alternating A, B, A, B, ... — each call
+	 * differs from its immediate predecessor, so {@link #_lastToolCallRepeats} alone never
+	 * catches it).
+	 */
+	private String _secondLastToolCallSignature;
+
+	/** Consecutive A/B alternations matching {@link #_secondLastToolCallSignature}. */
+	private int _alternationRepeats;
 
 	/** Maximum consecutive times the same tool+args combination may be called before being blocked. */
 	private static final int MAX_DUPLICATE_TOOL_CALLS = 2;
@@ -436,7 +449,10 @@ public class AgentLoop {
 			if (memory.shouldCompact()) {
 				int tokensBefore = memory.estimateTokens();
 				emit(listener, new AgentEvent.CompactionStarted(runId, turn, now(), tokensBefore, "proactive"));
-				CompactionResult compactionResult = memory.compact();
+				// Pass the same label used above, so CompactionResult.trigger() actually
+				// matches what CompactionStarted already reported — memory.compact()'s
+				// "auto" default is never read by anything that persists or displays it.
+				CompactionResult compactionResult = memory.compact("proactive");
 				emit(listener, new AgentEvent.CompactionCompleted(runId, turn, now(), compactionResult));
 			}
 
@@ -502,13 +518,16 @@ public class AgentLoop {
 		// End-of-turn: commit unless a tool actually executed and failed. Synthetic
 		// failures (denied, duplicate-blocked, unknown tool) never ran, so they cannot
 		// have corrupted data — rolling back for them would discard unrelated writes
-		// that succeeded in the same turn.
+		// that succeeded in the same turn. Failures marked ToolState.Failed.synthetic()
+		// (e.g. unresolvable arguments) are equally synthetic but only known once
+		// ToolCatalog has already produced the result, so they are recognized here
+		// instead of via _turnBlockedCallIds.
 		boolean anyExecutionFailed = conversation.messages().subList(messagesBefore, conversation.size())
 			.stream()
 			.filter(ToolResultMessage.class::isInstance)
 			.map(ToolResultMessage.class::cast)
 			.filter(tr -> !_turnBlockedCallIds.contains(tr.toolCallId()))
-			.anyMatch(tr -> tr.state() instanceof ToolState.Failed);
+			.anyMatch(tr -> tr.state() instanceof ToolState.Failed failed && !failed.synthetic());
 
 		if (anyExecutionFailed) {
 			boolean hadTransaction = context.transaction().isActive();
@@ -662,15 +681,17 @@ public class AgentLoop {
 	}
 
 	/**
-	 * Checks if this tool call is a consecutive duplicate of the previous call with the same
-	 * name and arguments. Returns a synthetic error result if the call has been repeated too
-	 * many times in a row, {@code null} otherwise.
+	 * Checks if this tool call is a consecutive duplicate of the previous call, or part of a
+	 * two-call oscillation (A, B, A, B, ...), with the same name and arguments each time.
+	 * Returns a synthetic error result if either pattern has repeated too many times,
+	 * {@code null} otherwise.
 	 *
-	 * <p>Allows up to {@link #MAX_DUPLICATE_TOOL_CALLS} consecutive identical calls (to account
-	 * for legitimate retries). Beyond that, the call is blocked with a message directing the
-	 * LLM to use the result it already received. The counter resets as soon as a different
-	 * tool call is made, so legitimate later re-reads (e.g. verify after an edit) stay
-	 * possible.</p>
+	 * <p>Allows up to {@link #MAX_DUPLICATE_TOOL_CALLS} consecutive identical calls, and up to
+	 * {@link #MAX_DUPLICATE_TOOL_CALLS} full A/B cycles (to account for legitimate retries and
+	 * genuine compare-two-things back-and-forth). Beyond that, the call is blocked with a
+	 * message directing the LLM to use the result it already received. Both counters reset as
+	 * soon as a call breaks the pattern, so legitimate later re-reads (e.g. verify after an
+	 * edit, or a third distinct comparison) stay possible.</p>
 	 *
 	 * <p>Only called from the loop thread — duplicate detection for concurrent batches
 	 * happens before the batch is dispatched to worker threads.</p>
@@ -680,6 +701,8 @@ public class AgentLoop {
 		if (signature.equals(_lastToolCallSignature)) {
 			_lastToolCallRepeats++;
 		} else {
+			_alternationRepeats = signature.equals(_secondLastToolCallSignature) ? _alternationRepeats + 1 : 1;
+			_secondLastToolCallSignature = _lastToolCallSignature;
 			_lastToolCallSignature = signature;
 			_lastToolCallRepeats = 1;
 		}
@@ -691,6 +714,15 @@ public class AgentLoop {
 				+ "' with these exact arguments " + (_lastToolCallRepeats - 1) + " time(s) in a row. "
 				+ "The result is already in your conversation. "
 				+ "Use the result you already received instead of calling again. "
+				+ "If you need different information, call the tool with DIFFERENT arguments.");
+		}
+		if (_alternationRepeats > MAX_DUPLICATE_TOOL_CALLS) {
+			_turnBlockedCallIds.add(toolCall.id());
+			return errorResult(toolCall,
+				"DUPLICATE CALL BLOCKED: You are alternating between '" + toolCall.name()
+				+ "' and a previous call without making progress. "
+				+ "Both results are already in your conversation. "
+				+ "Use the results you already received instead of calling again. "
 				+ "If you need different information, call the tool with DIFFERENT arguments.");
 		}
 
@@ -718,7 +750,7 @@ public class AgentLoop {
 		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
 		SubSessionContext userSession = ThreadContextManager.getSubSession();
 
-		List<CompletableFuture<ToolResultMessage>> futures = new ArrayList<>();
+		List<Future<ToolResultMessage>> futures = new ArrayList<>();
 
 		for (ToolCall tc : batch) {
 			// Duplicate detection runs on the loop thread, in call order, before dispatch —
@@ -745,11 +777,15 @@ public class AgentLoop {
 			// Propagate the caller's sub-session (e.g. the chat user's) onto the worker thread
 			// so parallel tools run in the same context as sequential ones; fall back to a
 			// system interaction only when the caller had no bound context.
-			futures.add(CompletableFuture.supplyAsync(
+			//
+			// Submitted directly to the ExecutorService (not via CompletableFuture.supplyAsync)
+			// so the returned Future is backed by FutureTask: its cancel(true) actually
+			// interrupts the worker thread if the job is running. CompletableFuture.cancel()
+			// never interrupts the underlying task regardless of mayInterruptIfRunning.
+			futures.add(TOOL_WORKERS.submit(
 				() -> userSession != null
 					? ThreadContextManager.inContext(userSession, job)
-					: ThreadContextManager.inSystemInteraction(AgentLoop.class, job),
-				TOOL_WORKERS));
+					: ThreadContextManager.inSystemInteraction(AgentLoop.class, job)));
 		}
 
 		List<ToolResultMessage> results = collectBatchResults(batch, futures, context);
@@ -766,49 +802,53 @@ public class AgentLoop {
 	 * <p>{@link CompletableFuture#join()} waits uninterruptibly, which would make the run
 	 * un-cancellable while a batch is in flight. Uses timed polling instead; once cancelled
 	 * or interrupted, remaining futures are cancelled and reported as failed, which triggers
-	 * the end-of-turn rollback.</p>
+	 * the end-of-turn rollback. Polls every not-yet-done future once per tick instead of
+	 * exhausting one future's timeout before moving to the next, so cancellation is noticed
+	 * within one poll slice regardless of the batch size.</p>
 	 */
 	private static List<ToolResultMessage> collectBatchResults(List<ToolCall> batch,
-			List<CompletableFuture<ToolResultMessage>> futures, ToolContext context) {
-		List<ToolResultMessage> results = new ArrayList<>();
+			List<Future<ToolResultMessage>> futures, ToolContext context) {
+		ToolResultMessage[] results = new ToolResultMessage[futures.size()];
 		boolean abort = false;
-		for (int i = 0; i < futures.size(); i++) {
-			CompletableFuture<ToolResultMessage> future = futures.get(i);
-			if (abort) {
-				future.cancel(true);
-				results.add(errorResult(batch.get(i), "Cancelled."));
-				continue;
+		int remaining = futures.size();
+		while (remaining > 0) {
+			if (!abort && (context.cancellationToken().isCancelled() || Thread.interrupted())) {
+				abort = true;
 			}
-			while (true) {
-				if (context.cancellationToken().isCancelled()) {
-					abort = true;
+			for (int i = 0; i < futures.size(); i++) {
+				if (results[i] != null) {
+					continue;
+				}
+				Future<ToolResultMessage> future = futures.get(i);
+				if (abort) {
 					future.cancel(true);
-					results.add(errorResult(batch.get(i), "Cancelled."));
-					break;
+					results[i] = errorResult(batch.get(i), "Cancelled.");
+					remaining--;
+					continue;
 				}
 				try {
-					results.add(future.get(200, TimeUnit.MILLISECONDS));
-					break;
+					results[i] = future.get(200, TimeUnit.MILLISECONDS);
+					remaining--;
 				} catch (TimeoutException e) {
 					// Still running — loop and re-check cancellation.
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 					abort = true;
 					future.cancel(true);
-					results.add(errorResult(batch.get(i), "Cancelled."));
-					break;
+					results[i] = errorResult(batch.get(i), "Cancelled.");
+					remaining--;
 				} catch (CancellationException e) {
-					results.add(errorResult(batch.get(i), "Cancelled."));
-					break;
+					results[i] = errorResult(batch.get(i), "Cancelled.");
+					remaining--;
 				} catch (ExecutionException e) {
 					Throwable cause = e.getCause() != null ? e.getCause() : e;
-					results.add(errorResult(batch.get(i),
-						"Concurrent execution failed: " + cause.getMessage()));
-					break;
+					results[i] = errorResult(batch.get(i),
+						"Concurrent execution failed: " + cause.getMessage());
+					remaining--;
 				}
 			}
 		}
-		return results;
+		return Arrays.asList(results);
 	}
 
 	/**
@@ -824,6 +864,16 @@ public class AgentLoop {
 
 	private ToolResultMessage executeWithSecurityCheck(ToolCall toolCall, ToolContext context,
 			AgentEventListener listener, String runId, int turn) {
+
+		if (context.cancellationToken().isCancelled()) {
+			// A concurrent batch's worker may not start running this job until well after
+			// the loop thread already gave up on it (thread-pool queueing, or another job in
+			// the same batch is slow). Bail out before emitting any lifecycle event or
+			// touching the tool. This covers jobs that haven't started yet; jobs already
+			// mid-execution rely on future.cancel(true) interrupting the worker thread (see
+			// collectBatchResults) plus the tool itself cooperatively checking this token.
+			return errorResult(toolCall, "Cancelled.");
+		}
 
 		SecurityContext security = context.security();
 
@@ -1039,21 +1089,8 @@ public class AgentLoop {
 	 */
 	private static void backoff(long waitMs, ToolContext context, ProviderException pending)
 			throws ProviderException {
-		long deadline = System.nanoTime() + waitMs * 1_000_000L;
-		while (true) {
-			if (context.cancellationToken().isCancelled()) {
-				throw pending;
-			}
-			long remainingMs = (deadline - System.nanoTime()) / 1_000_000L;
-			if (remainingMs <= 0) {
-				return;
-			}
-			try {
-				Thread.sleep(Math.min(BACKOFF_POLL_MS, remainingMs));
-			} catch (InterruptedException ie) {
-				Thread.currentThread().interrupt();
-				throw pending;
-			}
+		if (context.cancellationToken().sleepCancellably(waitMs, BACKOFF_POLL_MS)) {
+			throw pending;
 		}
 	}
 

@@ -211,6 +211,26 @@ public class TestToolCatalog extends TestCase {
 		ToolState.Failed failed = (ToolState.Failed) result.state();
 		assertTrue("Should mention 'Invalid JSON', got: " + failed.error(),
 			failed.error().contains("Invalid JSON"));
+		assertTrue("Never reached the tool body — must be synthetic.", failed.synthetic());
+	}
+
+	/**
+	 * An {@code @ToolMethod} parameter that cannot be coerced from the LLM-supplied JSON value
+	 * fails before the method is invoked -> Failed state is synthetic.
+	 */
+	public void testExecuteArgumentCoercionFailureIsSynthetic() {
+		ToolCatalog catalog = new ToolCatalog();
+		catalog.register(new SampleToolProvider());
+
+		ToolCall call = new ToolCall("call-1", "repeat", "{\"times\": \"not-a-number\"}");
+		ToolResultMessage result = catalog.execute(call, ToolContext.EMPTY);
+
+		assertInstanceOf(ToolState.Failed.class, result.state());
+		ToolState.Failed failed = (ToolState.Failed) result.state();
+		assertTrue("Should mention the parameter, got: " + failed.error(),
+			failed.error().contains("times"));
+		assertTrue("Failed before the tool method was invoked — must be synthetic.",
+			failed.synthetic());
 	}
 
 	/** Tool throws RuntimeException -> Failed state with "Tool 'x' failed: message". */
@@ -240,6 +260,8 @@ public class TestToolCatalog extends TestCase {
 		assertInstanceOf(ToolState.Failed.class, result.state());
 		ToolState.Failed failed = (ToolState.Failed) result.state();
 		assertEquals("bad arg", failed.error());
+		assertFalse("The tool's own body ran and may have produced side effects — must not be synthetic.",
+			failed.synthetic());
 	}
 
 	/** Tool throws CancellationException -> Failed state with "Tool execution cancelled." */
@@ -444,6 +466,11 @@ public class TestToolCatalog extends TestCase {
 		@ToolMethod(name = "greet", description = "Says hello", mode = ToolMode.READ)
 		public String greet(@P("Name to greet") String name) {
 			return "Hello, " + name;
+		}
+
+		@ToolMethod(name = "repeat", description = "Repeats a marker", mode = ToolMode.READ)
+		public String repeat(@P("Number of repetitions") int times) {
+			return "x".repeat(times);
 		}
 	}
 }

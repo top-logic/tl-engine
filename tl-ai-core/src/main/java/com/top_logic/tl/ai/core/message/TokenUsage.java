@@ -33,6 +33,26 @@ public record TokenUsage(
 	public static final TokenUsage EMPTY = new TokenUsage(0, 0, 0, 0, 0);
 
 	/**
+	 * Creates a {@link TokenUsage} from a provider whose prompt-token count already
+	 * <em>includes</em> the cached share (e.g. OpenAI-style {@code prompt_tokens}).
+	 *
+	 * <p>Centralizes the cache-exclusive-{@code inputTokens} convention documented on this
+	 * record, so providers construct usage from the raw API fields without each
+	 * re-implementing the subtraction (and risking silently reintroducing a cache-inclusive
+	 * {@code inputTokens} that would corrupt compaction's token estimate).</p>
+	 *
+	 * @param cacheInclusivePromptTokens the provider's raw prompt-token count, including cache
+	 * @param cacheReadTokens            tokens read from cache, out of the total above
+	 * @param outputTokens               tokens in the response
+	 * @param thinkingTokens             tokens used for extended thinking, or 0
+	 */
+	public static TokenUsage fromCacheInclusivePrompt(int cacheInclusivePromptTokens,
+			int cacheReadTokens, int outputTokens, int thinkingTokens) {
+		int inputTokens = Math.max(0, cacheInclusivePromptTokens - cacheReadTokens);
+		return new TokenUsage(inputTokens, outputTokens, thinkingTokens, cacheReadTokens, 0);
+	}
+
+	/**
 	 * Total prompt size in tokens, including cached parts.
 	 *
 	 * <p>This is the number to compare against a model's context window — with prompt

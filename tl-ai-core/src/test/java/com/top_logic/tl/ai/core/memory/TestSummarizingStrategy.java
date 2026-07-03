@@ -162,6 +162,134 @@ public class TestSummarizingStrategy extends TestCase {
 		assertFalse(req.messages().isEmpty());
 	}
 
+	/** A Failed tool result's error is capped and sent as plain UserMessage text. */
+	public void testFailedToolResultErrorTruncated() {
+		AtomicReference<ProviderRequest> captured = new AtomicReference<>();
+		LLMProvider capturingProvider = (request, handler) -> {
+			captured.set(request);
+			handler.onEvent(new StreamEvent.MessageComplete(
+				"sum-1", "test-model", "end_turn", USAGE,
+				List.of(new TextContent("Summary."))));
+		};
+
+		String longError = "e".repeat(SummarizingStrategy.MAX_TOOL_RESULT_CHARS + 500);
+		List<Message> messages = List.of(
+			userMsg("u1", "x".repeat(400)),
+			toolCallMsg("a1", "call-1"),
+			new ToolResultMessage("t1", T0, "call-1", "someTool",
+				new ToolState.Failed(longError, T0, T0, false)),
+			userMsg("u2", "x".repeat(400)),
+			assistantMsg("a2", "x".repeat(400)),
+			userMsg("u3", "recent"),
+			assistantMsg("a3", "recent"));
+
+		SummarizingStrategy strategy = new SummarizingStrategy(capturingProvider, "sum-model", 4096);
+		strategy.compact(messages, 50, _estimator);
+
+		ProviderRequest req = captured.get();
+		assertNotNull(req);
+		// ToolResultMessage is converted to a UserMessage with text; no raw tool_result block.
+		assertFalse("Provider request must not contain ToolResultMessage",
+			req.messages().stream().anyMatch(ToolResultMessage.class::isInstance));
+		// The error text must appear truncated inside the UserMessage.
+		boolean sawTruncatedError = req.messages().stream()
+			.filter(UserMessage.class::isInstance)
+			.map(UserMessage.class::cast)
+			.flatMap(um -> um.content().stream())
+			.filter(TextContent.class::isInstance)
+			.map(TextContent.class::cast)
+			.map(TextContent::text)
+			.anyMatch(t -> t.contains("[Tool error: someTool →")
+				&& t.contains("[truncated:"));
+		assertTrue("Failed tool result's error must be truncated before being sent to the summarizer",
+			sawTruncatedError);
+	}
+
+	/** Tool calls and results are converted to text so the provider never receives tool_use blocks. */
+	public void testToolCallsConvertedToTextForSummarizer() {
+		AtomicReference<ProviderRequest> captured = new AtomicReference<>();
+		LLMProvider capturingProvider = (request, handler) -> {
+			captured.set(request);
+			handler.onEvent(new StreamEvent.MessageComplete(
+				"sum-1", "test-model", "end_turn", USAGE,
+				List.of(new TextContent("Summary."))));
+		};
+
+		List<Message> messages = List.of(
+			userMsg("u1", "x".repeat(400)),
+			toolCallMsg("a1", "call-1"),
+			toolResultMsg("t1", "call-1", "the output"),
+			userMsg("u2", "x".repeat(400)),
+			assistantMsg("a2", "x".repeat(400)),
+			userMsg("u3", "recent"),
+			assistantMsg("a3", "recent"));
+
+		SummarizingStrategy strategy = new SummarizingStrategy(capturingProvider, "sum-model", 4096);
+		strategy.compact(messages, 50, _estimator);
+
+		ProviderRequest req = captured.get();
+		assertNotNull(req);
+		// No tool_result blocks
+		assertFalse("Provider request must not contain ToolResultMessage",
+			req.messages().stream().anyMatch(ToolResultMessage.class::isInstance));
+		// No tool_use blocks inside AssistantMessages
+		assertFalse("Provider request must not contain ToolCall blocks",
+			req.messages().stream()
+				.filter(AssistantMessage.class::isInstance)
+				.map(AssistantMessage.class::cast)
+				.flatMap(a -> a.content().stream())
+				.anyMatch(ToolCall.class::isInstance));
+		// Tool call appears as text in the AssistantMessage
+		assertTrue("AssistantMessage must describe the tool call as text",
+			req.messages().stream()
+				.filter(AssistantMessage.class::isInstance)
+				.map(AssistantMessage.class::cast)
+				.flatMap(a -> a.content().stream())
+				.filter(TextContent.class::isInstance)
+				.map(TextContent.class::cast)
+				.map(TextContent::text)
+				.anyMatch(t -> t.contains("[Called tool: someTool")));
+		// Tool result appears as text in a UserMessage
+		assertTrue("Tool result must appear as UserMessage text",
+			req.messages().stream()
+				.filter(UserMessage.class::isInstance)
+				.map(UserMessage.class::cast)
+				.flatMap(um -> um.content().stream())
+				.filter(TextContent.class::isInstance)
+				.map(TextContent.class::cast)
+				.map(TextContent::text)
+				.anyMatch(t -> t.contains("[Tool result: someTool →")));
+	}
+
+	/** Falls back to truncation when the LLM returns an empty summary. */
+	public void testFallsBackOnEmptySummary() {
+		String longText = "x".repeat(400);
+		List<Message> messages = List.of(
+			userMsg("u1", longText),
+			assistantMsg("a1", longText),
+			userMsg("u2", longText),
+			assistantMsg("a2", longText),
+			userMsg("u3", "recent"),
+			assistantMsg("a3", "recent"));
+
+		LLMProvider emptyProvider = (request, handler) -> {
+			handler.onEvent(new StreamEvent.MessageComplete(
+				"sum-1", "test-model", "end_turn", USAGE, List.of()));
+		};
+
+		SummarizingStrategy strategy = new SummarizingStrategy(emptyProvider, "test-model", 4096);
+		CompactionResult result = strategy.compact(messages, 50, _estimator);
+
+		assertNotNull(result);
+		assertTrue(result.replacementMessages().size() > 0);
+		assertTrue(result.replacementMessages().get(0) instanceof CompactionMarker);
+		// Falls back to truncation: no summary UserMessage with SUMMARY_PREFIX
+		assertFalse(result.replacementMessages().stream()
+			.filter(UserMessage.class::isInstance)
+			.map(UserMessage.class::cast)
+			.anyMatch(um -> textOf(um).contains(SummarizingStrategy.SUMMARY_PREFIX)));
+	}
+
 	/** When already under budget, returns messages unchanged. */
 	public void testAlreadyUnderBudget() {
 		List<Message> messages = List.of(

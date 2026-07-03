@@ -78,12 +78,23 @@ public sealed interface ToolState
 	 * @param error     error message
 	 * @param startTime when execution started
 	 * @param endTime   when the failure was recorded
+	 * @param synthetic {@code true} if the tool's body never ran (e.g. unresolvable arguments,
+	 *                  unknown tool) — such a failure cannot have produced side effects, so it
+	 *                  must not by itself trigger an end-of-turn transaction rollback
 	 */
-	record Failed(String error, Instant startTime, Instant endTime) implements ToolState {
+	record Failed(String error, Instant startTime, Instant endTime, boolean synthetic) implements ToolState {
 		public Failed {
 			Objects.requireNonNull(error, "Error must not be null.");
 			Objects.requireNonNull(startTime, "Start time must not be null.");
 			Objects.requireNonNull(endTime, "End time must not be null.");
+		}
+
+		/**
+		 * Convenience constructor for a genuine execution failure — the tool ran (or may have
+		 * run) and could have produced side effects.
+		 */
+		public Failed(String error, Instant startTime, Instant endTime) {
+			this(error, startTime, endTime, false);
 		}
 	}
 }

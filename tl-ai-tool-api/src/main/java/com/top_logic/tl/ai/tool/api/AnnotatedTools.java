@@ -232,12 +232,14 @@ public final class AnnotatedTools {
 	/**
 	 * Coerce a JSON-parsed value to the target Java parameter type.
 	 *
-	 * @throws IllegalArgumentException with a clean, LLM-facing message on type mismatch
+	 * @throws ToolArgumentCoercionException with a clean, LLM-facing message on type mismatch.
+	 *         Always thrown before the tool method is invoked — safe to treat as synthetic
+	 *         (no side effects) by callers deciding whether to roll back a transaction.
 	 */
 	static Object coerceArg(Object value, Class<?> targetType, Type genericType, String paramName) {
 		if (value == null) {
 			if (targetType.isPrimitive()) {
-				throw new IllegalArgumentException(
+				throw new ToolArgumentCoercionException(
 					"Parameter '" + paramName + "' is required (type " + targetType.getSimpleName() + "), got null.");
 			}
 			return null;
@@ -246,7 +248,7 @@ public final class AnnotatedTools {
 		try {
 			return doCoerce(value, targetType, genericType);
 		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException(
+			throw new ToolArgumentCoercionException(
 				"Parameter '" + paramName + "': expected " + targetType.getSimpleName()
 					+ ", got '" + value + "' (" + value.getClass().getSimpleName() + ").",
 				e);
@@ -352,7 +354,7 @@ public final class AnnotatedTools {
 			}
 			return recordType.getDeclaredConstructor(paramTypes).newInstance(args);
 		} catch (ReflectiveOperationException e) {
-			throw new IllegalArgumentException(
+			throw new ToolArgumentCoercionException(
 				"Failed to construct record " + recordType.getSimpleName() + " from " + map, e);
 		}
 	}

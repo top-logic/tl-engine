@@ -131,8 +131,15 @@ public class ConversationMemory {
 	public CompactionResult compact(String trigger) {
 		List<Message> messages = _conversation.messages();
 		int targetTokens = usableTokens();
+		// Pass our own accurate estimate (the API baseline, once one exists) instead of
+		// letting the strategy blindly recompute a messages-only heuristic: the estimator
+		// has no visibility into the system prompt or tool schemas, which are also part of
+		// the real request and count toward the actual budget, so a from-scratch heuristic
+		// here would systematically undercount relative to what decided compaction was
+		// needed in the first place.
+		int tokensBefore = estimateTokens();
 
-		CompactionResult result = _strategy.compact(messages, targetTokens, _estimator);
+		CompactionResult result = _strategy.compact(messages, targetTokens, _estimator, tokensBefore);
 
 		_conversation.replaceRange(0, messages.size(), result.replacementMessages());
 
@@ -168,12 +175,17 @@ public class ConversationMemory {
 	/**
 	 * Context window capacity minus reserved tokens.
 	 *
-	 * <p>The reserve is capped at half the context window, so small windows (smaller than
-	 * the configured reserve) still leave a positive compaction budget instead of forcing
-	 * compaction on every turn.</p>
+	 * <p>The configured reserve is used as-is whenever it leaves a positive budget. Only
+	 * when the reserve would consume the entire window (window &lt;= reserve — e.g. a small
+	 * per-agent window override paired with the default 33K reserve) is it capped to half
+	 * the window instead, so compaction still gets a usable budget rather than triggering
+	 * on every turn. Windows comfortably larger than the reserve are unaffected, keeping
+	 * the full configured output/safety margin.</p>
 	 */
 	public int usableTokens() {
-		int reserved = Math.min(_reservedTokens, _contextWindowTokens / 2);
+		int reserved = _reservedTokens >= _contextWindowTokens
+			? _contextWindowTokens / 2
+			: _reservedTokens;
 		return _contextWindowTokens - reserved;
 	}
 

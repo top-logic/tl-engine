@@ -42,9 +42,11 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
+import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -539,11 +541,15 @@ public class TestAgentLoop extends TestCase {
 		};
 
 		List<String> events = new ArrayList<>();
+		List<String> startedTriggers = new ArrayList<>();
+		List<String> completedTriggers = new ArrayList<>();
 		AgentEventListener listener = e -> {
 			if (e instanceof AgentEvent.CompactionStarted cs) {
 				events.add("compaction_start:" + cs.tokensBefore());
+				startedTriggers.add(cs.trigger());
 			} else if (e instanceof AgentEvent.CompactionCompleted cc) {
 				events.add("compaction_complete:" + cc.result().messagesSummarized());
+				completedTriggers.add(cc.result().trigger());
 			}
 		};
 
@@ -556,6 +562,13 @@ public class TestAgentLoop extends TestCase {
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertTrue("Compaction should have been triggered",
 			events.stream().anyMatch(e -> e.startsWith("compaction_start")));
+		// CompactionResult.trigger() must match what CompactionStarted already reported —
+		// nothing downstream reads CompactionResult.trigger() directly, but it must not
+		// silently disagree with the "proactive"/"reactive" label the UI actually shows.
+		assertEquals(startedTriggers, completedTriggers);
+		assertTrue("Proactive compaction's result must be labeled \"proactive\", not the "
+			+ "ConversationMemory.compact() default of \"auto\"",
+			completedTriggers.stream().allMatch("proactive"::equals));
 	}
 
 	/**
@@ -1114,9 +1127,8 @@ public class TestAgentLoop extends TestCase {
 	 */
 	public void testContextOverflowAfterCompactionRetries() {
 		// No-op compaction strategy: returns messages unchanged, so retries can never help
-		CompactionStrategy noOpStrategy = (messages, targetTokens, estimator) ->
-			new CompactionResult(messages, 0, estimator.estimateTokens(messages),
-				estimator.estimateTokens(messages), "reactive");
+		CompactionStrategy noOpStrategy = (messages, targetTokens, estimator, tokensBefore) ->
+			new CompactionResult(messages, 0, tokensBefore, tokensBefore, "reactive");
 
 		ConversationMemory memory = new ConversationMemory(
 			new Conversation(), new ByteBasedTokenEstimator(), noOpStrategy,
@@ -1860,6 +1872,68 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
+	 * A model alternating between two distinct calls without making progress (A, B, A, B, ...)
+	 * is eventually blocked too, even though no single call repeats consecutively and the
+	 * plain consecutive-repeat counter alone would never catch it.
+	 */
+	public void testAlternatingDuplicateCallsBlocked() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema toolSpec = new ToolSchema("lookup", "Looks up", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc2", "lookup", "{\"q\":2}")),
+			List.of(new ToolCall("tc3", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc4", "lookup", "{\"q\":2}")),
+			List.of(new TextContent("Done.")));
+
+		AgentLoop loop = new AgentLoop(config(), provider, stubRegistry(readTool("lookup", toolSpec)));
+		AgentResult result = loop.run(conv, e -> { /* empty listener */ });
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		List<ToolResultMessage> failures = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.filter(tr -> tr.state() instanceof ToolState.Failed)
+			.toList();
+		assertEquals(1, failures.size());
+		assertEquals("tc4", failures.get(0).toolCallId());
+		ToolState.Failed failed = (ToolState.Failed) failures.get(0).state();
+		assertTrue(failed.error().contains("DUPLICATE CALL BLOCKED"));
+		assertTrue(failed.error().contains("alternating"));
+	}
+
+	/**
+	 * A genuine 3-way rotation (A, B, C, A, B, C) is not a period-2 oscillation and must not
+	 * be blocked by the alternation guard.
+	 */
+	public void testThreeWayRotationNotBlocked() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Go"))));
+
+		ToolSchema toolSpec = new ToolSchema("lookup", "Looks up", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc2", "lookup", "{\"q\":2}")),
+			List.of(new ToolCall("tc3", "lookup", "{\"q\":3}")),
+			List.of(new ToolCall("tc4", "lookup", "{\"q\":1}")),
+			List.of(new ToolCall("tc5", "lookup", "{\"q\":2}")),
+			List.of(new ToolCall("tc6", "lookup", "{\"q\":3}")),
+			List.of(new TextContent("Done.")));
+
+		AgentLoop loop = new AgentLoop(config(), provider, stubRegistry(readTool("lookup", toolSpec)));
+		AgentResult result = loop.run(conv, e -> { /* empty listener */ });
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		boolean anyBlocked = conv.messages().stream()
+			.filter(ToolResultMessage.class::isInstance)
+			.map(ToolResultMessage.class::cast)
+			.anyMatch(tr -> tr.state() instanceof ToolState.Failed);
+		assertFalse("A 3-way rotation must not trip the period-2 alternation guard", anyBlocked);
+	}
+
+	/**
 	 * A synthetic failure (unknown tool) in the same turn as a successful write must not
 	 * roll back the write: the tool never executed, so nothing can be corrupted.
 	 */
@@ -1894,6 +1968,57 @@ public class TestAgentLoop extends TestCase {
 		assertEquals(StopReason.COMPLETE, result.stopReason());
 		assertTrue("Successful write must be committed", events.contains("tx_commit"));
 		assertFalse("Synthetic failure must not roll back the turn", events.contains("tx_rollback"));
+	}
+
+	/** Provider with an int-typed parameter, for triggering a real argument-coercion failure. */
+	public static class CoercionFailureProvider {
+		@ToolMethod(name = "count_items", description = "Counts", mode = ToolMode.READ)
+		public String count(@P("How many") int amount) {
+			return "counted " + amount;
+		}
+	}
+
+	/**
+	 * A synthetic failure from unresolvable tool arguments (going through the real
+	 * ToolCatalog, not a stub) in the same turn as a successful write must not roll back
+	 * the write either — same guarantee as {@link #testUnknownToolDoesNotRollBackTurn}, but
+	 * for the ToolCatalog-level synthetic marking instead of the AgentLoop-level one.
+	 */
+	public void testArgumentCoercionFailureDoesNotRollBackTurn() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema editSpec = new ToolSchema("edit_model", "Edits", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(
+				new ToolCall("tc1", "edit_model", "{}"),
+				new ToolCall("tc2", "count_items", "{\"amount\": \"not-a-number\"}")),
+			List.of(new TextContent("Done.")));
+
+		ToolCatalog catalog = new ToolCatalog();
+		catalog.register(globalTool("edit_model", editSpec));
+		catalog.register(new CoercionFailureProvider());
+		catalog.freeze();
+
+		List<String> events = new ArrayList<>();
+		AgentEventListener listener = e -> {
+			if (e instanceof AgentEvent.TransactionCommitted) {
+				events.add("tx_commit");
+			} else if (e instanceof AgentEvent.TransactionRolledBack) {
+				events.add("tx_rollback");
+			}
+		};
+
+		TestableTransactionScope scope = new TestableTransactionScope();
+		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
+
+		AgentLoop loop = new AgentLoop(config(), provider, catalog);
+		AgentResult result = loop.run(conv, ctx, listener);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertTrue("Successful write must be committed", events.contains("tx_commit"));
+		assertFalse("Argument-coercion failure never reached the tool body — must not roll back",
+			events.contains("tx_rollback"));
 	}
 
 	/**

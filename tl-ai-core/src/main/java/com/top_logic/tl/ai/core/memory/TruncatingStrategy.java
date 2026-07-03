@@ -57,15 +57,20 @@ public class TruncatingStrategy implements CompactionStrategy {
 
 	@Override
 	public CompactionResult compact(List<Message> messages, int targetTokens,
-			TokenEstimator estimator) {
-		int tokensBefore = estimator.estimateTokens(messages);
-
+			TokenEstimator estimator, int tokensBefore) {
 		if (tokensBefore <= targetTokens) {
 			return new CompactionResult(messages, 0, tokensBefore, tokensBefore, "auto");
 		}
 
 		int preserveFrom = Math.max(0, messages.size() - _minPreserve);
 
+		// Enforces "never orphan a tool result" by tracking dropped tool-call IDs and
+		// stripping any now-orphaned result out of the kept side afterward (below), rather
+		// than moving preserveFrom back like SummarizingStrategy.findSplitIndex does. That
+		// difference is intentional: dropping the orphaned result along with its tool call
+		// is consistent with this strategy's whole purpose (things are meant to be dropped
+		// here), whereas SummarizingStrategy must not silently drop a result without at
+		// least summarizing it, so it keeps the pair together instead.
 		Set<String> droppedToolCallIds = new HashSet<>();
 		List<Message> preservedSystemMessages = new ArrayList<>();
 		int dropCount = 0;

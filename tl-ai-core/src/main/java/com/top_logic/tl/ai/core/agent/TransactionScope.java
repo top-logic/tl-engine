@@ -97,6 +97,17 @@ public class TransactionScope implements AutoCloseable {
 	}
 
 	/**
+	 * The cancellation token this scope's lock-retry waits observe.
+	 *
+	 * <p>Pair a {@link ToolContext} built from this scope with the same token (see the
+	 * {@link ToolContext} constructors that accept a {@link TransactionScope} without an
+	 * explicit token — they derive it from here) so cancelling one always reaches the other.</p>
+	 */
+	public CancellationToken cancellationToken() {
+		return _cancellationToken;
+	}
+
+	/**
 	 * Acquire an object-level lock for the given operation and targets.
 	 *
 	 * <p>Uses the {@link LockService} to create a lock bound to the target objects,
@@ -132,21 +143,11 @@ public class TransactionScope implements AutoCloseable {
 	 * cancellation between slices so a cancelled run does not sit out the full delay.
 	 */
 	private void waitBeforeRetry() {
-		long deadline = System.nanoTime() + RETRY_DELAY_MS * 1_000_000L;
-		while (true) {
-			if (_cancellationToken.isCancelled()) {
-				throw new TransactionException("Lock acquisition cancelled");
+		if (_cancellationToken.sleepCancellably(RETRY_DELAY_MS, RETRY_POLL_MS)) {
+			if (Thread.currentThread().isInterrupted()) {
+				throw new TransactionException("Lock acquisition interrupted");
 			}
-			long remainingMs = (deadline - System.nanoTime()) / 1_000_000L;
-			if (remainingMs <= 0) {
-				return;
-			}
-			try {
-				Thread.sleep(Math.min(RETRY_POLL_MS, remainingMs));
-			} catch (InterruptedException ie) {
-				Thread.currentThread().interrupt();
-				throw new TransactionException("Lock acquisition interrupted", ie);
-			}
+			throw new TransactionException("Lock acquisition cancelled");
 		}
 	}
 

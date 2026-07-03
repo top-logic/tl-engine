@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "tl": {
-      "type": "http",
-      "url": "http://localhost:8080/tl-ai-demo/mcp"
-    }
-  }
-}

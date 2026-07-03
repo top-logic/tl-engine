@@ -15,8 +15,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -188,9 +190,11 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			throw new IllegalStateException("AgentExecutionStore is not started.");
 		}
 		try {
-			return writer.submit(
+			T result = writer.submit(
 				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, mutation::get))
 				.get();
+			publishToCaller();
+			return result;
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw new RuntimeException("Interrupted while writing agent execution data.", ex);
@@ -200,6 +204,29 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				throw runtime;
 			}
 			throw new RuntimeException("Failed to write agent execution data: " + cause.getMessage(), cause);
+		}
+	}
+
+	/**
+	 * Advances the calling subsession's KB revision past the writer thread's commit.
+	 *
+	 * <p>
+	 * TopLogic subsessions read at a stable session revision that only advances with their own
+	 * commits — a commit made by the writer thread's separate session is invisible to the caller
+	 * without this (read-your-own-writes): a freshly created session would 404 on the next
+	 * request of the same browser session. Best-effort: without a bound interaction (or in
+	 * contexts that refuse the update) the caller keeps its current view.
+	 * </p>
+	 */
+	private static void publishToCaller() {
+		if (ThreadContextManager.getInteraction() == null) {
+			return;
+		}
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (RuntimeException ex) {
+			Logger.info("Could not advance session revision after agent-data write: " + ex.getMessage(),
+				AgentExecutionStore.class);
 		}
 	}
 

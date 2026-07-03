@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_29361_Move_taggedObj_to_Tag_table"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29019_Removed_log_entries"
+			module="tl"
+		/>
+		<dependency name="Ticket_29361_Made_Tag_taggedObj_polymorphic"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="Tag:Tag.all#taggedObj">
+			<annotation class="com.top_logic.element.config.annotation.TLStorage"/>
+		</remove-annotations>
+		<add-annotations name="Tag:Tag.all#taggedObj">
+			<annotations>
+				<storage-algorithm>
+					<foreign-key-storage
+						storage-attribute="taggedObj"
+						storage-type="Tag"
+					/>
+				</storage-algorithm>
+			</annotations>
+		</add-annotations>
+		<processor class="com.top_logic.element.model.migration.MoveHistoricReferenceToColumn"
+			reference="taggedObj"
+			source-attribute="taggedObj"
+			table="Tag"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

@@ -53,7 +53,10 @@
 							<annotations>
 								<delete-protected/>
 								<storage-algorithm>
-									<historic-storage/>
+									<foreign-key-storage
+										storage-attribute="taggedObj"
+										storage-type="Tag"
+									/>
 								</storage-algorithm>
 							</annotations>
 						</reference>

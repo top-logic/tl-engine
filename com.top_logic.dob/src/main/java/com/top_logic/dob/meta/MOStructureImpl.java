@@ -411,16 +411,16 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		this.cachedAllDbAtttributes  = computeAllDbAttributes(cachedAllAttributes);
 		this.cachedDbSize  = computeDBColumnCount(cachedAllDbAtttributes);
 
-		initAttributeOwner(cachedDeclaredAttributes);
+		initAttributeOwner();
 	}
 
-    protected final void initAttributeOwner(List<MOAttribute> declaredAttributes) {
+	protected final void initAttributeOwner() {
     	int cacheIndex = computeFirstCacheIndex();
 		int columnIndex = computeFirstColumnIndex();
     	
     	// Note: Must be deferred upon freeze, because one can remove attributes.
-		for (int n = 0, cnt = declaredAttributes.size(); n < cnt; n++) {
-			MOAttribute attr = declaredAttributes.get(n);
+		for (int n = 0, cnt = cachedDeclaredAttributes.size(); n < cnt; n++) {
+			MOAttribute attr = cachedDeclaredAttributes.get(n);
 			
 			attr.initOwner(this, cacheIndex);
 			cacheIndex += attr.getStorage().getCacheSize();

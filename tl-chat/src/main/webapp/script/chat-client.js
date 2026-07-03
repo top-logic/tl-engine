@@ -3277,7 +3277,11 @@
         displayReason: it.prompt,
         argsJson: it.payload || "",
       });
-      State.set(State.AWAITING_APPROVAL);
+      // Only reflect the awaiting-approval state if the prompt was actually rendered — otherwise
+      // the composer would be locked with no visible prompt to act on.
+      if (Approval._currentPrompt) {
+        State.set(State.AWAITING_APPROVAL);
+      }
     },
 
     countFor(sessionId) {

@@ -171,6 +171,49 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				_writerThread = thread;
 				return thread;
 			});
+		cancelOrphanedPendingInteractions();
+	}
+
+	/**
+	 * Cancels every interaction request still marked {@link InteractionState#PENDING} at startup.
+	 *
+	 * <p>
+	 * No agent run survives a process restart, so a request left pending — e.g. the server was
+	 * stopped or the provider service was reconfigured while a user approval was open — is
+	 * orphaned: nothing will ever answer it. Left in place it would be re-surfaced to the user on
+	 * every visit to that chat and block the composer. Best-effort: a failure here must never
+	 * prevent startup.
+	 * </p>
+	 */
+	private void cancelOrphanedPendingInteractions() {
+		try {
+			int cancelled = write(() -> {
+				try (Transaction tx = beginTx("Cancel orphaned pending interaction requests")) {
+					TLClassifier pending = interactionStateClassifier(InteractionState.PENDING);
+					TLClassifier cancelledState = interactionStateClassifier(InteractionState.CANCELLED);
+					Date now = new Date();
+					int count = 0;
+					for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+						InteractionRequest request = (InteractionRequest) obj;
+						if (pending.equals(request.getState())) {
+							request.setState(cancelledState);
+							request.setResolvedAt(now);
+							count++;
+						}
+					}
+					tx.commit();
+					return count;
+				}
+			});
+			if (cancelled > 0) {
+				Logger.info("Cancelled " + cancelled
+					+ " orphaned pending interaction request(s) left by a previous run at startup.",
+					AgentExecutionStore.class);
+			}
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not cancel orphaned pending interaction requests at startup: "
+				+ ex.getMessage(), ex, AgentExecutionStore.class);
+		}
 	}
 
 	@Override

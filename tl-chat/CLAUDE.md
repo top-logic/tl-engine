@@ -17,8 +17,7 @@ Both served by `ChatServlet` at `/chat/*`:
    - `GET /chat/sessions` – List all sessions for current user.
    - `GET /chat/sessions/{id}` – Load session and activate server-side.
    - `PUT /chat/sessions/{id}/title` – Update session title.
-   - `PUT /chat/sessions/{id}/messages` – Persist messages to session.
-   - `DELETE /chat/sessions/{id}` – Delete session.
+   - `DELETE /chat/sessions/{id}` – Delete session (cascades over recorded executions, tasks, interactions).
 
 2. **SSE API** (real-time push):
    - `GET /chat/events` – SSE connection. `ChatSSEHandler` receives `AgentEvent`s and emits structured SSE frames: `connected`, `run_started`, `turn_started`, `text_delta`, `tool_started`, `tool_completed`, `approval_required`, `message_complete`, `heartbeat`, etc.
@@ -41,7 +40,7 @@ Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 - **`ChatSSEHandler`** – Push-based SSE handler implementing `AgentEventListener`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
-- **`ChatHistoryService`** – Static CRUD service for persistent `ChatSession` objects in KnowledgeBase. Messages stored as JSON blob in CLOB attribute. All methods use `ThreadContextManager.inSystemInteraction()`.
+- **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load. Legacy `tl.ai.chat:ChatSession` blobs are migrated on first session listing.
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (ChatControl) and `HttpSession` (ChatServlet)
 
 ## Thread Safety
@@ -52,10 +51,12 @@ Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 
 ## Persistence Model
 
-- **Module**: `tl.ai.chat`, **Type**: `ChatSession`
-- **Attributes**: `title`, `messages` (JSON CLOB), `createdAt`, `lastUpdated`, `owner` (via `WithOwner`)
-- V2 format: `ConversationLog` serialized via `ConversationLogSerializer` (structured turns with parts)
-- V1 format (legacy): `ChatMessage` list serialized via `DtoMapper` (flat message array)
+- **Module**: `tl.ai.agent` (tl-ai-core), **Types**: `AgentSession` (kind CHAT) + `AgentExecution` per run
+- Session: `title`, `kind`, `owner`, `metadata` (approved tools, approval mode, tasks, skills), timestamps
+- Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
+- Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
+- Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)
+- Legacy `tl.ai.chat:ChatSession` single-blob sessions are migrated to this model on first access
 
 ## Notes
 

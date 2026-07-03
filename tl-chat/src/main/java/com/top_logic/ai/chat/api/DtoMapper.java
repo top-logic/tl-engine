@@ -20,8 +20,6 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.MessageDto;
-import com.top_logic.ai.chat.api.messages.PersistedChat;
-import com.top_logic.ai.chat.api.messages.PersistedChatEntry;
 import com.top_logic.ai.chat.api.messages.SessionMetadata;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
@@ -216,67 +214,6 @@ public final class DtoMapper {
 	}
 
 	/**
-	 * Serializes a list of {@link ChatMessage} objects to a JSON string for persistence.
-	 * This is the V1 format used as a fallback; new sessions use {@link com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer}.
-	 *
-	 * @param messages
-	 *        The chat messages.
-	 * @return JSON string suitable for storing in the {@code ChatSession.messages} CLOB.
-	 */
-	public static String serializeMessages(List<ChatMessage> messages) {
-		PersistedChat chat = PersistedChat.create();
-		int messageIndex = 0;
-		for (ChatMessage msg : messages) {
-			PersistedChatEntry dto = PersistedChatEntry.create();
-			dto.setType("message");
-			dto.setMessageData(toMessageDto(msg, "m" + messageIndex));
-			messageIndex++;
-			chat.addEntry(dto);
-		}
-		return toJson(chat);
-	}
-
-	/**
-	 * Deserializes a JSON string (V1 format) back into {@link ChatMessage} objects.
-	 *
-	 * @param json
-	 *        The JSON string. May be null or empty.
-	 * @return List of chat messages, never null.
-	 */
-	public static List<ChatMessage> deserializeMessages(String json) {
-		if (json == null || json.isEmpty()) {
-			return new ArrayList<>();
-		}
-
-		List<ChatMessage> result = new ArrayList<>();
-		try {
-			PersistedChat chat = PersistedChat.readPersistedChat(new JsonReader(new StringR(json)));
-			for (PersistedChatEntry entry : chat.getEntries()) {
-				if ("message".equals(entry.getType()) && entry.getMessageData() != null) {
-					MessageDto msg = entry.getMessageData();
-					Instant timestamp = parseTimestamp(msg.getTime());
-					List<ChatMessage.AttachmentMetadata> attachments = new ArrayList<>();
-					for (AttachmentDto att : msg.getAttachments()) {
-						attachments.add(new ChatMessage.AttachmentMetadata(
-							att.getFileName(), att.getMimeType(), att.getSize()));
-					}
-					ChatMessage chatMsg = new ChatMessage(
-						msg.getUserName() != null ? msg.getUserName() : msg.getRole(),
-						msg.getContent(),
-						timestamp,
-						attachments);
-					result.add(chatMsg);
-				}
-				// task_snapshot entries from V1 format are silently skipped
-			}
-		} catch (Exception ex) {
-			// Fall back to legacy format (plain message array)
-			result.addAll(deserializeLegacyMessages(json));
-		}
-		return result;
-	}
-
-	/**
 	 * Parses the legacy message-only JSON format: [{role, text, timestamp}, ...].
 	 */
 	private static List<ChatMessage> deserializeLegacyMessages(String json) {
@@ -312,21 +249,6 @@ public final class DtoMapper {
 			// Return partial result on parse failure.
 		}
 		return result;
-	}
-
-	/**
-	 * Parses a timestamp string (ISO-8601) to an {@link Instant}. Falls back to
-	 * {@link Instant#now()} if parsing fails or the value is null.
-	 */
-	private static Instant parseTimestamp(String time) {
-		if (time == null || time.isEmpty()) {
-			return Instant.now();
-		}
-		try {
-			return Instant.parse(time);
-		} catch (Exception ex) {
-			return Instant.now();
-		}
 	}
 
 	/**

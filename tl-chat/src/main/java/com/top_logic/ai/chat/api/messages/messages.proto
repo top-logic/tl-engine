@@ -47,111 +47,6 @@ message MessageDto {
 }
 
 /**
- * One timeline event (tool call or agent call).
- */
-message TimelineEventDto {
-	/**
-	 * Event identifier.
-	 */
-	string id;
-
-	/**
-	 * Event type: "tool_call" or "agent_call".
-	 */
-	string type;
-
-	/**
-	 * Tool name (for tool_call events).
-	 */
-	string toolName;
-
-	/**
-	 * Event name.
-	 */
-	string name;
-
-	/**
-	 * Tool arguments as JSON string (for tool_call events).
-	 */
-	string argsJson;
-
-	/**
-	 * Tool result (for tool_call events).
-	 */
-	string result;
-
-	/**
-	 * Source agent name (for agent_call events).
-	 */
-	string fromAgent;
-
-	/**
-	 * Target agent name (for agent_call events).
-	 */
-	string toAgent;
-
-	/**
-	 * Input summary (for agent_call events).
-	 */
-	string inputSummary;
-
-	/**
-	 * Result summary (for agent_call events).
-	 */
-	string resultSummary;
-
-	/**
-	 * Duration in milliseconds (for tool_call events).
-	 */
-	long durationMs;
-
-	/**
-	 * Tool call status: "success" or "error" (for tool_call events).
-	 */
-	string status;
-}
-
-/**
- * Current (in-progress or just-finished) task.
- */
-message CurrentTaskDto {
-	/**
-	 * Unique task identifier.
-	 */
-	string taskId;
-
-	/**
-	 * "in_progress", "completed", "error".
-	 */
-	string status;
-
-	/**
-	 * Human-readable task description.
-	 */
-	string description;
-
-	/**
-	 * Error message if status is "error"; null otherwise.
-	 */
-	string errorMessage;
-
-	/**
-	 * List of timeline events (tool calls and agent calls) for this task.
-	 */
-	repeated TimelineEventDto timeline;
-
-	/**
-	 * Total token usage for this task's run.
-	 */
-	TokenUsageDto totalUsage;
-
-	/**
-	 * Accumulated extended-thinking text from the LLM.
-	 */
-	string thinkingText;
-}
-
-/**
  * Response body for GET /chat/updates.
  */
 message ChatUpdatesResponse {
@@ -165,10 +60,6 @@ message ChatUpdatesResponse {
 	 */
 	repeated MessageDto messages;
 
-	/**
-	 * Current or most recent task; null if no task.
-	 */
-	CurrentTaskDto currentTask;
 }
 
 /**
@@ -336,11 +227,6 @@ message ChatSessionDetailResponse {
 	string messagesJson;
 
 	/**
-	 * Structured entries (messages + task snapshots). V1 format.
-	 */
-	repeated PersistedChatEntry entries;
-
-	/**
 	 * Turn-based entries (V2 format) as a JSON array of <code>PersistedTurn</code> objects
 	 * (see <code>com.top_logic.tl.ai.core.session.persist</code>). When present, takes
 	 * precedence over entries.
@@ -356,36 +242,6 @@ message SaveMessagesRequest {
 	 * Messages JSON blob to save.
 	 */
 	string messagesJson;
-}
-
-/**
- * One entry in a persisted chat: either a message or a completed task snapshot.
- */
-message PersistedChatEntry {
-	/**
-	 * Entry type: "message" or "task_snapshot".
-	 */
-	string type;
-
-	/**
-	 * The message data (populated when type="message").
-	 */
-	MessageDto messageData;
-
-	/**
-	 * The task snapshot data (populated when type="task_snapshot").
-	 */
-	CurrentTaskDto taskData;
-}
-
-/**
- * Full persisted chat state: ordered list of entries (messages interleaved with task snapshots).
- */
-message PersistedChat {
-	/**
-	 * All entries in display order.
-	 */
-	repeated PersistedChatEntry entries;
 }
 
 /**

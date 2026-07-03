@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Context compaction event part.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.CompactionPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.CompactionPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.CompactionPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.CompactionPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto} type in JSON format. */
 	public static final String COMPACTION_PART_DTO__TYPE = "CompactionPartDto";
 
 	/** @see #getTokensBefore() */
@@ -33,7 +33,7 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Creates a {@link CompactionPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.CompactionPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto#create()
 	 */
 	protected CompactionPartDto() {
 		super();
@@ -49,7 +49,7 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getTokensBefore()
 	 */
-	public com.top_logic.ai.chat.api.messages.CompactionPartDto setTokensBefore(int value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto setTokensBefore(int value) {
 		internalSetTokensBefore(value);
 		return this;
 	}
@@ -69,7 +69,7 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getTokensAfter()
 	 */
-	public com.top_logic.ai.chat.api.messages.CompactionPartDto setTokensAfter(int value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto setTokensAfter(int value) {
 		internalSetTokensAfter(value);
 		return this;
 	}
@@ -89,7 +89,7 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getTrigger()
 	 */
-	public com.top_logic.ai.chat.api.messages.CompactionPartDto setTrigger(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto setTrigger(String value) {
 		internalSetTrigger(value);
 		return this;
 	}
@@ -151,8 +151,8 @@ public class CompactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.CompactionPartDto readCompactionPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.CompactionPartDto result = new com.top_logic.ai.chat.api.messages.CompactionPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto readCompactionPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto();
 		result.readContent(in);
 		return result;
 	}

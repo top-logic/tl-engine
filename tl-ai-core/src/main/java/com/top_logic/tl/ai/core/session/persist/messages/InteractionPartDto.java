@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * User interaction part for questions posed to the user.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.InteractionPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.InteractionPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.InteractionPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.InteractionPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto} type in JSON format. */
 	public static final String INTERACTION_PART_DTO__TYPE = "InteractionPartDto";
 
 	/** @see #getInteractionType() */
@@ -53,7 +53,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * Creates a {@link InteractionPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.InteractionPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto#create()
 	 */
 	protected InteractionPartDto() {
 		super();
@@ -69,7 +69,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getInteractionType()
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto setInteractionType(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto setInteractionType(String value) {
 		internalSetInteractionType(value);
 		return this;
 	}
@@ -89,7 +89,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getQuestion()
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto setQuestion(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto setQuestion(String value) {
 		internalSetQuestion(value);
 		return this;
 	}
@@ -109,7 +109,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getHeader()
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto setHeader(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto setHeader(String value) {
 		internalSetHeader(value);
 		return this;
 	}
@@ -129,7 +129,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getOptions()
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto setOptions(java.util.List<? extends String> value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto setOptions(java.util.List<? extends String> value) {
 		internalSetOptions(value);
 		return this;
 	}
@@ -143,7 +143,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * Adds a value to the {@link #getOptions()} list.
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto addOption(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto addOption(String value) {
 		internalAddOption(value);
 		return this;
 	}
@@ -170,7 +170,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #isMultiSelect()
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto setMultiSelect(boolean value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto setMultiSelect(boolean value) {
 		internalSetMultiSelect(value);
 		return this;
 	}
@@ -190,7 +190,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getUserResponse()
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto setUserResponse(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto setUserResponse(String value) {
 		internalSetUserResponse(value);
 		return this;
 	}
@@ -210,7 +210,7 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getResolvedAt()
 	 */
-	public com.top_logic.ai.chat.api.messages.InteractionPartDto setResolvedAt(long value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto setResolvedAt(long value) {
 		internalSetResolvedAt(value);
 		return this;
 	}
@@ -284,8 +284,8 @@ public class InteractionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.InteractionPartDto readInteractionPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.InteractionPartDto result = new com.top_logic.ai.chat.api.messages.InteractionPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto readInteractionPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto();
 		result.readContent(in);
 		return result;
 	}

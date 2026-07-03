@@ -8,7 +8,7 @@ package com.top_logic.ai.chat.layout;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.top_logic.ai.chat.api.ConversationLogSerializer;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;

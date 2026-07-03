@@ -27,9 +27,6 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
-import com.top_logic.ai.chat.api.messages.PersistedConversationV2;
-import com.top_logic.ai.chat.api.messages.PersistedPart;
-import com.top_logic.ai.chat.api.messages.PersistedTurn;
 import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -47,11 +44,17 @@ import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
 import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, GET /chat/events (SSE).
@@ -467,12 +470,11 @@ public class ChatServlet extends TopLogicServlet {
 			if (messagesJson != null && !messagesJson.isEmpty()) {
 				if (messagesJson.trim().startsWith("{")) {
 					PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
-						new de.haumacher.msgbuf.json.JsonReader(
-							new de.haumacher.msgbuf.io.StringR(messagesJson)));
+						new JsonReader(new StringR(messagesJson)));
 					for (PersistedTurn turn : conv.getTurns()) {
 						computeContentHtml(turn);
-						response.addTurn(turn);
 					}
+					response.setTurnsJson(serializeTurns(conv.getTurns()));
 				} else {
 					Logger.warn("Session " + sessionId + " has legacy chat format. V2-only response omits legacy entries.",
 						ChatServlet.class);
@@ -728,6 +730,21 @@ public class ChatServlet extends TopLogicServlet {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
+	}
+
+	/**
+	 * Serializes turns to a JSON array string for {@code ChatSessionDetailResponse.turnsJson}.
+	 */
+	private static String serializeTurns(List<PersistedTurn> turns) throws IOException {
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			json.beginArray();
+			for (PersistedTurn turn : turns) {
+				turn.writeTo(json);
+			}
+			json.endArray();
+		}
+		return buffer.toString();
 	}
 
 	/**

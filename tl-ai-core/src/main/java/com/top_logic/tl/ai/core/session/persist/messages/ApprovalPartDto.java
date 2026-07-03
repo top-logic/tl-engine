@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Approval request part for tool calls requiring user confirmation.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.ApprovalPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.ApprovalPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.ApprovalPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.ApprovalPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto} type in JSON format. */
 	public static final String APPROVAL_PART_DTO__TYPE = "ApprovalPartDto";
 
 	/** @see #getToolCallId() */
@@ -53,7 +53,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * Creates a {@link ApprovalPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.ApprovalPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto#create()
 	 */
 	protected ApprovalPartDto() {
 		super();
@@ -69,7 +69,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getToolCallId()
 	 */
-	public com.top_logic.ai.chat.api.messages.ApprovalPartDto setToolCallId(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setToolCallId(String value) {
 		internalSetToolCallId(value);
 		return this;
 	}
@@ -89,7 +89,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getToolName()
 	 */
-	public com.top_logic.ai.chat.api.messages.ApprovalPartDto setToolName(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setToolName(String value) {
 		internalSetToolName(value);
 		return this;
 	}
@@ -109,7 +109,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getArgsJson()
 	 */
-	public com.top_logic.ai.chat.api.messages.ApprovalPartDto setArgsJson(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setArgsJson(String value) {
 		internalSetArgsJson(value);
 		return this;
 	}
@@ -129,7 +129,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getDisplayReason()
 	 */
-	public com.top_logic.ai.chat.api.messages.ApprovalPartDto setDisplayReason(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setDisplayReason(String value) {
 		internalSetDisplayReason(value);
 		return this;
 	}
@@ -149,7 +149,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getDecision()
 	 */
-	public com.top_logic.ai.chat.api.messages.ApprovalPartDto setDecision(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setDecision(String value) {
 		internalSetDecision(value);
 		return this;
 	}
@@ -169,7 +169,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getUserComment()
 	 */
-	public com.top_logic.ai.chat.api.messages.ApprovalPartDto setUserComment(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setUserComment(String value) {
 		internalSetUserComment(value);
 		return this;
 	}
@@ -189,7 +189,7 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getResolvedAt()
 	 */
-	public com.top_logic.ai.chat.api.messages.ApprovalPartDto setResolvedAt(long value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto setResolvedAt(long value) {
 		internalSetResolvedAt(value);
 		return this;
 	}
@@ -263,8 +263,8 @@ public class ApprovalPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.ApprovalPartDto readApprovalPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.ApprovalPartDto result = new com.top_logic.ai.chat.api.messages.ApprovalPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto readApprovalPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto();
 		result.readContent(in);
 		return result;
 	}

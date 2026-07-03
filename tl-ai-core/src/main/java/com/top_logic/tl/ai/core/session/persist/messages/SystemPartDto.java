@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * System event part.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class SystemPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.SystemPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.SystemPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.SystemPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.SystemPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto} type in JSON format. */
 	public static final String SYSTEM_PART_DTO__TYPE = "SystemPartDto";
 
 	/** @see #getEventType() */
@@ -28,7 +28,7 @@ public class SystemPartDto extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Creates a {@link SystemPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.SystemPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto#create()
 	 */
 	protected SystemPartDto() {
 		super();
@@ -44,7 +44,7 @@ public class SystemPartDto extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * @see #getEventType()
 	 */
-	public com.top_logic.ai.chat.api.messages.SystemPartDto setEventType(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto setEventType(String value) {
 		internalSetEventType(value);
 		return this;
 	}
@@ -64,7 +64,7 @@ public class SystemPartDto extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * @see #getDetails()
 	 */
-	public com.top_logic.ai.chat.api.messages.SystemPartDto setDetails(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto setDetails(String value) {
 		internalSetDetails(value);
 		return this;
 	}
@@ -123,8 +123,8 @@ public class SystemPartDto extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.SystemPartDto readSystemPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.SystemPartDto result = new com.top_logic.ai.chat.api.messages.SystemPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto readSystemPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto();
 		result.readContent(in);
 		return result;
 	}

@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Agent delegation part.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.DelegationPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.DelegationPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.DelegationPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.DelegationPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto} type in JSON format. */
 	public static final String DELEGATION_PART_DTO__TYPE = "DelegationPartDto";
 
 	/** @see #getFromAgent() */
@@ -57,18 +57,18 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 
 	private long _durationMs = 0L;
 
-	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> _childParts = new java.util.ArrayList<>();
+	private final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> _childParts = new java.util.ArrayList<>();
 
 	private int _turnsUsed = 0;
 
-	private com.top_logic.ai.chat.api.messages.TokenUsageDto _totalUsage = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _totalUsage = null;
 
 	private String _stopReason = "";
 
 	/**
 	 * Creates a {@link DelegationPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.DelegationPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto#create()
 	 */
 	protected DelegationPartDto() {
 		super();
@@ -84,7 +84,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getFromAgent()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setFromAgent(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setFromAgent(String value) {
 		internalSetFromAgent(value);
 		return this;
 	}
@@ -104,7 +104,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getToAgent()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setToAgent(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setToAgent(String value) {
 		internalSetToAgent(value);
 		return this;
 	}
@@ -124,7 +124,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getInputSummary()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setInputSummary(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setInputSummary(String value) {
 		internalSetInputSummary(value);
 		return this;
 	}
@@ -144,7 +144,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getResultSummary()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setResultSummary(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setResultSummary(String value) {
 		internalSetResultSummary(value);
 		return this;
 	}
@@ -164,7 +164,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getChildSessionId()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setChildSessionId(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setChildSessionId(String value) {
 		internalSetChildSessionId(value);
 		return this;
 	}
@@ -184,7 +184,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getDurationMs()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setDurationMs(long value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setDurationMs(long value) {
 		internalSetDurationMs(value);
 		return this;
 	}
@@ -197,20 +197,20 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Nested child parts from the sub-agent's execution.
 	 */
-	public final java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> getChildParts() {
+	public final java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> getChildParts() {
 		return _childParts;
 	}
 
 	/**
 	 * @see #getChildParts()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setChildParts(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedPart> value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setChildParts(java.util.List<? extends com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> value) {
 		internalSetChildParts(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getChildParts()} without chain call utility. */
-	protected final void internalSetChildParts(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedPart> value) {
+	protected final void internalSetChildParts(java.util.List<? extends com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> value) {
 		if (value == null) throw new IllegalArgumentException("Property 'childParts' cannot be null.");
 		_childParts.clear();
 		_childParts.addAll(value);
@@ -219,20 +219,20 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Adds a value to the {@link #getChildParts()} list.
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto addChildPart(com.top_logic.ai.chat.api.messages.PersistedPart value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto addChildPart(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart value) {
 		internalAddChildPart(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addChildPart(com.top_logic.ai.chat.api.messages.PersistedPart)} without chain call utility. */
-	protected final void internalAddChildPart(com.top_logic.ai.chat.api.messages.PersistedPart value) {
+	/** Implementation of {@link #addChildPart(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart)} without chain call utility. */
+	protected final void internalAddChildPart(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart value) {
 		_childParts.add(value);
 	}
 
 	/**
 	 * Removes a value from the {@link #getChildParts()} list.
 	 */
-	public final void removeChildPart(com.top_logic.ai.chat.api.messages.PersistedPart value) {
+	public final void removeChildPart(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart value) {
 		_childParts.remove(value);
 	}
 
@@ -246,7 +246,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getTurnsUsed()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setTurnsUsed(int value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setTurnsUsed(int value) {
 		internalSetTurnsUsed(value);
 		return this;
 	}
@@ -259,20 +259,20 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Cumulative token usage of the sub-agent.
 	 */
-	public final com.top_logic.ai.chat.api.messages.TokenUsageDto getTotalUsage() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto getTotalUsage() {
 		return _totalUsage;
 	}
 
 	/**
 	 * @see #getTotalUsage()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setTotalUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto value) {
 		internalSetTotalUsage(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getTotalUsage()} without chain call utility. */
-	protected final void internalSetTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+	protected final void internalSetTotalUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto value) {
 		_totalUsage = value;
 	}
 
@@ -293,7 +293,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getStopReason()
 	 */
-	public com.top_logic.ai.chat.api.messages.DelegationPartDto setStopReason(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto setStopReason(String value) {
 		internalSetStopReason(value);
 		return this;
 	}
@@ -368,16 +368,16 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case RESULT_SUMMARY__PROP: internalSetResultSummary((String) value); break;
 			case CHILD_SESSION_ID__PROP: internalSetChildSessionId((String) value); break;
 			case DURATION_MS__PROP: internalSetDurationMs((long) value); break;
-			case CHILD_PARTS__PROP: internalSetChildParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedPart.class, value)); break;
+			case CHILD_PARTS__PROP: internalSetChildParts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.class, value)); break;
 			case TURNS_USED__PROP: internalSetTurnsUsed((int) value); break;
-			case TOTAL_USAGE__PROP: internalSetTotalUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
+			case TOTAL_USAGE__PROP: internalSetTotalUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case STOP_REASON__PROP: internalSetStopReason((String) value); break;
 		}
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.DelegationPartDto readDelegationPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.DelegationPartDto result = new com.top_logic.ai.chat.api.messages.DelegationPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto readDelegationPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto();
 		result.readContent(in);
 		return result;
 	}
@@ -404,7 +404,7 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 		out.value(getDurationMs());
 		out.name(CHILD_PARTS__PROP);
 		out.beginArray();
-		for (com.top_logic.ai.chat.api.messages.PersistedPart x : getChildParts()) {
+		for (com.top_logic.tl.ai.core.session.persist.messages.PersistedPart x : getChildParts()) {
 			x.writeTo(out);
 		}
 		out.endArray();
@@ -428,17 +428,17 @@ public class DelegationPartDto extends de.haumacher.msgbuf.data.AbstractDataObje
 			case CHILD_SESSION_ID__PROP: setChildSessionId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DURATION_MS__PROP: setDurationMs(in.nextLong()); break;
 			case CHILD_PARTS__PROP: {
-				java.util.List<com.top_logic.ai.chat.api.messages.PersistedPart> newValue = new java.util.ArrayList<>();
+				java.util.List<com.top_logic.tl.ai.core.session.persist.messages.PersistedPart> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					newValue.add(com.top_logic.ai.chat.api.messages.PersistedPart.readPersistedPart(in));
+					newValue.add(com.top_logic.tl.ai.core.session.persist.messages.PersistedPart.readPersistedPart(in));
 				}
 				in.endArray();
 				setChildParts(newValue);
 			}
 			break;
 			case TURNS_USED__PROP: setTurnsUsed(in.nextInt()); break;
-			case TOTAL_USAGE__PROP: setTotalUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case TOTAL_USAGE__PROP: setTotalUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case STOP_REASON__PROP: setStopReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}

@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Session metadata for the turn-based persistence format.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.SessionMetadataV2} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.SessionMetadataV2 create() {
-		return new com.top_logic.ai.chat.api.messages.SessionMetadataV2();
+	public static com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.SessionMetadataV2} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2} type in JSON format. */
 	public static final String SESSION_METADATA_V_2__TYPE = "SessionMetadataV2";
 
 	/** @see #getApprovedTools() */
@@ -32,7 +32,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 
 	private final java.util.List<String> _approvedTools = new java.util.ArrayList<>();
 
-	private com.top_logic.ai.chat.api.messages.TokenUsageDto _cumulativeUsage = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto _cumulativeUsage = null;
 
 	private String _lastModel = "";
 
@@ -43,7 +43,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Creates a {@link SessionMetadataV2} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.SessionMetadataV2#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2#create()
 	 */
 	protected SessionMetadataV2() {
 		super();
@@ -59,7 +59,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getApprovedTools()
 	 */
-	public com.top_logic.ai.chat.api.messages.SessionMetadataV2 setApprovedTools(java.util.List<? extends String> value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 setApprovedTools(java.util.List<? extends String> value) {
 		internalSetApprovedTools(value);
 		return this;
 	}
@@ -73,7 +73,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Adds a value to the {@link #getApprovedTools()} list.
 	 */
-	public com.top_logic.ai.chat.api.messages.SessionMetadataV2 addApprovedTool(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 addApprovedTool(String value) {
 		internalAddApprovedTool(value);
 		return this;
 	}
@@ -93,20 +93,20 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * Cumulative token usage across all turns.
 	 */
-	public final com.top_logic.ai.chat.api.messages.TokenUsageDto getCumulativeUsage() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto getCumulativeUsage() {
 		return _cumulativeUsage;
 	}
 
 	/**
 	 * @see #getCumulativeUsage()
 	 */
-	public com.top_logic.ai.chat.api.messages.SessionMetadataV2 setCumulativeUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 setCumulativeUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto value) {
 		internalSetCumulativeUsage(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getCumulativeUsage()} without chain call utility. */
-	protected final void internalSetCumulativeUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto value) {
+	protected final void internalSetCumulativeUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto value) {
 		_cumulativeUsage = value;
 	}
 
@@ -127,7 +127,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getLastModel()
 	 */
-	public com.top_logic.ai.chat.api.messages.SessionMetadataV2 setLastModel(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 setLastModel(String value) {
 		internalSetLastModel(value);
 		return this;
 	}
@@ -147,7 +147,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getLastProvider()
 	 */
-	public com.top_logic.ai.chat.api.messages.SessionMetadataV2 setLastProvider(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 setLastProvider(String value) {
 		internalSetLastProvider(value);
 		return this;
 	}
@@ -167,7 +167,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	/**
 	 * @see #getApprovalMode()
 	 */
-	public com.top_logic.ai.chat.api.messages.SessionMetadataV2 setApprovalMode(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 setApprovalMode(String value) {
 		internalSetApprovalMode(value);
 		return this;
 	}
@@ -227,7 +227,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	public void set(String field, Object value) {
 		switch (field) {
 			case APPROVED_TOOLS__PROP: internalSetApprovedTools(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
-			case CUMULATIVE_USAGE__PROP: internalSetCumulativeUsage((com.top_logic.ai.chat.api.messages.TokenUsageDto) value); break;
+			case CUMULATIVE_USAGE__PROP: internalSetCumulativeUsage((com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto) value); break;
 			case LAST_MODEL__PROP: internalSetLastModel((String) value); break;
 			case LAST_PROVIDER__PROP: internalSetLastProvider((String) value); break;
 			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
@@ -235,8 +235,8 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.SessionMetadataV2 readSessionMetadataV2(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.SessionMetadataV2 result = new com.top_logic.ai.chat.api.messages.SessionMetadataV2();
+	public static com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 readSessionMetadataV2(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2 result = new com.top_logic.tl.ai.core.session.persist.messages.SessionMetadataV2();
 		result.readContent(in);
 		return result;
 	}
@@ -280,7 +280,7 @@ public class SessionMetadataV2 extends de.haumacher.msgbuf.data.AbstractDataObje
 				setApprovedTools(newValue);
 			}
 			break;
-			case CUMULATIVE_USAGE__PROP: setCumulativeUsage(com.top_logic.ai.chat.api.messages.TokenUsageDto.readTokenUsageDto(in)); break;
+			case CUMULATIVE_USAGE__PROP: setCumulativeUsage(com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto.readTokenUsageDto(in)); break;
 			case LAST_MODEL__PROP: setLastModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LAST_PROVIDER__PROP: setLastProvider(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

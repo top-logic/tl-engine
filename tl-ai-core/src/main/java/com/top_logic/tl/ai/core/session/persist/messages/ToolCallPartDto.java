@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Tool call part with invocation details and result.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.ToolCallPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.ToolCallPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.ToolCallPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.ToolCallPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto} type in JSON format. */
 	public static final String TOOL_CALL_PART_DTO__TYPE = "ToolCallPartDto";
 
 	/** @see #getToolName() */
@@ -58,7 +58,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * Creates a {@link ToolCallPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.ToolCallPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto#create()
 	 */
 	protected ToolCallPartDto() {
 		super();
@@ -74,7 +74,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getToolName()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setToolName(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setToolName(String value) {
 		internalSetToolName(value);
 		return this;
 	}
@@ -94,7 +94,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getArgsJson()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setArgsJson(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setArgsJson(String value) {
 		internalSetArgsJson(value);
 		return this;
 	}
@@ -114,7 +114,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getStatus()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setStatus(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setStatus(String value) {
 		internalSetStatus(value);
 		return this;
 	}
@@ -134,7 +134,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getResult()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setResult(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setResult(String value) {
 		internalSetResult(value);
 		return this;
 	}
@@ -154,7 +154,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getResultRef()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setResultRef(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setResultRef(String value) {
 		internalSetResultRef(value);
 		return this;
 	}
@@ -174,7 +174,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getErrorMessage()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setErrorMessage(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setErrorMessage(String value) {
 		internalSetErrorMessage(value);
 		return this;
 	}
@@ -194,7 +194,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getDenyReason()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setDenyReason(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setDenyReason(String value) {
 		internalSetDenyReason(value);
 		return this;
 	}
@@ -214,7 +214,7 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getDurationMs()
 	 */
-	public com.top_logic.ai.chat.api.messages.ToolCallPartDto setDurationMs(long value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto setDurationMs(long value) {
 		internalSetDurationMs(value);
 		return this;
 	}
@@ -291,8 +291,8 @@ public class ToolCallPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.ToolCallPartDto readToolCallPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.ToolCallPartDto result = new com.top_logic.ai.chat.api.messages.ToolCallPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto readToolCallPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto();
 		result.readContent(in);
 		return result;
 	}

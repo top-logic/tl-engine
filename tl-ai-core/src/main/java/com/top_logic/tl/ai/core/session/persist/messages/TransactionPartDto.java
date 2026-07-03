@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Transaction event part.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class TransactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.TransactionPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.TransactionPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.TransactionPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.TransactionPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto} type in JSON format. */
 	public static final String TRANSACTION_PART_DTO__TYPE = "TransactionPartDto";
 
 	/** @see #getType() */
@@ -33,7 +33,7 @@ public class TransactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * Creates a {@link TransactionPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.TransactionPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto#create()
 	 */
 	protected TransactionPartDto() {
 		super();
@@ -49,7 +49,7 @@ public class TransactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getType()
 	 */
-	public com.top_logic.ai.chat.api.messages.TransactionPartDto setType(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto setType(String value) {
 		internalSetType(value);
 		return this;
 	}
@@ -69,7 +69,7 @@ public class TransactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getRevisionNumber()
 	 */
-	public com.top_logic.ai.chat.api.messages.TransactionPartDto setRevisionNumber(long value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto setRevisionNumber(long value) {
 		internalSetRevisionNumber(value);
 		return this;
 	}
@@ -89,7 +89,7 @@ public class TransactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	/**
 	 * @see #getReason()
 	 */
-	public com.top_logic.ai.chat.api.messages.TransactionPartDto setReason(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto setReason(String value) {
 		internalSetReason(value);
 		return this;
 	}
@@ -151,8 +151,8 @@ public class TransactionPartDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.TransactionPartDto readTransactionPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.TransactionPartDto result = new com.top_logic.ai.chat.api.messages.TransactionPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto readTransactionPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto();
 		result.readContent(in);
 		return result;
 	}

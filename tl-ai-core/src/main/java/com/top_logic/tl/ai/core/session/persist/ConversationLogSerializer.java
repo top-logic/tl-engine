@@ -3,32 +3,32 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.chat.api;
+package com.top_logic.tl.ai.core.session.persist;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.ai.chat.api.messages.ApprovalPartDto;
-import com.top_logic.ai.chat.api.messages.CompactionPartDto;
-import com.top_logic.ai.chat.api.messages.DelegationPartDto;
-import com.top_logic.ai.chat.api.messages.ErrorPartDto;
-import com.top_logic.ai.chat.api.messages.InteractionPartDto;
-import com.top_logic.ai.chat.api.messages.PersistedConversationV2;
-import com.top_logic.ai.chat.api.messages.PersistedPart;
-import com.top_logic.ai.chat.api.messages.PersistedTurn;
-import com.top_logic.ai.chat.api.messages.SystemPartDto;
-import com.top_logic.ai.chat.api.messages.TextPartDto;
-import com.top_logic.ai.chat.api.messages.ThinkingPartDto;
-import com.top_logic.ai.chat.api.messages.TokenUsageDto;
-import com.top_logic.ai.chat.api.messages.ToolCallPartDto;
-import com.top_logic.ai.chat.api.messages.TransactionPartDto;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
+import com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.TextPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto;
+import com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto;
+import com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;

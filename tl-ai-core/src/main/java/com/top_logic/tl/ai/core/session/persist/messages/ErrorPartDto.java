@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Error event part.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class ErrorPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.ErrorPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.ErrorPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.ErrorPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.ErrorPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto} type in JSON format. */
 	public static final String ERROR_PART_DTO__TYPE = "ErrorPartDto";
 
 	/** @see #getKind() */
@@ -28,7 +28,7 @@ public class ErrorPartDto extends de.haumacher.msgbuf.data.AbstractDataObject im
 	/**
 	 * Creates a {@link ErrorPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.ErrorPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto#create()
 	 */
 	protected ErrorPartDto() {
 		super();
@@ -44,7 +44,7 @@ public class ErrorPartDto extends de.haumacher.msgbuf.data.AbstractDataObject im
 	/**
 	 * @see #getKind()
 	 */
-	public com.top_logic.ai.chat.api.messages.ErrorPartDto setKind(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto setKind(String value) {
 		internalSetKind(value);
 		return this;
 	}
@@ -64,7 +64,7 @@ public class ErrorPartDto extends de.haumacher.msgbuf.data.AbstractDataObject im
 	/**
 	 * @see #getErrorMessage()
 	 */
-	public com.top_logic.ai.chat.api.messages.ErrorPartDto setErrorMessage(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto setErrorMessage(String value) {
 		internalSetErrorMessage(value);
 		return this;
 	}
@@ -123,8 +123,8 @@ public class ErrorPartDto extends de.haumacher.msgbuf.data.AbstractDataObject im
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.ErrorPartDto readErrorPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.ErrorPartDto result = new com.top_logic.ai.chat.api.messages.ErrorPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto readErrorPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto();
 		result.readContent(in);
 		return result;
 	}

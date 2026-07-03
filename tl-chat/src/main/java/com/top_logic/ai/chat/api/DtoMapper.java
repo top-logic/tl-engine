@@ -217,7 +217,7 @@ public final class DtoMapper {
 
 	/**
 	 * Serializes a list of {@link ChatMessage} objects to a JSON string for persistence.
-	 * This is the V1 format used as a fallback; new sessions use {@link ConversationLogSerializer}.
+	 * This is the V1 format used as a fallback; new sessions use {@link com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer}.
 	 *
 	 * @param messages
 	 *        The chat messages.

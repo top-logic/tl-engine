@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Thinking/reasoning content part.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.ThinkingPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.ThinkingPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.ThinkingPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.ThinkingPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto} type in JSON format. */
 	public static final String THINKING_PART_DTO__TYPE = "ThinkingPartDto";
 
 	/** @see #getText() */
@@ -28,7 +28,7 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * Creates a {@link ThinkingPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.ThinkingPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto#create()
 	 */
 	protected ThinkingPartDto() {
 		super();
@@ -44,7 +44,7 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getText()
 	 */
-	public com.top_logic.ai.chat.api.messages.ThinkingPartDto setText(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto setText(String value) {
 		internalSetText(value);
 		return this;
 	}
@@ -64,7 +64,7 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	/**
 	 * @see #getContinuityToken()
 	 */
-	public com.top_logic.ai.chat.api.messages.ThinkingPartDto setContinuityToken(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto setContinuityToken(String value) {
 		internalSetContinuityToken(value);
 		return this;
 	}
@@ -123,8 +123,8 @@ public class ThinkingPartDto extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.ThinkingPartDto readThinkingPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.ThinkingPartDto result = new com.top_logic.ai.chat.api.messages.ThinkingPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto readThinkingPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto();
 		result.readContent(in);
 		return result;
 	}

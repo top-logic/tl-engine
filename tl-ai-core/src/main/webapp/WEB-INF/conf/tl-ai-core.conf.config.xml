@@ -31,6 +31,8 @@
 					<module key="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions$Module" value="true"/>
 					<!-- HTML Page Service for the TL_HTMLGenerator agent's publishPage tool -->
 					<module key="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService$Module" value="true"/>
+					<!-- Agent Execution Store: persistence for agent sessions, executions, interactions and tasks -->
+					<module key="com.top_logic.tl.ai.core.execution.AgentExecutionStore$Module" value="true"/>
 					<!-- Web Tools Service: config for webSearch / webFetch -->
 					<module key="com.top_logic.tl.ai.core.tools.web.WebToolsService$Module" value="true"/>
 				</modules>

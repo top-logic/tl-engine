@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * Text content part.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class TextPartDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.TextPartDto} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.TextPartDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.TextPartDto create() {
-		return new com.top_logic.ai.chat.api.messages.TextPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.TextPartDto create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.TextPartDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.TextPartDto} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.TextPartDto} type in JSON format. */
 	public static final String TEXT_PART_DTO__TYPE = "TextPartDto";
 
 	/** @see #getText() */
@@ -23,7 +23,7 @@ public class TextPartDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * Creates a {@link TextPartDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.TextPartDto#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.TextPartDto#create()
 	 */
 	protected TextPartDto() {
 		super();
@@ -39,7 +39,7 @@ public class TextPartDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	/**
 	 * @see #getText()
 	 */
-	public com.top_logic.ai.chat.api.messages.TextPartDto setText(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.TextPartDto setText(String value) {
 		internalSetText(value);
 		return this;
 	}
@@ -95,8 +95,8 @@ public class TextPartDto extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.TextPartDto readTextPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.TextPartDto result = new com.top_logic.ai.chat.api.messages.TextPartDto();
+	public static com.top_logic.tl.ai.core.session.persist.messages.TextPartDto readTextPartDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.TextPartDto result = new com.top_logic.tl.ai.core.session.persist.messages.TextPartDto();
 		result.readContent(in);
 		return result;
 	}

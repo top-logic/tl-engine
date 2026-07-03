@@ -54,8 +54,17 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String ENDED_AT_ATTR = "endedAt";
 
 	/**
+	 * Part <code>errorMessage</code> of <code>AgentExecution</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.core:Text</code> in configuration.
+	 * </p>
+	 */
+	String ERROR_MESSAGE_ATTR = "errorMessage";
+
+	/**
 	 * Part <code>inputTokens</code> of <code>AgentExecution</code>
-	 * 
+	 *
 	 * <p>
 	 * Declared as <code>tl.core:Long</code> in configuration.
 	 * </p>
@@ -144,6 +153,15 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String STOP_REASON_ATTR = "stopReason";
 
 	/**
+	 * Part <code>thinkingTokens</code> of <code>AgentExecution</code>
+	 *
+	 * <p>
+	 * Declared as <code>tl.core:Long</code> in configuration.
+	 * </p>
+	 */
+	String THINKING_TOKENS_ATTR = "thinkingTokens";
+
+	/**
 	 * Part <code>transcript</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
@@ -206,6 +224,20 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setEndedAt(java.util.Date newValue) {
 		tUpdateByName(ENDED_AT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #ERROR_MESSAGE_ATTR}.
+	 */
+	default String getErrorMessage() {
+		return (String) tValueByName(ERROR_MESSAGE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ERROR_MESSAGE_ATTR}.
+	 */
+	default void setErrorMessage(String newValue) {
+		tUpdateByName(ERROR_MESSAGE_ATTR, newValue);
 	}
 
 	/**
@@ -346,6 +378,20 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setStopReason(String newValue) {
 		tUpdateByName(STOP_REASON_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #THINKING_TOKENS_ATTR}.
+	 */
+	default Long getThinkingTokens() {
+		return (Long) tValueByName(THINKING_TOKENS_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #THINKING_TOKENS_ATTR}.
+	 */
+	default void setThinkingTokens(Long newValue) {
+		tUpdateByName(THINKING_TOKENS_ATTR, newValue);
 	}
 
 	/**

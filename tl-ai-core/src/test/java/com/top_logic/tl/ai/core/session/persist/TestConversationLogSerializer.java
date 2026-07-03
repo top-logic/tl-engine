@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.chat.api;
+package com.top_logic.tl.ai.core.session.persist;
 
 import java.time.Duration;
 import java.time.Instant;

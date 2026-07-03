@@ -118,6 +118,9 @@
 					<property name="stopReason"
 						type="tl.core:String"
 					/>
+					<property name="errorMessage"
+						type="tl.core:Text"
+					/>
 					<property name="inputTokens"
 						type="tl.core:Long"
 					/>
@@ -128,6 +131,9 @@
 						type="tl.core:Long"
 					/>
 					<property name="cacheWriteTokens"
+						type="tl.core:Long"
+					/>
+					<property name="thinkingTokens"
 						type="tl.core:Long"
 					/>
 					<property name="transcript"

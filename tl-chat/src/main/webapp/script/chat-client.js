@@ -2363,8 +2363,15 @@
         Render._messagesEl.innerHTML = "";
       }
 
-      // V2 format: turn-based
-      const turns = data.turns || [];
+      // V2 format: turn-based (serialized separately as a JSON array string)
+      let turns = [];
+      if (data.turnsJson) {
+        try {
+          turns = JSON.parse(data.turnsJson) || [];
+        } catch (e) {
+          console.error("Failed to parse turnsJson", e);
+        }
+      }
       if (turns.length > 0) {
         Welcome.hide();
         this._renderTurns(turns);

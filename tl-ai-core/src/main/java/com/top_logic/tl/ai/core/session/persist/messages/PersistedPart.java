@@ -1,4 +1,4 @@
-package com.top_logic.ai.chat.api.messages;
+package com.top_logic.tl.ai.core.session.persist.messages;
 
 /**
  * A single part within a turn, representing one atomic piece of content.
@@ -6,13 +6,13 @@ package com.top_logic.ai.chat.api.messages;
 public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.PersistedPart} instance.
+	 * Creates a {@link com.top_logic.tl.ai.core.session.persist.messages.PersistedPart} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.PersistedPart create() {
-		return new com.top_logic.ai.chat.api.messages.PersistedPart();
+	public static com.top_logic.tl.ai.core.session.persist.messages.PersistedPart create() {
+		return new com.top_logic.tl.ai.core.session.persist.messages.PersistedPart();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.PersistedPart} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.tl.ai.core.session.persist.messages.PersistedPart} type in JSON format. */
 	public static final String PERSISTED_PART__TYPE = "PersistedPart";
 
 	/** @see #getId() */
@@ -60,30 +60,30 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 
 	private String _type = "";
 
-	private com.top_logic.ai.chat.api.messages.TextPartDto _textData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.TextPartDto _textData = null;
 
-	private com.top_logic.ai.chat.api.messages.ThinkingPartDto _thinkingData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto _thinkingData = null;
 
-	private com.top_logic.ai.chat.api.messages.ToolCallPartDto _toolCallData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto _toolCallData = null;
 
-	private com.top_logic.ai.chat.api.messages.ApprovalPartDto _approvalData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto _approvalData = null;
 
-	private com.top_logic.ai.chat.api.messages.InteractionPartDto _interactionData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto _interactionData = null;
 
-	private com.top_logic.ai.chat.api.messages.CompactionPartDto _compactionData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto _compactionData = null;
 
-	private com.top_logic.ai.chat.api.messages.ErrorPartDto _errorData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto _errorData = null;
 
-	private com.top_logic.ai.chat.api.messages.TransactionPartDto _transactionData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto _transactionData = null;
 
-	private com.top_logic.ai.chat.api.messages.DelegationPartDto _delegationData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto _delegationData = null;
 
-	private com.top_logic.ai.chat.api.messages.SystemPartDto _systemData = null;
+	private com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto _systemData = null;
 
 	/**
 	 * Creates a {@link PersistedPart} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.PersistedPart#create()
+	 * @see com.top_logic.tl.ai.core.session.persist.messages.PersistedPart#create()
 	 */
 	protected PersistedPart() {
 		super();
@@ -99,7 +99,7 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * @see #getId()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setId(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setId(String value) {
 		internalSetId(value);
 		return this;
 	}
@@ -119,7 +119,7 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * @see #getTimestamp()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setTimestamp(long value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setTimestamp(long value) {
 		internalSetTimestamp(value);
 		return this;
 	}
@@ -139,7 +139,7 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * @see #getType()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setType(String value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setType(String value) {
 		internalSetType(value);
 		return this;
 	}
@@ -152,20 +152,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Text content data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.TextPartDto getTextData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.TextPartDto getTextData() {
 		return _textData;
 	}
 
 	/**
 	 * @see #getTextData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setTextData(com.top_logic.ai.chat.api.messages.TextPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setTextData(com.top_logic.tl.ai.core.session.persist.messages.TextPartDto value) {
 		internalSetTextData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getTextData()} without chain call utility. */
-	protected final void internalSetTextData(com.top_logic.ai.chat.api.messages.TextPartDto value) {
+	protected final void internalSetTextData(com.top_logic.tl.ai.core.session.persist.messages.TextPartDto value) {
 		_textData = value;
 	}
 
@@ -179,20 +179,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Thinking/reasoning data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.ThinkingPartDto getThinkingData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto getThinkingData() {
 		return _thinkingData;
 	}
 
 	/**
 	 * @see #getThinkingData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setThinkingData(com.top_logic.ai.chat.api.messages.ThinkingPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setThinkingData(com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto value) {
 		internalSetThinkingData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getThinkingData()} without chain call utility. */
-	protected final void internalSetThinkingData(com.top_logic.ai.chat.api.messages.ThinkingPartDto value) {
+	protected final void internalSetThinkingData(com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto value) {
 		_thinkingData = value;
 	}
 
@@ -206,20 +206,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Tool call data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.ToolCallPartDto getToolCallData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto getToolCallData() {
 		return _toolCallData;
 	}
 
 	/**
 	 * @see #getToolCallData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setToolCallData(com.top_logic.ai.chat.api.messages.ToolCallPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setToolCallData(com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto value) {
 		internalSetToolCallData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getToolCallData()} without chain call utility. */
-	protected final void internalSetToolCallData(com.top_logic.ai.chat.api.messages.ToolCallPartDto value) {
+	protected final void internalSetToolCallData(com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto value) {
 		_toolCallData = value;
 	}
 
@@ -233,20 +233,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Approval request data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.ApprovalPartDto getApprovalData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto getApprovalData() {
 		return _approvalData;
 	}
 
 	/**
 	 * @see #getApprovalData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setApprovalData(com.top_logic.ai.chat.api.messages.ApprovalPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setApprovalData(com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto value) {
 		internalSetApprovalData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getApprovalData()} without chain call utility. */
-	protected final void internalSetApprovalData(com.top_logic.ai.chat.api.messages.ApprovalPartDto value) {
+	protected final void internalSetApprovalData(com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto value) {
 		_approvalData = value;
 	}
 
@@ -260,20 +260,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * User interaction data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.InteractionPartDto getInteractionData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto getInteractionData() {
 		return _interactionData;
 	}
 
 	/**
 	 * @see #getInteractionData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setInteractionData(com.top_logic.ai.chat.api.messages.InteractionPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setInteractionData(com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto value) {
 		internalSetInteractionData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getInteractionData()} without chain call utility. */
-	protected final void internalSetInteractionData(com.top_logic.ai.chat.api.messages.InteractionPartDto value) {
+	protected final void internalSetInteractionData(com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto value) {
 		_interactionData = value;
 	}
 
@@ -287,20 +287,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Context compaction data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.CompactionPartDto getCompactionData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto getCompactionData() {
 		return _compactionData;
 	}
 
 	/**
 	 * @see #getCompactionData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setCompactionData(com.top_logic.ai.chat.api.messages.CompactionPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setCompactionData(com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto value) {
 		internalSetCompactionData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getCompactionData()} without chain call utility. */
-	protected final void internalSetCompactionData(com.top_logic.ai.chat.api.messages.CompactionPartDto value) {
+	protected final void internalSetCompactionData(com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto value) {
 		_compactionData = value;
 	}
 
@@ -314,20 +314,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Error data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.ErrorPartDto getErrorData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto getErrorData() {
 		return _errorData;
 	}
 
 	/**
 	 * @see #getErrorData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setErrorData(com.top_logic.ai.chat.api.messages.ErrorPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setErrorData(com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto value) {
 		internalSetErrorData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getErrorData()} without chain call utility. */
-	protected final void internalSetErrorData(com.top_logic.ai.chat.api.messages.ErrorPartDto value) {
+	protected final void internalSetErrorData(com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto value) {
 		_errorData = value;
 	}
 
@@ -341,20 +341,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Transaction data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.TransactionPartDto getTransactionData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto getTransactionData() {
 		return _transactionData;
 	}
 
 	/**
 	 * @see #getTransactionData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setTransactionData(com.top_logic.ai.chat.api.messages.TransactionPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setTransactionData(com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto value) {
 		internalSetTransactionData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getTransactionData()} without chain call utility. */
-	protected final void internalSetTransactionData(com.top_logic.ai.chat.api.messages.TransactionPartDto value) {
+	protected final void internalSetTransactionData(com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto value) {
 		_transactionData = value;
 	}
 
@@ -368,20 +368,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * Agent delegation data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.DelegationPartDto getDelegationData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto getDelegationData() {
 		return _delegationData;
 	}
 
 	/**
 	 * @see #getDelegationData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setDelegationData(com.top_logic.ai.chat.api.messages.DelegationPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setDelegationData(com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto value) {
 		internalSetDelegationData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getDelegationData()} without chain call utility. */
-	protected final void internalSetDelegationData(com.top_logic.ai.chat.api.messages.DelegationPartDto value) {
+	protected final void internalSetDelegationData(com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto value) {
 		_delegationData = value;
 	}
 
@@ -395,20 +395,20 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/**
 	 * System event data.
 	 */
-	public final com.top_logic.ai.chat.api.messages.SystemPartDto getSystemData() {
+	public final com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto getSystemData() {
 		return _systemData;
 	}
 
 	/**
 	 * @see #getSystemData()
 	 */
-	public com.top_logic.ai.chat.api.messages.PersistedPart setSystemData(com.top_logic.ai.chat.api.messages.SystemPartDto value) {
+	public com.top_logic.tl.ai.core.session.persist.messages.PersistedPart setSystemData(com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto value) {
 		internalSetSystemData(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getSystemData()} without chain call utility. */
-	protected final void internalSetSystemData(com.top_logic.ai.chat.api.messages.SystemPartDto value) {
+	protected final void internalSetSystemData(com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto value) {
 		_systemData = value;
 	}
 
@@ -487,22 +487,22 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case ID__PROP: internalSetId((String) value); break;
 			case TIMESTAMP__PROP: internalSetTimestamp((long) value); break;
 			case TYPE__PROP: internalSetType((String) value); break;
-			case TEXT_DATA__PROP: internalSetTextData((com.top_logic.ai.chat.api.messages.TextPartDto) value); break;
-			case THINKING_DATA__PROP: internalSetThinkingData((com.top_logic.ai.chat.api.messages.ThinkingPartDto) value); break;
-			case TOOL_CALL_DATA__PROP: internalSetToolCallData((com.top_logic.ai.chat.api.messages.ToolCallPartDto) value); break;
-			case APPROVAL_DATA__PROP: internalSetApprovalData((com.top_logic.ai.chat.api.messages.ApprovalPartDto) value); break;
-			case INTERACTION_DATA__PROP: internalSetInteractionData((com.top_logic.ai.chat.api.messages.InteractionPartDto) value); break;
-			case COMPACTION_DATA__PROP: internalSetCompactionData((com.top_logic.ai.chat.api.messages.CompactionPartDto) value); break;
-			case ERROR_DATA__PROP: internalSetErrorData((com.top_logic.ai.chat.api.messages.ErrorPartDto) value); break;
-			case TRANSACTION_DATA__PROP: internalSetTransactionData((com.top_logic.ai.chat.api.messages.TransactionPartDto) value); break;
-			case DELEGATION_DATA__PROP: internalSetDelegationData((com.top_logic.ai.chat.api.messages.DelegationPartDto) value); break;
-			case SYSTEM_DATA__PROP: internalSetSystemData((com.top_logic.ai.chat.api.messages.SystemPartDto) value); break;
+			case TEXT_DATA__PROP: internalSetTextData((com.top_logic.tl.ai.core.session.persist.messages.TextPartDto) value); break;
+			case THINKING_DATA__PROP: internalSetThinkingData((com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto) value); break;
+			case TOOL_CALL_DATA__PROP: internalSetToolCallData((com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto) value); break;
+			case APPROVAL_DATA__PROP: internalSetApprovalData((com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto) value); break;
+			case INTERACTION_DATA__PROP: internalSetInteractionData((com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto) value); break;
+			case COMPACTION_DATA__PROP: internalSetCompactionData((com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto) value); break;
+			case ERROR_DATA__PROP: internalSetErrorData((com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto) value); break;
+			case TRANSACTION_DATA__PROP: internalSetTransactionData((com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto) value); break;
+			case DELEGATION_DATA__PROP: internalSetDelegationData((com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto) value); break;
+			case SYSTEM_DATA__PROP: internalSetSystemData((com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto) value); break;
 		}
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.PersistedPart readPersistedPart(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.PersistedPart result = new com.top_logic.ai.chat.api.messages.PersistedPart();
+	public static com.top_logic.tl.ai.core.session.persist.messages.PersistedPart readPersistedPart(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.tl.ai.core.session.persist.messages.PersistedPart result = new com.top_logic.tl.ai.core.session.persist.messages.PersistedPart();
 		result.readContent(in);
 		return result;
 	}
@@ -569,16 +569,16 @@ public class PersistedPart extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TIMESTAMP__PROP: setTimestamp(in.nextLong()); break;
 			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case TEXT_DATA__PROP: setTextData(com.top_logic.ai.chat.api.messages.TextPartDto.readTextPartDto(in)); break;
-			case THINKING_DATA__PROP: setThinkingData(com.top_logic.ai.chat.api.messages.ThinkingPartDto.readThinkingPartDto(in)); break;
-			case TOOL_CALL_DATA__PROP: setToolCallData(com.top_logic.ai.chat.api.messages.ToolCallPartDto.readToolCallPartDto(in)); break;
-			case APPROVAL_DATA__PROP: setApprovalData(com.top_logic.ai.chat.api.messages.ApprovalPartDto.readApprovalPartDto(in)); break;
-			case INTERACTION_DATA__PROP: setInteractionData(com.top_logic.ai.chat.api.messages.InteractionPartDto.readInteractionPartDto(in)); break;
-			case COMPACTION_DATA__PROP: setCompactionData(com.top_logic.ai.chat.api.messages.CompactionPartDto.readCompactionPartDto(in)); break;
-			case ERROR_DATA__PROP: setErrorData(com.top_logic.ai.chat.api.messages.ErrorPartDto.readErrorPartDto(in)); break;
-			case TRANSACTION_DATA__PROP: setTransactionData(com.top_logic.ai.chat.api.messages.TransactionPartDto.readTransactionPartDto(in)); break;
-			case DELEGATION_DATA__PROP: setDelegationData(com.top_logic.ai.chat.api.messages.DelegationPartDto.readDelegationPartDto(in)); break;
-			case SYSTEM_DATA__PROP: setSystemData(com.top_logic.ai.chat.api.messages.SystemPartDto.readSystemPartDto(in)); break;
+			case TEXT_DATA__PROP: setTextData(com.top_logic.tl.ai.core.session.persist.messages.TextPartDto.readTextPartDto(in)); break;
+			case THINKING_DATA__PROP: setThinkingData(com.top_logic.tl.ai.core.session.persist.messages.ThinkingPartDto.readThinkingPartDto(in)); break;
+			case TOOL_CALL_DATA__PROP: setToolCallData(com.top_logic.tl.ai.core.session.persist.messages.ToolCallPartDto.readToolCallPartDto(in)); break;
+			case APPROVAL_DATA__PROP: setApprovalData(com.top_logic.tl.ai.core.session.persist.messages.ApprovalPartDto.readApprovalPartDto(in)); break;
+			case INTERACTION_DATA__PROP: setInteractionData(com.top_logic.tl.ai.core.session.persist.messages.InteractionPartDto.readInteractionPartDto(in)); break;
+			case COMPACTION_DATA__PROP: setCompactionData(com.top_logic.tl.ai.core.session.persist.messages.CompactionPartDto.readCompactionPartDto(in)); break;
+			case ERROR_DATA__PROP: setErrorData(com.top_logic.tl.ai.core.session.persist.messages.ErrorPartDto.readErrorPartDto(in)); break;
+			case TRANSACTION_DATA__PROP: setTransactionData(com.top_logic.tl.ai.core.session.persist.messages.TransactionPartDto.readTransactionPartDto(in)); break;
+			case DELEGATION_DATA__PROP: setDelegationData(com.top_logic.tl.ai.core.session.persist.messages.DelegationPartDto.readDelegationPartDto(in)); break;
+			case SYSTEM_DATA__PROP: setSystemData(com.top_logic.tl.ai.core.session.persist.messages.SystemPartDto.readSystemPartDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

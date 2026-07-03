@@ -1067,6 +1067,18 @@
     background: var(--chat-bg);
 }
 
+/* Dot on the collapsed sidebar toggle when another chat has a pending approval */
+.chat-sidebar-toggle.has-pending::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--chat-accent);
+}
+
 .chat-toggle-bar {
     display: block;
     width: 16px;
@@ -1228,6 +1240,22 @@
     color: var(--chat-text-muted);
     padding-left: 4px;
     line-height: 1;
+}
+
+/* Pending-approval badge on a session with a background request awaiting the user */
+.chat-history-badge {
+    flex-shrink: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: var(--chat-accent);
+    color: #fff;
+    font-size: 0.6em;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: center;
 }
 
 .chat-history-item:hover {

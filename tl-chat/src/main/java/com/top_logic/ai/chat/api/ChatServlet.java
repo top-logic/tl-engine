@@ -27,6 +27,8 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
+import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
+import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
@@ -40,8 +42,14 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
+import com.top_logic.tl.ai.core.execution.model.TlAiAgentFactory;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
@@ -82,6 +90,7 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
+	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
@@ -138,6 +147,10 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_UPDATES) || pathInfo.equals(PATH_UPDATES + "/")) {
 			handleUpdates(req, resp);
+			return;
+		}
+		if (pathInfo.equals(PATH_INTERACTIONS) || pathInfo.equals(PATH_INTERACTIONS + "/")) {
+			handleInteractions(req, resp);
 			return;
 		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
@@ -395,6 +408,59 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/**
+	 * GET /chat/interactions — pending human-in-the-loop requests (approvals/questions) awaiting the
+	 * current user across all of their chat sessions.
+	 *
+	 * <p>
+	 * Lets the client surface a background run's pending approval while the user is viewing a
+	 * different chat: the run in chat A blocks on an approval while the user reads chat B, and this
+	 * feed drives a badge on chat A's session-list item. Responding still happens via the existing
+	 * /chat/respond once the user switches to that chat.
+	 * </p>
+	 */
+	private void handleInteractions(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+
+		TLClassifier chatKind = TlAiAgentFactory.getCHATSessionKindClassifier();
+		PendingInteractionsResponse response = PendingInteractionsResponse.create();
+		for (InteractionRequest request : AgentExecutionStore.getInstance().pendingInteractionsFor(person)) {
+			AgentExecution execution = request.getExecution();
+			AgentSession session = execution == null ? null : execution.getSession();
+			// Only surface requests that map to a chat session the client can navigate to; runs of
+			// other kinds (script, background) have no session-list item to badge.
+			if (session == null || !chatKind.equals(session.getKind())) {
+				continue;
+			}
+			PendingInteractionDto dto = PendingInteractionDto.create()
+				.setRequestId(request.getRequestId())
+				.setType(interactionTypeName(request.getType()))
+				.setHeader(request.getHeader())
+				.setPrompt(request.getPrompt())
+				.setSessionId(getObjectId(session))
+				.setSessionTitle(session.getTitle());
+			Date createdAt = request.getCreatedAt();
+			if (createdAt != null) {
+				dto.setCreatedAt(formatIso(createdAt));
+			}
+			response.addInteraction(dto);
+		}
+
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/** Lowercased classifier name ("approval"/"question"/"choice") of an interaction type. */
+	private static String interactionTypeName(TLClassifier type) {
+		return type == null ? null : type.getName().toLowerCase(java.util.Locale.ROOT);
 	}
 
 	private void handleSSE(HttpServletRequest req, HttpServletResponse resp) throws IOException {

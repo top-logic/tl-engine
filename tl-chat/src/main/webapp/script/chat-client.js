@@ -104,6 +104,7 @@
     cancel: CTX + "/chat/cancel",
     approvalMode: CTX + "/chat/approval-mode",
     updates: CTX + "/chat/updates",
+    interactions: CTX + "/chat/interactions",
   };
 
   // Registry key (windowName) of the TopLogic sub-session this chat was rendered in.
@@ -367,6 +368,8 @@
       Render.finalizeAssistantBubble();
       Render.updateInputState();
       Tokens.showRunUsage(data.totalUsage);
+      // A finished run may have left pending requests in other sessions resolved/cancelled.
+      Interactions.poll();
     },
 
     onTurnStarted(data) {
@@ -448,6 +451,7 @@
         State.set(State.STREAMING);
         Render.updateInputState();
       }
+      Interactions.poll();
     },
 
     onTxBegan(data) {
@@ -2389,6 +2393,8 @@
       sessions.forEach((s) => {
         this._listEl.appendChild(this._createSessionItem(s));
       });
+      // Re-apply pending-approval badges: the list was just rebuilt from scratch.
+      Interactions.apply();
     },
 
     _resetState() {
@@ -2428,6 +2434,8 @@
           el.classList.toggle("active", el.dataset.sessionId === sessionId);
         });
       }
+      // The now-current session must lose its badge; a previously-current one may gain one.
+      Interactions.apply();
 
       if (sessionId && !skipLoad) {
         try {
@@ -3159,6 +3167,107 @@
   };
 
   // ========================================================================
+  // Interactions — cross-session pending-approval badges
+  //
+  // A background run in one chat can block on a tool approval while the user is
+  // viewing another chat. This polls /chat/interactions (pending requests for the
+  // current user, across all their chat sessions) and badges the session-list items
+  // — and, when the sidebar is collapsed, the toggle button — so the pending
+  // request is visible without switching chats. Responding still happens inline via
+  // /chat/respond once the user opens that chat.
+  // ========================================================================
+  const Interactions = {
+    _bySession: {},
+    _timer: null,
+    _POLL_MS: 5000,
+
+    start() {
+      this.stop();
+      this.poll();
+      this._timer = setInterval(() => this.poll(), this._POLL_MS);
+      document.addEventListener("visibilitychange", this._onVisible);
+    },
+
+    stop() {
+      if (this._timer) {
+        clearInterval(this._timer);
+        this._timer = null;
+      }
+    },
+
+    _onVisible() {
+      if (!document.hidden) Interactions.poll();
+    },
+
+    async poll() {
+      try {
+        const resp = await fetch(withWindow(URLS.interactions));
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const bySession = {};
+        (data.interactions || []).forEach((it) => {
+          if (!it.sessionId) return;
+          bySession[it.sessionId] = (bySession[it.sessionId] || 0) + 1;
+        });
+        this._bySession = bySession;
+        this.apply();
+      } catch (e) {
+        // Non-fatal: badges just won't refresh this cycle.
+      }
+    },
+
+    countFor(sessionId) {
+      return this._bySession[sessionId] || 0;
+    },
+
+    apply() {
+      const listEl = Session._listEl;
+      if (listEl) {
+        listEl.querySelectorAll(".chat-history-item").forEach((item) => {
+          const id = item.dataset.sessionId;
+          // The session in view shows its pending request inline, so don't badge it.
+          const count = id && id !== Session.currentId ? this.countFor(id) : 0;
+          this._applyBadge(item, count);
+        });
+      }
+      this._applyGlobal();
+    },
+
+    _applyBadge(item, count) {
+      let badge = item.querySelector(".chat-history-badge");
+      if (count > 0) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "chat-history-badge";
+          const titleRow = item.querySelector(".chat-history-title-row");
+          const title =
+            titleRow && titleRow.querySelector(".chat-history-title");
+          if (titleRow) {
+            titleRow.insertBefore(badge, title ? title.nextSibling : null);
+          } else {
+            item.appendChild(badge);
+          }
+        }
+        badge.textContent = count > 9 ? "9+" : String(count);
+        badge.title = count + " pending request" + (count === 1 ? "" : "s");
+      } else if (badge) {
+        badge.remove();
+      }
+    },
+
+    _applyGlobal() {
+      const sidebar = Session._sidebarEl;
+      const toggle = sidebar && sidebar.querySelector(".chat-sidebar-toggle");
+      if (!toggle) return;
+      let total = 0;
+      for (const id in this._bySession) {
+        if (id !== Session.currentId) total += this._bySession[id];
+      }
+      toggle.classList.toggle("has-pending", total > 0);
+    },
+  };
+
+  // ========================================================================
   // Init — Bootstrap
   // ========================================================================
   function initChat(root) {
@@ -3175,6 +3284,8 @@
 
     const sessionId = root.dataset.sessionId || "";
     Session.switchTo(sessionId);
+
+    Interactions.start();
 
     State.onChange((newState) => {
       Render.updateInputState();

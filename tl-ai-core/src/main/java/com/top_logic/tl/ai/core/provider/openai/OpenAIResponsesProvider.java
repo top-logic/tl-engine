@@ -260,7 +260,8 @@ public class OpenAIResponsesProvider extends AbstractStreamingProvider {
 		if (usage.get("input_tokens_details") instanceof Map<?, ?> inputDetails) {
 			cached = intValue(inputDetails, "cached_tokens");
 		}
-		return new TokenUsage(input, output, reasoning, cached, 0);
+		// OpenAI's input_tokens includes the cached share.
+		return TokenUsage.fromCacheInclusivePrompt(input, cached, output, reasoning);
 	}
 
 	private static int intValue(Map<?, ?> map, String key) {

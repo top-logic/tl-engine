@@ -32,6 +32,7 @@ import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
@@ -435,9 +436,12 @@ public class ChatProcessor {
 				}
 			};
 		}
+		// Share one cancellation token between context and transaction scope so lock-retry
+		// waits also end promptly when the user cancels the run.
+		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
-			new TopLogicSecurityContext(), approvalCallback, new TransactionScope(),
-			taskTracker.getSessionApprovedTools());
+			new TopLogicSecurityContext(), approvalCallback, new TransactionScope(cancellationToken),
+			taskTracker.getSessionApprovedTools(), cancellationToken);
 	}
 
 	/**

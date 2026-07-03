@@ -96,6 +96,11 @@ public interface SecurityContext {
 	 * the tool. The default implementation requires approval for all state-changing
 	 * tools ({@link ToolMode#USER_SCOPED}, {@link ToolMode#DATA_WRITE}, and {@link ToolMode#STRUCTURAL}).</p>
 	 *
+	 * <p><b>Contract:</b> implementations must be side-effect-free and stable within a turn.
+	 * The agent loop calls this method more than once for the same tool call — first to
+	 * predict whether a call can join a concurrent batch, then again as the execution
+	 * gate.</p>
+	 *
 	 * @param tool     the tool to check
 	 * @param toolCall the specific invocation
 	 * @return the approval decision

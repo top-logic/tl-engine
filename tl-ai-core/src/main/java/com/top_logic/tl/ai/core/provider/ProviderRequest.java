@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -24,6 +25,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *                        {@code thinkingBudgetTokens}, etc.)
  * @param responseFormat  desired response format, or {@code null} for provider default
  * @param toolChoice      tool selection behaviour, or {@code null} for provider default
+ * @param timeout         HTTP request timeout, or {@code null} for the provider default
  */
 public record ProviderRequest(
 		String model,
@@ -33,7 +35,8 @@ public record ProviderRequest(
 		int maxOutputTokens,
 		Map<String, Object> modelOptions,
 		ResponseFormat responseFormat,
-		ToolChoice toolChoice) {
+		ToolChoice toolChoice,
+		Duration timeout) {
 
 	/** */
 	public ProviderRequest {
@@ -47,6 +50,19 @@ public record ProviderRequest(
 		if (maxOutputTokens <= 0) {
 			throw new IllegalArgumentException("maxOutputTokens must be positive.");
 		}
+		if (timeout != null && (timeout.isZero() || timeout.isNegative())) {
+			throw new IllegalArgumentException("timeout must be positive.");
+		}
+	}
+
+	/**
+	 * Convenience constructor without {@code timeout}.
+	 */
+	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
+			List<ToolSchema> tools, int maxOutputTokens, Map<String, Object> modelOptions,
+			ResponseFormat responseFormat, ToolChoice toolChoice) {
+		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions,
+			responseFormat, toolChoice, null);
 	}
 
 	/**
@@ -54,7 +70,7 @@ public record ProviderRequest(
 	 */
 	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
 			List<ToolSchema> tools, int maxOutputTokens, Map<String, Object> modelOptions) {
-		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions, null, null);
+		this(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions, null, null, null);
 	}
 
 	/**
@@ -63,6 +79,6 @@ public record ProviderRequest(
 	 */
 	public ProviderRequest(String model, String systemPrompt, List<Message> messages,
 			List<ToolSchema> tools, int maxOutputTokens) {
-		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of(), null, null);
+		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of(), null, null, null);
 	}
 }

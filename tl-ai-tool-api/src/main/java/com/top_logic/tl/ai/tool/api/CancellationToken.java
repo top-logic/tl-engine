@@ -50,4 +50,35 @@ public class CancellationToken {
 			throw new CancellationException("Tool execution cancelled.");
 		}
 	}
+
+	/**
+	 * Sleeps for {@code durationMs}, re-checking this token every {@code pollMs} so a
+	 * cancellation (or thread interrupt) ends the wait promptly instead of sitting out the
+	 * full duration.
+	 *
+	 * @param durationMs total time to sleep, in milliseconds
+	 * @param pollMs     how often to re-check {@link #isCancelled()} while waiting
+	 * @return {@code true} if the wait ended early due to cancellation or interruption (the
+	 *         calling thread's interrupt flag is restored in that case — check
+	 *         {@link Thread#isInterrupted()} to tell the two apart), {@code false} if the full
+	 *         duration elapsed normally
+	 */
+	public boolean sleepCancellably(long durationMs, long pollMs) {
+		long deadline = System.nanoTime() + durationMs * 1_000_000L;
+		while (true) {
+			if (isCancelled()) {
+				return true;
+			}
+			long remainingMs = (deadline - System.nanoTime()) / 1_000_000L;
+			if (remainingMs <= 0) {
+				return false;
+			}
+			try {
+				Thread.sleep(Math.min(pollMs, remainingMs));
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
+				return true;
+			}
+		}
+	}
 }

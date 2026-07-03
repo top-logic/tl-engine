@@ -30,6 +30,15 @@ public record CompactionResult(
 	public CompactionResult {
 		Objects.requireNonNull(replacementMessages, "Replacement messages must not be null.");
 		Objects.requireNonNull(trigger, "Trigger must not be null.");
+		if (messagesSummarized < 0) {
+			throw new IllegalArgumentException("messagesSummarized must not be negative.");
+		}
+		if (tokensBefore < 0) {
+			throw new IllegalArgumentException("tokensBefore must not be negative.");
+		}
+		if (tokensAfter < 0) {
+			throw new IllegalArgumentException("tokensAfter must not be negative.");
+		}
 		replacementMessages = List.copyOf(replacementMessages);
 	}
 }

@@ -42,10 +42,10 @@ public class ChatSessionManager {
 	private static final int MAX_CACHED_SESSIONS = 5;
 
 	/**
-	 * Default context window budget for chat session memory. This is a generous default that allows
-	 * the compaction strategy to keep enough context for multi-turn conversations. The
-	 * actual model context window is enforced by the agent loop; this budget only controls how many
-	 * messages the session memory retains.
+	 * Fallback context window budget for chat session memory, used only when no default model
+	 * is configured. The budget is a placeholder until the first agent run: the agent runner
+	 * re-aligns the memory with the effective per-agent context window (assignment override >
+	 * model catalog) before each run.
 	 */
 	private static final int DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000;
 
@@ -308,7 +308,8 @@ public class ChatSessionManager {
 	 * <p>
 	 * Uses the system's default model from {@link LLMService} for summarization.
 	 * Falls back to truncation if no default model is configured or if the registry is not
-	 * available.
+	 * available. The initial context window is a placeholder; the effective per-agent window
+	 * is applied by the agent runner before each run.
 	 * </p>
 	 */
 	private static ConversationMemory createDefaultMemory() {

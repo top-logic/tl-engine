@@ -35,11 +35,14 @@ public class ToolContext implements ToolExecutionContext {
 	 * Creates a new unrestricted context with a live transaction scope.
 	 *
 	 * <p>Use this for programmatic agent invocations (TL-Script, background jobs) where
-	 * tools need locking and transaction support. Each call creates a fresh scope.</p>
+	 * tools need locking and transaction support. Each call creates a fresh scope that
+	 * shares the context's cancellation token, so lock waits end promptly when the run
+	 * is cancelled.</p>
 	 */
 	public static ToolContext createUnrestricted() {
+		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE,
-			new TransactionScope());
+			new TransactionScope(cancellationToken), cancellationToken);
 	}
 
 	private final SecurityContext _security;
@@ -61,17 +64,26 @@ public class ToolContext implements ToolExecutionContext {
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
 	 *
+	 * <p>Derives its cancellation token from {@code transaction}, so cancelling this
+	 * context's token also ends the scope's lock-retry waits, and vice versa. Pass an
+	 * explicit token (see the overloads below) only when the context must observe
+	 * cancellation independently of the transaction scope.</p>
+	 *
 	 * @param security    the security context for the current user
 	 * @param approval    the callback for requesting user approval
 	 * @param transaction the transaction scope for the current agent run
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval, TransactionScope transaction) {
-		this(security, approval, transaction, Set.of(), 0, null, new CancellationToken(), ProgressReporter.NOOP);
+		this(security, approval, transaction, Set.of(), 0, null, transaction.cancellationToken(),
+			ProgressReporter.NOOP);
 	}
 
 	/**
 	 * Creates a context with the given security, approval callback, transaction scope,
 	 * and pre-approved tools from a previous run in the same session.
+	 *
+	 * <p>Derives its cancellation token from {@code transaction} — see the note on the
+	 * 3-argument overload.</p>
 	 *
 	 * @param security             the security context for the current user
 	 * @param approval             the callback for requesting user approval
@@ -80,7 +92,27 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public ToolContext(SecurityContext security, ApprovalCallback approval,
 			TransactionScope transaction, Set<String> sessionApprovedTools) {
-		this(security, approval, transaction, sessionApprovedTools, 0, null, new CancellationToken(), ProgressReporter.NOOP);
+		this(security, approval, transaction, sessionApprovedTools, 0, null,
+			transaction.cancellationToken(), ProgressReporter.NOOP);
+	}
+
+	/**
+	 * Creates a context with the given security, approval callback, transaction scope,
+	 * pre-approved tools, and cancellation token.
+	 *
+	 * <p>Pass the same token to the {@link TransactionScope} so lock-retry waits also end
+	 * when the run is cancelled.</p>
+	 *
+	 * @param security             the security context for the current user
+	 * @param approval             the callback for requesting user approval
+	 * @param transaction          the transaction scope for the current agent run
+	 * @param sessionApprovedTools tool names already approved for the session
+	 * @param cancellationToken    the cancellation token for cooperative cancellation
+	 */
+	public ToolContext(SecurityContext security, ApprovalCallback approval,
+			TransactionScope transaction, Set<String> sessionApprovedTools,
+			CancellationToken cancellationToken) {
+		this(security, approval, transaction, sessionApprovedTools, 0, null, cancellationToken, ProgressReporter.NOOP);
 	}
 
 	/**

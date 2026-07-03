@@ -10,7 +10,13 @@ package com.top_logic.tl.ai.core.message;
  *
  * <p>Carried on {@link AssistantMessage} for budget tracking and compaction decisions.</p>
  *
- * @param inputTokens      tokens in the request (prompt)
+ * <p><b>Convention:</b> {@code inputTokens} counts only the <em>non-cached</em> part of the
+ * prompt; cached tokens are reported exclusively in {@code cacheReadTokens} /
+ * {@code cacheWriteTokens}. Providers whose API reports a cache-inclusive prompt count
+ * (<code>OpenAI</code>-style {@code prompt_tokens}) must subtract the cached share when constructing
+ * this record. Use {@link #promptTokens()} for the full prompt size.</p>
+ *
+ * @param inputTokens      non-cached tokens in the request (prompt)
  * @param outputTokens     tokens in the response (completion)
  * @param thinkingTokens   tokens used for extended thinking (0 if not supported)
  * @param cacheReadTokens  tokens read from provider cache
@@ -27,10 +33,41 @@ public record TokenUsage(
 	public static final TokenUsage EMPTY = new TokenUsage(0, 0, 0, 0, 0);
 
 	/**
-	 * Total tokens consumed (input + output + thinking).
+	 * Creates a {@link TokenUsage} from a provider whose prompt-token count already
+	 * <em>includes</em> the cached share (e.g. <code>OpenAI</code>-style {@code prompt_tokens}).
+	 *
+	 * <p>Centralizes the cache-exclusive-{@code inputTokens} convention documented on this
+	 * record, so providers construct usage from the raw API fields without each
+	 * re-implementing the subtraction (and risking silently reintroducing a cache-inclusive
+	 * {@code inputTokens} that would corrupt compaction's token estimate).</p>
+	 *
+	 * @param cacheInclusivePromptTokens the provider's raw prompt-token count, including cache
+	 * @param cacheReadTokens            tokens read from cache, out of the total above
+	 * @param outputTokens               tokens in the response
+	 * @param thinkingTokens             tokens used for extended thinking, or 0
+	 */
+	public static TokenUsage fromCacheInclusivePrompt(int cacheInclusivePromptTokens,
+			int cacheReadTokens, int outputTokens, int thinkingTokens) {
+		int inputTokens = Math.max(0, cacheInclusivePromptTokens - cacheReadTokens);
+		return new TokenUsage(inputTokens, outputTokens, thinkingTokens, cacheReadTokens, 0);
+	}
+
+	/**
+	 * Total prompt size in tokens, including cached parts.
+	 *
+	 * <p>This is the number to compare against a model's context window — with prompt
+	 * caching active, {@link #inputTokens()} alone can be a tiny fraction of the real
+	 * prompt.</p>
+	 */
+	public int promptTokens() {
+		return inputTokens + cacheReadTokens + cacheWriteTokens;
+	}
+
+	/**
+	 * Total tokens consumed (full prompt + output + thinking).
 	 */
 	public int totalTokens() {
-		return inputTokens + outputTokens + thinkingTokens;
+		return promptTokens() + outputTokens + thinkingTokens;
 	}
 
 	/**

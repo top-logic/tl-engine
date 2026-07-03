@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.base.locking.Lock;
@@ -23,6 +24,7 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.tools.model.LockHolderLookup;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Manages one KB transaction and object-level locks per agent turn.
@@ -53,11 +55,16 @@ public class TransactionScope implements AutoCloseable {
 
 	private static final long LOCK_DURATION_MS = 10 * 60 * 1000L;
 
+	/** Sleep slice for lock-retry waits, so cancellation is noticed promptly. */
+	private static final long RETRY_POLL_MS = 250L;
+
 	private Transaction _transaction;
 
 	private final Set<Lock> _locks = new LinkedHashSet<>();
 
 	private Revision _commitRevision;
+
+	private final CancellationToken _cancellationToken;
 
 	/**
 	 * Creates a new live transaction scope.
@@ -66,7 +73,20 @@ public class TransactionScope implements AutoCloseable {
 	 * their targets via {@link #acquireLock(String, TLObject...)}.</p>
 	 */
 	public TransactionScope() {
-		// Live scope — uses PersistencyLayer and LockService at runtime
+		this(CancellationToken.UNCANCELLABLE);
+	}
+
+	/**
+	 * Creates a new live transaction scope that observes the given cancellation token.
+	 *
+	 * <p>Lock-retry waits in {@link #acquireLock(String, TLObject...)} end promptly when
+	 * the associated run is cancelled.</p>
+	 *
+	 * @param cancellationToken the token cancelled when the agent run is cancelled
+	 */
+	public TransactionScope(CancellationToken cancellationToken) {
+		_cancellationToken =
+			Objects.requireNonNull(cancellationToken, "Cancellation token must not be null.");
 	}
 
 	/**
@@ -74,6 +94,17 @@ public class TransactionScope implements AutoCloseable {
 	 */
 	public boolean isNoOp() {
 		return false;
+	}
+
+	/**
+	 * The cancellation token this scope's lock-retry waits observe.
+	 *
+	 * <p>Pair a {@link ToolContext} built from this scope with the same token (see the
+	 * {@link ToolContext} constructors that accept a {@link TransactionScope} without an
+	 * explicit token — they derive it from here) so cancelling one always reaches the other.</p>
+	 */
+	public CancellationToken cancellationToken() {
+		return _cancellationToken;
 	}
 
 	/**
@@ -86,7 +117,7 @@ public class TransactionScope implements AutoCloseable {
 	 * @param operation the abstract operation name (e.g. "editValues")
 	 * @param targets   the objects to lock
 	 * @throws LockConflictException if the lock cannot be acquired after all retries
-	 * @throws TransactionException  if lock acquisition is interrupted
+	 * @throws TransactionException  if lock acquisition is interrupted or cancelled
 	 */
 	public void acquireLock(String operation, TLObject... targets) {
 		Lock lock = LockService.getInstance().createLock(operation, (Object[]) targets);
@@ -102,13 +133,21 @@ public class TransactionScope implements AutoCloseable {
 					long totalWaitSecs = (MAX_RETRIES - 1) * RETRY_DELAY_MS / 1000;
 					throw new LockConflictException(resource, holder, MAX_RETRIES, totalWaitSecs, e);
 				}
-				try {
-					Thread.sleep(RETRY_DELAY_MS);
-				} catch (InterruptedException ie) {
-					Thread.currentThread().interrupt();
-					throw new TransactionException("Lock acquisition interrupted", ie);
-				}
+				waitBeforeRetry();
 			}
+		}
+	}
+
+	/**
+	 * Sleep {@value #RETRY_DELAY_MS}ms in {@value #RETRY_POLL_MS}ms slices, re-checking
+	 * cancellation between slices so a cancelled run does not sit out the full delay.
+	 */
+	private void waitBeforeRetry() {
+		if (_cancellationToken.sleepCancellably(RETRY_DELAY_MS, RETRY_POLL_MS)) {
+			if (Thread.currentThread().isInterrupted()) {
+				throw new TransactionException("Lock acquisition interrupted");
+			}
+			throw new TransactionException("Lock acquisition cancelled");
 		}
 	}
 

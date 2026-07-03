@@ -63,6 +63,25 @@ public class TestTruncatingStrategy extends TestCase {
 		assertEquals(0, result.messagesSummarized());
 	}
 
+	/**
+	 * The package-private overload that accepts a precomputed tokensBefore uses it as-is
+	 * instead of recomputing from the message list — this is what lets
+	 * {@link SummarizingStrategy}'s truncation fallback skip a redundant full re-scan.
+	 */
+	public void testPrecomputedTokensBeforeOverloadSkipsRecomputation() {
+		List<Message> messages = List.of(
+			userMsg("u1", "x".repeat(400)),
+			assistantMsg("a1", "recent"));
+
+		TruncatingStrategy strategy = new TruncatingStrategy(1);
+		// Deliberately wrong on purpose: if this were ignored and recomputed from the
+		// message list, tokensBefore in the result would differ from this value.
+		int deliberatelyWrongTokensBefore = 999_999;
+		CompactionResult result = strategy.compact(messages, 50, _estimator, deliberatelyWrongTokensBefore);
+
+		assertEquals(deliberatelyWrongTokensBefore, result.tokensBefore());
+	}
+
 	/** Drops oldest messages to fit under target. */
 	public void testDropsOldest() {
 		// Each "x".repeat(400) text = 400 bytes / 4 = 100 tokens

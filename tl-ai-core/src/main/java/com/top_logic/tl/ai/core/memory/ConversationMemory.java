@@ -5,13 +5,11 @@
  */
 package com.top_logic.tl.ai.core.memory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 
 /**
@@ -37,7 +35,7 @@ public class ConversationMemory {
 
 	private final CompactionStrategy _strategy;
 
-	private final int _contextWindowTokens;
+	private int _contextWindowTokens;
 
 	private final int _reservedTokens;
 
@@ -133,8 +131,15 @@ public class ConversationMemory {
 	public CompactionResult compact(String trigger) {
 		List<Message> messages = _conversation.messages();
 		int targetTokens = usableTokens();
+		// Pass our own accurate estimate (the API baseline, once one exists) instead of
+		// letting the strategy blindly recompute a messages-only heuristic: the estimator
+		// has no visibility into the system prompt or tool schemas, which are also part of
+		// the real request and count toward the actual budget, so a from-scratch heuristic
+		// here would systematically undercount relative to what decided compaction was
+		// needed in the first place.
+		int tokensBefore = estimateTokens();
 
-		CompactionResult result = _strategy.compact(messages, targetTokens, _estimator);
+		CompactionResult result = _strategy.compact(messages, targetTokens, _estimator, tokensBefore);
 
 		_conversation.replaceRange(0, messages.size(), result.replacementMessages());
 
@@ -161,74 +166,47 @@ public class ConversationMemory {
 	 */
 	public void updateTokenBaseline(TokenUsage usage) {
 		Objects.requireNonNull(usage, "Usage must not be null.");
-		_apiBaselineTokens = usage.inputTokens();
+		// Full prompt size: with prompt caching, inputTokens alone reports only the
+		// non-cached slice and would reset the baseline to nearly zero on every turn.
+		_apiBaselineTokens = usage.promptTokens();
 		_apiBaselineMessageCount = _conversation.messages().size();
 	}
 
-	/** Context window capacity minus reserved tokens. */
+	/**
+	 * Context window capacity minus reserved tokens.
+	 *
+	 * <p>The configured reserve is used as-is whenever it leaves a positive budget. Only
+	 * when the reserve would consume the entire window (window &lt;= reserve — e.g. a small
+	 * per-agent window override paired with the default 33K reserve) is it capped to half
+	 * the window instead, so compaction still gets a usable budget rather than triggering
+	 * on every turn. Windows comfortably larger than the reserve are unaffected, keeping
+	 * the full configured output/safety margin.</p>
+	 */
 	public int usableTokens() {
-		return _contextWindowTokens - _reservedTokens;
+		int reserved = _reservedTokens >= _contextWindowTokens
+			? _contextWindowTokens / 2
+			: _reservedTokens;
+		return _contextWindowTokens - reserved;
+	}
+
+	/** The total context window in tokens. */
+	public int contextWindowTokens() {
+		return _contextWindowTokens;
 	}
 
 	/**
-	 * Return messages fitting within the given token budget.
+	 * Updates the context window to match the model actually used for the next run.
 	 *
-	 * <p>Always includes all {@link SystemMessage}s. Then includes messages from
-	 * newest to oldest until the budget is exhausted. This ensures the LLM always
-	 * sees the system prompt and the most recent context.</p>
+	 * <p>Session memory is created before the agent (and thus the model) is known; the
+	 * agent runner calls this with the effective per-agent context window before each run.</p>
 	 *
-	 * @param tokenBudget maximum tokens for the returned messages
-	 * @return messages fitting within the budget, in conversation order
+	 * @param contextWindowTokens total context window of the model, must be positive
 	 */
-	public List<Message> getMessages(int tokenBudget) {
-		List<Message> all = _conversation.messages();
-		int fullEstimate = _estimator.estimateTokens(all);
-		if (fullEstimate <= tokenBudget) {
-			return all;
+	public void setContextWindowTokens(int contextWindowTokens) {
+		if (contextWindowTokens <= 0) {
+			throw new IllegalArgumentException("contextWindowTokens must be positive.");
 		}
-
-		// Always include system messages
-		List<Message> systemMessages = new ArrayList<>();
-		List<Message> nonSystemMessages = new ArrayList<>();
-		for (Message msg : all) {
-			if (msg instanceof SystemMessage) {
-				systemMessages.add(msg);
-			} else {
-				nonSystemMessages.add(msg);
-			}
-		}
-
-		int systemTokens = _estimator.estimateTokens(systemMessages);
-		int remainingBudget = tokenBudget - systemTokens;
-
-		// Add non-system messages from newest, respecting budget
-		List<Message> selected = new ArrayList<>();
-		for (int i = nonSystemMessages.size() - 1; i >= 0; i--) {
-			Message msg = nonSystemMessages.get(i);
-			int msgTokens = _estimator.estimateTokens(msg);
-			if (msgTokens <= remainingBudget) {
-				selected.add(0, msg);
-				remainingBudget -= msgTokens;
-			} else {
-				break;
-			}
-		}
-
-		// Rebuild in conversation order: system messages at their original positions
-		List<Message> result = new ArrayList<>();
-		int sysIdx = 0;
-		int selIdx = 0;
-		for (Message msg : all) {
-			if (msg instanceof SystemMessage && sysIdx < systemMessages.size()
-					&& msg == systemMessages.get(sysIdx)) {
-				result.add(msg);
-				sysIdx++;
-			} else if (selIdx < selected.size() && msg == selected.get(selIdx)) {
-				result.add(msg);
-				selIdx++;
-			}
-		}
-		return result;
+		_contextWindowTokens = contextWindowTokens;
 	}
 
 	/** The underlying conversation. */

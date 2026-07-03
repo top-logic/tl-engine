@@ -255,6 +255,12 @@ public sealed interface AgentEvent {
 	/**
 	 * Emitted after the approval channel returns with a decision.
 	 *
+	 * <p>Note: for tools already approved for the session, the loop emits a synthetic
+	 * {@code ApprovalResolved} with outcome
+	 * {@link com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome#APPROVED_FOR_SESSION}
+	 * and a fresh {@code approvalRequestId} <em>without</em> a preceding
+	 * {@link ApprovalRequired}. Listeners must not assume a request/resolve pairing.</p>
+	 *
 	 * @param runId agent run identifier
 	 * @param turnNumber 1-based loop iteration
 	 * @param timestamp when the event occurred

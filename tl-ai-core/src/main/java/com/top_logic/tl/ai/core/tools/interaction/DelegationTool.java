@@ -163,7 +163,8 @@ public class DelegationTool implements Tool {
 				List.of(new TextContent(userPrompt.toString())));
 			conversation.add(userMessage);
 
-			ToolContext childContext = toolContext.forDelegation(new TransactionScope());
+			ToolContext childContext = toolContext.forDelegation(
+				new TransactionScope(toolContext.cancellationToken()));
 			AgentResult result = targetLoop.run(conversation, childContext, childListener);
 
 			String finalText = extractFinalText(conversation, result);

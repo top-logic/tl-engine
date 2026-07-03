@@ -12,8 +12,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
@@ -173,35 +171,71 @@ public class TestConversationMemory extends TestCase {
 		assertNotNull(memory.conversation());
 	}
 
-	/** getMessages returns all messages when under budget. */
-	public void testGetMessagesUnderBudget() {
-		ConversationMemory memory = new ConversationMemory(
-			new Conversation(), new ByteBasedTokenEstimator(), new TruncatingStrategy(),
-			200_000, 33_000);
+	/**
+	 * The baseline must count the full prompt including cached tokens. With prompt caching,
+	 * the provider reports a tiny non-cached {@code inputTokens} slice (the bulk of the
+	 * prompt arrives as cache reads) — using only {@code inputTokens} would reset the
+	 * estimate to nearly zero after every response and compaction would never trigger.
+	 */
+	public void testBaselineIncludesCachedTokens() {
+		ConversationMemory memory = ConversationMemory.withDefaults(
+			new TruncatingStrategy(2), 5_000);
 
 		memory.add(userMsg("u1", "Hello"));
 		memory.add(assistantMsg("a1", "Hi"));
 
-		List<Message> result = memory.getMessages(100_000);
-		assertEquals(2, result.size());
+		// Anthropic-style cached response: 18 non-cached input, 43_000 read from cache
+		memory.updateTokenBaseline(new TokenUsage(18, 100, 0, 43_000, 900));
+
+		assertEquals(43_918, memory.estimateTokens());
+		assertTrue(memory.shouldCompact());
 	}
 
-	/** getMessages always includes system messages even when budget is tight. */
-	public void testGetMessagesPreservesSystemMessages() {
-		ConversationMemory memory = new ConversationMemory(
-			new Conversation(), new ByteBasedTokenEstimator(), new TruncatingStrategy(),
-			200_000, 33_000);
+	/** setContextWindowTokens re-aligns the compaction budget for a later run. */
+	public void testSetContextWindowTokens() {
+		ConversationMemory memory = ConversationMemory.withDefaults(
+			new TruncatingStrategy(), 200_000);
+		assertEquals(200_000, memory.contextWindowTokens());
+		assertEquals(167_000, memory.usableTokens());
 
-		memory.add(new SystemMessage("s1", T0, "You are helpful."));
-		memory.add(userMsg("u1", "x".repeat(400))); // large
-		memory.add(assistantMsg("a1", "x".repeat(400))); // large
-		memory.add(userMsg("u2", "recent"));
-		memory.add(assistantMsg("a2", "recent"));
+		memory.add(userMsg("u1", "x".repeat(400))); // ~100 tokens
+		assertFalse(memory.shouldCompact());
 
-		// Small budget: should get system + most recent messages
-		List<Message> result = memory.getMessages(50);
-		assertTrue(result.stream().anyMatch(SystemMessage.class::isInstance));
-		assertTrue(result.size() < 5);
+		// Shrink to a window smaller than the estimate -> compaction now due
+		memory.setContextWindowTokens(150);
+		assertEquals(150, memory.contextWindowTokens());
+		assertTrue(memory.shouldCompact());
+
+		// Grow again -> no longer due
+		memory.setContextWindowTokens(200_000);
+		assertFalse(memory.shouldCompact());
+	}
+
+	/** setContextWindowTokens rejects non-positive values. */
+	public void testSetContextWindowTokensRejectsNonPositive() {
+		ConversationMemory memory = ConversationMemory.withDefaults(
+			new TruncatingStrategy(), 200_000);
+		try {
+			memory.setContextWindowTokens(0);
+			fail("Expected IllegalArgumentException");
+		} catch (IllegalArgumentException expected) {
+			// expected
+		}
+	}
+
+	/**
+	 * Windows smaller than the reserve keep a positive budget: the reserve is capped at
+	 * half the window, so a 5000-token window with the default 33K reserve yields 2500
+	 * usable tokens instead of a negative budget that would compact on every turn.
+	 */
+	public void testUsableTokensClampsReserveForSmallWindows() {
+		ConversationMemory memory = ConversationMemory.withDefaults(
+			new TruncatingStrategy(), 5_000);
+
+		assertEquals(2_500, memory.usableTokens());
+
+		memory.add(userMsg("u1", "Hello"));
+		assertFalse(memory.shouldCompact());
 	}
 
 	/** After compaction, baseline is reset. */

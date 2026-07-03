@@ -212,8 +212,12 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 			.filter(StreamEvent.MessageComplete.class::isInstance)
 			.map(StreamEvent.MessageComplete.class::cast)
 			.findFirst().orElseThrow();
-		assertEquals(4096, complete.usage().inputTokens());
+		// prompt_tokens (4096) includes the cached share; inputTokens is the non-cached
+		// remainder (1024), cacheReadTokens carries the cached share, and promptTokens()
+		// reconstructs the full prompt size (4096) for compaction/context-window checks.
+		assertEquals(1024, complete.usage().inputTokens());
 		assertEquals(3072, complete.usage().cacheReadTokens());
+		assertEquals(4096, complete.usage().promptTokens());
 	}
 
 	private static ToolCall findToolCall(List<StreamEvent> events) {

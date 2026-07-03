@@ -18,6 +18,8 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -165,12 +167,37 @@ public class DelegationTool implements Tool {
 
 			ToolContext childContext = toolContext.forDelegation(
 				new TransactionScope(toolContext.cancellationToken()));
-			AgentResult result = targetLoop.run(conversation, childContext, childListener);
+
+			// When the parent run is recorded, record the child as its own execution with
+			// parentExecution set, so the parent+children token total stays a KB query.
+			ExecutionRecorder recorder = null;
+			AgentEventListener effectiveChildListener = childListener;
+			AgentExecution parentExecution = toolContext.executionHandle().get();
+			if (parentExecution != null) {
+				recorder = new ExecutionRecorder(parentExecution.getSession(), _targetAgentName,
+					parentExecution, childContext.executionHandle(), childListener);
+				effectiveChildListener = recorder;
+			}
+
+			AgentResult result;
+			try {
+				result = targetLoop.run(conversation, childContext, effectiveChildListener);
+			} catch (RuntimeException e) {
+				if (recorder != null) {
+					recorder.complete(null, e);
+				}
+				throw e;
+			}
+			if (recorder != null) {
+				recorder.complete(null, null);
+			}
+			String childRunId = recorder != null ? recorder.runId() : null;
 
 			String finalText = extractFinalText(conversation, result);
 			if (logListener != null && delegationId != null) {
 				long durationMs = Duration.between(startTime, Instant.now()).toMillis();
-				logListener.resolveDelegation(delegationId, truncate(finalText, 200), durationMs, result);
+				logListener.resolveDelegation(delegationId, truncate(finalText, 200), childRunId,
+					durationMs, result);
 			}
 			return ToolResult.of(finalText + formatDelegationMeta(result));
 		} catch (Exception e) {

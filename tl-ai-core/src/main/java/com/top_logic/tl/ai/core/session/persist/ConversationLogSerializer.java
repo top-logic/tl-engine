@@ -67,8 +67,20 @@ public final class ConversationLogSerializer {
 
 	/** Serializes a conversation log to JSON. */
 	public static String toJson(ConversationLog log) {
+		return toJson(log.turns());
+	}
+
+	/**
+	 * Serializes the given turns to JSON in the same format as {@link #toJson(ConversationLog)}.
+	 *
+	 * <p>
+	 * Used to persist a single run's slice of a longer conversation, e.g. as the transcript of
+	 * one agent execution.
+	 * </p>
+	 */
+	public static String toJson(List<Turn> turns) {
 		PersistedConversationV2 dto = PersistedConversationV2.create();
-		for (Turn turn : log.turns()) {
+		for (Turn turn : turns) {
 			dto.addTurn(toTurnDto(turn));
 		}
 		StringW buffer = new StringW();

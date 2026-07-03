@@ -39,8 +39,8 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -53,14 +53,11 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 
 /**
  * Background processing logic for the chat component.
@@ -122,11 +119,8 @@ public class ChatProcessor {
 		Set<String> loadedSkills = ConcurrentHashMap.newKeySet();
 		loadedSkills.addAll(taskTracker.getLoadedSkills());
 
-		try (
-			ConversationLogListenerBinding.Binding b1 = ConversationLogListenerBinding.bind(logListener);
-			TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(taskStore);
-			UserInteractionStoreBinding.Binding b3 = UserInteractionStoreBinding.bind(interactionStore);
-			LoadedSkillsBinding.Binding b4 = LoadedSkillsBinding.bind(loadedSkills)) {
+		try (AgentEnvironment env =
+				AgentEnvironment.open(logListener, taskStore, interactionStore, loadedSkills)) {
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);

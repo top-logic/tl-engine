@@ -23,8 +23,7 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
+import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -33,13 +32,8 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -158,11 +152,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 
 		ToolContext context = ToolContext.createUnrestricted();
-		try (
-			TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(new TaskStore());
-			UserInteractionStoreBinding.Binding b2 = UserInteractionStoreBinding.bind(new UserInteractionStore());
-			ConversationLogListenerBinding.Binding b3 =
-				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
+		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			Map<String, Object> args = parameters != null ? parameters : Map.of();
 			return ToolExecutions.execute(tool, args, context).text();
 		} catch (Exception ex) {
@@ -268,11 +258,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 		ToolContext context = ToolContext.createUnrestricted();
-		try (
-			TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(new TaskStore());
-			UserInteractionStoreBinding.Binding b2 = UserInteractionStoreBinding.bind(new UserInteractionStore());
-			ConversationLogListenerBinding.Binding b3 =
-				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
+		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			int messageCountBefore = conversation.size();
 			loop.run(conversation, context, event -> {
 				/** no event listener setup for a tlscript function */
@@ -313,11 +299,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		ToolContext context = ToolContext.createUnrestricted();
 
-		try (
-			TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(new TaskStore());
-			UserInteractionStoreBinding.Binding b2 = UserInteractionStoreBinding.bind(new UserInteractionStore());
-			ConversationLogListenerBinding.Binding b3 =
-				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
+		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			return factory.runAgent(agentName, conversation, null, context, event -> {
 				/** no event listener setup for a tlscript function */
 				// event.toString();

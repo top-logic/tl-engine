@@ -454,26 +454,28 @@ public class ChatServlet extends TopLogicServlet {
 				.setId(sessionId)
 				.setTitle(ChatHistoryService.getTitle(session));
 
-			// Return serialized messages from the now-active Chat
+			// Prefer the live ConversationLog of the now-active session: it includes the
+			// open turn of an in-flight run, whose transcript is only persisted at run end.
+			// Only sessions without server-side state fall back to the persisted
+			// per-execution transcripts.
+			String messagesJson = null;
 			if (tracker != null) {
 				ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
-				response.setMessagesJson(ConversationLogSerializer.toJson(convLog));
+				if (convLog.turnCount() > 0) {
+					messagesJson = ConversationLogSerializer.toJson(convLog);
+				}
 			}
-
-			// Populate structured turns directly from the persisted per-execution transcripts
-			// (no domain round-trip). Going through deserialize→domain→re-serialize would lose
-			// fields like durationMs and totalUsage that only exist on the DTO.
-			String messagesJson = ChatHistoryService.loadConversationJson(session);
+			if (messagesJson == null) {
+				messagesJson = ChatHistoryService.loadConversationJson(session);
+			}
 			if (messagesJson != null && !messagesJson.isEmpty()) {
+				response.setMessagesJson(messagesJson);
 				PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
 					new JsonReader(new StringR(messagesJson)));
 				for (PersistedTurn turn : conv.getTurns()) {
 					computeContentHtml(turn);
 				}
 				response.setTurnsJson(serializeTurns(conv.getTurns()));
-				if (tracker == null) {
-					response.setMessagesJson(messagesJson);
-				}
 			}
 
 			resp.getWriter().write(DtoMapper.toJson(response));

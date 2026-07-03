@@ -28,6 +28,9 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	/** @see #getPrompt() */
 	public static final String PROMPT__PROP = "prompt";
 
+	/** @see #getPayload() */
+	public static final String PAYLOAD__PROP = "payload";
+
 	/** @see #getSessionId() */
 	public static final String SESSION_ID__PROP = "sessionId";
 
@@ -44,6 +47,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	private String _header = "";
 
 	private String _prompt = "";
+
+	private String _payload = "";
 
 	private String _sessionId = "";
 
@@ -121,7 +126,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	}
 
 	/**
-	 * The prompt presented to the responder (raw markdown).
+	 * The prompt presented to the responder (raw markdown). For approvals this is the display
+	 * reason.
 	 */
 	public final String getPrompt() {
 		return _prompt;
@@ -138,6 +144,27 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 	/** Internal setter for {@link #getPrompt()} without chain call utility. */
 	protected final void internalSetPrompt(String value) {
 		_prompt = value;
+	}
+
+	/**
+	 * Structured request data. For approvals this is the tool call's argument JSON, so the client
+	 * can rebuild the approval prompt when the user re-opens the chat.
+	 */
+	public final String getPayload() {
+		return _payload;
+	}
+
+	/**
+	 * @see #getPayload()
+	 */
+	public com.top_logic.ai.chat.api.messages.PendingInteractionDto setPayload(String value) {
+		internalSetPayload(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPayload()} without chain call utility. */
+	protected final void internalSetPayload(String value) {
+		_payload = value;
 	}
 
 	/**
@@ -212,6 +239,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			TYPE__PROP, 
 			HEADER__PROP, 
 			PROMPT__PROP, 
+			PAYLOAD__PROP, 
 			SESSION_ID__PROP, 
 			SESSION_TITLE__PROP, 
 			CREATED_AT__PROP);
@@ -243,6 +271,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case TYPE__PROP: return getType();
 			case HEADER__PROP: return getHeader();
 			case PROMPT__PROP: return getPrompt();
+			case PAYLOAD__PROP: return getPayload();
 			case SESSION_ID__PROP: return getSessionId();
 			case SESSION_TITLE__PROP: return getSessionTitle();
 			case CREATED_AT__PROP: return getCreatedAt();
@@ -257,6 +286,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case TYPE__PROP: internalSetType((String) value); break;
 			case HEADER__PROP: internalSetHeader((String) value); break;
 			case PROMPT__PROP: internalSetPrompt((String) value); break;
+			case PAYLOAD__PROP: internalSetPayload((String) value); break;
 			case SESSION_ID__PROP: internalSetSessionId((String) value); break;
 			case SESSION_TITLE__PROP: internalSetSessionTitle((String) value); break;
 			case CREATED_AT__PROP: internalSetCreatedAt((String) value); break;
@@ -286,6 +316,8 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 		out.value(getHeader());
 		out.name(PROMPT__PROP);
 		out.value(getPrompt());
+		out.name(PAYLOAD__PROP);
+		out.value(getPayload());
 		out.name(SESSION_ID__PROP);
 		out.value(getSessionId());
 		out.name(SESSION_TITLE__PROP);
@@ -301,6 +333,7 @@ public class PendingInteractionDto extends de.haumacher.msgbuf.data.AbstractData
 			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case HEADER__PROP: setHeader(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case PROMPT__PROP: setPrompt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case PAYLOAD__PROP: setPayload(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case SESSION_ID__PROP: setSessionId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case SESSION_TITLE__PROP: setSessionTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case CREATED_AT__PROP: setCreatedAt(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

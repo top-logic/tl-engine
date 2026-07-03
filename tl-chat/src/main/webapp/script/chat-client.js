@@ -1768,6 +1768,15 @@
       const section = Render._inputSection;
       if (!section) return;
 
+      // Already showing this exact approval (e.g. SSE delivered it and the pending-feed
+      // re-surface raced): don't stack a duplicate.
+      if (
+        this._currentPrompt &&
+        this._currentPrompt.dataset.approvalId === data.approvalRequestId
+      ) {
+        return;
+      }
+
       const el = document.createElement("div");
       el.className = "tl-chat-approval";
       el.dataset.approvalId = data.approvalRequestId;
@@ -2034,6 +2043,24 @@
       if (this._interactionEl) {
         this._interactionEl.remove();
         this._interactionEl = null;
+      }
+    },
+
+    /**
+     * Clears any approval or ask-user prompt from the input area. Called on session switch so a
+     * pending request from one chat never lingers in another — approvals/interactions are strictly
+     * per-session, and the one for the chat being opened is re-surfaced from the pending feed.
+     */
+    reset() {
+      if (this._currentPrompt) {
+        this._currentPrompt.remove();
+        this._currentPrompt = null;
+      }
+      Store.activeInteractionRequestId = null;
+      this._removeInteractionUI();
+      if (Render._inputEl) {
+        Render._inputEl.disabled = false;
+        Render._inputEl.placeholder = "Type a message...";
       }
     },
   };
@@ -2401,6 +2428,10 @@
       State.set(State.IDLE);
       Store.currentRun = null;
       if (Render._messagesEl) Render._messagesEl.innerHTML = "";
+      // A pending approval/interaction belongs to the session it was raised in; drop it so it
+      // never bleeds into the chat being switched to (it is re-surfaced there if it is that
+      // session's own pending request).
+      Approval.reset();
       TaskPanel.reset();
       Render.updateInputState();
     },
@@ -2448,6 +2479,8 @@
           console.error("[tl-chat] Failed to load session:", e);
         }
       }
+      // Refresh badges and re-surface this chat's own pending approval (if any).
+      Interactions.poll();
     },
 
     _renderLoadedSession(data) {
@@ -3122,8 +3155,12 @@
               this._listEl.appendChild(item);
             }
           }
-          // Skip the GET — session was just created, nothing to load
-          await this.switchTo(data.id, true);
+          // Load (not skip): the GET is what switches the *server's* active session to the new
+          // one. Skipping it left the server pointing at the previously active chat, so a
+          // background run there kept leaking events into this new chat (blocking its composer)
+          // and the send was rejected as that other session was busy. The new session has no
+          // turns, so the load renders nothing.
+          await this.switchTo(data.id);
           Welcome.show();
         }
       } catch (e) {
@@ -3178,6 +3215,7 @@
   // ========================================================================
   const Interactions = {
     _bySession: {},
+    _all: [],
     _timer: null,
     _POLL_MS: 5000,
 
@@ -3204,16 +3242,42 @@
         const resp = await fetch(withWindow(URLS.interactions));
         if (!resp.ok) return;
         const data = await resp.json();
+        const list = data.interactions || [];
+        this._all = list;
         const bySession = {};
-        (data.interactions || []).forEach((it) => {
+        list.forEach((it) => {
           if (!it.sessionId) return;
           bySession[it.sessionId] = (bySession[it.sessionId] || 0) + 1;
         });
         this._bySession = bySession;
         this.apply();
+        // If the chat in view has a pending approval we're not showing (e.g. it was raised
+        // while another chat was focused, so its SSE event was suppressed), surface it now.
+        this.surfaceApprovalFor(Session.currentId);
       } catch (e) {
         // Non-fatal: badges just won't refresh this cycle.
       }
+    },
+
+    /**
+     * Rebuilds the actionable approval prompt for a pending tool approval in the given chat, if one
+     * exists and none is already shown. Questions/choices re-surface on their own via the SSE
+     * interaction poll when the chat is reopened; approvals have no such server poll, so we rebuild
+     * them here from the pending feed (which carries the tool name, reason, and argument JSON).
+     */
+    surfaceApprovalFor(sessionId) {
+      if (!sessionId || Approval._currentPrompt) return;
+      const it = this._all.find(
+        (x) => x.sessionId === sessionId && x.type === "approval",
+      );
+      if (!it) return;
+      Approval.showPrompt({
+        approvalRequestId: it.requestId,
+        toolName: it.header,
+        displayReason: it.prompt,
+        argsJson: it.payload || "",
+      });
+      State.set(State.AWAITING_APPROVAL);
     },
 
     countFor(sessionId) {

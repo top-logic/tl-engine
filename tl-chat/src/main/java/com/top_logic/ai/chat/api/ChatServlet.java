@@ -446,6 +446,7 @@ public class ChatServlet extends TopLogicServlet {
 				.setType(interactionTypeName(request.getType()))
 				.setHeader(request.getHeader())
 				.setPrompt(request.getPrompt())
+				.setPayload(request.getPayload())
 				.setSessionId(getObjectId(session))
 				.setSessionTitle(session.getTitle());
 			Date createdAt = request.getCreatedAt();

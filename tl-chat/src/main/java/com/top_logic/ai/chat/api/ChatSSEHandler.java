@@ -503,7 +503,12 @@ public class ChatSSEHandler implements AgentEventListener {
 	}
 
 	private void pollUserInteractions() {
-		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
+		// Only the run whose session is being viewed may surface its questions here; a background
+		// run's ask-user prompts must not appear in the foreground chat. On switching back, the new
+		// SSE handler re-emits this session's still-pending interactions (its emitted-id set is
+		// fresh), so nothing is lost.
+		ChatProcessor.AIProcessingState procState =
+			_tracker.getProcessingStateForSession(_tracker.getActiveSessionId());
 		if (procState == null) {
 			return;
 		}

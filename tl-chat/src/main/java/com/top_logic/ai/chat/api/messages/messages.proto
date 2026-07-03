@@ -208,9 +208,16 @@ message PendingInteractionDto {
 	string header;
 
 	/**
-	 * The prompt presented to the responder (raw markdown).
+	 * The prompt presented to the responder (raw markdown). For approvals this is the display
+	 * reason.
 	 */
 	string prompt;
+
+	/**
+	 * Structured request data. For approvals this is the tool call's argument JSON, so the client
+	 * can rebuild the approval prompt when the user re-opens the chat.
+	 */
+	string payload;
 
 	/**
 	 * ID of the chat session that raised this request.

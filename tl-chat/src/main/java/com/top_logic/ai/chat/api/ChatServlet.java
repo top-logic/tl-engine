@@ -29,6 +29,7 @@ import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -380,9 +381,12 @@ public class ChatServlet extends TopLogicServlet {
 
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state != null) {
-			ChatProcessor.applyPollUpdates(state, tracker.getChat(), tracker);
+			// Flush into the run's own captured chat, not the currently active one: with
+			// concurrent runs a background run's messages must not leak into another session.
+			Chat stateChat = state.getChat();
+			ChatProcessor.applyPollUpdates(state, stateChat != null ? stateChat : tracker.getChat(), tracker);
 		}
-		boolean processing = ChatProcessor.isProcessing(tracker);
+		boolean processing = tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId());
 		String currentTaskId = ChatProcessor.getCurrentTaskId(tracker);
 
 		ChatUpdatesResponse response = DtoMapper.toUpdatesResponse(tracker, processing, currentTaskId);

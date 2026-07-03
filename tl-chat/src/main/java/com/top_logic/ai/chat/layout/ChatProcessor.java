@@ -179,7 +179,15 @@ public class ChatProcessor {
 				Logger.warn("No SSE handler found for tracker — streaming may not reach the browser.",
 					ChatProcessor.class);
 			}
+			String runSessionId = state.getSessionId();
 			AgentEventListener sseForwarder = event -> {
+				// Stream only while this run's session is the one being viewed: with
+				// concurrent runs in different sessions, a background run's events would
+				// otherwise render into the wrong chat. Its progress is recovered from the
+				// live log when the user switches back (reattach path).
+				if (runSessionId != null && !runSessionId.equals(taskTracker.getActiveSessionId())) {
+					return;
+				}
 				ChatSSEHandler currentHandler = ChatSSEHandler.findHandler(taskTracker);
 				if (currentHandler != null) {
 					currentHandler.onEvent(event);
@@ -303,7 +311,8 @@ public class ChatProcessor {
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments) {
-		if (isProcessing(tracker)) {
+		// Busy is per chat session: a run in another session must not block this one.
+		if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
 			return SendResult.busy();
 		}

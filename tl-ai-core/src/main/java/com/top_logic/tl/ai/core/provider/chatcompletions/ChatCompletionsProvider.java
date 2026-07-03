@@ -418,6 +418,23 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 						handler.onEvent(new StreamEvent.TextDelta(state._textContentIndex, text));
 					}
 				}
+				// Reasoning models (DeepSeek-R1, Qwen, GLM, ...) stream their chain of thought in a
+				// separate delta field — "reasoning_content" (most) or "reasoning" (some). Surface it
+				// as a thinking block so it renders live instead of appearing frozen during the
+				// often-long reasoning phase.
+				case "reasoning_content", "reasoning" -> {
+					String text = normalizeContent(json);
+					if (text != null && !text.isEmpty()) {
+						if (!state._thinkingOpen) {
+							state._thinkingContentIndex = state._nextContentIndex++;
+							state._accumulator.addBlock(state._thinkingContentIndex, "thinking", null, null);
+							handler.onEvent(new StreamEvent.ThinkingStart(state._thinkingContentIndex));
+							state._thinkingOpen = true;
+						}
+						state._accumulator.appendText(state._thinkingContentIndex, text);
+						handler.onEvent(new StreamEvent.ThinkingDelta(state._thinkingContentIndex, text));
+					}
+				}
 				case "tool_calls" -> processToolCalls(json, state, handler);
 				default -> json.skipValue();
 			}
@@ -507,6 +524,9 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * has no per-block end signal, so all open blocks are closed when the stream terminates.
 	 */
 	private static void closeOpenBlocks(DeltaState state, StreamHandler handler) {
+		if (state._thinkingOpen) {
+			handler.onEvent(new StreamEvent.ThinkingEnd(state._thinkingContentIndex));
+		}
 		if (state._textOpen) {
 			handler.onEvent(new StreamEvent.TextEnd(state._textContentIndex));
 		}
@@ -529,6 +549,10 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 		int _textContentIndex = -1;
 
 		boolean _textOpen = false;
+
+		int _thinkingContentIndex = -1;
+
+		boolean _thinkingOpen = false;
 
 		final LinkedHashMap<Integer, Integer> _toolContentIndex = new LinkedHashMap<>();
 	}

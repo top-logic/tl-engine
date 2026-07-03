@@ -267,6 +267,50 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 		assertFalse("A truncated stream must not yield a MessageComplete.", hasComplete);
 	}
 
+	/**
+	 * Reasoning models stream their chain of thought in {@code delta.reasoning_content} before the
+	 * answer arrives in {@code delta.content}. The reasoning must surface as a thinking block
+	 * (ThinkingStart/Delta/End) so the UI shows it live, and the answer as a normal text block.
+	 */
+	public void testReasoningContentBecomesThinking() throws Exception {
+		String sse = ""
+			+ "data: {\"id\":\"chatcmpl-09\",\"model\":\"qwen3.6\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{\"reasoning_content\":\"Let me\"},\"finish_reason\":null}]}\n\n"
+
+			+ "data: {\"id\":\"chatcmpl-09\",\"model\":\"qwen3.6\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{\"reasoning_content\":\" think\"},\"finish_reason\":null}]}\n\n"
+
+			+ "data: {\"id\":\"chatcmpl-09\",\"model\":\"qwen3.6\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Answer\"},\"finish_reason\":null}]}\n\n"
+
+			+ "data: {\"id\":\"chatcmpl-09\",\"model\":\"qwen3.6\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],"
+			+ "\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":7}}\n\n"
+
+			+ "data: [DONE]\n\n";
+
+		List<StreamEvent> events = _provider.parse(toStream(sse));
+		StreamEventContractAssertions.assertValidStream(events);
+
+		String thinking = events.stream()
+			.filter(StreamEvent.ThinkingDelta.class::isInstance)
+			.map(StreamEvent.ThinkingDelta.class::cast)
+			.map(StreamEvent.ThinkingDelta::text)
+			.reduce("", String::concat);
+		assertEquals("Let me think", thinking);
+		assertTrue("Expected a ThinkingStart before the deltas.",
+			events.stream().anyMatch(StreamEvent.ThinkingStart.class::isInstance));
+		assertTrue("Expected a ThinkingEnd at stream close.",
+			events.stream().anyMatch(StreamEvent.ThinkingEnd.class::isInstance));
+
+		String text = events.stream()
+			.filter(StreamEvent.TextDelta.class::isInstance)
+			.map(StreamEvent.TextDelta.class::cast)
+			.map(StreamEvent.TextDelta::text)
+			.reduce("", String::concat);
+		assertEquals("Answer", text);
+	}
+
 	private static ToolCall findToolCall(List<StreamEvent> events) {
 		return events.stream()
 			.filter(StreamEvent.MessageComplete.class::isInstance)

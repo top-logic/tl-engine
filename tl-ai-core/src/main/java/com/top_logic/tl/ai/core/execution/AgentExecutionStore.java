@@ -545,11 +545,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * @param payload
 	 *        Structured request data, e.g. the tool name and the actual argument JSON of an
 	 *        approval; may be <code>null</code>.
-	 * @param responder
-	 *        The person expected to respond; may be <code>null</code> if any user may respond.
 	 */
 	public InteractionRequest createInteraction(AgentExecution execution, InteractionType type,
-			String requestId, String header, String prompt, String payload, Person responder) {
+			String requestId, String header, String prompt, String payload) {
 		return write(() -> {
 		try (Transaction tx = beginTx("Create interaction request " + requestId)) {
 			InteractionRequest request = TlAiAgentFactory.getInstance().createInteractionRequest();
@@ -560,6 +558,13 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			request.setHeader(header);
 			request.setPrompt(prompt);
 			request.setPayload(payload);
+			// The session owner is the person expected to respond (for chat sessions the
+			// chatting user); a session without an owner leaves the request open to any user.
+			// Resolved here on the writer thread, whose fresh system interaction sees KB HEAD and
+			// thus the just-recorded execution/session — unlike the calling agent thread, whose
+			// revision view is intentionally pinned to before the execution was recorded.
+			AgentSession session = execution.getSession();
+			Person responder = session == null ? null : session.getOwner();
 			if (responder != null) {
 				request.setResponder(responder);
 			}

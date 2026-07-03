@@ -51,10 +51,11 @@ public final class InteractionRecorder {
 			return null;
 		}
 		try {
-			// The session owner is the person expected to respond (for chat sessions the
-			// chatting user); sessions without an owner leave the request open to any user.
+			// The responder (session owner) is resolved inside createInteraction on the store's
+			// writer thread; dereferencing execution.getSession() here on the agent thread would
+			// fail, as this thread's KB view predates the just-recorded execution.
 			return AgentExecutionStore.getInstance().createInteraction(execution, type, requestId,
-				header, prompt, payload, execution.getSession().getOwner());
+				header, prompt, payload);
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to record interaction request " + requestId + ": " + ex.getMessage(),
 				ex, InteractionRecorder.class);

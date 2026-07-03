@@ -430,6 +430,13 @@
 					<method name="isCompatibleValue" class="com.top_logic.model.search.expr.config.operations.IsCompatibleValue$Builder"/>
 					<method name="singleElement" class="com.top_logic.model.search.expr.config.operations.SingleElementBuilder"/>
 					<method name="singleton" class="com.top_logic.model.search.expr.config.operations.SingletonBuilder"/>
+					<method name="canRead" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Read"/>
+					<method name="canWrite" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Write"/>
+					<method name="canDelete" class="com.top_logic.model.search.expr.config.operations.CanAccess$Builder" command-group="Delete"/>
+					<method name="canReadAttribute" class="com.top_logic.model.search.expr.config.operations.CanAccessAttribute$Builder" command-group="Read"/>
+					<method name="canWriteAttribute" class="com.top_logic.model.search.expr.config.operations.CanAccessAttribute$Builder" command-group="Write"/>
+					<method name="canCreate" class="com.top_logic.model.search.expr.config.operations.CanCreate$Builder"/>
+					<method name="canExecute" class="com.top_logic.model.search.expr.config.operations.CanExecute$Builder"/>
 					<method name="fill" class="com.top_logic.model.search.expr.Fill$Builder"/>
 					<method name="associationNavigation" class="com.top_logic.model.search.expr.config.operations.AssociationNavigationBuilder"/>
 					<method name="all" class="com.top_logic.model.search.expr.config.operations.AllBuilder"/>

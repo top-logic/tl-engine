@@ -1,0 +1,39 @@
+<h2>Syntax</h2>
+
+<pre><code>$object.canDelete()
+
+canDelete($object)
+</code></pre>
+
+<h2>Description</h2>
+
+<p>Checks whether the currently logged-in user is allowed to delete the given object and returns a boolean.</p>
+
+<p>The function never fails and never filters; it lets a script check delete access up front instead of running into the permission error that <code class="hljs inlineCode">delete</code> would raise for a non-deletable object.</p>
+
+<p>The check is evaluated for the currently logged-in user and follows the same rules as the implicit permission enforcement: deny-by-default, role inheritance along the security hierarchy, and full access for administrators or executions in a system context.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Type</th><th>Type Description</th><th>Mandatory</th><th>Default</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>object</td><td>Business object</td><td>The object whose delete access is checked.</td><td>yes</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Boolean</p>
+
+<p><code class="hljs inlineCode">true</code> if the current user may delete the object, <code class="hljs inlineCode">false</code> otherwise (in particular for <code class="hljs inlineCode">null</code>).</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1</h3>
+
+<pre><code>if($obsolete.canDelete(), $obsolete.delete(), null)</code></pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> Deletes the object only if the logged-in user is allowed to &ndash; otherwise nothing happens, without a permission error.</p>

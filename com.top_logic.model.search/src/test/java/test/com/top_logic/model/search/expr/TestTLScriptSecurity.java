@@ -36,6 +36,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -547,6 +548,143 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			assertNull("A read-denied attribute must not be copied.", otherCopy.tValueByName("budget"));
 			tx.rollback();
 		}
+	}
+
+	/**
+	 * {@code canRead(...)} reports the read access without failing or filtering: the responsible's
+	 * account may read both projects.
+	 */
+	public void testCanReadForResponsible() throws Exception {
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search("p -> canRead($p)"), _p1));
+		assertTrue((Boolean) execute(search("p -> canRead($p)"), _p2));
+	}
+
+	/**
+	 * {@code canRead(...)} for a member (ProjectReader on its project only): {@code p1} readable,
+	 * {@code p2} not.
+	 */
+	public void testCanReadForMember() throws Exception {
+		becomeUser(_reader);
+		assertTrue((Boolean) execute(search("p -> canRead($p)"), _p1));
+		assertFalse((Boolean) execute(search("p -> canRead($p)"), _p2));
+	}
+
+	/**
+	 * {@code canRead(...)} is {@code false} for a roleless user (deny-by-default), instead of
+	 * throwing.
+	 */
+	public void testCanReadDeniedForRoleless() throws Exception {
+		becomeUser(_other);
+		assertFalse((Boolean) execute(search("p -> canRead($p)"), _p1));
+	}
+
+	/**
+	 * {@code canWrite(...)} distinguishes the responsible (write granted) from a read-only member.
+	 */
+	public void testCanWrite() throws Exception {
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search("p -> canWrite($p)"), _p1));
+
+		becomeUser(_reader);
+		assertFalse((Boolean) execute(search("p -> canWrite($p)"), _p1));
+	}
+
+	/**
+	 * {@code canDelete(...)} distinguishes the responsible (delete granted) from a read-only member.
+	 */
+	public void testCanDelete() throws Exception {
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search("p -> canDelete($p)"), _p1));
+
+		becomeUser(_reader);
+		assertFalse((Boolean) execute(search("p -> canDelete($p)"), _p1));
+	}
+
+	/**
+	 * {@code canWriteAttribute(...)} lets a script check write access to an attribute up-front, so it
+	 * can branch instead of running into the {@code set(...)} permission exception.
+	 */
+	public void testCanWriteAttribute() throws Exception {
+		String script = "p -> canWriteAttribute($p, `TestTLScriptSecurity:Project#budget`)";
+
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search(script), _p1));
+
+		becomeUser(_reader);
+		assertFalse((Boolean) execute(search(script), _p1));
+	}
+
+	/**
+	 * {@code canReadAttribute(...)} follows the type-level read access: the member may read
+	 * attributes of {@code p1} (its project) but not of {@code p2}.
+	 */
+	public void testCanReadAttribute() throws Exception {
+		String script = "p -> canReadAttribute($p, `TestTLScriptSecurity:Project#name`)";
+
+		becomeUser(_reader);
+		assertTrue((Boolean) execute(search(script), _p1));
+		assertFalse((Boolean) execute(search(script), _p2));
+	}
+
+	/**
+	 * {@code canCreate(...)} checks the write access to the composition context (adding to
+	 * {@code members}): allowed for the responsible, denied for the read-only member.
+	 */
+	public void testCanCreate() throws Exception {
+		String script = "p -> canCreate($p, `TestTLScriptSecurity:Project#members`)";
+
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search(script), _p1));
+
+		becomeUser(_reader);
+		assertFalse((Boolean) execute(search(script), _p1));
+	}
+
+	/**
+	 * {@code canExecute(...)} checks an operation referenced by its command group id (here the
+	 * built-in {@code Delete}): allowed for the responsible, denied for the read-only member.
+	 */
+	public void testCanExecute() throws Exception {
+		String script = "p -> canExecute($p, \"" + SimpleBoundCommandGroup.DELETE_NAME + "\")";
+
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search(script), _p1));
+
+		becomeUser(_reader);
+		assertFalse((Boolean) execute(search(script), _p1));
+	}
+
+	/**
+	 * {@code canExecute(...)} with an unknown operation name fails with a {@link TopLogicException}.
+	 */
+	public void testCanExecuteUnknownOperation() throws Exception {
+		becomeUser(_user);
+		try {
+			execute(search("p -> canExecute($p, \"NoSuchOperation\")"), _p1);
+			fail("Expected a failure for an unknown operation.");
+		} catch (Throwable ex) {
+			if (!hasCause(ex, TopLogicException.class)) {
+				throw new AssertionError("Expected a TopLogicException for an unknown operation, but got: " + ex, ex);
+			}
+		}
+	}
+
+	/**
+	 * The functions declare named parameters (via their {@code ArgumentDescriptor}), so they can be
+	 * called with named arguments.
+	 */
+	public void testNamedArguments() throws Exception {
+		becomeUser(_user);
+		assertTrue((Boolean) execute(search("p -> canRead(object: $p)"), _p1));
+		assertTrue((Boolean) execute(
+			search("p -> canWriteAttribute(object: $p, attribute: `TestTLScriptSecurity:Project#budget`)"), _p1));
+		assertTrue((Boolean) execute(
+			search("p -> canExecute(object: $p, operation: \"" + SimpleBoundCommandGroup.DELETE_NAME + "\")"), _p1));
+
+		becomeUser(_reader);
+		assertFalse((Boolean) execute(
+			search("p -> canWriteAttribute(object: $p, attribute: `TestTLScriptSecurity:Project#budget`)"), _p1));
 	}
 
 	@SuppressWarnings("unchecked")

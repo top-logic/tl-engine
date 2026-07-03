@@ -95,7 +95,11 @@ public final class AgentRunner {
 			effectiveListener = recorder;
 		}
 
-		int turnsBefore = log != null ? log.turns().size() : 0;
+		// Entry points may start the run's turn before invoking the loop (chat records the
+		// user message first); an open current turn belongs to this run, not to history.
+		int turnsBefore = log != null
+			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
+			: 0;
 
 		AgentFactory.RunResult runResult;
 		try {

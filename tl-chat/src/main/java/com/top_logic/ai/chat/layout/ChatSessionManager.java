@@ -236,15 +236,10 @@ public class ChatSessionManager {
 			try {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session != null) {
-					String json = ChatHistoryService.getMessagesJson(session);
+					String json = ChatHistoryService.loadConversationJson(session);
 					if (json != null && !json.isEmpty()) {
-						if (json.trim().startsWith("{")) {
-							convLog = ConversationLogSerializer.fromJson(json);
-							ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
-						} else {
-							Logger.warn("Session " + sessionId + " has legacy chat format. V2-only load ignores legacy data.",
-								ChatSessionManager.class);
-						}
+						convLog = ConversationLogSerializer.fromJson(json);
+						ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
 					}
 
 					if (_tracker != null) {
@@ -267,7 +262,13 @@ public class ChatSessionManager {
 	}
 
 	/**
-	 * Persists the active session's full state (messages) to the database.
+	 * Persists the active session's metadata to the database.
+	 *
+	 * <p>
+	 * The conversation itself is persisted per run by the agent runner (one transcript per
+	 * execution); only the session-level metadata bag (approved tools, approval mode, tasks,
+	 * loaded skills) is written here.
+	 * </p>
 	 */
 	public void persistActiveSession() {
 		synchronized (_lock) {
@@ -287,14 +288,8 @@ public class ChatSessionManager {
 		try {
 			TLObject session = ChatHistoryService.findSessionById(sessionId);
 			if (session != null) {
-				ConversationLog conversationLog = state._conversationLog;
-				if (conversationLog == null) {
-					conversationLog = new ConversationLog();
-					state._conversationLog = conversationLog;
-				}
-				String json = ConversationLogSerializer.toJson(conversationLog);
 				String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
-				ChatHistoryService.saveMessagesAndMetadata(session, json, metadataJson);
+				ChatHistoryService.saveMetadata(session, metadataJson);
 			}
 		} catch (Exception ex) {
 			Logger.error("Failed to persist session " + sessionId + ": " + ex.getMessage(), ex,

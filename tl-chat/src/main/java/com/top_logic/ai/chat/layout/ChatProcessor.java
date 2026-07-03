@@ -30,6 +30,8 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -41,6 +43,8 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
+import com.top_logic.tl.ai.core.execution.AgentRunner;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -179,8 +183,12 @@ public class ChatProcessor {
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
 			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
-			AgentFactory.RunResult runResult = agentFactory.runAgent(entryPointAgent, conversation, conversationMemory,
-				toolContext, listener, sessionRegistry);
+
+			// Record the run against the session captured at send time (not the currently
+			// active one), so a completed run is never written under the wrong session.
+			AgentSession agentSession = resolveAgentSession(state.getSessionId());
+			AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
+				conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null);
 			if (ToolRegistryReloadFlag.consume()) {
 				// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
 				// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
@@ -355,6 +363,24 @@ public class ChatProcessor {
 	public static String getCurrentTaskId(TaskProgressTracker tracker) {
 		AIProcessingState state = tracker.getAnyActiveProcessingState();
 		return state != null ? state.getCurrentTaskId() : null;
+	}
+
+	/**
+	 * Resolves the {@link AgentSession} for the given session id, or <code>null</code> if the id
+	 * is unknown (recording is then skipped for the run).
+	 */
+	private static AgentSession resolveAgentSession(String sessionId) {
+		if (sessionId == null) {
+			return null;
+		}
+		try {
+			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			return session instanceof AgentSession agentSession ? agentSession : null;
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to resolve agent session " + sessionId + ": " + ex.getMessage(),
+				ChatProcessor.class);
+			return null;
+		}
 	}
 
 	/**

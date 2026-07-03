@@ -331,6 +331,36 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * Deletes the given session with everything recorded under it: tasks, the interaction
+	 * requests of its executions, the executions themselves, and finally the session.
+	 */
+	public void deleteSession(AgentSession session) {
+		if (session == null) {
+			return;
+		}
+		try (Transaction tx = beginTx("Delete agent session")) {
+			List<AgentExecution> executions = executionsOf(session);
+			for (TLObject obj : allInstances(TlAiAgentFactory.getInteractionRequestType())) {
+				InteractionRequest request = (InteractionRequest) obj;
+				if (executions.contains(request.getExecution())) {
+					request.tDelete();
+				}
+			}
+			for (TLObject obj : allInstances(TlAiAgentFactory.getAgentTaskType())) {
+				AgentTask task = (AgentTask) obj;
+				if (session.equals(task.getSession())) {
+					task.tDelete();
+				}
+			}
+			for (AgentExecution execution : executions) {
+				execution.tDelete();
+			}
+			session.tDelete();
+			tx.commit();
+		}
+	}
+
+	/**
 	 * Total token usage of the given execution including all (transitive) child executions.
 	 *
 	 * <p>

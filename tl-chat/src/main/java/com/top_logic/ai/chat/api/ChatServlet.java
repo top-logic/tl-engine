@@ -27,7 +27,6 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
-import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
@@ -459,25 +458,21 @@ public class ChatServlet extends TopLogicServlet {
 			if (tracker != null) {
 				ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
 				response.setMessagesJson(ConversationLogSerializer.toJson(convLog));
-			} else {
-				response.setMessagesJson(ChatHistoryService.getMessagesJson(session));
 			}
 
-			// Populate structured entries directly from persisted JSON (no domain round-trip).
-			// Going through deserialize→domain→re-serialize would lose fields like durationMs
-			// and totalUsage that only exist on the DTO, not on the domain objects.
-			String messagesJson = ChatHistoryService.getMessagesJson(session);
+			// Populate structured turns directly from the persisted per-execution transcripts
+			// (no domain round-trip). Going through deserialize→domain→re-serialize would lose
+			// fields like durationMs and totalUsage that only exist on the DTO.
+			String messagesJson = ChatHistoryService.loadConversationJson(session);
 			if (messagesJson != null && !messagesJson.isEmpty()) {
-				if (messagesJson.trim().startsWith("{")) {
-					PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
-						new JsonReader(new StringR(messagesJson)));
-					for (PersistedTurn turn : conv.getTurns()) {
-						computeContentHtml(turn);
-					}
-					response.setTurnsJson(serializeTurns(conv.getTurns()));
-				} else {
-					Logger.warn("Session " + sessionId + " has legacy chat format. V2-only response omits legacy entries.",
-						ChatServlet.class);
+				PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
+					new JsonReader(new StringR(messagesJson)));
+				for (PersistedTurn turn : conv.getTurns()) {
+					computeContentHtml(turn);
+				}
+				response.setTurnsJson(serializeTurns(conv.getTurns()));
+				if (tracker == null) {
+					response.setMessagesJson(messagesJson);
 				}
 			}
 
@@ -556,27 +551,9 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		// PUT /chat/sessions/{id}/messages
-		if (pathInfo.endsWith("/messages")) {
-			String sessionId = extractSessionIdBeforeSuffix(pathInfo, "/messages");
-			SaveMessagesRequest body;
-			try {
-				body = SaveMessagesRequest.readSaveMessagesRequest(new JsonReader(new StringR(jsonBody)));
-			} catch (Exception e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
-				return;
-			}
-			final String messagesJson = body.getMessagesJson();
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
-				ChatHistoryService.saveMessagesAndTouch(session, messagesJson);
-				resp.setStatus(HttpServletResponse.SC_OK);
-			} else {
-				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			}
-			return;
-		}
-
+		// PUT /chat/sessions/{id}/messages was removed: the server is the only persistence
+		// writer (per-execution transcripts written by the agent runner). Clients must not
+		// push conversation state.
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 

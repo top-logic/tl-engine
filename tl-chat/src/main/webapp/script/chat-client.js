@@ -329,6 +329,10 @@
       if (data.processing) {
         State.set(State.STREAMING);
         Store.resetRun();
+        // Attached to an in-flight run: deltas streamed before this connection are not
+        // replayed, so the streamed text may have a gap. Resync from the server once the
+        // turn completes.
+        Store.reattachedMidRun = true;
       } else {
         State.set(State.IDLE);
       }
@@ -336,6 +340,8 @@
     },
 
     onRunStarted(data) {
+      // Run observed from its start — no missed deltas, no resync needed.
+      Store.reattachedMidRun = false;
       Store.resetRun();
       Store.currentRun.runId = data.runId;
       Store.currentRun.model = data.model;
@@ -479,6 +485,13 @@
     },
 
     onMessageComplete(data) {
+      if (Store.reattachedMidRun) {
+        // The streamed view is incomplete (missed deltas while detached); replace it with
+        // the server's complete conversation instead of patching the last bubble.
+        Store.reattachedMidRun = false;
+        Session.resync();
+        return;
+      }
       Render.swapToRenderedHtml(data.contentHtml);
     },
 
@@ -2330,6 +2343,23 @@
       if (Render._messagesEl) Render._messagesEl.innerHTML = "";
       TaskPanel.reset();
       Render.updateInputState();
+    },
+
+    /**
+     * Re-fetches the current session from the server and re-renders it. Used after
+     * reattaching to a run mid-stream, where the locally streamed text may have gaps.
+     */
+    async resync() {
+      if (!this.currentId) return;
+      try {
+        const resp = await fetch(
+          withWindow(URLS.sessions + "/" + encodeURIComponent(this.currentId)),
+        );
+        const data = await resp.json();
+        this._renderLoadedSession(data);
+      } catch (e) {
+        console.error("[tl-chat] Failed to resync session:", e);
+      }
     },
 
     async switchTo(sessionId, skipLoad) {

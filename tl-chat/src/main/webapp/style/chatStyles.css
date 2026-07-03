@@ -1963,6 +1963,32 @@
 	margin-bottom: 10px;
 }
 
+.tl-chat-approval-args {
+	margin-bottom: 10px;
+	max-height: 240px;
+	overflow: auto;
+	border: 1px solid var(--chat-border, #ddd);
+	border-radius: var(--chat-radius-sm);
+	padding: 6px 8px;
+	background: var(--chat-bg-secondary, #f7f7f7);
+}
+
+.tl-chat-approval-arg-name {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--chat-text-secondary);
+	margin: 4px 0 2px;
+}
+
+.tl-chat-approval-arg-value {
+	font-size: 12px;
+	font-family: var(--chat-font-mono, monospace);
+	white-space: pre-wrap;
+	word-break: break-word;
+	margin: 0;
+	color: var(--chat-text-primary);
+}
+
 .tl-chat-approval-actions {
 	display: flex;
 	gap: 8px;

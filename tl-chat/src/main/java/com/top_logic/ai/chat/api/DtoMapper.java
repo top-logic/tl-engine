@@ -6,15 +6,10 @@
 package com.top_logic.ai.chat.api;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
@@ -26,8 +21,11 @@ import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
-import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.scripting.Converters;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
 
 import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringR;

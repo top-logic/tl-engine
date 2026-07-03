@@ -1775,6 +1775,7 @@
         '<div class="tl-chat-approval-reason">' +
         Utils.escapeHtml(data.displayReason || "") +
         "</div>" +
+        this._renderArgs(data.argsJson) +
         '<div class="tl-chat-approval-actions">' +
         '<button class="tl-chat-approval-btn allow" data-action="APPROVED">Allow</button>' +
         '<button class="tl-chat-approval-btn" data-action="APPROVED_FOR_SESSION">Allow for Session</button>' +
@@ -1819,6 +1820,41 @@
       // Insert at the top of the input section, above the input row
       section.insertBefore(el, section.firstChild);
       this._currentPrompt = el;
+    },
+
+    /**
+     * Renders the tool call's arguments so the user can judge what they are approving
+     * (e.g. the actual TL-Script source for executeTLScript). String values are shown
+     * raw in a <pre> block to preserve line breaks; other values as pretty JSON.
+     */
+    _renderArgs(argsJson) {
+      if (!argsJson || argsJson === "{}") return "";
+      let parsed = null;
+      try {
+        parsed = JSON.parse(argsJson);
+      } catch (e) {
+        // Not parseable — show the raw string rather than nothing.
+      }
+      let inner = "";
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (const [key, value] of Object.entries(parsed)) {
+          const text =
+            typeof value === "string" ? value : JSON.stringify(value, null, 2);
+          inner +=
+            '<div class="tl-chat-approval-arg-name">' +
+            Utils.escapeHtml(key) +
+            "</div>" +
+            '<pre class="tl-chat-approval-arg-value">' +
+            Utils.escapeHtml(text) +
+            "</pre>";
+        }
+      } else {
+        inner =
+          '<pre class="tl-chat-approval-arg-value">' +
+          Utils.escapeHtml(argsJson) +
+          "</pre>";
+      }
+      return '<div class="tl-chat-approval-args">' + inner + "</div>";
     },
 
     _respond(requestId, outcome, toolName, comment) {

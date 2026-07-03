@@ -10,15 +10,15 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -54,6 +54,19 @@ import com.top_logic.util.model.ModelService;
  * KB context — recording works from any caller context, including read-only ones such as
  * TL-Script evaluation during rendering (whose {@code ImmutableDBContext} cannot commit).
  * Queries run on the calling thread and require a bound TopLogic context.
+ * </p>
+ *
+ * <p>
+ * <b>Invariant:</b> nothing reachable from a KnowledgeBase {@code UpdateListener} (or any other
+ * synchronous commit hook) may call a mutating method of this service — the caller blocks on the
+ * single writer thread, whose commit synchronously notifies those listeners, so such a call
+ * closes a deadlock cycle.
+ * </p>
+ *
+ * <p>
+ * Callers do <em>not</em> automatically see their own writes: writer commits happen in a
+ * separate session, and a subsession's stable view only advances at sanctioned points. The chat
+ * servlet advances the session revision at request begin, which covers all HTTP read-back paths.
  * </p>
  */
 @ServiceDependencies({
@@ -128,7 +141,16 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		// No configurable properties for v1.
 	}
 
-	private ExecutorService _writer;
+	/**
+	 * Maximum seconds a caller waits for its write; recording is best-effort, so a stalled
+	 * commit degrades the caller instead of hanging it (and everything serialized behind it).
+	 */
+	private static final long WRITE_TIMEOUT_SECONDS = 30;
+
+	/** Queue depth above which a warning is logged — a growing queue means a stalled commit. */
+	private static final int QUEUE_WARN_THRESHOLD = 25;
+
+	private ThreadPoolExecutor _writer;
 
 	private volatile Thread _writerThread;
 
@@ -142,12 +164,13 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	@Override
 	protected void startUp() {
 		super.startUp();
-		_writer = Executors.newSingleThreadExecutor(runnable -> {
-			Thread thread = new Thread(runnable, "agent-execution-store");
-			thread.setDaemon(true);
-			_writerThread = thread;
-			return thread;
-		});
+		_writer = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
+			new LinkedBlockingQueue<>(), runnable -> {
+				Thread thread = new Thread(runnable, "agent-execution-store");
+				thread.setDaemon(true);
+				_writerThread = thread;
+				return thread;
+			});
 	}
 
 	@Override
@@ -181,52 +204,36 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	private <T> T write(Supplier<T> mutation) {
 		if (Thread.currentThread() == _writerThread) {
-			// Re-entrant call from a mutation (e.g. deleteSession -> executionsOf is a read,
-			// but guard against future nesting): run directly.
+			// Defensive: no mutation currently calls another mutator, so this branch is
+			// unreachable. If future code makes it reachable, running directly avoids a
+			// self-submit deadlock (single writer thread waiting on its own queue).
 			return mutation.get();
 		}
-		ExecutorService writer = _writer;
+		ThreadPoolExecutor writer = _writer;
 		if (writer == null) {
 			throw new IllegalStateException("AgentExecutionStore is not started.");
 		}
+		int queued = writer.getQueue().size();
+		if (queued > QUEUE_WARN_THRESHOLD) {
+			Logger.warn("Agent-data writer queue depth is " + queued
+				+ " — a commit is stalled or writes outpace the writer.", AgentExecutionStore.class);
+		}
 		try {
-			T result = writer.submit(
+			return writer.submit(
 				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, mutation::get))
-				.get();
-			publishToCaller();
-			return result;
+				.get(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw new RuntimeException("Interrupted while writing agent execution data.", ex);
+		} catch (TimeoutException ex) {
+			throw new RuntimeException("Timed out after " + WRITE_TIMEOUT_SECONDS
+				+ "s waiting for the agent-data writer; the write may still complete.", ex);
 		} catch (ExecutionException ex) {
 			Throwable cause = ex.getCause();
 			if (cause instanceof RuntimeException runtime) {
 				throw runtime;
 			}
 			throw new RuntimeException("Failed to write agent execution data: " + cause.getMessage(), cause);
-		}
-	}
-
-	/**
-	 * Advances the calling subsession's KB revision past the writer thread's commit.
-	 *
-	 * <p>
-	 * TopLogic subsessions read at a stable session revision that only advances with their own
-	 * commits — a commit made by the writer thread's separate session is invisible to the caller
-	 * without this (read-your-own-writes): a freshly created session would 404 on the next
-	 * request of the same browser session. Best-effort: without a bound interaction (or in
-	 * contexts that refuse the update) the caller keeps its current view.
-	 * </p>
-	 */
-	private static void publishToCaller() {
-		if (ThreadContextManager.getInteraction() == null) {
-			return;
-		}
-		try {
-			HistoryUtils.updateSessionRevision();
-		} catch (RuntimeException ex) {
-			Logger.info("Could not advance session revision after agent-data write: " + ex.getMessage(),
-				AgentExecutionStore.class);
 		}
 	}
 

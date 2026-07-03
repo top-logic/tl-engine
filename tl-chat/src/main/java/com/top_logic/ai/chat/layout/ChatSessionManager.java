@@ -206,13 +206,15 @@ public class ChatSessionManager {
 		if (sessionId == null) {
 			return;
 		}
+		PersistJob outgoing;
 		synchronized (_lock) {
 			if (sessionId.equals(_activeSessionId)) {
 				return;
 			}
 
-			// Persist current session before switching
-			persistActiveSessionInternal();
+			// Snapshot the outgoing session's metadata under the lock; the actual KB write
+			// happens after the lock is released (see persistOutsideLock).
+			outgoing = preparePersist();
 
 			// Reset tracker state immediately so it is never retained from the previous session,
 			// regardless of whether the new session is found in the LRU cache or loaded from DB.
@@ -259,6 +261,7 @@ public class ChatSessionManager {
 			_sessions.put(sessionId, newState);
 			_activeSessionId = sessionId;
 		}
+		persistOutsideLock(outgoing);
 	}
 
 	/**
@@ -271,28 +274,48 @@ public class ChatSessionManager {
 	 * </p>
 	 */
 	public void persistActiveSession() {
+		PersistJob job;
 		synchronized (_lock) {
-			persistActiveSessionInternal();
+			job = preparePersist();
 		}
+		persistOutsideLock(job);
 	}
 
-	private void persistActiveSessionInternal() {
+	/** Snapshot of what to persist, taken under {@link #_lock}. */
+	private record PersistJob(String sessionId, String metadataJson) {}
+
+	/**
+	 * Computes the active session's persistable metadata. Must be called under {@link #_lock}.
+	 */
+	private PersistJob preparePersist() {
 		String sessionId = _activeSessionId;
 		if (sessionId == null) {
-			return;
+			return null;
 		}
-		SessionState state = _sessions.get(sessionId);
-		if (state == null) {
+		if (_sessions.get(sessionId) == null) {
+			return null;
+		}
+		String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
+		return new PersistJob(sessionId, metadataJson);
+	}
+
+	/**
+	 * Executes the KB write of a prepared snapshot. Must be called WITHOUT holding
+	 * {@link #_lock}: the write blocks on the {@code AgentExecutionStore} writer thread, and a
+	 * stalled commit must not freeze all session switching and chat state access behind the
+	 * lock.
+	 */
+	private void persistOutsideLock(PersistJob job) {
+		if (job == null) {
 			return;
 		}
 		try {
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			TLObject session = ChatHistoryService.findSessionById(job.sessionId());
 			if (session != null) {
-				String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
-				ChatHistoryService.saveMetadata(session, metadataJson);
+				ChatHistoryService.saveMetadata(session, job.metadataJson());
 			}
 		} catch (Exception ex) {
-			Logger.error("Failed to persist session " + sessionId + ": " + ex.getMessage(), ex,
+			Logger.error("Failed to persist session " + job.sessionId() + ": " + ex.getMessage(), ex,
 				ChatSessionManager.class);
 		}
 	}

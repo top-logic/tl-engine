@@ -36,6 +36,8 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
@@ -92,6 +94,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path: /chat/send or /chat/updates");
@@ -122,6 +125,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path: /chat/updates or /chat/events");
@@ -144,6 +148,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -158,6 +163,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -699,6 +705,29 @@ public class ChatServlet extends TopLogicServlet {
 	private static String extractSessionIdBeforeSuffix(String pathInfo, String suffix) {
 		String withoutSuffix = pathInfo.substring(0, pathInfo.length() - suffix.length());
 		return extractSessionId(withoutSuffix);
+	}
+
+	/**
+	 * Advances the subsession's KB revision at request begin so this request sees all commits
+	 * made so far — in particular the {@code AgentExecutionStore} writer thread's commits from a
+	 * previous request (session created, execution recorded), which a subsession's stable view
+	 * would otherwise not include (read-your-own-writes).
+	 *
+	 * <p>
+	 * Request begin is a sanctioned advance point: no KB transaction is open on this thread and
+	 * no rendering is in progress, so the update cannot merge into (and poison) an open business
+	 * transaction or produce an inconsistent view.
+	 * </p>
+	 */
+	private static void advanceSessionRevision() {
+		if (ThreadContextManager.getInteraction() == null) {
+			return;
+		}
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (RuntimeException ex) {
+			Logger.info("Could not advance session revision: " + ex.getMessage(), ChatServlet.class);
+		}
 	}
 
 	private static String getObjectId(TLObject obj) {

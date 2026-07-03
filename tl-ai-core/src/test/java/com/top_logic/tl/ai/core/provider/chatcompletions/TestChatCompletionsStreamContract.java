@@ -220,6 +220,53 @@ public class TestChatCompletionsStreamContract extends AbstractProviderStreamTes
 		assertEquals(4096, complete.usage().promptTokens());
 	}
 
+	/**
+	 * Some OpenAI-compatible servers (and some local servers) end the stream after the final
+	 * chunk without the trailing {@code data: [DONE]} sentinel. As long as the model signalled a
+	 * {@code finish_reason}, the response is whole and must still yield a
+	 * {@link StreamEvent.MessageComplete} rather than failing the run.
+	 */
+	public void testMissingDoneSentinelStillCompletes() throws Exception {
+		String sse = ""
+			+ "data: {\"id\":\"chatcmpl-07\",\"model\":\"glm-4.7-flash\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"finish_reason\":null}]}\n\n"
+
+			+ "data: {\"id\":\"chatcmpl-07\",\"model\":\"glm-4.7-flash\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],"
+			+ "\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":5}}\n\n";
+		// No "data: [DONE]" line.
+
+		List<StreamEvent> events = _provider.parse(toStream(sse));
+		StreamEventContractAssertions.assertValidStream(events);
+
+		StreamEvent.MessageComplete complete = events.stream()
+			.filter(StreamEvent.MessageComplete.class::isInstance)
+			.map(StreamEvent.MessageComplete.class::cast)
+			.findFirst().orElseThrow();
+		// "stop" is normalized to the internal "end_turn" by mapFinishReason.
+		assertEquals("end_turn", complete.finishReason());
+	}
+
+	/**
+	 * When the stream is cut mid-response — no {@code finish_reason} and no {@code [DONE]} — the
+	 * accumulated content may be truncated, so the parser must surface a {@link StreamEvent.Error}
+	 * (which the loop turns into a clear provider error) instead of an opaque
+	 * "No MessageComplete event received" or a partial message delivered as complete.
+	 */
+	public void testPrematureStreamEndReportsError() throws Exception {
+		String sse = ""
+			+ "data: {\"id\":\"chatcmpl-08\",\"model\":\"glm-4.7-flash\","
+			+ "\"choices\":[{\"index\":0,\"delta\":{\"content\":\"I'll explore\"},\"finish_reason\":null}]}\n\n";
+		// Connection drops here: no finish_reason chunk, no [DONE].
+
+		List<StreamEvent> events = _provider.parse(toStream(sse));
+
+		boolean hasError = events.stream().anyMatch(StreamEvent.Error.class::isInstance);
+		boolean hasComplete = events.stream().anyMatch(StreamEvent.MessageComplete.class::isInstance);
+		assertTrue("Expected a StreamEvent.Error for a truncated stream.", hasError);
+		assertFalse("A truncated stream must not yield a MessageComplete.", hasComplete);
+	}
+
 	private static ToolCall findToolCall(List<StreamEvent> events) {
 		return events.stream()
 			.filter(StreamEvent.MessageComplete.class::isInstance)

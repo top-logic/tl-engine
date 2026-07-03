@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
@@ -268,6 +269,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 
 		handler.onEvent(new StreamEvent.StreamStart());
 
+		boolean completed = false;
 		SSEReader.Event event;
 		try (SSEReader sse = new SSEReader(input)) {
 			while ((event = sse.next()) != null) {
@@ -286,6 +288,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 						messageId, model,
 						finishReason != null ? finishReason : "end_turn",
 						usage, content));
+					completed = true;
 					break;
 				}
 
@@ -351,6 +354,33 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 						}
 					}
 					json.endObject();
+				}
+			}
+
+			// The stream closed without the "[DONE]" sentinel. Distinguish two cases instead of
+			// failing the whole run with an opaque "No MessageComplete event received":
+			if (!completed) {
+				closeOpenBlocks(state, handler);
+				if (finishReason != null) {
+					// The model signalled completion; the server merely omitted "[DONE]" (some
+					// OpenAI-compatible servers do). The response is whole — finalize it normally.
+					Logger.info("Chat Completions stream ended without a [DONE] sentinel; finalizing "
+						+ "from the received chunks (finishReason=" + finishReason + ").",
+						ChatCompletionsProvider.class);
+					List<ContentPart> content = state._accumulator.buildContentParts();
+					TokenUsage usage =
+						TokenUsage.fromCacheInclusivePrompt(inputTokens, cachedTokens, outputTokens, 0);
+					handler.onEvent(new StreamEvent.MessageComplete(
+						messageId, model, finishReason, usage, content));
+				} else {
+					// No finish signal and no sentinel: the connection dropped mid-response, so any
+					// accumulated content (including tool calls) may be truncated. Surface a clear
+					// provider error rather than delivering a partial message as if complete.
+					handler.onEvent(new StreamEvent.Error(
+						"Provider stream ended prematurely without a completion signal — the response "
+							+ "was likely truncated by the model server (timeout, context limit, or "
+							+ "model reload). Please retry.",
+						ProviderException.Kind.UNKNOWN));
 				}
 			}
 		} catch (IOException e) {

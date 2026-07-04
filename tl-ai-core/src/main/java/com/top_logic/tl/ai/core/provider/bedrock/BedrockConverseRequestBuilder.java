@@ -22,6 +22,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.DataUris;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -191,8 +192,7 @@ public final class BedrockConverseRequestBuilder {
 	private static Map<String, Object> buildImageBlock(ImageContent image) {
 		String base64Data;
 		if (image.url().startsWith("data:")) {
-			int commaIdx = image.url().indexOf(',');
-			base64Data = commaIdx >= 0 ? image.url().substring(commaIdx + 1) : image.url();
+			base64Data = DataUris.base64Payload(image.url());
 		} else {
 			// Bedrock Converse requires raw bytes — URLs are not supported.
 			// Fall back to a text placeholder rather than silently dropping the image.

@@ -24,6 +24,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
 import com.top_logic.tl.ai.core.provider.AuthScheme;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
+import com.top_logic.tl.ai.core.provider.ErrorClassifier;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.SSEReader;
@@ -661,16 +662,9 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 		Duration retryAfter = parseRetryAfter(response.headers());
 		String message = parseErrorMessage(body);
 
-		ProviderException.Kind kind = switch (status) {
-			case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
-			case 429 -> ProviderException.Kind.RATE_LIMITED;
-			default -> {
-				if (status >= 500) {
-					yield ProviderException.Kind.OVERLOADED;
-				}
-				yield ProviderException.Kind.INVALID_REQUEST;
-			}
-		};
+		// Chat-completions error bodies carry no reliable machine-readable code, so classify by
+		// HTTP status alone.
+		ProviderException.Kind kind = ErrorClassifier.classify(null, status, null);
 
 		throw new ProviderException(kind, status, message, retryAfter, null);
 	}

@@ -17,6 +17,7 @@ import java.util.Objects;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
+import com.top_logic.tl.ai.core.provider.ErrorClassifier;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.SSEReader;
@@ -277,38 +278,36 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	}
 
 	/**
-	 * Classifies an Anthropic API error using the {@code error.type} string and HTTP status code.
-	 * The type field is authoritative; the status code is the fallback.
+	 * Maps Anthropic {@code error.type} strings to a {@link ProviderException.Kind}. The type field
+	 * is authoritative; unmapped types fall through to the HTTP status code.
 	 */
-	private static ProviderException.Kind classifyError(String errorType, int statusCode) {
-		ProviderException.Kind kind = switch (errorType) {
-			case "authentication_error", "permission_error" -> ProviderException.Kind.AUTHENTICATION;
-			case "billing_error" -> ProviderException.Kind.BILLING;
-			case "rate_limit_error" -> ProviderException.Kind.RATE_LIMITED;
-			case "overloaded_error" -> ProviderException.Kind.OVERLOADED;
-			case "api_error" -> ProviderException.Kind.OVERLOADED;
-			case "timeout_error" -> ProviderException.Kind.OVERLOADED;
-			case "request_too_large" -> ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
-			case "not_found_error" -> ProviderException.Kind.INVALID_REQUEST;
-			case "invalid_request_error" -> ProviderException.Kind.INVALID_REQUEST;
-			default -> null;
-		};
-		if (kind != null) {
-			return kind;
+	private static final Map<String, ProviderException.Kind> ERROR_TYPE_MAP = Map.ofEntries(
+		Map.entry("authentication_error", ProviderException.Kind.AUTHENTICATION),
+		Map.entry("permission_error", ProviderException.Kind.AUTHENTICATION),
+		Map.entry("billing_error", ProviderException.Kind.BILLING),
+		Map.entry("rate_limit_error", ProviderException.Kind.RATE_LIMITED),
+		Map.entry("overloaded_error", ProviderException.Kind.OVERLOADED),
+		Map.entry("api_error", ProviderException.Kind.OVERLOADED),
+		Map.entry("timeout_error", ProviderException.Kind.OVERLOADED),
+		Map.entry("request_too_large", ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED),
+		Map.entry("not_found_error", ProviderException.Kind.INVALID_REQUEST),
+		Map.entry("invalid_request_error", ProviderException.Kind.INVALID_REQUEST));
+
+	/**
+	 * Classifies an Anthropic API error using the {@code error.type} string and HTTP status code.
+	 * The type field is authoritative; the status code is the fallback. Beyond the shared
+	 * {@link ErrorClassifier#classifyByStatus(int) status fallback}, Anthropic additionally maps
+	 * {@code 402} to billing and {@code 413} to a context-window overflow.
+	 */
+	static ProviderException.Kind classifyError(String errorType, int statusCode) {
+		ProviderException.Kind byType = ERROR_TYPE_MAP.get(errorType);
+		if (byType != null) {
+			return byType;
 		}
 		return switch (statusCode) {
-			case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
 			case 402 -> ProviderException.Kind.BILLING;
 			case 413 -> ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
-			case 429 -> ProviderException.Kind.RATE_LIMITED;
-			case 504 -> ProviderException.Kind.OVERLOADED;
-			case 529 -> ProviderException.Kind.OVERLOADED;
-			default -> {
-				if (statusCode >= 500) {
-					yield ProviderException.Kind.OVERLOADED;
-				}
-				yield ProviderException.Kind.INVALID_REQUEST;
-			}
+			default -> ErrorClassifier.classifyByStatus(statusCode);
 		};
 	}
 

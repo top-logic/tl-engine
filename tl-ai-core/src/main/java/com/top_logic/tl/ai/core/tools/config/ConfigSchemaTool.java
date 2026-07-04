@@ -19,6 +19,7 @@ import com.top_logic.layout.editor.DynamicComponentService;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
 /**
  * Tool for retrieving JSON Schema definitions for TopLogic configuration types.
@@ -240,22 +241,7 @@ public class ConfigSchemaTool {
 	 */
 	private static String buildErrorJson(String errorMessage) {
 		// Simple JSON error format
-		return "{\"error\": \"" + escapeJson(errorMessage) + "\"}";
-	}
-
-	/**
-	 * Escapes special characters for JSON string.
-	 */
-	private static String escapeJson(String value) {
-		if (value == null) {
-			return "";
-		}
-		return value
-			.replace("\\", "\\\\")
-			.replace("\"", "\\\"")
-			.replace("\n", "\\n")
-			.replace("\r", "\\r")
-			.replace("\t", "\\t");
+		return "{\"error\": \"" + JsonEscape.escape(errorMessage) + "\"}";
 	}
 
 }

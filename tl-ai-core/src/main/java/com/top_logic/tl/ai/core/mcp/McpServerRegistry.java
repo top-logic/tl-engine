@@ -5,12 +5,16 @@
  */
 package com.top_logic.tl.ai.core.mcp;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -199,73 +203,68 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 			return "{\"type\":\"object\",\"properties\":{}}";
 		}
 
-		StringBuilder sb = new StringBuilder();
-		sb.append("{\"type\":\"").append(schema.type() != null ? schema.type() : "object").append("\"");
+		try {
+			StringW buffer = new StringW();
+			try (JsonWriter json = new JsonWriter(buffer)) {
+				json.beginObject();
+				json.name("type").value(schema.type() != null ? schema.type() : "object");
 
-		Map<String, Object> properties = schema.properties();
-		if (properties != null) {
-			sb.append(",\"properties\":");
-			appendJsonValue(sb, properties);
-		} else {
-			sb.append(",\"properties\":{}");
-		}
+				json.name("properties");
+				Map<String, Object> properties = schema.properties();
+				if (properties != null) {
+					writeJsonValue(json, properties);
+				} else {
+					json.beginObject();
+					json.endObject();
+				}
 
-		List<String> required = schema.required();
-		if (required != null && !required.isEmpty()) {
-			sb.append(",\"required\":[");
-			for (int i = 0; i < required.size(); i++) {
-				if (i > 0) sb.append(",");
-				sb.append("\"").append(escapeJson(required.get(i))).append("\"");
+				List<String> required = schema.required();
+				if (required != null && !required.isEmpty()) {
+					json.name("required");
+					json.beginArray();
+					for (String name : required) {
+						json.value(name);
+					}
+					json.endArray();
+				}
+
+				if (Boolean.FALSE.equals(schema.additionalProperties())) {
+					json.name("additionalProperties").value(false);
+				}
+
+				json.endObject();
 			}
-			sb.append("]");
+			return buffer.toString();
+		} catch (IOException ex) {
+			throw new IllegalStateException("Failed to serialize MCP input schema", ex);
 		}
-
-		if (Boolean.FALSE.equals(schema.additionalProperties())) {
-			sb.append(",\"additionalProperties\":false");
-		}
-
-		sb.append("}");
-		return sb.toString();
 	}
 
-	private static void appendJsonValue(StringBuilder sb, Object value) {
+	private static void writeJsonValue(JsonWriter json, Object value) throws IOException {
 		if (value == null) {
-			sb.append("null");
+			json.nullValue();
 		} else if (value instanceof String s) {
-			sb.append("\"").append(escapeJson(s)).append("\"");
+			json.value(s);
 		} else if (value instanceof Number n) {
-			sb.append(n);
+			json.value(n);
 		} else if (value instanceof Boolean b) {
-			sb.append(b);
+			json.value(b.booleanValue());
 		} else if (value instanceof Map<?, ?> map) {
-			sb.append("{");
-			boolean first = true;
+			json.beginObject();
 			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				if (!first) sb.append(",");
-				first = false;
-				sb.append("\"").append(escapeJson(entry.getKey().toString())).append("\":");
-				appendJsonValue(sb, entry.getValue());
+				json.name(entry.getKey().toString());
+				writeJsonValue(json, entry.getValue());
 			}
-			sb.append("}");
+			json.endObject();
 		} else if (value instanceof List<?> list) {
-			sb.append("[");
-			for (int i = 0; i < list.size(); i++) {
-				if (i > 0) sb.append(",");
-				appendJsonValue(sb, list.get(i));
+			json.beginArray();
+			for (Object element : list) {
+				writeJsonValue(json, element);
 			}
-			sb.append("]");
+			json.endArray();
 		} else {
-			sb.append("\"").append(escapeJson(value.toString())).append("\"");
+			json.value(value.toString());
 		}
-	}
-
-	private static String escapeJson(String s) {
-		if (s == null) return "";
-		return s.replace("\\", "\\\\")
-			.replace("\"", "\\\"")
-			.replace("\n", "\\n")
-			.replace("\r", "\\r")
-			.replace("\t", "\\t");
 	}
 
 	/**

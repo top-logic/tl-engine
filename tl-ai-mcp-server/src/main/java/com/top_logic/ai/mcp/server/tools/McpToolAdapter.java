@@ -12,6 +12,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
@@ -125,47 +126,11 @@ public class McpToolAdapter {
 		} catch (Exception ex) {
 			Logger.error("Error executing tool '" + request.name() + "': " + ex.getMessage(),
 				ex, McpToolAdapter.class);
-			String errorJson = "{\"error\":\"" + escapeJsonString(ex.getMessage()) + "\"}";
+			String errorJson = "{\"error\":\"" + JsonEscape.escape(ex.getMessage()) + "\"}";
 			return McpSchema.CallToolResult.builder()
 				.content(List.of(new McpSchema.TextContent(errorJson)))
 				.isError(true)
 				.build();
 		}
-	}
-
-	/**
-	 * Escapes a string for use in JSON.
-	 */
-	private static String escapeJsonString(String s) {
-		if (s == null) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder();
-		for (char c : s.toCharArray()) {
-			switch (c) {
-				case '"':
-					sb.append("\\\"");
-					break;
-				case '\\':
-					sb.append("\\\\");
-					break;
-				case '\n':
-					sb.append("\\n");
-					break;
-				case '\r':
-					sb.append("\\r");
-					break;
-				case '\t':
-					sb.append("\\t");
-					break;
-				default:
-					if (c < 32) {
-						sb.append(String.format("\\u%04x", (int) c));
-					} else {
-						sb.append(c);
-					}
-			}
-		}
-		return sb.toString();
 	}
 }

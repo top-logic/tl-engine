@@ -52,6 +52,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
 /**
  * Push-based SSE handler that implements {@link AgentEventListener}.
@@ -384,9 +385,9 @@ public class ChatSSEHandler implements AgentEventListener {
 		} else if (event instanceof AgentEvent.ToolCallResultTruncated) {
 			// Not surfaced to UI
 		} else if (event instanceof AgentEvent.ToolProgress e) {
-			sendEvent("tool_progress", "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
-				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
-				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}");
+			sendEvent("tool_progress", "{\"toolCallId\":\"" + JsonEscape.escape(e.toolCallId())
+				+ "\",\"toolName\":\"" + JsonEscape.escape(e.toolName())
+				+ "\",\"message\":\"" + JsonEscape.escape(e.message()) + "\"}");
 		} else if (event instanceof AgentEvent.ApprovalRequired e) {
 			Logger.info("SSE: Sending approval_required for tool '" + e.toolName()
 				+ "' (approvalRequestId=" + e.approvalRequestId() + ")", ChatSSEHandler.class);
@@ -452,9 +453,9 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setErrorMessage(e.errorMessage()).setDurationMs(e.duration().toMillis()));
 		} else if (child instanceof AgentEvent.ToolProgress e) {
 			innerType = "tool_progress";
-			innerData = "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
-				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
-				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}";
+			innerData = "{\"toolCallId\":\"" + JsonEscape.escape(e.toolCallId())
+				+ "\",\"toolName\":\"" + JsonEscape.escape(e.toolName())
+				+ "\",\"message\":\"" + JsonEscape.escape(e.message()) + "\"}";
 		} else if (child instanceof AgentEvent.ApprovalRequired e) {
 			innerType = "approval_required";
 			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()
@@ -579,18 +580,4 @@ public class ChatSSEHandler implements AgentEventListener {
 			.setCacheWriteTokens(usage.cacheWriteTokens());
 	}
 
-	/**
-	 * Minimal JSON string escaping for inline JSON values.
-	 */
-	private static String escapeJson(String value) {
-		if (value == null) {
-			return "";
-		}
-		return value
-			.replace("\\", "\\\\")
-			.replace("\"", "\\\"")
-			.replace("\n", "\\n")
-			.replace("\r", "\\r")
-			.replace("\t", "\\t");
-	}
 }

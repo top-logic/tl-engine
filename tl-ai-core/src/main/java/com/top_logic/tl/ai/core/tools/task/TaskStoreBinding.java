@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.tools.task;
 
+import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+
 /**
  * Thread-local binding for {@link TaskStore} access from tool methods.
  *
@@ -14,7 +16,7 @@ package com.top_logic.tl.ai.core.tools.task;
  */
 public class TaskStoreBinding {
 
-	private static final ThreadLocal<TaskStore> STORE = new ThreadLocal<>();
+	private static final ThreadLocalBinding<TaskStore> STORE = new ThreadLocalBinding<>();
 
 	/**
 	 * Binds the given store on the current thread and returns a handle whose
@@ -22,13 +24,7 @@ public class TaskStoreBinding {
 	 * (or absence).
 	 */
 	public static Binding bind(TaskStore store) {
-		TaskStore previous = STORE.get();
-		if (store == null) {
-			STORE.remove();
-		} else {
-			STORE.set(store);
-		}
-		return new Binding(previous);
+		return new Binding(STORE.bind(store));
 	}
 
 	/**
@@ -42,24 +38,15 @@ public class TaskStoreBinding {
 	 * Handle returned by {@link TaskStoreBinding#bind(TaskStore)}.
 	 */
 	public static final class Binding implements AutoCloseable {
-		private final TaskStore _previous;
-		private boolean _closed;
+		private final ThreadLocalBinding<TaskStore>.Handle _handle;
 
-		Binding(TaskStore previous) {
-			_previous = previous;
+		Binding(ThreadLocalBinding<TaskStore>.Handle handle) {
+			_handle = handle;
 		}
 
 		@Override
 		public void close() {
-			if (_closed) {
-				return;
-			}
-			_closed = true;
-			if (_previous == null) {
-				STORE.remove();
-			} else {
-				STORE.set(_previous);
-			}
+			_handle.close();
 		}
 	}
 }

@@ -33,10 +33,9 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
@@ -56,13 +55,8 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -747,10 +741,7 @@ public class AgentLoop {
 
 		// Capture thread-local bindings and the caller's sub-session from the calling thread:
 		// worker threads do not inherit thread-locals, so each must re-establish them.
-		ConversationLogListener logListener = ConversationLogListenerBinding.getListener();
-		TaskStore taskStore = TaskStoreBinding.getStore();
-		UserInteractionStore interactionStore = UserInteractionStoreBinding.getStore();
-		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
+		BindingSnapshot bindings = BindingSnapshot.capture();
 		SubSessionContext userSession = ThreadContextManager.getSubSession();
 
 		List<Future<ToolResultMessage>> futures = new ArrayList<>();
@@ -765,15 +756,7 @@ public class AgentLoop {
 			}
 
 			ComputationEx2<ToolResultMessage, RuntimeException, RuntimeException> job = () -> {
-				try (
-					ConversationLogListenerBinding.Binding b1 =
-						ConversationLogListenerBinding.bind(logListener);
-					TaskStoreBinding.Binding b2 =
-						TaskStoreBinding.bind(taskStore);
-					UserInteractionStoreBinding.Binding b3 =
-						UserInteractionStoreBinding.bind(interactionStore);
-					LoadedSkillsBinding.Binding b4 =
-						LoadedSkillsBinding.bind(loadedSkills)) {
+				try (BindingSnapshot.Established established = bindings.establish()) {
 					return executeWithSecurityCheck(tc, context, listener, runId, turn);
 				}
 			};

@@ -14,16 +14,14 @@ import java.lang.reflect.RecordComponent;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonReader;
-import de.haumacher.msgbuf.json.JsonToken;
 import de.haumacher.msgbuf.json.JsonWriter;
+
+import com.top_logic.tl.ai.tool.api.json.JsonTree;
 
 /**
  * Scans an object for {@link ToolMethod}-annotated methods and produces {@link Tool} instances.
@@ -371,59 +369,11 @@ public final class AnnotatedTools {
 	// --- msgbuf-based JSON string → Map/List tree ---
 
 	private static Object parseJsonTree(String json) {
-		try (JsonReader reader = new JsonReader(new StringR(json))) {
-			return readValue(reader);
+		try {
+			return JsonTree.parseValue(json);
 		} catch (IOException e) {
 			throw new IllegalArgumentException("Failed to parse JSON string: " + e.getMessage(), e);
 		}
-	}
-
-	private static Object readValue(JsonReader reader) throws IOException {
-		JsonToken token = reader.peek();
-		return switch (token) {
-			case STRING -> reader.nextString();
-			case NUMBER -> {
-				double d = reader.nextDouble();
-				if (d == Math.floor(d) && !Double.isInfinite(d)) {
-					if (d >= Integer.MIN_VALUE && d <= Integer.MAX_VALUE) {
-						yield (int) d;
-					}
-					yield (long) d;
-				}
-				yield d;
-			}
-			case BOOLEAN -> reader.nextBoolean();
-			case NULL -> {
-				reader.nextNull();
-				yield null;
-			}
-			case BEGIN_OBJECT -> readObject(reader);
-			case BEGIN_ARRAY -> readArray(reader);
-			default -> {
-				reader.skipValue();
-				yield null;
-			}
-		};
-	}
-
-	private static Map<String, Object> readObject(JsonReader reader) throws IOException {
-		Map<String, Object> map = new LinkedHashMap<>();
-		reader.beginObject();
-		while (reader.hasNext()) {
-			map.put(reader.nextName(), readValue(reader));
-		}
-		reader.endObject();
-		return map;
-	}
-
-	private static List<Object> readArray(JsonReader reader) throws IOException {
-		List<Object> list = new ArrayList<>();
-		reader.beginArray();
-		while (reader.hasNext()) {
-			list.add(readValue(reader));
-		}
-		reader.endArray();
-		return list;
 	}
 
 	// --- ReflectiveTool ---

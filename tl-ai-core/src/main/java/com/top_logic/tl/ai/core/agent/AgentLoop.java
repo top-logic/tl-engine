@@ -89,7 +89,7 @@ public class AgentLoop {
 	// TODO: Memory/attachment injection between turns
 
 	/** Default maximum characters per tool result before truncation. */
-	public static final int DEFAULT_MAX_RESULT_CHARS = 20000;
+	public static final int DEFAULT_MAX_RESULT_CHARS = AgentTuning.MAX_TOOL_RESULT_CHARS;
 
 	private final AgentParams _config;
 
@@ -136,7 +136,7 @@ public class AgentLoop {
 	private int _alternationRepeats;
 
 	/** Maximum consecutive times the same tool+args combination may be called before being blocked. */
-	private static final int MAX_DUPLICATE_TOOL_CALLS = 2;
+	private static final int MAX_DUPLICATE_TOOL_CALLS = AgentTuning.MAX_DUPLICATE_TOOL_CALLS;
 
 	/**
 	 * Creates a new agent loop with default result truncation.
@@ -370,13 +370,13 @@ public class AgentLoop {
 	}
 
 	/** Maximum reactive compaction retries on context_window_exceeded before giving up. */
-	private static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
+	private static final int MAX_REACTIVE_COMPACT_RETRIES = AgentTuning.MAX_REACTIVE_COMPACT_RETRIES;
 
 	/** Base backoff delay in milliseconds for transient retries. Doubles each attempt. */
-	private static final long BASE_BACKOFF_MS = 1000;
+	private static final long BASE_BACKOFF_MS = AgentTuning.BASE_BACKOFF_MS;
 
 	/** Sleep slice for backoff waits, so cancellation is noticed promptly. */
-	private static final long BACKOFF_POLL_MS = 250;
+	private static final long BACKOFF_POLL_MS = AgentTuning.BACKOFF_POLL_MS;
 
 	private AgentResult runWithMemory(ConversationMemory memory, ToolContext context,
 			AgentEventListener listener, String runId) {

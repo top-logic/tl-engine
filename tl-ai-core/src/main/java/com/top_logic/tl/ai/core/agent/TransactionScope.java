@@ -49,14 +49,14 @@ public class TransactionScope implements AutoCloseable {
 	/** No-op scope for read-only agents and tests. All methods are safe no-ops. */
 	public static final TransactionScope NOOP = new NoOp();
 
-	private static final int MAX_RETRIES = 3;
+	private static final int MAX_RETRIES = AgentTuning.LOCK_MAX_RETRIES;
 
-	private static final long RETRY_DELAY_MS = 10_000L;
+	private static final long RETRY_DELAY_MS = AgentTuning.LOCK_RETRY_DELAY_MS;
 
-	private static final long LOCK_DURATION_MS = 10 * 60 * 1000L;
+	private static final long LOCK_DURATION_MS = AgentTuning.LOCK_DURATION_MS;
 
 	/** Sleep slice for lock-retry waits, so cancellation is noticed promptly. */
-	private static final long RETRY_POLL_MS = 250L;
+	private static final long RETRY_POLL_MS = AgentTuning.BACKOFF_POLL_MS;
 
 	private Transaction _transaction;
 

@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentTuning;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
@@ -36,7 +37,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
 public class AskUserTool {
 
 	/** Timeout for user interaction requests in minutes. */
-	private static final long INTERACTION_TIMEOUT_MINUTES = 5;
+	private static final long INTERACTION_TIMEOUT_MINUTES = AgentTuning.INTERACTION_TIMEOUT_MINUTES;
 
 	/** Maximum number of options allowed for choice interactions. */
 	private static final int MAX_CHOICE_OPTIONS = 5;

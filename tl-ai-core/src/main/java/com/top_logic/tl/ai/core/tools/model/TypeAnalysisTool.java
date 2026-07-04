@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.model.TLAssociationEnd;
@@ -23,12 +22,12 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.PartUsageResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.PropertyUsage;
 import com.top_logic.tl.ai.core.tools.model.messages.ReferenceUsage;
 import com.top_logic.tl.ai.core.tools.model.messages.SubclassUsage;
 import com.top_logic.tl.ai.core.tools.model.messages.TypeUsageResponse;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -91,25 +90,10 @@ public class TypeAnalysisTool {
 	public String findTypeUsages(
 			@P("The qualified type name in format 'module:TypeName'") String qualifiedTypeName) {
 
-		try {
-			// System interaction returns data class
-			TypeUsageResponse response = doFindTypeUsages(qualifiedTypeName);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("qualifiedTypeName", qualifiedTypeName);
-			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findTypeUsages()", args);
-
-		} catch (Exception ex) {
-			Logger.error("findTypeUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("qualifiedTypeName", qualifiedTypeName);
-			return DataClassSerializer.errorToJson(
-				"Error analyzing type: " + ex.getMessage(),
-				TypeAnalysisTool.class,
-				"findTypeUsages()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("qualifiedTypeName", qualifiedTypeName);
+		return ToolResults.invoke(TypeAnalysisTool.class, "findTypeUsages()", args,
+			"Error analyzing type: ", () -> doFindTypeUsages(qualifiedTypeName));
 	}
 
 	/**
@@ -137,27 +121,11 @@ public class TypeAnalysisTool {
 			@P("The qualified type name of the owner in format 'module:TypeName'") String ownerTypeQualifiedName,
 			@P("The name of the part to analyze") String partName) {
 
-		try {
-			// System interaction returns data class
-			PartUsageResponse response = doFindPartUsages(ownerTypeQualifiedName, partName);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
-			args.put("partName", partName);
-			return DataClassSerializer.toJson(response, TypeAnalysisTool.class, "findPartUsages()", args);
-
-		} catch (Exception ex) {
-			Logger.error("findPartUsages() error: " + ex.getMessage(), ex, TypeAnalysisTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
-			args.put("partName", partName);
-			return DataClassSerializer.errorToJson(
-				"Error analyzing part: " + ex.getMessage(),
-				TypeAnalysisTool.class,
-				"findPartUsages()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("ownerTypeQualifiedName", ownerTypeQualifiedName);
+		args.put("partName", partName);
+		return ToolResults.invoke(TypeAnalysisTool.class, "findPartUsages()", args,
+			"Error analyzing part: ", () -> doFindPartUsages(ownerTypeQualifiedName, partName));
 	}
 
 	private TypeUsageResponse doFindTypeUsages(String qualifiedTypeName) {

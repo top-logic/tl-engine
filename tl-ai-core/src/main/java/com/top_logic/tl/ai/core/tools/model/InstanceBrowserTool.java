@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.IdentifierUtil;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -34,12 +33,12 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
+import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.TLObjectReference;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -118,31 +117,13 @@ public class InstanceBrowserTool {
 			@P("Maximum number of instances to return (default: 100, max: 1000)") Integer limit,
 			@P("Cursor for pagination (null/empty for first page, use nextCursor from previous response)") String cursor) {
 
-		try {
-			// System interaction returns data class
-			InstanceListResponse response = doListInstances(moduleName, typeName, limit, cursor);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			args.put("typeName", typeName);
-			args.put("limit", limit);
-			args.put("cursor", cursor);
-			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "listInstances()", args);
-
-		} catch (Exception ex) {
-			Logger.error("listInstances() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			args.put("typeName", typeName);
-			args.put("limit", limit);
-			args.put("cursor", cursor);
-			return DataClassSerializer.errorToJson(
-				"Error accessing instances: " + ex.getMessage(),
-				InstanceBrowserTool.class,
-				"listInstances()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("moduleName", moduleName);
+		args.put("typeName", typeName);
+		args.put("limit", limit);
+		args.put("cursor", cursor);
+		return ToolResults.invoke(InstanceBrowserTool.class, "listInstances()", args,
+			"Error accessing instances: ", () -> doListInstances(moduleName, typeName, limit, cursor));
 	}
 
 	private InstanceListResponse doListInstances(String moduleName, String typeName, Integer limit, String cursor) {
@@ -273,25 +254,10 @@ public class InstanceBrowserTool {
 	@ToolMethod(description = "Get detailed information about a single instance by its TID including all attributes and values", mode = ToolMode.READ)
 	public String getInstance(@P("The TopLogic identifier (TID) in format 'TypeName:id'") String tid) {
 
-		try {
-			// System interaction returns data class
-			InstanceResponse response = doGetInstance(tid);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("tid", tid);
-			return DataClassSerializer.toJson(response, InstanceBrowserTool.class, "getInstance()", args);
-
-		} catch (Exception ex) {
-			Logger.error("getInstance() error: " + ex.getMessage(), ex, InstanceBrowserTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("tid", tid);
-			return DataClassSerializer.errorToJson(
-				"Error retrieving instance: " + ex.getMessage(),
-				InstanceBrowserTool.class,
-				"getInstance()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("tid", tid);
+		return ToolResults.invoke(InstanceBrowserTool.class, "getInstance()", args,
+			"Error retrieving instance: ", () -> doGetInstance(tid));
 	}
 
 	private InstanceResponse doGetInstance(String tid) throws IOException {

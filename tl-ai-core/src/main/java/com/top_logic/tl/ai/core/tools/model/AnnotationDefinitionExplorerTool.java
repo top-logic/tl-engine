@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -21,9 +20,9 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationDefinitionResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.PropertyDefinition;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -97,58 +96,45 @@ public class AnnotationDefinitionExplorerTool {
 	public String describeAnnotation(
 			@P("Fully-qualified configuration interface class name") String configInterfaceName) {
 
-		try {
-			// System interaction returns data class
-			// 1. Validate parameter
-			if (configInterfaceName == null || configInterfaceName.isEmpty()) {
-				throw new IllegalArgumentException("Configuration interface name is required");
-			}
-
-			// 2. Load class and validate it's a ConfigurationItem
-			Class<?> configClass = ClassValidator.loadAndValidate(configInterfaceName);
-
-			// 3. Get ConfigurationDescriptor via TypedConfiguration
-			ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(configClass);
-
-			// 4. Build response using data class
-			AnnotationDefinitionResponse response = AnnotationDefinitionResponse.create();
-			response.setConfigInterface(configInterfaceName);
-			response.setTagName(getTagName(configClass));
-			response.setAbstract(descriptor.isAbstract());
-
-			// Super interfaces
-			for (ConfigurationDescriptor superDescriptor : descriptor.getSuperDescriptors()) {
-				response.addSuperInterface(superDescriptor.getConfigurationInterface().getName());
-			}
-
-			// Properties
-			Set<String> visitedDescriptors = new HashSet<>();
-			for (PropertyDescriptor property : descriptor.getProperties()) {
-				if (isInternalProperty(property)) {
-					continue;
+		Map<String, Object> args = new HashMap<>();
+		args.put("configInterfaceName", configInterfaceName);
+		return ToolResults.invoke(AnnotationDefinitionExplorerTool.class, "describeAnnotation()", args,
+			"Error accessing annotation definition: ", () -> {
+				// 1. Validate parameter
+				if (configInterfaceName == null || configInterfaceName.isEmpty()) {
+					throw new IllegalArgumentException("Configuration interface name is required");
 				}
-				PropertyDefinition propDef =
-					PropertyDefinitionSerializer.buildPropertyDefinition(property, visitedDescriptors, 0);
-				response.addProperty(propDef);
-			}
 
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("configInterfaceName", configInterfaceName);
-			return DataClassSerializer.toJson(response, AnnotationDefinitionExplorerTool.class,
-				"describeAnnotation()", args);
+				// 2. Load class and validate it's a ConfigurationItem
+				Class<?> configClass = ClassValidator.loadAndValidate(configInterfaceName);
 
-		} catch (Exception ex) {
-			Logger.error("describeAnnotation() error: " + ex.getMessage(), ex,
-				AnnotationDefinitionExplorerTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("configInterfaceName", configInterfaceName);
-			return DataClassSerializer.errorToJson(
-				"Error accessing annotation definition: " + ex.getMessage(),
-				AnnotationDefinitionExplorerTool.class,
-				"describeAnnotation()",
-				args);
-		}
+				// 3. Get ConfigurationDescriptor via TypedConfiguration
+				ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(configClass);
+
+				// 4. Build response using data class
+				AnnotationDefinitionResponse response = AnnotationDefinitionResponse.create();
+				response.setConfigInterface(configInterfaceName);
+				response.setTagName(getTagName(configClass));
+				response.setAbstract(descriptor.isAbstract());
+
+				// Super interfaces
+				for (ConfigurationDescriptor superDescriptor : descriptor.getSuperDescriptors()) {
+					response.addSuperInterface(superDescriptor.getConfigurationInterface().getName());
+				}
+
+				// Properties
+				Set<String> visitedDescriptors = new HashSet<>();
+				for (PropertyDescriptor property : descriptor.getProperties()) {
+					if (isInternalProperty(property)) {
+						continue;
+					}
+					PropertyDefinition propDef =
+						PropertyDefinitionSerializer.buildPropertyDefinition(property, visitedDescriptors, 0);
+					response.addProperty(propDef);
+				}
+
+				return response;
+			});
 	}
 
 	/**

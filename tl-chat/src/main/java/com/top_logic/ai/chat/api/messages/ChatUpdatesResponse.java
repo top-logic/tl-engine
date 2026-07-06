@@ -21,14 +21,9 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #getMessages() */
 	public static final String MESSAGES__PROP = "messages";
 
-	/** @see #getCurrentTask() */
-	public static final String CURRENT_TASK__PROP = "currentTask";
-
 	private boolean _processing = false;
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.MessageDto> _messages = new java.util.ArrayList<>();
-
-	private com.top_logic.ai.chat.api.messages.CurrentTaskDto _currentTask = null;
 
 	/**
 	 * Creates a {@link ChatUpdatesResponse} instance.
@@ -101,33 +96,6 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 		_messages.remove(value);
 	}
 
-	/**
-	 * Current or most recent task; null if no task.
-	 */
-	public final com.top_logic.ai.chat.api.messages.CurrentTaskDto getCurrentTask() {
-		return _currentTask;
-	}
-
-	/**
-	 * @see #getCurrentTask()
-	 */
-	public com.top_logic.ai.chat.api.messages.ChatUpdatesResponse setCurrentTask(com.top_logic.ai.chat.api.messages.CurrentTaskDto value) {
-		internalSetCurrentTask(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getCurrentTask()} without chain call utility. */
-	protected final void internalSetCurrentTask(com.top_logic.ai.chat.api.messages.CurrentTaskDto value) {
-		_currentTask = value;
-	}
-
-	/**
-	 * Checks, whether {@link #getCurrentTask()} has a value.
-	 */
-	public final boolean hasCurrentTask() {
-		return _currentTask != null;
-	}
-
 	@Override
 	public String jsonType() {
 		return CHAT_UPDATES_RESPONSE__TYPE;
@@ -137,8 +105,7 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			PROCESSING__PROP, 
-			MESSAGES__PROP, 
-			CURRENT_TASK__PROP);
+			MESSAGES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -165,7 +132,6 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 		switch (field) {
 			case PROCESSING__PROP: return isProcessing();
 			case MESSAGES__PROP: return getMessages();
-			case CURRENT_TASK__PROP: return getCurrentTask();
 			default: return null;
 		}
 	}
@@ -175,7 +141,6 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 		switch (field) {
 			case PROCESSING__PROP: internalSetProcessing((boolean) value); break;
 			case MESSAGES__PROP: internalSetMessages(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.MessageDto.class, value)); break;
-			case CURRENT_TASK__PROP: internalSetCurrentTask((com.top_logic.ai.chat.api.messages.CurrentTaskDto) value); break;
 		}
 	}
 
@@ -202,10 +167,6 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 			x.writeTo(out);
 		}
 		out.endArray();
-		if (hasCurrentTask()) {
-			out.name(CURRENT_TASK__PROP);
-			getCurrentTask().writeTo(out);
-		}
 	}
 
 	@Override
@@ -222,7 +183,6 @@ public class ChatUpdatesResponse extends de.haumacher.msgbuf.data.AbstractDataOb
 				setMessages(newValue);
 			}
 			break;
-			case CURRENT_TASK__PROP: setCurrentTask(com.top_logic.ai.chat.api.messages.CurrentTaskDto.readCurrentTaskDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

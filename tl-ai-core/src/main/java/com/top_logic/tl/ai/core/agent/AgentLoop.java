@@ -33,10 +33,12 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.binding.BindingSnapshot;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.InteractionRecorder;
+import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
@@ -53,13 +55,8 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -92,7 +89,7 @@ public class AgentLoop {
 	// TODO: Memory/attachment injection between turns
 
 	/** Default maximum characters per tool result before truncation. */
-	public static final int DEFAULT_MAX_RESULT_CHARS = 20000;
+	public static final int DEFAULT_MAX_RESULT_CHARS = AgentTuning.MAX_TOOL_RESULT_CHARS;
 
 	private final AgentParams _config;
 
@@ -139,7 +136,7 @@ public class AgentLoop {
 	private int _alternationRepeats;
 
 	/** Maximum consecutive times the same tool+args combination may be called before being blocked. */
-	private static final int MAX_DUPLICATE_TOOL_CALLS = 2;
+	private static final int MAX_DUPLICATE_TOOL_CALLS = AgentTuning.MAX_DUPLICATE_TOOL_CALLS;
 
 	/**
 	 * Creates a new agent loop with default result truncation.
@@ -373,13 +370,13 @@ public class AgentLoop {
 	}
 
 	/** Maximum reactive compaction retries on context_window_exceeded before giving up. */
-	private static final int MAX_REACTIVE_COMPACT_RETRIES = 2;
+	private static final int MAX_REACTIVE_COMPACT_RETRIES = AgentTuning.MAX_REACTIVE_COMPACT_RETRIES;
 
 	/** Base backoff delay in milliseconds for transient retries. Doubles each attempt. */
-	private static final long BASE_BACKOFF_MS = 1000;
+	private static final long BASE_BACKOFF_MS = AgentTuning.BASE_BACKOFF_MS;
 
 	/** Sleep slice for backoff waits, so cancellation is noticed promptly. */
-	private static final long BACKOFF_POLL_MS = 250;
+	private static final long BACKOFF_POLL_MS = AgentTuning.BACKOFF_POLL_MS;
 
 	private AgentResult runWithMemory(ConversationMemory memory, ToolContext context,
 			AgentEventListener listener, String runId) {
@@ -744,10 +741,7 @@ public class AgentLoop {
 
 		// Capture thread-local bindings and the caller's sub-session from the calling thread:
 		// worker threads do not inherit thread-locals, so each must re-establish them.
-		ConversationLogListener logListener = ConversationLogListenerBinding.getListener();
-		TaskStore taskStore = TaskStoreBinding.getStore();
-		UserInteractionStore interactionStore = UserInteractionStoreBinding.getStore();
-		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
+		BindingSnapshot bindings = BindingSnapshot.capture();
 		SubSessionContext userSession = ThreadContextManager.getSubSession();
 
 		List<Future<ToolResultMessage>> futures = new ArrayList<>();
@@ -762,15 +756,7 @@ public class AgentLoop {
 			}
 
 			ComputationEx2<ToolResultMessage, RuntimeException, RuntimeException> job = () -> {
-				try (
-					ConversationLogListenerBinding.Binding b1 =
-						ConversationLogListenerBinding.bind(logListener);
-					TaskStoreBinding.Binding b2 =
-						TaskStoreBinding.bind(taskStore);
-					UserInteractionStoreBinding.Binding b3 =
-						UserInteractionStoreBinding.bind(interactionStore);
-					LoadedSkillsBinding.Binding b4 =
-						LoadedSkillsBinding.bind(loadedSkills)) {
+				try (BindingSnapshot.Established established = bindings.establish()) {
 					return executeWithSecurityCheck(tc, context, listener, runId, turn);
 				}
 			};
@@ -932,14 +918,25 @@ public class AgentLoop {
 						ApprovalRequest.DEFAULT_TIMEOUT);
 					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
 						toolCall.id(), approvalRequestId, toolCall.name(),
-						Map.copyOf(request.arguments()), request.displayReason()));
+						toolCall.arguments(), request.displayReason()));
+					// Durable record of the pending approval, carrying the tool call's actual
+					// argument JSON (not the possibly-empty parsed copy shown above).
+					InteractionRequest interactionRow = InteractionRecorder.begin(
+						context.executionHandle().get(),
+						AgentExecutionStore.InteractionType.APPROVAL, approvalRequestId,
+						tool.name(), needsApproval.displayReason(), toolCall.arguments());
 					ApprovalResult approvalResult = context.approval().requestApproval(request);
 					if (approvalResult instanceof ApprovalResult.Approved) {
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.RESOLVED, ApprovalOutcome.APPROVED.name());
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED));
 						// proceed to execution
 					} else if (approvalResult instanceof ApprovalResult.ApprovedForSession) {
 						_sessionApprovedTools.add(tool.name());
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.RESOLVED,
+							ApprovalOutcome.APPROVED_FOR_SESSION.name());
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.APPROVED_FOR_SESSION));
 						// proceed to execution
@@ -948,6 +945,10 @@ public class AgentLoop {
 							? "User denied tool '" + toolCall.name() + "'."
 							: "User denied tool '" + toolCall.name() + "': "
 								+ rejected.userComment();
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.RESOLVED,
+							rejected.userComment().isBlank() ? ApprovalOutcome.REJECTED.name()
+								: ApprovalOutcome.REJECTED.name() + ": " + rejected.userComment());
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.REJECTED));
 						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));
@@ -955,6 +956,8 @@ public class AgentLoop {
 						return errorResult(toolCall, feedback);
 					} else if (approvalResult instanceof ApprovalResult.TimedOut) {
 						String feedback = "Approval timed out for tool '" + toolCall.name() + "'.";
+						InteractionRecorder.resolve(interactionRow,
+							AgentExecutionStore.InteractionState.TIMED_OUT, null);
 						emit(listener, new AgentEvent.ApprovalResolved(runId, turn, now(),
 							toolCall.id(), approvalRequestId, ApprovalOutcome.TIMED_OUT));
 						emit(listener, new AgentEvent.ToolCallDenied(runId, turn, now(), toolCall.id(), toolCall.name(), feedback));

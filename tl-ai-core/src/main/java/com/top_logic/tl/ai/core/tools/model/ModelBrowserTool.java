@@ -31,6 +31,7 @@ import com.top_logic.model.resources.TLTypePartResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.visit.LabelVisitor;
+import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.ClassifierInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.EnumerationResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.ErrorResponse;
@@ -40,7 +41,6 @@ import com.top_logic.tl.ai.core.tools.model.messages.TypeInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.TypeListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.TypePartInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.TypePartListResponse;
-import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -111,25 +111,10 @@ public class ModelBrowserTool {
 			@P("Set to true to include framework/platform modules (tl.*, tl5.*). "
 				+ "Default: false (application modules only).")
 			Boolean includeFramework) {
-		try {
-			// System interaction returns data class
-			ModuleListResponse response = doListModules(includeFramework);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("includeFramework", includeFramework);
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listModules()", args);
-
-		} catch (Exception ex) {
-			Logger.error("listModules() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("includeFramework", includeFramework);
-			return DataClassSerializer.errorToJson(
-				"Error listing modules: " + ex.getMessage(),
-				ModelBrowserTool.class,
-				"listModules()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("includeFramework", includeFramework);
+		return ToolResults.invoke(ModelBrowserTool.class, "listModules()", args,
+			"Error listing modules: ", () -> doListModules(includeFramework));
 	}
 
 	private ModuleListResponse doListModules(Boolean includeFramework) {
@@ -195,25 +180,10 @@ public class ModelBrowserTool {
 	 */
 	@ToolMethod(description = "List all types (classes, enumerations, datatypes) in a specific module with inheritance information", mode = ToolMode.READ)
 	public String listTypes(@P("The name of the module to list types from") String moduleName) {
-		try {
-			// System interaction returns data class
-			TypeListResponse response = doListTypes(moduleName);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypes()", args);
-
-		} catch (Exception ex) {
-			Logger.error("listTypes() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			return DataClassSerializer.errorToJson(
-				"Error listing types: " + ex.getMessage(),
-				ModelBrowserTool.class,
-				"listTypes()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("moduleName", moduleName);
+		return ToolResults.invoke(ModelBrowserTool.class, "listTypes()", args,
+			"Error listing types: ", () -> doListTypes(moduleName));
 	}
 
 	private TypeListResponse doListTypes(String moduleName) {
@@ -320,29 +290,12 @@ public class ModelBrowserTool {
 			@P("The name of the type") String typeName,
 			@P("Whether to include inherited parts from supertypes (default: false)") Boolean includeInherited) {
 
-		try {
-			// System interaction returns data class
-			TypePartListResponse response = doListTypeParts(moduleName, typeName, includeInherited);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			args.put("typeName", typeName);
-			args.put("includeInherited", includeInherited);
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listTypeParts()", args);
-
-		} catch (Exception ex) {
-			Logger.error("listTypeParts() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			args.put("typeName", typeName);
-			args.put("includeInherited", includeInherited);
-			return DataClassSerializer.errorToJson(
-				"Error listing type parts: " + ex.getMessage(),
-				ModelBrowserTool.class,
-				"listTypeParts()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("moduleName", moduleName);
+		args.put("typeName", typeName);
+		args.put("includeInherited", includeInherited);
+		return ToolResults.invoke(ModelBrowserTool.class, "listTypeParts()", args,
+			"Error listing type parts: ", () -> doListTypeParts(moduleName, typeName, includeInherited));
 	}
 
 	private TypePartListResponse doListTypeParts(String moduleName, String typeName, Boolean includeInherited) {
@@ -456,27 +409,11 @@ public class ModelBrowserTool {
 			@P("The name of the module containing the enumeration") String moduleName,
 			@P("The name of the enumeration type") String enumName) {
 
-		try {
-			// System interaction returns data class
-			EnumerationResponse response = doListClassifiers(moduleName, enumName);
-
-			// Serialize to JSON using DataClassSerializer with tracking
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			args.put("enumName", enumName);
-			return DataClassSerializer.toJson(response, ModelBrowserTool.class, "listClassifiers()", args);
-
-		} catch (Exception ex) {
-			Logger.error("listClassifiers() error: " + ex.getMessage(), ex, ModelBrowserTool.class);
-			Map<String, Object> args = new HashMap<>();
-			args.put("moduleName", moduleName);
-			args.put("enumName", enumName);
-			return DataClassSerializer.errorToJson(
-				"Error listing classifiers: " + ex.getMessage(),
-				ModelBrowserTool.class,
-				"listClassifiers()",
-				args);
-		}
+		Map<String, Object> args = new HashMap<>();
+		args.put("moduleName", moduleName);
+		args.put("enumName", enumName);
+		return ToolResults.invoke(ModelBrowserTool.class, "listClassifiers()", args,
+			"Error listing classifiers: ", () -> doListClassifiers(moduleName, enumName));
 	}
 
 	private EnumerationResponse doListClassifiers(String moduleName, String enumName) {

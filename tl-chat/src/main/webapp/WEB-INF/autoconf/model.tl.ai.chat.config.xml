@@ -1,3 +1,6 @@
+<!-- Obsolete: declares the legacy tl.ai.chat model and its ChatSession table.
+     TODO: Delete this file in the next release together with the legacy model — see the
+     checklist in LegacyChatSessionMigration. -->
 <application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
   xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.agent">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.core.execution.model.impl"
+				interface-package="com.top_logic.tl.ai.core.execution.model"
+			/>
+		</annotations>
+		<types>
+
+			<enum name="SessionKind">
+				<classifier name="CHAT"/>
+				<classifier name="BACKGROUND"/>
+				<classifier name="SCHEDULED"/>
+				<classifier name="SCRIPT"/>
+			</enum>
+
+			<enum name="ExecutionStatus">
+				<classifier name="RUNNING"/>
+				<classifier name="COMPLETE"/>
+				<classifier name="ERROR"/>
+				<classifier name="CANCELLED"/>
+				<classifier name="REJECTED"/>
+			</enum>
+
+			<enum name="InteractionType">
+				<classifier name="APPROVAL"/>
+				<classifier name="QUESTION"/>
+				<classifier name="CHOICE"/>
+			</enum>
+
+			<enum name="InteractionState">
+				<classifier name="PENDING"/>
+				<classifier name="RESOLVED"/>
+				<classifier name="TIMED_OUT"/>
+				<classifier name="CANCELLED"/>
+			</enum>
+
+			<!--
+				Durable context + cumulative working state + presentation.
+				A chat is kind=CHAT with a Person owner and a title; a background job is
+				kind=BACKGROUND with a system principal. ChatSession generalizes into this.
+			-->
+			<class name="AgentSession">
+				<annotations>
+					<table name="AgentSession"/>
+					<main-properties properties="title,kind,status,lastUpdated"/>
+				</annotations>
+				<attributes>
+					<reference name="kind"
+						type="tl.ai.agent:SessionKind"
+						mandatory="true"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+					<property name="title"
+						type="tl.core:String"
+					/>
+					<property name="status"
+						type="tl.core:String"
+					/>
+					<property name="memory"
+						type="tl.core:Text"
+					/>
+					<property name="metadata"
+						type="tl.core:Text"
+					/>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<property name="lastUpdated"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				One agent-loop invocation. Sub-agents are AgentExecutions with parentExecution set.
+				Token counts are summable columns; SUM over the parentExecution subtree yields the
+				true parent+children total.
+			-->
+			<class name="AgentExecution">
+				<annotations>
+					<table name="AgentExecution"/>
+					<id-column value="runId"/>
+					<main-properties properties="runId,agentName,status,startedAt"/>
+				</annotations>
+				<attributes>
+					<reference name="session"
+						type="tl.ai.agent:AgentSession"
+						mandatory="true"
+					/>
+					<reference name="parentExecution"
+						type="tl.ai.agent:AgentExecution"
+					/>
+					<property name="runId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="agentName"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="model"
+						type="tl.core:String"
+					/>
+					<property name="provider"
+						type="tl.core:String"
+					/>
+					<reference name="status"
+						type="tl.ai.agent:ExecutionStatus"
+						mandatory="true"
+					/>
+					<property name="stopReason"
+						type="tl.core:String"
+					/>
+					<property name="errorMessage"
+						type="tl.core:Text"
+					/>
+					<property name="inputTokens"
+						type="tl.core:Long"
+					/>
+					<property name="outputTokens"
+						type="tl.core:Long"
+					/>
+					<property name="cacheReadTokens"
+						type="tl.core:Long"
+					/>
+					<property name="cacheWriteTokens"
+						type="tl.core:Long"
+					/>
+					<property name="thinkingTokens"
+						type="tl.core:Long"
+					/>
+					<property name="transcript"
+						type="tl.core:Text"
+					/>
+					<property name="startedAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<property name="endedAt"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				Generalized human-in-the-loop request. Unifies the former ApprovalRequest and
+				UserInteractionRequest. Query by (responder, state=PENDING) for the approval inbox
+				across chats and background jobs.
+			-->
+			<class name="InteractionRequest">
+				<annotations>
+					<table name="AgentInteractionRequest"/>
+					<id-column value="requestId"/>
+					<main-properties properties="requestId,type,state,createdAt"/>
+				</annotations>
+				<attributes>
+					<reference name="execution"
+						type="tl.ai.agent:AgentExecution"
+						mandatory="true"
+					/>
+					<property name="requestId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<reference name="type"
+						type="tl.ai.agent:InteractionType"
+						mandatory="true"
+					/>
+					<reference name="state"
+						type="tl.ai.agent:InteractionState"
+						mandatory="true"
+					/>
+					<property name="header"
+						type="tl.core:String"
+					/>
+					<property name="prompt"
+						type="tl.core:Text"
+					/>
+					<property name="payload"
+						type="tl.core:Text"
+					/>
+					<reference name="responder"
+						type="tl.accounts:Person"
+					/>
+					<property name="resolution"
+						type="tl.core:Text"
+					/>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<property name="resolvedAt"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				The agent todo plan. Session-scoped: cumulative across every execution in the
+				conversation, a sibling of AgentSession.memory. (TaskStore lives in the session
+				state today and persists in the session metadata.) lastTouchedByExecution is
+				attribution only.
+			-->
+			<class name="AgentTask">
+				<annotations>
+					<table name="AgentTask"/>
+					<id-column value="taskId"/>
+					<main-properties properties="taskId,subject,status,ordinal"/>
+				</annotations>
+				<attributes>
+					<reference name="session"
+						type="tl.ai.agent:AgentSession"
+						mandatory="true"
+					/>
+					<reference name="lastTouchedByExecution"
+						type="tl.ai.agent:AgentExecution"
+					/>
+					<property name="taskId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="subject"
+						type="tl.core:String"
+					/>
+					<property name="content"
+						type="tl.core:Text"
+					/>
+					<property name="status"
+						type="tl.core:String"
+					/>
+					<property name="ordinal"
+						type="tl.core:Integer"
+					/>
+				</attributes>
+			</class>
+
+		</types>
+	</module>
+</model>

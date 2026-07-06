@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -60,6 +61,8 @@ public class ToolContext implements ToolExecutionContext {
 	private final CancellationToken _cancellationToken;
 
 	private final ProgressReporter _progressReporter;
+
+	private final ExecutionHandle _executionHandle;
 
 	/**
 	 * Creates a context with the given security, approval callback, and transaction scope.
@@ -144,6 +147,14 @@ public class ToolContext implements ToolExecutionContext {
 			TransactionScope transaction, Set<String> sessionApprovedTools,
 			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
 			ProgressReporter progressReporter) {
+		this(security, approval, transaction, sessionApprovedTools, delegationDepth, toolCallId,
+			cancellationToken, progressReporter, new ExecutionHandle());
+	}
+
+	private ToolContext(SecurityContext security, ApprovalCallback approval,
+			TransactionScope transaction, Set<String> sessionApprovedTools,
+			int delegationDepth, String toolCallId, CancellationToken cancellationToken,
+			ProgressReporter progressReporter, ExecutionHandle executionHandle) {
 		_security = Objects.requireNonNull(security, "Security context must not be null.");
 		_approval = Objects.requireNonNull(approval, "Approval callback must not be null.");
 		_transaction = Objects.requireNonNull(transaction, "Transaction scope must not be null.");
@@ -152,6 +163,7 @@ public class ToolContext implements ToolExecutionContext {
 		_toolCallId = toolCallId;
 		_cancellationToken = Objects.requireNonNull(cancellationToken, "Cancellation token must not be null.");
 		_progressReporter = Objects.requireNonNull(progressReporter, "Progress reporter must not be null.");
+		_executionHandle = Objects.requireNonNull(executionHandle, "Execution handle must not be null.");
 	}
 
 	/**
@@ -236,11 +248,25 @@ public class ToolContext implements ToolExecutionContext {
 	}
 
 	/**
+	 * The holder for the persisted execution of the current run.
+	 *
+	 * <p>
+	 * Filled by the {@code ExecutionRecorder} when run recording is active; its value stays
+	 * {@code null} for unrecorded runs. Copies of this context share the same holder; a
+	 * {@link #forDelegation(TransactionScope) delegation context} gets a fresh one, since the
+	 * child run is a separate execution.
+	 * </p>
+	 */
+	public ExecutionHandle executionHandle() {
+		return _executionHandle;
+	}
+
+	/**
 	 * Returns a copy of this context with the given tool call ID.
 	 */
 	public ToolContext withToolCallId(String toolCallId) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
-			_delegationDepth, toolCallId, _cancellationToken, _progressReporter);
+			_delegationDepth, toolCallId, _cancellationToken, _progressReporter, _executionHandle);
 	}
 
 	/**
@@ -248,7 +274,7 @@ public class ToolContext implements ToolExecutionContext {
 	 */
 	public ToolContext withProgressReporter(ProgressReporter progressReporter) {
 		return new ToolContext(_security, _approval, _transaction, _sessionApprovedTools,
-			_delegationDepth, _toolCallId, _cancellationToken, progressReporter);
+			_delegationDepth, _toolCallId, _cancellationToken, progressReporter, _executionHandle);
 	}
 
 	/**

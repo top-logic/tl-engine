@@ -18,11 +18,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
 import com.top_logic.tl.ai.core.provider.AuthScheme;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
+import com.top_logic.tl.ai.core.provider.ErrorClassifier;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.SSEReader;
@@ -268,6 +270,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 
 		handler.onEvent(new StreamEvent.StreamStart());
 
+		boolean completed = false;
 		SSEReader.Event event;
 		try (SSEReader sse = new SSEReader(input)) {
 			while ((event = sse.next()) != null) {
@@ -286,6 +289,7 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 						messageId, model,
 						finishReason != null ? finishReason : "end_turn",
 						usage, content));
+					completed = true;
 					break;
 				}
 
@@ -353,6 +357,33 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 					json.endObject();
 				}
 			}
+
+			// The stream closed without the "[DONE]" sentinel. Distinguish two cases instead of
+			// failing the whole run with an opaque "No MessageComplete event received":
+			if (!completed) {
+				closeOpenBlocks(state, handler);
+				if (finishReason != null) {
+					// The model signalled completion; the server merely omitted "[DONE]" (some
+					// OpenAI-compatible servers do). The response is whole — finalize it normally.
+					Logger.info("Chat Completions stream ended without a [DONE] sentinel; finalizing "
+						+ "from the received chunks (finishReason=" + finishReason + ").",
+						ChatCompletionsProvider.class);
+					List<ContentPart> content = state._accumulator.buildContentParts();
+					TokenUsage usage =
+						TokenUsage.fromCacheInclusivePrompt(inputTokens, cachedTokens, outputTokens, 0);
+					handler.onEvent(new StreamEvent.MessageComplete(
+						messageId, model, finishReason, usage, content));
+				} else {
+					// No finish signal and no sentinel: the connection dropped mid-response, so any
+					// accumulated content (including tool calls) may be truncated. Surface a clear
+					// provider error rather than delivering a partial message as if complete.
+					handler.onEvent(new StreamEvent.Error(
+						"Provider stream ended prematurely without a completion signal — the response "
+							+ "was likely truncated by the model server (timeout, context limit, or "
+							+ "model reload). Please retry.",
+						ProviderException.Kind.UNKNOWN));
+				}
+			}
 		} catch (IOException e) {
 			throw e;
 		} catch (Exception e) {
@@ -386,6 +417,23 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 						}
 						state._accumulator.appendText(state._textContentIndex, text);
 						handler.onEvent(new StreamEvent.TextDelta(state._textContentIndex, text));
+					}
+				}
+				// Reasoning models (DeepSeek-R1, Qwen, GLM, ...) stream their chain of thought in a
+				// separate delta field — "reasoning_content" (most) or "reasoning" (some). Surface it
+				// as a thinking block so it renders live instead of appearing frozen during the
+				// often-long reasoning phase.
+				case "reasoning_content", "reasoning" -> {
+					String text = normalizeContent(json);
+					if (text != null && !text.isEmpty()) {
+						if (!state._thinkingOpen) {
+							state._thinkingContentIndex = state._nextContentIndex++;
+							state._accumulator.addBlock(state._thinkingContentIndex, "thinking", null, null);
+							handler.onEvent(new StreamEvent.ThinkingStart(state._thinkingContentIndex));
+							state._thinkingOpen = true;
+						}
+						state._accumulator.appendText(state._thinkingContentIndex, text);
+						handler.onEvent(new StreamEvent.ThinkingDelta(state._thinkingContentIndex, text));
 					}
 				}
 				case "tool_calls" -> processToolCalls(json, state, handler);
@@ -477,6 +525,9 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 	 * has no per-block end signal, so all open blocks are closed when the stream terminates.
 	 */
 	private static void closeOpenBlocks(DeltaState state, StreamHandler handler) {
+		if (state._thinkingOpen) {
+			handler.onEvent(new StreamEvent.ThinkingEnd(state._thinkingContentIndex));
+		}
 		if (state._textOpen) {
 			handler.onEvent(new StreamEvent.TextEnd(state._textContentIndex));
 		}
@@ -499,6 +550,10 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 		int _textContentIndex = -1;
 
 		boolean _textOpen = false;
+
+		int _thinkingContentIndex = -1;
+
+		boolean _thinkingOpen = false;
 
 		final LinkedHashMap<Integer, Integer> _toolContentIndex = new LinkedHashMap<>();
 	}
@@ -607,16 +662,9 @@ public class ChatCompletionsProvider extends AbstractStreamingProvider {
 		Duration retryAfter = parseRetryAfter(response.headers());
 		String message = parseErrorMessage(body);
 
-		ProviderException.Kind kind = switch (status) {
-			case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
-			case 429 -> ProviderException.Kind.RATE_LIMITED;
-			default -> {
-				if (status >= 500) {
-					yield ProviderException.Kind.OVERLOADED;
-				}
-				yield ProviderException.Kind.INVALID_REQUEST;
-			}
-		};
+		// Chat-completions error bodies carry no reliable machine-readable code, so classify by
+		// HTTP status alone.
+		ProviderException.Kind kind = ErrorClassifier.classify(null, status, null);
 
 		throw new ProviderException(kind, status, message, retryAfter, null);
 	}

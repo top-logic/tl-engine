@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskListResponse;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskResponse;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskSummary;
@@ -196,7 +197,7 @@ public class TaskTool {
 
 		Map<String, Object> args = new HashMap<>();
 
-		try {
+		return ToolResults.invoke(TaskTool.class, "listTasks()", args, "Failed to list tasks: ", () -> {
 			TaskStore store = requireStore();
 			List<AgentTask> tasks = store.getAllTasks();
 
@@ -215,12 +216,8 @@ public class TaskTool {
 				response.addTask(summary);
 			}
 
-			return DataClassSerializer.toJson(response, TaskTool.class, "listTasks()", args);
-		} catch (Exception ex) {
-			Logger.error("listTasks() error: " + ex.getMessage(), ex, TaskTool.class);
-			return DataClassSerializer.errorToJson(
-				"Failed to list tasks: " + ex.getMessage(), TaskTool.class, "listTasks()", args);
-		}
+			return response;
+		});
 	}
 
 	/**

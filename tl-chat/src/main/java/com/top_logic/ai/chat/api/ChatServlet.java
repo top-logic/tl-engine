@@ -27,12 +27,11 @@ import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.ChatSessionListResponse;
 import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.CreateSessionRequest;
-import com.top_logic.ai.chat.api.messages.PersistedConversationV2;
-import com.top_logic.ai.chat.api.messages.PersistedPart;
-import com.top_logic.ai.chat.api.messages.PersistedTurn;
-import com.top_logic.ai.chat.api.messages.SaveMessagesRequest;
+import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
+import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -40,18 +39,32 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
+import com.top_logic.tl.ai.core.execution.model.TlAiAgentFactory;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
+import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
 import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * JSON API for the agentic chat: POST /chat/send, GET /chat/updates, GET /chat/events (SSE).
@@ -77,6 +90,7 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_UPDATES = "/updates";
 	private static final String PATH_EVENTS = "/events";
 	private static final String PATH_SESSIONS = "/sessions";
+	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
@@ -90,6 +104,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path: /chat/send or /chat/updates");
@@ -120,6 +135,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null || pathInfo.isEmpty() || pathInfo.equals("/")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing path: /chat/updates or /chat/events");
@@ -133,6 +149,10 @@ public class ChatServlet extends TopLogicServlet {
 			handleUpdates(req, resp);
 			return;
 		}
+		if (pathInfo.equals(PATH_INTERACTIONS) || pathInfo.equals(PATH_INTERACTIONS + "/")) {
+			handleInteractions(req, resp);
+			return;
+		}
 		if (pathInfo.startsWith(PATH_SESSIONS)) {
 			handleSessionGet(req, resp, pathInfo);
 			return;
@@ -142,6 +162,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -156,6 +177,7 @@ public class ChatServlet extends TopLogicServlet {
 
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		advanceSessionRevision();
 		String pathInfo = req.getPathInfo();
 		if (pathInfo == null) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -372,9 +394,12 @@ public class ChatServlet extends TopLogicServlet {
 
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
 		if (state != null) {
-			ChatProcessor.applyPollUpdates(state, tracker.getChat(), tracker);
+			// Flush into the run's own captured chat, not the currently active one: with
+			// concurrent runs a background run's messages must not leak into another session.
+			Chat stateChat = state.getChat();
+			ChatProcessor.applyPollUpdates(state, stateChat != null ? stateChat : tracker.getChat(), tracker);
 		}
-		boolean processing = ChatProcessor.isProcessing(tracker);
+		boolean processing = tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId());
 		String currentTaskId = ChatProcessor.getCurrentTaskId(tracker);
 
 		ChatUpdatesResponse response = DtoMapper.toUpdatesResponse(tracker, processing, currentTaskId);
@@ -383,6 +408,60 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/**
+	 * GET /chat/interactions — pending human-in-the-loop requests (approvals/questions) awaiting the
+	 * current user across all of their chat sessions.
+	 *
+	 * <p>
+	 * Lets the client surface a background run's pending approval while the user is viewing a
+	 * different chat: the run in chat A blocks on an approval while the user reads chat B, and this
+	 * feed drives a badge on chat A's session-list item. Responding still happens via the existing
+	 * /chat/respond once the user switches to that chat.
+	 * </p>
+	 */
+	private void handleInteractions(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+
+		TLClassifier chatKind = TlAiAgentFactory.getCHATSessionKindClassifier();
+		PendingInteractionsResponse response = PendingInteractionsResponse.create();
+		for (InteractionRequest request : AgentExecutionStore.getInstance().pendingInteractionsFor(person)) {
+			AgentExecution execution = request.getExecution();
+			AgentSession session = execution == null ? null : execution.getSession();
+			// Only surface requests that map to a chat session the client can navigate to; runs of
+			// other kinds (script, background) have no session-list item to badge.
+			if (session == null || !chatKind.equals(session.getKind())) {
+				continue;
+			}
+			PendingInteractionDto dto = PendingInteractionDto.create()
+				.setRequestId(request.getRequestId())
+				.setType(interactionTypeName(request.getType()))
+				.setHeader(request.getHeader())
+				.setPrompt(request.getPrompt())
+				.setPayload(request.getPayload())
+				.setSessionId(getObjectId(session))
+				.setSessionTitle(session.getTitle());
+			Date createdAt = request.getCreatedAt();
+			if (createdAt != null) {
+				dto.setCreatedAt(formatIso(createdAt));
+			}
+			response.addInteraction(dto);
+		}
+
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
+	/** Lowercased classifier name ("approval"/"question"/"choice") of an interaction type. */
+	private static String interactionTypeName(TLClassifier type) {
+		return type == null ? null : type.getName().toLowerCase(java.util.Locale.ROOT);
 	}
 
 	private void handleSSE(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -452,31 +531,28 @@ public class ChatServlet extends TopLogicServlet {
 				.setId(sessionId)
 				.setTitle(ChatHistoryService.getTitle(session));
 
-			// Return serialized messages from the now-active Chat
+			// Prefer the live ConversationLog of the now-active session: it includes the
+			// open turn of an in-flight run, whose transcript is only persisted at run end.
+			// Only sessions without server-side state fall back to the persisted
+			// per-execution transcripts.
+			String messagesJson = null;
 			if (tracker != null) {
 				ConversationLog convLog = tracker.getSessionManager().getOrCreateConversationLog();
-				response.setMessagesJson(ConversationLogSerializer.toJson(convLog));
-			} else {
-				response.setMessagesJson(ChatHistoryService.getMessagesJson(session));
-			}
-
-			// Populate structured entries directly from persisted JSON (no domain round-trip).
-			// Going through deserialize→domain→re-serialize would lose fields like durationMs
-			// and totalUsage that only exist on the DTO, not on the domain objects.
-			String messagesJson = ChatHistoryService.getMessagesJson(session);
-			if (messagesJson != null && !messagesJson.isEmpty()) {
-				if (messagesJson.trim().startsWith("{")) {
-					PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
-						new de.haumacher.msgbuf.json.JsonReader(
-							new de.haumacher.msgbuf.io.StringR(messagesJson)));
-					for (PersistedTurn turn : conv.getTurns()) {
-						computeContentHtml(turn);
-						response.addTurn(turn);
-					}
-				} else {
-					Logger.warn("Session " + sessionId + " has legacy chat format. V2-only response omits legacy entries.",
-						ChatServlet.class);
+				if (convLog.turnCount() > 0) {
+					messagesJson = ConversationLogSerializer.toJson(convLog);
 				}
+			}
+			if (messagesJson == null) {
+				messagesJson = ChatHistoryService.loadConversationJson(session);
+			}
+			if (messagesJson != null && !messagesJson.isEmpty()) {
+				response.setMessagesJson(messagesJson);
+				PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
+					new JsonReader(new StringR(messagesJson)));
+				for (PersistedTurn turn : conv.getTurns()) {
+					computeContentHtml(turn);
+				}
+				response.setTurnsJson(serializeTurns(conv.getTurns()));
 			}
 
 			resp.getWriter().write(DtoMapper.toJson(response));
@@ -554,27 +630,9 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		// PUT /chat/sessions/{id}/messages
-		if (pathInfo.endsWith("/messages")) {
-			String sessionId = extractSessionIdBeforeSuffix(pathInfo, "/messages");
-			SaveMessagesRequest body;
-			try {
-				body = SaveMessagesRequest.readSaveMessagesRequest(new JsonReader(new StringR(jsonBody)));
-			} catch (Exception e) {
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON: " + e.getMessage());
-				return;
-			}
-			final String messagesJson = body.getMessagesJson();
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
-			if (session != null && ChatHistoryService.isOwnedBy(session, person)) {
-				ChatHistoryService.saveMessagesAndTouch(session, messagesJson);
-				resp.setStatus(HttpServletResponse.SC_OK);
-			} else {
-				resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			}
-			return;
-		}
-
+		// PUT /chat/sessions/{id}/messages was removed: the server is the only persistence
+		// writer (per-execution transcripts written by the agent runner). Clients must not
+		// push conversation state.
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
@@ -720,6 +778,29 @@ public class ChatServlet extends TopLogicServlet {
 		return extractSessionId(withoutSuffix);
 	}
 
+	/**
+	 * Advances the subsession's KB revision at request begin so this request sees all commits
+	 * made so far — in particular the {@code AgentExecutionStore} writer thread's commits from a
+	 * previous request (session created, execution recorded), which a subsession's stable view
+	 * would otherwise not include (read-your-own-writes).
+	 *
+	 * <p>
+	 * Request begin is a sanctioned advance point: no KB transaction is open on this thread and
+	 * no rendering is in progress, so the update cannot merge into (and poison) an open business
+	 * transaction or produce an inconsistent view.
+	 * </p>
+	 */
+	private static void advanceSessionRevision() {
+		if (ThreadContextManager.getInteraction() == null) {
+			return;
+		}
+		try {
+			HistoryUtils.updateSessionRevision();
+		} catch (RuntimeException ex) {
+			Logger.info("Could not advance session revision: " + ex.getMessage(), ChatServlet.class);
+		}
+	}
+
 	private static String getObjectId(TLObject obj) {
 		return obj.tHandle().getObjectName().toExternalForm();
 	}
@@ -728,6 +809,21 @@ public class ChatServlet extends TopLogicServlet {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
+	}
+
+	/**
+	 * Serializes turns to a JSON array string for {@code ChatSessionDetailResponse.turnsJson}.
+	 */
+	private static String serializeTurns(List<PersistedTurn> turns) throws IOException {
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			json.beginArray();
+			for (PersistedTurn turn : turns) {
+				turn.writeTo(json);
+			}
+			json.endArray();
+		}
+		return buffer.toString();
 	}
 
 	/**

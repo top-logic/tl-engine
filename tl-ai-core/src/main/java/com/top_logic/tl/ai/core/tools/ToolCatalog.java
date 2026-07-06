@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.tools;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,10 +24,7 @@ import com.top_logic.tl.ai.tool.api.ToolArgumentCoercionException;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
-
-import de.haumacher.msgbuf.io.StringR;
-import de.haumacher.msgbuf.json.JsonReader;
-import de.haumacher.msgbuf.json.JsonToken;
+import com.top_logic.tl.ai.tool.api.json.JsonTree;
 
 /**
  * Central catalog of {@link Tool}s.
@@ -233,57 +229,6 @@ public class ToolCatalog implements ToolRegistry {
 		if (json == null || json.isBlank() || "{}".equals(json.trim())) {
 			return Map.of();
 		}
-		try (JsonReader reader = new JsonReader(new StringR(json))) {
-			return readObject(reader);
-		}
-	}
-
-	private static Map<String, Object> readObject(JsonReader reader) throws IOException {
-		Map<String, Object> map = new LinkedHashMap<>();
-		reader.beginObject();
-		while (reader.hasNext()) {
-			String name = reader.nextName();
-			map.put(name, readValue(reader));
-		}
-		reader.endObject();
-		return map;
-	}
-
-	private static List<Object> readArray(JsonReader reader) throws IOException {
-		List<Object> list = new ArrayList<>();
-		reader.beginArray();
-		while (reader.hasNext()) {
-			list.add(readValue(reader));
-		}
-		reader.endArray();
-		return list;
-	}
-
-	private static Object readValue(JsonReader reader) throws IOException {
-		JsonToken token = reader.peek();
-		return switch (token) {
-			case STRING -> reader.nextString();
-			case NUMBER -> {
-				double d = reader.nextDouble();
-				if (d == Math.floor(d) && !Double.isInfinite(d)) {
-					if (d >= Integer.MIN_VALUE && d <= Integer.MAX_VALUE) {
-						yield (int) d;
-					}
-					yield (long) d;
-				}
-				yield d;
-			}
-			case BOOLEAN -> reader.nextBoolean();
-			case NULL -> {
-				reader.nextNull();
-				yield null;
-			}
-			case BEGIN_OBJECT -> readObject(reader);
-			case BEGIN_ARRAY -> readArray(reader);
-			default -> {
-				reader.skipValue();
-				yield null;
-			}
-		};
+		return JsonTree.parseObject(json);
 	}
 }

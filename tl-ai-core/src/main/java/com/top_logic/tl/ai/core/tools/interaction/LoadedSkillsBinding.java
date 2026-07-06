@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.util.Set;
 
+import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+
 /**
  * Thread-local binding for tracking loaded skill IDs.
  *
@@ -17,20 +19,14 @@ import java.util.Set;
  */
 public class LoadedSkillsBinding {
 
-	private static final ThreadLocal<Set<String>> SKILLS = new ThreadLocal<>();
+	private static final ThreadLocalBinding<Set<String>> SKILLS = new ThreadLocalBinding<>();
 
 	/**
 	 * Binds the given set on the current thread and returns a handle whose
 	 * {@link AutoCloseable#close() close()} restores the previously bound value.
 	 */
 	public static Binding bind(Set<String> skills) {
-		Set<String> previous = SKILLS.get();
-		if (skills == null) {
-			SKILLS.remove();
-		} else {
-			SKILLS.set(skills);
-		}
-		return new Binding(previous);
+		return new Binding(SKILLS.bind(skills));
 	}
 
 	/**
@@ -54,24 +50,15 @@ public class LoadedSkillsBinding {
 	 * Handle returned by {@link LoadedSkillsBinding#bind(Set)}.
 	 */
 	public static final class Binding implements AutoCloseable {
-		private final Set<String> _previous;
-		private boolean _closed;
+		private final ThreadLocalBinding<Set<String>>.Handle _handle;
 
-		Binding(Set<String> previous) {
-			_previous = previous;
+		Binding(ThreadLocalBinding<Set<String>>.Handle handle) {
+			_handle = handle;
 		}
 
 		@Override
 		public void close() {
-			if (_closed) {
-				return;
-			}
-			_closed = true;
-			if (_previous == null) {
-				SKILLS.remove();
-			} else {
-				SKILLS.set(_previous);
-			}
+			_handle.close();
 		}
 	}
 }

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
+import com.top_logic.tl.ai.core.provider.ErrorClassifier;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
@@ -281,6 +282,12 @@ public class OpenAIResponsesProvider extends AbstractStreamingProvider {
 		};
 	}
 
+	/** Maps OpenAI {@code error.code} strings to a {@link ProviderException.Kind}. */
+	private static final Map<String, ProviderException.Kind> ERROR_CODE_MAP = Map.of(
+		"context_length_exceeded", ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED,
+		"rate_limit_exceeded", ProviderException.Kind.RATE_LIMITED,
+		"authentication_error", ProviderException.Kind.AUTHENTICATION);
+
 	@Override
 	protected void handleErrorResponse(HttpResponse<InputStream> response) throws ProviderException {
 		int status = response.statusCode();
@@ -290,21 +297,7 @@ public class OpenAIResponsesProvider extends AbstractStreamingProvider {
 		String message = parseErrorMessage(body);
 		String code = parseErrorCode(body);
 
-		ProviderException.Kind kind = switch (code) {
-			case "context_length_exceeded" -> ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED;
-			case "rate_limit_exceeded" -> ProviderException.Kind.RATE_LIMITED;
-			case "authentication_error" -> ProviderException.Kind.AUTHENTICATION;
-			default -> switch (status) {
-				case 401, 403 -> ProviderException.Kind.AUTHENTICATION;
-				case 429 -> ProviderException.Kind.RATE_LIMITED;
-				default -> {
-					if (status >= 500) {
-						yield ProviderException.Kind.OVERLOADED;
-					}
-					yield ProviderException.Kind.INVALID_REQUEST;
-				}
-			};
-		};
+		ProviderException.Kind kind = ErrorClassifier.classify(code, status, ERROR_CODE_MAP);
 
 		throw new ProviderException(kind, status, message, retryAfter, null);
 	}

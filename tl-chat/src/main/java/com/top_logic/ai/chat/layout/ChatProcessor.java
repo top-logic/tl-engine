@@ -30,6 +30,8 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -39,8 +41,10 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.execution.AgentEnvironment;
+import com.top_logic.tl.ai.core.execution.AgentRunner;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -53,14 +57,11 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 
 /**
  * Background processing logic for the chat component.
@@ -122,11 +123,8 @@ public class ChatProcessor {
 		Set<String> loadedSkills = ConcurrentHashMap.newKeySet();
 		loadedSkills.addAll(taskTracker.getLoadedSkills());
 
-		try (
-			ConversationLogListenerBinding.Binding b1 = ConversationLogListenerBinding.bind(logListener);
-			TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(taskStore);
-			UserInteractionStoreBinding.Binding b3 = UserInteractionStoreBinding.bind(interactionStore);
-			LoadedSkillsBinding.Binding b4 = LoadedSkillsBinding.bind(loadedSkills)) {
+		try (AgentEnvironment env =
+				AgentEnvironment.open(logListener, taskStore, interactionStore, loadedSkills)) {
 
 			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
 				ChatProcessor.class);
@@ -174,19 +172,39 @@ public class ChatProcessor {
 
 			// SSE handler still receives raw AgentEvents for text_delta streaming.
 			// ConversationLogListener handles structured recording via ConversationLog.
-			AgentEventListener listener;
-			if (sseHandler != null) {
-				listener = new CompositeAgentEventListener(List.of(logListener, sseHandler));
-			} else {
-				Logger.warn("No SSE handler found for tracker — streaming will not reach the browser.", ChatProcessor.class);
-				listener = logListener;
+			// The handler is resolved per event, NOT captured once: the browser reopens the
+			// SSE stream on session switches (replacing the handler), and a handler captured
+			// at run start would go stale — the UI would stop updating for the rest of the run.
+			if (sseHandler == null) {
+				Logger.warn("No SSE handler found for tracker — streaming may not reach the browser.",
+					ChatProcessor.class);
 			}
+			String runSessionId = state.getSessionId();
+			AgentEventListener sseForwarder = event -> {
+				// Stream only while this run's session is the one being viewed: with
+				// concurrent runs in different sessions, a background run's events would
+				// otherwise render into the wrong chat. Its progress is recovered from the
+				// live log when the user switches back (reattach path).
+				if (runSessionId != null && !runSessionId.equals(taskTracker.getActiveSessionId())) {
+					return;
+				}
+				ChatSSEHandler currentHandler = ChatSSEHandler.findHandler(taskTracker);
+				if (currentHandler != null) {
+					currentHandler.onEvent(event);
+				}
+			};
+			AgentEventListener listener =
+				new CompositeAgentEventListener(List.of(logListener, sseForwarder));
 			// Allow sub-agent approval events to bubble up to the SSE handler
 			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
 			ToolRegistry sessionRegistry = taskTracker.getActiveToolRegistry();
-			AgentFactory.RunResult runResult = agentFactory.runAgent(entryPointAgent, conversation, conversationMemory,
-				toolContext, listener, sessionRegistry);
+
+			// Record the run against the session captured at send time (not the currently
+			// active one), so a completed run is never written under the wrong session.
+			AgentSession agentSession = resolveAgentSession(state.getSessionId());
+			AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
+				conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null);
 			if (ToolRegistryReloadFlag.consume()) {
 				// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
 				// or ScriptToolAuthoringTool). Discard the cached registry so the next turn
@@ -293,7 +311,8 @@ public class ChatProcessor {
 	 */
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments) {
-		if (isProcessing(tracker)) {
+		// Busy is per chat session: a run in another session must not block this one.
+		if (tracker.hasActiveProcessingStateFor(tracker.getActiveSessionId())) {
 			tracker.getChat().addMessage(new ChatMessage("System", "Please wait for the current response to complete."));
 			return SendResult.busy();
 		}
@@ -361,6 +380,31 @@ public class ChatProcessor {
 	public static String getCurrentTaskId(TaskProgressTracker tracker) {
 		AIProcessingState state = tracker.getAnyActiveProcessingState();
 		return state != null ? state.getCurrentTaskId() : null;
+	}
+
+	/**
+	 * Resolves the {@link AgentSession} for the given session id, or <code>null</code> if the id
+	 * is unknown (recording is then skipped for the run).
+	 */
+	private static AgentSession resolveAgentSession(String sessionId) {
+		if (sessionId == null) {
+			Logger.info("Run will not be recorded: no active session id at send time.",
+				ChatProcessor.class);
+			return null;
+		}
+		try {
+			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			if (session instanceof AgentSession agentSession) {
+				return agentSession;
+			}
+			Logger.warn("Run will not be recorded: session " + sessionId
+				+ (session == null ? " not found." : " is not an AgentSession."), ChatProcessor.class);
+			return null;
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to resolve agent session " + sessionId + ": " + ex.getMessage(),
+				ChatProcessor.class);
+			return null;
+		}
 	}
 
 	/**

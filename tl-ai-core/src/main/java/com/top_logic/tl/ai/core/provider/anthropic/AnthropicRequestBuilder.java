@@ -26,6 +26,7 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.DataUris;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
@@ -249,12 +250,9 @@ public final class AnthropicRequestBuilder {
 	private static Map<String, Object> buildImageSource(ImageContent image) {
 		Map<String, Object> source = new LinkedHashMap<>();
 		if (image.url().startsWith("data:")) {
-			String dataUri = image.url();
-			int commaIdx = dataUri.indexOf(',');
-			String base64Data = commaIdx >= 0 ? dataUri.substring(commaIdx + 1) : dataUri;
 			source.put("type", "base64");
 			source.put("media_type", image.mediaType());
-			source.put("data", base64Data);
+			source.put("data", DataUris.base64Payload(image.url()));
 		} else {
 			source.put("type", "url");
 			source.put("url", image.url());

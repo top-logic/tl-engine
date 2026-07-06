@@ -8,7 +8,7 @@ package com.top_logic.ai.chat.layout;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.top_logic.ai.chat.api.ConversationLogSerializer;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
@@ -206,13 +206,15 @@ public class ChatSessionManager {
 		if (sessionId == null) {
 			return;
 		}
+		PersistJob outgoing;
 		synchronized (_lock) {
 			if (sessionId.equals(_activeSessionId)) {
 				return;
 			}
 
-			// Persist current session before switching
-			persistActiveSessionInternal();
+			// Snapshot the outgoing session's metadata under the lock; the actual KB write
+			// happens after the lock is released (see persistOutsideLock).
+			outgoing = preparePersist();
 
 			// Reset tracker state immediately so it is never retained from the previous session,
 			// regardless of whether the new session is found in the LRU cache or loaded from DB.
@@ -236,15 +238,10 @@ public class ChatSessionManager {
 			try {
 				TLObject session = ChatHistoryService.findSessionById(sessionId);
 				if (session != null) {
-					String json = ChatHistoryService.getMessagesJson(session);
+					String json = ChatHistoryService.loadConversationJson(session);
 					if (json != null && !json.isEmpty()) {
-						if (json.trim().startsWith("{")) {
-							convLog = ConversationLogSerializer.fromJson(json);
-							ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
-						} else {
-							Logger.warn("Session " + sessionId + " has legacy chat format. V2-only load ignores legacy data.",
-								ChatSessionManager.class);
-						}
+						convLog = ConversationLogSerializer.fromJson(json);
+						ConversationLogReplay.rebuildMemory(convLog, memory.conversation());
 					}
 
 					if (_tracker != null) {
@@ -264,40 +261,61 @@ public class ChatSessionManager {
 			_sessions.put(sessionId, newState);
 			_activeSessionId = sessionId;
 		}
+		persistOutsideLock(outgoing);
 	}
 
 	/**
-	 * Persists the active session's full state (messages) to the database.
+	 * Persists the active session's metadata to the database.
+	 *
+	 * <p>
+	 * The conversation itself is persisted per run by the agent runner (one transcript per
+	 * execution); only the session-level metadata bag (approved tools, approval mode, tasks,
+	 * loaded skills) is written here.
+	 * </p>
 	 */
 	public void persistActiveSession() {
+		PersistJob job;
 		synchronized (_lock) {
-			persistActiveSessionInternal();
+			job = preparePersist();
 		}
+		persistOutsideLock(job);
 	}
 
-	private void persistActiveSessionInternal() {
+	/** Snapshot of what to persist, taken under {@link #_lock}. */
+	private record PersistJob(String sessionId, String metadataJson) {}
+
+	/**
+	 * Computes the active session's persistable metadata. Must be called under {@link #_lock}.
+	 */
+	private PersistJob preparePersist() {
 		String sessionId = _activeSessionId;
 		if (sessionId == null) {
-			return;
+			return null;
 		}
-		SessionState state = _sessions.get(sessionId);
-		if (state == null) {
+		if (_sessions.get(sessionId) == null) {
+			return null;
+		}
+		String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
+		return new PersistJob(sessionId, metadataJson);
+	}
+
+	/**
+	 * Executes the KB write of a prepared snapshot. Must be called WITHOUT holding
+	 * {@link #_lock}: the write blocks on the {@code AgentExecutionStore} writer thread, and a
+	 * stalled commit must not freeze all session switching and chat state access behind the
+	 * lock.
+	 */
+	private void persistOutsideLock(PersistJob job) {
+		if (job == null) {
 			return;
 		}
 		try {
-			TLObject session = ChatHistoryService.findSessionById(sessionId);
+			TLObject session = ChatHistoryService.findSessionById(job.sessionId());
 			if (session != null) {
-				ConversationLog conversationLog = state._conversationLog;
-				if (conversationLog == null) {
-					conversationLog = new ConversationLog();
-					state._conversationLog = conversationLog;
-				}
-				String json = ConversationLogSerializer.toJson(conversationLog);
-				String metadataJson = _tracker != null ? DtoMapper.serializeMetadata(_tracker) : null;
-				ChatHistoryService.saveMessagesAndMetadata(session, json, metadataJson);
+				ChatHistoryService.saveMetadata(session, job.metadataJson());
 			}
 		} catch (Exception ex) {
-			Logger.error("Failed to persist session " + sessionId + ": " + ex.getMessage(), ex,
+			Logger.error("Failed to persist session " + job.sessionId() + ": " + ex.getMessage(), ex,
 				ChatSessionManager.class);
 		}
 	}

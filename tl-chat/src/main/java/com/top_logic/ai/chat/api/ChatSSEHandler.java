@@ -52,6 +52,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
 /**
  * Push-based SSE handler that implements {@link AgentEventListener}.
@@ -384,9 +385,9 @@ public class ChatSSEHandler implements AgentEventListener {
 		} else if (event instanceof AgentEvent.ToolCallResultTruncated) {
 			// Not surfaced to UI
 		} else if (event instanceof AgentEvent.ToolProgress e) {
-			sendEvent("tool_progress", "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
-				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
-				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}");
+			sendEvent("tool_progress", "{\"toolCallId\":\"" + JsonEscape.escape(e.toolCallId())
+				+ "\",\"toolName\":\"" + JsonEscape.escape(e.toolName())
+				+ "\",\"message\":\"" + JsonEscape.escape(e.message()) + "\"}");
 		} else if (event instanceof AgentEvent.ApprovalRequired e) {
 			Logger.info("SSE: Sending approval_required for tool '" + e.toolName()
 				+ "' (approvalRequestId=" + e.approvalRequestId() + ")", ChatSSEHandler.class);
@@ -394,7 +395,7 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setToolCallId(e.toolCallId())
 				.setApprovalRequestId(e.approvalRequestId())
 				.setToolName(e.toolName())
-				.setArgsJson(DtoMapper.mapToJsonString(e.args()))
+				.setArgsJson(e.argsJson())
 				.setDisplayReason(e.displayReason())));
 		} else if (event instanceof AgentEvent.ApprovalResolved e) {
 			sendEvent("approval_resolved", DtoMapper.toJson(ApprovalResolvedEvent.create()
@@ -452,14 +453,14 @@ public class ChatSSEHandler implements AgentEventListener {
 				.setErrorMessage(e.errorMessage()).setDurationMs(e.duration().toMillis()));
 		} else if (child instanceof AgentEvent.ToolProgress e) {
 			innerType = "tool_progress";
-			innerData = "{\"toolCallId\":\"" + escapeJson(e.toolCallId())
-				+ "\",\"toolName\":\"" + escapeJson(e.toolName())
-				+ "\",\"message\":\"" + escapeJson(e.message()) + "\"}";
+			innerData = "{\"toolCallId\":\"" + JsonEscape.escape(e.toolCallId())
+				+ "\",\"toolName\":\"" + JsonEscape.escape(e.toolName())
+				+ "\",\"message\":\"" + JsonEscape.escape(e.message()) + "\"}";
 		} else if (child instanceof AgentEvent.ApprovalRequired e) {
 			innerType = "approval_required";
 			innerData = DtoMapper.toJson(ApprovalRequiredEvent.create()
 				.setToolCallId(e.toolCallId()).setApprovalRequestId(e.approvalRequestId())
-				.setToolName(e.toolName()).setArgsJson(DtoMapper.mapToJsonString(e.args()))
+				.setToolName(e.toolName()).setArgsJson(e.argsJson())
 				.setDisplayReason(e.displayReason()));
 		} else if (child instanceof AgentEvent.ApprovalResolved e) {
 			innerType = "approval_resolved";
@@ -503,7 +504,12 @@ public class ChatSSEHandler implements AgentEventListener {
 	}
 
 	private void pollUserInteractions() {
-		ChatProcessor.AIProcessingState procState = _tracker.getAnyActiveProcessingState();
+		// Only the run whose session is being viewed may surface its questions here; a background
+		// run's ask-user prompts must not appear in the foreground chat. On switching back, the new
+		// SSE handler re-emits this session's still-pending interactions (its emitted-id set is
+		// fresh), so nothing is lost.
+		ChatProcessor.AIProcessingState procState =
+			_tracker.getProcessingStateForSession(_tracker.getActiveSessionId());
 		if (procState == null) {
 			return;
 		}
@@ -574,18 +580,4 @@ public class ChatSSEHandler implements AgentEventListener {
 			.setCacheWriteTokens(usage.cacheWriteTokens());
 	}
 
-	/**
-	 * Minimal JSON string escaping for inline JSON values.
-	 */
-	private static String escapeJson(String value) {
-		if (value == null) {
-			return "";
-		}
-		return value
-			.replace("\\", "\\\\")
-			.replace("\"", "\\\"")
-			.replace("\n", "\\n")
-			.replace("\r", "\\r")
-			.replace("\t", "\\t");
-	}
 }

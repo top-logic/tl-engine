@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.agent.event;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
@@ -245,12 +244,12 @@ public sealed interface AgentEvent {
 	 * @param toolCallId tool call identifier
 	 * @param approvalRequestId approval request identifier
 	 * @param toolName name of the tool
-	 * @param args tool arguments
+	 * @param argsJson the tool call's raw argument JSON, exactly as the model emitted it
 	 * @param displayReason human-readable reason shown to user
 	 */
 	record ApprovalRequired(String runId, int turnNumber, Instant timestamp,
 			String toolCallId, String approvalRequestId, String toolName,
-			Map<String, Object> args, String displayReason) implements AgentEvent {}
+			String argsJson, String displayReason) implements AgentEvent {}
 
 	/**
 	 * Emitted after the approval channel returns with a decision.

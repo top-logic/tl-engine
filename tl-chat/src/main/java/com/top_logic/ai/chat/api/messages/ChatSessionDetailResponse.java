@@ -24,11 +24,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getMessagesJson() */
 	public static final String MESSAGES_JSON__PROP = "messagesJson";
 
-	/** @see #getEntries() */
-	public static final String ENTRIES__PROP = "entries";
-
-	/** @see #getTurns() */
-	public static final String TURNS__PROP = "turns";
+	/** @see #getTurnsJson() */
+	public static final String TURNS_JSON__PROP = "turnsJson";
 
 	private String _id = "";
 
@@ -36,9 +33,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 
 	private String _messagesJson = "";
 
-	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedChatEntry> _entries = new java.util.ArrayList<>();
-
-	private final java.util.List<com.top_logic.ai.chat.api.messages.PersistedTurn> _turns = new java.util.ArrayList<>();
+	private String _turnsJson = "";
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -110,87 +105,25 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	}
 
 	/**
-	 * Structured entries (messages + task snapshots). V1 format.
+	 * Turn-based entries (V2 format) as a JSON array of <code>PersistedTurn</code> objects
+	 * (see <code>com.top_logic.tl.ai.core.session.persist</code>). When present, takes
+	 * precedence over entries.
 	 */
-	public final java.util.List<com.top_logic.ai.chat.api.messages.PersistedChatEntry> getEntries() {
-		return _entries;
+	public final String getTurnsJson() {
+		return _turnsJson;
 	}
 
 	/**
-	 * @see #getEntries()
+	 * @see #getTurnsJson()
 	 */
-	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setEntries(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedChatEntry> value) {
-		internalSetEntries(value);
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setTurnsJson(String value) {
+		internalSetTurnsJson(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getEntries()} without chain call utility. */
-	protected final void internalSetEntries(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedChatEntry> value) {
-		if (value == null) throw new IllegalArgumentException("Property 'entries' cannot be null.");
-		_entries.clear();
-		_entries.addAll(value);
-	}
-
-	/**
-	 * Adds a value to the {@link #getEntries()} list.
-	 */
-	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse addEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry value) {
-		internalAddEntry(value);
-		return this;
-	}
-
-	/** Implementation of {@link #addEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry)} without chain call utility. */
-	protected final void internalAddEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry value) {
-		_entries.add(value);
-	}
-
-	/**
-	 * Removes a value from the {@link #getEntries()} list.
-	 */
-	public final void removeEntry(com.top_logic.ai.chat.api.messages.PersistedChatEntry value) {
-		_entries.remove(value);
-	}
-
-	/**
-	 * Turn-based entries (V2 format). When present, takes precedence over entries.
-	 */
-	public final java.util.List<com.top_logic.ai.chat.api.messages.PersistedTurn> getTurns() {
-		return _turns;
-	}
-
-	/**
-	 * @see #getTurns()
-	 */
-	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setTurns(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedTurn> value) {
-		internalSetTurns(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getTurns()} without chain call utility. */
-	protected final void internalSetTurns(java.util.List<? extends com.top_logic.ai.chat.api.messages.PersistedTurn> value) {
-		if (value == null) throw new IllegalArgumentException("Property 'turns' cannot be null.");
-		_turns.clear();
-		_turns.addAll(value);
-	}
-
-	/**
-	 * Adds a value to the {@link #getTurns()} list.
-	 */
-	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse addTurn(com.top_logic.ai.chat.api.messages.PersistedTurn value) {
-		internalAddTurn(value);
-		return this;
-	}
-
-	/** Implementation of {@link #addTurn(com.top_logic.ai.chat.api.messages.PersistedTurn)} without chain call utility. */
-	protected final void internalAddTurn(com.top_logic.ai.chat.api.messages.PersistedTurn value) {
-		_turns.add(value);
-	}
-
-	/**
-	 * Removes a value from the {@link #getTurns()} list.
-	 */
-	public final void removeTurn(com.top_logic.ai.chat.api.messages.PersistedTurn value) {
-		_turns.remove(value);
+	/** Internal setter for {@link #getTurnsJson()} without chain call utility. */
+	protected final void internalSetTurnsJson(String value) {
+		_turnsJson = value;
 	}
 
 	@Override
@@ -204,8 +137,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			ID__PROP, 
 			TITLE__PROP, 
 			MESSAGES_JSON__PROP, 
-			ENTRIES__PROP, 
-			TURNS__PROP);
+			TURNS_JSON__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -233,8 +165,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case ID__PROP: return getId();
 			case TITLE__PROP: return getTitle();
 			case MESSAGES_JSON__PROP: return getMessagesJson();
-			case ENTRIES__PROP: return getEntries();
-			case TURNS__PROP: return getTurns();
+			case TURNS_JSON__PROP: return getTurnsJson();
 			default: return null;
 		}
 	}
@@ -245,8 +176,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case ID__PROP: internalSetId((String) value); break;
 			case TITLE__PROP: internalSetTitle((String) value); break;
 			case MESSAGES_JSON__PROP: internalSetMessagesJson((String) value); break;
-			case ENTRIES__PROP: internalSetEntries(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedChatEntry.class, value)); break;
-			case TURNS__PROP: internalSetTurns(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PersistedTurn.class, value)); break;
+			case TURNS_JSON__PROP: internalSetTurnsJson((String) value); break;
 		}
 	}
 
@@ -271,18 +201,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		out.value(getTitle());
 		out.name(MESSAGES_JSON__PROP);
 		out.value(getMessagesJson());
-		out.name(ENTRIES__PROP);
-		out.beginArray();
-		for (com.top_logic.ai.chat.api.messages.PersistedChatEntry x : getEntries()) {
-			x.writeTo(out);
-		}
-		out.endArray();
-		out.name(TURNS__PROP);
-		out.beginArray();
-		for (com.top_logic.ai.chat.api.messages.PersistedTurn x : getTurns()) {
-			x.writeTo(out);
-		}
-		out.endArray();
+		out.name(TURNS_JSON__PROP);
+		out.value(getTurnsJson());
 	}
 
 	@Override
@@ -291,26 +211,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TITLE__PROP: setTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MESSAGES_JSON__PROP: setMessagesJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case ENTRIES__PROP: {
-				java.util.List<com.top_logic.ai.chat.api.messages.PersistedChatEntry> newValue = new java.util.ArrayList<>();
-				in.beginArray();
-				while (in.hasNext()) {
-					newValue.add(com.top_logic.ai.chat.api.messages.PersistedChatEntry.readPersistedChatEntry(in));
-				}
-				in.endArray();
-				setEntries(newValue);
-			}
-			break;
-			case TURNS__PROP: {
-				java.util.List<com.top_logic.ai.chat.api.messages.PersistedTurn> newValue = new java.util.ArrayList<>();
-				in.beginArray();
-				while (in.hasNext()) {
-					newValue.add(com.top_logic.ai.chat.api.messages.PersistedTurn.readPersistedTurn(in));
-				}
-				in.endArray();
-				setTurns(newValue);
-			}
-			break;
+			case TURNS_JSON__PROP: setTurnsJson(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

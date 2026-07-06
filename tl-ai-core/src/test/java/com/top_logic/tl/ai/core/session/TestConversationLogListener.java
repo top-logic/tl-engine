@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.session;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.TestCase;
 
@@ -164,7 +163,7 @@ public class TestConversationLogListener extends TestCase {
 		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "model"));
 		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
 		_listener.onEvent(new AgentEvent.ApprovalRequired("r1", 1, now, "tc1", "apr1",
-			"writeFile", Map.of("path", "/etc/hosts"), "Write to system file"));
+			"writeFile", "{\"path\":\"/etc/hosts\"}", "Write to system file"));
 
 		Part.ApprovalPart pending = (Part.ApprovalPart) _log.currentTurn().findPart("apr1");
 		assertNotNull(pending);

@@ -135,6 +135,49 @@ public class TaskProgressTracker {
 	}
 
 	/**
+	 * Returns the processing state of the run in the given chat session, or null if that session
+	 * has no run.
+	 *
+	 * <p>
+	 * Unlike {@link #getAnyActiveProcessingState()}, this never returns another session's run — so
+	 * a background run's interactions are not surfaced into the foreground chat.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat session id; null returns any active state (single-session fallback).
+	 */
+	public AIProcessingState getProcessingStateForSession(String sessionId) {
+		if (sessionId == null) {
+			return getAnyActiveProcessingState();
+		}
+		for (AIProcessingState state : _processingStates.values()) {
+			if (sessionId.equals(state.getSessionId())) {
+				return state;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns whether an AI task is currently in progress for the given chat session.
+	 *
+	 * <p>
+	 * Runs are per-session: a run in another session does not block this one.
+	 * </p>
+	 */
+	public boolean hasActiveProcessingStateFor(String sessionId) {
+		if (sessionId == null) {
+			return hasActiveProcessingState();
+		}
+		for (AIProcessingState state : _processingStates.values()) {
+			if (state.isProcessing() && sessionId.equals(state.getSessionId())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Returns whether any AI task is currently in progress for this tracker.
 	 */
 	public boolean hasActiveProcessingState() {

@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
+import com.top_logic.tl.ai.core.provider.LLMService;
 
 /**
  * Converts {@link AgentEvent}s into {@link Part}s and appends them to a
@@ -73,6 +74,11 @@ public class ConversationLogListener implements AgentEventListener {
 	/** Creates a {@link ConversationLogListener}. */
 	public ConversationLogListener(ConversationLog log) {
 		_log = log;
+	}
+
+	/** The conversation log this listener records into. */
+	public ConversationLog log() {
+		return _log;
 	}
 
 	/**
@@ -138,6 +144,22 @@ public class ConversationLogListener implements AgentEventListener {
 			turn = _log.startTurn();
 		}
 		turn.setModel(e.model());
+		turn.setProvider(resolveProviderId(e.model()));
+	}
+
+	/**
+	 * Best-effort lookup of the provider id serving the given model; <code>null</code> outside a
+	 * running application (e.g. unit tests).
+	 */
+	private static String resolveProviderId(String model) {
+		if (!LLMService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		try {
+			return LLMService.getInstance().getProviderId(model);
+		} catch (RuntimeException ex) {
+			return null;
+		}
 	}
 
 	private void handleRunCompleted() {
@@ -235,7 +257,7 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn != null) {
 			Part.ApprovalPart part = Part.ApprovalPart.pending(
 				e.approvalRequestId(), e.timestamp(), e.toolCallId(),
-				e.toolName(), argsMapToJson(e.args()), e.displayReason());
+				e.toolName(), e.argsJson(), e.displayReason());
 			turn.addAssistantPart(part);
 		}
 	}
@@ -414,12 +436,25 @@ public class ConversationLogListener implements AgentEventListener {
 	 */
 	public void resolveDelegation(String delegationId, String resultSummary,
 			long durationMs, AgentResult agentResult) {
+		resolveDelegation(delegationId, resultSummary, null, durationMs, agentResult);
+	}
+
+	/**
+	 * Resolve a completed delegation with result summary, the child run's id, duration, and
+	 * sub-agent metadata.
+	 *
+	 * @param childRunId
+	 *        The child agent loop's run id, linking the delegation part to the child's recorded
+	 *        execution; may be <code>null</code> if the child run was not recorded.
+	 */
+	public void resolveDelegation(String delegationId, String resultSummary, String childRunId,
+			long durationMs, AgentResult agentResult) {
 		_activeDelegations.remove(delegationId);
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
 			Part existing = turn.findPart(delegationId);
 			if (existing instanceof Part.DelegationPart dp) {
-				turn.updatePart(delegationId, dp.completed(resultSummary, null, durationMs,
+				turn.updatePart(delegationId, dp.completed(resultSummary, childRunId, durationMs,
 					agentResult.turnsUsed(), agentResult.totalUsage(), agentResult.stopReason()));
 			}
 		}
@@ -565,51 +600,6 @@ public class ConversationLogListener implements AgentEventListener {
 				return Part.ApprovalDecision.TIMED_OUT;
 			default:
 				throw new IllegalArgumentException("Unknown outcome: " + outcome);
-		}
-	}
-
-	private static String argsMapToJson(Map<String, Object> map) {
-		if (map == null || map.isEmpty()) {
-			return "{}";
-		}
-		StringBuilder sb = new StringBuilder("{");
-		boolean first = true;
-		for (var entry : map.entrySet()) {
-			if (!first) sb.append(",");
-			sb.append("\"");
-			appendEscaped(sb, entry.getKey());
-			sb.append("\":\"");
-			appendEscaped(sb, String.valueOf(entry.getValue()));
-			sb.append("\"");
-			first = false;
-		}
-		sb.append("}");
-		return sb.toString();
-	}
-
-	private static void appendEscaped(StringBuilder sb, String value) {
-		for (int i = 0; i < value.length(); i++) {
-			char c = value.charAt(i);
-			switch (c) {
-				case '"':
-					sb.append("\\\"");
-					break;
-				case '\\':
-					sb.append("\\\\");
-					break;
-				case '\n':
-					sb.append("\\n");
-					break;
-				case '\r':
-					sb.append("\\r");
-					break;
-				case '\t':
-					sb.append("\\t");
-					break;
-				default:
-					sb.append(c);
-					break;
-			}
 		}
 	}
 }

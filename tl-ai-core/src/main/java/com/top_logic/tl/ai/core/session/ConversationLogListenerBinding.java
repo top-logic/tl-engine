@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.session;
 
+import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+
 /**
  * Thread-local binding for {@link ConversationLogListener}.
  *
@@ -14,20 +16,14 @@ package com.top_logic.tl.ai.core.session;
  */
 public class ConversationLogListenerBinding {
 
-	private static final ThreadLocal<ConversationLogListener> LISTENER = new ThreadLocal<>();
+	private static final ThreadLocalBinding<ConversationLogListener> LISTENER = new ThreadLocalBinding<>();
 
 	/**
 	 * Binds the given listener on the current thread and returns a handle whose
 	 * {@link AutoCloseable#close() close()} restores the previously bound value.
 	 */
 	public static Binding bind(ConversationLogListener listener) {
-		ConversationLogListener previous = LISTENER.get();
-		if (listener == null) {
-			LISTENER.remove();
-		} else {
-			LISTENER.set(listener);
-		}
-		return new Binding(previous);
+		return new Binding(LISTENER.bind(listener));
 	}
 
 	/** Returns the bound listener, or {@code null}. */
@@ -37,24 +33,15 @@ public class ConversationLogListenerBinding {
 
 	/** Handle returned by {@link ConversationLogListenerBinding#bind(ConversationLogListener)}. */
 	public static final class Binding implements AutoCloseable {
-		private final ConversationLogListener _previous;
-		private boolean _closed;
+		private final ThreadLocalBinding<ConversationLogListener>.Handle _handle;
 
-		Binding(ConversationLogListener previous) {
-			_previous = previous;
+		Binding(ThreadLocalBinding<ConversationLogListener>.Handle handle) {
+			_handle = handle;
 		}
 
 		@Override
 		public void close() {
-			if (_closed) {
-				return;
-			}
-			_closed = true;
-			if (_previous == null) {
-				LISTENER.remove();
-			} else {
-				LISTENER.set(_previous);
-			}
+			_handle.close();
 		}
 	}
 }

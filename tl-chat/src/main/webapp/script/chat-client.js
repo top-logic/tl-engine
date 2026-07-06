@@ -104,6 +104,7 @@
     cancel: CTX + "/chat/cancel",
     approvalMode: CTX + "/chat/approval-mode",
     updates: CTX + "/chat/updates",
+    interactions: CTX + "/chat/interactions",
   };
 
   // Registry key (windowName) of the TopLogic sub-session this chat was rendered in.
@@ -329,6 +330,10 @@
       if (data.processing) {
         State.set(State.STREAMING);
         Store.resetRun();
+        // Attached to an in-flight run: deltas streamed before this connection are not
+        // replayed, so the streamed text may have a gap. Resync from the server once the
+        // turn completes.
+        Store.reattachedMidRun = true;
       } else {
         State.set(State.IDLE);
       }
@@ -336,6 +341,8 @@
     },
 
     onRunStarted(data) {
+      // Run observed from its start — no missed deltas, no resync needed.
+      Store.reattachedMidRun = false;
       Store.resetRun();
       Store.currentRun.runId = data.runId;
       Store.currentRun.model = data.model;
@@ -361,6 +368,8 @@
       Render.finalizeAssistantBubble();
       Render.updateInputState();
       Tokens.showRunUsage(data.totalUsage);
+      // A finished run may have left pending requests in other sessions resolved/cancelled.
+      Interactions.poll();
     },
 
     onTurnStarted(data) {
@@ -379,6 +388,7 @@
 
     onTextDelta(data) {
       if (Store.currentRun) {
+        Render.ensureStreamingBubble();
         // New text arriving — flush any pending output from a previous turn into the trace
         if (Store.currentRun.pendingOutputText) {
           Tools.renderOutput(Store.currentRun.pendingOutputText);
@@ -392,6 +402,7 @@
 
     onThinkingDelta(data) {
       if (Store.currentRun) {
+        Render.ensureStreamingBubble();
         Store.currentRun.thinkingBuffer += data.text;
         Thinking.updateStreaming();
       }
@@ -403,6 +414,7 @@
         Store.currentRun.pendingOutputText = Store.currentRun.textBuffer;
         Store.currentRun.textBuffer = "";
       }
+      Render.ensureStreamingBubble();
       Store.addToolCall(data.toolCallId, data.toolName, data.argsJson);
       Tools.renderToolCall(data.toolCallId);
     },
@@ -439,6 +451,7 @@
         State.set(State.STREAMING);
         Render.updateInputState();
       }
+      Interactions.poll();
     },
 
     onTxBegan(data) {
@@ -479,6 +492,13 @@
     },
 
     onMessageComplete(data) {
+      if (Store.reattachedMidRun) {
+        // The streamed view is incomplete (missed deltas while detached); replace it with
+        // the server's complete conversation instead of patching the last bubble.
+        Store.reattachedMidRun = false;
+        Session.resync();
+        return;
+      }
       Render.swapToRenderedHtml(data.contentHtml);
     },
 
@@ -1135,6 +1155,21 @@
       this._currentTextEl = textEl;
       this._currentToolsEl = toolsEl;
       this._currentTraceWrapper = traceWrapper;
+    },
+
+    /**
+     * Ensures a live streaming bubble exists before rendering stream content.
+     *
+     * After reattaching to an in-flight run (SSE reconnect on a session switch), the
+     * client never receives run_started -- the only event that creates the bubble -- and
+     * the session re-render may additionally have detached a previously created bubble
+     * (innerHTML reset leaves _currentTextEl pointing at a dead node). Recreate on
+     * demand; the text buffer is re-rendered in full, so nothing is lost.
+     */
+    ensureStreamingBubble() {
+      if (this._currentTextEl && this._currentTextEl.isConnected) return;
+      if (!this._messagesEl) return;
+      this.appendAssistantBubble();
       this._toolCount = 0;
       this._scrollToBottom();
     },
@@ -1733,6 +1768,15 @@
       const section = Render._inputSection;
       if (!section) return;
 
+      // Already showing this exact approval (e.g. SSE delivered it and the pending-feed
+      // re-surface raced): don't stack a duplicate.
+      if (
+        this._currentPrompt &&
+        this._currentPrompt.dataset.approvalId === data.approvalRequestId
+      ) {
+        return;
+      }
+
       const el = document.createElement("div");
       el.className = "tl-chat-approval";
       el.dataset.approvalId = data.approvalRequestId;
@@ -1744,6 +1788,7 @@
         '<div class="tl-chat-approval-reason">' +
         Utils.escapeHtml(data.displayReason || "") +
         "</div>" +
+        this._renderArgs(data.argsJson) +
         '<div class="tl-chat-approval-actions">' +
         '<button class="tl-chat-approval-btn allow" data-action="APPROVED">Allow</button>' +
         '<button class="tl-chat-approval-btn" data-action="APPROVED_FOR_SESSION">Allow for Session</button>' +
@@ -1788,6 +1833,41 @@
       // Insert at the top of the input section, above the input row
       section.insertBefore(el, section.firstChild);
       this._currentPrompt = el;
+    },
+
+    /**
+     * Renders the tool call's arguments so the user can judge what they are approving
+     * (e.g. the actual TL-Script source for executeTLScript). String values are shown
+     * raw in a <pre> block to preserve line breaks; other values as pretty JSON.
+     */
+    _renderArgs(argsJson) {
+      if (!argsJson || argsJson === "{}") return "";
+      let parsed = null;
+      try {
+        parsed = JSON.parse(argsJson);
+      } catch (e) {
+        // Not parseable — show the raw string rather than nothing.
+      }
+      let inner = "";
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (const [key, value] of Object.entries(parsed)) {
+          const text =
+            typeof value === "string" ? value : JSON.stringify(value, null, 2);
+          inner +=
+            '<div class="tl-chat-approval-arg-name">' +
+            Utils.escapeHtml(key) +
+            "</div>" +
+            '<pre class="tl-chat-approval-arg-value">' +
+            Utils.escapeHtml(text) +
+            "</pre>";
+        }
+      } else {
+        inner =
+          '<pre class="tl-chat-approval-arg-value">' +
+          Utils.escapeHtml(argsJson) +
+          "</pre>";
+      }
+      return '<div class="tl-chat-approval-args">' + inner + "</div>";
     },
 
     _respond(requestId, outcome, toolName, comment) {
@@ -1963,6 +2043,24 @@
       if (this._interactionEl) {
         this._interactionEl.remove();
         this._interactionEl = null;
+      }
+    },
+
+    /**
+     * Clears any approval or ask-user prompt from the input area. Called on session switch so a
+     * pending request from one chat never lingers in another — approvals/interactions are strictly
+     * per-session, and the one for the chat being opened is re-surfaced from the pending feed.
+     */
+    reset() {
+      if (this._currentPrompt) {
+        this._currentPrompt.remove();
+        this._currentPrompt = null;
+      }
+      Store.activeInteractionRequestId = null;
+      this._removeInteractionUI();
+      if (Render._inputEl) {
+        Render._inputEl.disabled = false;
+        Render._inputEl.placeholder = "Type a message...";
       }
     },
   };
@@ -2322,14 +2420,37 @@
       sessions.forEach((s) => {
         this._listEl.appendChild(this._createSessionItem(s));
       });
+      // Re-apply pending-approval badges: the list was just rebuilt from scratch.
+      Interactions.apply();
     },
 
     _resetState() {
       State.set(State.IDLE);
       Store.currentRun = null;
       if (Render._messagesEl) Render._messagesEl.innerHTML = "";
+      // A pending approval/interaction belongs to the session it was raised in; drop it so it
+      // never bleeds into the chat being switched to (it is re-surfaced there if it is that
+      // session's own pending request).
+      Approval.reset();
       TaskPanel.reset();
       Render.updateInputState();
+    },
+
+    /**
+     * Re-fetches the current session from the server and re-renders it. Used after
+     * reattaching to a run mid-stream, where the locally streamed text may have gaps.
+     */
+    async resync() {
+      if (!this.currentId) return;
+      try {
+        const resp = await fetch(
+          withWindow(URLS.sessions + "/" + encodeURIComponent(this.currentId)),
+        );
+        const data = await resp.json();
+        this._renderLoadedSession(data);
+      } catch (e) {
+        console.error("[tl-chat] Failed to resync session:", e);
+      }
     },
 
     async switchTo(sessionId, skipLoad) {
@@ -2344,6 +2465,8 @@
           el.classList.toggle("active", el.dataset.sessionId === sessionId);
         });
       }
+      // The now-current session must lose its badge; a previously-current one may gain one.
+      Interactions.apply();
 
       if (sessionId && !skipLoad) {
         try {
@@ -2356,6 +2479,8 @@
           console.error("[tl-chat] Failed to load session:", e);
         }
       }
+      // Refresh badges and re-surface this chat's own pending approval (if any).
+      Interactions.poll();
     },
 
     _renderLoadedSession(data) {
@@ -2363,8 +2488,15 @@
         Render._messagesEl.innerHTML = "";
       }
 
-      // V2 format: turn-based
-      const turns = data.turns || [];
+      // V2 format: turn-based (serialized separately as a JSON array string)
+      let turns = [];
+      if (data.turnsJson) {
+        try {
+          turns = JSON.parse(data.turnsJson) || [];
+        } catch (e) {
+          console.error("Failed to parse turnsJson", e);
+        }
+      }
       if (turns.length > 0) {
         Welcome.hide();
         this._renderTurns(turns);
@@ -2372,46 +2504,6 @@
         return;
       }
 
-      // V1 fallback: entry-based
-      const entries = data.entries || [];
-      if (entries.length > 0) {
-        Welcome.hide();
-      }
-      // Group consecutive entries: task_snapshot(s) followed by agent message form one bubble
-      let i = 0;
-      while (i < entries.length) {
-        const entry = entries[i];
-        if (entry.type === "message") {
-          const msg = entry.messageData;
-          if (msg) {
-            if (msg.role === "user") {
-              Render.appendUserMessage(msg.content || msg.text || "");
-            } else {
-              this._renderPersistedAgentMessage(msg);
-            }
-          }
-          i++;
-        } else if (entry.type === "task_snapshot") {
-          // Collect consecutive task snapshots (usually just one per agent turn)
-          const snapshots = [];
-          while (i < entries.length && entries[i].type === "task_snapshot") {
-            snapshots.push(entries[i].taskData);
-            i++;
-          }
-          // Next entry should be the agent message
-          let agentMsg = null;
-          if (i < entries.length && entries[i].type === "message") {
-            const msg = entries[i].messageData;
-            if (msg && msg.role !== "user") {
-              agentMsg = msg;
-              i++;
-            }
-          }
-          this._renderPersistedTrace(snapshots, agentMsg);
-        } else {
-          i++;
-        }
-      }
       Render._scrollToBottom();
     },
 
@@ -2974,203 +3066,6 @@
       }
     },
 
-    _renderPersistedTrace(snapshots, agentMsg) {
-      const div = document.createElement("div");
-      div.className = "chat-message chat-message-agent";
-
-      const content = document.createElement("div");
-      content.className = "chat-bubble chat-bubble-agent";
-
-      // Build trace wrapper (same structure as live Render.appendAssistantBubble)
-      const traceWrapper = document.createElement("div");
-      traceWrapper.className = "tl-chat-trace-wrapper";
-
-      const traceHeader = document.createElement("div");
-      traceHeader.className = "tl-chat-trace-header";
-
-      // Count total tool/agent calls across all snapshots
-      let totalEvents = 0;
-      let totalUsage = null;
-      let thinkingText = "";
-      for (const task of snapshots) {
-        if (task && task.timeline) {
-          totalEvents += task.timeline.length;
-        }
-        if (task && task.totalUsage) {
-          totalUsage = task.totalUsage;
-        }
-        if (task && task.thinkingText) {
-          thinkingText = task.thinkingText;
-        }
-      }
-
-      const traceTokensEl = document.createElement("span");
-      traceTokensEl.className = "tl-chat-trace-tokens";
-      if (totalUsage) {
-        const total = Utils.totalTokens(totalUsage);
-        if (total > 0) {
-          traceTokensEl.textContent = Utils.formatTokens(total) + " tokens";
-          traceTokensEl.addEventListener("click", (e) => {
-            e.stopPropagation();
-            Tokens._showPopover(e, totalUsage);
-          });
-        }
-      }
-
-      const summary =
-        totalEvents > 0
-          ? totalEvents + " tool" + (totalEvents > 1 ? "s" : "") + " used"
-          : "Thinking";
-      traceHeader.innerHTML =
-        '<span class="tl-chat-trace-chevron">&#9654;</span>' +
-        '<span class="tl-chat-trace-summary">' +
-        summary +
-        "</span>";
-      traceHeader.appendChild(traceTokensEl);
-
-      const traceBody = document.createElement("div");
-      traceBody.className = "tl-chat-trace-body";
-      traceBody.style.display = "none";
-
-      let traceExpanded = false;
-      traceHeader.addEventListener("click", () => {
-        traceExpanded = !traceExpanded;
-        traceBody.style.display = traceExpanded ? "" : "none";
-        traceHeader
-          .querySelector(".tl-chat-trace-chevron")
-          .classList.toggle("expanded", traceExpanded);
-      });
-
-      // Render timeline events
-      const toolsEl = document.createElement("div");
-      toolsEl.className = "tl-chat-tools-container";
-
-      for (const task of snapshots) {
-        if (!task || !task.timeline) continue;
-        for (const ev of task.timeline) {
-          if (ev.type === "output") {
-            this._renderPersistedOutput(toolsEl, ev);
-          } else if (ev.type === "agent_call") {
-            this._renderPersistedDelegation(toolsEl, ev);
-          } else {
-            this._renderPersistedToolCall(toolsEl, ev);
-          }
-        }
-      }
-
-      if (thinkingText) {
-        const thinkingEl = document.createElement("div");
-        thinkingEl.className = "tl-chat-thinking";
-        const thinkingHeader = document.createElement("div");
-        thinkingHeader.className = "tl-chat-thinking-header";
-        const preview =
-          thinkingText.substring(0, 80) +
-          (thinkingText.length > 80 ? "..." : "");
-        thinkingHeader.innerHTML =
-          '<span class="tl-chat-thinking-chevron">&#9654;</span>' +
-          "<span>Thinking</span>" +
-          '<span class="tl-chat-thinking-preview">' +
-          Utils.escapeHtml(preview) +
-          "</span>";
-        const thinkingBody = document.createElement("div");
-        thinkingBody.className = "tl-chat-thinking-body";
-        thinkingBody.style.display = "none";
-        thinkingBody.textContent = thinkingText;
-        thinkingHeader.addEventListener("click", () => {
-          const expanded = thinkingEl.dataset.expanded === "true";
-          thinkingEl.dataset.expanded = "" + !expanded;
-          thinkingHeader
-            .querySelector(".tl-chat-thinking-chevron")
-            .classList.toggle("expanded", !expanded);
-          thinkingHeader.querySelector(
-            ".tl-chat-thinking-preview",
-          ).style.display = !expanded ? "none" : "";
-          thinkingBody.style.display = !expanded ? "" : "none";
-        });
-        thinkingEl.appendChild(thinkingHeader);
-        thinkingEl.appendChild(thinkingBody);
-        traceBody.appendChild(thinkingEl);
-      }
-      traceBody.appendChild(toolsEl);
-      traceWrapper.appendChild(traceHeader);
-      traceWrapper.appendChild(traceBody);
-      content.appendChild(traceWrapper);
-
-      // Agent response text
-      const textEl = document.createElement("div");
-      textEl.className = "chat-agent-text";
-      if (agentMsg) {
-        textEl.innerHTML =
-          agentMsg.contentHtml || Markdown.basicFormat(agentMsg.content || "");
-      }
-      content.appendChild(textEl);
-
-      div.appendChild(content);
-      if (Render._messagesEl) {
-        Render._messagesEl.appendChild(div);
-      }
-    },
-
-    _renderPersistedToolCall(container, ev) {
-      const el = document.createElement("div");
-      el.className = "tl-chat-tool";
-
-      const statusClass = ev.status === "error" ? "error" : "success";
-
-      const header = document.createElement("div");
-      header.className = "tl-chat-tool-header";
-      header.innerHTML =
-        '<span class="tl-chat-status-dot ' +
-        statusClass +
-        '"></span>' +
-        '<span class="tl-chat-tool-name">' +
-        Utils.escapeHtml(ev.toolName || ev.name || "") +
-        "</span>" +
-        '<span class="tl-chat-tool-tokens">~' +
-        Utils.formatTokens(
-          Tools._estimateTokens(ev.argsJson) + Tools._estimateTokens(ev.result),
-        ) +
-        " tokens</span>" +
-        '<span class="tl-chat-tool-duration">' +
-        (ev.durationMs ? Utils.formatDuration(ev.durationMs) : "") +
-        "</span>" +
-        '<span class="tl-chat-tool-chevron">&#9654;</span>';
-
-      const body = document.createElement("div");
-      body.className = "tl-chat-tool-body";
-      body.style.display = "none";
-
-      if (ev.argsJson) {
-        body.innerHTML =
-          '<div class="tl-chat-tool-label">Arguments</div>' +
-          "<pre>" +
-          Utils.escapeHtml(Tools._prettyJson(ev.argsJson)) +
-          "</pre>";
-      }
-      if (ev.result) {
-        const resultDiv = document.createElement("div");
-        resultDiv.innerHTML =
-          '<div class="tl-chat-tool-label">Result</div>' +
-          "<pre>" +
-          Utils.escapeHtml(Tools._truncate(ev.result, 2000)) +
-          "</pre>";
-        body.appendChild(resultDiv);
-      }
-
-      let expanded = false;
-      header.addEventListener("click", () => {
-        expanded = !expanded;
-        body.style.display = expanded ? "" : "none";
-        header
-          .querySelector(".tl-chat-tool-chevron")
-          .classList.toggle("expanded", expanded);
-      });
-
-      el.appendChild(header);
-      el.appendChild(body);
-      container.appendChild(el);
-    },
-
     _renderPersistedDelegation(container, ev) {
       const el = document.createElement("div");
       el.className = "tl-chat-delegation";
@@ -3260,8 +3155,12 @@
               this._listEl.appendChild(item);
             }
           }
-          // Skip the GET — session was just created, nothing to load
-          await this.switchTo(data.id, true);
+          // Load (not skip): the GET is what switches the *server's* active session to the new
+          // one. Skipping it left the server pointing at the previously active chat, so a
+          // background run there kept leaking events into this new chat (blocking its composer)
+          // and the send was rejected as that other session was busy. The new session has no
+          // turns, so the load renders nothing.
+          await this.switchTo(data.id);
           Welcome.show();
         }
       } catch (e) {
@@ -3305,6 +3204,138 @@
   };
 
   // ========================================================================
+  // Interactions — cross-session pending-approval badges
+  //
+  // A background run in one chat can block on a tool approval while the user is
+  // viewing another chat. This polls /chat/interactions (pending requests for the
+  // current user, across all their chat sessions) and badges the session-list items
+  // — and, when the sidebar is collapsed, the toggle button — so the pending
+  // request is visible without switching chats. Responding still happens inline via
+  // /chat/respond once the user opens that chat.
+  // ========================================================================
+  const Interactions = {
+    _bySession: {},
+    _all: [],
+    _timer: null,
+    _POLL_MS: 5000,
+
+    start() {
+      this.stop();
+      this.poll();
+      this._timer = setInterval(() => this.poll(), this._POLL_MS);
+      document.addEventListener("visibilitychange", this._onVisible);
+    },
+
+    stop() {
+      if (this._timer) {
+        clearInterval(this._timer);
+        this._timer = null;
+      }
+    },
+
+    _onVisible() {
+      if (!document.hidden) Interactions.poll();
+    },
+
+    async poll() {
+      try {
+        const resp = await fetch(withWindow(URLS.interactions));
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const list = data.interactions || [];
+        this._all = list;
+        const bySession = {};
+        list.forEach((it) => {
+          if (!it.sessionId) return;
+          bySession[it.sessionId] = (bySession[it.sessionId] || 0) + 1;
+        });
+        this._bySession = bySession;
+        this.apply();
+        // If the chat in view has a pending approval we're not showing (e.g. it was raised
+        // while another chat was focused, so its SSE event was suppressed), surface it now.
+        this.surfaceApprovalFor(Session.currentId);
+      } catch (e) {
+        // Non-fatal: badges just won't refresh this cycle.
+      }
+    },
+
+    /**
+     * Rebuilds the actionable approval prompt for a pending tool approval in the given chat, if one
+     * exists and none is already shown. Questions/choices re-surface on their own via the SSE
+     * interaction poll when the chat is reopened; approvals have no such server poll, so we rebuild
+     * them here from the pending feed (which carries the tool name, reason, and argument JSON).
+     */
+    surfaceApprovalFor(sessionId) {
+      if (!sessionId || Approval._currentPrompt) return;
+      const it = this._all.find(
+        (x) => x.sessionId === sessionId && x.type === "approval",
+      );
+      if (!it) return;
+      Approval.showPrompt({
+        approvalRequestId: it.requestId,
+        toolName: it.header,
+        displayReason: it.prompt,
+        argsJson: it.payload || "",
+      });
+      // Only reflect the awaiting-approval state if the prompt was actually rendered — otherwise
+      // the composer would be locked with no visible prompt to act on.
+      if (Approval._currentPrompt) {
+        State.set(State.AWAITING_APPROVAL);
+      }
+    },
+
+    countFor(sessionId) {
+      return this._bySession[sessionId] || 0;
+    },
+
+    apply() {
+      const listEl = Session._listEl;
+      if (listEl) {
+        listEl.querySelectorAll(".chat-history-item").forEach((item) => {
+          const id = item.dataset.sessionId;
+          // The session in view shows its pending request inline, so don't badge it.
+          const count = id && id !== Session.currentId ? this.countFor(id) : 0;
+          this._applyBadge(item, count);
+        });
+      }
+      this._applyGlobal();
+    },
+
+    _applyBadge(item, count) {
+      let badge = item.querySelector(".chat-history-badge");
+      if (count > 0) {
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "chat-history-badge";
+          const titleRow = item.querySelector(".chat-history-title-row");
+          const title =
+            titleRow && titleRow.querySelector(".chat-history-title");
+          if (titleRow) {
+            titleRow.insertBefore(badge, title ? title.nextSibling : null);
+          } else {
+            item.appendChild(badge);
+          }
+        }
+        badge.textContent = count > 9 ? "9+" : String(count);
+        badge.title = count + " pending request" + (count === 1 ? "" : "s");
+      } else if (badge) {
+        badge.remove();
+      }
+    },
+
+    _applyGlobal() {
+      const sidebar = Session._sidebarEl;
+      const toggle = sidebar && sidebar.querySelector(".chat-sidebar-toggle");
+      if (!toggle) return;
+      let total = 0;
+      for (const id in this._bySession) {
+        if (id !== Session.currentId) total += this._bySession[id];
+      }
+      toggle.classList.toggle("has-pending", total > 0);
+    },
+  };
+
+  // ========================================================================
   // Init — Bootstrap
   // ========================================================================
   function initChat(root) {
@@ -3321,6 +3352,8 @@
 
     const sessionId = root.dataset.sessionId || "";
     Session.switchTo(sessionId);
+
+    Interactions.start();
 
     State.onChange((newState) => {
       Render.updateInputState();

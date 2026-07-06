@@ -8,12 +8,18 @@ package com.top_logic.tl.ai.core.tools.interaction;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.agent.AgentTuning;
+import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
-import com.top_logic.basic.Logger;
-
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.InteractionRecorder;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.tool.api.P;
+import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 
@@ -31,7 +37,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
 public class AskUserTool {
 
 	/** Timeout for user interaction requests in minutes. */
-	private static final long INTERACTION_TIMEOUT_MINUTES = 5;
+	private static final long INTERACTION_TIMEOUT_MINUTES = AgentTuning.INTERACTION_TIMEOUT_MINUTES;
 
 	/** Maximum number of options allowed for choice interactions. */
 	private static final int MAX_CHOICE_OPTIONS = 5;
@@ -57,7 +63,8 @@ public class AskUserTool {
 			@P("For 'choice': JSON array of options (max 5), "
 				+ "e.g. [{\"label\":\"Option A\",\"description\":\"...\"}]. "
 				+ "Ignored for other types.") String options,
-			@P("For 'choice': allow multiple selections. Defaults to false.") Boolean multiSelect) {
+			@P("For 'choice': allow multiple selections. Defaults to false.") Boolean multiSelect,
+			ToolExecutionContext context) {
 
 		UserInteractionStore store = UserInteractionStoreBinding.getStore();
 		if (store == null) {
@@ -79,33 +86,57 @@ public class AskUserTool {
 		Logger.info("User interaction requested (id: " + request.getId() + ", type: " + type
 			+ ", header: " + header + ")", AskUserTool.class);
 
+		InteractionRequest interactionRow = InteractionRecorder.begin(
+			currentExecution(context),
+			"choice".equals(type) ? AgentExecutionStore.InteractionType.CHOICE
+				: AgentExecutionStore.InteractionType.QUESTION,
+			request.getId(), header, question, options);
+
 		try {
 			String response = request.getFuture().get(INTERACTION_TIMEOUT_MINUTES, TimeUnit.MINUTES);
 			Logger.info("User responded to interaction " + request.getId() + ": " + response,
 				AskUserTool.class);
 			if ("cancelled".equals(response)) {
+				InteractionRecorder.resolve(interactionRow,
+					AgentExecutionStore.InteractionState.CANCELLED, null);
 				return "The user cancelled this request. Do not retry the same question. "
 					+ "Instead, write your final answer acknowledging the cancellation and ask "
 					+ "the user how they would like to proceed (without using the askUser tool).";
 			}
+			InteractionRecorder.resolve(interactionRow,
+				AgentExecutionStore.InteractionState.RESOLVED, response);
 			return response;
 		} catch (TimeoutException e) {
 			Logger.warn("User interaction timed out (id: " + request.getId() + ")", AskUserTool.class);
 			store.resolve(request.getId(), "timeout");
+			InteractionRecorder.resolve(interactionRow,
+				AgentExecutionStore.InteractionState.TIMED_OUT, null);
 			return "The user interaction timed out. Write your final answer and ask how they would "
 				+ "like to proceed (without using the askUser tool).";
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			Logger.info("User interaction interrupted/cancelled (id: " + request.getId() + ")",
 				AskUserTool.class);
+			InteractionRecorder.resolve(interactionRow,
+				AgentExecutionStore.InteractionState.CANCELLED, null);
 			return "The user cancelled this request. Do not retry the same question. "
 				+ "Instead, write your final answer acknowledging the cancellation and ask "
 				+ "the user how they would like to proceed (without using the askUser tool).";
 		} catch (Exception e) {
 			Logger.error("User interaction failed (id: " + request.getId() + "): " + e.getMessage(),
 				e, AskUserTool.class);
+			InteractionRecorder.resolve(interactionRow,
+				AgentExecutionStore.InteractionState.CANCELLED, "error: " + e.getMessage());
 			return "error: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
 		}
+	}
+
+	/**
+	 * The recorded execution of the current run, or <code>null</code> when the run is not
+	 * recorded (interaction persistence is then skipped).
+	 */
+	private static AgentExecution currentExecution(ToolExecutionContext context) {
+		return context instanceof ToolContext toolContext ? toolContext.executionHandle().get() : null;
 	}
 
 	/**

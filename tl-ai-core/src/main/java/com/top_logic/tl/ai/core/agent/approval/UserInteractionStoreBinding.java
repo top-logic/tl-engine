@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.agent.approval;
 
+import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+
 /**
  * Thread-local binding for {@link UserInteractionStore}.
  *
@@ -14,20 +16,14 @@ package com.top_logic.tl.ai.core.agent.approval;
  */
 public class UserInteractionStoreBinding {
 
-	private static final ThreadLocal<UserInteractionStore> STORE = new ThreadLocal<>();
+	private static final ThreadLocalBinding<UserInteractionStore> STORE = new ThreadLocalBinding<>();
 
 	/**
 	 * Binds the given store on the current thread and returns a handle whose
 	 * {@link AutoCloseable#close() close()} restores the previously bound value.
 	 */
 	public static Binding bind(UserInteractionStore store) {
-		UserInteractionStore previous = STORE.get();
-		if (store == null) {
-			STORE.remove();
-		} else {
-			STORE.set(store);
-		}
-		return new Binding(previous);
+		return new Binding(STORE.bind(store));
 	}
 
 	/** Returns the bound store, or {@code null}. */
@@ -37,24 +33,15 @@ public class UserInteractionStoreBinding {
 
 	/** Handle returned by {@link UserInteractionStoreBinding#bind(UserInteractionStore)}. */
 	public static final class Binding implements AutoCloseable {
-		private final UserInteractionStore _previous;
-		private boolean _closed;
+		private final ThreadLocalBinding<UserInteractionStore>.Handle _handle;
 
-		Binding(UserInteractionStore previous) {
-			_previous = previous;
+		Binding(ThreadLocalBinding<UserInteractionStore>.Handle handle) {
+			_handle = handle;
 		}
 
 		@Override
 		public void close() {
-			if (_closed) {
-				return;
-			}
-			_closed = true;
-			if (_previous == null) {
-				STORE.remove();
-			} else {
-				STORE.set(_previous);
-			}
+			_handle.close();
 		}
 	}
 }

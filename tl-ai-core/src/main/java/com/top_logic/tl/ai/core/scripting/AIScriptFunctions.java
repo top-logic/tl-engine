@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -23,23 +24,25 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.execution.AgentEnvironment;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.AgentRunner;
+import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
+import com.top_logic.util.TLContext;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -63,6 +66,11 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  */
 @ScriptPrefix("ai")
 public class AIScriptFunctions extends TLScriptFunctions {
+
+	/** No-op listener for TL-Script invocations, which have no event consumer. */
+	private static final AgentEventListener NO_LISTENER = event -> {
+		// TL-Script functions have no streaming surface.
+	};
 
 	/**
 	 * Returns a list of all available model names from the {@link LLMService}.
@@ -158,11 +166,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 
 		ToolContext context = ToolContext.createUnrestricted();
-		try (
-			TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(new TaskStore());
-			UserInteractionStoreBinding.Binding b2 = UserInteractionStoreBinding.bind(new UserInteractionStore());
-			ConversationLogListenerBinding.Binding b3 =
-				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
+		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			Map<String, Object> args = parameters != null ? parameters : Map.of();
 			return ToolExecutions.execute(tool, args, context).text();
 		} catch (Exception ex) {
@@ -268,15 +272,25 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		AgentLoop loop = new AgentLoop(config, provider, toolRegistry);
 		ToolContext context = ToolContext.createUnrestricted();
-		try (
-			TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(new TaskStore());
-			UserInteractionStoreBinding.Binding b2 = UserInteractionStoreBinding.bind(new UserInteractionStore());
-			ConversationLogListenerBinding.Binding b3 =
-				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
+		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			int messageCountBefore = conversation.size();
-			loop.run(conversation, context, event -> {
-				/** no event listener setup for a tlscript function */
-			});
+
+			AgentSession session = createScriptSession("ai.chat (" + modelName + ")");
+			ExecutionRecorder recorder = session != null
+				? new ExecutionRecorder(session, "ai.chat", null, context.executionHandle(),
+					NO_LISTENER)
+				: null;
+			try {
+				loop.run(conversation, context, recorder != null ? recorder : NO_LISTENER);
+			} catch (RuntimeException ex) {
+				if (recorder != null) {
+					recorder.complete(scriptTranscript(env), ex);
+				}
+				throw ex;
+			}
+			if (recorder != null) {
+				recorder.complete(scriptTranscript(env), null);
+			}
 			return AgentFactory.extractResponseText(conversation, messageCountBefore);
 		} finally {
 			context.transaction().close();
@@ -313,18 +327,49 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		ToolContext context = ToolContext.createUnrestricted();
 
-		try (
-			TaskStoreBinding.Binding b1 = TaskStoreBinding.bind(new TaskStore());
-			UserInteractionStoreBinding.Binding b2 = UserInteractionStoreBinding.bind(new UserInteractionStore());
-			ConversationLogListenerBinding.Binding b3 =
-				ConversationLogListenerBinding.bind(new ConversationLogListener(new ConversationLog()))) {
-			return factory.runAgent(agentName, conversation, null, context, event -> {
-				/** no event listener setup for a tlscript function */
-				// event.toString();
-			});
+		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			AgentSession session = createScriptSession("ai.agentChat: " + agentName);
+			AgentRunner.RecordedRun run = AgentRunner.run(agentName, conversation, null, context,
+				NO_LISTENER, null, env.logListener().log(), session, null);
+			return run.response();
 		} finally {
 			context.transaction().close();
 		}
+	}
+
+	/**
+	 * Creates a kind=SCRIPT {@link AgentSession} for recording a TL-Script agent invocation, or
+	 * <code>null</code> when the {@link AgentExecutionStore} is unavailable (the run then
+	 * proceeds unrecorded).
+	 */
+	private static AgentSession createScriptSession(String title) {
+		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		try {
+			return AgentExecutionStore.getInstance()
+				.createSession(AgentExecutionStore.SessionKind.SCRIPT, currentPerson(), title);
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to create script session '" + title + "': " + ex.getMessage(),
+				AIScriptFunctions.class);
+			return null;
+		}
+	}
+
+	/**
+	 * Serializes the invocation's ephemeral conversation log as the execution transcript.
+	 */
+	private static String scriptTranscript(AgentEnvironment env) {
+		try {
+			return ConversationLogSerializer.toJson(env.logListener().log());
+		} catch (RuntimeException ex) {
+			return null;
+		}
+	}
+
+	private static Person currentPerson() {
+		TLContext tlContext = TLContext.getContext();
+		return tlContext != null ? tlContext.getPerson() : null;
 	}
 
 	/**

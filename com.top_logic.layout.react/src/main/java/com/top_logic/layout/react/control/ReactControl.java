@@ -483,6 +483,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 	 * whose template (the interface's label) interleaves descriptive text with the argument values —
 	 * so a recorded step reads as e.g. <em>Navigate to 'input-controls'</em> rather than the raw
 	 * command and JSON. Used by the recorder side-window's step list.
+	 * </p>
 	 *
 	 * <p>
 	 * A control whose action is identified by <em>where</em> it sits rather than by its arguments (a

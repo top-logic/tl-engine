@@ -27,7 +27,9 @@ public interface ReportDisplayClassArguments extends ReactCommandArguments {
 	/**
 	 * The reported responsive display class name (a
 	 * {@link com.top_logic.layout.responsive.DisplayClass} enum constant). An unknown or absent value
-	 * falls back to {@link com.top_logic.layout.responsive.DisplayClass#DEFAULT}.
+	 * falls back to the enumeration's default.
+	 *
+	 * @implNote The fallback constant is {@link com.top_logic.layout.responsive.DisplayClass#DEFAULT}.
 	 */
 	@Name(DISPLAY_CLASS)
 	String getDisplayClass();

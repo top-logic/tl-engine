@@ -217,7 +217,7 @@ public final class AgentTreeProjector {
 	}
 
 	/**
-	 * The semantic role of a control: its {@link AgentNode#agentRole()} if it provides one, otherwise
+	 * The semantic role of a control: its {@link ReactControl#agentRole()} if it provides one, otherwise
 	 * a role derived from its React module identifier.
 	 *
 	 * @param control
@@ -234,7 +234,7 @@ public final class AgentTreeProjector {
 
 	/**
 	 * The semantic name of a control. Resolved in order of decreasing specificity: the control's
-	 * explicit {@link AgentNode#agentName()}, then a common label-like state key, then the application
+	 * explicit {@link ReactControl#agentName()}, then a common label-like state key, then the application
 	 * label of its bound {@link ReactControl#getModel() model} (so a control showing a business
 	 * object — a table row, a list item, a selection — is addressed by that object's label). Returns
 	 * {@code null} if none applies.

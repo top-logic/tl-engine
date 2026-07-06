@@ -11,9 +11,10 @@ package com.top_logic.layout.react.control.button;
  * <p>
  * Each constant carries the canonical client-side key name (the value the browser reports as
  * {@code KeyboardEvent.key}), which is what a {@link KeyStroke} serializes for the React keyboard
- * dispatcher. Character keys (letters, digits, punctuation) are not part of this enum; use
- * {@link KeyStroke#of(char)} for those.
+ * dispatcher. Character keys (letters, digits, punctuation) are not part of this enum.
  * </p>
+ *
+ * @implNote Use {@link KeyStroke#of(char)} for character keys.
  */
 public enum Key {
 

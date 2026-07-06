@@ -20,11 +20,9 @@ import com.top_logic.basic.config.ConfigurationItem;
  * human-readable rendering of a recorded step.
  * </p>
  *
- * <p>
- * Dispatch still goes through
- * {@link ReactControl#executeCommand(String, java.util.Map)} — the typed arguments only change the
- * shape the handler receives, not the behavior path the browser exercises.
- * </p>
+ * @implNote Dispatch still goes through
+ *           {@link ReactControl#executeCommand(String, java.util.Map)} — the typed arguments only
+ *           change the shape the handler receives, not the behavior path the browser exercises.
  */
 public interface ReactCommandArguments extends ConfigurationItem {
 

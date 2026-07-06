@@ -43,29 +43,29 @@ import com.top_logic.util.TopLogicServlet;
  * typically through a thin MCP wrapper) uses to drive a real session:
  * </p>
  * <ul>
- * <li>{@code GET  /agent-api/windows} &rarr; {@code {"windows":[...]}} — the windows that can be
+ * <li>{@code GET  /agent-api/windows} → {@code {"windows":[...]}} — the windows that can be
  * observed.</li>
- * <li>{@code GET  /agent-api/observe?windowName=W} &rarr; the addressable state tree of window
+ * <li>{@code GET  /agent-api/observe?windowName=W} → the addressable state tree of window
  * {@code W} (an {@link AgentNodeView} as JSON). Add {@code &mode=actions} for the compact
  * affordance-first view: a flat list of just the actionable nodes.</li>
  * <li>{@code POST /agent-api/act} with body {@code {"windowName":W,"address":A,"command":C,"arguments":{…}}}
- * &rarr; resolves {@code A}, invokes {@code C}, and returns {@code {"success":b,"observation":{…}}}
+ * → resolves {@code A}, invokes {@code C}, and returns {@code {"success":b,"observation":{…}}}
  * with the resulting state tree. The command arguments may be given as either {@link #FIELD_ARGUMENTS} or {@link #FIELD_ARGS}.</li>
  * <li>{@code POST /agent-api/navigate} with body {@code {"windowName":W,"url":"access-control/groups"}}
- * &rarr; navigates the window's router to a route URL (for areas loaded by routing rather than an
+ * → navigates the window's router to a route URL (for areas loaded by routing rather than an
  * in-place {@code selectItem}), returning {@code {"success":b,"url":…,"observation":{…}}}. {@code
  * success} is {@code true} only if the router actually reached the requested URL; a route into an
  * area whose participants are not registered yet is reported as {@code false} with a {@code message},
  * not a silent no-op.</li>
  * <li>{@code POST /agent-api/record/start} / {@code /record/stop} with body {@code {"windowName":W}}
- * &rarr; begin a fresh recording of the user's interactions, or stop it; both return
+ * → begin a fresh recording of the user's interactions, or stop it; both return
  * {@code {"recording":b,"steps":[…]}}. While recording, the browser command path captures each
  * dispatched command as an {@code {address,command,arguments}} step.</li>
- * <li>{@code GET /agent-api/record/steps?windowName=W} &rarr; the current recorder state and steps.</li>
+ * <li>{@code GET /agent-api/record/steps?windowName=W} → the current recorder state and steps.</li>
  * <li>{@code POST /agent-api/record/assert} with body {@code {"windowName":W,"address":A,"expect":{…}?}}
- * &rarr; append an assertion step — the expected state given as {@code expect}, or the node's current
+ * → append an assertion step — the expected state given as {@code expect}, or the node's current
  * state captured if omitted. On replay it is verified, not dispatched.</li>
- * <li>{@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[…]}} &rarr; replays a
+ * <li>{@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[…]}} → replays a
  * recorded (or hand-written) script through the same {@code act} path (assertion steps are verified
  * against live state), returning a per-step {@code results} list and the final {@code observation}.</li>
  * </ul>
@@ -404,7 +404,7 @@ public class AgentServlet extends TopLogicServlet {
 
 	/**
 	 * {@code POST /agent-api/record/assert} with body {@code {"windowName":W,"address":A,"expect":{…}?}}
-	 * &rarr; appends an assertion step. With {@code expect} it records exactly those expected state
+	 * → appends an assertion step. With {@code expect} it records exactly those expected state
 	 * entries; without it, it captures the node's current state — so a recorder can mark "the state
 	 * here is the expected state". On replay the step is verified rather than dispatched.
 	 */
@@ -439,7 +439,7 @@ public class AgentServlet extends TopLogicServlet {
 
 	/**
 	 * {@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[{address,command,arguments},…]}}
-	 * &rarr; replays each step through {@link AgentSession#act} in order, settling derived state between
+	 * → replays each step through {@link AgentSession#act} in order, settling derived state between
 	 * steps so each address resolves against the state its predecessors produced. Returns a top-level
 	 * {@code success} (true only when every step succeeded — the replay-as-regression verdict), a
 	 * per-step {@code results} list, and the final quiesced {@code observation}.

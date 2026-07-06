@@ -18,6 +18,7 @@ import com.top_logic.element.meta.kbbased.storage.AbstractDerivedStorage;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.providers.AttributeByExpression;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
@@ -74,6 +75,14 @@ public abstract class AbstractExpressionAttribute<C extends AbstractExpressionAt
 			// Otherwise, access to model literals that is resolved by the compiler use the wrong
 			// versions (e.g. classifier instances).
 			_expr = compileExpr(attribute.getModel(), getConfig().getExpr());
+
+			// Computed attributes have definer's-rights semantics: the computation must not apply the
+			// invoking user's model security (its result would otherwise be user-dependent, breaking
+			// caching/indexing/determinism). Access to the computed value itself is still controlled by
+			// the read grant on this (computed) attribute. The same deactivation is done for the
+			// tracing analyzer in AttributeByExpression#init and for the locator variant in
+			// AttributeValueLocatorByExpression.
+			UpdateSecurityVisitor.disableSecurity(_expr);
 		} catch (Exception ex) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_INITIALIZING_ATTR__ATTR_MSG.fill(TLModelUtil.qualifiedName(attribute),

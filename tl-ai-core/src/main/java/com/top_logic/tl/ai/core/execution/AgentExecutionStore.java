@@ -57,7 +57,7 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * <b>Invariant:</b> nothing reachable from a KnowledgeBase {@code UpdateListener} (or any other
+ * <b>Invariant:</b> nothing reachable from a {@code KnowledgeBase} {@code UpdateListener} (or any other
  * synchronous commit hook) may call a mutating method of this service — the caller blocks on the
  * single writer thread, whose commit synchronously notifies those listeners, so such a call
  * closes a deadlock cycle.

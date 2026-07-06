@@ -256,8 +256,8 @@ public class JSDiagramControl extends AbstractJSControl
 					if (diagram.isKeepViewBox() && _viewbox.getWidth() > 0) {
 						// The diagram was redrawn for the same model. The server transferred the
 						// current view box, so keep the user's zoom and pan instead of resetting to
-						// the initial zoom.
-						computeZoomLevel();
+						// the initial zoom. Still refresh the zoom indicator from the kept view box.
+						calcZoomLevel();
 					} else {
 						applyInitialZoom(diagram.getInitialZoom());
 					}
@@ -528,28 +528,11 @@ public class JSDiagramControl extends AbstractJSControl
 	}
 
 	private void calcZoomLevel() {
-		if (!computeZoomLevel()) {
-			return;
-		}
-
-		_zoomDisplay.textContent = "Zoom: " + zoomLevel + "%";
-		_zoomDisplay.classList.remove("invisible");
-
-		hideZoomDisplay.cancel();
-		hideZoomDisplay.schedule(5 * 1000);
-	}
-
-	/**
-	 * Updates {@link #zoomLevel} from the current view box without showing the zoom display.
-	 *
-	 * @return Whether the level could be computed.
-	 */
-	private boolean computeZoomLevel() {
 		int level = 0;
 		double fract = 1;
 		for (int i = 0; fract >= 1; i++) {
 			if (controlW == 0) {
-				return false;
+				return;
 			}
 			level = i;
 			fract = 2 - (_viewbox.getWidth() / controlW) * JsMath.pow(2, level);
@@ -561,7 +544,12 @@ public class JSDiagramControl extends AbstractJSControl
 			factor = level + fract;
 		}
 		zoomLevel = JsMath.round(factor * 100);
-		return true;
+
+		_zoomDisplay.textContent = "Zoom: " + zoomLevel + "%";
+		_zoomDisplay.classList.remove("invisible");
+
+		hideZoomDisplay.cancel();
+		hideZoomDisplay.schedule(5 * 1000);
 	}
 
 	private double getFactor() {

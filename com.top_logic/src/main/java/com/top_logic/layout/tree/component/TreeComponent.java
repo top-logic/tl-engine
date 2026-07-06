@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -375,8 +376,21 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	/**
 	 * Business objects of the expanded nodes, captured before the tree model is discarded, so
 	 * that the expansion state can be restored when the model is rebuilt.
+	 *
+	 * @see #_expansionRootObject
 	 */
 	private Collection<?> _expansionUserModel;
+
+	/**
+	 * The root business object of the tree from which {@link #_expansionUserModel} was captured.
+	 *
+	 * <p>
+	 * The captured expansion is only restored when the tree is rebuilt for the same root, i.e.
+	 * across an {@link #invalidate()}. When the displayed model changes, the (unrelated) expansion
+	 * of the previous tree must not leak into the new one.
+	 * </p>
+	 */
+	private Object _expansionRootObject;
 
 	/** @see Config#getExpandSelected() */
 	private final boolean _expandSelected;
@@ -819,6 +833,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	 */
 	public void resetTreeModel() {
 		_expansionUserModel = TreeUIModelUtil.getExpansionUserModel(_treeModel);
+		_expansionRootObject = _treeModel.getRoot().getBusinessObject();
 		_treeModel.removeTreeModelListener(_focusExpanded);
 		_treeModel.removeTreeModelListener(this);
 		_treeModel = null;
@@ -987,8 +1002,11 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		_treeModel.addTreeModelListener(this);
 		_treeModel.setExpanded(_treeModel.getRoot(), _expandRoot);
 		if (_expansionUserModel != null) {
-			TreeUIModelUtil.setExpansionUserModel(_expansionUserModel, _treeModel);
+			if (Objects.equals(_expansionRootObject, _treeModel.getRoot().getBusinessObject())) {
+				TreeUIModelUtil.setExpansionUserModel(_expansionUserModel, _treeModel);
+			}
 			_expansionUserModel = null;
+			_expansionRootObject = null;
 		}
 		if (CollectionUtils.isEmpty(selectedPaths)) {
 			return installDefaultSelection();

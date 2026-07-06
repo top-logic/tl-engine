@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -314,8 +315,21 @@ public class TreeTableComponent extends BoundComponent
 	/**
 	 * Business objects of the expanded nodes, captured before the tree model is discarded, so
 	 * that the expansion state can be restored when the model is rebuilt.
+	 *
+	 * @see #_expansionRootObject
 	 */
 	private Collection<?> _expansionUserModel;
+
+	/**
+	 * The root business object of the tree from which {@link #_expansionUserModel} was captured.
+	 *
+	 * <p>
+	 * The captured expansion is only restored when the tree is rebuilt for the same root, i.e.
+	 * across an {@link #invalidate()}. When the displayed model changes, the (unrelated) expansion
+	 * of the previous tree must not leak into the new one.
+	 * </p>
+	 */
+	private Object _expansionRootObject;
 
 	private TableConfigurationProvider _tableConfigProvider;
 
@@ -940,11 +954,15 @@ public class TreeTableComponent extends BoundComponent
 	/** Create a new {@link TableModel} and replace the old one. */
 	public void rebuildTableModel() {
 		if (hasTreeTableData()) {
-			Collection<?> expansionUserModel = TreeUIModelUtil.getExpansionUserModel(getTableData().getTree());
+			AbstractTreeTableModel<?> oldTree = getTableData().getTree();
+			Collection<?> expansionUserModel = TreeUIModelUtil.getExpansionUserModel(oldTree);
+			Object expansionRoot = oldTree.getRoot().getBusinessObject();
 			AbstractTreeTableModel<?> treeModel = createTreeModel();
 			configureTreeModel(treeModel);
 			getTableData().setTree(treeModel);
-			TreeUIModelUtil.setExpansionUserModel(expansionUserModel, treeModel);
+			if (Objects.equals(expansionRoot, treeModel.getRoot().getBusinessObject())) {
+				TreeUIModelUtil.setExpansionUserModel(expansionUserModel, treeModel);
+			}
 			adjustTreeTableData(getTableData());
 			invalidateSelection();
 			if (shouldCheckMissingTypeConfiguration()) {
@@ -963,6 +981,7 @@ public class TreeTableComponent extends BoundComponent
 	private void clearTreeTableField() {
 		if (hasTreeTableData()) {
 			_expansionUserModel = TreeUIModelUtil.getExpansionUserModel(_treeTableData.getTree());
+			_expansionRootObject = _treeTableData.getTree().getRoot().getBusinessObject();
 			_selectionModel.clear();
 			removeToolbarButtons(_treeTableData);
 			_treeTableData = null;
@@ -1561,8 +1580,11 @@ public class TreeTableComponent extends BoundComponent
 		/* Restore the expansion state only after the view model exists, so that filters are
 		 * applied before nodes are expanded (see #22798). */
 		if (_expansionUserModel != null) {
-			TreeUIModelUtil.setExpansionUserModel(_expansionUserModel, treeModel);
+			if (Objects.equals(_expansionRootObject, treeModel.getRoot().getBusinessObject())) {
+				TreeUIModelUtil.setExpansionUserModel(_expansionUserModel, treeModel);
+			}
 			_expansionUserModel = null;
+			_expansionRootObject = null;
 		}
 
 		rowsChannel().set(new ArrayList<>(viewModel.getDisplayedRows()));

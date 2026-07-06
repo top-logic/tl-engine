@@ -358,6 +358,10 @@ throw new TopLogicException(I18NConstants.ERROR_PDF_GENERATION_FAILED__MSG.fill(
 - Use `ResKey` (no params), `ResKey1` (1 param), `ResKey2` (2 params), etc.
 - JavaDoc comment must start with `@en` for English default text
 
+### TL-Script Builtin Functions
+
+Adding a builtin function (expression) to TL-Script is described in the in-app Developer Guide page `com.top_logic.model.search/src/main/webapp/doc/{en,de}/DeveloperGuide/TLScript/TLScriptExtensions/`. In short: implement a `GenericMethod` plus a `MethodBuilder`, register it as `<method>` in `SearchBuilder` configuration, name the arguments with a constant `ArgumentDescriptor`, keep the expression factory `getId()` unique when one class serves several `<method>` registrations, and **always** ship a documentation page (`index.html` + `page.properties`) under `.../doc/{en,de}/DeveloperGuide/TLScript/...` — a TL-Script expression without documentation is incomplete.
+
 ## Testing Conventions
 
 - Test classes use the `test.` package prefix (e.g., `test.com.top_logic.basic.GenericTest`)

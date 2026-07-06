@@ -16,6 +16,30 @@
 				</declarations>
 			</instance>
 		</config>
+
+		<!--
+			Demonstrates that view contributions generalize beyond tab bars: this contributes a
+			navigation item into the app-shell sidebar's "app.sidebar" extension point (declared in
+			app.view.xml), the same way tl-model-search-react contributes the Development tab into
+			the admin tab bar.
+		-->
+		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
+			<instance class="com.top_logic.layout.view.contribution.ViewContributionService">
+				<contributions>
+					<contribution id="contributed-section"
+						target="app.sidebar"
+						view="sidebar-contribution.view.xml"
+						icon="css:bi bi-puzzle"
+						rank="1000"
+					>
+						<label>
+							<en>Contributed</en>
+							<de>Beigesteuert</de>
+						</label>
+					</contribution>
+				</contributions>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

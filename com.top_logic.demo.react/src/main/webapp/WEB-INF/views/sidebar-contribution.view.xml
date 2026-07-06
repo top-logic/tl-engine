@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Demonstrates a sidebar contribution: this view is not referenced from app.view.xml. It is
+	spliced into the app-shell sidebar's "app.sidebar" extension point by a contribution in
+	demoReactConf.config.xml, exactly as the Development tab is contributed into the admin tab bar -
+	proving view contributions work for any navigable container, not just tab bars.
+-->
+<view>
+	<panel>
+		<title>
+			<en>Contributed section</en>
+			<de>Beigesteuerter Bereich</de>
+		</title>
+		<text>
+			<label>
+				<en>This sidebar item is not declared in app.view.xml. It was contributed into the "app.sidebar" extension point through the ViewContributionService - the same mechanism that adds the Development tab to the admin tab bar, now applied to a sidebar.</en>
+				<de>Dieser Sidebar-Eintrag ist nicht in app.view.xml deklariert. Er wurde über den ViewContributionService in den Erweiterungspunkt "app.sidebar" eingefügt - dasselbe Verfahren, das den Entwicklung-Tab zur Administrations-Tableiste hinzufügt, jetzt für eine Sidebar.</de>
+			</label>
+		</text>
+	</panel>
+</view>

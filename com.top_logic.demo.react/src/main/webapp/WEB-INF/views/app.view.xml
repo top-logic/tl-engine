@@ -9,7 +9,10 @@
 	</channels>
 	<app-shell>
 		<content>
-			<sidebar active-item="attributes">
+			<sidebar
+				active-item="attributes"
+				extension-id="app.sidebar"
+			>
 				<items>
 					<nav-item id="attributes"
 						icon="css:bi bi-card-list"

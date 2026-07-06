@@ -40,6 +40,14 @@
 							roles="TestTLScriptSecurity.ProjectResponsible"
 						/>
 					</class>
+					<class name="TestTLScriptSecurity:Employee">
+						<!-- The responsible may create employees (create condition 1). -->
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
+					</class>
 				</security-config>
 			</instance>
 		</config>

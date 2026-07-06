@@ -6,7 +6,6 @@
 package com.top_logic.bpe.execution.script;
 
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -16,6 +15,7 @@ import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -26,7 +26,6 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -114,15 +113,12 @@ public class CreateProcessInstance extends GenericMethodWithSecurity {
 		}
 
 		if (usesSecurity()) {
-			// TODO #29088: It must be checked whether the user is allowed to create instances for
-			// type.
-			if (false) {
-				Set<TLClass> accessibleTypes = ModelAccessRights.getInstance()
-					.getAccessibleTypes(TLContext.currentUser(), SimpleBoundCommandGroup.CREATE);
-				if (!accessibleTypes.contains(modelType)) {
-					throw new TopLogicException(
-						com.top_logic.model.search.expr.I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(modelType));
-				}
+			// A process instance is a top-level object (no composition parent), so the CREATE right
+			// is checked against the global security root.
+			TLObject context = null;
+			if (!ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), modelType, context)) {
+				throw new TopLogicException(
+					com.top_logic.model.search.expr.I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(modelType));
 			}
 		}
 		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(modelType);

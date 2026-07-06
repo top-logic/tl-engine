@@ -117,14 +117,36 @@ public interface ModelAccessRights {
 	 * Checks whether the given person can create a new child object in the given composition
 	 * attribute of the given parent instance.
 	 *
-	 * Convenience method equivalent to {@link #isAllowed(TLObject, BoundCommandGroup)} with
-	 * {@value SimpleBoundCommandGroup#WRITE}.
+	 * <p>
+	 * Both conditions of object creation must hold (see the model-based access rights spec, section
+	 * 2.3.6): the person needs the {@link SimpleBoundCommandGroup#CREATE CREATE} right on the created
+	 * type (the composition attribute's target type) in the parent context, <em>and</em> the
+	 * {@link SimpleBoundCommandGroup#WRITE WRITE} right on the composition attribute of the parent.
+	 * </p>
 	 */
 	boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute);
 
 	/**
+	 * Checks whether the given person can create an instance of the given type in the given context.
+	 *
+	 * <p>
+	 * This is condition 1 of object creation (see the model-based access rights spec, section
+	 * 2.3.6): the person must hold one of the roles granted the {@link SimpleBoundCommandGroup#CREATE
+	 * CREATE} command group on the type, checked on the given context object. When no context is
+	 * given (<code>null</code>), the check uses the global security root.
+	 * </p>
+	 */
+	boolean isAllowedCreate(Person person, TLClass type, TLObject context);
+
+	/**
 	 * Returns all types that the given person can perform the given command group on (based on
 	 * type-level rules; instance-level checks still required for specific objects).
+	 *
+	 * <p>
+	 * A user that bypasses the model security (e.g. an administrator, who may act on every object)
+	 * gets <em>all</em> types of the system, including types without any configured rights. A
+	 * restricted user without access gets no types at all.
+	 * </p>
 	 */
 	Set<TLClass> getAccessibleTypes(Person person, BoundCommandGroup commandGroup);
 

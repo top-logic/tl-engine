@@ -38,6 +38,7 @@ import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AccessRightsConfig;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.RoleConfig;
@@ -47,6 +48,7 @@ import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -371,15 +373,62 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute) {
+		// Condition 1: CREATE right on the created type (the reference's target type) in the parent
+		// context.
+		TLType targetType = compositionAttribute.getType();
+		if (targetType instanceof TLClass && !isAllowedCreate(person, (TLClass) targetType, parent)) {
+			return false;
+		}
+		// Condition 2: WRITE right on the composition reference of the parent.
 		return isAllowed(person, parent, compositionAttribute, SimpleBoundCommandGroup.WRITE);
 	}
 
 	@Override
+	public boolean isAllowedCreate(Person person, TLClass type, TLObject context) {
+		Boolean allowedBypass = isAllowedBypass(person, SimpleBoundCommandGroup.CREATE);
+		if (allowedBypass != null) {
+			return allowedBypass.booleanValue();
+		}
+		Set<BoundedRole> roles = getAllowedRoles(type, SimpleBoundCommandGroup.CREATE);
+		return accessManager().hasRole(person, createContext(context), roles);
+	}
+
+	/**
+	 * The {@link BoundObject} on which the CREATE right is checked: the given context if it is a
+	 * {@link BoundObject}, otherwise the global security root.
+	 */
+	private static BoundObject createContext(TLObject context) {
+		if (context instanceof BoundObject) {
+			return (BoundObject) context;
+		}
+		return BoundHelper.getInstance().getDefaultObject();
+	}
+
+	@Override
 	public Set<TLClass> getAccessibleTypes(Person person, BoundCommandGroup commandGroup) {
-		// TODO #29088: implement getAccessibleTypes!
-		if (true)
-			throw new UnsupportedOperationException("Generated stub");
-		return null;
+		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		if (allowedBypass != null) {
+			// The decision does not depend on per-type grants: an administrator may act on every
+			// object, so all types of the system are accessible; a restricted user gets none. In
+			// particular, types without any configured rights must be included for the "allow all"
+			// case, so iterating the configured rights would be wrong here.
+			return allowedBypass.booleanValue()
+				? TLModelUtil.getAllGlobalClasses(_applicationModel)
+				: Collections.emptySet();
+		}
+		BoundObject securityRoot = BoundHelper.getInstance().getDefaultObject();
+		Set<TLClass> result = new HashSet<>();
+		for (Map.Entry<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> entry : _expandedClassRights.entrySet()) {
+			Set<BoundedRole> roles = entry.getValue().getOrDefault(commandGroup, Collections.emptySet());
+			if (roles.isEmpty()) {
+				// Deny-by-default: a type without a grant for the command group is never accessible.
+				continue;
+			}
+			if (accessManager().hasRole(person, securityRoot, roles)) {
+				result.add(entry.getKey());
+			}
+		}
+		return result;
 	}
 
 	/**

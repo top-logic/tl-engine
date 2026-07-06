@@ -504,35 +504,41 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * Object creation ({@code new(...)}) is not yet subject to a permission check.
-	 *
-	 * <p>
-	 * TODO #29088: creation is not restricted yet (the check in
-	 * {@link com.top_logic.model.search.expr.CreateObject} is disabled), so a user without any role
-	 * may currently create objects. This test pins the current behaviour.
-	 * </p>
+	 * Object creation ({@code new(...)}) is denied for a user without a CREATE role on the (global)
+	 * security root &ndash; create condition 1 with the security root as context, because a top-level
+	 * {@code new(...)} has no composition parent.
 	 */
-	public void testCreateObjectNotYetRestricted() throws Exception {
+	public void testCreateObjectDeniedForRoleless() {
 		becomeUser(_other);
-		// Assert inside the transaction and roll back: the creation itself is not permission-checked
-		// (a denial would throw during evaluation); committing is irrelevant here and would require
-		// the mandatory attributes to be filled.
+		assertPermissionDenied(() -> {
+			try (Transaction tx = beginTx()) {
+				execute(search("new(`TestTLScriptSecurity:Employee`)"));
+				tx.rollback();
+			}
+		});
+	}
+
+	/**
+	 * An administrator bypasses the create check and may create instances.
+	 */
+	public void testCreateObjectAllowedForAdmin() throws Exception {
+		becomeUser(_root);
 		try (Transaction tx = beginTx()) {
 			Object created = execute(search("new(`TestTLScriptSecurity:Employee`)"));
-			assertTrue("Creation is not yet permission-checked.", created instanceof TLObject);
+			assertTrue(created instanceof TLObject);
 			assertEquals("Employee", ((TLObject) created).tType().getName());
 			tx.rollback();
 		}
 	}
 
 	/**
-	 * {@code copy()} is a shortcut for {@code new(type)..set(attr, $orig.get(attr))..}. With security,
-	 * reading a copied (stored) attribute is subject to the same read check as {@code get}: a user
-	 * who may not read the original's attributes obtains a copy without those values ({@code null}),
-	 * so the copy cannot be used to escalate read access.
+	 * {@code copy()} is a shortcut for {@code new(type)..set(attr, $orig.get(attr))..}. On the write
+	 * side, allocating a copy requires the CREATE permission on the copied type (mirroring
+	 * {@code new(type)}): an administrator may copy, a user without the CREATE right on the top-level
+	 * type may not.
 	 */
-	public void testCopyWithSecurityAppliesReadCheck() throws Exception {
-		// Admin reads everything -> faithful copy.
+	public void testCopyRequiresCreatePermission() throws Exception {
+		// Admin bypasses the create check -> faithful copy.
 		becomeUser(_root);
 		try (Transaction tx = beginTx()) {
 			TLObject adminCopy = (TLObject) execute(search("p -> $p.copy()"), _p1);
@@ -540,14 +546,15 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			tx.rollback();
 		}
 
-		// _other may not read the project -> the read-denied attributes are copied as null, exactly
-		// as $p.get(budget) would return null.
+		// A user without the CREATE right on the (top-level) Project type may not copy it, mirroring
+		// new(Project): allocating the copy is denied (create condition 1 against the security root).
 		becomeUser(_other);
-		try (Transaction tx = beginTx()) {
-			TLObject otherCopy = (TLObject) execute(search("p -> $p.copy()"), _p1);
-			assertNull("A read-denied attribute must not be copied.", otherCopy.tValueByName("budget"));
-			tx.rollback();
-		}
+		assertPermissionDenied(() -> {
+			try (Transaction tx = beginTx()) {
+				execute(search("p -> $p.copy()"), _p1);
+				tx.rollback();
+			}
+		});
 	}
 
 	/**
@@ -658,7 +665,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	/**
 	 * {@code canExecute(...)} with an unknown operation name fails with a {@link TopLogicException}.
 	 */
-	public void testCanExecuteUnknownOperation() throws Exception {
+	public void testCanExecuteUnknownOperation() {
 		becomeUser(_user);
 		try {
 			execute(search("p -> canExecute($p, \"NoSuchOperation\")"), _p1);

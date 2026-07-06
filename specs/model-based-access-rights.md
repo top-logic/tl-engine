@@ -392,6 +392,12 @@ Both conditions must be satisfied. Full example:
 
 > **Implementation status.** Implemented (Ticket #29088): `ModelAccessRights.isAllowedCreate(person, type, context)` checks condition 1, `isAllowedCreate(person, parent, compositionAttribute)` checks conditions 1 and 2, and `getAccessibleTypes(person, commandGroup)` enumerates the creatable types. The TL-Script functions `new(...)` / `canCreate(...)` and the BPE process instantiation enforce these checks.
 
+> **Objects that are not (yet) persistent are exempt from instance-level security.** Role assignments &ndash; in particular rule-derived roles &ndash; are only computed at commit time. Two consequences follow:
+> - **Not-yet-committed objects** (created in the current, uncommitted transaction): instance-level checks (read, write, delete) are skipped, i.e. they return "allowed". Their creation was already gated by the CREATE check against a committed context (the parent, or the global security root), and their roles do not exist until commit. This makes patterns like `new(T)..set(attr, v)` work within a single transaction.
+> - **Transient objects** (never persisted, e.g. working copies or form overlays) are outside model security entirely: they are exempt from the instance-level checks (as above), and creating them is not CREATE-checked either &ndash; a transient object is never added to the persistent model, so its creation is not a security-relevant action. Turning a transient object into a persistent one (e.g. a non-transient `copy()`) goes through the normal CREATE check.
+>
+> This is not a loophole: security on committed objects stays fully in force, and an object created in a transaction becomes subject to the regular checks in subsequent transactions once its roles are computed at commit.
+
 This design preserves context-sensitivity: user U may be permitted to create Milestones in general (condition 1) but only in projects where U holds a sufficient role (condition 2). Attribute-level granularity is also preserved: a user might be allowed to add milestones to a project (`Project#milestones`) but not sub-projects (`Project#subProjects`), controlled by separate attribute-level WRITE rules on the parent.
 
 The access rights for `Milestone`, `Project`, and the individual composition references (`Project#milestones`, `Project#subProjects`) are configured via `SecurityConfiguration` entries in the knowledge base (see section 2.4). No XML annotations are used in the model files for role configuration.

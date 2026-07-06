@@ -16,7 +16,7 @@
 <p>Diese Funktion akzeptiert vier Arten von Eingaben:</p>
 <ul>
 	<li><strong>Zeichenkette:</strong> Einfaches HTML als mehrzeiliges String-Literal (mit dreifachen Anführungszeichen <code>"""..."""</code>)</li>
-	<li><strong>HTML:</strong> HTML mit eingebetteten TLScript-Ausdrücken (mit HTML-Literal-Syntax mit dreifachen geschweiften Klammern <code>{{{...}}}</code>)</li>
+	<li><strong>HTML:</strong> HTML mit eingebetteten TL-Script-Ausdrücken (mit HTML-Literal-Syntax mit dreifachen geschweiften Klammern <code>{{{...}}}</code>)</li>
 	<li><strong>Strukturierter Text:</strong> Rich-Text-Inhalte aus WYSIWYG-Editor-Feldern mit eingebetteten Bildern. Bilder werden automatisch in BASE64-Daten-URIs für das PDF-Rendering konvertiert</li>
 	<li><strong>Binärdaten:</strong> Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code>, die HTML-Markup enthalten</li>
 </ul>
@@ -39,7 +39,7 @@
 		<tr>
 			<td>html</td>
 			<td>String, HTMLFragment, StructuredText oder Binärdaten</td>
-			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TLScript-Ausdrücken), ein StructuredText aus WYSIWYG-Editor-Feldern (mit automatisch eingebetteten BASE64-Bildern) oder eine Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
+			<td>Der HTML-Inhalt, der in PDF konvertiert werden soll. Kann ein einfacher String (mit dreifachen Anführungszeichen <code>"""..."""</code>), ein HTMLFragment (mit dreifachen geschweiften Klammern <code>{{{...}}}</code> Syntax mit eingebetteten TL-Script-Ausdrücken), ein StructuredText aus WYSIWYG-Editor-Feldern (mit automatisch eingebetteten BASE64-Bildern) oder eine Binärdaten mit Content-Type <code>text/html</code> oder <code>text/plain</code> sein. Muss wohlgeformtes XHTML sein, bei dem alle Tags ordnungsgemäß geschlossen sind.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
@@ -164,7 +164,7 @@
 }}}, "rechnung-" + $invoice.get(`my.module:Invoice#number`))</code>
 </pre>
 
-<p><strong>Ausgabe:</strong> Ein PDF mit dynamisch generiertem Inhalt. Die <code>{{{...}}}</code> Syntax ermöglicht das Einbetten von TLScript-Ausdrücken direkt im HTML, die vor der PDF-Generierung ausgewertet und sicher HTML-kodiert werden.</p>
+<p><strong>Ausgabe:</strong> Ein PDF mit dynamisch generiertem Inhalt. Die <code>{{{...}}}</code> Syntax ermöglicht das Einbetten von TL-Script-Ausdrücken direkt im HTML, die vor der PDF-Generierung ausgewertet und sicher HTML-kodiert werden.</p>
 
 <h3>PDF mit benutzerdefiniertem Dateinamen</h3>
 

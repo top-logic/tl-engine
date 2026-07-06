@@ -6,8 +6,6 @@
 package com.top_logic.layout.view.admin.system;
 
 import java.util.ArrayList;
-import java.util.List;
-
 import com.top_logic.base.locking.token.LockInfo;
 import com.top_logic.base.locking.token.TokenService;
 import com.top_logic.basic.CalledByReflection;

@@ -29,19 +29,21 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The script is parsed and executed without an argument (a global expression such as {@code 1 + 2}
- * or <code>all(`my.module:MyType`)</code>); the evaluation result becomes the action's output and is
- * typically written to a channel feeding a {@link ScriptResultTable}.
+ * or <code>all(`my.module:MyType`)</code>); the evaluation result becomes the action's output and
+ * is typically written to a channel feeding a {@link ScriptResultTable}.
  * </p>
  *
  * <p>
- * Whether modifications are committed is controlled by {@link WithTransaction.Config#isInTransaction()}:
- * when set, the evaluation runs inside a committed transaction, so a script that creates, modifies or
- * deletes persistent objects has a lasting effect; otherwise it runs without an ambient transaction
- * and any modification is discarded.
+ * Whether modifications are committed is controlled by
+ * {@link com.top_logic.model.search.providers.WithTransaction.Config#isInTransaction()}: when set,
+ * the evaluation runs inside a committed transaction, so a script that creates, modifies or deletes
+ * persistent objects has a lasting effect; otherwise it runs without an ambient transaction and any
+ * modification is discarded.
  * </p>
  *
- * @implNote Compilation uses {@link SearchExpressionParser} and {@link QueryExecutor#compile(Expr)};
- *           parse and evaluation failures are surfaced as a {@link TopLogicException}.
+ * @implNote Compilation uses {@link SearchExpressionParser} and
+ *           {@link QueryExecutor#compile(Expr)}; parse and evaluation failures are surfaced as a
+ *           {@link TopLogicException}.
  */
 public class EvaluateScriptAction implements ViewAction, WithTransaction {
 

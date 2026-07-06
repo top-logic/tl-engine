@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;

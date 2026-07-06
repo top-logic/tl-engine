@@ -353,7 +353,7 @@ Access check for "Can user U perform command group G on attribute A of instance 
 
 Creating an object requires satisfying two conditions that are checked independently:
 
-**Condition 1 — CREATE right on the target type**: The user must hold a role that is granted the `Create` command group on the type being created. This is a standard type-level check (section 2.3.5), with the composition parent as the context object (or the module's security root when no parent exists):
+**Condition 1 — CREATE right on the target type**: The user must hold a role that is granted the `Create` command group on the type being created. This is a standard type-level check (section 2.3.5), with the composition parent as the context object (or the global security root when no parent exists):
 
 ```
 TypeAccessRule(myapp:Milestone, Create) → required roles R_create
@@ -386,7 +386,11 @@ Both conditions must be satisfied. Full example:
   → ALLOW only if both are true
 ```
 
-**Top-level objects**: When no composition parent exists (e.g., creating a top-level Project), only condition 1 applies, using the module's security root as the context object. Condition 2 is vacuously satisfied since there is no containing object. The model is consistent across both cases: condition 1 is always required; condition 2 adds the container check whenever a container is present.
+**Top-level objects**: When no composition parent exists (e.g., creating a top-level Project), only condition 1 applies, using the global security root as the context object. Condition 2 is vacuously satisfied since there is no containing object. The model is consistent across both cases: condition 1 is always required; condition 2 adds the container check whenever a container is present.
+
+> **Note on the top-level context.** A single global security root is used for top-level creation (rather than a per-module root). A CREATE role held on the root therefore applies across modules. This is intentionally coarse: a top-level `new(type)` has no instance/parent context, so only the type-level grant plus a role on the global root can gate it. Finer, context-sensitive control is achieved by creating through a composition reference (condition 2). Note that the roles are still per type (`getAllowedRoles(type, Create)` differs per type), so a user is not able to create arbitrary types &ndash; only those whose CREATE grant lists a role the user holds on the root.
+
+> **Implementation status.** Implemented (Ticket #29088): `ModelAccessRights.isAllowedCreate(person, type, context)` checks condition 1, `isAllowedCreate(person, parent, compositionAttribute)` checks conditions 1 and 2, and `getAccessibleTypes(person, commandGroup)` enumerates the creatable types. The TL-Script functions `new(...)` / `canCreate(...)` and the BPE process instantiation enforce these checks.
 
 This design preserves context-sensitivity: user U may be permitted to create Milestones in general (condition 1) but only in projects where U holds a sufficient role (condition 2). Attribute-level granularity is also preserved: a user might be allowed to add milestones to a project (`Project#milestones`) but not sub-projects (`Project#subProjects`), controlled by separate attribute-level WRITE rules on the parent.
 
@@ -734,11 +738,20 @@ public interface ModelAccessRights {
      * Checks whether the given person can create a new child object in
      * the given composition attribute of the given parent instance.
      *
-     * Convenience method equivalent to
-     * isAllowed(person, parent, compositionAttribute, SimpleBoundCommandGroup.WRITE).
+     * Both creation conditions must hold (see section 2.3.6): the CREATE right on
+     * the created type (the composition attribute's target type) in the parent
+     * context, and the WRITE right on the composition attribute of the parent.
      */
     boolean isAllowedCreate(Person person, TLObject parent,
                             TLStructuredTypePart compositionAttribute);
+
+    /**
+     * Checks whether the given person can create an instance of the given type
+     * in the given context (condition 1 of section 2.3.6). When no context is
+     * given (null), the check uses the global security root; this is the check
+     * for a top-level creation without a composition parent.
+     */
+    boolean isAllowedCreate(Person person, TLClass type, TLObject context);
 
     /**
      * Returns all types that the given person can perform the given

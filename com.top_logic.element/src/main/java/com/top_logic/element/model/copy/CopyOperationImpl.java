@@ -22,6 +22,8 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, CopyConstructor {
@@ -155,6 +157,11 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 		}
 
 		TLClass classType = (TLClass) currentType;
+		if (useSecurity()
+				&& !ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), classType, context)) {
+			// Mirror new(type): allocating a copy requires the CREATE permission on the copied type.
+			throw new TopLogicException(I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE.fill(classType));
+		}
 		boolean copyTransient = _transientCopy == null ? orig.tTransient() : _transientCopy;
 		if (copyTransient) {
 			return TransientObjectFactory.INSTANCE.createObject(classType, context);

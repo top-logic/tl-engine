@@ -7,7 +7,7 @@
     <display-name>TopLogic React Demo</display-name>
 
     <listener>
-         <listener-class>com.top_logic.demo.react.DemoReactStartStopListener</listener-class>
+         <listener-class>com.top_logic.element.ElementStartStop</listener-class>
     </listener>
 
 </web-app>

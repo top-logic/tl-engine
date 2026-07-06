@@ -167,6 +167,10 @@ Throw `com.top_logic.util.error.TopLogicException` for user-visible errors that 
 
 See [docs/faq/i18n.md](docs/faq/i18n.md) for the `I18NConstants` pattern and a full example.
 
+### TL-Script Builtin Functions
+
+Adding a builtin function (expression) to TL-Script is described in the in-app Developer Guide page `com.top_logic.model.search/src/main/webapp/doc/{en,de}/DeveloperGuide/TLScript/TLScriptExtensions/`. In short: implement a `GenericMethod` plus a `MethodBuilder`, register it as `<method>` in `SearchBuilder` configuration, name the arguments with a constant `ArgumentDescriptor`, keep the expression factory `getId()` unique when one class serves several `<method>` registrations, and **always** ship a documentation page (`index.html` + `page.properties`) under `.../doc/{en,de}/DeveloperGuide/TLScript/...` — a TL-Script expression without documentation is incomplete.
+
 ### JavaDoc Conventions
 
 **Reference members, methods, and types with `{@link}`, not `{@code}`.** A `{@link #getScrollX()}`

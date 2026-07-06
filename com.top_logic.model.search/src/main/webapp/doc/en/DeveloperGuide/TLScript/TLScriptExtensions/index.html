@@ -37,6 +37,19 @@
    }
 }
 </code></pre>
+<h2>Naming the arguments</h2>
+<p>If the function takes arguments, describe them with a constant <code class="hljs inlineCode">ArgumentDescriptor</code> by overriding <code class="hljs inlineCode">descriptor()</code> in the builder. This enables calling the function with named arguments (e.g. <code class="hljs inlineCode">my_fun(value: 42)</code>), documents the signature and validates the number of arguments.</p>
+<pre><code class="language-java">private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+   .mandatory("value")
+   // .optional("digits", 0)
+   .build();
+
+@Override
+public ArgumentDescriptor descriptor() {
+   return DESCRIPTOR;
+}
+</code></pre>
+<p>Note: If a single expression class is reused for several registrations (parameterized by the builder configuration), override <code class="hljs inlineCode">getId()</code> on both the builder and the expression and return a value that is unique across <em>all</em> builders (e.g. the pair of the expression class and a configured discriminator). Otherwise the compiled form of the expression may be re-created by the wrong builder.</p>
 <h2>Configuration</h2>
 <p>The builder for the function implementation is registered in the application configuration in the section <code class="hljs inlineCode">com.top_logic.model.search.expr.config.SearchBuilder</code>. The above function could be registered as <code class="hljs inlineCode">my_floor</code> as follows:</p>
 <pre><code>&lt;config service-class="com.top_logic.model.search.expr.config.SearchBuilder"&gt;
@@ -52,3 +65,10 @@
 <p>The function registered above can then be called as follows:</p>
 <pre><code>my_floor(4.2)</code></pre>
 <p>The expected result would then be <code class="hljs inlineCode">4</code>.</p>
+<h2>Documentation</h2>
+<p>A TL-Script function is only complete once it is documented &ndash; otherwise users cannot discover or understand it. Provide a documentation page for every function. Built-in engine functions are documented under <code class="hljs inlineCode">src/main/webapp/doc/{en,de}/DeveloperGuide/TLScript/&lt;Section&gt;/&lt;functionName&gt;/</code>, with one directory per function (named exactly like the registered <code class="hljs inlineCode">&lt;method name&gt;</code>) containing:</p>
+<ul>
+	<li><code class="hljs inlineCode">index.html</code> &ndash; an HTML fragment with the sections <em>Syntax</em>, <em>Description</em>, <em>Parameters</em> (a <code class="hljs inlineCode">tlDocTable</code>), <em>Return value</em> and <em>Examples</em>.</li>
+	<li><code class="hljs inlineCode">page.properties</code> &ndash; with <code class="hljs inlineCode">position</code> (ordering within the section), <code class="hljs inlineCode">source</code>, <code class="hljs inlineCode">title</code> and a <code class="hljs inlineCode">uuid</code> (identical for the <code class="hljs inlineCode">en</code> and <code class="hljs inlineCode">de</code> variant).</li>
+</ul>
+<p>Pages are discovered by directory, so there is no central index to maintain. Copy an existing page as a template.</p>

@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+        
     <wb-module deploy-name="com.top_logic.layout.view.selfservice">
+                
         <wb-resource deploy-path="/" source-path="/src/main/java" tag="defaultRootSource"/>
+                
         <wb-resource deploy-path="/" source-path="/src/main/resources"/>
+                
         <wb-resource deploy-path="/" source-path="/.apt_generated"/>
-        <wb-resource deploy-path="/" source-path="/.apt_generated_tests"/>
+            
     </wb-module>
+    
 </project-modules>

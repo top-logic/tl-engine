@@ -55,16 +55,30 @@ The contribution is pure wiring; the contributed content stays an ordinary
 
 ### Extension point on a container
 
-A container exposes an extension point through an `extension-id` attribute. The
-first consumer is `<tab-bar extension-id="...">`: after its static `<tab>`s,
-`TabBarElement` appends one native tab per contribution (ordered by `rank`),
-each tab's content being a `view-ref` to the contributed view. Contributed tabs
-are first-class — access-controlled, routed and ordered exactly like
-hand-authored tabs.
+A container exposes an extension point through an `extension-id` attribute,
+declared once by the `WithExtensionPoint` config mix-in. Any container
+configuration that wants to be extensible just adds that mix-in.
 
-Further containers (sidebar, generic child lists, command bars) can expose an
-`extension-id` the same way; each maps a contribution to its own entry type
-while sharing the one `Contribution` payload.
+The shared work lives in one seam, `ViewContributions.sections(context, id)`: it
+queries the `ViewContributionService` for the contributions targeting the point
+and turns each into a neutral `Section` (id, resolved label, route, icon, and a
+`view-ref` content element). A `Section` carries no access control of its own —
+a contributed section's visibility is governed by the extension point's host and
+the contributed view's own command security.
+
+Each container then does only the last, genuinely container-specific hop: it
+renders a `Section` as *its* kind of entry.
+
+- `<tab-bar extension-id="...">` (`TabBarElement`) appends one native `TabEntry`
+  per section after its static `<tab>`s.
+- `<sidebar extension-id="...">` (`SidebarElement`) appends one native
+  `NavigationItem` per section after its static `<nav-item>`s / `<separator>`s.
+
+A tab and a sidebar nav-item are the same concept — a navigable section (id,
+label, icon, route, content) — rendered in two places; their configs are
+field-for-field identical, which is why one `Contribution` payload feeds both.
+Adding a third container is a small opt-in: add `WithExtensionPoint` to its
+config and map a `Section` to its entry type.
 
 ## Why this is better than the legacy overlay
 

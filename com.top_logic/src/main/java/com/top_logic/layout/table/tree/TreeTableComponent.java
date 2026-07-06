@@ -64,6 +64,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -76,6 +77,7 @@ import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
+import com.top_logic.layout.table.TableModelUtils;
 import com.top_logic.layout.table.TableRenderer;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.component.ComponentRowSource;
@@ -137,7 +139,7 @@ import com.top_logic.util.model.ModelService;
  */
 public class TreeTableComponent extends BoundComponent
 		implements SelectableWithSelectionModel, InAppSelectable, ControlRepresentable, TreeTableDataOwner,
-		ComponentRowSource, WithSelectionPath {
+		ComponentRowSource, WithSelectionPath, ObjectRevealer {
 
 	/**
 	 * Configuration options for {@link TreeTableComponent}.
@@ -275,10 +277,24 @@ public class TreeTableComponent extends BoundComponent
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(event.getNewSelection());
 
+			// React only to the nodes that were newly added to the selection, so that a node that
+			// was collapsed while staying selected is not expanded again when the selection changes
+			// elsewhere. On a model rebuild the node instances differ from the old selection, hence
+			// all of them count as added and the selection is fully revealed.
+			Set<AbstractTreeTableNode<?>> addedNodes = new HashSet<>(newSelectedNodes);
+			addedNodes.removeAll(event.getOldSelection());
+
 			if (_expandSelected) {
-				for (AbstractTreeTableNode<?> newSelectedNode : newSelectedNodes) {
+				for (AbstractTreeTableNode<?> newSelectedNode : addedNodes) {
 					if (newSelectedNode != null) {
 						newSelectedNode.setExpanded(true);
+					}
+				}
+			}
+			if (_revealSelection) {
+				for (AbstractTreeTableNode<?> newSelectedNode : addedNodes) {
+					if (newSelectedNode != null) {
+						TLTreeModelUtil.expandParents(newSelectedNode);
 					}
 				}
 			}
@@ -300,6 +316,8 @@ public class TreeTableComponent extends BoundComponent
 	private boolean _rootVisible;
 
 	private boolean _expandSelected;
+
+	private boolean _revealSelection;
 
 	private boolean _expandRoot;
 
@@ -338,6 +356,7 @@ public class TreeTableComponent extends BoundComponent
 		_rootVisible = config.isRootVisible();
 		_treeBuilder = context.getInstance(config.getTreeBuilder());
 		_expandSelected = config.getExpandSelected();
+		_revealSelection = config.getRevealSelection();
 		_expandRoot = config.getExpandRoot();
 		_hasDefaultSelection = config.getDefaultSelection();
 		_selectionModel = initSelectionModel(config);
@@ -900,6 +919,36 @@ public class TreeTableComponent extends BoundComponent
 		return Maybe.some(rowOfObject);
 	}
 
+	@Override
+	public boolean revealObject(Object businessObject) {
+		List<AbstractTreeTableNode<?>> nodes = findNodes(businessObject);
+		AbstractTreeTableNode<?> node;
+		if (!nodes.isEmpty()) {
+			node = nodes.get(0);
+		} else {
+			Maybe<AbstractTreeTableNode<?>> displayed = findNodeOfBusinessObject(businessObject);
+			if (!displayed.hasValue()) {
+				return false;
+			}
+			node = displayed.get();
+		}
+		// Expand the ancestors so that the node is displayed.
+		TLTreeModelUtil.expandParents(node);
+
+		TableViewModel viewModel = getTableViewModel();
+		viewModel.validate(DefaultDisplayContext.getDisplayContext());
+		int row = viewModel.getRowOfObject(node);
+		if (row != TableViewModel.NO_ROW) {
+			TableModelUtils.scrollToRow(viewModel, row);
+			if (_control != null) {
+				// Trigger a repaint so that the scroll request is sent to the client, even if the
+				// node was already displayed and no expansion happened above.
+				_control.requestRepaint();
+			}
+		}
+		return true;
+	}
+
 	/** Convenience method for finding the node of a business object. */
 	public final Maybe<AbstractTreeTableNode<?>> findNodeOfBusinessObject(Object businessObject) {
 		List<?> rows = getTableViewModel().getDisplayedRows();
@@ -1248,11 +1297,9 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void setSelection(Set<? extends TreeUINode<?>> newSelectedNodes) {
-		if (_expandSelected) {
-			SelectionUtil.setTreeSelection(_selectionModel, newSelectedNodes);
-		} else {
-			SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
-		}
+		// Revealing the selection is handled by the selection listener when the model actually
+		// changes; here only the selection is established.
+		SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
 	}
 
 	private AbstractTreeTableNode<?> getDefaultSelection() {

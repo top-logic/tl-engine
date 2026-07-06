@@ -42,5 +42,10 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-model-search-react</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-dev-tools</artifactId>
+    </dependency>
   </dependencies>
 </project>

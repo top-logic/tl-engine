@@ -145,7 +145,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			// _m1 is a member of p1; its account _reader therefore holds ProjectReader (read only) on
 			// p1.
 			_m1 = newObject("Employee");
-			_m1.tUpdateByName("salary", Integer.valueOf(0));
+			_m1.tUpdateByName("salary", Integer.valueOf(300));
 			_m1.tUpdateByName("account", _reader);
 
 			_p1 = newObject("Project");
@@ -699,7 +699,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	 * Instance-level checks are skipped for not-yet-committed objects (their roles are only computed
 	 * at commit), while committed objects are checked normally.
 	 */
-	public void testUncommittedObjectExemptFromInstanceChecks() throws Exception {
+	public void testUncommittedObjectExemptFromInstanceChecks() {
 		becomeUser(_other);
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
 
@@ -715,6 +715,31 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			assertTrue(accessRights.isReadAllowed(_other, fresh));
 			tx.rollback();
 		}
+	}
+
+	/**
+	 * A computed attribute has definer's-rights semantics: its computation does not apply the
+	 * current user's security, but reading the computed attribute itself is still gated by its own
+	 * read grant.
+	 *
+	 * <p>
+	 * {@code Project#runningCosts} collects the responsible and all members into a set and sums
+	 * their salaries. Employees are not readable for non-administrative users, yet the responsible
+	 * (who may read the project) still obtains the total through the derived attribute &ndash; the
+	 * computation ignores the user's inability to read {@code Employee}. A user who may not read the
+	 * project at all gets the empty value (the read of the derived attribute is denied at the type
+	 * level).
+	 * </p>
+	 */
+	public void testDerivedAttributeUsesDefinerRights() throws Exception {
+		String script = "p -> $p.get(`TestTLScriptSecurity:Project#runningCosts`)";
+
+		// responsible e1 (2000) + member m1 (300) = 2300, although the user must not read Employee.
+		becomeUser(_user);
+		assertEquals(2300, ((Number) execute(search(script), _p1)).intValue());
+
+		becomeUser(_other);
+		assertNull(execute(search(script), _p1));
 	}
 
 	@SuppressWarnings("unchecked")

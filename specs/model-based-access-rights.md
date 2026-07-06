@@ -305,6 +305,13 @@ roles: {Manager}
 -- Only Managers can change the status, even though Editors can modify other fields
 ```
 
+**Derived (computed) attributes: definer's-rights semantics.** A derived attribute's value is produced by its storage algorithm (e.g. a TL-Script expression), not stored. Security is handled as follows:
+
+- The **read of the derived attribute itself** is access-controlled like any attribute: it is subject to the read check on the derived attribute (its own attribute-level rule, falling back to the type-level rule). If denied, the empty value is returned.
+- The **computation** of the derived value applies **no** model security ("definer's rights", analogous to a SQL `SECURITY DEFINER` view). It runs with full access and is therefore user-independent and deterministic &ndash; a per-user derived value would be incoherent (it would break caching, indexing, persistence of derived values and equality/search) and would contradict the rule that a computed attribute uses security either always or never. This also keeps the behaviour backward compatible with the pre-security model.
+
+Consequence for the modeller: because the computation may aggregate data the reader must not see directly, a derived attribute is a potential side channel. Its read grant must be set to match the **sensitivity of what it exposes**, not the sensitivity of the raw data it happens to read. For example, `Employee#salaryBand` derived from `salary` must itself be at least as read-restricted as `salary`.
+
 #### 2.3.4 Module-Level Defaults
 
 Access rules can be defined at the **module level** as defaults for all types within that module:

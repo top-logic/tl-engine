@@ -55,6 +55,15 @@
 							multiple="true"
 							type="Employee"
 						/>
+						<property name="runningCosts"
+							type="tl.core:Integer"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestTLScriptSecurity:Project#members`).union($self.get(`TestTLScriptSecurity:Project#responsible`)).map(e -> $e.get(`TestTLScriptSecurity:Employee#salary`)).sum()"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
 			</types>

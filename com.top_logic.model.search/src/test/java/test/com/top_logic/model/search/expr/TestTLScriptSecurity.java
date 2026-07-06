@@ -33,6 +33,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -692,6 +693,28 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		becomeUser(_reader);
 		assertFalse((Boolean) execute(
 			search("p -> canWriteAttribute(object: $p, attribute: `TestTLScriptSecurity:Project#budget`)"), _p1));
+	}
+
+	/**
+	 * Instance-level checks are skipped for not-yet-committed objects (their roles are only computed
+	 * at commit), while committed objects are checked normally.
+	 */
+	public void testUncommittedObjectExemptFromInstanceChecks() throws Exception {
+		becomeUser(_other);
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+
+		// A committed object is checked: the roleless user may neither write nor delete it.
+		assertFalse(accessRights.isAllowed(_other, _p1, SimpleBoundCommandGroup.WRITE));
+		assertFalse(accessRights.isAllowed(_other, _p1, SimpleBoundCommandGroup.DELETE));
+
+		try (Transaction tx = beginTx()) {
+			// A freshly created, not-yet-committed object is exempt (no computed roles yet).
+			TLObject fresh = newObject("Project");
+			assertTrue(accessRights.isAllowed(_other, fresh, SimpleBoundCommandGroup.WRITE));
+			assertTrue(accessRights.isAllowed(_other, fresh, SimpleBoundCommandGroup.DELETE));
+			assertTrue(accessRights.isReadAllowed(_other, fresh));
+			tx.rollback();
+		}
 	}
 
 	@SuppressWarnings("unchecked")

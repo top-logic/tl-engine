@@ -26,6 +26,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.template.SelectionControlProvider;
@@ -327,6 +328,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!(instance instanceof BoundObject)) {
 			return true;
 		}
+		if (!isCommitted(instance)) {
+			// Roles are computed at commit time; an object created in the current transaction has no
+			// computed roles yet, so an instance-level check against it is not meaningful.
+			return true;
+		}
 		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass;
@@ -339,6 +345,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup) {
 		if (!(instance instanceof BoundObject)) {
+			return true;
+		}
+		if (!isCommitted(instance)) {
+			// See isAllowed(Person, TLObject, BoundCommandGroup): no check on not-yet-committed objects.
 			return true;
 		}
 		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
@@ -389,8 +399,31 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (allowedBypass != null) {
 			return allowedBypass.booleanValue();
 		}
+		if (context != null && !isCommitted(context)) {
+			// The context is being built in the current transaction (no computed roles yet); its own
+			// creation was already authorized, so creating into it is not checked here.
+			return true;
+		}
 		Set<BoundedRole> roles = getAllowedRoles(type, SimpleBoundCommandGroup.CREATE);
 		return accessManager().hasRole(person, createContext(context), roles);
+	}
+
+	/**
+	 * Whether instance-level access checks are meaningful for the given object.
+	 *
+	 * <p>
+	 * Role assignments (in particular rule-derived roles) are computed at commit time. An object
+	 * that was created in the current, not-yet-committed transaction therefore has no computed roles;
+	 * evaluating instance-level security against it would spuriously deny. Such objects (and
+	 * transient objects) are exempt from instance-level checks &ndash; their creation was already
+	 * gated by the CREATE check against a committed context.
+	 * </p>
+	 */
+	private static boolean isCommitted(TLObject object) {
+		if (object == null || object.tTransient()) {
+			return false;
+		}
+		return object.tHandle().getState() == KnowledgeItem.State.PERSISTENT;
 	}
 
 	/**

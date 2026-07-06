@@ -642,6 +642,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_ICON_SELECT_CLEAR;
 
 	/**
+	 * @en Clear filter
+	 */
+	@CustomKey("js.iconSelect.clearFilter")
+	public static ResKey JS_ICON_SELECT_CLEAR_FILTER;
+
+	/**
 	 * @en Choose icon
 	 */
 	@CustomKey("js.iconSelect.chooseIcon")

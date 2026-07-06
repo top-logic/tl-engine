@@ -10,29 +10,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.model.TLClass;
-import com.top_logic.model.TLModel;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
-import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -46,8 +37,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * Sessions and executions are stored through the {@link AgentExecutionStore}; the conversation
  * itself lives as one transcript blob per {@link AgentExecution}, written by the agent runner at
  * the end of each run. This class merges those per-run transcripts back into a single
- * conversation for loading, and transparently migrates legacy <code>tl.ai.chat:ChatSession</code>
- * blobs on first access.
+ * conversation for loading. Legacy <code>tl.ai.chat:ChatSession</code> blobs are migrated
+ * eagerly at startup by {@link LegacyChatSessionMigration}.
  * </p>
  *
  * <p>
@@ -60,26 +51,13 @@ public class ChatHistoryService {
 	/** KB table storing {@link AgentSession} objects. */
 	private static final String SESSION_TABLE_NAME = "AgentSession";
 
-	// Legacy tl.ai.chat:ChatSession (single-blob format), migrated on first access.
-
-	private static final String LEGACY_MODULE_NAME = "tl.ai.chat";
-
-	private static final String LEGACY_TYPE_NAME = "ChatSession";
-
 	private static final String ATTR_TITLE = "title";
-
-	private static final String ATTR_MESSAGES = "messages";
-
-	private static final String ATTR_CREATED_AT = "createdAt";
 
 	private static final String ATTR_LAST_UPDATED = "lastUpdated";
 
 	private static final String ATTR_METADATA = "metadata";
 
 	private static final String ATTR_OWNER = "owner";
-
-	/** Agent name recorded on the synthetic execution holding a migrated legacy transcript. */
-	private static final String LEGACY_IMPORT_AGENT = "legacy-import";
 
 	private ChatHistoryService() {
 		// Static utility class
@@ -88,18 +66,12 @@ public class ChatHistoryService {
 	/**
 	 * Returns all chat sessions owned by the given person, sorted by <code>lastUpdated</code>
 	 * descending.
-	 *
-	 * <p>
-	 * Legacy <code>ChatSession</code> objects of the person are migrated to
-	 * {@link AgentSession}s before listing.
-	 * </p>
 	 */
 	public static List<TLObject> getSessionsForUser(Person person) {
 		if (person == null) {
 			return Collections.emptyList();
 		}
 		try {
-			migrateLegacySessions(person);
 			return new ArrayList<>(store().sessionsForOwner(person, SessionKind.CHAT));
 		} catch (RuntimeException ex) {
 			Logger.error("Failed to get sessions: " + ex.getMessage(), ex, ChatHistoryService.class);
@@ -286,93 +258,7 @@ public class ChatHistoryService {
 		}
 	}
 
-	// ---- Legacy migration ----
-
-	/**
-	 * Migrates all legacy <code>tl.ai.chat:ChatSession</code> objects of the given person to
-	 * {@link AgentSession}s.
-	 *
-	 * <p>
-	 * Each legacy session becomes an {@link AgentSession} (kind CHAT) with the same title,
-	 * timestamps and metadata, plus one synthetic completed {@link AgentExecution} carrying the
-	 * old V2 message blob as its transcript. Legacy blobs in the pre-V2 format cannot be
-	 * replayed and are dropped with a warning. The legacy object is deleted after migration.
-	 * </p>
-	 */
-	private static void migrateLegacySessions(Person person) {
-		TLClass legacyType = getLegacySessionType();
-		if (legacyType == null) {
-			return;
-		}
-		List<TLObject> legacySessions;
-		try {
-			legacySessions = MetaElementUtil.getAllInstancesOf(legacyType, TLObject.class);
-		} catch (RuntimeException ex) {
-			return;
-		}
-		for (TLObject legacy : legacySessions) {
-			if (!person.equals(legacy.tValueByName(ATTR_OWNER))) {
-				continue;
-			}
-			try {
-				migrateLegacySession(legacy, person);
-			} catch (RuntimeException ex) {
-				Logger.error("Failed to migrate legacy chat session: " + ex.getMessage(), ex,
-					ChatHistoryService.class);
-			}
-		}
-	}
-
-	private static void migrateLegacySession(TLObject legacy, Person owner) {
-		String title = (String) legacy.tValueByName(ATTR_TITLE);
-		String messagesJson = (String) legacy.tValueByName(ATTR_MESSAGES);
-		String metadataJson = (String) legacy.tValueByName(ATTR_METADATA);
-		Date createdAt = (Date) legacy.tValueByName(ATTR_CREATED_AT);
-		Date lastUpdated = (Date) legacy.tValueByName(ATTR_LAST_UPDATED);
-
-		AgentExecutionStore store = store();
-		AgentSession session = store.createSession(SessionKind.CHAT, owner, title);
-		if (metadataJson != null) {
-			store.saveMetadata(session, metadataJson);
-		}
-
-		if (messagesJson != null && !messagesJson.isEmpty()) {
-			if (messagesJson.trim().startsWith("{")) {
-				AgentExecution execution = store.beginExecution(session,
-					"legacy-" + UUID.randomUUID(), LEGACY_IMPORT_AGENT, null, null, null);
-				store.finishExecution(execution, ExecutionStatus.COMPLETE, null, null, null,
-					messagesJson);
-			} else {
-				Logger.warn("Legacy chat session '" + title
-					+ "' has a pre-V2 message blob; conversation content is not migrated.",
-					ChatHistoryService.class);
-			}
-		}
-
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(ResKey.text("Migrate legacy chat session"))) {
-			// Preserve the original timestamps for correct history ordering.
-			session.tUpdateByName(ATTR_CREATED_AT, createdAt != null ? createdAt : new Date());
-			if (lastUpdated != null) {
-				session.tUpdateByName(ATTR_LAST_UPDATED, lastUpdated);
-			}
-			legacy.tDelete();
-			tx.commit();
-		}
-		Logger.info("Migrated legacy chat session '" + title + "' to AgentSession.",
-			ChatHistoryService.class);
-	}
-
 	private static AgentExecutionStore store() {
 		return AgentExecutionStore.getInstance();
-	}
-
-	private static TLClass getLegacySessionType() {
-		TLModel model = ModelService.getApplicationModel();
-		TLModule module = model.getModule(LEGACY_MODULE_NAME);
-		if (module == null) {
-			return null;
-		}
-		return (TLClass) module.getType(LEGACY_TYPE_NAME);
 	}
 }

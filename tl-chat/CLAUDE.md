@@ -40,7 +40,8 @@ Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 - **`ChatSSEHandler`** – Push-based SSE handler implementing `AgentEventListener`
 - **`Chat`** – Thread-safe in-memory container using `CopyOnWriteArrayList<ChatMessage>` (max 500)
 - **`ChatSessionManager`** – Manages per-session in-memory state (Chat + ConversationMemory + ConversationLog) with LRU caching (max 5 sessions). Handles session switching with persist/load/rebuild cycle.
-- **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load. Legacy `tl.ai.chat:ChatSession` blobs are migrated on first session listing.
+- **`ChatHistoryService`** – Static access to persistent `AgentSession` objects (kind CHAT) via `AgentExecutionStore` (tl-ai-core). Conversations are stored as one transcript per `AgentExecution` (written by `AgentRunner` at run end) and merged in run order on load.
+- **`LegacyChatSessionMigration`** – Startup service migrating legacy `tl.ai.chat:ChatSession` blobs to `AgentSession`s eagerly on first boot (carries the TODO checklist for deleting the legacy model in the next release)
 - **`ChatSessionRegistry`** – Bridges `WindowScope` (ChatControl) and `HttpSession` (ChatServlet)
 
 ## Thread Safety
@@ -56,7 +57,7 @@ Authentication enforced by TopLogic's `ChatSessionFilter` mapped to `/chat/*`.
 - Execution: `runId`, `agentName`, `model`, `provider`, `status`, `stopReason`, token columns, `transcript` (CLOB)
 - Transcript format: `ConversationLog` turns serialized via `ConversationLogSerializer` (tl-ai-core, `PersistedConversationV2`)
 - Human-in-the-loop requests persist as `InteractionRequest` rows (approval/question/choice with resolution)
-- Legacy `tl.ai.chat:ChatSession` single-blob sessions are migrated to this model on first access
+- Legacy `tl.ai.chat:ChatSession` single-blob sessions are migrated to this model eagerly at startup by `LegacyChatSessionMigration`
 
 ## Notes
 

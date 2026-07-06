@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!-- Obsolete: table of the legacy tl.ai.chat:ChatSession model, emptied at startup by
+     LegacyChatSessionMigration.
+     TODO: Drop this table in the next release via DeleteTableProcessor — see the checklist in
+     LegacyChatSessionMigration. -->
 <objectlist>
 	<metaobject
 		object_name="ChatSession"

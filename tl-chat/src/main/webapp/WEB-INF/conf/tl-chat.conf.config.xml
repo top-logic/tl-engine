@@ -9,5 +9,16 @@
 				</bundles>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<!-- Eager startup migration of legacy tl.ai.chat:ChatSession objects.
+					     TODO: Remove together with the legacy model — see the checklist in
+					     LegacyChatSessionMigration. -->
+					<module key="com.top_logic.ai.chat.history.LegacyChatSessionMigration$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
 	</services>
 </application>

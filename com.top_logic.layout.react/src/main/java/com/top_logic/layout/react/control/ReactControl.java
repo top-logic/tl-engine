@@ -61,7 +61,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * {@code child.write(context, out)} in traditional controls.
  * </p>
  */
-public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTarget {
+public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	/** State key for whether the control is hidden on the client. */
 	private static final String HIDDEN = "hidden";
@@ -212,89 +212,35 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		return invoker.invoke(this, _reactContext, arguments);
 	}
 
-	// -- Headless agent-interface introspection --
-	//
-	// These methods expose the control tree, its data state and its action space without
-	// rendering or invoking anything, so that a headless consumer (the script recorder or an
-	// AI agent driving the session) can observe the control and address it semantically. They
-	// reuse the very same state map and command dispatch that the browser client uses, so there
-	// is a single source of truth for what a control looks like and what it can do.
-
-	/**
-	 * The set of command IDs this control accepts via {@link #executeCommand(String, Map)}.
-	 *
-	 * <p>
-	 * Derived from the {@link ReactCommand @ReactCommand}-annotated methods of this control's class.
-	 * This is the raw action space; the headless layer may enrich it with argument schemas (see
-	 * {@link com.top_logic.layout.react.headless.AgentNode}).
-	 * </p>
-	 */
+	@Override
 	public Set<String> commandNames() {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).commandIds();
 	}
 
-	/**
-	 * Whether this control is a purely structural wrapper that the headless agent projection should
-	 * elide, lifting its children into its parent.
-	 *
-	 * <p>
-	 * Layout-only containers (stacks, insets, slots, reload boundaries) carry no task-level meaning
-	 * for an agent; emitting them only deepens addresses and bloats the observation. Such controls
-	 * override this to return {@code true}. The projection logic stays generic — it asks each control
-	 * via this method and never switches on concrete control types — so a new structural container is
-	 * handled by overriding this one method, with no change to the projector.
-	 * </p>
-	 *
-	 * @return {@code true} if this control should be elided from the agent projection; {@code false}
-	 *         (the default) to appear as an addressable node.
-	 */
+	@Override
 	public boolean agentTransparent() {
 		return false;
 	}
 
-	/**
-	 * A stable, semantic name for this control, used as the discriminator in its agent address (e.g.
-	 * a bound field name, a tab label, a business-object key).
-	 *
-	 * <p>
-	 * Declared here (not on a headless-package interface) so that controls can name themselves
-	 * without depending on the headless layer, consistently with {@link #agentTransparent()}.
-	 * {@code null} (the default) lets the projection derive a name from label state or the bound
-	 * model.
-	 * </p>
-	 *
-	 * @return The name, or {@code null} to fall back to generic derivation.
-	 */
+	@Override
 	public String agentName() {
 		return null;
 	}
 
-	/**
-	 * An explicit semantic role for this control (e.g. {@code "field"}, {@code "table"}), overriding
-	 * the role the projection otherwise derives from the React module identifier.
-	 *
-	 * @return The role, or {@code null} for the default derivation.
-	 */
+	@Override
 	public String agentRole() {
 		return null;
 	}
 
 	/**
-	 * The direct child controls embedded in this control's state.
+	 * {@inheritDoc}
 	 *
-	 * <p>
-	 * In the view system the state tree <em>is</em> the control tree: a child control is simply a
-	 * {@link ReactControl}-valued entry in the state map (possibly nested inside maps or lists, as
-	 * with {@link ReactCompositeControl}'s {@code children} list or a panel's {@code toolbar}). This
-	 * method walks the state the same way {@link #writeJsonValue} serializes it, but stops at each
-	 * embedded control rather than descending into it, yielding exactly the direct children.
-	 * </p>
-	 *
-	 * <p>
-	 * Entries are visited in state-key order so that the resulting child order is stable across
-	 * calls (the backing state map is unordered), which keeps semantic addresses reproducible.
-	 * </p>
+	 * @implNote Walks the state map the same way {@link #writeJsonValue} serializes it, but stops at
+	 *           each embedded control rather than descending into it. Entries are visited in
+	 *           state-key order (the backing map is unordered) so the child order is stable across
+	 *           calls.
 	 */
+	@Override
 	public List<ReactControl> agentChildren() {
 		List<ReactControl> result = new ArrayList<>();
 		_reactState.entrySet().stream()
@@ -317,16 +263,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		}
 	}
 
-	/**
-	 * A copy of this control's own data state, with all entries that (transitively) hold child
-	 * controls removed.
-	 *
-	 * <p>
-	 * The result is the control's semantic, scalar/structural payload (labels, values, flags) as a
-	 * headless consumer should see it; embedded child controls are not included here because they
-	 * are represented as separate addressable nodes via {@link #agentChildren()}.
-	 * </p>
-	 */
+	@Override
 	public Map<String, Object> agentScalarState() {
 		Set<String> presentation = agentPresentationKeys();
 		Map<String, Object> result = new LinkedHashMap<>();
@@ -430,10 +367,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		return !nonRecordableCommands().contains(command);
 	}
 
-	/**
-	 * The commands this control advertises to a headless agent: its {@link #commandNames()} minus the
-	 * {@link #agentHiddenCommands() chrome commands}.
-	 */
+	@Override
 	public Set<String> agentCommands() {
 		Set<String> hidden = effectiveChromeCommands();
 		if (hidden.isEmpty()) {
@@ -444,32 +378,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		return result;
 	}
 
-	/**
-	 * The declared argument schema of the given command (from its
-	 * {@link ReactCommand#params() @ReactCommand params}), so the headless projection can advertise
-	 * what a command expects instead of leaving a consumer to guess.
-	 *
-	 * @param command
-	 *        The command ID.
-	 * @return The parameter declarations; empty if the command declares none.
-	 */
+	@Override
 	public ReactParam[] agentCommandParams(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).paramsFor(command);
 	}
 
-	/**
-	 * The {@link ConfigurationDescriptor} of the typed argument the given command declares, or
-	 * {@code null} if it takes a raw {@code Map} (or no arguments).
-	 *
-	 * <p>
-	 * When present, the headless projection advertises the command's argument schema and renders a
-	 * recorded step from this one interface, rather than from the (superseded)
-	 * {@link #agentCommandParams(String) hand-declared params}.
-	 * </p>
-	 *
-	 * @param command
-	 *        The command ID.
-	 */
+	@Override
 	public ConfigurationDescriptor agentCommandArgsType(String command) {
 		return COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass).argTypeFor(command);
 	}
@@ -1048,8 +962,6 @@ public class ReactControl implements HTMLFragment, IReactControl, ReactCommandTa
 		}
 	}
 
-
-	// -- Context-aware serialization methods --
 
 	/**
 	 * Serializes a map to a JSON string with context for child initialization.

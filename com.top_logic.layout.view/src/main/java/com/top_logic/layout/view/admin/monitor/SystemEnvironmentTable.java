@@ -31,10 +31,11 @@ import com.top_logic.util.monitor.SystemEnvironmentBuilder;
  * name and its value.
  *
  * <p>
- * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
- * Values whose key matches a configured protected-alias pattern (see
- * {@link SystemEnvironmentBuilder.GlobalConfig}) are masked, so passwords and secrets carried in
- * properties, VM arguments or configuration variables are not exposed.
+ * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName}
+ * element). Values whose key matches a configured protected-alias pattern (see
+ * {@link com.top_logic.util.monitor.SystemEnvironmentBuilder.GlobalConfig}) are masked, so
+ * passwords and secrets carried in properties, VM arguments or configuration variables are not
+ * exposed.
  * </p>
  */
 public class SystemEnvironmentTable extends SectionedTable {

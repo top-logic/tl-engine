@@ -72,7 +72,6 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
 /**

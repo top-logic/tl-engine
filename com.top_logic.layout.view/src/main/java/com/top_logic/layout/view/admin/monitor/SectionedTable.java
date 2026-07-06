@@ -28,11 +28,10 @@ import com.top_logic.table.impl.ListRowSource;
  * Base for read-only monitoring tables that present data as (section, name, value) rows in a
  * sortable, text-filterable green-field table.
  *
- * <p>
- * Subclasses provide the rows via {@link #rows()}. This base builds the three columns, assigns a
- * stable per-row key (so value-equal rows stay individually selectable rather than collapsing under
- * the record's value equality) and wraps the result in a {@link TableViewControl}.
- * </p>
+ * @implNote Subclasses provide the rows via {@link #rows()}. This base builds the three columns,
+ *           assigns a stable per-row key (so value-equal rows stay individually selectable rather
+ *           than collapsing under the record's value equality) and wraps the result in a
+ *           {@link TableViewControl}.
  */
 public abstract class SectionedTable implements UIElement {
 

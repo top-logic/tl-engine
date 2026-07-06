@@ -20,8 +20,9 @@ import com.top_logic.tool.execution.ExecutableState;
  * evaluated on the command's input, returns {@code true}; otherwise the command is hidden.
  *
  * <p>
- * A reusable, condition-driven alternative to the fixed {@link NullInputHidden} / {@link AnonymousOnly}
- * rules: bind the command's {@code input} to the channel the predicate inspects, so the toolbar
+ * A reusable, condition-driven alternative to the fixed {@link NullInputHidden} /
+ * {@link com.top_logic.layout.view.login.AnonymousOnly} rules: bind the command's {@code input} to
+ * the channel the predicate inspects, so the toolbar
  * re-evaluates the rule whenever that channel changes. Example - show only while a boolean
  * {@code running} channel is set: {@code <visible-if expr="x -> $x == true"/>}.
  * </p>

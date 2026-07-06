@@ -47,13 +47,12 @@ import com.top_logic.table.impl.ListRowSource;
  * changes the logger's level at runtime; the selected logger name is written to the configured
  * {@link Config#getSelection() selection channel} so it can be removed.
  *
- * <p>
- * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element). The
- * loggers and their current levels come from the {@link LogConfigurator} facade; changing a row's level
- * applies immediately via {@link LogConfigurator#setLoggerLevel(String, String)}. A live snapshot is taken
- * when the view opens and rebuilt from the configured {@link Config#getInput() input channel} after an
- * add / remove command.
- * </p>
+ * @implNote App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName}
+ *           element). The loggers and their current levels come from the {@link LogConfigurator}
+ *           facade; changing a row's level applies immediately via
+ *           {@link LogConfigurator#setLoggerLevel(String, String)}. A live snapshot is taken when the
+ *           view opens and rebuilt from the configured {@link Config#getInput() input channel} after
+ *           an add / remove command.
  */
 public class LoggerLevelTable implements UIElement {
 

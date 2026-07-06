@@ -311,6 +311,12 @@ public class TreeTableComponent extends BoundComponent
 
 	private TreeTableData _treeTableData;
 
+	/**
+	 * Business objects of the expanded nodes, captured before the tree model is discarded, so
+	 * that the expansion state can be restored when the model is rebuilt.
+	 */
+	private Collection<?> _expansionUserModel;
+
 	private TableConfigurationProvider _tableConfigProvider;
 
 	private final SelectionModel _selectionModel;
@@ -934,9 +940,11 @@ public class TreeTableComponent extends BoundComponent
 	/** Create a new {@link TableModel} and replace the old one. */
 	public void rebuildTableModel() {
 		if (hasTreeTableData()) {
+			Collection<?> expansionUserModel = TreeUIModelUtil.getExpansionUserModel(getTableData().getTree());
 			AbstractTreeTableModel<?> treeModel = createTreeModel();
 			configureTreeModel(treeModel);
 			getTableData().setTree(treeModel);
+			TreeUIModelUtil.setExpansionUserModel(expansionUserModel, treeModel);
 			adjustTreeTableData(getTableData());
 			invalidateSelection();
 			if (shouldCheckMissingTypeConfiguration()) {
@@ -954,6 +962,7 @@ public class TreeTableComponent extends BoundComponent
 
 	private void clearTreeTableField() {
 		if (hasTreeTableData()) {
+			_expansionUserModel = TreeUIModelUtil.getExpansionUserModel(_treeTableData.getTree());
 			_selectionModel.clear();
 			removeToolbarButtons(_treeTableData);
 			_treeTableData = null;
@@ -1548,6 +1557,13 @@ public class TreeTableComponent extends BoundComponent
 		/* Side-effect programming: Fetch view model to trigger loading of personal configuration
 		 * and sorting table. */
 		TableViewModel viewModel = treeTableData.getViewModel();
+
+		/* Restore the expansion state only after the view model exists, so that filters are
+		 * applied before nodes are expanded (see #22798). */
+		if (_expansionUserModel != null) {
+			TreeUIModelUtil.setExpansionUserModel(_expansionUserModel, treeModel);
+			_expansionUserModel = null;
+		}
 
 		rowsChannel().set(new ArrayList<>(viewModel.getDisplayedRows()));
 		updateRowsChannelOnTableUpdate(viewModel);

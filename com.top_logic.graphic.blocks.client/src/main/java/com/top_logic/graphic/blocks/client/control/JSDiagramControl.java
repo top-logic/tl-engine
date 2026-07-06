@@ -253,7 +253,14 @@ public class JSDiagramControl extends AbstractJSControl
 					newCtrlW = controlW;
 					newCtrlH = controlH;
 					_viewbox = _svg.getViewBox().getBaseVal();
-					applyInitialZoom(diagram.getInitialZoom());
+					if (diagram.isKeepViewBox() && _viewbox.getWidth() > 0) {
+						// The diagram was redrawn for the same model. The server transferred the
+						// current view box, so keep the user's zoom and pan instead of resetting to
+						// the initial zoom. Still refresh the zoom indicator from the kept view box.
+						calcZoomLevel();
+					} else {
+						applyInitialZoom(diagram.getInitialZoom());
+					}
 
 					Element selectedPart = _control.querySelector(".tlSelected");
 					if (selectedPart != null) {

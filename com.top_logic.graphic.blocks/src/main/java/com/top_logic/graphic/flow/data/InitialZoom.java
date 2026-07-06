@@ -1,7 +1,7 @@
 package com.top_logic.graphic.flow.data;
 
 /**
- * Initial zoom policy applied when a {@link Diagram} is (re-)displayed.
+ * Initial zoom policy applied when a {@link Diagram} is first displayed for a model.
  *
  * <p>
  * The fixed variants set an absolute zoom factor. The fit variants scale the diagram such that

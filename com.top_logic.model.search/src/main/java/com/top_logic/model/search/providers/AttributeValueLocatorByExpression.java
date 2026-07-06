@@ -52,6 +52,12 @@ public class AttributeValueLocatorByExpression extends
 		super(context, config);
 
 		_fun = QueryExecutor.compile(config.getExpr());
+		// Definer's-rights: a computed attribute value must not apply the invoking user's model
+		// security (the result would otherwise be user-dependent, breaking caching/indexing and
+		// determinism); access to the computed value is controlled by the read grant on the computed
+		// attribute itself. The same is done for expression-based computed attributes in
+		// AbstractExpressionAttribute#init.
+		_fun.disableSecurity();
 	}
 
 	@Override

@@ -80,6 +80,9 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 		super.init(attribute);
 
 		_analyzer = ScriptTracer.compile(attribute.getModel(), getConfig().getExpr());
+		// Definer's-rights: the analyzer evaluates the same computation, so it must not apply the
+		// invoking user's model security either. See AbstractExpressionAttribute#init.
+		_analyzer.disableSecurity();
 	}
 
 	@Override

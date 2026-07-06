@@ -69,6 +69,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
@@ -138,7 +139,7 @@ import com.top_logic.util.Utils;
  */
 public class TreeComponent extends BuilderComponent implements SelectableWithSelectionModel,
 		TreeBuilder<DefaultTreeUINodeModel.DefaultTreeUINode>, TreeModelListener,
-		CompoundSecurityBoundChecker, TreeDataOwner, WithSelectionPath {
+		CompoundSecurityBoundChecker, TreeDataOwner, WithSelectionPath, ObjectRevealer {
 
 	/**
 	 * Default renderer for a {@link TreeComponent}.
@@ -374,6 +375,9 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	/** @see Config#getExpandSelected() */
 	private final boolean _expandSelected;
 
+	/** @see Config#getRevealSelection() */
+	private final boolean _revealSelection;
+
 	/** @see Config#getExpandRoot() */
 	private final boolean _expandRoot;
 
@@ -432,6 +436,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		_selectionFilter = createSelectionFilter(config);
 		_selectionModel = createSelectionModel(config);
 		_expandSelected = config.getExpandSelected();
+		_revealSelection = config.getRevealSelection();
 		_expandRoot = config.getExpandRoot();
 		_rootVisible = config.isRootVisible();
 		_adjustSelectionWhenCollapsing = config.adjustSelectionWhenCollapsing();
@@ -496,8 +501,16 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			{
 				Set<DefaultTreeUINode> newSelectedNodes = unsafeCast(event.getNewSelection());
+
+				// React only to the nodes that were newly added to the selection, so that a node
+				// that was collapsed while staying selected is not expanded again when the selection
+				// changes elsewhere. On a model rebuild the node instances differ from the old
+				// selection, hence all of them count as added and the selection is fully revealed.
+				Set<DefaultTreeUINode> addedNodes = new HashSet<>(newSelectedNodes);
+				addedNodes.removeAll(event.getOldSelection());
+
 				if (_expandSelected) {
-					for (DefaultTreeUINode selectedNode : newSelectedNodes) {
+					for (DefaultTreeUINode selectedNode : addedNodes) {
 						if (selectedNode != null) {
 							_treeModel.setExpanded(selectedNode, true);
 						}
@@ -506,8 +519,8 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 
 				setSelectionPathToChannel(newSelectedNodes);
 
-				if (isVisible()) {
-					displaySelection();
+				if (_revealSelection && isVisible()) {
+					revealNodes(addedNodes);
 				}
 			}
 		}
@@ -732,16 +745,25 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	protected void becomingVisible() {
 		super.becomingVisible();
 		initTreeModel();
+		/* Always reveal the current selection when the component becomes visible. This is the
+		 * initial display of an already existing selection, not the auto-reveal of a selection
+		 * change that the user can switch off via getRevealSelection(). */
 		displaySelection();
 	}
 
 	private void displaySelection() {
-		Collection<DefaultTreeUINode> selection = getSelection();
-		if (CollectionUtils.isEmpty(selection)) {
-			// no selection to display.
+		revealNodes(getSelection());
+	}
+
+	/**
+	 * Expands the ancestors of the given nodes so that they become displayed.
+	 */
+	private void revealNodes(Collection<DefaultTreeUINode> nodes) {
+		if (CollectionUtils.isEmpty(nodes)) {
+			// nothing to display.
 			return;
 		}
-		for (DefaultTreeUINode selectedNode : selection) {
+		for (DefaultTreeUINode selectedNode : nodes) {
 			DefaultTreeUINode node = selectedNode;
 			while (true) {
 				if (node.isDisplayed()) {
@@ -946,6 +968,19 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 			Object selectedNode = selection.iterator().next();
 			getScrollContainer().scrollToRange(new TreeNodeRange(treeControl, selectedNode));
 		}
+	}
+
+	@Override
+	public boolean revealObject(Object businessObject) {
+		DefaultTreeUINode node = createNodeForBusinessNode(businessObject);
+		if (node == null) {
+			return false;
+		}
+		TLTreeModelUtil.expandParents(node);
+		if (isVisible() && isModelValid()) {
+			getScrollContainer().scrollToRange(new TreeNodeRange(getTreeControl(), node));
+		}
+		return true;
 	}
 
 	/**

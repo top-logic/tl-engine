@@ -25,6 +25,7 @@
 					<property name="expandRoot"/>
 					<property name="defaultSelection"/>
 					<property name="expandSelected"/>
+					<property name="revealSelection"/>
 					<property name="multiSelection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="showDetailOpener"/>
@@ -164,6 +165,7 @@
 		page=""
 		partnerGroup="${partnerGroup}"
 		resPrefix="layout.element.grid.Grid."
+		revealSelection="${revealSelection}"
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"
 		selection="${selection}"

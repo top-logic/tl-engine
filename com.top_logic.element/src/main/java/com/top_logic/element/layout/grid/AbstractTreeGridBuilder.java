@@ -116,6 +116,8 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 
 	private boolean _expandSelectedNode;
 
+	private boolean _revealSelection = true;
+
 	private boolean _expandRoot;
 	
 	private boolean _adjustSelectionWhenCollapsing;
@@ -230,6 +232,16 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	}
 
 	/**
+	 * Returns true if the ancestors of a newly selected node should be expanded to make the
+	 * selection visible.
+	 *
+	 * @see TreeViewConfig#getRevealSelection()
+	 */
+	public boolean revealSelection() {
+		return _revealSelection;
+	}
+
+	/**
 	 * Returns true if collapsing of a node should adjust selection.
 	 * 
 	 * @see TreeViewConfig#adjustSelectionWhenCollapsing()
@@ -257,6 +269,13 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 */
 	public void setExpandSelected(boolean expandSelected) {
 		_expandSelectedNode = expandSelected;
+	}
+
+	/**
+	 * Sets the value of {@link #revealSelection()}.
+	 */
+	public void setRevealSelection(boolean revealSelection) {
+		_revealSelection = revealSelection;
 	}
 
 	/**
@@ -563,7 +582,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 			for (GridTreeTableNode selectedNode : selectectedTreeNodes) {
 				if (expandSelectedNode()) {
 					TreeUIModelUtil.expandSelfAndParents(getTreeModel(), selectedNode);
-				} else {
+				} else if (revealSelection()) {
 					TreeUIModelUtil.expandParents(getTreeModel(), selectedNode);
 				}
 			}

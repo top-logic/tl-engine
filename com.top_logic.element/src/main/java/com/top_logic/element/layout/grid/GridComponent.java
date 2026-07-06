@@ -605,6 +605,7 @@ public class GridComponent extends EditComponent implements
 		gridBuilder.setRootVisible(config.isRootVisible());
 		gridBuilder.setExpandRoot(config.getExpandRoot());
 		gridBuilder.setExpandSelected(config.getExpandSelected());
+		gridBuilder.setRevealSelection(config.getRevealSelection());
 		gridBuilder.adjustSelectionWhenCollapsing(config.adjustSelectionWhenCollapsing());
 	}
 

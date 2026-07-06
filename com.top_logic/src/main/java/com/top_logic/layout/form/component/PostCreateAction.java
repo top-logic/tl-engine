@@ -445,19 +445,14 @@ public interface PostCreateAction {
 		 * Reveals all objects contained in the given model.
 		 *
 		 * <p>
-		 * A model may be a single object, a collection of objects (e.g. a multiple selection) or a
-		 * path of business objects from the root to the selected object (as delivered by the
-		 * selection of a tree component); each of these is handled so that every selected object is
-		 * revealed.
+		 * A model may be a single object or a collection of objects (e.g. a multiple selection);
+		 * every contained object is revealed. A caller that delivers a business-object path (such as
+		 * a tree selection from root to the selected node) and wants only the selected node revealed
+		 * must reduce the path to that object before handing it to this action.
 		 * </p>
 		 */
 		private static void reveal(ObjectRevealer revealer, Object model) {
-			if (model instanceof List<?>) {
-				List<?> path = (List<?>) model;
-				if (!path.isEmpty()) {
-					revealer.revealObject(path.get(path.size() - 1));
-				}
-			} else if (model instanceof Collection<?>) {
+			if (model instanceof Collection<?>) {
 				for (Object element : (Collection<?>) model) {
 					reveal(revealer, element);
 				}

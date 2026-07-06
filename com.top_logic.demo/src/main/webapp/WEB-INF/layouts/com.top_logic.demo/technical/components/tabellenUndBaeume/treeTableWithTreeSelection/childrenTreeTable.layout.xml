@@ -19,8 +19,12 @@
 			<button id="revealSelection"
 				class="com.top_logic.tool.boundsec.GenericCommandHandler"
 				image="css:fas fa-eye"
-				target="selection(self())"
 			>
+				<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					input="selection(self())"
+				>
+					<function><![CDATA[paths -> $paths.map(path -> $path.lastElement())]]></function>
+				</target>
 				<postCreateActions>
 					<reveal/>
 				</postCreateActions>

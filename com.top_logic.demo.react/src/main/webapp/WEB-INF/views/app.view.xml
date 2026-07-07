@@ -20,15 +20,6 @@
 							<de>Attribute</de>
 						</label>
 					</nav-item>
-					<nav-item id="playground"
-						icon="css:bi bi-puzzle"
-					>
-						<view-ref view="playground/playground.view.xml"/>
-						<label>
-							<en>View overlays</en>
-							<de>View-Overlays</de>
-						</label>
-					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"

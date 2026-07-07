@@ -43,15 +43,15 @@ public class CreateObject extends AbstractObjectCreation {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		TLClass type = (TLClass) asStructuredTypeNonNull(arguments[0], getArguments()[0]);
 		TLObject context = asTLObject(arguments[1]);
-		if (usesSecurity()) {
-			if (!ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), type, context)) {
-				throw new TopLogicException(I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(type));
-			}
-		}
 		boolean transientObject = asBoolean(arguments[2]);
 		if (transientObject) {
 			return TransientObjectFactory.INSTANCE.createObject(type, context);
 		} else {
+			if (usesSecurity()) {
+				if (!ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), type, context)) {
+					throw new TopLogicException(I18NConstants.CREATE_PERMISSION_DENIED__TYPE.fill(type));
+				}
+			}
 			return ModelService.getInstance().getFactory().createObject(type, context);
 		}
 	}

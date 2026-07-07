@@ -48,11 +48,10 @@ public class TestTableElement extends TestCase {
 		assertNotNull("Config should be parsed", config);
 
 		// The content should be a TableElement config.
-		assertEquals("View should have one content element", 1, config.getContent().size());
 		assertTrue("Content should be TableElement config",
-			config.getContent().get(0) instanceof TableElement.Config);
+			config.getContent() instanceof TableElement.Config);
 
-		TableElement.Config tableConfig = (TableElement.Config) config.getContent().get(0);
+		TableElement.Config tableConfig = (TableElement.Config) config.getContent();
 
 		// Verify inputs.
 		assertEquals("Should have one input", 1, tableConfig.getInputs().size());

@@ -51,11 +51,10 @@ public class TestFormElement extends TestCase {
 		assertNotNull("Config should be parsed", config);
 
 		// The content should be a FormElement config.
-		assertEquals("View should have one content element", 1, config.getContent().size());
 		assertTrue("Content should be FormElement config",
-			config.getContent().get(0) instanceof FormElement.Config);
+			config.getContent() instanceof FormElement.Config);
 
-		FormElement.Config formConfig = (FormElement.Config) config.getContent().get(0);
+		FormElement.Config formConfig = (FormElement.Config) config.getContent();
 
 		// Verify input channel ref.
 		assertNotNull("Input should be set", formConfig.getInput());

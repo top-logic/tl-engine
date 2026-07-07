@@ -84,11 +84,10 @@ public class TestPanelCommands extends TestCase {
 
 		context.checkErrors();
 		assertNotNull("Config should be parsed", config);
-		assertEquals("View should have one content element", 1, config.getContent().size());
 
 		assertTrue("Content should be PanelElement config",
-			config.getContent().get(0) instanceof PanelElement.Config);
-		PanelElement.Config panelConfig = (PanelElement.Config) config.getContent().get(0);
+			config.getContent() instanceof PanelElement.Config);
+		PanelElement.Config panelConfig = (PanelElement.Config) config.getContent();
 
 		// Verify commands.
 		List<PolymorphicConfiguration<? extends ViewCommand>> commands = panelConfig.getCommands();

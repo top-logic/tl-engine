@@ -83,12 +83,11 @@ public class TestButtonCommand extends TestCase {
 
 		context.checkErrors();
 		assertNotNull("Config should be parsed", config);
-		assertEquals("View should have one content element", 1, config.getContent().size());
 
 		// The content element should be a ButtonElement.Config.
 		assertTrue("Content should be ButtonElement config",
-			config.getContent().get(0) instanceof ButtonElement.Config);
-		ButtonElement.Config buttonConfig = (ButtonElement.Config) config.getContent().get(0);
+			config.getContent() instanceof ButtonElement.Config);
+		ButtonElement.Config buttonConfig = (ButtonElement.Config) config.getContent();
 
 		// The action should be a ViewCommand.Config.
 		PolymorphicConfiguration<? extends ViewCommand> actionConfig = buttonConfig.getAction();

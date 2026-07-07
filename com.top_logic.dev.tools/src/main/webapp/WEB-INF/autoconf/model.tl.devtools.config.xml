@@ -18,5 +18,29 @@
 				</declarations>
 			</instance>
 		</config>
+
+		<!--
+			Contribute the Model admin section (the model editor) into the admin view's
+			"admin.sections" extension point. The admin view lives in tl-layout-view, which does not
+			depend on this module; the section appears only in apps that include tl-dev-tools. Ranked
+			before the Development section (rank 1000) so the order stays Access control, Monitoring,
+			System, Model, Development.
+		-->
+		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
+			<instance class="com.top_logic.layout.view.contribution.ViewContributionService">
+				<contributions>
+					<contribution id="model-editor"
+						target="admin.sections"
+						view="admin/model/model-editor.view.xml"
+						rank="500"
+					>
+						<label>
+							<en>Model</en>
+							<de>Modell</de>
+						</label>
+					</contribution>
+				</contributions>
+			</instance>
+		</config>
 	</services>
 </application>

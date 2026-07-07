@@ -10,7 +10,7 @@ package com.top_logic.layout.react.codeedit;
  *
  * <p>
  * Each constant carries the {@link #clientId() client language id} that selects the matching
- * CodeMirror language support in the {@code TLCodeEditor} React component.
+ * {@code CodeMirror} language support in the {@code TLCodeEditor} React component.
  * </p>
  */
 public enum CodeEditorLanguage {
@@ -27,7 +27,7 @@ public enum CodeEditorLanguage {
 	/** JavaScript. */
 	JAVASCRIPT("javascript"),
 
-	/** HyperText Markup Language. */
+	/** Hypertext Markup Language. */
 	HTML("html"),
 
 	/** Markdown. */
@@ -43,7 +43,7 @@ public enum CodeEditorLanguage {
 	}
 
 	/**
-	 * The language id passed to the client, selecting the CodeMirror language support.
+	 * The language id passed to the client, selecting the {@code CodeMirror} language support.
 	 */
 	public String clientId() {
 		return _clientId;

@@ -10,7 +10,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 
 /**
- * A {@link ReactFormFieldControl} rendering a CodeMirror 6 source-code editor for a string or text
+ * A {@link ReactFormFieldControl} rendering a {@code CodeMirror} 6 source-code editor for a string or text
  * field.
  *
  * <p>

@@ -31,10 +31,11 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  *
  * <p>
  * Contributions are indexed by {@link Contribution#getTarget() target} and, within a target, ordered
- * by {@link Contribution#getRank() rank} (ties broken by {@link Contribution#getId() id}). A
- * container exposing an extension point queries {@link #getContributions(String)} to obtain the
- * entries to append.
+ * by {@link Contribution#getRank() rank} (ties broken by {@link Contribution#getId() id}).
  * </p>
+ *
+ * @implNote A container exposing an extension point queries {@link #getContributions(String)} to
+ *           obtain the entries to append.
  */
 public class ViewContributionService extends ConfiguredManagedClass<ViewContributionService.Config> {
 

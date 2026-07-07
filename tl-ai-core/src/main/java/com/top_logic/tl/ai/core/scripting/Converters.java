@@ -126,6 +126,12 @@ public class Converters extends TLScriptFunctions {
 			NestedMarkdownExtension.create()
 		));
 
+		// Escape raw HTML embedded in markdown instead of passing it through. The markdown
+		// rendered in the chat UI is LLM/tool output and may carry attacker-controlled markup
+		// (prompt injection via fetched web content or MCP tool results), so raw HTML must
+		// never reach the browser unescaped.
+		options.set(HtmlRenderer.ESCAPE_HTML, true);
+
 		// Configure the HTML to Markdown converter for cleaner output
 		options.set(FlexmarkHtmlConverter.SETEXT_HEADINGS, false); // Use ATX headings (# style) instead of setext (underlined)
 		options.set(FlexmarkHtmlConverter.OUTPUT_ATTRIBUTES_ID, false); // Don't output id attributes

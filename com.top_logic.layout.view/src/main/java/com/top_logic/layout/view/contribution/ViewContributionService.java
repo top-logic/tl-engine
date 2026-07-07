@@ -74,8 +74,10 @@ public class ViewContributionService extends ConfiguredManagedClass<ViewContribu
 		String EXTENSIONS = "extensions";
 
 		/**
-		 * All registered extension-point content bindings, merged across modules by
-		 * {@link Extension#getId() id}.
+		 * All registered extension-point content bindings.
+		 *
+		 * @implNote Keyed by {@link Extension#getId()}, so entries merge additively across module
+		 *           configuration fragments.
 		 */
 		@Name(EXTENSIONS)
 		@Key(Extension.ID)
@@ -85,11 +87,10 @@ public class ViewContributionService extends ConfiguredManagedClass<ViewContribu
 	/**
 	 * Binds the content of a named extension point to a single {@link UIElement}.
 	 *
-	 * <p>
-	 * Entries with the same {@link Extension#getId() id} merge across module configuration fragments:
-	 * the owning module registers the base content, depending modules refine it through the standard
-	 * typed-configuration override (recursive item merge, keyed child lists, {@code config:position}).
-	 * </p>
+	 * @implNote Entries with the same {@link Extension#getId()} merge across module configuration
+	 *           fragments: the owning module registers the base content, depending modules refine it
+	 *           through the standard typed-configuration override (recursive item merge, keyed child
+	 *           lists, {@code config:position}).
 	 */
 	public interface Extension extends ConfigurationItem {
 

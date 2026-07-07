@@ -64,13 +64,14 @@ public class TabBarElement implements UIElement {
 		/**
 		 * The tab definitions.
 		 *
-		 * <p>
-		 * Keyed by {@link TabConfig#getId() id} so that a configuration fragment in another module can
-		 * add, reposition ({@code config:position}) or override individual tabs.
-		 * </p>
+		 * @implNote Written directly as {@code <tab>} children of the {@code <tab-bar>} (the
+		 *           {@code <tabs>} wrapper is optional). Keyed by {@link TabConfig#getId()} so that a
+		 *           configuration fragment in another module can add, reposition
+		 *           ({@code config:position}) or override individual tabs.
 		 */
 		@Name(TABS)
 		@Key(TabConfig.ID)
+		@DefaultContainer
 		@TreeProperty
 		List<TabConfig> getTabs();
 

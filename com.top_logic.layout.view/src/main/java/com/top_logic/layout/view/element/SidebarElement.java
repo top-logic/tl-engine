@@ -15,6 +15,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
@@ -76,10 +77,17 @@ public class SidebarElement implements UIElement {
 
 		/**
 		 * The sidebar navigation items.
+		 *
+		 * @implNote Written directly as {@code <nav-item>} / {@code <separator>} children of the
+		 *           {@code <sidebar>} (the {@code <items>} wrapper is optional). Keyed by
+		 *           {@link SidebarItemConfig#getId()} so that a configuration fragment in another
+		 *           module can add, reposition ({@code config:position}) or override individual items.
 		 */
 		@Name(ITEMS)
+		@Key(SidebarItemConfig.ID)
+		@DefaultContainer
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends SidebarItemElement>> getItems();
+		List<SidebarItemConfig> getItems();
 
 		/**
 		 * The ID of the initially active item, or empty for the first navigation item.
@@ -127,17 +135,35 @@ public class SidebarElement implements UIElement {
 	}
 
 	/**
+	 * Common configuration base for the entries of a {@link SidebarElement}.
+	 *
+	 * @implNote {@link #getId()} is the merge key of the items list: a configuration fragment in
+	 *           another module positions ({@code config:position}) or overrides an item by
+	 *           referencing this id. A {@code <separator>} usually leaves it empty; at most one
+	 *           anonymous entry (empty id) may occur, so give separators an explicit id when more
+	 *           than one is needed.
+	 */
+	public interface SidebarItemConfig extends PolymorphicConfiguration<SidebarItemElement> {
+
+		/** Configuration name for {@link #getId()}. */
+		String ID = "id";
+
+		/**
+		 * The unique item identifier.
+		 */
+		@Name(ID)
+		String getId();
+	}
+
+	/**
 	 * A navigation item with content.
 	 */
 	@TagName("nav-item")
-	public interface NavItemConfig extends PolymorphicConfiguration<SidebarItemElement>, WithAccessControl {
+	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl {
 
 		@Override
 		@ClassDefault(NavItemElement.class)
 		Class<? extends SidebarItemElement> getImplementationClass();
-
-		/** Configuration name for {@link #getId()}. */
-		String ID = "id";
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -150,12 +176,6 @@ public class SidebarElement implements UIElement {
 
 		/** Configuration name for {@link #getRoute()}. */
 		String ROUTE = "route";
-
-		/**
-		 * The unique item identifier.
-		 */
-		@Name(ID)
-		String getId();
 
 		/**
 		 * The display label.
@@ -195,7 +215,7 @@ public class SidebarElement implements UIElement {
 	 * A separator line between sidebar items.
 	 */
 	@TagName("separator")
-	public interface SeparatorConfig extends PolymorphicConfiguration<SidebarItemElement> {
+	public interface SeparatorConfig extends SidebarItemConfig {
 
 		@Override
 		@ClassDefault(SeparatorElement.class)
@@ -363,7 +383,7 @@ public class SidebarElement implements UIElement {
 	@CalledByReflection
 	public SidebarElement(InstantiationContext context, Config config) {
 		_items = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends SidebarItemElement> itemConfig : config.getItems()) {
+		for (SidebarItemConfig itemConfig : config.getItems()) {
 			_items.add(context.getInstance(itemConfig));
 		}
 		for (ViewContributions.Section section : ViewContributions.sections(context, config.getExtensionId())) {

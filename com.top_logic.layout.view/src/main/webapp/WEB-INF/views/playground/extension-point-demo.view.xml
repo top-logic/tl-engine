@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Demonstrates the <extension-point> mechanism: this view embeds no fixed content, only a named
+	extension point. Its content (a tab bar with framework-provided tabs) is registered at the
+	ViewContributionService in tl-layout-view.conf.config.xml. A depending module (the React demo)
+	splices an additional tab into that tab bar purely through typed-configuration merge - see
+	demoReactConf.config.xml.
+-->
+<view>
+	<extension-point id="tl.view.playground"/>
+</view>

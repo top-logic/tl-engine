@@ -23,6 +23,15 @@
 							<de>Attribute</de>
 						</label>
 					</nav-item>
+					<nav-item id="playground"
+						icon="css:bi bi-puzzle"
+					>
+						<view-ref view="playground/extension-point-demo.view.xml"/>
+						<label>
+							<en>Extension point</en>
+							<de>Erweiterungspunkt</de>
+						</label>
+					</nav-item>
 					<separator/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"

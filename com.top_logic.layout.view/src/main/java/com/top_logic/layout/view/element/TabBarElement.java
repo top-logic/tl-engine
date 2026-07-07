@@ -13,6 +13,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
@@ -62,8 +63,14 @@ public class TabBarElement implements UIElement {
 
 		/**
 		 * The tab definitions.
+		 *
+		 * <p>
+		 * Keyed by {@link TabConfig#getId() id} so that a configuration fragment in another module can
+		 * add, reposition ({@code config:position}) or override individual tabs.
+		 * </p>
 		 */
 		@Name(TABS)
+		@Key(TabConfig.ID)
 		@TreeProperty
 		List<TabConfig> getTabs();
 

@@ -18,34 +18,5 @@
 				</declarations>
 			</instance>
 		</config>
-
-		<!--
-			Contribute the Model admin section (the model editor) into the admin view's "admin"
-			extension point. The admin view lives in tl-layout-view, which does not depend on this
-			module; the section appears only in apps that include tl-dev-tools. Inserted right after
-			the static "system" tab so the order stays Access control, Monitoring, System, Model,
-			Development (the Development section appends at the end).
-		-->
-		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
-			<instance>
-				<extensions>
-					<extension id="admin">
-						<tab-bar>
-							<tab id="model-editor"
-								config:operation="add"
-								config:position="after"
-								config:reference="system"
-							>
-								<label>
-									<en>Model</en>
-									<de>Modell</de>
-								</label>
-								<view-ref view="admin/model/model-editor.view.xml"/>
-							</tab>
-						</tab-bar>
-					</extension>
-				</extensions>
-			</instance>
-		</config>
 	</services>
 </application>

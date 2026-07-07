@@ -70,15 +70,15 @@ public class ViewElement implements UIElement {
 		/**
 		 * The root content element of this view.
 		 *
-		 * <p>
-		 * Exactly one element is expected. The list type enables {@code @TagName} resolution so that
-		 * short element names (e.g. {@code <app-shell>}) can be used directly inside {@code <view>}.
-		 * </p>
+		 * @implNote Single-valued (not a list) so that overlays of the same view path recurse-merge
+		 *           into this element rather than replacing or appending it; short element names (e.g.
+		 *           {@code <app-shell>}) still resolve directly inside {@code <view>} via
+		 *           {@code @DefaultContainer}.
 		 */
 		@Name(CONTENT)
 		@DefaultContainer
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+		PolymorphicConfiguration<? extends UIElement> getContent();
 
 		/** Configuration name for {@link #getParamBindings()}. */
 		String PARAM_BINDINGS = "param-bindings";
@@ -112,7 +112,7 @@ public class ViewElement implements UIElement {
 
 	private final List<ParamBindingConfig> _paramBindings;
 
-	private final List<UIElement> _content;
+	private final UIElement _content;
 
 	/**
 	 * Creates a new {@link ViewElement} from configuration.
@@ -123,14 +123,12 @@ public class ViewElement implements UIElement {
 			.map(cc -> Map.entry(cc.getName(), context.getInstance(cc)))
 			.collect(Collectors.toList());
 		_paramBindings = config.getParamBindings();
-		List<PolymorphicConfiguration<? extends UIElement>> contentList = config.getContent();
-		if (contentList.isEmpty()) {
-			context.error("View element must have at least one content element.");
-			_content = List.of();
+		PolymorphicConfiguration<? extends UIElement> contentConfig = config.getContent();
+		if (contentConfig == null) {
+			context.error("View element must have a content element.");
+			_content = null;
 		} else {
-			_content = contentList.stream()
-				.map(context::getInstance)
-				.collect(Collectors.toList());
+			_content = context.getInstance(contentConfig);
 		}
 	}
 
@@ -150,16 +148,10 @@ public class ViewElement implements UIElement {
 		// Phase 2b: Create param-binding participants (registered on attach, not here).
 		List<ParamBindingParticipant> participants = createParamBindingParticipants(context);
 
-		// Phase 3: Create content controls.
-		IReactControl rootControl;
-		if (_content.size() == 1) {
-			rootControl = _content.get(0).createControl(context);
-		} else {
-			List<ReactControl> children = _content.stream()
-				.map(e -> (ReactControl) e.createControl(context))
-				.collect(Collectors.toList());
-			rootControl = new ReactStackControl(context, children);
-		}
+		// Phase 3: Create the content control.
+		IReactControl rootControl = _content != null
+			? _content.createControl(context)
+			: new ReactStackControl(context, List.of());
 
 		// Phase 4: Wire attach/detach — register/unregister participants with RouteManager.
 		if (!participants.isEmpty() && rootControl instanceof ReactControl rc) {

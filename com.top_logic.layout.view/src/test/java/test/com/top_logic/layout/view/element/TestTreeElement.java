@@ -48,11 +48,10 @@ public class TestTreeElement extends TestCase {
 		assertNotNull("Config should be parsed", config);
 
 		// The content should be a TreeElement config.
-		assertEquals("View should have one content element", 1, config.getContent().size());
 		assertTrue("Content should be TreeElement config",
-			config.getContent().get(0) instanceof TreeElement.Config);
+			config.getContent() instanceof TreeElement.Config);
 
-		TreeElement.Config treeConfig = (TreeElement.Config) config.getContent().get(0);
+		TreeElement.Config treeConfig = (TreeElement.Config) config.getContent();
 
 		// Verify inputs.
 		assertEquals("Should have one input", 1, treeConfig.getInputs().size());

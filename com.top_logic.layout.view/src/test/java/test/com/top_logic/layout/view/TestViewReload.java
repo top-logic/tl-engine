@@ -57,7 +57,7 @@ public class TestViewReload extends TestCase {
 			Files.copy(v1.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
 			ViewElement.Config config1 = parseViewFile(tempFile);
-			PanelElement.Config panel1 = (PanelElement.Config) config1.getContent().get(0);
+			PanelElement.Config panel1 = (PanelElement.Config) config1.getContent();
 			assertEquals(ResKey.builder().add(Locale.ENGLISH, "Version 1").build(), panel1.getTitle());
 
 			// Wait to ensure the file timestamp changes (ext4 has 1-second resolution).
@@ -73,7 +73,7 @@ public class TestViewReload extends TestCase {
 
 			// Re-parse and verify updated content.
 			ViewElement.Config config2 = parseViewFile(tempFile);
-			PanelElement.Config panel2 = (PanelElement.Config) config2.getContent().get(0);
+			PanelElement.Config panel2 = (PanelElement.Config) config2.getContent();
 			assertEquals(ResKey.builder().add(Locale.ENGLISH, "Version 2").build(), panel2.getTitle());
 		} finally {
 			tempFile.delete();

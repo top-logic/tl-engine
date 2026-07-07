@@ -49,11 +49,10 @@ public class TestReferenceElement extends TestCase {
 		context.checkErrors();
 
 		// The content should be a ReferenceElement.
-		assertEquals("Should have one content element", 1, config.getContent().size());
 		assertTrue("Content should be ReferenceElement config",
-			config.getContent().get(0) instanceof ReferenceElement.Config);
+			config.getContent() instanceof ReferenceElement.Config);
 
-		ReferenceElement.Config refConfig = (ReferenceElement.Config) config.getContent().get(0);
+		ReferenceElement.Config refConfig = (ReferenceElement.Config) config.getContent();
 		assertEquals("View path", "child-view.view.xml", refConfig.getView());
 
 		// Verify bindings.
@@ -85,7 +84,7 @@ public class TestReferenceElement extends TestCase {
 		ViewElement.Config config = (ViewElement.Config) reader.read();
 		context.checkErrors();
 
-		ReferenceElement.Config refConfig = (ReferenceElement.Config) config.getContent().get(0);
+		ReferenceElement.Config refConfig = (ReferenceElement.Config) config.getContent();
 		assertEquals("View path", "child-view.view.xml", refConfig.getView());
 		assertTrue("Should have no bindings", refConfig.getBindings().isEmpty());
 	}

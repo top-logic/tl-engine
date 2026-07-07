@@ -6,7 +6,10 @@
 package com.top_logic.layout.view;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,7 +19,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryData;
 
 /**
@@ -105,14 +107,17 @@ public class ViewLoader {
 	 *         if the file cannot be found or parsed.
 	 */
 	public static ViewElement.Config loadConfig(String viewPath) throws ConfigurationException {
-		BinaryData source = resolveSource(viewPath);
+		List<BinaryData> overlays = resolveOverlays(viewPath);
 
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
 			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
 
 		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
-		reader.setSource((Content) source);
+		// All same-path copies across modules, in dependency (build) order: the first is the base
+		// view, the rest are overlays that a depending module contributes (add/position/override
+		// tabs, items, ...). The typed-configuration merge folds them into one view configuration.
+		reader.setSources(overlays);
 
 		ViewElement.Config config = (ViewElement.Config) reader.read();
 		context.checkErrors();
@@ -150,22 +155,42 @@ public class ViewLoader {
 	}
 
 	/**
-	 * Resolves the view source file, throwing if not found.
+	 * Resolves all same-path copies of the view across the stacked module fragments, in dependency
+	 * order (base first), throwing if none exists.
 	 */
-	private static BinaryData resolveSource(String viewPath) throws ConfigurationException {
-		BinaryData source = FileManager.getInstance().getDataOrNull(viewPath);
-		if (source == null) {
+	private static List<BinaryData> resolveOverlays(String viewPath) throws ConfigurationException {
+		List<BinaryData> overlays;
+		try {
+			overlays = FileManager.getInstance().getDataOverlays(viewPath);
+		} catch (IOException ex) {
+			throw new ConfigurationException("Cannot read view file: " + viewPath, ex);
+		}
+		if (overlays.isEmpty()) {
 			throw new ConfigurationException("View file not found: " + viewPath);
 		}
-		return source;
+		// getDataOverlays() returns highest-priority (most-derived module) first, but the
+		// configuration overlay chain expects the base first and each dependent module's increment
+		// applied after its dependencies (so config:position can reference base elements). Reverse
+		// into dependency order.
+		List<BinaryData> ordered = new ArrayList<>(overlays);
+		Collections.reverse(ordered);
+		return ordered;
 	}
 
 	/**
-	 * Returns the current modification timestamp for the given view path.
+	 * A change signature over <em>all</em> module copies of the view path, so an edit to any overlay
+	 * (not just the top one) invalidates the cache.
 	 */
 	private static long currentModified(String viewPath) {
-		File file = FileManager.getInstance().getIDEFileOrNull(viewPath);
-		return file != null ? file.lastModified() : 0L;
+		String name = viewPath.startsWith("/") ? viewPath.substring(1) : viewPath;
+		long signature = 1L;
+		for (File root : FileManager.getInstance().getIDEPaths()) {
+			File file = new File(root, name);
+			if (file.exists()) {
+				signature = 31 * signature + file.lastModified();
+			}
+		}
+		return signature;
 	}
 
 	private static final class CachedConfig {

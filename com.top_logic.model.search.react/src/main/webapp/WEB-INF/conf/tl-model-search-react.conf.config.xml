@@ -15,32 +15,5 @@
 				</resources>
 			</instance>
 		</config>
-
-		<!--
-			Contribute the Development admin section (the TL-Script console) into the admin view's
-			"admin" extension point. The admin view lives in tl-layout-view, which does not depend on
-			this module; the section appears only in apps that include this module. The tab merges into
-			the admin tab bar by configuration alone (config:position="end"), so no rank is needed.
-		-->
-		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
-			<instance>
-				<extensions>
-					<extension id="admin">
-						<tab-bar>
-							<tab id="development"
-								config:operation="add"
-								config:position="end"
-							>
-								<label>
-									<en>Development</en>
-									<de>Entwicklung</de>
-								</label>
-								<view-ref view="admin/development/section.view.xml"/>
-							</tab>
-						</tab-bar>
-					</extension>
-				</extensions>
-			</instance>
-		</config>
 	</services>
 </application>

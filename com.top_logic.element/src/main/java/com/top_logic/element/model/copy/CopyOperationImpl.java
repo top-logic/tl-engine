@@ -157,15 +157,16 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 		}
 
 		TLClass classType = (TLClass) currentType;
-		if (useSecurity()
-				&& !ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), classType, context)) {
-			// Mirror new(type): allocating a copy requires the CREATE permission on the copied type.
-			throw new TopLogicException(I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE.fill(classType));
-		}
 		boolean copyTransient = _transientCopy == null ? orig.tTransient() : _transientCopy;
 		if (copyTransient) {
 			return TransientObjectFactory.INSTANCE.createObject(classType, context);
 		} else {
+			if (useSecurity()
+					&& !ModelAccessRights.getInstance().isAllowedCreate(TLContext.currentUser(), classType, context)) {
+				// Mirror new(type): allocating a copy requires the CREATE permission on the copied
+				// type.
+				throw new TopLogicException(I18NConstants.ERROR_CREATE_PERMISSION_DENIED__TYPE.fill(classType));
+			}
 			return _factory.createObject(classType, context);
 		}
 	}

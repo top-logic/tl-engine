@@ -413,10 +413,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 *
 	 * <p>
 	 * Role assignments (in particular rule-derived roles) are computed at commit time. An object
-	 * that was created in the current, not-yet-committed transaction therefore has no computed roles;
-	 * evaluating instance-level security against it would spuriously deny. Such objects (and
-	 * transient objects) are exempt from instance-level checks &ndash; their creation was already
-	 * gated by the CREATE check against a committed context.
+	 * that was created in the current, not-yet-committed transaction therefore has no computed
+	 * roles; evaluating instance-level security against it would spuriously deny. Such objects (and
+	 * transient objects) are exempt from instance-level checks -- their creation was already gated
+	 * by the CREATE check against a committed context.
 	 * </p>
 	 */
 	private static boolean isCommitted(TLObject object) {

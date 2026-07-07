@@ -25,8 +25,10 @@ import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
-import com.top_logic.element.model.diff.config.UpdateBag;
 import com.top_logic.element.model.diff.config.UpdateAbstract;
+import com.top_logic.element.model.diff.config.UpdateBag;
+import com.top_logic.element.model.diff.config.UpdateDeletionPolicy;
+import com.top_logic.element.model.diff.config.UpdateHistoryType;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateMultiplicity;
 import com.top_logic.element.model.diff.config.UpdateOrdered;
@@ -107,6 +109,12 @@ public interface DiffVisitor<R, A, E extends Throwable> {
 
 	/** Visit case for {@link UpdateAbstract}. */
 	R visit(UpdateAbstract diff, A arg) throws E;
+
+	/** Visit case for {@link UpdateHistoryType}. */
+	R visit(UpdateHistoryType diff, A arg) throws E;
+
+	/** Visit case for {@link UpdateDeletionPolicy}. */
+	R visit(UpdateDeletionPolicy diff, A arg) throws E;
 
 	/** Visit case for {@link MoveClassifier}. */
 	R visit(MoveClassifier diff, A arg) throws E;

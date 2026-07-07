@@ -63,6 +63,8 @@ import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
 import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.UpdateBag;
+import com.top_logic.element.model.diff.config.UpdateDeletionPolicy;
+import com.top_logic.element.model.diff.config.UpdateHistoryType;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateMultiplicity;
 import com.top_logic.element.model.diff.config.UpdateOrdered;
@@ -313,6 +315,16 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		@Override
 		public Priority visit(UpdateBag diff, Void arg) throws RuntimeException {
 			return Priority.CHANGE_TYPE_PART_BAG;
+		}
+
+		@Override
+		public Priority visit(UpdateDeletionPolicy diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_REFERENCE_DELETION_POLICY;
+		}
+
+		@Override
+		public Priority visit(UpdateHistoryType diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_REFERENCE_HISTORY_TYPE;
 		}
 
 		@Override
@@ -1531,6 +1543,54 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
 						+ part.getClass().getName() + "' possible.");
 			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateHistoryType diff, Void arg) throws RuntimeException {
+		TLReference part;
+		try {
+			part = (TLReference) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating history type of '" + diff.getPart() + "' to '" + diff.getHistoryType()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating history type of '" + diff.getPart() + "' to '" + diff.getHistoryType() + "'.");
+		part.setHistoryType(diff.getHistoryType());
+
+		if (createProcessors()) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setHistoryType(diff.getHistoryType());
+			addProcessor(config);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateDeletionPolicy diff, Void arg) throws RuntimeException {
+		TLReference part;
+		try {
+			part = (TLReference) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating deletion policy of '" + diff.getPart() + "' to '" + diff.getDeletionPolicy()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating deletion policy of '" + diff.getPart() + "' to '" + diff.getDeletionPolicy() + "'.");
+		part.setDeletionPolicy(diff.getDeletionPolicy());
+
+		if (createProcessors()) {
+			UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+			config.setName(qTypePartName(diff.getPart()));
+			config.setDeletionPolicy(diff.getDeletionPolicy());
+			addProcessor(config);
 		}
 		return null;
 	}

@@ -742,6 +742,23 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		assertNull(execute(search(script), _p1));
 	}
 
+	/**
+	 * A transient object is never persisted and is exempt from instance-level checks, exactly like a
+	 * not-yet-committed persistent object: a roleless user may set/read/delete its attributes.
+	 */
+	public void testTransientObjectExemptFromInstanceChecks() throws Exception {
+		becomeUser(_other);
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLClass projectType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:Project");
+		com.top_logic.model.TLStructuredTypePart budget = projectType.getPart("budget");
+		TLObject transientProject =
+			com.top_logic.model.impl.TransientObjectFactory.INSTANCE.createObject(projectType, null);
+
+		assertTrue(accessRights.isAllowed(_other, transientProject, budget, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isAllowed(_other, transientProject, SimpleBoundCommandGroup.DELETE));
+		assertTrue(accessRights.isReadAllowed(_other, transientProject, budget));
+	}
+
 	@SuppressWarnings("unchecked")
 	private Collection<? extends TLObject> members(TLObject project) {
 		return (Collection<? extends TLObject>) project.tValueByName("members");

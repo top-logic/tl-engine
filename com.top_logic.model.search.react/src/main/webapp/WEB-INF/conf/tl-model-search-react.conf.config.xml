@@ -23,7 +23,7 @@
 			module.
 		-->
 		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
-			<instance class="com.top_logic.layout.view.contribution.ViewContributionService">
+			<instance>
 				<contributions>
 					<contribution id="development"
 						target="admin.sections"

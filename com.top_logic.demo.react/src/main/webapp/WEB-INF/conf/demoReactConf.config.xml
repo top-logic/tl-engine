@@ -24,7 +24,7 @@
 			the admin tab bar.
 		-->
 		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
-			<instance class="com.top_logic.layout.view.contribution.ViewContributionService">
+			<instance>
 				<contributions>
 					<contribution id="contributed-section"
 						target="app.sidebar"

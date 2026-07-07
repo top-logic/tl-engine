@@ -26,7 +26,6 @@ import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.contribution.WithExtensionPoint;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
@@ -49,7 +48,7 @@ public class TabBarElement implements UIElement {
 	 * Configuration for {@link TabBarElement}.
 	 */
 	@TagName("tab-bar")
-	public interface Config extends UIElement.Config, WithExtensionPoint {
+	public interface Config extends UIElement.Config {
 
 		@Override
 		@ClassDefault(TabBarElement.class)
@@ -163,23 +162,7 @@ public class TabBarElement implements UIElement {
 			_tabs.add(new TabEntry(tabConfig.getId(), label, route, tabConfig.getIcon(),
 				tabConfig.getAccessControl(), children));
 		}
-		appendContributedTabs(context, config.getExtensionId());
 		_activeTab = config.getActiveTab();
-	}
-
-	/**
-	 * Appends the sections contributed to the extension point identified by the given id (if any)
-	 * as native tabs, ordered by rank.
-	 *
-	 * <p>
-	 * A contributed tab has no access control of its own (see {@link ViewContributions.Section}).
-	 * </p>
-	 */
-	private void appendContributedTabs(InstantiationContext context, String extensionId) {
-		for (ViewContributions.Section section : ViewContributions.sections(context, extensionId)) {
-			_tabs.add(new TabEntry(section.id(), section.label(), section.route(), section.icon(),
-				null, section.content()));
-		}
 	}
 
 	@Override

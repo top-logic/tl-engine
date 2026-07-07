@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Demonstrates view overlays: a self-contained tab bar with framework-provided tabs. A depending
+	module extends it by dropping a same-path overlay (WEB-INF/views/playground/playground.view.xml)
+	that merges tabs via config:position - see the React demo, which inserts an application tab before
+	"Settings". Reachable without administration rights, unlike the admin area.
+-->
+<view>
+	<tab-bar active-tab="overview">
+		<tabs>
+			<tab id="overview">
+				<label>
+					<en>Overview</en>
+					<de>Übersicht</de>
+				</label>
+				<panel>
+					<title>
+						<en>Framework tab</en>
+						<de>Framework-Tab</de>
+					</title>
+					<text>
+						<label>
+							<en>This tab is the base content of the view, defined by the framework module (tl-layout-view).</en>
+							<de>Dieser Tab ist der Basisinhalt der View, definiert vom Framework-Modul (tl-layout-view).</de>
+						</label>
+					</text>
+				</panel>
+			</tab>
+			<tab id="settings">
+				<label>
+					<en>Settings</en>
+					<de>Einstellungen</de>
+				</label>
+				<panel>
+					<title>
+						<en>Framework tab</en>
+						<de>Framework-Tab</de>
+					</title>
+					<text>
+						<label>
+							<en>Another framework-provided tab. A depending module can insert its own tab before this one by dropping a same-path overlay - no changes to this file.</en>
+							<de>Ein weiterer vom Framework bereitgestellter Tab. Ein abhängiges Modul kann seinen eigenen Tab davor einfügen, indem es ein gleichnamiges Overlay ablegt - ohne Änderung dieser Datei.</de>
+						</label>
+					</text>
+				</panel>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

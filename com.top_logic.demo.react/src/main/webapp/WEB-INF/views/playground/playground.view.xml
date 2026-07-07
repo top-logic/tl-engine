@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing an application tab into the framework's playground view
+	(tl-layout-view: WEB-INF/views/playground/playground.view.xml). Same-path overlay merged by the
+	ViewLoader in dependency order; the tab is inserted before the framework's "Settings" tab purely
+	through the typed-configuration list merge (config:position) - the framework needs no knowledge of
+	this module.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar>
+		<tabs>
+			<tab id="app-contributed"
+				config:operation="add"
+				config:position="before"
+				config:reference="settings"
+				icon="css:bi bi-plugin"
+			>
+				<label>
+					<en>App tab</en>
+					<de>App-Tab</de>
+				</label>
+				<panel>
+					<title>
+						<en>Application tab</en>
+						<de>Anwendungs-Tab</de>
+					</title>
+					<text>
+						<label>
+							<en>This tab is contributed by the application (com.top_logic.demo.react) and inserted before the framework's Settings tab - through a same-path view overlay alone, without touching the framework view.</en>
+							<de>Dieser Tab wird von der Anwendung (com.top_logic.demo.react) beigesteuert und vor dem Settings-Tab des Frameworks eingefügt - allein durch ein gleichnamiges View-Overlay, ohne die Framework-View zu ändern.</de>
+						</label>
+					</text>
+				</panel>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

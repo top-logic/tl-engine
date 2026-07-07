@@ -35,7 +35,6 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.contribution.WithExtensionPoint;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
@@ -57,7 +56,7 @@ public class SidebarElement implements UIElement {
 	 * Configuration for {@link SidebarElement}.
 	 */
 	@TagName("sidebar")
-	public interface Config extends UIElement.Config, WithExtensionPoint {
+	public interface Config extends UIElement.Config {
 
 		@Override
 		@ClassDefault(SidebarElement.class)
@@ -340,35 +339,6 @@ public class SidebarElement implements UIElement {
 		}
 	}
 
-	/**
-	 * A navigation item contributed by a depending module through the sidebar's extension point.
-	 *
-	 * <p>
-	 * Renders a {@link ViewContributions.Section} as a {@link NavigationItem}. Like a contributed
-	 * tab, it has no access control of its own.
-	 * </p>
-	 */
-	private static class ContributedNavItem implements SidebarItemElement {
-
-		private final ViewContributions.Section _section;
-
-		ContributedNavItem(ViewContributions.Section section) {
-			_section = section;
-		}
-
-		@Override
-		public SidebarItem createSidebarItem(ViewContext context) {
-			DirtyChannel dirtyChannel = new DirtyChannel();
-			NavigationItem item = new NavigationItem(_section.id(), _section.label(), _section.icon(),
-				() -> createContent(_section.content(), context, dirtyChannel, null), dirtyChannel);
-			String effectiveRoute = resolveRoute(_section.route(), _section.id());
-			if (effectiveRoute != null) {
-				item.withRoute(effectiveRoute);
-			}
-			return item;
-		}
-	}
-
 	private final List<SidebarItemElement> _items;
 
 	private final String _activeItem;
@@ -385,9 +355,6 @@ public class SidebarElement implements UIElement {
 		_items = new ArrayList<>();
 		for (SidebarItemConfig itemConfig : config.getItems()) {
 			_items.add(context.getInstance(itemConfig));
-		}
-		for (ViewContributions.Section section : ViewContributions.sections(context, config.getExtensionId())) {
-			_items.add(new ContributedNavItem(section));
 		}
 		_activeItem = config.getActiveItem();
 		_collapsed = config.getCollapsed();

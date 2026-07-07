@@ -13,72 +13,7 @@
 					<module key="com.top_logic.layout.view.security.SecurityScopeService$Module"
 						value="true"
 					/>
-					<module key="com.top_logic.layout.view.contribution.ViewContributionService$Module"
-						value="true"
-					/>
 				</modules>
-			</instance>
-		</config>
-
-		<!--
-			Registry of cross-module view contributions. A view declares a named extension point
-			(e.g. <tab-bar extension-id="admin.sections">); depending modules append <contribution>
-			entries here that target it, so a view can be extended without its module depending on
-			the contributors. The base configuration is empty; see the 29108-view-contributions spec.
-		-->
-		<config service-class="com.top_logic.layout.view.contribution.ViewContributionService">
-			<instance class="com.top_logic.layout.view.contribution.ViewContributionService">
-				<!--
-					Base content of the "tl.view.playground" extension point, embedded by
-					views/playground/extension-point-demo.view.xml through <extension-point>. A
-					depending module refines this tab bar (adding, positioning or overriding tabs) by
-					registering an <extension id="tl.view.playground"> of its own; the entries merge by
-					id, so the depending module needs no code and this module no knowledge of it.
-				-->
-				<extensions>
-					<extension id="tl.view.playground">
-						<tab-bar active-tab="overview">
-							<tabs>
-								<tab id="overview">
-									<label>
-										<en>Overview</en>
-										<de>Übersicht</de>
-									</label>
-									<panel>
-										<title>
-											<en>Framework tab</en>
-											<de>Framework-Tab</de>
-										</title>
-										<text>
-											<label>
-												<en>This tab is part of the extension point's base content, registered by the framework module (tl-layout-view).</en>
-												<de>Dieser Tab gehört zum Basisinhalt des Erweiterungspunkts, registriert vom Framework-Modul (tl-layout-view).</de>
-											</label>
-										</text>
-									</panel>
-								</tab>
-								<tab id="settings">
-									<label>
-										<en>Settings</en>
-										<de>Einstellungen</de>
-									</label>
-									<panel>
-										<title>
-											<en>Framework tab</en>
-											<de>Framework-Tab</de>
-										</title>
-										<text>
-											<label>
-												<en>Another framework-provided tab. A depending module can insert its own tab before this one without editing this configuration.</en>
-												<de>Ein weiterer vom Framework bereitgestellter Tab. Ein abhängiges Modul kann seinen eigenen Tab davor einfügen, ohne diese Konfiguration zu bearbeiten.</de>
-											</label>
-										</text>
-									</panel>
-								</tab>
-							</tabs>
-						</tab-bar>
-					</extension>
-				</extensions>
 			</instance>
 		</config>
 

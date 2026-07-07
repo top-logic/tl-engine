@@ -9,10 +9,7 @@
 	</channels>
 	<app-shell>
 		<content>
-			<sidebar
-				active-item="attributes"
-				extension-id="app.sidebar"
-			>
+			<sidebar active-item="attributes">
 				<items>
 					<nav-item id="attributes"
 						icon="css:bi bi-card-list"
@@ -26,10 +23,10 @@
 					<nav-item id="playground"
 						icon="css:bi bi-puzzle"
 					>
-						<view-ref view="playground/extension-point-demo.view.xml"/>
+						<view-ref view="playground/playground.view.xml"/>
 						<label>
-							<en>Extension point</en>
-							<de>Erweiterungspunkt</de>
+							<en>View overlays</en>
+							<de>View-Overlays</de>
 						</label>
 					</nav-item>
 					<separator/>

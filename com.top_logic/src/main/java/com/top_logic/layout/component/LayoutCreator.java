@@ -109,12 +109,29 @@ public class LayoutCreator {
 
 			createLayoutsForThemes(targetWebappDirectory, application, overlaysByLayoutKey);
 		}
-		
+
+		// Pre-merge same-path view overlays while the dependency-ordered FileManager still exposes
+		// every module copy (a deployed WAR flattens them into one). Reflective, so the core layer
+		// need not depend on the React view module.
+		mergeViewOverlays(targetWebappDirectory);
+
 		// Copy generated scripts and styles.
 		copy(targetWebappDirectory, appOverlay, "script");
 		copy(targetWebappDirectory, appOverlay, "style");
 
 		FileManager.setInstance(oldFileManager);
+	}
+
+	private static void mergeViewOverlays(File targetWebappDirectory) {
+		try {
+			Class<?> merger = Class.forName("com.top_logic.layout.view.ViewOverlayMerger", true,
+				Thread.currentThread().getContextClassLoader());
+			merger.getMethod("mergeOverlaidViews", File.class).invoke(null, targetWebappDirectory);
+		} catch (ClassNotFoundException ex) {
+			// Application does not include the React view layer; no view overlays to merge.
+		} catch (ReflectiveOperationException ex) {
+			Logger.error("Failed to merge view overlays.", ex, LayoutCreator.class);
+		}
 	}
 
 	private static void copy(File targetWebappDirectory, Path appOverlay, String name) {

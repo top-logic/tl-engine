@@ -46,6 +46,7 @@
 							</annotations>
 						</property>
 						<reference name="taggedObj"
+							history-type="historic"
 							kind="forwards"
 							mandatory="false"
 							type="tl.model:TLObject"

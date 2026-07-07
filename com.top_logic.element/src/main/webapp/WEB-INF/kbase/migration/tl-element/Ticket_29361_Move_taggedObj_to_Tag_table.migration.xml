@@ -18,6 +18,9 @@
 		<remove-annotations name="Tag:Tag.all#taggedObj">
 			<annotation class="com.top_logic.element.config.annotation.TLStorage"/>
 		</remove-annotations>
+		<update-reference name="Tag:Tag.all#taggedObj"
+			history-type="historic"
+		/>
 		<add-annotations name="Tag:Tag.all#taggedObj">
 			<annotations>
 				<storage-algorithm>

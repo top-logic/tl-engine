@@ -23,7 +23,13 @@
 		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl-element/Ticket_29361_Made_Tag_taggedObj_polymorphic.xslt"
 		/>
-		<processor class="com.top_logic.element.model.migration._29361.AddTagTypeColumn"/>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddDatabaseColumnProcessor"
+			binary="true"
+			column="TAGGED_OBJ_TYPE"
+			db-type="string"
+			size="150"
+			table="TAG"
+		/>
 	</pre-processors>
 	<migration>
 		<type-mapping class=""/>

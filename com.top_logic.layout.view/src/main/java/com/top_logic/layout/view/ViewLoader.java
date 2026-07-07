@@ -7,6 +7,8 @@ package com.top_logic.layout.view;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -119,8 +121,15 @@ public class ViewLoader {
 		// tabs, items, ...). The typed-configuration merge folds them into one view configuration.
 		reader.setSources(overlays);
 
-		ViewElement.Config config = (ViewElement.Config) reader.read();
-		context.checkErrors();
+		ViewElement.Config config;
+		try {
+			config = (ViewElement.Config) reader.read();
+			context.checkErrors();
+		} catch (ConfigurationException ex) {
+			// Name the view being merged, so a dangling config:reference (e.g. a base tab a
+			// contributor positions against was renamed or removed) is not a cryptic failure.
+			throw new ConfigurationException("Failed to merge overlays for view '" + viewPath + "'.", ex);
+		}
 
 		return config;
 	}
@@ -174,7 +183,30 @@ public class ViewLoader {
 		// into dependency order.
 		List<BinaryData> ordered = new ArrayList<>(overlays);
 		Collections.reverse(ordered);
+
+		// The lowest-priority copy must be a real base, not itself an overlay fragment. Otherwise
+		// there is no base to extend - typically because the base view was renamed or removed while
+		// contributor overlays still target its old path. Fail loudly instead of silently rendering
+		// an incomplete view.
+		if (isOverlayFragment(ordered.get(0))) {
+			throw new ConfigurationException("No base view found for '" + viewPath
+				+ "': the lowest-priority copy is itself an overlay (uses config:operation). "
+				+ "Was the base view renamed or removed?");
+		}
 		return ordered;
+	}
+
+	/**
+	 * Whether the given view source is an overlay fragment (uses {@code config:operation} to
+	 * add/update/remove into a base) rather than a self-contained base view.
+	 */
+	private static boolean isOverlayFragment(BinaryData source) {
+		try (InputStream in = source.getStream()) {
+			// A base view never carries list-merge operations; an overlay always does.
+			return new String(in.readAllBytes(), StandardCharsets.UTF_8).contains("config:operation");
+		} catch (IOException ex) {
+			return false;
+		}
 	}
 
 	/**

@@ -55,7 +55,7 @@
 							role="DemoSecurity.SecurityAdministratorB"
 							source-role="DemoSecurity.SecurityAdministrator"
 						>
-							<script-step expr="`DemoSecurity#ROOT`"/>
+							<singleton module="DemoSecurity"/>
 						</inheritance-rule>
 
 						<inheritance-rule
@@ -147,7 +147,7 @@
 							meta-element="DemoTypes:DemoTypes.B"
 							role="DemoTypes.BAdministrator"
 						>
-							<script-step expr="`DemoTypes#ROOT`"/>
+							<singleton module="DemoTypes"/>
 						</inheritance-rule>
 
 						<rule

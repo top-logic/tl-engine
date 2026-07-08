@@ -60,7 +60,7 @@
 			role="projElement.Nutzer"
 		>
 			<path>
-				<script-step expr="`SecurityStructure#ROOT`"/>
+				<singleton module="SecurityStructure"/>
 				<step attribute="SecurityStructure:SecurityStructure.Root#Nutzer"/>
 			</path>
 		</rule>
@@ -71,7 +71,7 @@
 			role="projElement.Hauptbenutzer"
 		>
 			<path>
-				<script-step expr="`SecurityStructure#ROOT`"/>
+				<singleton module="SecurityStructure"/>
 				<step attribute="SecurityStructure:SecurityStructure.Root#Hauptbenutzer"/>
 			</path>
 		</rule>
@@ -85,7 +85,7 @@
 			type="inheritance"
 		>
 			<path>
-				<script-step expr="`SecurityStructure#ROOT`"/>
+				<singleton module="SecurityStructure"/>
 			</path>
 		</rule>
 		<rule
@@ -96,7 +96,7 @@
 			type="inheritance"
 		>
 			<path>
-				<script-step expr="`SecurityStructure#ROOT`"/>
+				<singleton module="SecurityStructure"/>
 			</path>
 		</rule>
 

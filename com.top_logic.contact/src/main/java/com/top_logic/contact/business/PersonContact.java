@@ -17,14 +17,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.element.boundsec.ElementBoundHelper;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.wrap.StringWrapperAttributeComparator;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.util.TLContext;
 
 
@@ -65,16 +63,6 @@ public class PersonContact extends AbstractContact implements UserInterface {
 		return super.getName();
 	}
 
-    /** 
-     * Use global security
-     * 
-     * @see com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper#getSecurityParents()
-     */
-    @Override
-	public Collection<? extends BoundObject> getSecurityParents() {
-		return Collections.singletonList(ElementBoundHelper.getSecurityRoot());
-    }
-    
     @Override
 	protected String toStringValues() {
 		return super.toStringValues() + ", firstName: " + StringServices.nonNull(getFirstName());

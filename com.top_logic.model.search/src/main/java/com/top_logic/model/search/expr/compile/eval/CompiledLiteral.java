@@ -22,6 +22,18 @@ import com.top_logic.model.search.expr.IsEqual;
  */
 public class CompiledLiteral extends CompiledExpression {
 
+	/**
+	 * Largest magnitude of an integer that is exactly representable as a {@code double} (2^53 - 1).
+	 *
+	 * <p>
+	 * TL-Script integer literals are {@code double}s and the interpreted comparison against a
+	 * {@code long} column happens in {@code double}. Only within this range do a {@code long} and a
+	 * {@code double} comparison agree for every column value, so only here may a {@code long} literal
+	 * be adapted for SQL delegation (see {@link #adaptNumber(double, MOPrimitive)}).
+	 * </p>
+	 */
+	private static final long MAX_SAFE_INTEGER = (1L << 53) - 1;
+
 	private Object _literal;
 
 	/**
@@ -128,13 +140,21 @@ public class CompiledLiteral extends CompiledExpression {
 	private static Object adaptNumber(double value, MOPrimitive targetType) {
 		switch (targetType.getDefaultSQLType()) {
 			case BYTE:
-				return isIntegral(value, Byte.MIN_VALUE, Byte.MAX_VALUE) ? Byte.valueOf((byte) value) : null;
+				return isExactWithinIntRange(value, Byte.MIN_VALUE, Byte.MAX_VALUE) ? Byte.valueOf((byte) value) : null;
 			case SHORT:
-				return isIntegral(value, Short.MIN_VALUE, Short.MAX_VALUE) ? Short.valueOf((short) value) : null;
+				return isExactWithinIntRange(value, Short.MIN_VALUE, Short.MAX_VALUE) ? Short.valueOf((short) value)
+					: null;
 			case INT:
-				return isIntegral(value, Integer.MIN_VALUE, Integer.MAX_VALUE) ? Integer.valueOf((int) value) : null;
+				return isExactWithinIntRange(value, Integer.MIN_VALUE, Integer.MAX_VALUE) ? Integer.valueOf((int) value)
+					: null;
 			case LONG:
-				return isIntegral(value, Long.MIN_VALUE, Long.MAX_VALUE) ? Long.valueOf((long) value) : null;
+				// Only adapt within the range where a long and a double comparison agree for every
+				// column value. Beyond MAX_SAFE_INTEGER the interpreted comparison (which happens in
+				// double, as the literal is a double) and the exact long comparison in SQL would
+				// diverge, and (long) (double) Long.MAX_VALUE would even saturate. Larger literals
+				// return null and fall back to interpreted evaluation.
+				return isExactWithinIntRange(value, -MAX_SAFE_INTEGER, MAX_SAFE_INTEGER) ? Long.valueOf((long) value)
+					: null;
 			case FLOAT:
 				// A range check is not sufficient here: a double within the float range is generally
 				// not representable as a float, so narrowing would lose precision and the compiled
@@ -150,7 +170,12 @@ public class CompiledLiteral extends CompiledExpression {
 		}
 	}
 
-	private static boolean isIntegral(double value, long min, long max) {
+	/**
+	 * Whether the given value is an integer (no fractional part) that lies within the inclusive
+	 * range {@code [min, max]} and can therefore be represented in the target integer type without
+	 * loss.
+	 */
+	private static boolean isExactWithinIntRange(double value, long min, long max) {
 		return value == Math.floor(value) && value >= min && value <= max;
 	}
 

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
@@ -25,6 +26,9 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -57,8 +61,10 @@ public class SubagentSpawner {
 	 * <p>Captures the four thread-locals and the {@link SubSessionContext} from the
 	 * caller thread, registers a {@link SubagentJob}, emits
 	 * {@code SubagentStarted}, and submits the worker to the registry's executor.
-	 * The worker re-binds the thread-locals, runs the subagent loop, emits
-	 * {@code SubagentCompleted/Cancelled/Failed}, and stores the result in the job.</p>
+	 * The worker re-binds the thread-locals, runs the subagent loop — recorded as an
+	 * {@code AgentExecution} with {@code parentExecution} set when the parent run is
+	 * recorded — emits {@code SubagentCompleted/Cancelled/Failed}, and stores the
+	 * result in the job.</p>
 	 *
 	 * @param targetAgentName
 	 *        Name of the agent to build (passed to {@link DelegationTool.AgentLoopFactory#buildSubagentLoop}).
@@ -88,6 +94,23 @@ public class SubagentSpawner {
 		// Guard: ThreadContextManager may not be started in test environments.
 		final SubSessionContext userSession = getSubSessionSafe();
 
+		// When the parent run is recorded, record the subagent as its own execution with
+		// parentExecution set — same as the synchronous delegation path — so async runs
+		// appear in the execution history and the parent+children token total stays a KB
+		// query. Resolved on the caller thread (like executeSync), but guarded: recording
+		// is best-effort and must never prevent the spawn.
+		final AgentExecution parentExecution = toolContext.executionHandle().get();
+		AgentSession parentSession = null;
+		if (parentExecution != null) {
+			try {
+				parentSession = parentExecution.getSession();
+			} catch (RuntimeException ex) {
+				Logger.warn("Async subagent run will not be recorded: cannot resolve the parent "
+					+ "execution's session: " + ex.getMessage(), ex, SubagentSpawner.class);
+			}
+		}
+		final AgentSession recordingSession = parentSession;
+
 		CancellationToken childToken = new CancellationToken();
 		SubagentJob job = registry.register(targetAgentName, task, childToken);
 
@@ -115,8 +138,21 @@ public class SubagentSpawner {
 
 					ToolContext childContext = toolContext.forSubagent(new TransactionScope(), j.cancellationToken());
 					AgentEventListener childListener = subagentListener(logListener, j.subagentId());
+
+					// Record the subagent run as its own AgentExecution (parentExecution set),
+					// mirroring the synchronous delegation path in DelegationTool#executeSync.
+					ExecutionRecorder recorder = null;
+					AgentEventListener effectiveChildListener = childListener;
+					if (recordingSession != null) {
+						recorder = new ExecutionRecorder(recordingSession, targetAgentName,
+							parentExecution, childContext.executionHandle(), childListener);
+						effectiveChildListener = recorder;
+					}
 					try {
-						AgentResult result = targetLoop.run(conversation, childContext, childListener);
+						AgentResult result = targetLoop.run(conversation, childContext, effectiveChildListener);
+						if (recorder != null) {
+							recorder.complete(null, null);
+						}
 
 						if (j.cancellationToken().isCancelled()) {
 							if (logListener != null) {
@@ -137,6 +173,9 @@ public class SubagentSpawner {
 					} catch (java.util.concurrent.CancellationException ce) {
 						throw ce;
 					} catch (Exception e) {
+						if (recorder != null) {
+							recorder.complete(null, e);
+						}
 						if (logListener != null) {
 							logListener.recordSubagentFailed(j.subagentId(), e.getMessage());
 						}

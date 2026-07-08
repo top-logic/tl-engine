@@ -284,17 +284,64 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * Comparisons on a {@code long} column with literals around the boundary of what a
+	 * {@code double} can represent exactly ({@code 2^53}).
+	 *
+	 * <p>
+	 * TL-Script literals are {@link Double}s, so the interpreted comparison against a {@code long}
+	 * column happens in {@code double}. {@code CompiledLiteral} only adapts a literal to an exact
+	 * {@code long} (delegating to SQL) within the double-safe range ({@code |value| <= 2^53-1}); a
+	 * larger literal would otherwise produce an exact SQL comparison that diverges from the
+	 * interpreted (lossy) one. This test verifies compiled == interpreted at and beyond that
+	 * boundary; in particular {@code == 2^53+1} must match both the {@code 2^53} and the
+	 * {@code 2^53+1} row (both round to {@code 2^53} as {@code double}).
+	 * </p>
+	 */
+	public void testLargeLongKBCompare() {
+		with("TestSearchExpression-testLargeLongKBCompare.scenario.xml",
+			scenario -> {
+				TLObject b0 = scenario.getObject("b0"); // long = 2^53-1
+				TLObject b1 = scenario.getObject("b1"); // long = 2^53
+				TLObject b2 = scenario.getObject("b2"); // long = 2^53+1
+				assertNotNull(b0);
+				assertNotNull(b1);
+				assertNotNull(b2);
+
+				List<TLObject> all = list(b0, b1, b2);
+				String longAttr = "`TestSearchExpression:WithDatabaseColumns#long`";
+
+				// Literal within the double-safe range: adapted to Long and delegated to SQL.
+				assertCompareConsistent(set(b0), all, longAttr, "== 9007199254740991");
+				assertCompareConsistent(set(b1, b2), all, longAttr, "> 9007199254740991");
+
+				// Literal beyond 2^53: not adapted, falls back to interpreted (double) evaluation.
+				// 2^53+1 is not double-representable and rounds to 2^53, so it matches both 2^53 rows.
+				assertCompareConsistent(set(b1, b2), all, longAttr, "== 9007199254740993");
+				assertCompareConsistent(set(b0), all, longAttr, "< 9007199254740992");
+			});
+	}
+
+	/**
 	 * Asserts that a comparison predicate yields the given result both when delegated to the database
 	 * (rooted in {@code all(...)}) and when evaluated in memory (rooted in a passed-in list).
 	 */
 	private void assertCompareConsistent(Set<?> expected, TLObject a4, TLObject a5, String attr, String op)
+			throws ParseException {
+		assertCompareConsistent(expected, list(a4, a5), attr, op);
+	}
+
+	/**
+	 * Asserts that a comparison predicate yields the given result both when delegated to the database
+	 * (rooted in {@code all(...)}) and when evaluated in memory (rooted in the given list).
+	 */
+	private void assertCompareConsistent(Set<?> expected, List<TLObject> all, String attr, String op)
 			throws ParseException {
 		Object kbResult = executeAsSet(search(
 			"all(`TestSearchExpression:WithDatabaseColumns`).filter(x -> $x.get(" + attr + ") " + op + ")"));
 		assertEquals("Database-delegated result for '" + attr + " " + op + "'.", expected, kbResult);
 
 		Object inMemoryResult = asSet(execute(search(
-			"all -> $all.filter(x -> $x.get(" + attr + ") " + op + ")"), list(a4, a5)));
+			"all -> $all.filter(x -> $x.get(" + attr + ") " + op + ")"), all));
 		assertEquals("In-memory result for '" + attr + " " + op + "'.", expected, inMemoryResult);
 	}
 

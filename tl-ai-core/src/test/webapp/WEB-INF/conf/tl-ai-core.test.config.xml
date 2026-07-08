@@ -27,6 +27,7 @@
 				<entry value="com.top_logic.tl.ai.core.tools.web.WebSearchResults" />
 				<entry value="com.top_logic.tl.ai.core.agent.skills.Skill" />
 				<entry value="com.top_logic.tl.ai.core.memory.CompactionResult" />
+				<entry value="com.top_logic.tl.ai.core.agent.subagent.SubagentResult" />
 				<entry value="com.top_logic.tl.ai.core.message.SystemMessage" />
 				<entry value="com.top_logic.tl.ai.core.message.TextContent" />
 				<entry value="com.top_logic.tl.ai.core.message.ToolResultMessage" />

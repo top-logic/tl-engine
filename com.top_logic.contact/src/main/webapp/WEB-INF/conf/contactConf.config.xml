@@ -64,6 +64,20 @@
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
 				<group-mapper class="com.top_logic.contact.boundsec.manager.rule.ContactGroupMapper"/>
+				<security-parents>
+					<rule
+						inherit="true"
+						meta-element="Contacts:CompanyContact"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule
+						inherit="true"
+						meta-element="Contacts:PersonContact"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+				</security-parents>
 			</instance>
 		</config>
 

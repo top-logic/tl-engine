@@ -56,7 +56,7 @@ public class AttributeValueLocatorByExpression extends
 		// security (the result would otherwise be user-dependent, breaking caching/indexing and
 		// determinism); access to the computed value is controlled by the read grant on the computed
 		// attribute itself. The same is done for expression-based computed attributes in
-		// AbstractExpressionAttribute#init.
+		// AttributeByExpression#init.
 		_fun.disableSecurity();
 	}
 

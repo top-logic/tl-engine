@@ -35,6 +35,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.search.persistency.attribute.AbstractExpressionAttribute;
 import com.top_logic.model.util.Pointer;
@@ -79,9 +80,14 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
 
+		// Definer's-rights: a computed value must not apply the invoking user's model security (its
+		// result would otherwise be user-dependent, breaking caching/indexing/determinism); access to
+		// the value is controlled by the read grant on the computed attribute itself. Applied both to
+		// the value expression and to the tracing analyzer that evaluates the same computation. (The
+		// locator variant does the same in AttributeValueLocatorByExpression; a macro keeps security.)
+		UpdateSecurityVisitor.disableSecurity(getExpr());
+
 		_analyzer = ScriptTracer.compile(attribute.getModel(), getConfig().getExpr());
-		// Definer's-rights: the analyzer evaluates the same computation, so it must not apply the
-		// invoking user's model security either. See AbstractExpressionAttribute#init.
 		_analyzer.disableSecurity();
 	}
 

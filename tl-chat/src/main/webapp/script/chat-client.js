@@ -844,7 +844,9 @@
         el.style.display = "none";
         return;
       }
-      el.style.display = "";
+      // The stylesheet hides the empty panel (display:none), so restoring the inline
+      // style to "" would keep it invisible - set the intended layout explicitly.
+      el.style.display = "flex";
       const running = this.runningCount();
       const rows = [];
       this.jobs.forEach((j) => {

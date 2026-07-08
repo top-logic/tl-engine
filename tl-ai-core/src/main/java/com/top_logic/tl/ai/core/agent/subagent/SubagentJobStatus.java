@@ -16,7 +16,7 @@ public enum SubagentJobStatus {
 	/** Running on a background thread. */
 	RUNNING,
 
-	/** Finished successfully; {@link SubagentJob#result()} holds the envelope. */
+	/** Finished successfully; the {@link SubagentJob#result() job's result} holds the envelope. */
 	DONE,
 
 	/** Finished with an error; the envelope carries an error summary. */

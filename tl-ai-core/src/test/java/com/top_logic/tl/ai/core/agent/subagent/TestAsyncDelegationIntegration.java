@@ -17,10 +17,16 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -262,6 +268,58 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * An async subagent run is persisted as its own {@link AgentExecution} with
+	 * {@code parentExecution} set, mirroring the synchronous delegation path.
+	 *
+	 * <p>
+	 * Exercises: {@code SubagentSpawner}'s {@code ExecutionRecorder} wiring — session
+	 * resolution from the parent execution on the caller thread, row creation on the worker
+	 * thread, and terminal finalization after the child loop completes.
+	 * </p>
+	 */
+	public void testAsyncRunRecordedAsChildExecution() throws Exception {
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentSession session = store.createSession(SessionKind.CHAT, null, "async-recording-test");
+		AgentExecution parent =
+			store.beginExecution(session, "parent-run", "parent", MODEL, null, null);
+
+		SubagentJobRegistry registry = new SubagentJobRegistry(3);
+		try (SubagentRegistryBinding.Binding b = SubagentRegistryBinding.bind(registry)) {
+			DelegationTool tool = delegationTool("delegate_to_rec", "rec", "recorded child answer");
+			ToolContext context = ToolContext.createUnrestricted();
+			context.executionHandle().set(parent);
+
+			tool.execute(Map.of("task", "record me"), context);
+
+			List<SubagentJob> jobs = registry.byStatus(
+				SubagentJobStatus.QUEUED, SubagentJobStatus.RUNNING, SubagentJobStatus.DONE);
+			assertEquals("One job must be registered", 1, jobs.size());
+			registry.awaitBlocking(List.of(jobs.get(0).subagentId()), 30_000);
+
+			// The child's row was committed by the store's writer thread; advance this
+			// thread's stable view so the query below can see it (in production the chat
+			// servlet does this at request begin).
+			HistoryUtils.updateSessionRevision();
+
+			List<AgentExecution> executions = store.executionsOf(session);
+			assertEquals("Parent and child execution must be recorded; got: " + executions,
+				2, executions.size());
+			AgentExecution child = executions.stream()
+				.filter(e -> !"parent-run".equals(e.getRunId()))
+				.findFirst().orElse(null);
+			assertNotNull("Async subagent execution must exist", child);
+			assertEquals("Child is attributed to the target agent", "rec", child.getAgentName());
+			assertEquals("Child must reference the delegating execution as parent",
+				parent, child.getParentExecution());
+			assertNotNull("Child status must be set", child.getStatus());
+			assertEquals("Child must be finalized as COMPLETE",
+				ExecutionStatus.COMPLETE.name(), child.getStatus().getName());
+		} finally {
+			registry.shutdown();
+		}
+	}
+
 	// -----------------------------------------------------------------------
 	// Suite
 	// -----------------------------------------------------------------------
@@ -294,6 +352,7 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 		return KBSetup.getSingleKBTest(
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestAsyncDelegationIntegration.class),
-				ModelService.Module.INSTANCE));
+				ModelService.Module.INSTANCE,
+				AgentExecutionStore.Module.INSTANCE));
 	}
 }

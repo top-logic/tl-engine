@@ -661,11 +661,17 @@ public class ChatServlet extends TopLogicServlet {
 				first = false;
 				long tokens = job.result() != null ? job.result().tokenUsage().totalTokens() : 0;
 				long durationMs = job.result() != null ? job.result().durationMs() : 0;
+				// finalText doubles as the error summary for failed jobs; sending it lets the
+				// client rebuild expandable finished rows after a reload, matching the live
+				// subagent_completed/subagent_failed SSE events. Running jobs show their task.
+				String detail = job.result() != null ? job.result().finalText() : job.taskBrief();
 				json.append("{\"subagentId\":\"").append(jsonEscape(job.subagentId()))
 					.append("\",\"targetAgentName\":\"").append(jsonEscape(job.targetAgentName()))
 					.append("\",\"status\":\"").append(job.status().name())
 					.append("\",\"totalTokens\":").append(tokens)
-					.append(",\"durationMs\":").append(durationMs).append("}");
+					.append(",\"durationMs\":").append(durationMs)
+					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
+					.append("\"}");
 			}
 		}
 		json.append("]}");

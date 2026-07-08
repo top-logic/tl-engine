@@ -342,6 +342,9 @@
       } else {
         State.set(State.IDLE);
       }
+      // (Re)connect covers page load, SSE reconnect, and session switch: rebuild the
+      // background-tasks panel from the server, then let SSE events keep it updated.
+      BackgroundPanel.sync();
       Render.updateInputState();
     },
 
@@ -917,6 +920,38 @@
       fetch(URLS.subagents + "/" + encodeURIComponent(subagentId), {
         method: "DELETE",
       });
+    },
+
+    /** Drops all jobs, e.g. when switching to another session. */
+    reset() {
+      this.jobs.clear();
+      this.render();
+    },
+
+    /**
+     * Seeds the panel from the server's job registry, so it survives a page reload or
+     * session switch while jobs are still running. SSE events keep it updated afterwards.
+     */
+    async sync() {
+      try {
+        const resp = await fetch(withWindow(URLS.subagents));
+        if (!resp.ok) return;
+        const data = await resp.json();
+        this.jobs.clear();
+        (data.subagents || []).forEach((j) => {
+          this.jobs.set(j.subagentId, {
+            subagentId: j.subagentId,
+            name: j.targetAgentName,
+            status: j.status,
+            detail: j.detail,
+            tokens: j.totalTokens,
+            durationMs: j.durationMs,
+          });
+        });
+        this.render();
+      } catch (e) {
+        console.error("[tl-chat] Failed to sync background jobs:", e);
+      }
     },
 
     toast(message) {
@@ -2635,6 +2670,9 @@
       // session's own pending request).
       Approval.reset();
       TaskPanel.reset();
+      // Background jobs belong to the session they were spawned in; the panel is
+      // re-seeded from the server (BackgroundPanel.sync) when the new SSE connects.
+      BackgroundPanel.reset();
       Render.updateInputState();
     },
 
@@ -2689,6 +2727,11 @@
       if (Render._messagesEl) {
         Render._messagesEl.innerHTML = "";
       }
+
+      // Loading a session activates it server-side; re-seed the background-tasks panel
+      // from the now-active session's registry (the sync on SSE connect may have raced
+      // ahead of the activation and seen the previous session's jobs).
+      BackgroundPanel.sync();
 
       // V2 format: turn-based (serialized separately as a JSON array string)
       let turns = [];

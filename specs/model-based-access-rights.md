@@ -511,18 +511,39 @@ Role check for instance I:
   3. Result: union of roles found at any visited node
 ```
 
-**Backward compatibility**
+**Fallback to the global security root**
 
-If no security parent rule is configured for a type, the existing Java-based `BoundObject.getSecurityParent()` is used as a fallback. The `BoundObject` interface gains a default `getSecurityParents()` method:
+If no security parent rule is configured for a type, the global **security root** is used as the sole security parent -- provided `use-default-security-parent` is enabled (the default). The security root is the application's default security object (`BoundHelper.getDefaultObject()`); in a running application (`ElementBoundHelper`) it is the `ROOT` singleton of the `SecurityStructure` module.
 
-```java
-default Collection<? extends BoundObject> getSecurityParents() {
-    BoundObject single = getSecurityParent();  // legacy fallback
-    return single == null ? Collections.emptyList() : Collections.singletonList(single);
-}
+`AbstractBoundWrapper.getSecurityParents()` implements this as follows:
+
+- If security parent rules are configured for the instance's type, their result is returned **as-is** -- the security root is **not** added automatically.
+- Otherwise, the instance falls back to the security root (or to no parent at all when `use-default-security-parent` is disabled).
+
+In other words, explicitly configured security parents take precedence and fully define the parent set; the root is a *fallback*, not an always-present additional parent. A type that configures its own parents but still wants the root (or any other fixed object) in its parent chain must add it **explicitly** -- see below.
+
+**Including the security root (or any singleton) explicitly**
+
+To reach a fixed, base-object-independent object -- typically the security root, or any other module singleton -- a path uses a `<singleton>` step instead of an attribute `<step>`:
+
+```xml
+<security-parents>
+    <!-- Task's security parent is its Milestone... -->
+    <rule meta-element="myapp:Task" inherit="false">
+        <path>
+            <step attribute="myapp:Task#milestone" inverse="false"/>
+        </path>
+    </rule>
+    <!-- ...and, additionally, the security root (opt-in, since it is no longer merged in automatically): -->
+    <rule meta-element="myapp:Task" inherit="false">
+        <path>
+            <singleton module="SecurityStructure"/>
+        </path>
+    </rule>
+</security-parents>
 ```
 
-`AbstractBoundWrapper` overrides `getSecurityParents()` to consult configured `SecurityParentRule`s via `ElementAccessManager` first, and falls back to `getSecurityParent()` only when no rules are configured for the type.
+A `<singleton>` step resolves to the `getSingleton(name)` of the named module, independent of the base object. Its attributes are `module` (mandatory) and `name` (optional, defaults to the module's default singleton `ROOT`). `<singleton module="SecurityStructure"/>` therefore yields the security root. Because a singleton is constant, the step declares no relevant attributes, so it never triggers a role recomputation.
 
 **Integration with `ElementAccessManager`**
 

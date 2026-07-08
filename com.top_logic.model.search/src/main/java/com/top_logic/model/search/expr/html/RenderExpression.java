@@ -5,8 +5,8 @@
  */
 package com.top_logic.model.search.expr.html;
 
-import java.io.IOError;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -54,7 +54,7 @@ public abstract class RenderExpression extends SearchExpression {
 		try {
 			write(context, out, args, definitions);
 		} catch (IOException ex) {
-			throw new IOError(ex);
+			throw new UncheckedIOException(ex);
 		} catch (Throwable ex) {
 			try {
 				JSPErrorUtil.produceErrorOutput(context, out, "Rendering dynamic contents failed.", ex,

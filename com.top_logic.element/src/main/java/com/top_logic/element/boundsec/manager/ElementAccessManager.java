@@ -249,7 +249,17 @@ public class ElementAccessManager extends AccessManager {
 
 	private Map<TLClass, Set<BoundedRole>> _potentialRolesForType;
 
-	private Map<TLClass, Collection<NavigationRule>> _resolvedSecurityParents;
+	/**
+	 * Resolved security-parent rules per type.
+	 *
+	 * <p>
+	 * Initialized to an empty map so that a failed rule load (an exception, or reported problems in
+	 * {@link #loadSecurityParentRules()}) does not leave it <code>null</code>: {@link #getSecurityParents(BoundObject)}
+	 * is consulted on every access check and must not fail with a {@link NullPointerException}. On a
+	 * failed reload the previously resolved rules are retained; only a successful load replaces them.
+	 * </p>
+	 */
+	private Map<TLClass, Collection<NavigationRule>> _resolvedSecurityParents = Collections.emptyMap();
 
 	private Map<TLClass, TLModule> _securityModuleByClass;
 

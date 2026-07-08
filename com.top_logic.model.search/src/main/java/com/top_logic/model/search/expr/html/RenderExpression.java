@@ -24,6 +24,11 @@ import com.top_logic.tool.export.pdf.PDFRenderer;
 /**
  * Base class for {@link SearchExpression}s that produce page output as side-effect to their
  * {@link #evalWith(EvalContext, Args) evaluation}.
+ * 
+ * <p>
+ * When no page output could be generated then a {@link HTMLFragment} is returned that generates the
+ * page output.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

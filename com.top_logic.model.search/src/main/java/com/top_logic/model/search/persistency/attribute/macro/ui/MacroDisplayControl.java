@@ -10,6 +10,7 @@ import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -78,11 +79,16 @@ public class MacroDisplayControl extends AbstractFormFieldControlBase {
 	/**
 	 * Evaluates the given {@link SearchExpression function} together with the given context object.
 	 */
-	public static void writeEvaluatedMacro(DisplayContext context, TagWriter out, Object self, SearchExpression fun) {
+	public static void writeEvaluatedMacro(DisplayContext context, TagWriter out, Object self, SearchExpression fun)
+			throws IOException {
 		KnowledgeBase defaultKnowledgeBase = PersistencyLayer.getKnowledgeBase();
 		TLModel defaultTLModel = ModelService.getApplicationModel();
 		QueryExecutor executor = interpret(defaultKnowledgeBase, defaultTLModel, call(fun, literal(self)));
-		executor.executeWith(context, out, Args.none());
+		Object result = executor.executeWith(context, out, Args.none());
+		if (result instanceof HTMLFragment fragment) {
+			// Macro could not be written directly, but a fragment was returned. Write it now.
+			fragment.write(context, out);
+		}
 	}
 
 }

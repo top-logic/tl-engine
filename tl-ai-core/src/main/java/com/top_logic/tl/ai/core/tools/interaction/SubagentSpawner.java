@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.tools.interaction;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import com.top_logic.basic.Logger;
@@ -20,12 +19,12 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
@@ -37,8 +36,6 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 
@@ -58,12 +55,12 @@ public class SubagentSpawner {
 	/**
 	 * Spawns an asynchronous subagent and returns a handle {@link ToolResult} immediately.
 	 *
-	 * <p>Captures the four thread-locals and the {@link SubSessionContext} from the
-	 * caller thread, registers a {@link SubagentJob}, emits
-	 * {@code SubagentStarted}, and submits the worker to the registry's executor.
-	 * The worker re-binds the thread-locals, runs the subagent loop — recorded as an
-	 * {@code AgentExecution} with {@code parentExecution} set when the parent run is
-	 * recorded — emits {@code SubagentCompleted/Cancelled/Failed}, and stores the
+	 * <p>Captures the caller thread's {@link BindingSnapshot} and {@link SubSessionContext},
+	 * registers a {@link SubagentJob}, emits {@code SubagentStarted}, and submits the worker
+	 * to the registry's executor. The worker re-establishes the bindings (minus the
+	 * {@link SubagentRegistryBinding} — subagents are depth-1), runs the subagent loop —
+	 * recorded as an {@code AgentExecution} with {@code parentExecution} set when the parent
+	 * run is recorded — emits {@code SubagentCompleted/Cancelled/Failed}, and stores the
 	 * result in the job.</p>
 	 *
 	 * @param targetAgentName
@@ -87,10 +84,8 @@ public class SubagentSpawner {
 		String userPrompt = buildUserPrompt(task, contextStr);
 
 		// Capture caller-thread context so the background thread can re-establish it.
+		BindingSnapshot bindings = BindingSnapshot.capture();
 		ConversationLogListener logListener = ConversationLogListenerBinding.getListener();
-		TaskStore taskStore = TaskStoreBinding.getStore();
-		UserInteractionStore interactionStore = UserInteractionStoreBinding.getStore();
-		Set<String> loadedSkills = LoadedSkillsBinding.getSkills();
 		// Guard: ThreadContextManager may not be started in test environments.
 		final SubSessionContext userSession = getSubSessionSafe();
 
@@ -122,12 +117,14 @@ public class SubagentSpawner {
 		registry.spawn(job, j -> {
 			ComputationEx2<SubagentResult, RuntimeException, RuntimeException> work = () -> {
 				try (
-					ConversationLogListenerBinding.Binding b1 =
-						ConversationLogListenerBinding.bind(logListener);
-					TaskStoreBinding.Binding b2 = TaskStoreBinding.bind(taskStore);
-					UserInteractionStoreBinding.Binding b3 =
-						UserInteractionStoreBinding.bind(interactionStore);
-					LoadedSkillsBinding.Binding b4 = LoadedSkillsBinding.bind(loadedSkills)) {
+					BindingSnapshot.Established established = bindings.establish();
+					// Deliberately clear the registry the snapshot just carried over: a
+					// subagent must not see the session's SubagentJobRegistry. Its own
+					// turn-start injection (AgentLoop#injectSubagentResults) would steal
+					// the parent's undelivered sibling results, and subagents are
+					// structurally depth-1 anyway (buildSubagentLoop omits the
+					// spawn/wait/delegation tools from the child's catalog).
+					SubagentRegistryBinding.Binding noRegistry = SubagentRegistryBinding.bind(null)) {
 
 					Instant start = Instant.now();
 					AgentLoop targetLoop = loopFactory.buildSubagentLoop(targetAgentName);

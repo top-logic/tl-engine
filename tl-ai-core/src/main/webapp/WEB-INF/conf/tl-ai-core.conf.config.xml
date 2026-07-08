@@ -1269,7 +1269,7 @@ A subagent runs READ-ONLY: it cannot create or modify data. Use it to gather and
 				</skills>
 				<agents>
 					<agent name="TL_SingleAgent"
-						description=""
+						description="Delegate to the all-round TopLogic assistant carrying the full tool and skill set: model exploration and editing, TLScript, task management, and page authoring. Default chat entry point; as a background subagent it runs read-only. Prefer a specialist when the sub-task is purely exploration, TLScript, or model editing. Provide goal (short intent), task (concrete instructions), context (module/type names if relevant)."
 					>
 						<system-prompt><![CDATA[You are Albert — an expert consultant who helps users explore, understand, and modify their TopLogic application.
 
@@ -1341,7 +1341,7 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 						</skills>
 					</agent>
 					<agent name="TL_Orchestrator"
-						description=""
+						description="Delegate to the strategic coordinator that routes work to the specialist agents (model exploration, TLScript, model editing) and synthesizes their results. It has no domain tools of its own, so it only pays off for multi-step requests spanning several specialists; for a single concrete sub-task, pick the matching specialist directly."
 					>
 						<system-prompt><![CDATA[# Preamble
 

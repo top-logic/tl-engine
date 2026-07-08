@@ -5,10 +5,8 @@
  */
 package com.top_logic.tool.boundsec.wrap;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
@@ -98,15 +96,14 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 	@Override
 	public Collection<? extends BoundObject> getSecurityParents() {
 		Collection<? extends BoundObject> securityParents = AccessManager.getInstance().getSecurityParents(this);
-		BoundObject securityRoot = securityRoot();
-		if (securityParents.isEmpty()) {
-			return CollectionUtil.singletonOrEmptyList(securityRoot);
-		} else if (securityRoot == null) {
+		if (!securityParents.isEmpty()) {
+			// Explicitly configured security parents take precedence. The global security root is
+			// not added automatically; a type that also wants the root in its parent chain can
+			// configure it explicitly (see the "singleton" security-parent path element).
 			return securityParents;
 		}
-		List<BoundObject> merged = new ArrayList<>(securityParents);
-		merged.add(securityRoot);
-		return merged;
+		// No security parents configured: fall back to the global security root, if enabled.
+		return CollectionUtil.singletonOrEmptyList(securityRoot());
 	}
 
 }

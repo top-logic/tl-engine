@@ -11,6 +11,17 @@
 			att_type="String"
 			db_size="255"
 		/>
+		<!-- Persistence-level uniqueness backstop for Agent names (see issue #172).
+		     The form-level UniqueNameConstraint gives fast interactive feedback; this
+		     index is the authoritative guard against duplicates created programmatically.
+		     For versioned types the framework scopes the index by branch and revision. -->
+		<index>
+			<mo_index name="name" unique="true">
+				<index-parts>
+					<index_part name="name"/>
+				</index-parts>
+			</mo_index>
+		</index>
 	</metaobject>
 
 	<metaobject
@@ -22,6 +33,15 @@
 			att_type="String"
 			db_size="255"
 		/>
+		<!-- Persistence-level uniqueness backstop for Skill names (see issue #172).
+		     Skill names are a separate namespace from Agent names. -->
+		<index>
+			<mo_index name="name" unique="true">
+				<index-parts>
+					<index_part name="name"/>
+				</index-parts>
+			</mo_index>
+		</index>
 	</metaobject>
 
 	<metaobject

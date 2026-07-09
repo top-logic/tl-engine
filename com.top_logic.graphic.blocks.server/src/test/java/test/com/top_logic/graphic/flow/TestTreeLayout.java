@@ -401,6 +401,63 @@ public class TestTreeLayout extends TestCase {
 		writeToFile(diagram, "./target/TestTreeLayout-compact-zigzag.svg");
 	}
 
+	public void testCompactWideSiblingAfterZigZagSubtree() throws IOException {
+		// Second aspect of #29372: Root has a child A whose children form a row-wise ("zig-zag")
+		// sub-grid, followed by wide childless siblings B1/B2. With compact=true the wide
+		// siblings slide up beside A's deep sub-grid subtree — but they collide with its
+		// rendering: the sub-grid's vertical main bus and the stubs to the sub-grid children
+		// cross straight through the sibling boxes. The compaction's collision model represents
+		// A's bus at the linear bus position (right of the widest sibling), while the row-wise
+		// grid renders its main bus directly right of A's box and the stubs cross all sub-grid
+		// columns; neither is known to the collision check.
+		TreeLayout tree = TreeLayout.create()
+			.setCompact(true)
+			.setChildSplitThreshold(3)
+			.setRowWise(true);
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		Box a = node("A");
+		tree.addNode(a);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(a)));
+
+		// High fan-out under A triggers the row-wise sub-grid; each sub-grid child carries one
+		// descendant so the post-grid column is populated, too.
+		for (int i = 1; i <= 9; i++) {
+			Box child = node("A" + i);
+			tree.addNode(child);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(a))
+				.setChild(connector(child)));
+
+			Box grand = node("A" + i + "a");
+			tree.addNode(grand);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(child))
+				.setChild(connector(grand)));
+		}
+
+		// Wide childless siblings of A: compacted up beside A's sub-grid subtree, crossing its
+		// bus and stub lines.
+		Box b1 = node("Wide childless sibling B1");
+		tree.addNode(b1);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(b1)));
+
+		Box b2 = node("Wide childless sibling B2");
+		tree.addNode(b2);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(b2)));
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-compact-zigzag-wide-sibling.svg");
+	}
+
 	public void testRandomTree() throws IOException {
 		Diagram diagramCompfort =
 			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));

@@ -38,6 +38,35 @@
 		<header>
 			<app-bar variant="flat">
 				<commands>
+					<!--
+						Pops out the script-recorder side-window: a generic open-window command configured
+						with the recorder view.
+					-->
+					<open-window
+						height="320"
+						image="css:bi bi-record-circle"
+						placement="TOOLBAR"
+						singleton-key="script-recorder"
+						view="script-recorder.view.xml"
+						width="420"
+					>
+						<title>
+							<en>Script Recorder</en>
+							<de>Skript-Rekorder</de>
+						</title>
+						<label>
+							<en>Record</en>
+							<de>Aufzeichnen</de>
+						</label>
+						<tooltip>
+							<en>Open the script recorder to capture interactions as a replayable script.</en>
+							<de>Oeffnet den Skript-Rekorder, um Interaktionen als abspielbares Skript aufzuzeichnen.</de>
+						</tooltip>
+						<executability>
+							<authenticated-only/>
+						</executability>
+					</open-window>
+
 					<!-- Login: shown only for the anonymous user; opens the login dialog. -->
 					<generic-command
 						image="css:bi bi-box-arrow-in-right"

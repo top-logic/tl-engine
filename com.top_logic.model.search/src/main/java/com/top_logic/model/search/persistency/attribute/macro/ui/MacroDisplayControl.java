@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.search.persistency.attribute.macro.ui;
 
-import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
 import java.io.IOException;
@@ -83,8 +82,8 @@ public class MacroDisplayControl extends AbstractFormFieldControlBase {
 			throws IOException {
 		KnowledgeBase defaultKnowledgeBase = PersistencyLayer.getKnowledgeBase();
 		TLModel defaultTLModel = ModelService.getApplicationModel();
-		QueryExecutor executor = interpret(defaultKnowledgeBase, defaultTLModel, call(fun, literal(self)));
-		Object result = executor.executeWith(context, out, Args.none());
+		QueryExecutor executor = interpret(defaultKnowledgeBase, defaultTLModel, fun);
+		Object result = executor.executeWith(context, out, Args.some(self));
 		if (result instanceof HTMLFragment fragment) {
 			// Macro could not be written directly, but a fragment was returned. Write it now.
 			fragment.write(context, out);

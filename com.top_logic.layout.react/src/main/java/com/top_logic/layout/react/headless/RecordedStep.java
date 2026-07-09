@@ -29,8 +29,27 @@ import com.top_logic.basic.json.JSON;
  *        The command id that was invoked.
  * @param arguments
  *        The command arguments (never {@code null}; an empty map for argument-less commands).
+ * @param description
+ *        A human-readable, localized description of the step (see
+ *        {@link com.top_logic.layout.react.control.ReactControl#describeCommand(String, Map, String)}),
+ *        computed once at capture time — the only moment the target control is reliably at hand and
+ *        the UI state matches the step. {@code null} if the command has no describable form.
  */
-public record RecordedStep(String address, String command, Map<String, Object> arguments) {
+public record RecordedStep(String address, String command, Map<String, Object> arguments, String description) {
+
+	/**
+	 * A step without a {@link #description()}.
+	 *
+	 * @param address
+	 *        See {@link #address()}.
+	 * @param command
+	 *        See {@link #command()}.
+	 * @param arguments
+	 *        See {@link #arguments()}.
+	 */
+	public RecordedStep(String address, String command, Map<String, Object> arguments) {
+		this(address, command, arguments, null);
+	}
 
 	/**
 	 * Reserved pseudo-command for an assertion step: on replay the node's state is <em>verified</em>
@@ -99,6 +118,9 @@ public record RecordedStep(String address, String command, Map<String, Object> a
 		result.put("address", address);
 		result.put("command", command);
 		result.put("arguments", arguments == null ? Map.of() : arguments);
+		if (description != null) {
+			result.put("description", description);
+		}
 		return result;
 	}
 }

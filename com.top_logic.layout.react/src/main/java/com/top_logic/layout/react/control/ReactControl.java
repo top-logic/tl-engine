@@ -401,7 +401,9 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * The arguments bind into the typed interface and render through {@link ConfigLabelProvider},
 	 * whose template (the interface's label) interleaves descriptive text with the argument values —
 	 * so a recorded step reads as e.g. <em>Navigate to 'input-controls'</em> rather than the raw
-	 * command and JSON. Used by the recorder side-window's step list.
+	 * command and JSON. Called at capture time and stored as the step's
+	 * {@link com.top_logic.layout.react.headless.RecordedStep#description() description}, since the
+	 * target control cannot be re-resolved once the UI has navigated away from the recorded state.
 	 * </p>
 	 *
 	 * <p>

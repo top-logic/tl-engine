@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.recorder;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -43,28 +42,6 @@ public final class RecorderAccess {
 		}
 		SSEUpdateQueue openerQueue = context.getWindowRegistry().getQueue(openerWindowId);
 		return openerQueue == null ? null : openerQueue.getRecorder();
-	}
-
-	/**
-	 * The root {@link ReactControl} of the window that opened the given context's window, or
-	 * {@code null} if it cannot be resolved.
-	 *
-	 * <p>
-	 * The recorder side-window resolves a recorded step's semantic address against this root to reach
-	 * the target control (e.g. to render the step for humans).
-	 * </p>
-	 *
-	 * @param context
-	 *        The side-window's context.
-	 * @return The opener window's root control, or {@code null}.
-	 */
-	public static ReactControl openerRoot(ReactContext context) {
-		String openerWindowId = openerWindowId(context);
-		if (openerWindowId == null) {
-			return null;
-		}
-		SSEUpdateQueue openerQueue = context.getWindowRegistry().getQueue(openerWindowId);
-		return openerQueue == null ? null : openerQueue.getRootControl();
 	}
 
 	/**

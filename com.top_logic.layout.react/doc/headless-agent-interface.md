@@ -560,6 +560,18 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-07-09** — **Step descriptions captured with the step, not re-derived from the live tree.**
+  The recorder side-window rendered a step's description by re-resolving the step's address against
+  the opener window's *current* control tree on every table refresh. During recording that worked by
+  accident (each capture-time refresh ran in the pre-command state the address was computed against),
+  but the refresh fired by *stop* — after the UI navigated on — silently failed resolution and every
+  affected row fell back to the raw `command {json}` form. Fixed at the source: `RecordedStep` gained
+  a `description` component, computed once at capture time by `ReactServlet.recordCommand` via the
+  target control's `describeCommand` (the only moment the target is reliably at hand), and the table
+  merely displays it. The `record/steps` endpoint now carries the description too, so an agent reading
+  a script sees the human-readable step labels. `AgentSession.targetName(address)` extracts the last
+  `[name]` segment (moved from the table, which no longer touches the opener tree at all).
+
 - **2026-07-09** — **Replay failures made loud** (drift behavior, completes the "never silently
   substitutes or drops" rule for the replay runners). A step replayed in a state where its address
   does not resolve *failed correctly at the resolution layer* but the failure was invisible at both

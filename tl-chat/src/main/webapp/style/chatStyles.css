@@ -2255,6 +2255,34 @@
 	color: var(--chat-text-primary);
 }
 
+/* Inline free-text answer input rendered inside the interaction panel. */
+.tl-chat-interaction-input {
+	display: flex;
+	gap: 6px;
+	align-items: flex-end;
+}
+
+.tl-chat-interaction-text {
+	flex: 1;
+	padding: 6px 8px;
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius-sm);
+	font-size: 12px;
+	font-family: inherit;
+	background: var(--chat-bg);
+	color: var(--chat-text-primary);
+	resize: vertical;
+}
+
+.tl-chat-interaction-text:focus {
+	outline: none;
+	border-color: var(--chat-accent, var(--chat-status-success));
+}
+
+.tl-chat-interaction-input .tl-chat-submit-btn {
+	flex-shrink: 0;
+}
+
 /* ========================================
  * Token Badge and Popover
  * ======================================== */

@@ -2154,19 +2154,11 @@
       const section = Render._inputSection;
       if (!section) return;
 
-      // Track active interaction so the chat input can respond
+      // Track the active interaction so the main chat input can also answer as a secondary
+      // path; the panel below is self-contained and never depends on the main input, which
+      // is unreliable here (updateInputState disables it while a run is still streaming).
       Store.activeInteractionRequestId = data.requestId;
       this._interactionEl = null;
-
-      // Enable the input field so user can type a custom answer
-      if (Render._inputEl) {
-        Render._inputEl.disabled = false;
-        Render._inputEl.placeholder =
-          data.type === "choice"
-            ? "Type your answer and press Enter or pick above..."
-            : "Type your answer and press Enter...";
-        Render._inputEl.focus();
-      }
 
       const el = document.createElement("div");
       el.className = "tl-chat-approval";
@@ -2176,10 +2168,6 @@
         Store.activeInteractionRequestId = null;
         el.remove();
         this._interactionEl = null;
-        if (Render._inputEl) {
-          Render._inputEl.disabled = false;
-          Render._inputEl.placeholder = "Type a message...";
-        }
       };
 
       const respond = (response) => {
@@ -2196,15 +2184,17 @@
         dismiss();
       };
 
-      if (data.type === "text") {
-        el.innerHTML =
-          '<div class="tl-chat-approval-header">' +
-          Utils.escapeHtml(data.header || "Input requested") +
-          "</div>" +
-          '<div class="tl-chat-approval-reason">' +
-          (data.questionHtml || Utils.escapeHtml(data.question)) +
-          "</div>";
-      } else if (data.type === "choice") {
+      const headerHtml =
+        '<div class="tl-chat-approval-header">' +
+        Utils.escapeHtml(data.header || "Input requested") +
+        "</div>" +
+        '<div class="tl-chat-approval-reason">' +
+        (data.questionHtml || Utils.escapeHtml(data.question)) +
+        "</div>";
+
+      let focusEl = null;
+
+      if (data.type === "choice") {
         const multiSelect = data.multiSelect === true;
 
         if (multiSelect) {
@@ -2222,12 +2212,7 @@
           optionsHtml += "</div>";
 
           el.innerHTML =
-            '<div class="tl-chat-approval-header">' +
-            Utils.escapeHtml(data.header || "Choose") +
-            "</div>" +
-            '<div class="tl-chat-approval-reason">' +
-            (data.questionHtml || Utils.escapeHtml(data.question)) +
-            "</div>" +
+            headerHtml +
             optionsHtml +
             '<div class="tl-chat-approval-actions">' +
             '<button class="tl-chat-approval-btn allow tl-chat-submit-btn">Submit</button>' +
@@ -2244,7 +2229,7 @@
             },
           );
         } else {
-          // Single-select: original button layout
+          // Single-select: option-button layout
           let optionsHtml = '<div class="tl-chat-approval-actions">';
           (data.options || []).forEach((opt) => {
             const label = typeof opt === "string" ? opt : opt.label;
@@ -2257,25 +2242,53 @@
           });
           optionsHtml += "</div>";
 
-          el.innerHTML =
-            '<div class="tl-chat-approval-header">' +
-            Utils.escapeHtml(data.header || "Choose") +
-            "</div>" +
-            '<div class="tl-chat-approval-reason">' +
-            (data.questionHtml || Utils.escapeHtml(data.question)) +
-            "</div>" +
-            optionsHtml;
+          el.innerHTML = headerHtml + optionsHtml;
 
           el.querySelectorAll("[data-value]").forEach((btn) => {
             btn.addEventListener("click", () => respond(btn.dataset.value));
           });
         }
       } else {
-        console.warn("[tl-chat] Unknown interaction type:", data.type);
-        return;
+        // Free-text ("text") and any unrecognised type both render a usable inline text
+        // input inside the panel. This makes free-text questions self-contained and fixes
+        // them uniformly for top-level agents and subagents, and degrades gracefully for
+        // unknown types instead of rendering nothing.
+        if (data.type !== "text") {
+          console.warn(
+            "[tl-chat] Unknown interaction type, rendering text input:",
+            data.type,
+          );
+        }
+
+        el.innerHTML =
+          headerHtml +
+          '<div class="tl-chat-interaction-input">' +
+          '<textarea class="tl-chat-interaction-text" rows="2" ' +
+          'placeholder="Type your answer and press Enter..."></textarea>' +
+          '<button class="tl-chat-approval-btn allow tl-chat-submit-btn">Submit</button>' +
+          "</div>";
+
+        const textarea = el.querySelector(".tl-chat-interaction-text");
+        const submit = () => {
+          const value = textarea.value.trim();
+          if (!value) return;
+          respond(value);
+        };
+        el.querySelector(".tl-chat-submit-btn").addEventListener(
+          "click",
+          submit,
+        );
+        textarea.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
+        });
+        focusEl = textarea;
       }
 
       section.insertBefore(el, section.firstChild);
+      if (focusEl) focusEl.focus();
     },
 
     _removeInteractionUI() {

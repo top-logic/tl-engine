@@ -357,10 +357,10 @@ public class TestTreeLayout extends TestCase {
 		// Instead, each following sibling is flushed below the complete zig-zag: the zig-zag's
 		// vertical main bus (at T.right + gapX/2, spanning the full sub-grid height) reaches
 		// slightly into the X-range of the Sna boxes, and the compaction can only place a
-		// candidate below the bottom-most X-overlapping obstacle. (A subtree too large for the
-		// empty space — e.g. a three-node chain reaching the zig-zag columns — is legitimately
-		// placed below the zig-zag; squeezing it into a gap between zig-zag rows is not
-		// desired.)
+		// candidate below the bottom-most X-overlapping obstacle. The last sibling S4 carries a
+		// three-node chain (S4 → S4a → S4aa) reaching the zig-zag columns — a subtree too large
+		// for the empty space, which belongs below the zig-zag; squeezing it into a gap between
+		// zig-zag rows is not desired.
 		// Split threshold 4: Root's four children stay in a plain (compact) column; only T's
 		// twelve children exceed the threshold and form the zig-zag sub-grid.
 		TreeLayout tree = TreeLayout.create()
@@ -393,8 +393,9 @@ public class TestTreeLayout extends TestCase {
 				.setChild(connector(z)));
 		}
 
-		// Following siblings with small two-node chains: they end in T's column, left of the
-		// zig-zag columns, and fit completely into the empty space below S1/T.
+		// Following siblings S2/S3 with small two-node chains: they end in T's column, left of
+		// the zig-zag columns, and fit completely into the empty space below S1/T. S4's chain
+		// has a third node reaching the zig-zag columns: it does not fit and belongs below.
 		for (int i = 2; i <= 4; i++) {
 			Box s = node("S" + i);
 			tree.addNode(s);
@@ -407,6 +408,14 @@ public class TestTreeLayout extends TestCase {
 			tree.addConnection(TreeConnection.create()
 				.setParent(connector(s))
 				.setChild(connector(a)));
+
+			if (i == 4) {
+				Box aa = node("S" + i + "aa");
+				tree.addNode(aa);
+				tree.addConnection(TreeConnection.create()
+					.setParent(connector(a))
+					.setChild(connector(aa)));
+			}
 		}
 
 		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));

@@ -77,6 +77,12 @@
 					>
 						<singleton module="SecurityStructure"/>
 					</rule>
+					<rule
+						inherit="true"
+						meta-element="tl.accounts:Person"
+					>
+						<step attribute="tl.accounts:Person#contact"/>
+					</rule>
 				</security-parents>
 			</instance>
 		</config>

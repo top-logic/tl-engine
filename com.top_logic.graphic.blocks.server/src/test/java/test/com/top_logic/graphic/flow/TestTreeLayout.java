@@ -564,6 +564,68 @@ public class TestTreeLayout extends TestCase {
 		return new double[] { x, y, x + width, y + height };
 	}
 
+	public void testCompactRowWiseStartColFirstChildZigZag() throws IOException {
+		// #29372: row-wise sub-grid with subGridCols=2 and subGridStartCol=1, so the FIRST
+		// sub-grid child C1 is rendered in the right column. The zig-zag node B follows a
+		// non-zig-zag sibling A, and C1 itself carries a zig-zag subtree; all other sub-grid
+		// children are childless. The post-grid routing of C1's descendants anchors on C1's
+		// first child D1 — with subGridStartCol=1 that child sits in the RIGHT column of C1's
+		// nested grid, so the nested LEFT column (D2) lands back inside the outer sub-grid's
+		// right column, and the nested main bus lands left of C1's own box: its stubs cross
+		// the boxes of C1 and C3.
+		TreeLayout tree = TreeLayout.create()
+			.setCompact(true)
+			.setChildSplitThreshold(2)
+			.setRowWise(true)
+			.setSubGridCols(2)
+			.setSubGridStartCol(1);
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		// Non-zig-zag sibling: a plain chain.
+		Box a = node("A");
+		tree.addNode(a);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(a)));
+		Box aa = node("Aa");
+		tree.addNode(aa);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(a))
+			.setChild(connector(aa)));
+
+		// Zig-zag node B: three children in a 2x2 sub-grid starting at column 1.
+		Box b = node("B");
+		tree.addNode(b);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(b)));
+
+		for (int i = 1; i <= 3; i++) {
+			Box c = node("C" + i);
+			tree.addNode(c);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(b))
+				.setChild(connector(c)));
+
+			if (i == 1) {
+				// The first sub-grid child (rendered in the right column) has a zig-zag
+				// subtree of its own.
+				for (int j = 1; j <= 3; j++) {
+					Box d = node("D" + j);
+					tree.addNode(d);
+					tree.addConnection(TreeConnection.create()
+						.setParent(connector(c))
+						.setChild(connector(d)));
+				}
+			}
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-compact-rowwise-startcol-nested.svg");
+	}
+
 	public void testRandomTree() throws IOException {
 		Diagram diagramCompfort =
 			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));

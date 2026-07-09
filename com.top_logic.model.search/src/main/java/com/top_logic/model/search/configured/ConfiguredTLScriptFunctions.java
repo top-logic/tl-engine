@@ -5,9 +5,9 @@
  */
 package com.top_logic.model.search.configured;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -189,7 +189,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		try (TagWriter out = new TagWriter(sw)) {
 			documentation.write(context, out);
 		} catch (IOException ex) {
-			throw new IOError(ex);
+			throw new UncheckedIOException(ex);
 		}
 		return Optional.of(sw.toString());
 	}

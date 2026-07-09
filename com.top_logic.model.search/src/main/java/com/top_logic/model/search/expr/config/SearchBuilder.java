@@ -9,10 +9,10 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 import static com.top_logic.model.search.expr.SearchExpressions.*;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -279,7 +279,7 @@ public class SearchBuilder<C extends SearchBuilder.Config<?>> extends Configured
 				}
 				return Optional.of(out.toString());
 			} catch (IOException ex) {
-				throw new IOError(ex);
+				throw new UncheckedIOException(ex);
 			}
 		}
 		return Optional.empty();

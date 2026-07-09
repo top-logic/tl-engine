@@ -5,8 +5,8 @@
  */
 package com.top_logic.model.search.expr.config;
 
-import java.io.IOError;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -85,7 +85,7 @@ public class ExprPrinter implements ExprVisitor<Appendable, Appendable, IOExcept
 		try {
 			expr.visit(INSTANCE, buffer);
 		} catch (IOException ex) {
-			throw new IOError(ex);
+			throw new UncheckedIOException(ex);
 		}
 		return buffer.toString();
 	}

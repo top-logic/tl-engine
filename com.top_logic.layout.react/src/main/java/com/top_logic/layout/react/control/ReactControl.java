@@ -232,6 +232,11 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		return null;
 	}
 
+	@Override
+	public String agentChildSlot(ReactControl child) {
+		return null;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 *

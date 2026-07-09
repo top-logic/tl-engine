@@ -356,13 +356,48 @@ public class TestAgentSession extends TestCase {
 			new TabDefinition("first", "First", () -> new DemoButtonControl(context, "One"), null),
 			new TabDefinition("second", "Second", () -> new DemoButtonControl(context, "Two"), null)));
 
-		String before = AgentTreeProjector.baseSegment(tabBar);
+		String before = AgentTreeProjector.baseSegment(null, tabBar);
 		assertEquals("tabBar", before);
 
 		tabBar.selectTab("second");
 
 		assertEquals("Tab bar address must be stable across tab switches.",
-			before, AgentTreeProjector.baseSegment(tabBar));
+			before, AgentTreeProjector.baseSegment(null, tabBar));
+	}
+
+	/**
+	 * The content of a selection-driven container is addressed by the navigation slot of the
+	 * selected entry ({@code tab[<id>]}): the address encodes which tab the content belongs to, so
+	 * it resolves only while that tab is active and fails loudly under any other selection —
+	 * instead of silently matching a look-alike control of another tab.
+	 */
+	public void testTabBarContentAddressedByNavigationSlot() {
+		TestReactContext context = new TestReactContext(new SSEUpdateQueue());
+		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, List.of(
+			new TabDefinition("first", "First", () -> new DemoButtonControl(context, "One"), null),
+			new TabDefinition("second", "Second", () -> new DemoButtonControl(context, "Two"), null)));
+		AgentSession session = AgentSession.forRoot(tabBar);
+
+		tabBar.selectTab("second");
+
+		AgentNodeView content = single(single(session.observe().children()).children());
+		assertEquals("/tabBar/tab[second]", content.address());
+		// The slot only replaces the address segment; the node keeps its own role and name.
+		assertEquals("button", content.role());
+		assertEquals("Two", content.name());
+
+		DemoButtonControl two = (DemoButtonControl) session.resolve("/tabBar/tab[second]");
+		assertEquals("/tabBar/tab[second]", session.addressOf(two));
+
+		tabBar.selectTab("first");
+
+		assertEquals("/tabBar/tab[first]", single(single(session.observe().children()).children()).address());
+		try {
+			session.resolve("/tabBar/tab[second]");
+			fail("Content address of an inactive tab must not resolve.");
+		} catch (IllegalArgumentException expected) {
+			assertTrue(expected.getMessage().contains("tab[second]"));
+		}
 	}
 
 	private static AgentNodeView childByAddress(AgentNodeView parent, String address) {

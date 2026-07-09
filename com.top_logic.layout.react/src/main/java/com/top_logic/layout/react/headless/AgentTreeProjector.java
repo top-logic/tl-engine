@@ -39,6 +39,18 @@ import com.top_logic.layout.react.control.ReactParam;
  * </p>
  *
  * <p>
+ * <b>Navigation slots.</b> The content of a selection-driven container is addressed by the
+ * {@link com.top_logic.layout.react.control.AgentControl#agentChildSlot(ReactControl) slot} of the
+ * selected entry instead of its own role and name, e.g.
+ * {@code /appShell/sidebar/item[attributes]/tabBar/tab[overview]/…}. The address thus encodes the
+ * navigation context it belongs to with stable configuration identifiers: it stays valid while that
+ * context is active and fails loudly — rather than silently matching a look-alike control — when
+ * another sidebar item or tab is selected. A slotted child is never elided as
+ * {@link ReactControl#agentTransparent() transparent}, so the slot segment is always present in the
+ * addresses of the content subtree.
+ * </p>
+ *
+ * <p>
  * The same segment algorithm is used for resolution by {@link AgentSession}, so addresses round-trip
  * exactly.
  * </p>
@@ -100,7 +112,7 @@ public final class AgentTreeProjector {
 	 */
 	public static AgentNodeView project(ReactControl control, String address) {
 		List<ReactControl> kids = visibleChildren(control);
-		List<String> segments = segmentsFor(kids);
+		List<String> segments = segmentsFor(control, kids);
 
 		List<AgentNodeView> childViews = new ArrayList<>(kids.size());
 		for (int i = 0; i < kids.size(); i++) {
@@ -146,7 +158,7 @@ public final class AgentTreeProjector {
 	public static List<ReactControl> visibleChildren(ReactControl control) {
 		List<ReactControl> result = new ArrayList<>();
 		for (ReactControl child : control.agentChildren()) {
-			if (child.agentTransparent()) {
+			if (child.agentTransparent() && control.agentChildSlot(child) == null) {
 				result.addAll(visibleChildren(child));
 			} else {
 				result.add(child);
@@ -176,19 +188,23 @@ public final class AgentTreeProjector {
 	 * are left bare. The result is positionally aligned with {@code siblings}.
 	 * </p>
 	 *
+	 * @param parent
+	 *        The control whose children the siblings are, consulted for
+	 *        {@link com.top_logic.layout.react.control.AgentControl#agentChildSlot(ReactControl)
+	 *        navigation slots}; {@code null} for top-level controls.
 	 * @param siblings
 	 *        The sibling controls.
 	 * @return The segment for each sibling, in the same order.
 	 */
-	public static List<String> segmentsFor(List<ReactControl> siblings) {
+	public static List<String> segmentsFor(ReactControl parent, List<ReactControl> siblings) {
 		Map<String, Integer> totals = new HashMap<>();
 		for (ReactControl control : siblings) {
-			totals.merge(baseSegment(control), 1, Integer::sum);
+			totals.merge(baseSegment(parent, control), 1, Integer::sum);
 		}
 		Map<String, Integer> seen = new HashMap<>();
 		List<String> result = new ArrayList<>(siblings.size());
 		for (ReactControl control : siblings) {
-			String base = baseSegment(control);
+			String base = baseSegment(parent, control);
 			if (totals.get(base) > 1) {
 				int index = seen.merge(base, 1, Integer::sum) - 1;
 				result.add(base + "#" + index);
@@ -200,14 +216,23 @@ public final class AgentTreeProjector {
 	}
 
 	/**
-	 * The base address segment of a control: its role plus an optional {@code [name]} discriminator,
-	 * before sibling disambiguation.
+	 * The base address segment of a control before sibling disambiguation: the
+	 * {@link com.top_logic.layout.react.control.AgentControl#agentChildSlot(ReactControl) navigation
+	 * slot} its parent assigns it, or its role plus an optional {@code [name]} discriminator.
 	 *
+	 * @param parent
+	 *        The control's parent, or {@code null} for a top-level control.
 	 * @param control
 	 *        The control.
 	 * @return The base segment.
 	 */
-	public static String baseSegment(ReactControl control) {
+	public static String baseSegment(ReactControl parent, ReactControl control) {
+		if (parent != null) {
+			String slot = parent.agentChildSlot(control);
+			if (slot != null) {
+				return slot;
+			}
+		}
 		String role = roleOf(control);
 		String name = nameOf(control);
 		if (name == null || name.isEmpty()) {

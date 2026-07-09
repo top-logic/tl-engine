@@ -89,6 +89,41 @@ public interface AgentControl extends ReactCommandTarget {
 	List<ReactControl> agentChildren();
 
 	/**
+	 * The navigation slot under which the given direct child is addressed, or {@code null} if the
+	 * child is addressed by its own role and name.
+	 *
+	 * <p>
+	 * A container that swaps its content by a user selection (a tab bar's active tab, a sidebar's
+	 * active navigation item, a deck pane's active card) returns a segment naming the
+	 * <em>selected entry</em> by its stable configuration identity, e.g. {@code tab[overview]} or
+	 * {@code item[administration]} (see {@link #slotSegment(String, String)}). The content subtree
+	 * is thereby addressed by the navigation context it belongs to: the same address never resolves
+	 * under a different selection, so an action recorded in one context fails loudly instead of
+	 * silently targeting a look-alike control of another context. The container's own address stays
+	 * independent of its selection state.
+	 * </p>
+	 *
+	 * @param child
+	 *        A direct child control (an element of {@link #agentChildren()}).
+	 * @return The slot segment for the child, or {@code null}.
+	 */
+	String agentChildSlot(ReactControl child);
+
+	/**
+	 * Formats a navigation-slot segment for {@link #agentChildSlot(ReactControl)}.
+	 *
+	 * @param role
+	 *        The slot role (e.g. {@code "tab"}, {@code "item"}).
+	 * @param id
+	 *        The stable identifier of the selected entry. Must consist of address-safe characters
+	 *        (letters, digits, {@code -} and {@code _}), which holds for configuration identifiers.
+	 * @return The segment {@code role[id]}.
+	 */
+	static String slotSegment(String role, String id) {
+		return role + "[" + id + "]";
+	}
+
+	/**
 	 * A copy of this control's own data state, with all entries that (transitively) hold child
 	 * controls removed.
 	 *

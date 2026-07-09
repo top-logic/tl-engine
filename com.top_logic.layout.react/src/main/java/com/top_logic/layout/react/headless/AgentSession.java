@@ -88,7 +88,7 @@ public final class AgentSession {
 	 */
 	public AgentNodeView observe() {
 		List<ReactControl> roots = roots();
-		List<String> segments = AgentTreeProjector.segmentsFor(roots);
+		List<String> segments = AgentTreeProjector.segmentsFor(null, roots);
 		List<AgentNodeView> rootViews = new ArrayList<>(roots.size());
 		for (int i = 0; i < roots.size(); i++) {
 			String address = AgentTreeProjector.join(ROOT, segments.get(i));
@@ -142,7 +142,7 @@ public final class AgentSession {
 		ReactControl current = null;
 		StringBuilder walked = new StringBuilder();
 		for (String segment : segments) {
-			List<String> available = AgentTreeProjector.segmentsFor(candidates);
+			List<String> available = AgentTreeProjector.segmentsFor(current, candidates);
 			int index = available.indexOf(segment);
 			if (index < 0) {
 				throw new IllegalArgumentException("No node at address '" + address + "': segment '"
@@ -203,18 +203,19 @@ public final class AgentSession {
 		if (target == null) {
 			return null;
 		}
-		return searchAddress(ROOT, roots(), target);
+		return searchAddress(ROOT, null, roots(), target);
 	}
 
-	private static String searchAddress(String prefix, List<ReactControl> candidates, ReactControl target) {
-		List<String> segments = AgentTreeProjector.segmentsFor(candidates);
+	private static String searchAddress(String prefix, ReactControl parent, List<ReactControl> candidates,
+			ReactControl target) {
+		List<String> segments = AgentTreeProjector.segmentsFor(parent, candidates);
 		for (int i = 0; i < candidates.size(); i++) {
 			ReactControl control = candidates.get(i);
 			String address = AgentTreeProjector.join(prefix, segments.get(i));
 			if (control == target) {
 				return address;
 			}
-			String found = searchAddress(address, AgentTreeProjector.visibleChildren(control), target);
+			String found = searchAddress(address, control, AgentTreeProjector.visibleChildren(control), target);
 			if (found != null) {
 				return found;
 			}

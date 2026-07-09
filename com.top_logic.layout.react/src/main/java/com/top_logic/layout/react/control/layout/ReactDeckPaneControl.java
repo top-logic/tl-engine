@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.AgentControl;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -194,5 +195,17 @@ public class ReactDeckPaneControl extends ReactControl {
 	@ReactCommand(SELECT_CHILD_COMMAND)
 	void handleSelectChild(SelectChildArguments args) {
 		selectChild(args.getIndex());
+	}
+
+	/**
+	 * Addresses the active card's content by its stable index (e.g. {@code pane[0]}), so content
+	 * addresses encode which card they belong to.
+	 */
+	@Override
+	public String agentChildSlot(ReactControl child) {
+		if (child == getState(ACTIVE_CHILD)) {
+			return AgentControl.slotSegment("pane", Integer.toString(_activeIndex));
+		}
+		return null;
 	}
 }

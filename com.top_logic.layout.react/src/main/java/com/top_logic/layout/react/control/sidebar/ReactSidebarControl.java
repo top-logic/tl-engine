@@ -16,6 +16,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.AgentControl;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
@@ -639,6 +640,18 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		if (_onGroupToggled != null) {
 			_onGroupToggled.accept(itemId, Boolean.valueOf(expanded));
 		}
+	}
+
+	/**
+	 * Addresses the active navigation item's content by the item's stable ID (e.g.
+	 * {@code item[administration]}), so content addresses encode which sidebar item they belong to.
+	 */
+	@Override
+	public String agentChildSlot(ReactControl child) {
+		if (child == getState(ACTIVE_CONTENT)) {
+			return AgentControl.slotSegment("item", _activeItemId);
+		}
+		return null;
 	}
 
 }

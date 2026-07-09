@@ -634,6 +634,124 @@ public class TestTreeLayout extends TestCase {
 		}
 	}
 
+	public void testParentOffsetCompact() throws IOException {
+		Diagram diagram = createParentOffsetTree(true);
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-parent-offset-compact.svg");
+		assertParentOffset(svg);
+	}
+
+	public void testParentOffsetComfort() throws IOException {
+		Diagram diagram = createParentOffsetTree(false);
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-parent-offset-comfort.svg");
+		assertParentOffset(svg);
+	}
+
+	/**
+	 * A tree with {@link TreeLayout#getParentOffset() parentOffset} 20, so every first child's
+	 * anchor mid-Y must sit 20px above its parent's anchor mid-Y. Covers all combinations of the
+	 * first child being a zig-zag / non-zig-zag node followed by a zig-zag / non-zig-zag sibling:
+	 *
+	 * <ul>
+	 * <li>K1: non-zig-zag first child (A1) followed by a non-zig-zag sibling (A2)</li>
+	 * <li>K2: non-zig-zag first child (B1) followed by a zig-zag sibling (B2)</li>
+	 * <li>K3: zig-zag first child (C1) followed by a non-zig-zag sibling (C2)</li>
+	 * <li>K4: zig-zag first child (D1) followed by a zig-zag sibling (D2)</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The zig-zag parents (B2, C1, D1, D2) additionally check the placement of the first child
+	 * inside a row-wise sub-grid, and two sub-grid cells carry subtrees of their own: b21 (first
+	 * cell of B2) has a single non-zig-zag child, d11 (first cell of D1) has a zig-zag subtree —
+	 * their descendants are routed into the post-grid area.
+	 * </p>
+	 */
+	private Diagram createParentOffsetTree(boolean compact) {
+		TreeLayout tree = TreeLayout.create()
+			.setCompact(compact)
+			.setChildSplitThreshold(4)
+			.setRowWise(true)
+			.setSubGridCols(3)
+			.setParentOffset(20);
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		Box k1 = addChild(tree, root, "K1");
+		addChild(tree, k1, "A1");
+		addChild(tree, k1, "A2");
+
+		Box k2 = addChild(tree, root, "K2");
+		addChild(tree, k2, "B1");
+		Box b2 = addChild(tree, k2, "B2");
+		Box b21 = addChild(tree, b2, "b21");
+		addChild(tree, b21, "b21a");
+		for (int i = 2; i <= 5; i++) {
+			addChild(tree, b2, "b2" + i);
+		}
+
+		Box k3 = addChild(tree, root, "K3");
+		Box c1 = addChild(tree, k3, "C1");
+		for (int i = 1; i <= 5; i++) {
+			addChild(tree, c1, "c1" + i);
+		}
+		addChild(tree, k3, "C2");
+
+		Box k4 = addChild(tree, root, "K4");
+		Box d1 = addChild(tree, k4, "D1");
+		Box d11 = addChild(tree, d1, "d11");
+		for (char c = 'a'; c <= 'e'; c++) {
+			addChild(tree, d11, "d11" + c);
+		}
+		for (int i = 2; i <= 5; i++) {
+			addChild(tree, d1, "d1" + i);
+		}
+		Box d2 = addChild(tree, k4, "D2");
+		for (int i = 1; i <= 5; i++) {
+			addChild(tree, d2, "d2" + i);
+		}
+
+		return Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+	}
+
+	/**
+	 * Adds a child node with the given label to the parent and returns it.
+	 */
+	private Box addChild(TreeLayout tree, Box parent, String label) {
+		Box child = node(label);
+		tree.addNode(child);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(parent))
+			.setChild(connector(child)));
+		return child;
+	}
+
+	/**
+	 * Asserts that every first child sits exactly 20px above its parent (anchor mid-Y).
+	 */
+	private void assertParentOffset(String svg) {
+		String[][] pairs = {
+			{ "Root", "K1" },
+			{ "K1", "A1" },
+			{ "K2", "B1" },
+			{ "K3", "C1" },
+			{ "K4", "D1" },
+			{ "B2", "b21" },
+			{ "C1", "c11" },
+			{ "D1", "d11" },
+			{ "D2", "d21" },
+			{ "b21", "b21a" },
+			{ "d11", "d11a" },
+		};
+		for (String[] pair : pairs) {
+			double[] parent = boxBounds(svg, pair[0]);
+			double[] child = boxBounds(svg, pair[1]);
+			double parentMid = 0.5 * (parent[1] + parent[3]);
+			double childMid = 0.5 * (child[1] + child[3]);
+			assertEquals("First child '" + pair[1] + "' must sit 20px above its parent '" + pair[0] + "'.",
+				20.0, parentMid - childMid, 0.5);
+		}
+	}
+
 	public void testRandomTree() throws IOException {
 		Diagram diagramCompfort =
 			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));

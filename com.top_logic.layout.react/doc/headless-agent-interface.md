@@ -367,7 +367,7 @@ building recorder-side parity.
 | 1 | **Object/model references** | `ModelName` + `ModelNamingScheme`/`ModelResolver` (150+ schemes) | **Same infra reused** — `AgentModelKey` = JSON `ModelName`; `ReactActionContext` drives `ModelResolver.locateModel`; React-context schemes (`ReactOptionByLabelNaming`) | ✅ |
 | 2 | **Component/field addressing** | Fuzzy label/name/path (`FuzzyComponentNaming`, `*FieldRef`) | Semantic `role[name]` path (`AgentTreeProjector`) — different mechanism, same intent | ⚪→✅ |
 | 3 | **Command/button execution** | `CommandAction` (by id / fuzzy label) | Browser command captured at the control's semantic address | ✅ |
-| 4 | **Tab/route navigation** | `FuzzyGotoActionOp` (tab-path), `TabSwitch` | `selectTab` recorded; `tabBar[active]` addressing; `/navigate` route primitive | ✅ |
+| 4 | **Tab/route navigation** | `FuzzyGotoActionOp` (tab-path), `TabSwitch` | `selectTab` recorded; stable `tabBar` addressing; `/navigate` route primitive | ✅ |
 | 5 | **Form field input** | `FormInput` (CANONICAL/INTERACTIVE/RAW modes), typed `*FieldRef` | Browser field command via `recordCommand`; dropdown→`selectByKey`. Generic typed inputs (text/number/date) recorded verbatim — replay-stability not yet proven per field type | 🟡 |
 | 6 | **Selection (single)** | `SelectAction` (ABSOLUTE) + `SelectionRef` | Table `selectByKey` (index→business key), replay-stable across sort | ✅ |
 | 7 | **Selection (multi / range / tree subtree)** | `SelectAction` INCREMENTAL/SUBTREE | Modifier/range selections stay **index-based** (not key-stable); tree selection unproven | ❌ |
@@ -554,6 +554,16 @@ Also decide whether `observe` should ever block user commands at all.
       it — choosing by content, not a blind index.
 
 ## Progress log
+
+- **2026-07-09** — **Tab-bar addresses made state-independent** (address stability, D1). A tab
+  bar named itself after its *active* tab (`tabBar[Tabelle]` → `tabBar[Auswahl_Formular]` after a
+  switch), so a recorded script that switches tabs invalidated its own subsequent steps addressing
+  the tab bar — found by a live record→replay smoke test where the recorded assertion failed with
+  *"segment 'tabBar[Tabelle]' not found"* after the script's own `selectTab`. The `agentName()`
+  override is removed: a tab bar now addresses as bare `tabBar` (sibling tab bars get the standard
+  stable `#k` occurrence suffix; nested tab bars are already distinguished by path depth). This is
+  what the `agentName()` contract ("stable, semantic name") requires — a container must never be
+  named after mutable state. Regression: `testTabBarAddressStableAcrossTabSwitch`.
 
 - **2026-06-26** — **Recorder fidelity: technical-command classification, control-derived
   descriptions, and a checkbox-binding fix**, verified live.

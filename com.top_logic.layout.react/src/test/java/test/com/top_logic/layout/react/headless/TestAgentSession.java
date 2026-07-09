@@ -18,6 +18,8 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
+import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.headless.AgentAction;
 import com.top_logic.layout.react.headless.AgentNode;
 import com.top_logic.layout.react.headless.AgentNodeView;
@@ -342,6 +344,25 @@ public class TestAgentSession extends TestCase {
 		AgentNodeView view2 = single(AgentSession.forRoot(
 			new DemoPlainControl(new TestReactContext(new SSEUpdateQueue()), model)).observe().children());
 		assertEquals("user@example.com", view2.name());
+	}
+
+	/**
+	 * A tab bar's address must not change when its active tab changes: a recorded script that
+	 * switches tabs would otherwise invalidate its own subsequent steps addressing the tab bar.
+	 */
+	public void testTabBarAddressStableAcrossTabSwitch() {
+		TestReactContext context = new TestReactContext(new SSEUpdateQueue());
+		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, List.of(
+			new TabDefinition("first", "First", () -> new DemoButtonControl(context, "One"), null),
+			new TabDefinition("second", "Second", () -> new DemoButtonControl(context, "Two"), null)));
+
+		String before = AgentTreeProjector.baseSegment(tabBar);
+		assertEquals("tabBar", before);
+
+		tabBar.selectTab("second");
+
+		assertEquals("Tab bar address must be stable across tab switches.",
+			before, AgentTreeProjector.baseSegment(tabBar));
 	}
 
 	private static AgentNodeView childByAddress(AgentNodeView parent, String address) {

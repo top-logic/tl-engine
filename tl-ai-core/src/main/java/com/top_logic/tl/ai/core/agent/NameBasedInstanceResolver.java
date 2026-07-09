@@ -5,6 +5,9 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.i18n.log.I18NLog;
@@ -50,6 +53,13 @@ public class NameBasedInstanceResolver implements InstanceResolver {
 	public TLObject resolve(I18NLog log, Object context, String typeName, String globalId) {
 		String[] parts = typeName.split(":");
 		TLClass type = MetaElementUtil.getGlobalType(parts[0], parts[1]);
+
+		// Collect ALL matches first and delete them afterwards. Deleting every same-name instance
+		// (not just the first) keeps repeated imports from letting duplicates accumulate - there is
+		// no database-level uniqueness on the name, the UniqueNameConstraint is a UI-only form check.
+		// Deleting while iterating the live instance collection could raise a
+		// ConcurrentModificationException, hence the two-step approach.
+		List<TLObject> matches = new ArrayList<>();
 		for (TLObject instance : MetaElementUtil.getAllInstancesOf(type, TLObject.class)) {
 			// An earlier resolve() call in the same import transaction may already have deleted an
 			// instance. getAllInstancesOf still returns such locally-deleted objects until commit,
@@ -58,10 +68,15 @@ public class NameBasedInstanceResolver implements InstanceResolver {
 				continue;
 			}
 			if (globalId.equals(instance.tValueByName("name"))) {
-				instance.tDelete();
-				return null;
+				matches.add(instance);
 			}
 		}
+		for (TLObject match : matches) {
+			match.tDelete();
+		}
+
+		// Always signal "create new": returning null makes the importer instantiate the object
+		// from the XML, so the file stays the authoritative source of truth.
 		return null;
 	}
 }

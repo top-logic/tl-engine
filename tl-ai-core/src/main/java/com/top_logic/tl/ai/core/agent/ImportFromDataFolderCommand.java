@@ -6,6 +6,8 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.FileManager;
@@ -14,17 +16,22 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.db.schema.properties.DBProperties;
+import com.top_logic.basic.i18n.log.BufferingI18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.component.Selectable;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
@@ -90,8 +97,10 @@ public class ImportFromDataFolderCommand extends AbstractCommandHandler {
 
 		BinaryData data = FileManager.getInstance().getDataOrNull(resource);
 		if (data == null) {
-			Logger.error("Initial-data file not found: " + resource, ImportFromDataFolderCommand.class);
-			InfoService.showError(I18NConstants.IMPORT_FROM_DEV_ENV_ERROR);
+			// No export has happened yet, so there is nothing to import. This is an expected state
+			// (not an error): guide the user to the export button instead of a generic failure.
+			Logger.info("No initial-data file to import yet: " + resource, ImportFromDataFolderCommand.class);
+			InfoService.showWarning(I18NConstants.IMPORT_FROM_DEV_ENV_NO_DATA);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
@@ -100,17 +109,15 @@ public class ImportFromDataFolderCommand extends AbstractCommandHandler {
 			objects = XMLInstanceImporter.loadConfig(data);
 		} catch (ConfigurationException ex) {
 			Logger.error("Cannot parse initial-data file: " + resource, ex, ImportFromDataFolderCommand.class);
-			InfoService.showError(I18NConstants.IMPORT_FROM_DEV_ENV_ERROR);
+			InfoService.showError(I18NConstants.IMPORT_FROM_DEV_ENV_PARSE_ERROR);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+		ImportOutcome outcome;
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction()) {
 			ModelService modelService = ModelService.getInstance();
-			TLModel tlModel = modelService.getModel();
-			TLFactory factory = modelService.getFactory();
-			XMLInstanceImporter importer = new XMLInstanceImporter(tlModel, factory);
-			importer.importInstances(objects);
+			outcome = runImport(objects, modelService.getModel(), modelService.getFactory());
 			tx.commit();
 		} catch (RuntimeException ex) {
 			Logger.error("Failed to re-import initial-data file: " + resource, ex, ImportFromDataFolderCommand.class);
@@ -120,8 +127,113 @@ public class ImportFromDataFolderCommand extends AbstractCommandHandler {
 
 		markAsLoaded(fileName);
 
-		InfoService.showInfo(I18NConstants.IMPORT_FROM_DEV_ENV_SUCCESS);
+		// The import deletes and recreates every matched instance, so any object the component still
+		// points at (the current selection / open detail form) is now a deleted object. Rendering
+		// such a selection trips over DeletedObjectAccess and makes a successful import look broken.
+		// Clear the selection and rebuild the table model from the freshly imported instances.
+		refreshAfterImport(component);
+
+		if (outcome.hasProblems()) {
+			// The importer skips objects it cannot fully import but still commits the rest. Report a
+			// warning listing the problems rather than an unconditional success.
+			InfoService.showWarningList(
+				I18NConstants.IMPORT_FROM_DEV_ENV_PARTIAL__PROBLEMS_TOTAL.fill(
+					Integer.valueOf(outcome.problemCount()), Integer.valueOf(outcome.totalCount())),
+				outcome.problems());
+		} else {
+			InfoService.showInfo(I18NConstants.IMPORT_FROM_DEV_ENV_SUCCESS);
+		}
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Runs the importer for the given configuration, capturing per-object problems.
+	 *
+	 * <p>
+	 * Must be called within an open {@link Transaction}; the caller is responsible for committing.
+	 * </p>
+	 *
+	 * @param objects
+	 *        The parsed object descriptions to import.
+	 * @param model
+	 *        The model the import is based on.
+	 * @param factory
+	 *        The factory used to create imported objects.
+	 * @return The {@link ImportOutcome} describing what was imported and which objects had problems.
+	 */
+	static ImportOutcome runImport(ObjectsConf objects, TLModel model, TLFactory factory) {
+		BufferingI18NLog problemLog = new BufferingI18NLog();
+		XMLInstanceImporter importer = new XMLInstanceImporter(model, factory);
+		importer.setLog(problemLog);
+
+		List<TLObject> imported = importer.importInstances(objects);
+
+		int total = imported.size();
+		List<ResKey> problems = new ArrayList<>();
+		for (BufferingI18NLog.Entry entry : problemLog.getEntries()) {
+			if (entry.getLevel().is(Level.ERROR)) {
+				problems.add(entry.getMessage());
+			}
+		}
+
+		// Keep the full detail in the server log for developers.
+		problemLog.forwardToApplicationLog(ImportFromDataFolderCommand.class);
+
+		return new ImportOutcome(total, problems);
+	}
+
+	/**
+	 * Drops the component selection and invalidates its model after an import, so the editor never
+	 * keeps a deleted object selected.
+	 */
+	private static void refreshAfterImport(LayoutComponent component) {
+		if (component instanceof Selectable) {
+			((Selectable) component).clearSelection();
+		}
+		component.invalidate();
+	}
+
+	/**
+	 * Result of a {@link #runImport(ObjectsConf, TLModel, TLFactory)} call.
+	 */
+	static final class ImportOutcome {
+
+		private final int _totalCount;
+
+		private final List<ResKey> _problems;
+
+		ImportOutcome(int totalCount, List<ResKey> problems) {
+			_totalCount = totalCount;
+			_problems = problems;
+		}
+
+		/**
+		 * The number of top-level objects the import processed.
+		 */
+		int totalCount() {
+			return _totalCount;
+		}
+
+		/**
+		 * The number of problems reported while importing.
+		 */
+		int problemCount() {
+			return _problems.size();
+		}
+
+		/**
+		 * The problem messages reported while importing, one per skipped value or object.
+		 */
+		List<ResKey> problems() {
+			return _problems;
+		}
+
+		/**
+		 * Whether any object could not be fully imported.
+		 */
+		boolean hasProblems() {
+			return !_problems.isEmpty();
+		}
 	}
 
 	/**

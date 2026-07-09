@@ -6,6 +6,7 @@
 package com.top_logic.layout.view;
 
 import java.io.IOException;
+import java.util.List;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,9 +33,13 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
+import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
 import com.top_logic.layout.react.routing.RouteManager;
@@ -117,11 +122,14 @@ public class ViewServlet extends TopLogicServlet {
 			windowEntry.markConnected();
 			ReactControlProvider controlProvider = windowEntry.getControlProvider();
 			if (controlProvider != null) {
-				ReactContext displayContext = new DefaultReactContext(
+				ReactContext baseContext = new DefaultReactContext(
 					request.getContextPath(), windowName, sseQueue, windowRegistry);
-				wireRouteManager(displayContext, sseQueue, routePath);
-				ReactControl rootControl = controlProvider.createControl(
+				wireRouteManager(baseContext, sseQueue, routePath);
+				ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
+				ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
+				ReactControl content = controlProvider.createControl(
 					displayContext, windowEntry.getModel());
+				ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
 				windowEntry.setRootControl(rootControl);
 				sseQueue.setRootControl(rootControl);
 				renderPage(request, response, rootControl, displayContext);
@@ -141,18 +149,43 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
-		ReactContext displayContext = new DefaultReactContext(
+		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
-		wireRouteManager(displayContext, sseQueue, routePath);
+		wireRouteManager(baseContext, sseQueue, routePath);
+		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
+		ReactContext displayContext = withWindowErrorSink(baseContext, snackbar);
 		ViewContext viewContext = new DefaultViewContext(displayContext);
 
-		IReactControl rootControl = new ReloadableControl(viewPath, viewContext,
+		ReactControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
-		if (rootControl instanceof ReactControl rc) {
-			sseQueue.setRootControl(rc);
-		}
+		ReactControl rootControl = new ReactStackControl(displayContext, List.of(content, snackbar));
+		sseQueue.setRootControl(rootControl);
 
 		renderPage(request, response, rootControl, displayContext);
+	}
+
+	/**
+	 * Creates the window-level snackbar that renders error and info notifications in windows whose
+	 * view does not embed an app shell (which carries its own snackbar), e.g. tool side-windows.
+	 */
+	private static ReactSnackbarControl createWindowSnackbar(ReactContext context) {
+		return new ReactSnackbarControl(context, "", ReactSnackbarControl.Variant.SUCCESS, () -> {
+			// No dismiss handling needed.
+		});
+	}
+
+	/**
+	 * Derives a context whose {@link ReactContext#getErrorSink()} routes to the window snackbar, so
+	 * command errors and action feedback are user-visible in every view window.
+	 */
+	private static ReactContext withWindowErrorSink(ReactContext context, ReactSnackbarControl snackbar) {
+		ErrorSink errorSink = snackbar.asErrorSink();
+		return new ForwardingReactContext(context) {
+			@Override
+			public ErrorSink getErrorSink() {
+				return errorSink;
+			}
+		};
 	}
 
 	/**

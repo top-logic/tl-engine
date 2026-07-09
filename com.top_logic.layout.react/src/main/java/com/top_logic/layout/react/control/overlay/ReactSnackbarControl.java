@@ -5,8 +5,17 @@
  */
 package com.top_logic.layout.react.control.overlay;
 
+import java.io.IOException;
+import java.io.StringWriter;
+
+import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 
@@ -201,5 +210,40 @@ public class ReactSnackbarControl extends ReactControl {
 	@Override
 	protected java.util.Set<String> agentPresentationKeys() {
 		return java.util.Set.of("duration", "generation", "variant");
+	}
+
+	/**
+	 * An {@link ErrorSink} that routes messages to this snackbar, mapping the severity to the
+	 * corresponding {@link Variant}.
+	 */
+	public ErrorSink asErrorSink() {
+		return new ErrorSink() {
+			@Override
+			public void showError(HTMLFragment content) {
+				showHtml(renderToHtml(content), Variant.ERROR);
+			}
+
+			@Override
+			public void showWarning(HTMLFragment content) {
+				showHtml(renderToHtml(content), Variant.WARNING);
+			}
+
+			@Override
+			public void showInfo(HTMLFragment content) {
+				showHtml(renderToHtml(content), Variant.INFO);
+			}
+		};
+	}
+
+	private static String renderToHtml(HTMLFragment fragment) {
+		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+		StringWriter buffer = new StringWriter();
+		try {
+			TagWriter out = new TagWriter(buffer);
+			fragment.write(displayContext, out);
+		} catch (IOException ex) {
+			Logger.error("Failed to render snackbar message.", ex, ReactSnackbarControl.class);
+		}
+		return buffer.toString();
 	}
 }

@@ -219,7 +219,10 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public ErrorSink getErrorSink() {
-		return _errorSink;
+		if (_errorSink != null) {
+			return _errorSink;
+		}
+		return _reactContext == null ? null : _reactContext.getErrorSink();
 	}
 
 	@Override

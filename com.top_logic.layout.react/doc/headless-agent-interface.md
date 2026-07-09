@@ -560,6 +560,30 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-07-09** — **Replay failures made loud** (drift behavior, completes the "never silently
+  substitutes or drops" rule for the replay runners). A step replayed in a state where its address
+  does not resolve *failed correctly at the resolution layer* but the failure was invisible at both
+  replay entry points:
+  - *Step debugger:* `StepReplayAction` reported through the context `ErrorSink` — but a side-window
+    view has no app shell, hence no sink, so the report was a silent no-op; worse, the selection
+    advanced to the next step as if the step had run. Fixed: a failed step reports with **error**
+    severity and keeps the selection on the failed step.
+  - *Error visibility everywhere:* every view window now carries a **window-level snackbar** +
+    `ErrorSink` installed by `ViewServlet` (both the view-path and the control-provider window
+    kinds), mounted next to the content under a transparent stack. `ReactSnackbarControl.asErrorSink()`
+    is the shared adapter (the app shell reuses it and still overrides the sink for its subtree);
+    `DefaultViewContext.getErrorSink()` falls back to the underlying `ReactContext` (mirroring the
+    context-menu-opener pattern), so the window sink reaches view contexts created from a bare
+    `ReactContext` (e.g. `OpenViewWindowCommand`'s provider). This also makes the servlet's
+    `showCommandError` snackbar path work in shell-less windows.
+  - *HTTP replay:* `POST /agent-api/replay` executed **all** steps even after one failed, running
+    later steps against state the failed step never established. Fixed: replay stops at the first
+    failed step; `results` ends with that step.
+  - Verified live: replaying a recorded `selectTab` while another sidebar item was active pops an
+    error snackbar in the recorder side-window (*"segment 'item[attributes]' not found …
+    Available: [item[administration]]"*) and stays on the step; the same failing step over HTTP
+    aborts the remaining steps (`results.length == 1`, `success:false`).
+
 - **2026-07-09** — **Navigation-slot addressing: selection-driven content addressed by stable
   entry IDs** (address stability + context discrimination, D1). Two defects found by a live
   record→replay smoke test and its review:

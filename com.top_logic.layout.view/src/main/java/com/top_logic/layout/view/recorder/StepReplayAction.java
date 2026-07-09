@@ -32,7 +32,9 @@ import com.top_logic.util.Resources;
  * channel). It replays that step on the recorded (opener) window through {@link ReactWindowReplay}, so
  * the effect appears in the main browser window, and returns the <em>next</em> step's row key so the
  * chained {@code <write-channel>} advances the selection. When the last step has been replayed the
- * selection is left unchanged.
+ * selection is left unchanged. A step that fails to replay (e.g. its address does not resolve in the
+ * opener window's current state) reports the failure through the window's {@link ErrorSink} and keeps
+ * the selection on the failed step, so the debugger stops where the script does.
  * </p>
  */
 public class StepReplayAction implements ViewAction {
@@ -82,13 +84,17 @@ public class StepReplayAction implements ViewAction {
 			HandlerResult result =
 				ReactWindowReplay.act(registry, openerWindowId, step.address(), step.command(), step.arguments());
 			if (!result.isSuccess()) {
-				info(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.address())));
+				error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.address())));
+				return input;
 			}
 		} catch (RuntimeException ex) {
-			info(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(ex.getMessage())));
+			error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(ex.getMessage())));
+			return input;
 		}
 
 		// Advance to the next step's 1-based row key, or keep the current selection past the end.
+		// A failed step (above) keeps the selection on that step instead, so the debugger stops
+		// where the script does.
 		int next = index + 1;
 		return next < steps.size() ? rowKey(next) : input;
 	}
@@ -125,6 +131,17 @@ public class StepReplayAction implements ViewAction {
 		ErrorSink errorSink = context.getErrorSink();
 		if (errorSink != null) {
 			errorSink.showInfo(Fragments.text(Resources.getInstance().getString(message)));
+		}
+	}
+
+	/**
+	 * Shows an error message in the side-window through the React {@link ErrorSink}, a no-op when
+	 * the context has none.
+	 */
+	private static void error(ReactContext context, ResKey message) {
+		ErrorSink errorSink = context.getErrorSink();
+		if (errorSink != null) {
+			errorSink.showError(Fragments.text(Resources.getInstance().getString(message)));
 		}
 	}
 }

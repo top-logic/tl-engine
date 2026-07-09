@@ -5,24 +5,17 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 
 import java.util.stream.Collectors;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
@@ -115,7 +108,7 @@ public class AppShellElement implements UIElement {
 		// Create snackbar and error sink first.
 		ReactSnackbarControl snackbar = new ReactSnackbarControl(context, "",
 			ReactSnackbarControl.Variant.SUCCESS, () -> { /* no-op */ });
-		ErrorSink errorSink = createErrorSink(snackbar);
+		ErrorSink errorSink = snackbar.asErrorSink();
 
 		// Establish a shared command scope so that commands contributed by descendant
 		// elements (forms, dashboards, ...) can bubble up to the app bar in the header.
@@ -175,37 +168,6 @@ public class AppShellElement implements UIElement {
 			new ReactAppShellControl(context, header, content, footer, snackbar, errorSink, menuControl);
 		shellControl.attach();
 		return shellControl;
-	}
-
-	private static ErrorSink createErrorSink(ReactSnackbarControl snackbar) {
-		return new ErrorSink() {
-			@Override
-			public void showError(HTMLFragment content) {
-				snackbar.showHtml(renderToHtml(content), ReactSnackbarControl.Variant.ERROR);
-			}
-
-			@Override
-			public void showWarning(HTMLFragment content) {
-				snackbar.showHtml(renderToHtml(content), ReactSnackbarControl.Variant.WARNING);
-			}
-
-			@Override
-			public void showInfo(HTMLFragment content) {
-				snackbar.showHtml(renderToHtml(content), ReactSnackbarControl.Variant.INFO);
-			}
-		};
-	}
-
-	private static String renderToHtml(HTMLFragment fragment) {
-		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
-		StringWriter buffer = new StringWriter();
-		try {
-			TagWriter out = new TagWriter(buffer);
-			fragment.write(displayContext, out);
-		} catch (IOException ex) {
-			Logger.error("Failed to render info service message.", ex, AppShellElement.class);
-		}
-		return buffer.toString();
 	}
 
 	private static ReactControl createSlotControl(ViewContext context, List<UIElement> elements) {

@@ -66,7 +66,8 @@ import com.top_logic.util.TopLogicServlet;
  * state captured if omitted. On replay it is verified, not dispatched.</li>
  * <li>{@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[…]}} → replays a
  * recorded (or hand-written) script through the same {@code act} path (assertion steps are verified
- * against live state), returning a per-step {@code results} list and the final {@code observation}.</li>
+ * against live state), stopping at the first failed step, returning a per-step {@code results} list
+ * and the final {@code observation}.</li>
  * </ul>
  *
  * <p>
@@ -439,9 +440,11 @@ public class AgentServlet extends TopLogicServlet {
 	/**
 	 * {@code POST /agent-api/replay} with body {@code {"windowName":W,"steps":[{address,command,arguments},…]}}
 	 * → replays each step through {@link AgentSession#act} in order, settling derived state between
-	 * steps so each address resolves against the state its predecessors produced. Returns a top-level
-	 * {@code success} (true only when every step succeeded — the replay-as-regression verdict), a
-	 * per-step {@code results} list, and the final quiesced {@code observation}.
+	 * steps so each address resolves against the state its predecessors produced. Stops at the first
+	 * failed step — later steps assume state the failed step should have established. Returns a
+	 * top-level {@code success} (true only when every step succeeded — the replay-as-regression
+	 * verdict), a per-step {@code results} list up to and including the failed step, and the final
+	 * quiesced {@code observation}.
 	 */
 	@SuppressWarnings("unchecked")
 	private void handleReplay(HttpServletRequest request, HttpServletResponse response, HttpSession session)
@@ -463,20 +466,23 @@ public class AgentServlet extends TopLogicServlet {
 		try {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			List<Map<String, Object>> results = new ArrayList<>();
+			boolean allOk = true;
 			try {
 				for (Object stepObj : steps) {
-					results.add(replayStep(session, queue, windowName, (Map<String, Object>) stepObj));
+					Map<String, Object> stepResult =
+						replayStep(session, queue, windowName, (Map<String, Object>) stepObj);
+					results.add(stepResult);
+					if (!Boolean.TRUE.equals(stepResult.get(FIELD_SUCCESS))) {
+						// Stop at the first failed step: the remaining steps assume state this
+						// step should have established, so executing them would act on the wrong
+						// targets or fail confusingly.
+						allOk = false;
+						break;
+					}
 				}
 			} finally {
 				if (rootHandler != null) {
 					rootHandler.enableUpdate(updateBefore);
-				}
-			}
-			boolean allOk = true;
-			for (Map<String, Object> stepResult : results) {
-				if (!Boolean.TRUE.equals(stepResult.get(FIELD_SUCCESS))) {
-					allOk = false;
-					break;
 				}
 			}
 			String observation = agentSession(queue).observeJson();

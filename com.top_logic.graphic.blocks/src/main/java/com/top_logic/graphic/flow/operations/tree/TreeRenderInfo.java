@@ -1272,28 +1272,42 @@ public class TreeRenderInfo {
 			if (hasSubtree) {
 				// 2. Shift only the descendants to the post-grid: shift the entire ch-subtree
 				// (so ch's _gridInfo, if any, follows) and unshift ch alone, leaving ch in the
-				// sub-grid slot but its children at (postGridX, curYPost + ...).
-				TreeNode grandFirst = ch.getChildren().get(0);
+				// sub-grid slot but its children at (postGridX, curYPost + ...). The shift
+				// anchors on the descendant block's minimum X/Y extent — NOT on the first
+				// child: with a nested sub-grid whose subGridStartCol places the first child in
+				// a follow-up column, the first child is not the leftmost descendant, and
+				// anchoring on it would drag the nested left column back into this sub-grid and
+				// the nested main bus left of ch's own box. Anchoring the block extent keeps
+				// the leftmost nested column at postGridX and — by construction — the nested
+				// main bus at childBusX.
+				double grandMinX = Double.POSITIVE_INFINITY;
+				double grandMinY = Double.POSITIVE_INFINITY;
+				double grandMinAnchorMid = Double.POSITIVE_INFINITY;
+				for (TreeNode grand : ch.getChildren()) {
+					grandMinX = Math.min(grandMinX, subtreeMinX(grand));
+					grandMinY = Math.min(grandMinY, subtreeMinY(grand));
+					Box grandAnchor = grand.getAnchor();
+					grandMinAnchorMid = Math.min(grandMinAnchorMid,
+						grand.getY() + grandAnchor.getY() + 0.5 * grandAnchor.getHeight());
+				}
 
 				// (3b) Bus non-overlap at childBusX, second half: my bus.top is
-				// min(ch.anchorMidY, grandFirst.anchorMidY). Constraint (3) above only handles
-				// the ch.anchorMidY half (by pushing yi up). For the grandFirst.anchorMidY half
-				// we push curYPost up so that the first grandchild's anchor midY lands
+				// min(ch.anchorMidY, topmost grandchild anchorMidY). Constraint (3) above only
+				// handles the ch.anchorMidY half (by pushing yi up). For the grandchild half we
+				// push curYPost up so that the topmost grandchild's anchor midY lands
 				// sibblingGapY below the deepest past bus bottom. Without this, a parent with a
 				// shallow subtree (few/short post-grid descendants) following a parent with a
 				// deep anchor (long label above the anchor → big anchorMidY) would have its
 				// bus.top at the grandchild side overlap with the past bus at childBusX.
 				if (prevBusBottom > Double.NEGATIVE_INFINITY) {
-					Box grandFirstAnchor = grandFirst.getAnchor();
-					double grandFirstAnchorMidOff = grandFirstAnchor.getY() + 0.5 * grandFirstAnchor.getHeight();
-					double curYPostMin = prevBusBottom + _siblingGapY - grandFirstAnchorMidOff;
+					double curYPostMin = prevBusBottom + _siblingGapY - (grandMinAnchorMid - grandMinY);
 					if (curYPost < curYPostMin) {
 						curYPost = curYPostMin;
 					}
 				}
 
-				double dxDesc = postGridX - grandFirst.getX();
-				double dyDesc = curYPost - grandFirst.getY();
+				double dxDesc = postGridX - grandMinX;
+				double dyDesc = curYPost - grandMinY;
 				shiftSubtree(ch, dxDesc, dyDesc);
 				ch.setX(ch.getX() - dxDesc);
 				ch.setY(ch.getY() - dyDesc);

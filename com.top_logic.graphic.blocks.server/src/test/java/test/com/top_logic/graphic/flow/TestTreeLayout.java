@@ -568,11 +568,11 @@ public class TestTreeLayout extends TestCase {
 		// #29372: row-wise sub-grid with subGridCols=2 and subGridStartCol=1, so the FIRST
 		// sub-grid child C1 is rendered in the right column. The zig-zag node B follows a
 		// non-zig-zag sibling A, and C1 itself carries a zig-zag subtree; all other sub-grid
-		// children are childless. The post-grid routing of C1's descendants anchors on C1's
-		// first child D1 — with subGridStartCol=1 that child sits in the RIGHT column of C1's
-		// nested grid, so the nested LEFT column (D2) lands back inside the outer sub-grid's
-		// right column, and the nested main bus lands left of C1's own box: its stubs cross
-		// the boxes of C1 and C3.
+		// children are childless. The post-grid routing of C1's descendants anchors on the
+		// descendant block's minimum extent — with subGridStartCol=1 the first child D1 sits in
+		// the RIGHT column of C1's nested grid, so anchoring on it (instead of the block) would
+		// drag the nested left column (D2) back inside the outer sub-grid's right column and
+		// the nested main bus left of C1's own box, crossing the boxes of C1 and C3.
 		TreeLayout tree = TreeLayout.create()
 			.setCompact(true)
 			.setChildSplitThreshold(2)
@@ -623,7 +623,15 @@ public class TestTreeLayout extends TestCase {
 		}
 
 		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
-		writeToFile(diagram, "./target/TestTreeLayout-compact-rowwise-startcol-nested.svg");
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-compact-rowwise-startcol-nested.svg");
+
+		// The nested subtree lives completely in the post-grid area right of the outer
+		// sub-grid, and no bus or stub line crosses any box.
+		assertTrue("C1's subtree must lie right of the outer sub-grid.",
+			boxBounds(svg, "D2")[0] > boxBounds(svg, "C3")[2]);
+		for (String label : new String[] { "C1", "C2", "C3", "D1", "D2", "D3" }) {
+			assertNoLineCrossesBox(svg, label);
+		}
 	}
 
 	public void testRandomTree() throws IOException {

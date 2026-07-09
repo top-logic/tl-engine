@@ -348,19 +348,15 @@ public class TestTreeLayout extends TestCase {
 	}
 
 	public void testCompactSiblingsAfterDeepZigZagSubtree() throws IOException {
-		// Reproduces #29372: Root's first child S1 carries a large zig-zag subtree one level
-		// deeper in the tree (S1 → T → Z1..Z12 as a row-wise sub-grid). The following siblings
-		// S2..S4 carry only a two-node chain each (Sn → Sna) that ends in T's column, LEFT of
-		// all zig-zag columns — each chain fits completely into the empty space below S1/T.
-		// Compaction must not shift the preceding subtree aside to create space, but existing
-		// empty space like this must be used: S2/S2a directly below S1/T, S3/S3a below that.
-		// Instead, each following sibling is flushed below the complete zig-zag: the zig-zag's
-		// vertical main bus (at T.right + gapX/2, spanning the full sub-grid height) reaches
-		// slightly into the X-range of the Sna boxes, and the compaction can only place a
-		// candidate below the bottom-most X-overlapping obstacle. The last sibling S4 carries a
-		// three-node chain (S4 → S4a → S4aa) reaching the zig-zag columns — a subtree too large
-		// for the empty space, which belongs below the zig-zag; squeezing it into a gap between
-		// zig-zag rows is not desired.
+		// #29372: Root's first child S1 carries a large zig-zag subtree one level deeper in the
+		// tree (S1 → T → Z1..Z12 as a row-wise sub-grid). The following siblings S2/S3 carry
+		// small two-node chains (Sn → Sna) ending in T's column strip; S4's chain has a third
+		// node reaching into the zig-zag columns. With compact=true, S2/S3 fit completely into
+		// the empty space below S1/T and are placed there — the shared sibling column raster
+		// reserves the Sna box width in T's strip, so the zig-zag's main bus runs right of the
+		// Sna boxes. S4 does not fit: the zig-zag columns are densely covered by boxes and
+		// connection stubs, so it stays below the complete zig-zag; squeezing it into a gap
+		// between zig-zag rows is not desired.
 		// Split threshold 4: Root's four children stay in a plain (compact) column; only T's
 		// twelve children exceed the threshold and form the zig-zag sub-grid.
 		TreeLayout tree = TreeLayout.create()
@@ -393,9 +389,8 @@ public class TestTreeLayout extends TestCase {
 				.setChild(connector(z)));
 		}
 
-		// Following siblings S2/S3 with small two-node chains: they end in T's column, left of
-		// the zig-zag columns, and fit completely into the empty space below S1/T. S4's chain
-		// has a third node reaching the zig-zag columns: it does not fit and belongs below.
+		// Following siblings S2/S3 with small two-node chains ending in T's column; S4's chain
+		// has a third node reaching the zig-zag columns.
 		for (int i = 2; i <= 4; i++) {
 			Box s = node("S" + i);
 			tree.addNode(s);
@@ -419,7 +414,16 @@ public class TestTreeLayout extends TestCase {
 		}
 
 		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
-		writeToFile(diagram, "./target/TestTreeLayout-compact-zigzag.svg");
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-compact-zigzag.svg");
+
+		double[] z12 = boxBounds(svg, "Z12");
+		assertTrue("S2 must be compacted beside the zig-zag.", boxBounds(svg, "S2a")[3] < z12[1]);
+		assertTrue("S3 must be compacted beside the zig-zag.", boxBounds(svg, "S3a")[3] < z12[1]);
+		assertTrue("S4 must stay below the zig-zag.", boxBounds(svg, "S4")[1] > z12[3]);
+
+		assertNoLineCrossesBox(svg, "S2a");
+		assertNoLineCrossesBox(svg, "S3a");
+		assertNoLineCrossesBox(svg, "S4a");
 	}
 
 	public void testCompactWideSiblingAfterZigZagSubtree() throws IOException {

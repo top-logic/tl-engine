@@ -347,56 +347,68 @@ public class TestTreeLayout extends TestCase {
 		return tree;
 	}
 
-	public void testCompactRowWiseDeepSiblingSubtree() throws IOException {
-		// Reproduces #29372: Root's children C1..C6 are laid out as a row-wise ("zig-zag")
-		// sub-grid. C2 carries a deep subtree (itself a zig-zag sub-grid), the later siblings
-		// C4..C6 carry only a trivial subtree (a single descendant each). With compact=true the
-		// small siblings should be rendered in front of the deep subtree of their sibling C2:
-		// C4..C6 continuing the zig-zag rows directly below the first row, their descendants
-		// sliding up beside C2's subtree in the post-grid column. Instead, the row-wise packing
-		// ignores the compact option: every subtree-bearing child is stacked below the complete
-		// bus extent of its predecessor at the shared child bus, and the post-grid column
-		// advances strictly sequentially — so C4..C6 and their descendants end up below the
-		// complete deep subtree of C2, leaving the space beside it empty.
+	public void testCompactSiblingsAfterDeepZigZagSubtree() throws IOException {
+		// Reproduces #29372: Root's first child S1 carries a large zig-zag subtree one level
+		// deeper in the tree (S1 → T → Z1..Z12 as a row-wise sub-grid). The following siblings
+		// S2..S4 carry only a small chain each (Sn → Sna → Snaa). The chain leaves (Snaa) sit in
+		// the same X-columns as the zig-zag boxes, so with compact=true each following sibling
+		// is pushed below the BOTTOM-MOST zig-zag box overlapping its chain — i.e. below the
+		// complete zig-zag — although plenty of empty space is available: the zig-zag staggering
+		// leaves large free bands inside each of its columns, and the columns of Sn/Sna (below
+		// S1/T) are completely empty. Compaction must not shift the preceding subtree aside, but
+		// it should place a following sibling and its subtree into such existing empty space —
+		// directly below S1/T, with the chain leaf in a free band of the zig-zag column.
+		// Split threshold 4: Root's four children stay in a plain (compact) column; only T's
+		// twelve children exceed the threshold and form the zig-zag sub-grid.
 		TreeLayout tree = TreeLayout.create()
 			.setCompact(true)
-			.setChildSplitThreshold(3)
-			.setRowWise(true);
+			.setChildSplitThreshold(4)
+			.setRowWise(true)
+			.setSubGridCols(3);
 
 		Box root = node("Root");
 		tree.addNode(root);
 
-		for (int i = 1; i <= 6; i++) {
-			Box child = node("C" + i);
-			tree.addNode(child);
+		// S1 → T → large zig-zag: the deep subtree that spans the full height.
+		Box s1 = node("S1");
+		tree.addNode(s1);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(root))
+			.setChild(connector(s1)));
+
+		Box t = node("T");
+		tree.addNode(t);
+		tree.addConnection(TreeConnection.create()
+			.setParent(connector(s1))
+			.setChild(connector(t)));
+
+		for (int i = 1; i <= 12; i++) {
+			Box z = node("Z" + i);
+			tree.addNode(z);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(t))
+				.setChild(connector(z)));
+		}
+
+		// Following siblings with small chains reaching the zig-zag's column depth.
+		for (int i = 2; i <= 4; i++) {
+			Box s = node("S" + i);
+			tree.addNode(s);
 			tree.addConnection(TreeConnection.create()
 				.setParent(connector(root))
-				.setChild(connector(child)));
+				.setChild(connector(s)));
 
-			if (i == 2) {
-				// The deep sibling subtree: C2's own children again exceed the split threshold
-				// and form a nested zig-zag sub-grid with one descendant each.
-				for (int j = 1; j <= 9; j++) {
-					Box grand = node("C2x" + j);
-					tree.addNode(grand);
-					tree.addConnection(TreeConnection.create()
-						.setParent(connector(child))
-						.setChild(connector(grand)));
+			Box a = node("S" + i + "a");
+			tree.addNode(a);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(s))
+				.setChild(connector(a)));
 
-					Box great = node("C2x" + j + "g");
-					tree.addNode(great);
-					tree.addConnection(TreeConnection.create()
-						.setParent(connector(grand))
-						.setChild(connector(great)));
-				}
-			} else if (i >= 4) {
-				// Trivial subtrees: one descendant each.
-				Box grand = node("C" + i + "g");
-				tree.addNode(grand);
-				tree.addConnection(TreeConnection.create()
-					.setParent(connector(child))
-					.setChild(connector(grand)));
-			}
+			Box aa = node("S" + i + "aa");
+			tree.addNode(aa);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(a))
+				.setChild(connector(aa)));
 		}
 
 		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));

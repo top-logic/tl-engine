@@ -350,14 +350,17 @@ public class TestTreeLayout extends TestCase {
 	public void testCompactSiblingsAfterDeepZigZagSubtree() throws IOException {
 		// Reproduces #29372: Root's first child S1 carries a large zig-zag subtree one level
 		// deeper in the tree (S1 → T → Z1..Z12 as a row-wise sub-grid). The following siblings
-		// S2..S4 carry only a small chain each (Sn → Sna → Snaa). The chain leaves (Snaa) sit in
-		// the same X-columns as the zig-zag boxes, so with compact=true each following sibling
-		// is pushed below the BOTTOM-MOST zig-zag box overlapping its chain — i.e. below the
-		// complete zig-zag — although plenty of empty space is available: the zig-zag staggering
-		// leaves large free bands inside each of its columns, and the columns of Sn/Sna (below
-		// S1/T) are completely empty. Compaction must not shift the preceding subtree aside, but
-		// it should place a following sibling and its subtree into such existing empty space —
-		// directly below S1/T, with the chain leaf in a free band of the zig-zag column.
+		// S2..S4 carry only a two-node chain each (Sn → Sna) that ends in T's column, LEFT of
+		// all zig-zag columns — each chain fits completely into the empty space below S1/T.
+		// Compaction must not shift the preceding subtree aside to create space, but existing
+		// empty space like this must be used: S2/S2a directly below S1/T, S3/S3a below that.
+		// Instead, each following sibling is flushed below the complete zig-zag: the zig-zag's
+		// vertical main bus (at T.right + gapX/2, spanning the full sub-grid height) reaches
+		// slightly into the X-range of the Sna boxes, and the compaction can only place a
+		// candidate below the bottom-most X-overlapping obstacle. (A subtree too large for the
+		// empty space — e.g. a three-node chain reaching the zig-zag columns — is legitimately
+		// placed below the zig-zag; squeezing it into a gap between zig-zag rows is not
+		// desired.)
 		// Split threshold 4: Root's four children stay in a plain (compact) column; only T's
 		// twelve children exceed the threshold and form the zig-zag sub-grid.
 		TreeLayout tree = TreeLayout.create()
@@ -390,7 +393,8 @@ public class TestTreeLayout extends TestCase {
 				.setChild(connector(z)));
 		}
 
-		// Following siblings with small chains reaching the zig-zag's column depth.
+		// Following siblings with small two-node chains: they end in T's column, left of the
+		// zig-zag columns, and fit completely into the empty space below S1/T.
 		for (int i = 2; i <= 4; i++) {
 			Box s = node("S" + i);
 			tree.addNode(s);
@@ -403,12 +407,6 @@ public class TestTreeLayout extends TestCase {
 			tree.addConnection(TreeConnection.create()
 				.setParent(connector(s))
 				.setChild(connector(a)));
-
-			Box aa = node("S" + i + "aa");
-			tree.addNode(aa);
-			tree.addConnection(TreeConnection.create()
-				.setParent(connector(a))
-				.setChild(connector(aa)));
 		}
 
 		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));

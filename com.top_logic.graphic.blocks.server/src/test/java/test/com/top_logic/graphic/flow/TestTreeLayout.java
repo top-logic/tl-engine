@@ -10,6 +10,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
 
@@ -404,12 +406,9 @@ public class TestTreeLayout extends TestCase {
 	public void testCompactWideSiblingAfterZigZagSubtree() throws IOException {
 		// Second aspect of #29372: Root has a child A whose children form a row-wise ("zig-zag")
 		// sub-grid, followed by wide childless siblings B1/B2. With compact=true the wide
-		// siblings slide up beside A's deep sub-grid subtree — but they collide with its
-		// rendering: the sub-grid's vertical main bus and the stubs to the sub-grid children
-		// cross straight through the sibling boxes. The compaction's collision model represents
-		// A's bus at the linear bus position (right of the widest sibling), while the row-wise
-		// grid renders its main bus directly right of A's box and the stubs cross all sub-grid
-		// columns; neither is known to the collision check.
+		// siblings slide up beside A's deep sub-grid subtree. Since sibling buses are aligned
+		// right of the widest sibling (alignSiblingBuses), A's sub-grid bus and the stubs to the
+		// sub-grid children start right of B1/B2 and must not cross the sibling boxes.
 		TreeLayout tree = TreeLayout.create()
 			.setCompact(true)
 			.setChildSplitThreshold(3)
@@ -440,8 +439,7 @@ public class TestTreeLayout extends TestCase {
 				.setChild(connector(grand)));
 		}
 
-		// Wide childless siblings of A: compacted up beside A's sub-grid subtree, crossing its
-		// bus and stub lines.
+		// Wide childless siblings of A: compacted up beside A's sub-grid subtree.
 		Box b1 = node("Wide childless sibling B1");
 		tree.addNode(b1);
 		tree.addConnection(TreeConnection.create()
@@ -455,7 +453,92 @@ public class TestTreeLayout extends TestCase {
 			.setChild(connector(b2)));
 
 		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
-		writeToFile(diagram, "./target/TestTreeLayout-compact-zigzag-wide-sibling.svg");
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-compact-zigzag-wide-sibling.svg");
+
+		assertNoLineCrossesBox(svg, "Wide childless sibling B1");
+		assertNoLineCrossesBox(svg, "Wide childless sibling B2");
+	}
+
+	/**
+	 * Asserts that no bus, stub, or connection line segment crosses the box of the node with the
+	 * given label.
+	 *
+	 * <p>
+	 * Line paths (buses, stubs, connections) consist of M/H/V commands in tree-layout
+	 * coordinates; node borders are L-based outline paths in group-local coordinates and are
+	 * skipped. The box bounds are recovered from the node group's translation and its border
+	 * outline.
+	 * </p>
+	 */
+	private void assertNoLineCrossesBox(String svg, String label) {
+		double[] bounds = boxBounds(svg, label);
+		double left = bounds[0];
+		double top = bounds[1];
+		double right = bounds[2];
+		double bottom = bounds[3];
+
+		Matcher paths = Pattern.compile("d=\"([^\"]+)\"").matcher(svg);
+		while (paths.find()) {
+			String d = paths.group(1);
+			if (d.contains("L")) {
+				// Node border outline in group-local coordinates.
+				continue;
+			}
+			String[] tokens = d.trim().split("[ ,]+");
+			double x = 0;
+			double y = 0;
+			for (int i = 0; i < tokens.length; i++) {
+				switch (tokens[i]) {
+					case "M":
+						x = Double.parseDouble(tokens[++i]);
+						y = Double.parseDouble(tokens[++i]);
+						break;
+					case "H": {
+						double nx = Double.parseDouble(tokens[++i]);
+						assertFalse("Segment at y=" + y + " of '" + d + "' crosses box '" + label
+							+ "' (" + left + ", " + top + ", " + right + ", " + bottom + ").",
+							y > top && y < bottom && Math.min(x, nx) < right && Math.max(x, nx) > left);
+						x = nx;
+						break;
+					}
+					case "V": {
+						double ny = Double.parseDouble(tokens[++i]);
+						assertFalse("Segment at x=" + x + " of '" + d + "' crosses box '" + label
+							+ "' (" + left + ", " + top + ", " + right + ", " + bottom + ").",
+							x > left && x < right && Math.min(y, ny) < bottom && Math.max(y, ny) > top);
+						y = ny;
+						break;
+					}
+					default:
+						fail("Unsupported path command in '" + d + "': " + tokens[i]);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Bounds {@code [left, top, right, bottom]} of the labeled node's box in tree-layout
+	 * coordinates, recovered from the SVG markup: the node group's translation plus the extent
+	 * of its border outline path.
+	 */
+	private double[] boxBounds(String svg, String label) {
+		int labelPos = svg.indexOf(">" + label + "</text>");
+		assertTrue("Node '" + label + "' not found.", labelPos >= 0);
+
+		int groupStart = svg.lastIndexOf("<g transform=\"translate(", labelPos);
+		Matcher translate = Pattern.compile("translate\\(([0-9.-]+),([0-9.-]+)\\)")
+			.matcher(svg.substring(groupStart, labelPos));
+		assertTrue(translate.find());
+		double x = Double.parseDouble(translate.group(1));
+		double y = Double.parseDouble(translate.group(2));
+
+		Matcher border = Pattern.compile("d=\"M 0\\.5,0\\.5 L ([0-9.]+),0\\.5 L \\1,([0-9.]+)")
+			.matcher(svg.substring(labelPos));
+		assertTrue("Border outline of '" + label + "' not found.", border.find());
+		double width = Double.parseDouble(border.group(1)) + 0.5;
+		double height = Double.parseDouble(border.group(2)) + 0.5;
+
+		return new double[] { x, y, x + width, y + height };
 	}
 
 	public void testRandomTree() throws IOException {

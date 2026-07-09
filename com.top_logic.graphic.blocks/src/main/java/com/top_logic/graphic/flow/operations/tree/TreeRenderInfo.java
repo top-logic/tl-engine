@@ -662,7 +662,11 @@ public class TreeRenderInfo {
 	 * stays at X = 0; only its descendant columns move. The {@link TreeNode#getBusXOverride()
 	 * bus-X override} on each affected child records the new bus column so that connection
 	 * drawing in {@link TreeLayoutOperations#distributeSize} uses it instead of recomputing
-	 * the bus position from the child's box width.
+	 * the bus position from the child's box width. A child that is itself a sub-grid parent
+	 * has its {@link GridInfo} shifted by the same amount, so that its bus and stub rendering
+	 * (which takes the bar X from the {@link GridInfo}) stays aligned with the shifted
+	 * descendant columns — and in particular does not cross a compacted sibling placed in the
+	 * space left of the shared bus column.
 	 *
 	 * <p>
 	 * Must be called before children are shifted into the parent's frame: the override is
@@ -686,6 +690,10 @@ public class TreeRenderInfo {
 			if (extra > 0) {
 				for (TreeNode grand : child.getChildren()) {
 					shiftSubtree(grand, extra, 0);
+				}
+				GridInfo gi = _gridInfos.get(child);
+				if (gi != null) {
+					gi.shift(extra, 0);
 				}
 			}
 			child.setBusXOverride(maxChildWidth + _gapX / 2);

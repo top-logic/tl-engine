@@ -345,6 +345,62 @@ public class TestTreeLayout extends TestCase {
 		return tree;
 	}
 
+	public void testCompactRowWiseDeepSiblingSubtree() throws IOException {
+		// Reproduces #29372: Root's children C1..C6 are laid out as a row-wise ("zig-zag")
+		// sub-grid. C2 carries a deep subtree (itself a zig-zag sub-grid), the later siblings
+		// C4..C6 carry only a trivial subtree (a single descendant each). With compact=true the
+		// small siblings should be rendered in front of the deep subtree of their sibling C2:
+		// C4..C6 continuing the zig-zag rows directly below the first row, their descendants
+		// sliding up beside C2's subtree in the post-grid column. Instead, the row-wise packing
+		// ignores the compact option: every subtree-bearing child is stacked below the complete
+		// bus extent of its predecessor at the shared child bus, and the post-grid column
+		// advances strictly sequentially — so C4..C6 and their descendants end up below the
+		// complete deep subtree of C2, leaving the space beside it empty.
+		TreeLayout tree = TreeLayout.create()
+			.setCompact(true)
+			.setChildSplitThreshold(3)
+			.setRowWise(true);
+
+		Box root = node("Root");
+		tree.addNode(root);
+
+		for (int i = 1; i <= 6; i++) {
+			Box child = node("C" + i);
+			tree.addNode(child);
+			tree.addConnection(TreeConnection.create()
+				.setParent(connector(root))
+				.setChild(connector(child)));
+
+			if (i == 2) {
+				// The deep sibling subtree: C2's own children again exceed the split threshold
+				// and form a nested zig-zag sub-grid with one descendant each.
+				for (int j = 1; j <= 9; j++) {
+					Box grand = node("C2x" + j);
+					tree.addNode(grand);
+					tree.addConnection(TreeConnection.create()
+						.setParent(connector(child))
+						.setChild(connector(grand)));
+
+					Box great = node("C2x" + j + "g");
+					tree.addNode(great);
+					tree.addConnection(TreeConnection.create()
+						.setParent(connector(grand))
+						.setChild(connector(great)));
+				}
+			} else if (i >= 4) {
+				// Trivial subtrees: one descendant each.
+				Box grand = node("C" + i + "g");
+				tree.addNode(grand);
+				tree.addConnection(TreeConnection.create()
+					.setParent(connector(child))
+					.setChild(connector(grand)));
+			}
+		}
+
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(tree));
+		writeToFile(diagram, "./target/TestTreeLayout-compact-zigzag.svg");
+	}
+
 	public void testRandomTree() throws IOException {
 		Diagram diagramCompfort =
 			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));

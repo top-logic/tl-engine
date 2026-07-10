@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -541,6 +541,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       ref={dropdownRef}
       className="tlDropdownSelect__dropdown"
       style={dropdownStyle}
+      {...anchoredOverlayProps}
     >
       {/* Search field - shown when options are loaded */}
       {(optionsLoaded || loadError) && (

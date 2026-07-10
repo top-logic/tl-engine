@@ -20,6 +20,17 @@ const _traps: FocusTrap[] = [];
 let _nextId = 1;
 let _installed = false;
 
+/**
+ * Marks the root of a portaled overlay (e.g. a dropdown popup) that is anchored to a control
+ * inside a modal surface. Such an overlay renders at {@code document.body} (a portal escapes
+ * the surface's overflow clipping) but logically belongs to the surface: focus moving into it
+ * is not an escape from the surface's trap and must not be pulled back.
+ */
+export const ANCHORED_OVERLAY_ATTR = 'data-tl-anchored-overlay';
+
+/** Props to spread onto the root element of a portaled, anchored overlay. */
+export const anchoredOverlayProps = { [ANCHORED_OVERLAY_ATTR]: '' } as const;
+
 const FOCUSABLE = [
   'a[href]',
   'button:not([disabled])',
@@ -65,6 +76,9 @@ function onFocusIn(e: FocusEvent): void {
   }
   const target = e.target as Node | null;
   if (target && el.contains(target)) {
+    return;
+  }
+  if (target instanceof Element && target.closest(`[${ANCHORED_OVERLAY_ATTR}]`)) {
     return;
   }
   // Focus escaped the topmost trap (e.g. Tab past the edge, or another control stealing focus);

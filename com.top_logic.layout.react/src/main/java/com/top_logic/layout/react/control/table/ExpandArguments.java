@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link TableViewControl} {@code expand} command: which tree/group row to
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Set row {rowIndex} expanded to {expanded}")
-public interface ExpandArguments extends ReactCommandArguments {
+public interface ExpandArguments extends ReactCommand {
 
 	/** @see #getRowIndex() */
 	String ROW_INDEX = SelectRowArguments.ROW_INDEX;

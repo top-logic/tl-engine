@@ -16,7 +16,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -43,7 +43,7 @@ public class ReactSnackbarControl extends ReactControl {
 
 	private static final String GENERATION = "generation";
 
-	/** The {@link ReactCommand} that dismisses a shown snackbar. */
+	/** The {@link ReactCommandHandler} that dismisses a shown snackbar. */
 	public static final String DISMISS_COMMAND = "dismiss";
 
 	/**
@@ -192,7 +192,7 @@ public class ReactSnackbarControl extends ReactControl {
 	 * from hiding a newly shown snackbar.
 	 * </p>
 	 */
-	@ReactCommand(value = DISMISS_COMMAND, technical = true)
+	@ReactCommandHandler(value = DISMISS_COMMAND, technical = true)
 	void handleDismiss(DismissArguments args) {
 		Integer reported = args.getGeneration();
 		int dismissGeneration = reported != null ? reported.intValue() : -1;

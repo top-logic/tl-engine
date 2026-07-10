@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.tree;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactTreeControl} context-menu command: which tree node the menu
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Open context menu on node '{nodeId}'")
-public interface ContextMenuArguments extends ReactCommandArguments {
+public interface ContextMenuArguments extends ReactCommand {
 
 	/** @see #getNodeId() */
 	String NODE_ID = "nodeId";

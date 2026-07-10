@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -45,7 +45,7 @@ public class ReactBottomBarControl extends ReactControl {
 	/** Entry badge text. */
 	private static final String ENTRY_BADGE = "badge";
 
-	/** The {@link ReactCommand} that selects a navigation item. */
+	/** The {@link ReactCommandHandler} that selects a navigation item. */
 	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
 	private final Consumer<String> _selectHandler;
@@ -133,7 +133,7 @@ public class ReactBottomBarControl extends ReactControl {
 	/**
 	 * Handles item selection from the client.
 	 */
-	@ReactCommand(SELECT_ITEM_COMMAND)
+	@ReactCommandHandler(SELECT_ITEM_COMMAND)
 	void handleSelectItem(BottomBarSelectItemArguments args) {
 		_selectHandler.accept(args.getItemId());
 	}

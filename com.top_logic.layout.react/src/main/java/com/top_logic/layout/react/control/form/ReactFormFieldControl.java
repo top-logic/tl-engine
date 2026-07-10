@@ -12,7 +12,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.FormFieldAdapter;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.util.Resources;
@@ -262,7 +262,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 * arguments, since the field value is polymorphic and cannot be one shared type.
 	 * </p>
 	 */
-	@ReactCommand(CMD_VALUE_CHANGED)
+	@ReactCommandHandler(CMD_VALUE_CHANGED)
 	void handleValueChanged(FieldValueArguments args) {
 		applyClientValue(parseClientValue(args.getValue()));
 	}
@@ -288,22 +288,6 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
-	 * Renders a recorded value change as <em>Set 'Field' to 'value'</em>. The field's identity
-	 * ({@code targetName}) comes from its recorded address, since a field gets its name from its
-	 * container (a form field, a table column), not from itself.
-	 */
-	@Override
-	public String describeCommand(String command, Map<String, Object> arguments, String targetName) {
-		if (CMD_VALUE_CHANGED.equals(command) && targetName != null) {
-			Object value = arguments == null ? null : arguments.get(VALUE);
-			return Resources.getInstance()
-				.getString(com.top_logic.layout.react.I18NConstants.RECORD_FIELD_VALUE__FIELD_VALUE
-					.fill(targetName, String.valueOf(value)));
-		}
-		return super.describeCommand(command, arguments, targetName);
-	}
-
-	/**
 	 * Records consecutive {@link #CMD_VALUE_CHANGED} edits of this field as a single coalescing step
 	 * (the latest value supersedes the prior ones), so an uninterrupted edit is one recorded value —
 	 * the successor to the legacy {@code FormInput} — rather than one step per keystroke.
@@ -311,7 +295,7 @@ public class ReactFormFieldControl extends ReactControl {
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
 		if (CMD_VALUE_CHANGED.equals(command)) {
-			return new RecordedCommand(command, arguments == null ? Map.of() : arguments, true);
+			return new RecordedCommand(commandItem(command, arguments), true);
 		}
 		return super.recordCommand(command, arguments);
 	}

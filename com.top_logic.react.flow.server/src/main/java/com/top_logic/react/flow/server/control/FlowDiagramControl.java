@@ -21,7 +21,7 @@ import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.react.flow.callback.ClickHandler;
@@ -50,7 +50,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <p>
  * This control serializes a {@link Diagram} model as initial React state and uses SSE to push
  * incremental msgbuf patches to the client. Client commands (click, drop, update) are received via
- * {@link ReactCommand @ReactCommand}-annotated methods.
+ * {@link ReactCommandHandler @ReactCommandHandler}-annotated methods.
  * </p>
  */
 public class FlowDiagramControl extends ReactControl {
@@ -191,7 +191,7 @@ public class FlowDiagramControl extends ReactControl {
 	/**
 	 * Handles msgbuf patch updates sent from the client.
 	 */
-	@ReactCommand("update")
+	@ReactCommandHandler("update")
 	public HandlerResult handleUpdate(ReactContext context, Map<String, Object> args) {
 		String patch = (String) args.get("patch");
 		try {
@@ -205,7 +205,7 @@ public class FlowDiagramControl extends ReactControl {
 	/**
 	 * Handles click events sent from the client.
 	 */
-	@ReactCommand("dispatchClick")
+	@ReactCommandHandler("dispatchClick")
 	public HandlerResult handleClick(ReactContext context, Map<String, Object> args) {
 		@SuppressWarnings("unchecked")
 		List<String> buttonNames = (List<String>) args.get("mouseButtons");
@@ -219,7 +219,7 @@ public class FlowDiagramControl extends ReactControl {
 	/**
 	 * Handles drop events sent from the client.
 	 */
-	@ReactCommand("dispatchDrop")
+	@ReactCommandHandler("dispatchDrop")
 	public HandlerResult handleDrop(ReactContext context, Map<String, Object> args) {
 		int nodeId = ((Number) args.get("nodeId")).intValue();
 		// Note: Drop data must be provided by the client in the args map.
@@ -230,7 +230,7 @@ public class FlowDiagramControl extends ReactControl {
 	/**
 	 * Handles context menu requests from the client.
 	 */
-	@ReactCommand("contextMenu")
+	@ReactCommandHandler("contextMenu")
 	public HandlerResult handleContextMenu(ReactContext context, Map<String, Object> args) {
 		String contextInfo = (String) args.get("contextInfo");
 		Menu menu = createContextMenu(contextInfo);
@@ -249,7 +249,7 @@ public class FlowDiagramControl extends ReactControl {
 	 * written to the configured selection channel.
 	 * </p>
 	 */
-	@ReactCommand("selection")
+	@ReactCommandHandler("selection")
 	public HandlerResult handleSelection(ReactContext context, Map<String, Object> args) {
 		if (_selectionChannel == null || _graphScope == null) {
 			return HandlerResult.DEFAULT_RESULT;

@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
@@ -88,7 +88,7 @@ public class TLScriptEditorReactControl extends ReactControl {
 		putState(READ_ONLY, Boolean.valueOf(readOnly));
 	}
 
-	@ReactCommand("valueChanged")
+	@ReactCommandHandler("valueChanged")
 	void handleValueChanged(Map<String, Object> arguments) {
 		Object rawValue = arguments.get(VALUE);
 		String newValue = rawValue != null ? rawValue.toString() : null;
@@ -97,14 +97,14 @@ public class TLScriptEditorReactControl extends ReactControl {
 		}
 	}
 
-	@ReactCommand("validate")
+	@ReactCommandHandler("validate")
 	void handleValidate(Map<String, Object> arguments) {
 		String text = (String) arguments.get("text");
 		List<Map<String, Object>> diagnostics = computeDiagnostics(text);
 		putState(DIAGNOSTICS, diagnostics);
 	}
 
-	@ReactCommand("complete")
+	@ReactCommandHandler("complete")
 	void handleComplete(Map<String, Object> arguments) {
 		String line = (String) arguments.get("line");
 		String prefix = (String) arguments.get("prefix");
@@ -143,7 +143,7 @@ public class TLScriptEditorReactControl extends ReactControl {
 		putState("completionResponse", response);
 	}
 
-	@ReactCommand("hover")
+	@ReactCommandHandler("hover")
 	void handleHover(Map<String, Object> arguments) {
 		String token = (String) arguments.get("token");
 		Map<String, Object> hoverInfo = new HashMap<>();

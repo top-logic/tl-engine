@@ -13,8 +13,8 @@ import junit.framework.TestCase;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactCommandArguments;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -25,7 +25,7 @@ import com.top_logic.layout.react.headless.AgentNode;
 import com.top_logic.layout.react.headless.AgentNodeView;
 import com.top_logic.layout.react.headless.AgentParam;
 import com.top_logic.layout.react.headless.AgentSession;
-import com.top_logic.layout.react.headless.RecordedStep;
+import com.top_logic.layout.react.headless.AssertCommand;
 import com.top_logic.layout.react.headless.AgentTreeProjector;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -171,25 +171,26 @@ public class TestAgentSession extends TestCase {
 	/**
 	 * An assertion step verifies a subset of a node's state: expected entries must match the live state
 	 * (by value, ignoring numeric representation), extra live keys are ignored, and any divergence is
-	 * reported by key. This is the check a replay performs for an {@link RecordedStep#assertion}.
+	 * reported by key. This is the check a replay performs for an {@link AssertCommand}.
 	 */
 	public void testAssertionSubsetMatch() {
 		Map<String, Object> actual = Map.of("count", 4, "label", "Aufgaben", "hidden", false);
 
 		// Subset match: only the keys in the expectation are checked; representation-normalized.
-		assertTrue(RecordedStep.mismatchingKeys(Map.of("count", 4L), actual).isEmpty());
-		assertTrue(RecordedStep.mismatchingKeys(Map.of("label", "Aufgaben"), actual).isEmpty());
-		assertTrue(RecordedStep.mismatchingKeys(Map.of("count", 4, "label", "Aufgaben"), actual).isEmpty());
+		assertTrue(AssertCommand.mismatchingKeys(Map.of("count", 4L), actual).isEmpty());
+		assertTrue(AssertCommand.mismatchingKeys(Map.of("label", "Aufgaben"), actual).isEmpty());
+		assertTrue(AssertCommand.mismatchingKeys(Map.of("count", 4, "label", "Aufgaben"), actual).isEmpty());
 
 		// Mismatches are reported by key.
-		assertEquals(List.of("count"), RecordedStep.mismatchingKeys(Map.of("count", 5), actual));
-		assertEquals(List.of("missing"), RecordedStep.mismatchingKeys(Map.of("missing", "x"), actual));
+		assertEquals(List.of("count"), AssertCommand.mismatchingKeys(Map.of("count", 5), actual));
+		assertEquals(List.of("missing"), AssertCommand.mismatchingKeys(Map.of("missing", "x"), actual));
 
-		// The assertion factory marks the step and carries the expectation.
-		RecordedStep step = RecordedStep.assertion("/a/counter[X]", Map.of("count", 4));
-		assertTrue(step.isAssertion());
-		assertEquals(RecordedStep.ASSERT_COMMAND, step.command());
-		assertEquals(Map.of("count", 4), step.arguments().get(RecordedStep.ASSERT_STATE_ARG));
+		// The assertion factory marks the step and carries the expectation in canonical JSON.
+		AssertCommand step = AssertCommand.create("/a/counter[X]", Map.of("count", 4));
+		assertEquals(AssertCommand.COMMAND_NAME, step.getName());
+		assertEquals("/a/counter[X]", step.getAddress());
+		assertTrue("Round trip through canonical JSON preserves the expectation.",
+			AssertCommand.mismatchingKeys(Map.of("count", 4), step.stateEntries()).isEmpty());
 	}
 
 	/**
@@ -302,7 +303,7 @@ public class TestAgentSession extends TestCase {
 	}
 
 	/**
-	 * A command declaring a {@link ReactCommandArguments} parameter receives the client arguments
+	 * A command declaring a {@link ReactCommand} parameter receives the client arguments
 	 * bound into the typed instance (read via its JSON serialization) before dispatch, and exposes
 	 * its argument descriptor — the basis of the advertised JSON schema — whereas a {@code Map}-based
 	 * command does not. (The serialized schema itself is exercised live, since it resolves I18N
@@ -457,7 +458,7 @@ public class TestAgentSession extends TestCase {
 				List.of(AgentParam.requiredString("value", "The new text value.")), null));
 		}
 
-		@ReactCommand("change")
+		@ReactCommandHandler("change")
 		void change(Map<String, Object> arguments) {
 			putState("value", String.valueOf(arguments.get("value")));
 		}
@@ -498,7 +499,7 @@ public class TestAgentSession extends TestCase {
 			return List.of(AgentAction.of("click"));
 		}
 
-		@ReactCommand("click")
+		@ReactCommandHandler("click")
 		void click() {
 			_clicks++;
 			putState("clicks", Integer.valueOf(_clicks));
@@ -514,7 +515,7 @@ public class TestAgentSession extends TestCase {
 	 * label state, so its name must come from the model.
 	 */
 	/** Typed arguments of {@link DemoModelControl#setNote(NoteArgs)}. */
-	public interface NoteArgs extends ReactCommandArguments {
+	public interface NoteArgs extends ReactCommand {
 		/** The note text to store. */
 		@Name("note")
 		String getNote();
@@ -531,18 +532,18 @@ public class TestAgentSession extends TestCase {
 			putStateSilent("note", null);
 		}
 
-		@ReactCommand(value = "open", params = @ReactParam(name = "tab", required = true,
+		@ReactCommandHandler(value = "open", params = @ReactParam(name = "tab", required = true,
 			description = "Which tab to open."))
 		void open() {
 			_opened = true;
 		}
 
-		@ReactCommand("toggleStyle")
+		@ReactCommandHandler("toggleStyle")
 		void toggleStyle() {
 			// Chrome-only command.
 		}
 
-		@ReactCommand("setNote")
+		@ReactCommandHandler("setNote")
 		void setNote(NoteArgs args) {
 			putStateSilent("note", args.getNote());
 		}

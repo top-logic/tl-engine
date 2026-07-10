@@ -12,7 +12,7 @@ import java.util.List;
  *
  * <p>
  * An action maps directly onto a
- * {@link com.top_logic.layout.react.control.ReactCommand @ReactCommand} of the underlying control:
+ * {@link com.top_logic.layout.react.control.ReactCommand @ReactCommandHandler} of the underlying control:
  * {@link #command()} is the command ID passed to
  * {@link com.top_logic.layout.react.control.ReactControl#executeCommand(String, java.util.Map)}, and
  * {@link #params()} or {@link #argsSchema()} describes the {@code arguments} the command expects.
@@ -21,7 +21,7 @@ import java.util.List;
  * </p>
  *
  * @param command
- *        The command ID to invoke (matches a {@code @ReactCommand} value on the control).
+ *        The command ID to invoke (matches a {@code @ReactCommandHandler} value on the control).
  * @param label
  *        A human/agent readable label for the action.
  * @param params

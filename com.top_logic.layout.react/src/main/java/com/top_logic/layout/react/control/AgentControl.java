@@ -34,7 +34,7 @@ public interface AgentControl extends ReactCommandTarget {
 	 * The set of command IDs this control accepts via {@link #executeCommand(String, java.util.Map)}.
 	 *
 	 * <p>
-	 * Derived from the {@link ReactCommand @ReactCommand}-annotated methods of this control's class.
+	 * Derived from the {@link ReactCommandHandler @ReactCommandHandler}-annotated methods of this control's class.
 	 * This is the raw action space; the headless layer may enrich it with argument schemas (see
 	 * {@link com.top_logic.layout.react.headless.AgentNode}).
 	 * </p>
@@ -143,7 +143,7 @@ public interface AgentControl extends ReactCommandTarget {
 
 	/**
 	 * The declared argument schema of the given command (from its
-	 * {@link ReactCommand#params() @ReactCommand params}), so the headless projection can advertise
+	 * {@link ReactCommandHandler#params() @ReactCommandHandler params}), so the headless projection can advertise
 	 * what a command expects instead of leaving a consumer to guess.
 	 *
 	 * @param command

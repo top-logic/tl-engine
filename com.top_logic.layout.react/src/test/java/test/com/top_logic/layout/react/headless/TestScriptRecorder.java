@@ -6,23 +6,32 @@
 package test.com.top_logic.layout.react.headless;
 
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.TestCase;
 
-import com.top_logic.layout.react.headless.RecordedStep;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 
 /**
- * Tests {@link ScriptRecorder} capture, in particular the {@link ScriptRecorder#record(RecordedStep,
+ * Tests {@link ScriptRecorder} capture, in particular the {@link ScriptRecorder#record(ReactCommand,
  * boolean) coalescing} of consecutive same-target steps.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class TestScriptRecorder extends TestCase {
 
-	private static RecordedStep step(String address, String command, Object value) {
-		return new RecordedStep(address, command, Map.of("value", value));
+	private static ReactCommand step(String address, String command, String value) {
+		FieldValueArguments result = TypedConfiguration.newConfigItem(FieldValueArguments.class);
+		result.setAddress(address);
+		result.setName(command);
+		result.setValue(value);
+		return result;
+	}
+
+	private static String value(ReactCommand step) {
+		return ((FieldValueArguments) step).getValue();
 	}
 
 	/**
@@ -37,9 +46,9 @@ public class TestScriptRecorder extends TestCase {
 		recorder.record(step("/form/field[name]", "valueChanged", "he"), true);
 		recorder.record(step("/form/field[name]", "valueChanged", "hello"), true);
 
-		List<RecordedStep> steps = recorder.steps();
+		List<ReactCommand> steps = recorder.steps();
 		assertEquals("Consecutive edits of one field collapse to one step.", 1, steps.size());
-		assertEquals("hello", steps.get(0).arguments().get("value"));
+		assertEquals("hello", value(steps.get(0)));
 	}
 
 	/**
@@ -55,11 +64,11 @@ public class TestScriptRecorder extends TestCase {
 		recorder.record(step("/form/field[b]", "valueChanged", "x"), true);
 		recorder.record(step("/form/field[a]", "valueChanged", "123"), true);
 
-		List<RecordedStep> steps = recorder.steps();
+		List<ReactCommand> steps = recorder.steps();
 		assertEquals(3, steps.size());
-		assertEquals("12", steps.get(0).arguments().get("value"));
-		assertEquals("x", steps.get(1).arguments().get("value"));
-		assertEquals("123", steps.get(2).arguments().get("value"));
+		assertEquals("12", value(steps.get(0)));
+		assertEquals("x", value(steps.get(1)));
+		assertEquals("123", value(steps.get(2)));
 	}
 
 	/**

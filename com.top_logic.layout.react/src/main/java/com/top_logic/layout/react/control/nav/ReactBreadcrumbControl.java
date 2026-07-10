@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -36,7 +36,7 @@ public class ReactBreadcrumbControl extends ReactControl {
 	/** Entry display label. */
 	private static final String ENTRY_LABEL = "label";
 
-	/** The {@link ReactCommand} that navigates to a breadcrumb ancestor. */
+	/** The {@link ReactCommandHandler} that navigates to a breadcrumb ancestor. */
 	public static final String NAVIGATE_COMMAND = "navigate";
 
 	private final Consumer<String> _navigateHandler;
@@ -89,7 +89,7 @@ public class ReactBreadcrumbControl extends ReactControl {
 	/**
 	 * Handles breadcrumb navigation from the client.
 	 */
-	@ReactCommand(NAVIGATE_COMMAND)
+	@ReactCommandHandler(NAVIGATE_COMMAND)
 	void handleNavigate(NavigateArguments args) {
 		_navigateHandler.accept(args.getItemId());
 	}

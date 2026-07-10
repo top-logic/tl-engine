@@ -17,7 +17,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * <p>
  * The headless layer works generically against any {@link ReactControl} (deriving a role from the
  * React module, a name from common label state, and an action space from the
- * {@link com.top_logic.layout.react.control.ReactCommand @ReactCommand} methods). Implementing this
+ * {@link com.top_logic.layout.react.control.ReactCommand @ReactCommandHandler} methods). Implementing this
  * interface lets a control override the headless-typed parts of that projection:
  * </p>
  * <ul>

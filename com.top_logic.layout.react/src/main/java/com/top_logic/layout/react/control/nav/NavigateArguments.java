@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.nav;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactBreadcrumbControl#NAVIGATE_COMMAND} command: which breadcrumb
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Navigate to '{itemId}'")
-public interface NavigateArguments extends ReactCommandArguments {
+public interface NavigateArguments extends ReactCommand {
 
 	/** @see #getItemId() */
 	String ITEM_ID = "itemId";

@@ -26,10 +26,11 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.control.AgentModelKey;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -76,9 +77,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private static final String CMD_LOAD_OPTIONS = "loadOptions";
 
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
-
-	/** Command argument carrying the list of option business keys for {@link #CMD_SELECT_BY_KEY}. */
-	private static final String ARG_KEYS = "keys";
 
 	private final SelectFieldModel _selectModel;
 
@@ -167,7 +165,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			for (Object entry : list) {
 				if (entry instanceof Map<?, ?> descriptor) {
 					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
-					String key = AgentModelKey.toJson(scope, _optionIndex.get(descriptor.get(OPT_VALUE)));
+					Object key = AgentModelKey.toKey(scope, _optionIndex.get(descriptor.get(OPT_VALUE)));
 					if (key != null) {
 						augmented.put("key", key);
 					}
@@ -206,7 +204,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * allocated IDs to model objects for later resolution.
 	 * </p>
 	 */
-	@ReactCommand(CMD_LOAD_OPTIONS)
+	@ReactCommandHandler(CMD_LOAD_OPTIONS)
 	HandlerResult handleLoadOptions() {
 		try {
 			List<?> options = sortedOptions();
@@ -239,7 +237,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	// support a List of primitives (the reader expects list elements to be objects), so this command
 	// keeps a raw Map with a lightweight @ReactParam schema rather than a typed ConfigurationItem.
 	@SuppressWarnings("unchecked")
-	@ReactCommand(value = CMD_VALUE_CHANGED, params = @ReactParam(name = VALUE, type = "string[]",
+	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = VALUE, type = "string[]",
 		required = true, description = "List of selected option value ids (from the options descriptors)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
 		List<String> selectedIds = (List<String>) arguments.get(VALUE);
@@ -280,27 +278,15 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * <p>
 	 * This lets a headless agent select members by business object identity (e.g. the group labeled
 	 * {@code securityOwner} within this control) instead of session-allocated option ids that do not
-	 * survive a reload or replay. Each key is parsed back to a {@link ModelName} and resolved against
-	 * this control's {@link ReactOptionScope option scope} (for context-relative names) or globally.
-	 * Keys that do not resolve are skipped.
+	 * survive a reload or replay. Each {@link ModelName} is resolved against this control's
+	 * {@link ReactOptionScope option scope} (for context-relative names) or globally.
 	 * </p>
-	 *
-	 * @param arguments
-	 *        Must contain a {@link #ARG_KEYS} entry with a list of key JSON strings.
 	 */
-	// Argument is a string array (business keys); see the note on handleValueChanged — a List of
-	// primitives is not supported by the config-JSON binding, so this stays a raw Map.
-	@SuppressWarnings("unchecked")
-	@ReactCommand(value = CMD_SELECT_BY_KEY, params = @ReactParam(name = ARG_KEYS, type = "string[]",
-		required = true,
-		description = "List of option business keys (the 'key' projected onto each option)."))
-	HandlerResult handleSelectByKey(Map<String, Object> arguments) {
-		List<String> keys = (List<String>) arguments.get(ARG_KEYS);
-		if (keys == null) {
-			keys = Collections.emptyList();
-		}
+	@ReactCommandHandler(CMD_SELECT_BY_KEY)
+	HandlerResult handleSelectByKey(SelectByKeysArguments arguments) {
+		List<ModelName> keys = arguments.getKeys();
 
-		List<String> unresolved = new ArrayList<>();
+		List<ModelName> unresolved = new ArrayList<>();
 		List<Object> newSelection = resolveByKeys(keys, unresolved);
 		if (!unresolved.isEmpty()) {
 			// Drift contract: a recorded key that no longer designates an option in this session is an
@@ -321,7 +307,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Records a value change in replay-stable form: the live {@link #CMD_VALUE_CHANGED} carries
 	 * session-allocated option ids, so it is recorded as a {@link #CMD_SELECT_BY_KEY} of the selected
-	 * options' business keys, which resolve again in a later session.
+	 * options' business {@link ModelName identities}, which resolve again in a later session.
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -331,15 +317,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			if (ids != null) {
 				ReactOptionScope scope =
 					new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
-				List<String> keys = new ArrayList<>(ids.size());
+				SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
+				recorded.setName(CMD_SELECT_BY_KEY);
 				for (String id : ids) {
 					Object option = _optionIndex.get(id);
-					String key = option == null ? null : AgentModelKey.toJson(scope, option);
+					ModelName key = option == null ? null : AgentModelKey.name(scope, option);
 					if (key != null) {
-						keys.add(key);
+						recorded.getKeys().add(key);
 					}
 				}
-				return new RecordedCommand(CMD_SELECT_BY_KEY, Map.of(ARG_KEYS, keys));
+				return new RecordedCommand(recorded);
 			}
 		}
 		return super.recordCommand(command, arguments);
@@ -353,31 +340,28 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * Resolution is against the model's authoritative option list, not only the options already
 	 * streamed to the client ({@code _optionIndex}). This lets a recorded {@link #CMD_SELECT_BY_KEY}
 	 * replay without first opening the dropdown ({@link #CMD_LOAD_OPTIONS}), and matches the full set
-	 * the keys were built against. A key that fails to parse, throws, or resolves to nothing is
-	 * reported as unresolved rather than skipped.
+	 * the keys were built against. A key that throws or resolves to nothing is reported as unresolved
+	 * rather than skipped.
 	 * </p>
 	 */
-	private List<Object> resolveByKeys(List<String> keys, List<String> unresolvedOut) {
+	private List<Object> resolveByKeys(List<ModelName> keys, List<ModelName> unresolvedOut) {
 		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
 		ActionContext actionContext = newActionContext();
 		List<Object> resolved = new ArrayList<>(keys.size());
-		for (String key : keys) {
-			ModelName name = AgentModelKey.fromJson(key);
+		for (ModelName name : keys) {
 			Object option = null;
-			if (name != null) {
-				// Context-relative names (ContextDependent) resolve within this control's option scope;
-				// globally-named options (e.g. a person) resolve without a value context.
-				Object valueContext = name instanceof ContextDependent ? scope : null;
-				try {
-					option = ModelResolver.locateModel(actionContext, valueContext, name);
-				} catch (RuntimeException ex) {
-					Logger.warn("Cannot resolve option for key: " + key, ex, this);
-				}
+			// Context-relative names (ContextDependent) resolve within this control's option scope;
+			// globally-named options (e.g. a person) resolve without a value context.
+			Object valueContext = name instanceof ContextDependent ? scope : null;
+			try {
+				option = ModelResolver.locateModel(actionContext, valueContext, name);
+			} catch (RuntimeException ex) {
+				Logger.warn("Cannot resolve option for key: " + name, ex, this);
 			}
 			if (option != null) {
 				resolved.add(option);
 			} else {
-				unresolvedOut.add(key);
+				unresolvedOut.add(name);
 			}
 		}
 		return resolved;

@@ -13,7 +13,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.DirtyChannel;
@@ -720,7 +720,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	/**
 	 * Command that enters edit mode.
 	 */
-	@ReactCommand("formEdit")
+	@ReactCommandHandler("formEdit")
 	void handleEdit() {
 		enterEditMode();
 	}
@@ -728,7 +728,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	/**
 	 * Command that applies overlay changes without leaving edit mode.
 	 */
-	@ReactCommand("formApply")
+	@ReactCommandHandler("formApply")
 	void handleApply() {
 		executeApply();
 	}
@@ -736,7 +736,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	/**
 	 * Command that saves changes (applies and exits edit mode).
 	 */
-	@ReactCommand("formSave")
+	@ReactCommandHandler("formSave")
 	void handleSave() {
 		executeSave();
 	}
@@ -744,7 +744,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	/**
 	 * Command that cancels editing, discarding changes.
 	 */
-	@ReactCommand("formCancel")
+	@ReactCommandHandler("formCancel")
 	void handleCancel() {
 		executeCancel();
 	}

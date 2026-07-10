@@ -14,7 +14,7 @@ import java.util.Map;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
@@ -115,7 +115,7 @@ public class ReactTileBreadcrumbControl extends ReactControl {
 	 * length; the tile-stack listening on the same channel rebuilds its top frame accordingly.
 	 * </p>
 	 */
-	@ReactCommand(NAVIGATE_COMMAND)
+	@ReactCommandHandler(NAVIGATE_COMMAND)
 	void handleNavigate(Map<String, Object> arguments) {
 		Object idValue = arguments.get(ITEM_ID);
 		if (!(idValue instanceof String idString)) {

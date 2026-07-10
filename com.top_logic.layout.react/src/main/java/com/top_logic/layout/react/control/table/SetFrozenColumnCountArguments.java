@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link TableViewControl} {@code setFrozenColumnCount} command: how many
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Freeze {count} columns")
-public interface SetFrozenColumnCountArguments extends ReactCommandArguments {
+public interface SetFrozenColumnCountArguments extends ReactCommand {
 
 	/** @see #getCount() */
 	String COUNT = "count";

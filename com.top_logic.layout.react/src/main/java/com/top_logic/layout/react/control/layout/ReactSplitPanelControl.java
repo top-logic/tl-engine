@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
@@ -425,7 +425,7 @@ public class ReactSplitPanelControl extends ReactControl {
 	 * Handles the updateSizes command sent by the React client after a splitter drag operation.
 	 */
 	@SuppressWarnings("unchecked")
-	@ReactCommand(value = "updateSizes", params = @ReactParam(name = "sizes", type = "object", required = true,
+	@ReactCommandHandler(value = "updateSizes", params = @ReactParam(name = "sizes", type = "object", required = true,
 		description = "Map of child control id to its new pixel size."))
 	void handleUpdateSizes(Map<String, Object> arguments) {
 		Map<String, Object> sizes = (Map<String, Object>) arguments.get(SIZES_ARG);

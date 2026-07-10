@@ -206,27 +206,6 @@ public final class AgentSession {
 		return searchAddress(ROOT, null, roots(), target);
 	}
 
-	/**
-	 * The semantic name of the addressed control: the last {@code [name]} segment of the address —
-	 * the container-supplied identity (a form field name, a table column, a button label) that the
-	 * control itself may not know. E.g. {@code …/formField[members]/textInput} yields {@code members}
-	 * and {@code …/button[Neu]} yields {@code Neu}. {@code null} if the address carries no name.
-	 *
-	 * @param address
-	 *        The semantic address, or {@code null}.
-	 */
-	public static String targetName(String address) {
-		if (address == null) {
-			return null;
-		}
-		int close = address.lastIndexOf(']');
-		if (close < 0) {
-			return null;
-		}
-		int open = address.lastIndexOf('[', close);
-		return open < 0 ? null : address.substring(open + 1, close);
-	}
-
 	private static String searchAddress(String prefix, ReactControl parent, List<ReactControl> candidates,
 			ReactControl target) {
 		List<String> segments = AgentTreeProjector.segmentsFor(parent, candidates);

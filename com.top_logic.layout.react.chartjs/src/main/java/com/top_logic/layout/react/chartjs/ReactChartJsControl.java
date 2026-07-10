@@ -12,7 +12,7 @@ import java.util.Map;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -162,7 +162,7 @@ public class ReactChartJsControl extends ReactControl {
 	 *        Contains {@code datasetIndex} (int), {@code index} (int), and
 	 *        {@code zone} ("datapoint" or "legend").
 	 */
-	@ReactCommand("elementClick")
+	@ReactCommandHandler("elementClick")
 	HandlerResult handleElementClick(Map<String, Object> arguments) {
 		int datasetIndex = ((Number) arguments.get("datasetIndex")).intValue();
 		int index = ((Number) arguments.get("index")).intValue();
@@ -204,7 +204,7 @@ public class ReactChartJsControl extends ReactControl {
 	 * @param arguments
 	 *        Contains {@code datasetIndex} (int) and {@code index} (int).
 	 */
-	@ReactCommand("tooltip")
+	@ReactCommandHandler("tooltip")
 	void handleTooltip(Map<String, Object> arguments) {
 		int datasetIndex = ((Number) arguments.get("datasetIndex")).intValue();
 		int index = ((Number) arguments.get("index")).intValue();

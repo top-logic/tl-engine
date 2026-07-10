@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link TableViewControl} {@code columnResize} command: which column to
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Resize column '{column}' to {width}")
-public interface ColumnResizeArguments extends ReactCommandArguments {
+public interface ColumnResizeArguments extends ReactCommand {
 
 	/** @see #getColumn() */
 	String COLUMN = "column";

@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.tree;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactTreeControl} drop command: which tree node the drop targets and
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Drop on node '{nodeId}'")
-public interface DropArguments extends ReactCommandArguments {
+public interface DropArguments extends ReactCommand {
 
 	/** @see #getNodeId() */
 	String NODE_ID = "nodeId";

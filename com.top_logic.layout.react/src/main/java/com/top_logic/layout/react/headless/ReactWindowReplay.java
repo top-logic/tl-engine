@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.headless;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -16,6 +17,9 @@ import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -73,27 +77,22 @@ public final class ReactWindowReplay {
 	}
 
 	/**
-	 * Dispatches {@code command} (with {@code arguments}) to the control at {@code address} in the given
-	 * window, in that window's subsession and under the session request lock, settling derived state
-	 * afterwards.
+	 * Replays the given recorded step in the given window, in that window's subsession and under the
+	 * session request lock, settling derived state afterwards. An {@link AssertCommand assertion}
+	 * step is verified against the window's current state; any other step is dispatched to the
+	 * control at the step's address.
 	 *
 	 * @param registry
 	 *        The session's window registry.
 	 * @param windowName
 	 *        The target window (e.g. the opener window of a recorder side-window).
-	 * @param address
-	 *        The semantic address of the target control (as {@link AgentSession#resolve(String)}
-	 *        accepts).
-	 * @param command
-	 *        The command id to dispatch.
-	 * @param arguments
-	 *        The command arguments, or an empty map.
-	 * @return The {@link HandlerResult} of the command.
+	 * @param step
+	 *        The recorded step to replay.
+	 * @return The {@link HandlerResult} of the command or assertion.
 	 * @throws IllegalArgumentException
-	 *         If the window has no rendered tree or the address does not resolve.
+	 *         If the window has no rendered tree or the step's address does not resolve.
 	 */
-	public static HandlerResult act(ReactWindowRegistry registry, String windowName, String address,
-			String command, Map<String, Object> arguments) {
+	public static HandlerResult act(ReactWindowRegistry registry, String windowName, ReactCommand step) {
 		SSEUpdateQueue queue = registry.getQueue(windowName);
 		ReactControl root = queue == null ? null : queue.getRootControl();
 
@@ -105,7 +104,13 @@ public final class ReactWindowReplay {
 		try {
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
-				HandlerResult result = AgentSession.forRoot(root).act(address, command, arguments);
+				AgentSession session = AgentSession.forRoot(root);
+				HandlerResult result;
+				if (step instanceof AssertCommand assertion) {
+					result = verify(session, assertion);
+				} else {
+					result = session.act(step.getAddress(), step.getName(), ReactCommands.arguments(step));
+				}
 				registry.synthesizeModelEvents(windowName);
 				return result;
 			} finally {
@@ -119,5 +124,21 @@ public final class ReactWindowReplay {
 				displayContext.installSubSessionContext(callerSubSession);
 			}
 		}
+	}
+
+	/**
+	 * Verifies an {@link AssertCommand} against the target window's current state: the node at the
+	 * step's address must have, for each expected entry, a state value equal to the recorded one
+	 * (subset match).
+	 */
+	private static HandlerResult verify(AgentSession session, AssertCommand assertion) {
+		Map<String, Object> expected = assertion.stateEntries();
+		Map<String, Object> actual = AgentTreeProjector.nodeState(session.resolve(assertion.getAddress()));
+		List<String> mismatches = AssertCommand.mismatchingKeys(expected, actual);
+		if (mismatches.isEmpty()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return HandlerResult.error(
+			I18NConstants.ERROR_ASSERTION_FAILED__ADDRESS_KEYS.fill(assertion.getAddress(), mismatches));
 	}
 }

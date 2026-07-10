@@ -146,7 +146,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
       so numeric representation is irrelevant) and reports per-key `mismatches`. Verified live
       on the group form: `select user` + `assertState {value:"user"}` passes; the same with
       `{value:"superuser"}` fails with `mismatches:[{key:value,expected:superuser,actual:user}]`.
-      The compare logic (`RecordedStep.mismatchingKeys`) is unit-tested.
+      The compare logic (`AssertCommand.mismatchingKeys`) is unit-tested.
 - [x] **Replay-stable table selection.** `TableViewControl` gains a `selectByKey {key}`
       command (resolves the row's business object globally via `ReactActionContext` and
       selects it) and a `recordCommand` override translating a plain `select {rowIndex}`
@@ -263,20 +263,22 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
         advertises `selectItem` with `argsSchema` carrying `required:["itemId"]` and the
         property's generated `title:"Item ID"` + description — `@Mandatory` and the I18N label
         flowing into the schema with no hand-written `@ReactParam`.
-  - [x] **Human-readable step rendering — done, verified live.** `ReactControl.describeCommand`
-        binds a step's arguments to the typed config and renders it via `ConfigLabelProvider`;
-        each arg interface's `@Label` *is* the template (e.g. `Navigate to '{itemId}'`, kept in
-        the generated bundle, DE hand-authored). The recorder side-window's `RecordedStepsTable`
-        gained a **Description** column that resolves the step's address against the opener
-        window and calls `describeCommand` (falling back to the raw command + JSON for assertion
-        steps, untyped commands, or drifted addresses). Verified live (German session): captured
-        steps read *"Navigiere zu 'input-controls'"*, *"Navigiere zu 'tabs'"*,
-        *"Tab 'details' aktivieren"* beside the technical address/command/arguments. Values are
-        the raw ids for now; resolving them to friendly labels is the deferred follow-up.
-  - [ ] **Persisted step format** — write the bound config instance as JSON/XML (feeds
+  - [x] **Human-readable step rendering — done, verified live.** A recorded step *is* a typed
+        `ReactCommand` item; its description is generated on demand by `ReactCommands.describe`
+        via `ConfigLabelProvider` — each command interface's `@Label` *is* the template (e.g.
+        `Navigate to '{itemId}'`, kept in the generated bundle, DE hand-authored), and the
+        derived `target` property (the address's last `[name]` segment) serves positional
+        commands (`Press button '{target}'`, `Set '{target}' to '{value}'`). Item-valued
+        properties render through their own labels: a row selection reads
+        *"Zeile "Sample 3" auswählen"* from the row's `ModelName`. Because the item — not a
+        pre-rendered string — is stored, the description is stable across UI navigation and
+        renders per request locale.
+  - [ ] **Persisted step format** — write the `ReactCommand` items as JSON/XML (feeds
         parity item #12; per-step `comment` rides along, parity #16).
-  - [x] Lean React-side action-config **base** — `ReactCommandArguments` (plain
-        `ConfigurationItem`). **Not** legacy `ApplicationAction`.
+  - [x] Lean React-side action-config **base** — `ReactCommand` (a `ConfigurationItem` with
+        the `address`/`name` envelope and the derived `target`; every command's argument
+        interface extends it, so the whole action is one typed item). **Not** legacy
+        `ApplicationAction`. The handler-marker annotation is `@ReactCommandHandler`.
   - [x] Migrate the structural-navigation commands — **done, verified live**: sidebar
         `selectItem` → `SelectItemArguments`, tab bar `selectTab` → `SelectTabArguments`,
         table `select` → `SelectRowArguments`. Live `/agent-api/observe` advertises each
@@ -284,10 +286,14 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
         (`rowIndex:"integer"` required, `ctrlKey`/`shiftKey:"boolean"` optional) and a
         table-row click still selects (detail panel populated). `@ReactParam` removed from
         all three; arg-key literals unified onto the typed interfaces.
-  - [ ] Migrate the value-bearing commands (`valueChanged`/`selectByKey`). Entangled with
-        the value→label-resolution decision below (their values are option/business keys),
-        so deferred with the rendering work. Consider a conformance check that every
-        recordable `@ReactCommand` declares a config arg type.
+  - [x] Migrate the value-bearing commands — **done, verified live**: table `selectByKey`
+        → `SelectByKeyArguments` with an item-typed `ModelName getKey()`, dropdown
+        `selectByKey` → `SelectByKeysArguments` with `List<ModelName> getKeys()`. The
+        projection's row/option `key` is the same config-JSON value the typed property binds
+        from, so an agent copies it verbatim (no JSON-in-string tokens). `ReactCommandMap`
+        enforces that every typed argument interface extends `ReactCommand`. The dropdown's
+        live `valueChanged` (session option ids) stays a raw-`Map` handler; recording rewrites
+        it to the typed `selectByKey` form.
 - [ ] **Sidebar size hotspot via the enum schema** — once `selectItem` carries a typed
       arg, advertise `itemId` as a constrained enum (`∈ {dashboard, administration, …}`)
       from the schema instead of shipping the raw 24-entry `items` array (folds the
@@ -380,8 +386,8 @@ building recorder-side parity.
 | 9 | **Typed assertion library** | 40+ plugins: field error/mode/validity/label, `ModelNotExists`, table-contents, visibility | Only the one generic state-subset assert | ❌ |
 | 10 | **Global variables / parameterization** | `GlobalVariableStore`, `SetGlobalVariableAction`, `GlobalVariableRef` | none — cannot capture a created object's identity and reuse it downstream | ❌ |
 | 11 | **Script control flow** | `ActionChain`, `ConditionalAction`/`IfAction`, `IncludeScriptAction`, `DynamicAction` | flat ordered step list only | ❌ |
-| 12 | **Persisted script format** | Polymorphic-config XML via `ActionWriter`/`ActionReader` (`.script.xml`) | in-memory `RecordedStep` + JSON over HTTP — no on-disk format, no reader/writer | ❌ |
-| 13 | **Replay runner & failure report** | `ScriptedTest`/`ApplicationSession.process`, stop-on-first `ApplicationAssertion` | `/replay`: per-step `success`+`error`, top-level verdict; continues through steps | ✅ (differs: no stop-on-first) |
+| 12 | **Persisted script format** | Polymorphic-config XML via `ActionWriter`/`ActionReader` (`.script.xml`) | in-memory typed `ReactCommand` items + JSON over HTTP — no on-disk format yet, but the items are polymorphic config and serialize canonically | 🟡 |
+| 13 | **Replay runner & failure report** | `ScriptedTest`/`ApplicationSession.process`, stop-on-first `ApplicationAssertion` | `/replay`: per-step `success`+`error`, top-level verdict, stops at the first failed step | ✅ |
 | 14 | **Recording on/off + noise filter** | `setRecordingActive`, `annotateAsDontRecord`/`mustNotRecord` | `ScriptRecorder` start/stop; per-control `nonRecordableCommands()` | 🟡 (no pause/resume) |
 | 15 | **Insert-assertion UX (inspector)** | `GuiInspectorControl` + `AssertionPlugin` (right-click → pick check) | `/record/assert` endpoint only — no in-UI element inspector | ❌ |
 | 16 | **Comments / metadata on steps** | `getComment`/`getFailureMessage`/`getUserID` per action | none | ❌ |
@@ -559,6 +565,35 @@ Also decide whether `observe` should ever block user commands at all.
       it — choosing by content, not a blind index.
 
 ## Progress log
+
+- **2026-07-10** — **A recorded step is one typed configuration item (`ReactCommand`).** Completes
+  the D5 typed-argument arc: the former `ReactCommandArguments` marker became the `ReactCommand`
+  item interface carrying the `address`/`name` envelope plus a derived `target` (the address's last
+  `[name]` segment, usable in `@Label` templates); every command's argument interface extends it,
+  and `ReactCommandMap` enforces that. The recorder stores these items — `RecordedStep` (and
+  yesterday's stored `description`) is deleted; the wire form (`record/steps`, `/replay`), the
+  dispatch arguments (`ReactCommands.arguments`) and the human-readable description
+  (`ReactCommands.describe` via `ConfigLabelProvider`) are all pure functions of the item, computed
+  on demand — so descriptions are stable across UI navigation *and* render per request locale (the
+  same recording listed German in the side-window and English over HTTP). The annotation freed the
+  name and is now `@ReactCommandHandler`.
+  - **Item-valued identities replace JSON-in-string keys.** Table `selectByKey` takes
+    `ModelName getKey()`, dropdown `selectByKey` takes `List<ModelName> getKeys()`; the projection's
+    row/option `key` is the same config-JSON value the property binds from, so an agent copies it
+    verbatim. The formerly unacceptable *"Zeile '<JSON>' auswählen"* now reads
+    *"Zeile "Sample 3" auswählen"* — the `ModelName` renders through its own label.
+  - Assertions are typed too (`AssertCommand`, expected state as canonical JSON), and
+    `ReactWindowReplay` now verifies them, so the side-window step debugger can replay assertion
+    steps like the HTTP runner.
+  - The advertised argument schemas strip the envelope properties; schemas are cached per
+    descriptor, and an interface with an unbounded item-typed value space (the `ModelName` closure
+    defeats the schema builder) falls back to a minimal property-name schema instead of logging
+    errors on every observe.
+  - Verified live end to end: record row-click + tab switch + sidebar navigation → readable
+    descriptions during recording, after stop, and via `record/steps`; step-debugger replay fails
+    loudly in the wrong context and succeeds (row "Sample 3" selected by identity) in the right
+    one; `POST /replay` of the full wire-form script succeeds including the nested `ModelName`
+    round trip. Unit suites: 57 (react) + 100 (view) green.
 
 - **2026-07-09** — **Step descriptions captured with the step, not re-derived from the live tree.**
   The recorder side-window rendered a step's description by re-resolving the step's address against

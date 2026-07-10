@@ -15,8 +15,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.headless.ReactWindowReplay;
-import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.command.ViewAction;
@@ -71,20 +71,19 @@ public class StepReplayAction implements ViewAction {
 			return input;
 		}
 
-		List<RecordedStep> steps = recorder.steps();
+		List<ReactCommand> steps = recorder.steps();
 		int index = selectedIndex(input, steps.size());
 		if (index < 0) {
 			info(context, I18NConstants.SELECT_STEP_TO_REPLAY);
 			return input;
 		}
 
-		RecordedStep step = steps.get(index);
+		ReactCommand step = steps.get(index);
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		try {
-			HandlerResult result =
-				ReactWindowReplay.act(registry, openerWindowId, step.address(), step.command(), step.arguments());
+			HandlerResult result = ReactWindowReplay.act(registry, openerWindowId, step);
 			if (!result.isSuccess()) {
-				error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.address())));
+				error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.getAddress())));
 				return input;
 			}
 		} catch (RuntimeException ex) {

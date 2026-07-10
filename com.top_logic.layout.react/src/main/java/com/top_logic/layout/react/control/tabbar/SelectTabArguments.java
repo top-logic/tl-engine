@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.tabbar;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactTabBarControl#SELECT_TAB_COMMAND} command: which tab to
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Activate tab '{tabId}'")
-public interface SelectTabArguments extends ReactCommandArguments {
+public interface SelectTabArguments extends ReactCommand {
 
 	/** @see #getTabId() */
 	String TAB_ID = "tabId";

@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.control.overlay;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -151,7 +151,7 @@ public class ReactDrawerControl extends ReactControl {
 	/**
 	 * Handles the close command sent when the drawer is closed.
 	 */
-	@ReactCommand(value = "close", technical = true)
+	@ReactCommandHandler(value = "close", technical = true)
 	void handleClose() {
 		close();
 		_closeHandler.run();

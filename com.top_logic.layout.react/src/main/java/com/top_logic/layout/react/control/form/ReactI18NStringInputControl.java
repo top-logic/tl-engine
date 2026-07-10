@@ -15,7 +15,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -193,7 +193,7 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	 * after an actual edit, so merely focusing and leaving the field translates nothing.
 	 * </p>
 	 */
-	@ReactCommand(COMMIT_COMMAND)
+	@ReactCommandHandler(COMMIT_COMMAND)
 	void handleCommit() {
 		if (!TranslationService.isActive()) {
 			return;

@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.AgentControl;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
@@ -85,13 +85,13 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	private static final String DRAWER_TOGGLE_CONTRIBUTION = "drawerToggleContribution";
 
-	/** The {@link ReactCommand} that selects a navigation item. */
+	/** The {@link ReactCommandHandler} that selects a navigation item. */
 	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
-	/** The {@link ReactCommand} that executes a sidebar command item. */
+	/** The {@link ReactCommandHandler} that executes a sidebar command item. */
 	public static final String EXECUTE_COMMAND_COMMAND = "executeCommand";
 
-	/** The {@link ReactCommand} that expands or collapses a sidebar group. */
+	/** The {@link ReactCommandHandler} that expands or collapses a sidebar group. */
 	public static final String TOGGLE_GROUP_COMMAND = "toggleGroup";
 
 	private final Consumer<Boolean> _onCollapseChanged;
@@ -536,7 +536,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles navigation item selection from the client.
 	 */
-	@ReactCommand(SELECT_ITEM_COMMAND)
+	@ReactCommandHandler(SELECT_ITEM_COMMAND)
 	void handleSelectItem(SelectItemArguments args) {
 		String itemId = args.getItemId();
 
@@ -555,7 +555,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles command item execution from the client.
 	 */
-	@ReactCommand(EXECUTE_COMMAND_COMMAND)
+	@ReactCommandHandler(EXECUTE_COMMAND_COMMAND)
 	HandlerResult handleExecuteCommand(ReactContext context, ExecuteCommandArguments args) {
 		String itemId = args.getItemId();
 		CommandItem cmdItem = findCommandItem(itemId, _items);
@@ -602,7 +602,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles collapse toggle from the client.
 	 */
-	@ReactCommand(value = "toggleCollapse", technical = true)
+	@ReactCommandHandler(value = "toggleCollapse", technical = true)
 	void handleToggleCollapse() {
 		toggleCollapse();
 	}
@@ -624,7 +624,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles mobile drawer toggle from the client.
 	 */
-	@ReactCommand(value = "toggleDrawer", technical = true)
+	@ReactCommandHandler(value = "toggleDrawer", technical = true)
 	void handleToggleDrawer() {
 		toggleDrawer();
 	}
@@ -632,7 +632,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	/**
 	 * Handles group expand/collapse toggle from the client.
 	 */
-	@ReactCommand(value = TOGGLE_GROUP_COMMAND, technical = true)
+	@ReactCommandHandler(value = TOGGLE_GROUP_COMMAND, technical = true)
 	void handleToggleGroup(ToggleGroupArguments args) {
 		String itemId = args.getItemId();
 		boolean expanded = args.isExpanded();

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
@@ -30,7 +31,7 @@ import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.AgentModelKey;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.scripting.ReactActionContext;
@@ -421,7 +422,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ARG_ROW_INDEX, Integer.valueOf(index));
 			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
-			String key = AgentModelKey.toJson(row.data());
+			Object key = AgentModelKey.toKey(null, row.data());
 			if (key != null) {
 				rowState.put(ARG_KEY, key);
 			}
@@ -487,7 +488,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * per field is chosen from the field model itself ({@link #fieldControl}).
 	 * </p>
 	 */
-	@ReactCommand(CMD_OPEN_FILTER)
+	@ReactCommandHandler(CMD_OPEN_FILTER)
 	void handleOpenFilter(OpenFilterArguments args) {
 		String column = args.getColumn();
 		ColumnFilter<?> filter = _view.columnFilter(column);
@@ -607,7 +608,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a viewport scroll request.
 	 */
-	@ReactCommand(CMD_SCROLL)
+	@ReactCommandHandler(CMD_SCROLL)
 	void handleScroll(ScrollArguments args) {
 		updateViewport(args.getStart(), args.getCount());
 	}
@@ -615,7 +616,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a sort request (single click replaces, shift-click adds/toggles).
 	 */
-	@ReactCommand(CMD_SORT)
+	@ReactCommandHandler(CMD_SORT)
 	void handleSort(SortArguments args) {
 		String column = args.getColumn();
 		boolean ascending = !SORT_DESC.equals(args.getDirection());
@@ -640,7 +641,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a row selection (single / ctrl-toggle / shift-range).
 	 */
-	@ReactCommand(CMD_SELECT)
+	@ReactCommandHandler(CMD_SELECT)
 	void handleSelect(SelectRowArguments args) {
 		int rowIndex = args.getRowIndex();
 		int total = _view.rowCount();
@@ -687,13 +688,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * recorded selection is captured as so it survives sorting, filtering and a fresh session.
 	 *
 	 * @param args
-	 *        Carries a {@link SelectByKeyArguments#getKey() key} with a row business key (the same key
-	 *        the agent projection puts on each row).
+	 *        Carries a {@link SelectByKeyArguments#getKey() key} with a row business identity (the
+	 *        same key the agent projection puts on each row).
 	 */
-	@ReactCommand(CMD_SELECT_BY_KEY)
+	@ReactCommandHandler(CMD_SELECT_BY_KEY)
 	HandlerResult handleSelectByKey(SelectByKeyArguments args) {
-		String key = args.getKey();
-		ModelName name = key == null ? null : AgentModelKey.fromJson(key);
+		ModelName name = args.getKey();
 		Object target = null;
 		if (name != null) {
 			try {
@@ -702,7 +702,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 					new ReactActionContext(displayContext, displayContext.asRequest().getSession());
 				target = ModelResolver.locateModel(actionContext, null, name);
 			} catch (RuntimeException ex) {
-				Logger.warn("Cannot resolve row for key: " + key, ex, this);
+				Logger.warn("Cannot resolve row for key: " + name, ex, this);
 			}
 		}
 		if (target != null) {
@@ -723,7 +723,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 		}
 		// Drift contract: a recorded row key that no longer designates a present row is an explicit
 		// failure (replay reports success:false), never a silent no-op selection.
-		return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(key));
+		return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
 	}
 
 	/**
@@ -743,9 +743,9 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 
 	/**
 	 * Records a plain (unmodified) row selection in replay-stable form: a {@link #CMD_SELECT} by
-	 * {@link #ARG_ROW_INDEX} becomes a {@link #CMD_SELECT_BY_KEY} of the row's business key, so the
-	 * recording survives sorting and a fresh session. Modifier selections (ctrl/shift range/toggle)
-	 * are recorded verbatim — their semantics are index/anchor based.
+	 * {@link #ARG_ROW_INDEX} becomes a {@link #CMD_SELECT_BY_KEY} of the row's business identity, so
+	 * the recording survives sorting and a fresh session. Modifier selections (ctrl/shift
+	 * range/toggle) are recorded verbatim — their semantics are index/anchor based.
 	 */
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
@@ -755,9 +755,12 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 				&& !Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY))) {
 			List<Row<R>> single = _view.rows(rowIndex.intValue(), rowIndex.intValue() + 1);
 			if (!single.isEmpty()) {
-				String key = AgentModelKey.toJson(single.get(0).data());
+				ModelName key = AgentModelKey.name(null, single.get(0).data());
 				if (key != null) {
-					return new RecordedCommand(CMD_SELECT_BY_KEY, Map.of(ARG_KEY, key));
+					SelectByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
+					recorded.setName(CMD_SELECT_BY_KEY);
+					recorded.setKey(key);
+					return new RecordedCommand(recorded);
 				}
 			}
 		}
@@ -778,7 +781,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	 * it.
 	 * </p>
 	 */
-	@ReactCommand(CMD_MOVE_SELECTION)
+	@ReactCommandHandler(CMD_MOVE_SELECTION)
 	void handleMoveSelection(MoveSelectionArguments args) {
 		int total = _view.rowCount();
 		if (total == 0) {
@@ -839,7 +842,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles the header select-all / deselect-all checkbox.
 	 */
-	@ReactCommand(CMD_SELECT_ALL)
+	@ReactCommandHandler(CMD_SELECT_ALL)
 	void handleSelectAll(SelectAllArguments args) {
 		boolean selected = args.isSelected();
 		_selectedKeys.clear();
@@ -857,7 +860,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a column resize.
 	 */
-	@ReactCommand(CMD_COLUMN_RESIZE)
+	@ReactCommandHandler(CMD_COLUMN_RESIZE)
 	void handleColumnResize(ColumnResizeArguments args) {
 		String column = args.getColumn();
 		int width = Math.max(MIN_WIDTH, args.getWidth());
@@ -868,7 +871,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a column reorder.
 	 */
-	@ReactCommand(CMD_COLUMN_REORDER)
+	@ReactCommandHandler(CMD_COLUMN_REORDER)
 	void handleColumnReorder(ColumnReorderArguments args) {
 		String column = args.getColumn();
 		int targetIndex = args.getTargetIndex();
@@ -879,7 +882,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a tree/group expand or collapse.
 	 */
-	@ReactCommand(CMD_EXPAND)
+	@ReactCommandHandler(CMD_EXPAND)
 	void handleExpand(ExpandArguments args) {
 		int rowIndex = args.getRowIndex();
 		boolean expanded = args.isExpanded();
@@ -893,7 +896,7 @@ public class TableViewControl<R> extends ReactControl implements TooltipProvider
 	/**
 	 * Handles a change of the frozen column count.
 	 */
-	@ReactCommand(CMD_SET_FROZEN_COLUMN_COUNT)
+	@ReactCommandHandler(CMD_SET_FROZEN_COLUMN_COUNT)
 	void handleSetFrozenColumnCount(SetFrozenColumnCountArguments args) {
 		int count = args.getCount();
 		_view.setFrozenColumnCount(Math.max(0, count));

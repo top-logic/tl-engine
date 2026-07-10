@@ -17,13 +17,6 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * Recorder-step description of a field value change: which field (by name) was set to which value.
-	 *
-	 * @en Set ''{0}'' to ''{1}''
-	 */
-	public static ResKey2 RECORD_FIELD_VALUE__FIELD_VALUE;
-
-	/**
 	 * @en React control value changed.
 	 */
 	public static ResKey REACT_VALUE_CHANGED;
@@ -683,6 +676,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}
 	 */
 	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}
+	 */
+	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;
 
 	static {
 		initConstants(I18NConstants.class);

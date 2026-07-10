@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control.overlay;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactWindowControl#RESIZE_COMMAND} command: the new window
@@ -19,7 +19,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Resize window to {width}×{height}")
-public interface ResizeArguments extends ReactCommandArguments {
+public interface ResizeArguments extends ReactCommand {
 
 	/** @see #getWidth() */
 	String WIDTH = "width";

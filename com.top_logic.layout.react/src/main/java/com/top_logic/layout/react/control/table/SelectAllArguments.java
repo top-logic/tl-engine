@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control.table;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link TableViewControl} {@code selectAll} command: whether the header
@@ -19,7 +19,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Select all rows: {selected}")
-public interface SelectAllArguments extends ReactCommandArguments {
+public interface SelectAllArguments extends ReactCommand {
 
 	/** @see #isSelected() */
 	String SELECTED = "selected";

@@ -59,7 +59,6 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.headless.AgentSession;
 import com.top_logic.layout.react.headless.ReactWindowReplay;
-import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.JSSnipplet;
@@ -441,7 +440,8 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Captures the command as a {@link RecordedStep} if the window's {@link ScriptRecorder} is active.
+	 * Captures the command as a typed {@link com.top_logic.layout.react.control.ReactCommand} item if
+	 * the window's {@link ScriptRecorder} is active.
 	 *
 	 * <p>
 	 * The target control is translated to its stable semantic {@link AgentSession#addressOf(ReactControl)
@@ -459,16 +459,11 @@ public class ReactServlet extends TopLogicServlet {
 			// Incidental view adjustments (scroll, column resize) and chrome are not user intent.
 			return;
 		}
-		String address = AgentSession.forRoot(queue.getRootControl()).addressOf(reactControl);
 		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
-		// replay-stable form before capture.
+		// replay-stable typed item before capture.
 		RecordedCommand recorded = reactControl.recordCommand(commandName, arguments);
-		// The description is captured with the step: it is derived from the target control, which a
-		// later reader (the recorder side-window) cannot re-resolve once the UI has navigated on.
-		String description = reactControl.describeCommand(recorded.command(), recorded.arguments(),
-			AgentSession.targetName(address));
-		recorder.record(new RecordedStep(address, recorded.command(), recorded.arguments(), description),
-			recorded.coalescing());
+		recorded.command().setAddress(AgentSession.forRoot(queue.getRootControl()).addressOf(reactControl));
+		recorder.record(recorded.command(), recorded.coalescing());
 	}
 
 	/**

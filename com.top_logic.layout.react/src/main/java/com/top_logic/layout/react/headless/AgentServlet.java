@@ -26,6 +26,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -129,6 +131,8 @@ public class AgentServlet extends TopLogicServlet {
 	private static final String FIELD_ACTUAL = "actual";
 
 	private static final String FIELD_MISMATCHES = "mismatches";
+
+	private static final String FIELD_DESCRIPTION = "description";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -395,11 +399,36 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static void writeRecorderState(HttpServletResponse response, ScriptRecorder recorder) throws IOException {
 		List<Map<String, Object>> steps = new ArrayList<>();
-		for (RecordedStep step : recorder.steps()) {
-			steps.add(step.toMap());
+		for (ReactCommand step : recorder.steps()) {
+			steps.add(stepWireForm(step));
 		}
 		write(response, "{\"" + FIELD_RECORDING + "\":" + recorder.isRecording()
 			+ ",\"" + FIELD_STEPS + "\":" + JSON.toString(steps) + "}");
+	}
+
+	/**
+	 * A recorded step in the wire form the replay endpoint accepts back: {@code address},
+	 * {@code command}, its {@code arguments} and the generated human-readable {@code description} —
+	 * all derived from the typed {@link ReactCommand} item.
+	 */
+	private static Map<String, Object> stepWireForm(ReactCommand step) {
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(FIELD_ADDRESS, step.getAddress());
+		result.put(FIELD_COMMAND, step.getName());
+		if (step instanceof AssertCommand assertion) {
+			// The expected state is carried as a nested object, matching what record/assert accepted.
+			result.put(FIELD_ARGUMENTS, Map.of(AssertCommand.STATE, assertion.stateEntries()));
+		} else {
+			result.put(FIELD_ARGUMENTS, ReactCommands.arguments(step));
+		}
+		try {
+			result.put(FIELD_DESCRIPTION, ReactCommands.describe(step));
+		} catch (RuntimeException ex) {
+			// The description is informational; a rendering problem must not break the listing.
+			Logger.error("Failed to describe recorded step at '" + step.getAddress() + "'.", ex,
+				AgentServlet.class);
+		}
+		return result;
 	}
 
 	/**
@@ -430,7 +459,7 @@ public class AgentServlet extends TopLogicServlet {
 			if (expected == null) {
 				expected = AgentTreeProjector.nodeState(agentSession.resolve(address));
 			}
-			queue.getRecorder().record(RecordedStep.assertion(address, expected));
+			queue.getRecorder().record(AssertCommand.create(address, expected));
 			writeRecorderState(response, queue.getRecorder());
 		} finally {
 			requestLock.unlock();
@@ -509,7 +538,7 @@ public class AgentServlet extends TopLogicServlet {
 			result.put(FIELD_ERROR, "Step has no address or command.");
 			return result;
 		}
-		if (RecordedStep.ASSERT_COMMAND.equals(command)) {
+		if (AssertCommand.COMMAND_NAME.equals(command)) {
 			return verifyAssertion(queue, address, result, arguments);
 		}
 		try {
@@ -536,10 +565,10 @@ public class AgentServlet extends TopLogicServlet {
 	private Map<String, Object> verifyAssertion(SSEUpdateQueue queue, String address, Map<String, Object> result,
 			Map<String, Object> arguments) {
 		Map<String, Object> expected = arguments == null
-			? Map.of() : (Map<String, Object>) arguments.getOrDefault(RecordedStep.ASSERT_STATE_ARG, Map.of());
+			? Map.of() : (Map<String, Object>) arguments.getOrDefault(AssertCommand.STATE, Map.of());
 		try {
 			Map<String, Object> actual = AgentTreeProjector.nodeState(agentSession(queue).resolve(address));
-			List<String> mismatchKeys = RecordedStep.mismatchingKeys(expected, actual);
+			List<String> mismatchKeys = AssertCommand.mismatchingKeys(expected, actual);
 			result.put(FIELD_SUCCESS, mismatchKeys.isEmpty());
 			if (!mismatchKeys.isEmpty()) {
 				List<Map<String, Object>> mismatches = new ArrayList<>();

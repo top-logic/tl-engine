@@ -22,7 +22,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
@@ -443,7 +443,7 @@ public class CompositionTableControl extends ReactControl implements FormModelLi
 	 * current list. Updates the main overlay and refreshes the table.
 	 * </p>
 	 */
-	@ReactCommand("addRow")
+	@ReactCommandHandler("addRow")
 	void handleAddRow() {
 		addRow();
 	}

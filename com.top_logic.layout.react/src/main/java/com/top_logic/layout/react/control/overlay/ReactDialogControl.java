@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.control.overlay;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -122,7 +122,7 @@ public class ReactDialogControl extends ReactControl {
 	/**
 	 * Handles the close command sent when the dialog overlay is dismissed.
 	 */
-	@ReactCommand("close")
+	@ReactCommandHandler("close")
 	void handleClose() {
 		close();
 		_closeHandler.run();

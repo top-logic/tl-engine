@@ -27,7 +27,7 @@ import com.top_logic.layout.form.control.IconInputControl;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -82,7 +82,7 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 	/**
 	 * Lazily loads icon metadata from configured icon libraries and sends it to the client.
 	 */
-	@ReactCommand("loadIcons")
+	@ReactCommandHandler("loadIcons")
 	HandlerResult handleLoadIcons() {
 		try {
 			List<Map<String, Object>> iconData = buildIconData();

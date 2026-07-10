@@ -15,6 +15,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -71,6 +72,25 @@ public final class AgentModelKey {
 	 * @return The key JSON, or {@code null}.
 	 */
 	public static String toJson(Object valueContext, Object model) {
+		return toJson(name(valueContext, model));
+	}
+
+	/**
+	 * The {@link ModelName} of the given model object built relative to a value context, or
+	 * {@code null} if the object cannot be named (e.g. has no applicable naming scheme).
+	 *
+	 * <p>
+	 * Best-effort: any failure to name yields {@code null} rather than an error. See
+	 * {@link #toJson(Object, Object)} for the value-context semantics.
+	 * </p>
+	 *
+	 * @param valueContext
+	 *        The context object the name is built relative to, or {@code null} for a global name.
+	 * @param model
+	 *        The business object to identify.
+	 * @return The name, or {@code null}.
+	 */
+	public static ModelName name(Object valueContext, Object model) {
 		if (model == null) {
 			return null;
 		}
@@ -82,7 +102,47 @@ public final class AgentModelKey {
 		} catch (Throwable ex) {
 			return null;
 		}
-		if (!name.hasValue()) {
+		return name.hasValue() ? name.get() : null;
+	}
+
+	/**
+	 * The identity of the given model object as a JSON <em>value</em> (the parsed form of
+	 * {@link #toJson(Object, Object)}), or {@code null} if the object cannot be named.
+	 *
+	 * <p>
+	 * This is the {@code key} the headless projection puts on rows and options: the same config-JSON
+	 * value a {@link ModelName}-typed command argument binds from, so an agent copies the key
+	 * verbatim into a {@code selectByKey} command.
+	 * </p>
+	 *
+	 * @param valueContext
+	 *        The context object the name is built relative to, or {@code null} for a global name.
+	 * @param model
+	 *        The business object to identify.
+	 * @return The key JSON value, or {@code null}.
+	 */
+	public static Object toKey(Object valueContext, Object model) {
+		String json = toJson(valueContext, model);
+		if (json == null) {
+			return null;
+		}
+		try {
+			return JSON.fromString(json);
+		} catch (JSON.ParseException ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * The given {@link ModelName} serialized as JSON, or {@code null} if it cannot be serialized (or
+	 * {@code name} is {@code null}).
+	 *
+	 * @param name
+	 *        The name to serialize.
+	 * @return The key JSON, or {@code null}.
+	 */
+	public static String toJson(ModelName name) {
+		if (name == null) {
 			return null;
 		}
 		try {
@@ -91,7 +151,7 @@ public final class AgentModelKey {
 			// Write with the polymorphic ModelName static type so the concrete scheme's name type is
 			// encoded (as the array type tag). Without it the key would be a bare property object that
 			// {@link #fromJson(String)} could not reconstruct the scheme for.
-			new JsonConfigurationWriter(json).write(ModelName.class, name.get());
+			new JsonConfigurationWriter(json).write(ModelName.class, name);
 			json.flush();
 			return buffer.toString();
 		} catch (Throwable ex) {

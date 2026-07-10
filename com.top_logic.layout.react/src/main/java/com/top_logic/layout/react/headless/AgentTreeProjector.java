@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
@@ -373,21 +374,100 @@ public final class AgentTreeProjector {
 	/**
 	 * The JSON Schema of the command's typed argument interface, as a parsed JSON value, or
 	 * {@code null} if the command takes a raw {@code Map} (or no arguments).
+	 *
+	 * <p>
+	 * The {@link com.top_logic.layout.react.control.ReactCommand} base properties (address, name and
+	 * the derived target) are the recorded step's envelope, never sent by a client in the
+	 * {@code arguments} — they are stripped so every command's advertised schema shows only its own
+	 * arguments.
+	 * </p>
+	 *
+	 * <p>
+	 * Schemas are cached per argument descriptor. An argument interface with an item-typed identity
+	 * property (e.g. a row's {@code ModelName} key) has an unbounded polymorphic value space the
+	 * schema builder cannot enumerate; such a command falls back to a minimal object schema naming
+	 * the argument properties — the identity values are copied verbatim from the projection anyway.
+	 * </p>
 	 */
 	private static Object argsSchemaOf(ReactControl control, String command) {
 		ConfigurationDescriptor argType = control.agentCommandArgsType(command);
 		if (argType == null) {
 			return null;
 		}
+		return SCHEMA_CACHE.computeIfAbsent(argType, descriptor -> buildArgsSchema(control, command, descriptor));
+	}
+
+	private static Object buildArgsSchema(ReactControl control, String command, ConfigurationDescriptor argType) {
 		try {
 			Schema schema = new JsonConfigSchemaBuilder().buildConfigSchema(argType);
-			return JSON.read(new StringReader(JsonSchemaWriter.toJson(schema)));
+			Object parsed = JSON.read(new StringReader(JsonSchemaWriter.toJson(schema)));
+			stripEnvelopeProperties(parsed);
+			return parsed;
 		} catch (Exception ex) {
-			Logger.error("Failed to project argument schema for command '" + command + "' on "
-				+ control.getClass().getName(), ex, AgentTreeProjector.class);
-			return null;
+			Logger.info("No full argument schema for command '" + command + "' on "
+				+ control.getClass().getName() + " (unbounded value space): " + ex.getMessage(),
+				AgentTreeProjector.class);
+			return minimalArgsSchema(argType);
 		}
 	}
+
+	/**
+	 * A minimal object schema naming the argument properties (without value schemas), for an
+	 * argument interface whose full schema cannot be built.
+	 */
+	private static Object minimalArgsSchema(ConfigurationDescriptor argType) {
+		Map<String, Object> properties = new HashMap<>();
+		for (com.top_logic.basic.config.PropertyDescriptor property : argType.getProperties()) {
+			String name = property.getPropertyName();
+			if (!ENVELOPE_PROPERTIES.contains(name)) {
+				properties.put(name, Map.of());
+			}
+		}
+		Map<String, Object> schema = new HashMap<>();
+		schema.put("type", "object");
+		schema.put("properties", properties);
+		return schema;
+	}
+
+	/**
+	 * Built argument schemas by descriptor, so the (potentially expensive or failing) build runs once
+	 * per argument interface instead of once per observation.
+	 */
+	private static final Map<ConfigurationDescriptor, Object> SCHEMA_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
+	/**
+	 * Removes the {@link com.top_logic.layout.react.control.ReactCommand} envelope properties from
+	 * every {@code properties} object and {@code required} list of the given parsed JSON Schema, in
+	 * place.
+	 */
+	private static void stripEnvelopeProperties(Object schema) {
+		if (schema instanceof Map<?, ?> map) {
+			Object properties = map.get("properties");
+			if (properties instanceof Map<?, ?> propertyMap) {
+				propertyMap.keySet().removeAll(ENVELOPE_PROPERTIES);
+			}
+			Object required = map.get("required");
+			if (required instanceof List<?> requiredList) {
+				requiredList.removeAll(ENVELOPE_PROPERTIES);
+			}
+			for (Object value : map.values()) {
+				stripEnvelopeProperties(value);
+			}
+		} else if (schema instanceof List<?> list) {
+			for (Object element : list) {
+				stripEnvelopeProperties(element);
+			}
+		}
+	}
+
+	/**
+	 * The {@link com.top_logic.layout.react.control.ReactCommand} base property names stripped from
+	 * advertised argument schemas by {@link #stripEnvelopeProperties(Object)}.
+	 */
+	private static final Set<String> ENVELOPE_PROPERTIES = Set.of(
+		com.top_logic.layout.react.control.ReactCommand.ADDRESS,
+		com.top_logic.layout.react.control.ReactCommand.NAME,
+		com.top_logic.layout.react.control.ReactCommand.TARGET);
 
 	/**
 	 * Derives a role from a React module identifier (e.g. {@code "TLButton"} to {@code "button"},

@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.nav;
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
@@ -59,7 +59,7 @@ public class ReactAppShellControl extends ReactControl {
 
 	private static final String MENU_OVERLAY = "menuOverlay";
 
-	/** The {@link ReactCommand} that records the client's responsive display class. */
+	/** The {@link ReactCommandHandler} that records the client's responsive display class. */
 	public static final String REPORT_DISPLAY_CLASS_COMMAND = "reportDisplayClass";
 
 	private final ReactControl _header;
@@ -161,7 +161,7 @@ public class ReactAppShellControl extends ReactControl {
 	 * @param args
 	 *        The reported {@link DisplayClass} name.
 	 */
-	@ReactCommand(value = REPORT_DISPLAY_CLASS_COMMAND, technical = true)
+	@ReactCommandHandler(value = REPORT_DISPLAY_CLASS_COMMAND, technical = true)
 	void handleReportDisplayClass(ReportDisplayClassArguments args) {
 		String reported = args.getDisplayClass();
 		DisplayClass displayClass = DisplayClass.DEFAULT;

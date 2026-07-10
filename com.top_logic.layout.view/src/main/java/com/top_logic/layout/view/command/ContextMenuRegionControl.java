@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
@@ -78,7 +78,7 @@ public class ContextMenuRegionControl extends ReactControl {
 	 * Opens the context menu at the given client coordinates, using the current target supplier
 	 * value as the selection target.
 	 */
-	@ReactCommand("openContextMenu")
+	@ReactCommandHandler("openContextMenu")
 	void handleOpen(Map<String, Object> arguments) {
 		int x = intArg(arguments, "x");
 		int y = intArg(arguments, "y");

@@ -10,7 +10,7 @@ import com.top_logic.basic.io.binary.BinaryDataValue;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -100,7 +100,7 @@ public class ReactDownloadControl extends ReactControl implements DataProvider {
 	/**
 	 * Handles the clear event from the React client, removing the current data.
 	 */
-	@ReactCommand("clear")
+	@ReactCommandHandler("clear")
 	void handleClear() {
 		_model.setData(null);
 	}

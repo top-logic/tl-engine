@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link TableViewControl} {@code columnReorder} command: which column to
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Move column '{column}' to position {targetIndex}")
-public interface ColumnReorderArguments extends ReactCommandArguments {
+public interface ColumnReorderArguments extends ReactCommand {
 
 	/** @see #getColumn() */
 	String COLUMN = "column";

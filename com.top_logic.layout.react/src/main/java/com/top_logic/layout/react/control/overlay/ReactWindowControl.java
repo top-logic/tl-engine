@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ToolbarControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
@@ -62,7 +62,7 @@ public class ReactWindowControl extends ToolbarControl {
 
 	private static final String MIN_HEIGHT = "minHeight";
 
-	/** The {@link ReactCommand} that records a window resize. */
+	/** The {@link ReactCommandHandler} that records a window resize. */
 	public static final String RESIZE_COMMAND = "resize";
 
 	private ReactControl _child;
@@ -238,7 +238,7 @@ public class ReactWindowControl extends ToolbarControl {
 	/**
 	 * Handles the close button click.
 	 */
-	@ReactCommand("close")
+	@ReactCommandHandler("close")
 	void handleClose() {
 		_closeHandler.run();
 	}
@@ -246,7 +246,7 @@ public class ReactWindowControl extends ToolbarControl {
 	/**
 	 * Handles a resize event from the client.
 	 */
-	@ReactCommand(RESIZE_COMMAND)
+	@ReactCommandHandler(RESIZE_COMMAND)
 	void handleResize(ResizeArguments args) {
 		Integer w = args.getWidth();
 		Integer h = args.getHeight();

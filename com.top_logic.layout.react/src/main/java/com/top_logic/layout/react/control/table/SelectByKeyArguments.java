@@ -8,28 +8,35 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.scripting.recorder.ref.ModelName;
 
 /**
- * Typed arguments of the {@link TableViewControl} {@code selectByKey} command: the business key of
- * the row to select, as projected onto each row.
+ * The {@link TableViewControl} {@code selectByKey} command: selects the row whose business object
+ * has the given {@link ModelName identity}.
  *
  * <p>
- * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans.
+ * The key is the identity the headless projection puts on each row, so an agent copies a row's
+ * {@code key} verbatim into this command. The {@link Label} doubles as the
+ * {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider} template that renders a recorded
+ * step for humans — the {@link ModelName} renders through its own label, i.e. by the row's readable
+ * identity.
  * </p>
  */
-@Label("Select row '{key}'")
-public interface SelectByKeyArguments extends ReactCommandArguments {
+@Label("Select row {key}")
+public interface SelectByKeyArguments extends ReactCommand {
 
 	/** @see #getKey() */
 	String KEY = "key";
 
 	/**
-	 * Business key of the row to select (the {@code key} projected onto each row).
+	 * The business identity of the row to select (the {@code key} projected onto each row).
 	 */
 	@Name(KEY)
 	@Mandatory
-	String getKey();
+	ModelName getKey();
+
+	/** @see #getKey() */
+	void setKey(ModelName value);
 
 }

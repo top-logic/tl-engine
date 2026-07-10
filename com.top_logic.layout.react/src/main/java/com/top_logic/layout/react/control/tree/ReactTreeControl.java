@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
@@ -514,7 +514,7 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Expands a tree node, loading children and prefetching grandchildren.
 	 */
-	@ReactCommand(EXPAND_COMMAND)
+	@ReactCommandHandler(EXPAND_COMMAND)
 	void handleExpand(ExpandNodeArguments args) {
 		String nodeId = args.getNodeId();
 		Object node = findNodeById(nodeId);
@@ -536,7 +536,7 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Collapses a tree node, removing its children from the visible list.
 	 */
-	@ReactCommand(COLLAPSE_COMMAND)
+	@ReactCommandHandler(COLLAPSE_COMMAND)
 	void handleCollapse(CollapseNodeArguments args) {
 		String nodeId = args.getNodeId();
 		Object node = findNodeById(nodeId);
@@ -550,7 +550,7 @@ public class ReactTreeControl extends ReactControl {
 	 * Selects a tree node. Supports single, toggle (Ctrl), and range (Shift) selection.
 	 */
 	@SuppressWarnings("unchecked")
-	@ReactCommand(SELECT_COMMAND)
+	@ReactCommandHandler(SELECT_COMMAND)
 	void handleSelect(SelectNodeArguments args) {
 		String nodeId = args.getNodeId();
 		boolean ctrlKey = args.isCtrlKey();
@@ -603,7 +603,7 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Opens a context menu at the given coordinates for a tree node.
 	 */
-	@ReactCommand(CONTEXT_MENU_COMMAND)
+	@ReactCommandHandler(CONTEXT_MENU_COMMAND)
 	void handleContextMenu(ContextMenuArguments args) {
 		String nodeId = args.getNodeId();
 		Object node = findNodeById(nodeId);
@@ -618,7 +618,7 @@ public class ReactTreeControl extends ReactControl {
 	 * Evaluates whether a drop is allowed at the given position and updates the drop indicator
 	 * state.
 	 */
-	@ReactCommand(DRAG_OVER_COMMAND)
+	@ReactCommandHandler(DRAG_OVER_COMMAND)
 	void handleDragOver(DragOverArguments args) {
 		String nodeId = args.getNodeId();
 		String position = args.getPosition();
@@ -634,7 +634,7 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Handles a drop event on a tree node. Clears drop indicators and processes the drop.
 	 */
-	@ReactCommand(DROP_COMMAND)
+	@ReactCommandHandler(DROP_COMMAND)
 	void handleDrop(DropArguments args) {
 		String nodeId = args.getNodeId();
 		String position = args.getPosition();
@@ -656,7 +656,7 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Clears the drop indicator state when a drag operation ends.
 	 */
-	@ReactCommand("dragEnd")
+	@ReactCommandHandler("dragEnd")
 	void handleDragEnd() {
 		_dropIndicatorNodeId = null;
 		_dropIndicatorPosition = null;
@@ -667,7 +667,7 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Handles the selection of a context menu item.
 	 */
-	@ReactCommand(CONTEXT_MENU_ACTION_COMMAND)
+	@ReactCommandHandler(CONTEXT_MENU_ACTION_COMMAND)
 	void handleContextMenuAction(ContextMenuActionArguments args) {
 		String itemId = args.getItemId();
 		Consumer<String> handler = _contextMenuActionHandler;
@@ -680,7 +680,7 @@ public class ReactTreeControl extends ReactControl {
 	/**
 	 * Handles the context menu being closed without selection.
 	 */
-	@ReactCommand("contextMenuClose")
+	@ReactCommandHandler("contextMenuClose")
 	void handleContextMenuClose() {
 		closeContextMenu();
 	}

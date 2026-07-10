@@ -12,7 +12,7 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.AgentControl;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -45,7 +45,7 @@ public class ReactDeckPaneControl extends ReactControl {
 
 	private static final String CHILD_COUNT = "childCount";
 
-	/** The {@link ReactCommand} that activates a child pane. */
+	/** The {@link ReactCommandHandler} that activates a child pane. */
 	public static final String SELECT_CHILD_COMMAND = "selectChild";
 
 	/**
@@ -192,7 +192,7 @@ public class ReactDeckPaneControl extends ReactControl {
 	/**
 	 * Handles child selection from the client.
 	 */
-	@ReactCommand(SELECT_CHILD_COMMAND)
+	@ReactCommandHandler(SELECT_CHILD_COMMAND)
 	void handleSelectChild(SelectChildArguments args) {
 		selectChild(args.getIndex());
 	}

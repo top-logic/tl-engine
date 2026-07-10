@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control.nav;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactAppShellControl#REPORT_DISPLAY_CLASS_COMMAND} command: the
@@ -19,7 +19,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Report display class '{displayClass}'")
-public interface ReportDisplayClassArguments extends ReactCommandArguments {
+public interface ReportDisplayClassArguments extends ReactCommand {
 
 	/** @see #getDisplayClass() */
 	String DISPLAY_CLASS = "displayClass";

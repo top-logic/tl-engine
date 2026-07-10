@@ -25,7 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Built lazily on first instantiation of each class via {@link #forClass(Class)}. Scans the class
- * hierarchy for {@link ReactCommand}-annotated methods, builds {@link MethodHandle}s, and
+ * hierarchy for {@link ReactCommandHandler}-annotated methods, builds {@link MethodHandle}s, and
  * determines parameter injection flags.
  * </p>
  */
@@ -91,7 +91,7 @@ class ReactCommandMap {
 	}
 
 	/**
-	 * The ids of commands marked {@link ReactCommand#technical() technical} — omitted from the agent
+	 * The ids of commands marked {@link ReactCommandHandler#technical() technical} — omitted from the agent
 	 * action space and never recorded.
 	 */
 	Set<String> technicalCommands() {
@@ -99,7 +99,7 @@ class ReactCommandMap {
 	}
 
 	/**
-	 * Scans the given class hierarchy for {@link ReactCommand}-annotated methods and builds a
+	 * Scans the given class hierarchy for {@link ReactCommandHandler}-annotated methods and builds a
 	 * {@link ReactCommandMap}.
 	 *
 	 * @throws IllegalStateException
@@ -115,7 +115,7 @@ class ReactCommandMap {
 		for (Class<?> clazz = controlClass; clazz != null && clazz != Object.class;
 				clazz = clazz.getSuperclass()) {
 			for (Method method : clazz.getDeclaredMethods()) {
-				ReactCommand annotation = method.getAnnotation(ReactCommand.class);
+				ReactCommandHandler annotation = method.getAnnotation(ReactCommandHandler.class);
 				if (annotation == null) {
 					continue;
 				}
@@ -156,7 +156,7 @@ class ReactCommandMap {
 					}
 				} catch (IllegalAccessException ex) {
 					throw new IllegalStateException(
-						"Cannot access @ReactCommand method " + method + " on " + controlClass.getName(), ex);
+						"Cannot access @ReactCommandHandler method " + method + " on " + controlClass.getName(), ex);
 				}
 			}
 		}
@@ -167,14 +167,14 @@ class ReactCommandMap {
 		Class<?> returnType = method.getReturnType();
 		if (returnType != HandlerResult.class && returnType != void.class) {
 			throw new IllegalStateException(
-				"@ReactCommand method " + method.getName()
+				"@ReactCommandHandler method " + method.getName()
 					+ " must return HandlerResult or void, but returns "
 					+ returnType.getName());
 		}
 		Class<?>[] paramTypes = method.getParameterTypes();
 		if (paramTypes.length > 2) {
 			throw new IllegalStateException(
-				"@ReactCommand method " + method.getName() + " declares " + paramTypes.length
+				"@ReactCommandHandler method " + method.getName() + " declares " + paramTypes.length
 					+ " parameters, but at most 2 are allowed: "
 					+ "(ReactContext, Map<String, Object> | ConfigurationItem).");
 		}
@@ -184,30 +184,44 @@ class ReactCommandMap {
 			if (ReactContext.class.isAssignableFrom(paramType)) {
 				if (contextSeen) {
 					throw new IllegalStateException(
-						"@ReactCommand method " + method.getName()
+						"@ReactCommandHandler method " + method.getName()
 							+ " declares ReactContext more than once.");
 				}
 				if (argsSeen) {
 					throw new IllegalStateException(
-						"@ReactCommand method " + method.getName()
+						"@ReactCommandHandler method " + method.getName()
 							+ " declares ReactContext after the argument. "
 							+ "Required order: (ReactContext, Map<String, Object> | ConfigurationItem).");
 				}
 				contextSeen = true;
-			} else if (ConfigurationItem.class.isAssignableFrom(paramType)
-					|| Map.class.isAssignableFrom(paramType)) {
+			} else if (ConfigurationItem.class.isAssignableFrom(paramType)) {
+				if (!ReactCommand.class.isAssignableFrom(paramType)) {
+					// The typed argument doubles as the recorded step item, so it must carry the
+					// address/name envelope of the base interface.
+					throw new IllegalStateException(
+						"@ReactCommandHandler method " + method.getName() + " declares argument type "
+							+ paramType.getName() + " that does not extend " + ReactCommand.class.getName() + ".");
+				}
 				if (argsSeen) {
 					throw new IllegalStateException(
-						"@ReactCommand method " + method.getName()
+						"@ReactCommandHandler method " + method.getName()
 							+ " declares more than one argument parameter. Use either a raw Map or a "
-							+ "single ConfigurationItem argument type.");
+							+ "single ReactCommand argument type.");
+				}
+				argsSeen = true;
+			} else if (Map.class.isAssignableFrom(paramType)) {
+				if (argsSeen) {
+					throw new IllegalStateException(
+						"@ReactCommandHandler method " + method.getName()
+							+ " declares more than one argument parameter. Use either a raw Map or a "
+							+ "single ReactCommand argument type.");
 				}
 				argsSeen = true;
 			} else {
 				throw new IllegalStateException(
-					"@ReactCommand method " + method.getName() + " has unsupported parameter type: "
+					"@ReactCommandHandler method " + method.getName() + " has unsupported parameter type: "
 						+ paramType.getName()
-						+ ". Allowed: ReactContext, Map<String, Object>, or a ConfigurationItem argument type.");
+						+ ". Allowed: ReactContext, Map<String, Object>, or a ReactCommand argument type.");
 			}
 		}
 	}

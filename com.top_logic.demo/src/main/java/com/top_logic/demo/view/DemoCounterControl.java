@@ -6,7 +6,7 @@
 package com.top_logic.demo.view;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -60,12 +60,12 @@ public class DemoCounterControl extends ReactControl {
 		putState(COUNT, count);
 	}
 
-	@ReactCommand("increment")
+	@ReactCommandHandler("increment")
 	void handleIncrement() {
 		setCount(getCount() + 1);
 	}
 
-	@ReactCommand("decrement")
+	@ReactCommandHandler("decrement")
 	void handleDecrement() {
 		setCount(getCount() - 1);
 	}

@@ -18,8 +18,9 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.control.table.TableViewControl;
-import com.top_logic.layout.react.headless.RecordedStep;
 import com.top_logic.layout.react.headless.ScriptRecorder;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -34,7 +35,7 @@ import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 
 /**
- * Read-only table of {@link RecordedStep captured recorder steps}, one row per step with its 1-based
+ * Read-only table of {@link ReactCommand captured recorder steps}, one row per step with its 1-based
  * number, target address, command and arguments.
  *
  * <p>
@@ -52,14 +53,14 @@ public class RecordedStepsTable implements UIElement {
 
 	/**
 	 * A captured step paired with its 1-based position, so the table can show and key by the step
-	 * number independent of the {@link RecordedStep} value (two identical steps stay distinct rows).
+	 * number independent of the {@link ReactCommand} item (two identical steps stay distinct rows).
 	 *
 	 * @param number
 	 *        The 1-based step number.
 	 * @param step
 	 *        The captured step.
 	 */
-	private record NumberedStep(int number, RecordedStep step) {
+	private record NumberedStep(int number, ReactCommand step) {
 		// Pure data.
 	}
 
@@ -101,9 +102,10 @@ public class RecordedStepsTable implements UIElement {
 		List<Column<NumberedStep, ?>> columns = new ArrayList<>();
 		columns.add(textColumn("index", I18NConstants.COLUMN_INDEX, r -> Integer.toString(r.number()), 60));
 		columns.add(textColumn("description", I18NConstants.COLUMN_DESCRIPTION, r -> describe(r.step()), 360));
-		columns.add(textColumn("address", I18NConstants.COLUMN_ADDRESS, r -> nullSafe(r.step().address()), 360));
-		columns.add(textColumn("command", I18NConstants.COLUMN_COMMAND, r -> r.step().command(), 140));
-		columns.add(textColumn("arguments", I18NConstants.COLUMN_ARGUMENTS, r -> JSON.toString(r.step().arguments()), 260));
+		columns.add(textColumn("address", I18NConstants.COLUMN_ADDRESS, r -> nullSafe(r.step().getAddress()), 360));
+		columns.add(textColumn("command", I18NConstants.COLUMN_COMMAND, r -> r.step().getName(), 140));
+		columns.add(textColumn("arguments", I18NConstants.COLUMN_ARGUMENTS,
+			r -> JSON.toString(ReactCommands.arguments(r.step())), 260));
 
 		ScriptRecorder recorder = RecorderAccess.openerRecorder(context);
 		ListRowSource<NumberedStep> source =
@@ -170,7 +172,7 @@ public class RecordedStepsTable implements UIElement {
 		List<NumberedStep> result = new ArrayList<>();
 		if (recorder != null) {
 			int number = 1;
-			for (RecordedStep step : recorder.steps()) {
+			for (ReactCommand step : recorder.steps()) {
 				result.add(new NumberedStep(number++, step));
 			}
 		}
@@ -190,15 +192,16 @@ public class RecordedStepsTable implements UIElement {
 	}
 
 	/**
-	 * The step's {@link RecordedStep#description() capture-time description} (e.g. <em>Navigate to
-	 * 'input-controls'</em>), falling back to the raw command and arguments for assertion steps and
-	 * untyped commands.
+	 * The step's human-readable description, {@link ReactCommands#describe(ReactCommand) generated}
+	 * from the typed item (e.g. <em>Navigate to 'input-controls'</em>).
 	 */
-	private static String describe(RecordedStep step) {
-		if (step.description() != null) {
-			return step.description();
+	private static String describe(ReactCommand step) {
+		try {
+			return ReactCommands.describe(step);
+		} catch (RuntimeException ex) {
+			// The description is informational; a rendering problem must not break the step list.
+			return step.getName() + " " + JSON.toString(ReactCommands.arguments(step));
 		}
-		return step.command() + " " + JSON.toString(step.arguments());
 	}
 
 	/**

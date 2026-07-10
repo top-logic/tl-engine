@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.table;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link TableViewControl} {@code select} command: which row to select and
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Select row {rowIndex}")
-public interface SelectRowArguments extends ReactCommandArguments {
+public interface SelectRowArguments extends ReactCommand {
 
 	/** @see #getRowIndex() */
 	String ROW_INDEX = "rowIndex";

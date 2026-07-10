@@ -11,11 +11,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Describes one argument of a {@link ReactCommand}, so the headless agent interface can advertise
+ * Describes one argument of a {@link ReactCommandHandler}, so the headless agent interface can advertise
  * the command's argument schema instead of leaving a consumer to guess it.
  *
  * <p>
- * Declared on the command method via {@link ReactCommand#params()}. It documents the {@code key}
+ * Declared on the command method via {@link ReactCommandHandler#params()}. It documents the {@code key}
  * expected in the command's {@code arguments} map, its informal {@link #type()} and whether it is
  * {@link #required()}. This lives next to the command (not on a headless interface) so the schema
  * cannot drift from the handler.

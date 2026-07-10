@@ -11,7 +11,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -196,7 +196,7 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	/**
 	 * Dispatches the goto click to the configured {@link GotoListener}.
 	 */
-	@ReactCommand("goto")
+	@ReactCommandHandler("goto")
 	HandlerResult handleGoto(ReactContext context) {
 		Object target = _rowObject;
 		GotoListener listener = _gotoListener;

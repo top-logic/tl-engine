@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.tree;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactTreeControl} select command: which tree node to select and the
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Select node '{nodeId}'")
-public interface SelectNodeArguments extends ReactCommandArguments {
+public interface SelectNodeArguments extends ReactCommand {
 
 	/** @see #getNodeId() */
 	String NODE_ID = "nodeId";

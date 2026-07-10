@@ -21,7 +21,7 @@ import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Invokes a single {@link ReactCommand}-annotated method on a {@link ReactControl}.
+ * Invokes a single {@link ReactCommandHandler}-annotated method on a {@link ReactControl}.
  *
  * <p>
  * Built once per annotated method during {@link ReactCommandMap} resolution. Uses a
@@ -102,7 +102,7 @@ class ReactCommandInvoker {
 			Logger.warn("No DialogManager available for dirty-check dialog.", ReactCommandInvoker.class);
 			return HandlerResult.DEFAULT_RESULT;
 		} catch (Throwable ex) {
-			Logger.error("@ReactCommand failed on " + control.getClass().getName(), ex,
+			Logger.error("@ReactCommandHandler failed on " + control.getClass().getName(), ex,
 				ReactCommandInvoker.class);
 			I18NFailure i18n = findI18NFailure(ex);
 			if (i18n != null) {

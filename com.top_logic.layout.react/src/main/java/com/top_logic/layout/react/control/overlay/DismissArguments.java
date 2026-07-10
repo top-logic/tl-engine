@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control.overlay;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactSnackbarControl#DISMISS_COMMAND} command: the snackbar
@@ -19,7 +19,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Dismiss snackbar {generation}")
-public interface DismissArguments extends ReactCommandArguments {
+public interface DismissArguments extends ReactCommand {
 
 	/** @see #getGeneration() */
 	String GENERATION = "generation";

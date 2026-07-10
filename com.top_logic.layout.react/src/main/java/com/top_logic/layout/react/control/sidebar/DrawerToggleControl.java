@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.control.sidebar;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -41,7 +41,7 @@ public class DrawerToggleControl extends ReactControl {
 	/**
 	 * Handles toggle clicks from the client.
 	 */
-	@ReactCommand("toggle")
+	@ReactCommandHandler("toggle")
 	void handleToggle() {
 		_target.toggleDrawer();
 	}

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
@@ -277,7 +277,7 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 	 * @param arguments
 	 *        Command arguments; {@code "depth"} is the target chain depth to clear from.
 	 */
-	@ReactCommand("navigate")
+	@ReactCommandHandler("navigate")
 	void handleNavigate(Map<String, Object> arguments) {
 		if (_chain == null) {
 			return;

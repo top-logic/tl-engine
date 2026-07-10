@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.form;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactFormFieldControl#CMD_VALUE_CHANGED} command of a single-valued
@@ -18,8 +18,8 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * The {@link Label} doubles as the recorder-step rendering template.
  * </p>
  */
-@Label("Set the field value to '{value}'")
-public interface FieldValueArguments extends ReactCommandArguments {
+@Label("Set '{target}' to '{value}'")
+public interface FieldValueArguments extends ReactCommand {
 
 	/** @see #getValue() */
 	String VALUE = "value";
@@ -30,5 +30,8 @@ public interface FieldValueArguments extends ReactCommandArguments {
 	@Name(VALUE)
 	@Nullable
 	String getValue();
+
+	/** @see #getValue() */
+	void setValue(String value);
 
 }

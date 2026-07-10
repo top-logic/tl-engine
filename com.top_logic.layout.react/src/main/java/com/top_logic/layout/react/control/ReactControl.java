@@ -26,7 +26,7 @@ import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.layout.form.values.edit.ConfigLabelProvider;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
@@ -49,7 +49,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  *
  * <p>
  * Subclasses handle client-side commands by declaring methods annotated with
- * {@link ReactCommand @ReactCommand}. See the annotation's documentation for the supported method
+ * {@link ReactCommandHandler @ReactCommandHandler}. See the annotation's documentation for the supported method
  * signatures.
  * </p>
  *
@@ -207,7 +207,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		ReactCommandInvoker invoker = commandMap.get(commandName);
 		if (invoker == null) {
 			throw new IllegalArgumentException(
-				"No @ReactCommand(\"" + commandName + "\") on " + getClass().getName());
+				"No @ReactCommandHandler(\"" + commandName + "\") on " + getClass().getName());
 		}
 		return invoker.invoke(this, _reactContext, arguments);
 	}
@@ -344,7 +344,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	/**
 	 * The commands omitted from the agent action space and never recorded: the union of the
-	 * {@link ReactCommand#technical() technical}-flagged commands (co-located on the handler) and the
+	 * {@link ReactCommandHandler#technical() technical}-flagged commands (co-located on the handler) and the
 	 * manually declared {@link #agentHiddenCommands() chrome commands}.
 	 */
 	private Set<String> effectiveChromeCommands() {
@@ -394,48 +394,6 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * A human-readable, localized description of the given command applied to the given arguments, or
-	 * {@code null} if the command takes no {@link #agentCommandArgsType(String) typed argument}.
-	 *
-	 * <p>
-	 * The arguments bind into the typed interface and render through {@link ConfigLabelProvider},
-	 * whose template (the interface's label) interleaves descriptive text with the argument values —
-	 * so a recorded step reads as e.g. <em>Navigate to 'input-controls'</em> rather than the raw
-	 * command and JSON. Called at capture time and stored as the step's
-	 * {@link com.top_logic.layout.react.headless.RecordedStep#description() description}, since the
-	 * target control cannot be re-resolved once the UI has navigated away from the recorded state.
-	 * </p>
-	 *
-	 * <p>
-	 * A control whose action is identified by <em>where</em> it sits rather than by its arguments (a
-	 * button by its label, a field by its name) overrides this and uses {@code targetName} — the
-	 * control's semantic name from its recorded address — since that identity comes from the
-	 * container (a form field name, a table column), not from the control itself.
-	 * </p>
-	 *
-	 * @param command
-	 *        The command ID.
-	 * @param arguments
-	 *        The recorded command arguments.
-	 * @param targetName
-	 *        The semantic name of the addressed control (the last {@code [name]} segment of its
-	 *        recorded address), or {@code null} if it has none.
-	 */
-	public String describeCommand(String command, Map<String, Object> arguments, String targetName) {
-		ConfigurationDescriptor argType = agentCommandArgsType(command);
-		if (argType == null) {
-			return null;
-		}
-		try {
-			return new ConfigLabelProvider().getLabel(bindArguments(argType, arguments));
-		} catch (Exception ex) {
-			Logger.error("Failed to render recorded step for command '" + command + "' on "
-				+ getClass().getName(), ex, ReactControl.class);
-			return null;
-		}
-	}
-
-	/**
 	 * Binds the (client JSON) command arguments into a {@link ConfigurationItem} of the given
 	 * descriptor, by re-serializing the map and reading it through {@link JsonConfigurationReader} so
 	 * binding is by the JSON property names the schema advertises.
@@ -461,10 +419,11 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * Translates a just-dispatched command into the form the script recorder should capture.
 	 *
 	 * <p>
-	 * The default records the command and arguments verbatim. A control whose live arguments are
-	 * session-bound — e.g. a select that sends allocated option ids — overrides this to emit a
-	 * replay-stable form (business keys instead of ids, possibly a different command), so a recorded
-	 * step resolves in a later session. Called before the command runs, with the same arguments.
+	 * The default records the command and arguments verbatim, as the {@link #commandItem(String, Map)
+	 * typed item}. A control whose live arguments are session-bound — e.g. a select that sends
+	 * allocated option ids — overrides this to emit a replay-stable form (business keys instead of
+	 * ids, possibly a different command), so a recorded step resolves in a later session. Called
+	 * before the command runs, with the same arguments.
 	 * </p>
 	 *
 	 * @param command
@@ -474,7 +433,38 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * @return The command to record.
 	 */
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		return new RecordedCommand(command, arguments == null ? Map.of() : arguments);
+		return new RecordedCommand(commandItem(command, arguments));
+	}
+
+	/**
+	 * The typed {@link ReactCommand} item representing a dispatch of the given command on this
+	 * control: the arguments bound into the command's {@link #agentCommandArgsType(String) argument
+	 * interface} (a bare {@link ReactCommand} for argument-less commands), with the {@link
+	 * ReactCommand#getName() command name} set.
+	 *
+	 * @param command
+	 *        The command id.
+	 * @param arguments
+	 *        The dispatched arguments (may be {@code null}).
+	 * @return The command item, without an {@link ReactCommand#getAddress() address} (the recording
+	 *         servlet fills it in).
+	 */
+	public final ReactCommand commandItem(String command, Map<String, Object> arguments) {
+		ConfigurationDescriptor argType = agentCommandArgsType(command);
+		ReactCommand item;
+		if (argType != null) {
+			try {
+				item = (ReactCommand) bindArguments(argType, arguments);
+			} catch (ConfigurationException ex) {
+				throw new IllegalArgumentException("Arguments of command '" + command + "' on "
+					+ getClass().getName() + " do not bind to "
+					+ argType.getConfigurationInterface().getName() + ".", ex);
+			}
+		} else {
+			item = TypedConfiguration.newConfigItem(ReactCommand.class);
+		}
+		item.setName(command);
+		return item;
 	}
 
 	private static boolean containsControl(Object value) {

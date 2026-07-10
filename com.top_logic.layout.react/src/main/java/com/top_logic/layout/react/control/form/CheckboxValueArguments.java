@@ -5,8 +5,9 @@
  */
 package com.top_logic.layout.react.control.form;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of a checkbox's {@link ReactFormFieldControl#CMD_VALUE_CHANGED} command: the new
@@ -14,11 +15,11 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  *
  * <p>
  * A checkbox's value is a {@code boolean}, not the text the base field assumes — hence its own typed
- * arguments. The recorder-step rendering is supplied by {@link ReactCheckboxControl} from the
- * field's name and this state, not from a {@code @Label} template.
+ * arguments.
  * </p>
  */
-public interface CheckboxValueArguments extends ReactCommandArguments {
+@Label("Set '{target}' to '{value}'")
+public interface CheckboxValueArguments extends ReactCommand {
 
 	/** @see #isChecked() */
 	String VALUE = "value";

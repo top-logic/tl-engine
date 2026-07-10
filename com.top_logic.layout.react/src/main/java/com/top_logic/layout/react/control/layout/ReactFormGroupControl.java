@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -155,7 +155,7 @@ public class ReactFormGroupControl extends ReactCompositeControl {
 	/**
 	 * Handles the toggleCollapse command sent when the user toggles the collapse state.
 	 */
-	@ReactCommand(value = "toggleCollapse", technical = true)
+	@ReactCommandHandler(value = "toggleCollapse", technical = true)
 	void handleToggleCollapse() {
 		toggleCollapsed();
 	}

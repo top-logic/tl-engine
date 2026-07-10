@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.tree;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommandArguments;
+import com.top_logic.layout.react.control.ReactCommand;
 
 /**
  * Typed arguments of the {@link ReactTreeControl} context-menu-action command: which context-menu
@@ -20,7 +20,7 @@ import com.top_logic.layout.react.control.ReactCommandArguments;
  * </p>
  */
 @Label("Invoke context-menu item '{itemId}'")
-public interface ContextMenuActionArguments extends ReactCommandArguments {
+public interface ContextMenuActionArguments extends ReactCommand {
 
 	/** @see #getItemId() */
 	String ITEM_ID = "itemId";

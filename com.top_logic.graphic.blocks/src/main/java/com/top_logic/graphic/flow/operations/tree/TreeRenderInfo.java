@@ -1206,13 +1206,16 @@ public class TreeRenderInfo {
 		double childBusX = postGridX - _gapX / 2;
 
 		// Adaptive Y stack with per-column bottom, per-column "max past stub Y crossing this col"
-		// (from past children whose own col is > this col), and bus-bottom tracking.
+		// (from past children whose own col is > this col), and bus-bottom tracking. curYPost is
+		// the post-grid contour: the topmost Y where the next descendant block may start without
+		// colliding with an earlier block (or its bus at childBusX). It is a lower bound only —
+		// a block's preferred position is the one its own subtree packing produced.
 		double[] prevColBottom = new double[C];
 		Arrays.fill(prevColBottom, Double.NEGATIVE_INFINITY);
 		double[] prevStubsCrossingCol = new double[C];
 		Arrays.fill(prevStubsCrossingCol, Double.NEGATIVE_INFINITY);
 		double prevBusBottom = Double.NEGATIVE_INFINITY;
-		double curYPost = 0;
+		double curYPost = Double.NEGATIVE_INFINITY;
 
 		for (int i = 0; i < M; i++) {
 			TreeNode ch = children.get(i);
@@ -1272,14 +1275,14 @@ public class TreeRenderInfo {
 			if (hasSubtree) {
 				// 2. Shift only the descendants to the post-grid: shift the entire ch-subtree
 				// (so ch's _gridInfo, if any, follows) and unshift ch alone, leaving ch in the
-				// sub-grid slot but its children at (postGridX, curYPost + ...). The shift
-				// anchors on the descendant block's minimum X/Y extent — NOT on the first
-				// child: with a nested sub-grid whose subGridStartCol places the first child in
-				// a follow-up column, the first child is not the leftmost descendant, and
-				// anchoring on it would drag the nested left column back into this sub-grid and
-				// the nested main bus left of ch's own box. Anchoring the block extent keeps
-				// the leftmost nested column at postGridX and — by construction — the nested
-				// main bus at childBusX.
+				// sub-grid slot but its children in the post-grid column. The X-shift anchors
+				// on the descendant block's minimum extent — NOT on the first child: with a
+				// nested sub-grid whose subGridStartCol places the first child in a follow-up
+				// column, the first child is not the leftmost descendant, and anchoring on it
+				// would drag the nested left column back into this sub-grid and the nested main
+				// bus left of ch's own box. Anchoring the block extent keeps the leftmost
+				// nested column at postGridX and — by construction — the nested main bus at
+				// childBusX.
 				double grandMinX = Double.POSITIVE_INFINITY;
 				double grandMinY = Double.POSITIVE_INFINITY;
 				double grandMinAnchorMid = Double.POSITIVE_INFINITY;
@@ -1307,7 +1310,12 @@ public class TreeRenderInfo {
 				}
 
 				double dxDesc = postGridX - grandMinX;
-				double dyDesc = curYPost - grandMinY;
+				// Y: the subtree packing already placed ch relative to its children according to
+				// parentAlign/parentOffset (placeParent), and the slot shift above moved that
+				// geometry rigidly — so the preferred Y-shift is zero. Push the block down to
+				// the post-grid contour only when the preferred position would collide with an
+				// earlier descendant block or its bus at childBusX.
+				double dyDesc = Math.max(0, curYPost - grandMinY);
 				shiftSubtree(ch, dxDesc, dyDesc);
 				ch.setX(ch.getX() - dxDesc);
 				ch.setY(ch.getY() - dyDesc);

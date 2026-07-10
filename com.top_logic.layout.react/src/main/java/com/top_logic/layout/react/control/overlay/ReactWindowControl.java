@@ -250,12 +250,15 @@ public class ReactWindowControl extends ToolbarControl {
 	void handleResize(ResizeArguments args) {
 		Integer w = args.getWidth();
 		Integer h = args.getHeight();
-		if (w != null) {
-			putStateSilent(WIDTH, w + "px");
-		}
-		if (h != null) {
-			putStateSilent(HEIGHT, h + "px");
-		}
+		// The client performed the resize itself; no echo needed.
+		updateStateSilently(() -> {
+			if (w != null) {
+				putState(WIDTH, w + "px");
+			}
+			if (h != null) {
+				putState(HEIGHT, h + "px");
+			}
+		});
 		saveCustomizedSize(w, h);
 	}
 

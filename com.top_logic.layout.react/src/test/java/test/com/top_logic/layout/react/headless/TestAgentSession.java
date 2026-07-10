@@ -439,7 +439,7 @@ public class TestAgentSession extends TestCase {
 		DemoFieldControl(ReactContext context, String fieldName, String initialValue) {
 			super(context, fieldName, "TLTextInput");
 			_fieldName = fieldName;
-			putStateSilent("value", initialValue);
+			putState("value", initialValue);
 		}
 
 		@Override
@@ -480,8 +480,8 @@ public class TestAgentSession extends TestCase {
 		DemoButtonControl(ReactContext context, String label) {
 			super(context, label, "TLButton");
 			_label = label;
-			putStateSilent("label", label);
-			putStateSilent("clicks", Integer.valueOf(0));
+			putState("label", label);
+			putState("clicks", Integer.valueOf(0));
 		}
 
 		@Override
@@ -527,9 +527,9 @@ public class TestAgentSession extends TestCase {
 
 		DemoModelControl(ReactContext context, Object model) {
 			super(context, model, "TLCell");
-			putStateSilent("value", "v1");
-			putStateSilent("variant", "outlined");
-			putStateSilent("note", null);
+			putState("value", "v1");
+			putState("variant", "outlined");
+			putState("note", null);
 		}
 
 		@ReactCommandHandler(value = "open", params = @ReactParam(name = "tab", required = true,
@@ -545,7 +545,7 @@ public class TestAgentSession extends TestCase {
 
 		@ReactCommandHandler("setNote")
 		void setNote(NoteArgs args) {
-			putStateSilent("note", args.getNote());
+			putState("note", args.getNote());
 		}
 
 		@Override
@@ -597,7 +597,7 @@ public class TestAgentSession extends TestCase {
 
 		DemoFormControl(ReactContext context, List<? extends ReactControl> fields, ReactControl submit) {
 			super(context, null, "TLForm", fields);
-			putStateSilent("submit", submit);
+			putState("submit", submit);
 		}
 	}
 

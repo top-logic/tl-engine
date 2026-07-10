@@ -403,7 +403,10 @@ public final class AgentTreeProjector {
 			Object parsed = JSON.read(new StringReader(JsonSchemaWriter.toJson(schema)));
 			stripEnvelopeProperties(parsed);
 			return parsed;
-		} catch (Exception ex) {
+		} catch (Exception | LinkageError ex) {
+			// The schema builder reflects over every registered subtype of every item-valued
+			// property; a subtype that cannot even link in this environment (LinkageError) must
+			// degrade the advertised schema, not break observation.
 			Logger.info("No full argument schema for command '" + command + "' on "
 				+ control.getClass().getName() + " (unbounded value space): " + ex.getMessage(),
 				AgentTreeProjector.class);

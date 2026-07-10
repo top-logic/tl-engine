@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.tabbar;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,7 +23,6 @@ import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 
-import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * A {@link ReactControl} that renders a tab bar with lazily created content.
@@ -103,7 +101,7 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		}
 		putState(TABS, tabList);
 		putState(ACTIVE_TAB_ID, _activeTabId);
-		// activeContent is null until writeAsChild creates it.
+		// activeContent is null until the first render creates it.
 	}
 
 	/**
@@ -114,16 +112,15 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer)
-			throws IOException {
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
 		if (getState(ACTIVE_CONTENT) == null) {
 			ReactControl activeContent = getOrCreateContent(_activeTabId);
-			putStateSilent(ACTIVE_CONTENT, activeContent);
+			putState(ACTIVE_CONTENT, activeContent);
 			if (isAttached()) {
 				activeContent.attach();
 			}
 		}
-		super.writeAsChild(writer);
 	}
 
 	@Override
@@ -181,7 +178,7 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 
 		if (!isSSEAttached()) {
 			// Not yet rendered; just update state for deferred rendering.
-			putStateSilent(ACTIVE_TAB_ID, _activeTabId);
+			putState(ACTIVE_TAB_ID, _activeTabId);
 			return;
 		}
 

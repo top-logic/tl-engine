@@ -26,7 +26,32 @@ public interface ReactCommandTarget {
 	String getID();
 
 	/**
-	 * Dispatches a command sent by the React client.
+	 * Dispatches a command programmatically (headless agent, script replay, server-side code).
+	 *
+	 * <p>
+	 * State changes the command makes are pushed to the client like any other server-side change —
+	 * no browser has anticipated them.
+	 * </p>
+	 *
+	 * @param commandName
+	 *        The command identifier (e.g. "click", "sort").
+	 * @param arguments
+	 *        The command arguments.
+	 * @return The result of the command execution.
+	 */
+	HandlerResult executeCommand(String commandName, Map<String, Object> arguments);
+
+	/**
+	 * Dispatches a command sent by the browser client itself.
+	 *
+	 * <p>
+	 * The difference to {@link #executeCommand}: the browser that sent the command has typically
+	 * already applied the change optimistically (a typed character, a dragged window edge), so
+	 * state changes reflecting exactly what the client did are not echoed back — for an input
+	 * being typed into, a late echo would overwrite newer keystrokes. Only on this dispatch path
+	 * may such echoes be omitted; {@link #executeCommand} compensates omissions by resending
+	 * state.
+	 * </p>
 	 *
 	 * @param commandName
 	 *        The command identifier (e.g. "click", "sort").
@@ -34,5 +59,7 @@ public interface ReactCommandTarget {
 	 *        The command arguments from the client.
 	 * @return The result of the command execution.
 	 */
-	HandlerResult executeCommand(String commandName, Map<String, Object> arguments);
+	default HandlerResult executeClientCommand(String commandName, Map<String, Object> arguments) {
+		return executeCommand(commandName, arguments);
+	}
 }

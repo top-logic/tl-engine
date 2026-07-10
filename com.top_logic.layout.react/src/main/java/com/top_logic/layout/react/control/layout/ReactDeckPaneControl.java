@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.layout;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,7 +14,6 @@ import com.top_logic.layout.react.control.AgentControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 
-import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * A {@link ReactControl} that shows one child at a time from a list, driven by a server-side
@@ -80,7 +78,7 @@ public class ReactDeckPaneControl extends ReactControl {
 
 		putState(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
 		putState(CHILD_COUNT, Integer.valueOf(_childFactories.size()));
-		// activeChild is null until writeAsChild creates it.
+		// activeChild is null until the first render creates it.
 	}
 
 	/**
@@ -107,7 +105,7 @@ public class ReactDeckPaneControl extends ReactControl {
 		_activeIndex = index;
 
 		if (!isSSEAttached()) {
-			putStateSilent(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
+			putState(ACTIVE_INDEX, Integer.valueOf(_activeIndex));
 			return;
 		}
 
@@ -134,16 +132,15 @@ public class ReactDeckPaneControl extends ReactControl {
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer)
-			throws IOException {
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
 		if (getState(ACTIVE_CHILD) == null) {
 			ReactControl activeChild = getOrCreateChild(_activeIndex);
-			putStateSilent(ACTIVE_CHILD, activeChild);
+			putState(ACTIVE_CHILD, activeChild);
 			if (isAttached()) {
 				activeChild.attach();
 			}
 		}
-		super.writeAsChild(writer);
 	}
 
 	@Override

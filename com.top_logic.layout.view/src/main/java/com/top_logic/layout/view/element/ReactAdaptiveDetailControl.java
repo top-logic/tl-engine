@@ -128,7 +128,7 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		_displayModel = DisplayClassModel.forCurrentSubSession();
 		_disposal = AdaptiveDetailDisposal.forCurrentSubSession();
 
-		_displayListener = (sender, oldValue, newValue) -> renderPresentation(false);
+		_displayListener = (sender, oldValue, newValue) -> renderPresentation();
 		_displayModel.addListener(DisplayClassModel.DISPLAY_CLASS, _displayListener);
 		addCleanupAction(() -> _displayModel.removeListener(DisplayClassModel.DISPLAY_CLASS, _displayListener));
 
@@ -149,7 +149,7 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 		// by the selection listener via renderPresentation). The coordinator control is stable, so
 		// these listeners never fire on a torn-down control.
 		if (coordinator && chain != null) {
-			ChannelListener breadcrumbListener = (sender, oldValue, newValue) -> updateBreadcrumb(false);
+			ChannelListener breadcrumbListener = (sender, oldValue, newValue) -> updateBreadcrumb();
 			for (int i = 1; i < chain.size(); i++) {
 				ViewChannel deeper = chain.get(i);
 				deeper.addListener(breadcrumbListener);
@@ -157,18 +157,18 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 			}
 		}
 
-		renderPresentation(true);
+		renderPresentation();
 	}
 
 	private void onSelectionChanged() {
 		// In REGULAR the split's detail reacts to the channel itself; only COMPACT toggles selector
 		// vs. detail and therefore needs a rebuild.
 		if (_displayModel.getDisplayClass() == DisplayClass.COMPACT) {
-			renderPresentation(false);
+			renderPresentation();
 		}
 	}
 
-	private void renderPresentation(boolean initial) {
+	private void renderPresentation() {
 		if (_disposed) {
 			// A nested control may still receive a display-class event from the stack-copy of
 			// listeners after its parent rebuilt and tore it down; ignore it.
@@ -188,31 +188,21 @@ public class ReactAdaptiveDetailControl extends ReactControl {
 
 		ReactControl old = _currentChild;
 		_currentChild = built;
-		if (initial) {
-			putStateSilent(CONTENT, built);
-			putStateSilent(BREADCRUMB, buildBreadcrumb());
-		} else {
-			Object token = beginUpdate();
-			putState(CONTENT, built);
-			putState(BREADCRUMB, buildBreadcrumb());
-			commitUpdate(token);
-			if (old != null && old != built) {
-				if (_disposal.isDeferring()) {
-					_disposal.defer(old);
-				} else {
-					old.cleanupTree();
-				}
+		Object token = beginUpdate();
+		putState(CONTENT, built);
+		putState(BREADCRUMB, buildBreadcrumb());
+		commitUpdate(token);
+		if (old != null && old != built) {
+			if (_disposal.isDeferring()) {
+				_disposal.defer(old);
+			} else {
+				old.cleanupTree();
 			}
 		}
 	}
 
-	private void updateBreadcrumb(boolean initial) {
-		Object items = buildBreadcrumb();
-		if (initial) {
-			putStateSilent(BREADCRUMB, items);
-		} else {
-			putState(BREADCRUMB, items);
-		}
+	private void updateBreadcrumb() {
+		putState(BREADCRUMB, buildBreadcrumb());
 	}
 
 	/**

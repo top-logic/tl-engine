@@ -566,6 +566,29 @@ Also decide whether `observe` should ever block user commands at all.
 
 ## Progress log
 
+- **2026-07-10** — **Replayed commands update the browser UI (dispatch-origin correction in the
+  framework).** A replayed text edit changed the server-side value but the visible input stayed
+  stale: command handlers record some state changes silently on the grounds that the browser
+  already shows them (optimistic input echo, window drag-resize) — reasoning that only holds when
+  the browser itself sent the command. The correction is central, not per handler:
+  `ReactServlet` dispatches via `executeClientCommand`; every programmatic path
+  (`AgentSession.act`, replay, server code) stays on `executeCommand`, which resends the control's
+  full state (`StateEvent`, the reconnect mechanism) after the command whenever the handler left
+  silent changes behind — no control makes the decision, so no future handler can forget it.
+  `putStateSilent` is gone entirely: `putState` is the one write primitive (a no-op event-wise
+  before render), and `updateStateSilently` is the single explicit way to say "the client itself
+  is the source of this change" (typed value echo, drag-resize); the render paths run inside that
+  scope, so lazy child creation moved from `writeAsChild` overrides into `onBeforeWrite` hooks.
+  The form-field echo suppression records the suppressed value as a silent state change, which
+  both feeds the resend on replay and keeps agent observation / re-render current after live
+  typing. Audited every `@ReactCommandHandler`:
+  affected were `ReactFormFieldControl.applyClientValue` (text input, and
+  checkbox/color/icon-select inheriting the base `valueChanged` handler) and
+  `ReactWindowControl.handleResize`; all other handlers push unconditionally or are `technical`
+  (never recorded/advertised, so unreachable by replay). Regression-tested in
+  `TestReactFormFieldControl` (state resent on `executeCommand`, silent-but-recorded on
+  `executeClientCommand`, coerced values still echoed).
+
 - **2026-07-10** — **A recorded step is one typed configuration item (`ReactCommand`).** Completes
   the D5 typed-argument arc: the former `ReactCommandArguments` marker became the `ReactCommand`
   item interface carrying the `address`/`name` envelope plus a derived `target` (the address's last

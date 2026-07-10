@@ -67,7 +67,7 @@ public class ReactTileBreadcrumbControl extends ReactControl {
 		_pathChannel.addListener(_pathListener);
 		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
 
-		putStateSilent(ITEMS, buildItems());
+		putState(ITEMS, buildItems());
 	}
 
 	@SuppressWarnings("unchecked")

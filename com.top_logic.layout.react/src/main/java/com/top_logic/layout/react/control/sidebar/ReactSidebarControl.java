@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.react.control.sidebar;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,7 +27,6 @@ import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.tool.boundsec.HandlerResult;
 
-import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * A {@link ReactControl} that renders a sidebar with navigation items, command buttons, collapsible
@@ -232,16 +230,15 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	@Override
-	protected void writeAsChild(JsonWriter writer)
-			throws IOException {
+	protected void onBeforeWrite() {
+		super.onBeforeWrite();
 		if (getState(ACTIVE_CONTENT) == null && _activeItemId != null) {
 			ReactControl activeContent = getOrCreateContent(_activeItemId);
-			putStateSilent(ACTIVE_CONTENT, activeContent);
+			putState(ACTIVE_CONTENT, activeContent);
 			if (isAttached()) {
 				activeContent.attach();
 			}
 		}
-		super.writeAsChild(writer);
 	}
 
 	@Override
@@ -333,7 +330,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		_activeItemId = itemId;
 
 		if (!isSSEAttached()) {
-			putStateSilent(ACTIVE_ITEM_ID, _activeItemId);
+			putState(ACTIVE_ITEM_ID, _activeItemId);
 			return;
 		}
 
@@ -393,11 +390,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			itemList.add(itemMap);
 		}
 
-		if (isSSEAttached()) {
-			putState(ITEMS, itemList);
-		} else {
-			putStateSilent(ITEMS, itemList);
-		}
+		putState(ITEMS, itemList);
 	}
 
 	/**

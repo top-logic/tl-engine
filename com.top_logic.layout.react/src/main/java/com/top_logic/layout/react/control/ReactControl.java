@@ -30,6 +30,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -103,6 +104,29 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 */
 	private Map<String, Object> _pendingPatch;
 
+	/**
+	 * Whether the currently executing command was dispatched by the browser client (via
+	 * {@link #executeClientCommand(String, Map)}), as opposed to programmatically (headless agent,
+	 * script replay, server-side code).
+	 */
+	private boolean _clientDispatch;
+
+	/**
+	 * While {@code true}, {@link #putState(String, Object)} records state changes server-side
+	 * without sending a patch event.
+	 *
+	 * @see #updateStateSilently(Runnable)
+	 */
+	private boolean _silentUpdates;
+
+	/**
+	 * Whether the state was changed without sending an event since the client last received the
+	 * full state (render or state resend). Set by silent state writes; a programmatic command
+	 * dispatch that leaves silent changes behind triggers a state resend, see
+	 * {@link #executeCommand(String, Map)}.
+	 */
+	private boolean _silentChanges;
+
 	private List<Runnable> _cleanupActions;
 
 	private List<Runnable> _beforeWriteActions;
@@ -165,24 +189,6 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	}
 
 	/**
-	 * Updates a state key on the server without sending an SSE event.
-	 *
-	 * <p>
-	 * Use this for updates where the client already knows the new value (e.g. in command handlers
-	 * that process client-initiated changes), or for deferred pre-render state updates that will be
-	 * included in the initial render.
-	 * </p>
-	 *
-	 * @param key
-	 *        The state key.
-	 * @param value
-	 *        The new value.
-	 */
-	protected void putStateSilent(String key, Object value) {
-		_reactState.put(key, value);
-	}
-
-	/**
 	 * The current {@link SSEUpdateQueue}, or {@code null} if cleaned up.
 	 */
 	protected SSEUpdateQueue getSSEQueue() {
@@ -201,6 +207,18 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 		return _sseQueue != null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Command handlers may record state changes silently on the assumption that the browser
+	 * already shows them (see {@link #updateStateSilently(Runnable)}). That assumption only holds
+	 * for {@link #executeClientCommand(String, Map) client dispatch}; here — where the browser has
+	 * anticipated nothing — any silent changes the handler leaves behind are corrected by resending
+	 * this control's full state after the command. Handlers therefore need no dispatch-origin
+	 * logic of their own.
+	 * </p>
+	 */
 	@Override
 	public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
 		ReactCommandMap commandMap = COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass);
@@ -209,7 +227,34 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			throw new IllegalArgumentException(
 				"No @ReactCommandHandler(\"" + commandName + "\") on " + getClass().getName());
 		}
-		return invoker.invoke(this, _reactContext, arguments);
+		HandlerResult result = invoker.invoke(this, _reactContext, arguments);
+		if (!_clientDispatch && _silentChanges && _rendered && isSSEAttached()) {
+			sendCurrentState();
+		}
+		return result;
+	}
+
+	@Override
+	public final HandlerResult executeClientCommand(String commandName, Map<String, Object> arguments) {
+		boolean before = _clientDispatch;
+		_clientDispatch = true;
+		try {
+			return executeCommand(commandName, arguments);
+		} finally {
+			_clientDispatch = before;
+		}
+	}
+
+	/**
+	 * Sends this control's complete current state to the client, superseding any state the client
+	 * holds.
+	 */
+	private void sendCurrentState() {
+		_silentChanges = false;
+		StateEvent event = StateEvent.create()
+			.setControlId(getID())
+			.setState(stateAsJSON());
+		requireSSEQueue().enqueue(event);
 	}
 
 	@Override
@@ -497,9 +542,15 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 
 	@Override
 	public void write(TagWriter out) throws IOException {
-		onBeforeWrite();
-		_rendered = true;
+		boolean silentBefore = _silentUpdates;
+		// State written while producing the rendered output (e.g. lazily created children in an
+		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
+		_silentUpdates = true;
 		try {
+			onBeforeWrite();
+			_rendered = true;
+			// The full state is serialized below; nothing is pending on the client side anymore.
+			_silentChanges = false;
 			String stateJson = toJsonString(_reactContext, _reactState);
 
 			out.beginBeginTag(HTMLConstants.DIV);
@@ -512,6 +563,7 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			out.endBeginTag();
 			out.endTag(HTMLConstants.DIV);
 		} finally {
+			_silentUpdates = silentBefore;
 			onAfterWrite();
 		}
 	}
@@ -632,7 +684,10 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *
 	 * <p>
 	 * If this control is already attached to an SSE queue (i.e. rendered), a {@link PatchEvent} is
-	 * sent to the client. Otherwise the value is stored for inclusion in the initial render.
+	 * sent to the client. Before rendering, the value simply becomes part of the initial render.
+	 * Within {@link #updateStateSilently(Runnable)} — and during state serialization, where the
+	 * written state reaches the client as part of the rendered output — the change is recorded
+	 * without an event.
 	 * </p>
 	 *
 	 * @param key
@@ -642,12 +697,47 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 */
 	protected void putState(String key, Object value) {
 		_reactState.put(key, value);
+		if (_silentUpdates) {
+			_silentChanges = true;
+			return;
+		}
 		if (_rendered) {
 			if (_pendingPatch != null) {
 				_pendingPatch.put(key, value);
 			} else {
 				sendPatch(java.util.Collections.singletonMap(key, value));
 			}
+		}
+	}
+
+	/**
+	 * Runs the given state update without sending events: changes are recorded in the server-side
+	 * state (so later renders and agent observations see them) but no patch event is sent.
+	 *
+	 * <p>
+	 * Use this when the client already holds the resulting state because the change being
+	 * processed originates from the client itself — e.g. to run the regular model-change reaction
+	 * after applying a value the client sent. Echoing such state back would be redundant, and for
+	 * an input being typed into harmful (a late echo overwrites newer keystrokes).
+	 * </p>
+	 *
+	 * <p>
+	 * The client-already-holds assumption is only valid for commands the browser itself
+	 * dispatched. When the same handler runs programmatically (script replay, headless agent), the
+	 * framework corrects the omission by resending the control's state after the command — see
+	 * {@link #executeCommand(String, Map)}. Handlers need not distinguish the two cases.
+	 * </p>
+	 *
+	 * @param update
+	 *        The state update to run silently.
+	 */
+	protected final void updateStateSilently(Runnable update) {
+		boolean before = _silentUpdates;
+		_silentUpdates = true;
+		try {
+			update.run();
+		} finally {
+			_silentUpdates = before;
 		}
 	}
 
@@ -737,11 +827,8 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 *
 	 * <p>
 	 * Since the control is fully initialized at construction time (ID assigned, SSE registered),
-	 * this method simply serializes the current state.
-	 * </p>
-	 *
-	 * <p>
-	 * Composite controls override this to prepare lazy children before serialization (e.g.,
+	 * this method simply serializes the current state. Composite controls that create children
+	 * lazily do so in an {@link #onBeforeWrite()} hook (e.g.
 	 * {@link com.top_logic.layout.react.control.layout.ReactDeckPaneControl} creates its active
 	 * child).
 	 * </p>
@@ -749,17 +836,27 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 	 * @param writer
 	 *        The JSON writer to write to.
 	 */
-	protected void writeAsChild(JsonWriter writer) throws IOException {
-		onBeforeWrite();
-		_rendered = true;
-		writer.beginObject();
-		writer.name("controlId");
-		writer.value(getID());
-		writer.name("module");
-		writer.value(_reactModule);
-		writer.name("state");
-		writeState(writer);
-		writer.endObject();
+	protected final void writeAsChild(JsonWriter writer) throws IOException {
+		boolean silentBefore = _silentUpdates;
+		// State written while producing the rendered output (e.g. lazily created children in an
+		// onBeforeWrite hook) reaches the client as part of that output — no events for it.
+		_silentUpdates = true;
+		try {
+			onBeforeWrite();
+			_rendered = true;
+			// The full state is serialized below; nothing is pending on the client side anymore.
+			_silentChanges = false;
+			writer.beginObject();
+			writer.name("controlId");
+			writer.value(getID());
+			writer.name("module");
+			writer.value(_reactModule);
+			writer.name("state");
+			writeState(writer);
+			writer.endObject();
+		} finally {
+			_silentUpdates = silentBefore;
+		}
 	}
 
 	private void writeState(JsonWriter writer) throws IOException {

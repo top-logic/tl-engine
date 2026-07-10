@@ -153,6 +153,9 @@ public class ReactFormFieldControl extends ReactControl {
 					// sending). Echoing it back races with continued typing and corrupts the input
 					// (a late echo of an earlier keystroke overwrites newer characters). A server
 					// coercion or a dependent change (newValue != the sent value) is still echoed.
+					// The server-side state is still updated so later renders and agent
+					// observations see the current value — only the patch event is skipped.
+					updateStateSilently(() -> handleModelValueChanged(source, oldValue, newValue));
 					return;
 				}
 				handleModelValueChanged(source, oldValue, newValue);
@@ -268,10 +271,17 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
-	 * Applies a client-originated value to the field model, suppressing the redundant echo of exactly
-	 * this value back to the client that already holds it (see the model listener in
+	 * Applies a {@code valueChanged} value to the field model, suppressing the redundant echo of
+	 * exactly this value back to the client that already holds it (see the model listener in
 	 * {@link #registerModelListeners()}). Subclasses that handle {@code valueChanged} with their own
 	 * typed arguments call this so they share the same anti-echo behavior.
+	 *
+	 * <p>
+	 * The suppressed echo is recorded as a silent state change; when the command was dispatched
+	 * programmatically (script replay, headless agent) rather than by the browser, the framework
+	 * resends the control state after the command, so the value still reaches the client — see
+	 * {@link #executeCommand(String, java.util.Map)}.
+	 * </p>
 	 *
 	 * @param value
 	 *        The parsed value to set.

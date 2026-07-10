@@ -413,7 +413,7 @@ public class ReactServlet extends TopLogicServlet {
 			HandlerResult result;
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
-				result = control.executeCommand(commandName, arguments);
+				result = control.executeClientCommand(commandName, arguments);
 			} finally {
 				if (rootHandler != null) {
 					rootHandler.enableUpdate(updateBefore);

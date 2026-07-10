@@ -82,7 +82,7 @@ public class ReactTileStackControl extends ReactControl {
 		addCleanupAction(() -> _pathChannel.removeListener(_pathListener));
 
 		_currentChild = buildChild();
-		putStateSilent(FRAME, _currentChild);
+		putState(FRAME, _currentChild);
 	}
 
 	private void rebuildChild() {

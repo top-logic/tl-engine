@@ -40,7 +40,7 @@ import com.top_logic.basic.func.Function1;
  *           base properties are never sent by the client and are stripped from the advertised
  *           argument schema; they are set when a dispatched command is captured as a recorded step.
  */
-@Label("Command '{name}' on '{target}'")
+@Label(value = "Command '{name}' on '{target}'", option = "Command")
 public interface ReactCommand extends ConfigurationItem {
 
 	/** @see #getAddress() */

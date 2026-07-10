@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -71,6 +72,8 @@ public class WellKnownTypes {
 
 	ExecutableElement _labelValue;
 
+	ExecutableElement _labelOption;
+
 	TypeMirror _templateVariableAnnotation;
 
 	ExecutableElement _templateVariableName;
@@ -126,6 +129,7 @@ public class WellKnownTypes {
 		if (label != null) {
 			_labelAnnotation = label.asType();
 			_labelValue = methodByName(label, "value");
+			_labelOption = methodByNameOptional(label, "option");
 		} else {
 			// May happen during tests.
 		}
@@ -151,6 +155,14 @@ public class WellKnownTypes {
 			.filter(elem -> elem.getSimpleName().contentEquals(methodName))
 			.map(ExecutableElement.class::cast)
 			.findFirst().get();
+	}
+
+	private ExecutableElement methodByNameOptional(Element type, String methodName) {
+		return type.getEnclosedElements().stream()
+			.filter(elem -> elem.getKind() == ElementKind.METHOD)
+			.filter(elem -> elem.getSimpleName().contentEquals(methodName))
+			.map(ExecutableElement.class::cast)
+			.findFirst().orElse(null);
 	}
 
 	private TypeMirror typeMirror(String className) {
@@ -196,6 +208,29 @@ public class WellKnownTypes {
 		AnnotationMirror annotation = getAnnotation(element, _labelAnnotation);
 		if (annotation != null) {
 			return Optional.ofNullable((String) annotation.getElementValues().get(_labelValue).getValue());
+		}
+
+		return Optional.empty();
+	}
+
+	/**
+	 * Determines the {@code option} attribute of the {@value #LABEL_ANNOTATION} annotation: the
+	 * label of the annotated type itself, when its main label is an instance rendering template.
+	 */
+	public Optional<String> getAnnotatedOptionLabel(Element element) {
+		if (_labelOption == null) {
+			return Optional.empty();
+		}
+		AnnotationMirror annotation = getAnnotation(element, _labelAnnotation);
+		if (annotation != null) {
+			// Only explicitly given values are present; the empty default means "no option label".
+			AnnotationValue value = annotation.getElementValues().get(_labelOption);
+			if (value != null) {
+				String label = (String) value.getValue();
+				if (!label.isEmpty()) {
+					return Optional.of(label);
+				}
+			}
 		}
 
 		return Optional.empty();

@@ -1,4 +1,4 @@
-import { React, useTLCommand, useI18N } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ColorPopup from './color/ColorPopup';
 
@@ -17,12 +17,13 @@ const { useState, useCallback, useRef } = React;
  *  - defaultPalette: (string | null)[] - Default palette for reset
  */
 const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const [fieldValue, setValue] = useTLFieldValue();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const [open, setOpen] = useState(false);
   const swatchRef = useRef<HTMLButtonElement>(null);
 
-  const value = state.value as string | null;
+  const value = fieldValue as string | null;
   const editable = state.editable !== false;
   const palette = (state.palette as (string | null)[]) ?? [];
   const paletteColumns = (state.paletteColumns as number) ?? 6;
@@ -35,9 +36,9 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const handleConfirm = useCallback(
     (hex: string | null) => {
       setOpen(false);
-      sendCommand('valueChanged', { value: hex });
+      setValue(hex);
     },
-    [sendCommand]
+    [setValue]
   );
 
   const handleCancel = useCallback(() => {

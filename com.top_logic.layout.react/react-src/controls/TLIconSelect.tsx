@@ -1,4 +1,4 @@
-import { React, useTLCommand, useI18N } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import IconSelectPopup, { IconPreview } from './icon/IconSelectPopup';
 import type { IconEntry } from './icon/IconSelectPopup';
@@ -17,12 +17,13 @@ const { useState, useCallback, useRef } = React;
  *  - iconsLoaded: boolean     - Whether icons have been loaded
  */
 const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
+  const [fieldValue, setValue] = useTLFieldValue();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const [open, setOpen] = useState(false);
   const swatchRef = useRef<HTMLButtonElement>(null);
 
-  const value = state.value as string | null;
+  const value = fieldValue as string | null;
   const editable = state.editable !== false;
   const disabled = state.disabled === true;
   const icons = (state.icons as IconEntry[]) ?? [];
@@ -35,9 +36,9 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const handleSelect = useCallback(
     (encoded: string | null) => {
       setOpen(false);
-      sendCommand('valueChanged', { value: encoded });
+      setValue(encoded);
     },
-    [sendCommand]
+    [setValue]
   );
 
   const handleCancel = useCallback(() => {

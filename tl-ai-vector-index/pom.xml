@@ -8,6 +8,12 @@
   </parent>
 
   <artifactId>tl-ai-vector-index</artifactId>
+  <licenses>
+    <license>
+      <name>LicenseRef-BOS-TopLogic-1.0</name>
+      <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+    </license>
+  </licenses>
   <description>Integration of the Vector full-text search engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 	

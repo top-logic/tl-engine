@@ -9,6 +9,14 @@
   </parent>
 
   <artifactId>tl-ai-tool-api</artifactId>
+
+  <licenses>
+    <license>
+      <name>LicenseRef-BOS-TopLogic-1.0</name>
+      <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+    </license>
+  </licenses>
+	
   <description>Shared tool contracts and annotations for tl-ai modules.</description>
   <url>https://github.com/top-logic/tl-engine/</url>
 

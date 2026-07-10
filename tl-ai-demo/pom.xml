@@ -10,10 +10,16 @@
 	</parent>
 	
 	<artifactId>tl-ai-demo</artifactId>
-  <version>8.0.0-alpha5</version>
-  	
-  
+
+	<licenses>
+	  <license>
+	    <name>LicenseRef-BOS-TopLogic-1.0</name>
+	    <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+	  </license>
+	</licenses>
 	
+	<version>8.0.0-alpha5</version>
+  	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 		<msgbuf.version>1.2.2</msgbuf.version>

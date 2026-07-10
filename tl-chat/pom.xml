@@ -9,6 +9,13 @@
 	</parent>
 	
 	<artifactId>tl-chat</artifactId>
+
+	<licenses>
+	  <license>
+	    <name>LicenseRef-BOS-TopLogic-1.0</name>
+	    <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+	  </license>
+	</licenses>
 	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>

@@ -7,6 +7,12 @@
     <relativePath />
   </parent>
   <artifactId>tl-ai-parent</artifactId>
+  <licenses>
+    <license>
+      <name>LicenseRef-BOS-TopLogic-1.0</name>
+      <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+    </license>
+  </licenses>
   <version>1.0.10-SNAPSHOT</version>
   <packaging>pom</packaging>
   <scm>

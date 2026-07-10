@@ -35,6 +35,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
@@ -230,7 +231,8 @@ public class AgentLoop {
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
-		AgentEventListener serialized = AgentEventListener.serializing(listener);
+		AgentEventListener serialized =
+			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
@@ -340,7 +342,8 @@ public class AgentLoop {
 
 		_sessionApprovedTools.addAll(context.sessionApprovedTools());
 
-		AgentEventListener serialized = AgentEventListener.serializing(listener);
+		AgentEventListener serialized =
+			AgentEventListener.serializing(new DiagnosticLoggingListener(listener));
 		String runId = UUID.randomUUID().toString();
 		emit(serialized, new AgentEvent.RunStarted(runId, 0, now(), _config.model()));
 
@@ -1110,9 +1113,9 @@ public class AgentLoop {
 
 		if (Logger.isDebugEnabled(AgentLoop.class)) {
 			List<String> toolNames = filteredTools.stream().map(ToolSchema::name).toList();
-			Logger.debug("[AgentLoop " + runId + " turn " + turn + "] "
-				+ filteredTools.size() + " tools: " + toolNames
-				+ " | " + conversation.messages().size() + " messages",
+			Logger.debug("run=" + runId + " turn=" + turn + " PROVIDER_REQUEST"
+				+ " tools=" + filteredTools.size() + " messages=" + conversation.messages().size()
+				+ " toolNames=" + toolNames,
 				AgentLoop.class);
 		}
 
@@ -1128,7 +1131,18 @@ public class AgentLoop {
 			Duration.ofSeconds(_config.timeoutSeconds()));
 
 		ResponseCollector collector = new ResponseCollector(listener, runId, turn);
-		_provider.stream(request, collector);
+		long startNanos = System.nanoTime();
+		try {
+			_provider.stream(request, collector);
+		} finally {
+			if (Logger.isDebugEnabled(AgentLoop.class)) {
+				// Provider call latency is operational signal that is not persisted (the KB stores
+				// only the run's token totals, not per-turn timing). Logged even on failure so a
+				// slow-then-erroring provider is visible. Correlated by runId/turn.
+				Logger.debug("run=" + runId + " turn=" + turn + " PROVIDER_MS ms="
+					+ (System.nanoTime() - startNanos) / 1_000_000L, AgentLoop.class);
+			}
+		}
 		return collector.toAssistantMessage();
 	}
 

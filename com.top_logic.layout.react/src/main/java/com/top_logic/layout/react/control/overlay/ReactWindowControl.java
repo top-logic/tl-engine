@@ -251,10 +251,10 @@ public class ReactWindowControl extends ToolbarControl {
 		Integer w = args.getWidth();
 		Integer h = args.getHeight();
 		if (w != null) {
-			putStateSilent(WIDTH, w.toString());
+			putStateSilent(WIDTH, w + "px");
 		}
 		if (h != null) {
-			putStateSilent(HEIGHT, h.toString());
+			putStateSilent(HEIGHT, h + "px");
 		}
 		saveCustomizedSize(w, h);
 	}
@@ -278,13 +278,13 @@ public class ReactWindowControl extends ToolbarControl {
 		putState(MIN_HEIGHT, height + "px");
 	}
 
-	private void saveCustomizedSize(Object widthValue, Object heightValue) {
+	private void saveCustomizedSize(Integer widthValue, Integer heightValue) {
 		String key = _configKey.get();
 		if (key == null) {
 			return;
 		}
-		int width = parsePx(widthValue, -1);
-		int height = parsePx(heightValue, -1);
+		int width = widthValue != null ? widthValue.intValue() : -1;
+		int height = heightValue != null ? heightValue.intValue() : -1;
 		if (width < 0 && height < 0) {
 			return;
 		}
@@ -306,19 +306,6 @@ public class ReactWindowControl extends ToolbarControl {
 			parameters.add(width);
 			parameters.add(height);
 			config.setJSONValue(key, parameters);
-		}
-	}
-
-	private static int parsePx(Object value, int fallback) {
-		if (value == null) return fallback;
-		String s = value.toString().trim();
-		if (s.endsWith("px")) {
-			s = s.substring(0, s.length() - 2);
-		}
-		try {
-			return Integer.parseInt(s);
-		} catch (NumberFormatException e) {
-			return fallback;
 		}
 	}
 

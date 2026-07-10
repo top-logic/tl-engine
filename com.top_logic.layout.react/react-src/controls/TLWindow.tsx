@@ -171,8 +171,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
       const lh = localHeightRef.current;
       if (lw != null || lh != null) {
         sendCommand('resize', {
-          ...(lw != null ? { width: Math.round(lw) + 'px' } : {}),
-          ...(lh != null ? { height: Math.round(lh) + 'px' } : {}),
+          ...(lw != null ? { width: Math.round(lw) } : {}),
+          ...(lh != null ? { height: Math.round(lh) } : {}),
         });
         // Keep local dimensions — server uses putStateSilent() which does not push back.
       }

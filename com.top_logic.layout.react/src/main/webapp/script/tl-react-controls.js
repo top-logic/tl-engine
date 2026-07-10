@@ -1486,8 +1486,8 @@ const Pe = ({ icon: l }) => l ? /* @__PURE__ */ e.createElement(Ee, { encoded: l
       document.removeEventListener("mousemove", F), document.removeEventListener("mouseup", $);
       const X = b.current, M = V.current;
       (X != null || M != null) && n("resize", {
-        ...X != null ? { width: Math.round(X) + "px" } : {},
-        ...M != null ? { height: Math.round(M) + "px" } : {}
+        ...X != null ? { width: Math.round(X) } : {},
+        ...M != null ? { height: Math.round(M) } : {}
       }), R.current = null;
     };
     document.addEventListener("mousemove", F), document.addEventListener("mouseup", $);

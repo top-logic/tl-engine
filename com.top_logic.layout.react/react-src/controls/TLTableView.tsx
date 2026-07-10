@@ -321,8 +321,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- Selection handlers --
   const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
-    if (event.shiftKey) {
-      event.preventDefault();
+    // A click that concluded a text-selection drag inside the row copies text,
+    // it does not change the row selection.
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed && event.currentTarget.contains(selection.anchorNode)) {
+      return;
     }
     // Give the body keyboard focus so the table's keyboard scope becomes active.
     scrollContainerRef.current?.focus({ preventScroll: true });
@@ -597,6 +600,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 ...(row.index === cursorIndex
                   ? { outline: '2px solid var(--color-primary, #1a73e8)', outlineOffset: '-2px' }
                   : {}),
+              }}
+              onMouseDown={(e) => {
+                // Suppress the text selection the browser would start as a side
+                // effect of row-selection gestures (shift/ctrl range or toggle,
+                // double-click); plain click-and-drag still selects cell text.
+                if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
+                  e.preventDefault();
+                }
               }}
               onClick={(e) => handleRowClick(row.index, e)}
             >

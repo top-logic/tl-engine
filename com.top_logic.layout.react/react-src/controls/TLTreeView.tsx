@@ -37,6 +37,15 @@ const TLTreeView: React.FC<TLCellProps> = () => {
   }, [sendCommand]);
 
   const handleSelect = React.useCallback((nodeId: string, e: React.MouseEvent) => {
+    // A click that concluded a text-selection drag inside the node copies text,
+    // it does not change the node selection.
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed && e.currentTarget.contains(selection.anchorNode)) {
+      return;
+    }
+    // Give the tree keyboard focus even when the mousedown default (which would
+    // focus it natively) was suppressed for a modifier click.
+    listRef.current?.focus({ preventScroll: true });
     sendCommand('select', {
       nodeId,
       ctrlKey: e.ctrlKey || e.metaKey,
@@ -207,6 +216,14 @@ const TLTreeView: React.FC<TLCellProps> = () => {
           ].filter(Boolean).join(' ')}
           style={{ paddingLeft: node.depth * INDENT_PX }}
           draggable={dragEnabled}
+          onMouseDown={(e) => {
+            // Suppress the text selection the browser would start as a side
+            // effect of node-selection gestures (shift/ctrl range or toggle,
+            // double-click); plain click-and-drag still selects label text.
+            if (e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) {
+              e.preventDefault();
+            }
+          }}
           onClick={(e) => handleSelect(node.id, e)}
           onContextMenu={(e) => handleContextMenu(node.id, e)}
           onDragStart={(e) => handleDragStart(node.id, e)}

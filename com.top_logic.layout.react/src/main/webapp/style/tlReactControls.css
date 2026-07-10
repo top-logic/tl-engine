@@ -2455,7 +2455,6 @@ button.tlMenu__item--disabled:hover {
 	box-sizing: border-box;
 	overflow: hidden;
 	cursor: pointer;
-	user-select: none;
 }
 
 .tlTableView__row:hover {
@@ -2973,7 +2972,6 @@ button.tlMenu__item--disabled:hover {
   height: 32px;
   padding-right: var(--spacing-03);
   cursor: pointer;
-  user-select: none;
   border-left: 3px solid transparent;
 }
 

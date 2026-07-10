@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SPDX-FileCopyrightText: 2000 (c) Business Operation Systems GmbH <info@top-logic.com>
-# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+# SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
 
 # Determine paths
 SRC_PATH=$(dirname $(readlink -f "$0"))

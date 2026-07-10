@@ -21,12 +21,12 @@
 	<dependencies>
 		<!-- Using TopLogic OpenSource Edition. AGPL license conditions apply. -->
 		<!-- To switch to TopLogic Professional Edition, uncomment the following dependency: -->
-		<!--
+		
 		<dependency>
 		    <groupId>com.top-logic</groupId>
 		    <artifactId>tl-license-professional</artifactId>
 		</dependency>
-		-->
+		
 
 		<!-- TopLogic -->
 

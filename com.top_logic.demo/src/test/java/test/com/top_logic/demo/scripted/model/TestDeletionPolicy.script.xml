@@ -1208,7 +1208,7 @@
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
-					expected-failure-message="Eines der Objekte [B3] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: "
+					expected-failure-message="Eines der Objekte \[B3\] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: "
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 						command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
@@ -1889,7 +1889,7 @@
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
-					expected-failure-message="Eines der Objekte [B9] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: "
+					expected-failure-message="Eines der Objekte \[B9\] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: "
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 						command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
@@ -1922,7 +1922,7 @@
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
-					expected-failure-message="Eines der Objekte [B7] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: "
+					expected-failure-message="Eines der Objekte \[B7\] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: "
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 						command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"

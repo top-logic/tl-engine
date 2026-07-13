@@ -855,12 +855,18 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 	 * @return the steps in application order (first applied first), or {@code null}
 	 */
 	private static List<Step> extractChain(SearchExpression expression) {
-		if (!(expression instanceof Lambda lambda)) {
-			/* In this case getValues() does not depend on the input. When any attribute value
-			 * changes, it is necessary to re-compute this path for all objects. */
-			return null;
+		if (expression instanceof Lambda lambda) {
+			return extractSubChain(lambda.getBody(), lambda.getKey(), new HashMap<>());
 		}
-		return extractSubChain(lambda.getBody(), lambda.getKey(), new HashMap<>());
+		/* A non-lambda expression does not depend on the base object. When it is a constant
+		 * expression (e.g. a singleton literal such as `module:Module#ROOT`, which compiles to a
+		 * Literal holding the singleton, or an all(Type) source), it can still be decomposed into an
+		 * invertible chain (a ConstantBranchStep or AllStep). This yields precise getSources /
+		 * getPathBase instead of the "recompute all" fallback -- matching the precision of a
+		 * dedicated constant path element. A fresh, never-matching parameter key ensures the
+		 * decomposition terminates only at a constant / all root, never at a lambda variable; a
+		 * non-decomposable expression still returns null (recompute all). */
+		return extractSubChain(expression, new NamedConstant("<no-parameter>"), new HashMap<>());
 	}
 
 	/**

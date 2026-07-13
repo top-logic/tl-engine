@@ -19,6 +19,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.ErrorHandlingHelper;
 
 /**
  * Invokes a single {@link ReactCommandHandler}-annotated method on a {@link ReactControl}.
@@ -77,6 +78,12 @@ class ReactCommandInvoker {
 	 * {@linkplain I18NFailure#getErrorKey() user-visible error message}.</li>
 	 * <li>Other exceptions produce a generic error result with the exception message.</li>
 	 * </ul>
+	 *
+	 * <p>
+	 * Only {@linkplain ErrorHandlingHelper#isInternalError(Throwable) internal errors} are logged
+	 * as errors; user-level failures (e.g. a rejected login) are logged at info level, since the
+	 * error result already reports them to the user.
+	 * </p>
 	 */
 	HandlerResult invoke(ReactControl control, ReactContext context,
 			Map<String, Object> arguments) {
@@ -102,8 +109,16 @@ class ReactCommandInvoker {
 			Logger.warn("No DialogManager available for dirty-check dialog.", ReactCommandInvoker.class);
 			return HandlerResult.DEFAULT_RESULT;
 		} catch (Throwable ex) {
-			Logger.error("@ReactCommandHandler failed on " + control.getClass().getName(), ex,
-				ReactCommandInvoker.class);
+			if (ErrorHandlingHelper.isInternalError(ex)) {
+				Logger.error("@ReactCommandHandler failed on " + control.getClass().getName(), ex,
+					ReactCommandInvoker.class);
+			} else {
+				// A user-level problem (e.g. invalid input, denied login) that the UI reports to
+				// the user anyway - not a malfunction worth an error log entry.
+				Logger.info(
+					"Command on " + control.getClass().getName() + " rejected: " + ex.getMessage(),
+					ReactCommandInvoker.class);
+			}
 			I18NFailure i18n = findI18NFailure(ex);
 			if (i18n != null) {
 				return HandlerResult.error(i18n.getErrorKey(), ex);

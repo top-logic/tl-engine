@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -101,6 +102,7 @@ import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.tree.model.TreeModelEvent;
 import com.top_logic.layout.tree.model.TreeModelListener;
 import com.top_logic.layout.tree.model.TreeUIModel;
+import com.top_logic.layout.tree.model.TreeUIModelUtil;
 import com.top_logic.layout.tree.model.TreeViewConfig;
 import com.top_logic.layout.tree.model.UserObjectIndex;
 import com.top_logic.layout.tree.renderer.ConfigurableTreeContentRenderer;
@@ -371,6 +373,25 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	private final SelectionModel _selectionModel;
 
 	private IndexedTreeUINodeModel _treeModel;
+
+	/**
+	 * Business objects of the expanded nodes, captured before the tree model is discarded, so
+	 * that the expansion state can be restored when the model is rebuilt.
+	 *
+	 * @see #_expansionRootObject
+	 */
+	private Collection<?> _expansionUserModel;
+
+	/**
+	 * The root business object of the tree from which {@link #_expansionUserModel} was captured.
+	 *
+	 * <p>
+	 * The captured expansion is only restored when the tree is rebuilt for the same root, i.e.
+	 * across an {@link #invalidate()}. When the displayed model changes, the (unrelated) expansion
+	 * of the previous tree must not leak into the new one.
+	 * </p>
+	 */
+	private Object _expansionRootObject;
 
 	/** @see Config#getExpandSelected() */
 	private final boolean _expandSelected;
@@ -833,6 +854,8 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	 * Resets the {@link #getTreeModel()} in reaction on a model change.
 	 */
 	public void resetTreeModel() {
+		_expansionUserModel = TreeUIModelUtil.getExpansionUserModel(_treeModel);
+		_expansionRootObject = _treeModel.getRoot().getBusinessObject();
 		_treeModel.removeTreeModelListener(_focusExpanded);
 		_treeModel.removeTreeModelListener(this);
 		_treeModel = null;
@@ -1013,6 +1036,13 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		/* Add listener before expanding node to ensure that preload is triggered. */
 		_treeModel.addTreeModelListener(this);
 		_treeModel.setExpanded(_treeModel.getRoot(), _expandRoot);
+		if (_expansionUserModel != null) {
+			if (Objects.equals(_expansionRootObject, _treeModel.getRoot().getBusinessObject())) {
+				TreeUIModelUtil.setExpansionUserModel(_expansionUserModel, _treeModel);
+			}
+			_expansionUserModel = null;
+			_expansionRootObject = null;
+		}
 		if (CollectionUtils.isEmpty(selectedPaths)) {
 			return installDefaultSelection();
 		} else {

@@ -236,7 +236,7 @@
 			</selection-model-name>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp">
-			<expected-failure-message>Eines der Objekte [Unbenanntes Objekt vom Typ "A"] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: [test.singletondelete#ROOT]</expected-failure-message>
+			<expected-failure-message>Eines der Objekte \[Unbenanntes Objekt vom Typ "A"\] kann nicht gelöscht werden, weil es von den folgenden Objekten verwendet wird: \[test.singletondelete#ROOT\]</expected-failure-message>
 			<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 				command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				command-label="Löschen..."

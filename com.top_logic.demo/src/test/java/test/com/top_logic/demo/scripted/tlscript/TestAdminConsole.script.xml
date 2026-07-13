@@ -87,7 +87,7 @@ $item;
 					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
-					expected-failure-message="Unzulässiger Änderungszugriff. Derzeit sind keine Änderungen erlaubt. Argumente: []"
+					expected-failure-message="Unzulässiger Änderungszugriff. Derzeit sind keine Änderungen erlaubt. Argumente: \[\]"
 				>
 					<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 						command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"

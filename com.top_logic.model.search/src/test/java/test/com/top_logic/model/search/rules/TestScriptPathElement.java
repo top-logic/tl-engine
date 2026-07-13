@@ -362,6 +362,38 @@ public class TestScriptPathElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests {@link PathByExpression} for a bare constant expression that is not wrapped in a lambda
+	 * -- a singleton literal such as {@code `TestScriptPathElement#ROOT1`}.
+	 *
+	 * <p>
+	 * The value is independent of the base object. Even without a lambda parameter the expression is
+	 * decomposed into a constant chain, so {@link PathByExpression#getSources} is precise: every base
+	 * object reaches the singleton ({@link BaseObjects#all()}), but no base object reaches any other
+	 * destination (empty set) -- instead of the "recompute all" fallback a non-decomposable
+	 * expression would use. This matches the precision of a dedicated singleton path element.
+	 * </p>
+	 */
+	public void testConstantSingletonExpression() {
+		PathByExpression path = newPathByExpression("`TestScriptPathElement#ROOT1`");
+		try (Transaction tx = beginTX()) {
+			Plant other = createPlant("other");
+
+			// The constant value is returned regardless of the base object.
+			assertEquals(set(_root1), toSet(path.getValues(other)));
+
+			// Every base object reaches the singleton...
+			assertTrue(path.getSources(_root1).isAll());
+			// ...but no base object reaches any other destination (precise, not "recompute all").
+			assertSources(set(), path, other);
+
+			// A constant expression references no attributes.
+			assertTrue(path.getRelevantParts().isEmpty());
+
+			tx.commit();
+		}
+	}
+
+	/**
 	 * Tests {@link PathByExpression#getPathBase} for a let-binding expression. When an attribute
 	 * referenced in the binding expression changes, {@code getPathBase} must still compute the
 	 * correct base objects via the {@code LetBindingStep}.

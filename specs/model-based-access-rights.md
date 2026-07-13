@@ -292,6 +292,15 @@ AttributeAccessRule:
 
 Attribute-level rules **restrict** the type-level permissions. If no attribute-level rule exists, the type-level rule applies. If an attribute-level rule exists, only the roles listed in the attribute-level rule have access, provided they also have the corresponding type-level access.
 
+**Denying an attribute for every role.** An attribute-level rule whose role set is **empty** (a grant that is present but lists no roles) denies the operation for *every* role, overriding the type-level grant. This is the closed-world reading of "grant this operation to [these roles]" -- the empty set grants it to nobody. It is distinct from having *no* attribute-level rule (which falls back to the type-level decision). Only a bypassing super-user (system context or administrator, see section 2.3.5) is unaffected. This is how an attribute is made effectively unreadable or unwritable regardless of the roles a user holds:
+
+```xml
+<part name="myapp:Contract#secret">
+    <grant operation="Read"/>    <!-- present, no roles: nobody may read -->
+    <grant operation="Write"/>   <!-- nobody may write -->
+</part>
+```
+
 Example:
 ```
 attribute: myapp:Customer#salary

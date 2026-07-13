@@ -360,10 +360,19 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!allowedOnInstance) {
 			return false;
 		}
-		Set<BoundedRole> requiredPartRoles = getAllowedRoles(attribute, commandGroup);
-
-		if (requiredPartRoles.isEmpty()) {
+		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
+			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
+		if (!partRights.containsKey(commandGroup)) {
+			// No attribute-level grant for this operation: the attribute inherits the (passed)
+			// class-level decision.
 			return true;
+		}
+		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
+		if (requiredPartRoles.isEmpty()) {
+			// An attribute-level grant is present but lists no roles: the operation is denied for
+			// every role. A role-based user can never satisfy it (only a bypassing super-user, which
+			// is already handled above, is unaffected).
+			return false;
 		}
 		return accessManager().hasRole(person, (BoundObject) instance, requiredPartRoles);
 	}

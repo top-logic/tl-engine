@@ -39,6 +39,9 @@
 						<property name="budget"
 							type="tl.core:Integer"
 						/>
+						<property name="secret"
+							type="tl.core:String"
+						/>
 						<reference name="responsible"
 							type="Employee"
 						>

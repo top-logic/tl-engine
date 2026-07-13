@@ -48,6 +48,12 @@
 							roles="TestTLScriptSecurity.ProjectResponsible"
 						/>
 					</class>
+					<part name="TestTLScriptSecurity:Project#secret">
+						<!-- Present grant with no roles: reading and writing this attribute is denied
+							for every role (only a bypassing super-user is unaffected). -->
+						<grant operation="Read"/>
+						<grant operation="Write"/>
+					</part>
 				</security-config>
 			</instance>
 		</config>

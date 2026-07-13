@@ -759,6 +759,55 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		assertTrue(accessRights.isReadAllowed(_other, transientProject, budget));
 	}
 
+	/**
+	 * An attribute-level grant that is present but lists no roles denies the operation for every
+	 * role, overriding the (passed) class-level grant. Only a bypassing super-user is unaffected.
+	 *
+	 * <p>
+	 * {@code Project#secret} has empty {@code Read} and {@code Write} grants (see the test config).
+	 * The responsible ({@code _user}) holds the class-level read and write rights on {@code Project},
+	 * yet may neither read nor write {@code secret}; the reader may not read it either. Attributes
+	 * without such a deny ({@code budget}, {@code name}) stay governed by the class level.
+	 * </p>
+	 */
+	public void testAttributeDeniedForAllRoles() throws Exception {
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLClass projectType = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:Project");
+		com.top_logic.model.TLStructuredTypePart secret = projectType.getPart("secret");
+		com.top_logic.model.TLStructuredTypePart budget = projectType.getPart("budget");
+		com.top_logic.model.TLStructuredTypePart name = projectType.getPart("name");
+
+		becomeUser(_user);
+		// Denied for the responsible, although the class grants read and write.
+		assertFalse(accessRights.isAllowed(_user, _p1, secret, SimpleBoundCommandGroup.WRITE));
+		assertFalse(accessRights.isReadAllowed(_user, _p1, secret));
+		// Attributes without a deny stay governed by the class level (responsible: read + write).
+		assertTrue(accessRights.isAllowed(_user, _p1, budget, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isReadAllowed(_user, _p1, name));
+
+		// The reader (class read only) may not read the denied attribute either.
+		becomeUser(_reader);
+		assertFalse(accessRights.isReadAllowed(_reader, _p1, secret));
+
+		// A bypassing super-user (system context) is unaffected by the attribute deny.
+		TLContext context = TLContext.getContext();
+		Person formerPerson = context.getCurrentPersonWrapper();
+		context.setCurrentPerson(null);
+		context.setContextId(SessionContext.SYSTEM_ID_PREFIX + TestTLScriptSecurity.class.getName());
+		try {
+			assertTrue(ThreadContext.isSystemContext());
+			assertTrue(accessRights.isAllowed(null, _p1, secret, SimpleBoundCommandGroup.WRITE));
+			assertTrue(accessRights.isReadAllowed(null, _p1, secret));
+		} finally {
+			context.setCurrentPerson(formerPerson);
+		}
+
+		// A bypassing super-user is unaffected by the attribute deny.
+		becomeUser(_root);
+		assertTrue(accessRights.isAllowed(_root, _p1, secret, SimpleBoundCommandGroup.WRITE));
+		assertTrue(accessRights.isReadAllowed(_root, _p1, secret));
+	}
+
 	@SuppressWarnings("unchecked")
 	private Collection<? extends TLObject> members(TLObject project) {
 		return (Collection<? extends TLObject>) project.tValueByName("members");

@@ -2494,20 +2494,24 @@ button.tlMenu__item--disabled:hover {
 	min-width: 0;
 }
 
-/* Remove cell padding when it contains an editable input — the input provides its own */
-.tlTableView__cell:has(.tlReactTextInput, .tlReactNumberInput, .tlReactDatePicker, .tlReactSelect) {
+/* Remove cell padding when it contains an editable input — the input provides its own.
+   Element-qualified so the rules match only real form controls, not the read-only
+   display spans that carry the same base class. */
+.tlTableView__cell:has(input.tlReactTextInput, textarea.tlReactTextInput, input.tlReactNumberInput, input.tlReactDatePicker, select.tlReactSelect) {
 	padding: 0;
 }
 
 /* Inline-edit inputs inside table cells: Excel-style, cell = input */
-.tlTableView__cell .tlReactTextInput,
-.tlTableView__cell .tlReactNumberInput,
-.tlTableView__cell .tlReactDatePicker,
-.tlTableView__cell .tlReactSelect,
-.tlTableView__cell .tlReactTextInput:focus,
-.tlTableView__cell .tlReactNumberInput:focus,
-.tlTableView__cell .tlReactDatePicker:focus,
-.tlTableView__cell .tlReactSelect:focus {
+.tlTableView__cell input.tlReactTextInput,
+.tlTableView__cell textarea.tlReactTextInput,
+.tlTableView__cell input.tlReactNumberInput,
+.tlTableView__cell input.tlReactDatePicker,
+.tlTableView__cell select.tlReactSelect,
+.tlTableView__cell input.tlReactTextInput:focus,
+.tlTableView__cell textarea.tlReactTextInput:focus,
+.tlTableView__cell input.tlReactNumberInput:focus,
+.tlTableView__cell input.tlReactDatePicker:focus,
+.tlTableView__cell select.tlReactSelect:focus {
 	border: none;
 	border-radius: 0;
 	background: transparent;
@@ -3317,6 +3321,8 @@ button.tlToolbar__menuTrigger:focus-visible {
 	min-height: 2rem;
 	cursor: pointer;
 	box-sizing: border-box;
+	/* Same field typography as the text-like inputs, instead of the inherited body size. */
+	font-size: var(--body-compact-01-font-size, 0.875rem);
 }
 
 .tlDropdownSelect:focus {

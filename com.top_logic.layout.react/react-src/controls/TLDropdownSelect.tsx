@@ -513,21 +513,18 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     }
   }, [highlightedIndex, controlId]);
 
-  // -- Immutable (read-only) rendering --
+  // -- Immutable (read-only) rendering: an empty selection renders nothing (the "empty option"
+  // label is an edit affordance and would mislead in a read-only display) --
 
   if (!editable) {
     return (
       <div id={controlId} className="tlDropdownSelect tlDropdownSelect--immutable">
-        {value.length === 0 ? (
-          <span className="tlDropdownSelect__empty">{emptyOptionLabel}</span>
-        ) : (
-          value.map((v) => (
-            <span key={v.value} className="tlDropdownSelect__readonlyValue">
-              <OptionImage image={v.image} />
-              <span>{v.label}</span>
-            </span>
-          ))
-        )}
+        {value.map((v) => (
+          <span key={v.value} className="tlDropdownSelect__readonlyValue">
+            <OptionImage image={v.image} />
+            <span>{v.label}</span>
+          </span>
+        ))}
       </div>
     );
   }

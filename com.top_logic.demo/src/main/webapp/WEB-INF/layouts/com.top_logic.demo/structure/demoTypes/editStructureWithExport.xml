@@ -57,6 +57,7 @@
 				</contextMenuFactory>
 
 				<buttons>
+					<reference command-id="invalidate"/>
 					<button id="openNewElementDialog"
 						checkScopeProvider="com.top_logic.layout.basic.check.MasterSlaveCheckProvider"
 						class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"

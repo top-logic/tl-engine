@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, CMD_VALUE_CHANGED } from 'tl-react-bridge';
 import { createPortal } from 'react-dom';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -327,7 +327,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       }
 
       valueRef.current = newValue;
-      sendCommand('valueChanged', { value: newValue.map((v) => v.value) });
+      sendCommand(CMD_VALUE_CHANGED, { value: newValue.map((v) => v.value) });
 
       if (!multiSelect) {
         closeDropdown();
@@ -344,7 +344,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       removalIndexRef.current = valueRef.current.findIndex((v) => v.value === optionValue);
       const newValue = valueRef.current.filter((v) => v.value !== optionValue);
       valueRef.current = newValue;
-      sendCommand('valueChanged', { value: newValue.map((v) => v.value) });
+      sendCommand(CMD_VALUE_CHANGED, { value: newValue.map((v) => v.value) });
     },
     [sendCommand]
   );
@@ -352,7 +352,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const clearAll = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      sendCommand('valueChanged', { value: [] });
+      sendCommand(CMD_VALUE_CHANGED, { value: [] });
       closeDropdown();
     },
     [sendCommand, closeDropdown]
@@ -487,7 +487,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
       reordered.splice(insertAt, 0, moved);
 
       valueRef.current = reordered;
-      sendCommand('valueChanged', { value: reordered.map((v) => v.value) });
+      sendCommand(CMD_VALUE_CHANGED, { value: reordered.map((v) => v.value) });
 
       setDragIndex(null);
       setDropTargetIndex(null);

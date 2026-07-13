@@ -57,6 +57,7 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.headless.AgentSession;
 import com.top_logic.layout.react.headless.ReactWindowReplay;
 import com.top_logic.layout.react.headless.ScriptRecorder;
@@ -393,6 +394,15 @@ public class ReactServlet extends TopLogicServlet {
 		}
 		ReactCommandTarget control = queue.getControl(controlId);
 		if (control == null) {
+			if (ReactFormFieldControl.CMD_VALUE_CHANGED.equals(commandName)) {
+				// A debounced field value flushed after its control was disposed: the edit was
+				// abandoned (e.g. the dialog was canceled), so dropping the value is the intended
+				// outcome, not an error.
+				Logger.debug("Dropped '" + commandName + "' for disposed control '" + controlId + "'.",
+					ReactServlet.class);
+				sendSuccess(response);
+				return;
+			}
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
 			return;
 		}

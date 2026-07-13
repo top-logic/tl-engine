@@ -7,6 +7,7 @@ import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
+import { CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -254,6 +255,11 @@ export function useTLState(): Record<string, unknown> {
 
 /**
  * Returns a function to send a command to the server for the enclosing control.
+ *
+ * <p>Commands are dispatched through the strict FIFO chain of {@link enqueueCommand}: they reach
+ * the server in dispatch order, and an action command implicitly flushes all pending debounced
+ * field values first (see {@link useTLFieldValue}). The returned promise resolves when this
+ * command's server response has arrived.</p>
  */
 export function useTLCommand(): (command: string, args?: Record<string, unknown>) => Promise<void> {
   const ctx = useContext(TLControlContext);
@@ -264,26 +270,13 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
   const windowName = ctx.windowName;
 
   return useCallback(
-    async (command: string, args?: Record<string, unknown>) => {
-      const body = JSON.stringify({
+    (command: string, args?: Record<string, unknown>) =>
+      enqueueCommand(getApiBase() + 'react-api/command', {
         controlId,
         command,
         windowName,
         arguments: args ?? {},
-      });
-      try {
-        const resp = await fetch(getApiBase() + 'react-api/command', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        });
-        if (!resp.ok) {
-          console.error('[TLReact] Command failed:', resp.status, await resp.text());
-        }
-      } catch (e) {
-        console.error('[TLReact] Command error:', e);
-      }
-    },
+      }),
     [controlId, windowName]
   );
 }
@@ -342,7 +335,9 @@ export interface TLFieldValueOptions {
    * When > 0, the server `valueChanged` is debounced by this many milliseconds instead of being
    * sent on every {@link setValue}. The local store is still updated immediately on every call, so
    * the controlled input stays responsive; only the round-trip is coalesced. Use the returned
-   * `flush` (e.g. on blur) to send any pending value immediately. Leave 0/undefined for discrete
+   * `flush` (e.g. on blur) to send any pending value immediately; a pending value is also flushed
+   * automatically before any action command is dispatched (see {@link enqueueCommand}), so e.g.
+   * submitting a dialog with Enter never races the debounce window. Leave 0/undefined for discrete
    * controls (checkbox, select, date picker) that should commit on every change.
    */
   debounceMs?: number;
@@ -367,12 +362,19 @@ export function useTLFieldValue(
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<{ value: unknown } | null>(null);
 
+  // Identity-stable flush wrapper, registered on the command channel while a debounced value is
+  // pending so that any action command flushes it before being sent (see enqueueCommand).
+  const stableFlushRef = useRef<(() => Promise<void>) | null>(null);
+
   const send = useCallback(
-    (value: unknown) => sendCommand('valueChanged', { value }),
+    (value: unknown) => sendCommand(CMD_VALUE_CHANGED, { value }),
     [sendCommand]
   );
 
   const flush = useCallback((): Promise<void> => {
+    if (stableFlushRef.current !== null) {
+      unregisterPendingFlush(stableFlushRef.current);
+    }
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -385,6 +387,12 @@ export function useTLFieldValue(
     return Promise.resolve();
   }, [send]);
 
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+  if (stableFlushRef.current === null) {
+    stableFlushRef.current = () => flushRef.current();
+  }
+
   const setValue = useCallback(
     (newValue: unknown) => {
       // Optimistically update the local store so the controlled input reflects the new value
@@ -392,13 +400,13 @@ export function useTLFieldValue(
       ctx?.store.applyPatch({ value: newValue });
       if (debounceMs > 0) {
         pendingRef.current = { value: newValue };
+        registerPendingFlush(stableFlushRef.current!);
         if (timerRef.current !== null) {
           clearTimeout(timerRef.current);
         }
         timerRef.current = setTimeout(() => {
           timerRef.current = null;
-          pendingRef.current = null;
-          send(newValue);
+          void flushRef.current();
         }, debounceMs);
       } else {
         send(newValue);
@@ -408,8 +416,6 @@ export function useTLFieldValue(
   );
 
   // Flush a pending value if the field is unmounted mid-edit (e.g. a dialog closes before blur).
-  const flushRef = useRef(flush);
-  flushRef.current = flush;
   useEffect(() => () => { void flushRef.current(); }, []);
 
   return [state.value, setValue, flush];

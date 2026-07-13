@@ -5,6 +5,8 @@
  * Only acts on events where targetWindowId matches the current page's window name.
  */
 
+import { enqueueCommand } from './command-channel';
+
 /** Registry of windows opened from this page. */
 const openWindows: Map<string, Window> = new Map();
 
@@ -47,21 +49,18 @@ function ensurePolling(): void {
   }, 2000);
 }
 
-/** Notify server that a window was closed by the user. */
+/**
+ * Notify server that a window was closed by the user. Best-effort: transport failures are only
+ * logged; the server cleans up via heartbeat timeout if the notification is lost.
+ */
 function notifyWindowClosed(windowId: string): void {
   const contextPath = getContextPath();
   const myWindowId = getMyWindowId();
-  fetch(`${contextPath}/react-api/command`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      controlId: '',
-      command: 'windowClosed',
-      windowName: myWindowId,
-      arguments: { windowId },
-    }),
-  }).catch(() => {
-    // Best-effort notification. Server will clean up via heartbeat timeout if this fails.
+  void enqueueCommand(`${contextPath}/react-api/command`, {
+    controlId: '',
+    command: 'windowClosed',
+    windowName: myWindowId,
+    arguments: { windowId },
   });
 }
 
@@ -117,21 +116,15 @@ export function handleWindowFocus(event: WindowFocusEventData): void {
   }
 }
 
-/** Notify server that a popup was blocked. */
+/** Notify server that a popup was blocked. Best-effort: transport failures are only logged. */
 function notifyWindowBlocked(windowId: string): void {
   const contextPath = getContextPath();
   const myWindowId = getMyWindowId();
-  fetch(`${contextPath}/react-api/command`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      controlId: '',
-      command: 'windowBlocked',
-      windowName: myWindowId,
-      arguments: { windowId },
-    }),
-  }).catch(() => {
-    // Best-effort.
+  void enqueueCommand(`${contextPath}/react-api/command`, {
+    controlId: '',
+    command: 'windowBlocked',
+    windowName: myWindowId,
+    arguments: { windowId },
   });
 }
 

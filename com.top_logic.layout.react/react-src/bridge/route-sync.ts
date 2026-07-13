@@ -6,6 +6,8 @@
  * - On initial load, hides window name from URL via replaceState
  */
 
+import { enqueueCommand } from './command-channel';
+
 export interface RouteChangeEventData {
   url: string;
   replace: boolean;
@@ -68,22 +70,17 @@ export function handleRouteVetoEvent(event: RouteVetoEventData): void {
 
 /**
  * Send navigateToRoute command to the server.
- * Uses the same POST endpoint and format as window-manager.ts commands.
+ * Dispatched through the strict FIFO command channel so navigation cannot overtake
+ * (or be overtaken by) in-flight control commands.
  */
 function sendRouteCommand(url: string): void {
   const contextPath = getContextPath();
   const windowName = getWindowName();
-  fetch(`${contextPath}/react-api/command`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      controlId: '',
-      command: 'navigateToRoute',
-      windowName,
-      arguments: { url },
-    }),
-  }).catch((e) => {
-    console.error('[TLReact] navigateToRoute error:', e);
+  void enqueueCommand(`${contextPath}/react-api/command`, {
+    controlId: '',
+    command: 'navigateToRoute',
+    windowName,
+    arguments: { url },
   });
 }
 

@@ -34,7 +34,7 @@ import com.top_logic.util.Resources;
 public class ReactFormFieldControl extends ReactControl {
 
 	/** Command sent by the client when the field value changes. */
-	protected static final String CMD_VALUE_CHANGED = "valueChanged";
+	public static final String CMD_VALUE_CHANGED = "valueChanged";
 
 	/** State key for the field value. */
 	protected static final String VALUE = "value";

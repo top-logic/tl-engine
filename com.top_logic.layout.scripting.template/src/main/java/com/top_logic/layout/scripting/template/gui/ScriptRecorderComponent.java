@@ -59,7 +59,6 @@ public class ScriptRecorderComponent extends FormComponent {
 	private final ValueListener editActionListener = new ValueListener() {
 
 		@Override
-		@SuppressWarnings("synthetic-access")
 		public void valueChanged(FormField editActionFieldViaParameter, Object oldActionXml, Object newActionXml) {
 			reactOnNewActionXml((ApplicationAction) newActionXml);
 		}
@@ -141,9 +140,8 @@ public class ScriptRecorderComponent extends FormComponent {
 	private void updateActionFields(FormField editableActionField) {
 		ApplicationAction newAction = ScriptRecorderTree.action(getModel());
 		editableActionField.setValue(newAction);
-		if (newAction == null) {
-			editableActionField.setImmutable(true);
-		} else {
+		editableActionField.setImmutable(newAction == null);
+		if (newAction != null) {
 			if (ScriptRecorderTree.isDerived((TLTreeNode<?>) getModel())) {
 				editableActionField.setDisabled(true);
 			} else {

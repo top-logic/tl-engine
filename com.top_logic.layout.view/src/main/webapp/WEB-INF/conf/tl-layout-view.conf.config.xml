@@ -85,6 +85,11 @@
 	<configs>
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
 			<startPage>/view/</startPage>
+			<loginPage>/view/</loginPage>
+			<loginRetrySSO>/view/</loginRetrySSO>
+			<logoutPage>/view/</logoutPage>
+			<startPage>/view/</startPage>
+			<layout>/view/</layout>
 		</config>
 	</configs>
 </application>

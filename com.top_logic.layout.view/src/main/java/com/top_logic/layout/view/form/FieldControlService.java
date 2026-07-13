@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,8 +23,10 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
@@ -163,6 +168,52 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 
 		// 4. Built-in primitive-kind fallback.
 		return primitiveFallback(context, part, model);
+	}
+
+	/**
+	 * Creates a read-only control displaying the given attribute value exactly as a view-mode form
+	 * field shows it.
+	 *
+	 * <p>
+	 * The control is resolved through the same chain as
+	 * {@link #createFieldControl(ReactContext, TLStructuredTypePart, FieldModel)}, bound to a
+	 * non-editable field model holding the given value. Attributes that are edited by selecting
+	 * from options get an option-less select model, so their values render with the select
+	 * control's read-only representation (labels and icons).
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param part
+	 *        The model attribute the value belongs to.
+	 * @param value
+	 *        The attribute value to display, may be {@code null}.
+	 */
+	public ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
+		AbstractFieldModel model = displayModel(part, value);
+		model.setEditable(false);
+		return createFieldControl(context, part, model);
+	}
+
+	private AbstractFieldModel displayModel(TLStructuredTypePart part, Object value) {
+		if (selectOptionSource(part) == null) {
+			return new AbstractFieldModel(value);
+		}
+		return new SimpleSelectFieldModel(selection(part, value), Collections.emptyList(), part.isMultiple());
+	}
+
+	/**
+	 * Normalizes an attribute value to the selection representation expected by the select
+	 * control: a {@link java.util.List} for multi-valued attributes, the raw value otherwise.
+	 */
+	private static Object selection(TLStructuredTypePart part, Object value) {
+		if (!part.isMultiple()) {
+			return value;
+		}
+		if (value instanceof Collection<?> collection) {
+			return new ArrayList<>(collection);
+		}
+		return value == null ? Collections.emptyList() : Collections.singletonList(value);
 	}
 
 	/**

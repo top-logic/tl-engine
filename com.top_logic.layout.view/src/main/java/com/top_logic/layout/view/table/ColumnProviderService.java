@@ -7,11 +7,14 @@ package com.top_logic.layout.view.table;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -24,6 +27,8 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -37,6 +42,9 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.FilterInput;
+import com.top_logic.table.FilterPushdown;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.ComparableColumnFilter;
@@ -49,7 +57,13 @@ import com.top_logic.table.impl.DefaultColumn;
  * table {@link Column} (accessor + renderer + comparator + filter).
  *
  * <p>
- * Resolution chain (mirrors {@code FieldControlService}):
+ * Cells display attribute values through {@link FieldControlService}: a cell shows a value exactly
+ * as a view-mode form field does (color swatch, icon, checkbox, selection labels), so forms and
+ * tables share a single type-to-display mechanism.
+ * </p>
+ *
+ * <p>
+ * Comparator and filter are resolved per attribute type (mirrors {@link FieldControlService}):
  * </p>
  * <ol>
  * <li>A provider configured in this service for the attribute's {@link TLType} (app-extensible).</li>
@@ -153,17 +167,67 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * Builds a column whose filter is an application-defined override matching against the cell's
-	 * display text, used when a {@code <column>} configures its own filter. The accessor, renderer
-	 * and sort are the display-label defaults; only the filter differs from
-	 * {@link #createColumn(String, ResKey, TLStructuredTypePart)}.
+	 * display text, used when a {@code <column>} configures its own filter. The cell display and
+	 * the label-based sort are the same as in
+	 * {@link #createColumn(String, ResKey, TLStructuredTypePart)}; only the filter differs.
 	 */
-	public Column<Object, ?> createColumn(String attribute, ResKey label, ColumnFilter<String> customFilter) {
-		return DefaultColumn.<Object, String> builder(attribute, row -> label(attributeValue(row, attribute)))
+	public Column<Object, ?> createColumn(String attribute, ResKey label, TLStructuredTypePart part,
+			ColumnFilter<String> customFilter) {
+		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
 			.label(label)
-			.renderer(value -> CellContent.text(value))
-			.sort(() -> Comparator.<String> naturalOrder())
-			.filter(customFilter)
+			.renderer(value -> displayContent(part, value))
+			.sort(() -> Comparator.comparing(ColumnProviderService::label))
+			.filter(byLabel(customFilter))
 			.build();
+	}
+
+	/**
+	 * Adapts a filter over the cell's display text to a column holding raw attribute values: the
+	 * predicate and facet keys see the value's display label, everything else delegates unchanged.
+	 */
+	private static ColumnFilter<Object> byLabel(ColumnFilter<String> filter) {
+		return new ColumnFilter<>() {
+			@Override
+			public FilterInput input() {
+				return filter.input();
+			}
+
+			@Override
+			public Predicate<Object> predicate(FilterState state) {
+				Predicate<String> inner = filter.predicate(state);
+				return value -> inner.test(label(value));
+			}
+
+			@Override
+			public Optional<FilterPushdown> pushdown(FilterState state) {
+				return filter.pushdown(state);
+			}
+
+			@Override
+			public boolean countsMatches() {
+				return filter.countsMatches();
+			}
+
+			@Override
+			public boolean supportsInversion() {
+				return filter.supportsInversion();
+			}
+
+			@Override
+			public Object toJson(FilterState state) {
+				return filter.toJson(state);
+			}
+
+			@Override
+			public FilterState fromJson(Object json) {
+				return filter.fromJson(json);
+			}
+
+			@Override
+			public Collection<Object> facetKeys(Object value) {
+				return filter.facetKeys(label(value));
+			}
+		};
 	}
 
 	/**
@@ -173,49 +237,49 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		if (part != null && !part.isMultiple()) {
 			TLType type = part.getType();
 			if (type instanceof TLEnumeration enumeration) {
-				return optionsColumn(attribute, label, enumeration);
+				return optionsColumn(attribute, label, part, enumeration);
 			}
 			if (type instanceof TLPrimitive primitive) {
 				switch (primitive.getKind()) {
 					case BOOLEAN:
 					case TRISTATE:
-						// Label the filter's true/false options exactly as the cells render them.
-						return typedColumn(attribute, label, Boolean.class,
+						// Label the filter's true/false options with the values' display labels.
+						return typedColumn(attribute, label, part, Boolean.class,
 							Comparator.<Boolean> naturalOrder(),
 							new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)), ResKey.text(label(Boolean.FALSE))));
 					case INT:
 					case FLOAT:
-						return typedColumn(attribute, label, Number.class,
+						return typedColumn(attribute, label, part, Number.class,
 							Comparator.comparingDouble(Number::doubleValue),
 							new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
 								Double::valueOf));
 					case DATE:
-						return typedColumn(attribute, label, Date.class,
+						return typedColumn(attribute, label, part, Date.class,
 							Comparator.<Date> naturalOrder(),
 							new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
 								ColumnProviderService::parseDate));
 					case STRING:
-						return typedColumn(attribute, label, String.class,
+						return typedColumn(attribute, label, part, String.class,
 							Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
 					default:
 						break;
 				}
 			}
 		}
-		return labelColumn(attribute, label);
+		return labelColumn(attribute, label, part);
 	}
 
 	/**
 	 * A column reading a typed attribute value, with a value comparator and a matching column
-	 * filter. The cell renders the value's localized display label. A value that is not an instance
-	 * of the expected type (a data / model-kind mismatch) yields {@code null} rather than a
-	 * {@link ClassCastException}, so one stray cell cannot break the whole table render.
+	 * filter. A value that is not an instance of the expected type (a data / model-kind mismatch)
+	 * yields {@code null} rather than a {@link ClassCastException}, so one stray cell cannot break
+	 * the whole table render.
 	 */
-	private static <V> Column<Object, V> typedColumn(String attribute, ResKey label, Class<V> valueType,
-			Comparator<V> comparator, ColumnFilter<V> filter) {
+	private static <V> Column<Object, V> typedColumn(String attribute, ResKey label, TLStructuredTypePart part,
+			Class<V> valueType, Comparator<V> comparator, ColumnFilter<V> filter) {
 		return DefaultColumn.<Object, V> builder(attribute, row -> typedValue(row, attribute, valueType))
 			.label(label)
-			.renderer(value -> CellContent.text(label(value)))
+			.renderer(value -> displayContent(part, value))
 			.sort(() -> comparator)
 			.filter(filter)
 			.build();
@@ -228,16 +292,17 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * A column over an enumeration attribute: an options filter offering the enumeration's
-	 * classifiers, sorted and rendered by their display labels.
+	 * classifiers, sorted by their display labels.
 	 */
-	private static Column<Object, Object> optionsColumn(String attribute, ResKey label, TLEnumeration enumeration) {
+	private static Column<Object, Object> optionsColumn(String attribute, ResKey label, TLStructuredTypePart part,
+			TLEnumeration enumeration) {
 		List<Option> options = new ArrayList<>();
 		for (TLClassifier classifier : enumeration.getClassifiers()) {
 			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
 		}
 		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
 			.label(label)
-			.renderer(value -> CellContent.text(label(value)))
+			.renderer(value -> displayContent(part, value))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new OptionsColumnFilter<>(options))
 			.build();
@@ -246,13 +311,32 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	/**
 	 * The fallback column: sorts and text-filters by the cell's display label.
 	 */
-	private static Column<Object, Object> labelColumn(String attribute, ResKey label) {
+	private static Column<Object, Object> labelColumn(String attribute, ResKey label, TLStructuredTypePart part) {
 		return DefaultColumn.<Object, Object> builder(attribute, row -> attributeValue(row, attribute))
 			.label(label)
-			.renderer(value -> CellContent.text(label(value)))
+			.renderer(value -> displayContent(part, value))
 			.sort(() -> Comparator.comparing(ColumnProviderService::label))
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))
 			.build();
+	}
+
+	/**
+	 * The cell content displaying an attribute value: the attribute's view-mode form display (see
+	 * {@link FieldControlService#createDisplayControl}), or the value's display label as plain text
+	 * when no attribute is available.
+	 *
+	 * @param part
+	 *        The model attribute the value belongs to, or {@code null} if the row type is
+	 *        unresolved.
+	 * @param value
+	 *        The attribute value to display, may be {@code null}.
+	 */
+	public static CellContent displayContent(TLStructuredTypePart part, Object value) {
+		if (part == null) {
+			return CellContent.text(label(value));
+		}
+		return new CellContent.Raw((CellControlFactory) context -> FieldControlService.getInstance()
+			.createDisplayControl(context, part, value));
 	}
 
 	/**

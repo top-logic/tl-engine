@@ -23,7 +23,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -48,8 +47,8 @@ import com.top_logic.table.impl.ListRowSource;
  * of the non-hidden attributes across all object types present - with type-appropriate sorting,
  * filtering and cell rendering. The objects are the rows directly.</li>
  * <li>Otherwise (a primitive value is present, or no object attributes exist) a {@code result}
- * column shows each element's label, followed by text columns for any object attributes. These
- * columns are sortable and text-filterable.</li>
+ * column shows each element's label, followed by columns for any object attributes with their
+ * type-derived display. These columns are sortable and text-filterable.</li>
  * </ul>
  *
  * <p>
@@ -163,7 +162,8 @@ public class ScriptResultControl extends ReactControl {
 
 	/**
 	 * Builds the fallback table for a result containing primitive values: a label {@code result}
-	 * column followed by text columns for any object attributes, all sortable and text-filterable.
+	 * column followed by columns for any object attributes with their type-derived display, all
+	 * sortable and text-filterable by display label.
 	 */
 	private ReactControl buildGenericTable(List<Object> elements) {
 		List<ScriptResultRow> rows = new ArrayList<>(elements.size());
@@ -174,8 +174,7 @@ public class ScriptResultControl extends ReactControl {
 		List<Column<ScriptResultRow, ?>> columns = new ArrayList<>();
 		columns.add(textColumn(RESULT_COLUMN, I18NConstants.SCRIPT_RESULT_COLUMN, row -> label(row.value())));
 		for (TLStructuredTypePart part : attributeUnion(elements).values()) {
-			String name = part.getName();
-			columns.add(textColumn(name, TLModelNamingConvention.resourceKey(part), row -> attribute(row.value(), name)));
+			columns.add(attributeColumn(part));
 		}
 
 		ListRowSource<ScriptResultRow> source =
@@ -237,17 +236,20 @@ public class ScriptResultControl extends ReactControl {
 	}
 
 	/**
-	 * The label of the value's attribute {@code partName}, or the empty string when the value is not
-	 * a {@link TLObject} or its type lacks that attribute.
+	 * A column showing an object attribute with its type-derived display (see
+	 * {@link ColumnProviderService#displayContent}), sorted and text-filtered by the value's
+	 * display label. The value is empty for elements that are not {@link TLObject}s or whose type
+	 * lacks the attribute.
 	 */
-	private static String attribute(Object value, String partName) {
-		if (value instanceof TLObject obj) {
-			TLStructuredType type = obj.tType();
-			if (type != null && type.getPart(partName) != null) {
-				return label(obj.tValueByName(partName));
-			}
-		}
-		return "";
+	private static Column<ScriptResultRow, Object> attributeColumn(TLStructuredTypePart part) {
+		String name = part.getName();
+		return DefaultColumn
+			.<ScriptResultRow, Object> builder(name, row -> ColumnProviderService.attributeValue(row.value(), name))
+			.label(TLModelNamingConvention.resourceKey(part))
+			.renderer(value -> ColumnProviderService.displayContent(part, value))
+			.sort(() -> Comparator.comparing(ColumnProviderService::label))
+			.filter(new TextColumnFilter<>(ColumnProviderService::label))
+			.build();
 	}
 
 	/**

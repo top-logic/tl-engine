@@ -63,17 +63,19 @@ public interface ColumnBinding {
 		setup -> ColumnProviderService.getInstance().createColumn(setup.attribute(), setup.label(), setup.part());
 
 	/**
-	 * Binding for a value-based custom filter: the column renders, sorts and filters by the cell's
-	 * display text, with the configured filter applied to that text.
+	 * Binding for a value-based custom filter: the column shows the attribute's type-derived
+	 * display and sorts by the cell's display text, with the configured filter applied to that
+	 * text.
 	 *
 	 * @param filter
-	 *        The configured filter; value-based filters operate on the rendered text, so it is used
+	 *        The configured filter; value-based filters operate on the display text, so it is used
 	 *        as a {@code ColumnFilter<String>}.
 	 */
 	static ColumnBinding forValueFilter(ColumnFilter<?> filter) {
 		@SuppressWarnings("unchecked")
 		ColumnFilter<String> textFilter = (ColumnFilter<String>) filter;
-		return setup -> ColumnProviderService.getInstance().createColumn(setup.attribute(), setup.label(), textFilter);
+		return setup -> ColumnProviderService.getInstance()
+			.createColumn(setup.attribute(), setup.label(), setup.part(), textFilter);
 	}
 
 }

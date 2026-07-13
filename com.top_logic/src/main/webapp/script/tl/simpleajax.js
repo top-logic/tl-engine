@@ -228,16 +228,84 @@ services.AJAXServiceClass = function() {
 		}
 	};
 	
-	this._showWaitPane = function() {
-		var waitPane = document.getElementById("waitPane");
-		BAL.DOM.addClass(waitPane, "waiting");
-		waitPane.style.cursor = "wait";
+	/**
+	 * Maximum duration in milliseconds a mouse click gesture is considered to be in
+	 * progress after its mousedown event.
+	 *
+	 * Guards against a lost gesture end notification, e.g. when the mouse button is
+	 * released outside the browser window, see _clickGestureActive().
+	 */
+	this.CLICK_GESTURE_TIMEOUT = 3000;
 
+	/**
+	 * Notifies the top window that a mouse click gesture has started (a mousedown
+	 * event occurred in some application window).
+	 *
+	 * Must only be called on the topWindow instance.
+	 */
+	this._clickGestureBegin = function() {
+		window.services.ajax.clickGestureStart = new Date().getTime();
+	};
+
+	/**
+	 * Notifies the top window that the current mouse click gesture has completed
+	 * (the click event following the mouseup has been dispatched).
+	 *
+	 * Displays the wait pane, if showing it was deferred while the gesture was in
+	 * progress, see _showWaitPane().
+	 *
+	 * Must only be called on the topWindow instance.
+	 */
+	this._clickGestureEnd = function() {
+		window.services.ajax.clickGestureStart = 0;
+		if (window.services.ajax.waitPaneDeferred) {
+			window.services.ajax.waitPaneDeferred = false;
+			if (window.services.ajax.waitPaneCounter > 0) {
+				this._displayWaitPane();
+			}
+		}
+	};
+
+	/**
+	 * Whether a mouse click gesture (mousedown until the dispatch of the resulting
+	 * click event) is currently in progress in some application window.
+	 */
+	this._clickGestureActive = function() {
+		var start = window.services.ajax.clickGestureStart;
+		if (start == null || start == 0) {
+			return false;
+		}
+		return new Date().getTime() - start < this.CLICK_GESTURE_TIMEOUT;
+	};
+
+	this._showWaitPane = function() {
 		var counter = window.services.ajax.waitPaneCounter;
 		if (counter == null) {
 			counter = 0;
 		}
 		window.services.ajax.waitPaneCounter = counter + 1;
+
+		if (this._clickGestureActive()) {
+			// Making the wait pane visible between the mousedown and mouseup events of
+			// a click swallows the click: The mouseup then hits the wait pane and the
+			// browser re-targets the click event to the common ancestor of the
+			// mousedown and mouseup targets, so the clicked element is never
+			// activated. This happens regularly when a button is clicked while a form
+			// field with unsaved input has the focus: The mousedown moves the focus,
+			// the field's value update request is sent and displays the wait pane
+			// while the mouse button is still pressed. Therefore, the wait pane is
+			// displayed only after the click event has been dispatched, see
+			// _clickGestureEnd().
+			window.services.ajax.waitPaneDeferred = true;
+		} else {
+			this._displayWaitPane();
+		}
+	};
+
+	this._displayWaitPane = function() {
+		var waitPane = document.getElementById("waitPane");
+		BAL.DOM.addClass(waitPane, "waiting");
+		waitPane.style.cursor = "wait";
 	};
 
 	this._hideWaitPane = function() {
@@ -247,6 +315,7 @@ services.AJAXServiceClass = function() {
 		if (counter > 0) {
 			return;
 		}
+		window.services.ajax.waitPaneDeferred = false;
 		var waitPane = document.getElementById("waitPane");
 		BAL.DOM.removeClass(waitPane, "waiting");
 		waitPane.style.cursor = "default";
@@ -1680,6 +1749,34 @@ services.AJAXServiceConstructor = function() {
 services.AJAXServiceClass.prototype = new WebService("/servlet/AJAXServlet");
 services.AJAXServiceConstructor.prototype = new services.AJAXServiceClass();
 services.ajax = new services.AJAXServiceConstructor();
+
+/**
+ * Tracks the mouse click gesture (mousedown until the dispatch of the resulting
+ * click event) in this window and reports it to the top window, where the wait
+ * pane lives.
+ *
+ * While a click gesture is in progress, showing the input-blocking wait pane is
+ * deferred, see services.ajax._showWaitPane().
+ */
+(function() {
+	var topAjax = function() {
+		var topWindow = services.ajax.topWindow;
+		if (topWindow != null && topWindow.services != null) {
+			return topWindow.services.ajax;
+		}
+		return services.ajax;
+	};
+	BAL.addEventListener(document, "mousedown", function() {
+		topAjax()._clickGestureBegin();
+	}, true);
+	BAL.addEventListener(document, "mouseup", function() {
+		// The click event is dispatched synchronously after the mouseup in the same
+		// task. End the gesture only after the click has been delivered.
+		window.setTimeout(function() {
+			topAjax()._clickGestureEnd();
+		}, 0);
+	}, true);
+})();
 
 
 function XMLValueDecoder() {

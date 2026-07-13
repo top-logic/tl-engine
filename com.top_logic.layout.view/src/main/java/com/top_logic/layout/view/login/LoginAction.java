@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -135,6 +136,10 @@ public class LoginAction implements ViewAction {
 				success = Login.getInstance()
 					.checkUserPassword(userName, decryptedPassword, displayContext.asRequest(),
 						displayContext.asResponse());
+			} catch (InMaintenanceModeException ex) {
+				Logger.info("Login attempt for '" + userName + "' rejected: maintenance mode active.",
+					LoginAction.class);
+				throw new TopLogicException(Login.getMaintenanceMessage(userName), ex);
 			} catch (Exception ex) {
 				Logger.info("Login attempt for '" + userName + "' rejected: " + ex.getMessage(), LoginAction.class);
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED, ex);
@@ -241,8 +246,22 @@ public class LoginAction implements ViewAction {
 	 * Completes a successful authentication: records the deferred login on the HTTP session, closes
 	 * the top dialog, and triggers the client reload that lets {@link PendingSessionAction} perform
 	 * the actual session swap.
+	 *
+	 * <p>
+	 * Re-checks the maintenance mode before recording the login: the follow-up steps (OTP
+	 * verification, forced password change) can complete long after the password check, so
+	 * maintenance mode may have been activated in between.
+	 * </p>
 	 */
 	static void completeLogin(ReactContext context, String userName) {
+		try {
+			Login.getInstance().checkAllowedGroups(Person.byName(userName));
+		} catch (InMaintenanceModeException ex) {
+			Logger.info("Login completion for '" + userName + "' rejected: maintenance mode active.",
+				LoginAction.class);
+			throw new TopLogicException(Login.getMaintenanceMessage(userName), ex);
+		}
+
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		PendingSessionAction.requestLogin(displayContext.asRequest().getSession(), userName);
 

@@ -11,7 +11,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
@@ -86,6 +89,18 @@ public class PendingSessionAction {
 		// interaction: invalidateSession fires a logout event that opens a knowledge-base
 		// transaction, which requires a valid session context.
 		Person target = pendingUser != null ? Person.byName(pendingUser) : null;
+		if (target != null) {
+			// Last gate before the session swap: maintenance mode may have been activated after
+			// the login was recorded. Fall back to the anonymous session in that case; the
+			// user-visible maintenance message is raised by the login command itself.
+			try {
+				Login.getInstance().checkAllowedGroups(target);
+			} catch (InMaintenanceModeException ex) {
+				Logger.info("Pending login for '" + pendingUser + "' dropped: maintenance mode active.",
+					PendingSessionAction.class);
+				target = null;
+			}
+		}
 		if (target == null) {
 			target = PersonManager.getManager().getAnonymous();
 		}

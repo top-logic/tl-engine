@@ -88,7 +88,6 @@
 			<loginPage>/view/</loginPage>
 			<loginRetrySSO>/view/</loginRetrySSO>
 			<logoutPage>/view/</logoutPage>
-			<layout>/view/</layout>
 		</config>
 	</configs>
 </application>

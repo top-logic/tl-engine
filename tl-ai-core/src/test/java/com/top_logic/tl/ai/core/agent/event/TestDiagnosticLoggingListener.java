@@ -64,7 +64,7 @@ public class TestDiagnosticLoggingListener extends TestCase {
 			new AgentEvent.TaskUpdated(RUN, 1, T0, "[{\"id\":\"1\"}]"),
 			new AgentEvent.RetryScheduled(RUN, 1, T0, "OVERLOADED", 1, 2000),
 			new AgentEvent.ProviderError(RUN, 1, T0, "UNKNOWN", "connection reset"),
-			new AgentEvent.DelegatedEvent(RUN, 1, T0, "tc6", child),
+			new AgentEvent.DelegatedEvent(RUN, 1, T0, "", "tc6", child),
 			new AgentEvent.TurnCompleted(RUN, 1, T0, usage, List.of(new TextContent("done"))),
 			new AgentEvent.RunCompleted(RUN, 1, T0, StopReason.COMPLETE, usage));
 	}

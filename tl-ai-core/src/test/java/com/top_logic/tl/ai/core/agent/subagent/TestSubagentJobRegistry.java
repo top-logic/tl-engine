@@ -62,6 +62,24 @@ public class TestSubagentJobRegistry extends TestCase {
 		assertEquals("already delivered, not returned again", 0, second.size());
 	}
 
+	public void testCancelAllCancelsOnlyNonTerminalJobs() {
+		CancellationToken running = new CancellationToken();
+		CancellationToken queued = new CancellationToken();
+		CancellationToken done = new CancellationToken();
+
+		_registry.register("running", "t", running).markRunning();
+		_registry.register("queued", "t", queued);
+		_registry.register("done", "t", done).markTerminal(SubagentJobStatus.DONE,
+			new SubagentResult("r", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE));
+
+		int cancelled = _registry.cancelAll();
+
+		assertEquals("running + queued cancelled, terminal skipped", 2, cancelled);
+		assertTrue("running job's token is cancelled", running.isCancelled());
+		assertTrue("queued job's token is cancelled", queued.isCancelled());
+		assertFalse("terminal job's token is left alone", done.isCancelled());
+	}
+
 	public void testAwaitReturnsTerminalResults() {
 		SubagentJob a = _registry.register("a", "t", new CancellationToken());
 		SubagentResult result = new SubagentResult("r", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE);

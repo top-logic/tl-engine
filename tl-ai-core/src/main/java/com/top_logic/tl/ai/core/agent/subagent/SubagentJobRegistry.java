@@ -97,6 +97,23 @@ public class SubagentJobRegistry {
 	}
 
 	/**
+	 * Cancels every job that is not yet terminal by firing its {@link SubagentJob#cancellationToken()
+	 * cancellation token}. Used when the parent/orchestrator run is cancelled so its still-running
+	 * subagents terminate instead of hanging (including any parked on a user question, whose
+	 * ask-user wait the token's listener unblocks).
+	 *
+	 * @return the number of jobs whose token was cancelled
+	 */
+	public int cancelAll() {
+		int cancelled = 0;
+		for (SubagentJob job : byStatus(SubagentJobStatus.QUEUED, SubagentJobStatus.RUNNING)) {
+			job.cancellationToken().cancel();
+			cancelled++;
+		}
+		return cancelled;
+	}
+
+	/**
 	 * Returns all jobs that are terminal and not yet delivered, marking each delivered.
 	 * Used by the parent loop's top-of-turn injection.
 	 */

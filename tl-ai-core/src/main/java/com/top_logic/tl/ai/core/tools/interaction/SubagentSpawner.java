@@ -20,6 +20,7 @@ import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -34,8 +35,11 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 
@@ -136,19 +140,31 @@ public class SubagentSpawner {
 					ToolContext childContext = toolContext.forSubagent(new TransactionScope(), j.cancellationToken());
 					AgentEventListener childListener = subagentListener(logListener, j.subagentId());
 
+					// Record the child's own transcript (turns, tool calls, thinking) into a
+					// dedicated ConversationLog so it is persisted and viewable, exactly like a
+					// top-level run (AgentRunner#transcriptOf). The first turn carries the task
+					// brief as the user message; the loop's events populate the rest.
+					ConversationLog childLog = new ConversationLog();
+					childLog.startTurn().setUserParts(
+						List.of(new Part.TextPart(UUID.randomUUID().toString(), Instant.now(), userPrompt)));
+					ConversationLogListener childLogListener = new ConversationLogListener(childLog);
+					AgentEventListener recordingListener =
+						new CompositeAgentEventListener(List.of(childLogListener, childListener));
+
 					// Record the subagent run as its own AgentExecution (parentExecution set),
 					// mirroring the synchronous delegation path in DelegationTool#executeSync.
 					ExecutionRecorder recorder = null;
-					AgentEventListener effectiveChildListener = childListener;
+					AgentEventListener effectiveChildListener = recordingListener;
 					if (recordingSession != null) {
 						recorder = new ExecutionRecorder(recordingSession, targetAgentName,
-							parentExecution, childContext.executionHandle(), childListener);
+							parentExecution, childContext.executionHandle(), recordingListener);
 						effectiveChildListener = recorder;
 					}
 					try {
 						AgentResult result = targetLoop.run(conversation, childContext, effectiveChildListener);
 						if (recorder != null) {
-							recorder.complete(null, null);
+							recorder.complete(transcriptOf(childLog), null);
+							j.setChildRunId(recorder.runId());
 						}
 
 						if (j.cancellationToken().isCancelled()) {
@@ -171,7 +187,8 @@ public class SubagentSpawner {
 						throw ce;
 					} catch (Exception e) {
 						if (recorder != null) {
-							recorder.complete(null, e);
+							recorder.complete(transcriptOf(childLog), e);
+							j.setChildRunId(recorder.runId());
 						}
 						if (logListener != null) {
 							logListener.recordSubagentFailed(j.subagentId(), e.getMessage());
@@ -216,6 +233,21 @@ public class SubagentSpawner {
 		}
 		// Wrap child events as DelegatedEvent carrying the subagentId for UI routing.
 		return logListener.subagentListener(subagentId);
+	}
+
+	/**
+	 * Serializes the subagent's recorded turns to the same {@code PersistedConversationV2} JSON
+	 * format used for top-level runs, or {@code null} if serialization fails (recording is
+	 * best-effort and must never break the spawn).
+	 */
+	private static String transcriptOf(ConversationLog childLog) {
+		try {
+			return ConversationLogSerializer.toJson(childLog);
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to serialize subagent transcript: " + ex.getMessage(), ex,
+				SubagentSpawner.class);
+			return null;
+		}
 	}
 
 	private static int countToolCalls(Conversation conversation, int fromIndex) {

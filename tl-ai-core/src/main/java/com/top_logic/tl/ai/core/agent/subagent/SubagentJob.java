@@ -31,6 +31,8 @@ public class SubagentJob {
 
 	private volatile boolean _delivered;
 
+	private volatile String _childRunId;
+
 	/** */
 	public SubagentJob(String subagentId, String targetAgentName, String taskBrief,
 			CancellationToken cancellationToken) {
@@ -79,6 +81,20 @@ public class SubagentJob {
 	/** Whether the result has already been handed to the parent (injection or wait). */
 	public boolean isDelivered() {
 		return _delivered;
+	}
+
+	/**
+	 * Run id of the recorded child {@link com.top_logic.tl.ai.core.execution.model.AgentExecution},
+	 * or {@code null} when the run is not recorded. Lets the UI open the subagent's persisted
+	 * transcript.
+	 */
+	public String childRunId() {
+		return _childRunId;
+	}
+
+	/** Sets the {@link #childRunId() recorded child run id}. */
+	public void setChildRunId(String childRunId) {
+		_childRunId = childRunId;
 	}
 
 	/** Transition QUEUED -&gt; RUNNING. */

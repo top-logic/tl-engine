@@ -315,6 +315,14 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 			assertNotNull("Child status must be set", child.getStatus());
 			assertEquals("Child must be finalized as COMPLETE",
 				ExecutionStatus.COMPLETE.name(), child.getStatus().getName());
+
+			// The child's own transcript must be persisted (Bug 3): top-level runs serialize
+			// their ConversationLog turns; the async subagent path must do the same instead of
+			// storing a null transcript.
+			String transcript = child.getTranscript();
+			assertNotNull("Child transcript must be persisted", transcript);
+			assertTrue("Child transcript must contain the child's turns; got: " + transcript,
+				transcript.contains("recorded child answer"));
 		} finally {
 			registry.shutdown();
 		}

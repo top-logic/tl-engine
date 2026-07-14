@@ -58,6 +58,10 @@ public class TestRoleRulesImporter extends BasicTestCase {
 
 	private final static String ROLE_RULES_INVALID_ROLE = "/WEB-INF/xml/roleRules/InvalidRoleRoleRules.xml";
 
+	private final static String ROLE_RULES_MISSING_ID = "/WEB-INF/xml/roleRules/MissingIdRoleRules.xml";
+
+	private final static String ROLE_RULES_DUPLICATE_ID = "/WEB-INF/xml/roleRules/DuplicateIdRoleRules.xml";
+
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
@@ -131,6 +135,30 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		RoleRulesImporter importer = RoleRulesImporter.loadRules(roleRules);
 		assertTrue(importer.getProblems().isEmpty());
 
+	}
+
+	public void testMissingIdRejected() throws Exception {
+		boolean rejected;
+		try {
+			getRoleRulesConfig(ROLE_RULES_MISSING_ID);
+			rejected = false;
+		} catch (Throwable expected) {
+			// Expected: mandatory 'id' missing.
+			rejected = true;
+		}
+		assertTrue("A rule without a mandatory 'id' must be rejected.", rejected);
+	}
+
+	public void testDuplicateIdRejected() throws Exception {
+		boolean rejected;
+		try {
+			getRoleRulesConfig(ROLE_RULES_DUPLICATE_ID);
+			rejected = false;
+		} catch (Throwable expected) {
+			// Expected: duplicate key 'dup'.
+			rejected = true;
+		}
+		assertTrue("Two rules with the same 'id' must be rejected by the @Key uniqueness.", rejected);
 	}
 
 	private RoleRulesConfig getRoleRulesConfig(String resource) throws ConfigurationException, IOException {

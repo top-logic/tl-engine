@@ -14,7 +14,12 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
@@ -55,6 +60,23 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * Tests for {@link AgentLoop}.
  */
 public class TestAgentLoop extends TestCase {
+
+	/**
+	 * Test suite that boots the {@link com.top_logic.basic.thread.ThreadContextManager} module.
+	 *
+	 * <p>
+	 * {@link AgentLoop} executes tool calls through
+	 * {@link com.top_logic.tl.ai.core.tools.ToolExecutions#execute} (and, for concurrent batches,
+	 * {@link com.top_logic.basic.thread.ThreadContextManager#inSystemInteraction}), which establishes
+	 * a TopLogic interaction context so tools may access the {@code KnowledgeBase}. That requires the
+	 * {@code ThreadContextManager} module to be started; the plain {@code TestCase} runner is not
+	 * enough.
+	 * </p>
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.withThreadContext(new TestSuite(TestAgentLoop.class)));
+	}
 
 	private static final Instant T0 = Instant.parse("2026-04-04T12:00:00Z");
 

@@ -53,6 +53,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
@@ -63,6 +64,7 @@ import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
+import com.top_logic.layout.component.ObjectRevealer;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -122,7 +124,8 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class TableComponent extends BuilderComponent implements SelectableWithSelectionModel, InAppSelectable,
-		FormHandler, TableDataOwner, ControlRepresentable, CompareAlgorithmHolder, ComponentRowSource {
+		FormHandler, TableDataOwner, ControlRepresentable, CompareAlgorithmHolder, ComponentRowSource,
+		ObjectRevealer {
 
 	/**
 	 * Configuration options for {@link TableComponent}.
@@ -993,6 +996,18 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	public TableViewModel getViewModel() {
 		return getTableData().getViewModel();
+	}
+
+	@Override
+	public boolean revealObject(Object businessObject) {
+		TableViewModel viewModel = getViewModel();
+		viewModel.validate(DefaultDisplayContext.getDisplayContext());
+		int row = viewModel.getApplicationModel().getRowOfObject(businessObject);
+		if (row < 0) {
+			return false;
+		}
+		TableModelUtils.scrollToRow(viewModel, row);
+		return true;
 	}
 
 	private FormTableModel createFormTableModel(EditableRowTableModel applicationModel) {

@@ -54,8 +54,14 @@ public class UndoCommandHandler extends AbstractCommandHandler implements WithPo
 
 	/**
 	 * Configuration for {@link UndoCommandHandler}.
+	 *
+	 * <p>
+	 * The inherited {@link ChangeLogOptions} restrict which changes are considered for undo. With
+	 * settings equal to those of a change overview table, the command only undoes changes that
+	 * the overview displays.
+	 * </p>
 	 */
-	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config, ChangeLogOptions {
 
 		/** @see #isCheckConflicts() */
 		String CHECK_CONFLICTS = "check-conflicts";
@@ -116,7 +122,8 @@ public class UndoCommandHandler extends AbstractCommandHandler implements WithPo
 		TLObject root = model instanceof TLObject tlModel ? tlModel : null;
 		Config cfg = config();
 
-		ChangeSet target = ChangeSetReverter.findUndoCandidate(root, cfg.getWindowSize(), cfg.getIncludeSubtree());
+		ChangeSet target =
+			ChangeSetReverter.findUndoCandidate(root, cfg, cfg.getWindowSize(), cfg.getIncludeSubtree());
 		if (target == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}

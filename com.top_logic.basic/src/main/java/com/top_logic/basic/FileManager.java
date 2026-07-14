@@ -247,7 +247,7 @@ public abstract class FileManager {
 	 * 
 	 * @param name
 	 *        The name of the resource (including its path relative to the web application root).
-	 * @return A handle for the requested resource, nor <code>null</code>, if the resource does not
+	 * @return A handle for the requested resource, or <code>null</code>, if the resource does not
 	 *         exist.
 	 */
 	public abstract BinaryData getDataOrNull(String name);

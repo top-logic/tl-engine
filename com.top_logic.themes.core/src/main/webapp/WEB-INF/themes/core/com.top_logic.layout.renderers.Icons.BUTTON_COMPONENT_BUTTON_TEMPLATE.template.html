@@ -1,5 +1,6 @@
-<a accesskey="{accessKey}" id="{id}" class="tlButton {cssClass}" href="#" 
+<a accesskey="{accessKey}" id="{id}" class="tlButton {cssClass}" href="#" role="button"
 	data-tooltip="{tooltip}" onclick="{onclick}"
+	onkeydown="return services.form.ButtonControl.handleKeyDown(event, this);"
 >
 	<h4 class="tlButtonLabel">
 		{label}

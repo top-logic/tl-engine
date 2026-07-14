@@ -40,6 +40,7 @@ import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.meta.MetaAttributeFactory;
 import com.top_logic.element.meta.MetaElementFactory;
+import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -58,6 +59,7 @@ import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.search.expr.CalendarField;
 import com.top_logic.model.search.expr.CalendarUpdate;
@@ -88,6 +90,37 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestSearchExpression extends AbstractSearchExpressionTest {
+
+	public void testKBSearchWithTransientObjects() {
+		with("TestSearchExpression-testKBSearchTransient.scenario.xml",
+			scenario -> {
+				TLObject a0 = scenario.getObject("a0");
+				assertEquals("A0", a0.tValueByName("name"));
+				TLObject a1 = scenario.getObject("a1");
+				assertEquals("A1", a1.tValueByName("name"));
+				TLObject a2 = scenario.getObject("a2");
+				assertEquals("A1", a2.tValueByName("name"));
+				assertNotNull(a2);
+
+				QueryExecutor search = QueryExecutor.compile(search(
+					"context -> all(`TestSearchExpression:A`).filter(x -> $x != $context).filter(x -> $x.get(`TestSearchExpression:A#name`) == $context.get(`TestSearchExpression:A#name`)).toSet()"));
+				assertEquals(set(), search.execute(a0));
+				assertEquals(set(a1), search.execute(a2));
+				assertEquals(set(a2), search.execute(a1));
+
+				TLClass tType = (TLClass) a0.tType();
+				TLObject transientObject = TransientObjectFactory.INSTANCE.createObject(tType);
+				transientObject.tUpdateByName("name", "A1");
+
+				assertEquals(set(a1, a2), search.execute(transientObject));
+
+				TLObject newPersistentObject =
+					DynamicModelService.getFactoryFor(tType.getModule().getName()).createObject(tType);
+				newPersistentObject.tUpdateByName("name", "A1");
+
+				assertEquals(set(a1, a2), search.execute(newPersistentObject));
+			});
+	}
 
 	public void testKBSearch() {
 		with("TestSearchExpression-testKBSearch.scenario.xml",

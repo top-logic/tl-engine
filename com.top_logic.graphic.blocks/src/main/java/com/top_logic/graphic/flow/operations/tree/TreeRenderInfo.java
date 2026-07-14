@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
@@ -543,13 +544,17 @@ public class TreeRenderInfo {
 	 * </p>
 	 *
 	 * <p>
-	 * In {@link #_compact compact} mode the vertical position of each sibling is determined by a
-	 * per-box collision check against previously placed siblings (with {@link #_siblingGapY}
-	 * vertical and {@link #_gapX} horizontal clearance). Boxes that do not X-overlap with anything
-	 * placed before do not contribute a Y-constraint, so a sibling with a shallow / narrow subtree
-	 * can slide up next to the deep grandchildren of a preceding sibling — the empty space to the
-	 * left of those grandchildren is re-used. In non-compact mode children are stacked strictly
-	 * below the full bounding box of the previous sibling, separated by {@link #_siblingGapY}.
+	 * In {@link #_compact compact} mode the children's subtrees are first aligned on a shared
+	 * depth-column raster ({@link #rasterizeSiblingColumns(List)}): boxes of the same depth
+	 * occupy the same column strip, and all buses between two depths share one X coordinate.
+	 * Each child subtree is then placed as a rigid unit at the topmost vertical position where
+	 * none of its boxes and connection lines conflicts with the already placed siblings
+	 * ({@link #topmostFitDy(List, SubtreeBoxes, double)}) — with {@link #_siblingGapY} between
+	 * the two subtree roots and {@link #_subtreeGapY} for every other pair. A small subtree
+	 * following a deep sibling thereby slides up into existing free space (e.g. directly below
+	 * the sibling's root), while a subtree that does not fit completely into free space remains
+	 * below. In non-compact mode children are stacked strictly below the full bounding box of
+	 * the previous sibling, separated by {@link #_siblingGapY}.
 	 * </p>
 	 */
 	private void packLinear(TreeNode node) {
@@ -558,13 +563,9 @@ public class TreeRenderInfo {
 		double stub = Math.max(_gapX / 2, maxDeco);
 		double childOriginX = node.getBox().getWidth() + _gapX / 2 + stub;
 
-		// Align every child's outgoing-bus column to a single X derived from the widest direct
-		// sibling. Without this each child's bus would sit greedily at its own right edge plus
-		// _gapX/2 - a wider sibling's box would then poke past a narrower sibling's bus column,
-		// producing a visual cross of box and bus line.
-		alignSiblingBuses(children);
-
 		if (_compact) {
+			rasterizeSiblingColumns(children);
+
 			// Per-child subtree boxes: the child's own box (root) vs. its descendants. Sibling
 			// roots (direct children of {@code node}) share the same direct parent, so their
 			// pairwise Y-clearance is _siblingGapY; every other pair crosses a subtree boundary
@@ -576,17 +577,24 @@ public class TreeRenderInfo {
 				double dx = childOriginX - subtreeMinX(child);
 				shiftSubtree(child, dx, 0);
 				SubtreeBoxes candidate = collectSubtree(child);
+				double topDy = -subtreeMinY(child);
 				double dy;
 				if (first) {
-					dy = -subtreeMinY(child);
+					dy = topDy;
 					first = false;
 				} else {
-					dy = minCompactDySiblings(placed, candidate);
+					dy = topmostFitDy(placed, candidate, topDy);
 				}
 				shiftSubtree(child, 0, dy);
 				placed.add(candidate.shifted(dy));
 			}
 		} else {
+			// Align every child's outgoing-bus column to a single X derived from the widest
+			// direct sibling. Without this each child's bus would sit greedily at its own right
+			// edge plus _gapX/2 - a wider sibling's box would then poke past a narrower
+			// sibling's bus column, producing a visual cross of box and bus line.
+			alignSiblingBuses(children);
+
 			double curY = 0;
 			for (TreeNode child : children) {
 				double dx = childOriginX - subtreeMinX(child);
@@ -598,6 +606,97 @@ public class TreeRenderInfo {
 
 		// Center parent based on parentAlign (between first and last child anchors).
 		placeParent(node, children.get(0), children.get(children.size() - 1));
+	}
+
+	/**
+	 * Aligns the children's subtrees on a shared depth-column raster.
+	 *
+	 * <p>
+	 * The raster is measured over all sibling subtrees: column {@code d} is as wide as the
+	 * widest box at depth {@code d} (the children form depth 0), and the bus between depths
+	 * {@code d} and {@code d + 1} sits {@code gapX/2} right of column {@code d}. Every node
+	 * moves to its depth's column start and every parent's outgoing bus to the depth's shared
+	 * bus position ({@link TreeNode#getBusXOverride() bus-X override}). This reserves the strip
+	 * width a sibling's wider box needs in a column that another sibling's subtree passes
+	 * through — the precondition for placing a following sibling into free space beside a
+	 * preceding sibling's subtree without crossing its bus.
+	 * </p>
+	 *
+	 * <p>
+	 * A sub-grid parent keeps its internal grid geometry: only its main bus (and with it the
+	 * complete grid block) moves to the shared bus position of its depth; measurement does not
+	 * descend into the grid.
+	 * </p>
+	 */
+	private void rasterizeSiblingColumns(List<TreeNode> children) {
+		List<double[]> cols = new ArrayList<>();
+		for (TreeNode child : children) {
+			measureColumns(child, 0, cols);
+		}
+
+		double[] colX = new double[cols.size()];
+		double[] busX = new double[cols.size()];
+		for (int d = 0; d < cols.size(); d++) {
+			colX[d] = d == 0 ? 0 : busX[d - 1] + Math.max(_gapX / 2, cols.get(d)[1]);
+			busX[d] = colX[d] + cols.get(d)[0] + _gapX / 2;
+		}
+
+		for (TreeNode child : children) {
+			applyRaster(child, 0, colX, busX);
+		}
+	}
+
+	/**
+	 * Records the maximum box width ({@code [0]}) and incoming-decoration width ({@code [1]})
+	 * per depth for {@link #rasterizeSiblingColumns(List)}. Does not descend into sub-grid
+	 * parents — their interior keeps its own geometry.
+	 */
+	private void measureColumns(TreeNode node, int depth, List<double[]> cols) {
+		while (cols.size() <= depth) {
+			cols.add(new double[] { 0, 0 });
+		}
+		double[] col = cols.get(depth);
+		col[0] = Math.max(col[0], node.getBox().getWidth());
+		Double deco = _maxDecoWidth.get(node);
+		if (deco != null) {
+			col[1] = Math.max(col[1], deco);
+		}
+		if (_gridInfos.containsKey(node)) {
+			return;
+		}
+		for (TreeNode child : node.getChildren()) {
+			measureColumns(child, depth + 1, cols);
+		}
+	}
+
+	/**
+	 * Moves {@code node} to its depth's raster column and its outgoing bus to the depth's
+	 * shared bus position; recurses into linear children. A sub-grid parent's whole grid block
+	 * is shifted so that its main bus lands on the shared bus position.
+	 */
+	private void applyRaster(TreeNode node, int depth, double[] colX, double[] busX) {
+		double dx = colX[depth] - node.getX();
+		if (dx != 0) {
+			shiftSubtree(node, dx, 0);
+		}
+		if (node.getChildren().isEmpty()) {
+			return;
+		}
+		node.setBusXOverride(busX[depth]);
+		GridInfo gi = _gridInfos.get(node);
+		if (gi != null) {
+			double busDelta = busX[depth] - gi.getBusX()[0];
+			if (busDelta != 0) {
+				for (TreeNode grand : node.getChildren()) {
+					shiftSubtree(grand, busDelta, 0);
+				}
+				gi.shift(busDelta, 0);
+			}
+			return;
+		}
+		for (TreeNode child : node.getChildren()) {
+			applyRaster(child, depth + 1, colX, busX);
+		}
 	}
 
 	/**
@@ -630,9 +729,10 @@ public class TreeRenderInfo {
 
 	/**
 	 * Recursively collects every visual obstacle of the subtree rooted at {@code node}: each
-	 * node's box, plus a width-0 phantom rectangle at every internal node's outgoing-bus column
-	 * so that the X-overlap test can detect when a wider sibling's box extends into a bus
-	 * column. Each entry is {@code [x, y, w, h]} in the current coordinate frame.
+	 * node's box, plus phantom rectangles for every internal node's connection graphics
+	 * ({@link #addBus(TreeNode, List)}), so that compact placement never puts a sibling box
+	 * onto a bus or stub line. Each entry is {@code [x, y, w, h]} in the current coordinate
+	 * frame.
 	 */
 	private void collectBoxes(TreeNode node, List<double[]> result) {
 		Box box = node.getBox();
@@ -656,13 +756,19 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * Shifts each child's descendants to the right so that every child of the current parent
-	 * has its outgoing bus at the same X — derived from the widest direct child's natural bus
-	 * column ({@code maxChildWidth + _gapX/2} in the child's local frame). A child's own box
+	 * Non-compact counterpart of {@link #rasterizeSiblingColumns(List)}, aligning the depth-1
+	 * bus column only: shifts each child's descendants to the right so that every child of the
+	 * current parent has its outgoing bus at the same X — derived from the widest direct
+	 * child's natural bus column ({@code maxChildWidth + _gapX/2} in the child's local frame).
+	 * A child's own box
 	 * stays at X = 0; only its descendant columns move. The {@link TreeNode#getBusXOverride()
 	 * bus-X override} on each affected child records the new bus column so that connection
 	 * drawing in {@link TreeLayoutOperations#distributeSize} uses it instead of recomputing
-	 * the bus position from the child's box width.
+	 * the bus position from the child's box width. A child that is itself a sub-grid parent
+	 * has its {@link GridInfo} shifted by the same amount, so that its bus and stub rendering
+	 * (which takes the bar X from the {@link GridInfo}) stays aligned with the shifted
+	 * descendant columns — and in particular does not cross a compacted sibling placed in the
+	 * space left of the shared bus column.
 	 *
 	 * <p>
 	 * Must be called before children are shifted into the parent's frame: the override is
@@ -687,32 +793,46 @@ public class TreeRenderInfo {
 				for (TreeNode grand : child.getChildren()) {
 					shiftSubtree(grand, extra, 0);
 				}
+				GridInfo gi = _gridInfos.get(child);
+				if (gi != null) {
+					gi.shift(extra, 0);
+				}
 			}
 			child.setBusXOverride(maxChildWidth + _gapX / 2);
 		}
 	}
 
 	/**
-	 * Appends a width-0 phantom rectangle representing {@code node}'s outgoing bus to
-	 * {@code result}, if {@code node} has children. The bus sits at X =
-	 * {@code node.right + _gapX/2} and spans Y from the topmost to the bottommost anchor mid-Y
-	 * among {@code node} and its direct children. Used by compact packing to detect that a
-	 * wider sibling box would visually cross the bus line.
+	 * Appends width- or height-0 phantom rectangles representing {@code node}'s outgoing
+	 * connection graphics to {@code result}, if {@code node} has children. Compact packing
+	 * treats these as obstacles so that no sibling box is placed onto a drawn line.
+	 *
+	 * <p>
+	 * For a linear parent this is the vertical bus alone (at the {@link
+	 * TreeNode#getBusXOverride() bus-X override} or {@code node.right + _gapX/2}, spanning the
+	 * anchor mid-Ys of {@code node} and its direct children): the parent stem and the stubs
+	 * into the children stay between the bus and the adjacent column strips and cannot cross
+	 * sibling boxes. A sub-grid parent's stubs, in contrast, cross its sub-column strips, so
+	 * {@link #addGridBus(TreeNode, GridInfo, List)} contributes the complete line set.
+	 * </p>
 	 */
 	private void addBus(TreeNode node, List<double[]> result) {
 		List<TreeNode> children = node.getChildren();
 		if (children.isEmpty()) {
 			return;
 		}
+		GridInfo gi = _gridInfos.get(node);
+		if (gi != null) {
+			addGridBus(node, gi, result);
+			return;
+		}
 		double busX = node.hasBusXOverride()
 			? node.getBusXOverride()
 			: node.getX() + node.getBox().getWidth() + _gapX / 2;
-		Box anchor = node.getAnchor();
-		double topY = node.getY() + anchor.getY() + 0.5 * anchor.getHeight();
+		double topY = anchorMid(node);
 		double botY = topY;
 		for (TreeNode child : children) {
-			Box ca = child.getAnchor();
-			double midY = child.getY() + ca.getY() + 0.5 * ca.getHeight();
+			double midY = anchorMid(child);
 			if (midY < topY) {
 				topY = midY;
 			}
@@ -724,33 +844,181 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * Minimum vertical shift to apply to {@code candidate} so that it does not collide with any
-	 * already {@code placed} sibling-subtree, with {@code _gapX} horizontal and per-pair
-	 * vertical clearance:
-	 * <ul>
-	 * <li>{@link #_siblingGapY} between the two subtree roots (direct siblings under the same
-	 * parent).</li>
-	 * <li>{@link #_subtreeGapY} for every pair that crosses the subtree boundary (root↔descendant
-	 * or descendant↔descendant).</li>
-	 * </ul>
+	 * Grid variant of {@link #addBus(TreeNode, List)}: the parent stem, the vertical buses, the
+	 * stubs from the bus across the sub-columns into each child, the bottom bridge of a
+	 * column-wise grid, and the stems and shared child bus of subtree-bearing row-wise sub-grid
+	 * children. These lines cross sub-column strips, so compact packing must not place a
+	 * sibling box into the seemingly free space they run through.
 	 */
-	private double minCompactDySiblings(List<SubtreeBoxes> placed, SubtreeBoxes candidate) {
-		double dy = Double.NEGATIVE_INFINITY;
+	private void addGridBus(TreeNode node, GridInfo gi, List<double[]> result) {
+		double parentMid = anchorMid(node);
+		Box parentAnchor = node.getAnchor();
+		double parentRight = node.getX() + parentAnchor.getX() + parentAnchor.getWidth();
+
+		if (gi.getKind() == GridInfo.Kind.ROW_WISE) {
+			double mainBusX = gi.getBusX()[0];
+			result.add(new double[] { parentRight, parentMid, mainBusX - parentRight, 0 });
+
+			double topY = parentMid;
+			double botY = parentMid;
+			double childBusTop = Double.POSITIVE_INFINITY;
+			double childBusBot = Double.NEGATIVE_INFINITY;
+			for (TreeNode child : node.getChildren()) {
+				double midY = anchorMid(child);
+				topY = Math.min(topY, midY);
+				botY = Math.max(botY, midY);
+
+				double childLeft = child.getX();
+				result.add(new double[] { Math.min(mainBusX, childLeft), midY,
+					Math.abs(childLeft - mainBusX), 0 });
+
+				if (!child.getChildren().isEmpty()) {
+					Box childAnchor = child.getAnchor();
+					double childRight = child.getX() + childAnchor.getX() + childAnchor.getWidth();
+					result.add(new double[] { childRight, midY, gi.getChildBusX() - childRight, 0 });
+					childBusTop = Math.min(childBusTop, midY);
+					childBusBot = Math.max(childBusBot, midY);
+					for (TreeNode grand : child.getChildren()) {
+						double grandMid = anchorMid(grand);
+						childBusTop = Math.min(childBusTop, grandMid);
+						childBusBot = Math.max(childBusBot, grandMid);
+					}
+				}
+			}
+			result.add(new double[] { mainBusX, topY, 0, botY - topY });
+			if (childBusTop <= childBusBot) {
+				result.add(
+					new double[] { gi.getChildBusX(), childBusTop, 0, childBusBot - childBusTop });
+			}
+		} else {
+			double[] busX = gi.getBusX();
+			double bridgeY = gi.getBridgeY();
+			List<List<TreeNode>> cols = gi.getCols();
+			result.add(new double[] { parentRight, parentMid, busX[0] - parentRight, 0 });
+			for (int c = 0; c < gi.getColCount(); c++) {
+				List<TreeNode> col = cols.get(c);
+				double topY = c == 0 ? Math.min(parentMid, anchorMid(col.get(0))) : anchorMid(col.get(0));
+				result.add(new double[] { busX[c], topY, 0, bridgeY - topY });
+				for (TreeNode child : col) {
+					double midY = anchorMid(child);
+					double childLeft = child.getX();
+					result.add(new double[] { Math.min(busX[c], childLeft), midY,
+						Math.abs(childLeft - busX[c]), 0 });
+				}
+			}
+			if (gi.getColCount() > 1) {
+				result.add(new double[] { busX[0], bridgeY, busX[gi.getColCount() - 1] - busX[0], 0 });
+			}
+		}
+	}
+
+	/**
+	 * Y coordinate of the node anchor's vertical mid-point.
+	 */
+	private double anchorMid(TreeNode node) {
+		Box anchor = node.getAnchor();
+		return node.getY() + anchor.getY() + 0.5 * anchor.getHeight();
+	}
+
+	/**
+	 * Topmost vertical position (as shift to apply to {@code candidate}) at which the candidate
+	 * subtree fits without conflicting with any already {@code placed} sibling subtree.
+	 *
+	 * <p>
+	 * Tried positions are {@code topDy} (the top of the packing) and, for every pair of a
+	 * placed obstacle and a candidate box that share X range, the position placing the
+	 * candidate box directly below that obstacle. The first (topmost) conflict-free position
+	 * wins; the position below all overlapping obstacles is always conflict-free, so the search
+	 * cannot fail. Clearances match {@link #fits(List, SubtreeBoxes, double)}:
+	 * {@link #_siblingGapY} between the two subtree roots (direct siblings under the same
+	 * parent), {@link #_subtreeGapY} for every pair that crosses the subtree boundary
+	 * (root↔descendant or descendant↔descendant).
+	 * </p>
+	 */
+	private double topmostFitDy(List<SubtreeBoxes> placed, SubtreeBoxes candidate, double topDy) {
+		TreeSet<Double> tries = new TreeSet<>();
+		tries.add(topDy);
+		double below = Double.NEGATIVE_INFINITY;
 		for (SubtreeBoxes pst : placed) {
-			dy = Math.max(dy, yClearance(pst._root, candidate._root, _siblingGapY));
+			below = Math.max(below, enterTry(tries, pst._root, candidate._root, _siblingGapY, topDy));
 			for (double[] cd : candidate._descendants) {
-				dy = Math.max(dy, yClearance(pst._root, cd, _subtreeGapY));
+				below = Math.max(below, enterTry(tries, pst._root, cd, _subtreeGapY, topDy));
 			}
 			for (double[] pd : pst._descendants) {
-				dy = Math.max(dy, yClearance(pd, candidate._root, _subtreeGapY));
+				below = Math.max(below, enterTry(tries, pd, candidate._root, _subtreeGapY, topDy));
 				for (double[] cd : candidate._descendants) {
-					dy = Math.max(dy, yClearance(pd, cd, _subtreeGapY));
+					below = Math.max(below, enterTry(tries, pd, cd, _subtreeGapY, topDy));
 				}
 			}
 		}
-		// Candidate's X extent disjoint from everything placed: no Y constraint at all - keep
-		// the natural top-of-subtree position.
-		return dy == Double.NEGATIVE_INFINITY ? 0 : dy;
+		if (below == Double.NEGATIVE_INFINITY) {
+			// Candidate's X extent disjoint from everything placed: no Y constraint at all -
+			// keep the natural top-of-subtree position.
+			return topDy;
+		}
+		for (double dy : tries) {
+			if (fits(placed, candidate, dy)) {
+				return dy;
+			}
+		}
+		return below;
+	}
+
+	/**
+	 * Registers the position that places the candidate box {@code cb} directly below the placed
+	 * box {@code pb} as a try position for {@link #topmostFitDy(List, SubtreeBoxes, double)} —
+	 * provided the two boxes share X range and the position is not above {@code topDy} — and
+	 * returns it as this pair's contribution to the below-everything fallback.
+	 */
+	private double enterTry(TreeSet<Double> tries, double[] pb, double[] cb, double gapY, double topDy) {
+		if (pb[0] + pb[2] <= cb[0] || cb[0] + cb[2] <= pb[0]) {
+			return Double.NEGATIVE_INFINITY;
+		}
+		double dy = pb[1] + pb[3] + gapY - cb[1];
+		if (dy >= topDy) {
+			tries.add(dy);
+		}
+		return dy;
+	}
+
+	/**
+	 * Whether the candidate, shifted by {@code dy}, conflicts with none of the placed sibling
+	 * subtrees.
+	 */
+	private boolean fits(List<SubtreeBoxes> placed, SubtreeBoxes candidate, double dy) {
+		for (SubtreeBoxes pst : placed) {
+			if (conflicts(pst._root, candidate._root, dy, _siblingGapY)) {
+				return false;
+			}
+			for (double[] cd : candidate._descendants) {
+				if (conflicts(pst._root, cd, dy, _subtreeGapY)) {
+					return false;
+				}
+			}
+			for (double[] pd : pst._descendants) {
+				if (conflicts(pd, candidate._root, dy, _subtreeGapY)) {
+					return false;
+				}
+				for (double[] cd : candidate._descendants) {
+					if (conflicts(pd, cd, dy, _subtreeGapY)) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Whether the placed box {@code pb} and the candidate box {@code cb}, shifted by
+	 * {@code dy}, share X range and violate the vertical clearance {@code gapY}.
+	 */
+	private boolean conflicts(double[] pb, double[] cb, double dy, double gapY) {
+		if (pb[0] + pb[2] <= cb[0] || cb[0] + cb[2] <= pb[0]) {
+			return false;
+		}
+		double top = cb[1] + dy;
+		return top < pb[1] + pb[3] + gapY && top + cb[3] + gapY > pb[1];
 	}
 
 	/**
@@ -938,13 +1206,16 @@ public class TreeRenderInfo {
 		double childBusX = postGridX - _gapX / 2;
 
 		// Adaptive Y stack with per-column bottom, per-column "max past stub Y crossing this col"
-		// (from past children whose own col is > this col), and bus-bottom tracking.
+		// (from past children whose own col is > this col), and bus-bottom tracking. curYPost is
+		// the post-grid contour: the topmost Y where the next descendant block may start without
+		// colliding with an earlier block (or its bus at childBusX). It is a lower bound only —
+		// a block's preferred position is the one its own subtree packing produced.
 		double[] prevColBottom = new double[C];
 		Arrays.fill(prevColBottom, Double.NEGATIVE_INFINITY);
 		double[] prevStubsCrossingCol = new double[C];
 		Arrays.fill(prevStubsCrossingCol, Double.NEGATIVE_INFINITY);
 		double prevBusBottom = Double.NEGATIVE_INFINITY;
-		double curYPost = 0;
+		double curYPost = Double.NEGATIVE_INFINITY;
 
 		for (int i = 0; i < M; i++) {
 			TreeNode ch = children.get(i);
@@ -1004,28 +1275,47 @@ public class TreeRenderInfo {
 			if (hasSubtree) {
 				// 2. Shift only the descendants to the post-grid: shift the entire ch-subtree
 				// (so ch's _gridInfo, if any, follows) and unshift ch alone, leaving ch in the
-				// sub-grid slot but its children at (postGridX, curYPost + ...).
-				TreeNode grandFirst = ch.getChildren().get(0);
+				// sub-grid slot but its children in the post-grid column. The X-shift anchors
+				// on the descendant block's minimum extent — NOT on the first child: with a
+				// nested sub-grid whose subGridStartCol places the first child in a follow-up
+				// column, the first child is not the leftmost descendant, and anchoring on it
+				// would drag the nested left column back into this sub-grid and the nested main
+				// bus left of ch's own box. Anchoring the block extent keeps the leftmost
+				// nested column at postGridX and — by construction — the nested main bus at
+				// childBusX.
+				double grandMinX = Double.POSITIVE_INFINITY;
+				double grandMinY = Double.POSITIVE_INFINITY;
+				double grandMinAnchorMid = Double.POSITIVE_INFINITY;
+				for (TreeNode grand : ch.getChildren()) {
+					grandMinX = Math.min(grandMinX, subtreeMinX(grand));
+					grandMinY = Math.min(grandMinY, subtreeMinY(grand));
+					Box grandAnchor = grand.getAnchor();
+					grandMinAnchorMid = Math.min(grandMinAnchorMid,
+						grand.getY() + grandAnchor.getY() + 0.5 * grandAnchor.getHeight());
+				}
 
 				// (3b) Bus non-overlap at childBusX, second half: my bus.top is
-				// min(ch.anchorMidY, grandFirst.anchorMidY). Constraint (3) above only handles
-				// the ch.anchorMidY half (by pushing yi up). For the grandFirst.anchorMidY half
-				// we push curYPost up so that the first grandchild's anchor midY lands
+				// min(ch.anchorMidY, topmost grandchild anchorMidY). Constraint (3) above only
+				// handles the ch.anchorMidY half (by pushing yi up). For the grandchild half we
+				// push curYPost up so that the topmost grandchild's anchor midY lands
 				// sibblingGapY below the deepest past bus bottom. Without this, a parent with a
 				// shallow subtree (few/short post-grid descendants) following a parent with a
 				// deep anchor (long label above the anchor → big anchorMidY) would have its
 				// bus.top at the grandchild side overlap with the past bus at childBusX.
 				if (prevBusBottom > Double.NEGATIVE_INFINITY) {
-					Box grandFirstAnchor = grandFirst.getAnchor();
-					double grandFirstAnchorMidOff = grandFirstAnchor.getY() + 0.5 * grandFirstAnchor.getHeight();
-					double curYPostMin = prevBusBottom + _siblingGapY - grandFirstAnchorMidOff;
+					double curYPostMin = prevBusBottom + _siblingGapY - (grandMinAnchorMid - grandMinY);
 					if (curYPost < curYPostMin) {
 						curYPost = curYPostMin;
 					}
 				}
 
-				double dxDesc = postGridX - grandFirst.getX();
-				double dyDesc = curYPost - grandFirst.getY();
+				double dxDesc = postGridX - grandMinX;
+				// Y: the subtree packing already placed ch relative to its children according to
+				// parentAlign/parentOffset (placeParent), and the slot shift above moved that
+				// geometry rigidly — so the preferred Y-shift is zero. Push the block down to
+				// the post-grid contour only when the preferred position would collide with an
+				// earlier descendant block or its bus at childBusX.
+				double dyDesc = Math.max(0, curYPost - grandMinY);
 				shiftSubtree(ch, dxDesc, dyDesc);
 				ch.setX(ch.getX() - dxDesc);
 				ch.setY(ch.getY() - dyDesc);

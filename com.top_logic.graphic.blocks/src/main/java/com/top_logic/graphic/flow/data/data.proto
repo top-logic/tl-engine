@@ -59,14 +59,26 @@ message Diagram extends Widget {
 	double viewBoxHeight;
 
 	/**
-	 * The zoom level to apply when the diagram is first displayed, when the model changes,
-	 * or when the view is refreshed. The user can still adjust the zoom interactively afterwards.
+	 * The zoom level to apply when the diagram is first displayed for a model. The user can still
+	 * adjust the zoom interactively afterwards.
 	 */
 	InitialZoom initialZoom;
+
+	/**
+	 * Whether the client must keep its current view box (zoom and pan) instead of applying the
+	 * {@link #initialZoom}.
+	 *
+	 * <p>
+	 * Set by the server when the diagram is rebuilt for the same model (an internal update), so that
+	 * a redraw does not reset the zoom the user has chosen. On a switch to another model the flag
+	 * stays {@code false} and the {@link #initialZoom} is applied to the transferred view box.
+	 * </p>
+	 */
+	boolean keepViewBox;
 }
 
 /**
- * Initial zoom policy applied when a {@link Diagram} is (re-)displayed.
+ * Initial zoom policy applied when a {@link Diagram} is first displayed for a model.
  *
  * <p>
  * The fixed variants set an absolute zoom factor. The fit variants scale the diagram such that

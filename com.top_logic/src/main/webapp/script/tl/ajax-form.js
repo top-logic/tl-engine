@@ -1976,6 +1976,21 @@ services.form = {
 			controlElement.enableTimer = null;
 		},
 
+		/**
+		 * Activates an anchor-based button with the space key like a native button.
+		 *
+		 * The synthesized click event triggers the element's onclick attribute and
+		 * activates the button through the regular handleClick() path.
+		 */
+		handleKeyDown : function(event, element) {
+			event = BAL.getEvent(event);
+			if (BAL.getKeyCode(event) == 32) {
+				element.click();
+				return false;
+			}
+			return true;
+		},
+
 		handleClick : function(event, controlID, progressDivID) {
 			BAL.eventStopPropagation(BAL.getEvent(event));
 			var delay = services.ajax.progressBarDelay;

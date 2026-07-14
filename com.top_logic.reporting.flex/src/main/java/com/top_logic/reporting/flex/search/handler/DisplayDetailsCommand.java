@@ -12,12 +12,10 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.search.AttributedSearchResultSet;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ConstantDisplayValue;
-import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -31,35 +29,22 @@ import com.top_logic.reporting.flex.chart.config.model.ChartNode;
 import com.top_logic.reporting.flex.chart.config.model.ChartTree;
 import com.top_logic.reporting.flex.chart.config.model.ChartTree.DataKey;
 import com.top_logic.reporting.flex.search.chart.SearchResultChartConfig;
-import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * Dialog-hanlder that works with {@link AttributedSearchResultSet} to pass information about type
+ * Dialog-handler that works with {@link AttributedSearchResultSet} to pass information about type
  * and selected columns.
  * 
- * @author <a href=mailto:cca@top-logic.com>cca</a>
+ * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class DisplayDetailsCommand extends OpenModalDialogCommandHandler {
 
 	/**
-	 * Configuration options for {@link DisplayDetailsCommand}.
+	 * The ID used to register this command in {@link CommandHandlerFactory}
 	 */
-	public interface Config extends OpenModalDialogCommandHandler.Config {
-		// No separate access rights for displaying details.
-		@Override
-		@FormattedDefault(SimpleBoundCommandGroup.SYSTEM_NAME)
-		public CommandGroupReference getGroup();
-	}
-
-	/**
-	 * <code>COMMAND_ID</code>: The ID used to register this command in
-	 * {@link CommandHandlerFactory}
-	 */
-	public static String COMMAND_ID = "displaySearchResultDetails";
+	public static final String COMMAND_ID = "displaySearchResultDetails";
 
 	/**
 	 * Creates a new {@link DisplayDetailsCommand}
@@ -93,11 +78,6 @@ public class DisplayDetailsCommand extends OpenModalDialogCommandHandler {
 			}
 		}
 		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	@Override
-	public ComponentName getOpenToDialogName() {
-		return DetailsTableDialog.GLOBAL_DIALOG_NAME;
 	}
 
 	private AttributedSearchResultSet toSearchResult(List<?> objects, Set<? extends TLClass> types,

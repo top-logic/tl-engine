@@ -30,13 +30,13 @@
 
 	<properties>
 		<tl.version>8.0.0-SNAPSHOT</tl.version>
-		<jetty.version>12.1.10</jetty.version>
+		<jetty.version>12.1.11</jetty.version>
 		<poi.version>5.5.1</poi.version>
 		<kafka.version>3.9.2</kafka.version>
 		<zookeeper.version>3.9.5</zookeeper.version>
 		<slf4j.version>2.0.18</slf4j.version>
-		<log4j.version>2.26.0</log4j.version>
-		<fasterxml.version>2.22.0</fasterxml.version>
+		<log4j.version>2.26.1</log4j.version>
+		<fasterxml.version>2.22.1</fasterxml.version>
 		<msgbuf.version>1.2.2</msgbuf.version>
 		<bouncycastle.version>1.84</bouncycastle.version>
 		<batik.version>1.19</batik.version>
@@ -133,7 +133,7 @@
 					<plugin>
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
-						<version>0.10.0</version>
+						<version>0.11.0</version>
 						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>tl-ossrh</publishingServerId>
@@ -869,14 +869,14 @@
 			<dependency>
 			    <groupId>org.postgresql</groupId>
 			    <artifactId>postgresql</artifactId>
-			    <version>42.7.11</version>
+			    <version>42.7.13</version>
 			</dependency>
 
 			<!-- External dependencies -->
 			<dependency>
 				<groupId>com.networknt</groupId>
 				<artifactId>json-schema-validator</artifactId>
-				<version>3.0.4</version>
+				<version>3.0.6</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet</groupId>
@@ -1180,7 +1180,7 @@
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>pdfbox</artifactId>
-			    <version>3.0.7</version>
+			    <version>3.0.8</version>
 			    
 			    <exclusions>
 			    	<!-- Note: Whenever pdfbox is used, jcl-over-slf4j must be added as well. -->
@@ -1198,7 +1198,7 @@
 			<dependency>
 			    <groupId>org.apache.pdfbox</groupId>
 	    		<artifactId>fontbox</artifactId>
-			    <version>3.0.7</version>
+			    <version>3.0.8</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.xmlgraphics</groupId>
@@ -1297,7 +1297,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>6.5.3</version>
+    			<version>6.5.4</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1307,7 +1307,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-jakartaee</artifactId>
-    			<version>6.5.3</version>
+    			<version>6.5.4</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>
@@ -1388,7 +1388,7 @@
     		<dependency>
 				<groupId>org.commonmark</groupId>
 				<artifactId>commonmark</artifactId>
-				<version>0.28.0</version>
+				<version>0.29.0</version>
 			</dependency>
 			
 			<!-- Test modules -->
@@ -1926,7 +1926,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.10.2.0</version>
+				<version>4.10.3.0</version>
 				<!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
 				<!-- <dependencies>
 					<dependency>

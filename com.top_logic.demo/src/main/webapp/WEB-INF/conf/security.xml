@@ -120,7 +120,20 @@
 		</profile>
 		<profile name="DemoTypes.Selection"/>
 		<profile name="DemoTypes.StringAdministrator"/>
-		<profile name="SecurityStructure.OwnerRole"/>
+		<profile name="SecurityStructure.OwnerRole">
+			<view name="com.top_logic.demo/search/searchChart.layout.xml#searchChart">
+				<commandGroup name="ownerWrite"/>
+				<commandGroup name="publish"/>
+			</view>
+			<view name="com.top_logic.element/search/searchInput.layout.xml#searchInput">
+				<commandGroup name="ownerWrite"/>
+				<commandGroup name="publish"/>
+			</view>
+			<view name="com.top_logic.model.search/search/modelSearch.layout.xml#modelSearch">
+				<commandGroup name="ownerWrite"/>
+				<commandGroup name="publish"/>
+			</view>
+		</profile>
 		<profile name="SecurityStructure.superuser">
 			<view name="admin/base/index.layout.xml#adminBaseView">
 				<commandGroup name="Read"/>

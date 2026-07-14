@@ -39,6 +39,9 @@
 				<dropTarget class="com.top_logic.element.layout.tree.StructuredElementTreeDropTarget"/>
 			</dropTargets>
 			<layoutInfo size="400"/>
+			<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
+				<script expr="`tl.doc#ROOT`"/>
+			</model>
 			<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"
 				structureName="tl.doc"
 			/>

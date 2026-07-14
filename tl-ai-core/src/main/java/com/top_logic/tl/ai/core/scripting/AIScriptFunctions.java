@@ -14,21 +14,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
+import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -43,6 +51,8 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
@@ -335,6 +345,230 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		} finally {
 			context.transaction().close();
 		}
+	}
+
+	/**
+	 * Starts a named agent on a background thread and returns immediately with a handle.
+	 *
+	 * <p>
+	 * Unlike {@link #agentChat(String, Object)}, which runs the agent loop synchronously on the
+	 * calling thread and blocks until it finishes, this function submits the run to the
+	 * {@link SchedulerService} and returns right away. The returned {@link AgentSession} is the
+	 * handle: poll it with {@link #agentRunStatus(Object)} and {@link #agentRunResult(Object)} to
+	 * observe progress and retrieve the transcript once the run is {@code COMPLETE}.
+	 * </p>
+	 *
+	 * <p>
+	 * The background run re-establishes the calling user's sub-session (captured synchronously here
+	 * on the calling thread, as it cannot be read off-thread) via
+	 * {@link ThreadContextManager#inContext}, so the agent and its tools act with that user's
+	 * permissions. A {@code BACKGROUND}-kind {@link AgentSession} is created up front so the caller
+	 * always receives a usable handle; the {@link com.top_logic.tl.ai.core.execution.AgentExecution}
+	 * row is recorded by {@link AgentRunner} once the loop starts, and finalized with status and
+	 * transcript when it ends (including on failure, recorded as {@code ERROR}).
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Warning - unattended auto-approval:</b> a background run has no human to answer tool-approval
+	 * prompts, so every tool call is auto-approved. An async run can therefore perform any
+	 * write/destructive tool action (delete data, call external systems, ...) unattended. Only start
+	 * async runs for agents you trust to act without supervision.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Caveat - detached transaction:</b> the background run commits in its own transaction,
+	 * independent of the caller's. It cannot see the caller's uncommitted changes, and if this
+	 * function is called from a business transaction that later rolls back, the agent (and its side
+	 * effects) will still have run.
+	 * </p>
+	 *
+	 * <p>
+	 * Example usage in TL-Script:
+	 * </p>
+	 *
+	 * <pre>
+	 * handle = aiAgentChatAsync("my-agent", "Summarize the latest changes.");
+	 * // ... later ...
+	 * aiAgentRunStatus(handle) == "COMPLETE" ? aiAgentRunResult(handle) : null
+	 * </pre>
+	 *
+	 * @param agentName
+	 *        The agent name as configured in the knowledge base.
+	 * @param userMessage
+	 *        The user message to send to the agent.
+	 * @return The {@link AgentSession} handle to poll for status and result.
+	 * @throws IllegalStateException
+	 *         If the calling thread has no usable sub-session to run as, or the
+	 *         {@link AgentExecutionStore} is unavailable.
+	 */
+	public static AgentSession agentChatAsync(String agentName, Object userMessage) {
+		// Capture the caller's sub-session synchronously: it lives on the calling thread and
+		// cannot be read off-thread. The background run re-enters it to act as this user.
+		TLSubSessionContext callerSession = TLContextManager.getSubSession();
+		if (callerSession == null) {
+			throw new IllegalStateException(
+				"aiAgentChatAsync requires an interactive user context, but the calling thread has "
+					+ "no sub-session. It cannot be started from a system/background context.");
+		}
+		Person owner = callerSession.getPerson();
+		if (owner == null) {
+			throw new IllegalStateException(
+				"aiAgentChatAsync requires an authenticated user, but the current sub-session has no "
+					+ "associated person.");
+		}
+
+		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
+			throw new IllegalStateException(
+				"aiAgentChatAsync requires the AgentExecutionStore service, which is not active.");
+		}
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		AgentSession session =
+			store.createSession(AgentExecutionStore.SessionKind.BACKGROUND, owner,
+				"ai.agentChatAsync: " + agentName);
+
+		Object messageContent = userMessage;
+		SchedulerService.getInstance().submit(() -> ThreadContextManager.inContext(callerSession,
+			() -> runAsync(agentName, messageContent, session)));
+
+		return session;
+	}
+
+	/**
+	 * The background body of {@link #agentChatAsync(String, Object)}: runs the agent as the
+	 * re-established user, in its own transaction, recording the execution against {@code session}.
+	 */
+	private static void runAsync(String agentName, Object userMessage, AgentSession session) {
+		Conversation conversation = new Conversation();
+		conversation.add(createUserMessage(userMessage));
+
+		// Own transaction lifecycle on the background thread, detached from any caller transaction.
+		// Auto-approve every tool call: a background run has no human to answer approval prompts.
+		CancellationToken cancellationToken = new CancellationToken();
+		ToolContext context = new ToolContext(new TopLogicSecurityContext(),
+			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
+
+		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			AgentRunner.run(agentName, conversation, null, context, NO_LISTENER, null,
+				env.logListener().log(), session, null);
+		} catch (Throwable ex) {
+			// AgentRunner records ERROR itself once the loop has started (the recorder publishes the
+			// execution to the context handle). If the run failed before that - e.g. the agent name
+			// is unknown - no row exists yet, so record the failure here so it is not lost.
+			if (context.executionHandle().get() == null) {
+				recordEarlyFailure(session, agentName, ex);
+			}
+			Logger.error("Async agent run of '" + agentName + "' failed: " + ex.getMessage(), ex,
+				AIScriptFunctions.class);
+		} finally {
+			context.transaction().close();
+		}
+	}
+
+	/**
+	 * Records an {@link AgentExecutionStore.ExecutionStatus#ERROR} execution for a background run
+	 * that failed before the agent loop started (and thus before {@link AgentRunner} could record
+	 * it), so the failure is retrievable via the handle.
+	 */
+	private static void recordEarlyFailure(AgentSession session, String agentName, Throwable ex) {
+		try {
+			AgentExecutionStore store = AgentExecutionStore.getInstance();
+			AgentExecution execution =
+				store.beginExecution(session, UUID.randomUUID().toString(), agentName, null, null, null);
+			String message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
+			store.finishExecution(execution, AgentExecutionStore.ExecutionStatus.ERROR,
+				StopReason.ERROR, message, null, null);
+		} catch (RuntimeException recordEx) {
+			Logger.error("Failed to record early failure of async agent run '" + agentName + "': "
+				+ recordEx.getMessage(), recordEx, AIScriptFunctions.class);
+		}
+	}
+
+	/**
+	 * Returns the status of an async agent run started with {@link #agentChatAsync(String, Object)}.
+	 *
+	 * <p>
+	 * The status is one of the {@link AgentExecutionStore.ExecutionStatus} names
+	 * ({@code RUNNING}, {@code COMPLETE}, {@code ERROR}, {@code CANCELLED}, {@code REJECTED}).
+	 * While the run is still queued or its recording has not yet become visible on the calling
+	 * thread, {@code RUNNING} is returned.
+	 * </p>
+	 *
+	 * @param handle
+	 *        The handle returned by {@link #agentChatAsync(String, Object)} (an {@link AgentSession}),
+	 *        an {@link AgentExecution} directly, or a run-id string.
+	 * @return The status name, or {@code null} if the handle cannot be resolved to a run.
+	 */
+	public static String agentRunStatus(Object handle) {
+		AgentExecution execution = resolveExecution(handle);
+		if (execution == null) {
+			// A session handle with no visible execution yet: the run is queued or its recording
+			// has not yet propagated to this thread's revision view.
+			return handle instanceof AgentSession
+				? AgentExecutionStore.ExecutionStatus.RUNNING.name()
+				: null;
+		}
+		com.top_logic.model.TLClassifier status = execution.getStatus();
+		return status != null ? status.getName() : null;
+	}
+
+	/**
+	 * Returns the result transcript of an async agent run once it is
+	 * {@link AgentExecutionStore.ExecutionStatus#COMPLETE}.
+	 *
+	 * <p>
+	 * The transcript is the serialized per-run conversation log (as produced by
+	 * {@link ConversationLogSerializer}). Before the run completes - or if it ended in any
+	 * non-{@code COMPLETE} state - this returns {@code null}; use {@link #agentRunStatus(Object)}
+	 * to distinguish the cases.
+	 * </p>
+	 *
+	 * @param handle
+	 *        The handle returned by {@link #agentChatAsync(String, Object)} (an {@link AgentSession}),
+	 *        an {@link AgentExecution} directly, or a run-id string.
+	 * @return The transcript when the run is {@code COMPLETE}, otherwise {@code null}.
+	 */
+	public static String agentRunResult(Object handle) {
+		AgentExecution execution = resolveExecution(handle);
+		if (execution == null) {
+			return null;
+		}
+		com.top_logic.model.TLClassifier status = execution.getStatus();
+		if (status == null
+			|| !AgentExecutionStore.ExecutionStatus.COMPLETE.name().equals(status.getName())) {
+			return null;
+		}
+		return execution.getTranscript();
+	}
+
+	/**
+	 * Resolves an async-run handle to its {@link AgentExecution}.
+	 *
+	 * <p>
+	 * Accepts the {@link AgentSession} returned by {@link #agentChatAsync(String, Object)} (its most
+	 * recent execution is returned), an {@link AgentExecution} directly, or a run-id string. Returns
+	 * <code>null</code> when the handle cannot be resolved (unknown type, or no execution recorded
+	 * yet).
+	 * </p>
+	 */
+	private static AgentExecution resolveExecution(Object handle) {
+		if (handle == null) {
+			return null;
+		}
+		if (handle instanceof AgentExecution execution) {
+			return execution;
+		}
+		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		AgentExecutionStore store = AgentExecutionStore.getInstance();
+		if (handle instanceof AgentSession session) {
+			List<AgentExecution> executions = store.executionsOf(session);
+			return executions.isEmpty() ? null : executions.get(executions.size() - 1);
+		}
+		if (handle instanceof String runId) {
+			return store.findExecutionByRunId(runId);
+		}
+		return null;
 	}
 
 	/**

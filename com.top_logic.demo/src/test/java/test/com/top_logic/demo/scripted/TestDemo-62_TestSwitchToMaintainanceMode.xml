@@ -446,29 +446,10 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="26"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Ziel"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ziel"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="SecurityStructure#ROOT"
@@ -477,29 +458,10 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="26"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Rolle"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Rolle"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -513,26 +475,8 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="26"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
 							<labeled-member label="Pfad"/>
 							<named-member name="add"/>
 						</path>
@@ -548,37 +492,10 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="26"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Pfad"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="0"
-								/>
-							</object>
-							<labeled-member label="Gruppe mit Namen"/>
-							<labeled-member label="Name"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -588,6 +505,11 @@
 						</values>
 					</value>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
@@ -678,29 +600,22 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="27"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Ziel"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="27"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ziel"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="SecurityStructure#ROOT"
@@ -709,29 +624,10 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="27"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Rolle"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Rolle"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -745,26 +641,8 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="27"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
 							<labeled-member label="Pfad"/>
 							<named-member name="add"/>
 						</path>
@@ -780,37 +658,10 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="27"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Pfad"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="0"
-								/>
-							</object>
-							<labeled-member label="Gruppe mit Namen"/>
-							<labeled-member label="Name"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -820,6 +671,11 @@
 						</values>
 					</value>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"
@@ -910,29 +766,22 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="28"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Ziel"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="ID"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="28"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Ziel"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="SecurityStructure#ROOT"
@@ -941,29 +790,10 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="28"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Rolle"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Rolle"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -977,26 +807,8 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="28"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
 							<labeled-member label="Pfad"/>
 							<named-member name="add"/>
 						</path>
@@ -1012,37 +824,10 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-						/>
-						<path>
-							<labeled-member label="Dienst-Konfiguration"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Rollen-Regeln"/>
-							<named-member name="outerContainer"/>
-							<named-member name="contentContainer"/>
-							<named-member name="content"/>
-							<labeled-member label="Regeln"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="28"
-								/>
-							</object>
-							<labeled-member label="Rollenregel für ein Singleton"/>
-							<labeled-member label="Pfad"/>
-							<named-member name="content"/>
-							<object>
-								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="0"
-								/>
-							</object>
-							<labeled-member label="Gruppe mit Namen"/>
-							<labeled-member label="Name"/>
-						</path>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
@@ -1052,6 +837,11 @@
 						</values>
 					</value>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ok"
+					user-id="root"
+				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 					command-label="Speichern"

@@ -1708,9 +1708,6 @@
 					template-name-comment="Rolle Rolle an Gruppe zuweisen"
 				>
 					<parameters>
-						<parameter name="Rollenregelnummer"
-							value="26"
-						/>
 						<parameter name="Typ"
 							value="DemoTypes:A"
 						/>
@@ -1730,9 +1727,6 @@
 					template-name-comment="Rolle Rolle an Gruppe zuweisen"
 				>
 					<parameters>
-						<parameter name="Rollenregelnummer"
-							value="27"
-						/>
 						<parameter name="Typ"
 							value="DemoTypes:X"
 						/>
@@ -1752,9 +1746,6 @@
 					template-name-comment="Rolle Rolle an Gruppe zuweisen"
 				>
 					<parameters>
-						<parameter name="Rollenregelnummer"
-							value="28"
-						/>
 						<parameter name="Typ"
 							value="DemoTypes:A"
 						/>
@@ -1774,9 +1765,6 @@
 					template-name-comment="Rolle Rolle an Gruppe zuweisen"
 				>
 					<parameters>
-						<parameter name="Rollenregelnummer"
-							value="29"
-						/>
 						<parameter name="Typ"
 							value="DemoTypes:A"
 						/>
@@ -1796,9 +1784,6 @@
 					template-name-comment="Rolle Rolle an Gruppe zuweisen"
 				>
 					<parameters>
-						<parameter name="Rollenregelnummer"
-							value="30"
-						/>
 						<parameter name="Typ"
 							value="DemoTypes:A"
 						/>
@@ -1818,9 +1803,6 @@
 					template-name-comment="Rolle Rolle an Gruppe zuweisen"
 				>
 					<parameters>
-						<parameter name="Rollenregelnummer"
-							value="31"
-						/>
 						<parameter name="Typ"
 							value="DemoTypes:A"
 						/>
@@ -1840,9 +1822,6 @@
 					template-name-comment="Rolle Rolle an Gruppe zuweisen"
 				>
 					<parameters>
-						<parameter name="Rollenregelnummer"
-							value="32"
-						/>
 						<parameter name="Typ"
 							value="DemoTypes:A"
 						/>

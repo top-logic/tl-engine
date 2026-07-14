@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	tl-ai-demo logging configuration (developer / debug variant).
+
+	Copy of the TopLogic engine base config
+	(com.top_logic/src/main/webapp/WEB-INF/conf/logging/debug.xml) extended with a dedicated
+	rolling target for the AI subsystem, with the AI categories raised to "debug" so the full
+	per-run diagnostic trace is captured (out of top-logic.main.log via additivity="false").
+	Keep the non-AI parts in sync with the engine base when it changes.
+
+	See tl-ai-core/doc/ai-logging.md for how to read and tune the AI logs.
+-->
+<Configuration
+	com.top_logic.basic.Logger.exceptionLevel="DEBUG"
+	com.top_logic.basic.Logger.traceExceptions="true"
+	com.top_logic.basic.Logger.traceMessages="true"
+>
+	<Properties>
+		<!--
+			The TopLogic alias LOG_PATH is defined in the application configuration.
+			Both occurrences (here and there) have to be changed in the same way.
+		-->
+		<Property name="log.directory">%LOG_PATH%</Property>
+		<Property name="filename.prefix">top-logic</Property>
+		<Property name="pattern.long">%date{ISO8601} %-5level [%thread]: %logger - %message %mdc{tl-session-id}%n%throwable</Property>
+		<Property name="pattern.plain">%message%n%throwable</Property>
+	</Properties>
+	<Appenders>
+		<Console name="STDOUT"
+			target="SYSTEM_OUT"
+		>
+			<PatternLayout pattern="${pattern.plain}" charset="UTF-8"/>
+		</Console>
+		<Console name="STDERR"
+			target="SYSTEM_ERR"
+		>
+			<PatternLayout pattern="${pattern.plain}" charset="UTF-8"/>
+		</Console>
+		<RollingFile name="FILE_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.main.log"
+			filePattern="${log.directory}/${filename.prefix}.main.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<RollingFile name="SCHEDULER_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.scheduler.log"
+			filePattern="${log.directory}/${filename.prefix}.scheduler.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<RollingFile name="MEMORY_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.memory.log"
+			filePattern="${log.directory}/${filename.prefix}.memory.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<!-- AI logging: dedicated rolling target for the AI subsystem. -->
+		<RollingFile name="TL_AI_APPENDER"
+			fileName="${log.directory}/${filename.prefix}.tl-ai.log"
+			filePattern="${log.directory}/${filename.prefix}.tl-ai.%i.log"
+		>
+			<PatternLayout pattern="${pattern.long}" charset="UTF-8"/>
+			<DefaultRolloverStrategy
+				fileIndex="min"
+				max="10"
+			/>
+			<SizeBasedTriggeringPolicy size="1 MB"/>
+		</RollingFile>
+		<SystemPropertyArbiter
+			propertyName="tl_developerMode"
+			propertyValue="true"
+		>
+			<Socket name="SOCKET_APPENDER"
+				host="localhost"
+				port="4445"
+			>
+				<SerializedLayout/>
+			</Socket>
+		</SystemPropertyArbiter>
+	</Appenders>
+	<Loggers>
+		<Logger name="STDOUT"
+			level="info"
+		>
+			<AppenderRef ref="STDOUT"/>
+		</Logger>
+		<Logger name="STDERR"
+			level="info"
+		>
+			<AppenderRef ref="STDERR"/>
+		</Logger>
+		<Logger name="com.top_logic.util.sched"
+			additivity="false"
+			level="info"
+		>
+			<AppenderRef ref="SCHEDULER_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.util.sched.MemoryObserverThread"
+			additivity="false"
+			level="info"
+		>
+			<AppenderRef ref="MEMORY_APPENDER"/>
+		</Logger>
+		<!--
+			AI logging: full per-run diagnostic trace for the AI subsystem, in its own file and out
+			of top-logic.main.log (additivity="false"). "com.top_logic.tl.ai" covers tl-ai-core and
+			tl-ai-tool-api; "com.top_logic.ai" covers tl-chat, tl-ai-mcp-server and
+			tl-ai-vector-index. No prompt/tool payload is written here - that content lives in the
+			persisted AgentExecution records. See tl-ai-core/doc/ai-logging.md.
+		-->
+		<Logger name="com.top_logic.tl.ai"
+			additivity="false"
+			level="debug"
+		>
+			<AppenderRef ref="TL_AI_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.ai"
+			additivity="false"
+			level="debug"
+		>
+			<AppenderRef ref="TL_AI_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.base.accesscontrol.ExternalAuthenticationServlet"
+			level="debug"
+		>
+			<AppenderRef ref="FILE_APPENDER"/>
+		</Logger>
+		<Logger name="com.top_logic.base.accesscontrol.J2eeRemoteUserAuthenticationServlet"
+			level="debug"
+		>
+			<AppenderRef ref="FILE_APPENDER"/>
+		</Logger>
+
+		<Root level="info">
+			<AppenderRef ref="FILE_APPENDER"/>
+			<SystemPropertyArbiter
+				propertyName="tl_developerMode"
+				propertyValue="true"
+			>
+				<AppenderRef ref="SOCKET_APPENDER"/>
+			</SystemPropertyArbiter>
+		</Root>
+	</Loggers>
+</Configuration>

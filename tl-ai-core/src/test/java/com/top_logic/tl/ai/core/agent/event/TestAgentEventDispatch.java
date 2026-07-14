@@ -61,6 +61,39 @@ public class TestAgentEventDispatch extends TestCase {
 	}
 
 	/** */
+	public void testDispatchesToSelf() {
+		AgentEventListener a = e -> { /* ignore */ };
+		assertTrue(a.dispatchesTo(a));
+		AgentEventListener b = e -> { /* ignore */ };
+		assertFalse(a.dispatchesTo(b));
+	}
+
+	/** */
+	public void testCompositeDispatchesToDirectDelegate() {
+		AgentEventListener a = e -> { /* ignore */ };
+		AgentEventListener b = e -> { /* ignore */ };
+		AgentEventListener other = e -> { /* ignore */ };
+		CompositeAgentEventListener composite = new CompositeAgentEventListener(a, b);
+
+		assertTrue(composite.dispatchesTo(a));
+		assertTrue(composite.dispatchesTo(b));
+		assertTrue(composite.dispatchesTo(composite));
+		assertFalse(composite.dispatchesTo(other));
+	}
+
+	/** */
+	public void testCompositeDispatchesToNestedDelegate() {
+		AgentEventListener leaf = e -> { /* ignore */ };
+		AgentEventListener sibling = e -> { /* ignore */ };
+		CompositeAgentEventListener inner = new CompositeAgentEventListener(leaf);
+		CompositeAgentEventListener outer = new CompositeAgentEventListener(sibling, inner);
+
+		assertTrue(outer.dispatchesTo(leaf));
+		assertTrue(outer.dispatchesTo(inner));
+		assertFalse(outer.dispatchesTo(e -> { /* unrelated */ }));
+	}
+
+	/** */
 	public void testSerializingSwallowsRuntimeException() {
 		AgentEventListener throwing = e -> { throw new RuntimeException("boom"); };
 		SerializingListener safe = new SerializingListener(throwing);

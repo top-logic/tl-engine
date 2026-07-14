@@ -47,6 +47,9 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
+import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.Part;
+import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
@@ -338,6 +341,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		ToolContext context = ToolContext.createUnrestricted();
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			recordUserTurn(env.logListener().log(), userMessage);
 			AgentSession session = createScriptSession("ai.agentChat: " + agentName);
 			AgentRunner.RecordedRun run = AgentRunner.run(agentName, conversation, null, context,
 				NO_LISTENER, null, env.logListener().log(), session, null);
@@ -448,6 +452,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
+			recordUserTurn(env.logListener().log(), userMessage);
 			AgentRunner.run(agentName, conversation, null, context, NO_LISTENER, null,
 				env.logListener().log(), session, null);
 		} catch (Throwable ex) {
@@ -588,6 +593,23 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				AIScriptFunctions.class);
 			return null;
 		}
+	}
+
+	/**
+	 * Opens the transcript turn for a script-initiated run and records the user's message on it.
+	 *
+	 * <p>
+	 * {@link AgentRunner} serializes this run's turns as the execution transcript. The chat UI
+	 * starts the turn and sets the user parts before the run so the transcript carries the request;
+	 * this mirrors that for the TL-Script entry points, which have no UI. The agent's own turns
+	 * (assistant text, tool calls) are appended to the same turn by the log listener wired in
+	 * {@link AgentRunner}.
+	 * </p>
+	 */
+	private static void recordUserTurn(ConversationLog log, Object userMessage) {
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart(
+			UUID.randomUUID().toString(), Instant.now(), toString(userMessage))));
 	}
 
 	/**

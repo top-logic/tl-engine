@@ -36,13 +36,24 @@ from trac_client import connect
 
 
 def release_description(name):
-    """Standard release-milestone body: a TicketQuery over `relatedmilestones`."""
+    """Standard release-milestone body: TicketQueries over `relatedmilestones`.
+
+    Three sections, matching the format established with TL_8.0.0-alpha4 and
+    TL_8.0.0-alpha5:
+      * the main list excludes tickets keyworded `Update` (keywords!~=Update),
+      * an `== Updates ==` section lists exactly those (keywords~=Update),
+      * a `== Migration ==` section lists tickets keyworded RequiresCodeMigration
+        or RequiresDataMigration (OR expressed with `|` in the query).
+    """
     return (
-        "[[TicketQuery(relatedmilestones~=milestone:%s)]]\n"
+        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords!~=Update)]]\n"
+        "\n"
+        "== Updates ==\n"
+        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords~=Update)]]\n"
         "\n"
         "== Migration ==\n"
-        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords~=RequiresCodeMigration)]]"
-        % (name, name)
+        "[[TicketQuery(relatedmilestones~=milestone:%s,keywords~=RequiresCodeMigration|RequiresDataMigration)]]"
+        % (name, name, name)
     )
 
 

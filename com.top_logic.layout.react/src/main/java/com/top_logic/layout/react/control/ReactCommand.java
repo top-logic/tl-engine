@@ -53,9 +53,11 @@ public interface ReactCommand extends ConfigurationItem {
 	String TARGET = "target";
 
 	/**
-	 * The semantic address of the target control (as
-	 * {@link com.top_logic.layout.react.headless.AgentSession#resolve(String)} accepts), or
-	 * {@code null} if the target could not be addressed.
+	 * The semantic address of the target control, or {@code null} if the target could not be
+	 * addressed.
+	 *
+	 * @implNote The address is in the form accepted by
+	 *           {@link com.top_logic.layout.react.headless.AgentSession#resolve(String)}.
 	 */
 	@Name(ADDRESS)
 	@Nullable

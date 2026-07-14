@@ -14,6 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -101,6 +102,19 @@ public class SubagentSpawner {
 		final AgentExecution parentExecution = toolContext.executionHandle().get();
 		AgentSession parentSession = null;
 		if (parentExecution != null) {
+			// The parent execution row is written by the AgentExecutionStore's committer, which
+			// advances the KB to a revision newer than this (long-running) agent thread's stable
+			// read view. Without catching up, resolving parentExecution.getSession() fails with
+			// "created after access revision N", the recorder is never built, and the child run
+			// gets no recorded transcript (childRunId stays null → the UI shows no transcript).
+			// Advance to the latest revision first — the same catch-up the chat servlet does when
+			// reading store-written rows. See ChatServlet#handleSubagentTranscript.
+			try {
+				HistoryUtils.updateSessionRevision();
+			} catch (RuntimeException ex) {
+				Logger.info("Could not advance the session revision before resolving the parent "
+					+ "execution's session: " + ex.getMessage(), ex, SubagentSpawner.class);
+			}
 			try {
 				parentSession = parentExecution.getSession();
 			} catch (RuntimeException ex) {

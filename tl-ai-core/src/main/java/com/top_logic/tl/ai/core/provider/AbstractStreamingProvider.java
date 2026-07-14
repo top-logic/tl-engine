@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -138,12 +139,36 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 		try (InputStream responseBody = response.body()) {
 			InputStream parseInput =
 				dumpStream ? StreamDump.wrap(responseBody, dumpLabel, startNanos) : responseBody;
-			processStream(parseInput, handler);
+			// Abort a cancelled run promptly: closing the response stream from the cancelling
+			// thread unblocks the socket read in processStream, which surfaces as an IOException
+			// below. Without this, a run cancelled mid-turn keeps reading until the model has
+			// streamed its entire response. The read is on this thread; the close is on whoever
+			// calls cancel(). If the token is already cancelled, onCancel closes immediately.
+			CancellationToken cancellation = handler.cancellation();
+			try (CancellationToken.Registration ignored = cancellation.onCancel(() -> closeQuietly(responseBody))) {
+				processStream(parseInput, handler);
+			}
+			if (cancellation.isCancelled()) {
+				throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.");
+			}
 		} catch (ProviderException e) {
 			throw e;
 		} catch (IOException e) {
+			if (handler.cancellation().isCancelled()) {
+				throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.", e);
+			}
 			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
 				"Stream read error: " + e.getMessage(), e);
+		}
+	}
+
+	/** Closes a stream, swallowing any {@link IOException} (used from the cancellation listener). */
+	private static void closeQuietly(InputStream stream) {
+		try {
+			stream.close();
+		} catch (IOException ex) {
+			// Best effort: the point of the close is to unblock the reader, which will now
+			// observe the closed stream regardless of this exception.
 		}
 	}
 

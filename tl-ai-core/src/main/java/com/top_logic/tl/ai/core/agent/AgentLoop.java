@@ -63,6 +63,7 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -1161,7 +1162,7 @@ public class AgentLoop {
 			_config.toolChoice(),
 			Duration.ofSeconds(_config.timeoutSeconds()));
 
-		ResponseCollector collector = new ResponseCollector(listener, runId, turn);
+		ResponseCollector collector = new ResponseCollector(listener, runId, turn, context.cancellationToken());
 		long startNanos = System.nanoTime();
 		try {
 			_provider.stream(request, collector);
@@ -1189,6 +1190,8 @@ public class AgentLoop {
 
 		private final int _turnNumber;
 
+		private final CancellationToken _cancellation;
+
 		private String _id;
 
 		private String _finishReason;
@@ -1203,10 +1206,17 @@ public class AgentLoop {
 		 */
 		private ProviderException _streamError;
 
-		ResponseCollector(AgentEventListener listener, String runId, int turnNumber) {
+		ResponseCollector(AgentEventListener listener, String runId, int turnNumber,
+				CancellationToken cancellation) {
 			_listener = listener;
 			_runId = runId;
 			_turnNumber = turnNumber;
+			_cancellation = cancellation;
+		}
+
+		@Override
+		public CancellationToken cancellation() {
+			return _cancellation;
 		}
 
 		@Override

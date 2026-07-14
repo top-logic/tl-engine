@@ -65,9 +65,7 @@ public class TestPublishHtmlPageTool extends BasicTestCase {
 	 * be absolute — otherwise an LLM that receives a root-relative path may invent its own host.
 	 */
 	public void testPrependsHostAliasWhenConfigured() throws Exception {
-		AliasManager aliases = AliasManager.getInstance();
-		String previous = aliases.getAlias(AliasManager.HOST);
-		AliasManager.putVariable(aliases.getExpander(), "HOST", "https://app.example.test");
+		String restore = configureHost("https://app.example.test");
 		try {
 			String url;
 			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
@@ -78,7 +76,7 @@ public class TestPublishHtmlPageTool extends BasicTestCase {
 			assertTrue("URL must be absolute when %HOST% is set: " + url,
 				url.startsWith("https://app.example.test/html/"));
 		} finally {
-			AliasManager.putVariable(aliases.getExpander(), "HOST", previous == null ? "" : previous);
+			restoreHost(restore);
 		}
 	}
 
@@ -88,9 +86,7 @@ public class TestPublishHtmlPageTool extends BasicTestCase {
 	 * with one.
 	 */
 	public void testStripsTrailingSlashOnHostAlias() throws Exception {
-		AliasManager aliases = AliasManager.getInstance();
-		String previous = aliases.getAlias(AliasManager.HOST);
-		AliasManager.putVariable(aliases.getExpander(), "HOST", "https://app.example.test/");
+		String restore = configureHost("https://app.example.test/");
 		try {
 			String url;
 			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
@@ -100,8 +96,54 @@ public class TestPublishHtmlPageTool extends BasicTestCase {
 			assertTrue("trailing slash must be stripped: " + url,
 				url.startsWith("https://app.example.test/html/"));
 		} finally {
-			AliasManager.putVariable(aliases.getExpander(), "HOST", previous == null ? "" : previous);
+			restoreHost(restore);
 		}
+	}
+
+	/**
+	 * System property backing the {@code %HOST%} alias.
+	 *
+	 * <p>
+	 * The application config defines {@code %HOST% = ${env:tl_host}}, which {@link AliasManager}
+	 * resolves via {@link com.top_logic.basic.Environment#getSystemPropertyOrEnvironmentVariable} -
+	 * i.e. from a system property or environment variable named {@value}.
+	 * </p>
+	 */
+	private static final String HOST_PROPERTY = "tl_host";
+
+	/**
+	 * Configures the {@code %HOST%} alias for the duration of a single test.
+	 *
+	 * <p>
+	 * The alias expander of the started {@link AliasManager} service is frozen and rejects direct
+	 * modification ("Can no longer be modified."), and the configured {@code %HOST%} alias would
+	 * override any base alias anyway. Instead this sets the {@link #HOST_PROPERTY} system property
+	 * that the alias definition reads and calls {@link AliasManager#reload()}, which re-resolves the
+	 * configured aliases and rebuilds the expander from scratch - the sanctioned way to change an
+	 * alias at runtime.
+	 * </p>
+	 *
+	 * @return The previous value of the backing system property ({@code null} if unset); pass it to
+	 *         {@link #restoreHost(String)} to restore the original state.
+	 */
+	private static String configureHost(String host) {
+		String previous = System.getProperty(HOST_PROPERTY);
+		System.setProperty(HOST_PROPERTY, host);
+		AliasManager.getInstance().reload();
+		return previous;
+	}
+
+	/**
+	 * Restores the {@link #HOST_PROPERTY} system property to the value captured by
+	 * {@link #configureHost(String)} and reloads the {@link AliasManager} so {@code %HOST%} reverts.
+	 */
+	private static void restoreHost(String previous) {
+		if (previous == null) {
+			System.clearProperty(HOST_PROPERTY);
+		} else {
+			System.setProperty(HOST_PROPERTY, previous);
+		}
+		AliasManager.getInstance().reload();
 	}
 
 	/**

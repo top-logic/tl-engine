@@ -141,6 +141,14 @@ public class ChatHistoryService {
 		try {
 			PersistedConversationV2 merged = PersistedConversationV2.create();
 			for (AgentExecution execution : store().executionsOf((AgentSession) session)) {
+				// Only top-level runs belong to the main chat stream. Sub-agent runs are recorded
+				// as child executions (parentExecution set) with their own transcript; merging
+				// them here would splice a sub-agent's internal turns inline into the chat. They
+				// are surfaced separately via the background-tasks panel (execution transcript
+				// endpoint).
+				if (execution.getParentExecution() != null) {
+					continue;
+				}
 				String transcript = execution.getTranscript();
 				if (transcript == null || transcript.isEmpty()) {
 					continue;

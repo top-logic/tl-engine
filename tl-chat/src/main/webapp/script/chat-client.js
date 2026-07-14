@@ -105,6 +105,7 @@
     approvalMode: CTX + "/chat/approval-mode",
     updates: CTX + "/chat/updates",
     interactions: CTX + "/chat/interactions",
+    subagents: CTX + "/chat/subagents",
   };
 
   // Registry key (windowName) of the TopLogic sub-session this chat was rendered in.
@@ -288,6 +289,10 @@
         delegation_event: Handlers.onDelegationEvent,
         approval_mode: Handlers.onApprovalMode,
         task_update: Handlers.onTaskUpdate,
+        subagent_started: Handlers.onSubagentStarted,
+        subagent_completed: Handlers.onSubagentCompleted,
+        subagent_failed: Handlers.onSubagentFailed,
+        subagent_cancelled: Handlers.onSubagentCancelled,
       };
 
       for (const [type, handler] of Object.entries(handlers)) {
@@ -337,6 +342,9 @@
       } else {
         State.set(State.IDLE);
       }
+      // (Re)connect covers page load, SSE reconnect, and session switch: rebuild the
+      // background-tasks panel from the server, then let SSE events keep it updated.
+      BackgroundPanel.sync();
       Render.updateInputState();
     },
 
@@ -359,6 +367,12 @@
       }
       if (data.reason === "ABORTED") {
         State.set(State.CANCELLED);
+        // Cancelling the run also cancels any subagent parked on an askUser question, so its
+        // question is now moot. Drop the pending interaction panel here — otherwise the
+        // "needs input" prompt lingers in the input area after cancellation, inviting an
+        // answer that can no longer be delivered.
+        Store.activeInteractionRequestId = null;
+        Approval._removeInteractionUI();
         Render.showCancelledPrompt();
       } else if (data.reason === "ERROR") {
         State.set(State.ERROR);
@@ -527,7 +541,11 @@
       const del = Store.currentRun
         ? Store.currentRun.delegations.get(delId)
         : null;
-      if (!del) return;
+      if (!del) {
+        // Async subagent whose delegation isn't in the current run: the background panel
+        // (driven by subagent_* events) is authoritative; drop inner streaming here.
+        return;
+      }
 
       const innerType = data.eventType;
       const inner =
@@ -592,6 +610,38 @@
         del.totalUsage = inner.totalUsage;
         Render._updateDelegationHeader(delId);
       }
+    },
+
+    onSubagentStarted(data) {
+      BackgroundPanel.upsert({
+        subagentId: data.subagentId,
+        name: data.targetAgentName,
+        status: "RUNNING",
+        detail: data.detail,
+      });
+    },
+
+    onSubagentCompleted(data) {
+      BackgroundPanel.setStatus(data.subagentId, "DONE", {
+        tokens: data.totalTokens,
+        durationMs: data.durationMs,
+        detail: data.detail,
+      });
+      BackgroundPanel.toast("Subagent finished: " + (data.subagentId || ""));
+      // Refresh from the server so the finished row learns whether a transcript was recorded
+      // (hasTranscript is only carried by the /subagents feed, not the live status event).
+      BackgroundPanel.sync();
+    },
+
+    onSubagentFailed(data) {
+      BackgroundPanel.setStatus(data.subagentId, "FAILED", { detail: data.detail });
+      BackgroundPanel.toast("Subagent failed: " + (data.subagentId || ""));
+      BackgroundPanel.sync();
+    },
+
+    onSubagentCancelled(data) {
+      BackgroundPanel.setStatus(data.subagentId, "CANCELLED", {});
+      BackgroundPanel.sync();
     },
   };
 
@@ -768,6 +818,257 @@
   };
 
   // ========================================================================
+  // BackgroundPanel — running async subagent jobs, keyed by subagentId
+  // ========================================================================
+  const BackgroundPanel = {
+    jobs: new Map(), // subagentId -> {subagentId, name, status, detail, tokens, durationMs}
+
+    _panelEl() {
+      return (Render._root || document).querySelector(".chat-background-panel");
+    },
+
+    upsert(job) {
+      this.jobs.set(job.subagentId, { ...this.jobs.get(job.subagentId), ...job });
+      this.render();
+    },
+
+    setStatus(subagentId, status, extra) {
+      const job = this.jobs.get(subagentId) || { subagentId };
+      Object.assign(job, { status }, extra || {});
+      this.jobs.set(subagentId, job);
+      this.render();
+    },
+
+    runningCount() {
+      let n = 0;
+      this.jobs.forEach((j) => {
+        if (j.status === "RUNNING" || j.status === "QUEUED") n++;
+      });
+      return n;
+    },
+
+    render() {
+      const el = this._panelEl();
+      if (!el) return;
+      if (this.jobs.size === 0) {
+        el.innerHTML = "";
+        el.style.display = "none";
+        return;
+      }
+      // The stylesheet hides the empty panel (display:none), so restoring the inline
+      // style to "" would keep it invisible - set the intended layout explicitly.
+      el.style.display = "flex";
+      const running = this.runningCount();
+      const rows = [];
+      this.jobs.forEach((j) => {
+        const hasResult = !!(j.detail && j.detail.trim());
+        const meta =
+          (j.status || "") +
+          (j.tokens ? " · " + j.tokens + " tok" : "") +
+          (j.durationMs ? " · " + Utils.formatDuration(j.durationMs) : "");
+        rows.push(
+          '<div class="chat-bg-row' +
+            (hasResult ? " has-result" : "") +
+            '" data-subagent-id="' +
+            Utils.escapeHtml(j.subagentId) +
+            '"><span class="chat-bg-status ' +
+            (j.status || "").toLowerCase() +
+            '"></span><span class="chat-bg-name">' +
+            Utils.escapeHtml(j.name || j.subagentId) +
+            '</span><span class="chat-bg-meta">' +
+            meta +
+            "</span>" +
+            (hasResult ? '<span class="chat-bg-chevron">&#9654;</span>' : "") +
+            (j.status === "RUNNING" || j.status === "QUEUED"
+              ? '<button class="chat-bg-cancel" data-subagent-id="' +
+                Utils.escapeHtml(j.subagentId) +
+                '">✕</button>'
+              : "") +
+            "</div>" +
+            (hasResult
+              ? '<div class="chat-bg-detail" data-detail-for="' +
+                Utils.escapeHtml(j.subagentId) +
+                '" style="display:none"></div>'
+              : ""),
+        );
+      });
+      el.innerHTML =
+        '<div class="chat-bg-pill">' +
+        running +
+        " running</div>" +
+        rows.join("");
+      el.querySelectorAll(".chat-bg-cancel").forEach((btn) => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          BackgroundPanel.cancel(btn.getAttribute("data-subagent-id"));
+        };
+      });
+      // Clicking a finished row toggles its result detail.
+      el.querySelectorAll(".chat-bg-row.has-result").forEach((row) => {
+        const id = row.getAttribute("data-subagent-id");
+        const detail = el.querySelector(
+          '.chat-bg-detail[data-detail-for="' + CSS.escape(id) + '"]',
+        );
+        if (!detail) return;
+        row.onclick = () => {
+          const open = detail.style.display !== "none";
+          if (open) {
+            detail.style.display = "none";
+            row.classList.remove("expanded");
+            return;
+          }
+          if (!detail.firstChild) {
+            const job = BackgroundPanel.jobs.get(id);
+            detail.appendChild(
+              Tools._buildResultBlock("Result", job ? job.detail : ""),
+            );
+            if (job && job.hasTranscript) {
+              const btn = document.createElement("button");
+              btn.className = "chat-bg-transcript-btn";
+              btn.textContent = "View full transcript";
+              btn.onclick = (e) => {
+                e.stopPropagation();
+                BackgroundPanel.viewTranscript(id, job.name || id);
+              };
+              detail.appendChild(btn);
+            }
+          }
+          detail.style.display = "";
+          row.classList.add("expanded");
+        };
+      });
+    },
+
+    cancel(subagentId) {
+      // withWindow is required: the servlet resolves the chat tracker from the window id, so a
+      // DELETE without it is rejected as a stale window and the cancel silently does nothing.
+      fetch(withWindow(URLS.subagents + "/" + encodeURIComponent(subagentId)), {
+        method: "DELETE",
+      }).catch((err) =>
+        console.error("[tl-chat] Subagent cancel request failed:", err),
+      );
+    },
+
+    /**
+     * Opens the persisted transcript (turns, tool calls) of a finished subagent in a modal,
+     * rendered with the same turn renderer used for the main conversation.
+     */
+    async viewTranscript(subagentId, title) {
+      const modal = this._ensureModal();
+      const body = modal.querySelector(".chat-transcript-body");
+      const titleEl = modal.querySelector(".chat-transcript-title");
+      titleEl.textContent = "Subagent transcript - " + (title || subagentId);
+      body.innerHTML = '<div class="chat-transcript-loading">Loading…</div>';
+      modal.style.display = "flex";
+      try {
+        const resp = await fetch(
+          withWindow(
+            URLS.subagents +
+              "/" +
+              encodeURIComponent(subagentId) +
+              "/transcript",
+          ),
+        );
+        if (!resp.ok) {
+          body.innerHTML =
+            '<div class="chat-transcript-loading">Transcript unavailable.</div>';
+          return;
+        }
+        const data = await resp.json();
+        let turns = [];
+        if (data.turnsJson) {
+          try {
+            turns = JSON.parse(data.turnsJson) || [];
+          } catch (e) {
+            console.error("[tl-chat] Failed to parse subagent transcript:", e);
+          }
+        }
+        body.innerHTML = "";
+        if (turns.length === 0) {
+          body.innerHTML =
+            '<div class="chat-transcript-loading">No transcript recorded.</div>';
+          return;
+        }
+        Session._renderTurns(turns, body);
+      } catch (e) {
+        console.error("[tl-chat] Failed to load subagent transcript:", e);
+        body.innerHTML =
+          '<div class="chat-transcript-loading">Failed to load transcript.</div>';
+      }
+    },
+
+    _ensureModal() {
+      // Anchored to <body> so the fixed-position backdrop always covers the viewport,
+      // independent of any transformed ancestor of the chat root.
+      let modal = document.querySelector(".chat-transcript-modal");
+      if (modal) return modal;
+      modal = document.createElement("div");
+      modal.className = "chat-transcript-modal";
+      modal.style.display = "none";
+      modal.innerHTML =
+        '<div class="chat-transcript-dialog">' +
+        '<div class="chat-transcript-header">' +
+        '<span class="chat-transcript-title"></span>' +
+        '<button class="chat-transcript-close" aria-label="Close">✕</button>' +
+        "</div>" +
+        '<div class="chat-transcript-body chat-messages"></div>' +
+        "</div>";
+      const close = () => {
+        modal.style.display = "none";
+        modal.querySelector(".chat-transcript-body").innerHTML = "";
+      };
+      modal.querySelector(".chat-transcript-close").onclick = close;
+      // Click on the dimmed backdrop (outside the dialog) closes the modal.
+      modal.onclick = (e) => {
+        if (e.target === modal) close();
+      };
+      document.body.appendChild(modal);
+      return modal;
+    },
+
+    /** Drops all jobs, e.g. when switching to another session. */
+    reset() {
+      this.jobs.clear();
+      this.render();
+    },
+
+    /**
+     * Seeds the panel from the server's job registry, so it survives a page reload or
+     * session switch while jobs are still running. SSE events keep it updated afterwards.
+     */
+    async sync() {
+      try {
+        const resp = await fetch(withWindow(URLS.subagents));
+        if (!resp.ok) return;
+        const data = await resp.json();
+        this.jobs.clear();
+        (data.subagents || []).forEach((j) => {
+          this.jobs.set(j.subagentId, {
+            subagentId: j.subagentId,
+            name: j.targetAgentName,
+            status: j.status,
+            detail: j.detail,
+            tokens: j.totalTokens,
+            durationMs: j.durationMs,
+            hasTranscript: !!j.hasTranscript,
+          });
+        });
+        this.render();
+      } catch (e) {
+        console.error("[tl-chat] Failed to sync background jobs:", e);
+      }
+    },
+
+    toast(message) {
+      const t = document.createElement("div");
+      t.className = "chat-bg-toast";
+      t.textContent = message;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    },
+  };
+
+  // ========================================================================
   // Attachments — file selection, drag-and-drop, preview, and encoding
   // ========================================================================
   const Attachments = {
@@ -926,6 +1227,15 @@
     _currentToolsEl: null,
     _scrollThreshold: 300,
     _rafId: null,
+    // When non-null, static turn rendering (_renderTurns and its helpers) appends here instead
+    // of the main chat, so a subagent transcript can be rendered into its own container without
+    // disturbing the live conversation. Only set during a synchronous _renderTurns(turns, target)
+    // call; null during live streaming.
+    _renderTarget: null,
+
+    _appendTarget() {
+      return this._renderTarget || this._messagesEl;
+    },
 
     init(root) {
       this._root = root;
@@ -1085,8 +1395,8 @@
       }
       html += "</div>";
       div.innerHTML = html;
-      this._messagesEl.appendChild(div);
-      this._scrollToBottom();
+      this._appendTarget().appendChild(div);
+      if (!this._renderTarget) this._scrollToBottom();
     },
 
     appendAssistantBubble() {
@@ -1700,13 +2010,7 @@
       const body = el.querySelector(".tl-chat-tool-body");
       if (body) {
         if (tc.result) {
-          const resultDiv = document.createElement("div");
-          resultDiv.innerHTML =
-            '<div class="tl-chat-tool-label">Result</div>' +
-            "<pre>" +
-            Utils.escapeHtml(this._truncate(tc.result, 2000)) +
-            "</pre>";
-          body.appendChild(resultDiv);
+          body.appendChild(this._buildResultBlock("Result", tc.result));
         }
         if (tc.error) {
           const errorDiv = document.createElement("div");
@@ -1755,6 +2059,53 @@
       return (
         s.substring(0, max) + "\n... (" + (s.length - max) + " more characters)"
       );
+    },
+
+    // Default character budget shown before a result is collapsed behind a toggle.
+    _RESULT_COLLAPSE_AT: 2000,
+
+    // Builds a labelled result/error block. Long text is collapsed to a preview
+    // with a "Show more / Show less" toggle so the full content stays reachable
+    // in the trace instead of being hard-truncated.
+    _buildResultBlock(label, text, opts) {
+      opts = opts || {};
+      const wrap = document.createElement("div");
+
+      const labelDiv = document.createElement("div");
+      labelDiv.className = "tl-chat-tool-label";
+      labelDiv.textContent = label;
+      if (opts.color) labelDiv.style.color = opts.color;
+      wrap.appendChild(labelDiv);
+
+      const pre = document.createElement("pre");
+      if (opts.color) pre.style.color = opts.color;
+      wrap.appendChild(pre);
+
+      const full = text || "";
+      const limit = this._RESULT_COLLAPSE_AT;
+      if (full.length <= limit) {
+        pre.textContent = full;
+        return wrap;
+      }
+
+      let expanded = false;
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "tl-chat-tool-more";
+      const apply = () => {
+        pre.textContent = expanded ? full : full.substring(0, limit) + "\n…";
+        toggle.textContent = expanded
+          ? "Show less"
+          : "Show " + (full.length - limit) + " more characters";
+      };
+      toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        expanded = !expanded;
+        apply();
+      });
+      apply();
+      wrap.appendChild(toggle);
+      return wrap;
     },
   };
 
@@ -1915,19 +2266,11 @@
       const section = Render._inputSection;
       if (!section) return;
 
-      // Track active interaction so the chat input can respond
+      // Track the active interaction so the main chat input can also answer as a secondary
+      // path; the panel below is self-contained and never depends on the main input, which
+      // is unreliable here (updateInputState disables it while a run is still streaming).
       Store.activeInteractionRequestId = data.requestId;
       this._interactionEl = null;
-
-      // Enable the input field so user can type a custom answer
-      if (Render._inputEl) {
-        Render._inputEl.disabled = false;
-        Render._inputEl.placeholder =
-          data.type === "choice"
-            ? "Type your answer and press Enter or pick above..."
-            : "Type your answer and press Enter...";
-        Render._inputEl.focus();
-      }
 
       const el = document.createElement("div");
       el.className = "tl-chat-approval";
@@ -1937,10 +2280,6 @@
         Store.activeInteractionRequestId = null;
         el.remove();
         this._interactionEl = null;
-        if (Render._inputEl) {
-          Render._inputEl.disabled = false;
-          Render._inputEl.placeholder = "Type a message...";
-        }
       };
 
       const respond = (response) => {
@@ -1957,15 +2296,17 @@
         dismiss();
       };
 
-      if (data.type === "text") {
-        el.innerHTML =
-          '<div class="tl-chat-approval-header">' +
-          Utils.escapeHtml(data.header || "Input requested") +
-          "</div>" +
-          '<div class="tl-chat-approval-reason">' +
-          (data.questionHtml || Utils.escapeHtml(data.question)) +
-          "</div>";
-      } else if (data.type === "choice") {
+      const headerHtml =
+        '<div class="tl-chat-approval-header">' +
+        Utils.escapeHtml(data.header || "Input requested") +
+        "</div>" +
+        '<div class="tl-chat-approval-reason">' +
+        (data.questionHtml || Utils.escapeHtml(data.question)) +
+        "</div>";
+
+      let focusEl = null;
+
+      if (data.type === "choice") {
         const multiSelect = data.multiSelect === true;
 
         if (multiSelect) {
@@ -1983,12 +2324,7 @@
           optionsHtml += "</div>";
 
           el.innerHTML =
-            '<div class="tl-chat-approval-header">' +
-            Utils.escapeHtml(data.header || "Choose") +
-            "</div>" +
-            '<div class="tl-chat-approval-reason">' +
-            (data.questionHtml || Utils.escapeHtml(data.question)) +
-            "</div>" +
+            headerHtml +
             optionsHtml +
             '<div class="tl-chat-approval-actions">' +
             '<button class="tl-chat-approval-btn allow tl-chat-submit-btn">Submit</button>' +
@@ -2005,7 +2341,7 @@
             },
           );
         } else {
-          // Single-select: original button layout
+          // Single-select: option-button layout
           let optionsHtml = '<div class="tl-chat-approval-actions">';
           (data.options || []).forEach((opt) => {
             const label = typeof opt === "string" ? opt : opt.label;
@@ -2018,25 +2354,53 @@
           });
           optionsHtml += "</div>";
 
-          el.innerHTML =
-            '<div class="tl-chat-approval-header">' +
-            Utils.escapeHtml(data.header || "Choose") +
-            "</div>" +
-            '<div class="tl-chat-approval-reason">' +
-            (data.questionHtml || Utils.escapeHtml(data.question)) +
-            "</div>" +
-            optionsHtml;
+          el.innerHTML = headerHtml + optionsHtml;
 
           el.querySelectorAll("[data-value]").forEach((btn) => {
             btn.addEventListener("click", () => respond(btn.dataset.value));
           });
         }
       } else {
-        console.warn("[tl-chat] Unknown interaction type:", data.type);
-        return;
+        // Free-text ("text") and any unrecognised type both render a usable inline text
+        // input inside the panel. This makes free-text questions self-contained and fixes
+        // them uniformly for top-level agents and subagents, and degrades gracefully for
+        // unknown types instead of rendering nothing.
+        if (data.type !== "text") {
+          console.warn(
+            "[tl-chat] Unknown interaction type, rendering text input:",
+            data.type,
+          );
+        }
+
+        el.innerHTML =
+          headerHtml +
+          '<div class="tl-chat-interaction-input">' +
+          '<textarea class="tl-chat-interaction-text" rows="2" ' +
+          'placeholder="Type your answer and press Enter..."></textarea>' +
+          '<button class="tl-chat-approval-btn allow tl-chat-submit-btn">Submit</button>' +
+          "</div>";
+
+        const textarea = el.querySelector(".tl-chat-interaction-text");
+        const submit = () => {
+          const value = textarea.value.trim();
+          if (!value) return;
+          respond(value);
+        };
+        el.querySelector(".tl-chat-submit-btn").addEventListener(
+          "click",
+          submit,
+        );
+        textarea.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
+        });
+        focusEl = textarea;
       }
 
       section.insertBefore(el, section.firstChild);
+      if (focusEl) focusEl.focus();
     },
 
     _removeInteractionUI() {
@@ -2433,6 +2797,9 @@
       // session's own pending request).
       Approval.reset();
       TaskPanel.reset();
+      // Background jobs belong to the session they were spawned in; the panel is
+      // re-seeded from the server (BackgroundPanel.sync) when the new SSE connects.
+      BackgroundPanel.reset();
       Render.updateInputState();
     },
 
@@ -2488,6 +2855,11 @@
         Render._messagesEl.innerHTML = "";
       }
 
+      // Loading a session activates it server-side; re-seed the background-tasks panel
+      // from the now-active session's registry (the sync on SSE connect may have raced
+      // ahead of the activation and seen the previous session's jobs).
+      BackgroundPanel.sync();
+
       // V2 format: turn-based (serialized separately as a JSON array string)
       let turns = [];
       if (data.turnsJson) {
@@ -2507,7 +2879,21 @@
       Render._scrollToBottom();
     },
 
-    _renderTurns(turns) {
+    _renderTurns(turns, targetEl) {
+      // The append helpers (Render.appendUserMessage, Render._appendTarget) route output through
+      // Render._renderTarget, so the target must be set THERE — setting it on Session would leave
+      // Render appending to the main chat. targetEl is the subagent-transcript modal body; null
+      // for the normal session-load path (renders into the live chat).
+      const prevTarget = Render._renderTarget;
+      Render._renderTarget = targetEl || null;
+      try {
+        this._renderTurnsInto(turns);
+      } finally {
+        Render._renderTarget = prevTarget;
+      }
+    },
+
+    _renderTurnsInto(turns) {
       for (const turn of turns) {
         // Render user message(s)
         const userParts = turn.userParts || [];
@@ -2614,8 +3000,9 @@
           cancelDiv.innerHTML =
             '<div class="chat-bubble chat-bubble-agent">' +
             '<div class="chat-agent-text"><em>Processing was cancelled</em></div></div>';
-          if (Render._messagesEl) {
-            Render._messagesEl.appendChild(cancelDiv);
+          const cancelTarget = Render._appendTarget();
+          if (cancelTarget) {
+            cancelTarget.appendChild(cancelDiv);
           }
         }
       }
@@ -2752,8 +3139,9 @@
       }
 
       div.appendChild(content);
-      if (Render._messagesEl) {
-        Render._messagesEl.appendChild(div);
+      const target = Render._appendTarget();
+      if (target) {
+        target.appendChild(div);
       }
     },
 
@@ -2805,21 +3193,9 @@
           "</pre>";
         body.appendChild(deniedDiv);
       } else if (isFailed && tc.errorMessage) {
-        const errorDiv = document.createElement("div");
-        errorDiv.innerHTML =
-          '<div class="tl-chat-tool-label">Error</div>' +
-          "<pre>" +
-          Utils.escapeHtml(tc.errorMessage) +
-          "</pre>";
-        body.appendChild(errorDiv);
+        body.appendChild(Tools._buildResultBlock("Error", tc.errorMessage));
       } else if (tc.result) {
-        const resultDiv = document.createElement("div");
-        resultDiv.innerHTML =
-          '<div class="tl-chat-tool-label">Result</div>' +
-          "<pre>" +
-          Utils.escapeHtml(Tools._truncate(tc.result, 2000)) +
-          "</pre>";
-        body.appendChild(resultDiv);
+        body.appendChild(Tools._buildResultBlock("Result", tc.result));
       }
 
       let expanded = false;
@@ -3061,8 +3437,9 @@
       bubble.appendChild(textEl);
 
       div.appendChild(bubble);
-      if (Render._messagesEl) {
-        Render._messagesEl.appendChild(div);
+      const target = Render._appendTarget();
+      if (target) {
+        target.appendChild(div);
       }
     },
 

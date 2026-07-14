@@ -20,6 +20,9 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.DelegationEventWrapper} type in JSON format. */
 	public static final String DELEGATION_EVENT_WRAPPER__TYPE = "DelegationEventWrapper";
 
+	/** @see #getSubagentId() */
+	public static final String SUBAGENT_ID__PROP = "subagentId";
+
 	/** @see #getDelegationToolCallId() */
 	public static final String DELEGATION_TOOL_CALL_ID__PROP = "delegationToolCallId";
 
@@ -28,6 +31,8 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 
 	/** @see #getEventData() */
 	public static final String EVENT_DATA__PROP = "eventData";
+
+	private String _subagentId = "";
 
 	private String _delegationToolCallId = "";
 
@@ -42,6 +47,26 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 	 */
 	protected DelegationEventWrapper() {
 		super();
+	}
+
+	/**
+	 * The subagent job id (empty for synchronous delegation).
+	 */
+	public final String getSubagentId() {
+		return _subagentId;
+	}
+
+	/**
+	 * @see #getSubagentId()
+	 */
+	public com.top_logic.ai.chat.api.messages.DelegationEventWrapper setSubagentId(String value) {
+		internalSetSubagentId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSubagentId()} without chain call utility. */
+	protected final void internalSetSubagentId(String value) {
+		_subagentId = value;
 	}
 
 	/**
@@ -112,6 +137,7 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
+			SUBAGENT_ID__PROP, 
 			DELEGATION_TOOL_CALL_ID__PROP, 
 			EVENT_TYPE__PROP, 
 			EVENT_DATA__PROP);
@@ -139,6 +165,7 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 	@Override
 	public Object get(String field) {
 		switch (field) {
+			case SUBAGENT_ID__PROP: return getSubagentId();
 			case DELEGATION_TOOL_CALL_ID__PROP: return getDelegationToolCallId();
 			case EVENT_TYPE__PROP: return getEventType();
 			case EVENT_DATA__PROP: return getEventData();
@@ -149,6 +176,7 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
+			case SUBAGENT_ID__PROP: internalSetSubagentId((String) value); break;
 			case DELEGATION_TOOL_CALL_ID__PROP: internalSetDelegationToolCallId((String) value); break;
 			case EVENT_TYPE__PROP: internalSetEventType((String) value); break;
 			case EVENT_DATA__PROP: internalSetEventData((String) value); break;
@@ -170,6 +198,8 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
+		out.name(SUBAGENT_ID__PROP);
+		out.value(getSubagentId());
 		out.name(DELEGATION_TOOL_CALL_ID__PROP);
 		out.value(getDelegationToolCallId());
 		out.name(EVENT_TYPE__PROP);
@@ -181,6 +211,7 @@ public class DelegationEventWrapper extends de.haumacher.msgbuf.data.AbstractDat
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
+			case SUBAGENT_ID__PROP: setSubagentId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DELEGATION_TOOL_CALL_ID__PROP: setDelegationToolCallId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case EVENT_TYPE__PROP: setEventType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case EVENT_DATA__PROP: setEventData(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

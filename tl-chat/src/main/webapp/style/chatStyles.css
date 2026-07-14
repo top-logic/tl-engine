@@ -834,6 +834,234 @@
 }
 
 /* ========================================
+ * Background Panel — async subagent jobs
+ * ======================================== */
+
+.chat-background-panel {
+	display: none;
+	flex-direction: column;
+	border-top: 1px solid var(--chat-border);
+	background: var(--chat-bg-secondary, #f9fafb);
+	padding: 6px 12px;
+	flex-shrink: 0;
+	max-height: 200px;
+	overflow-y: auto;
+	gap: 4px;
+}
+
+.chat-bg-pill {
+	display: inline-block;
+	font-size: 0.78em;
+	font-weight: 600;
+	color: var(--chat-accent, #2563eb);
+	background: color-mix(in srgb, var(--chat-accent, #2563eb) 12%, transparent);
+	border-radius: 10px;
+	padding: 1px 8px;
+	margin-bottom: 4px;
+}
+
+.chat-bg-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.85em;
+	padding: 2px 0;
+}
+
+.chat-bg-status {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	background: var(--chat-text-muted);
+}
+
+.chat-bg-status.running {
+	background: var(--chat-accent, #2563eb);
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+.chat-bg-status.queued {
+	background: var(--chat-text-muted);
+}
+
+.chat-bg-status.done {
+	background: #16a34a;
+}
+
+.chat-bg-status.failed {
+	background: #dc2626;
+}
+
+.chat-bg-status.cancelled {
+	background: var(--chat-text-muted);
+}
+
+.chat-bg-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chat-bg-meta {
+	font-size: 0.85em;
+	color: var(--chat-text-muted);
+	white-space: nowrap;
+}
+
+.chat-bg-cancel {
+	background: none;
+	border: 1px solid var(--chat-border);
+	border-radius: 4px;
+	padding: 1px 5px;
+	font-size: 0.8em;
+	cursor: pointer;
+	color: var(--chat-text-muted);
+	line-height: 1.4;
+}
+
+.chat-bg-cancel:hover {
+	color: #dc2626;
+	border-color: #dc2626;
+}
+
+.chat-bg-row.has-result {
+	cursor: pointer;
+}
+
+.chat-bg-chevron {
+	color: var(--chat-text-muted);
+	font-size: 10px;
+	transition: transform 0.15s ease;
+}
+
+.chat-bg-row.expanded .chat-bg-chevron {
+	transform: rotate(90deg);
+}
+
+.chat-bg-detail {
+	padding: 2px 0 6px 14px;
+}
+
+.chat-bg-detail pre {
+	max-height: 240px;
+	overflow: auto;
+	background: var(--chat-bg);
+	padding: 6px 8px;
+	border-radius: var(--chat-radius-sm);
+	font-size: 11px;
+	margin: 4px 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.chat-bg-transcript-btn {
+	margin-top: 4px;
+	background: none;
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius-sm);
+	padding: 3px 10px;
+	font-size: 0.85em;
+	cursor: pointer;
+	color: var(--chat-accent, #2563eb);
+}
+
+.chat-bg-transcript-btn:hover {
+	background: color-mix(in srgb, var(--chat-accent, #2563eb) 10%, transparent);
+}
+
+/* Subagent transcript modal */
+.chat-transcript-modal {
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.4);
+	z-index: 10001;
+}
+
+.chat-transcript-dialog {
+	display: flex;
+	flex-direction: column;
+	width: min(760px, 92vw);
+	max-height: 85vh;
+	background: var(--chat-bg, #fff);
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius, 10px);
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+	overflow: hidden;
+}
+
+.chat-transcript-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--chat-border);
+	font-weight: 600;
+	font-size: 0.95em;
+}
+
+.chat-transcript-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chat-transcript-close {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1em;
+	color: var(--chat-text-muted);
+	line-height: 1;
+	padding: 4px;
+}
+
+.chat-transcript-close:hover {
+	color: var(--chat-text, #111);
+}
+
+.chat-transcript-body {
+	padding: 12px 14px;
+	overflow-y: auto;
+}
+
+.chat-transcript-loading {
+	color: var(--chat-text-muted);
+	font-size: 0.9em;
+	padding: 12px 0;
+}
+
+.chat-bg-toast {
+	position: fixed;
+	bottom: 24px;
+	right: 24px;
+	background: var(--chat-bg-secondary, #f9fafb);
+	border: 1px solid var(--chat-border);
+	border-radius: 8px;
+	padding: 10px 16px;
+	font-size: 0.9em;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	z-index: 9999;
+	animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* ========================================
  * Agent Calls - compact activity lines
  * ======================================== */
 
@@ -1905,6 +2133,20 @@
 	margin-bottom: 2px;
 }
 
+.tl-chat-tool-more {
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 2px 0 4px;
+	font-size: 11px;
+	cursor: pointer;
+	color: var(--chat-accent, #2563eb);
+}
+
+.tl-chat-tool-more:hover {
+	text-decoration: underline;
+}
+
 .tl-chat-tools-container {
 	margin-top: 8px;
 }
@@ -2091,6 +2333,34 @@
 	font-size: 12px;
 	background: var(--chat-bg);
 	color: var(--chat-text-primary);
+}
+
+/* Inline free-text answer input rendered inside the interaction panel. */
+.tl-chat-interaction-input {
+	display: flex;
+	gap: 6px;
+	align-items: flex-end;
+}
+
+.tl-chat-interaction-text {
+	flex: 1;
+	padding: 6px 8px;
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius-sm);
+	font-size: 12px;
+	font-family: inherit;
+	background: var(--chat-bg);
+	color: var(--chat-text-primary);
+	resize: vertical;
+}
+
+.tl-chat-interaction-text:focus {
+	outline: none;
+	border-color: var(--chat-accent, var(--chat-status-success));
+}
+
+.tl-chat-interaction-input .tl-chat-submit-btn {
+	flex-shrink: 0;
 }
 
 /* ========================================

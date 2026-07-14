@@ -460,6 +460,72 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 	}
 
+	// ---- Subagent lifecycle ----
+
+	/**
+	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentStarted} lifecycle
+	 * event to the parent listener for the UI panel.
+	 */
+	public void recordSubagentStarted(String subagentId, String targetAgentName, String taskBrief) {
+		AgentEventListener parent = _parentListener;
+		if (parent != null) {
+			parent.onEvent(new AgentEvent.SubagentStarted("", 0, Instant.now(), subagentId, targetAgentName, taskBrief));
+		}
+	}
+
+	/**
+	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCompleted}
+	 * lifecycle event to the parent listener.
+	 */
+	public void recordSubagentCompleted(String subagentId,
+			com.top_logic.tl.ai.core.agent.subagent.SubagentResult result) {
+		AgentEventListener parent = _parentListener;
+		if (parent != null) {
+			parent.onEvent(new AgentEvent.SubagentCompleted("", 0, Instant.now(), subagentId, result));
+		}
+	}
+
+	/**
+	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentFailed} lifecycle
+	 * event to the parent listener.
+	 */
+	public void recordSubagentFailed(String subagentId, String errorSummary) {
+		AgentEventListener parent = _parentListener;
+		if (parent != null) {
+			parent.onEvent(new AgentEvent.SubagentFailed("", 0, Instant.now(), subagentId, errorSummary));
+		}
+	}
+
+	/**
+	 * Forwards a {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.SubagentCancelled}
+	 * lifecycle event to the parent listener.
+	 */
+	public void recordSubagentCancelled(String subagentId) {
+		AgentEventListener parent = _parentListener;
+		if (parent != null) {
+			parent.onEvent(new AgentEvent.SubagentCancelled("", 0, Instant.now(), subagentId));
+		}
+	}
+
+	/**
+	 * Returns a lightweight forwarding listener that wraps every child event as a
+	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.DelegatedEvent} carrying the
+	 * {@code subagentId} and forwards it to the parent listener.
+	 *
+	 * <p>V1 simplification: child events are NOT recorded as {@link Part}s in the
+	 * {@link ConversationLog}; the UI panel and result injection are the surfaces for v1.</p>
+	 */
+	public AgentEventListener subagentListener(String subagentId) {
+		return childEvent -> {
+			AgentEventListener parent = _parentListener;
+			if (parent != null) {
+				parent.onEvent(new AgentEvent.DelegatedEvent(
+					childEvent.runId(), childEvent.turnNumber(), childEvent.timestamp(),
+					subagentId, "", childEvent));
+			}
+		};
+	}
+
 	// ---- Delegation forwarding inner class ----
 
 	private class DelegationForwardingListener implements AgentEventListener {
@@ -539,7 +605,7 @@ public class ConversationLogListener implements AgentEventListener {
 			if (parent != null) {
 				parent.onEvent(new AgentEvent.DelegatedEvent(
 					childEvent.runId(), childEvent.turnNumber(), childEvent.timestamp(),
-					_delegationToolCallId, childEvent));
+					"", _delegationToolCallId, childEvent));
 			}
 		}
 

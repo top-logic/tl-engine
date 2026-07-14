@@ -159,6 +159,8 @@
 							<includes>
 								<include>**/TestAnthropicProvider.java</include>
 								<include>**/VisualStreamTest.java</include>
+								<include>**/TestSubagentJobRegistry.java</include>
+								<include>**/TestAsyncDelegationIntegration.java</include>
 							</includes>
 						</configuration>
 					</plugin>

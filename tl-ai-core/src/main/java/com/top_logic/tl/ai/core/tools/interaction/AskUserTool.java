@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -92,6 +93,15 @@ public class AskUserTool {
 				: AgentExecutionStore.InteractionType.QUESTION,
 			request.getId(), header, question, options);
 
+		// While parked on the future below this thread cannot observe the cooperative
+		// cancellation flag. Register a listener that resolves the request as "cancelled" when
+		// the run (or this subagent) is cancelled, so the wait ends promptly instead of hanging
+		// until the interaction timeout. This is what makes cancelling a subagent that is
+		// waiting on a question actually stop it.
+		CancellationToken cancellation = context.cancellationToken();
+		CancellationToken.Registration cancelHook =
+			cancellation.onCancel(() -> store.resolve(request.getId(), "cancelled"));
+
 		try {
 			String response = request.getFuture().get(INTERACTION_TIMEOUT_MINUTES, TimeUnit.MINUTES);
 			Logger.info("User responded to interaction " + request.getId() + ": " + response,
@@ -128,6 +138,8 @@ public class AskUserTool {
 			InteractionRecorder.resolve(interactionRow,
 				AgentExecutionStore.InteractionState.CANCELLED, "error: " + e.getMessage());
 			return "error: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+		} finally {
+			cancelHook.close();
 		}
 	}
 

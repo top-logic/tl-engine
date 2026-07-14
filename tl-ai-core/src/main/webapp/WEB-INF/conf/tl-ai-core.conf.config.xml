@@ -1225,10 +1225,65 @@ You have tools to search the web and fetch content from URLs.
 							<tool name="web-search.webSearch"/>
 						</tools>
 					</skill>
+					<skill name="TL_spawnSubagents"
+						description="Load when delegating work to other agents — to run one or more predefined agents asynchronously and collect their results. Especially for fanning out independent sub-tasks in parallel."
+					>
+						<content><![CDATA[# Spawning Subagents
+
+<when_to_use>
+Spawn a subagent to hand a self-contained sub-task to a specialized agent — exploration, analysis, drafting — while you keep orchestrating.
+Best when sub-tasks are INDEPENDENT: spawn several at once and let them run in parallel.
+Do NOT spawn for trivial work you can do inline, or when one step depends on the previous one's output (do those yourself, in order).
+A subagent runs READ-ONLY: it cannot create or modify data. Use it to gather and report, not to act.
+</when_to_use>
+
+<fire_and_forget>
+Spawning is FIRE-AND-FORGET. `spawn_subagent` returns immediately and the subagent keeps running in the background.
+After spawning, END YOUR TURN — tell the user you started the subagent(s), then stop. Do NOT call `wait_for_subagent`. The user must stay free to keep chatting with you while the subagent works.
+When a subagent finishes, its result is delivered to you automatically at the start of a later turn — you do not have to poll or wait for it. Synthesize it into your answer when it arrives.
+</fire_and_forget>
+
+<workflow>
+**1. Discover** — Call `list_agents` to see which predefined agents exist and what each is for. Pick the one whose description fits the sub-task.
+**2. Spawn** — Call `spawn_subagent(agent, task, context)` for each sub-task. Each call returns immediately with a subagent id. To fan out, issue several `spawn_subagent` calls in the SAME turn — they run concurrently. Then END YOUR TURN.
+**3. Report the result** — When a finished subagent's result arrives in a later turn, combine it into your own answer. Do not just forward it verbatim.
+</workflow>
+
+<answering_the_user>
+- **"How is it going / what's the status?"** → Call `subagent_status` (non-blocking) and report what it says. NEVER use `wait_for_subagent` for a status question — that would freeze the chat.
+- **"Wait for it / let me know when it's done and then continue"** → NOW call `wait_for_subagent`. This is the ONLY situation in which you wait: the user explicitly asked you to. Omit `subagentIds` to wait for all outstanding subagents, or pass specific ids for a subset.
+- **Otherwise** → do not wait and do not poll; just let the result arrive on its own.
+</answering_the_user>
+
+<core_rules>
+- Write a precise, self-contained `task`: the subagent does not see your conversation. Put everything it needs in `task` plus the `context` argument.
+- `agent` must be an exact name from `list_agents` — never invent one.
+- Prefer parallel fan-out: spawn all independent sub-tasks in one turn, then end the turn.
+- Never auto-wait after spawning. `wait_for_subagent` is opt-in and only for an explicit user "wait" request.
+- Delegation depth is bounded — a spawned subagent cannot itself spawn further subagents.
+</core_rules>
+
+<tools_ref>
+`list_agents()` — lists the predefined agents available to spawn, with descriptions. Call first to choose a target.
+
+`spawn_subagent(agent, task, context?)` — starts the named agent asynchronously on the given task. `context` carries relevant background from the conversation. Returns a subagent id immediately and does not block; its result is delivered automatically in a later turn.
+
+`subagent_status(subagentIds?)` — returns the current state (queued/running/done/failed/cancelled) of the given subagents, and their result if finished, WITHOUT blocking. With no `subagentIds`, reports all subagents. Use this for status questions.
+
+`wait_for_subagent(subagentIds?, timeoutMs?)` — BLOCKS until the given subagents finish and returns their results; with no `subagentIds`, waits for all outstanding subagents. `timeoutMs` defaults to 300000 (5 min). Use only when the user explicitly asks you to wait.
+</tools_ref>
+]]></content>
+						<tools>
+							<tool name="subagent.spawn_subagent"/>
+							<tool name="subagent.list_agents"/>
+							<tool name="subagent.subagent_status"/>
+							<tool name="subagent.wait_for_subagent"/>
+						</tools>
+					</skill>
 				</skills>
 				<agents>
 					<agent name="TL_SingleAgent"
-						description=""
+						description="Delegate to the all-round TopLogic assistant carrying the full tool and skill set: model exploration and editing, TLScript, task management, and page authoring. Default chat entry point; as a background subagent it runs read-only. Prefer a specialist when the sub-task is purely exploration, TLScript, or model editing. Provide goal (short intent), task (concrete instructions), context (module/type names if relevant)."
 					>
 						<system-prompt><![CDATA[You are Albert — an expert consultant who helps users explore, understand, and modify their TopLogic application.
 
@@ -1296,10 +1351,11 @@ If you loaded a skill but forgot to use its tools — use them now instead of lo
 							<skill name="TL_agenticAuthoring"/>
 							<skill name="TL_webAccess"/>
 							<skill name="TL_tlScriptInstanceCreation"/>
+							<skill name="TL_spawnSubagents"/>
 						</skills>
 					</agent>
 					<agent name="TL_Orchestrator"
-						description=""
+						description="Delegate to the strategic coordinator that routes work to the specialist agents (model exploration, TLScript, model editing) and synthesizes their results. It has no domain tools of its own, so it only pays off for multi-step requests spanning several specialists; for a single concrete sub-task, pick the matching specialist directly."
 					>
 						<system-prompt><![CDATA[# Preamble
 
@@ -2003,6 +2059,10 @@ Do NOT include long explanations. Be concise and factual.]]></system-prompt>
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.TaskTool"
 						/>
+					</factory>
+					<!-- Generic async-subagent orchestration: spawn_subagent, list_agents (independent of delegation) -->
+					<factory name="subagent">
+						<implementation class="com.top_logic.tl.ai.core.tools.registry.SubagentToolFactory"/>
 					</factory>
 					<factory name="user-interaction">
 						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"

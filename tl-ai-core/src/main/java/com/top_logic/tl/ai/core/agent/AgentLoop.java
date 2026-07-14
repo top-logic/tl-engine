@@ -36,6 +36,10 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.event.DiagnosticLoggingListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
@@ -45,6 +49,7 @@ import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
+import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -58,6 +63,7 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -86,8 +92,6 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * @see AgentEventListener
  */
 public class AgentLoop {
-
-	// TODO: Memory/attachment injection between turns
 
 	/** Default maximum characters per tool result before truncation. */
 	public static final int DEFAULT_MAX_RESULT_CHARS = AgentTuning.MAX_TOOL_RESULT_CHARS;
@@ -214,6 +218,30 @@ public class AgentLoop {
 	}
 
 	/**
+	 * Injects results of any completed-but-undelivered subagents (from the thread-bound
+	 * registry) into the conversation as system messages, so the next provider call sees them.
+	 * Realizes the long-standing "memory/attachment injection between turns" intent.
+	 */
+	private void injectSubagentResults(Conversation conversation) {
+		injectSubagentResultsForTest(conversation);
+	}
+
+	/** Test-visible entry point for {@link #injectSubagentResults}. */
+	static void injectSubagentResultsForTest(Conversation conversation) {
+		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
+		if (registry == null) {
+			return;
+		}
+		for (SubagentJob job : registry.takeUndeliveredResults()) {
+			SubagentResult r = job.result();
+			String text = "Subagent " + job.targetAgentName() + " (" + job.subagentId()
+				+ ") finished with status " + job.status() + ":\n" + r.finalText();
+			conversation.add(new SystemMessage(
+				UUID.randomUUID().toString(), Instant.now(), text));
+		}
+	}
+
+	/**
 	 * Run the agent loop.
 	 *
 	 * <p>Blocks until the LLM completes without tool calls, the turn limit is reached,
@@ -260,6 +288,8 @@ public class AgentLoop {
 			}
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
+
+			injectSubagentResults(conversation);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -395,6 +425,8 @@ public class AgentLoop {
 			}
 
 			emit(listener, new AgentEvent.TurnStarted(runId, turn, now()));
+
+			injectSubagentResults(conversation);
 
 			AssistantMessage assistantMsg;
 			try {
@@ -1130,7 +1162,7 @@ public class AgentLoop {
 			_config.toolChoice(),
 			Duration.ofSeconds(_config.timeoutSeconds()));
 
-		ResponseCollector collector = new ResponseCollector(listener, runId, turn);
+		ResponseCollector collector = new ResponseCollector(listener, runId, turn, context.cancellationToken());
 		long startNanos = System.nanoTime();
 		try {
 			_provider.stream(request, collector);
@@ -1158,6 +1190,8 @@ public class AgentLoop {
 
 		private final int _turnNumber;
 
+		private final CancellationToken _cancellation;
+
 		private String _id;
 
 		private String _finishReason;
@@ -1172,10 +1206,17 @@ public class AgentLoop {
 		 */
 		private ProviderException _streamError;
 
-		ResponseCollector(AgentEventListener listener, String runId, int turnNumber) {
+		ResponseCollector(AgentEventListener listener, String runId, int turnNumber,
+				CancellationToken cancellation) {
 			_listener = listener;
 			_runId = runId;
 			_turnNumber = turnNumber;
+			_cancellation = cancellation;
+		}
+
+		@Override
+		public CancellationToken cancellation() {
+			return _cancellation;
 		}
 
 		@Override

@@ -499,6 +499,9 @@ message ApprovalResolvedEvent {
  * </p>
  */
 message DelegationEventWrapper {
+	/** The subagent job id (empty for synchronous delegation). */
+	string subagentId;
+
 	/** The parent agent's tool call ID for the delegate_to_* tool. */
 	string delegationToolCallId;
 
@@ -507,6 +510,31 @@ message DelegationEventWrapper {
 
 	/** The inner event data as JSON string. */
 	string eventData;
+}
+
+/**
+ * SSE event carrying subagent lifecycle status.
+ *
+ * <p>
+ * Emitted for {@code subagent_started}, {@code subagent_completed}, {@code subagent_failed},
+ * and {@code subagent_cancelled} events.
+ * </p>
+ */
+message SubagentStatusEvent {
+	/** The subagent job id within the session. */
+	string subagentId;
+
+	/** The delegated-to agent name. */
+	string targetAgentName;
+
+	/** The task brief (on start) or final text / error summary (on completion/failure). */
+	string detail;
+
+	/** Total tokens the subagent used (0 until completion). */
+	int32 totalTokens;
+
+	/** Run duration in milliseconds (0 until completion). */
+	int64 durationMs;
 }
 
 /** SSE event for transaction committed. */

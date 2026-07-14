@@ -18,14 +18,16 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -131,11 +133,16 @@ public class DelegationTool implements Tool {
 		}
 		String contextStr = (String) args.get("context");
 
-		StringBuilder userPrompt = new StringBuilder();
-		if (contextStr != null && !contextStr.isBlank()) {
-			userPrompt.append("## Context\n\n").append(contextStr).append("\n\n");
+		SubagentJobRegistry registry = SubagentRegistryBinding.getRegistry();
+		if (registry == null) {
+			// No async session bound (non-chat caller, tests): keep synchronous behavior.
+			return executeSync(toolContext, task, contextStr);
 		}
-		userPrompt.append("## Task\n\n").append(task);
+		return executeAsync(registry, toolContext, task, contextStr);
+	}
+
+	private ToolResult executeSync(ToolContext toolContext, String task, String contextStr) {
+		String userPromptStr = buildUserPrompt(task, contextStr);
 
 		ConversationLogListener logListener = ConversationLogListener.current();
 		String delegationId = null;
@@ -162,7 +169,7 @@ public class DelegationTool implements Tool {
 			UserMessage userMessage = new UserMessage(
 				UUID.randomUUID().toString(),
 				Instant.now(),
-				List.of(new TextContent(userPrompt.toString())));
+				List.of(new TextContent(userPromptStr)));
 			conversation.add(userMessage);
 
 			ToolContext childContext = toolContext.forDelegation(
@@ -209,6 +216,15 @@ public class DelegationTool implements Tool {
 			Logger.error("Delegation to " + _targetAgentName + " failed.", e, DelegationTool.class);
 			return ToolResult.of("ERROR: Delegation to " + _targetAgentName + " failed: " + e.getMessage());
 		}
+	}
+
+	private ToolResult executeAsync(SubagentJobRegistry registry, ToolContext toolContext,
+			String task, String contextStr) {
+		return SubagentSpawner.spawnAsync(_targetAgentName, task, contextStr, toolContext, _loopFactory, registry);
+	}
+
+	private static String buildUserPrompt(String task, String contextStr) {
+		return SubagentSpawner.buildUserPrompt(task, contextStr);
 	}
 
 	private String extractFinalText(Conversation conversation, AgentResult result) {
@@ -258,5 +274,13 @@ public class DelegationTool implements Tool {
 
 		/** Builds an agent loop for the named agent. */
 		AgentLoop buildAgentLoop(String agentName);
+
+		/**
+		 * Builds a read-only, non-spawning agent loop for an asynchronous subagent run.
+		 * Defaults to {@link #buildAgentLoop} for callers that do not distinguish.
+		 */
+		default AgentLoop buildSubagentLoop(String agentName) {
+			return buildAgentLoop(agentName);
+		}
 	}
 }

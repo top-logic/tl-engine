@@ -32,11 +32,13 @@ import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
+import com.top_logic.tl.ai.core.tools.interaction.SearchToolsTool;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
+import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
@@ -53,7 +55,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * @see AgentDefinitionQuery
  * @see AgentLoop
  */
-public class AgentFactory {
+public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 	private static final AgentFactory INSTANCE = new AgentFactory();
 
@@ -275,6 +277,7 @@ public class AgentFactory {
 	 * @throws IllegalArgumentException
 	 *         if no agent with the given name exists
 	 */
+	@Override
 	public AgentLoop buildAgentLoop(String name) {
 		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
 		if (agentDef == null) {
@@ -291,6 +294,48 @@ public class AgentFactory {
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 
 		return new AgentLoop(config, provider, registry, maxToolResultChars);
+	}
+
+	/**
+	 * Builds an {@link AgentLoop} for an asynchronous subagent: a faithful clone of the named
+	 * agent — same provider/config and the same full tool catalog (skills, {@code loadSkill}, and
+	 * the agent's complete read <em>and</em> write tool set) — with the single exception that the
+	 * subagent may not spawn further subagents.
+	 *
+	 * <p>
+	 * Concretely this builds the same catalog as {@link #buildAgentLoop} but with
+	 * {@code includeDelegation=false}, so the {@code delegate_to_*} / {@code wait_for_subagent}
+	 * tools are omitted (delegation depth stays bounded — a subagent is depth-1). Everything else
+	 * is at full parity with the parent agent, so a subagent has the very same capabilities the
+	 * user would get by talking to that agent directly — including skill-provided tools such as
+	 * web access ({@code TL_webAccess}).
+	 * </p>
+	 */
+	@Override
+	public AgentLoop buildSubagentLoop(String name) {
+		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		if (agentDef == null) {
+			throw new IllegalArgumentException("No agent found with name: " + name);
+		}
+		AgentModelAssignment assignment =
+			LLMService.getInstance().resolveModelAssignment(agentDef.name());
+		AgentParams config = buildConfig(agentDef, assignment);
+		LLMProvider provider = buildProvider(config.model());
+		// Full parity with the parent agent's toolset, minus the ability to spawn subagents.
+		ToolRegistry registry = agentDef.skills().isEmpty()
+			? buildStaticToolCatalog(agentDef, false, false)
+			: buildDynamicToolCatalog(agentDef, false, false);
+		int maxToolResultChars = resolveMaxToolResultChars(assignment);
+		return new AgentLoop(config, provider, registry, maxToolResultChars);
+	}
+
+	/**
+	 * Returns {@code true} if the tool has a read-only mode ({@code READ} or {@code USER_SCOPED}).
+	 */
+	static boolean isReadOnlyTool(Tool tool) {
+		ToolMode mode = tool.mode();
+		return mode == ToolMode.READ
+			|| mode == ToolMode.USER_SCOPED;
 	}
 
 	/**
@@ -479,12 +524,12 @@ public class AgentFactory {
 	 */
 	ToolRegistry buildToolCatalog(AgentDefinition agent) {
 		if (!agent.skills().isEmpty()) {
-			return buildDynamicToolCatalog(agent);
+			return buildDynamicToolCatalog(agent, true, false);
 		}
-		return buildStaticToolCatalog(agent);
+		return buildStaticToolCatalog(agent, true, false);
 	}
 
-	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent) {
+	private ToolCatalog buildStaticToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly) {
 		ToolCatalog registry =
 			new ToolCatalog();
 
@@ -498,12 +543,14 @@ public class AgentFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
-				try {
-					registry.register(tool);
-				} catch (IllegalArgumentException e) {
-					throw new IllegalArgumentException(
-						"Agent '" + agent.name() + "': " + e.getMessage()
-						+ " (qualified source: '" + toolName + "')", e);
+				if (!readOnly || isReadOnlyTool(tool)) {
+					try {
+						registry.register(tool);
+					} catch (IllegalArgumentException e) {
+						throw new IllegalArgumentException(
+							"Agent '" + agent.name() + "': " + e.getMessage()
+							+ " (qualified source: '" + toolName + "')", e);
+					}
 				}
 			}
 		}
@@ -521,36 +568,47 @@ public class AgentFactory {
 					continue;
 				}
 				for (Tool mcpTool : mcpTools) {
-					registry.register(mcpTool);
+					if (!readOnly || isReadOnlyTool(mcpTool)) {
+						registry.register(mcpTool);
+					}
 				}
 			}
 		}
 
-		// Inject skill tool if the agent has skills
-		SkillTool skillTool = buildSkillTool(agent);
-		if (skillTool != null) {
-			for (Tool tool : AnnotatedTools.from(skillTool)) {
-				registry.register(tool);
+		// Inject skill tool if the agent has skills (but not for read-only subagents to avoid runtime capability escalation)
+		if (!readOnly) {
+			SkillTool skillTool = buildSkillTool(agent);
+			if (skillTool != null) {
+				for (Tool tool : AnnotatedTools.from(skillTool)) {
+					registry.register(tool);
+				}
 			}
 		}
 
 		// Inject delegation tools from the agent's delegations list
-		List<String> delegationNames = agent.delegations();
-		if (!delegationNames.isEmpty()) {
-			String parentName = agent.name();
-			AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-			for (String targetName : delegationNames) {
-				AgentDefinition target = query.findAgentByName(targetName);
-				String targetDesc = target != null ? target.description() : "No description";
-				String toolName = "delegate_to_" + targetName.replace('-', '_');
-				registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this::buildAgentLoop));
+		if (includeDelegation) {
+			List<String> delegationNames = agent.delegations();
+			if (!delegationNames.isEmpty()) {
+				String parentName = agent.name();
+				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+				for (String targetName : delegationNames) {
+					AgentDefinition target = query.findAgentByName(targetName);
+					String targetDesc = target != null ? target.description() : "No description";
+					String toolName = "delegate_to_" + targetName.replace('-', '_');
+					registry.register(new DelegationTool(toolName, targetDesc, targetName, parentName, this));
+				}
+				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
+				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
+				if (registry.getTool(WaitForSubagentTool.NAME) == null) {
+					registry.register(new WaitForSubagentTool());
+				}
 			}
 		}
 
 		return registry.freeze();
 	}
 
-	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent) {
+	private ToolRegistry buildDynamicToolCatalog(AgentDefinition agent, boolean includeDelegation, boolean readOnly) {
 		ToolCatalog baseCatalog = new ToolCatalog();
 
 		// Register only bootstrap tools from the agent's tools list
@@ -563,12 +621,14 @@ public class AgentFactory {
 					Logger.warn("Tool not found in registry: " + toolName, AgentFactory.class);
 					continue;
 				}
-				try {
-					baseCatalog.register(tool);
-				} catch (IllegalArgumentException e) {
-					throw new IllegalArgumentException(
-						"Agent '" + agent.name() + "': " + e.getMessage()
-						+ " (qualified source: '" + toolName + "')", e);
+				if (!readOnly || isReadOnlyTool(tool)) {
+					try {
+						baseCatalog.register(tool);
+					} catch (IllegalArgumentException e) {
+						throw new IllegalArgumentException(
+							"Agent '" + agent.name() + "': " + e.getMessage()
+							+ " (qualified source: '" + toolName + "')", e);
+					}
 				}
 			}
 		}
@@ -586,22 +646,31 @@ public class AgentFactory {
 					continue;
 				}
 				for (Tool mcpTool : mcpTools) {
-					baseCatalog.register(mcpTool);
+					if (!readOnly || isReadOnlyTool(mcpTool)) {
+						baseCatalog.register(mcpTool);
+					}
 				}
 			}
 		}
 
 		// Delegation tools go in the base (architectural)
-		List<String> delegationNames = agent.delegations();
-		if (!delegationNames.isEmpty()) {
-			String parentName = agent.name();
-			AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-			for (String targetName : delegationNames) {
-				AgentDefinition target = query.findAgentByName(targetName);
-				String targetDesc = target != null ? target.description() : "No description";
-				String toolName = "delegate_to_" + targetName.replace('-', '_');
-				baseCatalog.register(
-					new DelegationTool(toolName, targetDesc, targetName, parentName, this::buildAgentLoop));
+		if (includeDelegation) {
+			List<String> delegationNames = agent.delegations();
+			if (!delegationNames.isEmpty()) {
+				String parentName = agent.name();
+				AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
+				for (String targetName : delegationNames) {
+					AgentDefinition target = query.findAgentByName(targetName);
+					String targetDesc = target != null ? target.description() : "No description";
+					String toolName = "delegate_to_" + targetName.replace('-', '_');
+					baseCatalog.register(
+						new DelegationTool(toolName, targetDesc, targetName, parentName, this));
+				}
+				// delegate_to_* runs asynchronously, so the await tool is wired in alongside it,
+				// unless the agent already selected it explicitly (subagent.wait_for_subagent).
+				if (baseCatalog.getTool(WaitForSubagentTool.NAME) == null) {
+					baseCatalog.register(new WaitForSubagentTool());
+				}
 			}
 		}
 

@@ -94,7 +94,8 @@ public class TaskTool {
 
 			TaskResponse response = TaskResponse.create()
 				.setTaskId(task.getId())
-				.setStatus(task.getStatus());
+				.setStatus(task.getStatus())
+				.setSubject(task.getSubject());
 
 			String result = DataClassSerializer.toJson(response, TaskTool.class, "createTask()", args);
 
@@ -172,7 +173,8 @@ public class TaskTool {
 
 			TaskResponse response = TaskResponse.create()
 				.setTaskId(task.getId())
-				.setStatus(task.getStatus());
+				.setStatus(task.getStatus())
+				.setSubject(task.getSubject());
 
 			return DataClassSerializer.toJson(response, TaskTool.class, "updateTask()", args);
 		} catch (Exception ex) {

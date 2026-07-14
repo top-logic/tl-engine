@@ -9,7 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -30,6 +35,22 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * <p>Subsumes the former {@code TestToolCatalogCollision} tests.</p>
  */
 public class TestToolCatalog extends TestCase {
+
+	/**
+	 * Test suite that boots the {@link com.top_logic.basic.thread.ThreadContextManager} module.
+	 *
+	 * <p>
+	 * {@link ToolCatalog#execute} routes tool invocation through
+	 * {@link com.top_logic.tl.ai.core.tools.ToolExecutions#execute}, which establishes a TopLogic
+	 * interaction context (tools may touch the {@code KnowledgeBase}). That requires the
+	 * {@code ThreadContextManager} module to be started, so the plain {@code TestCase} runner is not
+	 * enough.
+	 * </p>
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.withThreadContext(new TestSuite(TestToolCatalog.class)));
+	}
 
 	// ===== Registration Contract =====
 

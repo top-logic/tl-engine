@@ -5,6 +5,7 @@
 >
 	<rules>
 		<rule
+			id="simple"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.simple"

@@ -5,6 +5,7 @@
 >
 	<rules>
 		<rule
+			id="invalidRole"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.invalidRole"

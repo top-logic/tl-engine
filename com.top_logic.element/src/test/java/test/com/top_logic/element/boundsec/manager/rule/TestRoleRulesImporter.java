@@ -101,7 +101,7 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		this.multiProblemTest(ROLE_RULES_INVALID_PATH_META_ELEMENT,
 			com.top_logic.basic.config.I18NConstants.ERROR_INSTANTIATION_FAILED__CLASS_LOCATION
 				.fill(PathNavigation.class.getName(),
-					LocationImpl.location("file://" + ROLE_RULES_INVALID_PATH_META_ELEMENT, 14, 44))
+					LocationImpl.location("file://" + ROLE_RULES_INVALID_PATH_META_ELEMENT, 15, 44))
         );
     }
 
@@ -109,7 +109,7 @@ public class TestRoleRulesImporter extends BasicTestCase {
 		this.multiProblemTest(ROLE_RULES_INVALID_ATTRIBUTE,
 			com.top_logic.basic.config.I18NConstants.ERROR_INSTANTIATION_FAILED__CLASS_LOCATION
 				.fill(PathNavigation.class.getName(),
-					LocationImpl.location("file://" + ROLE_RULES_INVALID_ATTRIBUTE, 17, 7)));
+					LocationImpl.location("file://" + ROLE_RULES_INVALID_ATTRIBUTE, 18, 7)));
 	}
 
     /**

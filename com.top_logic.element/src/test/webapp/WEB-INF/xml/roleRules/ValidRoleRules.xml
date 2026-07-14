@@ -5,6 +5,7 @@
 >
 	<rules>
 		<rule
+			id="minimal"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.minimal"
@@ -15,6 +16,7 @@
 			</path>
 		</rule>
 		<rule
+			id="simple"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.simple"
@@ -25,6 +27,7 @@
 			</path>
 		</rule>
 		<rule
+			id="forward"
 			inherit="true"
 			meta-element="projElement:projElement.Part"
 			resource-key="roleRule.forward"
@@ -36,6 +39,7 @@
 			</path>
 		</rule>
 		<rule
+			id="backward"
 			inherit="true"
 			meta-element="projElement:projElement.Part"
 			resource-key="roleRule.backward"

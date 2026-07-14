@@ -21,6 +21,7 @@
 				<role-rules>
 					<rules>
 						<rule
+							id="Mandator.all_navigation"
 							inherit="true"
 							meta-element="mandatorStructure:Mandator.all"
 							role="navigation"

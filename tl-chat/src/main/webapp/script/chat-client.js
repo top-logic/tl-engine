@@ -367,6 +367,12 @@
       }
       if (data.reason === "ABORTED") {
         State.set(State.CANCELLED);
+        // Cancelling the run also cancels any subagent parked on an askUser question, so its
+        // question is now moot. Drop the pending interaction panel here — otherwise the
+        // "needs input" prompt lingers in the input area after cancellation, inviting an
+        // answer that can no longer be delivered.
+        Store.activeInteractionRequestId = null;
+        Approval._removeInteractionUI();
         Render.showCancelledPrompt();
       } else if (data.reason === "ERROR") {
         State.set(State.ERROR);
@@ -983,7 +989,7 @@
             '<div class="chat-transcript-loading">No transcript recorded.</div>';
           return;
         }
-        Render._renderTurns(turns, body);
+        Session._renderTurns(turns, body);
       } catch (e) {
         console.error("[tl-chat] Failed to load subagent transcript:", e);
         body.innerHTML =
@@ -2874,12 +2880,16 @@
     },
 
     _renderTurns(turns, targetEl) {
-      const prevTarget = this._renderTarget;
-      this._renderTarget = targetEl || null;
+      // The append helpers (Render.appendUserMessage, Render._appendTarget) route output through
+      // Render._renderTarget, so the target must be set THERE — setting it on Session would leave
+      // Render appending to the main chat. targetEl is the subagent-transcript modal body; null
+      // for the normal session-load path (renders into the live chat).
+      const prevTarget = Render._renderTarget;
+      Render._renderTarget = targetEl || null;
       try {
         this._renderTurnsInto(turns);
       } finally {
-        this._renderTarget = prevTarget;
+        Render._renderTarget = prevTarget;
       }
     },
 

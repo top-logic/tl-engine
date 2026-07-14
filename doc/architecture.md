@@ -10,21 +10,31 @@ erfahrener Berater, der die Anwendung kennt.
 
 Dabei gibt es drei Einsatzformen:
 
-- **Eingebauter Assistent**: Ein KI-Chat direkt in der Anwendung, über
+- **Interaktiver Agent**: Ein Copilot direkt in der Anwendung, über
   den Anwender Fragen stellen und Aufgaben ausführen lassen können.
+
+- **Proaktive Agenten**: KI-Agenten innerhalb der
+  Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen.
+  Interne Agenten können dabei auch externe Werkzeuge (Anwendungen) verwenden.
+  Die Aktivierung erfolgt eigenständig durch User-Prompt (Copilot), Zeitgesteuert, Ereignissgesteuert, durch (externe) Agenten.
+  Die Spezialisierung solcher Agenten manifestiert sind in ihren "Skills", 
+  also ihren konkreten Fähigkeiten.
+  - **Development Agenten**  
+  Agenten zur Unterstützung der Anwendungsentwicklung.
+  Fokus: Applikationsmodell, Konfiguration, Layout
+  Typische Skills: Modellteile suchen, analysieren, modifzieren, Layouts konfigurieren...
+  - **Fachliche Agenten**  
+  Agenten zur Interaktion mit Anwendungsdaten
+  Fokus: Applikationsdaten, lokal und Systemübergreifend
+  Typische Skills: Daten auswerten, überwachen, Datensätze anlegen und ändern, 
+  Aktionen in Fremdsystemen anstoßen, Mails versenden ...
 
 - **Externe Agenten**: Eigenständige KI-Werkzeuge (z.B. Claude
   Desktop, Cursor), die sich von außen mit der Anwendung verbinden und
   mit ihr arbeiten.
 
-- **Interne Agenten**: Spezialisierte KI-Agenten innerhalb der
-  Anwendung, die eigenständig wiederkehrende Aufgaben übernehmen –
-  zeitgesteuert oder als Reaktion auf Ereignisse. Interne Agenten
-  können dabei auch externe Werkzeuge (Anwendungen) verwenden und 
-  aus deren Perspektive als externe Agenten auftreten.
-
 Alle drei Formen nutzen dieselben Werkzeuge. Was der eingebaute
-Assistent kann, kann auch ein fachlicher Agent – nur eben
+Assistent kann, kann auch ein Agent – nur eben
 automatisch und ohne dass jemand eine Frage stellt.
 
 

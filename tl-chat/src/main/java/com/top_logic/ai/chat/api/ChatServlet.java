@@ -95,6 +95,7 @@ public class ChatServlet extends TopLogicServlet {
 	private static final String PATH_SESSIONS = "/sessions";
 	private static final String PATH_INTERACTIONS = "/interactions";
 	private static final String PATH_SUBAGENTS = "/subagents";
+	private static final String TRANSCRIPT_SUFFIX = "/transcript";
 	private static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";
 	private static final String CONTENT_TYPE_SSE = "text/event-stream";
 
@@ -155,6 +156,12 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		if (pathInfo.equals(PATH_INTERACTIONS) || pathInfo.equals(PATH_INTERACTIONS + "/")) {
 			handleInteractions(req, resp);
+			return;
+		}
+		if (pathInfo.startsWith(PATH_SUBAGENTS + "/") && pathInfo.endsWith(TRANSCRIPT_SUFFIX)) {
+			String id = pathInfo.substring((PATH_SUBAGENTS + "/").length(),
+				pathInfo.length() - TRANSCRIPT_SUFFIX.length());
+			handleSubagentTranscript(req, resp, id);
 			return;
 		}
 		if (pathInfo.equals(PATH_SUBAGENTS) || pathInfo.equals(PATH_SUBAGENTS + "/")) {
@@ -300,14 +307,18 @@ public class ChatServlet extends TopLogicServlet {
 
 		TaskProgressTracker tracker = currentTracker();
 		ChatProcessor.AIProcessingState state = tracker.getAnyActiveProcessingState();
-		if (state == null) {
-			resp.sendError(HttpServletResponse.SC_CONFLICT, "No active processing state");
-			return;
-		}
-
-		UserInteractionStore store = state.getUserInteractionStore();
+		UserInteractionStore store = state == null ? null : state.getUserInteractionStore();
 		if (store == null) {
-			resp.sendError(HttpServletResponse.SC_CONFLICT, "No interaction store available");
+			// A late answer to a request whose run already ended (completed, cancelled, or timed
+			// out): the interaction is no longer pending, so there is nothing to resolve. Treat
+			// it as a benign no-op rather than an error - the user must not see a failure for
+			// answering a question that the system already tore down (e.g. after cancelling the
+			// orchestrator, which cancels its subagents' pending questions).
+			Logger.info("Ignoring late interaction response for request " + requestId
+				+ ": no active interaction store.", ChatServlet.class);
+			resp.setContentType(CONTENT_TYPE_JSON);
+			resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+			resp.getWriter().write("{\"status\":\"ignored\"}");
 			return;
 		}
 
@@ -391,6 +402,20 @@ public class ChatServlet extends TopLogicServlet {
 		ConversationLogListener logListener = state.getLogListener();
 		if (logListener != null) {
 			logListener.recordCancellation();
+		}
+
+		// Propagate cancellation to still-running subagents: cancelling the orchestrator must
+		// terminate the work it spawned instead of leaving it running in the background. Each
+		// subagent's cancellation token also unblocks a subagent parked on a user question, so
+		// its ask-user wait ends (and its pending interaction is resolved) rather than hanging
+		// until the interaction timeout.
+		SubagentJobRegistry subagentRegistry = tracker.getActiveSubagentRegistry();
+		if (subagentRegistry != null) {
+			int cancelledSubagents = subagentRegistry.cancelAll();
+			if (cancelledSubagents > 0) {
+				Logger.info("Cancelled " + cancelledSubagents + " running subagent(s) on orchestrator "
+					+ "cancel.", ChatServlet.class);
+			}
 		}
 
 		Thread agentThread = state.getAgentThread();
@@ -649,6 +674,56 @@ public class ChatServlet extends TopLogicServlet {
 		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 	}
 
+	/**
+	 * GET /chat/subagents/{id}/transcript - the persisted transcript of one background subagent's
+	 * recorded child run, as a {@code turnsJson} array in the same shape a session load returns.
+	 *
+	 * <p>
+	 * Lets the background-tasks panel open a subagent's full transcript (turns, tool calls). The
+	 * subagent id is resolved against the active session's {@link SubagentJobRegistry} to its
+	 * recorded child run; access is restricted to executions whose session the user owns.
+	 * </p>
+	 */
+	private void handleSubagentTranscript(HttpServletRequest req, HttpServletResponse resp, String id)
+			throws IOException {
+		Person person = resolveCurrentPerson(req);
+		if (person == null) {
+			resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+
+		resp.setContentType(CONTENT_TYPE_JSON);
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+
+		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
+		SubagentJob job = registry == null ? null : registry.get(id);
+		String runId = job == null ? null : job.childRunId();
+		if (runId == null || runId.isEmpty()) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
+		AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
+		AgentSession session = execution == null ? null : execution.getSession();
+		if (execution == null || session == null || !ChatHistoryService.isOwnedBy(session, person)) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
+		String transcript = execution.getTranscript();
+		ChatSessionDetailResponse response = ChatSessionDetailResponse.create().setId(id);
+		if (transcript != null && !transcript.isEmpty()) {
+			response.setMessagesJson(transcript);
+			PersistedConversationV2 conv = PersistedConversationV2.readPersistedConversationV2(
+				new JsonReader(new StringR(transcript)));
+			for (PersistedTurn turn : conv.getTurns()) {
+				computeContentHtml(turn);
+			}
+			response.setTurnsJson(serializeTurns(conv.getTurns()));
+		}
+		resp.getWriter().write(DtoMapper.toJson(response));
+	}
+
 	private void handleListSubagents(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		SubagentJobRegistry registry = currentTracker().getActiveSubagentRegistry();
 		StringBuilder json = new StringBuilder("{\"subagents\":[");
@@ -665,11 +740,15 @@ public class ChatServlet extends TopLogicServlet {
 				// client rebuild expandable finished rows after a reload, matching the live
 				// subagent_completed/subagent_failed SSE events. Running jobs show their task.
 				String detail = job.result() != null ? job.result().finalText() : job.taskBrief();
+				// hasTranscript lets the client show a "view transcript" affordance only when the
+				// recorded child run is available (GET /chat/subagents/{id}/transcript).
+				boolean hasTranscript = job.childRunId() != null && !job.childRunId().isEmpty();
 				json.append("{\"subagentId\":\"").append(jsonEscape(job.subagentId()))
 					.append("\",\"targetAgentName\":\"").append(jsonEscape(job.targetAgentName()))
 					.append("\",\"status\":\"").append(job.status().name())
 					.append("\",\"totalTokens\":").append(tokens)
 					.append(",\"durationMs\":").append(durationMs)
+					.append(",\"hasTranscript\":").append(hasTranscript)
 					.append(",\"detail\":\"").append(jsonEscape(detail != null ? detail : ""))
 					.append("\"}");
 			}

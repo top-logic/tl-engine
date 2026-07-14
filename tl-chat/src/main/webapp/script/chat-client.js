@@ -622,15 +622,20 @@
         detail: data.detail,
       });
       BackgroundPanel.toast("Subagent finished: " + (data.subagentId || ""));
+      // Refresh from the server so the finished row learns whether a transcript was recorded
+      // (hasTranscript is only carried by the /subagents feed, not the live status event).
+      BackgroundPanel.sync();
     },
 
     onSubagentFailed(data) {
       BackgroundPanel.setStatus(data.subagentId, "FAILED", { detail: data.detail });
       BackgroundPanel.toast("Subagent failed: " + (data.subagentId || ""));
+      BackgroundPanel.sync();
     },
 
     onSubagentCancelled(data) {
       BackgroundPanel.setStatus(data.subagentId, "CANCELLED", {});
+      BackgroundPanel.sync();
     },
   };
 
@@ -911,6 +916,16 @@
             detail.appendChild(
               Tools._buildResultBlock("Result", job ? job.detail : ""),
             );
+            if (job && job.hasTranscript) {
+              const btn = document.createElement("button");
+              btn.className = "chat-bg-transcript-btn";
+              btn.textContent = "View full transcript";
+              btn.onclick = (e) => {
+                e.stopPropagation();
+                BackgroundPanel.viewTranscript(id, job.name || id);
+              };
+              detail.appendChild(btn);
+            }
           }
           detail.style.display = "";
           row.classList.add("expanded");
@@ -919,9 +934,90 @@
     },
 
     cancel(subagentId) {
-      fetch(URLS.subagents + "/" + encodeURIComponent(subagentId), {
+      // withWindow is required: the servlet resolves the chat tracker from the window id, so a
+      // DELETE without it is rejected as a stale window and the cancel silently does nothing.
+      fetch(withWindow(URLS.subagents + "/" + encodeURIComponent(subagentId)), {
         method: "DELETE",
-      });
+      }).catch((err) =>
+        console.error("[tl-chat] Subagent cancel request failed:", err),
+      );
+    },
+
+    /**
+     * Opens the persisted transcript (turns, tool calls) of a finished subagent in a modal,
+     * rendered with the same turn renderer used for the main conversation.
+     */
+    async viewTranscript(subagentId, title) {
+      const modal = this._ensureModal();
+      const body = modal.querySelector(".chat-transcript-body");
+      const titleEl = modal.querySelector(".chat-transcript-title");
+      titleEl.textContent = "Subagent transcript - " + (title || subagentId);
+      body.innerHTML = '<div class="chat-transcript-loading">Loading…</div>';
+      modal.style.display = "flex";
+      try {
+        const resp = await fetch(
+          withWindow(
+            URLS.subagents +
+              "/" +
+              encodeURIComponent(subagentId) +
+              "/transcript",
+          ),
+        );
+        if (!resp.ok) {
+          body.innerHTML =
+            '<div class="chat-transcript-loading">Transcript unavailable.</div>';
+          return;
+        }
+        const data = await resp.json();
+        let turns = [];
+        if (data.turnsJson) {
+          try {
+            turns = JSON.parse(data.turnsJson) || [];
+          } catch (e) {
+            console.error("[tl-chat] Failed to parse subagent transcript:", e);
+          }
+        }
+        body.innerHTML = "";
+        if (turns.length === 0) {
+          body.innerHTML =
+            '<div class="chat-transcript-loading">No transcript recorded.</div>';
+          return;
+        }
+        Render._renderTurns(turns, body);
+      } catch (e) {
+        console.error("[tl-chat] Failed to load subagent transcript:", e);
+        body.innerHTML =
+          '<div class="chat-transcript-loading">Failed to load transcript.</div>';
+      }
+    },
+
+    _ensureModal() {
+      // Anchored to <body> so the fixed-position backdrop always covers the viewport,
+      // independent of any transformed ancestor of the chat root.
+      let modal = document.querySelector(".chat-transcript-modal");
+      if (modal) return modal;
+      modal = document.createElement("div");
+      modal.className = "chat-transcript-modal";
+      modal.style.display = "none";
+      modal.innerHTML =
+        '<div class="chat-transcript-dialog">' +
+        '<div class="chat-transcript-header">' +
+        '<span class="chat-transcript-title"></span>' +
+        '<button class="chat-transcript-close" aria-label="Close">✕</button>' +
+        "</div>" +
+        '<div class="chat-transcript-body chat-messages"></div>' +
+        "</div>";
+      const close = () => {
+        modal.style.display = "none";
+        modal.querySelector(".chat-transcript-body").innerHTML = "";
+      };
+      modal.querySelector(".chat-transcript-close").onclick = close;
+      // Click on the dimmed backdrop (outside the dialog) closes the modal.
+      modal.onclick = (e) => {
+        if (e.target === modal) close();
+      };
+      document.body.appendChild(modal);
+      return modal;
     },
 
     /** Drops all jobs, e.g. when switching to another session. */
@@ -948,6 +1044,7 @@
             detail: j.detail,
             tokens: j.totalTokens,
             durationMs: j.durationMs,
+            hasTranscript: !!j.hasTranscript,
           });
         });
         this.render();
@@ -1124,6 +1221,15 @@
     _currentToolsEl: null,
     _scrollThreshold: 300,
     _rafId: null,
+    // When non-null, static turn rendering (_renderTurns and its helpers) appends here instead
+    // of the main chat, so a subagent transcript can be rendered into its own container without
+    // disturbing the live conversation. Only set during a synchronous _renderTurns(turns, target)
+    // call; null during live streaming.
+    _renderTarget: null,
+
+    _appendTarget() {
+      return this._renderTarget || this._messagesEl;
+    },
 
     init(root) {
       this._root = root;
@@ -1283,8 +1389,8 @@
       }
       html += "</div>";
       div.innerHTML = html;
-      this._messagesEl.appendChild(div);
-      this._scrollToBottom();
+      this._appendTarget().appendChild(div);
+      if (!this._renderTarget) this._scrollToBottom();
     },
 
     appendAssistantBubble() {
@@ -2767,7 +2873,17 @@
       Render._scrollToBottom();
     },
 
-    _renderTurns(turns) {
+    _renderTurns(turns, targetEl) {
+      const prevTarget = this._renderTarget;
+      this._renderTarget = targetEl || null;
+      try {
+        this._renderTurnsInto(turns);
+      } finally {
+        this._renderTarget = prevTarget;
+      }
+    },
+
+    _renderTurnsInto(turns) {
       for (const turn of turns) {
         // Render user message(s)
         const userParts = turn.userParts || [];
@@ -2874,8 +2990,9 @@
           cancelDiv.innerHTML =
             '<div class="chat-bubble chat-bubble-agent">' +
             '<div class="chat-agent-text"><em>Processing was cancelled</em></div></div>';
-          if (Render._messagesEl) {
-            Render._messagesEl.appendChild(cancelDiv);
+          const cancelTarget = Render._appendTarget();
+          if (cancelTarget) {
+            cancelTarget.appendChild(cancelDiv);
           }
         }
       }
@@ -3012,8 +3129,9 @@
       }
 
       div.appendChild(content);
-      if (Render._messagesEl) {
-        Render._messagesEl.appendChild(div);
+      const target = Render._appendTarget();
+      if (target) {
+        target.appendChild(div);
       }
     },
 
@@ -3309,8 +3427,9 @@
       bubble.appendChild(textEl);
 
       div.appendChild(bubble);
-      if (Render._messagesEl) {
-        Render._messagesEl.appendChild(div);
+      const target = Render._appendTarget();
+      if (target) {
+        target.appendChild(div);
       }
     },
 

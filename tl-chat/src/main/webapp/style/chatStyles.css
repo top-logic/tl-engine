@@ -956,6 +956,86 @@
 	word-break: break-word;
 }
 
+.chat-bg-transcript-btn {
+	margin-top: 4px;
+	background: none;
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius-sm);
+	padding: 3px 10px;
+	font-size: 0.85em;
+	cursor: pointer;
+	color: var(--chat-accent, #2563eb);
+}
+
+.chat-bg-transcript-btn:hover {
+	background: color-mix(in srgb, var(--chat-accent, #2563eb) 10%, transparent);
+}
+
+/* Subagent transcript modal */
+.chat-transcript-modal {
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.4);
+	z-index: 10001;
+}
+
+.chat-transcript-dialog {
+	display: flex;
+	flex-direction: column;
+	width: min(760px, 92vw);
+	max-height: 85vh;
+	background: var(--chat-bg, #fff);
+	border: 1px solid var(--chat-border);
+	border-radius: var(--chat-radius, 10px);
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+	overflow: hidden;
+}
+
+.chat-transcript-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--chat-border);
+	font-weight: 600;
+	font-size: 0.95em;
+}
+
+.chat-transcript-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.chat-transcript-close {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 1em;
+	color: var(--chat-text-muted);
+	line-height: 1;
+	padding: 4px;
+}
+
+.chat-transcript-close:hover {
+	color: var(--chat-text, #111);
+}
+
+.chat-transcript-body {
+	padding: 12px 14px;
+	overflow-y: auto;
+}
+
+.chat-transcript-loading {
+	color: var(--chat-text-muted);
+	font-size: 0.9em;
+	padding: 12px 0;
+}
+
 .chat-bg-toast {
 	position: fixed;
 	bottom: 24px;

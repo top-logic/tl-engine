@@ -6,11 +6,9 @@
 package com.top_logic.react.flow.server.ui;
 
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.TextMetricsImpl;
@@ -31,8 +29,11 @@ public class AWTContext implements RenderContext {
 	 */
 	public AWTContext(float textSize) {
 		_font = Font.decode("Arial").deriveFont(textSize);
-		Graphics2D graphics = (Graphics2D) new BufferedImage(8, 8, BufferedImage.TYPE_4BYTE_ABGR).getGraphics();
-		_fontRenderContext = graphics.getFontRenderContext();
+		// Anti-aliased + fractional-metrics rendering matches how browsers actually paint SVG
+		// text. The default FontRenderContext (no anti-aliasing, no fractional metrics) produces
+		// noticeably shorter advance widths than the browser, especially for bold weights, which
+		// would let text overflow its measured box.
+		_fontRenderContext = new FontRenderContext(null, true, true);
 	}
 
 	@Override

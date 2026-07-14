@@ -297,10 +297,19 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
-	 * Builds an {@link AgentLoop} for an asynchronous subagent: same provider/config as
-	 * {@link #buildAgentLoop}, but with a tool catalog filtered to read-only
-	 * ({@code READ}/{@code USER_SCOPED}) tools and with delegation/wait tools omitted
-	 * (structural depth-1).
+	 * Builds an {@link AgentLoop} for an asynchronous subagent: a faithful clone of the named
+	 * agent — same provider/config and the same full tool catalog (skills, {@code loadSkill}, and
+	 * the agent's complete read <em>and</em> write tool set) — with the single exception that the
+	 * subagent may not spawn further subagents.
+	 *
+	 * <p>
+	 * Concretely this builds the same catalog as {@link #buildAgentLoop} but with
+	 * {@code includeDelegation=false}, so the {@code delegate_to_*} / {@code wait_for_subagent}
+	 * tools are omitted (delegation depth stays bounded — a subagent is depth-1). Everything else
+	 * is at full parity with the parent agent, so a subagent has the very same capabilities the
+	 * user would get by talking to that agent directly — including skill-provided tools such as
+	 * web access ({@code TL_webAccess}).
+	 * </p>
 	 */
 	@Override
 	public AgentLoop buildSubagentLoop(String name) {
@@ -312,8 +321,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			LLMService.getInstance().resolveModelAssignment(agentDef.name());
 		AgentParams config = buildConfig(agentDef, assignment);
 		LLMProvider provider = buildProvider(config.model());
-		// Always a static, read-only, non-delegating catalog for subagents (depth-1, no writes).
-		ToolRegistry registry = buildStaticToolCatalog(agentDef, false, true);
+		// Full parity with the parent agent's toolset, minus the ability to spawn subagents.
+		ToolRegistry registry = agentDef.skills().isEmpty()
+			? buildStaticToolCatalog(agentDef, false, false)
+			: buildDynamicToolCatalog(agentDef, false, false);
 		int maxToolResultChars = resolveMaxToolResultChars(assignment);
 		return new AgentLoop(config, provider, registry, maxToolResultChars);
 	}

@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 
 /**
  * I18N constants for the agent package.
@@ -62,6 +63,34 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de Fehler beim Zurücksetzen der Instanzen aus der Entwicklungsumgebung.
 	 */
 	public static ResKey IMPORT_FROM_DEV_ENV_ERROR;
+
+	/**
+	 * Message shown when the import is triggered but no exported data file exists yet.
+	 *
+	 * @en No development data found. Use "Apply to development environment" first to create the
+	 *     export file.
+	 * @de Keine Entwicklungsdaten gefunden. Bitte zuerst "In Entwicklungsumgebung übernehmen"
+	 *     verwenden, um die Exportdatei zu erzeugen.
+	 */
+	public static ResKey IMPORT_FROM_DEV_ENV_NO_DATA;
+
+	/**
+	 * Error message when the exported data file exists but cannot be parsed.
+	 *
+	 * @en The development data file is invalid and could not be parsed.
+	 * @de Die Entwicklungsdatendatei ist ungültig und konnte nicht gelesen werden.
+	 */
+	public static ResKey IMPORT_FROM_DEV_ENV_PARSE_ERROR;
+
+	/**
+	 * Warning header shown when an import completed but some values could not be imported.
+	 *
+	 * @en Import completed with problems: {0} issue(s) reported while importing {1} object(s). Some
+	 *     data may be incomplete.
+	 * @de Import mit Problemen abgeschlossen: {0} Problem(e) beim Importieren von {1} Objekt(en).
+	 *     Einige Daten sind möglicherweise unvollständig.
+	 */
+	public static ResKey2 IMPORT_FROM_DEV_ENV_PARTIAL__PROBLEMS_TOTAL;
 
 	static {
 		initConstants(I18NConstants.class);

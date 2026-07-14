@@ -44,6 +44,23 @@ public interface AgentEventListener {
 	void onEvent(AgentEvent event);
 
 	/**
+	 * Whether events delivered to this listener also reach {@code target}, either because this
+	 * listener <em>is</em> {@code target} or because it forwards to it (directly or transitively).
+	 *
+	 * <p>
+	 * Lets a caller test whether a listener is already part of an assembled chain before wiring it
+	 * in again, so the same listener is not invoked twice per event.
+	 * </p>
+	 *
+	 * @param target
+	 *        The listener to look for.
+	 * @return {@code true} if this listener dispatches events to {@code target}.
+	 */
+	default boolean dispatchesTo(AgentEventListener target) {
+		return this == target;
+	}
+
+	/**
 	 * Wraps the given listener in a framework-internal wrapper that serializes
 	 * dispatch and swallows listener exceptions.
 	 *

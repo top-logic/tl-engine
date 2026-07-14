@@ -12,11 +12,13 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
+import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -87,11 +89,17 @@ public final class AgentRunner {
 			ConversationMemory memory, ToolContext context, AgentEventListener listener,
 			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
 			AgentExecution parentExecution) {
-		AgentEventListener effectiveListener = listener;
+		// Ensure the run's turns land in the log that becomes the transcript. Callers that wire a
+		// ConversationLogListener over this log themselves (e.g. the chat UI) already record into
+		// it; entry points that don't (e.g. the TL-Script functions, which pass a no-op listener)
+		// would otherwise serialize an empty log. This closes that gap for every caller.
+		AgentEventListener downstream = withTranscriptRecording(listener, log);
+
+		AgentEventListener effectiveListener = downstream;
 		ExecutionRecorder recorder = null;
 		if (session != null) {
 			recorder = new ExecutionRecorder(session, agentName, parentExecution,
-				context.executionHandle(), listener);
+				context.executionHandle(), downstream);
 			effectiveListener = recorder;
 		} else {
 			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
@@ -121,6 +129,33 @@ public final class AgentRunner {
 		return new RecordedRun(runResult.response(), runResult.registry(),
 			recorder != null ? recorder.result() : null,
 			recorder != null ? recorder.execution() : null);
+	}
+
+	/**
+	 * Returns a listener that additionally records the run's events into {@code log} (the transcript
+	 * source), unless {@code listener} already dispatches to a recorder for that log.
+	 *
+	 * <p>
+	 * The recorder used is the {@link ConversationLogListener} bound to the current thread when it
+	 * targets {@code log} (so tool-driven parts and loop events share one listener); otherwise a
+	 * fresh {@link ConversationLogListener} over {@code log} is created. When {@code log} is
+	 * <code>null</code> no transcript is kept and {@code listener} is returned unchanged.
+	 * </p>
+	 */
+	private static AgentEventListener withTranscriptRecording(AgentEventListener listener,
+			ConversationLog log) {
+		if (log == null) {
+			return listener;
+		}
+		ConversationLogListener bound = ConversationLogListener.current();
+		ConversationLogListener transcriptRecorder =
+			(bound != null && bound.log() == log) ? bound : new ConversationLogListener(log);
+		if (listener != null && listener.dispatchesTo(transcriptRecorder)) {
+			return listener;
+		}
+		return listener == null
+			? transcriptRecorder
+			: new CompositeAgentEventListener(transcriptRecorder, listener);
 	}
 
 	/**

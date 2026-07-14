@@ -53,4 +53,17 @@ public final class CompositeAgentEventListener implements AgentEventListener {
 			}
 		}
 	}
+
+	@Override
+	public boolean dispatchesTo(AgentEventListener target) {
+		if (this == target) {
+			return true;
+		}
+		for (AgentEventListener delegate : _delegates) {
+			if (delegate.dispatchesTo(target)) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

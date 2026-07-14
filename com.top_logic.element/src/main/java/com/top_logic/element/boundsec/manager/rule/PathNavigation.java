@@ -128,14 +128,6 @@ public class PathNavigation extends AbstractConfiguredInstance<PathElementConfig
 	}
 
 	@Override
-	public void appendId(Appendable out) throws IOException {
-		out.append("ma:");
-		out.append(TLModelUtil.qualifiedName(_reference));
-		out.append('_');
-		out.append(isInverse() ? "back" : "succ");
-	}
-
-	@Override
 	public void appendForTooltip(Appendable out) throws IOException {
 		out.append("MA: ");
 		out.append(TagUtil.encodeXML(TLModelUtil.qualifiedName(_reference)));

@@ -105,11 +105,6 @@ public class GroupWithName extends AbstractConfiguredInstance<GroupWithName.Conf
 	}
 
 	@Override
-	public void appendId(Appendable out) throws IOException {
-		out.append("group:").append(groupName());
-	}
-
-	@Override
 	public void appendForTooltip(Appendable out) throws IOException {
 		out.append("Group: ");
 		out.append(TagUtil.encodeXML(groupName()));

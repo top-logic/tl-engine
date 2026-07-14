@@ -7,11 +7,7 @@
 package com.top_logic.model.search.rules;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1314,22 +1310,6 @@ public class PathByExpression extends AbstractConfiguredInstance<PathByExpressio
 		} else {
 			return Collections.emptySet();
 		}
-	}
-
-	@Override
-	public void appendId(Appendable out) throws IOException {
-		StringBuilder builder = searchAsString();
-
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA1");
-			byte[] input = builder.toString().getBytes(StandardCharsets.UTF_8);
-			String output = Base64.getEncoder().encodeToString(digest.digest(input));
-			out.append("exprHash:");
-			out.append(output);
-		} catch (NoSuchAlgorithmException ex) {
-			throw new IllegalStateException(ex);
-		}
-
 	}
 
 	private StringBuilder searchAsString() {

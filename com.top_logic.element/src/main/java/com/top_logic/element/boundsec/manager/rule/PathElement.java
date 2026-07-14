@@ -84,21 +84,6 @@ public interface PathElement {
 			Supplier<?> partValue);
 
 	/**
-	 * Appends a machine-readable identifier for this path element to the given output.
-	 *
-	 * <p>
-	 * The produced string is used as part of a unique ID for the enclosing {@link RoleRule} and
-	 * must therefore be stable and unambiguous across all path element types.
-	 * </p>
-	 *
-	 * @param out
-	 *        The output to append to. Must not be <code>null</code>.
-	 * @throws IOException
-	 *         If writing to {@code out} fails.
-	 */
-	void appendId(Appendable out) throws IOException;
-
-	/**
 	 * Appends an HTML-encoded, human-readable description of this path element to the given output.
 	 *
 	 * <p>

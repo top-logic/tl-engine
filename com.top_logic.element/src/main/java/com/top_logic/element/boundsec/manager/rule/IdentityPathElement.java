@@ -56,11 +56,6 @@ public class IdentityPathElement implements PathElement {
 	}
 
 	@Override
-	public void appendId(Appendable out) throws IOException {
-		// No ID for technical path element.
-	}
-
-	@Override
 	public void appendForTooltip(Appendable out) throws IOException {
 		// No tooltip for technical path element.
 	}

@@ -5,8 +5,6 @@
  */
 package com.top_logic.element.boundsec.manager.rule;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -65,41 +63,6 @@ public abstract class RoleRule implements RoleProvider {
 		this.resourceKey = aResourceKey;
 		this.id = id;
 	}
-
-	/**
-	 * Computes an ID based on the given informations.
-	 * 
-	 * @see #getId()
-	 */
-	protected static String computeId(TLClass aME, TLClass aSourceME, boolean isInherit, BoundRole aRole,
-			BoundRole aSourceRole, List<PathElement> aPath, Type aType) {
-        StringBuffer theSB = new StringBuffer();
-		theSB.append("me:");
-		theSB.append(aME.getName());
-        if (aSourceME != null) {
-            theSB.append("sme:");
-            theSB.append(aSourceME.getName());
-        }
-        theSB.append('_');
-        theSB.append(isInherit);
-        theSB.append('_');
-        theSB.append(aRole.getName());
-        if (aSourceRole != null) {
-            theSB.append('=');
-            theSB.append(aSourceRole.getName());
-        }
-        theSB.append('_');
-        for (Iterator<PathElement> theIt = aPath.iterator(); theIt.hasNext();) {
-			try {
-				theIt.next().appendId(theSB);
-			} catch (IOException ex) {
-				throw new IOError(ex);
-			}
-        }
-        theSB.append('_');
-        theSB.append(aType.ordinal());
-        return theSB.toString();
-    }
 
     @Override
 	public String getId() {

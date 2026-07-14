@@ -169,8 +169,18 @@ public class RoleRulesImporter {
 
 	}
 
+	private static String composeId(String configId, BoundRole role, BoundRole sourceRole) {
+		StringBuilder result = new StringBuilder(configId);
+		result.append('_').append(role.getName());
+		if (sourceRole != null) {
+			result.append('=').append(sourceRole.getName());
+		}
+		return result.toString();
+	}
+
 	private void createRules(RoleRuleConfig roleRuleConfig, BoundedRole sourceRole, Collection<BoundedRole> roles,
 			List<PathElement> path) {
+		String configId = roleRuleConfig.getId();
 		if (roleRuleConfig instanceof SingletonRuleConfig singletonRuleConf) {
 			TLObject singleton;
 			try {
@@ -184,16 +194,16 @@ public class RoleRulesImporter {
 				return;
 			}
 			for (BoundedRole role : roles) {
-				addRule(new SingletonRule(singleton, role, path, _resKey));
+				addRule(new SingletonRule(singleton, role, path, _resKey, composeId(configId, role, null)));
 			}
 		} else {
 			for (BoundedRole role : roles) {
 				if (Type.inheritance.equals(roleRuleConfig.getType())) {
 					addRule(new DefaultRoleRule(_metaElement, _sourceMetaElement, _inherit, role, sourceRole, path,
-						Type.inheritance, _resKey));
+						Type.inheritance, _resKey, composeId(configId, role, sourceRole)));
 				} else {
-					addRule(
-						new DefaultRoleRule(_metaElement, null, _inherit, role, null, path, Type.reference, _resKey));
+					addRule(new DefaultRoleRule(_metaElement, null, _inherit, role, null, path, Type.reference,
+						_resKey, composeId(configId, role, null)));
 				}
 			}
 		}

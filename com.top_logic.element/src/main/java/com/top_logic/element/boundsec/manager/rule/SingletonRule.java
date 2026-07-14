@@ -6,12 +6,8 @@
 
 package com.top_logic.element.boundsec.manager.rule;
 
-import java.io.IOError;
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
-import com.top_logic.basic.TLID;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -40,29 +36,11 @@ public class SingletonRule extends RoleRule {
 	 * @param aResourceKey
 	 *        See {@link #getResourceKey()}.
 	 */
-	public SingletonRule(TLObject singleton, BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey) {
-		super(aRole, aPath, aResourceKey, computeId(getType(singleton), singleton.tIdLocal(), aRole, aPath));
+	public SingletonRule(TLObject singleton, BoundRole aRole, List<PathElement> aPath, ResKey aResourceKey,
+			String id) {
+		super(aRole, aPath, aResourceKey, id);
 		_singleton = singleton;
 		_singletonType = getType(singleton);
-	}
-
-	private static String computeId(TLClass aME, TLID singletonID, BoundRole aRole, List<PathElement> aPath) {
-		StringBuffer theSB = new StringBuffer();
-		theSB.append("me:");
-		theSB.append(aME.getName());
-		theSB.append('_');
-		theSB.append(singletonID);
-		theSB.append('_');
-		theSB.append(aRole.getName());
-		theSB.append('_');
-		for (Iterator<PathElement> theIt = aPath.iterator(); theIt.hasNext();) {
-			try {
-				theIt.next().appendId(theSB);
-			} catch (IOException ex) {
-				throw new IOError(ex);
-			}
-		}
-		return theSB.toString();
 	}
 
 	private static TLClass getType(TLObject singleton) {

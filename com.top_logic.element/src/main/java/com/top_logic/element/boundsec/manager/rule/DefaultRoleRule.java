@@ -53,8 +53,8 @@ public class DefaultRoleRule extends RoleRule {
 	 *        See {@link #getResourceKey()}.
 	 */
 	public DefaultRoleRule(TLClass aME, TLClass aSourceME, boolean isInherit, BoundRole aRole, BoundRole aSourceRole,
-			List<PathElement> aPath, Type aType, ResKey aResourceKey) {
-		super(aRole, aPath, aResourceKey, computeId(aME, aSourceME, isInherit, aRole, aSourceRole, aPath, aType));
+			List<PathElement> aPath, Type aType, ResKey aResourceKey, String id) {
+		super(aRole, aPath, aResourceKey, id);
 		this.metaElement = Objects.requireNonNull(aME);
 		this.sourceMetaElement = aSourceME;
 		this.inherit = isInherit;

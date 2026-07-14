@@ -45,6 +45,7 @@
 					<rules>
 						<!-- Selection role implies navigation role -->
 						<rule
+							id="OrgUnit.all_navigation"
 							inherit="true"
 							meta-element="orgStructure:OrgUnit.all"
 							role="navigation"
@@ -54,6 +55,7 @@
 
 						<!-- navigation role is automatically applied to parent elements, so navigation path becomes visible -->
 						<rule
+							id="OrgUnit.all_navigation_2"
 							inherit="true"
 							meta-element="orgStructure:OrgUnit.all"
 							role="navigation"

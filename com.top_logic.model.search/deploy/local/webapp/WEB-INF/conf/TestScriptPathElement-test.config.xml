@@ -23,6 +23,7 @@
 				<role-rules>
 					<rules>
 						<rule
+							id="Assignment_Writer"
 							meta-element="TestScriptPathElement:Assignment"
 							role="TestScriptPathElement.Writer"
 						>
@@ -31,6 +32,7 @@
 							</path>
 						</rule>
 						<rule
+							id="Assignment_Reader"
 							meta-element="TestScriptPathElement:Assignment"
 							role="TestScriptPathElement.Reader"
 						>
@@ -39,6 +41,7 @@
 							</path>
 						</rule>
 						<inheritance-rule
+							id="Assembly_Reader"
 							meta-element="TestScriptPathElement:Assembly"
 							role="TestScriptPathElement.Reader"
 						>

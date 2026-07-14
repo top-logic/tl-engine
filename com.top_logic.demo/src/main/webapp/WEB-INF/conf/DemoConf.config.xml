@@ -182,6 +182,7 @@
 			<instance>
 				<role-rules>
 					<singleton-rule
+						id="OwnerRole"
 						target="SecurityStructure#ROOT"
 						role="SecurityStructure.OwnerRole"
 					>

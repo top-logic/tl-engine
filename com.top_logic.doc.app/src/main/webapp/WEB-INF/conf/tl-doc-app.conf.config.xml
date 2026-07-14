@@ -43,20 +43,23 @@
 				</structures>
 				<role-rules>
 					<singleton-rule
+						id="Admin"
 						target="SecurityStructure#ROOT"
 						role="SecurityStructure.Admin"
 					>
 						<group-with-name name="Admin"/>
 					</singleton-rule>
-					
+
 					<singleton-rule
+						id="DocumentationReader"
 						target="tl.doc#ROOT"
 						role="tl.doc.DocumentationReader"
 					>
 						<group-with-name name="DocumentationReader"/>
 					</singleton-rule>
-					
+
 					<singleton-rule
+						id="DocumentationWriter"
 						target="tl.doc#ROOT"
 						role="tl.doc.DocumentationWriter"
 					>

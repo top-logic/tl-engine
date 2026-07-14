@@ -7,6 +7,7 @@
 				<role-rules>
 					<rules>
 						<rule
+							id="WithOwner_OwnerRole"
 							inherit="true"
 							meta-element="tl.accounts:WithOwner"
 							role="SecurityStructure.OwnerRole"
@@ -17,6 +18,7 @@
 						</rule>
 
 						<rule
+							id="DemoSecurity.A_Role1"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.A"
 							role="DemoSecurity.Role1"
@@ -27,6 +29,7 @@
 						</rule>
 
 						<rule
+							id="DemoSecurity.A_Role2"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.A"
 							role="DemoSecurity.Role2"
@@ -37,6 +40,7 @@
 						</rule>
 
 						<inheritance-rule
+							id="DemoSecurity.A_SecurityAdministrator"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.A"
 							role="DemoSecurity.SecurityAdministrator"
@@ -50,6 +54,7 @@
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoSecurity.B_SecurityAdministratorB"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.B"
 							role="DemoSecurity.SecurityAdministratorB"
@@ -59,6 +64,7 @@
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoSecurity.All_selection"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.All"
 							role="selection"
@@ -66,6 +72,7 @@
 						/>
 
 						<inheritance-rule
+							id="DemoSecurity.All_navigation"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurity.All"
 							role="navigation"
@@ -73,6 +80,7 @@
 						/>
 
 						<inheritance-rule
+							id="DemoSecurityElementContainer_navigation"
 							inherit="true"
 							meta-element="DemoSecurity:DemoSecurityElementContainer"
 							role="navigation"
@@ -83,6 +91,7 @@
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoTypes.All_navigation"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
 							role="navigation"
@@ -90,6 +99,7 @@
 						/>
 
 						<inheritance-rule
+							id="DemoTypesContainer_navigation"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypesContainer"
 							role="navigation"
@@ -100,6 +110,7 @@
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoTypes.All_Administrator"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
 							role="DemoTypes.Administrator,DemoTypes.StringAdministrator,DemoTypes.BooleanAdministrator,DemoTypes.DateAdministrator,DemoTypes.Responsible"
@@ -113,6 +124,7 @@
 						</inheritance-rule>
 
 						<inheritance-rule
+							id="DemoTypes.All_selection"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.All"
 							role="selection"
@@ -120,6 +132,7 @@
 						/>
 
 						<rule
+							id="DemoTypes.A_Responsible"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.A"
 							role="DemoTypes.Responsible"
@@ -129,6 +142,7 @@
 							</path>
 						</rule>
 						<rule
+							id="DemoTypes.A_Responsible_2"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.A"
 							role="DemoTypes.Responsible"
@@ -143,6 +157,7 @@
 						</rule>
 
 						<inheritance-rule
+							id="DemoTypes.B_BAdministrator"
 							inherit="true"
 							meta-element="DemoTypes:DemoTypes.B"
 							role="DemoTypes.BAdministrator"
@@ -151,6 +166,7 @@
 						</inheritance-rule>
 
 						<rule
+							id="DemoPlain.All_Administrator"
 							inherit="true"
 							meta-element="DemoPlain:DemoPlain.All"
 							role="DemoTypes.Administrator"
@@ -158,6 +174,7 @@
 							<group-with-name name="demoTypeAdministrators"/>
 						</rule>
 						<singleton-rule
+							id="Administrator"
 							role="DemoTypes.Administrator"
 							target="DemoTypes#ROOT"
 						>
@@ -165,6 +182,7 @@
 						</singleton-rule>
 
 						<singleton-rule
+							id="BAdministrator"
 							role="DemoTypes.BAdministrator"
 							target="DemoTypes#ROOT"
 						>

@@ -45,13 +45,15 @@
 			<instance>
 				<role-rules>
 					<singleton-rule
+						id="user"
 						target="SecurityStructure#ROOT"
 						role="SecurityStructure.user"
 					>
 						<group-with-name name="user"/>
 					</singleton-rule>
-					
+
 					<singleton-rule
+						id="superuser"
 						target="SecurityStructure#ROOT"
 						role="SecurityStructure.superuser"
 					>

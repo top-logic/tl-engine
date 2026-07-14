@@ -46,13 +46,15 @@
 				</structures>
 				<role-rules>
 					<singleton-rule
+						id="User"
 						target="DemoSecurity#ROOT"
 						role="DemoSecurity.User"
 					>
 						<group-with-name name="user"/>
 					</singleton-rule>
-					
+
 					<singleton-rule
+						id="SecurityAdministrator"
 						target="DemoSecurity#ROOT"
 						role="DemoSecurity.SecurityAdministrator"
 					>

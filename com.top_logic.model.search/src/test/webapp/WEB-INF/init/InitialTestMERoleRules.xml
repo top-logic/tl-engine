@@ -5,6 +5,7 @@
 >
 	<rules>
 		<rule
+			id="assignedResponsible"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.assignedResponsible"
@@ -15,6 +16,7 @@
 			</path>
 		</rule>
 		<rule
+			id="assignedMember"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.assignedMember"
@@ -26,6 +28,7 @@
 		</rule>
 
 		<rule
+			id="inheritedResponsible"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.inheritedResponsible"
@@ -41,6 +44,7 @@
 		</rule>
 
 		<rule
+			id="subResponsible"
 			inherit="true"
 			meta-element="projElement:projElement.ProjectRoot"
 			resource-key="roleRule.subResponsible"
@@ -54,6 +58,7 @@
 		</rule>
 
 		<rule
+			id="allUsers"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.allUsers"
@@ -65,6 +70,7 @@
 			</path>
 		</rule>
 		<rule
+			id="mainUsers"
 			inherit="false"
 			meta-element="projElement:Project"
 			resource-key="roleRule.mainUsers"
@@ -77,6 +83,7 @@
 		</rule>
 
 		<rule
+			id="observer"
 			inherit="true"
 			meta-element="projElement:projElement.Part"
 			resource-key="roleRule.observer"
@@ -89,6 +96,7 @@
 			</path>
 		</rule>
 		<rule
+			id="projectObserver"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.projectObserver"
@@ -101,6 +109,7 @@
 		</rule>
 
 		<rule
+			id="dependendResponsible"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.dependendResponsible"
@@ -112,6 +121,7 @@
 			</path>
 		</rule>
 		<rule
+			id="dependendMember"
 			inherit="true"
 			meta-element="projElement:projElement.All"
 			resource-key="roleRule.dependendMember"

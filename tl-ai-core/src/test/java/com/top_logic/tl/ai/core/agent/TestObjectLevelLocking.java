@@ -72,11 +72,7 @@ public class TestObjectLevelLocking extends TestCase {
 
 	/**
 	 * {@link TaskTool} methods are classified as {@link ToolMode#USER_SCOPED} or
-<<<<<<< CWS/CWS_ArchitectureRefinements
 	 * {@link ToolMode#READ}, never {@link ToolMode#DATA_WRITE} or {@link ToolMode#STRUCTURAL}.
-=======
-	 * {@link ToolMode#READ}, never {@link ToolMode#STRUCTURAL}.
->>>>>>> 6941e23 Refine message layer: tighten PdfContent validation, add missing tests.
 	 */
 	public void testReclassifiedModes() {
 		TaskTool taskTool = new TaskTool();

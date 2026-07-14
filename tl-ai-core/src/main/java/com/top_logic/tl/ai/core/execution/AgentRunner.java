@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
+import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -128,6 +129,84 @@ public final class AgentRunner {
 		}
 		return new RecordedRun(runResult.response(), runResult.registry(),
 			recorder != null ? recorder.result() : null,
+			recorder != null ? recorder.execution() : null);
+	}
+
+	/**
+	 * Runs a pre-built {@link AgentLoop}, recording it as an {@link AgentExecution} of the given
+	 * session through the very same transcript path as the agent-name
+	 * {@link #run(String, Conversation, ConversationMemory, ToolContext, AgentEventListener, ToolRegistry, ConversationLog, AgentSession, AgentExecution)
+	 * overload}.
+	 *
+	 * <p>
+	 * This entry point exists for callers that cannot build their loop from an agent name via
+	 * {@link AgentFactory} - notably asynchronous subagents, which run a specially built,
+	 * depth-limited loop. They get identical transcript recording ({@link #withTranscriptRecording}
+	 * over {@code log} plus an {@link ExecutionRecorder}) without duplicating that wiring.
+	 * </p>
+	 *
+	 * <p>
+	 * The caller owns the {@code conversation} and {@code log} (including any user turn seeded
+	 * before the run); the returned {@link RecordedRun} carries no response text or tool registry
+	 * (both {@code null}) - the caller extracts what it needs from the conversation it passed in.
+	 * On an exception the recorder is finalized with the failure and the exception is rethrown.
+	 * </p>
+	 *
+	 * @param loop
+	 *        The pre-built loop to run.
+	 * @param agentName
+	 *        The agent name, recorded on the execution row.
+	 * @param conversation
+	 *        The conversation to operate on.
+	 * @param context
+	 *        Execution context; its {@link ToolContext#executionHandle() execution handle} receives
+	 *        the created execution, so the caller can read the child run id back from it.
+	 * @param listener
+	 *        Receives progress events during the run.
+	 * @param log
+	 *        The conversation log recording this run; its new turns become the execution's
+	 *        transcript. May be <code>null</code> (no transcript).
+	 * @param session
+	 *        The session to record the execution under; <code>null</code> disables recording.
+	 * @param parentExecution
+	 *        The delegating execution for sub-agent runs; <code>null</code> for top-level runs.
+	 */
+	public static RecordedRun run(AgentLoop loop, String agentName, Conversation conversation,
+			ToolContext context, AgentEventListener listener, ConversationLog log,
+			AgentSession session, AgentExecution parentExecution) {
+		AgentEventListener downstream = withTranscriptRecording(listener, log);
+
+		AgentEventListener effectiveListener = downstream;
+		ExecutionRecorder recorder = null;
+		if (session != null) {
+			recorder = new ExecutionRecorder(session, agentName, parentExecution,
+				context.executionHandle(), downstream);
+			effectiveListener = recorder;
+		} else {
+			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
+				AgentRunner.class);
+		}
+
+		// Callers may seed the run's first turn (e.g. the subagent's user message) before the loop;
+		// an open current turn belongs to this run, not to history.
+		int turnsBefore = log != null
+			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
+			: 0;
+
+		AgentResult result;
+		try {
+			result = loop.run(conversation, context, effectiveListener);
+		} catch (RuntimeException ex) {
+			if (recorder != null) {
+				recorder.complete(transcriptOf(log, turnsBefore), ex);
+			}
+			throw ex;
+		}
+
+		if (recorder != null) {
+			recorder.complete(transcriptOf(log, turnsBefore), null);
+		}
+		return new RecordedRun(null, null, result,
 			recorder != null ? recorder.execution() : null);
 	}
 

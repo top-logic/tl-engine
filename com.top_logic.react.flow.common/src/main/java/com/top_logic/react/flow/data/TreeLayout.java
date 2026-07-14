@@ -36,6 +36,21 @@ public interface TreeLayout extends com.top_logic.react.flow.data.FloatingLayout
 	/** @see #getSubtreeGapY() */
 	String SUBTREE_GAP_Y__PROP = "subtreeGapY";
 
+	/** @see #getChildSplitThreshold() */
+	String CHILD_SPLIT_THRESHOLD__PROP = "childSplitThreshold";
+
+	/** @see #getSubGridCols() */
+	String SUB_GRID_COLS__PROP = "subGridCols";
+
+	/** @see #getSubGridStartCol() */
+	String SUB_GRID_START_COL__PROP = "subGridStartCol";
+
+	/** @see #isRowWise() */
+	String ROW_WISE__PROP = "rowWise";
+
+	/** @see #getBridgeGapY() */
+	String BRIDGE_GAP_Y__PROP = "bridgeGapY";
+
 	/** @see #getStrokeStyle() */
 	String STROKE_STYLE__PROP = "strokeStyle";
 
@@ -118,6 +133,106 @@ public interface TreeLayout extends com.top_logic.react.flow.data.FloatingLayout
 	 * @see #getSubtreeGapY()
 	 */
 	com.top_logic.react.flow.data.TreeLayout setSubtreeGapY(double value);
+
+	/**
+	 * Threshold above which a parent's children are split into a 2D sub-grid instead of a single
+	 * vertical column.
+	 *
+	 * <p>If the number of children of some parent node exceeds this value, the children are
+	 * arranged in a sub-grid. The exact layout depends on {@link #isRowWise()}:</p>
+	 * <ul>
+	 * <li>Column-wise (default): At most {@code childSplitThreshold} children per sub-column,
+	 * fanning out into <code>C = ⌈M / childSplitThreshold⌉</code> sub-columns. Each sub-column
+	 * has its own vertical bus; follow-up buses are connected to the primary bus via a horizontal
+	 * bottom-bridge.</li>
+	 * <li>Row-wise (when {@link #isRowWise()}): Children are placed row-major across
+	 * <code>subGridCols</code> sub-columns (or <code>childSplitThreshold</code> if
+	 * <code>subGridCols</code> is not set). The sub-grid contains only the direct children,
+	 * subtrees of those direct children are rendered to the right of the sub-grid, and a single
+	 * bus connects all sub-grid children.</li>
+	 * </ul>
+	 *
+	 * <p>A value of {@code 0} disables sub-grid mode (legacy behavior, single column per parent).</p>
+	 */
+	int getChildSplitThreshold();
+
+	/**
+	 * @see #getChildSplitThreshold()
+	 */
+	com.top_logic.react.flow.data.TreeLayout setChildSplitThreshold(int value);
+
+	/**
+	 * Number of sub-columns of the row-wise sub-grid (only relevant if {@link #isRowWise()}).
+	 *
+	 * <p>If set to a positive value, the row-wise algorithm distributes children across exactly
+	 * this many sub-columns; the threshold for triggering sub-grid mode is still
+	 * {@link #getChildSplitThreshold()}. If set to {@code 0}, the row-wise algorithm uses
+	 * {@link #getChildSplitThreshold()} as the sub-column count (default behavior).</p>
+	 *
+	 * <p>Ignored in column-wise mode (the column count there is derived from
+	 * <code>⌈M / childSplitThreshold⌉</code>).</p>
+	 */
+	int getSubGridCols();
+
+	/**
+	 * @see #getSubGridCols()
+	 */
+	com.top_logic.react.flow.data.TreeLayout setSubGridCols(int value);
+
+	/**
+	 * Sub-column the first sub-grid child (child index 0) lands in (only relevant if
+		 * {@link #isRowWise()}).
+	 *
+	 * <p>The row-wise algorithm normally places child <code>n</code> in sub-column
+	 * <code>n mod C</code>. With {@code subGridStartCol = k} the placement becomes
+	 * <code>(n + k) mod C</code>, so child 0 starts in sub-column <code>k</code>, child
+	 * <code>C − k</code> wraps back to sub-column 0, and so on. Useful e.g. to leave the
+	 * top-left sub-grid cells empty for visual balance with the parent node.</p>
+	 *
+	 * <p>Must be in the range <code>0 .. C − 1</code>; values outside that range are taken
+	 * modulo <code>C</code>. Defaults to {@code 0}. Ignored in column-wise mode.</p>
+	 */
+	int getSubGridStartCol();
+
+	/**
+	 * @see #getSubGridStartCol()
+	 */
+	com.top_logic.react.flow.data.TreeLayout setSubGridStartCol(int value);
+
+	/**
+	 * Whether to use the row-wise sub-grid algorithm instead of the column-wise one.
+	 *
+	 * <p>The row-wise algorithm places only the direct children inside the sub-grid (in
+	 * <code>childSplitThreshold</code> sub-columns, row-major) and renders all sub-grid children's
+	 * subtrees in a single column to the right of the sub-grid (so depth↔X correspondence is kept
+	 * for descendants, regardless of which sub-column the direct child sits in). A single
+	 * vertical bus is routed just outside the sub-grid for both the parent→direct-children and
+	 * any sub-grid-child→subtree connections.</p>
+	 *
+	 * <p>Sub-grid Y-positions are adaptively packed: a child's row is the tightest position
+	 * subject to (a) box clearance to the previous child in the same sub-column, (b) bus-stub
+	 * clearance to siblings in earlier sub-columns, (c) — for sub-grid children with subtrees —
+	 * non-overlap with the bus extent of any earlier subtree-bearing sibling.</p>
+	 */
+	boolean isRowWise();
+
+	/**
+	 * @see #isRowWise()
+	 */
+	com.top_logic.react.flow.data.TreeLayout setRowWise(boolean value);
+
+	/**
+	 * Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge that
+	 * connects all sub-grid columns. Only relevant in column-wise sub-grid mode (i.e. when
+		 * {@link #getChildSplitThreshold()} triggers sub-grid mode and {@link #isRowWise()} is
+		 * {@code false}).
+	 */
+	double getBridgeGapY();
+
+	/**
+	 * @see #getBridgeGapY()
+	 */
+	com.top_logic.react.flow.data.TreeLayout setBridgeGapY(double value);
 
 	/**
 	 * Stroke style of tree connections.

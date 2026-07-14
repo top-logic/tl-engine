@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -1061,6 +1062,29 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param parentOffset
 	 *        Offset to add to the parent Y coordinate after the alignment operation based on parent
 	 *        ratio.
+	 * @param childSplitThreshold
+	 *        Threshold above which a parent's children are split into a 2D sub-grid instead of a
+	 *        single vertical column. The exact layout depends on {@code rowWise}: column-wise
+	 *        splits the children column-major into sub-columns of at most
+	 *        {@code childSplitThreshold} children with a per-column bus and a bottom-bridge,
+	 *        row-wise splits them row-major into exactly {@code childSplitThreshold} sub-columns
+	 *        and routes all subtrees to a single column to the right of the sub-grid behind one
+	 *        shared vertical bus. A value of 0 disables sub-grid mode (single column per parent).
+	 * @param rowWise
+	 *        Selects the row-wise sub-grid algorithm. See {@code childSplitThreshold} for the
+	 *        difference. Only relevant when {@code childSplitThreshold} triggers sub-grid mode.
+	 * @param subGridCols
+	 *        Number of sub-columns of the row-wise sub-grid. Only relevant when {@code rowWise}
+	 *        is true. If {@code 0}, falls back to {@code childSplitThreshold}.
+	 * @param subGridStartCol
+	 *        Sub-column in which the first sub-grid child (child index 0) is placed; child
+	 *        {@code n} lands in column {@code (n + subGridStartCol) mod C}. Only relevant when
+	 *        {@code rowWise} is true. Defaults to {@code 0}.
+	 * @param bridgeGapY
+	 *        Vertical gap between the bottom of the deepest sub-grid column and the bottom-bridge
+	 *        that connects all sub-grid columns. Only relevant in column-wise sub-grid mode (i.e.
+	 *        when {@code childSplitThreshold} triggers sub-grid mode and {@code rowWise} is
+	 *        false).
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
@@ -1084,8 +1108,13 @@ public class FlowFactory extends TLScriptFunctions {
 			double parentAlign,
 		@DoubleDefault(0)
 		double parentOffset,
+		@IntDefault(0) int childSplitThreshold,
+		boolean rowWise,
+		@IntDefault(0) int subGridCols,
+		@IntDefault(0) int subGridStartCol,
+		Double bridgeGapY,
 		String cssClass,
-		Object userObject 
+		Object userObject
 	) {
 		TreeLayout result = TreeLayout.create()
 			.setNodes(nodes.stream().filter(Objects::nonNull).toList())
@@ -1097,6 +1126,10 @@ public class FlowFactory extends TLScriptFunctions {
 			.setCompact(compact)
 			.setParentAlign(parentAlign)
 			.setParentOffset(parentOffset)
+			.setChildSplitThreshold(childSplitThreshold)
+			.setRowWise(rowWise)
+			.setSubGridCols(subGridCols)
+			.setSubGridStartCol(subGridStartCol)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 
@@ -1109,6 +1142,9 @@ public class FlowFactory extends TLScriptFunctions {
 		}
 		if (subtreeGapY != null) {
 			result.setSubtreeGapY(subtreeGapY);
+		}
+		if (bridgeGapY != null) {
+			result.setBridgeGapY(bridgeGapY);
 		}
 
 		return result;

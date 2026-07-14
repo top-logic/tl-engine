@@ -363,13 +363,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * The background run re-establishes the calling user's sub-session (captured synchronously here
-	 * on the calling thread, as it cannot be read off-thread) via
-	 * {@link ThreadContextManager#inContext}, so the agent and its tools act with that user's
-	 * permissions. A {@code BACKGROUND}-kind {@link AgentSession} is created up front so the caller
-	 * always receives a usable handle; the {@link com.top_logic.tl.ai.core.execution.AgentExecution}
-	 * row is recorded by {@link AgentRunner} once the loop starts, and finalized with status and
-	 * transcript when it ends (including on failure, recorded as {@code ERROR}).
+	 * The background run re-enters the calling user's sub-session (captured synchronously here on the
+	 * calling thread, as it cannot be read off-thread), so the agent and its tools act as that user
+	 * with that user's permissions. A {@code BACKGROUND}-kind {@link AgentSession} is created up front
+	 * so the caller always receives a usable handle; the execution record is created before the first
+	 * model call, once the loop starts, and finalized with status and transcript when it ends
+	 * (including on failure, recorded as {@code ERROR}).
 	 * </p>
 	 *
 	 * <p>
@@ -404,6 +403,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @throws IllegalStateException
 	 *         If the calling thread has no usable sub-session to run as, or the
 	 *         {@link AgentExecutionStore} is unavailable.
+	 * @see com.top_logic.basic.thread.ThreadContextManager
+	 * @see com.top_logic.tl.ai.core.execution.model.AgentExecution
+	 * @see AgentRunner
 	 */
 	public static AgentSession agentChatAsync(String agentName, Object userMessage) {
 		// Capture the caller's sub-session synchronously: it lives on the calling thread and

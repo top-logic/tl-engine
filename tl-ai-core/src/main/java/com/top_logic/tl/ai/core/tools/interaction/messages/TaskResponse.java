@@ -21,9 +21,14 @@ public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject im
 	/** @see #getStatus() */
 	public static final String STATUS__PROP = "status";
 
+	/** @see #getSubject() */
+	public static final String SUBJECT__PROP = "subject";
+
 	private String _taskId = "";
 
 	private String _status = "";
+
+	private String _subject = "";
 
 	/**
 	 * Creates a {@link TaskResponse} instance.
@@ -74,6 +79,26 @@ public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject im
 		_status = value;
 	}
 
+	/**
+	 * Brief title of the task.
+	 */
+	public final String getSubject() {
+		return _subject;
+	}
+
+	/**
+	 * @see #getSubject()
+	 */
+	public com.top_logic.tl.ai.core.tools.interaction.messages.TaskResponse setSubject(String value) {
+		internalSetSubject(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSubject()} without chain call utility. */
+	protected final void internalSetSubject(String value) {
+		_subject = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return TASK_RESPONSE__TYPE;
@@ -83,7 +108,8 @@ public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject im
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			TASK_ID__PROP, 
-			STATUS__PROP);
+			STATUS__PROP, 
+			SUBJECT__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -110,6 +136,7 @@ public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject im
 		switch (field) {
 			case TASK_ID__PROP: return getTaskId();
 			case STATUS__PROP: return getStatus();
+			case SUBJECT__PROP: return getSubject();
 			default: return null;
 		}
 	}
@@ -119,6 +146,7 @@ public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject im
 		switch (field) {
 			case TASK_ID__PROP: internalSetTaskId((String) value); break;
 			case STATUS__PROP: internalSetStatus((String) value); break;
+			case SUBJECT__PROP: internalSetSubject((String) value); break;
 		}
 	}
 
@@ -141,6 +169,8 @@ public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject im
 		out.value(getTaskId());
 		out.name(STATUS__PROP);
 		out.value(getStatus());
+		out.name(SUBJECT__PROP);
+		out.value(getSubject());
 	}
 
 	@Override
@@ -148,6 +178,7 @@ public class TaskResponse extends de.haumacher.msgbuf.data.AbstractDataObject im
 		switch (field) {
 			case TASK_ID__PROP: setTaskId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STATUS__PROP: setStatus(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case SUBJECT__PROP: setSubject(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

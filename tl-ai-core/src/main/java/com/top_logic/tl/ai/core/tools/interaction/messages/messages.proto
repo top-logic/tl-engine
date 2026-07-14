@@ -19,6 +19,11 @@ message TaskResponse {
 	 * Current status of the task (pending, in_progress, completed).
 	 */
 	string status;
+
+	/**
+	 * Brief title of the task.
+	 */
+	string subject;
 }
 
 /**

@@ -30,16 +30,22 @@ import com.top_logic.util.model.ModelService;
  * unique index declared in {@code tl-ai-coreMeta.xml} (issue #172).
  *
  * <p>
- * These are the authoritative backstop against duplicate names created on paths that bypass the
- * form-level {@code UniqueNameConstraint} (import, migrations, TL-Script, concurrent edits).
+ * The index is the authoritative backstop against duplicate names created on paths that bypass the
+ * form-level {@code UniqueNameConstraint} (import, migrations, TL-Script, concurrent edits). To
+ * prove that the index - and not the model-level constraint - rejects duplicates, these tests
+ * temporarily unregister the {@link ModelService} commit checker (which runs
+ * {@link UniqueNameConstraint} on every commit). With that checker gone, a duplicate can only be
+ * stopped by the DB unique index. If the index were missing, the duplicate commit would succeed and
+ * the assertions below would fail.
  * </p>
  */
 public class TestUniqueAgentSkillName extends BasicTestCase {
 
 	/**
-	 * A second {@link Agent} committed with an already-used name must be rejected.
+	 * A second {@link Agent} committed with an already-used name must be rejected by the unique
+	 * index, even when the model-level constraint check is bypassed.
 	 */
-	public void testDuplicateAgentNameRejected() throws Exception {
+	public void testDuplicateAgentNameRejectedByIndex() throws Exception {
 		TlAiCoreFactory factory = TlAiCoreFactory.getInstance();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
@@ -48,7 +54,8 @@ public class TestUniqueAgentSkillName extends BasicTestCase {
 			tx.commit();
 		}
 
-		assertCommitRejected("A second Agent named 'DuplicateAgent' must be rejected by the unique name index.",
+		assertRejectedByIndex(
+			"A second Agent named 'DuplicateAgent' must be rejected by the unique name index.",
 			kb, () -> createAgent(factory, "DuplicateAgent"));
 
 		assertEquals("Exactly one Agent 'DuplicateAgent' must remain persistent.",
@@ -56,9 +63,10 @@ public class TestUniqueAgentSkillName extends BasicTestCase {
 	}
 
 	/**
-	 * A second {@link Skill} committed with an already-used name must be rejected.
+	 * A second {@link Skill} committed with an already-used name must be rejected by the unique
+	 * index, even when the model-level constraint check is bypassed.
 	 */
-	public void testDuplicateSkillNameRejected() throws Exception {
+	public void testDuplicateSkillNameRejectedByIndex() throws Exception {
 		TlAiCoreFactory factory = TlAiCoreFactory.getInstance();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
@@ -67,11 +75,35 @@ public class TestUniqueAgentSkillName extends BasicTestCase {
 			tx.commit();
 		}
 
-		assertCommitRejected("A second Skill named 'DuplicateSkill' must be rejected by the unique name index.",
+		assertRejectedByIndex(
+			"A second Skill named 'DuplicateSkill' must be rejected by the unique name index.",
 			kb, () -> createSkill(factory, "DuplicateSkill"));
 
 		assertEquals("Exactly one Skill 'DuplicateSkill' must remain persistent.",
 			1, countInstances(TlAiCoreFactory.getSkillType(), Skill.NAME_ATTR, "DuplicateSkill"));
+	}
+
+	/**
+	 * The {@code name} columns are case-insensitive ({@code VARCHAR_IGNORECASE}), so names differing
+	 * only in case are duplicates at the persistence level as well.
+	 */
+	public void testCaseInsensitiveDuplicateAgentNameRejectedByIndex() throws Exception {
+		TlAiCoreFactory factory = TlAiCoreFactory.getInstance();
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+
+		try (Transaction tx = kb.beginTransaction()) {
+			createAgent(factory, "CaseAgent");
+			tx.commit();
+		}
+
+		assertRejectedByIndex(
+			"An Agent named 'caseagent' must collide with 'CaseAgent' in the case-insensitive index.",
+			kb, () -> createAgent(factory, "caseagent"));
+
+		assertEquals("Only the original Agent 'CaseAgent' must remain persistent.",
+			1, countInstances(TlAiCoreFactory.getAgentType(), Agent.NAME_ATTR, "CaseAgent"));
+		assertEquals("The case-variant Agent 'caseagent' must not have been persisted.",
+			0, countInstances(TlAiCoreFactory.getAgentType(), Agent.NAME_ATTR, "caseagent"));
 	}
 
 	/**
@@ -94,16 +126,30 @@ public class TestUniqueAgentSkillName extends BasicTestCase {
 			1, countInstances(TlAiCoreFactory.getSkillType(), Skill.NAME_ATTR, "SharedName"));
 	}
 
-	private static void assertCommitRejected(String message, KnowledgeBase kb, Runnable createDuplicate) {
-		boolean rejected = false;
-		try (Transaction tx = kb.beginTransaction()) {
-			createDuplicate.run();
-			tx.commit();
-		} catch (Exception expected) {
-			// A unique-index violation surfaces as a (wrapped) exception on commit.
-			rejected = true;
+	/**
+	 * Commits {@code createDuplicate} with the model-level commit constraint check disabled, so that
+	 * the duplicate can only be rejected by the persistence-level unique index. Asserts that the
+	 * commit is rejected.
+	 */
+	private static void assertRejectedByIndex(String message, KnowledgeBase kb, Runnable createDuplicate) {
+		ModelService modelService = ModelService.getInstance();
+
+		// Unregister the model commit checker (which runs UniqueNameConstraint) so the only
+		// remaining guard is the DB unique index. Restored afterwards to keep test isolation.
+		kb.removeCommitChecker(modelService);
+		try {
+			boolean rejected = false;
+			try (Transaction tx = kb.beginTransaction()) {
+				createDuplicate.run();
+				tx.commit();
+			} catch (Exception expected) {
+				// A unique-index violation surfaces as a (wrapped) exception on commit.
+				rejected = true;
+			}
+			assertTrue(message, rejected);
+		} finally {
+			kb.addCommitChecker(modelService);
 		}
-		assertTrue(message, rejected);
 	}
 
 	private static Agent createAgent(TlAiCoreFactory factory, String name) {

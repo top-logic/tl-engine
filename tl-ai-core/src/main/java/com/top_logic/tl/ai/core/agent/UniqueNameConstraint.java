@@ -18,6 +18,13 @@ import com.top_logic.model.util.Pointer;
 /**
  * {@link ConstraintCheck} that ensures the {@code name} attribute is unique among all instances of
  * the same type.
+ *
+ * <p>
+ * The comparison is case-insensitive to match the persistence-level backstop: the {@code name}
+ * columns of {@code AIAgent} / {@code AISkill} are {@code String} columns, which the database
+ * renders case-insensitively (e.g. {@code VARCHAR_IGNORECASE} on H2). Aligning both layers ensures
+ * the form gives fast feedback for exactly those duplicates the unique DB index would reject.
+ * </p>
  */
 public class UniqueNameConstraint implements ConstraintCheck {
 
@@ -33,7 +40,7 @@ public class UniqueNameConstraint implements ConstraintCheck {
 			if (other.equals(object) || !other.tValid()) {
 				continue;
 			}
-			if (name.equals(other.tValue(attribute))) {
+			if (other.tValue(attribute) instanceof String otherName && name.equalsIgnoreCase(otherName)) {
 				return I18NConstants.DUPLICATE_NAME_ERROR__NAME.fill(name);
 			}
 		}

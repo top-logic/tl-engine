@@ -10,6 +10,7 @@
 			att_name="name"
 			att_type="String"
 			db_size="255"
+			mandatory="true"
 		/>
 		<!-- Persistence-level uniqueness backstop for Agent names (see issue #172).
 		     The form-level UniqueNameConstraint gives fast interactive feedback; this
@@ -32,6 +33,7 @@
 			att_name="name"
 			att_type="String"
 			db_size="255"
+			mandatory="true"
 		/>
 		<!-- Persistence-level uniqueness backstop for Skill names (see issue #172).
 		     Skill names are a separate namespace from Agent names. -->

@@ -25,8 +25,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Error message when an agent or skill name is already in use.
 	 *
-	 * @en The name '{0}' is already in use.
-	 * @de Der Name '{0}' wird bereits verwendet.
+	 * @en The name ''{0}'' is already in use.
+	 * @de Der Name ''{0}'' ist bereits in Gebrauch.
 	 */
 	public static ResKey1 DUPLICATE_NAME_ERROR__NAME;
 

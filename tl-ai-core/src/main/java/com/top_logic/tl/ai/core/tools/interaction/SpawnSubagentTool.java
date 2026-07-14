@@ -67,7 +67,11 @@ public class SpawnSubagentTool implements Tool {
 	public String description() {
 		return "Spawn a background subagent of a chosen predefined agent type to work on a task. "
 			+ "Call list_agents first to see available agents. "
-			+ "The subagent runs asynchronously (read-only); its result arrives in a later turn or via wait_for_subagent.";
+			+ "This is FIRE-AND-FORGET: it returns a subagent id immediately and the subagent runs "
+			+ "in the background - do NOT wait for it afterwards. End your turn so the user can keep "
+			+ "chatting; the subagent's result arrives on its own in a later turn. To answer a status "
+			+ "question use subagent_status (non-blocking). Only call wait_for_subagent if the user "
+			+ "explicitly asks you to wait for the result.";
 	}
 
 	@Override

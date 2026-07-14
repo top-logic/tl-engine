@@ -57,8 +57,11 @@ public class WaitForSubagentTool implements Tool {
 
 	@Override
 	public String description() {
-		return "Wait for one or more background subagents to finish and return their results. "
-			+ "Use after spawning subagents when you need their results before continuing.";
+		return "BLOCK the current turn until one or more background subagents finish, then return "
+			+ "their results. Use this ONLY when the user explicitly asks you to wait for a subagent "
+			+ "(e.g. \"wait for it and then summarize\"). Do NOT call it right after spawning: a spawn "
+			+ "is fire-and-forget and results arrive on their own in a later turn. For a status "
+			+ "question use subagent_status, which does not block.";
 	}
 
 	@Override

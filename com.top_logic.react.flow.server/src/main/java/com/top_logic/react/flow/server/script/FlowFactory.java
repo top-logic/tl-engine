@@ -105,7 +105,7 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 @ScriptPrefix("reactFlow")
 public class FlowFactory extends TLScriptFunctions {
 	
-	private static final String FLOW_CORE_CSS = "/style/tl-flow-core.css";
+	private static final String FLOW_CORE_CSS = "/style/tl-react-flow.css";
 
 	/**
 	 * Factory for {@link Diagram}s.

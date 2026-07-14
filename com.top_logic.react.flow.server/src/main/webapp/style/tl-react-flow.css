@@ -1,0 +1,18 @@
+/*
+ * Stylesheet for the React flow diagram, also inlined when a diagram is exported to PDF.
+ *
+ * Rules in this stylesheet must use CSS2 features only, since the the Apache Batik rendering engine
+ * does only support CSS2.
+ */
+.tlSelectionMarker {
+	display: none;
+}
+
+/* Pointer cursor on selectable elements. */
+.tlCanSelect { cursor: pointer; }
+
+/* Color-change selection for graph nodes and edges. CSS overrides SVG presentation attributes. */
+.tlSelected .tlSelectionStroke { stroke: var(--focus); stroke-width: 2; }
+.tlSelected .tlSelectionFill { fill: var(--layer-selected); }
+/* Edge selection: highlight the visible edge stroke (not the transparent click target). */
+g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--focus); stroke-width: 2; }

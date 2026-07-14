@@ -12,8 +12,8 @@
 						resource="/script/tl-react-flow-controls.js"
 						requires="tl-react-bridge"
 					/>
-					<stylesheet name="tl-flow-core-css"
-						resource="/style/tl-flow-core.css"
+					<stylesheet name="tl-react-flow-css"
+						resource="/style/tl-react-flow.css"
 					/>
 				</resources>
 			</instance>

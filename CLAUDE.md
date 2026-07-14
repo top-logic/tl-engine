@@ -474,7 +474,19 @@ mvn exec:java@migrate-ticket28336
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
 - **com.top_logic.element/** - Element management
-- **com.top_logic.demo/** - Demo application
+- **com.top_logic.demo/** - Legacy demo application (`tl-demo`). The classic
+  layout UI plus a React view layer mounted at `/view/`. Depends directly on the
+  legacy `graphic.blocks.*` diagram stack, so it also serves those modules'
+  webapp resources (e.g. `/style/tl-flow-core.css`).
+- **com.top_logic.demo.react/** - React-only demo application (`tl-demo-react`),
+  built purely on the `com.top_logic.layout.view` `.view.xml` layer and served at
+  `/view/`. This is the successor test bed for React UI features (see its
+  `TRIAGE.md`). It does **not** depend on the legacy `graphic.blocks.*` modules;
+  the React flow diagram is provided by the copied, self-contained
+  `com.top_logic.react.flow.*` modules. When verifying a React UI feature, run
+  this app, not `tl-demo` — a feature that works under `tl-demo` may still be
+  broken here if it relies on a legacy webapp resource that only `tl-demo`
+  happens to serve.
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output

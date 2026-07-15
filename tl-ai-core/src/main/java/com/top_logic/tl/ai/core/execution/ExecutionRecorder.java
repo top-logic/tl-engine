@@ -110,6 +110,15 @@ public final class ExecutionRecorder implements AgentEventListener {
 	}
 
 	/**
+	 * Finalizes the execution row after the loop returned or threw, without a final answer.
+	 *
+	 * @see #complete(String, String, Throwable)
+	 */
+	public void complete(String transcript, Throwable failure) {
+		complete(transcript, null, failure);
+	}
+
+	/**
 	 * Finalizes the execution row after the loop returned or threw.
 	 *
 	 * <p>
@@ -118,10 +127,13 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 *
 	 * @param transcript
 	 *        The serialized transcript of this run's turns; may be <code>null</code>.
+	 * @param response
+	 *        The agent's final answer text (the value the synchronous entry points return); may be
+	 *        <code>null</code> when the run produced no answer.
 	 * @param failure
 	 *        The exception the loop threw, or <code>null</code> if it returned normally.
 	 */
-	public void complete(String transcript, Throwable failure) {
+	public void complete(String transcript, String response, Throwable failure) {
 		AgentExecution execution = _execution;
 		if (execution == null) {
 			return;
@@ -132,7 +144,8 @@ public final class ExecutionRecorder implements AgentEventListener {
 				: (failure != null ? StopReason.ERROR : null);
 			TokenUsage usage = result != null ? result.totalUsage() : TokenUsage.EMPTY;
 			AgentExecutionStore.getInstance().finishExecution(execution,
-				statusFor(stopReason, failure), stopReason, errorMessage(failure), usage, transcript);
+				statusFor(stopReason, failure), stopReason, errorMessage(failure), usage, transcript,
+				response);
 		} catch (RuntimeException ex) {
 			Logger.warn("Failed to record end of agent run " + _runId + ": " + ex.getMessage(),
 				ex, ExecutionRecorder.class);

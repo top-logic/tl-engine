@@ -139,6 +139,12 @@
 					<property name="transcript"
 						type="tl.core:Text"
 					/>
+					<property name="response"
+						type="tl.core:Text"
+					/>
+					<property name="cancelRequested"
+						type="tl.core:Boolean"
+					/>
 					<property name="startedAt"
 						mandatory="true"
 						type="tl.core:DateTime"

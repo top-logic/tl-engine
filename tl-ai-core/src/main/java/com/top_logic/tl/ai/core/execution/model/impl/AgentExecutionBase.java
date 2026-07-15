@@ -45,6 +45,15 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	String CACHE_WRITE_TOKENS_ATTR = "cacheWriteTokens";
 
 	/**
+	 * Part <code>cancelRequested</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String CANCEL_REQUESTED_ATTR = "cancelRequested";
+
+	/**
 	 * Part <code>endedAt</code> of <code>AgentExecution</code>
 	 * 
 	 * <p>
@@ -55,7 +64,7 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 
 	/**
 	 * Part <code>errorMessage</code> of <code>AgentExecution</code>
-	 *
+	 * 
 	 * <p>
 	 * Declared as <code>tl.core:Text</code> in configuration.
 	 * </p>
@@ -64,7 +73,7 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 
 	/**
 	 * Part <code>inputTokens</code> of <code>AgentExecution</code>
-	 *
+	 * 
 	 * <p>
 	 * Declared as <code>tl.core:Long</code> in configuration.
 	 * </p>
@@ -106,6 +115,15 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String PROVIDER_ATTR = "provider";
+
+	/**
+	 * Part <code>response</code> of <code>AgentExecution</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Text</code> in configuration.
+	 * </p>
+	 */
+	String RESPONSE_ATTR = "response";
 
 	/**
 	 * Part <code>runId</code> of <code>AgentExecution</code>
@@ -154,7 +172,7 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 
 	/**
 	 * Part <code>thinkingTokens</code> of <code>AgentExecution</code>
-	 *
+	 * 
 	 * <p>
 	 * Declared as <code>tl.core:Long</code> in configuration.
 	 * </p>
@@ -210,6 +228,20 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setCacheWriteTokens(Long newValue) {
 		tUpdateByName(CACHE_WRITE_TOKENS_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #CANCEL_REQUESTED_ATTR}.
+	 */
+	default boolean getCancelRequested() {
+		return (Boolean) tValueByName(CANCEL_REQUESTED_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CANCEL_REQUESTED_ATTR}.
+	 */
+	default void setCancelRequested(boolean newValue) {
+		tUpdateByName(CANCEL_REQUESTED_ATTR, newValue);
 	}
 
 	/**
@@ -308,6 +340,20 @@ public interface AgentExecutionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setProvider(String newValue) {
 		tUpdateByName(PROVIDER_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #RESPONSE_ATTR}.
+	 */
+	default String getResponse() {
+		return (String) tValueByName(RESPONSE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #RESPONSE_ATTR}.
+	 */
+	default void setResponse(String newValue) {
+		tUpdateByName(RESPONSE_ATTR, newValue);
 	}
 
 	/**

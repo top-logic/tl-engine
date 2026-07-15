@@ -457,6 +457,17 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	}
 
 	/**
+	 * Records the terminal state of an agent-loop invocation without a final answer.
+	 *
+	 * @see #finishExecution(AgentExecution, ExecutionStatus, StopReason, String, TokenUsage,
+	 *      String, String)
+	 */
+	public void finishExecution(AgentExecution execution, ExecutionStatus status,
+			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript) {
+		finishExecution(execution, status, stopReason, errorMessage, usage, transcript, null);
+	}
+
+	/**
 	 * Records the terminal state of an agent-loop invocation.
 	 *
 	 * @param status
@@ -470,6 +481,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 *        <code>null</code>.
 	 * @param transcript
 	 *        The serialized per-run conversation-log transcript; may be <code>null</code>.
+	 * @param response
+	 *        The agent's final answer text (the same value the synchronous entry points return);
+	 *        may be <code>null</code> when the run produced no answer (e.g. it failed).
 	 *
 	 * <p>
 	 * Interaction requests of this execution still pending at run end (e.g. an approval nobody
@@ -477,7 +491,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * </p>
 	 */
 	public void finishExecution(AgentExecution execution, ExecutionStatus status,
-			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript) {
+			StopReason stopReason, String errorMessage, TokenUsage usage, String transcript,
+			String response) {
 		write(() -> {
 		try (Transaction tx = beginTx("Finish agent execution " + execution.getRunId())) {
 			cancelPendingInteractions(execution);
@@ -492,6 +507,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				execution.setCacheWriteTokens((long) usage.cacheWriteTokens());
 			}
 			execution.setTranscript(transcript);
+			execution.setResponse(response);
 			execution.setEndedAt(new Date());
 			AgentSession session = execution.getSession();
 			session.setLastUpdated(new Date());
@@ -499,6 +515,63 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		}
 		return null;
 		});
+	}
+
+	/**
+	 * Requests cancellation of a running agent execution by setting and committing its persisted
+	 * {@link AgentExecution#getCancelRequested() cancel marker}.
+	 *
+	 * <p>
+	 * This is the cluster-safe half of async cancellation: the request is a normal KB write, so it
+	 * works from any node - the node that receives the cancel need not be the node running the job.
+	 * The node actually running the job observes the committed marker at HEAD (see
+	 * {@link #isCancelRequested(AgentExecution)}) and cancels its in-memory
+	 * {@link com.top_logic.tl.ai.tool.api.CancellationToken}, which the agent loop already honors.
+	 * </p>
+	 *
+	 * <p>
+	 * A no-op for a run that has already reached a terminal state: there is nothing left to cancel.
+	 * The current status is (re-)read at HEAD on the writer thread so a concurrently finishing run
+	 * is seen correctly regardless of the caller's pinned revision.
+	 * </p>
+	 *
+	 * @param execution
+	 *        The execution to cancel; must not be <code>null</code>.
+	 * @return <code>true</code> if a still-running execution was newly signalled to cancel;
+	 *         <code>false</code> if it was already terminal (or already signalled).
+	 */
+	public boolean requestCancel(AgentExecution execution) {
+		return write(() -> {
+			if (isTerminal(execution) || execution.getCancelRequested()) {
+				return Boolean.FALSE;
+			}
+			try (Transaction tx = beginTx("Request cancel of agent execution " + execution.getRunId())) {
+				execution.setCancelRequested(true);
+				tx.commit();
+			}
+			return Boolean.TRUE;
+		});
+	}
+
+	/**
+	 * Whether the given execution's persisted cancel marker is set, read at KB HEAD.
+	 *
+	 * <p>
+	 * Read on the writer thread inside a fresh system interaction so the marker committed by a
+	 * (possibly remote) {@link #requestCancel(AgentExecution)} is visible even though the caller -
+	 * typically the agent-loop thread - reads at an older pinned request revision.
+	 * </p>
+	 */
+	public boolean isCancelRequested(AgentExecution execution) {
+		return write(() -> Boolean.valueOf(execution.getCancelRequested())).booleanValue();
+	}
+
+	/**
+	 * Whether the execution's status (read in the current interaction) is a terminal one.
+	 */
+	private boolean isTerminal(AgentExecution execution) {
+		TLClassifier status = execution.getStatus();
+		return status != null && !ExecutionStatus.RUNNING.name().equals(status.getName());
 	}
 
 	/**

@@ -213,6 +213,13 @@ public class TlAiAgentFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link AgentExecution#CANCEL_REQUESTED_ATTR} of {@link AgentExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getCancelRequestedAgentExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.CANCEL_REQUESTED_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentExecution#ENDED_AT_ATTR} of {@link AgentExecution}.
 	 */
 	public static com.top_logic.model.TLProperty getEndedAtAgentExecutionAttr() {
@@ -252,6 +259,13 @@ public class TlAiAgentFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLProperty getProviderAgentExecutionAttr() {
 		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.PROVIDER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link AgentExecution#RESPONSE_ATTR} of {@link AgentExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getResponseAgentExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getAgentExecutionType().getPart(AgentExecution.RESPONSE_ATTR);
 	}
 
 	/**

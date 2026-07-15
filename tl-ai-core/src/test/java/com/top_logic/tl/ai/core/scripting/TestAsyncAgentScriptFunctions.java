@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.scripting;
 
+import java.time.Instant;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -17,11 +19,15 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.tl.ai.core.execution.CancelSignalObserver;
+import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -49,6 +55,8 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 
 	private static final String TRANSCRIPT = "{\"turns\":[]}";
 
+	private static final String RESPONSE = "The final answer.";
+
 	private AgentExecutionStore _store;
 
 	@Override
@@ -71,9 +79,10 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 	}
 
 	/**
-	 * A run that finishes {@code COMPLETE} exposes its status and transcript through the handle.
+	 * A run that finishes {@code COMPLETE} exposes its status, final answer and transcript through
+	 * the handle - and {@code agentRunResult} returns the final answer, not the transcript.
 	 */
-	public void testCompleteRunExposesTranscript() throws Exception {
+	public void testCompleteRunExposesResultAndTranscript() throws Exception {
 		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "complete-run");
 		AgentExecution execution =
 			_store.beginExecution(session, "run-complete", "test-agent", "test-model", null, null);
@@ -82,11 +91,15 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		assertNull("result not available while running", AIScriptFunctions.agentRunResult(session));
 
 		_store.finishExecution(execution, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null,
-			TRANSCRIPT);
+			TRANSCRIPT, RESPONSE);
 		advance();
 
 		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(session));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunResult(session));
+		assertEquals("result is the final answer", RESPONSE, AIScriptFunctions.agentRunResult(session));
+		assertEquals("transcript is the full log", TRANSCRIPT,
+			AIScriptFunctions.agentRunTranscript(session));
+		assertFalse("result must not be the transcript",
+			TRANSCRIPT.equals(AIScriptFunctions.agentRunResult(session)));
 	}
 
 	/**
@@ -113,13 +126,15 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		AgentExecution execution =
 			_store.beginExecution(session, "run-42", "test-agent", "test-model", null, null);
 		_store.finishExecution(execution, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null,
-			TRANSCRIPT);
+			TRANSCRIPT, RESPONSE);
 		advance();
 
 		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus("run-42"));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunResult("run-42"));
+		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult("run-42"));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript("run-42"));
 		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(execution));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunResult(execution));
+		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult(execution));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(execution));
 	}
 
 	/**
@@ -143,11 +158,143 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		AgentExecution execution =
 			_store.beginExecution(session, "run-by-session-id", "test-agent", "test-model", null, null);
 		_store.finishExecution(execution, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null,
-			TRANSCRIPT);
+			TRANSCRIPT, RESPONSE);
 		advance();
 
 		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(sessionId));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunResult(sessionId));
+		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult(sessionId));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(sessionId));
+	}
+
+	/**
+	 * A handle resolves to the session's <em>top-level</em> execution ({@code parentExecution ==
+	 * null}), not merely its most recent one: a session that accrues a later sub-agent (child)
+	 * execution must still report the top-level run's answer.
+	 */
+	public void testResolutionHitsTopLevelExecution() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "with-subagent");
+		String sessionId = KBUtils.getWrappedObjectName(session).toString();
+
+		AgentExecution topLevel =
+			_store.beginExecution(session, "run-top", "top-agent", "test-model", null, null);
+		_store.finishExecution(topLevel, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null,
+			TRANSCRIPT, RESPONSE);
+		// A sub-agent execution recorded later under the same session, with the top-level run as
+		// its parent. It started after the top-level, so a "latest execution" resolution would pick
+		// it - the top-level resolution must not.
+		AgentExecution child =
+			_store.beginExecution(session, "run-child", "sub-agent", "test-model", null, topLevel);
+		_store.finishExecution(child, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null,
+			"{\"turns\":[{}]}", "child answer");
+		advance();
+
+		assertEquals("handle must resolve to the top-level run's answer", RESPONSE,
+			AIScriptFunctions.agentRunResult(sessionId));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(sessionId));
+	}
+
+	/**
+	 * {@code agentRunCancel} sets and commits the persisted cancel marker of a still-running
+	 * top-level execution (a normal KB write, hence cluster-safe), and is a no-op for a terminal
+	 * or unknown run.
+	 */
+	public void testCancelSetsAndCommitsMarker() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "cancel-marker");
+		String sessionId = KBUtils.getWrappedObjectName(session).toString();
+		AgentExecution execution =
+			_store.beginExecution(session, "run-cancel", "test-agent", "test-model", null, null);
+		advance();
+
+		assertTrue("a running run is signalled", AIScriptFunctions.agentRunCancel(sessionId));
+		// The marker is committed: it is visible at HEAD (the store reads it on its writer thread)
+		// and, after advancing the caller revision, on the execution wrapper itself.
+		assertTrue("marker read at HEAD", _store.isCancelRequested(execution));
+		advance();
+		assertTrue("marker visible on the wrapper after advancing", execution.getCancelRequested());
+
+		assertFalse("re-cancelling an already-signalled run is a no-op",
+			AIScriptFunctions.agentRunCancel(sessionId));
+
+		_store.finishExecution(execution, ExecutionStatus.CANCELLED, StopReason.ABORTED, null, null,
+			TRANSCRIPT, null);
+		advance();
+		assertFalse("cancelling a terminal run is a no-op", AIScriptFunctions.agentRunCancel(sessionId));
+		assertFalse("cancelling an unknown handle is a no-op",
+			AIScriptFunctions.agentRunCancel("no-such-run"));
+	}
+
+	/**
+	 * The cluster-safe cancel path end to end at the observer level: a cancel requested through the
+	 * persisted marker (as {@code agentRunCancel} does, possibly from another node) is observed by
+	 * the {@link CancelSignalObserver} running on the job's node at its next turn and flips the
+	 * local {@link CancellationToken}, which the agent loop honors to stop the run.
+	 */
+	public void testCancelObserverFlipsTokenFromMarker() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "cancel-observer");
+		AgentExecution execution =
+			_store.beginExecution(session, "run-observed", "test-agent", "test-model", null, null);
+
+		ExecutionHandle handle = new ExecutionHandle();
+		handle.set(execution);
+		CancellationToken token = new CancellationToken();
+		CancelSignalObserver observer = new CancelSignalObserver(handle, token);
+
+		Instant now = Instant.now();
+		// No cancel requested yet: a turn boundary leaves the token untouched.
+		observer.onEvent(new AgentEvent.TurnStarted("run-observed", 1, now));
+		assertFalse(token.isCancelled());
+
+		// Request cancel (the marker is committed) and let the next turn boundary observe it.
+		assertTrue(AIScriptFunctions.agentRunCancel(execution));
+		observer.onEvent(new AgentEvent.TurnStarted("run-observed", 2, now));
+		assertTrue("observer flips the local token from the committed marker", token.isCancelled());
+	}
+
+	/**
+	 * A cancel requested while the run sits inside a single long turn - no {@code TurnStarted}
+	 * boundary occurs while a long LLM stream or tool call is in flight - must still take effect
+	 * within a bounded delay. This is the regression guard for the bug where cancellation was only
+	 * observed at turn boundaries: a busy run never crossed one, so the committed marker was never
+	 * read and the local token never flipped (the run stayed {@code RUNNING} forever).
+	 */
+	public void testCancelTakesEffectWithoutTurnBoundary() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "cancel-long-turn");
+		AgentExecution execution =
+			_store.beginExecution(session, "run-long-turn", "test-agent", "test-model", null, null);
+
+		ExecutionHandle handle = new ExecutionHandle();
+		handle.set(execution);
+		CancellationToken token = new CancellationToken();
+		CancelSignalObserver observer = new CancelSignalObserver(handle, token);
+
+		Instant now = Instant.now();
+		try {
+			// The run starts, then sits inside one long turn: only RunStarted is emitted, never a
+			// subsequent TurnStarted.
+			observer.onEvent(new AgentEvent.RunStarted("run-long-turn", 0, now, "test-model"));
+
+			// A cancel is requested from (possibly) another node: the marker is committed.
+			assertTrue(AIScriptFunctions.agentRunCancel(execution));
+
+			// The observer must flip the local token within a bounded delay despite no turn boundary.
+			assertTrue("cancel must take effect without a turn boundary",
+				awaitCancelled(token, 15_000));
+		} finally {
+			observer.onEvent(new AgentEvent.RunCompleted("run-long-turn", 1, now, StopReason.ABORTED,
+				com.top_logic.tl.ai.core.message.TokenUsage.EMPTY));
+		}
+	}
+
+	/** Waits up to {@code timeoutMs} for the token to become cancelled. */
+	private static boolean awaitCancelled(CancellationToken token, long timeoutMs) throws Exception {
+		long deadline = System.currentTimeMillis() + timeoutMs;
+		while (System.currentTimeMillis() < deadline) {
+			if (token.isCancelled()) {
+				return true;
+			}
+			Thread.sleep(50);
+		}
+		return token.isCancelled();
 	}
 
 	/**
@@ -157,10 +304,16 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 	public void testUnknownHandleResolvesNull() {
 		assertNull(AIScriptFunctions.agentRunStatus(Integer.valueOf(7)));
 		assertNull(AIScriptFunctions.agentRunResult(Integer.valueOf(7)));
+		assertNull(AIScriptFunctions.agentRunTranscript(Integer.valueOf(7)));
+		assertFalse(AIScriptFunctions.agentRunCancel(Integer.valueOf(7)));
 		assertNull(AIScriptFunctions.agentRunStatus("no-such-run-id"));
 		assertNull(AIScriptFunctions.agentRunResult("no-such-run-id"));
+		assertNull(AIScriptFunctions.agentRunTranscript("no-such-run-id"));
+		assertFalse(AIScriptFunctions.agentRunCancel("no-such-run-id"));
 		assertNull(AIScriptFunctions.agentRunStatus(null));
 		assertNull(AIScriptFunctions.agentRunResult(null));
+		assertNull(AIScriptFunctions.agentRunTranscript(null));
+		assertFalse(AIScriptFunctions.agentRunCancel(null));
 	}
 
 	/**

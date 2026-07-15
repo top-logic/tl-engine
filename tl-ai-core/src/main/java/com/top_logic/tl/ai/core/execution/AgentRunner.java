@@ -125,7 +125,7 @@ public final class AgentRunner {
 		}
 
 		if (recorder != null) {
-			recorder.complete(transcriptOf(log, turnsBefore), null);
+			recorder.complete(transcriptOf(log, turnsBefore), runResult.response(), null);
 		}
 		return new RecordedRun(runResult.response(), runResult.registry(),
 			recorder != null ? recorder.result() : null,

@@ -24,6 +24,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -357,6 +358,30 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			}
 			return null;
 		});
+	}
+
+	/**
+	 * Looks up an {@link AgentSession} by its persistent object id (as produced by
+	 * {@link KBUtils#getWrappedObjectName(TLObject)}), or <code>null</code> if none matches.
+	 *
+	 * <p>
+	 * Used to resolve the string handle returned by an async run
+	 * ({@code aiAgentChatAsync}) back to its session on a later polling request. Scans the session
+	 * instances; polling is infrequent, so a linear scan is acceptable and avoids assumptions about
+	 * the id's type-key encoding.
+	 * </p>
+	 */
+	public AgentSession findSessionById(String sessionId) {
+		if (sessionId == null || sessionId.isEmpty()) {
+			return null;
+		}
+		for (TLObject obj : allInstances(TlAiAgentFactory.getAgentSessionType())) {
+			AgentSession session = (AgentSession) obj;
+			if (sessionId.equals(KBUtils.getWrappedObjectName(session).toString())) {
+				return session;
+			}
+		}
+		return null;
 	}
 
 	/**

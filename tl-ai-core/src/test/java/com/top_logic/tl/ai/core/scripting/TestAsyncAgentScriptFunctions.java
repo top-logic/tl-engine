@@ -14,6 +14,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -122,6 +123,34 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 	}
 
 	/**
+	 * The string session-id handle returned by {@code agentChatAsync} - a persistent object id, not
+	 * a run id - resolves through the poll functions: {@code RUNNING} before any execution is
+	 * visible, then the recorded status and transcript once the run finishes. This is the path the
+	 * fix relies on to avoid returning a live {@link AgentSession} wrapper (which throws
+	 * {@code DeletedObjectAccess} across revisions).
+	 */
+	public void testResolveByStringSessionId() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "by-session-id");
+		String sessionId = KBUtils.getWrappedObjectName(session).toString();
+		advance();
+
+		// Before any execution row is visible, the string session id still reads as RUNNING (queued),
+		// unlike an unknown string which is null.
+		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(sessionId));
+		assertNull(AIScriptFunctions.agentRunResult(sessionId));
+		assertSame(session, _store.findSessionById(sessionId));
+
+		AgentExecution execution =
+			_store.beginExecution(session, "run-by-session-id", "test-agent", "test-model", null, null);
+		_store.finishExecution(execution, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null,
+			TRANSCRIPT);
+		advance();
+
+		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(sessionId));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunResult(sessionId));
+	}
+
+	/**
 	 * An unresolvable handle (unknown type, or an unknown run id) yields {@code null} rather than
 	 * throwing.
 	 */
@@ -154,7 +183,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 			return;
 		}
 
-		AgentSession handle = AIScriptFunctions.agentChatAsync("__no_such_agent__", "hello");
+		String handle = AIScriptFunctions.agentChatAsync("__no_such_agent__", "hello");
 		assertNotNull("async kickoff must return a handle immediately", handle);
 
 		String status = pollUntilTerminal(handle);
@@ -168,7 +197,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 	 * store's writer thread has committed, then polls the run status until it leaves
 	 * {@code RUNNING} or a timeout elapses.
 	 */
-	private static String pollUntilTerminal(AgentSession handle) throws Exception {
+	private static String pollUntilTerminal(String handle) throws Exception {
 		String status = null;
 		for (int i = 0; i < 150; i++) {
 			advance();

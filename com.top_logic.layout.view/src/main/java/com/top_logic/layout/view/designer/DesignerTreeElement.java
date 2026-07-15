@@ -148,6 +148,11 @@ public class DesignerTreeElement implements UIElement {
 					if (uiNode != null) {
 						revealNode(uiNode);
 						selectionModel.setSelected(uiNode, true);
+						// Push the server-side expansion+selection change to the client. Unlike a
+						// client-initiated select/expand (which flows through the control's own
+						// command handlers that rebuild this state), this change is made directly on
+						// the models, so the control's visible node state must be rebuilt explicitly.
+						treeControl.updateVisibleState();
 					}
 				}
 			});

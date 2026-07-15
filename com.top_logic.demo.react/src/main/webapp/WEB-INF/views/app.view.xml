@@ -41,6 +41,17 @@
 		<header>
 			<app-bar variant="flat">
 				<commands>
+					<open-designer placement="TOOLBAR" image="css:bi bi-easel">
+						<label>
+							<en>Designer</en>
+							<de>Designer</de>
+						</label>
+						<tooltip>
+							<en>Open the view designer to edit the current page.</en>
+							<de>Öffnet den View-Designer zur Bearbeitung der aktuellen Seite.</de>
+						</tooltip>
+					</open-designer>
+
 					<!--
 						Pops out the script-recorder side-window: a generic open-window command configured
 						with the recorder view.
@@ -63,7 +74,7 @@
 						</label>
 						<tooltip>
 							<en>Open the script recorder to capture interactions as a replayable script.</en>
-							<de>Oeffnet den Skript-Rekorder, um Interaktionen als abspielbares Skript aufzuzeichnen.</de>
+							<de>Öffnet den Skript-Rekorder, um Interaktionen als abspielbares Skript aufzuzeichnen.</de>
 						</tooltip>
 						<executability>
 							<authenticated-only/>

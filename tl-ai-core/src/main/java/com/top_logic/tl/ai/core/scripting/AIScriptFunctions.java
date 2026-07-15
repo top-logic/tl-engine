@@ -35,6 +35,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
+import com.top_logic.tl.ai.core.execution.CancelSignalObserver;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
@@ -470,9 +471,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		ToolContext context = new ToolContext(new TopLogicSecurityContext(),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
+		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on
+		// this thread observes the persisted cancel marker (committed by aiAgentRunCancel from any
+		// node) at each turn and flips the local token. No cross-node in-memory registry is needed -
+		// only the request must cross nodes, which the KB marker carries.
+		CancelSignalObserver cancelObserver =
+			new CancelSignalObserver(context.executionHandle(), cancellationToken);
+
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			recordUserTurn(env.logListener().log(), userMessage);
-			AgentRunner.run(agentName, conversation, null, context, NO_LISTENER, null,
+			AgentRunner.run(agentName, conversation, null, context, cancelObserver, null,
 				env.logListener().log(), session, null);
 		} catch (Throwable ex) {
 			// AgentRunner records ERROR itself once the loop has started (the recorder publishes the
@@ -553,20 +561,22 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Returns the result transcript of an async agent run once it is
+	 * Returns the final answer of an async agent run once it is
 	 * {@link AgentExecutionStore.ExecutionStatus#COMPLETE}.
 	 *
 	 * <p>
-	 * The transcript is the serialized per-run conversation log (as produced by
-	 * {@link ConversationLogSerializer}). Before the run completes - or if it ended in any
-	 * non-{@code COMPLETE} state - this returns {@code null}; use {@link #agentRunStatus(Object)}
-	 * to distinguish the cases.
+	 * This is symmetric with the synchronous {@link #agentChat(String, Object)}: it returns the
+	 * same final-answer string that {@code agentChat} would have returned for the run - the
+	 * persisted {@link AgentExecution#getResponse() response}, not the transcript. Use
+	 * {@link #agentRunTranscript(Object)} for the full conversation log. Before the run completes -
+	 * or if it ended in any non-{@code COMPLETE} state - this returns {@code null}; use
+	 * {@link #agentRunStatus(Object)} to distinguish the cases.
 	 * </p>
 	 *
 	 * @param handle
 	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
-	 * @return The transcript when the run is {@code COMPLETE}, otherwise {@code null}.
+	 * @return The final answer text when the run is {@code COMPLETE}, otherwise {@code null}.
 	 */
 	public static String agentRunResult(Object handle) {
 		AgentExecution execution = resolveExecution(handle);
@@ -578,7 +588,63 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			|| !AgentExecutionStore.ExecutionStatus.COMPLETE.name().equals(status.getName())) {
 			return null;
 		}
+		return execution.getResponse();
+	}
+
+	/**
+	 * Returns the full conversation log (transcript) of an async agent run.
+	 *
+	 * <p>
+	 * The transcript is the serialized per-run conversation log (as produced by
+	 * {@link ConversationLogSerializer}). It is written at run finalization, so it is {@code null}
+	 * while the run is still {@code RUNNING} and becomes available once the run reaches any terminal
+	 * state - including {@code ERROR} and {@code CANCELLED}, where the partial log is the most
+	 * useful diagnostic. For the agent's final answer alone, use {@link #agentRunResult(Object)}.
+	 * </p>
+	 *
+	 * @param handle
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
+	 * @return The serialized transcript, or {@code null} if the handle cannot be resolved or no
+	 *         transcript has been recorded yet.
+	 */
+	public static String agentRunTranscript(Object handle) {
+		AgentExecution execution = resolveExecution(handle);
+		if (execution == null) {
+			return null;
+		}
 		return execution.getTranscript();
+	}
+
+	/**
+	 * Requests cancellation of a running async agent run started with
+	 * {@link #agentChatAsync(String, Object)}.
+	 *
+	 * <p>
+	 * Cluster-safe: the handle is resolved to its top-level execution and the run's persisted
+	 * cancel marker is set and committed - a normal KB write that works from any node, so the node
+	 * receiving the cancel need not be the node running the job. The running node observes the
+	 * marker at its next agent-loop turn and cancels the run, which then finalizes as
+	 * {@code CANCELLED}. Cancellation is therefore asynchronous: poll {@link #agentRunStatus(Object)}
+	 * to observe the run reach {@code CANCELLED}.
+	 * </p>
+	 *
+	 * <p>
+	 * A no-op for a run that has already reached a terminal state (nothing left to cancel).
+	 * </p>
+	 *
+	 * @param handle
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
+	 * @return {@code true} if a still-running run was signalled to cancel; {@code false} if the
+	 *         handle could not be resolved or the run was already terminal.
+	 */
+	public static boolean agentRunCancel(Object handle) {
+		AgentExecution execution = resolveExecution(handle);
+		if (execution == null || !AgentExecutionStore.Module.INSTANCE.isActive()) {
+			return false;
+		}
+		return AgentExecutionStore.getInstance().requestCancel(execution);
 	}
 
 	/**
@@ -586,7 +652,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * Accepts the string session-id handle returned by {@link #agentChatAsync(String, Object)} (its
-	 * session's most recent execution is returned), an {@link AgentSession} directly, an
+	 * session's top-level execution is returned), an {@link AgentSession} directly, an
 	 * {@link AgentExecution} directly, or a run-id string. Returns <code>null</code> when the handle
 	 * cannot be resolved (unknown type, or no execution recorded yet).
 	 * </p>
@@ -603,15 +669,15 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		AgentExecutionStore store = AgentExecutionStore.getInstance();
 		if (handle instanceof AgentSession session) {
-			return latestExecutionOf(store, session);
+			return topLevelExecutionOf(store, session);
 		}
 		if (handle instanceof String id) {
 			// The async handle is a session id (see agentChatAsync); resolve it to the session and
-			// return its latest execution. Fall back to a run-id lookup for handles obtained
+			// return its top-level execution. Fall back to a run-id lookup for handles obtained
 			// otherwise (e.g. an AgentExecution's run id).
 			AgentSession session = store.findSessionById(id);
 			if (session != null) {
-				return latestExecutionOf(store, session);
+				return topLevelExecutionOf(store, session);
 			}
 			return store.findExecutionByRunId(id);
 		}
@@ -619,12 +685,25 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The most recent {@link AgentExecution} of the given session, or <code>null</code> if none has
-	 * been recorded (or become visible) yet.
+	 * The session's top-level {@link AgentExecution} - the one whose
+	 * {@link AgentExecution#getParentExecution() parentExecution} is <code>null</code> - or
+	 * <code>null</code> if none has been recorded (or become visible) yet.
+	 *
+	 * <p>
+	 * A session accrues sub-agent executions (delegation children) in addition to its top-level
+	 * run; the handle addresses the run the caller started, which is the top-level one. The most
+	 * recent top-level execution is chosen so a re-run of the same session resolves to its latest
+	 * run.
+	 * </p>
 	 */
-	private static AgentExecution latestExecutionOf(AgentExecutionStore store, AgentSession session) {
-		List<AgentExecution> executions = store.executionsOf(session);
-		return executions.isEmpty() ? null : executions.get(executions.size() - 1);
+	private static AgentExecution topLevelExecutionOf(AgentExecutionStore store, AgentSession session) {
+		AgentExecution topLevel = null;
+		for (AgentExecution execution : store.executionsOf(session)) {
+			if (execution.getParentExecution() == null) {
+				topLevel = execution;
+			}
+		}
+		return topLevel;
 	}
 
 	/**

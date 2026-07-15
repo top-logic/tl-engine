@@ -63,9 +63,6 @@
 			<directory>deploy</directory>
 		</fileSet>
 		<fileSet filtered="true">
-			<directory>local-config.template</directory>
-		</fileSet>
-		<fileSet filtered="true">
 			<directory>src</directory>
 		</fileSet>
 		<fileSet filtered="true">
@@ -75,6 +72,7 @@
 				<include>.factorypath</include>
 				<include>.gitignore</include>
 				<include>.project</include>
+				<include>local.conf.xml.template</include>
 			</includes>
 		</fileSet>
 	</fileSets>

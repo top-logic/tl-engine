@@ -34,10 +34,17 @@ import com.top_logic.util.Resources;
 public class SequenceIdGenerator implements NumberHandler {
 
 	/**
-	 * Technical suffix for the sequence actually used in sequence table to ensure that no clash is
-	 * produced with internal sequences.
+	 * Technical suffix appended to the physical sequence name (as stored in the sequence table) to
+	 * ensure that no clash is produced with internal sequences.
+	 *
+	 * <p>
+	 * The suffix is appended last, after the base name and the optional context (see
+	 * {@link #sequenceName(String, Object)}), so that all mechanisms addressing a sequence (this
+	 * generator, {@link SequenceDefaultProvider} and the {@code generateSequenceId}/
+	 * {@code resetSequence} TL-Script functions) compute the same physical name.
+	 * </p>
 	 */
-	public static final String SEQUENCE_SUFFIX = "_NumberHandler";
+	public static final String SEQUENCE_SUFFIX = "_SequenceId";
 
 	/**
 	 * @see ConfiguredNumberHandler.UIConfig#getNumberPattern()
@@ -103,7 +110,7 @@ public class SequenceIdGenerator implements NumberHandler {
 	@Override
 	public Object generateId(Object context) throws GenerateNumberException {
 		try {
-			StringBuilder sequenceNameBuilder = new StringBuilder(_sequenceName).append(SEQUENCE_SUFFIX);
+			StringBuilder sequenceNameBuilder = new StringBuilder(_sequenceName);
 			String result = _idPattern;
 
 			SimpleDateFormat dateFormat = createDateFormat();
@@ -127,6 +134,8 @@ public class SequenceIdGenerator implements NumberHandler {
 				dynamicName = "";
 			}
 			result = StringServices.replace(result, OBJECT_PLACEHOLDER, dynamicName);
+
+			sequenceNameBuilder.append(SEQUENCE_SUFFIX);
 
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			PooledConnection connection = ((CommitHandler) kb).createCommitContext().getConnection();
@@ -162,6 +171,30 @@ public class SequenceIdGenerator implements NumberHandler {
 	 */
 	protected final NumberFormat createNumberFormat() throws IllegalArgumentException {
 		return new DecimalFormat(_numberPattern);
+	}
+
+	/**
+	 * Computes the physical sequence name (as stored in the sequence table) for the given base name
+	 * and context.
+	 *
+	 * <p>
+	 * The name is built as base name, followed by the context (see {@link #addNames(StringBuilder,
+	 * Object)}), followed by the technical {@link #SEQUENCE_SUFFIX}. All mechanisms addressing a
+	 * sequence must use this method (or the same layout) so that they operate on the same counter.
+	 * </p>
+	 *
+	 * @param baseName
+	 *        The configured base name of the sequence.
+	 * @param context
+	 *        The optional context discriminating the sequence (a {@link TLObject}, a value or a
+	 *        {@link Collection} thereof), or <code>null</code> for a single global sequence.
+	 * @return The physical sequence name.
+	 */
+	public static String sequenceName(String baseName, Object context) {
+		StringBuilder sequenceNameBuilder = new StringBuilder(baseName);
+		addNames(sequenceNameBuilder, context);
+		sequenceNameBuilder.append(SEQUENCE_SUFFIX);
+		return sequenceNameBuilder.toString();
 	}
 
 	/**

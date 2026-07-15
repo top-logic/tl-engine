@@ -895,6 +895,14 @@ public class ReactControl implements HTMLFragment, IReactControl, AgentControl {
 			writer.value(_reactModule);
 			writer.name("state");
 			writeState(writer);
+			if (_viewSource != null) {
+				// Carried in the child descriptor so the client (TLChild) can stamp
+				// data-view-source onto this control's root element; the top-level write() path
+				// emits the same attribute directly, but view-boundary controls are always
+				// serialized here as nested children.
+				writer.name("viewSource");
+				writer.value(_viewSource);
+			}
 			writer.endObject();
 		} finally {
 			_silentUpdates = silentBefore;

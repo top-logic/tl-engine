@@ -44,6 +44,7 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMService;
@@ -357,9 +358,19 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <p>
 	 * Unlike {@link #agentChat(String, Object)}, which runs the agent loop synchronously on the
 	 * calling thread and blocks until it finishes, this function submits the run to the
-	 * {@link SchedulerService} and returns right away. The returned {@link AgentSession} is the
-	 * handle: poll it with {@link #agentRunStatus(Object)} and {@link #agentRunResult(Object)} to
-	 * observe progress and retrieve the transcript once the run is {@code COMPLETE}.
+	 * {@link SchedulerService} and returns right away. The return value is the session's persistent
+	 * id as a plain {@link String} handle: poll it with {@link #agentRunStatus(Object)} and
+	 * {@link #agentRunResult(Object)} to observe progress and retrieve the transcript once the run
+	 * is {@code COMPLETE}.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link String} handle (rather than the live {@link AgentSession} wrapper) is returned
+	 * deliberately: the session is committed out-of-band on the {@link AgentExecutionStore} writer
+	 * thread at a revision newer than the caller's pinned request revision, so returning the wrapper
+	 * would fail with {@code DeletedObjectAccess} wherever the caller's context accesses it in its
+	 * older revision (e.g. the Script Console typing the result row). A {@code String} is
+	 * revision-independent; the poll functions resolve it back to the session.
 	 * </p>
 	 *
 	 * <p>
@@ -399,7 +410,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The agent name as configured in the knowledge base.
 	 * @param userMessage
 	 *        The user message to send to the agent.
-	 * @return The {@link AgentSession} handle to poll for status and result.
+	 * @return The session's persistent id as a {@link String} handle to poll for status and result.
 	 * @throws IllegalStateException
 	 *         If the calling thread has no usable sub-session to run as, or the
 	 *         {@link AgentExecutionStore} is unavailable.
@@ -407,7 +418,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @see com.top_logic.tl.ai.core.execution.model.AgentExecution
 	 * @see AgentRunner
 	 */
-	public static AgentSession agentChatAsync(String agentName, Object userMessage) {
+	public static String agentChatAsync(String agentName, Object userMessage) {
 		// Capture the caller's sub-session synchronously: it lives on the calling thread and
 		// cannot be read off-thread. The background run re-enters it to act as this user.
 		TLSubSessionContext callerSession = TLContextManager.getSubSession();
@@ -436,7 +447,13 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		SchedulerService.getInstance().submit(() -> ThreadContextManager.inContext(callerSession,
 			() -> runAsync(agentName, messageContent, session)));
 
-		return session;
+		// Return the session's persistent id as a plain String rather than the live AgentSession
+		// wrapper. The session was committed out-of-band on the store's writer thread at a revision
+		// newer than the caller's pinned request revision, so the wrapper's tType()/attribute access
+		// would throw DeletedObjectAccess in the older access revision (e.g. when the Script Console
+		// types the result row). A String is revision-independent and has no tType(); the poll
+		// functions resolve it back to the session via AgentExecutionStore.findSessionById.
+		return KBUtils.getWrappedObjectName(session).toString();
 	}
 
 	/**
@@ -501,21 +518,38 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param handle
-	 *        The handle returned by {@link #agentChatAsync(String, Object)} (an {@link AgentSession}),
-	 *        an {@link AgentExecution} directly, or a run-id string.
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @return The status name, or {@code null} if the handle cannot be resolved to a run.
 	 */
 	public static String agentRunStatus(Object handle) {
 		AgentExecution execution = resolveExecution(handle);
 		if (execution == null) {
 			// A session handle with no visible execution yet: the run is queued or its recording
-			// has not yet propagated to this thread's revision view.
-			return handle instanceof AgentSession
+			// has not yet propagated to this thread's revision view. This also covers the string
+			// session id returned by agentChatAsync, whose background execution only becomes visible
+			// in a later request's revision.
+			return isSessionHandle(handle)
 				? AgentExecutionStore.ExecutionStatus.RUNNING.name()
 				: null;
 		}
 		com.top_logic.model.TLClassifier status = execution.getStatus();
 		return status != null ? status.getName() : null;
+	}
+
+	/**
+	 * Whether the handle refers to an {@link AgentSession} - either the wrapper directly or the
+	 * string session id returned by {@link #agentChatAsync(String, Object)} - as opposed to a
+	 * run-id string or an unresolvable value.
+	 */
+	private static boolean isSessionHandle(Object handle) {
+		if (handle instanceof AgentSession) {
+			return true;
+		}
+		if (handle instanceof String id && AgentExecutionStore.Module.INSTANCE.isActive()) {
+			return AgentExecutionStore.getInstance().findSessionById(id) != null;
+		}
+		return false;
 	}
 
 	/**
@@ -530,8 +564,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param handle
-	 *        The handle returned by {@link #agentChatAsync(String, Object)} (an {@link AgentSession}),
-	 *        an {@link AgentExecution} directly, or a run-id string.
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @return The transcript when the run is {@code COMPLETE}, otherwise {@code null}.
 	 */
 	public static String agentRunResult(Object handle) {
@@ -551,10 +585,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * Resolves an async-run handle to its {@link AgentExecution}.
 	 *
 	 * <p>
-	 * Accepts the {@link AgentSession} returned by {@link #agentChatAsync(String, Object)} (its most
-	 * recent execution is returned), an {@link AgentExecution} directly, or a run-id string. Returns
-	 * <code>null</code> when the handle cannot be resolved (unknown type, or no execution recorded
-	 * yet).
+	 * Accepts the string session-id handle returned by {@link #agentChatAsync(String, Object)} (its
+	 * session's most recent execution is returned), an {@link AgentSession} directly, an
+	 * {@link AgentExecution} directly, or a run-id string. Returns <code>null</code> when the handle
+	 * cannot be resolved (unknown type, or no execution recorded yet).
 	 * </p>
 	 */
 	private static AgentExecution resolveExecution(Object handle) {
@@ -569,13 +603,28 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		AgentExecutionStore store = AgentExecutionStore.getInstance();
 		if (handle instanceof AgentSession session) {
-			List<AgentExecution> executions = store.executionsOf(session);
-			return executions.isEmpty() ? null : executions.get(executions.size() - 1);
+			return latestExecutionOf(store, session);
 		}
-		if (handle instanceof String runId) {
-			return store.findExecutionByRunId(runId);
+		if (handle instanceof String id) {
+			// The async handle is a session id (see agentChatAsync); resolve it to the session and
+			// return its latest execution. Fall back to a run-id lookup for handles obtained
+			// otherwise (e.g. an AgentExecution's run id).
+			AgentSession session = store.findSessionById(id);
+			if (session != null) {
+				return latestExecutionOf(store, session);
+			}
+			return store.findExecutionByRunId(id);
 		}
 		return null;
+	}
+
+	/**
+	 * The most recent {@link AgentExecution} of the given session, or <code>null</code> if none has
+	 * been recorded (or become visible) yet.
+	 */
+	private static AgentExecution latestExecutionOf(AgentExecutionStore store, AgentSession session) {
+		List<AgentExecution> executions = store.executionsOf(session);
+		return executions.isEmpty() ? null : executions.get(executions.size() - 1);
 	}
 
 	/**

@@ -287,6 +287,17 @@ public class AJAXServlet extends TopLogicServlet {
 			}
 			try {
 				MainLayout mainLayout = rootHandler.getMainLayout();
+				if (mainLayout == null) {
+					/* The subsession is registered but its component tree does not (yet) exist. This
+					 * may occur if the browser window unloads (sending e.g. a 'notifyUnload' request)
+					 * before the login has finished rendering the main layout. Answer with an empty
+					 * response to keep the client's request sequence intact. */
+					TagWriter out = MainLayout.getTagWriter(request, response);
+					UpdateWriter writer = new UpdateWriter(displayContext, out, encoding, rxSequence);
+					writer.endResponse();
+					out.flushBuffer();
+					return;
+				}
 				String sourceReference = getSourceComponentReference(ajaxRequest, mainLayout);
 				if (Utils.equals(sourceReference, SOURCE_COMPONENT_NOT_VISIBLE)) {
 					/* This may occur if loading a component automatically triggers an AJAX-request,

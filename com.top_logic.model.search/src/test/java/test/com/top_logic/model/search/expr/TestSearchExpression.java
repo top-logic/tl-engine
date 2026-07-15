@@ -7,6 +7,9 @@ package test.com.top_logic.model.search.expr;
 
 import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -19,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.zip.GZIPInputStream;
 
 import junit.framework.Test;
 
@@ -32,6 +36,8 @@ import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
@@ -2603,6 +2609,33 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 		// Test mathE function
 		assertEquals(Math.E, execute(search("mathE()")));
+	}
+
+	/**
+	 * Test for the <code>gzip()</code> function compressing binary data.
+	 */
+	public void testGzip() throws Exception {
+		Object result = execute(
+			search("binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\").gzip()"));
+
+		assertInstanceof(result, BinaryDataSource.class);
+		BinaryDataSource data = (BinaryDataSource) result;
+		assertEquals("hello.txt.gz", data.getName());
+		assertEquals("application/gzip", data.getContentType());
+
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		data.deliverTo(buffer);
+		try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(buffer.toByteArray()))) {
+			assertEquals("Hello world!", StreamUtilities.readAllFromStream(in, StandardCharsets.UTF_8));
+		}
+
+		// Explicit result name.
+		BinaryDataSource named = (BinaryDataSource) execute(search(
+			"binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\").gzip(name: \"custom.gz\")"));
+		assertEquals("custom.gz", named.getName());
+
+		// A null input results in a null value.
+		assertNull(execute(search("gzip(null)")));
 	}
 
 	@FunctionalInterface

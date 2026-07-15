@@ -251,6 +251,53 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 	}
 
 	/**
+	 * A cancel requested while the run sits inside a single long turn - no {@code TurnStarted}
+	 * boundary occurs while a long LLM stream or tool call is in flight - must still take effect
+	 * within a bounded delay. This is the regression guard for the bug where cancellation was only
+	 * observed at turn boundaries: a busy run never crossed one, so the committed marker was never
+	 * read and the local token never flipped (the run stayed {@code RUNNING} forever).
+	 */
+	public void testCancelTakesEffectWithoutTurnBoundary() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "cancel-long-turn");
+		AgentExecution execution =
+			_store.beginExecution(session, "run-long-turn", "test-agent", "test-model", null, null);
+
+		ExecutionHandle handle = new ExecutionHandle();
+		handle.set(execution);
+		CancellationToken token = new CancellationToken();
+		CancelSignalObserver observer = new CancelSignalObserver(handle, token);
+
+		Instant now = Instant.now();
+		try {
+			// The run starts, then sits inside one long turn: only RunStarted is emitted, never a
+			// subsequent TurnStarted.
+			observer.onEvent(new AgentEvent.RunStarted("run-long-turn", 0, now, "test-model"));
+
+			// A cancel is requested from (possibly) another node: the marker is committed.
+			assertTrue(AIScriptFunctions.agentRunCancel(execution));
+
+			// The observer must flip the local token within a bounded delay despite no turn boundary.
+			assertTrue("cancel must take effect without a turn boundary",
+				awaitCancelled(token, 15_000));
+		} finally {
+			observer.onEvent(new AgentEvent.RunCompleted("run-long-turn", 1, now, StopReason.ABORTED,
+				com.top_logic.tl.ai.core.message.TokenUsage.EMPTY));
+		}
+	}
+
+	/** Waits up to {@code timeoutMs} for the token to become cancelled. */
+	private static boolean awaitCancelled(CancellationToken token, long timeoutMs) throws Exception {
+		long deadline = System.currentTimeMillis() + timeoutMs;
+		while (System.currentTimeMillis() < deadline) {
+			if (token.isCancelled()) {
+				return true;
+			}
+			Thread.sleep(50);
+		}
+		return token.isCancelled();
+	}
+
+	/**
 	 * An unresolvable handle (unknown type, or an unknown run id) yields {@code null} rather than
 	 * throwing.
 	 */

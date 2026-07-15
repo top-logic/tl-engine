@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$input.gunzip()</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Dekomprimiert die übergebenen Binärdaten, die mit dem GZIP-Kompressionsformat komprimiert wurden, siehe <a class="tlObject" data-custom="false" href="?page=gzip&amp;uuid=cf9e5014-93ec-49cc-9040-6190fce563df">GZIP-Kompression</a>.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binärdaten</td>
+			<td>Die zu dekomprimierenden GZIP-komprimierten Binärdaten.</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Der Name des erzeugten Binärwerts.</td>
+			<td>nein</td>
+			<td>Der Name der Eingabe ohne die Endung <code>.gz</code>, falls vorhanden.</td>
+		</tr>
+		<tr>
+			<td>contentType</td>
+			<td>Zeichenkette</td>
+			<td>Der Inhaltstyp des erzeugten Binärwerts.</td>
+			<td>nein</td>
+			<td>Wird aus dem Namen des Ergebnisses abgeleitet.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Binärdaten</p>
+
+<p>Der dekomprimierte Inhalt der Eingabe.</p>
+
+<h2>Beispiel</h2>
+
+<pre>
+<code>binary(name: "hello.txt", data: "Hello world!", encoding: "utf-8").gzip().gunzip()</code></pre>
+
+<p>Liefert einen Binärwert mit dem Namen "hello.txt", der den ursprünglichen Inhalt der Textdatei enthält.</p>

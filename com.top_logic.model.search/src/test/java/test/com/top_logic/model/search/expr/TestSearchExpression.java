@@ -38,6 +38,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
@@ -2636,6 +2637,33 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 		// A null input results in a null value.
 		assertNull(execute(search("gzip(null)")));
+	}
+
+	/**
+	 * Test for the <code>gunzip()</code> function decompressing GZIP-compressed binary data.
+	 */
+	public void testGunzip() throws Exception {
+		Object result = execute(search(
+			"binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\").gzip().gunzip()"));
+
+		assertInstanceof(result, BinaryDataSource.class);
+		BinaryDataSource data = (BinaryDataSource) result;
+		assertEquals("hello.txt", data.getName());
+		assertEquals(MimeTypesModule.getInstance().getMimeType("hello.txt"), data.getContentType());
+
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		data.deliverTo(buffer);
+		assertEquals("Hello world!", new String(buffer.toByteArray(), StandardCharsets.UTF_8));
+
+		// Explicit result name and content type.
+		BinaryDataSource named = (BinaryDataSource) execute(search(
+			"binary(name: \"hello.txt\", data: \"Hello world!\", encoding: \"utf-8\")"
+				+ ".gzip().gunzip(name: \"custom.data\", contentType: \"application/octet-stream\")"));
+		assertEquals("custom.data", named.getName());
+		assertEquals("application/octet-stream", named.getContentType());
+
+		// A null input results in a null value.
+		assertNull(execute(search("gunzip(null)")));
 	}
 
 	@FunctionalInterface

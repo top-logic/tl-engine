@@ -826,11 +826,18 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private native void sendUpdate(String id, String patch, double requestID) /*-{
 		$wnd.services.ajax.dropLazyRequest(requestID);
+		// Synchronize the update (e.g. a selection change) with the server without raising the
+		// input-blocking wait pane (useWaitPane = false). The change is already applied to the
+		// client-side diagram, so blocking all input for the duration of the round-trip is
+		// unnecessary. A wait pane raised here covers the diagram and swallows a quickly
+		// following click: with a slow connection it is still visible when the second click of a
+		// double click arrives, so that click hits the overlay instead of the SVG and no native
+		// double click is formed.
 		$wnd.services.ajax.execute("dispatchControlCommand", {
 			controlCommand : "update",
 			controlID : id,
 			patch : patch
-		}, true)
+		}, false)
 	}-*/;
 
 	private native void logError(String message) /*-{

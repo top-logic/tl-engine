@@ -16,6 +16,12 @@
 # API. Its jar is newer than its own sources, so a local check calls it fresh,
 # yet it must be rebuilt against the new model.search jar.
 #
+# Pom-packaging modules (parents/aggregators) are tracked by their installed
+# POM: out-of-reactor builds (e.g. the nested builds of the tl-archetype-*
+# integration tests) resolve parent chains from the repository, so a stale
+# installed parent POM breaks them. Stale POMs are reinstalled (near-free) but
+# do not propagate staleness to inheriting modules.
+#
 # The reactor is enumerated by walking the <modules> lists of the aggregator
 # POMs (including <modules> in active-by-default profiles), starting at the
 # root POM. This deliberately avoids running a Maven goal per reactor module:
@@ -162,17 +168,44 @@ def newest_mtime(*paths):
                     pass
     return m
 
+def installed_mtime(artifact):
+    """Effective install time of a repository artifact, or None if absent.
+
+    maven-install-plugin copies files into the repository PRESERVING the
+    source file's (millisecond-truncated) timestamp, and maven-jar-plugin
+    keeps an existing jar file when its contents are unchanged -- so the
+    artifact's own mtime can predate the actual install and would flag the
+    module stale forever (e.g. when the TLDoclet regenerates messages files
+    under src/ after packaging). maven-metadata-local.xml in the same
+    directory is rewritten at install time, so the newer of the two is the
+    time the module was last installed."""
+    if not os.path.isfile(artifact):
+        return None
+    mt = os.path.getmtime(artifact)
+    meta = os.path.join(os.path.dirname(artifact), "maven-metadata-local.xml")
+    if os.path.isfile(meta):
+        mt = max(mt, os.path.getmtime(meta))
+    return mt
+
 # --- 2. Compute mtimes and parse direct reactor dependencies -------------
 deps = {}                            # artifactId -> set(reactor artifactIds it depends on)
 
 for a, m in mods.items():
-    if m["pkg"] == "pom":            # aggregators produce no jar
-        continue
     g, v, basedir = m["g"], m["v"], m["basedir"]
-    m["jar"] = os.path.join(repo, *g.split("."), a, v, f"{a}-{v}.jar")
     m["src_mtime"] = newest_mtime(os.path.join(basedir, "pom.xml"),
                                   os.path.join(basedir, "src"))
-    m["jar_mtime"] = os.path.getmtime(m["jar"]) if os.path.isfile(m["jar"]) else None
+    if m["pkg"] == "pom":
+        # Parents/aggregators produce no jar, but their installed POM matters:
+        # builds that resolve a reactor artifact's parent chain from the
+        # repository (e.g. the nested out-of-reactor builds spawned by the
+        # tl-archetype-* integration tests) see the INSTALLED parent POM, so a
+        # stale one breaks them (e.g. a dependencyManagement entry missing).
+        # Installing a POM is near-free, so track it like any artifact.
+        m["jar"] = os.path.join(repo, *g.split("."), a, v, f"{a}-{v}.pom")
+        m["jar_mtime"] = installed_mtime(m["jar"])
+        continue
+    m["jar"] = os.path.join(repo, *g.split("."), a, v, f"{a}-{v}.jar")
+    m["jar_mtime"] = installed_mtime(m["jar"])
 
     edges = set()
     for dep in trees[a].iter():
@@ -186,6 +219,7 @@ for a, m in mods.items():
     deps[a] = edges
 
 jarred = [a for a, m in mods.items() if m["pkg"] != "pom"]
+pom_only = [a for a, m in mods.items() if m["pkg"] == "pom"]
 
 # --- 3. Seed source-stale set --------------------------------------------
 stale = set()
@@ -196,6 +230,16 @@ for a in jarred:
         stale.add(a); reason[a] = "no jar"
     elif m["src_mtime"] > m["jar_mtime"]:
         stale.add(a); reason[a] = "sources changed"
+
+# Stale pom-packaging modules are reinstalled, but deliberately do NOT
+# propagate over the dependency graph: a touched parent POM would otherwise
+# force a rebuild of every inheriting module on each run.
+for a in pom_only:
+    m = mods[a]
+    if m["jar_mtime"] is None:
+        stale.add(a); reason[a] = "no installed pom"
+    elif m["src_mtime"] > m["jar_mtime"]:
+        stale.add(a); reason[a] = "pom changed"
 
 # --- 4. Propagate to a fixpoint over the dependency graph ----------------
 # M is stale if a dependency D is stale, OR D's jar is newer than M's jar
@@ -221,6 +265,8 @@ while changed:
 
 # --- 5. Emit --------------------------------------------------------------
 def rel(basedir):
+    if basedir == root:
+        return "."      # the root POM itself, as a -pl selector
     return basedir[len(root) + 1:] if basedir.startswith(root + os.sep) else basedir
 
 if not stale:
